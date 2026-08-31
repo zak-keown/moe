@@ -7,11 +7,11 @@ idea: |
   larger/greenfield initiatives.
 status: backlog
 size: M
-estimate: 6-8 h
+estimate: 7-9 h
 depends_on: [DO-NOW-1, DO-NOW-2, skill-set-fidelity-refactor]
 blocks: []
-conflicts_with: [parallel-execution-option, gsd-core-skill-import, tiered-workflow-naming, moe-tone-and-branding, native-renderers]
-touches: [packages/core/skills/, packages/core/skill-tiers.yaml, packages/core/test/metadata.test.ts]
+conflicts_with: [parallel-execution-option, gsd-core-skill-import, tiered-workflow-naming, moe-tone-and-branding, native-renderers, tc-governance-integration]
+touches: [packages/core/skills/, packages/core/skill-tiers.yaml, packages/core/test/metadata.test.ts, packages/core/hooks/, packages/core/hooks/hooks.json]
 decision_needed: no
 ---
 
@@ -33,6 +33,34 @@ smallest version worth building is a committed manifest for that set plus one CL
 that answers "what is runnable now".
 
 ## Debate-review decisions (2026-08-31)
+
+**ANSWERED 2026-08-31 (Zak): both — Option A *plus* the SessionStart hook.**
+The re-price below was run and it did not pick a winner, because the two things do
+different jobs: the hook is the only mechanism that cannot silently miss, and the skill
+is the only place the loop can live in one file. Consequences, all of them real work
+this item now owns:
+
+- The `sequencing-plans` **description shrinks**. It no longer has to carry the
+  cold-start case (*"new session, four plans exist, which are done?"*), because the
+  hook fires on that deterministically with no model in the loop. Write the description
+  for the warm case — "use when a project has more than one plan and you need to know
+  which is runnable" — and let the hook own the cold one.
+- **New file: `packages/core/hooks/hooks.json` + a `plan-set-notice` hook**, added to
+  this item's `touches`. That creates one new conflict edge,
+  `tc-governance-integration`, now declared in `conflicts_with`. The schedule was
+  recomputed: max clique is **still 7**, wall clock still 47 h, and the committed
+  7-wave schedule is still valid — `deterministic-task-dag` is W02 and
+  `tc-governance-integration` is W07. **W02 therefore defines `hooks.json`'s shape,**
+  and `verification-split-and-firing-rate` (W03) and `tc-governance-integration` (W07)
+  both extend whatever this item writes. Neither of those edges was declared in the
+  frontmatter the author wrote; see `WAVES.md`.
+- The hook script is **extensionless**, per the Windows lesson: Claude Code's Windows
+  auto-detection prepends `bash` to any command containing `.sh`. It also must not be
+  the thing that carries the loop — announce only, exit 0 on every failure path, and
+  say plainly when it did not run, matching `run-hook.cmd`'s diagnostic.
+- **+1 h** on the estimate (6-8 h → 7-9 h) for the hook, its registration and its test.
+
+*Original re-price argument, kept because it is the reasoning the answer rests on:*
 
 - **Option A has to be re-argued against a hook.** Its case is that B "is
   undiscoverable exactly when it is needed" — *"new session, four plans exist,
@@ -187,7 +215,9 @@ a directory to register in the fork-authored set.
 edits less and adds nothing to any session's permanent context — but it has no
 trigger of its own.
 
-**Recommendation: A, the skill.** Not because a skill is now permitted, but
+**Recommendation: A, the skill — and, per the decision above, the hook alongside it.**
+What follows is the case for the skill half; the hook half is argued in the
+Debate-review block. Not because a skill is now permitted, but
 because B fails at the one moment this feature exists for. `using-moe/SKILL.md`
 makes the frontmatter `description` the entire routing mechanism — "Invoke
 relevant or requested skills BEFORE any response or action." B's entry points are
@@ -212,8 +242,12 @@ It already paid for those edge cases and names them in comments.
 `skill-tiers.yaml`'s own principle is "A skill earns a place in `moe-core` if it
 fires on ordinary work without being asked for." Multi-plan work is ordinary for
 anyone building a feature that spans subsystems, and `writing-plans:23` already
-routes there unprompted. The `ERR SMALL` rule would send a tie to `everything`,
-but this is not a tie: the file's own note says the lean plugin is what "~20
+routes there unprompted. The `ERR SMALL` rule would send a tie to `everything`
+— **except `ERR SMALL` was deleted by DO-NOW-2 (`0b1571d`) and replaced by `TRIGGER
+COLLISION`, which sends an absent-collision tie to `core`. That strengthens this
+recommendation rather than weakening it: no core-tier skill's description claims a
+multi-plan-set trigger, so there is no collision.** And it is not a tie anyway: the
+file's own note says the lean plugin is what "~20
 people will leave on permanently," and a recovery mechanism that is not installed
 when the reset happens is not a recovery mechanism. The everyday flow
 (`writing-plans` → SDD, both core) can produce a multi-plan project, so the thing
@@ -262,7 +296,9 @@ consumes this doc's ready set and must follow it.
 **In:** the `sequencing-plans` skill directory and SKILL.md; the manifest schema;
 `scripts/plan-set` with `next`/`done`/`check`; cycle detection; transitive blocked
 propagation; the `skill-tiers.yaml` entry; the REQUIRED pointer at
-`writing-plans:23`; two test-allowlist lines; vitest coverage.
+`writing-plans:23`; two test-allowlist lines; vitest coverage; **the `SessionStart`
+entry in `packages/core/hooks/hooks.json` and the extensionless `plan-set-notice`
+hook that announces an incomplete plan set.**
 
 **Out:**
 - Lifting the parallel-write ban, or dispatching the ready set concurrently —
@@ -283,7 +319,9 @@ propagation; the `skill-tiers.yaml` entry; the REQUIRED pointer at
 
 ## Open questions for Zak
 
-None. #34 is settled above. The tier recommendation (`core`, with the
+None. #34 is settled above, and the A-vs-B-vs-hook re-price the debate review demanded
+was answered on 2026-08-31: **both**, recorded at the top of this doc with its four
+consequences. The tier recommendation (`core`, with the
 pointer-strength coupling) is input to DO-NOW-2, not a separate question. The name
 is provisional pending `tiered-workflow-naming`. The manifest location, the
 three-verb CLI surface, and `blocked` semantics are calls made above.
@@ -296,9 +334,11 @@ three-verb CLI surface, and `blocked` semantics are calls made above.
 | `scripts/plan-set`: three verbs, Kahn, cycle error, blocked propagation | 1.5-2 h |
 | Vitest fixtures + the two allowlist lines | 1-1.5 h |
 | `skill-tiers.yaml` entry + REQUIRED pointer at `writing-plans:23` | 0.5 h |
+| `plan-set-notice` hook + `hooks.json` `SessionStart` entry + its test | 1 h |
 | Dry run on a real three-plan project | 1 h |
 
-**6-8 h**, between the two earlier figures: the 9 h estimate assumed writing a
+**7-9 h** — 6-8 h for the skill plus 1 h for the hook. The skill half sits between the
+two earlier figures: the 9 h estimate assumed writing a
 methodology-sized skill and arguing a tier from scratch; the 4-6 h assumed no
 skill at all. This is a focused ~120-line skill plus a tier entry, and
 `skill-set-fidelity-refactor` absorbs the assertion work that made the first
@@ -323,6 +363,11 @@ with a reference implementation to read.
 4. For the dry-run project, after `plan-set done` on plan 1 a fresh session with
    no prior context runs `plan-set next` and gets plan 2 — the context-reset
    claim tested as a command rather than asserted in prose.
-5. `pnpm lint` and `pnpm build` green.
+5. A fresh session in a project with an incomplete `docs/moe/plans/*-MANIFEST.md`
+   prints the hook's notice; the same session in a project with no manifest, and in one
+   where every entry is `done`, prints nothing. The hook exits 0 in all three, and also
+   when `plan-set` is missing or non-executable — a broken notice must never fail a
+   session start.
+6. `pnpm lint` and `pnpm build` green.
 
 Sources: [A harness for every task: dynamic workflows in Claude Code](https://claude.com/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code)

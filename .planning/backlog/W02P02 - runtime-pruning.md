@@ -24,7 +24,7 @@ touches:
   - infra/container/bin/harness-versions
   - ARCHITECTURE.md
   - PARITY.md
-decision_needed: yes
+decision_needed: no
 ---
 
 # Prune Dead Runtime Targets
@@ -245,20 +245,28 @@ blocked on the licence question, and whichever slug owns the flight-lab import i
 "skip `gemini.yaml`" instruction from here. Out: touching `Dockerfile:14`'s
 `AGY_OAUTH_HOME=/auth/gemini`, which looks like a Gemini leftover and is not.
 
-## Open questions for Zak
+## Decisions (2026-08-31, Zak)
 
-1. **Grok is alive** (Grok Build, shipping as of 2026-08-12). Confirm you still want it out —
-   it costs one Dockerfile pin, one `harness-versions` entry, `deep_grok()` and some install
-   prose. Cheap to keep, cheap to remove; your call, not a forced one.
-2. **The dogfood test drops from 8 hand-maintained manifests to 7.** That is one permanently
-   unrecoverable assertion against the pinned `superpowers` @ `b36e082` spec — `packages/core`
-   can never substitute, because its manifests will be generated. Accept the loss, or keep
-   `gemini.ts` in the tree solely as a dogfood target while excluding it from every real
-   config? Recommendation: accept the loss; a coverage assertion for a retired CLI is not
-   coverage.
-3. **Anyone here on a Gemini Code Assist Standard/Enterprise seat?** Those licences kept Gemini
-   CLI access past the 2026-06-18 cutoff. If yes for even one person, the adapter is not dead
-   yet and this becomes a deprecation warning instead of a delete.
+All three questions below were open at the debate review and are now answered. Nothing
+in this item is blocked.
+
+1. **Grok goes, even though the premise was wrong.** Grok Build is alive and shipping
+   (Grok 4.6 default as of 2026-08-12). Removing it is a policy call, and the call is
+   remove: nobody here uses it, and an unused row in a support matrix ~20 people read
+   is a lie whether or not the CLI still answers. Keep the *reasoning* honest in
+   `PARITY.md` — the `### Not ported` row must say "dropped, not discontinued", because
+   a future maintainer reading "removed: discontinued" next to a live product will
+   distrust the whole table.
+2. **Nobody is on a Gemini Code Assist Standard/Enterprise seat.** So Gemini CLI is
+   hard-dead for every user of this fork, and this is a delete, not a deprecation.
+   `gemini.ts`, its 24 tests, the snapshot entries and the docs all go.
+3. **Accept the dogfood coverage loss: 8 hand-maintained manifests → 7.** A coverage
+   assertion for a retired CLI is not coverage. Assert the new count explicitly in
+   `dogfood.test.ts` so it cannot silently drift to 6 later — the loss is accepted once,
+   deliberately, not made cheap to repeat.
+
+**Recommendation confirmed: Option 1** — remove only, no Antigravity adapter. The
+root-`plugin.json` collision with `agent-plugins-1.0` stays its own future item.
 
 ## Effort
 
