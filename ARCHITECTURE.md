@@ -37,11 +37,11 @@ consumed through the npm registry. The DX cost is concentrated in three places:
 Upstream those were the same unit, so every skill cluster that wanted its own
 release cadence needed its own repository. Here they are separate concerns:
 source lives in `packages/`, and installable plugin manifests are **generated**
-into `/plugins/` by `@moe/mint`. Plugin boundaries — a lean `moe-core` and a full
+into `/plugins/` by `@bubstack/moe-mint`. Plugin boundaries — a lean `moe-core` and a full
 `moe-everything` — are a build-time choice, made once, changeable without moving
 a file.
 
-This is what makes a 28-skill `@moe/core` acceptable. The objection to a large
+This is what makes a 28-skill `@bubstack/moe-core` acceptable. The objection to a large
 plugin is context cost: every skill description loads every session. That
 objection binds only if source layout dictates install layout. It doesn't.
 
@@ -81,14 +81,14 @@ moe/
 
 | Package | Absorbs | Job |
 |---|---|---|
-| `@moe/core` | superpowers, superpowers-lab, iterative-development, the-elements-of-style, superpowers-developing-for-claude-code, double-shot-latte | The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring, and the stop-hook. 28 skills. |
-| `@moe/backstory` | greenfield | Recover a behavioral spec from a codebase that never had one. 22 skills, 2 agents. |
-| `@moe/memory` | episodic-memory, private-journal-mcp | One embedding layer, one store, two record types (conversation turn, journal entry), one MCP server. |
-| `@moe/flight` | gauntlet, superpowers-evals (quorum) | Drive a target — web, CLI, or TUI — through acceptance criteria and grade it. Also drives nine agent CLIs side by side. |
-| `@moe/mint` | everyharness, everyharness-container | Generate native plugin manifests for every harness from one config. The monorepo's plugin build step. |
-| `@moe/crew` | claude-session-driver | Launch, control and monitor worker Claude sessions over tmux. |
-| `@moe/glass` | superpowers-chrome | Zero-dependency Chrome DevTools Protocol client. |
-| `@moe/tab` | obol | Price an agent transcript. What the run cost you. |
+| `@bubstack/moe-core` | superpowers, superpowers-lab, iterative-development, the-elements-of-style, superpowers-developing-for-claude-code, double-shot-latte | The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring, and the stop-hook. 28 skills. |
+| `@bubstack/moe-backstory` | greenfield | Recover a behavioral spec from a codebase that never had one. 22 skills, 2 agents. |
+| `@bubstack/moe-memory` | episodic-memory, private-journal-mcp | One embedding layer, one store, two record types (conversation turn, journal entry), one MCP server. |
+| `@bubstack/moe-flight` | gauntlet, superpowers-evals (quorum) | Drive a target — web, CLI, or TUI — through acceptance criteria and grade it. Also drives nine agent CLIs side by side. |
+| `@bubstack/moe-mint` | everyharness, everyharness-container | Generate native plugin manifests for every harness from one config. The monorepo's plugin build step. |
+| `@bubstack/moe-crew` | claude-session-driver | Launch, control and monitor worker Claude sessions over tmux. |
+| `@bubstack/moe-glass` | superpowers-chrome | Zero-dependency Chrome DevTools Protocol client. |
+| `@bubstack/moe-tab` | obol | Price an agent transcript. What the run cost you. |
 | `moe-proof` | smevals | Evals against small models. Python; stays Python. |
 
 ### Why these and not others
@@ -164,3 +164,57 @@ Binaries: `moe-flight`, `moe-tab`, `moe-mint`, `moe-crew`, `moe-glass`,
 (`episodic-memory` → `moe-memory`, `chrome` → `moe-glass`) invalidates existing
 user configs, and every binary name changes. Acceptable for an internal audience;
 not something to do twice. See PARITY.md for the full token inventory.
+
+## 8. Hosting and CI
+
+**Origin: GitLab, self-hosted at `gitlab.tcdevops.com`.** Not GitHub. Upstream
+is on GitHub and stays there — `github.com/obra` and
+`github.com/prime-radiant-inc` URLs are provenance and belong in `NOTICE` and
+`PARITY.md`. The distinction to hold while rebranding:
+
+- **Provenance URLs** — "derived from `github.com/obra/superpowers`" — keep the
+  GitHub URL. Rewriting them destroys the attribution the licenses require.
+- **Self-referential URLs** — `homepage`, `repository`, `bugs`, badge links,
+  "clone this repo", issue links — become GitLab.
+
+> **Assumption to confirm:** project path `bubstack/moe`, i.e.
+> `git@gitlab.tcdevops.com:bubstack/moe.git`. The **group** is not really a
+> guess — GitLab's instance-level npm registry requires the package scope to
+> equal the top-level group name, so `@bubstack` implies a `bubstack` group. Only
+> the project name is unconfirmed. Correct it before the first push.
+
+### Packages and registry
+
+Eight packages publish to the GitLab Package Registry under the `@bubstack`
+scope; `moe-proof` is Python and PyPI has no scopes, so it stays `moe-proof`.
+
+```
+@bubstack/moe-core        @bubstack/moe-mint
+@bubstack/moe-backstory   @bubstack/moe-crew
+@bubstack/moe-memory      @bubstack/moe-glass
+@bubstack/moe-flight      @bubstack/moe-tab
+moe-proof                 (PyPI, unscoped)
+```
+
+Root `.npmrc` points the scope at the instance registry:
+
+```
+@bubstack:registry=https://gitlab.tcdevops.com/api/v4/packages/npm/
+```
+
+### CI
+
+Upstream ships **11 GitHub Actions workflows across 7 repositories**. None
+survive; they port to a single root `.gitlab-ci.yml` driving turbo, with rules
+scoped by changed path so a docs edit does not rebuild the Rust crate.
+
+`obol` carries the awkward ones: `crates-release.yml` and `pypi-release.yml`
+publish to crates.io and PyPI respectively. Decide per artifact whether Moe
+publishes publicly at all, or whether `@bubstack/moe-tab` and its bindings stay
+on the instance registry. `smevals`' `publish.yml` raises the same question for
+`moe-proof`.
+
+`superpowers/.github/FUNDING.yml` is **deleted, not ported** — it solicits
+sponsorship for the upstream author. `superpowers-evals/.github/CODEOWNERS` and
+the two `PULL_REQUEST_TEMPLATE.md` files become their GitLab equivalents
+(`CODEOWNERS`, `.gitlab/merge_request_templates/`).

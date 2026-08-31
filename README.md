@@ -16,24 +16,28 @@ A hard fork of the Superpowers ecosystem — 19 repositories, one workspace,
 Target-shape only. No code imported yet. `ARCHITECTURE.md` is the spec; read it
 before writing anything.
 
+Origin is GitLab (`gitlab.tcdevops.com`); packages publish to the GitLab Package
+Registry under `@bubstack`. Upstream stays on GitHub — those URLs are provenance,
+not links to us.
+
 ## The 9 packages
 
 | Package | Job |
 |---|---|
-| `@moe/core` | The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring |
-| `@moe/backstory` | Recover a behavioral spec from a codebase that never had one |
-| `@moe/memory` | Semantic recall over past sessions and journal entries |
-| `@moe/flight` | Drive web, CLI or TUI targets through acceptance criteria and grade them |
-| `@moe/mint` | Generate native plugin manifests for every harness from one config |
-| `@moe/crew` | Launch, control and monitor worker sessions over tmux |
-| `@moe/glass` | Zero-dependency Chrome DevTools Protocol client |
-| `@moe/tab` | Price an agent transcript — what the run cost you |
+| `@bubstack/moe-core` | The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring |
+| `@bubstack/moe-backstory` | Recover a behavioral spec from a codebase that never had one |
+| `@bubstack/moe-memory` | Semantic recall over past sessions and journal entries |
+| `@bubstack/moe-flight` | Drive web, CLI or TUI targets through acceptance criteria and grade them |
+| `@bubstack/moe-mint` | Generate native plugin manifests for every harness from one config |
+| `@bubstack/moe-crew` | Launch, control and monitor worker sessions over tmux |
+| `@bubstack/moe-glass` | Zero-dependency Chrome DevTools Protocol client |
+| `@bubstack/moe-tab` | Price an agent transcript — what the run cost you |
 | `moe-proof` | Evals against small models (Python) |
 
 ## Two rules
 
 1. **A repository is not an installable plugin.** Source lives in `packages/`;
-   plugin manifests are generated into `/plugins/` by `@moe/mint`. Never
+   plugin manifests are generated into `/plugins/` by `@bubstack/moe-mint`. Never
    hand-edit a generated manifest.
 2. **The snapshots in `.references/` are the spec, not upstream HEAD.** Pinned
    revisions are in [PARITY.md](./PARITY.md). Parity against a moving target is

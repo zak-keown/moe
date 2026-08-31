@@ -23,22 +23,22 @@ done
 
 | Upstream repo | Pinned | Date | License | → lands as |
 |---|---|---|---|---|
-| `superpowers` | `b36e082` | 2026-08-12 | MIT | `@moe/core` |
-| `superpowers-lab` | `51111f7` | 2026-06-01 | MIT | `@moe/core` |
-| `superpowers-developing-for-claude-code` | `74afe93` | 2025-12-03 | MIT | `@moe/core` |
-| `iterative-development` | `c05889a` | 2026-06-06 | Apache-2.0 | `@moe/core` |
-| `the-elements-of-style` | `05fc4f0` | 2026-08-12 | Public domain | `@moe/core` |
-| `double-shot-latte` | `dfe7567` | 2026-02-25 | MIT | `@moe/core` (hooks) |
-| `greenfield` | `6e6d4b4` | 2026-08-06 | Apache-2.0 | `@moe/backstory` |
-| `episodic-memory` | `1075769` | 2026-05-21 | MIT | `@moe/memory` |
-| `private-journal-mcp` | `016953f` | 2026-08-11 | MIT | `@moe/memory` |
-| `gauntlet` | `91b6f7e` | 2026-08-06 | Apache-2.0 | `@moe/flight` |
-| `superpowers-evals` | `114f725` | 2026-08-25 | **none — see below** | `@moe/flight` |
-| `everyharness` | `4f7c5e2` | 2026-08-15 | MIT | `@moe/mint` |
+| `superpowers` | `b36e082` | 2026-08-12 | MIT | `@bubstack/moe-core` |
+| `superpowers-lab` | `51111f7` | 2026-06-01 | MIT | `@bubstack/moe-core` |
+| `superpowers-developing-for-claude-code` | `74afe93` | 2025-12-03 | MIT | `@bubstack/moe-core` |
+| `iterative-development` | `c05889a` | 2026-06-06 | Apache-2.0 | `@bubstack/moe-core` |
+| `the-elements-of-style` | `05fc4f0` | 2026-08-12 | Public domain | `@bubstack/moe-core` |
+| `double-shot-latte` | `dfe7567` | 2026-02-25 | MIT | `@bubstack/moe-core` (hooks) |
+| `greenfield` | `6e6d4b4` | 2026-08-06 | Apache-2.0 | `@bubstack/moe-backstory` |
+| `episodic-memory` | `1075769` | 2026-05-21 | MIT | `@bubstack/moe-memory` |
+| `private-journal-mcp` | `016953f` | 2026-08-11 | MIT | `@bubstack/moe-memory` |
+| `gauntlet` | `91b6f7e` | 2026-08-06 | Apache-2.0 | `@bubstack/moe-flight` |
+| `superpowers-evals` | `114f725` | 2026-08-25 | **none — see below** | `@bubstack/moe-flight` |
+| `everyharness` | `4f7c5e2` | 2026-08-15 | MIT | `@bubstack/moe-mint` |
 | `everyharness-container` | `2467bd7` | 2026-08-11 | MIT | `infra/container` |
-| `claude-session-driver` | `d97d1eb` | 2026-06-14 | MIT | `@moe/crew` |
-| `superpowers-chrome` | `782358e` | 2026-08-07 | MIT | `@moe/glass` |
-| `obol` | `28e3dba` | 2026-08-06 | Apache-2.0 | `@moe/tab` |
+| `claude-session-driver` | `d97d1eb` | 2026-06-14 | MIT | `@bubstack/moe-crew` |
+| `superpowers-chrome` | `782358e` | 2026-08-07 | MIT | `@bubstack/moe-glass` |
+| `obol` | `28e3dba` | 2026-08-06 | Apache-2.0 | `@bubstack/moe-tab` |
 | `smevals` | `0c28dc6` | 2026-08-11 | MIT | `py/proof` |
 | `superpowers-marketplace` | `1ab7b8e` | 2026-08-12 | MIT | `.claude-plugin/marketplace.json` |
 | `prime-radiant-marketplace` | `49a45ef` | 2026-06-06 | Apache-2.0 | `.claude-plugin/marketplace.json` |
@@ -59,7 +59,7 @@ also requires stating that files were changed; the rebrand does change them.
 **One unresolved item.** `superpowers-evals` ships **no `LICENSE` file and no
 `package.json` license field**. No grant of rights has been located. It is the
 single largest body of forked material — 796 files, 17 MB, roughly half the
-rebrand surface — and it lands in `@moe/flight` alongside Apache-2.0 `gauntlet`.
+rebrand surface — and it lands in `@bubstack/moe-flight` alongside Apache-2.0 `gauntlet`.
 
 Absent a license, the default is all rights reserved. Options, in order of
 preference:
@@ -67,7 +67,7 @@ preference:
 1. Ask Prime Radiant to state a license, or confirm the omission is an oversight.
 2. Import `gauntlet` only, and rebuild quorum's agent-CLI runner from its
    documented behavior rather than its source.
-3. Proceed internally and do not redistribute `@moe/flight` outside the team.
+3. Proceed internally and do not redistribute `@bubstack/moe-flight` outside the team.
 
 This does not block the other 8 packages. It blocks publishing `flight`.
 
@@ -119,9 +119,50 @@ deliberate mapping rather than a regex:
 | bin | `everyharness` | `moe-mint` |
 | bin | `obol` | `moe-tab` |
 | bin | `superpowers-chrome-mcp` | `moe-glass` |
-| npm package | `@primeradianthq/obol` | `@moe/tab` (`workspace:*`) |
+| npm package | `@primeradianthq/obol` | `@bubstack/moe-tab` (`workspace:*`) |
 | PyPI package | `smevals` | `moe-proof` |
 
 Watch for these beyond source: `${CLAUDE_PLUGIN_ROOT}` paths in plugin manifests,
-skill frontmatter `name:` fields, hook script paths, GitHub URLs in docs, and
-`catalog-info.yaml` service identifiers.
+skill frontmatter `name:` fields, hook script paths, and `catalog-info.yaml`
+service identifiers.
+
+## GitHub → GitLab
+
+Origin is GitLab, self-hosted at `gitlab.tcdevops.com`. Upstream stays on
+GitHub. **Two kinds of URL, opposite treatment** — a blanket
+find-and-replace gets this wrong:
+
+| URL kind | Example | Treatment |
+|---|---|---|
+| Provenance | "derived from `github.com/obra/superpowers`" | **Keep.** Rewriting it destroys attribution the licenses require. |
+| Self-referential | `homepage`, `repository`, `bugs`, badges, issue links, clone instructions | **Rewrite** to GitLab. |
+
+`README.md` badge rows are the densest offenders — `smevals` alone carries four
+pointing at PyPI, GitHub releases, and GitHub Actions.
+
+### CI to port
+
+11 workflows across 7 repos, all of which are replaced by one root
+`.gitlab-ci.yml`:
+
+| Upstream repo | Workflows |
+|---|---|
+| `obol` | `ci.yml`, `release.yml`, `crates-release.yml`, `pypi-release.yml` |
+| `smevals` | `test.yml`, `publish.yml` |
+| `claude-session-driver` | `ci.yml` |
+| `everyharness` | `ci.yml` |
+| `everyharness-container` | `build.yml` |
+| `gauntlet` | `check.yml` |
+| `superpowers-evals` | `test.yml` |
+
+The four release workflows publish to crates.io and PyPI. Decide per artifact
+whether Moe publishes publicly at all before porting them.
+
+### Not ported
+
+| Path | Why |
+|---|---|
+| `superpowers/.github/FUNDING.yml` | Solicits sponsorship for the upstream author. Delete. |
+| `superpowers/.github/ISSUE_TEMPLATE/` | Rebuild as GitLab issue templates rather than translate. |
+| `superpowers-evals/.github/CODEOWNERS` | Becomes root `CODEOWNERS` with Moe owners. |
+| `*/.github/PULL_REQUEST_TEMPLATE.md` | Becomes `.gitlab/merge_request_templates/`. |
