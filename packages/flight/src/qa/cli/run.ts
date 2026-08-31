@@ -4,7 +4,7 @@ import type { EventObserver, EvidenceLogger } from "../evidence/logger.js";
 import { parseStoryCard } from "../format/story-card.js";
 import type { LLMClient } from "../models/provider.js";
 import { flightPath } from "../paths.js";
-import { runRunSet } from "../runs/run-set.js";
+import { type RunSetResult, runRunSet } from "../runs/run-set.js";
 import type { RunSetCtx } from "../runs/run-set-types.js";
 import { safeEmitIndexHtml } from "./auto-emit-html.js";
 import { runOne } from "./run-one.js";
@@ -133,7 +133,7 @@ export async function run(opts: RunCommandOptions): Promise<void> {
 
   const cancelToken = { cancelled: false };
   const detach = installSigintHandler(cancelToken);
-  let setResult;
+  let setResult: RunSetResult;
   try {
     const handle = await runRunSet({
       resultsRoot: flightRoot,

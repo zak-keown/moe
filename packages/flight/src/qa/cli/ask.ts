@@ -5,7 +5,12 @@ import type { AppConfig } from "../config.js";
 import type { LLMClient } from "../models/provider.js";
 import { createClient, UnknownModelProviderError } from "../models/resolve.js";
 import { flightPath } from "../paths.js";
-import { ANSWER_TOOL, extractAnswer, rebuildMessages } from "../revival/index.js";
+import {
+  ANSWER_TOOL,
+  extractAnswer,
+  type RebuildResult,
+  rebuildMessages,
+} from "../revival/index.js";
 import type { AskArgs } from "./args.js";
 
 export async function ask(args: AskArgs, config: AppConfig): Promise<number> {
@@ -39,7 +44,7 @@ export async function ask(args: AskArgs, config: AppConfig): Promise<number> {
     throw err;
   }
 
-  let rebuilt;
+  let rebuilt: RebuildResult;
   try {
     rebuilt = rebuildMessages(runDir, client, args.upToTurn);
   } catch (err) {

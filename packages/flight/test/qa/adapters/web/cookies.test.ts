@@ -402,8 +402,8 @@ describe("buildInstallCookiesTool", () => {
     const { logger, actions } = makeFakeLogger();
     const tool = buildInstallCookiesTool(root, 0, driver, logger)!;
 
-    const escape = await tool.execute({ path: "../secret.yaml" });
-    expect(escape.text.toLowerCase()).toContain("error");
+    const result = await tool.execute({ path: "../secret.yaml" });
+    expect(result.text.toLowerCase()).toContain("error");
     expect(calls.setCookies).toHaveLength(0);
     const failure = actions.find((a) => a.action === "install_cookies_failed");
     expect(failure).toBeDefined();

@@ -290,7 +290,9 @@ describe.skipIf(!tmuxAvailable)("TUIAdapter", () => {
     const screen = await adapter.readScreen();
     expect(screen).toContain("X");
     expect(screen).toContain("Y");
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: \x1b (ESC) is a real ANSI escape sequence under test, not a mistaken input.
     expect(screen).toMatch(/\x1b\[[0-9;]*31/);
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: \x1b (ESC) is a real ANSI escape sequence under test, not a mistaken input.
     expect(screen).toMatch(/\x1b\[[0-9;]*32/);
   });
 

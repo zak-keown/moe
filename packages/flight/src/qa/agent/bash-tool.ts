@@ -75,7 +75,7 @@ export function buildBashTool(opts: BashToolOptions): BashTool {
         : DEFAULT_TIMEOUT_MS;
 
     // detached: true makes proc.pid serve as pgid (setsid).
-    let proc;
+    let proc: ReturnType<typeof spawn>;
     try {
       proc = spawn(["bash", "-c", command], {
         cwd,

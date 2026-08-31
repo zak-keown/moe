@@ -45,7 +45,7 @@ function listVisibleEntries(dir: string): DirEntryInfo[] {
   const entries: DirEntryInfo[] = [];
   for (const name of names) {
     if (name.startsWith(".")) continue;
-    let stat;
+    let stat: ReturnType<typeof statSync>;
     try {
       stat = statSync(join(dir, name));
     } catch {

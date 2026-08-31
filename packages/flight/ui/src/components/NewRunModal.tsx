@@ -49,6 +49,7 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
   const [saveScreencast, setSaveScreencast] = useState<boolean>(prefill?.saveScreencast ?? false);
   const [error, setError] = useState<string | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally mount-only — prefill is a one-time seed for initial state, not a value this effect should re-run on.
   useEffect(() => {
     api.cards
       .list()

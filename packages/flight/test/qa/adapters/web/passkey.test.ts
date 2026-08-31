@@ -376,8 +376,8 @@ describe("buildInstallPasskeyTool", () => {
     const { logger, actions } = makeFakeLogger();
     const tool = buildInstallPasskeyTool(root, 0, driver, logger)!;
 
-    const escape = await tool.execute({ path: "../secret.json" });
-    expect(escape.text.toLowerCase()).toContain("error");
+    const result = await tool.execute({ path: "../secret.json" });
+    expect(result.text.toLowerCase()).toContain("error");
 
     expect(calls.openSession).toBe(0);
     const failure = actions.find((a) => a.action === "install_passkey_failed");

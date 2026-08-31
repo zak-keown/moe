@@ -3,7 +3,7 @@ import type { AppConfig } from "../config.js";
 import type { EventObserver, EvidenceLogger } from "../evidence/logger.js";
 import type { LLMClient } from "../models/provider.js";
 import { flightPath } from "../paths.js";
-import { runRunSet } from "../runs/run-set.js";
+import { type RunSetResult, runRunSet } from "../runs/run-set.js";
 import type { RunSetCtx } from "../runs/run-set-types.js";
 import { asCardId, type CardId } from "../util/brands.js";
 import { safeEmitIndexHtml } from "./auto-emit-html.js";
@@ -105,7 +105,7 @@ export async function runBatch(opts: BatchOptions, runOneImpl: RunOneFn = runOne
 
     const cancelToken = { cancelled: false };
     const detach = installSigintHandler(cancelToken);
-    let setResult;
+    let setResult: RunSetResult;
     try {
       const handle = await runRunSet({
         resultsRoot: flightRoot,

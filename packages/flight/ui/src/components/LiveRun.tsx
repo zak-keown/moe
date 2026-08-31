@@ -20,6 +20,7 @@ export function LiveRun({ activeRuns, activeRunsLoaded, onComplete }: LiveRunPro
   const { frame, messages, result, connected, error, gone } = useRunStream(runId ?? null);
   const logRef = useRef<HTMLDivElement>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: messages is a trigger-only dependency — the effect scrolls to the new bottom on every message, but reads it via logRef, not directly. Removing it (biome's suggested fix) would stop auto-scroll on new messages.
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [messages]);

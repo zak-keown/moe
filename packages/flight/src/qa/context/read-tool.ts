@@ -75,7 +75,7 @@ export function buildReadTool(contextRoot: string): ReadTool | null {
       return textResult(`Error: ${errorMessage(err)}`);
     }
 
-    let stat;
+    let stat: ReturnType<typeof statSync>;
     try {
       stat = statSync(resolved);
     } catch {

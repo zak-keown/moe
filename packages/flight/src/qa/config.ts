@@ -389,7 +389,7 @@ function parseBoolEnv(raw: string, label: string): boolean {
 
 function resolveCredentialResolver(rawPath: string, projectRoot: string): string {
   const absolute = isAbsolute(rawPath) ? rawPath : resolvePath(projectRoot, rawPath);
-  let stat;
+  let stat: ReturnType<typeof statSync>;
   try {
     stat = statSync(absolute);
   } catch (err) {

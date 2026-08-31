@@ -285,7 +285,9 @@ describe("BatchTableRenderer (TTY mode — Mock B ticker)", () => {
     expect(sink.out).toContain("[1/2]");
     expect(sink.out).toContain("a");
     // Spinner uses single-line redraw — no full-screen cursor walk.
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: \x1b (ESC) is a real ANSI escape sequence under test, not a mistaken input.
     expect(sink.out).toMatch(/\r\x1b\[2K/);
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: \x1b (ESC) is a real ANSI escape sequence under test, not a mistaken input.
     expect(sink.out).not.toMatch(/\x1b\[\d+A\x1b\[0J/);
     r.finalize();
   });

@@ -1,9 +1,15 @@
 import { Hono } from "hono";
 import { join } from "path";
 import { findCard } from "../../cards/store.js";
-import { type AppConfig, mergeRunConfig, validateRunBody } from "../../config.js";
+import {
+  type AppConfig,
+  mergeRunConfig,
+  type ResolvedRunConfig,
+  type RunRequestBody,
+  validateRunBody,
+} from "../../config.js";
 import type { StoryCard } from "../../format/story-card.js";
-import type { LLMClient } from "../../models/provider.js";
+import type { LLMClient, Provider } from "../../models/provider.js";
 import {
   createClientForProvider,
   resolveProvider,
@@ -206,14 +212,14 @@ export function runRoutes(
     if (!entry) return c.json({ error: "not found" }, 404);
 
     const rawBody = await c.req.json().catch(() => ({}));
-    let body;
+    let body: RunRequestBody;
     try {
       body = validateRunBody(rawBody);
     } catch (err) {
       return c.json({ error: err instanceof Error ? err.message : String(err) }, 400);
     }
 
-    let effective;
+    let effective: ResolvedRunConfig;
     try {
       effective = mergeRunConfig(config, body);
     } catch (err) {
@@ -241,7 +247,7 @@ export function runRoutes(
       );
     }
 
-    let provider;
+    let provider: Provider;
     try {
       provider = resolveProvider(effective.model);
     } catch (err) {
