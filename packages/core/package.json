@@ -4,10 +4,19 @@
   "private": true,
   "type": "module",
   "description": "The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring, and the stop-hook.",
-  "license": "Apache-2.0",
+  "license": "MIT AND Apache-2.0",
   "scripts": {
     "lint": "biome check .",
-    "typecheck": "echo 'content package: no TypeScript'"
+    "typecheck": "echo 'content package: no TypeScript'",
+    "test": "vitest run",
+    "test:python": "python3 -m unittest discover -s test/iterative-development -t .",
+    "test:brainstorm": "node test/brainstorm-server/ws-protocol.test.cjs && node test/brainstorm-server/helper.test.cjs && node test/brainstorm-server/browser-launcher.test.cjs && node test/brainstorm-server/auth.test.cjs && node test/brainstorm-server/branding.test.cjs && node test/brainstorm-server/server.test.cjs && node test/brainstorm-server/lifecycle.test.cjs && bash test/brainstorm-server/start-server.test.sh && bash test/brainstorm-server/stop-server.test.sh",
+    "test:shell": "bash test/shell/test-find-polluter.sh && bash test/shell/test-render-graphs.sh",
+    "latte:evals": "bash test/latte/run-evals.sh"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "vitest": "^3.2.4",
+    "ws": "^8.21.0",
+    "yaml": "^2.8.0"
+  }
 }
