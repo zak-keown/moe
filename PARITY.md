@@ -170,8 +170,10 @@ pointing at PyPI, GitHub releases, and GitHub Actions.
 | `gauntlet` | `check.yml` |
 | `superpowers-evals` | `test.yml` |
 
-The four release workflows publish to crates.io and PyPI. Decide per artifact
-whether Moe publishes publicly at all before porting them.
+The four release workflows publish to crates.io and PyPI. **Decided 2026-08-31:
+deleted, not ported.** Moe publishes nothing publicly; anything that must be
+consumable outside the repo goes to the GitLab instance registry under
+`@bubstack`. Same boundary as the License exposure decision above.
 
 ### Not ported
 
