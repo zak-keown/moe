@@ -46,7 +46,7 @@ export function resolveSetting<T, NoVal extends string = "default">(
   envBag: NodeJS.ProcessEnv,
 ): Resolved<T, NoVal> {
   let value = spec.default;
-  let source: NoVal | "env" | "flag" = (spec.noValueSource ?? ("default" as NoVal));
+  let source: NoVal | "env" | "flag" = spec.noValueSource ?? ("default" as NoVal);
   if (spec.env) {
     const raw = envBag[spec.env.name];
     if (raw !== undefined && raw !== "") {

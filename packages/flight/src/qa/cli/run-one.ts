@@ -1,12 +1,12 @@
 import { readFileSync } from "fs";
-import { parseStoryCard } from "../format/story-card.js";
+import type { AppConfig } from "../config.js";
 import type { EvidenceLogger } from "../evidence/logger.js";
+import { parseStoryCard } from "../format/story-card.js";
+import type { LLMClient } from "../models/provider.js";
 import { createClient } from "../models/resolve.js";
 import { executeRunCore, type RunAdapterType } from "../runs/orchestrator.js";
-import type { AppConfig } from "../config.js";
-import type { LLMClient } from "../models/provider.js";
-import type { VerdictResult } from "../types.js";
 import type { RunSetCtx } from "../runs/run-set-types.js";
+import type { VerdictResult } from "../types.js";
 import type { RunId } from "../util/brands.js";
 
 export interface RunOneOptions {
@@ -50,9 +50,7 @@ export async function runOne(opts: RunOneOptions): Promise<RunOneSummary> {
   const card = parseStoryCard(content);
 
   const client = (opts.clientFactory ?? createClient)(config.models.agent);
-  const chrome = config.sources.defaultChrome === "default"
-    ? undefined
-    : config.defaultChrome;
+  const chrome = config.sources.defaultChrome === "default" ? undefined : config.defaultChrome;
 
   return executeRunCore({
     card,
@@ -75,8 +73,6 @@ export async function runOne(opts: RunOneOptions): Promise<RunOneSummary> {
       saveScreencast: config.defaultSaveScreencast,
       credentialResolver: config.credentialResolver,
     },
-    hooks: opts.onLogger
-      ? { onLogger: (logger) => opts.onLogger!(logger) }
-      : undefined,
+    hooks: opts.onLogger ? { onLogger: (logger) => opts.onLogger!(logger) } : undefined,
   });
 }

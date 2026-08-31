@@ -1,8 +1,8 @@
 import { mkdirSync } from "fs";
-import { textResult, type ToolDefinition, type ToolResult } from "../models/provider.js";
 import type { EvidenceLogger } from "../evidence/logger.js";
-import { spawn } from "../runtime/spawn.js";
+import { type ToolDefinition, type ToolResult, textResult } from "../models/provider.js";
 import { killProcessTree, listDescendants } from "../runtime/process-tree.js";
+import { spawn } from "../runtime/spawn.js";
 
 const BASH_TOOL_DESCRIPTION =
   "The best interface for inspecting logs and files on the host via " +
@@ -60,7 +60,9 @@ export function buildBashTool(opts: BashToolOptions): BashTool {
       return textResult(`Error: bash requires a non-empty "command" argument.`);
     }
     if (!opts.cwd) {
-      return textResult(`Error: bash tool has no cwd configured (adapter was constructed without runDir; this path is for tool-definition introspection, not execution).`);
+      return textResult(
+        `Error: bash tool has no cwd configured (adapter was constructed without runDir; this path is for tool-definition introspection, not execution).`,
+      );
     }
 
     const cwd = opts.cwd;
@@ -135,13 +137,28 @@ const MIN_TIMEOUT_MS = 100;
 const MAX_TIMEOUT_MS = 60_000;
 
 const BASE_ENV_KEYS = [
-  "PATH", "HOME", "USER", "SHELL", "LANG", "LC_ALL", "TERM", "TMPDIR", "TZ",
+  "PATH",
+  "HOME",
+  "USER",
+  "SHELL",
+  "LANG",
+  "LC_ALL",
+  "TERM",
+  "TMPDIR",
+  "TZ",
 ] as const;
 
 const SDK_PASSTHROUGH_KEYS = [
-  "ANTHROPIC_API_KEY", "ANTHROPIC_BASE_URL", "ANTHROPIC_LOG",
-  "OPENAI_API_KEY", "OPENAI_BASE_URL", "OPENAI_ORG_ID", "OPENAI_PROJECT",
-  "HTTPS_PROXY", "HTTP_PROXY", "NO_PROXY",
+  "ANTHROPIC_API_KEY",
+  "ANTHROPIC_BASE_URL",
+  "ANTHROPIC_LOG",
+  "OPENAI_API_KEY",
+  "OPENAI_BASE_URL",
+  "OPENAI_ORG_ID",
+  "OPENAI_PROJECT",
+  "HTTPS_PROXY",
+  "HTTP_PROXY",
+  "NO_PROXY",
 ] as const;
 
 function buildScrubbedEnv(parent: NodeJS.ProcessEnv): Record<string, string> {

@@ -1,6 +1,13 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { LLMClient, ToolDefinition, AgentResponse, StopReason, ToolCall, ToolResult } from "./provider.js";
 import { withLlmErrorSanitization } from "../util/sanitize-error.js";
+import type {
+  AgentResponse,
+  LLMClient,
+  StopReason,
+  ToolCall,
+  ToolDefinition,
+  ToolResult,
+} from "./provider.js";
 
 /**
  * Per-model output-token ceiling. 4096 killed a run mid-verdict
@@ -29,8 +36,7 @@ export function maxOutputTokensForModel(model: string): number {
 // Bearer and is gated by Anthropic to Claude Code: the request MUST carry the
 // oauth beta header AND lead its system blocks with this exact identity string,
 // or the API rejects it (429). Verified empirically 2026-06-23.
-export const CLAUDE_CODE_IDENTITY =
-  "You are Claude Code, Anthropic's official CLI for Claude.";
+export const CLAUDE_CODE_IDENTITY = "You are Claude Code, Anthropic's official CLI for Claude.";
 const OAUTH_BETA_HEADER = "oauth-2025-04-20";
 
 export type AnthropicAuth =
@@ -51,8 +57,8 @@ export function resolveAnthropicAuth(
   if (env.ANTHROPIC_API_KEY) return { mode: "api-key" };
   throw new Error(
     "No Anthropic credential found. Set CLAUDE_CODE_OAUTH_TOKEN (a subscription " +
-    "token from `claude setup-token`) to use a logged-in Claude subscription, " +
-    "or ANTHROPIC_API_KEY to use a pay-per-token API key."
+      "token from `claude setup-token`) to use a logged-in Claude subscription, " +
+      "or ANTHROPIC_API_KEY to use a pay-per-token API key.",
   );
 }
 
@@ -71,9 +77,7 @@ export function buildAnthropicSystemBlocks(
     text: systemPrompt,
     cache_control: { type: "ephemeral" },
   };
-  return useOAuth
-    ? [{ type: "text", text: CLAUDE_CODE_IDENTITY }, promptBlock]
-    : [promptBlock];
+  return useOAuth ? [{ type: "text", text: CLAUDE_CODE_IDENTITY }, promptBlock] : [promptBlock];
 }
 
 /**
@@ -117,9 +121,7 @@ export function createAnthropicClient(model: string): LLMClient {
       const system = buildAnthropicSystemBlocks(systemPrompt, useOAuth);
 
       // Cache breakpoint 3: last message (moving breakpoint for conversation prefix)
-      const apiMessages = withCacheBreakpointOnLastMessage(
-        messages as Anthropic.MessageParam[]
-      );
+      const apiMessages = withCacheBreakpointOnLastMessage(messages as Anthropic.MessageParam[]);
 
       const response = await withLlmErrorSanitization(() =>
         client.messages.create({
@@ -211,7 +213,7 @@ function convertTool(tool: ToolDefinition, cacheBreakpoint: boolean): Anthropic.
  * This creates a moving cache breakpoint so the conversation prefix is cached between turns.
  */
 function withCacheBreakpointOnLastMessage(
-  messages: Anthropic.MessageParam[]
+  messages: Anthropic.MessageParam[],
 ): Anthropic.MessageParam[] {
   if (messages.length === 0) return messages;
 
@@ -260,10 +262,11 @@ export function convertResponse(response: Anthropic.Message): AgentResponse {
     .map((b) => b.text)
     .join("");
 
-  const reasoning = response.content
-    .filter((b): b is Anthropic.ThinkingBlock => b.type === "thinking")
-    .map((b) => b.thinking)
-    .join("\n\n") || undefined;
+  const reasoning =
+    response.content
+      .filter((b): b is Anthropic.ThinkingBlock => b.type === "thinking")
+      .map((b) => b.thinking)
+      .join("\n\n") || undefined;
 
   const toolCalls = response.content
     .filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use")
@@ -277,8 +280,7 @@ export function convertResponse(response: Anthropic.Message): AgentResponse {
   // matches our StopReason union for the values we care about. If Anthropic
   // ships a new value (current SDK includes `refusal` which we also cover),
   // TS will complain here and we update the union.
-  const stopReason: StopReason =
-    (response.stop_reason as StopReason | null) ?? "end_turn";
+  const stopReason: StopReason = (response.stop_reason as StopReason | null) ?? "end_turn";
 
   // Capture cache breakpoint telemetry. `cache_creation_input_tokens` tells
   // us how many tokens were written to the cache on this turn;

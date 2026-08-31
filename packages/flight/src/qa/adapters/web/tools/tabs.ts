@@ -1,4 +1,4 @@
-import { textResult, type ToolResult } from "../../../models/provider.js";
+import { type ToolResult, textResult } from "../../../models/provider.js";
 import { composeResult } from "../adapter.js";
 import type { WebToolCtx } from "./types.js";
 
@@ -42,13 +42,9 @@ export async function executeNewTab(
   // Empty / non-http URLs would otherwise become about:blank and
   // silently consume a stack slot — refuse explicitly so the
   // agent doesn't waste turns.
-  if (
-    typeof targetUrl !== "string" ||
-    !/^(https?:|file:|about:)/i.test(targetUrl)
-  ) {
+  if (typeof targetUrl !== "string" || !/^(https?:|file:|about:)/i.test(targetUrl)) {
     return textResult(
-      "Error: new_tab requires an absolute URL (http://, https://, " +
-        "file://, or about:)",
+      "Error: new_tab requires an absolute URL (http://, https://, " + "file://, or about:)",
     );
   }
   try {
@@ -82,9 +78,7 @@ export async function executeCloseTab(
   _args: Record<string, unknown>,
 ): Promise<ToolResult> {
   if (ctx.tabStack.length <= 1) {
-    return textResult(
-      "Error: cannot close the original tab — use navigate to change the page",
-    );
+    return textResult("Error: cannot close the original tab — use navigate to change the page");
   }
   const popped = ctx.tabStack.pop()!;
   ctx.logger.logEvent("tab_focus_changed", {

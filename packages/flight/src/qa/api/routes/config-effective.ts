@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import type { AppConfig } from "../../config.js";
 import { buildConfigOutput } from "../../cli/config-command.js";
+import type { AppConfig } from "../../config.js";
 
 export function configEffectiveRoutes(config: AppConfig) {
   const router = new Hono();

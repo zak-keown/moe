@@ -1,13 +1,13 @@
 import { mkdirSync } from "fs";
 import { join } from "path";
-import type { Adapter } from "../adapter.js";
-import { textResult, type ToolDefinition, type ToolResult } from "../../models/provider.js";
-import type { EvidenceLogger } from "../../evidence/logger.js";
 import { buildSharedTools, type SharedTools } from "../../agent/shared-tools.js";
-import type { CredentialResolverConfig } from "../../config.js";
 import { validateToolArgs } from "../../agent/validators.js";
-import { spawn, type SpawnedProcess } from "../../runtime/spawn.js";
-import { listDescendants, killProcessTree } from "../../runtime/process-tree.js";
+import type { CredentialResolverConfig } from "../../config.js";
+import type { EvidenceLogger } from "../../evidence/logger.js";
+import { type ToolDefinition, type ToolResult, textResult } from "../../models/provider.js";
+import { killProcessTree, listDescendants } from "../../runtime/process-tree.js";
+import { type SpawnedProcess, spawn } from "../../runtime/spawn.js";
+import type { Adapter } from "../adapter.js";
 
 const KEY_MAP: Record<string, string> = {
   Enter: "\n",
@@ -17,7 +17,6 @@ const KEY_MAP: Record<string, string> = {
   "Ctrl+D": "\x04",
   "Ctrl+Z": "\x1a",
 };
-
 
 export interface CLIAdapterOptions {
   contextRoot?: string | undefined;
@@ -72,10 +71,7 @@ export class CLIAdapter implements Adapter {
     const scratch = join(this.runDir, "scratch");
     mkdirSync(scratch, { recursive: true });
 
-    this.proc = spawn(
-      ["bash", "--norc", "--noprofile", "-i"],
-      { cwd: scratch, detached: true },
-    );
+    this.proc = spawn(["bash", "--norc", "--noprofile", "-i"], { cwd: scratch, detached: true });
     this.pgid = this.proc.pid;
 
     this.readStream(this.proc.stdout);
@@ -108,9 +104,7 @@ export class CLIAdapter implements Adapter {
       `durable session — many commands can run through it during the ` +
       `run. When you are finished, type \`exit\` to close the shell cleanly.`;
     if (!target) return base;
-    return (
-      `${base} The command you are exercising is \`${target}\`.`
-    );
+    return `${base} The command you are exercising is \`${target}\`.`;
   }
 
   defaultViewport(): null {
@@ -168,8 +162,7 @@ export class CLIAdapter implements Adapter {
       },
       {
         name: "press",
-        description:
-          "Press a special key (Enter, Tab, Escape, Ctrl+C, Ctrl+D, Ctrl+Z)",
+        description: "Press a special key (Enter, Tab, Escape, Ctrl+C, Ctrl+D, Ctrl+Z)",
         parameters: {
           type: "object",
           properties: {
@@ -180,8 +173,7 @@ export class CLIAdapter implements Adapter {
       },
       {
         name: "read_output",
-        description:
-          "Read and clear the buffered terminal output since last read",
+        description: "Read and clear the buffered terminal output since last read",
         parameters: {
           type: "object",
           properties: {},

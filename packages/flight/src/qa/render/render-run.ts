@@ -1,4 +1,4 @@
-import { readFile, writeFile, access } from "node:fs/promises";
+import { access, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { staticReportTemplate } from "../../package-root.js";
 
@@ -41,7 +41,8 @@ export async function renderRunFromTemplate(opts: RenderRunOptions): Promise<str
   const json = JSON.stringify(payload).replace(/<\/script/gi, "<\\/script");
 
   // Lookaheads confirm both attributes are present without prescribing order.
-  const re = /(<script\b(?=[^>]*\btype="application\/json")(?=[^>]*\bid="__MOE_FLIGHT_RUN__")[^>]*>)([\s\S]*?)(<\/script>)/i;
+  const re =
+    /(<script\b(?=[^>]*\btype="application\/json")(?=[^>]*\bid="__MOE_FLIGHT_RUN__")[^>]*>)([\s\S]*?)(<\/script>)/i;
   if (!re.test(template)) {
     throw new Error("renderRun: template is missing the __MOE_FLIGHT_RUN__ script tag");
   }

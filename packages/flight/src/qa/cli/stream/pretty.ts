@@ -1,10 +1,10 @@
-import type { StreamEvent, StreamRenderer } from "./renderer.js";
-import type { WriteSink } from "./jsonl.js";
 import { makePaint, type Paint } from "./colors.js";
-import { softWrap } from "./wrap.js";
 import { formatToolArgs } from "./format-args.js";
-import { formatTiming } from "./format-timing.js";
 import { formatAnomalyEvent } from "./format-event.js";
+import { formatTiming } from "./format-timing.js";
+import type { WriteSink } from "./jsonl.js";
+import type { StreamEvent, StreamRenderer } from "./renderer.js";
+import { softWrap } from "./wrap.js";
 
 const RULE = "──────────────────────────────────────────────────────";
 
@@ -15,8 +15,8 @@ export interface PrettyOptions {
 
 function humanizeDuration(ms: number): string {
   if (ms % 3_600_000 === 0) return `${ms / 3_600_000}h`;
-  if (ms % 60_000 === 0)    return `${ms / 60_000}m`;
-  if (ms % 1_000 === 0)     return `${ms / 1_000}s`;
+  if (ms % 60_000 === 0) return `${ms / 60_000}m`;
+  if (ms % 1_000 === 0) return `${ms / 1_000}s`;
   return `${ms}ms`;
 }
 
@@ -40,7 +40,10 @@ export class PrettyRenderer implements StreamRenderer {
   private spinnerStartMs = 0;
   private spinnerActive = false;
 
-  constructor(private sink: WriteSink, private opts: PrettyOptions) {
+  constructor(
+    private sink: WriteSink,
+    private opts: PrettyOptions,
+  ) {
     this.paint = makePaint(opts.color);
   }
 
@@ -141,7 +144,8 @@ export class PrettyRenderer implements StreamRenderer {
         `in ${formatThousands(usage.inputTokens)}`,
         `out ${formatThousands(usage.outputTokens)}`,
       ];
-      if (usage.cacheReadInputTokens) parts.push(`cache ${formatThousands(usage.cacheReadInputTokens)}`);
+      if (usage.cacheReadInputTokens)
+        parts.push(`cache ${formatThousands(usage.cacheReadInputTokens)}`);
       this.write(`  ${p.dim("usage")}     ${parts.join("  ")}`);
     }
     const evidence = e.outDir ? String(e.outDir) : this.outDir;
@@ -244,8 +248,7 @@ export class PrettyRenderer implements StreamRenderer {
         // First line accounts for `» ` prefix (2 chars); continuations
         // for `  ` indent (also 2 chars). Either way the available width
         // is `columns - 2`, so a uniform check works.
-        const lastLineFits =
-          (lines[lastIdx]?.length ?? 0) + turnSuffixLen + 2 <= this.opts.columns;
+        const lastLineFits = (lines[lastIdx]?.length ?? 0) + turnSuffixLen + 2 <= this.opts.columns;
         for (let i = 0; i < lines.length; i++) {
           const isFirst = i === 0;
           const isLast = i === lastIdx;
@@ -287,13 +290,19 @@ export class PrettyRenderer implements StreamRenderer {
     const ms = Number(e.durationMs ?? 0);
     const err = Boolean(e.error);
     const timing = formatTiming(ms, err);
-    const timingText = timing ? (timing.slow && err ? p.red(timing.text) : timing.slow ? p.yellow(timing.text) : p.dim(timing.text)) : "";
+    const timingText = timing
+      ? timing.slow && err
+        ? p.red(timing.text)
+        : timing.slow
+          ? p.yellow(timing.text)
+          : p.dim(timing.text)
+      : "";
 
     if (this.pendingRewrite && this.opts.color) {
       // Erase the previous line and rewrite with the final timing inline.
       const mark = err ? p.red("✗") : p.green("✓");
       this.sink.write("\x1b[1A\x1b[2K"); // cursor up, erase line
-      const tail = timing ? `   ${mark} ${timingText}` : (err ? `   ${mark}` : "");
+      const tail = timing ? `   ${mark} ${timingText}` : err ? `   ${mark}` : "";
       this.write(`${this.pendingRewrite.base}${tail}`);
       this.pendingRewrite = undefined;
     } else if (timing || err) {
@@ -310,8 +319,8 @@ export class PrettyRenderer implements StreamRenderer {
       if (text) this.write(`      ${p.dim("╵ error ")} ${text}`);
       if (e.hint) this.write(`      ${p.dim("╵ hint  ")} ${String(e.hint)}`);
     } else {
-      if (e.image)            this.write(`      ${p.dim("→")} ${p.blue(String(e.image))}`);
-      else if (e.artifact)    this.write(`      ${p.dim("→")} ${p.blue(String(e.artifact))}`);
+      if (e.image) this.write(`      ${p.dim("→")} ${p.blue(String(e.image))}`);
+      else if (e.artifact) this.write(`      ${p.dim("→")} ${p.blue(String(e.artifact))}`);
       else if (e.capturePath) this.write(`      ${p.dim("→")} ${p.blue(String(e.capturePath))}`);
       else if (String(e.name ?? "") === "read_output") {
         // Surface the captured prompt for CLI/TUI `read_output` calls.
@@ -347,7 +356,9 @@ export class PrettyRenderer implements StreamRenderer {
     }
     const turn = Number(e.turn ?? 0);
     this.write("");
-    this.write(`${p.dim("─── Run failed ──────────────────────────────────")} ${p.red("✗")} ${p.red("error")}`);
+    this.write(
+      `${p.dim("─── Run failed ──────────────────────────────────")} ${p.red("✗")} ${p.red("error")}`,
+    );
     this.write(`  ${p.dim("runId")}     ${this.runId ?? ""}`);
     this.write(`  ${p.dim("turn")}      ${turn}`);
     this.write(`  ${p.dim("error")}     ${String(e.message ?? "")}`);

@@ -1,4 +1,4 @@
-import { textResult, type ToolResult } from "../../../models/provider.js";
+import { type ToolResult, textResult } from "../../../models/provider.js";
 import { composeResult } from "../adapter.js";
 import type { WebToolCtx } from "./types.js";
 
@@ -21,10 +21,7 @@ export async function executeClick(
   try {
     const result = await ctx.chrome.click(ctx.tab, args.selector as string);
     const note = result?.fallback ? ` (fallback: ${result.fallback})` : "";
-    return composeResult(
-      `clicked ${args.selector}${note}`,
-      await ctx.takeReturnScreenshot(),
-    );
+    return composeResult(`clicked ${args.selector}${note}`, await ctx.takeReturnScreenshot());
   } catch (err) {
     // Make failures visible to the agent. A silent "clicked" when
     // nothing actually got clicked is a classic way to waste 40
@@ -90,9 +87,7 @@ export async function executeDrag(
   } else if (typeof targetX === "number" && typeof targetY === "number") {
     target = { x: targetX, y: targetY };
   } else {
-    return textResult(
-      "Error: drag requires either target_selector or both target_x and target_y",
-    );
+    return textResult("Error: drag requires either target_selector or both target_x and target_y");
   }
   try {
     await ctx.chrome.drag(ctx.tab, sourceSelector, target);
@@ -108,10 +103,7 @@ export async function executeMouseMove(
   args: Record<string, unknown>,
 ): Promise<ToolResult> {
   await ctx.chrome.mouseMove(ctx.tab, args.x as number, args.y as number);
-  return composeResult(
-    `moved mouse to (${args.x}, ${args.y})`,
-    await ctx.takeReturnScreenshot(),
-  );
+  return composeResult(`moved mouse to (${args.x}, ${args.y})`, await ctx.takeReturnScreenshot());
 }
 
 export async function executeScroll(

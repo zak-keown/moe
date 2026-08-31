@@ -1,47 +1,31 @@
 import { createRequire } from "node:module";
 import { join } from "path";
-import type { Adapter } from "../adapter.js";
-import { textResult, type ToolDefinition, type ToolResult } from "../../models/provider.js";
-import type { EvidenceLogger } from "../../evidence/logger.js";
-import { DEFAULT_VIEWPORT, type ChromeEndpoint, type Viewport } from "../../config.js";
-import type { CredentialResolverConfig } from "../../config.js";
 import { buildSharedTools, type SharedTools } from "../../agent/shared-tools.js";
-import {
-  buildInstallPasskeyTool,
-  type PasskeyTool,
-  type WebAuthnDriver,
-} from "./passkey.js";
-import {
-  buildInstallCookiesTool,
-  type CookiesDriver,
-  type CookiesTool,
-} from "./cookies.js";
 import { validateToolArgs } from "../../agent/validators.js";
+import type { CredentialResolverConfig } from "../../config.js";
+import { type ChromeEndpoint, DEFAULT_VIEWPORT, type Viewport } from "../../config.js";
+import type { EvidenceLogger } from "../../evidence/logger.js";
+import { type ToolDefinition, type ToolResult, textResult } from "../../models/provider.js";
+import type { Adapter } from "../adapter.js";
+import { buildInstallCookiesTool, type CookiesDriver, type CookiesTool } from "./cookies.js";
+import { closeWebAdapter, startWebAdapter, type WebLifecycleState } from "./lifecycle.js";
+import { buildInstallPasskeyTool, type PasskeyTool, type WebAuthnDriver } from "./passkey.js";
 import { webToolDefinitions } from "./tool-defs.js";
-import { executeScreenshot, executeExtract, executeWaitFor } from "./tools/visual.js";
+import { executePress, executeType } from "./tools/keyboard.js";
+import { executeEval, executeFileUpload, executeNavigate } from "./tools/page-actions.js";
 import {
   executeClick,
-  executeHover,
   executeDoubleClick,
-  executeRightClick,
   executeDrag,
+  executeHover,
   executeMouseMove,
+  executeRightClick,
   executeScroll,
 } from "./tools/pointer.js";
-import { executeType, executePress } from "./tools/keyboard.js";
-import { executeNavigate, executeEval, executeFileUpload } from "./tools/page-actions.js";
-import {
-  startWebAdapter,
-  closeWebAdapter,
-  type WebLifecycleState,
-} from "./lifecycle.js";
 import { buildReturnScreenshot } from "./tools/return-screenshot.js";
-import {
-  executeNewTab,
-  executeCloseTab,
-  type WebTabsCtx,
-} from "./tools/tabs.js";
+import { executeCloseTab, executeNewTab, type WebTabsCtx } from "./tools/tabs.js";
 import type { WebToolCtx } from "./tools/types.js";
+import { executeExtract, executeScreenshot, executeWaitFor } from "./tools/visual.js";
 
 // The forked CDP library is CommonJS JS. Bun tolerated a bare `require()`
 // inside an ESM package; Node and vitest do not, so it is reached through
@@ -79,9 +63,20 @@ const COOKIES_TAB = 0;
 // excluded so the trace surfaces the agent's actual attempts to drive
 // the page.
 const WEB_MUTATING_TOOLS = new Set([
-  "click", "type", "press", "hover", "double_click", "right_click",
-  "drag", "mouse_move", "scroll", "file_upload", "navigate", "eval",
-  "new_tab", "close_tab",
+  "click",
+  "type",
+  "press",
+  "hover",
+  "double_click",
+  "right_click",
+  "drag",
+  "mouse_move",
+  "scroll",
+  "file_upload",
+  "navigate",
+  "eval",
+  "new_tab",
+  "close_tab",
 ]);
 
 // The default driver opens a dedicated CDP session (pinned WebSocket) for
@@ -168,14 +163,9 @@ export interface ScreenshotResult {
   screenshotSkipped?: string | undefined;
 }
 
-export function composeResult(
-  text: string,
-  screenshot: ScreenshotResult
-): ToolResult {
+export function composeResult(text: string, screenshot: ScreenshotResult): ToolResult {
   if (screenshot.screenshotSkipped) {
-    return textResult(
-      `${text} (screenshot unavailable: ${screenshot.screenshotSkipped})`,
-    );
+    return textResult(`${text} (screenshot unavailable: ${screenshot.screenshotSkipped})`);
   }
   // Always pass image + imagePath together — takeReturnScreenshot sets
   // them as a unit. If imagePath is set without image, that would be a
@@ -236,14 +226,18 @@ export class WebAdapter implements Adapter {
    * in close(). Replaces the per-launch --user-data-dir as the per-test
    * isolation primitive. null until start() runs (and after close()).
    */
-  private context: { browserContextId: string; createPage(url?: string): Promise<{
-    id: string;
-    targetId: string;
-    webSocketDebuggerUrl: string;
-    type: string;
-    url: string;
+  private context: {
     browserContextId: string;
-  }>; dispose(): Promise<void> } | null = null;
+    createPage(url?: string): Promise<{
+      id: string;
+      targetId: string;
+      webSocketDebuggerUrl: string;
+      type: string;
+      url: string;
+      browserContextId: string;
+    }>;
+    dispose(): Promise<void>;
+  } | null = null;
 
   constructor(options?: WebAdapterOptions) {
     this.remote = false;
@@ -326,19 +320,31 @@ export class WebAdapter implements Adapter {
   private async waitForPopupAfter<T>(
     parentTargetId: string,
     action: () => Promise<T>,
-    { timeoutMs = 5000 }: { timeoutMs?: number | undefined } = {}
-  ): Promise<{ result: T; popup: { targetId: string; openerId?: string | undefined; type: string; url: string } | null }> {
-    const popupP = (this.chrome as unknown as {
-      targets: {
-        waitForNew(
-          predicate: (t: { targetId: string; openerId?: string | undefined; type: string; url: string }) => boolean,
-          opts?: { timeoutMs?: number | undefined },
-        ): Promise<{ targetId: string; openerId?: string | undefined; type: string; url: string }>;
-      };
-    }).targets.waitForNew(
-      (t) => t.openerId === parentTargetId && t.type === "page",
-      { timeoutMs }
-    );
+    { timeoutMs = 5000 }: { timeoutMs?: number | undefined } = {},
+  ): Promise<{
+    result: T;
+    popup: { targetId: string; openerId?: string | undefined; type: string; url: string } | null;
+  }> {
+    const popupP = (
+      this.chrome as unknown as {
+        targets: {
+          waitForNew(
+            predicate: (t: {
+              targetId: string;
+              openerId?: string | undefined;
+              type: string;
+              url: string;
+            }) => boolean,
+            opts?: { timeoutMs?: number | undefined },
+          ): Promise<{
+            targetId: string;
+            openerId?: string | undefined;
+            type: string;
+            url: string;
+          }>;
+        };
+      }
+    ).targets.waitForNew((t) => t.openerId === parentTargetId && t.type === "page", { timeoutMs });
     let result: T;
     try {
       result = await action();
@@ -347,8 +353,17 @@ export class WebAdapter implements Adapter {
       popupP.catch(() => {});
       throw e;
     }
-    let popup: { targetId: string; openerId?: string | undefined; type: string; url: string } | null = null;
-    try { popup = await popupP; } catch { /* no popup is fine */ }
+    let popup: {
+      targetId: string;
+      openerId?: string | undefined;
+      type: string;
+      url: string;
+    } | null = null;
+    try {
+      popup = await popupP;
+    } catch {
+      /* no popup is fine */
+    }
     return { result, popup };
   }
 
@@ -417,7 +432,7 @@ export class WebAdapter implements Adapter {
   async executeTool(
     name: string,
     args: Record<string, unknown>,
-    logger: EvidenceLogger
+    logger: EvidenceLogger,
   ): Promise<ToolResult> {
     // Validate the LLM's args shape against the tool schema before dispatch.
     // A bad shape (e.g. `selector: {css: "#foo"}` where string expected)

@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
-import type { RunSetCtx, SetBucket } from "../runs/run-set-types.js";
 import { deriveBucket, median } from "../runs/aggregate.js";
+import type { RunSetCtx, SetBucket } from "../runs/run-set-types.js";
 import type { VerdictResult, VerdictStatus } from "../types.js";
 
 interface RunEntry {
@@ -42,7 +42,10 @@ export class RunSetWriter {
   private dir: string;
   private manifest!: SetManifest;
 
-  constructor(private resultsRoot: string, private ctx: RunSetCtx) {
+  constructor(
+    private resultsRoot: string,
+    private ctx: RunSetCtx,
+  ) {
     this.dir = join(resultsRoot, "run-sets", ctx.runSetId);
   }
 
@@ -78,7 +81,12 @@ export class RunSetWriter {
     // Track which run IDs had results provided via lookup (vs explicitly errored/cancelled)
     const processedIds = new Set<string>();
     for (const run of this.manifest.runs) {
-      if (run.status !== "queued" && run.status !== "running" && run.status !== "cancelled" && run.status !== "errored") {
+      if (
+        run.status !== "queued" &&
+        run.status !== "running" &&
+        run.status !== "cancelled" &&
+        run.status !== "errored"
+      ) {
         processedIds.add(run.runId);
       }
     }
@@ -171,7 +179,8 @@ function summarizeOverall(perCard: CardSummary[]): OverallSummary {
     byStatus.cancelled += c.byStatus.cancelled;
   }
   return {
-    totalRuns: byStatus.pass + byStatus.fail + byStatus.investigate + byStatus.errored + byStatus.cancelled,
+    totalRuns:
+      byStatus.pass + byStatus.fail + byStatus.investigate + byStatus.errored + byStatus.cancelled,
     byStatus,
     overallStatus: deriveBucket(byStatus),
   };

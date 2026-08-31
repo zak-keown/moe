@@ -1,21 +1,26 @@
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
+import { type Adapter, snapshotViewport } from "../adapters/adapter.js";
 import { CLIAdapter } from "../adapters/cli/adapter.js";
-import { snapshotViewport, type Adapter } from "../adapters/adapter.js";
-import type { ChromeEndpoint, CredentialResolverConfig, ResolvedRunConfig, Viewport } from "../config.js";
-import type { RunId } from "../util/brands.js";
+import { runAgent } from "../agent/agent.js";
+import type {
+  ChromeEndpoint,
+  CredentialResolverConfig,
+  ResolvedRunConfig,
+  Viewport,
+} from "../config.js";
 import { renderContextTree } from "../context/tree.js";
 import { EvidenceLogger } from "../evidence/logger.js";
 import { writeResultFiles } from "../evidence/writer.js";
-import { runAgent } from "../agent/agent.js";
-import { resolveProvider } from "../models/resolve.js";
-import type { LLMClient } from "../models/provider.js";
-import { flightPath } from "../paths.js";
-import { snapshotRunInputs } from "./snapshot.js";
-import { makeRunId } from "../util/id.js";
 import type { StoryCard } from "../format/story-card.js";
+import type { LLMClient } from "../models/provider.js";
+import { resolveProvider } from "../models/resolve.js";
+import { flightPath } from "../paths.js";
 import { snapshotRunConfig, type VerdictResult } from "../types.js";
+import type { RunId } from "../util/brands.js";
+import { makeRunId } from "../util/id.js";
 import type { RunSetCtx } from "./run-set-types.js";
+import { snapshotRunInputs } from "./snapshot.js";
 
 export type RunAdapterType = "web" | "cli" | "tui";
 
@@ -61,7 +66,9 @@ export interface RunCoreHooks {
    * called after adapter close so close-time events still fan out. */
   onLogger?: ((logger: EvidenceLogger, ctx: RunCorePrepared) => void | (() => void)) | undefined;
   beforeAgent?: ((ctx: RunCoreStarted) => Promise<void> | void) | undefined;
-  onError?: ((err: unknown, ctx: RunCoreStarted | RunCorePrepared) => Promise<void> | void) | undefined;
+  onError?:
+    | ((err: unknown, ctx: RunCoreStarted | RunCorePrepared) => Promise<void> | void)
+    | undefined;
   beforeClose?: ((ctx: RunCoreStarted) => Promise<void> | void) | undefined;
   afterClose?: ((ctx: RunCoreStarted | RunCorePrepared) => Promise<void> | void) | undefined;
 }
@@ -157,13 +164,12 @@ async function buildDefaultAdapter(
   }
 }
 
-export async function executeRunCore(
-  opts: ExecuteRunCoreOptions,
-): Promise<ExecuteRunCoreResult> {
+export async function executeRunCore(opts: ExecuteRunCoreOptions): Promise<ExecuteRunCoreResult> {
   const { card, storyPath, runConfig, client, runSetCtx, hooks } = opts;
 
   const runId = opts.runId ?? makeRunId(card.id);
-  const outDir = opts.outDir ?? flightPath(runConfig.projectRoot, runConfig.stateDirName, "results", runId);
+  const outDir =
+    opts.outDir ?? flightPath(runConfig.projectRoot, runConfig.stateDirName, "results", runId);
 
   snapshotRunInputs({
     runDir: outDir,
@@ -177,7 +183,11 @@ export async function executeRunCore(
 
   const contextRoot = join(outDir, "inputs", "context");
   const contextTree = renderContextTree(contextRoot);
-  const projectPrompt = resolveProjectPrompt(runConfig.projectRoot, runConfig.stateDirName, opts.projectPromptPath);
+  const projectPrompt = resolveProjectPrompt(
+    runConfig.projectRoot,
+    runConfig.stateDirName,
+    opts.projectPromptPath,
+  );
 
   const adapter = await (opts.adapterFactory
     ? opts.adapterFactory({ contextRoot, runId, logger })
@@ -208,9 +218,7 @@ export async function executeRunCore(
       provider: resolveProvider(runConfig.model),
       model: runConfig.model,
       outDir,
-      viewport: runConfig.adapter === "web"
-        ? viewportString(snapshotViewport(adapter))
-        : undefined,
+      viewport: runConfig.adapter === "web" ? viewportString(snapshotViewport(adapter)) : undefined,
       abortSignal: opts.abortSignal,
     });
     result.config = stampedRunConfig;
@@ -218,7 +226,11 @@ export async function executeRunCore(
     (opts.writeResultFiles ?? writeResultFiles)(outDir, result);
 
     await hooks?.beforeClose?.(started);
-    try { await adapter.close(); } catch { /* swallow */ }
+    try {
+      await adapter.close();
+    } catch {
+      /* swallow */
+    }
     detachLogger();
     await hooks?.afterClose?.(started);
 
@@ -230,11 +242,27 @@ export async function executeRunCore(
       stack: err instanceof Error ? err.stack : undefined,
     });
     const ctx: RunCoreStarted = { ...prepared, contextRoot, adapter };
-    try { await hooks?.onError?.(err, ctx); } catch { /* swallow */ }
-    try { await hooks?.beforeClose?.(ctx); } catch { /* swallow */ }
-    try { await adapter.close(); } catch { /* swallow */ }
+    try {
+      await hooks?.onError?.(err, ctx);
+    } catch {
+      /* swallow */
+    }
+    try {
+      await hooks?.beforeClose?.(ctx);
+    } catch {
+      /* swallow */
+    }
+    try {
+      await adapter.close();
+    } catch {
+      /* swallow */
+    }
     detachLogger();
-    try { await hooks?.afterClose?.(ctx); } catch { /* swallow */ }
+    try {
+      await hooks?.afterClose?.(ctx);
+    } catch {
+      /* swallow */
+    }
     throw err;
   }
 }

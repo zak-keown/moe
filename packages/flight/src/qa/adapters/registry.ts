@@ -1,7 +1,7 @@
 import type { ToolDefinition } from "../models/provider.js";
-import { WebAdapter } from "./web/adapter.js";
 import { CLIAdapter } from "./cli/adapter.js";
 import { TUIAdapter } from "./tui/adapter.js";
+import { WebAdapter } from "./web/adapter.js";
 
 /**
  * Look up an adapter's tool definitions by recorded adapter name.

@@ -52,14 +52,20 @@ export interface KillProcessTreeResult {
  * still alive; once it exits, the parent→child relation through it
  * disappears and `listDescendants` returns nothing useful.
  */
-export function killProcessTree(
-  pgid: number,
-  descendants: number[],
-): KillProcessTreeResult {
-  try { process.kill(-pgid, "SIGKILL"); } catch { /* already dead */ }
+export function killProcessTree(pgid: number, descendants: number[]): KillProcessTreeResult {
+  try {
+    process.kill(-pgid, "SIGKILL");
+  } catch {
+    /* already dead */
+  }
   let reaped = 0;
   for (const pid of descendants) {
-    try { process.kill(pid, "SIGKILL"); reaped++; } catch { /* already dead */ }
+    try {
+      process.kill(pid, "SIGKILL");
+      reaped++;
+    } catch {
+      /* already dead */
+    }
   }
   return { reaped };
 }

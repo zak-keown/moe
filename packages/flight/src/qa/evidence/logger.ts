@@ -1,17 +1,10 @@
-import { mkdirSync, appendFileSync, writeFileSync } from "fs";
+import { appendFileSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
 import type { CardId, RunId } from "../util/brands.js";
 
-export type BrowserEventCategory =
-  | "console"
-  | "exception"
-  | "log"
-  | "network-ws";
+export type BrowserEventCategory = "console" | "exception" | "log" | "network-ws";
 
-export type ProgressObserver = (
-  action: string,
-  params: Record<string, unknown>,
-) => void;
+export type ProgressObserver = (action: string, params: Record<string, unknown>) => void;
 
 export type EventObserver = (event: Record<string, unknown>) => void;
 
@@ -85,12 +78,12 @@ export interface ToolResultFields {
    * own key.
    */
   transcriptText?: string | undefined;
-  image?: string | undefined;            // relative path
+  image?: string | undefined; // relative path
   /** Media type of the image (e.g. "image/png"). Set when `image` is set
    * so post-hoc readers (e.g. session revival) can re-feed the bytes
    * into a provider-native image block without guessing. */
   mediaType?: string | undefined;
-  artifact?: string | undefined;         // relative path
+  artifact?: string | undefined; // relative path
   /** Relative path to a TUI capture (`captures/NNN.ansi`). When set, the
    * tool_result row's `text` is replaced with this path to keep
    * run.jsonl lean; the LLM still receives the full ANSI via the
@@ -172,10 +165,18 @@ export class EvidenceLogger {
     mkdirSync(join(outDir, "artifacts"), { recursive: true });
   }
 
-  get screenshots(): string[] { return [...this._screenshots]; }
-  get artifacts(): string[] { return [...this._artifacts]; }
-  get captures(): string[] { return [...this._captures]; }
-  get logPath(): string { return "run.jsonl"; }
+  get screenshots(): string[] {
+    return [...this._screenshots];
+  }
+  get artifacts(): string[] {
+    return [...this._artifacts];
+  }
+  get captures(): string[] {
+    return [...this._captures];
+  }
+  get logPath(): string {
+    return "run.jsonl";
+  }
 
   // Two distinct observer channels fire side-by-side:
   //
@@ -192,25 +193,37 @@ export class EvidenceLogger {
   // summary feed, the event channel is the structured firehose.
   addProgressObserver(fn: ProgressObserver): () => void {
     this.observers.add(fn);
-    return () => { this.observers.delete(fn); };
+    return () => {
+      this.observers.delete(fn);
+    };
   }
 
   // A misbehaving observer (one that throws) will not prevent other observers
   // from receiving the action.
   private notifyProgressObservers(action: string, params: Record<string, unknown>): void {
     for (const fn of this.observers) {
-      try { fn(action, params); } catch { /* isolated */ }
+      try {
+        fn(action, params);
+      } catch {
+        /* isolated */
+      }
     }
   }
 
   addEventObserver(fn: EventObserver): () => void {
     this.eventObservers.add(fn);
-    return () => { this.eventObservers.delete(fn); };
+    return () => {
+      this.eventObservers.delete(fn);
+    };
   }
 
   private notifyEventObservers(event: Record<string, unknown>): void {
     for (const fn of this.eventObservers) {
-      try { fn(event); } catch { /* isolated */ }
+      try {
+        fn(event);
+      } catch {
+        /* isolated */
+      }
     }
   }
 
@@ -317,7 +330,10 @@ export class EvidenceLogger {
     }
 
     let body: Record<string, unknown> = { ...normalized };
-    if (typeof normalized.text === "string" && Buffer.byteLength(normalized.text, "utf8") > INLINE_TEXT_LIMIT) {
+    if (
+      typeof normalized.text === "string" &&
+      Buffer.byteLength(normalized.text, "utf8") > INLINE_TEXT_LIMIT
+    ) {
       const bytes = Buffer.byteLength(normalized.text, "utf8");
       const spilled = this.saveArtifact(normalized.text, "txt");
       // Keep run.jsonl readable by dropping the full text, but don't leave
@@ -368,19 +384,13 @@ export class EvidenceLogger {
     this.writeEvent("run_end", { ...fields });
   }
 
-  logBrowserEvent(
-    category: BrowserEventCategory,
-    data: Record<string, unknown>,
-  ): void {
+  logBrowserEvent(category: BrowserEventCategory, data: Record<string, unknown>): void {
     const entry = {
       timestamp: new Date().toISOString(),
       category,
       ...data,
     };
-    appendFileSync(
-      join(this.outDir, `${category}.jsonl`),
-      JSON.stringify(entry) + "\n",
-    );
+    appendFileSync(join(this.outDir, `${category}.jsonl`), JSON.stringify(entry) + "\n");
   }
 
   saveScreenshot(data: Buffer, name?: string): string {

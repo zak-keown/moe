@@ -1,8 +1,8 @@
 import type { EvidenceLogger } from "../../evidence/logger.js";
 import type { StreamOptions } from "./format.js";
-import type { StreamRenderer } from "./renderer.js";
 import { JsonlRenderer, type WriteSink } from "./jsonl.js";
 import { PrettyRenderer } from "./pretty.js";
+import type { StreamRenderer } from "./renderer.js";
 
 /**
  * Attach a stream renderer to an EvidenceLogger's event observer channel.

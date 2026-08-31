@@ -79,9 +79,7 @@ function formatType(args: StringRecord): FormattedArgs {
   const selector = asString(args, "selector");
   if (text === null) return jsonFallback(args);
   const clipped = clip(text, 80);
-  const body = selector
-    ? `${selector} ← "${clipped}"`
-    : `"${clipped}"`;
+  const body = selector ? `${selector} ← "${clipped}"` : `"${clipped}"`;
   const marker = asBool(args, "return_screenshot") ? "📷" : undefined;
   return { body, marker };
 }

@@ -1,7 +1,7 @@
 import { readFileSync, unlinkSync } from "fs";
-import { join } from "path";
 import { tmpdir } from "os";
-import { textResult, type ToolResult } from "../../../models/provider.js";
+import { join } from "path";
+import { type ToolResult, textResult } from "../../../models/provider.js";
 import { composeResult } from "../adapter.js";
 import type { WebToolCtx } from "./types.js";
 

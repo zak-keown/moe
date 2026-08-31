@@ -1,11 +1,11 @@
+import { mkdirSync, unlinkSync, writeFileSync } from "fs";
 import { Hono } from "hono";
-import { mkdirSync, writeFileSync, unlinkSync } from "fs";
 import { join } from "path";
-import { serializeStoryCard } from "../../format/story-card.js";
+import { findCard, loadAllCards } from "../../cards/store.js";
 import type { StoryCard } from "../../format/story-card.js";
+import { serializeStoryCard } from "../../format/story-card.js";
+import { flightPath, isSafePath } from "../../paths.js";
 import { asCardId } from "../../util/brands.js";
-import { loadAllCards, findCard } from "../../cards/store.js";
-import { isSafePath, flightPath } from "../../paths.js";
 import type { ErrorLog } from "../../util/error-log.js";
 
 /**
@@ -188,9 +188,8 @@ export function scenarioRoutes(projectRoot: string, stateDirName: string, errorL
 
     // HTTP boundary: brand parent (route-body string) before merging into
     // the existing card. id always comes from the path-bound entry.
-    const brandedParent = updates.parent !== undefined
-      ? asCardId(updates.parent)
-      : entry.card.parent;
+    const brandedParent =
+      updates.parent !== undefined ? asCardId(updates.parent) : entry.card.parent;
     // Spreading `updates` would set every absent optional key to an explicit
     // `undefined`, which exactOptionalPropertyTypes treats as different from
     // absent — and `raw` is regenerated from this object, so the difference is

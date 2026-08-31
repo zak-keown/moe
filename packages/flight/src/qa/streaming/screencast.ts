@@ -4,7 +4,7 @@
 // a streamer without one was previously possible via a fresh-session fallback;
 // that fallback was a footgun (the fresh session has no Chrome behind it) so
 // callers must now pass the WebAdapter's session explicitly.
-import { writeFileSync, mkdirSync } from "fs";
+import { mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
 
 export interface ScreencastFrame {
@@ -60,30 +60,39 @@ export class ScreencastStreamer {
     this.pageSession = await tabs[this.tabIndex].getPageSession();
     const ps = this.pageSession;
 
-    this.unsubFrame = ps.onEvent(async (event: { method: string; params: { data: string; sessionId: number; metadata?: { deviceWidth?: number | undefined; deviceHeight?: number | undefined } } }) => {
-      if (!this.running) return;
-      if (event.method !== "Page.screencastFrame") return;
+    this.unsubFrame = ps.onEvent(
+      async (event: {
+        method: string;
+        params: {
+          data: string;
+          sessionId: number;
+          metadata?: { deviceWidth?: number | undefined; deviceHeight?: number | undefined };
+        };
+      }) => {
+        if (!this.running) return;
+        if (event.method !== "Page.screencastFrame") return;
 
-      const params = event.params;
-      this.onFrame({
-        data: params.data,
-        metadata: {
-          width: params.metadata?.deviceWidth || 0,
-          height: params.metadata?.deviceHeight || 0,
-        },
-      });
+        const params = event.params;
+        this.onFrame({
+          data: params.data,
+          metadata: {
+            width: params.metadata?.deviceWidth || 0,
+            height: params.metadata?.deviceHeight || 0,
+          },
+        });
 
-      if (this.saveDir) {
-        const filename = `frame-${String(this.frameCount).padStart(5, "0")}.jpg`;
-        writeFileSync(join(this.saveDir, filename), Buffer.from(params.data, "base64"));
-        this.frameCount++;
-      }
+        if (this.saveDir) {
+          const filename = `frame-${String(this.frameCount).padStart(5, "0")}.jpg`;
+          writeFileSync(join(this.saveDir, filename), Buffer.from(params.data, "base64"));
+          this.frameCount++;
+        }
 
-      // Acknowledge frame so Chrome sends the next one.
-      await ps.send("Page.screencastFrameAck", {
-        sessionId: params.sessionId,
-      });
-    });
+        // Acknowledge frame so Chrome sends the next one.
+        await ps.send("Page.screencastFrameAck", {
+          sessionId: params.sessionId,
+        });
+      },
+    );
 
     // Defaults tuned for local dev: Flight runs on the developer's
     // machine, not over a network, so CPU-to-encode is the only cost of
@@ -104,10 +113,18 @@ export class ScreencastStreamer {
     this.running = false;
     try {
       if (this.pageSession) {
-        try { await this.pageSession.send("Page.stopScreencast"); } catch { /* best-effort */ }
+        try {
+          await this.pageSession.send("Page.stopScreencast");
+        } catch {
+          /* best-effort */
+        }
       }
       if (this.unsubFrame) {
-        try { this.unsubFrame(); } catch { /* best-effort */ }
+        try {
+          this.unsubFrame();
+        } catch {
+          /* best-effort */
+        }
         this.unsubFrame = null;
       }
       // Don't detach the page session — the tab cache holds it; closing the

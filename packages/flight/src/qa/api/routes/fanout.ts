@@ -1,16 +1,20 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { Hono } from "hono";
-import { writeFileSync, mkdirSync, readFileSync, existsSync } from "fs";
 import { join } from "path";
+import type { ParseResult } from "../../agent/validators.js";
+import { findCard } from "../../cards/store.js";
+import type { AppConfig } from "../../config.js";
+import {
+  generateFanout,
+  generateFromFailure,
+  generateFromObservations,
+} from "../../fanout/generator.js";
 import { parseStoryCard } from "../../format/story-card.js";
-import { generateFanout, generateFromObservations, generateFromFailure } from "../../fanout/generator.js";
+import type { LLMClient } from "../../models/provider.js";
 import { createClient } from "../../models/resolve.js";
 import { flightPath } from "../../paths.js";
-import type { LLMClient } from "../../models/provider.js";
 import type { VerdictResult } from "../../types.js";
-import type { AppConfig } from "../../config.js";
-import { findCard } from "../../cards/store.js";
 import type { ErrorLog } from "../../util/error-log.js";
-import type { ParseResult } from "../../agent/validators.js";
 
 function resolveClient(config: AppConfig, clientFactory?: () => LLMClient): ParseResult<LLMClient> {
   if (clientFactory) return { ok: true, value: clientFactory() };
@@ -21,11 +25,7 @@ function resolveClient(config: AppConfig, clientFactory?: () => LLMClient): Pars
   return { ok: true, value: createClient(model) };
 }
 
-function writeCards(
-  storiesDir: string,
-  cardTexts: string[],
-  errorLog?: ErrorLog,
-) {
+function writeCards(storiesDir: string, cardTexts: string[], errorLog?: ErrorLog) {
   mkdirSync(storiesDir, { recursive: true });
   const seen = new Set<string>();
   const written: { id: string; title: string; filename: string }[] = [];
@@ -77,7 +77,11 @@ function isMode(s: string): s is Mode {
   return s === "observations" || s === "failure";
 }
 
-export function fanoutRoutes(config: AppConfig, clientFactory?: () => LLMClient, errorLog?: ErrorLog) {
+export function fanoutRoutes(
+  config: AppConfig,
+  clientFactory?: () => LLMClient,
+  errorLog?: ErrorLog,
+) {
   const router = new Hono();
   const projectRoot = config.projectRoot;
   const stateDirName = config.stateDirName;

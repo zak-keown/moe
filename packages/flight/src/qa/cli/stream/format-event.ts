@@ -39,7 +39,11 @@ function formatInstallCookiesOk(fields: EventFields): string {
   const rejected = fields.rejected;
   const cookies = Array.isArray(fields.cookies) ? fields.cookies : [];
   const names = cookies
-    .map((c) => (typeof c === "object" && c && "name" in c ? String((c as Record<string, unknown>).name) : null))
+    .map((c) =>
+      typeof c === "object" && c && "name" in c
+        ? String((c as Record<string, unknown>).name)
+        : null,
+    )
     .filter((n): n is string => !!n);
   const namesStr = names.length > 0 ? names.join(", ") : "—";
   return `accepted ${accepted ?? 0} · rejected ${rejected ?? 0} · ${namesStr}`;
@@ -67,7 +71,8 @@ export function formatAnomalyEvent(event: Record<string, unknown>): FormattedEve
   const name = String(event.name ?? "event");
   const fields: EventFields = {};
   for (const [k, v] of Object.entries(event)) {
-    if (k === "type" || k === "name" || k === "eventId" || k === "parentEventId" || k === "ts") continue;
+    if (k === "type" || k === "name" || k === "eventId" || k === "parentEventId" || k === "ts")
+      continue;
     if (v === undefined || v === null) continue;
     fields[k] = v;
   }

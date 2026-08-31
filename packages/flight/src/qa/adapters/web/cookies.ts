@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 import * as YAML from "yaml";
-import { textResult, type ToolDefinition, type ToolResult } from "../../models/provider.js";
 import type { EvidenceLogger } from "../../evidence/logger.js";
+import { type ToolDefinition, type ToolResult, textResult } from "../../models/provider.js";
 import { contextRootIsPopulated, resolveInside } from "../../paths.js";
 
 // CDP CookieParam — the shape passed verbatim to `Network.setCookie`.
@@ -55,7 +55,7 @@ export interface CookiesTool {
 const TOOL_DESCRIPTION =
   "Install cookies into the browser, reading them from a YAML file under " +
   "the project's context directory. The path is relative to " +
-  ".moe-flight/context/ (example: \"alice/cookies.yaml\"). The file is a list " +
+  '.moe-flight/context/ (example: "alice/cookies.yaml"). The file is a list ' +
   "of cookie entries; each entry mirrors Chrome's Network.setCookie " +
   "parameters (name, value, plus either url or domain+path, and optional " +
   "secure, httpOnly, sameSite, expires). Call this once, before navigating " +
@@ -188,8 +188,7 @@ function cookieContext(cookie: CookieParam): Record<string, unknown> {
   };
 }
 
-const errorMessage = (err: unknown) =>
-  err instanceof Error ? err.message : String(err);
+const errorMessage = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
 export function buildInstallCookiesTool(
   contextRoot: string,
@@ -220,7 +219,9 @@ export function buildInstallCookiesTool(
 
     if (!path) {
       logger?.logEvent("install_cookies_failed", {
-        path: "", step: "validate_args", error: "missing path argument",
+        path: "",
+        step: "validate_args",
+        error: "missing path argument",
       });
       return textResult(
         `Error: install_cookies requires a "path" argument (relative to the project's context directory).`,
@@ -233,7 +234,9 @@ export function buildInstallCookiesTool(
     } catch (err) {
       const error = errorMessage(err);
       logger?.logEvent("install_cookies_failed", {
-        path, step: "resolve_path", error,
+        path,
+        step: "resolve_path",
+        error,
       });
       return textResult(`Error: ${error}`);
     }
@@ -244,7 +247,9 @@ export function buildInstallCookiesTool(
     } catch (err) {
       const error = errorMessage(err);
       logger?.logEvent("install_cookies_failed", {
-        path, step: "read_cookies", error,
+        path,
+        step: "read_cookies",
+        error,
       });
       return textResult(`Error: ${error}`);
     }
@@ -260,9 +265,7 @@ export function buildInstallCookiesTool(
         error,
         cookies: cookies.map(cookieContext),
       });
-      return textResult(
-        `Error installing cookies from "${path}" at step "set_cookies": ${error}`,
-      );
+      return textResult(`Error installing cookies from "${path}" at step "set_cookies": ${error}`);
     }
 
     const accepted: string[] = [];
@@ -287,9 +290,7 @@ export function buildInstallCookiesTool(
 
     const total = cookies.length;
     const acceptedNames = accepted.join(", ");
-    const rejectedSummary = rejected
-      .map((r) => `${r.name} (${r.reason})`)
-      .join(", ");
+    const rejectedSummary = rejected.map((r) => `${r.name} (${r.reason})`).join(", ");
 
     let text: string;
     if (rejected.length === 0) {

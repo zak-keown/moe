@@ -1,12 +1,12 @@
-import { resolve } from "path";
 import { existsSync, readFileSync } from "fs";
+import { resolve } from "path";
 import { createInterface } from "readline";
-import type { AskArgs } from "./args.js";
 import type { AppConfig } from "../config.js";
 import type { LLMClient } from "../models/provider.js";
-import { rebuildMessages, ANSWER_TOOL, extractAnswer } from "../revival/index.js";
 import { createClient, UnknownModelProviderError } from "../models/resolve.js";
 import { flightPath } from "../paths.js";
+import { ANSWER_TOOL, extractAnswer, rebuildMessages } from "../revival/index.js";
+import type { AskArgs } from "./args.js";
 
 export async function ask(args: AskArgs, config: AppConfig): Promise<number> {
   const runDir = flightPath(config.projectRoot, config.stateDirName, "results", args.runId);
@@ -31,8 +31,8 @@ export async function ask(args: AskArgs, config: AppConfig): Promise<number> {
     if (err instanceof UnknownModelProviderError) {
       console.error(
         `Run ${args.runId} was recorded against model ${recordedModelId}, which is no longer available. ` +
-        `To revive against a different model, pass --model <model-id>. ` +
-        `Note that the answers will be from a different model than the one that produced the original run.`,
+          `To revive against a different model, pass --model <model-id>. ` +
+          `Note that the answers will be from a different model than the one that produced the original run.`,
       );
       return 1;
     }
@@ -117,9 +117,7 @@ export async function ask(args: AskArgs, config: AppConfig): Promise<number> {
         messages.push(response.rawAssistantMessage);
         const answerCall = response.toolCalls.find((tc) => tc.name === "answer");
         if (answerCall) {
-          messages.push(
-            ...client.toolResultMessages([answerCall], [{ kind: "text", text: "" }]),
-          );
+          messages.push(...client.toolResultMessages([answerCall], [{ kind: "text", text: "" }]));
         }
       } catch (err) {
         clearInterval(ticker);

@@ -25,7 +25,14 @@ export class LlmError extends Error {
   readonly requestId?: string | undefined;
   readonly errorType?: string | undefined;
 
-  constructor(message: string, fields: { status?: number | undefined; requestId?: string | undefined; errorType?: string | undefined } = {}) {
+  constructor(
+    message: string,
+    fields: {
+      status?: number | undefined;
+      requestId?: string | undefined;
+      errorType?: string | undefined;
+    } = {},
+  ) {
     super(message);
     this.name = "LlmError";
     this.status = fields.status;

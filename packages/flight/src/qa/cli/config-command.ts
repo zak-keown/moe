@@ -1,5 +1,5 @@
+import { type AppConfig, loadConfig } from "../config.js";
 import type { ConfigArgs } from "./args.js";
-import { loadConfig, type AppConfig } from "../config.js";
 
 interface ConfigOutput {
   flight: {
@@ -88,24 +88,58 @@ export function formatConfigText(output: ConfigOutput): string {
   const lines: string[] = [];
   lines.push("# Flight configuration");
   lines.push("");
-  lines.push(`  projectRoot:    ${output.flight.projectRoot}  (${output.flight.sources.projectRoot})`);
-  lines.push(`  stateDirName:   ${output.flight.stateDirName}  (${output.flight.sources.stateDirName})`);
+  lines.push(
+    `  projectRoot:    ${output.flight.projectRoot}  (${output.flight.sources.projectRoot})`,
+  );
+  lines.push(
+    `  stateDirName:   ${output.flight.stateDirName}  (${output.flight.sources.stateDirName})`,
+  );
   lines.push(`  port:           ${output.flight.port}  (${output.flight.sources.port})`);
-  lines.push(`  defaultChrome:  ${output.flight.defaultChrome.host}:${output.flight.defaultChrome.port}  (${output.flight.sources.defaultChrome})`);
-  lines.push(`  defaultTarget:  ${output.flight.defaultTarget ?? "(unset)"}  (${output.flight.sources.defaultTarget})`);
-  lines.push(`  defaultBudgetMs: ${output.flight.defaultBudgetMs}  (${output.flight.sources.defaultBudgetMs})`);
-  lines.push(`  defaultReflectionInterval: ${output.flight.defaultReflectionInterval}  (${output.flight.sources.defaultReflectionInterval})`);
-  lines.push(`  defaultViewport: ${output.flight.defaultViewport.width}x${output.flight.defaultViewport.height}  (${output.flight.sources.defaultViewport})`);
-  lines.push(`  defaultSaveScreencast: ${output.flight.defaultSaveScreencast}  (${output.flight.sources.defaultSaveScreencast})`);
-  lines.push(`  shutdownGraceMs: ${output.flight.shutdownGraceMs}  (${output.flight.sources.shutdownGraceMs})`);
-  lines.push(`  maxRequestBodySize: ${output.flight.maxRequestBodySize}  (${output.flight.sources.maxRequestBodySize})`);
-  lines.push(`  maxConcurrentRuns: ${output.flight.maxConcurrentRuns}  (${output.flight.sources.maxConcurrentRuns})`);
-  lines.push(`  activeRunTargetMaxBytes: ${output.flight.activeRunTargetMaxBytes}  (${output.flight.sources.activeRunTargetMaxBytes})`);
-  lines.push(`  wsIdleTimeoutSec: ${output.flight.wsIdleTimeoutSec}  (${output.flight.sources.wsIdleTimeoutSec})`);
-  lines.push(`  wsOriginAllowlist: [${output.flight.wsOriginAllowlist.join(", ")}]  (${output.flight.sources.wsOriginAllowlist})`);
-  lines.push(`  models.agent:   ${output.flight.models.agent}  (${output.flight.sources["models.agent"]})`);
-  lines.push(`  models.fanout:  ${output.flight.models.fanout ?? "(unset)"}  (${output.flight.sources["models.fanout"]})`);
-  lines.push(`  models.available: [${output.flight.models.available.join(", ")}]  (${output.flight.sources["models.available"]})`);
+  lines.push(
+    `  defaultChrome:  ${output.flight.defaultChrome.host}:${output.flight.defaultChrome.port}  (${output.flight.sources.defaultChrome})`,
+  );
+  lines.push(
+    `  defaultTarget:  ${output.flight.defaultTarget ?? "(unset)"}  (${output.flight.sources.defaultTarget})`,
+  );
+  lines.push(
+    `  defaultBudgetMs: ${output.flight.defaultBudgetMs}  (${output.flight.sources.defaultBudgetMs})`,
+  );
+  lines.push(
+    `  defaultReflectionInterval: ${output.flight.defaultReflectionInterval}  (${output.flight.sources.defaultReflectionInterval})`,
+  );
+  lines.push(
+    `  defaultViewport: ${output.flight.defaultViewport.width}x${output.flight.defaultViewport.height}  (${output.flight.sources.defaultViewport})`,
+  );
+  lines.push(
+    `  defaultSaveScreencast: ${output.flight.defaultSaveScreencast}  (${output.flight.sources.defaultSaveScreencast})`,
+  );
+  lines.push(
+    `  shutdownGraceMs: ${output.flight.shutdownGraceMs}  (${output.flight.sources.shutdownGraceMs})`,
+  );
+  lines.push(
+    `  maxRequestBodySize: ${output.flight.maxRequestBodySize}  (${output.flight.sources.maxRequestBodySize})`,
+  );
+  lines.push(
+    `  maxConcurrentRuns: ${output.flight.maxConcurrentRuns}  (${output.flight.sources.maxConcurrentRuns})`,
+  );
+  lines.push(
+    `  activeRunTargetMaxBytes: ${output.flight.activeRunTargetMaxBytes}  (${output.flight.sources.activeRunTargetMaxBytes})`,
+  );
+  lines.push(
+    `  wsIdleTimeoutSec: ${output.flight.wsIdleTimeoutSec}  (${output.flight.sources.wsIdleTimeoutSec})`,
+  );
+  lines.push(
+    `  wsOriginAllowlist: [${output.flight.wsOriginAllowlist.join(", ")}]  (${output.flight.sources.wsOriginAllowlist})`,
+  );
+  lines.push(
+    `  models.agent:   ${output.flight.models.agent}  (${output.flight.sources["models.agent"]})`,
+  );
+  lines.push(
+    `  models.fanout:  ${output.flight.models.fanout ?? "(unset)"}  (${output.flight.sources["models.fanout"]})`,
+  );
+  lines.push(
+    `  models.available: [${output.flight.models.available.join(", ")}]  (${output.flight.sources["models.available"]})`,
+  );
   lines.push("");
   lines.push("# API keys");
   lines.push(`  anthropic:      ${output.flight.apiKeys.anthropic}`);

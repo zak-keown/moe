@@ -16,19 +16,15 @@
  *     the one wire-shape change across this boundary, and it is what
  *     test/lab/tab.test.ts's fully-typed fixtures exist to catch.
  */
-import { existsSync, readFileSync } from 'node:fs';
-import {
-  type CostEstimate,
-  estimatePath,
-  TabError,
-} from '@bubstack/moe-tab';
-import type { TokenUsage } from '../contracts/economics.js';
+import { existsSync, readFileSync } from "node:fs";
+import { type CostEstimate, estimatePath, TabError } from "@bubstack/moe-tab";
+import type { TokenUsage } from "../contracts/economics.js";
 
 const BUCKET_KEYS = [
-  'total_input',
-  'total_cache_create',
-  'total_cache_read',
-  'total_output',
+  "total_input",
+  "total_cache_create",
+  "total_cache_read",
+  "total_output",
 ] as const;
 
 const round10 = (n: number): number => Math.round(n * 1e10) / 1e10;
@@ -48,9 +44,7 @@ interface Bucket {
  *  first non-null `pricing_as_of`. Returns null when no tokens were counted.
  *  Costs round to 10 decimals; `est_cost_usd` is null when every priced model
  *  is unpriced. */
-export function mergeEstimates(
-  estimates: readonly CostEstimate[],
-): TokenUsage | null {
+export function mergeEstimates(estimates: readonly CostEstimate[]): TokenUsage | null {
   const perModel = new Map<string, Bucket>();
   const unpriced = new Set<string>();
   const approximations: { kind: string; detail: string | null }[] = [];
@@ -106,18 +100,13 @@ export function mergeEstimates(
     return null;
   }
 
-  const allUnpriced =
-    perModel.size > 0 && [...perModel.keys()].every((m) => unpriced.has(m));
-  const models: TokenUsage['models'] = {};
+  const allUnpriced = perModel.size > 0 && [...perModel.keys()].every((m) => unpriced.has(m));
+  const models: TokenUsage["models"] = {};
   let topModel: string | null = null;
   let topCost = -1;
   let totalUsd = 0;
   for (const [name, b] of perModel) {
-    const tokens =
-      b.total_input +
-      b.total_cache_create +
-      b.total_cache_read +
-      b.total_output;
+    const tokens = b.total_input + b.total_cache_create + b.total_cache_read + b.total_output;
     models[name] = {
       total_input: b.total_input,
       total_cache_create: b.total_cache_create,
@@ -147,7 +136,7 @@ export function mergeEstimates(
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /** Sum the UTF-8 byte length of every tool.result output string in a kimi wire
@@ -157,13 +146,13 @@ function isObject(value: unknown): value is Record<string, unknown> {
 export function kimiToolResultTotalBytes(file: string): number {
   let text: string;
   try {
-    text = readFileSync(file, 'utf8');
+    text = readFileSync(file, "utf8");
   } catch {
     return 0;
   }
   let total = 0;
-  for (const line of text.split('\n')) {
-    if (line.trim() === '') {
+  for (const line of text.split("\n")) {
+    if (line.trim() === "") {
       continue;
     }
     let row: unknown;
@@ -172,20 +161,20 @@ export function kimiToolResultTotalBytes(file: string): number {
     } catch {
       continue;
     }
-    if (!isObject(row) || row['type'] !== 'context.append_loop_event') {
+    if (!isObject(row) || row["type"] !== "context.append_loop_event") {
       continue;
     }
-    const event = row['event'];
-    if (!isObject(event) || event['type'] !== 'tool.result') {
+    const event = row["event"];
+    if (!isObject(event) || event["type"] !== "tool.result") {
       continue;
     }
-    const result = event['result'];
+    const result = event["result"];
     if (!isObject(result)) {
       continue;
     }
-    const output = result['output'];
-    if (typeof output === 'string') {
-      total += Buffer.byteLength(output, 'utf8');
+    const output = result["output"];
+    if (typeof output === "string") {
+      total += Buffer.byteLength(output, "utf8");
     }
   }
   return total;
@@ -198,14 +187,12 @@ export function kimiToolResultTotalBytes(file: string): number {
  *  when the file is absent, moe-tab rejects it (TabError), or the trajectory
  *  carries no usage (antigravity). This is the ONLY coding-agent token source:
  *  the normalizers fill the trajectory's metrics, no raw log is re-parsed. */
-export async function estimateTrajectory(
-  path: string,
-): Promise<TokenUsage | null> {
+export async function estimateTrajectory(path: string): Promise<TokenUsage | null> {
   if (!existsSync(path)) {
     return null;
   }
   try {
-    return mergeEstimates([await estimatePath(path, 'atif')]);
+    return mergeEstimates([await estimatePath(path, "atif")]);
   } catch (e) {
     if (e instanceof TabError) {
       return null;
@@ -223,14 +210,12 @@ export async function estimateTrajectory(
  *  `"tab"` — so the old literal is not a cosmetic leftover, it is a
  *  `TabError::UnknownDialect` that the catch below would then swallow as
  *  "no usage". Pinned by test/lab/usage-row-contract.test.ts. */
-export async function estimateUsageSidecar(
-  path: string,
-): Promise<TokenUsage | null> {
+export async function estimateUsageSidecar(path: string): Promise<TokenUsage | null> {
   if (!existsSync(path)) {
     return null;
   }
   try {
-    return mergeEstimates([await estimatePath(path, 'tab')]);
+    return mergeEstimates([await estimatePath(path, "tab")]);
   } catch (e) {
     if (e instanceof TabError) {
       return null;

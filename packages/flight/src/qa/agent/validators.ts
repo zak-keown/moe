@@ -35,11 +35,7 @@ const OBSERVATION_KINDS: readonly ObservationKind[] = [
   "performance",
 ];
 const VERDICT_STATUSES: readonly ReportableStatus[] = ["pass", "fail", "investigate"];
-const CRITERION_VERDICTS: readonly CriterionVerdict["verdict"][] = [
-  "pass",
-  "fail",
-  "unclear",
-];
+const CRITERION_VERDICTS: readonly CriterionVerdict["verdict"][] = ["pass", "fail", "unclear"];
 
 /**
  * Validate the required verdict fields of a `report_result` call:
@@ -355,7 +351,10 @@ export function validateToolArgs(
       }
       const v = args[key];
       if (v === null || v === undefined) {
-        return { ok: false, reason: `${toolName}: required property "${key}" is ${v === null ? "null" : "undefined"}` };
+        return {
+          ok: false,
+          reason: `${toolName}: required property "${key}" is ${v === null ? "null" : "undefined"}`,
+        };
       }
     }
   }

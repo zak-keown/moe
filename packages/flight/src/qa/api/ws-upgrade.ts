@@ -8,9 +8,7 @@
  */
 import { parseRunId, parseRunSetId } from "../util/id.js";
 
-export type UpgradeData =
-  | { runId: string }
-  | { runSetId: string };
+export type UpgradeData = { runId: string } | { runSetId: string };
 
 export interface DecideUpgradeOptions {
   /** When non-empty, the request's `Origin` header must match one of

@@ -1,5 +1,5 @@
-import { textResult, type ToolDefinition, type ToolResult } from "../models/provider.js";
 import type { EvidenceLogger } from "../evidence/logger.js";
+import { type ToolDefinition, type ToolResult, textResult } from "../models/provider.js";
 import {
   WAKE_IDLE_MS_DEFAULT,
   WAKE_IDLE_MS_MIN,
@@ -61,9 +61,7 @@ function parseArgs(args: Record<string, unknown>): ParsedArgs | { error: string 
   return { idleMs, timeoutMs, pollIntervalMs };
 }
 
-export function buildWakeOnIdleLogTool(opts: {
-  manager: WatchManager;
-}): WakeOnIdleLogTool {
+export function buildWakeOnIdleLogTool(opts: { manager: WatchManager }): WakeOnIdleLogTool {
   const definition: ToolDefinition = {
     name: "wake_on_idle_log",
     description: WAKE_ON_IDLE_LOG_DESCRIPTION,

@@ -1,6 +1,6 @@
-import { writeFileSync, mkdirSync } from "fs";
+import { mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
-import type { VerdictResult, Observation } from "../types.js";
+import type { Observation, VerdictResult } from "../types.js";
 
 export function writeResultFiles(outDir: string, result: VerdictResult): void {
   // Write result.json
@@ -15,7 +15,11 @@ export function writeResultFiles(outDir: string, result: VerdictResult): void {
     mkdirSync(issuesDir, { recursive: true });
     for (const [i, obs] of result.observations.entries()) {
       const num = String(i + 1).padStart(3, "0");
-      const slug = obs.description.slice(0, 40).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "");
+      const slug = obs.description
+        .slice(0, 40)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/-+$/, "");
       const filename = `${num}-${obs.kind}-${slug}.md`;
       writeFileSync(join(issuesDir, filename), renderObservationMarkdown(obs, result));
     }

@@ -4,9 +4,9 @@
 // but survive round-trips via `extra`. Pin the version — ATIF has had breaking
 // changes across minors.
 
-export const ATIF_SCHEMA_VERSION = 'ATIF-v1.7' as const;
+export const ATIF_SCHEMA_VERSION = "ATIF-v1.7" as const;
 
-export type AtifSource = 'system' | 'user' | 'agent';
+export type AtifSource = "system" | "user" | "agent";
 
 export interface AtifToolCall {
   tool_call_id: string;

@@ -39,7 +39,11 @@ export class RunBroadcaster {
   closeAll(code: number, reason: string): void {
     for (const set of this.clients.values()) {
       for (const ws of set) {
-        try { ws.close(code, reason); } catch { /* per-client errors ignored */ }
+        try {
+          ws.close(code, reason);
+        } catch {
+          /* per-client errors ignored */
+        }
       }
     }
     this.clients.clear();

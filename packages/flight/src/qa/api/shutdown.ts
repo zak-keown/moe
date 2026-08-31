@@ -15,8 +15,8 @@
  * See spec/plan: docs/history/specs/2026-05-13-shutdown-drain-cancellation-spec.md
  */
 
-import { writeShutdownStubs } from "./shutdown-stub-writer.js";
 import type { CardId, RunId } from "../util/brands.js";
+import { writeShutdownStubs } from "./shutdown-stub-writer.js";
 
 export type ShutdownSignal = "SIGTERM" | "SIGINT" | "SIGHUP";
 
@@ -100,8 +100,19 @@ export interface DrainResult {
 }
 
 export async function drainShutdown(opts: DrainShutdownOptions): Promise<DrainResult> {
-  const { signal, state, broadcaster, setBroadcaster, registry, cancelTokens,
-          resultsRoot, graceMs, postAbortMs, pollMs, log } = opts;
+  const {
+    signal,
+    state,
+    broadcaster,
+    setBroadcaster,
+    registry,
+    cancelTokens,
+    resultsRoot,
+    graceMs,
+    postAbortMs,
+    pollMs,
+    log,
+  } = opts;
 
   state.mark(signal);
   log(`shutdown signaled (${signal}); draining for up to ${graceMs}ms`);
@@ -159,7 +170,7 @@ export async function drainShutdown(opts: DrainShutdownOptions): Promise<DrainRe
   );
   log(
     `wrote ${stubbed} stub result.json file(s) for run(s) that did not exit cleanly ` +
-    `(${stillListed.length - stubbed} already had a result.json)`,
+      `(${stillListed.length - stubbed} already had a result.json)`,
   );
 
   const elapsedMs = Date.now() - startedAt;
@@ -203,10 +214,7 @@ export function installShutdownHandlers(
   signals: ShutdownSignal[],
   onSignal: (signal: ShutdownSignal) => void,
 ): () => void {
-  const handlers: Array<[ShutdownSignal, () => void]> = signals.map((s) => [
-    s,
-    () => onSignal(s),
-  ]);
+  const handlers: Array<[ShutdownSignal, () => void]> = signals.map((s) => [s, () => onSignal(s)]);
   for (const [s, h] of handlers) process.on(s, h);
   return () => {
     for (const [s, h] of handlers) process.removeListener(s, h);

@@ -81,17 +81,16 @@ export interface CaptureToolResult extends ToolResultBase {
   capturePath: string;
 }
 
-export type ToolResult =
-  | TextToolResult
-  | ImageToolResult
-  | ArtifactToolResult
-  | CaptureToolResult;
+export type ToolResult = TextToolResult | ImageToolResult | ArtifactToolResult | CaptureToolResult;
 
 /**
  * Convenience constructor for the dominant `text` variant. Saves
  * every producer from spelling `{ kind: "text", text }`.
  */
-export function textResult(text: string, opts?: { transcriptText?: string | undefined }): TextToolResult {
+export function textResult(
+  text: string,
+  opts?: { transcriptText?: string | undefined },
+): TextToolResult {
   return opts?.transcriptText !== undefined
     ? { kind: "text", text, transcriptText: opts.transcriptText }
     : { kind: "text", text };
@@ -197,11 +196,7 @@ export interface LLMClient {
    * stays attached to the same logical turn instead of inventing a
    * standalone user turn (which Anthropic forbids).
    */
-  toolResultMessages(
-    calls: ToolCall[],
-    results: ToolResult[],
-    extraUserText?: string,
-  ): unknown[];
+  toolResultMessages(calls: ToolCall[], results: ToolResult[], extraUserText?: string): unknown[];
 }
 
 /**

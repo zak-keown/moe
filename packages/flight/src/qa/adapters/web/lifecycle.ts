@@ -1,6 +1,6 @@
 import { rm } from "fs/promises";
-import type { EvidenceLogger, BrowserEventCategory } from "../../evidence/logger.js";
 import type { Viewport } from "../../config.js";
+import type { BrowserEventCategory, EvidenceLogger } from "../../evidence/logger.js";
 import type { ChromeSession } from "./adapter.js";
 import type { PasskeyTool } from "./passkey.js";
 
@@ -56,10 +56,7 @@ export interface WebLifecycleState {
   observerSession: ObserverSession | null;
 }
 
-export async function startWebAdapter(
-  state: WebLifecycleState,
-  url: string,
-): Promise<void> {
+export async function startWebAdapter(state: WebLifecycleState, url: string): Promise<void> {
   if (!state.remote) {
     // Pass the per-run profile name (spec §5.1) so each run gets its
     // own --user-data-dir. Falls back to chrome-ws-lib's default when

@@ -1,6 +1,6 @@
+import { isAdapterType } from "../adapters/adapter.js";
 import type { StoryCard } from "../format/story-card.js";
 import { loadPromptFile } from "./prompts/loader.js";
-import { isAdapterType } from "../adapters/adapter.js";
 
 /**
  * Build the Scenario blocks (Story Card + Acceptance Criteria) for a card.
@@ -16,7 +16,12 @@ export function buildScenarioBlocks(card: StoryCard): string[] {
   // Story Card block — header, identifying lines, and description are
   // one block (sub-lines joined by \n; the description is offset by a
   // blank line within the block).
-  const storyLines: string[] = [`## Story Card`, ``, `**ID:** ${card.id}`, `**Title:** ${card.title}`];
+  const storyLines: string[] = [
+    `## Story Card`,
+    ``,
+    `**ID:** ${card.id}`,
+    `**Title:** ${card.title}`,
+  ];
   if (card.stakeholder) storyLines.push(`**Stakeholder:** ${card.stakeholder}`);
   storyLines.push(``, card.description);
   blocks.push(storyLines.join("\n"));
@@ -41,7 +46,7 @@ export function buildScenarioBlocks(card: StoryCard): string[] {
     blocks.push(critLines.join("\n"));
   } else {
     blocks.push(
-      `This story has no explicit acceptance criteria. You should explore the application freely and report what you find. Judge whether the story's intent is satisfied.`
+      `This story has no explicit acceptance criteria. You should explore the application freely and report what you find. Judge whether the story's intent is satisfied.`,
     );
   }
 
@@ -83,9 +88,7 @@ export function buildSystemPrompt(
 
   // Context section — only when populated. Spec §4.4.
   if (contextTree && contextTree.length > 0) {
-    parts.push(
-      loadPromptFile("context").replace("{{TREE_LISTING}}", contextTree),
-    );
+    parts.push(loadPromptFile("context").replace("{{TREE_LISTING}}", contextTree));
   }
 
   // Shell access section — always emitted; bash tool is always mounted.

@@ -29,7 +29,11 @@ export class RunSetBroadcaster {
     const json = JSON.stringify(message);
     for (const ws of set) {
       if (ws.readyState === 1) {
-        try { ws.send(json); } catch { /* swallow per-client errors */ }
+        try {
+          ws.send(json);
+        } catch {
+          /* swallow per-client errors */
+        }
       }
     }
   }
@@ -40,7 +44,11 @@ export class RunSetBroadcaster {
   closeAll(code: number, reason: string): void {
     for (const set of this.clients.values()) {
       for (const ws of set) {
-        try { ws.close(code, reason); } catch { /* per-client errors ignored */ }
+        try {
+          ws.close(code, reason);
+        } catch {
+          /* per-client errors ignored */
+        }
       }
     }
     this.clients.clear();

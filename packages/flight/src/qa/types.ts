@@ -22,8 +22,8 @@
 //     missing startedAt at stub time".
 export const RESULT_SCHEMA_VERSION = 5;
 
-import type { RunSetCtx } from "./runs/run-set-types.js";
 import type { ResolvedRunConfig, Viewport } from "./config.js";
+import type { RunSetCtx } from "./runs/run-set-types.js";
 import type { CardId, RunId } from "./util/brands.js";
 
 export interface RunConfigSnapshot {
@@ -44,13 +44,7 @@ export interface RunConfigSnapshot {
 
 export type VerdictStatus = "pass" | "fail" | "investigate" | "errored";
 
-export type ObservationKind =
-  | "bug"
-  | "ux"
-  | "typo"
-  | "suggestion"
-  | "a11y"
-  | "performance";
+export type ObservationKind = "bug" | "ux" | "typo" | "suggestion" | "a11y" | "performance";
 
 export interface Observation {
   kind: ObservationKind;

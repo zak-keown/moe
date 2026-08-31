@@ -14,9 +14,8 @@ export interface ReflectableToolCall {
 
 function renderValue(value: unknown): string {
   if (typeof value === "string") {
-    const truncated = value.length > MAX_ARG_VALUE_LEN
-      ? value.slice(0, MAX_ARG_VALUE_LEN) + "…"
-      : value;
+    const truncated =
+      value.length > MAX_ARG_VALUE_LEN ? value.slice(0, MAX_ARG_VALUE_LEN) + "…" : value;
     return JSON.stringify(truncated);
   }
   if (value === null || typeof value === "number" || typeof value === "boolean") {
@@ -46,9 +45,7 @@ export function formatToolCall(call: ReflectableToolCall): string {
 export function renderTrace(calls: ReflectableToolCall[]): string {
   if (calls.length === 0) return "  (no state-changing actions taken yet)";
   const window = calls.slice(-MAX_TRACE_ENTRIES);
-  return window
-    .map((c, i) => `  ${i + 1}. ${formatToolCall(c)}`)
-    .join("\n");
+  return window.map((c, i) => `  ${i + 1}. ${formatToolCall(c)}`).join("\n");
 }
 
 // Single reminder text used at every checkpoint. The text is intentionally

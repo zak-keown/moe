@@ -95,10 +95,7 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  const verbose = isVerboseRequest(
-    process.env as Record<string, string | undefined>,
-    process.argv,
-  );
+  const verbose = isVerboseRequest(process.env as Record<string, string | undefined>, process.argv);
   const isTty = Boolean(process.stderr.isTTY);
   process.stderr.write(formatCliError(err, { verbose, isTty }));
   process.exit(1);

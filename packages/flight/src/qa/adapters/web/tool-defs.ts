@@ -88,8 +88,7 @@ export function webToolDefinitions(): ToolDefinition[] {
     },
     {
       name: "press",
-      description:
-        "Press a special key (Enter, Tab, Escape, ArrowDown, etc.)",
+      description: "Press a special key (Enter, Tab, Escape, ArrowDown, etc.)",
       parameters: {
         type: "object",
         properties: {
@@ -312,8 +311,7 @@ export function webToolDefinitions(): ToolDefinition[] {
         properties: {
           selector: {
             type: "string",
-            description:
-              "CSS selector to extract from. Omit for full page markdown.",
+            description: "CSS selector to extract from. Omit for full page markdown.",
           },
         },
       },
@@ -368,8 +366,7 @@ export function webToolDefinitions(): ToolDefinition[] {
           },
           return_screenshot: {
             type: "boolean",
-            description:
-              "Screenshot the new tab after it loads.",
+            description: "Screenshot the new tab after it loads.",
           },
         },
         required: ["url"],
@@ -387,8 +384,7 @@ export function webToolDefinitions(): ToolDefinition[] {
         properties: {
           return_screenshot: {
             type: "boolean",
-            description:
-              "Screenshot the now-active tab after closing.",
+            description: "Screenshot the now-active tab after closing.",
           },
         },
       },

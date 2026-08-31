@@ -136,7 +136,9 @@ export async function qaMain(argv: string[]): Promise<void> {
       const { RunSetBroadcaster } = await import("./api/run-set-broadcaster.js");
       const { CancelTokenRegistry } = await import("./api/run-cancel.js");
       const { handleWsOpen, handleSetWsOpen } = await import("./api/ws-handlers.js");
-      const { ShutdownState, drainShutdown, installShutdownHandlers } = await import("./api/shutdown.js");
+      const { ShutdownState, drainShutdown, installShutdownHandlers } = await import(
+        "./api/shutdown.js"
+      );
       const { decideUpgrade } = await import("./api/ws-upgrade.js");
       const { flightPath } = await import("./paths.js");
       const { serve } = await import("./runtime/serve.js");
@@ -153,7 +155,15 @@ export async function qaMain(argv: string[]): Promise<void> {
       const setBroadcaster = new RunSetBroadcaster();
       const cancelTokens = new CancelTokenRegistry();
       const shutdownState = new ShutdownState();
-      const app = createApp(config, uiDir, broadcaster, registry, setBroadcaster, cancelTokens, shutdownState);
+      const app = createApp(
+        config,
+        uiDir,
+        broadcaster,
+        registry,
+        setBroadcaster,
+        cancelTokens,
+        shutdownState,
+      );
       const port = config.port;
       console.error(`moe-flight server listening on port ${port}`);
       type WsData = { runId?: string | undefined; runSetId?: string | undefined };

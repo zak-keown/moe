@@ -1,5 +1,5 @@
 import { readFileSync, statSync } from "fs";
-import { textResult, type ToolDefinition, type ToolResult } from "../models/provider.js";
+import { type ToolDefinition, type ToolResult, textResult } from "../models/provider.js";
 import { contextRootIsPopulated, resolveInside } from "../paths.js";
 
 // The `read` tool is the agent-facing primitive for pulling file contents
@@ -27,8 +27,7 @@ const TOOL_DESCRIPTION =
   "names a user and you need their credentials, character notes, or any " +
   "other file the story references.";
 
-const errorMessage = (err: unknown) =>
-  err instanceof Error ? err.message : String(err);
+const errorMessage = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
 // UTF-8 decode sanity check: if the file contains NUL bytes or any
 // sequence that would have been replaced by U+FFFD on a strict decode,

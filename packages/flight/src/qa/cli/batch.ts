@@ -1,16 +1,16 @@
 import { basename, extname } from "path";
 import type { AppConfig } from "../config.js";
-import type { EvidenceLogger, EventObserver } from "../evidence/logger.js";
+import type { EventObserver, EvidenceLogger } from "../evidence/logger.js";
 import type { LLMClient } from "../models/provider.js";
 import { flightPath } from "../paths.js";
-import { runOne, type RunOneOptions, type RunOneSummary } from "./run-one.js";
-import { safeEmitIndexHtml } from "./auto-emit-html.js";
 import { runRunSet } from "../runs/run-set.js";
-import { installSigintHandler } from "./signals.js";
 import type { RunSetCtx } from "../runs/run-set-types.js";
+import { asCardId, type CardId } from "../util/brands.js";
+import { safeEmitIndexHtml } from "./auto-emit-html.js";
+import { type RunOneOptions, type RunOneSummary, runOne } from "./run-one.js";
+import { installSigintHandler } from "./signals.js";
 import { BatchTableRenderer } from "./stream/batch-table.js";
 import type { WriteSink } from "./stream/jsonl.js";
-import { asCardId, type CardId } from "../util/brands.js";
 
 export interface BatchOptions {
   scenarioPaths: string[];
@@ -52,18 +52,13 @@ function makeBatchObserver(
       if (t === "run_start") {
         currentRunId = String((ev as any).runId);
         if (table) {
-          table.setRunning(
-            cardId,
-            currentRunId,
-            attemptNumber,
-            passes,
-          );
+          table.setRunning(cardId, currentRunId, attemptNumber, passes);
         }
       } else if (t === "llm_response") {
         if (table) table.onTurn(cardId, Number((ev as any).turn ?? 0), attemptNumber);
       } else if (t === "run_end") {
         const status = String((ev as any).status ?? "fail") as "pass" | "fail" | "investigate";
-        const turns = Number(((ev as any).usage?.turns) ?? 0);
+        const turns = Number((ev as any).usage?.turns ?? 0);
         if (table) table.setDone(cardId, status, turns, attemptNumber);
       }
 
@@ -76,10 +71,7 @@ function makeBatchObserver(
   };
 }
 
-export async function runBatch(
-  opts: BatchOptions,
-  runOneImpl: RunOneFn = runOne,
-): Promise<number> {
+export async function runBatch(opts: BatchOptions, runOneImpl: RunOneFn = runOne): Promise<number> {
   const cards = opts.scenarioPaths.map((p) => ({ scenarioPath: p, id: cardIdForPath(p) }));
   const resultsRoot = flightPath(opts.config.projectRoot, opts.config.stateDirName, "results");
   const useTable = !opts.silent && opts.format !== "jsonl";
@@ -188,7 +180,10 @@ export async function runBatch(
     }
     if (table) table.setQueued(c.id);
 
-    let pass = 0, fail = 0, investigate = 0, errored = 0;
+    let pass = 0,
+      fail = 0,
+      investigate = 0,
+      errored = 0;
 
     let currentRunId: string | null = null;
 
@@ -204,7 +199,7 @@ export async function runBatch(
           if (table) table.onTurn(c.id, Number((ev as any).turn ?? 0));
         } else if (t === "run_end") {
           const status = String((ev as any).status ?? "fail") as "pass" | "fail" | "investigate";
-          const turns = Number(((ev as any).usage?.turns) ?? 0);
+          const turns = Number((ev as any).usage?.turns ?? 0);
           if (table) table.setDone(c.id, status, turns);
         }
 
@@ -228,10 +223,18 @@ export async function runBatch(
       await safeEmitIndexHtml(summary.outDir);
       const s = summary.result.status;
       switch (s) {
-        case "pass": pass++; break;
-        case "fail": fail++; break;
-        case "investigate": investigate++; break;
-        case "errored": errored++; break;
+        case "pass":
+          pass++;
+          break;
+        case "fail":
+          fail++;
+          break;
+        case "investigate":
+          investigate++;
+          break;
+        case "errored":
+          errored++;
+          break;
         default: {
           const _exhaustive: never = s;
           throw new Error(`unexpected VerdictStatus: ${JSON.stringify(_exhaustive)}`);
@@ -252,6 +255,6 @@ export async function runBatch(
       console.error(`results: ${resultsRoot}`);
     }
 
-    return (fail + investigate + errored) === 0 ? 0 : 1;
+    return fail + investigate + errored === 0 ? 0 : 1;
   }
 }

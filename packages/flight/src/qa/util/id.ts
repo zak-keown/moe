@@ -44,7 +44,10 @@ export function makeRunSetId(kind: "single" | "batch"): RunSetId {
  * No hyphens, no colons — safe in path segments and Chrome profile names.
  */
 function isoBasicNow(): string {
-  return new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  return new Date()
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}Z$/, "Z");
 }
 
 /**

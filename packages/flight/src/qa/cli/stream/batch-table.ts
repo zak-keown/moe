@@ -1,8 +1,8 @@
-import type { WriteSink } from "./jsonl.js";
-import type { VerdictStatus } from "../../types.js";
-import { deriveBucket, median } from "../../runs/aggregate.js";
 import type { ByStatus } from "../../runs/aggregate.js";
+import { deriveBucket, median } from "../../runs/aggregate.js";
 import type { SetBucket } from "../../runs/run-set-types.js";
+import type { VerdictStatus } from "../../types.js";
+import type { WriteSink } from "./jsonl.js";
 
 interface CardRow {
   cardId: string;
@@ -14,7 +14,7 @@ interface CardRow {
   finalStatus: VerdictStatus | null;
   errorTurn: number | null;
   errorMessage: string | null;
-  startedAt: number;        // ms; 0 until setRunning
+  startedAt: number; // ms; 0 until setRunning
   finishedAt: number | null; // ms
 }
 
@@ -34,17 +34,17 @@ const SPINNER_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏";
 
 // Inline ANSI byte sequences. Tiny + nowhere else in the tree to import them
 // from; `pretty.ts` uses the same shape inline.
-const ERASE_LINE = "\r\x1b[2K";              // CR + erase entire line
+const ERASE_LINE = "\r\x1b[2K"; // CR + erase entire line
 const CURSOR_UP_AND_ERASE = "\x1b[1A\r\x1b[2K"; // up one + CR + erase
 
 const C = {
   reset: "\x1b[0m",
-  dim:   "\x1b[2m",
-  bold:  "\x1b[1m",
+  dim: "\x1b[2m",
+  bold: "\x1b[1m",
   green: "\x1b[32m",
-  yellow:"\x1b[33m",
-  red:   "\x1b[31m",
-  cyan:  "\x1b[36m",
+  yellow: "\x1b[33m",
+  red: "\x1b[31m",
+  cyan: "\x1b[36m",
 };
 
 export class BatchTableRenderer {
@@ -54,7 +54,7 @@ export class BatchTableRenderer {
   // TTY-mode state
   private headerWritten = false;
   private activeKey: string | null = null;
-  private cardIndex = 0;            // 1-indexed; the currently-running card
+  private cardIndex = 0; // 1-indexed; the currently-running card
   private spinnerStep = 0;
   private spinnerTimer: ReturnType<typeof setInterval> | null = null;
   // True when setRunning wrote a "\n" above the current spinner — meaning
@@ -64,7 +64,10 @@ export class BatchTableRenderer {
   // and should be preserved.
   private pendingBlankAboveSpinner = false;
 
-  constructor(private sink: WriteSink, private opts: BatchTableOptions) {}
+  constructor(
+    private sink: WriteSink,
+    private opts: BatchTableOptions,
+  ) {}
 
   private rowKey(cardId: string, attemptNumber = 1): string {
     return `${cardId}#${attemptNumber}`;
@@ -185,7 +188,10 @@ export class BatchTableRenderer {
       this.pendingBlankAboveSpinner = false;
     }
 
-    let pass = 0, fail = 0, investigate = 0, errored = 0;
+    let pass = 0,
+      fail = 0,
+      investigate = 0,
+      errored = 0;
     for (const key of this.order) {
       const row = this.rows.get(key);
       if (!row) continue;
@@ -239,9 +245,7 @@ export class BatchTableRenderer {
     const frame = SPINNER_FRAMES[this.spinnerStep % SPINNER_FRAMES.length];
     const idx = this.cardIndex;
     const total = this.order.length;
-    const turn = row.turn === 0 && row.state === "running"
-      ? `starting…`
-      : `turn ${row.turn}`;
+    const turn = row.turn === 0 && row.state === "running" ? `starting…` : `turn ${row.turn}`;
     this.sink.write(
       `${ERASE_LINE}${c.bold}${frame}${c.reset} ${c.dim}[${idx}/${total}]${c.reset} ${row.cardId}   ${c.dim}${turn}${c.reset}`,
     );
@@ -267,18 +271,18 @@ export class BatchTableRenderer {
     // line). Either way, writing the result here lands it flush.
 
     const c = this.colors();
-    const elapsedSec = row.finishedAt && row.startedAt
-      ? ((row.finishedAt - row.startedAt) / 1000).toFixed(1)
-      : "—";
-    const turnsLabel = row.state === "errored"
-      ? row.errorTurn === null ? "before start" : `turn ${row.errorTurn}`
-      : `${row.turn} turns`;
+    const elapsedSec =
+      row.finishedAt && row.startedAt ? ((row.finishedAt - row.startedAt) / 1000).toFixed(1) : "—";
+    const turnsLabel =
+      row.state === "errored"
+        ? row.errorTurn === null
+          ? "before start"
+          : `turn ${row.errorTurn}`
+        : `${row.turn} turns`;
 
     const glyph = this.glyphFor(row);
     const status = this.statusFor(row);
-    const runHint = row.runId
-      ? `${this.opts.resultsRoot}/${row.runId}/`
-      : "—";
+    const runHint = row.runId ? `${this.opts.resultsRoot}/${row.runId}/` : "—";
 
     this.sink.write(
       `  ${glyph} ${row.cardId}   ${status}   ${c.dim}${turnsLabel} · ${elapsedSec}s${c.reset}\n`,
@@ -291,7 +295,9 @@ export class BatchTableRenderer {
     // will correctly account for it when positioning its spinner.
     const rollup = this.rollupFor(row.cardId);
     if (rollup !== null) {
-      this.sink.write(`        ${c.dim}→${c.reset} ${rollup.cardStatus} · median ${rollup.medianTurns} turns\n`);
+      this.sink.write(
+        `        ${c.dim}→${c.reset} ${rollup.cardStatus} · median ${rollup.medianTurns} turns\n`,
+      );
     }
   }
 
@@ -336,18 +342,25 @@ export class BatchTableRenderer {
   private emitRollupNonTTY(cardId: string): void {
     const rollup = this.rollupFor(cardId);
     if (!rollup) return;
-    this.sink.write(`${cardId}: rollup ${rollup.cardStatus} (median ${rollup.medianTurns} turns)\n`);
+    this.sink.write(
+      `${cardId}: rollup ${rollup.cardStatus} (median ${rollup.medianTurns} turns)\n`,
+    );
   }
 
   private glyphFor(row: CardRow): string {
     const c = this.colors();
     if (row.state === "errored") return `${c.red}✗${c.reset}`;
     switch (row.finalStatus) {
-      case "pass":        return `${c.green}✓${c.reset}`;
-      case "fail":        return `${c.red}✗${c.reset}`;
-      case "investigate": return `${c.yellow}!${c.reset}`;
-      case "errored":     return `${c.red}✗${c.reset}`;
-      default:            return ` `;
+      case "pass":
+        return `${c.green}✓${c.reset}`;
+      case "fail":
+        return `${c.red}✗${c.reset}`;
+      case "investigate":
+        return `${c.yellow}!${c.reset}`;
+      case "errored":
+        return `${c.red}✗${c.reset}`;
+      default:
+        return ` `;
     }
   }
 
@@ -358,15 +371,20 @@ export class BatchTableRenderer {
       return `${c.red}error${c.reset}${c.dim}${msg}${c.reset}`;
     }
     switch (row.finalStatus) {
-      case "pass":        return `${c.green}pass${c.reset}`;
-      case "fail":        return `${c.red}fail${c.reset}`;
-      case "investigate": return `${c.yellow}investigate${c.reset}`;
+      case "pass":
+        return `${c.green}pass${c.reset}`;
+      case "fail":
+        return `${c.red}fail${c.reset}`;
+      case "investigate":
+        return `${c.yellow}investigate${c.reset}`;
       // PRI-1507: distinguish v5 errored (agent returned errored result —
       // typically shutdown interrupted) from state=errored (executor
       // threw). Visually similar (red), but labeled differently so an
       // operator reading the table can tell them apart.
-      case "errored":     return `${c.red}interrupted${c.reset}`;
-      default:            return "";
+      case "errored":
+        return `${c.red}interrupted${c.reset}`;
+      default:
+        return "";
     }
   }
 

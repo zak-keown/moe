@@ -1,7 +1,4 @@
-import {
-  spawn as nodeSpawn,
-  spawnSync as nodeSpawnSync,
-} from "node:child_process";
+import { spawn as nodeSpawn, spawnSync as nodeSpawnSync } from "node:child_process";
 import { Readable } from "node:stream";
 
 /**
@@ -88,25 +85,36 @@ function spawnViaNode(argv: string[], options?: SpawnOptions): SpawnedProcess {
     }
     proc.once("exit", (code, _signal) => resolve(code ?? -1));
   });
-  return withTimeout({
-    pid: proc.pid,
-    stdin: {
-      write: (d) => { proc.stdin!.write(d); },
-      // Node's child_process stdin flushes synchronously to the kernel
-      // pipe on each write call; there's no equivalent of FileSink.flush.
-      flush: () => {},
+  return withTimeout(
+    {
+      pid: proc.pid,
+      stdin: {
+        write: (d) => {
+          proc.stdin!.write(d);
+        },
+        // Node's child_process stdin flushes synchronously to the kernel
+        // pipe on each write call; there's no equivalent of FileSink.flush.
+        flush: () => {},
+      },
+      stdout: Readable.toWeb(proc.stdout) as unknown as ReadableStream<Uint8Array>,
+      stderr: Readable.toWeb(proc.stderr) as unknown as ReadableStream<Uint8Array>,
+      kill: () => {
+        proc.kill();
+      },
+      exited,
     },
-    stdout: Readable.toWeb(proc.stdout) as unknown as ReadableStream<Uint8Array>,
-    stderr: Readable.toWeb(proc.stderr) as unknown as ReadableStream<Uint8Array>,
-    kill: () => { proc.kill(); },
-    exited,
-  }, options?.timeout_ms);
+    options?.timeout_ms,
+  );
 }
 
 function withTimeout(proc: SpawnedProcess, timeoutMs: number | undefined): SpawnedProcess {
   if (!timeoutMs) return proc;
   const handle = setTimeout(() => {
-    try { proc.kill(); } catch { /* already dead */ }
+    try {
+      proc.kill();
+    } catch {
+      /* already dead */
+    }
   }, timeoutMs);
   proc.exited.finally(() => {
     clearTimeout(handle);
@@ -118,7 +126,11 @@ function spawnSyncViaNode(argv: string[]): SpawnSyncResult {
   const r = nodeSpawnSync(argv[0]!, argv.slice(1));
   return {
     exitCode: r.status,
-    stdout: r.stdout ? new Uint8Array(r.stdout.buffer, r.stdout.byteOffset, r.stdout.byteLength) : new Uint8Array(),
-    stderr: r.stderr ? new Uint8Array(r.stderr.buffer, r.stderr.byteOffset, r.stderr.byteLength) : new Uint8Array(),
+    stdout: r.stdout
+      ? new Uint8Array(r.stdout.buffer, r.stdout.byteOffset, r.stdout.byteLength)
+      : new Uint8Array(),
+    stderr: r.stderr
+      ? new Uint8Array(r.stderr.buffer, r.stderr.byteOffset, r.stderr.byteLength)
+      : new Uint8Array(),
   };
 }

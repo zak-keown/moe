@@ -1,6 +1,6 @@
 import { readFileSync, unlinkSync } from "fs";
-import { join } from "path";
 import { tmpdir } from "os";
+import { join } from "path";
 import type { EvidenceLogger } from "../../../evidence/logger.js";
 import type { ChromeSession, ScreenshotResult } from "../adapter.js";
 
@@ -54,9 +54,7 @@ export function buildReturnScreenshot(opts: {
       }
       const reason = err instanceof Error ? err.message : String(err);
       const elapsed = Date.now() - t0;
-      console.warn(
-        `[moe-flight] return_screenshot skipped (${toolName}, ${elapsed}ms): ${reason}`,
-      );
+      console.warn(`[moe-flight] return_screenshot skipped (${toolName}, ${elapsed}ms): ${reason}`);
       return { screenshotSkipped: reason };
     }
   };

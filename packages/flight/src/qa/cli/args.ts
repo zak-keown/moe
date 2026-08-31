@@ -1,5 +1,5 @@
+import { ADAPTER_TYPES, type AdapterType, isAdapterType } from "../adapters/adapter.js";
 import type { CliArgsInput } from "../config.js";
-import { ADAPTER_TYPES, isAdapterType, type AdapterType } from "../adapters/adapter.js";
 
 /**
  * parseInt("abc", 10) returns NaN, which propagates through loadConfig
@@ -27,7 +27,9 @@ function parseBoolFlag(raw: string | undefined, label: string): boolean | undefi
   const v = raw.trim().toLowerCase();
   if (v === "true" || v === "1" || v === "yes" || v === "on") return true;
   if (v === "false" || v === "0" || v === "no" || v === "off") return false;
-  throw new Error(`Invalid ${label} value "${raw}": expected a boolean (true/false, 1/0, yes/no, on/off)`);
+  throw new Error(
+    `Invalid ${label} value "${raw}": expected a boolean (true/false, 1/0, yes/no, on/off)`,
+  );
 }
 
 /**
@@ -45,9 +47,21 @@ function parsePasses(raw: string | undefined): number {
 }
 
 const RUN_ALLOWED = new Set([
-  "target", "out", "adapter", "model", "chrome", "project-dir", "state-dir",
-  "max-time", "reflection-interval", "viewport", "save-screencast",
-  "silent", "format", "no-color", "passes",
+  "target",
+  "out",
+  "adapter",
+  "model",
+  "chrome",
+  "project-dir",
+  "state-dir",
+  "max-time",
+  "reflection-interval",
+  "viewport",
+  "save-screencast",
+  "silent",
+  "format",
+  "no-color",
+  "passes",
   "project-prompt",
   "show-prompt-and-exit",
 ]);
@@ -55,13 +69,38 @@ const RUN_ALLOWED = new Set([
 // batch-level results dir; each card writes to its default per-run dir.
 // `--project-prompt` and `--show-prompt-and-exit` are excluded; batch
 // may get them in a future task.
-const BATCH_ALLOWED = new Set([...RUN_ALLOWED].filter(
-  (f) => f !== "out" && f !== "project-prompt" && f !== "show-prompt-and-exit",
-));
+const BATCH_ALLOWED = new Set(
+  [...RUN_ALLOWED].filter(
+    (f) => f !== "out" && f !== "project-prompt" && f !== "show-prompt-and-exit",
+  ),
+);
 const VALIDATE_ALLOWED = new Set<string>([]);
 const FANOUT_ALLOWED = new Set(["out", "model", "from-result"]);
-const SERVE_ALLOWED = new Set(["port", "project-dir", "state-dir", "chrome", "target", "model", "max-time", "reflection-interval", "viewport", "save-screencast"]);
-const CONFIG_ALLOWED = new Set(["json", "project-dir", "state-dir", "port", "chrome", "target", "model", "max-time", "reflection-interval", "viewport", "save-screencast"]);
+const SERVE_ALLOWED = new Set([
+  "port",
+  "project-dir",
+  "state-dir",
+  "chrome",
+  "target",
+  "model",
+  "max-time",
+  "reflection-interval",
+  "viewport",
+  "save-screencast",
+]);
+const CONFIG_ALLOWED = new Set([
+  "json",
+  "project-dir",
+  "state-dir",
+  "port",
+  "chrome",
+  "target",
+  "model",
+  "max-time",
+  "reflection-interval",
+  "viewport",
+  "save-screencast",
+]);
 const ASK_ALLOWED = new Set(["turn", "model", "project-dir", "state-dir"]);
 const RENDER_ALLOWED = new Set(["project-dir", "state-dir"]);
 
@@ -72,7 +111,10 @@ function rejectUnknownFlags(
 ): void {
   const unknown = Object.keys(flags).filter((k) => !allowed.has(k));
   if (unknown.length > 0) {
-    const validList = [...allowed].sort().map((f) => `--${f}`).join(", ");
+    const validList = [...allowed]
+      .sort()
+      .map((f) => `--${f}`)
+      .join(", ");
     throw new Error(
       `Unknown flag${unknown.length > 1 ? "s" : ""} for "moe-flight ${command}": ${unknown.map((f) => `--${f}`).join(", ")}\n\nValid flags: ${validList || "(none)"}`,
     );
@@ -143,7 +185,15 @@ export interface RenderArgs {
   cli: CliArgsInput;
 }
 
-export type ParsedArgs = RunArgs | BatchArgs | ValidateArgs | FanoutArgs | ServeArgs | ConfigArgs | AskArgs | RenderArgs;
+export type ParsedArgs =
+  | RunArgs
+  | BatchArgs
+  | ValidateArgs
+  | FanoutArgs
+  | ServeArgs
+  | ConfigArgs
+  | AskArgs
+  | RenderArgs;
 
 export function parseArgs(argv: string[]): ParsedArgs {
   // Skip "bun" and script name. Strip `--verbose` here so it works on
@@ -212,9 +262,7 @@ function parseAskArgs(args: string[]): AskArgs {
   rejectUnknownFlags(flags, ASK_ALLOWED, "ask");
   // parseFlags accumulates --model into flags.model (string[])
   const modelOverride =
-    Array.isArray(flags.model) && flags.model.length > 0
-      ? flags.model[0]
-      : undefined;
+    Array.isArray(flags.model) && flags.model.length > 0 ? flags.model[0] : undefined;
   return {
     command: "ask",
     runId: positional,
@@ -301,11 +349,16 @@ function parseBatchArgs(args: string[]): BatchArgs {
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === undefined) continue;
-    if (a.startsWith("--")) { i++; continue; }
+    if (a.startsWith("--")) {
+      i++;
+      continue;
+    }
     positionals.push(a);
   }
   if (positionals.length === 0) {
-    throw new Error("Missing card paths\n\nUsage: moe-flight qa batch <story.md> [more.md ...] --target <url>\n\nAt least one card path is required.");
+    throw new Error(
+      "Missing card paths\n\nUsage: moe-flight qa batch <story.md> [more.md ...] --target <url>\n\nAt least one card path is required.",
+    );
   }
 
   const flags = parseFlags(args);
@@ -376,7 +429,9 @@ function parseFanoutArgs(args: string[]): FanoutArgs {
   const resultDir = flags["from-result"];
 
   if (!positional && !resultDir) {
-    throw new Error("Missing story path or --from-result\n\nUsage: moe-flight qa fanout <story.md> | --from-result <result-dir>");
+    throw new Error(
+      "Missing story path or --from-result\n\nUsage: moe-flight qa fanout <story.md> | --from-result <result-dir>",
+    );
   }
 
   return {

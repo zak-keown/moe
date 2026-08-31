@@ -1,8 +1,8 @@
-import { isAbsolute, resolve as resolvePath } from "node:path";
 import { statSync } from "node:fs";
-import { ADAPTER_TYPES, isAdapterType, type AdapterType } from "./adapters/adapter.js";
+import { isAbsolute, resolve as resolvePath } from "node:path";
+import { ADAPTER_TYPES, type AdapterType, isAdapterType } from "./adapters/adapter.js";
+import { resolveEnvOnlySetting, resolveSetting } from "./config-helpers.js";
 import { parseDuration } from "./util/parse-duration.js";
-import { resolveSetting, resolveEnvOnlySetting } from "./config-helpers.js";
 
 export interface ChromeEndpoint {
   host: string;
@@ -194,7 +194,15 @@ export interface ResolvedRunConfig {
   credentialResolver?: CredentialResolverConfig | undefined;
 }
 
-const RUN_BODY_ALLOWED = new Set(["target", "model", "chrome", "adapter", "viewport", "saveScreencast", "passes"]);
+const RUN_BODY_ALLOWED = new Set([
+  "target",
+  "model",
+  "chrome",
+  "adapter",
+  "viewport",
+  "saveScreencast",
+  "passes",
+]);
 export const DEFAULT_BUDGET_MS = 300_000;
 export const DEFAULT_REFLECTION_INTERVAL = 10;
 export const DEFAULT_VIEWPORT: Viewport = { width: 1440, height: 900 };
@@ -244,9 +252,7 @@ export function validateRunBody(body: unknown, _opts: Record<string, never> = {}
     throw new Error("run request body: target is required and must be a non-empty string");
   }
   if (bodyObj.adapter !== undefined && !isAdapterType(bodyObj.adapter)) {
-    throw new Error(
-      `run request body: adapter must be one of: ${ADAPTER_TYPES.join(", ")}`,
-    );
+    throw new Error(`run request body: adapter must be one of: ${ADAPTER_TYPES.join(", ")}`);
   }
   let viewport: Viewport | undefined;
   if (bodyObj.viewport !== undefined) {
@@ -271,7 +277,11 @@ export function validateRunBody(body: unknown, _opts: Record<string, never> = {}
   }
   let passes: number | undefined;
   if (bodyObj.passes !== undefined) {
-    if (!Number.isInteger(bodyObj.passes) || (bodyObj.passes as number) < 1 || (bodyObj.passes as number) > 50) {
+    if (
+      !Number.isInteger(bodyObj.passes) ||
+      (bodyObj.passes as number) < 1 ||
+      (bodyObj.passes as number) > 50
+    ) {
       throw new Error("passes must be an integer in [1, 50]");
     }
     passes = bodyObj.passes as number;
@@ -372,13 +382,12 @@ function parseBoolEnv(raw: string, label: string): boolean {
   const v = raw.trim().toLowerCase();
   if (v === "1" || v === "true" || v === "yes" || v === "on") return true;
   if (v === "0" || v === "false" || v === "no" || v === "off" || v === "") return false;
-  throw new Error(`Invalid ${label} "${raw}": expected a boolean (1/0, true/false, yes/no, on/off)`);
+  throw new Error(
+    `Invalid ${label} "${raw}": expected a boolean (1/0, true/false, yes/no, on/off)`,
+  );
 }
 
-function resolveCredentialResolver(
-  rawPath: string,
-  projectRoot: string,
-): string {
+function resolveCredentialResolver(rawPath: string, projectRoot: string): string {
   const absolute = isAbsolute(rawPath) ? rawPath : resolvePath(projectRoot, rawPath);
   let stat;
   try {
@@ -416,70 +425,106 @@ export function requireLlmCapable(config: AppConfig): void {
   if (!config.apiKeys.anthropic && !config.apiKeys.openai) {
     throw new Error(
       "No LLM provider configured. Set CLAUDE_CODE_OAUTH_TOKEN (a Claude " +
-      "subscription token from `claude setup-token`) or ANTHROPIC_API_KEY (for " +
-      "Claude models), or OPENAI_API_KEY (for GPT models). Run 'moe-flight qa config' " +
-      "to see current state.",
+        "subscription token from `claude setup-token`) or ANTHROPIC_API_KEY (for " +
+        "Claude models), or OPENAI_API_KEY (for GPT models). Run 'moe-flight qa config' " +
+        "to see current state.",
     );
   }
 }
 
 export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfig {
   // projectRoot
-  const projectRootR = resolveSetting({
-    default: DEFAULT_PROJECT_ROOT,
-    env: { name: "MOE_FLIGHT_PROJECT_ROOT", parse: (s) => s },
-    arg: { value: args.projectRoot },
-  }, env);
+  const projectRootR = resolveSetting(
+    {
+      default: DEFAULT_PROJECT_ROOT,
+      env: { name: "MOE_FLIGHT_PROJECT_ROOT", parse: (s) => s },
+      arg: { value: args.projectRoot },
+    },
+    env,
+  );
   const projectRoot = projectRootR.value;
   const projectRootSource = projectRootR.source;
 
   // stateDirName — leaf name of the per-project state directory under
   // projectRoot. Single segment only (validated). Default ".moe-flight".
-  const stateDirNameR = resolveSetting({
-    default: DEFAULT_STATE_DIR_NAME,
-    env: { name: "MOE_FLIGHT_STATE_DIR", parse: (s) => parseStateDirName(s, "MOE_FLIGHT_STATE_DIR") },
-    arg: { value: args.stateDirName !== undefined ? parseStateDirName(args.stateDirName, "--state-dir") : undefined },
-  }, env);
+  const stateDirNameR = resolveSetting(
+    {
+      default: DEFAULT_STATE_DIR_NAME,
+      env: {
+        name: "MOE_FLIGHT_STATE_DIR",
+        parse: (s) => parseStateDirName(s, "MOE_FLIGHT_STATE_DIR"),
+      },
+      arg: {
+        value:
+          args.stateDirName !== undefined
+            ? parseStateDirName(args.stateDirName, "--state-dir")
+            : undefined,
+      },
+    },
+    env,
+  );
   const stateDirName = stateDirNameR.value;
   const stateDirNameSource = stateDirNameR.source;
 
   // port
-  const portR = resolveSetting({
-    default: DEFAULT_PORT,
-    env: { name: "MOE_FLIGHT_PORT", parse: (s) => parsePortNumber(s, "MOE_FLIGHT_PORT") },
-    arg: { value: args.port },
-  }, env);
+  const portR = resolveSetting(
+    {
+      default: DEFAULT_PORT,
+      env: { name: "MOE_FLIGHT_PORT", parse: (s) => parsePortNumber(s, "MOE_FLIGHT_PORT") },
+      arg: { value: args.port },
+    },
+    env,
+  );
   const port = portR.value;
   const portSource = portR.source;
 
   // defaultChrome — parser is non-trivial (parseChromeEndpoint).
   // sources.defaultChrome === "default" is load-bearing: mergeRunConfig
   // reads it to decide whether to auto-launch Chrome.
-  const chromeR = resolveSetting({
-    default: DEFAULT_CHROME,
-    env: { name: "MOE_FLIGHT_CHROME", parse: (s) => parseChromeEndpoint(s, "MOE_FLIGHT_CHROME") },
-    arg: { value: args.chrome !== undefined ? parseChromeEndpoint(args.chrome, "--chrome") : undefined },
-  }, env);
+  const chromeR = resolveSetting(
+    {
+      default: DEFAULT_CHROME,
+      env: { name: "MOE_FLIGHT_CHROME", parse: (s) => parseChromeEndpoint(s, "MOE_FLIGHT_CHROME") },
+      arg: {
+        value: args.chrome !== undefined ? parseChromeEndpoint(args.chrome, "--chrome") : undefined,
+      },
+    },
+    env,
+  );
   const defaultChrome = chromeR.value;
   const chromeSource = chromeR.source;
 
   // defaultTarget — source widens to include "unset" because there is no
   // in-code default value (sources.defaultTarget cascades unset→env→flag).
-  const targetR = resolveSetting<string | undefined, "unset">({
-    default: undefined,
-    noValueSource: "unset",
-    env: { name: "MOE_FLIGHT_TARGET", parse: (s) => s },
-    arg: { value: args.target },
-  }, env);
+  const targetR = resolveSetting<string | undefined, "unset">(
+    {
+      default: undefined,
+      noValueSource: "unset",
+      env: { name: "MOE_FLIGHT_TARGET", parse: (s) => s },
+      arg: { value: args.target },
+    },
+    env,
+  );
   const defaultTarget = targetR.value;
   const targetSource = targetR.source;
 
   // defaultViewport
-  const viewportR = resolveSetting({
-    default: DEFAULT_VIEWPORT,
-    env: { name: "MOE_FLIGHT_VIEWPORT", parse: (s) => parseViewportString(s, "MOE_FLIGHT_VIEWPORT") },
-    arg: { value: args.viewport !== undefined ? parseViewportString(args.viewport, "--viewport") : undefined },
-  }, env);
+  const viewportR = resolveSetting(
+    {
+      default: DEFAULT_VIEWPORT,
+      env: {
+        name: "MOE_FLIGHT_VIEWPORT",
+        parse: (s) => parseViewportString(s, "MOE_FLIGHT_VIEWPORT"),
+      },
+      arg: {
+        value:
+          args.viewport !== undefined
+            ? parseViewportString(args.viewport, "--viewport")
+            : undefined,
+      },
+    },
+    env,
+  );
   const defaultViewport = viewportR.value;
   const viewportSource = viewportR.source;
 
@@ -487,11 +532,17 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   // Defaults off because per-run screencast files are 100MB–1GB and
   // rarely consulted post-run; the live WS stream to UI clients is
   // unaffected either way.
-  const saveScreencastR = resolveSetting({
-    default: false,
-    env: { name: "MOE_FLIGHT_SAVE_SCREENCAST", parse: (s) => parseBoolEnv(s, "MOE_FLIGHT_SAVE_SCREENCAST") },
-    arg: { value: args.saveScreencast },
-  }, env);
+  const saveScreencastR = resolveSetting(
+    {
+      default: false,
+      env: {
+        name: "MOE_FLIGHT_SAVE_SCREENCAST",
+        parse: (s) => parseBoolEnv(s, "MOE_FLIGHT_SAVE_SCREENCAST"),
+      },
+      arg: { value: args.saveScreencast },
+    },
+    env,
+  );
   const defaultSaveScreencast = saveScreencastR.value;
   const saveScreencastSource = saveScreencastR.source;
 
@@ -504,11 +555,16 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
       throw new Error(`Invalid ${label} "${raw}": ${(err as Error).message}`);
     }
   };
-  const budgetR = resolveSetting({
-    default: DEFAULT_BUDGET_MS,
-    env: { name: "MOE_FLIGHT_MAX_TIME", parse: (s) => parseBudget(s, "MOE_FLIGHT_MAX_TIME") },
-    arg: { value: args.maxTime !== undefined ? parseBudget(args.maxTime, "--max-time") : undefined },
-  }, env);
+  const budgetR = resolveSetting(
+    {
+      default: DEFAULT_BUDGET_MS,
+      env: { name: "MOE_FLIGHT_MAX_TIME", parse: (s) => parseBudget(s, "MOE_FLIGHT_MAX_TIME") },
+      arg: {
+        value: args.maxTime !== undefined ? parseBudget(args.maxTime, "--max-time") : undefined,
+      },
+    },
+    env,
+  );
   const defaultBudgetMs = budgetR.value;
   const budgetSource = budgetR.source;
 
@@ -516,23 +572,35 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   // 0 disables. Prompt-only nudge, not enforced.
   const validateReflection = (n: number): number => {
     if (!Number.isInteger(n) || n < 0) {
-      throw new Error(`Invalid --reflection-interval ${n}: expected non-negative integer (0 disables)`);
+      throw new Error(
+        `Invalid --reflection-interval ${n}: expected non-negative integer (0 disables)`,
+      );
     }
     return n;
   };
-  const reflectionR = resolveSetting({
-    default: DEFAULT_REFLECTION_INTERVAL,
-    env: {
-      name: "MOE_FLIGHT_REFLECTION_INTERVAL",
-      parse: (raw) => {
-        if (!/^\d+$/.test(raw)) {
-          throw new Error(`Invalid MOE_FLIGHT_REFLECTION_INTERVAL "${raw}": expected non-negative integer (0 disables)`);
-        }
-        return parseInt(raw, 10);
+  const reflectionR = resolveSetting(
+    {
+      default: DEFAULT_REFLECTION_INTERVAL,
+      env: {
+        name: "MOE_FLIGHT_REFLECTION_INTERVAL",
+        parse: (raw) => {
+          if (!/^\d+$/.test(raw)) {
+            throw new Error(
+              `Invalid MOE_FLIGHT_REFLECTION_INTERVAL "${raw}": expected non-negative integer (0 disables)`,
+            );
+          }
+          return parseInt(raw, 10);
+        },
+      },
+      arg: {
+        value:
+          args.reflectionInterval !== undefined
+            ? validateReflection(args.reflectionInterval)
+            : undefined,
       },
     },
-    arg: { value: args.reflectionInterval !== undefined ? validateReflection(args.reflectionInterval) : undefined },
-  }, env);
+    env,
+  );
   const defaultReflectionInterval = reflectionR.value;
   const reflectionSource = reflectionR.source;
 
@@ -549,66 +617,112 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
 
   // shutdownGraceMs — drain window for graceful shutdown (PRI-1477).
   // No flag override; this is an operator-level knob (env only).
-  const shutdownGraceR = resolveEnvOnlySetting({
-    default: DEFAULT_SHUTDOWN_GRACE_MS,
-    env: { name: "MOE_FLIGHT_SHUTDOWN_GRACE_MS", parse: (s) => parseNonNegInt(s, "MOE_FLIGHT_SHUTDOWN_GRACE_MS") },
-  }, env);
+  const shutdownGraceR = resolveEnvOnlySetting(
+    {
+      default: DEFAULT_SHUTDOWN_GRACE_MS,
+      env: {
+        name: "MOE_FLIGHT_SHUTDOWN_GRACE_MS",
+        parse: (s) => parseNonNegInt(s, "MOE_FLIGHT_SHUTDOWN_GRACE_MS"),
+      },
+    },
+    env,
+  );
   const shutdownGraceMs = shutdownGraceR.value;
   const shutdownGraceMsSource = shutdownGraceR.source;
 
   // PRI-1478 caps — operator-level knobs (env only).
-  const maxRequestBodySizeR = resolveEnvOnlySetting({
-    default: DEFAULT_MAX_REQUEST_BODY_SIZE,
-    env: { name: "MOE_FLIGHT_MAX_REQUEST_BODY_SIZE", parse: (s) => parseNonNegInt(s, "MOE_FLIGHT_MAX_REQUEST_BODY_SIZE") },
-  }, env);
+  const maxRequestBodySizeR = resolveEnvOnlySetting(
+    {
+      default: DEFAULT_MAX_REQUEST_BODY_SIZE,
+      env: {
+        name: "MOE_FLIGHT_MAX_REQUEST_BODY_SIZE",
+        parse: (s) => parseNonNegInt(s, "MOE_FLIGHT_MAX_REQUEST_BODY_SIZE"),
+      },
+    },
+    env,
+  );
   const maxRequestBodySize = maxRequestBodySizeR.value;
   const maxRequestBodySizeSource = maxRequestBodySizeR.source;
 
-  const maxConcurrentRunsR = resolveEnvOnlySetting({
-    default: DEFAULT_MAX_CONCURRENT_RUNS,
-    env: { name: "MOE_FLIGHT_MAX_CONCURRENT_RUNS", parse: (s) => parseNonNegInt(s, "MOE_FLIGHT_MAX_CONCURRENT_RUNS") },
-  }, env);
+  const maxConcurrentRunsR = resolveEnvOnlySetting(
+    {
+      default: DEFAULT_MAX_CONCURRENT_RUNS,
+      env: {
+        name: "MOE_FLIGHT_MAX_CONCURRENT_RUNS",
+        parse: (s) => parseNonNegInt(s, "MOE_FLIGHT_MAX_CONCURRENT_RUNS"),
+      },
+    },
+    env,
+  );
   const maxConcurrentRuns = maxConcurrentRunsR.value;
   const maxConcurrentRunsSource = maxConcurrentRunsR.source;
 
-  const activeRunTargetMaxBytesR = resolveEnvOnlySetting({
-    default: DEFAULT_ACTIVE_RUN_TARGET_MAX_BYTES,
-    env: { name: "MOE_FLIGHT_ACTIVE_RUN_TARGET_MAX_BYTES", parse: (s) => parseNonNegInt(s, "MOE_FLIGHT_ACTIVE_RUN_TARGET_MAX_BYTES") },
-  }, env);
+  const activeRunTargetMaxBytesR = resolveEnvOnlySetting(
+    {
+      default: DEFAULT_ACTIVE_RUN_TARGET_MAX_BYTES,
+      env: {
+        name: "MOE_FLIGHT_ACTIVE_RUN_TARGET_MAX_BYTES",
+        parse: (s) => parseNonNegInt(s, "MOE_FLIGHT_ACTIVE_RUN_TARGET_MAX_BYTES"),
+      },
+    },
+    env,
+  );
   const activeRunTargetMaxBytes = activeRunTargetMaxBytesR.value;
   const activeRunTargetMaxBytesSource = activeRunTargetMaxBytesR.source;
 
   // PRI-1483 WebSocket hygiene knobs.
-  const wsIdleTimeoutSecR = resolveEnvOnlySetting({
-    default: DEFAULT_WS_IDLE_TIMEOUT_SEC,
-    env: { name: "MOE_FLIGHT_WS_IDLE_TIMEOUT_SEC", parse: (s) => parseNonNegInt(s, "MOE_FLIGHT_WS_IDLE_TIMEOUT_SEC") },
-  }, env);
+  const wsIdleTimeoutSecR = resolveEnvOnlySetting(
+    {
+      default: DEFAULT_WS_IDLE_TIMEOUT_SEC,
+      env: {
+        name: "MOE_FLIGHT_WS_IDLE_TIMEOUT_SEC",
+        parse: (s) => parseNonNegInt(s, "MOE_FLIGHT_WS_IDLE_TIMEOUT_SEC"),
+      },
+    },
+    env,
+  );
   const wsIdleTimeoutSec = wsIdleTimeoutSecR.value;
   const wsIdleTimeoutSecSource = wsIdleTimeoutSecR.source;
 
-  const wsOriginAllowlistR = resolveEnvOnlySetting<string[]>({
-    default: [],
-    env: { name: "MOE_FLIGHT_WS_ORIGIN_ALLOWLIST", parse: (s) => s.split(",").map((x) => x.trim()).filter(Boolean) },
-  }, env);
+  const wsOriginAllowlistR = resolveEnvOnlySetting<string[]>(
+    {
+      default: [],
+      env: {
+        name: "MOE_FLIGHT_WS_ORIGIN_ALLOWLIST",
+        parse: (s) =>
+          s
+            .split(",")
+            .map((x) => x.trim())
+            .filter(Boolean),
+      },
+    },
+    env,
+  );
   const wsOriginAllowlist = wsOriginAllowlistR.value;
   const wsOriginAllowlistSource = wsOriginAllowlistR.source;
 
   // models.agent
-  const agentR = resolveSetting({
-    default: DEFAULT_AGENT_MODEL,
-    env: { name: "MOE_FLIGHT_AGENT_MODEL", parse: (s) => s },
-    arg: { value: args.models?.agent },
-  }, env);
+  const agentR = resolveSetting(
+    {
+      default: DEFAULT_AGENT_MODEL,
+      env: { name: "MOE_FLIGHT_AGENT_MODEL", parse: (s) => s },
+      arg: { value: args.models?.agent },
+    },
+    env,
+  );
   const agentModel = agentR.value;
   const agentSource = agentR.source;
 
   // models.fanout — no in-code default, so source starts as "unset".
-  const fanoutR = resolveSetting<string | undefined, "unset">({
-    default: undefined,
-    noValueSource: "unset",
-    env: { name: "MOE_FLIGHT_FANOUT_MODEL", parse: (s) => s },
-    arg: { value: args.models?.fanout },
-  }, env);
+  const fanoutR = resolveSetting<string | undefined, "unset">(
+    {
+      default: undefined,
+      noValueSource: "unset",
+      env: { name: "MOE_FLIGHT_FANOUT_MODEL", parse: (s) => s },
+      arg: { value: args.models?.fanout },
+    },
+    env,
+  );
   const fanoutModel = fanoutR.value;
   const fanoutSource = fanoutR.source;
 
@@ -617,10 +731,20 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   // When the operator sets MOE_FLIGHT_MODELS, the route layer enforces it.
   // (sources tracker typed `default | env | flag` for back-compat; flag
   // is unreachable since there is no --models flag.)
-  const availableR = resolveEnvOnlySetting<string[]>({
-    default: [],
-    env: { name: "MOE_FLIGHT_MODELS", parse: (s) => s.split(",").map((x) => x.trim()).filter(Boolean) },
-  }, env);
+  const availableR = resolveEnvOnlySetting<string[]>(
+    {
+      default: [],
+      env: {
+        name: "MOE_FLIGHT_MODELS",
+        parse: (s) =>
+          s
+            .split(",")
+            .map((x) => x.trim())
+            .filter(Boolean),
+      },
+    },
+    env,
+  );
   const availableModels = availableR.value;
   const availableSource: "default" | "env" | "flag" = availableR.source;
 
@@ -629,9 +753,7 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   // SDK-native ANTHROPIC_AUTH_TOKEN) counts even without ANTHROPIC_API_KEY.
   const apiKeys = {
     anthropic: Boolean(
-      env.ANTHROPIC_API_KEY ||
-        env.CLAUDE_CODE_OAUTH_TOKEN ||
-        env.ANTHROPIC_AUTH_TOKEN,
+      env.ANTHROPIC_API_KEY || env.CLAUDE_CODE_OAUTH_TOKEN || env.ANTHROPIC_AUTH_TOKEN,
     ),
     openai: Boolean(env.OPENAI_API_KEY),
   };
@@ -645,16 +767,16 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   let credentialResolver: CredentialResolverConfig | undefined;
   let credentialResolverSource: "default" | "env" = "default";
   if (env.MOE_FLIGHT_CREDENTIAL_RESOLVER) {
-    const resolvedPath = resolveCredentialResolver(
-      env.MOE_FLIGHT_CREDENTIAL_RESOLVER,
-      projectRoot,
-    );
+    const resolvedPath = resolveCredentialResolver(env.MOE_FLIGHT_CREDENTIAL_RESOLVER, projectRoot);
     const rawTimeout = env.MOE_FLIGHT_CREDENTIAL_RESOLVER_TIMEOUT_MS;
     const timeoutMs = rawTimeout
       ? parseNonNegInt(rawTimeout, "MOE_FLIGHT_CREDENTIAL_RESOLVER_TIMEOUT_MS")
       : DEFAULT_CREDENTIAL_RESOLVER_TIMEOUT_MS;
     const includeInTranscripts = env.MOE_FLIGHT_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS
-      ? parseBoolEnv(env.MOE_FLIGHT_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS, "MOE_FLIGHT_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS")
+      ? parseBoolEnv(
+          env.MOE_FLIGHT_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS,
+          "MOE_FLIGHT_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS",
+        )
       : false;
     credentialResolver = { path: resolvedPath, timeoutMs, includeInTranscripts };
     credentialResolverSource = "env";

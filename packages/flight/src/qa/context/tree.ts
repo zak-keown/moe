@@ -70,10 +70,7 @@ function listVisibleEntries(dir: string): DirEntryInfo[] {
  * Context section. Returns an empty string when the root is absent,
  * inaccessible, or contains no visible entries.
  */
-export function renderContextTree(
-  contextRoot: string,
-  options?: RenderContextTreeOptions,
-): string {
+export function renderContextTree(contextRoot: string, options?: RenderContextTreeOptions): string {
   const maxBytes = options?.maxBytes ?? DEFAULT_MAX_BYTES;
   const maxEntries = options?.maxEntries ?? DEFAULT_MAX_ENTRIES;
 
@@ -109,10 +106,7 @@ export function renderContextTree(
       } else {
         // +1 for the newline that will separate this line from the next.
         const candidateBytes = bytesUsed + line.length + 1;
-        if (
-          entriesUsed + 1 > maxEntries ||
-          candidateBytes > maxBytes
-        ) {
+        if (entriesUsed + 1 > maxEntries || candidateBytes > maxBytes) {
           truncated = true;
           remaining++;
         } else {
@@ -133,9 +127,7 @@ export function renderContextTree(
   if (lines.length === 0 && !truncated) return "";
 
   if (truncated) {
-    lines.push(
-      `... (truncated: ${remaining} more entries not shown — this run cannot see them)`,
-    );
+    lines.push(`... (truncated: ${remaining} more entries not shown — this run cannot see them)`);
   }
 
   return lines.join("\n");

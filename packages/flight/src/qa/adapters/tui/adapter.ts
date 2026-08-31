@@ -1,14 +1,14 @@
-import type { Adapter } from "../adapter.js";
-import { textResult, type ToolDefinition, type ToolResult } from "../../models/provider.js";
-import type { EvidenceLogger } from "../../evidence/logger.js";
+import { mkdirSync } from "fs";
+import { join } from "path";
 import { buildSharedTools, type SharedTools } from "../../agent/shared-tools.js";
 import { validateToolArgs } from "../../agent/validators.js";
 import type { CredentialResolverConfig, Viewport } from "../../config.js";
-import { defaultCaptureParser, type CaptureParser } from "./capture-parser.js";
-import { spawnSync } from "../../runtime/spawn.js";
-import { mkdirSync } from "fs";
-import { join } from "path";
+import type { EvidenceLogger } from "../../evidence/logger.js";
+import { type ToolDefinition, type ToolResult, textResult } from "../../models/provider.js";
 import { listDescendants } from "../../runtime/process-tree.js";
+import { spawnSync } from "../../runtime/spawn.js";
+import type { Adapter } from "../adapter.js";
+import { type CaptureParser, defaultCaptureParser } from "./capture-parser.js";
 
 /**
  * tmux pane dimensions in character cells. Hardcoded for now — resize
@@ -131,17 +131,26 @@ export class TUIAdapter implements Adapter {
     const scratch = join(this.runDir, "scratch");
     mkdirSync(scratch, { recursive: true });
 
-    const create = spawnSync(this.tmux(
-      "new-session", "-d", "-s", id,
-      "-x", String(TUI_GRID.width),
-      "-y", String(TUI_GRID.height),
-      "-c", scratch,
-      "bash", "--norc", "--noprofile", "-i",
-    ));
+    const create = spawnSync(
+      this.tmux(
+        "new-session",
+        "-d",
+        "-s",
+        id,
+        "-x",
+        String(TUI_GRID.width),
+        "-y",
+        String(TUI_GRID.height),
+        "-c",
+        scratch,
+        "bash",
+        "--norc",
+        "--noprofile",
+        "-i",
+      ),
+    );
     if (create.exitCode !== 0) {
-      throw new Error(
-        `Failed to start tmux session: ${new TextDecoder().decode(create.stderr)}`,
-      );
+      throw new Error(`Failed to start tmux session: ${new TextDecoder().decode(create.stderr)}`);
     }
 
     this.bashPid = await this.readPanePid(id);
@@ -163,13 +172,7 @@ export class TUIAdapter implements Adapter {
   }
 
   async readScreen(): Promise<string> {
-    const result = spawnSync(this.tmux(
-      "capture-pane",
-      "-t",
-      this.sessionName,
-      "-p",
-      "-e",
-    ));
+    const result = spawnSync(this.tmux("capture-pane", "-t", this.sessionName, "-p", "-e"));
 
     if (result.exitCode !== 0) {
       const stderr = new TextDecoder().decode(result.stderr);
@@ -180,13 +183,7 @@ export class TUIAdapter implements Adapter {
   }
 
   async type(text: string): Promise<void> {
-    const result = spawnSync(this.tmux(
-      "send-keys",
-      "-t",
-      this.sessionName,
-      "-l",
-      text,
-    ));
+    const result = spawnSync(this.tmux("send-keys", "-t", this.sessionName, "-l", text));
 
     if (result.exitCode !== 0) {
       const stderr = new TextDecoder().decode(result.stderr);
@@ -198,12 +195,7 @@ export class TUIAdapter implements Adapter {
     const mapped = KEY_MAP[key];
     if (!mapped) throw new Error(`Unknown key: ${key}. Available: ${AVAILABLE_KEYS}`);
 
-    const result = spawnSync(this.tmux(
-      "send-keys",
-      "-t",
-      this.sessionName,
-      mapped,
-    ));
+    const result = spawnSync(this.tmux("send-keys", "-t", this.sessionName, mapped));
 
     if (result.exitCode !== 0) {
       const stderr = new TextDecoder().decode(result.stderr);
@@ -219,13 +211,7 @@ export class TUIAdapter implements Adapter {
   // fixed delay covers a single ~16ms frame and turns the race into a
   // guarantee.
   async typeAndSubmit(text: string): Promise<void> {
-    const typed = spawnSync(this.tmux(
-      "send-keys",
-      "-t",
-      this.sessionName,
-      "-l",
-      text,
-    ));
+    const typed = spawnSync(this.tmux("send-keys", "-t", this.sessionName, "-l", text));
     if (typed.exitCode !== 0) {
       const stderr = new TextDecoder().decode(typed.stderr);
       throw new Error(`Failed to type-and-submit (typing): ${stderr}`);
@@ -233,12 +219,7 @@ export class TUIAdapter implements Adapter {
 
     await new Promise((r) => setTimeout(r, 15));
 
-    const submitted = spawnSync(this.tmux(
-      "send-keys",
-      "-t",
-      this.sessionName,
-      "Enter",
-    ));
+    const submitted = spawnSync(this.tmux("send-keys", "-t", this.sessionName, "Enter"));
     if (submitted.exitCode !== 0) {
       const stderr = new TextDecoder().decode(submitted.stderr);
       throw new Error(`Failed to type-and-submit (submitting): ${stderr}`);
@@ -264,9 +245,7 @@ export class TUIAdapter implements Adapter {
   async close(): Promise<void> {
     if (!this._sessionName) return;
     const sessionName = this._sessionName;
-    const descendants = this.bashPid !== null
-      ? listDescendants(this.bashPid)
-      : [];
+    const descendants = this.bashPid !== null ? listDescendants(this.bashPid) : [];
 
     try {
       // kill-server (not kill-session): the private server holds only this
@@ -281,7 +260,12 @@ export class TUIAdapter implements Adapter {
     // its session.shutdown usage record ~11ms after SIGHUP) before hard-
     // killing the stragglers — an instant SIGKILL races that flush away.
     const alive = (pid: number): boolean => {
-      try { process.kill(pid, 0); return true; } catch { return false; }
+      try {
+        process.kill(pid, 0);
+        return true;
+      } catch {
+        return false;
+      }
     };
     const deadline = Date.now() + this.descendantGraceMs;
     let survivors = descendants.filter(alive);
@@ -292,7 +276,12 @@ export class TUIAdapter implements Adapter {
 
     let reaped = 0;
     for (const pid of survivors) {
-      try { process.kill(pid, "SIGKILL"); reaped++; } catch { /* already dead */ }
+      try {
+        process.kill(pid, "SIGKILL");
+        reaped++;
+      } catch {
+        /* already dead */
+      }
     }
     if (reaped > 0 && this.logger) {
       this.logger.logEvent("tui_session_descendants_reaped", {
@@ -349,7 +338,8 @@ export class TUIAdapter implements Adapter {
       },
       {
         name: "read_screen",
-        description: "Read the current terminal screen. Returns the rendered text with ANSI escape sequences preserved so you can see colors and styles — e.g. `\\x1b[31mX\\x1b[0m` means character X is red. Parse these to verify color-dependent behavior. Cursor-movement and clear sequences are already resolved by the terminal.",
+        description:
+          "Read the current terminal screen. Returns the rendered text with ANSI escape sequences preserved so you can see colors and styles — e.g. `\\x1b[31mX\\x1b[0m` means character X is red. Parse these to verify color-dependent behavior. Cursor-movement and clear sequences are already resolved by the terminal.",
         parameters: {
           type: "object",
           properties: {},
@@ -363,7 +353,7 @@ export class TUIAdapter implements Adapter {
   async executeTool(
     name: string,
     args: Record<string, unknown>,
-    logger: EvidenceLogger
+    logger: EvidenceLogger,
   ): Promise<ToolResult> {
     // See WebAdapter.executeTool for the rationale: validate the LLM's
     // argument shape once, upfront, before dispatching to a handler that
@@ -403,11 +393,7 @@ export class TUIAdapter implements Adapter {
         // Parse on the server so the UI can render a layout-correct
         // 2D grid without re-parsing on every view. Both the raw ANSI
         // and the parsed JSON land under captures/.
-        const parsed = await this.captureParser.parse(
-          screen,
-          TUI_GRID.width,
-          TUI_GRID.height,
-        );
+        const parsed = await this.captureParser.parse(screen, TUI_GRID.width, TUI_GRID.height);
         const capturePath = logger.saveCapture(screen, JSON.stringify(parsed));
         // Stream a `tui_capture` event over the existing WS channel.
         // Using logEvent (rather than a bespoke broadcaster call) lets

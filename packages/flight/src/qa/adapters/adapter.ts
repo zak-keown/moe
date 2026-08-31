@@ -1,9 +1,9 @@
-import type { ToolDefinition, ToolResult } from "../models/provider.js";
-import type { EvidenceLogger } from "../evidence/logger.js";
 import type { Viewport } from "../config.js";
+import type { EvidenceLogger } from "../evidence/logger.js";
+import type { ToolDefinition, ToolResult } from "../models/provider.js";
 
 export const ADAPTER_TYPES = ["web", "cli", "tui"] as const;
-export type AdapterType = typeof ADAPTER_TYPES[number];
+export type AdapterType = (typeof ADAPTER_TYPES)[number];
 
 export function isAdapterType(s: unknown): s is AdapterType {
   return typeof s === "string" && (ADAPTER_TYPES as readonly string[]).includes(s);
@@ -17,7 +17,7 @@ export interface Adapter {
   executeTool(
     name: string,
     args: Record<string, unknown>,
-    logger: EvidenceLogger
+    logger: EvidenceLogger,
   ): Promise<ToolResult>;
   /**
    * One-line framing for the initial user message telling the agent what

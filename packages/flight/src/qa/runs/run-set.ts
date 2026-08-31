@@ -1,9 +1,9 @@
 import { readFileSync } from "fs";
 import { RunSetWriter } from "../evidence/run-set-writer.js";
-import { makeRunSetId, makeRunId } from "../util/id.js";
-import type { RunSetCtx, RunSetKind } from "./run-set-types.js";
 import type { VerdictResult } from "../types.js";
 import type { CardId, RunId, RunSetId } from "../util/brands.js";
+import { makeRunId, makeRunSetId } from "../util/id.js";
+import type { RunSetCtx, RunSetKind } from "./run-set-types.js";
 
 export interface ExecutorArgs {
   cardId: CardId;
@@ -84,7 +84,14 @@ export async function runRunSet(cfg: RunSetConfig): Promise<RunSetHandle> {
   // ── Run phase (slow: cards × passes loop). Started but not awaited. ──
   const completion = runLoop({ cfg, writer, ctx0, allRuns, runSetId });
 
-  return { runSetId, kind: cfg.kind, passes: cfg.passes, cards: cfg.cards, runs: allRuns, completion };
+  return {
+    runSetId,
+    kind: cfg.kind,
+    passes: cfg.passes,
+    cards: cfg.cards,
+    runs: allRuns,
+    completion,
+  };
 }
 
 async function runLoop(args: {
@@ -144,8 +151,6 @@ async function runLoop(args: {
   writer.finalize((runId) => resultsByRunId.get(runId) ?? null);
 
   // Re-read final manifest.
-  const set = JSON.parse(
-    readFileSync(`${cfg.resultsRoot}/run-sets/${runSetId}/set.json`, "utf8"),
-  );
+  const set = JSON.parse(readFileSync(`${cfg.resultsRoot}/run-sets/${runSetId}/set.json`, "utf8"));
   return { runSetId, runs: set.runs, summary: set.summary };
 }

@@ -1,12 +1,13 @@
 import { Hono } from "hono";
-import type { ActiveRunRegistry, ActiveRunInfo } from "../active-runs.js";
+import type { ActiveRunInfo, ActiveRunRegistry } from "../active-runs.js";
 
 export function activeRunRoutes(registry: ActiveRunRegistry, targetMaxBytes?: number) {
   const router = new Hono();
 
   router.get("/", (c) => {
     const cap = targetMaxBytes;
-    const runs = cap === undefined ? registry.list() : registry.list().map((r) => truncateTarget(r, cap));
+    const runs =
+      cap === undefined ? registry.list() : registry.list().map((r) => truncateTarget(r, cap));
     return c.json({ runs });
   });
 

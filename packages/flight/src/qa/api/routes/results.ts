@@ -1,9 +1,9 @@
+import { existsSync, readdirSync, readFileSync } from "fs";
 import { Hono } from "hono";
-import { readdirSync, readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { isSafePath } from "../../paths.js";
-import { getMimeType } from "../mime-types.js";
 import type { ActiveRunRegistry } from "../active-runs.js";
+import { getMimeType } from "../mime-types.js";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
@@ -13,7 +13,12 @@ const MAX_LIMIT = 200;
  * A value that doesn't parse as an integer collapses to `fallback` rather
  * than erroring — matches the tolerant convention used elsewhere in this API.
  */
-function parseIntParam(raw: string | undefined, fallback: number, min: number, max: number): number {
+function parseIntParam(
+  raw: string | undefined,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
   if (!raw) return fallback;
   const n = Number.parseInt(raw, 10);
   if (!Number.isFinite(n)) return fallback;
@@ -59,9 +64,7 @@ export function resultRoutes(resultsDir: string, registry?: ActiveRunRegistry) {
     // `_` (story-card parse enforces `[a-zA-Z0-9-]`), so a `<cardId>_`
     // prefix match is unambiguous and lets us skip file reads for
     // non-matching dirs.
-    const filteredRunIds = cardId
-      ? runIds.filter((id) => id.startsWith(`${cardId}_`))
-      : runIds;
+    const filteredRunIds = cardId ? runIds.filter((id) => id.startsWith(`${cardId}_`)) : runIds;
 
     const total = filteredRunIds.length;
     const page = filteredRunIds.slice(offset, offset + limit);
@@ -193,7 +196,11 @@ function collectManifestPaths(manifest: unknown): Set<string> {
 
   if (Array.isArray(m.observations)) {
     for (const obs of m.observations) {
-      if (obs && typeof obs === "object" && Array.isArray((obs as { evidence?: unknown | undefined }).evidence)) {
+      if (
+        obs &&
+        typeof obs === "object" &&
+        Array.isArray((obs as { evidence?: unknown | undefined }).evidence)
+      ) {
         for (const p of (obs as { evidence: unknown[] }).evidence) {
           if (typeof p === "string") paths.add(p);
         }

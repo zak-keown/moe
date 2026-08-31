@@ -23,9 +23,7 @@ export function parseDuration(input: string): number {
 
   const match = /^(\d+)(ms|s|m|h)?$/.exec(trimmed);
   if (!match) {
-    throw new Error(
-      `invalid duration "${input}": expected integer with optional suffix ms|s|m|h`,
-    );
+    throw new Error(`invalid duration "${input}": expected integer with optional suffix ms|s|m|h`);
   }
 
   const n = parseInt(match[1]!, 10);
@@ -35,10 +33,14 @@ export function parseDuration(input: string): number {
 
   const unit = match[2] ?? "s";
   switch (unit) {
-    case "ms": return n;
-    case "s":  return n * 1_000;
-    case "m":  return n * 60_000;
-    case "h":  return n * 3_600_000;
+    case "ms":
+      return n;
+    case "s":
+      return n * 1_000;
+    case "m":
+      return n * 60_000;
+    case "h":
+      return n * 3_600_000;
   }
 
   // Unreachable: the regex restricts to ms|s|m|h|absent.

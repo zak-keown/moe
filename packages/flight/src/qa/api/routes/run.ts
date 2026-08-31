@@ -1,32 +1,32 @@
 import { Hono } from "hono";
 import { join } from "path";
 import { findCard } from "../../cards/store.js";
-import {
-  SUPPORTED_MODEL_PREFIXES_MESSAGE,
-  UnknownModelProviderError,
-  createClientForProvider,
-  resolveProvider,
-} from "../../models/resolve.js";
-import { makeRunId } from "../../util/id.js";
-import { flightPath } from "../../paths.js";
-import { mergeRunConfig, validateRunBody, type AppConfig } from "../../config.js";
-import { runRunSet } from "../../runs/run-set.js";
-import {
-  executeRunCore,
-  type ExecuteRunCoreOptions,
-  type ExecuteRunCoreResult,
-  type RunCoreHooks,
-} from "../../runs/orchestrator.js";
-import type { RunBroadcaster } from "../ws.js";
-import type { ActiveRunRegistry } from "../active-runs.js";
-import type { RunSetBroadcaster } from "../run-set-broadcaster.js";
-import type { CancelTokenRegistry } from "../run-cancel.js";
-import type { ScreencastStreamer as ScreencastStreamerType } from "../../streaming/screencast.js";
-import type { ErrorLog } from "../../util/error-log.js";
+import { type AppConfig, mergeRunConfig, validateRunBody } from "../../config.js";
 import type { StoryCard } from "../../format/story-card.js";
 import type { LLMClient } from "../../models/provider.js";
+import {
+  createClientForProvider,
+  resolveProvider,
+  SUPPORTED_MODEL_PREFIXES_MESSAGE,
+  UnknownModelProviderError,
+} from "../../models/resolve.js";
+import { flightPath } from "../../paths.js";
+import {
+  type ExecuteRunCoreOptions,
+  type ExecuteRunCoreResult,
+  executeRunCore,
+  type RunCoreHooks,
+} from "../../runs/orchestrator.js";
+import { runRunSet } from "../../runs/run-set.js";
 import type { RunSetCtx } from "../../runs/run-set-types.js";
+import type { ScreencastStreamer as ScreencastStreamerType } from "../../streaming/screencast.js";
 import type { RunId } from "../../util/brands.js";
+import type { ErrorLog } from "../../util/error-log.js";
+import { makeRunId } from "../../util/id.js";
+import type { ActiveRunRegistry } from "../active-runs.js";
+import type { CancelTokenRegistry } from "../run-cancel.js";
+import type { RunSetBroadcaster } from "../run-set-broadcaster.js";
+import type { RunBroadcaster } from "../ws.js";
 
 export interface ExecuteHttpRunOpts {
   runId: RunId;
@@ -60,11 +60,20 @@ export interface ExecuteHttpRunOpts {
  * terminal broadcast (in unregister-then-broadcast order so a
  * late-connecting WS sees an empty registry).
  */
-export async function executeHttpRun(
-  opts: ExecuteHttpRunOpts,
-): Promise<ExecuteRunCoreResult> {
-  const { runId, card, storyPath, client, effective, projectRoot,
-          broadcaster, registry, errorLog, startedAt, runSetCtx } = opts;
+export async function executeHttpRun(opts: ExecuteHttpRunOpts): Promise<ExecuteRunCoreResult> {
+  const {
+    runId,
+    card,
+    storyPath,
+    client,
+    effective,
+    projectRoot,
+    broadcaster,
+    registry,
+    errorLog,
+    startedAt,
+    runSetCtx,
+  } = opts;
 
   let streamer: ScreencastStreamerType | undefined;
   // `terminal` is null during the run and at afterClose time on the
@@ -78,23 +87,29 @@ export async function executeHttpRun(
     onLogger: (logger) => {
       const detachers: Array<() => void> = [];
       if (broadcaster || registry) {
-        detachers.push(logger.addProgressObserver((action, params) => {
-          const message = `[${action}] ${JSON.stringify(params)}`;
-          broadcaster?.send(runId, {
-            type: "progress",
-            message,
-            status: "running",
-            card: card.id,
-          });
-          registry?.recordProgress(runId, message);
-        }));
+        detachers.push(
+          logger.addProgressObserver((action, params) => {
+            const message = `[${action}] ${JSON.stringify(params)}`;
+            broadcaster?.send(runId, {
+              type: "progress",
+              message,
+              status: "running",
+              card: card.id,
+            });
+            registry?.recordProgress(runId, message);
+          }),
+        );
       }
       if (broadcaster) {
-        detachers.push(logger.addEventObserver((event) => {
-          broadcaster.send(runId, { type: "event", event });
-        }));
+        detachers.push(
+          logger.addEventObserver((event) => {
+            broadcaster.send(runId, { type: "event", event });
+          }),
+        );
       }
-      return () => { for (const d of detachers) d(); };
+      return () => {
+        for (const d of detachers) d();
+      };
     },
     beforeAgent: async (ctx) => {
       if (effective.adapter === "web" && (broadcaster || registry)) {
@@ -105,22 +120,28 @@ export async function executeHttpRun(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const webAdapter = ctx.adapter as any;
         const chromeSession = webAdapter.getChromeSession();
-        const framesDir = effective.saveScreencast === false
-          ? undefined
-          : join(flightPath(projectRoot, effective.stateDirName, "results", runId), "frames");
-        streamer = new ScreencastStreamer(0, (frame) => {
-          broadcaster?.send(runId, {
-            type: "frame",
-            data: frame.data,
-            width: frame.metadata.width,
-            height: frame.metadata.height,
-          });
-          registry?.recordFrame(runId, {
-            data: frame.data,
-            width: frame.metadata.width,
-            height: frame.metadata.height,
-          });
-        }, chromeSession, framesDir);
+        const framesDir =
+          effective.saveScreencast === false
+            ? undefined
+            : join(flightPath(projectRoot, effective.stateDirName, "results", runId), "frames");
+        streamer = new ScreencastStreamer(
+          0,
+          (frame) => {
+            broadcaster?.send(runId, {
+              type: "frame",
+              data: frame.data,
+              width: frame.metadata.width,
+              height: frame.metadata.height,
+            });
+            registry?.recordFrame(runId, {
+              data: frame.data,
+              width: frame.metadata.width,
+              height: frame.metadata.height,
+            });
+          },
+          chromeSession,
+          framesDir,
+        );
         await streamer.start();
       }
     },
@@ -131,7 +152,11 @@ export async function executeHttpRun(
     },
     beforeClose: async () => {
       if (streamer) {
-        try { await streamer.stop(); } catch { /* ignore */ }
+        try {
+          await streamer.stop();
+        } catch {
+          /* ignore */
+        }
       }
     },
     afterClose: () => {
@@ -196,18 +221,24 @@ export function runRoutes(
     }
 
     if (config.models.available.length > 0 && !config.models.available.includes(effective.model)) {
-      return c.json({ error: `model "${effective.model}" is not in MOE_FLIGHT_MODELS allow-list` }, 400);
+      return c.json(
+        { error: `model "${effective.model}" is not in MOE_FLIGHT_MODELS allow-list` },
+        400,
+      );
     }
 
     // Concurrency cap (PRI-1478). Refuse new runs when at the operator-
     // configured ceiling so a flood of POSTs can't pin the daemon.
     if (registry && registry.list().length >= config.maxConcurrentRuns) {
       c.header("Retry-After", "5");
-      return c.json({
-        error: "too_many_runs",
-        message: `at concurrency cap of ${config.maxConcurrentRuns} in-flight runs`,
-        cap: config.maxConcurrentRuns,
-      }, 429);
+      return c.json(
+        {
+          error: "too_many_runs",
+          message: `at concurrency cap of ${config.maxConcurrentRuns} in-flight runs`,
+          cap: config.maxConcurrentRuns,
+        },
+        429,
+      );
     }
 
     let provider;
@@ -215,10 +246,13 @@ export function runRoutes(
       provider = resolveProvider(effective.model);
     } catch (err) {
       if (err instanceof UnknownModelProviderError) {
-        return c.json({
-          error: "unknown_model",
-          message: `Model not supported. ${SUPPORTED_MODEL_PREFIXES_MESSAGE}`,
-        }, 400);
+        return c.json(
+          {
+            error: "unknown_model",
+            message: `Model not supported. ${SUPPORTED_MODEL_PREFIXES_MESSAGE}`,
+          },
+          400,
+        );
       }
       throw err;
     }
@@ -228,7 +262,10 @@ export function runRoutes(
       : createClientForProvider(effective.model, provider);
 
     const passes = body.passes ?? 1;
-    const storyPath = join(flightPath(config.projectRoot, config.stateDirName, "stories"), entry.filename);
+    const storyPath = join(
+      flightPath(config.projectRoot, config.stateDirName, "stories"),
+      entry.filename,
+    );
 
     if (passes === 1) {
       // ── Solo path ──
@@ -267,12 +304,15 @@ export function runRoutes(
         // double-logging.
       });
 
-      return c.json({
-        runSetId: null,
-        kind: "single",
-        passes: 1,
-        runs: [{ runId, attemptNumber: 1, status: "running" as const }],
-      }, 202);
+      return c.json(
+        {
+          runSetId: null,
+          kind: "single",
+          passes: 1,
+          runs: [{ runId, attemptNumber: 1, status: "running" as const }],
+        },
+        202,
+      );
     }
 
     // ── Multi-pass path ──
@@ -317,7 +357,10 @@ export function runRoutes(
         if (registry) registry.setStatus(runId, "running");
         if (setBroadcaster) {
           setBroadcaster.send(runSetCtx.runSetId, {
-            kind: "pass_start", runId, attemptNumber: runSetCtx.attemptNumber, passes,
+            kind: "pass_start",
+            runId,
+            attemptNumber: runSetCtx.attemptNumber,
+            passes,
           });
         }
 
@@ -338,7 +381,9 @@ export function runRoutes(
 
         if (setBroadcaster) {
           setBroadcaster.send(runSetCtx.runSetId, {
-            kind: "pass_end", runId, attemptNumber: runSetCtx.attemptNumber,
+            kind: "pass_end",
+            runId,
+            attemptNumber: runSetCtx.attemptNumber,
             finalStatus: result.status,
           });
         }
@@ -376,16 +421,19 @@ export function runRoutes(
         }
       });
 
-    return c.json({
-      runSetId: handle.runSetId,
-      kind: handle.kind,
-      passes: handle.passes,
-      runs: handle.runs.map((r) => ({
-        runId: r.runId,
-        attemptNumber: r.attemptNumber,
-        status: "queued" as const,
-      })),
-    }, 202);
+    return c.json(
+      {
+        runSetId: handle.runSetId,
+        kind: handle.kind,
+        passes: handle.passes,
+        runs: handle.runs.map((r) => ({
+          runId: r.runId,
+          attemptNumber: r.attemptNumber,
+          status: "queued" as const,
+        })),
+      },
+      202,
+    );
   });
 
   return router;

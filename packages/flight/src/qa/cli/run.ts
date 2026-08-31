@@ -1,17 +1,17 @@
 import { readFileSync } from "fs";
-import { runOne } from "./run-one.js";
-import { safeEmitIndexHtml } from "./auto-emit-html.js";
-import { attachRenderer } from "./stream/attach.js";
-import { resolveStreamOptions } from "./stream/format.js";
-import { runRunSet } from "../runs/run-set.js";
-import { installSigintHandler } from "./signals.js";
-import { flightPath } from "../paths.js";
-import { parseStoryCard } from "../format/story-card.js";
-import { BatchTableRenderer } from "./stream/batch-table.js";
 import type { AppConfig } from "../config.js";
-import type { EvidenceLogger, EventObserver } from "../evidence/logger.js";
+import type { EventObserver, EvidenceLogger } from "../evidence/logger.js";
+import { parseStoryCard } from "../format/story-card.js";
 import type { LLMClient } from "../models/provider.js";
+import { flightPath } from "../paths.js";
+import { runRunSet } from "../runs/run-set.js";
 import type { RunSetCtx } from "../runs/run-set-types.js";
+import { safeEmitIndexHtml } from "./auto-emit-html.js";
+import { runOne } from "./run-one.js";
+import { installSigintHandler } from "./signals.js";
+import { attachRenderer } from "./stream/attach.js";
+import { BatchTableRenderer } from "./stream/batch-table.js";
+import { resolveStreamOptions } from "./stream/format.js";
 import type { WriteSink } from "./stream/jsonl.js";
 
 export interface RunCommandOptions {
@@ -48,18 +48,13 @@ function makeRunObserver(
       if (t === "run_start") {
         currentRunId = String((ev as any).runId);
         if (table) {
-          table.setRunning(
-            cardId,
-            currentRunId,
-            attemptNumber,
-            passes,
-          );
+          table.setRunning(cardId, currentRunId, attemptNumber, passes);
         }
       } else if (t === "llm_response") {
         if (table) table.onTurn(cardId, Number((ev as any).turn ?? 0), attemptNumber);
       } else if (t === "run_end") {
         const status = String((ev as any).status ?? "fail") as "pass" | "fail" | "investigate";
-        const turns = Number(((ev as any).usage?.turns) ?? 0);
+        const turns = Number((ev as any).usage?.turns ?? 0);
         if (table) table.setDone(cardId, status, turns, attemptNumber);
       }
 
@@ -148,14 +143,7 @@ export async function run(opts: RunCommandOptions): Promise<void> {
       onAllRunsKnown,
       cancelToken,
       executor: async ({ cardId, runSetCtx, runId }) => {
-        const onLogger = makeRunObserver(
-          table,
-          opts.format,
-          opts.silent,
-          sink,
-          cardId,
-          runSetCtx,
-        );
+        const onLogger = makeRunObserver(table, opts.format, opts.silent, sink, cardId, runSetCtx);
         try {
           const summary = await runOne({
             scenarioPath: opts.scenarioPath,

@@ -2,6 +2,7 @@
 // ESM resolver can't statically detect named exports. Importing default
 // and destructuring works on both Bun and Node.
 import xtermHeadless from "@xterm/headless";
+
 const { Terminal } = xtermHeadless;
 
 /**

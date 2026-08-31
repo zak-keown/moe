@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 import * as YAML from "yaml";
-import { textResult, type ToolDefinition, type ToolResult } from "../../models/provider.js";
 import type { EvidenceLogger } from "../../evidence/logger.js";
+import { type ToolDefinition, type ToolResult, textResult } from "../../models/provider.js";
 import { contextRootIsPopulated, resolveInside } from "../../paths.js";
 
 // A pinned CDP session with WebAuthn enabled. Bypasses the chrome-ws-lib
@@ -118,8 +118,7 @@ export function readPasskeyFile(absolutePath: string): PasskeyCredential {
     isResidentCredential: Boolean(p.isResidentCredential),
     rpId: p.rpId,
     privateKey: toStandardBase64(p.privateKey),
-    userHandle:
-      typeof p.userHandle === "string" ? toStandardBase64(p.userHandle) : undefined,
+    userHandle: typeof p.userHandle === "string" ? toStandardBase64(p.userHandle) : undefined,
     signCount: p.signCount,
   };
 }
@@ -138,8 +137,7 @@ function credentialContext(credential: PasskeyCredential): Record<string, unknow
   };
 }
 
-const errorMessage = (err: unknown) =>
-  err instanceof Error ? err.message : String(err);
+const errorMessage = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
 export function buildInstallPasskeyTool(
   contextRoot: string,
@@ -175,9 +173,13 @@ export function buildInstallPasskeyTool(
 
     if (!path) {
       logger?.logEvent("install_passkey_failed", {
-        path: "", step: "validate_args", error: "missing path argument",
+        path: "",
+        step: "validate_args",
+        error: "missing path argument",
       });
-      return textResult(`Error: install_passkey requires a "path" argument (relative to the project's context directory).`);
+      return textResult(
+        `Error: install_passkey requires a "path" argument (relative to the project's context directory).`,
+      );
     }
 
     let resolved: string;
@@ -186,7 +188,9 @@ export function buildInstallPasskeyTool(
     } catch (err) {
       const error = errorMessage(err);
       logger?.logEvent("install_passkey_failed", {
-        path, step: "resolve_path", error,
+        path,
+        step: "resolve_path",
+        error,
       });
       return textResult(`Error: ${error}`);
     }
@@ -197,7 +201,9 @@ export function buildInstallPasskeyTool(
     } catch (err) {
       const error = errorMessage(err);
       logger?.logEvent("install_passkey_failed", {
-        path, step: "read_passkey", error,
+        path,
+        step: "read_passkey",
+        error,
       });
       return textResult(`Error: ${error}`);
     }
@@ -206,7 +212,9 @@ export function buildInstallPasskeyTool(
     // sessions may already be dead (Chrome reset the WebAuthn domain on
     // navigation); swallow errors.
     if (session) {
-      try { await session.close(); } catch {}
+      try {
+        await session.close();
+      } catch {}
       session = null;
     }
 
@@ -220,13 +228,19 @@ export function buildInstallPasskeyTool(
       await session.addCredential(authenticatorId, credential);
 
       logger?.logEvent("install_passkey_ok", {
-        path, authenticatorId, ...credentialContext(credential),
+        path,
+        authenticatorId,
+        ...credentialContext(credential),
       });
-      return textResult(`Installed passkey from "${path}" (rpId: ${credential.rpId}). The browser will now answer WebAuthn challenges for this credential until the next navigation.`);
+      return textResult(
+        `Installed passkey from "${path}" (rpId: ${credential.rpId}). The browser will now answer WebAuthn challenges for this credential until the next navigation.`,
+      );
     } catch (err) {
       const error = errorMessage(err);
       logger?.logEvent("install_passkey_failed", {
-        path, step, error,
+        path,
+        step,
+        error,
         authenticatorId,
         authenticatorOptions: DEFAULT_AUTHENTICATOR_OPTIONS,
         credential: credentialContext(credential),
@@ -239,7 +253,9 @@ export function buildInstallPasskeyTool(
     const current = session;
     session = null;
     if (current) {
-      try { await current.close(); } catch {}
+      try {
+        await current.close();
+      } catch {}
     }
   };
 

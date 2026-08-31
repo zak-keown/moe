@@ -1,7 +1,11 @@
-import { readFileSync, writeFileSync, mkdirSync } from "fs";
+import { mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
+import {
+  generateFanout,
+  generateFromFailure,
+  generateFromObservations,
+} from "../fanout/generator.js";
 import { parseStoryCard } from "../format/story-card.js";
-import { generateFanout, generateFromObservations, generateFromFailure } from "../fanout/generator.js";
 import { createClient } from "../models/resolve.js";
 import type { ModelConfig, VerdictResult } from "../types.js";
 
@@ -9,7 +13,7 @@ export async function fanout(
   scenarioPath: string | undefined,
   outDir: string,
   models: ModelConfig,
-  resultDir?: string
+  resultDir?: string,
 ): Promise<void> {
   if (resultDir) {
     await fanoutFromResult(resultDir, outDir, models);
@@ -23,7 +27,7 @@ export async function fanout(
 async function fanoutFromScenario(
   scenarioPath: string,
   outDir: string,
-  models: ModelConfig
+  models: ModelConfig,
 ): Promise<void> {
   const content = readFileSync(scenarioPath, "utf-8");
   const card = parseStoryCard(content);
@@ -45,7 +49,7 @@ async function fanoutFromScenario(
 async function fanoutFromResult(
   resultDir: string,
   outDir: string,
-  models: ModelConfig
+  models: ModelConfig,
 ): Promise<void> {
   const resultPath = join(resultDir, "result.json");
   const content = readFileSync(resultPath, "utf-8");

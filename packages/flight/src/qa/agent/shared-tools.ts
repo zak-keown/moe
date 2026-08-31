@@ -1,12 +1,12 @@
-import type { ToolDefinition, ToolResult } from "../models/provider.js";
-import type { EvidenceLogger } from "../evidence/logger.js";
 import type { CredentialResolverConfig } from "../config.js";
-import { buildReadTool, type ReadTool } from "../context/read-tool.js";
 import { buildFetchCredentialTool, type FetchCredentialTool } from "../context/credential-tool.js";
-import { buildBashTool, type BashTool } from "./bash-tool.js";
-import { WatchManager } from "./watch-manager.js";
-import { buildWatchLogsTool, type WatchLogsTool } from "./watch-logs-tool.js";
+import { buildReadTool, type ReadTool } from "../context/read-tool.js";
+import type { EvidenceLogger } from "../evidence/logger.js";
+import type { ToolDefinition, ToolResult } from "../models/provider.js";
+import { type BashTool, buildBashTool } from "./bash-tool.js";
 import { buildWakeOnIdleLogTool, type WakeOnIdleLogTool } from "./wake-on-idle-log-tool.js";
+import { buildWatchLogsTool, type WatchLogsTool } from "./watch-logs-tool.js";
+import { WatchManager } from "./watch-manager.js";
 
 export interface SharedToolsOptions {
   contextRoot?: string | undefined;
@@ -31,9 +31,7 @@ export interface SharedTools {
 }
 
 export function buildSharedTools(opts: SharedToolsOptions): SharedTools {
-  const readTool: ReadTool | null = opts.contextRoot
-    ? buildReadTool(opts.contextRoot)
-    : null;
+  const readTool: ReadTool | null = opts.contextRoot ? buildReadTool(opts.contextRoot) : null;
   const credentialTool: FetchCredentialTool | null = buildFetchCredentialTool(
     opts.contextRoot ?? "",
     opts.credentialResolver,

@@ -1,19 +1,20 @@
-import type { LLMClient, ToolDefinition, ToolResult } from "../models/provider.js";
-import { pushAssistantTurn, textResult } from "../models/provider.js";
 import type { Adapter } from "../adapters/adapter.js";
 import type { EvidenceLogger } from "../evidence/logger.js";
 import type { StoryCard } from "../format/story-card.js";
+import type { LLMClient, ToolDefinition, ToolResult } from "../models/provider.js";
+import { pushAssistantTurn, textResult } from "../models/provider.js";
 import type { VerdictResult, VerdictStatus } from "../types.js";
 import { RESULT_SCHEMA_VERSION } from "../types.js";
 import type { RunId } from "../util/brands.js";
-import { buildSystemPrompt } from "./prompts.js";
 import { buildInitialUserMessage } from "./initial-message.js";
-import { checkCriteriaConsistency, parseReportCriteria, parseReportResult, salvageReportResult } from "./validators.js";
+import { buildSystemPrompt } from "./prompts.js";
+import { buildReflectionReminder, type ReflectableToolCall, renderTrace } from "./reflection.js";
 import {
-  buildReflectionReminder,
-  renderTrace,
-  type ReflectableToolCall,
-} from "./reflection.js";
+  checkCriteriaConsistency,
+  parseReportCriteria,
+  parseReportResult,
+  salvageReportResult,
+} from "./validators.js";
 
 // How many mutating tool calls to retain for the reflection trace. Set
 // to roughly twice MAX_TRACE_ENTRIES (8) so the rendered window has
@@ -196,8 +197,7 @@ export interface AgentOptions {
 // after the model accumulated escape-heavy reasoning output.)
 export const REPORT_TOOL: ToolDefinition = {
   name: "report_result",
-  description:
-    "Report your test result. Call this when you are done testing.",
+  description: "Report your test result. Call this when you are done testing.",
   parameters: {
     type: "object",
     properties: {
@@ -213,20 +213,13 @@ export const REPORT_TOOL: ToolDefinition = {
       observations: {
         type: "array",
         description:
-          "Array of structured observations. Pass as an array literal, not a JSON string. Use an empty array if you have nothing to report. Example: [{\"kind\": \"bug\", \"description\": \"login button does nothing on second click\"}]",
+          'Array of structured observations. Pass as an array literal, not a JSON string. Use an empty array if you have nothing to report. Example: [{"kind": "bug", "description": "login button does nothing on second click"}]',
         items: {
           type: "object",
           properties: {
             kind: {
               type: "string",
-              enum: [
-                "bug",
-                "ux",
-                "typo",
-                "suggestion",
-                "a11y",
-                "performance",
-              ],
+              enum: ["bug", "ux", "typo", "suggestion", "a11y", "performance"],
             },
             description: { type: "string" },
           },
@@ -315,9 +308,7 @@ export async function runAgent(
 
   logger.logUserMessage(0, initialMessage);
 
-  const messages: unknown[] = [
-    client.userMessage(initialMessage),
-  ];
+  const messages: unknown[] = [client.userMessage(initialMessage)];
 
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
@@ -399,9 +390,10 @@ export async function runAgent(
         turns,
       },
     };
-    const result: VerdictResult = partial.status === "errored"
-      ? { ...base, status: "errored", error: partial.error! }
-      : { ...base, status: partial.status };
+    const result: VerdictResult =
+      partial.status === "errored"
+        ? { ...base, status: "errored", error: partial.error! }
+        : { ...base, status: partial.status };
     logger.logRunEnd({
       status: result.status,
       summary: result.summary,
@@ -490,7 +482,9 @@ export async function runAgent(
     turns++;
 
     const thinkingBlocks: Array<{ text: string; signature?: string | undefined }> = [];
-    const raw = response.rawAssistantMessage as { content?: Array<Record<string, unknown>> } | undefined;
+    const raw = response.rawAssistantMessage as
+      | { content?: Array<Record<string, unknown>> }
+      | undefined;
     if (raw && Array.isArray(raw.content)) {
       for (const block of raw.content) {
         if (block && block.type === "thinking" && typeof block.thinking === "string") {
@@ -508,7 +502,11 @@ export async function runAgent(
       text: response.text,
       thinking: thinkingBlocks,
       reasoning: response.reasoning,
-      toolCalls: response.toolCalls.map((tc) => ({ id: tc.id, name: tc.name, arguments: tc.arguments })),
+      toolCalls: response.toolCalls.map((tc) => ({
+        id: tc.id,
+        name: tc.name,
+        arguments: tc.arguments,
+      })),
       usage: {
         inputTokens: response.usage.inputTokens,
         outputTokens: response.usage.outputTokens,
@@ -533,13 +531,9 @@ export async function runAgent(
     // and further tool calls (clicks, navigates) would be for a scenario
     // the model considers finished. We log the dropped names to the
     // evidence log so they're recoverable post-hoc.
-    const report = response.toolCalls.find(
-      (tc) => tc.name === "report_result"
-    );
+    const report = response.toolCalls.find((tc) => tc.name === "report_result");
     if (report) {
-      const otherTools = response.toolCalls.filter(
-        (tc) => tc.name !== "report_result"
-      );
+      const otherTools = response.toolCalls.filter((tc) => tc.name !== "report_result");
       if (otherTools.length > 0) {
         logger.logEvent("report_with_other_tools_dropped", {
           dropped: otherTools.map((tc) => tc.name),
@@ -594,19 +588,22 @@ export async function runAgent(
             tc.id === report.id
               ? textResult(
                   `Error: report_result rejected: ${validationFailure}. ` +
-                  `Call report_result again with corrected arguments. ` +
-                  `Keep your verdict and findings the same; fix only the invalid field.`,
+                    `Call report_result again with corrected arguments. ` +
+                    `Keep your verdict and findings the same; fix only the invalid field.`,
                 )
-              : textResult(
-                  "Error: not executed — report_result was called in the same turn.",
-                ),
+              : textResult("Error: not executed — report_result was called in the same turn."),
           );
           // Log the synthetic rejection as ordinary tool_call/tool_result
           // rows: session revival rebuilds each turn from these, and an
           // assistant tool call with no result row replays as a dangling
           // tool_use.
           response.toolCalls.forEach((tc, i) => {
-            logger.logToolCall({ turn: turns, toolUseId: tc.id, name: tc.name, arguments: tc.arguments });
+            logger.logToolCall({
+              turn: turns,
+              toolUseId: tc.id,
+              name: tc.name,
+              arguments: tc.arguments,
+            });
             logger.logToolResult({
               turn: turns,
               toolUseId: tc.id,
@@ -644,7 +641,11 @@ export async function runAgent(
         // Raw args in reasoning so a human post-mortem can reconstruct
         // what the model tried to report.
         let rawArgs = "<unserializable>";
-        try { rawArgs = JSON.stringify(report.arguments); } catch { /* ignore */ }
+        try {
+          rawArgs = JSON.stringify(report.arguments);
+        } catch {
+          /* ignore */
+        }
         return buildResult({
           status: "investigate",
           summary: `LLM returned malformed report_result: ${validationFailure}`,
@@ -695,7 +696,12 @@ export async function runAgent(
       const results: ToolResult[] = [];
       for (const tc of response.toolCalls) {
         if (isAborted()) return abortedResult();
-        logger.logToolCall({ turn: turns, toolUseId: tc.id, name: tc.name, arguments: tc.arguments });
+        logger.logToolCall({
+          turn: turns,
+          toolUseId: tc.id,
+          name: tc.name,
+          arguments: tc.arguments,
+        });
         const started = Date.now();
         let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
         let result: ToolResult;
@@ -729,9 +735,7 @@ export async function runAgent(
           // assign `undefined`: an absent key and a present-but-undefined key
           // are different things on the wire, and run.jsonl rows are read back
           // by session revival.
-          ...(result.transcriptText !== undefined
-            ? { transcriptText: result.transcriptText }
-            : {}),
+          ...(result.transcriptText !== undefined ? { transcriptText: result.transcriptText } : {}),
           ...(result.kind === "image"
             ? {
                 ...(result.imagePath !== undefined ? { image: result.imagePath } : {}),
@@ -762,13 +766,17 @@ export async function runAgent(
         !adapter.isMutatingTool(tc0.name)
       ) {
         let argsJson = "<unserializable>";
-        try { argsJson = JSON.stringify(tc0.arguments ?? {}); } catch { /* ignore */ }
+        try {
+          argsJson = JSON.stringify(tc0.arguments ?? {});
+        } catch {
+          /* ignore */
+        }
         // Fingerprint the STABLE payload of the result. For image
         // results that's the image bytes — the text carries a per-call
         // path ("Screenshot saved to screenshots/00X.png"), which would
         // make a frozen screen look alive (and an identical caption over
         // a changing screen look frozen).
-        const stablePayload = result0.kind === "image" ? result0.image.data : result0.text ?? "";
+        const stablePayload = result0.kind === "image" ? result0.image.data : (result0.text ?? "");
         const fingerprint = [tc0.name, argsJson, stablePayload].join("\0");
         if (fingerprint === lastStallFingerprint) {
           stallRepeats++;
@@ -839,9 +847,7 @@ export async function runAgent(
           repeats: stallRepeats,
         });
         stallForcedText = buildStallForcedReminder(stalledTool, stallRepeats);
-        extraUserText = extraUserText
-          ? `${extraUserText}\n\n${stallForcedText}`
-          : stallForcedText;
+        extraUserText = extraUserText ? `${extraUserText}\n\n${stallForcedText}` : stallForcedText;
       }
 
       // One combined user_message row per turn — revival reads only the
@@ -866,8 +872,8 @@ export async function runAgent(
       pushAssistantTurn(messages, response.rawAssistantMessage);
       messages.push(
         client.userMessage(
-          "Use the tools to interact with the application, or call report_result when done."
-        )
+          "Use the tools to interact with the application, or call report_result when done.",
+        ),
       );
     } else {
       // Empty response. Try a nudge once (PRI-1864 — long-haul polling
@@ -916,9 +922,11 @@ export async function runAgent(
    * budget); a malformed report falls to salvage (PRI-2140) and then
    * to the caller-supplied fallback investigate.
    */
-  async function finalReportTurn(
-    fallback: { summary: string; reasoning: string; malformedEvent: string },
-  ): Promise<VerdictResult> {
+  async function finalReportTurn(fallback: {
+    summary: string;
+    reasoning: string;
+    malformedEvent: string;
+  }): Promise<VerdictResult> {
     const graceTurn = turns + 1;
     logger.logLlmRequest(graceTurn, messages.length);
     const graceResponse = await client.chat(messages, [REPORT_TOOL], systemPrompt, { runId });
@@ -928,7 +936,9 @@ export async function runAgent(
     totalCacheRead += graceResponse.usage.cacheReadInputTokens ?? 0;
 
     const graceThinking: Array<{ text: string; signature?: string | undefined }> = [];
-    const graceRaw = graceResponse.rawAssistantMessage as { content?: Array<Record<string, unknown>> } | undefined;
+    const graceRaw = graceResponse.rawAssistantMessage as
+      | { content?: Array<Record<string, unknown>> }
+      | undefined;
     if (graceRaw && Array.isArray(graceRaw.content)) {
       for (const block of graceRaw.content) {
         if (block && block.type === "thinking" && typeof block.thinking === "string") {
@@ -945,7 +955,11 @@ export async function runAgent(
       stopReason: graceResponse.stopReason,
       text: graceResponse.text,
       thinking: graceThinking,
-      toolCalls: graceResponse.toolCalls.map((tc) => ({ id: tc.id, name: tc.name, arguments: tc.arguments })),
+      toolCalls: graceResponse.toolCalls.map((tc) => ({
+        id: tc.id,
+        name: tc.name,
+        arguments: tc.arguments,
+      })),
       usage: {
         inputTokens: graceResponse.usage.inputTokens,
         outputTokens: graceResponse.usage.outputTokens,
@@ -967,7 +981,11 @@ export async function runAgent(
         // are accepted when valid but never fatal: an invalid or
         // missing criteria array is dropped with an event, not
         // re-asked — the verdict survives.
-        const contract = enforceCriteriaContract(parsed.value.status, graceReport.arguments, graceTurn);
+        const contract = enforceCriteriaContract(
+          parsed.value.status,
+          graceReport.arguments,
+          graceTurn,
+        );
         return buildResult({
           status: contract.status,
           summary: parsed.value.summary,
@@ -987,7 +1005,11 @@ export async function runAgent(
           reason: parsed.reason,
           dropped: salvaged.value.dropped,
         });
-        const contract = enforceCriteriaContract(salvaged.value.status, graceReport.arguments, graceTurn);
+        const contract = enforceCriteriaContract(
+          salvaged.value.status,
+          graceReport.arguments,
+          graceTurn,
+        );
         return buildResult({
           status: contract.status,
           summary: salvaged.value.summary,
@@ -1020,7 +1042,7 @@ export async function runAgent(
   const elapsedSec = Math.round(elapsedMsAtGrace / 1000);
   const reminderText =
     `<SYSTEM-REMINDER>\n` +
-    `You have used your time budget (${elapsedSec}s of ${Math.round(budgetMs/1000)}s) without calling report_result. ` +
+    `You have used your time budget (${elapsedSec}s of ${Math.round(budgetMs / 1000)}s) without calling report_result. ` +
     `No more application tools are available — only report_result can be called now. ` +
     `This is your final response.\n` +
     `\n` +
@@ -1038,7 +1060,7 @@ export async function runAgent(
 
   return finalReportTurn({
     summary: "Agent reached time budget without reporting a result",
-    reasoning: `Exceeded ${Math.round(budgetMs/1000)}s budget; grace-turn reminder did not yield a valid report_result.`,
+    reasoning: `Exceeded ${Math.round(budgetMs / 1000)}s budget; grace-turn reminder did not yield a valid report_result.`,
     malformedEvent: "deadline_grace_malformed_report",
   });
 }

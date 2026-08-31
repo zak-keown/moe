@@ -1,7 +1,7 @@
-import type { LLMClient, Provider } from "./provider.js";
 import type { ModelConfig } from "../types.js";
 import { createAnthropicClient } from "./anthropic.js";
 import { createOpenAIClient } from "./openai.js";
+import type { LLMClient, Provider } from "./provider.js";
 
 export const SUPPORTED_MODEL_PREFIXES_MESSAGE = "Supported prefixes: claude*, gpt*, o1*, o3*";
 

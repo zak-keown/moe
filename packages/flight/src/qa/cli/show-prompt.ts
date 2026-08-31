@@ -1,15 +1,15 @@
-import { readFileSync, existsSync } from "fs";
-import { parseStoryCard } from "../format/story-card.js";
-import { buildInitialUserMessage } from "../agent/initial-message.js";
-import { buildScenarioBlocks } from "../agent/prompts.js";
-import { renderContextTree } from "../context/tree.js";
-import { resolveProjectPrompt } from "../runs/orchestrator.js";
-import { flightPath } from "../paths.js";
-import { loadPromptFile } from "../agent/prompts/loader.js";
+import { existsSync, readFileSync } from "fs";
 import type { Adapter, AdapterType } from "../adapters/adapter.js";
-import { WebAdapter } from "../adapters/web/adapter.js";
 import { CLIAdapter } from "../adapters/cli/adapter.js";
 import { TUIAdapter } from "../adapters/tui/adapter.js";
+import { WebAdapter } from "../adapters/web/adapter.js";
+import { buildInitialUserMessage } from "../agent/initial-message.js";
+import { loadPromptFile } from "../agent/prompts/loader.js";
+import { buildScenarioBlocks } from "../agent/prompts.js";
+import { renderContextTree } from "../context/tree.js";
+import { parseStoryCard } from "../format/story-card.js";
+import { flightPath } from "../paths.js";
+import { resolveProjectPrompt } from "../runs/orchestrator.js";
 
 export interface ShowPromptOptions {
   scenarioPath: string;
@@ -56,7 +56,11 @@ export function showPromptAndExit(opts: ShowPromptOptions): void {
   const card = parseStoryCard(readFileSync(opts.scenarioPath, "utf-8"));
   const contextRoot = flightPath(opts.projectRoot, opts.stateDirName, "context");
   const contextTree = existsSync(contextRoot) ? renderContextTree(contextRoot) : "";
-  const projectPrompt = resolveProjectPrompt(opts.projectRoot, opts.stateDirName, opts.projectPromptPath);
+  const projectPrompt = resolveProjectPrompt(
+    opts.projectRoot,
+    opts.stateDirName,
+    opts.projectPromptPath,
+  );
 
   // Honest introspection: instantiate the actual adapter (no start()) so
   // tool list and describeTarget() match what the agent receives. The
@@ -101,7 +105,9 @@ export function showPromptAndExit(opts: ShowPromptOptions): void {
     // At runtime, executeRunCore reads from a snapshotted copy under
     // <outDir>/inputs/context — contents identical by construction. The
     // path shown here is the project-root source of truth.
-    out.push(h("Context", `src/agent/prompts/context.md + ${contextRoot} (snapshotted at run time)`));
+    out.push(
+      h("Context", `src/agent/prompts/context.md + ${contextRoot} (snapshotted at run time)`),
+    );
     out.push(loadPromptFile("context").replace("{{TREE_LISTING}}", contextTree));
   } else {
     out.push(h("Context", "(none)"));

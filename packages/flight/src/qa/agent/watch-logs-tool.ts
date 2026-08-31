@@ -1,5 +1,5 @@
-import { textResult, type ToolDefinition, type ToolResult } from "../models/provider.js";
 import type { EvidenceLogger } from "../evidence/logger.js";
+import { type ToolDefinition, type ToolResult, textResult } from "../models/provider.js";
 import type { WatchManager } from "./watch-manager.js";
 
 const WATCH_LOGS_DESCRIPTION =

@@ -35,10 +35,7 @@ export interface StubTarget {
   startedAt?: number | undefined;
 }
 
-export function writeShutdownStubs(
-  targets: StubTarget[],
-  resultsRoot: string,
-): number {
+export function writeShutdownStubs(targets: StubTarget[], resultsRoot: string): number {
   let written = 0;
   const now = Date.now();
   for (const t of targets) {

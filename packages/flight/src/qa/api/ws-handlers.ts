@@ -1,9 +1,9 @@
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { isSafePath } from "../paths.js";
-import type { RunBroadcaster } from "./ws.js";
 import type { ActiveRunRegistry } from "./active-runs.js";
 import type { RunSetBroadcaster } from "./run-set-broadcaster.js";
+import type { RunBroadcaster } from "./ws.js";
 
 interface WsLike {
   send(data: string): void;
@@ -33,11 +33,13 @@ export function handleWsOpen(
   broadcaster.addClient(runId, ws);
   const snap = registry?.getSnapshot(runId);
   if (snap) {
-    ws.send(JSON.stringify({
-      type: "snapshot",
-      lastFrame: snap.lastFrame,
-      progressLog: snap.progressLog,
-    }));
+    ws.send(
+      JSON.stringify({
+        type: "snapshot",
+        lastFrame: snap.lastFrame,
+        progressLog: snap.progressLog,
+      }),
+    );
   } else {
     ws.send(JSON.stringify({ type: "gone" }));
   }
@@ -58,7 +60,11 @@ export function handleWsOpen(
           .split("\n")
           .filter(Boolean)
           .map((l) => {
-            try { return JSON.parse(l); } catch { return null; }
+            try {
+              return JSON.parse(l);
+            } catch {
+              return null;
+            }
           })
           .filter((x) => x !== null);
         if (events.length > 0) {
@@ -90,6 +96,8 @@ export function handleSetWsOpen(
     try {
       const manifest = JSON.parse(readFileSync(path, "utf8"));
       ws.send(JSON.stringify({ kind: "snapshot", manifest }));
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 }

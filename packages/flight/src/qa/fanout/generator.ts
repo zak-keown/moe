@@ -52,15 +52,12 @@ Description of what this variation tests.
 - Second criterion`;
 }
 
-export async function generateFanout(
-  card: StoryCard,
-  client: LLMClient
-): Promise<string[]> {
+export async function generateFanout(card: StoryCard, client: LLMClient): Promise<string[]> {
   const prompt = buildFanoutPrompt(card);
   const response = await client.chat(
     [client.userMessage(prompt)],
     [],
-    "You are a QA test designer. Output story cards in markdown format."
+    "You are a QA test designer. Output story cards in markdown format.",
   );
 
   return splitAndValidateCards(response.text);
@@ -74,11 +71,17 @@ export function splitAndValidateCards(text: string): string[] {
     .replace(/\n```\s*\n/gm, "\n");
 
   // Try explicit separator first
-  let chunks = stripped.split("---CARD---").map((s) => s.trim()).filter(Boolean);
+  let chunks = stripped
+    .split("---CARD---")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   // If no separator found, try splitting on YAML frontmatter boundaries
   if (chunks.length <= 1) {
-    chunks = stripped.split(/\n(?=---\nid:)/).map((s) => s.trim()).filter(Boolean);
+    chunks = stripped
+      .split(/\n(?=---\nid:)/)
+      .map((s) => s.trim())
+      .filter(Boolean);
   }
 
   return chunks.filter((chunk) => {
@@ -121,7 +124,7 @@ Generate one story card per observation. Output each as a complete story card in
 
 export async function generateFromObservations(
   result: VerdictResult,
-  client: LLMClient
+  client: LLMClient,
 ): Promise<string[]> {
   if (result.observations.length === 0) return [];
 
@@ -129,7 +132,7 @@ export async function generateFromObservations(
   const response = await client.chat(
     [client.userMessage(prompt)],
     [],
-    "You are a QA analyst. Output story cards in markdown format."
+    "You are a QA analyst. Output story cards in markdown format.",
   );
 
   return splitAndValidateCards(response.text);
@@ -161,7 +164,7 @@ Generate 2-3 follow-up cards. Output each as a complete story card in markdown f
 
 export async function generateFromFailure(
   result: VerdictResult,
-  client: LLMClient
+  client: LLMClient,
 ): Promise<string[]> {
   const prompt = buildFailurePrompt(result);
   if (prompt === null) return [];
@@ -169,7 +172,7 @@ export async function generateFromFailure(
   const response = await client.chat(
     [client.userMessage(prompt)],
     [],
-    "You are a QA analyst. Output story cards in markdown format."
+    "You are a QA analyst. Output story cards in markdown format.",
   );
 
   return splitAndValidateCards(response.text);

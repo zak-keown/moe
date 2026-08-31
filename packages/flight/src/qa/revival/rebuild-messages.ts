@@ -1,14 +1,14 @@
 import { readFileSync } from "fs";
 import { join } from "path";
-import type { LLMClient, ToolCall, ToolDefinition, ToolResult } from "../models/provider.js";
-import { pushAssistantTurn, textResult } from "../models/provider.js";
-import { buildRevivalAddendum } from "./system-prompt-addendum.js";
 import { getAdapterToolDefinitionsByName } from "../adapters/registry.js";
 import {
   REPORT_TOOL,
   synthesizeFilledAssistantMessage,
   synthesizeTruncatedAssistantStub,
 } from "../agent/agent.js";
+import type { LLMClient, ToolCall, ToolDefinition, ToolResult } from "../models/provider.js";
+import { pushAssistantTurn, textResult } from "../models/provider.js";
+import { buildRevivalAddendum } from "./system-prompt-addendum.js";
 
 /**
  * The subset of LLMClient that rebuildMessages depends on. Both
@@ -76,8 +76,7 @@ export function rebuildMessages(
     );
   }
 
-  const systemPrompt =
-    systemPromptBody + buildRevivalAddendum(toolDefs, { fallback });
+  const systemPrompt = systemPromptBody + buildRevivalAddendum(toolDefs, { fallback });
 
   const turnsSeen = events
     .map((e) => (typeof e.turn === "number" ? (e.turn as number) : undefined))
@@ -85,9 +84,7 @@ export function rebuildMessages(
   const lastTurn = turnsSeen.length > 0 ? Math.max(...turnsSeen) : 0;
 
   if (upToTurn !== undefined && upToTurn > lastTurn) {
-    throw new Error(
-      `--turn ${upToTurn} out of range; run ended at turn ${lastTurn}`,
-    );
+    throw new Error(`--turn ${upToTurn} out of range; run ended at turn ${lastTurn}`);
   }
 
   const cutoff = upToTurn ?? lastTurn;
@@ -169,9 +166,7 @@ export function rebuildMessages(
       // reflection-checkpoint reminder. The provider's toolResultMessages
       // weaves it correctly (Anthropic: trailing text block; OpenAI:
       // separate user message after the per-call tool messages).
-      const extraUserText = userMsg
-        ? String(userMsg.content ?? "")
-        : undefined;
+      const extraUserText = userMsg ? String(userMsg.content ?? "") : undefined;
       messages.push(...client.toolResultMessages(calls, results, extraUserText));
     }
   }
@@ -190,9 +185,7 @@ export function rebuildMessages(
       const executedIds = new Set(
         events
           .filter(
-            (e) =>
-              e.type === "tool_result" &&
-              (e.turn as number) === (finalLlmResp.turn as number),
+            (e) => e.type === "tool_result" && (e.turn as number) === (finalLlmResp.turn as number),
           )
           .map((e) => String(e.toolUseId)),
       );
@@ -213,11 +206,7 @@ export function rebuildMessages(
  * Reconstruct an in-memory ToolResult from a logged tool_result event,
  * rehydrating spilled image / text / capture content from disk.
  */
-function rebuildToolResult(
-  tr: RawEvent,
-  runDir: string,
-  warnings: string[],
-): ToolResult {
+function rebuildToolResult(tr: RawEvent, runDir: string, warnings: string[]): ToolResult {
   // Reconstruct the variant from the per-field signals on disk. The
   // run.jsonl rows don't carry an explicit `kind`; we infer from
   // which fields the original producer set:

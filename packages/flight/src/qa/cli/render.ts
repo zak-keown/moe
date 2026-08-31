@@ -1,9 +1,9 @@
 import { existsSync, statSync } from "node:fs";
 import { isAbsolute } from "node:path";
-import type { RenderArgs } from "./args.js";
 import type { AppConfig } from "../config.js";
 import { resolveRunDir } from "../paths.js";
 import { renderRun } from "../render/render-run.js";
+import type { RenderArgs } from "./args.js";
 
 export interface RenderDeps {
   log?: ((message: string) => void) | undefined;
@@ -14,7 +14,11 @@ export interface RenderDeps {
  * resolves to an existing directory, treat it as a run-dir path. Otherwise
  * treat it as a run-id and look it up under the configured state dir.
  */
-export async function render(args: RenderArgs, config: AppConfig, deps: RenderDeps = {}): Promise<void> {
+export async function render(
+  args: RenderArgs,
+  config: AppConfig,
+  deps: RenderDeps = {},
+): Promise<void> {
   const log = deps.log ?? ((m) => process.stderr.write(m + "\n"));
   const arg = args.runIdOrPath;
 

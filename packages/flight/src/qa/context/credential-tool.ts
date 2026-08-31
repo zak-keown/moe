@@ -3,11 +3,11 @@
 // timeout cascade, and the existing seam's `kill()` doesn't take a
 // signal. Every other caller in the codebase is fine with the seam;
 // this module is the deliberate exception.
-import { spawn, type ChildProcessByStdio } from "child_process";
+import { type ChildProcessByStdio, spawn } from "child_process";
 import type { Readable } from "stream";
 import type { CredentialResolverConfig } from "../config.js";
-import { textResult, type ToolDefinition, type ToolResult } from "../models/provider.js";
 import type { EvidenceLogger } from "../evidence/logger.js";
+import { type ToolDefinition, type ToolResult, textResult } from "../models/provider.js";
 import { contextRootIsPopulated } from "../paths.js";
 
 // `empty_stdout` is intentionally distinct from `ok`: per spec, a resolver
@@ -66,12 +66,16 @@ export async function runResolver(
 
     const timeoutHandle = setTimeout(() => {
       timedOut = true;
-      try { child.kill("SIGTERM"); } catch {}
+      try {
+        child.kill("SIGTERM");
+      } catch {}
     }, config.timeoutMs);
 
     const killHandle = setTimeout(() => {
       if (!settled) {
-        try { child.kill("SIGKILL"); } catch {}
+        try {
+          child.kill("SIGKILL");
+        } catch {}
       }
     }, config.timeoutMs + KILL_GRACE_MS);
 
@@ -80,7 +84,9 @@ export async function runResolver(
       stdoutBytes += chunk.length;
       if (stdoutBytes > STDOUT_CAP_BYTES) {
         stdoutOverflow = true;
-        try { child.kill("SIGKILL"); } catch {}
+        try {
+          child.kill("SIGKILL");
+        } catch {}
         settle({ kind: "stdout_overflow", elapsedMs: Date.now() - start });
         return;
       }
@@ -92,7 +98,9 @@ export async function runResolver(
       stderrBytes += chunk.length;
       if (stderrBytes > STDERR_CAP_BYTES) {
         stderrOverflow = true;
-        try { child.kill("SIGKILL"); } catch {}
+        try {
+          child.kill("SIGKILL");
+        } catch {}
         settle({ kind: "stderr_overflow", elapsedMs: Date.now() - start });
         return;
       }
@@ -133,8 +141,8 @@ export const FETCH_CREDENTIAL_TOOL_DESCRIPTION =
   "identifier for the user being acted as — typically the username or email, " +
   "whichever the system-under-test recognizes; extract it from the context file " +
   "that describes the user (use the `read` tool to fetch that file first). The " +
-  "second argument `key` names which credential is being requested (e.g. \"otp\", " +
-  "\"signup_verification\"). The file under the project's context directory that describes " +
+  'second argument `key` names which credential is being requested (e.g. "otp", ' +
+  '"signup_verification"). The file under the project\'s context directory that describes ' +
   "the entity declares which `key` values are valid. Returns the credential's " +
   "current value as markdown; on failure returns an error message naming the " +
   "step that failed.";
@@ -145,17 +153,16 @@ export interface FetchCredentialTool {
   // adapter-agnostic builder works equally well from web/cli/tui
   // adapters, each of which receives a per-tool-call logger in its
   // own executeTool(name, args, logger) entry point.
-  execute(
-    args: Record<string, unknown>,
-    logger?: EvidenceLogger | null,
-  ): Promise<ToolResult>;
+  execute(args: Record<string, unknown>, logger?: EvidenceLogger | null): Promise<ToolResult>;
 }
 
-const ENTITY_FORBIDDEN_PATTERN = /[\/\\]/;
+const ENTITY_FORBIDDEN_PATTERN = /[/\\]/;
 const KEY_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
 const ENTITY_MAX_LENGTH = 256;
 
-function validateEntity(entity: unknown): { ok: true; value: string } | { ok: false; reason: string } {
+function validateEntity(
+  entity: unknown,
+): { ok: true; value: string } | { ok: false; reason: string } {
   if (typeof entity !== "string" || entity.length === 0) {
     return { ok: false, reason: "must be a non-empty string" };
   }
@@ -246,7 +253,8 @@ export function buildFetchCredentialTool(
     switch (result.kind) {
       case "ok":
         logger?.logEvent("fetch_credential_ok", {
-          entity, key,
+          entity,
+          key,
           exitCode: 0,
           stdoutLength: result.stdout.length,
           stderrLength: result.stderr.length,
@@ -263,43 +271,65 @@ export function buildFetchCredentialTool(
         });
       case "nonzero_exit":
         logger?.logEvent("fetch_credential_failed", {
-          entity, key, step: "nonzero_exit",
+          entity,
+          key,
+          step: "nonzero_exit",
           exitCode: result.exitCode,
           stdoutLength: result.stdout.length,
           stderrLength: result.stderr.length,
           elapsedMs: result.elapsedMs,
         });
-        return textResult(`Error: fetch_credential resolver exited ${result.exitCode} for ${entity}:${key}:\n${result.stderr}`);
+        return textResult(
+          `Error: fetch_credential resolver exited ${result.exitCode} for ${entity}:${key}:\n${result.stderr}`,
+        );
       case "empty_stdout":
         logger?.logEvent("fetch_credential_failed", {
-          entity, key, step: "empty_stdout",
+          entity,
+          key,
+          step: "empty_stdout",
           stderrLength: result.stderr.length,
           elapsedMs: result.elapsedMs,
         });
-        return textResult(`Error: fetch_credential resolver returned empty success for ${entity}:${key}.`);
+        return textResult(
+          `Error: fetch_credential resolver returned empty success for ${entity}:${key}.`,
+        );
       case "timeout":
         logger?.logEvent("fetch_credential_failed", {
-          entity, key, step: "timeout",
+          entity,
+          key,
+          step: "timeout",
           timeoutMs: result.timeoutMs,
           stderrLength: result.stderr.length,
           elapsedMs: result.elapsedMs,
         });
-        return textResult(`Error: fetch_credential resolver timed out after ${result.timeoutMs}ms for ${entity}:${key}.`);
+        return textResult(
+          `Error: fetch_credential resolver timed out after ${result.timeoutMs}ms for ${entity}:${key}.`,
+        );
       case "stdout_overflow":
         logger?.logEvent("fetch_credential_failed", {
-          entity, key, step: "stdout_overflow",
+          entity,
+          key,
+          step: "stdout_overflow",
           elapsedMs: result.elapsedMs,
         });
-        return textResult(`Error: fetch_credential resolver stdout exceeded 64 KiB for ${entity}:${key}.`);
+        return textResult(
+          `Error: fetch_credential resolver stdout exceeded 64 KiB for ${entity}:${key}.`,
+        );
       case "stderr_overflow":
         logger?.logEvent("fetch_credential_failed", {
-          entity, key, step: "stderr_overflow",
+          entity,
+          key,
+          step: "stderr_overflow",
           elapsedMs: result.elapsedMs,
         });
-        return textResult(`Error: fetch_credential resolver stderr exceeded 8 KiB for ${entity}:${key}.`);
+        return textResult(
+          `Error: fetch_credential resolver stderr exceeded 8 KiB for ${entity}:${key}.`,
+        );
       case "spawn_failed":
         logger?.logEvent("fetch_credential_failed", {
-          entity, key, step: "spawn",
+          entity,
+          key,
+          step: "spawn",
           error: result.error,
         });
         return textResult(`Error: fetch_credential resolver failed to spawn: ${result.error}.`);

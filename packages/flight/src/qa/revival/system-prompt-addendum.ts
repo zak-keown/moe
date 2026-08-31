@@ -4,10 +4,7 @@ export interface AddendumOptions {
   fallback: boolean;
 }
 
-export function buildRevivalAddendum(
-  tools: ToolDefinition[],
-  opts: AddendumOptions,
-): string {
+export function buildRevivalAddendum(tools: ToolDefinition[], opts: AddendumOptions): string {
   const toolLines = tools
     .map((t) => `- \`${t.name}\` — ${t.description.split("\n")[0]}`)
     .join("\n");

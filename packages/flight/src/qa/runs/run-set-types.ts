@@ -6,8 +6,8 @@ export interface RunSetCtx {
   runSetId: RunSetId;
   kind: RunSetKind;
   passes: number;
-  cards: CardId[];      // cardIds, in deterministic order
-  cardIndex: number;    // 0-indexed position in `cards`
+  cards: CardId[]; // cardIds, in deterministic order
+  cardIndex: number; // 0-indexed position in `cards`
   attemptNumber: number; // 1-indexed within the (cards × attempts) loop
 }
 

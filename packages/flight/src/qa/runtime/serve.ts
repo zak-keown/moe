@@ -16,7 +16,6 @@ import type { Duplex } from "node:stream";
 import { serve as honoServe } from "@hono/node-server";
 import { WebSocketServer } from "ws";
 
-
 export interface WsLike {
   send(data: string): void;
   readyState: number;
@@ -89,7 +88,9 @@ function serveViaNode<T>(opts: ServeOptions<T>): RunningServer {
       wss.handleUpgrade(req, socket, head, (ws) => {
         const wsLike = ws as unknown as WsLike;
         hooks.open(wsLike, data);
-        ws.on("close", () => { hooks.close(wsLike, data); });
+        ws.on("close", () => {
+          hooks.close(wsLike, data);
+        });
       });
     });
   }

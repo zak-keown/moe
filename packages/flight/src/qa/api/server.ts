@@ -1,25 +1,25 @@
+import { existsSync, readFileSync, statSync } from "fs";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { join } from "path";
-import { existsSync, readFileSync, statSync } from "fs";
-import { scenarioRoutes } from "./routes/scenarios.js";
-import { resultRoutes } from "./routes/results.js";
-import { fanoutRoutes } from "./routes/fanout.js";
-import { runRoutes } from "./routes/run.js";
-import { runSetRoutes } from "./routes/run-sets.js";
+import type { AppConfig } from "../config.js";
+import { flightPath, isSafePath } from "../paths.js";
+import { ErrorLog } from "../util/error-log.js";
+import type { ActiveRunRegistry } from "./active-runs.js";
+import { getMimeType } from "./mime-types.js";
+import { activeRunRoutes } from "./routes/active-runs.js";
 import { configRoutes } from "./routes/config.js";
 import { configEffectiveRoutes } from "./routes/config-effective.js";
 import { errorRoutes } from "./routes/errors.js";
-import { ErrorLog } from "../util/error-log.js";
-import { activeRunRoutes } from "./routes/active-runs.js";
-import { getMimeType } from "./mime-types.js";
-import { isSafePath, flightPath } from "../paths.js";
-import type { RunBroadcaster } from "./ws.js";
-import type { ActiveRunRegistry } from "./active-runs.js";
-import type { RunSetBroadcaster } from "./run-set-broadcaster.js";
+import { fanoutRoutes } from "./routes/fanout.js";
+import { resultRoutes } from "./routes/results.js";
+import { runRoutes } from "./routes/run.js";
+import { runSetRoutes } from "./routes/run-sets.js";
+import { scenarioRoutes } from "./routes/scenarios.js";
 import type { CancelTokenRegistry } from "./run-cancel.js";
+import type { RunSetBroadcaster } from "./run-set-broadcaster.js";
 import type { ShutdownState } from "./shutdown.js";
-import type { AppConfig } from "../config.js";
+import type { RunBroadcaster } from "./ws.js";
 
 export function createApp(
   config: AppConfig,
@@ -32,10 +32,13 @@ export function createApp(
 ) {
   const app = new Hono();
   app.onError((err, c) => {
-    return c.json({
-      error: "internal",
-      message: err instanceof Error ? err.message : String(err),
-    }, 500);
+    return c.json(
+      {
+        error: "internal",
+        message: err instanceof Error ? err.message : String(err),
+      },
+      500,
+    );
   });
 
   // Graceful shutdown gate: while the daemon is draining, refuse new POSTs
@@ -52,14 +55,21 @@ export function createApp(
 
   // Body-size cap (PRI-1478). Applied at the Hono layer so both Bun and
   // Node runtimes enforce it uniformly. 413 + a structured envelope.
-  app.use("*", bodyLimit({
-    maxSize: config.maxRequestBodySize,
-    onError: (c) => c.json({
-      error: "body_too_large",
-      message: `request body exceeds cap of ${config.maxRequestBodySize} bytes`,
-      cap: config.maxRequestBodySize,
-    }, 413),
-  }));
+  app.use(
+    "*",
+    bodyLimit({
+      maxSize: config.maxRequestBodySize,
+      onError: (c) =>
+        c.json(
+          {
+            error: "body_too_large",
+            message: `request body exceeds cap of ${config.maxRequestBodySize} bytes`,
+            cap: config.maxRequestBodySize,
+          },
+          413,
+        ),
+    }),
+  );
 
   const errorLog = new ErrorLog();
   const projectRoot = config.projectRoot;
@@ -69,12 +79,16 @@ export function createApp(
   api.route("/scenarios", scenarioRoutes(projectRoot, stateDirName, errorLog));
   api.route("/results", resultRoutes(flightPath(projectRoot, stateDirName, "results"), registry));
   api.route("/fanout", fanoutRoutes(config, undefined, errorLog));
-  api.route("/run", runRoutes(config, broadcaster, errorLog, registry, setBroadcaster, cancelTokens));
+  api.route(
+    "/run",
+    runRoutes(config, broadcaster, errorLog, registry, setBroadcaster, cancelTokens),
+  );
   api.route("/run-sets", runSetRoutes(flightPath(projectRoot, stateDirName), cancelTokens));
   api.route("/config", configRoutes(config));
   api.route("/config/effective", configEffectiveRoutes(config));
   api.route("/errors", errorRoutes(errorLog));
-  if (registry) api.route("/runs/active", activeRunRoutes(registry, config.activeRunTargetMaxBytes));
+  if (registry)
+    api.route("/runs/active", activeRunRoutes(registry, config.activeRunTargetMaxBytes));
 
   app.route("/api", api);
 

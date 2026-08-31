@@ -1,4 +1,4 @@
-import { mkdirSync, cpSync, readdirSync, statSync } from "fs";
+import { cpSync, mkdirSync, readdirSync, statSync } from "fs";
 import { join } from "path";
 
 export interface SnapshotInputs {
