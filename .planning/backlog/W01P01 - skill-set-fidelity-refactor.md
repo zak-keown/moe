@@ -10,14 +10,15 @@ idea: |
   protecting.
 status: backlog
 size: M
-estimate: 4-5 h
-depends_on: [DO-NOW-1, DO-NOW-2]
+estimate: 5-6 h
+depends_on: [DO-NOW-1, DO-NOW-2]  # both landed as of main a9f981d — satisfied
 blocks: [deterministic-task-dag]
-conflicts_with: [parallel-execution-option, gsd-core-skill-import, tiered-workflow-naming, native-renderers, deterministic-task-dag, runtime-pruning]
+conflicts_with: [parallel-execution-option, gsd-core-skill-import, tiered-workflow-naming, native-renderers, deterministic-task-dag, runtime-pruning, verification-split-and-firing-rate]
 touches:
   - packages/core/skill-tiers.yaml
   - packages/core/test/metadata.test.ts
   - packages/core/README.md
+  - scripts/mint-plugins.mjs
   - PARITY.md
 decision_needed: yes
 ---
@@ -69,9 +70,21 @@ deleting the only automated fidelity check in the package.
 
 ## Current state
 
-All citations from the `import/packages-core` worktree
-`.claude/worktrees/wf_238bb49d-362-13`, package `packages/core`. On `main` this
-package is a stub; nothing below exists there yet (DO-NOW-1).
+**Re-based on `main` @ `a9f981d`.** DO-NOW-1 and DO-NOW-2 have both landed, and
+DO-NOW-3 substantially has: `packages/core` is on `main`, `metadata.test.ts` is
+690 lines (was 652 on the import branch), `plugins/` exists with six generated
+plugins, and `moe-mint.yaml` has split into `mint/moe-core.yaml` +
+`mint/moe-everything.yaml`. Every line number below is verified against `main`,
+not the worktree. **The six assertions this item exists to change are all
+unmodified** — the file grew below `:500` — so the problem is untouched even
+though its surroundings moved.
+
+One convention, taken from Zak's own commit `a9f981d` ("PARITY: cite the closure
+test by name, because the refactor moves its line"): that commit de-referenced
+`PARITY.md:89` from `metadata.test.ts:475` to the test's *name*, on the explicit
+grounds that this branch moves it. **The diff should follow suit** — any prose
+citing this file should name the `it(...)` rather than the line, since this item
+is precisely the change that invalidates line numbers.
 
 The sites named in the brief, verified:
 
@@ -99,11 +112,19 @@ The sites named in the brief, verified:
 
 Four further facts that change the answers, none of them in the brief:
 
-**`skill-tiers.yaml` has exactly one machine consumer.** `metadata.test.ts:452`
-is the only code that parses it; `moe-mint.yaml:11` mentions it in a comment and
-`README.md:99,112,141,155,715` describe it in prose. DO-NOW-3 has not yet been
-written against its schema, so this is the cheapest moment the schema will ever
-be changeable.
+**`skill-tiers.yaml` now has three consumers, not one — corrected after the
+re-base.** When I first wrote this, `metadata.test.ts:452` was the only code that
+parsed it and DO-NOW-3 had not been built against the schema, which made the
+restructure nearly free. That is no longer true. It is now read by
+`metadata.test.ts:452` (used at `:457`, `:458`, `:469`, `:478` and the new `:511`),
+by **`scripts/mint-plugins.mjs:123-135`**, which stages the two plugins by
+filtering `Object.entries(parsed.skills ?? {})` on tier, and it is declared as a
+turbo input at `turbo.json:26`. `mint/moe-core.yaml:25` and
+`mint/moe-everything.yaml:5` name it in comments; `README.md:103,116,134,149,174`
+describe it in prose. **The schema change therefore has a build script to update,
+not just a test** — `scripts/mint-plugins.mjs` joins `touches`, and the "cheapest
+moment" argument is spent. The `?? {}` at `:132` degrades to an empty map rather
+than throwing, but `:135` (`if (names.size === 0) fail(...)`) catches it loudly.
 
 **The execute-bit allowlist has already drifted.** `find skills hooks -type f
 -perm -u+x` returns 18 non-example files; `:312-327` lists 14. The four missing
@@ -119,6 +140,10 @@ the two `- ✅` authoring examples `:240` already skips):
 `writing-skills/SKILL.md:18,393`,
 `writing-skills/testing-skills-with-subagents.md:13`. Every backticked kebab
 token on all seven is a real skill name, so tightening `:243` is a zero-content diff.
+(`writing-skills/SKILL.md:393` is correct on `main`. `moe-tone-and-branding`'s
+unmerged branch inserts a section above it and shifts it to `:399`; whichever
+merges second re-checks this line, which is the cost of citing a line number in a
+file two items edit.)
 
 **Provenance cannot live in frontmatter.** `:145` allows exactly `name`,
 `description`, `allowed-tools`, `argument-hint` — the keys Claude Code recognises
@@ -127,21 +152,21 @@ every generated plugin.
 
 ## Prerequisites
 
-**DO-NOW-1** — the file is on a branch; restructuring before the merge means
-resolving the same conflict twice.
+**Both are satisfied. This item is unblocked and is scheduled W01P01.**
 
-**DO-NOW-2 — the dependency is right, but not for the schema reason the brief
-gives.** The schema argument is weak in both directions: DO-NOW-2 edits `tier:`
-*values*, I edit *structure*, and my restructure would remove work from DO-NOW-2
-by retiring the magic number it would otherwise hand-update. The real reason is
-`:470`. My recommendation keeps an explicit lean-tier count, and
-`skill-tiers.yaml`'s own header says the current split "is a PROPOSAL awaiting
-human review, not a settled decision." Landing first means pinning an undecided
-13 as the diff's central assertion and having DO-NOW-2 move it before review.
-Landing second means the number I pin is a decision. Separately, this item
-reindents all 27 entries under a new top-level key, which conflicts textually
-with any concurrent edit to that file — same-wave was never available regardless
-of order.
+**DO-NOW-1 — landed.** `packages/core` is on `main`; the merge conflict this
+dependency existed to avoid cannot happen now.
+
+**DO-NOW-2 — landed, and it vindicated the dependency.** I argued this dependency
+was real for one specific reason: my recommendation pins an explicit lean-tier
+count, and `skill-tiers.yaml`'s header called the split "a PROPOSAL awaiting human
+review," so landing first would have meant pinning an undecided 13. That was
+right, and for a sharper reason than I knew — the review did not merely ratify the
+split, it **deleted ERR SMALL**, the rule my B1 recommendation cited as its
+justification (see B1). Had this item landed first it would have shipped an
+assertion whose stated rationale was deleted a day later. The split itself stands
+(`skill-tiers.yaml:7-8`), the counts are still 13 and 14, and `LEAN_TIER_COUNT` now
+pins a decision rather than a proposal.
 
 No backlog slug is a prerequisite.
 
@@ -163,7 +188,7 @@ ordering collision.** Its Verification at `:360-362` requires
 as its proof it took the right mechanism. After this item those lines do not
 exist in that form and the bullet is unsatisfiable as written; it needs restating
 as *touches neither `imported:` nor the pinned literal, and does not move
-`LEAN_TIER_BUDGET`*. Same file, so `conflicts_with` either way.
+`LEAN_TIER_COUNT`*. Same file, so `conflicts_with` either way.
 
 **`moe-tone-and-branding` — does not block.** Explicit at `:145`: "Not
 `skill-set-fidelity-refactor`, because this item adds no skill." Recommendation C
@@ -173,6 +198,19 @@ automatic guard on "no 28th skill," which becomes "documented, not enforced."
 Worth telling that doc: an unregistered skill still fails the completeness
 equality and a registered one is an explicit two-line manifest diff, so the guard
 is narrower than `toBe(27)` but better aimed.
+
+One correction to that item's `touches`, found when its branch reported a red
+suite. `house-voice.md` names the upstream project once, so it needs a
+`["skills/writing-clearly-and-concisely/house-voice.md", ["superpowers"]]` row in
+the provenance map at `metadata.test.ts:565-571` — verified: `superpowers` is the
+only banned token in the file, and for a `.md` path `commentish()` at `:575`
+returns true unconditionally, so one row exempts the whole file. **That row belongs
+in that item's own branch, not this one.** A branch that turns the suite red fixes
+it in the same branch; deferring it here would leave that branch red until this
+unrelated refactor ships, and the entry has nothing to do with the two-list model.
+So `moe-tone-and-branding` should add `packages/core/test/metadata.test.ts` to its
+`touches` — which also makes its `conflicts_with` correct, since that is the file
+this item rewrites.
 
 **`codegraph-context-layer` — does not block.** It routes around core, to
 `packages/memory/skills/retrieving-context/` (`:247`, `touches:13`). Verified
@@ -200,18 +238,20 @@ the `from:` convention, and what a Moe-original skill needs. **Part B** is the
 `skill-tiers.yaml` schema: the lean budget, tier assignment, and the closure rule.
 **Part C** is independent of both.
 
-**Part B is contingent on a pending decision.** Zak has questioned the premise of
-the lean/full split — measured, the 27 name+description pairs are 5,333 characters
-(~1,333 tokens) resident per session against ~57k tokens of bodies loaded on
-demand, so the split saves roughly 700 tokens, and `ARCHITECTURE.md` §2 justifies
-it purely on context cost. This doc is written for the world where the split
-exists, because that is today's code. If it is dropped, `:457`, `:460`, `:470` and
-`:474` go with it and **Part B is deleted rather than rewritten.** That holds
-because `skill-tiers.yaml` is already two files in one: a provenance registry
-(`from:` on all 27 entries) and a tiering table (`tier:` plus the `plugins:`
-block). Part A uses only the first, so dropping the split deletes the `tier:` keys
-and renames the file; `imported:`/`authored:`/`from:` stay exactly as Part A
-leaves them.
+**Part B was contingent on a pending decision. That decision has landed and Part B
+survives.** The premise of the lean/full split was questioned — the resident cost
+of all 27 name+description pairs is ~1,480 tokens against ~57,600 tokens of
+on-demand bodies — and DO-NOW-2 resolved it on 2026-08-31: **the split stands, and
+the ERR SMALL tiebreak was deleted** (`skill-tiers.yaml:7-8,24-42`). So `:457`,
+`:460`, `:470` and `:474` all still exist and Part B is live work, with B1
+re-derived on a justification that does not cite the deleted rule.
+
+The separability is worth keeping anyway, because it is what let this doc absorb
+that decision by editing one subsection instead of being rewritten.
+`skill-tiers.yaml` is two files in one: a provenance registry (`from:` on all 27
+entries) and a tiering table (`tier:` plus the `plugins:` block). Part A uses only
+the first. If the split is ever revisited, Part B is deleted rather than rewritten
+and `imported:`/`authored:`/`from:` stay exactly as Part A leaves them.
 
 ### Part A — the upstream-fidelity half
 
@@ -297,11 +337,13 @@ Three reasons. One key, one meaning, one type — no consumer grows an `undefine
 branch. It closes the relabelling loophole: moving an upstream skill to
 `authored:` to dodge the pin means writing `from: moe` over a real provenance
 value, a lie a reviewer can see in a diff that also deletes a line from the pinned
-literal. And provenance is a vocabulary that will grow, not a boolean:
-`gsd-core-skill-import` adds a sixth value if its census returns IMPORT, and TC's
-own `gitlab.tcdevops.com/ai/skills` is a plausible seventh for
-`tc-governance-integration`. Extending a value set is one test edit plus a
-`PARITY.md` row; extending a boolean is a schema change. `from: moe` is also what
+literal. And provenance is a named value, not a boolean, so admitting a new kind
+of it later is one test edit plus a `PARITY.md` row rather than a schema change.
+On that last point the debate review went further than I did and it improves the
+recommendation: with PARITY.md frozen at its current upstreams, the value set is
+**stable at five**, not a moving target, so the assertion is a pin rather than a
+maintenance burden. A sixth value would now require a deliberate decision to
+unfreeze — which is the right bar. `from: moe` is also what
 `deterministic-task-dag:211` already assumes.
 
 #### A4 — what else a Moe-original skill needs
@@ -309,10 +351,10 @@ own `gitlab.tcdevops.com/ai/skills` is a plausible seventh for
 **Frontmatter: nothing.** `:145` forbids it and Claude Code would not read it, so
 provenance lives in the registry (A3), never in `SKILL.md`.
 
-**`licenses/` entry: no.** `:624-635` is "one LICENSE per inbound license, as
+**`licenses/` entry: no.** `:662-673` is "one LICENSE per inbound license, as
 NOTICE promises" — *inbound*. Fork-authored content has no inbound license and
-does not change `package.json`'s `"MIT AND Apache-2.0"` (`:650`), which is a
-statement about imported material, so the `licenses/` equality at `:630-635`
+does not change `package.json`'s `"MIT AND Apache-2.0"` (`:688`), which is a
+statement about imported material, so the `licenses/` equality at `:668-673`
 stays untouched. Single exception: a fork-authored skill that *vendors*
 third-party text, the way `writing-clearly-and-concisely` vendors the 1918
 Strunk, does need a `licenses/` row and an update to that literal.
@@ -346,22 +388,45 @@ follow.
 
 #### B1 — what replaces `toBe(13)`
 
-**`toBe(13)` stays, as an explicit number.** Deriving it from the manifest is the
-option to reject. `:470`'s job is not fidelity — it is a *budget*. It makes any
-tier reassignment a two-file diff, which is the enforcement arm of
-`skill-tiers.yaml`'s own ERR SMALL rule ("Every description in an installed
-plugin costs context in every session, for ~20 people who will leave the lean
-plugin on permanently"). A count derived from the yaml can never fail; it just
-reports whatever the yaml says, and the speed bump is gone. So: one named
-constant, `LEAN_TIER_BUDGET`, with the ERR SMALL rationale in a comment beside
-it, asserted with equality against `core.length` across both maps. A magic number
-stops being magic when it is named and explained; it does not stop being a
-deliberate speed bump. Drop `:471`'s proportional bound — an exact equality makes
-a `<` bound dead weight, and `authored:` growth would only loosen it.
+**My original argument here is void and I am replacing it, not patching it.** I
+justified keeping `toBe(13)` as the enforcement arm of `skill-tiers.yaml`'s ERR
+SMALL rule. **ERR SMALL was deleted on 2026-08-31** when DO-NOW-2 settled, and
+deleted for exactly the reason it should have been: the premise was measured and
+false. The file now says so at `skill-tiers.yaml:24-33` — the resident cost is
+~1,480 tokens against ~57,600 tokens of on-demand bodies, "not a budget worth
+curating against, and a rule that cites a cost it does not have will keep
+producing demotions nobody can defend." Citing a deleted rule to justify an
+assertion would be the same error one layer up.
 
-This is the half `parallel-execution-option` cares about: its `:176` plans
-`:470`: 13 → 14. Under this shape that is one constant, in one place, still
-reviewable.
+**The replacement tiebreak points the other way.** TRIGGER COLLISION
+(`skill-tiers.yaml:35-42`) sends the tie to `everything` only when a skill's
+description claims a trigger a core-tier skill already claims; "absent a collision
+the tie goes to `core`." So settled policy now expects the lean tier to *grow*,
+and an exact count is a speed bump against the direction policy pushes.
+
+**Recommendation, re-derived: keep the explicit number, on a different
+justification, and rename it.** What the lean set is, now, is *an interface* — the
+plugin ~20 people have permanently installed. Its membership should not change
+without someone saying so. That argument survives ERR SMALL's deletion because it
+never depended on token cost. So: one named constant `LEAN_TIER_COUNT` — not
+`LEAN_TIER_BUDGET`, since "budget" is the cost framing that just proved false —
+asserted with equality against `core.length` across both maps, with a comment
+recording that it is expected to be bumped and why that is fine. Drop `:471`'s
+proportional bound: it was cost-based too, and `authored:` growth would only
+loosen it.
+
+Note what already does the heavier work. The new `it("emits exactly the core tier
+into the lean plugin, plus _shared")` at `:507-516` asserts `plugins/moe-core/skills`
+equals the core-tier set plus `_shared`, and `:518-528` asserts the superset. Those
+pin the *contents* of the installed set, which is strictly stronger than pinning
+its cardinality. `LEAN_TIER_COUNT` is the review signal on top of them, not the
+guard.
+
+**This settles `parallel-execution-option` in its favour, and the file says so.**
+`skill-tiers.yaml:32-33` records that "exactly one skill was demoted on this rule
+alone; see `dispatching-parallel-agents`" — the very skill that slug wants
+promoted to lean. Its 13 → 14 is now argued by the deletion of the rule that
+demoted it, and under this shape the edit is one constant.
 
 #### B2 — tiers for fork-authored skills, and `:457`
 
@@ -392,9 +457,13 @@ skill, and it should fail.
 maps and `tiers.skills` is `undefined`, so `tierOf` returns `undefined` for every
 skill, `:481`'s `if (tierOf(s.name) !== "core") continue` skips all 27, `offenders`
 stays empty and **`:474` passes vacuously** — the closure rule silently gone. Of
-the four assertions reading `tiers.skills` this is the only one that fails
-silently: `:457`/`:458` throw on `undefined`, and `:469`'s filter yields an empty
-array so `:470` fails loudly against the budget.
+the five in-test readers of `tiers.skills`, this is the only one that fails
+silently: `:457`/`:458` throw on `undefined`; `:469`'s filter yields an empty array
+so `:470` fails loudly; and the new `:511` filter yields an empty array so `:515`
+fails loudly with `expected` collapsed to `["_shared"]`. Outside the test,
+`scripts/mint-plugins.mjs:132` has the same shape (`parsed.skills ?? {}`) and is
+also loud, at `:135`. One silent failure out of six readers is exactly the one to
+write a test for.
 
 So build one merged lookup at the top of the `describe` block —
 `{ ...tiers.imported, ...tiers.authored }` — and have `tierOf`, the `:469` filter
@@ -469,8 +538,9 @@ current 15 entries exactly — 11 by extension, 4 by shebang
 value-set assertions around `:460`; the `:243` tightening; the x-bit
 completeness cross-check plus the four missing `.py` paths; discovery for the two
 parse lists; the `PARITY.md` **Authored here** section; the five
-`README.md:99,112,141,155,715` prose sites the restructure makes wrong, plus
-`README.md:716`'s hardcoded "all 27 skills".
+`README.md:103,116,134,149,174` prose sites the restructure makes wrong; and the
+tier filter in `scripts/mint-plugins.mjs:123-135`, which must read both maps or
+the plugin staging breaks.
 
 **Out:** any actual new skill — `deterministic-task-dag` owns the first one and is
 the test case for this design. Which skills sit in which tier, and the 13→14
@@ -505,14 +575,17 @@ fact, that is the finding.
 
 ## Open questions for Zak
 
-1. **May a fork-authored skill take `tier: core`?** Not a schema question — the
-   schema allows it either way — but a policy one, and it is the ERR SMALL
-   trade-off applied to content the fork chose to create rather than inherited. A
-   `tier: core` authored skill costs a description line in every session for ~20
-   people who leave the lean plugin on permanently. `deterministic-task-dag`
-   wants `everything` for `sequencing-plans`, so nothing is blocked on the answer
-   today. If it is "everything-tier only for now," that is one extra assertion; if
-   "decide per skill," the existing `why:` requirement already carries the argument.
+1. **May a fork-authored skill take `tier: core`? — largely answered already;
+   confirm and I will drop it.** I asked this as the ERR SMALL trade-off applied to
+   authored content. DO-NOW-2 has since deleted ERR SMALL and replaced it with
+   TRIGGER COLLISION, whose stated default is "absent a collision the tie goes to
+   `core`" (`skill-tiers.yaml:35-42`). Read straight, that answers it: a
+   fork-authored skill is eligible for `core` and is judged by the same trigger
+   test as an imported one, with no provenance-based penalty. The only thing left
+   for you is whether you *intended* that rule to govern content the fork authored
+   as well as content it inherited. If yes, no assertion is needed and the `why:`
+   requirement carries the argument. If authored skills should start in
+   `everything` regardless, that is one extra assertion and I will add it.
 
 2. **Does `PARITY.md` get the Authored here section?** It is your ledger and its
    shape is a statement about what the fork is. The alternative is to leave
@@ -530,15 +603,16 @@ fact, that is the finding.
 | Merged `tierOf` + resolved-lookup assertion (B3) | 30 min | small, and the one place to be careful — see must-not 3 |
 | Tighten `:243` to all-resolve | 10 min | one operator, passes immediately |
 | x-bit completeness check + 4 missing `.py`; parse lists to discovery | 1 h | the shebang predicate is the only fiddly part |
+| Two-map read in `scripts/mint-plugins.mjs:123-135` | 20 min | added after the re-base; `?? {}` must not become the fallback |
 | `PARITY.md` section + five `README.md` prose sites | 40 min | |
-| `pnpm --filter @bubstack/moe-core test` plus the three sibling scripts | 20 min | |
+| `pnpm --filter @bubstack/moe-core test`, the three sibling scripts, and `pnpm mint` | 30 min | `plugins/` must regenerate identically |
 
-**Total 4-5 h.** Slower if: DO-NOW-2's decision arrives *during* the work, so the
-reindent conflicts and step 1 is redone — the argument for taking DO-NOW-2 first.
-Add 20 min if open question 1 comes back "everything-tier only." Add 30 min and a
-second parse if a reviewer wants `imported:` in a separate file after all.
-**Faster** if the lean/full split is dropped: Part B disappears and the item is
-Part A plus Part C, roughly 2.5-3 h.
+**Total 5-6 h**, up from 4-5 after the re-base added the staging-script change and
+the `pnpm mint` regeneration check. Slower if: `moe-tone-and-branding` merges first
+and `writing-skills/SKILL.md`'s REQUIRED line has to be re-found (minutes, but
+it is a re-verification of the all-resolve claim). Add 20 min if open question 1
+comes back "authored skills start in `everything`." Add 30 min and a second parse
+if a reviewer wants `imported:` in a separate file after all.
 
 ## Verification
 
@@ -574,5 +648,11 @@ Part A plus Part C, roughly 2.5-3 h.
   `from: superpowers` and it fails. Both restore. `from: ''` still fails `:460`.
 - `PARITY.md` contains an **Authored here** section naming `skill-tiers.yaml` →
   `authored:`, and the Map at `:24-44` is byte-identical.
-- `LEAN_TIER_BUDGET` appears once as a definition with the ERR SMALL comment
-  beside it, and `git grep -n 'toBe(13)' packages/core/` returns nothing.
+- `LEAN_TIER_COUNT` appears once as a definition, and
+  `git grep -n 'toBe(13)' packages/core/` returns nothing. `git grep -n 'ERR SMALL'`
+  finds it only in `skill-tiers.yaml`'s record of its own deletion — the diff must
+  not reintroduce the phrase as a live rationale.
+- `pnpm mint` regenerates `plugins/moe-core` and `plugins/moe-everything`
+  byte-identically, and `it("emits exactly the core tier into the lean plugin, plus
+  _shared")` passes — proof the staging script was updated for the two-map schema
+  rather than silently falling back to `?? {}`.
