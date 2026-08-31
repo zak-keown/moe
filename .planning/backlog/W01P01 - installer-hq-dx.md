@@ -10,7 +10,7 @@ depends_on: [DO-NOW-1, DO-NOW-3, DO-NOW-5]
 blocks: []
 conflicts_with: [moe-bare-binary-dispatcher, runtime-pruning, contributing-flow-docs, moe-tone-and-branding]
 touches: [.gitignore, .gitattributes, ARCHITECTURE.md, .claude-plugin/marketplace.json, README.md, bin/, packages/memory/package.json, packages/glass/package.json, packages/mint/src/adapters/shared.ts, packages/mint/src/adapters/pi.ts, packages/mint/test/adapters/]
-decision_needed: yes
+decision_needed: no
 ---
 
 # Cross-Platform Installer With HQ DX
@@ -336,10 +336,52 @@ win32, and the bootstrap hook needs Git for Windows or it silently skips. State 
 four; do not paper over them. `run-hook.cmd` already prints the WSL 2 recommendation
 when it finds no bash, so the doctor and the hook say the same thing.
 
-**Q2 — Windows headcount: still needed, and it is a fact only Zak has.** Not a
-design question. The clean-`HOME` smoke test needs at least one real Windows box,
-and whether that box is native or WSL 2 changes what the test proves. Does not block
-starting; does block claiming Windows is verified.
+**Q2 — answered 2026-08-31: about two thirds are on Windows today, in flux as
+laptops are refreshed. Plan for 50/50.**
+
+**This reframes the item rather than adding a footnote to it.** At 50/50, WSL 2 is
+not an accommodation for a minority — it is the primary install path for roughly ten
+of the twenty people this fork exists for. Consequences:
+
+- **The doctor's Windows branch is a first-class path, not a fallback.** Half the
+  audience meets it on first run. Its wording gets the same care as the macOS path.
+- **`run-hook.cmd`'s diagnostic is on the hot path.** It used to `exit /b 0`
+  silently when it found no bash; it now names the hook that did not run and
+  recommends WSL 2. At 50/50 that change protects ten people rather than a corner
+  case.
+- **`.gitattributes` is protecting ten people, not one.** A clone made on the
+  Windows side and reached through `/mnt/c` under `core.autocrlf=true` breaks the
+  cmd/bash polyglot in *both* interpreters, with no half-working state to notice.
+  That file is the only thing preventing it.
+- **The clean-`HOME` smoke test now needs a real Windows box as a release gate**,
+  not a nice-to-have — and it needs to run in both modes, because native and WSL 2
+  prove different things.
+
+**One stated blocker is FALSE and should be struck: `better-sqlite3` does NOT need
+MSVC on native Windows.** Verified against the upstream release rather than
+assumed: `better-sqlite3@12.11.1` publishes 50 win32 prebuilds, 8 of them for plain
+Node ABIs, including `better-sqlite3-v12.11.1-node-v137-win32-x64.tar.gz` and the
+matching `arm64`. Node 24 is ABI 137 and this repo pins Node >= 24, so
+`prebuild-install` finds a binary and `node-gyp` never runs. Do not tell users to
+install build tools they do not need.
+
+Also not a gap: **pnpm build approval is correctly configured.**
+`pnpm-workspace.yaml`'s `allowBuilds` already carries `better-sqlite3`,
+`onnxruntime-node` and `sharp` as `true` with the reason for each. A fresh
+`pnpm install` runs all three install scripts. (`sharp` and `onnxruntime-node`
+publish win32 binaries too, but that is unverified here — check it on the box, do
+not assert it.)
+
+**So the native-Windows gap list is three, not four:** bash is optional so the
+bootstrap hook can skip (now loud, not silent), `moe-crew` cannot run because it
+drives tmux, and Claude Code sandboxing is unsupported. State all three plainly.
+
+**A tension worth naming once, not litigating:** the stated order is macOS-first,
+with native Windows becoming first class after. With half the audience on Windows
+that looks inverted — but it is not, because WSL 2 *is* the Windows answer and it is
+a Linux target, so those users are served by the path that already works. What is
+deferred is native Windows specifically, which is a real choice and a defensible
+one.
 
 *The original questions, kept as written:*
 
