@@ -192,34 +192,13 @@ check_hermes() {
   fi
 }
 
-# --- gemini: `gemini extensions validate` when offered, else jq + paths ----
-check_gemini() {
-  local harness=gemini
-  local file="$PLUGIN_ROOT/gemini-extension.json"
-  if [ ! -f "$file" ]; then
-    skip "$harness" "not generated"
-    return
-  fi
-  if command -v gemini >/dev/null 2>&1 && gemini extensions --help 2>/dev/null | grep -q validate; then
-    local out
-    if out=$(gemini extensions validate "$PLUGIN_ROOT" 2>&1); then
-      ok "$harness" "gemini extensions validate passed"
-    else
-      not_ok "$harness" "gemini extensions validate failed: $(oneline "$out")"
-    fi
-    return
-  fi
-  check_manifest_harness "$harness" "gemini-extension.json"
-}
-
 # --- manifest harnesses: jq-parse + referenced-path existence --------------
 # Shared by codex/cursor/devin/kimi/agent-plugins-1.0/agents-marketplace
-# (each own a fixed-path manifest with no per-plugin-name substitution) and
-# by gemini's fallback above. A referenced path is any string value in the
-# manifest (at any depth) that starts with "./" — moe-mint's own
-# convention for every path-shaped field it emits (e.g. "./skills/"); such a
-# path is always relative to the plugin root, regardless of which
-# subdirectory the manifest itself lives in.
+# (each own a fixed-path manifest with no per-plugin-name substitution).
+# A referenced path is any string value in the manifest (at any depth) that
+# starts with "./" — moe-mint's own convention for every path-shaped field it
+# emits (e.g. "./skills/"); such a path is always relative to the plugin root,
+# regardless of which subdirectory the manifest itself lives in.
 #
 # mcp.json's top-level mcpServers is excluded from the scan: its
 # command/args/cwd are subprocess invocation parameters carried through
@@ -301,29 +280,6 @@ deep_claude_code() {
   fi
 }
 
-# --- install-gemini: two separate prompts have to be defused or the install
-# blocks forever. --consent covers the third-party-extension warning;
-# folderTrust must be disabled in settings.json to cover the workspace-trust
-# prompt, which --consent does NOT cover and which prints nothing while it
-# waits.
-deep_gemini() {
-  local harness=install-gemini
-  if ! command -v gemini >/dev/null 2>&1; then
-    skip "$harness" "gemini not on PATH"
-    return
-  fi
-  mkdir -p "$HOME/.gemini"
-  printf '{"security":{"folderTrust":{"enabled":false}}}' > "$HOME/.gemini/settings.json"
-  local out
-  out=$(gemini extensions install "$WORK" --consent >/dev/null 2>&1 &&
-        gemini skills list --all 2>&1)
-  if all_skills_present "$out"; then
-    ok "$harness" "gemini skills list --all shows every skill after install"
-  else
-    not_ok "$harness" "gemini skills list --all did not show every skill: $(oneline "$out")"
-  fi
-}
-
 # --- install-codex: `debug prompt-input` renders the model-visible prompt, so
 # a hit here proves the skill reaches the model rather than merely sitting on
 # disk. codex installs through the Agent Plugins descriptor (.agents/plugins/
@@ -388,25 +344,6 @@ deep_opencode() {
     not_ok "$harness" "skills also appear with --pure; discovery is not coming from the plugin"
   else
     not_ok "$harness" "opencode debug skill did not list every skill: $(oneline "$withp")"
-  fi
-}
-
-# --- install-grok: needs --trust for a local-path install. grok exposes no
-# skill-name list, so `plugin details` reporting a populated skill-dir count is
-# the deepest offline signal available.
-deep_grok() {
-  local harness=install-grok
-  if ! command -v grok >/dev/null 2>&1; then
-    skip "$harness" "grok not on PATH"
-    return
-  fi
-  local out
-  out=$(grok plugin install "$WORK" --trust >/dev/null 2>&1 &&
-        grok plugin details "$PLUGIN_NAME" 2>&1)
-  if grep -qE '[1-9][0-9]* skill dir' <<<"$out"; then
-    ok "$harness" "grok plugin details reports a populated skill dir"
-  else
-    not_ok "$harness" "grok plugin details reported no skill dir: $(oneline "$out")"
   fi
 }
 
@@ -614,11 +551,9 @@ deep_exec_bits() {
 
   local first="${EXEC_FILES[0]}"
   exec_bits_harness claude-code claude "$HOME/.claude/plugins" "$first"
-  exec_bits_harness gemini gemini "$HOME/.gemini/extensions" "$first"
   exec_bits_harness codex codex "$HOME/.codex/plugins" "$first"
   exec_bits_harness copilot copilot "$HOME/.copilot/installed-plugins" "$first"
   exec_bits_harness droid droid "$HOME/.factory/plugins" "$first"
-  exec_bits_harness grok grok "$HOME/.grok/installed-plugins" "$first"
   exec_bits_harness hermes hermes "$HOME/.hermes/plugins" "$first"
 
   # kimi installs only through its TUI (see install-kimi note above), so no
@@ -658,7 +593,7 @@ deep_checks() {
   # No skills -> the whole tier is a documented no-op.
   if [ "${#SKILL_NAMES[@]}" -eq 0 ]; then
     local h
-    for h in claude-code gemini codex copilot opencode grok droid hermes pi kimi cursor devin; do
+    for h in claude-code codex copilot opencode droid hermes pi kimi cursor devin; do
       skip "install-$h" "plugin has no skills to verify"
     done
     return
@@ -685,11 +620,9 @@ deep_checks() {
     commit -qm "moe-mint deep-check snapshot" >/dev/null 2>&1 || true
 
   deep_claude_code
-  deep_gemini
   deep_codex
   deep_copilot
   deep_opencode
-  deep_grok
   deep_droid
   deep_hermes
   deep_pi
@@ -715,7 +648,6 @@ check_claude_code
 check_opencode
 check_pi
 check_hermes
-check_gemini
 check_manifest_harness codex .codex-plugin/plugin.json
 check_manifest_harness cursor .cursor-plugin/plugin.json
 check_manifest_harness devin .devin-plugin/plugin.json

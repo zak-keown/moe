@@ -10,7 +10,7 @@ everyday set) and `moe-everything` (all of them) — built into `/plugins/` by
 `@bubstack/moe-mint`. Never hand-edit a generated manifest.
 
 **Status:** imported and building. 27 skills. Both plugins now generate into
-`/plugins/` for all 11 harnesses — see
+`/plugins/` for all 10 harnesses — see
 [Two plugins, one source tree](#two-plugins-one-source-tree). 211 tests passing,
 5 skipped, across five suites; see [Verification](#verification). The lean/full
 split was **reviewed and settled 2026-08-31**.
@@ -241,10 +241,12 @@ rather than rewriting them.
 
 **Everything moe-mint generates.** All nine hand-maintained plugin manifests,
 `.agents/`, `.codex-plugin/`, `.cursor-plugin/`, `.devin-plugin/`,
-`.kimi-plugin/`, `.hermes-plugin/`, `.opencode/`, `.pi/`, `GEMINI.md`,
-`gemini-extension.json`, the root `package.json`, `.version-bump.json`,
-`scripts/bump-version.sh`, `hooks/hooks-cursor.json`, `hooks/session-start`, and
-the nine test groups that existed only to check them
+`.kimi-plugin/`, `.hermes-plugin/`, `.opencode/`, `.pi/`, upstream's Gemini
+CLI files (`GEMINI.md`, `gemini-extension.json`, both dropped in the
+runtime-pruning wave along with the adapter), the root `package.json`,
+`.version-bump.json`, `scripts/bump-version.sh`, `hooks/hooks-cursor.json`,
+`hooks/session-start`, and the nine test groups that existed only to check
+them
 (`tests/{devin,kimi,codex,antigravity,pi,hermes,opencode,version-bump,codex-plugin-sync}`).
 Three of those tests asserted `manifest.name == "superpowers"`; all nine were
 testing the thing mint replaces.
@@ -279,8 +281,7 @@ so each would have vanished on the next `generate`:
 | Pi | **two divergent copies** — `piToolMapping()` in the extension and `references/pi-tools.md` | merged into `references/pi-tools.md` |
 
 `using-moe`'s Platform Adaptation list now names all seven reference files.
-Upstream's named four, omitted `gemini-tools.md` while `GEMINI.md` loaded exactly
-that file, and only the `antigravity` entry was test-enforced.
+Upstream's named four and only the `antigravity` entry was test-enforced.
 `test/metadata.test.ts` now checks the list and the directory agree in both
 directions.
 
@@ -623,7 +624,7 @@ misses entirely.
 
 | Path | Why |
 |---|---|
-| `superpowers/{.claude-plugin,.agents,.codex-plugin,.cursor-plugin,.devin-plugin,.kimi-plugin,.hermes-plugin,.opencode,.pi}/`, `GEMINI.md`, `gemini-extension.json`, `package.json`, `.version-bump.json` | 15 hand-maintained files moe-mint generates. Read for identifiers first; the three adapter-only tool mappings were extracted. |
+| `superpowers/{.claude-plugin,.agents,.codex-plugin,.cursor-plugin,.devin-plugin,.kimi-plugin,.hermes-plugin,.opencode,.pi}/`, upstream's `GEMINI.md` / `gemini-extension.json` (dropped in the runtime-pruning wave with the Gemini adapter), `package.json`, `.version-bump.json` | 15 hand-maintained files moe-mint generates. Read for identifiers first; the three adapter-only tool mappings were extracted. |
 | `superpowers/AGENTS.md` | A git symlink to `CLAUDE.md`. Upstream conflated contributor governance with the agents.md instructions file; a plain `cp -r` would have materialised a duplicate 8.8 KB copy. The AGENTS.md surface is a separate decision. |
 | `superpowers/CODE_OF_CONDUCT.md` | Contributor Covenant boilerplate whose only brand token is a live abuse-reporting address at the upstream author's company. |
 | `superpowers/.github/**` | No workflows exist (PARITY's CI table correctly omits this repo). `FUNDING.yml` solicits sponsorship for the upstream author; the five issue/PR templates are rebuilt as GitLab equivalents, not translated. |
@@ -707,7 +708,7 @@ Three things that verifies which nothing else does:
 - `hooks/moe-mint/hooks.json` contains **both** the `Stop` entry cloned from this
   package's `hooks/hooks.json` and mint's own `SessionStart` bootstrap entry — so
   the merge works and there is exactly one session-start implementation.
-- All three bootstrap resolvers (`hooks/moe-mint/session-start`, `GEMINI.md`,
+- Both bootstrap resolvers (`hooks/moe-mint/session-start` and
   `.hermes-plugin/__init__.py`) point at `skills/using-moe/SKILL.md`, which is
   also proof that `bootstrap: { skill: using-moe }` resolved — `buildModel()`
   throws if the named skill is absent.

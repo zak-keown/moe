@@ -100,7 +100,7 @@ describe('agents-marketplace adapter with harnesses.agents-marketplace.manifest'
 })
 
 describe('agents-marketplace adapter installDoc', () => {
-  it('uses repo basename for droid, declared name-dev for copilot, and URL for grok', () => {
+  it('uses repo basename for droid and declared name-dev for copilot', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-agents-marketplace-installdoc-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
@@ -118,8 +118,6 @@ describe('agents-marketplace adapter installDoc', () => {
     expect(doc).not.toContain('droid plugin install example-plugin@example-plugin-dev')
     // copilot uses declared name with -dev suffix
     expect(doc).toContain('copilot plugin install example-plugin@example-plugin-dev')
-    // grok has its own command structure
-    expect(doc).toContain('grok plugin install')
   })
 
   it('copilot install id uses the configured marketplace.name, not the -dev default', () => {
