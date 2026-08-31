@@ -46,7 +46,7 @@ Honor any existing declared preference without asking. If the user declines cons
 
 ## Step 1: Create Isolated Workspace
 
-**You have two mechanisms. Try them in this order.**
+**You have two mechanisms plus a branch-name step. Try them in this order.**
 
 ### 1a. Native Worktree Tools (preferred)
 
@@ -54,9 +54,29 @@ The user has asked for an isolated workspace (Step 0 consent). Do you already ha
 
 Native tools handle directory placement, branch creation, and cleanup automatically. Using `git worktree add` when you have a native tool creates phantom state your harness can't see or manage.
 
-Only proceed to Step 1b if you have no native worktree tool available.
+Only proceed to Step 1c if you have no native worktree tool available.
 
-### 1b. Git Worktree Fallback
+### 1b. Branch Name
+
+**Runs whether Step 1a took over or Step 1c is next.** A native worktree tool
+still needs a branch name; the git fallback below takes one directly. Do this
+before either.
+
+For repos on `gitlab.tcdevops.com`, TC conventions require
+`sc-{CARD_NUMBER}/{slug}` — see
+`${CLAUDE_PLUGIN_ROOT}/skills/_shared/tc-conventions.md` for the full rule.
+In short:
+
+1. **Card number known** — call `shortcut_stories-get-branch-name` on the card.
+   It returns `feature/sc-{CARD_NUMBER}/{slug}`. **Strip the `feature/` prefix**;
+   the TC filter that surfaces AI-authored work matches on `sc-`, not on
+   `feature/`.
+2. **No card** — fall back to `feature/{slug}`. Never invent a card number.
+
+For repos on any other forge, use whatever convention that repo's `CONTRIBUTING`
+or `CODEOWNERS` documents; if there is none, `feature/{slug}` is a safe default.
+
+### 1c. Git Worktree Fallback
 
 **Only use this if Step 1a does not apply** — you have no native worktree tool available. Create a worktree manually using git.
 
@@ -167,7 +187,8 @@ Ready to implement <feature-name>
 | Already in linked worktree | Skip creation (Step 0) |
 | In a submodule | Treat as normal repo (Step 0 guard) |
 | Native worktree tool available | Use it (Step 1a) |
-| No native tool | Git worktree fallback (Step 1b) |
+| Branch name needed (any path) | Derive per Step 1b (TC card → strip `feature/`) |
+| No native tool | Git worktree fallback (Step 1c) |
 | `.worktrees/` exists | Use it (verify ignored) |
 | `worktrees/` exists | Use it (verify ignored) |
 | Both exist | Use `.worktrees/` |
