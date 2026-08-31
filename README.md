@@ -18,11 +18,13 @@ premise: one operator driving every harness at once, from one place.
 
 ## Status
 
-**All 19 upstream repositories are imported and integrated.** Nine packages
-build, ~3,400 tests pass, and `pnpm mint` generates six installable plugins into
-`/plugins/` from one config each. `ARCHITECTURE.md` remains the spec — read it
-before writing anything, because it records *why* the shape is what it is, which
-the tree cannot tell you.
+**All 19 upstream repositories are imported and integrated** into nine packages,
+each censused, each carrying its own counted status in its own README. ~3,400
+tests pass, and `pnpm mint` generates six plugins for all eleven harnesses into
+`/plugins/`, with CI asserting they regenerate byte-identically.
+`ARCHITECTURE.md` is the spec and now also the record — read it before writing
+anything, because it holds *why* the shape is what it is, which the tree cannot
+tell you.
 
 What is not done: nothing is published to any registry, the eval container image
 has not been built, and 15 items sit in `.planning/backlog/` on a seven-wave

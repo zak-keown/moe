@@ -69,6 +69,29 @@ plugins:
   <<: *pnpm
   script: [pnpm mint:check]
 
+# ARCHITECTURE.md §8: provenance is preserved, self-reference is rewritten. The
+# flight import broke that rule and a human caught it, not a check —
+# packages/flight/README.md:336-338 records the correction. This job asserts every
+# `## Forked from` table still names an upstream repo PARITY.md accounts for.
+#
+# No `<<: *pnpm`. The script reads markdown with node's stdlib and has no
+# dependencies, so installing the workspace would cost a minute to change nothing.
+#
+# The second line is the job's own self-test. A checker nobody has seen fail is a
+# checker nobody knows works, and this one has no live defect to fail on — so it
+# runs against a fixture that IS misattributed and demands exit 1.
+provenance:
+  stage: check
+  image: node:24
+  script:
+    - node scripts/check-provenance.mjs
+    # QUOTED DELIBERATELY. This entry contains a colon-space inside the echo
+    # message, and an unquoted YAML plain scalar containing ": " parses as a
+    # single-key MAP, not a string. GitLab requires every `script` entry to be a
+    # string, and a map there is a job-config error that fails pipeline CREATION
+    # — taking every other job down with it, not just this one.
+    - "if node scripts/check-provenance.mjs scripts/fixtures/provenance-red --min-readmes 1; then echo 'self-test failed: the red fixture passed'; exit 1; fi"
+
 # Path-scoped so a docs edit does not rebuild the Rust crate.
 tab:
   stage: check

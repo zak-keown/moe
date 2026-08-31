@@ -106,6 +106,8 @@ skill-tiers.yaml        The lean/full curation AND the provenance registry, as
 licenses/               One verbatim notice per inbound license.
 test/
   metadata.test.ts      36 vitest assertions. THE verification for this package.
+  house-voice.test.ts   11 assertions over the two-arm subagent experiment below.
+  house-voice/          That experiment: scenario, both arms' output, the scorer.
   iterative-development/  37 Python unittest tests over the 9 skill CLIs.
   brainstorm-server/    130 upstream node:assert + `ws` tests over server.cjs.
   shell/                8 bash assertions over find-polluter.sh and render-graphs.mjs.
