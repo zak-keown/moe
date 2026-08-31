@@ -177,15 +177,26 @@ Both are empty today. Populate them from an import census, not from names.
 
 ### Local prerequisites
 
-`pnpm install && pnpm check` passes on a clean checkout. Two packages cannot
-build on this machine yet:
+`pnpm install && pnpm check` passes on a clean checkout. Beyond Node and pnpm:
 
-| Missing | Blocks |
-|---|---|
-| `cargo` | `pnpm tab:build`, `pnpm tab:test` |
-| `uv`, and Python ≥ 3.10 (system is 3.9.6) | `pnpm proof:test` |
+| Tool | For | Status |
+|---|---|---|
+| `cargo` ≥ 1.98 | `pnpm tab:build`, `pnpm tab:test` | installed, **needs a PATH entry** |
+| `uv` ≥ 0.12 | `pnpm proof:test` | installed; resolves Python 3.14 |
 
-Neither blocks the seven TypeScript packages.
+**cargo is installed but not on PATH.** rustup owns the toolchain, brew's `rust`
+formula could not link over rustup's shims, and `brew cleanup` then pruned
+`/opt/homebrew/bin/{cargo,rustc}`. There is no `~/.cargo/bin`. The working binary
+is inside the rustup toolchain:
+
+```sh
+export PATH="$HOME/.rustup/toolchains/stable-aarch64-apple-darwin/bin:$PATH"
+```
+
+Make it permanent with either `brew unlink rustup && brew link --overwrite rust`,
+or `rustup default stable` once rustup's shim dir is on PATH. The repo scripts
+call bare `cargo` deliberately — pinning a machine-specific path in
+`package.json` would not survive a second developer.
 
 ### Gotcha worth remembering
 

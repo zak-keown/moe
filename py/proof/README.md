@@ -21,8 +21,8 @@ as author. Both are recorded in the root [NOTICE](../../NOTICE).
   workflows and software under development. Three jobs sharing a syllable is not a
   merge argument.
 - Candidate dependency on `moe-tab`'s Python binding for cost data — confirm before adding.
-- **Blocked locally:** `uv` is not installed and system Python is 3.9.6, below the
-  `>=3.10` floor. Both are needed before `pnpm proof:test` runs.
+- Unblocked locally: `uv` 0.12.7 resolves Python 3.14.7 for this project, well above
+  the `>=3.10` floor.
 - Two upstream CI workflows here, one of which publishes to PyPI. Decide whether Moe
   publishes publicly before porting it.
 - README badges point at PyPI, GitHub releases and GitHub Actions. All four are

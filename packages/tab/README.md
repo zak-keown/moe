@@ -22,4 +22,5 @@ Snapshots are in `../.moe-references/` (gitignored). They are the spec — not u
 - Cargo workspace members: obol-core, obol-cli, obol-ffi. All three rename.
 - Carries its own NOTICE with upstream attributions. It travels with the code.
 - Four of the eleven upstream CI workflows are here, two of which publish to crates.io and PyPI. Decide whether Moe publishes publicly before porting them.
-- cargo is not installed on this machine. `pnpm tab:build` will fail until it is.
+- cargo 1.98 is installed and reads the upstream 3-crate workspace, but it is not on
+  PATH by default here. See ARCHITECTURE.md, Local prerequisites.
