@@ -150,6 +150,21 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
 
+## Presenting the plan
+
+The plan file on disk is already rung 4 (markdown) of the shared
+native-rendering ladder at `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md`.
+Every executor path ends up reading that file, so no other rung is
+required for the workflow to work.
+
+When your human partner asks to review the plan visually — a browseable
+table of tasks, a rendered dependency diagram — walk the ladder from
+the top: on Claude Code, publish an artifact via the Artifact tool
+(rung 1) so they can scroll it in their client; otherwise fall to the
+brainstorm companion (rung 2) or a self-contained local HTML file
+(rung 3). Never gate execution on the browseable form; the markdown
+file is the source of truth.
+
 ## Execution Handoff
 
 After saving the plan, offer execution choice:

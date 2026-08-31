@@ -932,6 +932,60 @@ describe("the platform reference list", () => {
   });
 });
 
+describe("native rendering", () => {
+  // Guards the shared four-rung ladder at skills/_shared/native-rendering.md.
+  // A skill that mentions Claude Code's Artifact tool must also point the
+  // reader at the ladder, so a runtime without that tool still knows what to
+  // do. And the env var that opts INTO shareable-by-default artifacts is
+  // stated as off-by-default, mirroring MOE_LATTE_ENABLED.
+
+  const RENDERING_MARKER = /\bArtifact tool\b|\bpublish an artifact\b/;
+  const LADDER = join(SKILLS, "_shared/native-rendering.md");
+
+  it("every mention of the Claude Code Artifact tool names the shared ladder", () => {
+    // The bare word "artifact" is overloaded here — it also means plugin
+    // artifact files, task artifacts, spec artifacts, iteration artifacts.
+    // Only the phrases "Artifact tool" and "publish an artifact" mean the
+    // Claude Code Artifact tool, so those are what get matched. Anything that
+    // matches must also reference `native-rendering.md`, so a reader dropped
+    // into a runtime that has no such tool finds the fallback rungs.
+    const offenders: string[] = [];
+    for (const p of ownedMarkdown) {
+      const text = readFileSync(p, "utf8");
+      if (!RENDERING_MARKER.test(text)) continue;
+      if (p === LADDER) continue; // the ladder IS the fallback, so no self-reference required
+      if (!text.includes("native-rendering.md")) {
+        offenders.push(p.slice(PKG.length + 1));
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it("the shared ladder is present and referenced", () => {
+    expect(existsSync(LADDER), "skills/_shared/native-rendering.md").toBe(true);
+    // Something must actually point at it, or it isn't part of the workflow.
+    const referenced = ownedMarkdown
+      .filter((p) => p !== LADDER)
+      .some((p) => readFileSync(p, "utf8").includes("native-rendering.md"));
+    expect(referenced, "nothing references _shared/native-rendering.md").toBe(true);
+  });
+
+  it("MOE_ARTIFACT_SHARING is documented as default off in the ladder", () => {
+    // Mirrors the "Stop hook is opt-in and exits 0 when disarmed" assertion
+    // for MOE_LATTE_ENABLED, but for a doc-only env var: no hook reads it, so
+    // the assertion is on the prose that promises the default. The `off` word
+    // must appear near the env-var name, not in some distant paragraph.
+    const src = readFileSync(LADDER, "utf8");
+    expect(src, "ladder must name MOE_ARTIFACT_SHARING").toContain("MOE_ARTIFACT_SHARING");
+    expect(
+      src,
+      "ladder must state MOE_ARTIFACT_SHARING defaults off, within ~200 chars of the name",
+    ).toMatch(
+      /MOE_ARTIFACT_SHARING[\s\S]{0,240}(default(?:s|ed)? (?:is )?off|off by default|default off)/i,
+    );
+  });
+});
+
 describe("licensing", () => {
   it("retains one LICENSE per inbound license, as NOTICE promises", () => {
     // Four of the six sources ship a LICENSE, with three distinct notices, so
