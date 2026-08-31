@@ -32,6 +32,24 @@ that set is exactly what both upstream skills instruct the agent to create. The
 smallest version worth building is a committed manifest for that set plus one CLI
 that answers "what is runnable now".
 
+## Debate-review decisions (2026-08-31)
+
+- **Option A has to be re-argued against a hook.** Its case is that B "is
+  undiscoverable exactly when it is needed" — *"new session, four plans exist,
+  which are done?"* — and that "a skill's description sentence is the trigger,
+  and there is no other way to get one." There is now another way: that trigger
+  condition is a deterministic file-existence test
+  (`docs/moe/plans/*-MANIFEST.md`), which a SessionStart hook can evaluate with
+  no model in the loop. ARCHITECTURE.md §2 records the rule — a skill earns a
+  deterministic trigger when a missed trigger fails silently — and a manifest the
+  agent never notices is precisely a silent miss.
+- **This does not settle it against the skill.** A hook can announce that a plan
+  set exists; it cannot carry the loop that reads `next`, dispatches, and calls
+  `done`. The likely answer is both, and the description's job shrinks
+  accordingly. Re-price Option A against Option B plus a hook.
+- **`from: moe` still comes from `skill-set-fidelity-refactor`**, unchanged.
+- Both items extend `metadata.test.ts`, so they cannot share a wave.
+
 ## Why it matters
 
 The failure is already documented in the fork's own prose:

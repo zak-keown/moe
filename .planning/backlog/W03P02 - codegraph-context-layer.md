@@ -13,7 +13,7 @@ touches:
   - packages/core/skills/retrieving-context/
   - packages/core/agents/
   - packages/core/skill-tiers.yaml
-  - packages/core/moe-mint.yaml
+  - packages/core/mint/moe-core.yaml
 decision_needed: yes
 ---
 

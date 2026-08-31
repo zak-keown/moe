@@ -43,6 +43,23 @@ tool install** (affects only the eval image), and a **doc mention**. Gemini appe
 three. Grok appears in the container and in mint's prose but has no adapter of its own — it
 rides the `agents-marketplace` descriptor. This is a census-then-delete job, not a rewrite.
 
+## Debate-review decisions (2026-08-31)
+
+One question this item is uniquely placed to answer and does not currently ask.
+
+- **Does the skill set work on the weaker targets?** mint emits for eleven
+  harnesses; Codex, Kimi, OpenCode, Pi and Hermes run whatever model the user
+  configures. The panel review's one claim that genuinely applies to this fork is
+  that semantic autoload degrades below the frontier — spotty on mid-tier models,
+  silently confident on small local ones. This item decides which of those
+  targets survive, so it is where the question belongs.
+- **The instrument now exists.** `verification-split-and-firing-rate` Part C
+  counts `Skill` tool invocations per session from the transcript. Run it per
+  harness before concluding anything; zero firing on a target is a reason to
+  prune the target, not only the skill.
+- **This is an added open question, not a change to the recommendation.** Option 1
+  (remove only, no Antigravity adapter) stands.
+
 ## Why it matters
 
 Every dead harness is a lie the docs tell and a row in a support matrix ~20 internal people

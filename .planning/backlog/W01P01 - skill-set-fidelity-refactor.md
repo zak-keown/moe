@@ -38,6 +38,20 @@ the newly-sanctioned thing. The job is to split one assertion into two: keep
 equality on the upstream half, open the other half, and make the two separable
 from the files alone.
 
+## Debate-review decisions (2026-08-31)
+
+- **The `imported:` `from:` value set stays at five names.** PARITY.md is frozen
+  at its current upstreams, so the sixth and seventh values this doc anticipates
+  — from `gsd-core-skill-import` and `tc-governance-integration` — are not
+  arriving as drift-tracked upstreams. Attribution rows may still be added under
+  the freeze's carve-out; they do not become `from:` values without a decision.
+- **A3's recommendation is unaffected and gets easier**, since the asserted value
+  set is now stable rather than a moving target.
+- **`authored:` stays `{}` for the moment.** The one new item this review created
+  (`verification-split-and-firing-rate`) adds a hook and a section to an existing
+  core skill — no new skill directory.
+- Both items rewrite parts of `metadata.test.ts`, so they cannot share a wave.
+
 ## Why it matters
 
 The wall is load-bearing in the *backlog*, not just the test. Three docs cite the

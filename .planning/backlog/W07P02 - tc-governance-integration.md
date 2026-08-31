@@ -37,6 +37,19 @@ skill pointing at a retrieval surface. The finding that drives everything below:
 correct move on the governance half is largely *not to vendor it*, leaving enforcement
 plumbing plus two conformance findings.
 
+## Debate-review decisions (2026-08-31)
+
+- **The watch-only row kind is withdrawn.** PARITY.md is frozen at its current
+  upstreams, and this item's own finding is that governance should *not* be
+  vendored — so there is no copy to diff and nothing for a watch-only row to buy.
+  Drop the design requirement handed to `tc-standards-conformance`.
+- **Recommendation B is unaffected.** A SessionStart presence check needs no
+  ledger row; it greps the installed policy and emits `additionalContext`.
+- **Recommendation C is unaffected**, and gains a sibling: a second `Stop` hook
+  lands in `hooks/hooks.json` from
+  `verification-split-and-firing-rate`. Different event, no collision, but the
+  two items both write that file and so cannot share a wave.
+
 ## Why it matters
 
 Moe is TC's agent tooling for ~20 TC engineers, so every Moe session is a TC session and

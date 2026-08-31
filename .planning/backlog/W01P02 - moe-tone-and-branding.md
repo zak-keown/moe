@@ -33,6 +33,22 @@ written down.** So this is a transcription job plus one guard, not an authoring
 job. (Repo under discussion: `~/Code/moe`, the Superpowers fork — not
 `~/Code/tools/moe` and not `~/.claude/moe-core`.)
 
+## Debate-review decisions (2026-08-31)
+
+- **The flip condition is now measurable without a purpose-built test.** This
+  doc names one: *if `writing-clearly-and-concisely` measurably under-fires on
+  README and MR-description work, discoverability is a real gap and a second
+  trigger earns its keep.* `verification-split-and-firing-rate` Part C counts
+  `Skill` invocations per session from the transcript, so the counter answers it
+  directly.
+- **Step 5's subagent test is still owed.** The Iron Law binds the edit
+  regardless; the counter measures *firing*, the subagent test measures whether
+  the pointer changes the output. Different questions.
+- **Recommendation C stands.** Nothing here reopens the no-28th-skill decision —
+  and ARCHITECTURE.md §2's firing-rate rule now gives it a second, independent
+  argument: a description that never fires is dead weight, and adding one is a
+  bet you cannot yet price.
+
 ## Why it matters
 
 Twenty people will read these docs and none of them wrote them. The nine package

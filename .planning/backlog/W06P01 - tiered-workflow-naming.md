@@ -34,6 +34,26 @@ idea once you look at the repo: `brainstorming` already ships a three-way classi
 this should extend rather than duplicate, and "tier" is already spoken for three
 times over, so a fourth meaning is a naming defect whatever the levels get called.
 
+## Debate-review decisions (2026-08-31)
+
+- **Depth no longer has to relax `verification-before-completion`.** The
+  "Consequence for implementation" line — `patch` and `change` drop from *a pass*
+  to *inline evidence* — was the price of scaling ceremony. It is no longer
+  needed: `verification-split-and-firing-rate` Part A puts the mechanical
+  evidence floor in a `Stop` hook, which costs nothing to leave on at every
+  depth. Only the prose half scales. Depth and model tier are different axes and
+  this keeps them from being conflated.
+- **The `dispatching-parallel-agents` row changes.** It stays `tier: everything`
+  — the promotion in `parallel-execution-option` is rejected — so it is no longer
+  true that "every reader will have it." The row stays (it is real at `feature`
+  depth) but the parenthetical justifying it by decision #6 does not.
+- **One line each on failure polarity is worth adding to the depth table.**
+  Gold-plating is the `patch`-depth risk; stub-and-declare is the `feature`-depth
+  risk. Both catches already ship — anti-stub at `writing-plans:131-138`,
+  anti-over-engineering at `receiving-code-review:88-97` — so this is labelling,
+  not new content. ARCHITECTURE.md §2 records why this maps onto depth rather
+  than onto model tier.
+
 ## Why it matters
 
 The tier-3 chain below is ten skills deep, and today it is the only documented path.

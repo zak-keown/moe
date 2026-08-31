@@ -4,8 +4,8 @@ title: Parallelism As A First-Class Execution Option
 idea: |
   - Explore parallelization as an execution option
 status: backlog
-size: M
-estimate: 4-6 h
+size: S
+estimate: 2-3 h
 depends_on: [DO-NOW-1, DO-NOW-2]
 blocks: []
 conflicts_with: [tiered-workflow-naming, deterministic-task-dag, gsd-core-skill-import, native-renderers, moe-tone-and-branding]
@@ -50,6 +50,25 @@ frontmatter — [sub-agents docs](https://code.claude.com/docs/en/sub-agents),
 boundary rather than trusting the agent. Two implementers editing disjoint files in
 separate worktrees cannot conflict. The prohibition was a guard against a hazard the
 harness has since removed.
+
+## Debate-review decisions (2026-08-31)
+
+Recorded in PARITY.md ("Inherited skills, resolved") and ARCHITECTURE.md §2.
+
+- **The tier promotion is rejected.** `dispatching-parallel-agents` stays
+  `tier: everything`. `skill-tiers.yaml`'s own criterion settles it — a skill you
+  invoke deliberately, by name, when you already know you want it, belongs in
+  `moe-everything` — and so does the silent-failure test: a missed parallel
+  dispatch yields serial execution, which is correct and merely slower.
+- **So step 5 goes away.** No `skill-tiers.yaml` edit, no `metadata.test.ts:470`
+  13 → 14. The lean tier stays at 13.
+- **The rest of Option B stands, and it is the valuable half.** The bans at
+  `subagent-driven-development/SKILL.md:282` and `implementing-tasks/SKILL.md:101`
+  cite a hazard the harness removed; correcting a false statement is maintenance,
+  not a feature. The gate, the wave/integration step, `using-git-worktrees` Step
+  1c and the crew fix all remain.
+- **Net: this is S, not M.** The depth-table row in `tiered-workflow-naming` also
+  changes, since the skill it references is no longer promoted.
 
 ## Why it matters
 

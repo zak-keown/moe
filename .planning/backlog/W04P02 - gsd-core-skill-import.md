@@ -36,6 +36,25 @@ GSD-core: it is the installed artifact of an **older, now-deleted Moe repo** tha
 itself derived from GSD. Importing means going to upstream, and the census below is
 what says whether anything is worth going for.
 
+## Debate-review decisions (2026-08-31)
+
+- **The census gains a second row, and it is stronger than the first.**
+  Goal-backward verification — enumerate must-haves from the stated goal rather
+  than from the task list or the diff — is being folded into
+  `verification-before-completion` by
+  `verification-split-and-firing-rate` Part B. Its provenance is unresolved and
+  this item's census owns the question.
+- **The chain matters here.** GSD-core (`996196f`, MIT) → an older, deleted Moe
+  repo → `~/.claude/moe-core`. Inside that artifact the method is credited to
+  "the existing `moe-verifier` agent's goal-backward methodology"
+  (`references/verify-mvp-mode.md:56`), which points at Moe lineage rather than
+  GSD lineage. If it originated in the deleted repo, there is no living upstream
+  to attribute — the same position the rest of this fork is in.
+- **Option B no longer rests solely on the nine debugger references.** That was
+  the thin part of its case; this is a second find in the same shape (content
+  folded into an existing core skill, no new skill directory).
+- **PARITY.md's freeze does not block it.** Attribution is the carve-out.
+
 ## Why it matters
 
 Three reasons, and only one of them is about skills.

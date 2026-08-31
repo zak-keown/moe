@@ -25,6 +25,15 @@ Claude Code can additionally publish an org-private page at a URL. This item
 generalises the renderer Moe has, adds the URL rung beside it, and makes every
 rung degrade cleanly. It does **not** build a new server; the server exists.
 
+## Debate-review decisions (2026-08-31)
+
+- **One wave collision to note.** Step 5 mirrors the `MOE_LATTE_ENABLED` pattern
+  — a `MOE_*` env var, default-off, asserted in `metadata.test.ts`.
+  `verification-split-and-firing-rate` Part A does the same for its hook, and
+  both items extend `metadata.test.ts`. Same file, so they cannot share a wave;
+  no design conflict.
+- Nothing else in this item changes.
+
 ## Why it matters
 
 Moe's skills are already Claude-native, not lowest-common-denominator. Two

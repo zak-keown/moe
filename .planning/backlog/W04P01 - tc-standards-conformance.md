@@ -43,6 +43,23 @@ rather than invented). The fourth part — keeping TC's conventions from driftin
 away from Moe's vendored copy — is the half with no obvious answer, and is
 where most of the estimate goes.
 
+## Debate-review decisions (2026-08-31)
+
+- **PARITY.md is frozen at its current upstreams** (see its "Upstream tracking,
+  frozen" section). No new drift-tracking rows.
+- **So option 2 loses its stated justification.** Its recommendation rests on
+  "it is the mechanism PARITY.md already uses for every upstream — so it adds a
+  pattern the repo has rather than a new one." That precedent is withdrawn.
+  Re-argue option 2 on its own merits against option 3 (runtime reference) and
+  option 4 (`@tc/skills` from ProGet), or place the manifest in a TC-scoped file
+  that is not this ledger.
+- **The freeze does not block the vendoring itself.** `_shared/tc-conventions.md`
+  and its provenance header are attribution, which is the freeze's explicit
+  carve-out. What is blocked is growing PARITY into a live drift tracker for
+  three more repos.
+- **`tc-governance-integration`'s watch-only row kind is withdrawn**, so that
+  design requirement is off this item's plate.
+
 ## Why it matters
 
 Every one of the ~20 users opens MRs in `gitlab.tcdevops.com` against branches
