@@ -13,9 +13,10 @@
 #
 # Two things fall out of that, and both were previously blockers:
 #
-#   - Two plugins from one source tree. moe-everything is this same tree with all
-#     27 skills instead of the lean 13; see ./moe-everything.yaml. Nothing has to
-#     move, because each gets its own staging root.
+#   - Two plugins from one source tree. moe-everything is this same tree with
+#     every skill instead of the core tier alone; see ./moe-everything.yaml.
+#     Nothing has to move, because each gets its own staging root. (No counts
+#     here on purpose — skill-tiers.yaml holds them and a test asserts them.)
 #   - All 11 harness adapters can run. opencode and pi were excluded here because
 #     they emit a FULL-REPLACEMENT package.json into the plugin root — which used
 #     to be `packages/core`, whose package.json is the pnpm workspace manifest.

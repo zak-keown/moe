@@ -15,9 +15,12 @@
 
 name: moe-everything
 version: 0.0.0
+# No skill count here, deliberately. A number in a SHIPPED description rots on
+# the first authored skill, and it rots in twelve places at once because mint
+# byte-copies this string into every harness manifest. The count lives in
+# skill-tiers.yaml, where a test asserts it.
 description: >-
-  The full Moe skill library: all 27 skills, including the ones you invoke
-  deliberately by name.
+  The full Moe skill library, including the ones you invoke deliberately by name.
 author:
   name: Zak Keown
   email: zak@turncommerce.com

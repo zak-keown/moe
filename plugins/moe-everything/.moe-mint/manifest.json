@@ -6,28 +6,28 @@
       "sha256": "955161a680f8034d649d5e893246b1a9ebb39c53065f9ca3a361a05677b25d44"
     },
     ".claude-plugin/marketplace.json": {
-      "sha256": "80900201f326cc4248d015383311c3e4dc35816b2aba56ff0e7e8fdd8f9a4af4"
+      "sha256": "fbabbcad2b660a54694a80ec284f5cb9047fdb6897907185a1238a98069dc726"
     },
     ".claude-plugin/plugin.json": {
-      "sha256": "36140e3398f204e860bf8a8baab0537118880ca9db0a66b3fbff8b328fa1799b"
+      "sha256": "6e895badaa5b492c69875e03d4999490f77b269c3e8f274bff9fb6d946fa2494"
     },
     ".codex-plugin/plugin.json": {
-      "sha256": "f6a5d2cf2a64b3f9092387a27e45cf981c9f2769ae93b7d71ae5465145583a40"
+      "sha256": "99633bd5c93227e665b5f5a97647bae13b39e6bdb1e2e07a5b205ac3e51b9ea5"
     },
     ".cursor-plugin/plugin.json": {
-      "sha256": "f683d54c17a38cc764aee1ec0ed2e00010f4c5686fe7f176442060017c02bfbf"
+      "sha256": "6378948d04d66f7770d3132ccf9e480e8be10cf14411729d32a6e76f4de48ff8"
     },
     ".devin-plugin/plugin.json": {
-      "sha256": "480fbe8e1cab8aff68f15fabfe11be7f3d6e1a4e16c8cadd1e30c5c6edb97458"
+      "sha256": "373f180b08544e13d94d9682a1398fcd4022e752aa8194464553b5af9474ff33"
     },
     ".hermes-plugin/__init__.py": {
       "sha256": "9e68d23b73a09a44447f6587bcb7ffa42650134132ac53e2f717598241e129c1"
     },
     ".hermes-plugin/plugin.yaml": {
-      "sha256": "4e64bd83ddb02d24fb6a76b0d0512192fe1ff0c09dd3b222969a14511736acba"
+      "sha256": "83fff85a9cd7c9f4267a1a9bd955b987c88161d1017b630da76c235bd94a99a5"
     },
     ".kimi-plugin/plugin.json": {
-      "sha256": "de33a341d0056b97808ac051681f382088dca62a5677734058ce67cbb8a37922"
+      "sha256": "8d68356e4e90cc233f995ca64594c9acaf1b0bee6571bd524ff48ec4f0301e93"
     },
     ".opencode/plugins/moe-everything.js": {
       "sha256": "4ba52771b07d7bad1b7eac488a8cce6d4672cb1d8173e24ddf4a0acb58b11bfa"
@@ -75,7 +75,7 @@
       "sha256": "4b4914267b167bbd602a118f1a3ef18ca0c1a5e9a6607913db1b9c6ffb29f7fb"
     },
     "gemini-extension.json": {
-      "sha256": "3f5d37f3ed8b8b8856a8b369ec60e90283ad36f7557fc9d91e4bc7e53c17dd83"
+      "sha256": "aea0559bfc4ee43f306cb62309cbec7df36a4833c27525dba53d936cf4e72502"
     },
     "hooks/moe-mint/hooks-cursor.json": {
       "sha256": "7653af3eca8918a0fa45c4d67c321723d3906b8d3d6966959461be208f67d8a5"
@@ -92,10 +92,10 @@
       "executable": true
     },
     "package.json": {
-      "sha256": "4f003b12cfbf972eee57bfcbe33bb8d6d17bea14415797a6bbd3c6b04c8c24e2"
+      "sha256": "5943713faaf66cf11a0d5fab6cb09f2391ff20788bd05ed07e54d18eae236d17"
     },
     "plugin.json": {
-      "sha256": "4ecb597a8ab18b370fe81815abb4979af9a75fd9a25b7d1c817d19a8146c011d"
+      "sha256": "bdfa9039ceeb59b0b665ae961a09544188b0139075eda70444cb5b4bcaaabb2f"
     }
   }
 }

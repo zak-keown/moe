@@ -1,6 +1,6 @@
 {
   "name": "moe-everything",
-  "description": "The full Moe skill library: all 27 skills, including the ones you invoke deliberately by name.",
+  "description": "The full Moe skill library, including the ones you invoke deliberately by name.",
   "version": "0.0.0",
   "contextFileName": "GEMINI.md"
 }

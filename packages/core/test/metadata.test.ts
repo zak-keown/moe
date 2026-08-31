@@ -260,8 +260,17 @@ describe("skill inventory", () => {
     // with the pinned literal above they are strictly stronger than what they
     // replaced: nothing may exist on disk without a manifest entry, nothing may
     // be registered without existing, and no name may sit in both maps.
-    expect(authored, "authored: parsed as null — it needs an explicit {}").not.toBeNull();
-    expect(typeof authored).toBe("object");
+    // Assert the RAW parse, never the coalesced local. `authored` is
+    // `tiers.authored ?? {}` at the top of this file, so asserting IT can never
+    // fail — which is exactly what this guard did until 2026-08-31, while its own
+    // message claimed to catch a null. `typeof null` is also "object", so the
+    // null and undefined cases each need their own assertion.
+    expect(tiers.authored, "authored: key is missing from skill-tiers.yaml").not.toBeUndefined();
+    expect(
+      tiers.authored,
+      "authored: parsed as null — an empty map needs an explicit `{}` in the yaml",
+    ).not.toBeNull();
+    expect(typeof tiers.authored, "authored: is not a map").toBe("object");
 
     const registered = [...Object.keys(imported), ...Object.keys(authored)].sort();
     expect(registered, "skills/ and skill-tiers.yaml disagree").toEqual([...skillNames].sort());
@@ -682,6 +691,29 @@ describe("the lean/full curation", () => {
         `authored.${name}.tier is "${entry.tier}". Fork-authored skills are everything-tier only — CURRENT POLICY (D2, 2026-08-31), reversible by deliberate decision, not by editing this manifest.`,
       ).toBe("everything");
     }
+  });
+
+  it("no shipped plugin description hardcodes a skill count", () => {
+    // The count rots on the first authored skill, and it rots in TWELVE places at
+    // once, because mint byte-copies each `description` into every harness
+    // manifest plus both marketplace files. Both `mint/*.yaml` descriptions
+    // carried "all 27 skills" until 2026-08-31 while nothing asserted any of
+    // them; the de-rotting pass corrected the one copy nothing parses and left
+    // the shipped ones. Assert the sources, since /plugins/ is generated from
+    // them and mint:check proves the copy.
+    const offenders: string[] = [];
+    for (const rel of ["mint/moe-core.yaml", "mint/moe-everything.yaml"]) {
+      const text = readFileSync(join(PKG, rel), "utf8");
+      text.split("\n").forEach((line, i) => {
+        if (/\b\d+\s+skills\b/.test(line)) offenders.push(`${rel}:${i + 1}  ${line.trim()}`);
+      });
+    }
+    expect(
+      offenders,
+      "a skill count in a mint config reaches every generated manifest. Say " +
+        '"every skill" or "the core tier"; the numbers live in skill-tiers.yaml.\n  ' +
+        offenders.join("\n  "),
+    ).toEqual([]);
   });
 
   it("keeps the lean tier lean", () => {

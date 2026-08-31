@@ -314,8 +314,15 @@ imported:
 # nobody chose. Flip the assertion when that conversation happens.
 #
 # The `{}` on the next line is load-bearing. A bare `authored:` with nothing
-# under it parses as null rather than as an empty map, which would make
-# Object.keys() throw a TypeError far from the cause.
+# under it parses as NULL rather than as an empty map.
+#
+# It does not throw, and that is the point. metadata.test.ts coalesces with
+# `tiers.authored ?? {}` so every downstream read keeps working, which means a
+# null here has no symptom at all. What catches it is an explicit assertion on
+# the raw parse in "accounts for every skill on disk in exactly one of the two
+# maps". That assertion was itself vacuous until 2026-08-31 — it tested the
+# coalesced value — so for a while both this comment and that test claimed a
+# guarantee neither provided.
 # ---------------------------------------------------------------------------
 authored:
   {}

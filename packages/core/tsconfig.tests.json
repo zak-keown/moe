@@ -1,0 +1,12 @@
+{
+  "//": "Test-only compile, and the ONLY tsconfig this package needs — core has no src/, so there is no composite project and no entry in the root solution file. It exists because `pnpm typecheck` for this package was literally `echo 'content package: no TypeScript'`, which was false: test/ holds ~700 lines of load-bearing assertions plus vitest.config.ts. Nothing statically checked them, so a mistyped property that silently produced `undefined` would pass — exactly the failure the merged fidelity refactor had to guard against by hand. Excludes skills/**, whose .ts files are illustrative examples inside skill bodies, not code this package compiles.",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true
+  },
+  "include": ["test/**/*", "vitest.config.ts"],
+  "exclude": ["skills/**"]
+}
