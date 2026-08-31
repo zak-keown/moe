@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Renders $MOE_PROOF_CHECK_INPUT to $MOE_PROOF_CHECK_CREATES using rsvg-convert.
+# White background because transparent PNGs reach vision models
+# unpredictably; fixed width so every model is judged at the same size.
+set -euo pipefail
+
+rsvg-convert --background-color=white --width=800 \
+  "$MOE_PROOF_CHECK_INPUT" -o "$MOE_PROOF_CHECK_CREATES"
+echo "{\"notes\": \"$(rsvg-convert --version | head -1)\"}"
