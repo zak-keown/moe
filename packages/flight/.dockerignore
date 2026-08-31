@@ -1,0 +1,15 @@
+# INERT AS PLACED. Docker reads .dockerignore from the BUILD CONTEXT root, and
+# docker/Dockerfile's context is the monorepo root — so this file is never
+# consulted, and the equivalent belongs at the repo root instead. It is kept
+# because it is the only record of what upstream excluded from its image, and
+# because it becomes live again if anyone ever narrows the context back to this
+# package.
+#
+# Upstream's exclusions, verbatim:
+node_modules
+dist
+.git
+test
+docs
+evidence
+/tmp

@@ -1,0 +1,252 @@
+import { describe, test, expect } from "vitest";
+import { mkdtempSync, readFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { ShutdownState, drainShutdown } from "../../../src/qa/api/shutdown.js";
+import { RunBroadcaster } from "../../../src/qa/api/ws.js";
+import { RunSetBroadcaster } from "../../../src/qa/api/run-set-broadcaster.js";
+
+type Closeable = {
+  readyState: number;
+  send(_: string): void;
+  close(code?: number, reason?: string): void;
+};
+
+function fakeWs(): Closeable & { closeArgs: Array<[number?, string?]> } {
+  const ws = {
+    readyState: 1,
+    send() {},
+    closeArgs: [] as Array<[number?, string?]>,
+    close(code?: number, reason?: string) {
+      ws.closeArgs.push([code, reason]);
+      ws.readyState = 3;
+    },
+  };
+  return ws;
+}
+
+describe("ShutdownState", () => {
+  test("starts not-draining; mark() flips it", () => {
+    const s = new ShutdownState();
+    expect(s.isDraining()).toBe(false);
+    s.mark("SIGTERM");
+    expect(s.isDraining()).toBe(true);
+    expect(s.signal).toBe("SIGTERM");
+  });
+
+  test("mark() is idempotent — first signal wins", () => {
+    const s = new ShutdownState();
+    s.mark("SIGTERM");
+    s.mark("SIGINT");
+    expect(s.signal).toBe("SIGTERM");
+  });
+});
+
+describe("RunBroadcaster.closeAll", () => {
+  test("closes every connected client with code+reason and clears the registry", () => {
+    const b = new RunBroadcaster();
+    const a = fakeWs();
+    const c = fakeWs();
+    b.addClient("run-1", a);
+    b.addClient("run-2", c);
+
+    b.closeAll(1001, "shutting down");
+
+    expect(a.closeArgs).toEqual([[1001, "shutting down"]]);
+    expect(c.closeArgs).toEqual([[1001, "shutting down"]]);
+  });
+
+  test("tolerates clients whose .close throws (one bad client doesn't block the rest)", () => {
+    const b = new RunBroadcaster();
+    const bad = fakeWs();
+    bad.close = () => { throw new Error("boom"); };
+    const good = fakeWs();
+    b.addClient("run-1", bad);
+    b.addClient("run-2", good);
+
+    expect(() => b.closeAll(1001, "shutting down")).not.toThrow();
+    expect(good.closeArgs).toEqual([[1001, "shutting down"]]);
+  });
+});
+
+describe("RunSetBroadcaster.closeAll", () => {
+  test("closes every connected client with code+reason", () => {
+    const b = new RunSetBroadcaster();
+    const a = fakeWs();
+    const c = fakeWs();
+    b.addClient("rset-1", a);
+    b.addClient("rset-2", c);
+
+    b.closeAll(1001, "shutting down");
+
+    expect(a.closeArgs).toEqual([[1001, "shutting down"]]);
+    expect(c.closeArgs).toEqual([[1001, "shutting down"]]);
+  });
+});
+
+describe("drainShutdown", () => {
+  test("sets draining flag, closes both broadcasters, returns immediately if registry is empty", async () => {
+    const state = new ShutdownState();
+    const broadcaster = new RunBroadcaster();
+    const setBroadcaster = new RunSetBroadcaster();
+    const wsRun = fakeWs();
+    const wsSet = fakeWs();
+    broadcaster.addClient("run-1", wsRun);
+    setBroadcaster.addClient("rset-1", wsSet);
+
+    const log: string[] = [];
+    const before = Date.now();
+    const result = await drainShutdown({
+      signal: "SIGTERM",
+      state,
+      broadcaster,
+      setBroadcaster,
+      registry: { list: () => [], abortAll: () => 0 },
+      resultsRoot: "/tmp/moe-flight-test-unused",
+      graceMs: 5000,
+      pollMs: 25,
+      log: (m) => log.push(m),
+    });
+    const elapsed = Date.now() - before;
+
+    expect(state.isDraining()).toBe(true);
+    expect(wsRun.closeArgs).toEqual([[1001, "shutting down"]]);
+    expect(wsSet.closeArgs).toEqual([[1001, "shutting down"]]);
+    expect(result.drainedCleanly).toBe(true);
+    expect(elapsed).toBeLessThan(500); // empty registry → fast return
+    expect(log[0]).toContain("SIGTERM");
+  });
+
+  test("polls registry until empty when runs are in flight, then returns drainedCleanly=true", async () => {
+    const state = new ShutdownState();
+    const remaining = [{ id: "run-1" } as any, { id: "run-2" } as any];
+    let calls = 0;
+    const registry = {
+      list: () => {
+        calls++;
+        if (calls >= 3) return [];
+        return remaining;
+      },
+      abortAll: () => 0,
+    };
+
+    const result = await drainShutdown({
+      signal: "SIGINT",
+      state,
+      broadcaster: new RunBroadcaster(),
+      setBroadcaster: new RunSetBroadcaster(),
+      registry,
+      resultsRoot: "/tmp/moe-flight-test-unused",
+      graceMs: 5000,
+      pollMs: 25,
+      log: () => {},
+    });
+
+    expect(result.drainedCleanly).toBe(true);
+    expect(calls).toBeGreaterThanOrEqual(3);
+  });
+
+  test("times out after graceMs, fires abortAll, then writes stub for run with no result.json", async () => {
+    const state = new ShutdownState();
+    const stuck = [{ id: "stuck-run", cardId: "stuck", startedAt: Date.now() - 1000 }];
+    let abortAllCalled = 0;
+    const registry = {
+      list: () => stuck,
+      abortAll: () => { abortAllCalled++; return 1; },
+    };
+    const resultsRoot = mkdtempSync(join(tmpdir(), "moe-flight-shutdown-stub-"));
+
+    const before = Date.now();
+    const result = await drainShutdown({
+      signal: "SIGTERM",
+      state,
+      broadcaster: new RunBroadcaster(),
+      setBroadcaster: new RunSetBroadcaster(),
+      registry,
+      resultsRoot,
+      graceMs: 200,
+      postAbortMs: 100,
+      pollMs: 25,
+      log: () => {},
+    });
+    const elapsed = Date.now() - before;
+
+    expect(result.drainedCleanly).toBe(false);
+    expect(result.remaining).toBe(1);
+    expect(result.aborted).toBe(1);
+    expect(result.stubbed).toBe(1);
+    expect(abortAllCalled).toBe(1);
+    expect(elapsed).toBeGreaterThanOrEqual(200);
+    expect(elapsed).toBeLessThan(2000);
+
+    // Stub file actually landed on disk
+    const stub = JSON.parse(readFileSync(join(resultsRoot, "stuck-run", "result.json"), "utf-8"));
+    expect(stub.status).toBe("errored");
+    expect(stub.error.type).toBe("shutdown_interrupted");
+  });
+});
+
+describe("createApp drain middleware", () => {
+  // We import lazily to avoid pulling all of createApp's deps if some
+  // module in that graph fails to load in this isolated test context.
+  test("returns 503 with shutting_down envelope when state.draining=true", async () => {
+    const { createApp } = await import("../../../src/qa/api/server.js");
+    const state = new ShutdownState();
+    state.mark("SIGTERM");
+
+    const config = {
+      projectRoot: "/tmp/does-not-matter-for-this-test",
+      stateDirName: ".moe-flight",
+      port: 4400,
+      defaultChrome: { host: "127.0.0.1", port: 9222 },
+      defaultBudgetMs: 300_000,
+      defaultMaxStuckRetries: 5,
+      defaultViewport: { width: 1440, height: 900 },
+      saveScreencast: false,
+      shutdownGraceMs: 10000,
+      models: { agent: "claude-sonnet-4-6", fanout: undefined, available: [] },
+      sources: { defaultChrome: "default" },
+      apiKeys: { anthropic: false, openai: false },
+    } as any;
+
+    const app = createApp(config, undefined, undefined, undefined, undefined, undefined, state);
+
+    const res = await app.request("/api/run/anything", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target: "http://localhost:3000" }),
+    });
+
+    expect(res.status).toBe(503);
+    const body = await res.json() as { error: string };
+    expect(body.error).toBe("shutting_down");
+  });
+
+  test("does NOT block /api/runs/active or other GETs while draining (clients can still poll)", async () => {
+    const { createApp } = await import("../../../src/qa/api/server.js");
+    const { ActiveRunRegistry } = await import("../../../src/qa/api/active-runs.js");
+    const state = new ShutdownState();
+    state.mark("SIGTERM");
+
+    const config = {
+      projectRoot: "/tmp/does-not-matter-for-this-test",
+      stateDirName: ".moe-flight",
+      port: 4400,
+      defaultChrome: { host: "127.0.0.1", port: 9222 },
+      defaultBudgetMs: 300_000,
+      defaultMaxStuckRetries: 5,
+      defaultViewport: { width: 1440, height: 900 },
+      saveScreencast: false,
+      shutdownGraceMs: 10000,
+      models: { agent: "claude-sonnet-4-6", fanout: undefined, available: [] },
+      sources: { defaultChrome: "default" },
+      apiKeys: { anthropic: false, openai: false },
+    } as any;
+
+    const registry = new ActiveRunRegistry();
+    const app = createApp(config, undefined, undefined, registry, undefined, undefined, state);
+
+    const res = await app.request("/api/runs/active");
+    expect(res.status).toBe(200);
+  });
+});

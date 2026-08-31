@@ -1,0 +1,102 @@
+import { describe, test, expect } from "vitest";
+import { parseArgs } from "../../../src/qa/cli/args.js";
+
+describe("CLI flag hygiene", () => {
+  test("parseServeArgs rejects unknown flag", () => {
+    expect(() => parseArgs(["bun", "moe-flight", "serve", "--bogus", "x"]))
+      .toThrow(/unknown flag.*--bogus/i);
+  });
+
+  test("parseServeArgs accepts --chrome, --project-dir, --port, --model, --target", () => {
+    const args = parseArgs([
+      "bun", "moe-flight", "serve",
+      "--port", "4400",
+      "--project-dir", "/tmp/x",
+      "--chrome", "localhost:9222",
+      "--model", "agent=claude-sonnet-4-6",
+      "--target", "http://localhost:3000",
+    ]);
+    expect(args.command).toBe("serve");
+    // Specific field assertions come in Task 4 after AppConfig shape is set.
+  });
+
+  test("parseRunArgs rejects unknown flag", () => {
+    expect(() => parseArgs(["bun", "moe-flight", "run", "foo.md", "--target", "http://x", "--nope", "y"]))
+      .toThrow(/unknown flag.*--nope/i);
+  });
+
+  test("parseRunArgs accepts --target, --model, --chrome, --adapter, --out", () => {
+    const args = parseArgs([
+      "bun", "moe-flight", "run", "foo.md",
+      "--target", "http://localhost:3000",
+      "--model", "agent=claude-sonnet-4-6",
+      "--chrome", "localhost:9222",
+      "--adapter", "web",
+      "--out", "/tmp/out",
+    ]);
+    expect(args.command).toBe("run");
+  });
+
+  test("parseFanoutArgs rejects unknown flag", () => {
+    expect(() => parseArgs(["bun", "moe-flight", "fanout", "foo.md", "--bogus", "y"]))
+      .toThrow(/unknown flag.*--bogus/i);
+  });
+
+  test("parseFanoutArgs yields undefined cli.models when no --model given", () => {
+    const args = parseArgs(["bun", "moe-flight", "fanout", "scenario.md"]) as any;
+    expect(args.command).toBe("fanout");
+    expect(args.cli.models).toBeUndefined();
+  });
+
+  test("parseFanoutArgs threads --model agent= into cli.models.agent", () => {
+    const args = parseArgs([
+      "bun", "moe-flight", "fanout", "scenario.md",
+      "--model", "agent=gpt-4o",
+    ]) as any;
+    expect(args.command).toBe("fanout");
+    expect(args.cli.models.agent).toBe("gpt-4o");
+  });
+
+  test("parseValidateArgs rejects unknown flag", () => {
+    expect(() => parseArgs(["bun", "moe-flight", "validate", "foo.md", "--bogus", "y"]))
+      .toThrow(/unknown flag.*--bogus/i);
+  });
+
+  test("error mentions valid flags for command", () => {
+    try {
+      parseArgs(["bun", "moe-flight", "serve", "--bogus", "x"]);
+      throw new Error("expected throw");
+    } catch (e) {
+      const msg = (e as Error).message;
+      expect(msg).toMatch(/--port/);
+      expect(msg).toMatch(/--project-dir/);
+      expect(msg).toMatch(/--chrome/);
+    }
+  });
+
+  test("bareword flag followed by another flag does not eat it", () => {
+    const args = parseArgs([
+      "bun", "moe-flight", "config",
+      "--json",
+      "--project-dir", "/tmp/x",
+    ]);
+    expect(args.command).toBe("config");
+    expect((args as any).json).toBe(true);
+    expect((args as any).cli.projectRoot).toBe("/tmp/x");
+  });
+
+  test("bareword --json alone parses correctly", () => {
+    const args = parseArgs(["bun", "moe-flight", "config", "--json"]);
+    expect((args as any).json).toBe(true);
+  });
+
+  test("--json true still works (explicit value form)", () => {
+    const args = parseArgs(["bun", "moe-flight", "config", "--json", "true"]);
+    expect((args as any).json).toBe(true);
+  });
+
+  test("--port with non-integer value throws", () => {
+    expect(() => parseArgs(["bun", "moe-flight", "serve", "--port", "abc"]))
+      .toThrow(/--port/);
+  });
+});

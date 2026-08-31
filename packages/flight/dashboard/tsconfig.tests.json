@@ -1,0 +1,14 @@
+{
+  "//": "Test-only program: src + test, non-composite and noEmit. Upstream typechecked both in one config; the runtime build cannot, because it emits.",
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*", "test/**/*", "vitest.config.ts"]
+}

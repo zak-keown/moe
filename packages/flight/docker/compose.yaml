@@ -1,0 +1,32 @@
+# `context: ..` — the build context is packages/flight, and the Dockerfile
+# needs the MONOREPO root, so this file is invoked from the repo root:
+#
+#   docker compose -f packages/flight/docker/compose.yaml up
+#
+# Compose resolves relative paths against THIS file's directory, so the context
+# has to climb out of docker/ and out of packages/flight/. Upstream had
+# `context: .` with compose.yaml at the repo root; moving it into docker/ and
+# moving the package into a workspace both shifted it.
+services:
+  moe-flight:
+    build:
+      context: ../../..
+      dockerfile: packages/flight/docker/Dockerfile
+    ports:
+      - "${MOE_FLIGHT_PORT:-4400}:${MOE_FLIGHT_PORT:-4400}"
+    environment:
+      - MOE_FLIGHT_PORT=${MOE_FLIGHT_PORT:-4400}
+    volumes:
+      # Mounts the target project root. Flight writes state to
+      # <project>/.moe-flight/. Defaults to "." so `docker compose up`
+      # from the repo root mounts this repo (Flight-on-Flight).
+      - ${TARGET_PROJECT:-../../..}:/project
+    env_file:
+      # Relative to this file, and OPTIONAL. Upstream required it with no
+      # fallback, so `docker compose config` failed on a fresh clone; every
+      # MOE_FLIGHT_* var has a default in src/qa/config.ts, and the provider
+      # keys are the only thing an operator must actually supply. See
+      # ../.env.example for the list.
+      - path: ../.env
+        required: false
+    command: ["serve", "--project-dir", "/project"]

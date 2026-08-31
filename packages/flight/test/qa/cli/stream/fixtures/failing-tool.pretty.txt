@@ -1,0 +1,31 @@
+──────────────────────────────────────────────────────
+  runId     r-ff01
+  card      login-flow
+  target    https://example.com
+  model     claude-sonnet-4-6
+  adapter   web · viewport 1440×900
+  max time  5m
+  evidence  .moe-flight/results/r-ff01/
+──────────────────────────────────────────────────────
+
+» Clicking login. · t1
+  ▸ click .nonexistent
+    ↳ ✗ 1.2s
+      ╵ error  element not found: waited 1s for ".nonexistent"
+      ╵ hint   closest match: ".login-button"
+
+─── Run complete ────────────────────────────── ✗ fail
+  runId     r-ff01
+  duration  3.5s
+  turns     1
+  usage     in 1.2k  out 40
+  evidence  .moe-flight/results/r-ff01/
+
+  Summary
+    Could not find login button
+
+  Reasoning
+    Selector did not match
+
+  Observations (1)
+    · [bug] Login button class changed from .login-button to .login_button

@@ -1,0 +1,218 @@
+import { describe, test, expect } from "vitest";
+import { buildSystemPrompt } from "../../../src/qa/agent/prompts.js";
+import type { StoryCard } from "../../../src/qa/format/story-card.js";
+
+describe("buildSystemPrompt", () => {
+  test("includes story card content", () => {
+    const card: StoryCard = {
+      id: "story-001",
+      title: "User can add a todo",
+      status: "ready",
+      tags: ["core"],
+      description: "As a user I want to add a todo",
+      acceptanceCriteria: ["Item appears in list", "Count updates"],
+      raw: "",
+    };
+
+    const prompt = buildSystemPrompt(card, undefined, undefined, undefined);
+    expect(prompt).toContain("story-001");
+    expect(prompt).toContain("User can add a todo");
+    expect(prompt).toContain("Item appears in list");
+    expect(prompt).toContain("Count updates");
+  });
+
+  test("instructs agent to report observations", () => {
+    const card: StoryCard = {
+      id: "story-001",
+      title: "Test",
+      status: "ready",
+      tags: [],
+      description: "Test story",
+      acceptanceCriteria: [],
+      raw: "",
+    };
+
+    const prompt = buildSystemPrompt(card, undefined, undefined, undefined);
+    expect(prompt).toContain("observation");
+  });
+
+  // PRI-2160: the agent must give a cited per-criterion verdict, so the
+  // criteria are numbered (entries map by position) and both the
+  // scenario closer and the Reporting section demand evidence.
+  test("numbers acceptance criteria and demands cited per-criterion verdicts (PRI-2160)", () => {
+    const card: StoryCard = {
+      id: "story-001",
+      title: "User can add a todo",
+      status: "ready",
+      tags: [],
+      description: "As a user I want to add a todo",
+      acceptanceCriteria: ["Item appears in list", "Count updates"],
+      raw: "",
+    };
+
+    const prompt = buildSystemPrompt(card, undefined, undefined, undefined);
+    expect(prompt).toContain("1. Item appears in list");
+    expect(prompt).toContain("2. Count updates");
+    expect(prompt).toContain("`criteria` array");
+    // Evidence must be observed, and absence claims need a cited search.
+    expect(prompt).toContain("never happened");
+  });
+
+  test("instructs autonomous exploration when no criteria", () => {
+    const card: StoryCard = {
+      id: "story-001",
+      title: "Test",
+      status: "ready",
+      tags: [],
+      description: "Explore the app",
+      acceptanceCriteria: [],
+      raw: "",
+    };
+
+    const prompt = buildSystemPrompt(card, undefined, undefined, undefined);
+    expect(prompt).toContain("explore");
+  });
+
+  // Context section — Flight v1.5 spec §4.1. The three-paragraph
+  // prose is load-bearing; these assertions are fixed strings so any
+  // drift breaks at CI time and the author has to either change the
+  // spec (via amendment) or revert.
+  describe("Context section (spec §4.1)", () => {
+    const baseCard: StoryCard = {
+      id: "story-001",
+      title: "A test story",
+      status: "ready",
+      tags: [],
+      description: "Do the thing.",
+      acceptanceCriteria: [],
+      raw: "",
+    };
+
+    // Authoritative prose, copy-pasted from spec §4.1, with
+    // {{TREE_LISTING}} already substituted for the sample tree used
+    // below. If the spec prose is amended, update this fixture AND
+    // the spec in the same commit.
+    const SAMPLE_TREE = "  alice.md  (5 bytes)";
+    const EXPECTED_CONTEXT_SECTION =
+      "## Context\n\n" +
+      "Below is the complete list of files available for this run. Use the\n" +
+      "`read` tool with a name from this tree to fetch any file's contents.\n\n" +
+      "Stories will often refer to users by name (\"Alice\", \"as bob\") without\n" +
+      "spelling out credentials. When that happens, look for a matching path in\n" +
+      "the tree below, `read` the relevant files, and use what you find to log\n" +
+      "in via the regular browser tools. A profile directory typically contains\n" +
+      "an identity file (prose describing the person) and a credentials file;\n" +
+      "some also contain `passkey.yaml` for WebAuthn sign-in via\n" +
+      "`install_passkey`.\n\n" +
+      "This listing is the full map: it is built once at the start of the run\n" +
+      "and does not change while the run is in flight, so you do not need to —\n" +
+      "and cannot — re-list it. Every file you might need is in this tree; if a\n" +
+      "path is not shown here, it does not exist.\n\n" +
+      SAMPLE_TREE;
+
+    test("section is appended verbatim when a tree is provided", () => {
+      const prompt = buildSystemPrompt(baseCard, SAMPLE_TREE, undefined, undefined);
+      expect(prompt).toContain(EXPECTED_CONTEXT_SECTION);
+    });
+
+    test("section appears before the Shell access section", () => {
+      // Context is no longer last — Shell access always follows it.
+      const prompt = buildSystemPrompt(baseCard, SAMPLE_TREE, undefined, undefined);
+      const contextIdx = prompt.indexOf("## Context");
+      const shellIdx = prompt.indexOf("## Shell access");
+      expect(contextIdx).toBeGreaterThan(0);
+      expect(shellIdx).toBeGreaterThan(contextIdx);
+    });
+
+    test("section is omitted when contextTree is undefined", () => {
+      const prompt = buildSystemPrompt(baseCard, undefined, undefined, undefined);
+      expect(prompt).not.toContain("## Context");
+      expect(prompt).not.toContain(".moe-flight/context/");
+    });
+
+    test("section is omitted when contextTree is the empty string", () => {
+      const prompt = buildSystemPrompt(baseCard, "", undefined, undefined);
+      expect(prompt).not.toContain("## Context");
+      expect(prompt).not.toContain(".moe-flight/context/");
+    });
+
+    test("immutability-invariant prose is present", () => {
+      const prompt = buildSystemPrompt(baseCard, SAMPLE_TREE, undefined, undefined);
+      // This is the prose face of spec §4.2 — it must not drift.
+      expect(prompt).toContain(
+        "built once at the start of the run\nand does not change while the run is in flight",
+      );
+      expect(prompt).toContain("so you do not need to —\nand cannot — re-list it");
+    });
+
+    test("never leaks the .moe-flight/context/ path to the agent (PRI-1614)", () => {
+      const prompt = buildSystemPrompt(baseCard, SAMPLE_TREE, undefined, undefined);
+      expect(prompt).not.toContain(".moe-flight/context/");
+    });
+  });
+
+  // PRI-1615 — the bash tool is always mounted; the prompt must tell the
+  // agent it is available and what it is for.
+  test("system prompt includes Shell access section", () => {
+    const card: StoryCard = {
+      id: "story-001",
+      title: "Test",
+      status: "ready",
+      tags: [],
+      description: "Do the thing.",
+      acceptanceCriteria: [],
+      raw: "",
+    };
+    const prompt = buildSystemPrompt(card, undefined, undefined, undefined);
+    expect(prompt).toContain("## Shell access");
+    expect(prompt).toContain("`bash` tool");
+  });
+
+  // PRI-1439 — side-trip guidance is web-only. The prompt must teach the
+  // agent that signin flows often require a side trip, that new_tab is
+  // the right answer, and that `navigate` is a trap.
+  describe("side-trip tab guidance (PRI-1439)", () => {
+    const baseCard: StoryCard = {
+      id: "story-001",
+      title: "A test story",
+      status: "ready",
+      tags: [],
+      description: "Do the thing.",
+      acceptanceCriteria: [],
+      raw: "",
+    };
+
+    test("web adapter prompt mentions new_tab, close_tab, and side trips", () => {
+      const prompt = buildSystemPrompt(baseCard, undefined, "web", undefined);
+      expect(prompt).toContain("new_tab");
+      expect(prompt).toContain("close_tab");
+      expect(prompt.toLowerCase()).toContain("side trip");
+    });
+
+    test("web prompt warns off `navigate` for side trips", () => {
+      const prompt = buildSystemPrompt(baseCard, undefined, "web", undefined);
+      // The agent's natural instinct is `navigate(url)`. The prompt has
+      // to flag this explicitly or the side-trip guidance is just noise
+      // alongside a more familiar tool.
+      expect(prompt).toMatch(/do not use `navigate`|navigate.*resets/i);
+    });
+
+    test("non-web adapters (cli, tui) do not get side-trip guidance", () => {
+      // cli/tui adapters don't expose new_tab — telling the agent to
+      // call it would be a hallucination invitation.
+      for (const name of ["cli", "tui", undefined]) {
+        const prompt = buildSystemPrompt(baseCard, undefined, name, undefined);
+        expect(prompt).not.toContain("new_tab");
+        expect(prompt).not.toContain("close_tab");
+      }
+    });
+
+    test("web side-trip section sits before the context section", () => {
+      const prompt = buildSystemPrompt(baseCard, "  alice.md  (5 bytes)", "web", undefined);
+      const sideTripIdx = prompt.indexOf("Side trips");
+      const contextIdx = prompt.indexOf("## Context");
+      expect(sideTripIdx).toBeGreaterThan(0);
+      expect(contextIdx).toBeGreaterThan(sideTripIdx);
+    });
+  });
+});

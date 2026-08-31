@@ -1,0 +1,40 @@
+# A standalone headless browser on :9222, for pointing `moe-flight qa run
+# --chrome <host>:9222` at a browser this image did not start.
+#
+# Deliberately NOT the same browser as docker/Dockerfile. That image installs
+# Debian's `chromium`, which is multi-arch; this one installs Google's
+# `google-chrome-stable`, which Google publishes for amd64 only. Upstream's apt
+# source line said `arch=amd64` and the build simply failed on arm64 with a
+# "no candidate" error several layers in — on the arm64 Macs in this shop, that
+# is every developer.
+#
+# So the arch constraint is now declared rather than discovered: build it with
+#
+#   docker build --platform linux/amd64 -f packages/flight/docker/Dockerfile.chrome .
+#
+# and expect emulation on Apple Silicon. If you want a browser that builds
+# natively, use docker/Dockerfile's chromium instead — the CDP surface the web
+# adapter drives is the same.
+FROM --platform=linux/amd64 debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget gnupg2 ca-certificates \
+    fonts-liberation libnss3 libxss1 libasound2 \
+    libatk-bridge2.0-0 libgtk-3-0 libdrm2 libgbm1 \
+    libxkbcommon0 xdg-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update && apt-get install -y --no-install-recommends google-chrome-stable \
+    && rm -rf /var/lib/apt/lists/*
+
+EXPOSE 9222
+
+ENTRYPOINT ["google-chrome-stable", \
+    "--headless=new", \
+    "--no-sandbox", \
+    "--disable-gpu", \
+    "--disable-dev-shm-usage", \
+    "--remote-debugging-address=0.0.0.0", \
+    "--remote-debugging-port=9222"]
