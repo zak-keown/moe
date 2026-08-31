@@ -190,17 +190,44 @@ export function timestampFromEntryPath(filePath: string): Date | null {
 }
 
 /**
- * Stable id for an entry: `md5(scope + ':' + path relative to its root)`.
+ * Id for an entry, and it is deliberately asymmetric by scope:
  *
- * Deliberately not the absolute path. Upstream stored the absolute path as the
- * record's identity inside the sidecar, so renaming the journal directory made
- * every existing record unreadable — search listed them and read refused them.
- * A root-relative id survives the root moving; the absolute `path` column is
+ *   user     md5(scope + ':' + path relative to its root)
+ *   project  md5(scope + ':' + absolute root + ':' + path relative to its root)
+ *
+ * Neither form is the absolute entry path. Upstream stored that as the record's
+ * identity inside the sidecar, so renaming the journal directory made every
+ * existing record unreadable — search listed them and read refused them. A
+ * root-relative id survives the root moving, and the absolute `path` column is
  * refreshed from the walk on every index run.
+ *
+ * `project` scope has to give up some of that. Every project on the machine
+ * shares one database and a relative entry path is only a date directory plus a
+ * timestamped filename, so two repos that journalled in the same second produced
+ * the same id and one silently replaced the other. The root is what distinguishes
+ * them. There is exactly one user root, so including it there would buy no
+ * discrimination and cost the move-stability property for nothing — hence the
+ * asymmetry rather than a blanket change.
  */
 export function journalEntryId(scope: JournalScope, root: string, entryPath: string): string {
   const relative = path.relative(root, entryPath).split(path.sep).join("/");
-  return crypto.createHash("md5").update(`${scope}:${relative}`).digest("hex");
+  // The root joins the key for `project` scope only, and the asymmetry is the
+  // point.
+  //
+  // Every project on the machine shares ONE database (src/paths.ts), and a
+  // relative entry path is just a date directory and a timestamped filename. So
+  // for project entries the root is the only thing distinguishing two repos that
+  // journalled in the same second — without it they hash to one primary key and
+  // one silently replaces the other.
+  //
+  // There is exactly one user root, so for `user` scope the root adds no
+  // discrimination and including it would cost the property upstream built this
+  // function for: an id that survives the journal directory moving. That
+  // property is kept, and it is what the "stable across the root moving" test
+  // asserts.
+  const key =
+    scope === "project" ? `${scope}:${path.resolve(root)}:${relative}` : `${scope}:${relative}`;
+  return crypto.createHash("md5").update(key).digest("hex");
 }
 
 /**

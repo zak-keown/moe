@@ -74,12 +74,26 @@ interface Filters {
   params: unknown[];
 }
 
-function buildFilters(options: {
-  scope?: JournalScopeFilter | undefined;
-  dateRange?: { start?: Date | undefined; end?: Date | undefined } | undefined;
-}): Filters {
+function buildFilters(
+  options: {
+    scope?: JournalScopeFilter | undefined;
+    dateRange?: { start?: Date | undefined; end?: Date | undefined } | undefined;
+  },
+  roots: readonly string[],
+): Filters {
   const parts: string[] = [];
   const params: unknown[] = [];
+  // Confine retrieval to the roots this service was constructed with.
+  //
+  // The service has always been handed them and never used them for filtering,
+  // so a `scope: "project"` entry written in one repo was returned in every
+  // other repo on the machine — they all share one database. The roots are the
+  // current project's journal directory plus the shared user directory, so user
+  // entries, which deliberately follow the person between projects, still match.
+  if (roots.length > 0) {
+    parts.push(`j.root IN (${roots.map(() => "?").join(", ")})`);
+    params.push(...roots);
+  }
   if (options.scope && options.scope !== "both") {
     parts.push("j.scope = ?");
     params.push(options.scope);
@@ -129,7 +143,7 @@ export class JournalSearchService {
     const sections = options.sections ?? [];
 
     const queryEmbedding = await this.embedQuery(query);
-    const { sql: filterClause, params: filterParams } = buildFilters(options);
+    const { sql: filterClause, params: filterParams } = buildFilters(options, this.roots);
 
     // vec0 applies KNN before WHERE, so ask for more candidates than `limit`
     // whenever a filter is active and trim afterwards — the same correction the
@@ -168,7 +182,7 @@ export class JournalSearchService {
 
   listRecent(options: JournalRecentOptions = {}): JournalSearchResult[] {
     const limit = options.limit ?? 10;
-    const { sql: filterClause, params: filterParams } = buildFilters(options);
+    const { sql: filterClause, params: filterParams } = buildFilters(options, this.roots);
 
     const rows = this.db
       .prepare(`

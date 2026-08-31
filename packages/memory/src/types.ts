@@ -127,6 +127,14 @@ export interface JournalEntry {
   id: string;
   /** Absolute path of the markdown file, refreshed from the walk on every index. */
   path: string;
+  /**
+   * Absolute path of the journal root this entry was found under.
+   *
+   * One database serves every project on the machine, so this is what makes a
+   * `project`-scoped entry belong to a repo: retrieval filters on it, and the
+   * index prune only considers rows whose root it is currently walking.
+   */
+  root: string;
   scope: JournalScope;
   /** Epoch milliseconds. */
   timestamp: number;

@@ -241,6 +241,7 @@ export class JournalStore {
     const entry: JournalEntry = {
       id: journalEntryId(scope, root.path, entryPath),
       path: entryPath,
+      root: path.resolve(root.path),
       scope,
       timestamp,
       text,
@@ -323,11 +324,25 @@ export class JournalStore {
       }
     }
 
-    for (const id of state.keys()) {
-      if (!seen.has(id)) {
-        deleteJournalEntry(db, id);
-        result.pruned++;
-      }
+    // Prune only what this walk was actually responsible for.
+    //
+    // One database holds every project's entries, and `seen` can only ever
+    // contain ids from the roots above. Deleting everything absent from it
+    // therefore deleted other repos' project notes — permanently, on every
+    // server start. A row is a candidate for pruning only if its root is one of
+    // the roots just walked; anything else belongs to a project that is not this
+    // one, and its own next index is what will prune it.
+    //
+    // Rows written before `journal_entries.root` existed carry `''` and are
+    // never pruned here. migrateJournalRoot clears them once, so the case is
+    // transitional; treating an unknown root as "not mine" is the safe default
+    // regardless.
+    const walked = new Set(this.roots().map((root) => path.resolve(root.path)));
+    for (const [id, row] of state) {
+      if (seen.has(id)) continue;
+      if (!row.root || !walked.has(row.root)) continue;
+      deleteJournalEntry(db, id);
+      result.pruned++;
     }
 
     return result;

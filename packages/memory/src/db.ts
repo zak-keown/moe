@@ -77,6 +77,51 @@ export function migrateSchema(db: Database.Database): void {
   }
 
   migrateToolCallsCascade(db);
+  migrateJournalRoot(db);
+}
+
+/**
+ * Add `journal_entries.root` and discard the journal index once.
+ *
+ * Every project on the machine shares one database, and until this column
+ * existed nothing recorded which journal root a row came from. Three defects
+ * followed, all of them data loss or leakage:
+ *
+ *   - `indexJournal` pruned every row it had not just walked, and it walks only
+ *     the current project's roots — so indexing in one repo deleted every other
+ *     repo's `project`-scoped rows. `mcp-server.ts` runs it on every start.
+ *   - Retrieval filtered on scope and timestamp only, so one repo's project
+ *     notes surfaced in another.
+ *   - `journalEntryId` hashed `scope:<relative path>`, so two repos whose entries
+ *     shared a relative path — a date directory and a timestamp — collided on the
+ *     primary key and overwrote each other.
+ *
+ * The fix changes the id, so old rows are unreachable by their new ids and
+ * cannot be backfilled reliably: `path` is absolute, but nothing in it marks
+ * where the root stopped and the entry began. The index is a derived cache —
+ * `mcp-server.ts` says so ("the markdown files are the source of truth, and a
+ * failed index is retried on the next start") — so it is dropped and rebuilt.
+ * Each project restores its own rows the next time it indexes, which is what
+ * makes this recoverable rather than the deletion it replaces.
+ */
+export function migrateJournalRoot(db: Database.Database): void {
+  const table = db
+    .prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'`)
+    .get() as { sql: string } | undefined;
+  if (!table) return; // caller creates it with the column already present
+  const columns = db
+    .prepare(`SELECT name FROM pragma_table_info('journal_entries')`)
+    .all() as Array<{
+    name: string;
+  }>;
+  if (columns.some((c) => c.name === "root")) return;
+
+  console.log("Migrating journal_entries: adding root column and rebuilding the index...");
+  db.prepare("ALTER TABLE journal_entries ADD COLUMN root TEXT NOT NULL DEFAULT ''").run();
+  // vec0 rows are keyed by the same ids, so they go too or they orphan.
+  db.prepare("DELETE FROM vec_journal_entries").run();
+  db.prepare("DELETE FROM journal_entries").run();
+  console.log("  journal index cleared; it rebuilds per project on next index.");
 }
 
 /**
@@ -225,6 +270,7 @@ export function initDatabase(): Database.Database {
     CREATE TABLE IF NOT EXISTS journal_entries (
       id TEXT PRIMARY KEY,
       path TEXT NOT NULL,
+      root TEXT NOT NULL DEFAULT '',
       scope TEXT NOT NULL,
       timestamp INTEGER NOT NULL,
       text TEXT NOT NULL,
@@ -389,6 +435,7 @@ export function deleteExchange(db: Database.Database, id: string): void {
 interface JournalRow {
   id: string;
   path: string;
+  root: string;
   scope: string;
   timestamp: number;
   text: string;
@@ -406,6 +453,7 @@ export function journalEntryFromRow(row: JournalRow): JournalEntry {
   return {
     id: row.id,
     path: row.path,
+    root: row.root ?? "",
     scope: row.scope === "project" ? "project" : "user",
     timestamp: row.timestamp,
     text: row.text,
@@ -416,6 +464,7 @@ export function journalEntryFromRow(row: JournalRow): JournalEntry {
 export const JOURNAL_SELECT_COLUMNS = `
         j.id,
         j.path,
+        j.root,
         j.scope,
         j.timestamp,
         j.text,
@@ -435,11 +484,12 @@ export function upsertJournalEntry(
 ): void {
   db.prepare(`
     INSERT OR REPLACE INTO journal_entries
-      (id, path, scope, timestamp, text, sections, source_mtime_ms, last_indexed, embedding_version)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, path, root, scope, timestamp, text, sections, source_mtime_ms, last_indexed, embedding_version)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     entry.id,
     entry.path,
+    entry.root,
     entry.scope,
     entry.timestamp,
     entry.text,
@@ -464,6 +514,8 @@ export function deleteJournalEntry(db: Database.Database, id: string): void {
 export interface JournalIndexState {
   id: string;
   path: string;
+  /** The journal root the row was indexed under. `''` for pre-migration rows. */
+  root: string;
   sourceMtimeMs: number;
   embeddingVersion: number;
 }
@@ -485,13 +537,16 @@ export function getJournalIndexState(
     scope
       ? db
           .prepare(
-            "SELECT id, path, source_mtime_ms, embedding_version FROM journal_entries WHERE scope = ?",
+            "SELECT id, path, root, source_mtime_ms, embedding_version FROM journal_entries WHERE scope = ?",
           )
           .all(scope)
-      : db.prepare("SELECT id, path, source_mtime_ms, embedding_version FROM journal_entries").all()
+      : db
+          .prepare("SELECT id, path, root, source_mtime_ms, embedding_version FROM journal_entries")
+          .all()
   ) as Array<{
     id: string;
     path: string;
+    root: string;
     source_mtime_ms: number;
     embedding_version: number;
   }>;
@@ -501,6 +556,7 @@ export function getJournalIndexState(
     state.set(row.id, {
       id: row.id,
       path: row.path,
+      root: row.root ?? "",
       sourceMtimeMs: row.source_mtime_ms,
       embeddingVersion: row.embedding_version,
     });
