@@ -122,6 +122,7 @@ export async function qaMain(argv: string[]): Promise<void> {
       const { ask } = await import("./cli/ask.js");
       const code = await ask(args, config);
       process.exit(code);
+      break;
     }
     case "render": {
       const config = await loadConfigOrThrow(args.cli);

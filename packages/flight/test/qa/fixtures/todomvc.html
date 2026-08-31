@@ -118,7 +118,7 @@
 <body>
   <h1>todos</h1>
   <section class="todoapp">
-    <input class="new-todo" placeholder="What needs to be done?" autofocus>
+    <input class="new-todo" placeholder="What needs to be done?">
     <ul class="todo-list"></ul>
     <footer class="hidden">
       <span class="todo-count"></span>
@@ -127,7 +127,7 @@
         <li><a href="#/active" data-filter="active">Active</a></li>
         <li><a href="#/completed" data-filter="completed">Completed</a></li>
       </ul>
-      <button class="clear-completed hidden">Clear completed</button>
+      <button type="button" class="clear-completed hidden">Clear completed</button>
     </footer>
   </section>
   <p class="info">Double-click to edit a todo</p>
@@ -155,11 +155,13 @@
       render();
     });
 
-    filterLinks.forEach(a => a.addEventListener('click', e => {
-      e.preventDefault();
-      filter = a.dataset.filter;
-      render();
-    }));
+    filterLinks.forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        filter = a.dataset.filter;
+        render();
+      });
+    });
 
     function render() {
       list.innerHTML = '';
@@ -191,7 +193,9 @@
       footer.classList.toggle('hidden', todos.length === 0);
       countEl.innerHTML = `<strong>${active.length}</strong> item${active.length === 1 ? '' : 's'} left`;
       clearBtn.classList.toggle('hidden', completed.length === 0);
-      filterLinks.forEach(a => a.classList.toggle('selected', a.dataset.filter === filter));
+      filterLinks.forEach(a => {
+        a.classList.toggle('selected', a.dataset.filter === filter);
+      });
     }
   </script>
 </body>

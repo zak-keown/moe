@@ -71,17 +71,17 @@
 <body>
   <h1>TODO</h1>
   <form class="new-item" id="add-form">
-    <input id="new-text" placeholder="What needs doing?" autofocus />
+    <input id="new-text" placeholder="What needs doing?" />
   </form>
   <ul id="list"></ul>
   <footer>
     <span id="count">0 items left</span>
     <div class="filters">
-      <button data-filter="all">All</button>
-      <button data-filter="active">Active</button>
-      <button data-filter="completed">Completed</button>
+      <button type="button" data-filter="all">All</button>
+      <button type="button" data-filter="active">Active</button>
+      <button type="button" data-filter="completed">Completed</button>
     </div>
-    <button class="clear" id="clear">Clear completed</button>
+    <button type="button" class="clear" id="clear">Clear completed</button>
   </footer>
 
   <script>

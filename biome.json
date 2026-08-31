@@ -6,7 +6,13 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/dist", "!**/dist-static", "!plugins"]
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/dist-static",
+      "!plugins",
+      "!**/packages/flight/src/qa/agent/prompts/generated.ts"
+    ]
   },
   "formatter": {
     "enabled": true,
