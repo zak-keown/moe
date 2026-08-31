@@ -240,8 +240,18 @@ describe("cross-references", () => {
         if (line.trimStart().startsWith("- ✅") || line.trimStart().startsWith("- ❌")) continue;
         const named = [...line.matchAll(/`([a-z0-9][a-z0-9-]*)`/g)].map((m) => m[1] as string);
         const resolved = named.filter((n) => skillNames.has(n));
-        if (resolved.length === 0) {
-          offenders.push(`${p.slice(PKG.length + 1)}: ${line.trim().slice(0, 100)}`);
+        // EVERY backticked token on the line must resolve, not merely one of
+        // them. The old rule flagged only a line where NOTHING resolved, so
+        // `Use \`subagent-driven-development\` or \`not-a-real-skill\`` passed on
+        // the strength of its good half while the reader still hit a dead end
+        // on the bad one. A line carrying no backticked token at all stays an
+        // offender: `named.length === 0` is checked FIRST, because an
+        // all-resolve rule expressed as an equality would let 0 === 0 pass it.
+        if (named.length === 0 || resolved.length !== named.length) {
+          const unresolved = named.filter((n) => !skillNames.has(n));
+          offenders.push(
+            `${p.slice(PKG.length + 1)}: ${line.trim().slice(0, 100)} [named=${named.join(",") || "none"} unresolved=${unresolved.join(",") || "none"}]`,
+          );
         }
       }
     }
@@ -265,6 +275,57 @@ describe("cross-references", () => {
 // cache is populated on demand by update_docs.cjs and deliberately not
 // committed - see skills/working-with-claude-code/SKILL.md.
 const NOT_COMMITTED = new Set(["/skills/working-with-claude-code/references/"]);
+
+// Every shipped file that must carry the execute bit, package-relative.
+//
+// Cross-checked against `find`-style discovery in BOTH directions below: the
+// presence direction (this list -> disk) is what catches a LOST bit, which
+// discovery alone cannot see, because a file that lost its bit simply stops
+// being discovered. The completeness direction (disk -> this list) is what
+// catches an executable arriving unreviewed. The list had already drifted by
+// four files when the second direction was added, all Python in the
+// iterative-development cluster, which is why one direction was not enough.
+//
+// The reverse of the completeness rule is deliberately NOT asserted: "every
+// script is executable" would be wrong. brainstorming/scripts/{helper,server}.cjs
+// are `require`d rather than executed and correctly carry no bit.
+const X_BIT_ALLOWLIST = [
+  "hooks/claude-judge-continuation",
+  "hooks/run-hook.cmd",
+  "skills/brainstorming/scripts/start-server.sh",
+  "skills/brainstorming/scripts/stop-server.sh",
+  "skills/extracting-requirements/scripts/aggregate_stories.py",
+  "skills/extracting-requirements/scripts/chunk_spec.py",
+  "skills/finding-duplicate-functions/scripts/extract-functions.sh",
+  "skills/finding-duplicate-functions/scripts/generate-report.sh",
+  "skills/finding-duplicate-functions/scripts/prepare-category-analysis.sh",
+  "skills/running-an-iteration/scripts/check_citations.py",
+  "skills/scoping-the-simplest-core/scripts/check_citations.py",
+  "skills/subagent-driven-development/scripts/review-package",
+  "skills/subagent-driven-development/scripts/sdd-workspace",
+  "skills/subagent-driven-development/scripts/task-brief",
+  "skills/systematic-debugging/find-polluter.sh",
+  "skills/using-tmux-for-interactive-commands/tmux-wrapper.sh",
+  "skills/working-with-claude-code/scripts/update_docs.cjs",
+  "skills/writing-skills/render-graphs.mjs",
+];
+
+// Everything Zone-A discovery walks: the skills tree and the hooks directory,
+// example plugins excluded. Shared by the execute-bit and script-parse checks
+// so the two cannot disagree about what "shipped" means.
+const shippedFiles = () => [
+  ...walk(SKILLS, { skipExamples: true }),
+  ...walk(join(PKG, "hooks"), { skipExamples: true }),
+];
+
+const isExecutable = (p: string) => {
+  try {
+    accessSync(p, constants.X_OK);
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 describe("runtime paths", () => {
   it("every ${CLAUDE_PLUGIN_ROOT}-anchored path resolves inside the package", () => {
@@ -309,55 +370,87 @@ describe("runtime paths", () => {
     // The three subagent-driven-development scripts are invoked as bare paths
     // with no `bash` prefix, so a mode-losing copy breaks them with
     // "Permission denied" and nothing else would notice.
-    const expected = [
-      "hooks/claude-judge-continuation",
-      "hooks/run-hook.cmd",
-      "skills/brainstorming/scripts/start-server.sh",
-      "skills/brainstorming/scripts/stop-server.sh",
-      "skills/finding-duplicate-functions/scripts/extract-functions.sh",
-      "skills/finding-duplicate-functions/scripts/generate-report.sh",
-      "skills/finding-duplicate-functions/scripts/prepare-category-analysis.sh",
-      "skills/subagent-driven-development/scripts/review-package",
-      "skills/subagent-driven-development/scripts/sdd-workspace",
-      "skills/subagent-driven-development/scripts/task-brief",
-      "skills/systematic-debugging/find-polluter.sh",
-      "skills/using-tmux-for-interactive-commands/tmux-wrapper.sh",
-      "skills/working-with-claude-code/scripts/update_docs.cjs",
-      "skills/writing-skills/render-graphs.mjs",
-    ];
-    for (const rel of expected) {
+    //
+    // The presence direction. This is the one discovery cannot replace: a file
+    // that loses its bit stops being discovered, so only a pinned list notices.
+    for (const rel of X_BIT_ALLOWLIST) {
       const p = join(PKG, rel);
       expect(existsSync(p), rel).toBe(true);
       expect(() => accessSync(p, constants.X_OK), `${rel} is not executable`).not.toThrow();
     }
+    // The wrapper Windows dispatches through. Named explicitly because it is
+    // the one entry that is neither a shell script nor a node script, so no
+    // other assertion in this file would miss it.
+    expect(X_BIT_ALLOWLIST).toContain("hooks/run-hook.cmd");
+  });
+
+  it("has no executable outside the allowlist", () => {
+    // The completeness direction. The allowlist had drifted by four files
+    // before this existed — an executable can arrive with a skill import and
+    // never be reviewed. Discovery is the only thing that sees those.
+    const discovered = shippedFiles()
+      .filter(isExecutable)
+      .map((p) => p.slice(PKG.length + 1))
+      .sort();
+    const unlisted = discovered.filter((rel) => !X_BIT_ALLOWLIST.includes(rel));
+    expect(unlisted, "executable on disk but not in X_BIT_ALLOWLIST").toEqual([]);
+    // A walk that silently stopped finding anything would satisfy the line
+    // above with an empty list. It must find at least as many as are pinned.
+    expect(discovered.length).toBeGreaterThanOrEqual(X_BIT_ALLOWLIST.length);
   });
 
   it("every shell script and node script parses", () => {
-    const shell = [
+    // Discovered, not enumerated. Two hardcoded lists (11 shell, 4 node) drifted
+    // out of this file's sight the moment a skill import added a script, exactly
+    // as the execute-bit allowlist did. Routing is by extension, plus a shebang
+    // read for the extensionless scripts the subagent-driven-development and
+    // hooks trees ship.
+    //
+    // hooks/run-hook.cmd is correctly in neither set: `.cmd` is not a routed
+    // extension, it is not extensionless, and its first line is `: << 'CMDBLOCK'`
+    // with no shebang. It is a polyglot batch/sh file that `bash -n` would
+    // reject on the batch half, and its behaviour is asserted separately.
+    const bash: string[] = [];
+    const node: string[] = [];
+    for (const abs of shippedFiles()) {
+      const rel = abs.slice(PKG.length + 1);
+      const base = rel.split("/").pop() as string;
+      if (base.endsWith(".sh")) {
+        bash.push(rel);
+      } else if (base.endsWith(".cjs") || base.endsWith(".mjs")) {
+        node.push(rel);
+      } else if (!base.includes(".")) {
+        // Read only the first line: some of these are long.
+        const first = readFileSync(abs, "utf8").split(/\r?\n/)[0] ?? "";
+        if (/^#!.*\b(bash|sh)\b/.test(first)) bash.push(rel);
+      }
+    }
+
+    // Floors. A walk that stopped finding anything — a moved directory, a
+    // tightened filter — would otherwise satisfy every assertion below by
+    // iterating zero times.
+    expect(bash.length, "bash targets discovered").toBeGreaterThanOrEqual(11);
+    expect(node.length, "node targets discovered").toBeGreaterThanOrEqual(4);
+    for (const rel of [
       "hooks/claude-judge-continuation",
-      "skills/brainstorming/scripts/start-server.sh",
-      "skills/brainstorming/scripts/stop-server.sh",
-      "skills/finding-duplicate-functions/scripts/extract-functions.sh",
-      "skills/finding-duplicate-functions/scripts/generate-report.sh",
-      "skills/finding-duplicate-functions/scripts/prepare-category-analysis.sh",
       "skills/subagent-driven-development/scripts/review-package",
       "skills/subagent-driven-development/scripts/sdd-workspace",
       "skills/subagent-driven-development/scripts/task-brief",
-      "skills/systematic-debugging/find-polluter.sh",
-      "skills/using-tmux-for-interactive-commands/tmux-wrapper.sh",
-    ];
-    for (const rel of shell) {
+    ]) {
+      // The extensionless four. If the shebang read regresses, these vanish
+      // silently and the floor above could still be met by .sh files alone.
+      expect(bash, `extensionless script ${rel} not routed to bash -n`).toContain(rel);
+    }
+    expect(bash).not.toContain("hooks/run-hook.cmd");
+    expect(node).not.toContain("hooks/run-hook.cmd");
+
+    for (const rel of bash) {
       expect(
         () => execFileSync("bash", ["-n", join(PKG, rel)], { stdio: "pipe" }),
         `bash -n ${rel}`,
       ).not.toThrow();
     }
-    for (const rel of [
-      "skills/brainstorming/scripts/server.cjs",
-      "skills/brainstorming/scripts/helper.cjs",
-      "skills/working-with-claude-code/scripts/update_docs.cjs",
-      "skills/writing-skills/render-graphs.mjs",
-    ]) {
+    for (const rel of node) {
       expect(
         () => execFileSync(process.execPath, ["--check", join(PKG, rel)], { stdio: "pipe" }),
         `node --check ${rel}`,
