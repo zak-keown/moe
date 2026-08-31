@@ -132,7 +132,7 @@ number, an auto-generated slug, and `feature/{description}` with no card.
 `mcp__codegraph__shortcut_stories-get-branch-name` on story `136686`; it returned
 `feature/sc-136686/nb2-admin-api-access-requests-grid`. A skill can *derive* the
 branch rather than ask — but the tool prepends `feature/`, matching neither TC's
-`sc-{CARD}/{desc}` nor the IDEA-LOG's `sc-{cardNumber}/{slug}`.
+`sc-{CARD}/{desc}` nor the `sc-{cardNumber}/{slug}` this item was briefed with.
 
 **Drift is already observable.** `ai/skills/README.md`'s row for
 `creating-merge-requests` claims it covers "Conventional Commits titles for
@@ -237,8 +237,10 @@ the branch-name derivation step in `using-git-worktrees`; root `CODEOWNERS` and
 2. **Trust-map gate:** `tc-finishing-branch` Steps 2/2b block on
    `getTrustRating`/`analyzeTrust` and auto-assign reviewers from the GitLab
    `ui-approvers` group. Adopt, or leave out of Moe?
-3. **Canonical branch format.** Three sources disagree: IDEA-LOG says
-   `sc-{cardNumber}/{slug}`, `tc-git-worktrees/SKILL.md:31` says
+3. **Canonical branch format.** Three sources disagree. The brief for this item
+   said `sc-{cardNumber}/{slug}` (recorded verbatim in this doc's `idea:`
+   frontmatter, which is now the only copy — IDEA-LOG.md was cleared for a fresh
+   list on 2026-08-31), `tc-git-worktrees/SKILL.md:31` says
    `sc-{CARD_NUMBER}/{description}` with a `feature/{description}` no-card
    fallback, and `shortcut_stories-get-branch-name` emits
    `feature/sc-136686/{slug}`. Which one does the skill enforce?
