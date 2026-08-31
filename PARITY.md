@@ -56,20 +56,35 @@ retaining the notices — so upstream `LICENSE` files travel with the code they
 cover, under each package, and `NOTICE` at the root carries attribution. Apache-2.0
 also requires stating that files were changed; the rebrand does change them.
 
-**One unresolved item.** `superpowers-evals` ships **no `LICENSE` file and no
-`package.json` license field**. No grant of rights has been located. It is the
-single largest body of forked material — 796 files, 17 MB, roughly half the
-rebrand surface — and it lands in `@bubstack/moe-flight` alongside Apache-2.0 `gauntlet`.
+**One item, knowingly accepted.** `superpowers-evals` ships **no `LICENSE` file
+and no `package.json` license field**. No grant of rights has been located, so the
+default is all rights reserved. It is the single largest body of forked material —
+796 files, 17 MB, roughly half the rebrand surface — and it lands in
+`@bubstack/moe-flight` alongside Apache-2.0 `gauntlet`.
 
-Absent a license, the default is all rights reserved. Options, in order of
-preference:
+**Decision, 2026-08-31, Zak Keown: imported anyway, on internal-use grounds.** Moe
+is an internal tool for roughly twenty people in one company, and `flight` is not
+distributed. That is a low-magnitude risk the company accepts.
 
-1. Ask Prime Radiant to state a license, or confirm the omission is an oversight.
-2. Import `gauntlet` only, and rebuild quorum's agent-CLI runner from its
-   documented behavior rather than its source.
-3. Proceed internally and do not redistribute `@bubstack/moe-flight` outside the team.
+The risk is not uniform, and the boundary is distribution, not use. These are the
+conditions under which the decision above stops holding:
 
-This does not block the other 8 packages. It blocks publishing `flight`.
+| Condition | Effect |
+|---|---|
+| `@bubstack/moe-flight` published to any registry — npm, the GitLab Package Registry, anywhere | Decision void. Do not publish. |
+| Moe open-sourced, or any part of `flight` shipped to a customer or contractor | Decision void. Revisit first. |
+| Moe distributed outside the company by any other means | Decision void. |
+| Prime Radiant states a license | Risk goes to zero. Update this section. |
+
+Enforced in code, not only in prose: `@bubstack/moe-flight` and its two frontends
+carry `"private": true`, and `flight` is absent from
+`.claude-plugin/marketplace.json`. Anyone removing either should read this section
+first.
+
+The cheap resolution is still open and still worth doing — ask Prime Radiant to
+state a license, or to confirm the omission was an oversight. Every other
+repository they published is MIT or Apache-2.0, so a permissive answer is the
+likely one.
 
 ## Rebrand footprint
 
