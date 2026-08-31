@@ -1,0 +1,17 @@
+[package]
+name = "moe-tab-core"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+description = "Read an AI-agent transcript (ATIF trajectory or moe-tab usage sidecar) and estimate its USD cost."
+readme = "README.md"
+keywords = ["llm", "cost", "tokens", "ai", "transcript"]
+categories = ["parsing", "development-tools"]
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+ureq.workspace = true

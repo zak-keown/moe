@@ -87,7 +87,14 @@ importers:
         version: 5.9.3
 
   packages/tab/bindings/typescript:
+    dependencies:
+      koffi:
+        specifier: 2.16.2
+        version: 2.16.2
     devDependencies:
+      '@types/node':
+        specifier: ^24.7.0
+        version: 24.13.3
       typescript:
         specifier: ^5.9.0
         version: 5.9.3
@@ -1051,6 +1058,9 @@ packages:
 
   json-schema-typed@8.0.2:
     resolution: {integrity: sha512-fQhoXdcvc3V28x7C7BMs4P5+kNlgUURe2jmUT1T//oBRMDrqy1QPelJimwZGo7Hg9VPV3EQV5Bnq4hbFy2vetA==}
+
+  koffi@2.16.2:
+    resolution: {integrity: sha512-owU0MRwv6xkrVqCd+33uw6BaYppkTRXbO/rVdJNI2dvZG0gzyRhYwW25eWtc5pauwK8TGh3AbkFONSezdykfSA==}
 
   loupe@3.2.1:
     resolution: {integrity: sha512-CdzqowRJCeLU72bHvWqwRBBlLcMEtIvGrlvef74kMnV2AolS9Y8xUv1I0U/MNAWMhBlKIoyuEgoJ0t/bbwHbLQ==}
@@ -2213,6 +2223,8 @@ snapshots:
   json-schema-traverse@1.0.0: {}
 
   json-schema-typed@8.0.2: {}
+
+  koffi@2.16.2: {}
 
   loupe@3.2.1: {}
 

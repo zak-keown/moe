@@ -1,10 +1,11 @@
 {
-  "//": "Runtime DAG for this package: one reference per package.json dependency. Empty until source is imported.",
+  "//": "Runtime DAG: no workspace dependencies. The Rust cdylib this binding dlopens is a file path resolved at runtime, not a module edge, so `references` stays empty even though the package cannot function without `cargo build -p moe-tab-ffi`.",
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "types": ["node"]
   },
-  "include": [],
+  "include": ["src/**/*"],
   "references": []
 }
