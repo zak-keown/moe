@@ -5,12 +5,27 @@ description = "Evals against small (and large) models"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
+# `authors` is the upstream author of smevals, which this is a fork of;
+# `maintainers` is who maintains the fork. See README.md and the root NOTICE.
+authors = [{ name = "Simon Willison" }]
+maintainers = [{ name = "Zak Keown" }]
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "click>=8.4.2",
+    "pyyaml>=6.0.3",
+]
 
 [project.scripts]
 moe-proof = "moe_proof.cli:cli"
 
 [build-system]
-requires = ["uv_build>=0.11.0,<0.12.0"]
+requires = ["uv_build>=0.12.0,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
