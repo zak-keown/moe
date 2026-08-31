@@ -1,0 +1,414 @@
+// Transcript event model + reducer for run.jsonl
+//
+// Shape mirrors src/evidence/logger.ts on the server side. We don't import
+// across the boundary (the UI tsconfig rootDir is `ui/src`), so keep the
+// type definitions here in sync if the server types change.
+
+export interface BaseEvent {
+  eventId: number;
+  parentEventId: number;
+  ts: string;
+}
+
+export interface RunStartEvent extends BaseEvent {
+  type: "run_start";
+  runId: string;
+  cardId: string;
+  target?: string | undefined;
+  provider: string;
+  model: string;
+  adapter: string;
+  budgetMs: number;
+  toolTimeoutMs: number;
+  contextTreeBytes: number;
+}
+
+export interface SystemPromptEvent extends BaseEvent {
+  type: "system_prompt";
+  content: string;
+}
+
+export interface UserMessageEvent extends BaseEvent {
+  type: "user_message";
+  turn: number;
+  content: string;
+}
+
+export interface LlmRequestEvent extends BaseEvent {
+  type: "llm_request";
+  turn: number;
+  messageCount: number;
+}
+
+export interface LlmResponseEvent extends BaseEvent {
+  type: "llm_response";
+  turn: number;
+  stopReason: string;
+  text: string;
+  thinking: Array<{ text: string; signature?: string | undefined }>;
+  /**
+   * Model's reasoning summary for this turn (provider-neutral). OpenAI
+   * populates from `ResponseReasoningItem.summary[].text`; a model-
+   * authored summary, not raw chain-of-thought. Distinct from
+   * Anthropic's `thinking` blocks above (which ARE raw).
+   */
+  reasoning?: string | undefined;
+  toolCalls: Array<{ id: string; name: string; arguments: Record<string, unknown> }>;
+  usage: {
+    inputTokens: number;
+    outputTokens: number;
+    cacheCreationInputTokens?: number | undefined;
+    cacheReadInputTokens?: number | undefined;
+  };
+  rawAssistantMessage: unknown;
+}
+
+export interface ToolCallEvent extends BaseEvent {
+  type: "tool_call";
+  turn: number;
+  toolUseId: string;
+  name: string;
+  arguments: Record<string, unknown>;
+}
+
+export interface ToolResultEvent extends BaseEvent {
+  type: "tool_result";
+  turn: number;
+  toolUseId: string;
+  name: string;
+  durationMs: number;
+  text: string;
+  image: string | null;
+  artifact: string | null;
+  textTruncated?: true | undefined;
+  textBytes?: number | undefined;
+  error: boolean;
+}
+
+export interface AnomalyEvent extends BaseEvent {
+  type: "event";
+  name: string;
+  [k: string]: unknown;
+}
+
+export interface RunEndEvent extends BaseEvent {
+  type: "run_end";
+  status: string;
+  summary: string;
+  reasoning: string;
+  observationCount: number;
+  observations?: Array<{ kind: string; description: string; evidence?: string[] | undefined }>;
+  durationMs: number;
+  usage: {
+    inputTokens: number;
+    outputTokens: number;
+    cacheCreationInputTokens?: number | undefined;
+    cacheReadInputTokens?: number | undefined;
+    turns: number;
+  };
+}
+
+export type TranscriptEvent =
+  | RunStartEvent
+  | SystemPromptEvent
+  | UserMessageEvent
+  | LlmRequestEvent
+  | LlmResponseEvent
+  | ToolCallEvent
+  | ToolResultEvent
+  | AnomalyEvent
+  | RunEndEvent;
+
+export interface ToolPair {
+  toolUseId: string;
+  call: ToolCallEvent;
+  result?: ToolResultEvent | undefined;
+}
+
+export interface TurnModel {
+  turn: number;
+  llmRequest?: LlmRequestEvent | undefined;
+  llmResponse?: LlmResponseEvent | undefined;
+  tools: ToolPair[];
+}
+
+export interface TranscriptModel {
+  runId?: string | undefined;
+  runStart?: RunStartEvent | undefined;
+  systemPrompt?: SystemPromptEvent | undefined;
+  userMessages: Map<number, UserMessageEvent>;
+  turns: Map<number, TurnModel>;
+  runEnd?: RunEndEvent | undefined;
+  anomalies: AnomalyEvent[];
+  ordered: TranscriptEvent[];
+  maxEventId: number;
+}
+
+export function emptyTranscript(): TranscriptModel {
+  return {
+    userMessages: new Map(),
+    turns: new Map(),
+    anomalies: [],
+    ordered: [],
+    maxEventId: 0,
+  };
+}
+
+function cloneTurn(turn: TurnModel): TurnModel {
+  return {
+    turn: turn.turn,
+    llmRequest: turn.llmRequest,
+    llmResponse: turn.llmResponse,
+    tools: [...turn.tools],
+  };
+}
+
+function ensureTurn(model: TranscriptModel, turnNumber: number): [Map<number, TurnModel>, TurnModel] {
+  const turns = new Map(model.turns);
+  const existing = turns.get(turnNumber);
+  const turn: TurnModel = existing
+    ? cloneTurn(existing)
+    : { turn: turnNumber, tools: [] };
+  turns.set(turnNumber, turn);
+  return [turns, turn];
+}
+
+export function applyEvent(model: TranscriptModel, event: TranscriptEvent): TranscriptModel {
+  if (event.eventId <= model.maxEventId) {
+    // Idempotent: already applied.
+    return model;
+  }
+
+  const ordered = [...model.ordered, event];
+  const maxEventId = event.eventId;
+
+  switch (event.type) {
+    case "run_start":
+      return {
+        ...model,
+        ordered,
+        maxEventId,
+        runId: event.runId,
+        runStart: event,
+      };
+
+    case "system_prompt":
+      return { ...model, ordered, maxEventId, systemPrompt: event };
+
+    case "user_message": {
+      const userMessages = new Map(model.userMessages);
+      userMessages.set(event.turn, event);
+      return { ...model, ordered, maxEventId, userMessages };
+    }
+
+    case "llm_request": {
+      const [turns, turn] = ensureTurn(model, event.turn);
+      turn.llmRequest = event;
+      return { ...model, ordered, maxEventId, turns };
+    }
+
+    case "llm_response": {
+      const [turns, turn] = ensureTurn(model, event.turn);
+      turn.llmResponse = event;
+      return { ...model, ordered, maxEventId, turns };
+    }
+
+    case "tool_call": {
+      const [turns, turn] = ensureTurn(model, event.turn);
+      turn.tools.push({ toolUseId: event.toolUseId, call: event });
+      return { ...model, ordered, maxEventId, turns };
+    }
+
+    case "tool_result": {
+      const [turns, turn] = ensureTurn(model, event.turn);
+      const idx = turn.tools.findIndex((t) => t.toolUseId === event.toolUseId);
+      if (idx === -1) {
+        console.warn(
+          `[transcript] tool_result for toolUseId=${event.toolUseId} has no matching tool_call in turn ${event.turn}; dropping`,
+        );
+        return { ...model, ordered, maxEventId };
+      }
+      const existing = turn.tools[idx];
+      if (existing === undefined) return { ...model, ordered, maxEventId };
+      turn.tools[idx] = { ...existing, result: event };
+      return { ...model, ordered, maxEventId, turns };
+    }
+
+    case "event":
+      return {
+        ...model,
+        ordered,
+        maxEventId,
+        anomalies: [...model.anomalies, event],
+      };
+
+    case "run_end":
+      return { ...model, ordered, maxEventId, runEnd: event };
+
+    default: {
+      // Unknown event type — keep it in `ordered` but don't touch anything else.
+      const _exhaustive: never = event;
+      void _exhaustive;
+      return { ...model, ordered, maxEventId };
+    }
+  }
+}
+
+export function reduceTranscript(events: TranscriptEvent[]): TranscriptModel {
+  return events.reduce(applyEvent, emptyTranscript());
+}
+
+// Parse newline-delimited JSON. Invalid lines are skipped with a warning.
+export function parseJsonl(text: string): TranscriptEvent[] {
+  const out: TranscriptEvent[] = [];
+  const lines = text.split("\n");
+  lines.forEach((line, i) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    try {
+      const obj = JSON.parse(trimmed);
+      if (obj && typeof obj === "object" && typeof obj.type === "string") {
+        out.push(obj as TranscriptEvent);
+      } else {
+        console.warn(`[transcript] line ${i + 1}: missing or invalid 'type' field`);
+      }
+    } catch (e) {
+      console.warn(`[transcript] line ${i + 1}: JSON parse failed`, e);
+    }
+  });
+  return out;
+}
+
+/**
+ * Pure helper: parse a raw JSONL string into a TranscriptModel.
+ * Used by the static-mode branch so this path can be unit-tested
+ * without a DOM or hook runner.
+ */
+export function parseTranscriptFromStaticPayload(runJsonl: string): TranscriptModel {
+  const events = parseJsonl(runJsonl);
+  return reduceTranscript(events);
+}
+
+// Helpers for render-time consumers.
+
+export function turnsInOrder(model: TranscriptModel): TurnModel[] {
+  return Array.from(model.turns.values()).sort((a, b) => a.turn - b.turn);
+}
+
+// `read_output` returns the captured PTY buffer. For readline-style
+// prompts the active question is the last non-empty line — preceding
+// lines are leading banner / prior output. Used to pair a `read_output`
+// with the keystroke (`type` / `press`) that immediately follows it,
+// so the transcript reads as "answering: <prompt>" instead of bare
+// `Enter`s.
+export function extractPromptLine(text: string): string | null {
+  if (!text) return null;
+  const lines = text.split("\n");
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const trimmed = lines[i]?.trim();
+    if (trimmed) return trimmed;
+  }
+  return null;
+}
+
+// Tool calls that consume a previously-captured prompt. The transcript
+// pairs each one with the most recent `read_output` snippet in the same
+// turn so the reader sees what the keystroke was answering.
+const PROMPT_CONSUMER_TOOLS = new Set(["type", "press"]);
+
+export function isPromptConsumer(toolName: string): boolean {
+  return PROMPT_CONSUMER_TOOLS.has(toolName);
+}
+
+/**
+ * Walk all tool calls across all turns in chronological order, threading the
+ * most recent `read_output` snippet into the next prompt-consumer call (`type`
+ * / `press`). Returns a map of toolUseId → prompt text for those consumer
+ * calls. Used by the transcript to render an "answering: <prompt>" line on
+ * each keystroke card so the reader sees what the input was responding to —
+ * the read_output and its answering keystroke are typically in *different*
+ * turns, so this pairing has to span the run, not just one turn.
+ *
+ * Resets `lastPrompt` whenever a non-consumer, non-read_output call appears
+ * (e.g. an intervening file `read`) so we don't bleed a stale prompt across
+ * unrelated tool activity.
+ */
+export function computePromptPairings(model: TranscriptModel): Map<string, string> {
+  const pairings = new Map<string, string>();
+  let lastPrompt: string | null = null;
+  for (const turn of turnsInOrder(model)) {
+    for (const pair of turn.tools) {
+      if (isPromptConsumer(pair.call.name)) {
+        if (lastPrompt) pairings.set(pair.toolUseId, lastPrompt);
+        continue; // a consumer doesn't change lastPrompt — multiple keystrokes can answer one prompt
+      }
+      if (pair.call.name === "read_output" && pair.result && !pair.result.error) {
+        lastPrompt = extractPromptLine(pair.result.text);
+      } else {
+        lastPrompt = null;
+      }
+    }
+  }
+  return pairings;
+}
+
+// Soft-error detection: a tool_result with error=false whose text output
+// starts with an error-ish prefix. The tool call succeeded (no hard error),
+// but the tool's response tells the agent something went wrong — typically a
+// misused argument or a rejected input. Worth surfacing because the agent
+// usually spends extra turns recovering, which is a signal for improving
+// Gauntlet (tool ergonomics), the system prompt (how to use the tool), or
+// the story (what the run needs the agent to know upfront).
+const SOFT_ERROR_PATTERN = /^\s*(error|failed|cannot|could\s+not|unable\s+to)\b[\s:]/i;
+
+export function isSoftErrorResult(result: ToolResultEvent | undefined): boolean {
+  if (!result) return false;
+  if (result.error) return false; // hard errors render separately
+  return SOFT_ERROR_PATTERN.test(result.text ?? "");
+}
+
+export interface SoftErrorSite {
+  turn: number;
+  toolUseId: string;
+  toolName: string;
+  snippet: string; // first line of the error text, trimmed
+}
+
+export function findSoftErrors(model: TranscriptModel): SoftErrorSite[] {
+  const sites: SoftErrorSite[] = [];
+  for (const turn of turnsInOrder(model)) {
+    for (const pair of turn.tools) {
+      if (!isSoftErrorResult(pair.result)) continue;
+      const firstLine = ((pair.result?.text ?? "").split("\n")[0] ?? "").trim();
+      const snippet = firstLine.length > 140 ? firstLine.slice(0, 140) + "…" : firstLine;
+      sites.push({
+        turn: turn.turn,
+        toolUseId: pair.toolUseId,
+        toolName: pair.call.name,
+        snippet,
+      });
+    }
+  }
+  return sites;
+}
+
+export function totalUsage(model: TranscriptModel): {
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationInputTokens: number;
+  cacheReadInputTokens: number;
+} {
+  let inputTokens = 0;
+  let outputTokens = 0;
+  let cacheCreationInputTokens = 0;
+  let cacheReadInputTokens = 0;
+  for (const turn of model.turns.values()) {
+    const u = turn.llmResponse?.usage;
+    if (!u) continue;
+    inputTokens += u.inputTokens;
+    outputTokens += u.outputTokens;
+    cacheCreationInputTokens += u.cacheCreationInputTokens ?? 0;
+    cacheReadInputTokens += u.cacheReadInputTokens ?? 0;
+  }
+  return { inputTokens, outputTokens, cacheCreationInputTokens, cacheReadInputTokens };
+}

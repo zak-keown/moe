@@ -1,0 +1,11 @@
+{
+  "//": "Package configuration. The SPA emits TWO directories — dist/ (the server-served bundle) and dist-static/ (the single-file run-report template) — and the root task only declares dist/**. Without this, a turbo cache HIT on this package's build restores dist/ and leaves dist-static/ absent, and `moe-flight qa render` then dies with 'static template not found'. Nothing in the suite catches that, because the two render tests would have been cached too.",
+  "$schema": "https://turborepo.com/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", "dist-static/**"]
+    }
+  }
+}

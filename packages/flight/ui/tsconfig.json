@@ -1,0 +1,23 @@
+{
+  "//": "Deliberately NOT a member of the root solution tsconfig.json, and deliberately NOT extending tsconfig.base.json. The base is NodeNext with `lib: [\"ES2023\"]` and no DOM; this is a browser bundle that vite compiles, so it needs DOM libs, `jsx: react-jsx`, and bundler resolution for its ~90 extensionless relative specifiers. It also has nothing to emit, and a composite project may not set `noEmit` (TS6304) — hence a standalone config rather than an override. Nothing imports this package as a module, so no `references` point here.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["vite/client", "node"]
+  },
+  "include": ["src/**/*", "test/**/*", "vite.config.ts", "vite.static.config.ts", "vitest.config.ts"]
+}

@@ -1,0 +1,6 @@
+{
+  "//": "This subtree is the vendored fork of chrome-ws-lib (see ../../../../../docs/history/upstream-sync.md). It is CommonJS JavaScript, and @bubstack/moe-flight is \"type\": \"module\", so Node would otherwise parse these .js files as ESM and fail on `require`/`module.exports`. This marker scopes them back to CommonJS. Same mechanism packages/glass uses at skills/browsing/package.json. Not a pnpm workspace member: pnpm-workspace.yaml's globs do not reach this deep.",
+  "name": "chrome-ws-lib",
+  "private": true,
+  "type": "commonjs"
+}

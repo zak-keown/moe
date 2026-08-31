@@ -1,0 +1,151 @@
+import { readFileSync } from "fs";
+import { RunSetWriter } from "../evidence/run-set-writer.js";
+import { makeRunSetId, makeRunId } from "../util/id.js";
+import type { RunSetCtx, RunSetKind } from "./run-set-types.js";
+import type { VetResult } from "../types.js";
+import type { CardId, RunId, RunSetId } from "../util/brands.js";
+
+export interface ExecutorArgs {
+  cardId: CardId;
+  runSetCtx: RunSetCtx;
+  runId: RunId;
+}
+
+export interface ExecutorReturn {
+  runId: RunId;
+  outDir: string;
+  result: VetResult;
+}
+
+export type Executor = (args: ExecutorArgs) => Promise<ExecutorReturn>;
+
+export interface CancelToken {
+  cancelled: boolean;
+}
+
+export interface RunSetConfig {
+  resultsRoot: string;
+  cards: CardId[];
+  passes: number;
+  kind: RunSetKind;
+  executor: Executor;
+  generateRunId?: ((cardId: CardId, attemptNumber: number) => RunId) | undefined;
+  cancelToken?: CancelToken | undefined;
+  onAllRunsKnown?: (runs: Array<{ runId: RunId; cardId: CardId; attemptNumber: number }>) => void;
+}
+
+export interface RunSetResult {
+  runSetId: RunSetId;
+  runs: Array<{ runId: RunId; cardId: CardId; attemptNumber: number; status: string }>;
+  summary: {
+    perCard: Array<{ cardId: CardId; cardStatus: string; byStatus: Record<string, number> }>;
+    overall: { overallStatus: string; byStatus: Record<string, number>; totalRuns: number };
+  } | null;
+}
+
+export interface RunSetHandle {
+  runSetId: RunSetId;
+  kind: RunSetKind;
+  passes: number;
+  cards: CardId[];
+  runs: Array<{ runId: RunId; cardId: CardId; attemptNumber: number }>;
+  completion: Promise<RunSetResult>;
+}
+
+export async function runRunSet(cfg: RunSetConfig): Promise<RunSetHandle> {
+  // ── Prep phase (fast: id gen, eager runIds, set.json stub) ──
+  const runSetId = makeRunSetId(cfg.kind);
+  const gen = cfg.generateRunId ?? ((cardId, _i) => makeRunId(cardId));
+
+  // Eagerly generate all runIds so set.json is fully populated up front.
+  const allRuns: Array<{ runId: RunId; cardId: CardId; attemptNumber: number }> = [];
+  for (const [cardIndex, cardId] of cfg.cards.entries()) {
+    for (let attemptNumber = 1; attemptNumber <= cfg.passes; attemptNumber++) {
+      allRuns.push({
+        runId: gen(cardId, attemptNumber),
+        cardId,
+        attemptNumber,
+      });
+    }
+  }
+
+  const ctx0: RunSetCtx = {
+    runSetId,
+    kind: cfg.kind,
+    passes: cfg.passes,
+    cards: cfg.cards,
+    cardIndex: 0,
+    attemptNumber: 1,
+  };
+  const writer = new RunSetWriter(cfg.resultsRoot, ctx0);
+  writer.start(allRuns);
+  cfg.onAllRunsKnown?.(allRuns);
+
+  // ── Run phase (slow: cards × passes loop). Started but not awaited. ──
+  const completion = runLoop({ cfg, writer, ctx0, allRuns, runSetId });
+
+  return { runSetId, kind: cfg.kind, passes: cfg.passes, cards: cfg.cards, runs: allRuns, completion };
+}
+
+async function runLoop(args: {
+  cfg: RunSetConfig;
+  writer: RunSetWriter;
+  ctx0: RunSetCtx;
+  allRuns: Array<{ runId: RunId; cardId: CardId; attemptNumber: number }>;
+  runSetId: RunSetId;
+}): Promise<RunSetResult> {
+  const { cfg, writer, ctx0, allRuns, runSetId } = args;
+
+  const resultsByRunId = new Map<string, VetResult>();
+  const processedRunIds = new Set<string>();
+
+  outer: for (const [cardIndex, cardId] of cfg.cards.entries()) {
+    for (let attemptNumber = 1; attemptNumber <= cfg.passes; attemptNumber++) {
+      if (cfg.cancelToken?.cancelled) break outer;
+
+      const runEntry = allRuns.find(
+        (r) => r.cardId === cardId && r.attemptNumber === attemptNumber,
+      );
+      if (runEntry === undefined) {
+        // allRuns is generated from the same (cards x passes) product in the
+        // prep phase, so this cannot happen. Upstream asserted it with `!`;
+        // saying it out loud is cheaper than a silent skip.
+        throw new Error(
+          `runRunSet: no eagerly-generated run for card ${cardId} attempt ${attemptNumber}`,
+        );
+      }
+      const ctx: RunSetCtx = { ...ctx0, cardIndex, attemptNumber };
+
+      writer.recordRunStart(runEntry.runId);
+      processedRunIds.add(runEntry.runId);
+      try {
+        const ret = await cfg.executor({
+          cardId,
+          runSetCtx: ctx,
+          runId: runEntry.runId,
+        });
+        resultsByRunId.set(runEntry.runId, ret.result);
+        writer.recordRunEnd(runEntry.runId, ret.result.status);
+      } catch (_e) {
+        writer.recordRunEnd(runEntry.runId, "errored");
+      }
+    }
+  }
+
+  // Anything we never started is `cancelled`.
+  if (cfg.cancelToken?.cancelled) {
+    for (const r of allRuns) {
+      if (!processedRunIds.has(r.runId)) {
+        writer.recordRunEnd(r.runId, "cancelled");
+      }
+    }
+  }
+
+  writer.finalize((runId) => resultsByRunId.get(runId) ?? null);
+
+  // Re-read final manifest.
+  const set = JSON.parse(
+    readFileSync(`${cfg.resultsRoot}/run-sets/${runSetId}/set.json`, "utf8"),
+  );
+  return { runSetId, runs: set.runs, summary: set.summary };
+}

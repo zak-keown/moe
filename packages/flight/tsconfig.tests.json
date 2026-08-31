@@ -1,0 +1,14 @@
+{
+  "//": "Non-composite, noEmit companion program: `src` plus `examples` plus the vitest config, under the full strict base. `examples/` is net-new coverage — upstream's tsconfig had `include: [\"src/**/*\"]`, so the demo targets were never typechecked, which is how two of them kept a `Bun.serve` call nobody noticed. `test/**` is deliberately NOT here: upstream also excluded it (`exclude: [\"node_modules\", \"dist\", \"test\"]`), and under this base its 145 suites produce 592 errors. That is a real gap, recorded as a follow-up with the triage — not a green claim. The suites are verified by running: 1240 tests pass.",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*", "examples/**/*", "vitest.config.ts"],
+  "exclude": ["dist", "node_modules", "ui", "dashboard", "examples/**/*.tsx"]
+}

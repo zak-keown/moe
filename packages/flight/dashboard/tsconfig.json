@@ -1,10 +1,12 @@
 {
-  "//": "Runtime DAG for this package: one reference per package.json dependency. Empty until source is imported.",
+  "//": "Composite src build, a member of the root solution. Upstream ran `noEmit` with `allowImportingTsExtensions` and 32 explicit `.ts` specifiers; both had to go, because the root tsconfig.json lists this project as a reference and a referenced project must emit. Nothing here references another workspace package — the dashboard imports nothing from the harness, which is what makes it a true leaf.",
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "noPropertyAccessFromIndexSignature": true,
+    "noFallthroughCasesInSwitch": true
   },
-  "include": [],
+  "include": ["src/**/*"],
   "references": []
 }

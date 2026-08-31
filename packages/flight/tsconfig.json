@@ -1,10 +1,15 @@
 {
-  "//": "Runtime DAG for this package: one reference per package.json dependency. Empty until source is imported.",
+  "//": "Runtime DAG for this package: one reference per workspace dependency. `@bubstack/moe-flight-dashboard` is the only one — `src/cli.ts` dispatches `moe-flight dashboard` into it. The candidate edges to glass and crew are REFUTED and CONFIRMED-BUT-DEFERRED respectively; see README.md, 'The two candidate edges'. `include` stays strictly src-scoped: loosening it pulls ui/src and dashboard/src into this program, which double-compiles them and trips TS6059.",
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "resolveJsonModule": true
   },
-  "include": [],
-  "references": []
+  "include": ["src/**/*"],
+  "references": [
+    {
+      "path": "./dashboard"
+    }
+  ]
 }

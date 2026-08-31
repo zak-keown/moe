@@ -3,15 +3,36 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Server-side run reporter for moe-flight. Forked from quorum's @quorum/dashboard.",
+  "description": "Read-only scenario x agent x credential x OS results grid for moe-flight, server-rendered and live-updated over SSE.",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "moe-flight-dashboard": "./dist/bin.js"
+  },
   "scripts": {
-    "build": "tsc -b",
-    "typecheck": "tsc -b --pretty",
-    "test": "vitest run --passWithNoTests",
+    "build": "tsc -b && node scripts/copy-static.mjs",
+    "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --pretty",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "biome check ."
   },
+  "dependencies": {
+    "@hono/node-server": "^2.0.1",
+    "zod": "^3.23.8"
+  },
   "devDependencies": {
-    "typescript": "^5.9.0"
+    "@types/node": "^24.7.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.4"
   }
 }

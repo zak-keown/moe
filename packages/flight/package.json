@@ -3,18 +3,43 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Drive web, CLI or TUI targets through acceptance criteria and grade them. Also drives nine agent CLIs side by side.",
+  "description": "Drive web, CLI or TUI targets through acceptance criteria and grade them.",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24"
+  },
   "bin": {
     "moe-flight": "./dist/cli.js"
   },
   "scripts": {
-    "lint": "biome check .",
-    "build": "tsc -b",
-    "typecheck": "tsc -b --pretty",
-    "test": "vitest run --passWithNoTests"
+    "gen:prompts": "node scripts/gen-prompts.mjs",
+    "build": "node scripts/gen-prompts.mjs && tsc -b && node scripts/copy-vendor.mjs",
+    "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --pretty",
+    "test": "vitest run --project unit",
+    "test:chrome": "vitest run --project chrome",
+    "test:tmux": "vitest run --project tmux",
+    "test:watch": "vitest",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
+    "@bubstack/moe-flight-dashboard": "workspace:*",
+    "@bubstack/moe-flight-ui": "workspace:*",
+    "@hono/node-server": "^2.0.1",
+    "@xterm/headless": "^6.0.0",
+    "hono": "^4.12.5",
+    "openai": "^6.27.0",
+    "ws": "^8.20.0",
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
-    "typescript": "^5.9.0"
+    "@types/node": "^24.7.0",
+    "@types/react": "^19.2.14",
+    "@types/ws": "^8.18.1",
+    "ink": "^7.0.3",
+    "react": "^19.2.6",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.4"
   }
 }
