@@ -181,6 +181,32 @@ plan is its argument — record the ruling beside its row, and dispatch
 Task 1. The review loop remains the net for conflicts that only emerge from
 implementation.
 
+### Wave grouping
+
+The preflight scan above already lists every pair of tasks that share a file or
+an interface. Use that same table to group the plan's tasks into WAVES: within a
+wave, dispatch implementers concurrently; between waves, integrate then advance.
+A wave is a set of tasks that all satisfy the worktree gate
+(`dispatching-parallel-agents`, "The gate"): pairwise-disjoint `Files:` blocks,
+no `Consumes:` → `Produces:` edge inside the wave, and one worktree per worker.
+Fail any one and the tasks belong to different waves.
+
+Produce the wave list from the scan table, not from the plan's task order — the
+plan is a linear read but its dependency shape is a DAG. A task with no in-wave
+predecessors and no in-wave file overlap joins the earliest wave that admits it.
+Record the wave assignment in the ledger before dispatching Wave 1:
+`Waves: [W1: t1,t2,t3] [W2: t4] [W3: t5,t6]`, so recovery after compaction reads
+the same shape you dispatched from.
+
+Before dispatching a wave, record its BASE SHA once — every worker in the wave
+branches from that same commit, per the divergent-tree rule in
+`dispatching-parallel-agents`. A worker branched from a stale base will cite the
+same file coordinates as its siblings but read different content there.
+
+A plan of exactly one task is a wave of one, and the loop below still applies.
+Nothing about single-task plans changes — the wave step adds a shape, it does
+not remove the per-task discipline.
+
 ## Model Selection
 
 Use the least powerful model that can handle each role to conserve cost and increase speed.
@@ -279,7 +305,14 @@ and fix-round diffs need it.
   a pointer to that ledger entry in the dispatch.
 - Record the implementer's agent identity from the dispatch result —
   fix-loop rounds 1-3 resume this agent.
-- Never dispatch multiple implementation subagents in parallel (conflicts).
+- Dispatch multiple implementers concurrently ONLY when the wave they belong to
+  satisfies the worktree gate (see the Wave grouping step above and
+  `dispatching-parallel-agents`): the wave's tasks have disjoint `Files:`
+  blocks, no task in the wave `Consumes:` an interface another in the wave
+  `Produces:`, and each concurrent worker gets its own linked worktree via
+  `using-git-worktrees` Step 1c. Fail any condition and the wave is serial —
+  correct in every harness, merely slower. The old blanket ban was rooted in
+  `(conflicts)`, which worktree isolation now removes.
 
 Template: [implementer-prompt.md](implementer-prompt.md)
 
@@ -441,6 +474,39 @@ message as your other bookkeeping:
 Then mark the todo complete and move on. Never move to the next task while
 the review has open Critical/Important issues that are neither fixed nor
 parked-with-ruling at the cap.
+
+### 6. Integrate the wave
+
+Serial waves need nothing here — the ledger's `Task <N>: complete` line already
+records the merged HEAD. A parallel wave produces N branches, one per worker,
+and something has to fold them together before the next wave's workers branch
+off, or Wave 2 workers will branch from a base that predates Wave 1's writes and
+reintroduce the divergent-tree failure the wave gate exists to prevent.
+
+For each parallel wave, in order:
+
+1. Merge each worker's branch into the base you recorded before the wave
+   dispatched. Order does not matter — the gate guaranteed the Files: blocks
+   were disjoint, so no textual conflicts. If git reports one anyway, the gate
+   was wrong (a task lied about which files it touches) or a worker wrote
+   outside its declared Files: block — either way, stop and rule on it in the
+   ledger before proceeding.
+2. Run the full test suite on the merged tree, from the merged head. Per-task
+   reviewers only saw one worker's diff at a time; this is the first moment the
+   suite sees them together, and semantic conflicts that no per-task review
+   could catch (a shared constant renamed by two workers, an interface subtly
+   redefined) surface here. A red suite here is a wave-level fix loop, not a
+   per-task one: dispatch ONE fix subagent with the failing tests and the
+   ledger's per-task summaries, then re-run the suite on the fixed head.
+3. Record the wave's post-integration HEAD in the ledger:
+   `Wave <W>: integrated (base <base7>, head <head7>, N workers, suite green)`.
+   That HEAD is the base every worker in the next wave branches from.
+
+Only after the integrated head is green does the next wave start. If a wave's
+integration cannot be made green — the wave-level fix loop reaches its cap or
+the failure is structural — that is the plan-defect exit (see the four
+stop-conditions at the top of this skill): stop, ledger the state, and hand
+back to your human partner.
 
 ## Final Review
 

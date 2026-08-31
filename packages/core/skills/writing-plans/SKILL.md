@@ -169,3 +169,12 @@ After saving the plan, offer execution choice:
 **If Inline Execution chosen:**
 - **REQUIRED SUB-SKILL:** Use `executing-plans`
 - Batch execution with checkpoints for review
+
+**Either option runs waves in parallel when the worktree gate holds.** Tasks
+whose `Files:` blocks are pairwise-disjoint and share no `Consumes:` →
+`Produces:` edge are one wave, and one wave's implementers can run
+concurrently — each in its own linked worktree, branched from one recorded
+base SHA. `subagent-driven-development` (Wave grouping, Integrate the wave)
+and `dispatching-parallel-agents` (The gate, The divergent-tree rule) define
+the mechanics; the `Files:` and `Interfaces:` blocks the plan already carries
+are what those mechanics read.
