@@ -1,0 +1,79 @@
+# moe-mint config for the LEAN plugin, moe-core.
+#
+# Preserved from the-elements-of-style's `everyharness.yaml` @ 05fc4f0 — the only
+# real upstream consumer of the plugin generator, and therefore the seed of this
+# pipeline. Every field below was rewritten; the file's shape and its habit of
+# explaining each non-obvious choice in a comment are what survived.
+#
+# The full plugin, moe-everything, is the same source tree with every skill
+# instead of the lean thirteen. It has no config file yet, because moe-mint reads
+# exactly `<root>/moe-mint.yaml` and takes one plugin root for both config-in and
+# files-out. See skill-tiers.yaml and README.md ("Two plugins, one source tree").
+
+name: moe-core
+version: 0.0.0
+description: >-
+  The house skills: brainstorming, planning, TDD, systematic debugging, code
+  review and finishing a branch — the everyday set, lean enough to leave on.
+author:
+  name: Zak Keown
+  email: zak@turncommerce.com
+license: MIT AND Apache-2.0
+repository: https://gitlab.tcdevops.com/bubstack/moe
+homepage: https://gitlab.tcdevops.com/bubstack/moe
+keywords:
+  - skills
+  - brainstorming
+  - planning
+  - tdd
+  - debugging
+  - code-review
+  - workflow
+  - writing
+
+# The bootstrap skill is what makes the rest fire without being asked for; every
+# harness reads it at session start. Upstream superpowers hand-maintained the
+# SessionStart hook that injected it, wrapped in `<EXTREMELY_IMPORTANT>You have
+# superpowers.` plus an explicit "it is ALREADY LOADED, do not load it again".
+# moe-mint's generated wrapper is `<plugin-bootstrap plugin="moe-core">` instead.
+# That is a behaviour change to the single most load-bearing string in the merge,
+# so both dropped instructions were moved INTO skills/using-moe/SKILL.md, which
+# mint cats verbatim inside its own wrapper. Flagged for review; unverified
+# behaviourally — see README.md.
+bootstrap:
+  skill: using-moe
+
+# components: are all defaults (skills/, commands/, agents/, hooks/hooks.json,
+# .mcp.json) and therefore omitted. This package has no commands/, no agents/
+# and no .mcp.json; hooks/hooks.json carries the Stop hook only, and mint merges
+# its own SessionStart entry into hooks/moe-mint/hooks.json.
+
+harnesses:
+  # Both adapters emit a FULL-REPLACEMENT package.json into the plugin root, and
+  # this plugin root is packages/core — whose package.json is the pnpm workspace
+  # manifest. mint's own generate.ts says so in its conflict message: "--force
+  # will REPLACE your package.json entirely." Excluded until the plugin root is
+  # a staging directory rather than the source tree.
+  exclude:
+    - opencode
+    - pi
+
+marketplace:
+  # Local-dev descriptor only. The marketplace people actually install from is
+  # the hand-maintained root .claude-plugin/marketplace.json, which lists every
+  # Moe plugin and points at /plugins/<name>.
+  source: local
+  category: development
+  tags:
+    - skills
+    - workflow
+
+release:
+  audit:
+    # `moe-mint bump --audit` sweeps the package for stray copies of the current
+    # version string. These four hold versions that are not this plugin's.
+    exclude:
+      - docs/history
+      - licenses
+      - skills/developing-claude-code-plugins/examples
+      - test/latte/scenarios

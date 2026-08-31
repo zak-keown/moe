@@ -1,0 +1,257 @@
+# The lean/full curation, as data.
+#
+# ARCHITECTURE.md section 2: core ships as TWO generated plugins from ONE source
+# tree — `moe-core` (the everyday set) and `moe-everything` (all of them). This
+# file is the boundary between them. It is a PROPOSAL awaiting human review, not
+# a settled decision.
+#
+# The selection principle, quoted from ARCHITECTURE.md section 2:
+#
+#   A skill earns a place in `moe-core` if it fires on ordinary work without
+#   being asked for. A skill you invoke deliberately, by name, when you already
+#   know you want it, belongs in `moe-everything`.
+#
+# Two rules were applied on top of it, and they pull in opposite directions:
+#
+#   CLOSURE. If a skill in the lean tier carries a `**REQUIRED SUB-SKILL:**` or
+#   `**REQUIRED BACKGROUND:**` marker naming another skill, that skill is in the
+#   lean tier too. A REQUIRED marker pointing at a skill the reader does not
+#   have installed is a dead end mid-workflow. test/metadata.test.ts enforces
+#   this: it fails if any core-tier skill REQUIREs an everything-tier skill.
+#
+#   ERR SMALL. Where closure does not force the answer, the tie goes to
+#   `everything`. Every description in an installed plugin costs context in every
+#   session, for ~20 people who will leave the lean plugin on permanently.
+#
+# `tier: core`       ships in BOTH moe-core and moe-everything.
+# `tier: everything` ships in moe-everything ONLY.
+#
+# moe-everything is a strict superset: 13 + 14 = 27.
+
+plugins:
+  moe-core:
+    description: >-
+      The house skills: brainstorming, planning, TDD, systematic debugging, code
+      review and finishing a branch — the everyday set, lean enough to leave on.
+    tiers: [core]
+  moe-everything:
+    description: >-
+      The full Moe skill library: all 27 skills, including the ones you invoke
+      deliberately by name.
+    tiers: [core, everything]
+
+skills:
+  # ---------------------------------------------------------------- core (13)
+
+  using-moe:
+    tier: core
+    from: superpowers
+    why: >-
+      The bootstrap. It is moe-mint's `bootstrap: { skill: }` target and the
+      thing that makes every other skill fire at all. Not optional in either
+      plugin.
+
+  brainstorming:
+    tier: core
+    from: superpowers
+    why: >-
+      Its own description opens "You MUST use this before any creative work".
+      Fires on every feature request, unasked. One of the two skills the
+      bootstrap names by name.
+
+  systematic-debugging:
+    tier: core
+    from: superpowers
+    why: >-
+      "Use when encountering any bug, test failure, or unexpected behavior."
+      Fires on every bug, unasked. The other skill the bootstrap names.
+
+  test-driven-development:
+    tier: core
+    from: superpowers
+    why: >-
+      "Use when implementing any feature or bugfix, before writing
+      implementation code." Fires on every implementation. Also the REQUIRED
+      BACKGROUND for systematic-debugging's failing-test step.
+
+  verification-before-completion:
+    tier: core
+    from: superpowers
+    why: >-
+      "Use when about to claim work is complete." Fires at the end of every
+      task, and systematic-debugging routes to it before any success claim.
+
+  writing-plans:
+    tier: core
+    from: superpowers
+    why: >-
+      "Use when you have a spec or requirements for a multi-step task, before
+      touching code." The step brainstorming hands off to; nobody asks for it by
+      name.
+
+  subagent-driven-development:
+    tier: core
+    from: superpowers
+    why: >-
+      CLOSURE. writing-plans marks it "**REQUIRED SUB-SKILL**" as the
+      recommended execution path, and it is the path every harness Moe targets
+      can actually take.
+
+  executing-plans:
+    tier: core
+    from: superpowers
+    why: >-
+      CLOSURE. writing-plans marks it "**REQUIRED SUB-SKILL**" as the second of
+      exactly two execution options — the one to take when subagents are
+      unavailable. 344 words, the smallest skill in the set.
+
+  using-git-worktrees:
+    tier: core
+    from: superpowers
+    why: >-
+      CLOSURE. Step 0 of both execution paths ("ensure an isolated workspace")
+      and named by the bootstrap.
+
+  finishing-a-development-branch:
+    tier: core
+    from: superpowers
+    why: >-
+      CLOSURE. "**REQUIRED SUB-SKILL**" at the terminal step of both execution
+      paths. Without it the everyday flow ends with the branch unmerged and no
+      guidance.
+
+  requesting-code-review:
+    tier: core
+    from: superpowers
+    why: >-
+      CLOSURE. subagent-driven-development's review phase dispatches this
+      skill's `code-reviewer.md` template. Also fires unasked on "before
+      merging".
+
+  receiving-code-review:
+    tier: core
+    from: superpowers
+    why: >-
+      Fires when review feedback arrives, which is ordinary work, and it is the
+      counterpart to requesting-code-review. Shipping the request half without
+      the receive half teaches half the loop.
+
+  writing-clearly-and-concisely:
+    tier: core
+    from: the-elements-of-style
+    why: >-
+      THE MOST ARGUABLE CALL IN THIS PROPOSAL — flagged deliberately for review.
+      Its trigger is literally "ANY prose humans will read", which includes the
+      commit messages, MR descriptions and error text of every session, so it
+      fires unasked more often than anything else here. Its lean-tier cost is
+      one description line: the ~12,000-token 1918 text is a separate file the
+      agent opens only while editing prose. If the reviewer disagrees, this is
+      the one to move, and moving it breaks no closure edge.
+
+  # ----------------------------------------------------------- everything (14)
+
+  dispatching-parallel-agents:
+    tier: everything
+    from: superpowers
+    why: >-
+      ERR SMALL. "Use when facing 2+ independent tasks" is a recognition
+      trigger, but nothing REQUIREs it and subagent-driven-development already
+      covers the parallel case inside the everyday flow. An optimisation you
+      reach for.
+
+  writing-skills:
+    tier: everything
+    from: superpowers
+    why: >-
+      You invoke it deliberately, when authoring or editing a skill. Also the
+      largest skill in the set at 3,781 words.
+
+  working-with-claude-code:
+    tier: everything
+    from: superpowers-developing-for-claude-code
+    why: >-
+      A documentation router. You reach for it when you are already working on
+      Claude Code configuration.
+
+  developing-claude-code-plugins:
+    tier: everything
+    from: superpowers-developing-for-claude-code
+    why: >-
+      You invoke it when you know you are building a plugin. Ships the
+      example plugins and the polyglot-hook reference.
+
+  finding-duplicate-functions:
+    tier: everything
+    from: superpowers-lab
+    why: >-
+      Experimental (upstream's own word). A codebase audit you run on purpose;
+      it also wants `rg` and `jq` and dispatches two subagent tiers.
+
+  mcp-cli:
+    tier: everything
+    from: superpowers-lab
+    why: >-
+      Experimental. Deliberate reach, and it instructs the agent to clone and
+      `go build` a third-party binary onto the user's PATH — see README.md.
+
+  using-tmux-for-interactive-commands:
+    tier: everything
+    from: superpowers-lab
+    why: >-
+      Experimental, and the one genuinely arguable case in this group: it can
+      fire unprompted on "run vim". It also trigger-overlaps moe-crew's
+      driving-claude-code-sessions on the word tmux, which is the tiebreak.
+
+  windows-vm:
+    tier: everything
+    from: superpowers-lab
+    why: >-
+      Experimental, and it cannot run on this fork's dev machines or in CI —
+      needs /dev/kvm, sshpass and Debian. See README.md.
+
+  iterative-development:
+    tier: everything
+    from: iterative-development
+    why: >-
+      An alternative whole methodology, invoked by name when a spec is too large
+      for the writing-plans flow. Six skills' descriptions is a permanent
+      context cost for a workflow nobody stumbles into.
+
+  extracting-requirements:
+    tier: everything
+    from: iterative-development
+    why: >-
+      Part of the iterative-development cluster. Dispatched by the orchestrator,
+      never reached on its own.
+
+  scoping-the-simplest-core:
+    tier: everything
+    from: iterative-development
+    why: >-
+      Part of the cluster, and it reads a prompt template out of
+      running-an-iteration's directory — the two cannot be split.
+
+  running-an-iteration:
+    tier: everything
+    from: iterative-development
+    why: >-
+      Part of the cluster. Dispatches implementing-tasks.
+
+  implementing-tasks:
+    tier: everything
+    from: iterative-development
+    why: >-
+      Part of the cluster. A fork of subagent-driven-development for in-memory
+      task batches; only running-an-iteration invokes it.
+
+  auditing-progress:
+    tier: everything
+    from: iterative-development
+    why: >-
+      Part of the cluster. The orchestrator's post-iteration gate.
+
+# Not a skill: skills/_shared/ holds the three PAR reference documents the
+# iterative-development cluster reads at runtime. It carries no SKILL.md, so
+# moe-mint's readSkills() skips it, and it ships with the skills directory in
+# both plugins. Was skills/shared/ upstream; renamed to sort first and to signal
+# that it is not a skill in a directory that now holds 27 of them.
