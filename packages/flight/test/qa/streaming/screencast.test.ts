@@ -1,7 +1,7 @@
-import { describe, test, expect } from "vitest";
 import { existsSync, mkdtempSync, readdirSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
 import { ScreencastStreamer } from "../../../src/qa/streaming/screencast.js";
 
 // PRI-1436: streamer requires a chrome-ws-lib session. The session surface used

@@ -1,15 +1,15 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
-  buildFanoutPrompt,
-  generateFanout,
-  buildObservationPrompt,
-  generateFromObservations,
   buildFailurePrompt,
+  buildFanoutPrompt,
+  buildObservationPrompt,
+  generateFanout,
   generateFromFailure,
+  generateFromObservations,
   splitAndValidateCards,
 } from "../../../src/qa/fanout/generator.js";
-import { parseStoryCard } from "../../../src/qa/format/story-card.js";
 import type { StoryCard } from "../../../src/qa/format/story-card.js";
+import { parseStoryCard } from "../../../src/qa/format/story-card.js";
 import type { LLMClient } from "../../../src/qa/models/provider.js";
 import type { VerdictResult } from "../../../src/qa/types.js";
 
@@ -226,9 +226,7 @@ describe("generateFromObservations", () => {
   test("creates cards from observations", async () => {
     const result = makeVerdictResult({
       scenario: "checkout-flow",
-      observations: [
-        { kind: "bug", description: "Button overlaps on mobile" },
-      ],
+      observations: [{ kind: "bug", description: "Button overlaps on mobile" }],
     });
 
     const cardA = `---\nid: checkout-flow-obs-1\ntitle: Fix button overlap on mobile\nstatus: draft\ntags: observation\nparent: checkout-flow\n---\n\nInvestigate button overlap on mobile viewports.\n\n## Acceptance Criteria\n\n- Button is fully visible on mobile`;

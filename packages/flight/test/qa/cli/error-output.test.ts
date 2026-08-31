@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { formatCliError, isVerboseRequest } from "../../../src/qa/cli/error-output.js";
 
 describe("formatCliError — piped (non-TTY)", () => {
@@ -56,10 +56,10 @@ describe("formatCliError — TTY (interactive)", () => {
   });
 
   test("preserves multi-line messages including the usage hint pattern", () => {
-    const out = formatCliError(
-      new Error("Missing runId\n\nUsage: moe-flight qa ask <runId>"),
-      { verbose: false, isTty: true },
-    );
+    const out = formatCliError(new Error("Missing runId\n\nUsage: moe-flight qa ask <runId>"), {
+      verbose: false,
+      isTty: true,
+    });
     expect(out).toBe("Missing runId\n\nUsage: moe-flight qa ask <runId>\n");
   });
 
@@ -73,7 +73,7 @@ describe("formatCliError — TTY (interactive)", () => {
     const out = formatCliError(err, { verbose: true, isTty: true });
     expect(out.startsWith("boom\n")).toBe(true);
     expect(out).toContain("Error: boom");
-    expect(out.includes("{\"error\"")).toBe(false);
+    expect(out.includes('{"error"')).toBe(false);
   });
 });
 
@@ -83,7 +83,9 @@ describe("isVerboseRequest", () => {
   });
 
   test("returns true when --verbose appears in argv", () => {
-    expect(isVerboseRequest({}, ["bun", "src/index.ts", "run", "story.md", "--verbose"])).toBe(true);
+    expect(isVerboseRequest({}, ["bun", "src/index.ts", "run", "story.md", "--verbose"])).toBe(
+      true,
+    );
   });
 
   test("returns false when neither signal is present", () => {

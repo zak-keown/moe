@@ -1,11 +1,10 @@
-import { describe, test, expect } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, } from "fs";
+import { createRequire } from "node:module";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import { WebAdapter, composeResult } from "../../../../src/qa/adapters/web/adapter.js";
+import { describe, expect, test } from "vitest";
+import { composeResult, WebAdapter } from "../../../../src/qa/adapters/web/adapter.js";
 import { EvidenceLogger } from "../../../../src/qa/evidence/logger.js";
-
-import { createRequire } from "node:module";
 
 // The CDP library under src/qa/adapters/web/lib/ is vendored CommonJS.
 // Bun tolerated a bare `require()` in an ESM file; Node and vitest do
@@ -167,10 +166,7 @@ describe("WebAdapter", () => {
         join(tmp, ".moe-flight", "context", "matt", "passkey.yaml"),
         "this is not valid passkey YAML",
       );
-      writeFileSync(
-        join(tmp, ".moe-flight", "context", "matt", "cookies.yaml"),
-        ":\n  : :",
-      );
+      writeFileSync(join(tmp, ".moe-flight", "context", "matt", "cookies.yaml"), ":\n  : :");
       const adapter = new WebAdapter({ contextRoot: join(tmp, ".moe-flight", "context") });
       const names = adapter.toolDefinitions().map((t) => t.name);
       expect(names).toContain("install_passkey");
@@ -257,15 +253,18 @@ describe("WebAdapter", () => {
     // isolated from each other and from production code paths.
     type Call = [string, unknown[]];
 
-    function makeStubSession(
-      overrides: Record<string, (...args: unknown[]) => unknown> = {},
-    ): { session: Record<string, (...args: unknown[]) => unknown>; calls: Call[] } {
+    function makeStubSession(overrides: Record<string, (...args: unknown[]) => unknown> = {}): {
+      session: Record<string, (...args: unknown[]) => unknown>;
+      calls: Call[];
+    } {
       const calls: Call[] = [];
-      const record = (name: string) => (...args: unknown[]) => {
-        calls.push([name, args]);
-        const o = overrides[name];
-        return o ? o(...args) : undefined;
-      };
+      const record =
+        (name: string) =>
+        (...args: unknown[]) => {
+          calls.push([name, args]);
+          const o = overrides[name];
+          return o ? o(...args) : undefined;
+        };
       const session: Record<string, (...args: unknown[]) => unknown> = {};
       const keys = [
         "startChrome",
@@ -334,7 +333,9 @@ describe("WebAdapter", () => {
 
       const order: string[] = [];
       const { session } = makeStubSession({
-        killChrome: () => { order.push("killChrome"); },
+        killChrome: () => {
+          order.push("killChrome");
+        },
         getChromeProfileDir: (name: unknown) => {
           order.push(`getChromeProfileDir:${name}`);
           return fakeProfileDir;
@@ -468,16 +469,16 @@ describe("WebAdapter", () => {
 
     function makeSideTripStub(): SideTripStub {
       // Initial state: chrome has one tab (the original) at index 0.
-      const tabs: { webSocketDebuggerUrl: string }[] = [
-        { webSocketDebuggerUrl: "ws://stub/0" },
-      ];
+      const tabs: { webSocketDebuggerUrl: string }[] = [{ webSocketDebuggerUrl: "ws://stub/0" }];
       let newTabCounter = 1;
       let newTabError: Error | null = null;
       const calls: Call[] = [];
-      const record = (name: string) => (...args: unknown[]) => {
-        calls.push([name, args]);
-        return undefined;
-      };
+      const record =
+        (name: string) =>
+        (...args: unknown[]) => {
+          calls.push([name, args]);
+          return undefined;
+        };
       const session: Record<string, (...args: unknown[]) => unknown> = {
         // Lifecycle stubs.
         startChrome: record("startChrome"),
@@ -555,7 +556,9 @@ describe("WebAdapter", () => {
         session,
         calls,
         tabs,
-        setNewTabError: (err) => { newTabError = err; },
+        setNewTabError: (err) => {
+          newTabError = err;
+        },
       };
     }
 
@@ -679,11 +682,7 @@ describe("WebAdapter", () => {
           expect(r.text).toContain("opened tab");
         }
         const newTabCallsBefore = stub.calls.filter((c) => c[0] === "newTab").length;
-        const overflow = await adapter.executeTool(
-          "new_tab",
-          { url: "https://overflow/" },
-          logger,
-        );
+        const overflow = await adapter.executeTool("new_tab", { url: "https://overflow/" }, logger);
         expect(overflow.text).toMatch(/too many side-trip tabs/i);
         const newTabCallsAfter = stub.calls.filter((c) => c[0] === "newTab").length;
         expect(newTabCallsAfter).toBe(newTabCallsBefore);
@@ -799,11 +798,7 @@ describe("WebAdapter", () => {
         const adapter = new WebAdapter({ chromeSession: stub.session as never });
         await adapter.start("https://example.com/");
         await adapter.executeTool("new_tab", { url: "https://mail.example/" }, logger);
-        await adapter.executeTool(
-          "close_tab",
-          { return_screenshot: true },
-          logger,
-        );
+        await adapter.executeTool("close_tab", { return_screenshot: true }, logger);
         const screenshotCalls = stub.calls.filter((c) => c[0] === "screenshot");
         expect(screenshotCalls).toHaveLength(1);
         // Screenshot must hit the original tab (now the active tab),
@@ -828,9 +823,7 @@ describe("WebAdapter", () => {
         await adapter.start("https://example.com/");
         await adapter.executeTool("new_tab", { url: "https://mail.example/" }, logger);
         await adapter.executeTool("close_tab", {}, logger);
-        const pop = events.find(
-          (e) => e.name === "tab_focus_changed" && e.data.action === "pop",
-        );
+        const pop = events.find((e) => e.name === "tab_focus_changed" && e.data.action === "pop");
         expect(pop).toBeDefined();
         expect(pop!.data.url).toBe("https://mail.example/");
         expect(pop!.data.ws_url).toBe("ws://stub/1");
@@ -852,7 +845,10 @@ describe("WebAdapter", () => {
       try {
         const events: Array<{ name: string; data: Record<string, unknown> }> = [];
         const orig = logger.logEvent.bind(logger);
-        logger.logEvent = (name, data) => { events.push({ name, data }); return orig(name, data); };
+        logger.logEvent = (name, data) => {
+          events.push({ name, data });
+          return orig(name, data);
+        };
         const adapter = new WebAdapter({ chromeSession: stub.session as never });
         await adapter.start("https://example.com/");
         await adapter.executeTool("new_tab", { url: "https://mail.example/" }, logger);
@@ -891,11 +887,7 @@ describe("WebAdapter", () => {
       try {
         const adapter = new WebAdapter({ chromeSession: stub.session as never });
         await adapter.start("https://example.com/");
-        const result = await adapter.executeTool(
-          "new_tab",
-          { url: "javascript:alert(1)" },
-          logger,
-        );
+        const result = await adapter.executeTool("new_tab", { url: "javascript:alert(1)" }, logger);
         expect(result.text).toMatch(/new_tab requires an absolute URL/i);
         const newTabCalls = stub.calls.filter((c) => c[0] === "newTab");
         expect(newTabCalls).toHaveLength(0);
@@ -916,11 +908,7 @@ describe("WebAdapter", () => {
         for (let i = 0; i < 4; i++) {
           await adapter.executeTool("new_tab", { url: `https://side${i}/` }, logger);
         }
-        const overflow = await adapter.executeTool(
-          "new_tab",
-          { url: "https://overflow/" },
-          logger,
-        );
+        const overflow = await adapter.executeTool("new_tab", { url: "https://overflow/" }, logger);
         // Should mention "max 4" (the side-trip cap), not "max 5"
         // (the total stack depth, off by one).
         expect(overflow.text).toContain("max 4");
@@ -936,7 +924,10 @@ describe("WebAdapter", () => {
       try {
         const events: Array<{ name: string; data: Record<string, unknown> }> = [];
         const orig = logger.logEvent.bind(logger);
-        logger.logEvent = (name, data) => { events.push({ name, data }); return orig(name, data); };
+        logger.logEvent = (name, data) => {
+          events.push({ name, data });
+          return orig(name, data);
+        };
         // close() uses the *constructor-passed* logger (not the dispatch
         // logger), so wire it in here.
         const adapter = new WebAdapter({ chromeSession: stub.session as never, logger });
@@ -995,11 +986,12 @@ describe("WebAdapter", () => {
       // createPage propagates out of start() and the adapter does NOT
       // get into a half-initialized state.
       const stub = makeSideTripStub();
-      stub.session.createBrowserContext = () => Promise.resolve({
-        browserContextId: "stub-ctx",
-        createPage: () => Promise.reject(new Error("network blip")),
-        dispose: () => Promise.resolve(),
-      });
+      stub.session.createBrowserContext = () =>
+        Promise.resolve({
+          browserContextId: "stub-ctx",
+          createPage: () => Promise.reject(new Error("network blip")),
+          dispose: () => Promise.resolve(),
+        });
       const { logger, dir } = tmpLogger();
       try {
         const adapter = new WebAdapter({
@@ -1028,7 +1020,10 @@ describe("WebAdapter", () => {
       try {
         const events: Array<{ name: string; data: Record<string, unknown> }> = [];
         const orig = logger.logEvent.bind(logger);
-        logger.logEvent = (name, data) => { events.push({ name, data }); return orig(name, data); };
+        logger.logEvent = (name, data) => {
+          events.push({ name, data });
+          return orig(name, data);
+        };
         const adapter = new WebAdapter({
           chromeSession: stub.session as never,
           contextRoot: join(tmpCtx, ".moe-flight", "context"),
@@ -1044,11 +1039,7 @@ describe("WebAdapter", () => {
           // warning branch. The execute() body will error downstream
           // (the YAML doesn't exist), which is fine — the warning is
           // logged before execute runs.
-          await adapter.executeTool(
-            "install_passkey",
-            { path: "alice/passkey.yaml" },
-            logger,
-          );
+          await adapter.executeTool("install_passkey", { path: "alice/passkey.yaml" }, logger);
         } catch {
           // ignored
         }
@@ -1119,7 +1110,7 @@ describe("composeResult", () => {
       screenshotSkipped: "CDP command timeout: Page.captureScreenshot",
     });
     expect(result.text).toBe(
-      "clicked button (screenshot unavailable: CDP command timeout: Page.captureScreenshot)"
+      "clicked button (screenshot unavailable: CDP command timeout: Page.captureScreenshot)",
     );
     expect(result.image).toBeUndefined();
     expect(result.imagePath).toBeUndefined();
@@ -1147,14 +1138,10 @@ const RETURN_SCREENSHOT_TIMEOUT_MS = 5000;
 // 1x1 transparent PNG bytes — write to the file the fake screenshot
 // "returns" so logger.saveScreenshot can read a valid image.
 const ONE_PX_PNG = Buffer.from([
-  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-  0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
-  0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-  0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4,
-  0x89, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41,
-  0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
-  0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00,
-  0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
+  0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4,
+  0x89, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
+  0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
   0x42, 0x60, 0x82,
 ]);
 
@@ -1168,7 +1155,7 @@ describe("takeReturnScreenshot via WebAdapter (PRI-1517)", () => {
         _file: unknown,
         _sel: unknown,
         _full: unknown,
-        opts?: { timeoutMs?: number }
+        opts?: { timeoutMs?: number },
       ) => {
         screenshotTimeoutPassed = opts?.timeoutMs;
         // Reject quickly — we're not testing the production cap timer
@@ -1190,7 +1177,7 @@ describe("takeReturnScreenshot via WebAdapter (PRI-1517)", () => {
       const result = await adapter.executeTool(
         "click",
         { selector: "button", return_screenshot: true },
-        logger
+        logger,
       );
       const elapsed = Date.now() - t0;
 
@@ -1203,7 +1190,7 @@ describe("takeReturnScreenshot via WebAdapter (PRI-1517)", () => {
       // The action result decoupling — the action's primary text is
       // preserved verbatim, and the skip note is appended.
       expect(result.text).toBe(
-        "clicked button (screenshot unavailable: CDP command timeout: Page.captureScreenshot)"
+        "clicked button (screenshot unavailable: CDP command timeout: Page.captureScreenshot)",
       );
       expect(result.image).toBeUndefined();
       expect(result.imagePath).toBeUndefined();
@@ -1231,7 +1218,7 @@ describe("takeReturnScreenshot via WebAdapter (PRI-1517)", () => {
       const result = await adapter.executeTool(
         "click",
         { selector: "button", return_screenshot: true },
-        logger
+        logger,
       );
 
       expect(result.text).toBe("clicked button");
@@ -1258,11 +1245,7 @@ describe("takeReturnScreenshot via WebAdapter (PRI-1517)", () => {
       const logger = new EvidenceLogger(outDir);
       const adapter = new WebAdapter({ chromeSession: session as never });
 
-      const result = await adapter.executeTool(
-        "click",
-        { selector: "button" },
-        logger
-      );
+      const result = await adapter.executeTool("click", { selector: "button" }, logger);
 
       expect(result.text).toBe("clicked button");
       expect(result.image).toBeUndefined();

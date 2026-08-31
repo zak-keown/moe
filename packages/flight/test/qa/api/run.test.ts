@@ -1,16 +1,16 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { runRoutes, executeHttpRun } from "../../../src/qa/api/routes/run.js";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
+import { Hono } from "hono";
+import { tmpdir } from "os";
+import { join } from "path";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import type { Adapter } from "../../../src/qa/adapters/adapter.js";
 import { ActiveRunRegistry } from "../../../src/qa/api/active-runs.js";
+import { executeHttpRun, runRoutes } from "../../../src/qa/api/routes/run.js";
 import { RunBroadcaster } from "../../../src/qa/api/ws.js";
 import { loadConfig, mergeRunConfig, validateRunBody } from "../../../src/qa/config.js";
-import { flightPath } from "../../../src/qa/paths.js";
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from "fs";
-import { join } from "path";
-import { tmpdir } from "os";
-import { Hono } from "hono";
-import type { Adapter } from "../../../src/qa/adapters/adapter.js";
-import type { LLMClient } from "../../../src/qa/models/provider.js";
 import type { StoryCard } from "../../../src/qa/format/story-card.js";
+import type { LLMClient } from "../../../src/qa/models/provider.js";
+import { flightPath } from "../../../src/qa/paths.js";
 
 const STORY_MD = `---
 id: story-001
@@ -41,7 +41,9 @@ describe("Run API", () => {
   });
 
   test("POST /api/run/:id returns 404 for unknown scenario", async () => {
-    const config = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
+    const config = loadConfig({ projectRoot }, {
+      MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+    } as NodeJS.ProcessEnv);
     const app = new Hono();
     app.route("/api/run", runRoutes(config));
 
@@ -56,7 +58,9 @@ describe("Run API", () => {
   });
 
   test("POST /api/run/:id returns 400 when target is missing", async () => {
-    const config = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
+    const config = loadConfig({ projectRoot }, {
+      MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+    } as NodeJS.ProcessEnv);
     const app = new Hono();
     app.route("/api/run", runRoutes(config));
 
@@ -71,7 +75,9 @@ describe("Run API", () => {
   });
 
   test("POST /api/run/:id returns 400 when body includes turns field", async () => {
-    const config = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
+    const config = loadConfig({ projectRoot }, {
+      MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+    } as NodeJS.ProcessEnv);
     const app = new Hono();
     app.route("/api/run", runRoutes(config));
 
@@ -86,7 +92,9 @@ describe("Run API", () => {
   });
 
   test("POST /api/run/:id returns JSON 400 for unknown model prefix before registering a run", async () => {
-    const config = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
+    const config = loadConfig({ projectRoot }, {
+      MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+    } as NodeJS.ProcessEnv);
     const registry = new ActiveRunRegistry();
     const app = new Hono();
     app.route("/api/run", runRoutes(config, undefined, undefined, registry));
@@ -115,36 +123,38 @@ describe("Run API", () => {
     const prev = process.env.ANTHROPIC_API_KEY;
     process.env.ANTHROPIC_API_KEY = "test-key";
     try {
-    const config = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
-    const registry = new ActiveRunRegistry();
-    const broadcaster = new RunBroadcaster();
-    const app = new Hono();
-    app.route("/api/run", runRoutes(config, broadcaster, undefined, registry));
+      const config = loadConfig({ projectRoot }, {
+        MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+      } as NodeJS.ProcessEnv);
+      const registry = new ActiveRunRegistry();
+      const broadcaster = new RunBroadcaster();
+      const app = new Hono();
+      app.route("/api/run", runRoutes(config, broadcaster, undefined, registry));
 
-    // This will fail downstream (no real Chrome) but should still return 202
-    // because start is detached. We only assert the acknowledgement + registration.
-    const res = await app.request("/api/run/story-001", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ target: "http://localhost:3000", adapter: "cli" }),
-    });
-    expect(res.status).toBe(202);
-    const body = await res.json();
-    // New uniform response shape: runSetId is null for solo runs.
-    expect(body.runSetId).toBeNull();
-    expect(body.passes).toBe(1);
-    expect(body.runs).toHaveLength(1);
-    expect(body.runs[0].runId).toMatch(/^story-001_\d{8}T\d{6}Z_[a-z0-9]{4}$/);
-    // Registered synchronously before detach, keyed by runId (not cardId).
-    expect(registry.has(body.runs[0].runId)).toBe(true);
-    expect(registry.has("story-001")).toBe(false);
+      // This will fail downstream (no real Chrome) but should still return 202
+      // because start is detached. We only assert the acknowledgement + registration.
+      const res = await app.request("/api/run/story-001", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target: "http://localhost:3000", adapter: "cli" }),
+      });
+      expect(res.status).toBe(202);
+      const body = await res.json();
+      // New uniform response shape: runSetId is null for solo runs.
+      expect(body.runSetId).toBeNull();
+      expect(body.passes).toBe(1);
+      expect(body.runs).toHaveLength(1);
+      expect(body.runs[0].runId).toMatch(/^story-001_\d{8}T\d{6}Z_[a-z0-9]{4}$/);
+      // Registered synchronously before detach, keyed by runId (not cardId).
+      expect(registry.has(body.runs[0].runId)).toBe(true);
+      expect(registry.has("story-001")).toBe(false);
 
-    // PRI-1507: solo path attaches an AbortController on register so
-    // shutdown drain can fire it on grace-window expiry.
-    expect(registry.getAbortController(body.runs[0].runId)).toBeDefined();
+      // PRI-1507: solo path attaches an AbortController on register so
+      // shutdown drain can fire it on grace-window expiry.
+      expect(registry.getAbortController(body.runs[0].runId)).toBeDefined();
 
-    // Give the detached task time to finish writing before afterEach rm's the dir.
-    await new Promise((r) => setTimeout(r, 100));
+      // Give the detached task time to finish writing before afterEach rm's the dir.
+      await new Promise((r) => setTimeout(r, 100));
     } finally {
       if (prev === undefined) delete process.env.ANTHROPIC_API_KEY;
       else process.env.ANTHROPIC_API_KEY = prev;
@@ -156,7 +166,9 @@ describe("Run API", () => {
     // path without needing a real LLM or Chrome.
     const stubAdapter: Adapter = {
       name: "cli",
-      start: async () => { throw new Error("stub start failure"); },
+      start: async () => {
+        throw new Error("stub start failure");
+      },
       close: async () => {},
       // Unused by the error path, but required by the interface.
       type: async () => {},
@@ -210,13 +222,21 @@ describe("Run API", () => {
     const storyDir = flightPath(projectRoot, ".moe-flight", "stories");
     mkdirSync(storyDir, { recursive: true });
     const storyPath = join(storyDir, "story-001.md");
-    writeFileSync(storyPath, `---\nid: story-001\ntitle: Test\nstatus: draft\ntags: core\n---\n\nbody\n\n## Acceptance Criteria\n- works\n`);
+    writeFileSync(
+      storyPath,
+      `---\nid: story-001\ntitle: Test\nstatus: draft\ntags: core\n---\n\nbody\n\n## Acceptance Criteria\n- works\n`,
+    );
 
-    const cfg = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
-    const effective = mergeRunConfig(cfg, validateRunBody({
-      target: "http://localhost:3000",
-      adapter: "cli",
-    }));
+    const cfg = loadConfig({ projectRoot }, {
+      MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+    } as NodeJS.ProcessEnv);
+    const effective = mergeRunConfig(
+      cfg,
+      validateRunBody({
+        target: "http://localhost:3000",
+        adapter: "cli",
+      }),
+    );
 
     // executeHttpRun rethrows after running all cleanup hooks (onError →
     // beforeClose → adapter.close → detachLogger → afterClose). Swallow
@@ -232,7 +252,9 @@ describe("Run API", () => {
       broadcaster,
       registry,
       adapterFactory: () => stubAdapter,
-    }).catch(() => { /* expected: stub throws on start */ });
+    }).catch(() => {
+      /* expected: stub throws on start */
+    });
 
     // After executeHttpRun resolves, registry must be clean.
     expect(registry.has(runId)).toBe(false);
@@ -246,11 +268,15 @@ describe("Run API", () => {
     // that mergeRunConfig (called inside the route) honors the body override.
     // We import mergeRunConfig directly to validate the threading.
     const { mergeRunConfig, validateRunBody } = await import("../../../src/qa/config.js");
-    const config = loadConfig(
-      { projectRoot },
-      { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6", MOE_FLIGHT_CHROME: "server:9100" } as NodeJS.ProcessEnv,
-    );
-    const body = validateRunBody({ target: "http://localhost:3000", chrome: "override:9333", adapter: "cli" });
+    const config = loadConfig({ projectRoot }, {
+      MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+      MOE_FLIGHT_CHROME: "server:9100",
+    } as NodeJS.ProcessEnv);
+    const body = validateRunBody({
+      target: "http://localhost:3000",
+      chrome: "override:9333",
+      adapter: "cli",
+    });
     const eff = mergeRunConfig(config, body);
     expect(eff.chrome).toEqual({ host: "override", port: 9333 });
 
@@ -260,17 +286,21 @@ describe("Run API", () => {
     const prev = process.env.ANTHROPIC_API_KEY;
     process.env.ANTHROPIC_API_KEY = "test-key";
     try {
-    // And confirm the route accepts the request (returns 202).
-    const app = new Hono();
-    app.route("/api/run", runRoutes(config));
-    const res = await app.request("/api/run/story-001", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ target: "http://localhost:3000", chrome: "override:9333", adapter: "cli" }),
-    });
-    expect(res.status).toBe(202);
+      // And confirm the route accepts the request (returns 202).
+      const app = new Hono();
+      app.route("/api/run", runRoutes(config));
+      const res = await app.request("/api/run/story-001", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          target: "http://localhost:3000",
+          chrome: "override:9333",
+          adapter: "cli",
+        }),
+      });
+      expect(res.status).toBe(202);
 
-    await new Promise((r) => setTimeout(r, 100));
+      await new Promise((r) => setTimeout(r, 100));
     } finally {
       if (prev === undefined) delete process.env.ANTHROPIC_API_KEY;
       else process.env.ANTHROPIC_API_KEY = prev;
@@ -279,10 +309,10 @@ describe("Run API", () => {
 
   test("POST /api/run/:id returns 400 when model is not in allow-list", async () => {
     // MOE_FLIGHT_MODELS, when set, is enforced at the route layer.
-    const config = loadConfig(
-      { projectRoot },
-      { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6", MOE_FLIGHT_MODELS: "claude-sonnet-4-6" } as NodeJS.ProcessEnv,
-    );
+    const config = loadConfig({ projectRoot }, {
+      MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+      MOE_FLIGHT_MODELS: "claude-sonnet-4-6",
+    } as NodeJS.ProcessEnv);
     const app = new Hono();
     app.route("/api/run", runRoutes(config));
 
@@ -297,10 +327,9 @@ describe("Run API", () => {
   });
 
   test("rejects unknown adapter value with 400", async () => {
-    const config = loadConfig(
-      { projectRoot },
-      { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv,
-    );
+    const config = loadConfig({ projectRoot }, {
+      MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+    } as NodeJS.ProcessEnv);
     const app = new Hono();
     app.route("/api/run", runRoutes(config));
 
@@ -362,14 +391,22 @@ describe("Run API", () => {
     const storyDir = flightPath(projectRoot, ".moe-flight", "stories");
     mkdirSync(storyDir, { recursive: true });
     const storyPath = join(storyDir, "story-001.md");
-    writeFileSync(storyPath, `---\nid: story-001\ntitle: Test\nstatus: draft\ntags: core\n---\n\nbody\n\n## Acceptance Criteria\n- works\n`);
+    writeFileSync(
+      storyPath,
+      `---\nid: story-001\ntitle: Test\nstatus: draft\ntags: core\n---\n\nbody\n\n## Acceptance Criteria\n- works\n`,
+    );
 
-    const cfg = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
-    const effective = mergeRunConfig(cfg, validateRunBody({
-      target: "http://localhost:3000",
-      adapter: "web",
-      saveScreencast,
-    }));
+    const cfg = loadConfig({ projectRoot }, {
+      MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+    } as NodeJS.ProcessEnv);
+    const effective = mergeRunConfig(
+      cfg,
+      validateRunBody({
+        target: "http://localhost:3000",
+        adapter: "web",
+        saveScreencast,
+      }),
+    );
 
     // executeHttpRun catches the streamer.start() failure (chrome not
     // running) and falls through to cleanup — fine for our purposes,
@@ -384,7 +421,9 @@ describe("Run API", () => {
       stateDirName: ".moe-flight",
       registry,
       adapterFactory: () => stubAdapter,
-    }).catch(() => { /* swallow expected streamer failure */ });
+    }).catch(() => {
+      /* swallow expected streamer failure */
+    });
 
     return { framesDir: join(flightPath(projectRoot, ".moe-flight", "results", runId), "frames") };
   }

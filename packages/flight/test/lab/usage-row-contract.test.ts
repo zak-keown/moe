@@ -2,9 +2,9 @@ import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
+import { estimateUsageSidecar } from "../../src/lab/tab/index.js";
 import { EvidenceLogger, USAGE_ROW_TYPE } from "../../src/qa/evidence/logger.js";
 import { asCardId, asRunId } from "../../src/qa/util/brands.js";
-import { estimateUsageSidecar } from "../../src/lab/tab/index.js";
 
 /**
  * The one test that closes the `moe-flight -> moe-tab` loop: flight WRITES a

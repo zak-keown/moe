@@ -1,10 +1,9 @@
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { existsSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
-import { renderRun } from "../../../src/qa/render/render-run.js";
 import { staticReportTemplate } from "../../../src/package-root.js";
+import { renderRun } from "../../../src/qa/render/render-run.js";
 
 /**
  * The one test that exercises the REAL built template.

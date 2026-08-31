@@ -1,6 +1,5 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
-
 import { createRequire } from "node:module";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 // The CDP library under src/qa/adapters/web/lib/ is vendored CommonJS.
 // Bun tolerated a bare `require()` in an ESM file; Node and vitest do
@@ -45,7 +44,9 @@ describe("BrowserContext isolation across parallel adapter sessions (PRI-1535)",
     const bCookies = await psB.send("Network.getCookies", {
       urls: ["https://example.test/"],
     });
-    expect((bCookies.cookies || []).find((c: any) => c.name === "across-sessions-A")).toBeUndefined();
+    expect(
+      (bCookies.cookies || []).find((c: any) => c.name === "across-sessions-A"),
+    ).toBeUndefined();
 
     await psA.detach();
     await psB.detach();

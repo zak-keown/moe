@@ -1,10 +1,10 @@
-import { describe, test, expect } from "vitest";
 import { mkdtempSync, readFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
 import { RunSetWriter } from "../../../src/qa/evidence/run-set-writer.js";
-import type { VerdictResult } from "../../../src/qa/types.js";
 import type { RunSetCtx } from "../../../src/qa/runs/run-set-types.js";
+import type { VerdictResult } from "../../../src/qa/types.js";
 
 // PRI-1507 — when a v5 "errored" run still has a result.json on disk
 // (e.g., interrupted by shutdown drain after the agent loop accumulated
@@ -47,7 +47,9 @@ describe("RunSetWriter.summarizeCard — errored with usage (PRI-1507)", () => {
     writer.recordRunEnd("r1", "errored");
     writer.finalize((_id) => null);
 
-    const set = JSON.parse(readFileSync(join(root, "run-sets", "single_test", "set.json"), "utf-8"));
+    const set = JSON.parse(
+      readFileSync(join(root, "run-sets", "single_test", "set.json"), "utf-8"),
+    );
     const summary = set.summary.perCard[0];
     expect(summary.byStatus.errored).toBe(1);
     expect(summary.medianTurns).toBe(0); // no samples
@@ -59,15 +61,21 @@ describe("RunSetWriter.summarizeCard — errored with usage (PRI-1507)", () => {
     const writer = new RunSetWriter(root, makeCtx(1));
     writer.start([{ runId: "r1", cardId: "card-x", attemptNumber: 1 }]);
     writer.recordRunEnd("r1", "errored");
-    writer.finalize((id) => id === "r1" ? makeResult({
-      runId: "r1",
-      status: "errored",
-      duration_ms: 5000,
-      usage: { inputTokens: 100, outputTokens: 50, turns: 7 },
-      error: { type: "shutdown_interrupted", message: "..." },
-    }) : null);
+    writer.finalize((id) =>
+      id === "r1"
+        ? makeResult({
+            runId: "r1",
+            status: "errored",
+            duration_ms: 5000,
+            usage: { inputTokens: 100, outputTokens: 50, turns: 7 },
+            error: { type: "shutdown_interrupted", message: "..." },
+          })
+        : null,
+    );
 
-    const set = JSON.parse(readFileSync(join(root, "run-sets", "single_test", "set.json"), "utf-8"));
+    const set = JSON.parse(
+      readFileSync(join(root, "run-sets", "single_test", "set.json"), "utf-8"),
+    );
     const summary = set.summary.perCard[0];
     expect(summary.byStatus.errored).toBe(1);
     expect(summary.medianTurns).toBe(7);
@@ -89,13 +97,30 @@ describe("RunSetWriter.summarizeCard — errored with usage (PRI-1507)", () => {
     writer.recordRunEnd("r4", "errored"); // catch-path errored, no result
 
     writer.finalize((id) => {
-      if (id === "r1") return makeResult({ runId: "r1", status: "pass", usage: { inputTokens: 100, outputTokens: 50, turns: 3 } });
-      if (id === "r2") return makeResult({ runId: "r2", status: "errored", usage: { inputTokens: 100, outputTokens: 50, turns: 4 } });
-      if (id === "r3") return makeResult({ runId: "r3", status: "pass", usage: { inputTokens: 100, outputTokens: 50, turns: 5 } });
+      if (id === "r1")
+        return makeResult({
+          runId: "r1",
+          status: "pass",
+          usage: { inputTokens: 100, outputTokens: 50, turns: 3 },
+        });
+      if (id === "r2")
+        return makeResult({
+          runId: "r2",
+          status: "errored",
+          usage: { inputTokens: 100, outputTokens: 50, turns: 4 },
+        });
+      if (id === "r3")
+        return makeResult({
+          runId: "r3",
+          status: "pass",
+          usage: { inputTokens: 100, outputTokens: 50, turns: 5 },
+        });
       return null; // r4: catch-path, no result
     });
 
-    const set = JSON.parse(readFileSync(join(root, "run-sets", "single_test", "set.json"), "utf-8"));
+    const set = JSON.parse(
+      readFileSync(join(root, "run-sets", "single_test", "set.json"), "utf-8"),
+    );
     const summary = set.summary.perCard[0];
     expect(summary.byStatus).toMatchObject({ pass: 2, errored: 2 });
     // Samples: 3 (r1), 4 (r2), 5 (r3). r4 catch-path skipped. Median = 4.

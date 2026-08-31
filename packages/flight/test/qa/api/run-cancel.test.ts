@@ -1,5 +1,5 @@
-import { describe, test, expect } from "vitest";
 import { Hono } from "hono";
+import { describe, expect, test } from "vitest";
 import { CancelTokenRegistry, runCancelRoutes } from "../../../src/qa/api/run-cancel.js";
 
 describe("CancelTokenRegistry", () => {

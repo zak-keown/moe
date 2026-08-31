@@ -1,11 +1,16 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { ActiveRunRegistry } from "../../../src/qa/api/active-runs.js";
 
 describe("ActiveRunRegistry", () => {
   // Per-run shape: `id` is the runId (the primary key), `cardId` is
   // payload metadata. Tests use synthetic ids that satisfy both fields
   // independently — the registry doesn't parse runId structure.
-  const info = (runId: string, startedAt: number, cardId = "card-x", status: "queued" | "running" = "running") => ({
+  const info = (
+    runId: string,
+    startedAt: number,
+    cardId = "card-x",
+    status: "queued" | "running" = "running",
+  ) => ({
     id: runId,
     cardId,
     title: `Title ${runId}`,
@@ -180,7 +185,6 @@ describe("ActiveRunRegistry — status", () => {
     const r = new ActiveRunRegistry();
     expect(() => r.setStatus("nope", "running")).not.toThrow();
   });
-
 });
 
 // PRI-1507 — AbortController storage and bulk abort. Independent describe

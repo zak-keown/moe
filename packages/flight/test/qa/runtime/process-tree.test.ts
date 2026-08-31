@@ -1,5 +1,5 @@
-import { describe, test, expect } from "vitest";
-import { listDescendants, killProcessTree } from "../../../src/qa/runtime/process-tree.js";
+import { describe, expect, test } from "vitest";
+import { killProcessTree, listDescendants } from "../../../src/qa/runtime/process-tree.js";
 import { spawn } from "../../../src/qa/runtime/spawn.js";
 
 describe("listDescendants", () => {
@@ -12,7 +12,12 @@ describe("listDescendants", () => {
       const kids = listDescendants(parent.pid);
       expect(kids.length).toBeGreaterThan(0);
       const alive = kids.filter((pid) => {
-        try { process.kill(pid, 0); return true; } catch { return false; }
+        try {
+          process.kill(pid, 0);
+          return true;
+        } catch {
+          return false;
+        }
       });
       expect(alive.length).toBeGreaterThan(0);
     } finally {
@@ -41,10 +46,9 @@ test("killProcessTree SIGKILLs the pgid and reaps descendants", async () => {
   const dir = mkdtempSync(join(tmpdir(), "moe-flight-killtree-"));
   const pidFile = join(dir, "child.pid");
 
-  const parent = spawn(
-    ["bash", "-c", `sleep 30 & echo $! > ${pidFile}; sleep 30`],
-    { detached: true },
-  );
+  const parent = spawn(["bash", "-c", `sleep 30 & echo $! > ${pidFile}; sleep 30`], {
+    detached: true,
+  });
 
   // Wait for the pid file to be written
   let childPid = 0;
@@ -52,7 +56,9 @@ test("killProcessTree SIGKILLs the pgid and reaps descendants", async () => {
     try {
       childPid = Number(readFileSync(pidFile, "utf-8").trim());
       if (childPid > 0) break;
-    } catch { /* not yet */ }
+    } catch {
+      /* not yet */
+    }
     await new Promise((r) => setTimeout(r, 20));
   }
   expect(childPid).toBeGreaterThan(0);
@@ -67,7 +73,11 @@ test("killProcessTree SIGKILLs the pgid and reaps descendants", async () => {
   // Both parent and background child should be dead now.
   await new Promise((r) => setTimeout(r, 50));
   let childAlive = true;
-  try { process.kill(childPid, 0); } catch { childAlive = false; }
+  try {
+    process.kill(childPid, 0);
+  } catch {
+    childAlive = false;
+  }
   expect(childAlive).toBe(false);
   await parent.exited;
 });

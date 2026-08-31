@@ -1,10 +1,10 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { createApp } from "../../../src/qa/api/server.js";
 import { loadConfig } from "../../../src/qa/config.js";
 import { flightPath } from "../../../src/qa/paths.js";
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from "fs";
-import { join } from "path";
-import { tmpdir } from "os";
 
 const makeApp = (projectRoot: string, uiDir?: string) =>
   createApp(loadConfig({ projectRoot }, {} as NodeJS.ProcessEnv), uiDir);

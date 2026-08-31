@@ -1,10 +1,10 @@
-import { describe, test, expect } from "vitest";
-import OpenAI from "openai";
+import type OpenAI from "openai";
+import { describe, expect, test } from "vitest";
 import {
-  createOpenAIClient,
-  openaiToolResultMessages,
   convertResponse,
+  createOpenAIClient,
   deriveStopReason,
+  openaiToolResultMessages,
 } from "../../../src/qa/models/openai.js";
 
 describe("OpenAI message helpers (Responses API shape)", () => {
@@ -36,7 +36,11 @@ describe("OpenAI message helpers (Responses API shape)", () => {
       { id: "call_def", name: "click", arguments: { x: 10, y: 20 } },
     ];
     const results = [
-      { kind: "image" as const, text: "Screenshot captured", image: { data: "iVBOR...", mediaType: "image/png" } },
+      {
+        kind: "image" as const,
+        text: "Screenshot captured",
+        image: { data: "iVBOR...", mediaType: "image/png" },
+      },
       { kind: "text" as const, text: "clicked" },
     ];
 
@@ -73,14 +77,26 @@ describe("OpenAI message helpers (Responses API shape)", () => {
       { id: "call_2", name: "click", arguments: { return_screenshot: true } },
     ];
     const results = [
-      { kind: "image" as const, text: "Screenshot 1", image: { data: "img1data", mediaType: "image/png" } },
-      { kind: "image" as const, text: "Clicked + screenshot", image: { data: "img2data", mediaType: "image/png" } },
+      {
+        kind: "image" as const,
+        text: "Screenshot 1",
+        image: { data: "img1data", mediaType: "image/png" },
+      },
+      {
+        kind: "image" as const,
+        text: "Clicked + screenshot",
+        image: { data: "img2data", mediaType: "image/png" },
+      },
     ];
 
     const messages = openaiToolResultMessages(calls, results);
 
     expect(messages).toHaveLength(3);
-    const userMsg = messages[2] as { type: string; role: string; content: Array<Record<string, unknown>> };
+    const userMsg = messages[2] as {
+      type: string;
+      role: string;
+      content: Array<Record<string, unknown>>;
+    };
     expect(userMsg.type).toBe("message");
     expect(userMsg.role).toBe("user");
     expect(userMsg.content).toHaveLength(3); // 1 text + 2 images
@@ -116,7 +132,11 @@ describe("OpenAI message helpers (Responses API shape)", () => {
     const calls = [{ id: "call_1", name: "click", arguments: {} }];
     const results = [{ text: "clicked" }];
 
-    const messages = openaiToolResultMessages(calls, results, "<SYSTEM-REMINDER>reflect</SYSTEM-REMINDER>");
+    const messages = openaiToolResultMessages(
+      calls,
+      results,
+      "<SYSTEM-REMINDER>reflect</SYSTEM-REMINDER>",
+    );
 
     expect(messages).toHaveLength(2);
     expect(messages[1]).toEqual({
@@ -130,9 +150,11 @@ describe("OpenAI message helpers (Responses API shape)", () => {
 // Helpers for building Response fixtures with the minimum surface
 // `convertResponse` actually reads.
 type FakeResponse = OpenAI.Responses.Response;
-function fakeResponse(overrides: Partial<FakeResponse> & {
-  output: OpenAI.Responses.ResponseOutputItem[];
-}): FakeResponse {
+function fakeResponse(
+  overrides: Partial<FakeResponse> & {
+    output: OpenAI.Responses.ResponseOutputItem[];
+  },
+): FakeResponse {
   return {
     id: "resp_x",
     created_at: 0,
@@ -154,17 +176,19 @@ function fakeResponse(overrides: Partial<FakeResponse> & {
 
 describe("convertResponse", () => {
   test("extracts plain text from a message item", () => {
-    const r = convertResponse(fakeResponse({
-      output: [
-        {
-          type: "message",
-          id: "msg_1",
-          role: "assistant",
-          status: "completed",
-          content: [{ type: "output_text", text: "hello world", annotations: [], logprobs: [] }],
-        } as OpenAI.Responses.ResponseOutputMessage,
-      ],
-    }));
+    const r = convertResponse(
+      fakeResponse({
+        output: [
+          {
+            type: "message",
+            id: "msg_1",
+            role: "assistant",
+            status: "completed",
+            content: [{ type: "output_text", text: "hello world", annotations: [], logprobs: [] }],
+          } as OpenAI.Responses.ResponseOutputMessage,
+        ],
+      }),
+    );
     expect(r.text).toBe("hello world");
     expect(r.toolCalls).toHaveLength(0);
     expect(r.reasoning).toBeUndefined();
@@ -172,35 +196,41 @@ describe("convertResponse", () => {
   });
 
   test("extracts a function call into toolCalls and sets stopReason: tool_use", () => {
-    const r = convertResponse(fakeResponse({
-      output: [
-        {
-          type: "function_call",
-          call_id: "call_xyz",
-          name: "click",
-          arguments: '{"selector":"button"}',
-          id: "fc_1",
-          status: "completed",
-        } as OpenAI.Responses.ResponseFunctionToolCall,
-      ],
-    }));
-    expect(r.toolCalls).toEqual([{ id: "call_xyz", name: "click", arguments: { selector: "button" } }]);
+    const r = convertResponse(
+      fakeResponse({
+        output: [
+          {
+            type: "function_call",
+            call_id: "call_xyz",
+            name: "click",
+            arguments: '{"selector":"button"}',
+            id: "fc_1",
+            status: "completed",
+          } as OpenAI.Responses.ResponseFunctionToolCall,
+        ],
+      }),
+    );
+    expect(r.toolCalls).toEqual([
+      { id: "call_xyz", name: "click", arguments: { selector: "button" } },
+    ]);
     expect(r.stopReason).toBe("tool_use");
   });
 
   test("joins multiple reasoning summary parts into AgentResponse.reasoning", () => {
-    const r = convertResponse(fakeResponse({
-      output: [
-        {
-          type: "reasoning",
-          id: "rs_1",
-          summary: [
-            { type: "summary_text", text: "First, I considered..." },
-            { type: "summary_text", text: " then I decided..." },
-          ],
-        } as OpenAI.Responses.ResponseReasoningItem,
-      ],
-    }));
+    const r = convertResponse(
+      fakeResponse({
+        output: [
+          {
+            type: "reasoning",
+            id: "rs_1",
+            summary: [
+              { type: "summary_text", text: "First, I considered..." },
+              { type: "summary_text", text: " then I decided..." },
+            ],
+          } as OpenAI.Responses.ResponseReasoningItem,
+        ],
+      }),
+    );
     expect(r.reasoning).toBe("First, I considered... then I decided...");
   });
 
@@ -230,16 +260,18 @@ describe("convertResponse", () => {
   });
 
   test("subtracts cached_tokens from input_tokens to produce uncached count", () => {
-    const r = convertResponse(fakeResponse({
-      output: [],
-      usage: {
-        input_tokens: 1500,
-        input_tokens_details: { cached_tokens: 1000, cache_write_tokens: 0 },
-        output_tokens: 200,
-        output_tokens_details: { reasoning_tokens: 50 },
-        total_tokens: 1700,
-      },
-    }));
+    const r = convertResponse(
+      fakeResponse({
+        output: [],
+        usage: {
+          input_tokens: 1500,
+          input_tokens_details: { cached_tokens: 1000, cache_write_tokens: 0 },
+          output_tokens: 200,
+          output_tokens_details: { reasoning_tokens: 50 },
+          total_tokens: 1700,
+        },
+      }),
+    );
     expect(r.usage.inputTokens).toBe(500);
     expect(r.usage.cacheReadInputTokens).toBe(1000);
     expect(r.usage.outputTokens).toBe(200);
@@ -258,39 +290,46 @@ describe("convertResponse", () => {
   });
 
   test("cacheReadInputTokens is undefined when cached_tokens is 0", () => {
-    const r = convertResponse(fakeResponse({
-      output: [],
-      usage: {
-        input_tokens: 800,
-        input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
-        output_tokens: 100,
-        output_tokens_details: { reasoning_tokens: 0 },
-        total_tokens: 900,
-      },
-    }));
+    const r = convertResponse(
+      fakeResponse({
+        output: [],
+        usage: {
+          input_tokens: 800,
+          input_tokens_details: { cached_tokens: 0, cache_write_tokens: 0 },
+          output_tokens: 100,
+          output_tokens_details: { reasoning_tokens: 0 },
+          total_tokens: 900,
+        },
+      }),
+    );
     expect(r.usage.inputTokens).toBe(800);
     expect(r.usage.cacheReadInputTokens).toBeUndefined();
   });
 
   test("refusal content surfaces as text with marker and stopReason: refusal", () => {
-    const r = convertResponse(fakeResponse({
-      output: [
-        {
-          type: "message",
-          id: "msg_1",
-          role: "assistant",
-          status: "completed",
-          content: [{ type: "refusal", refusal: "I cannot help with that." }],
-        } as OpenAI.Responses.ResponseOutputMessage,
-      ],
-    }));
+    const r = convertResponse(
+      fakeResponse({
+        output: [
+          {
+            type: "message",
+            id: "msg_1",
+            role: "assistant",
+            status: "completed",
+            content: [{ type: "refusal", refusal: "I cannot help with that." }],
+          } as OpenAI.Responses.ResponseOutputMessage,
+        ],
+      }),
+    );
     expect(r.text).toBe("[refusal] I cannot help with that.");
     expect(r.stopReason).toBe("refusal");
   });
 });
 
 describe("deriveStopReason", () => {
-  const mk = (status: OpenAI.Responses.ResponseStatus | undefined, reason?: "max_output_tokens" | "content_filter") =>
+  const mk = (
+    status: OpenAI.Responses.ResponseStatus | undefined,
+    reason?: "max_output_tokens" | "content_filter",
+  ) =>
     fakeResponse({
       output: [],
       ...(status !== undefined && { status }),

@@ -1,6 +1,5 @@
-import { describe, test, expect, beforeAll, afterAll } from "vitest";
-
 import { createRequire } from "node:module";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 // The CDP library under src/qa/adapters/web/lib/ is vendored CommonJS.
 // Bun tolerated a bare `require()` in an ESM file; Node and vitest do
@@ -28,7 +27,7 @@ describe("PRI-1439 side-trip popup regression (PRI-1535 capability)", () => {
     const start = Date.now();
     const popupP = session.targets.waitForNew(
       (t: any) => t.openerId === parent.targetId && t.type === "page",
-      { timeoutMs: 1000 }
+      { timeoutMs: 1000 },
     );
 
     // userGesture: true is required for window.open to actually spawn a tab.

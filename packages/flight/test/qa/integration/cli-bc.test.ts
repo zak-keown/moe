@@ -1,13 +1,13 @@
-import { describe, test, expect } from "vitest";
-import { runAgent } from "../../../src/qa/agent/agent.js";
-import { CLIAdapter } from "../../../src/qa/adapters/cli/adapter.js";
-import { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
-import { makeRunId } from "../../../src/qa/util/id.js";
-import type { AgentResponse } from "../../../src/qa/models/provider.js";
 import { mkdtempSync } from "fs";
-import { join } from "path";
 import { tmpdir } from "os";
-import { citeAll, loadStory, step, report, makeScriptedClient } from "./helpers.js";
+import { join } from "path";
+import { describe, expect, test } from "vitest";
+import { CLIAdapter } from "../../../src/qa/adapters/cli/adapter.js";
+import { runAgent } from "../../../src/qa/agent/agent.js";
+import { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
+import type { AgentResponse } from "../../../src/qa/models/provider.js";
+import { makeRunId } from "../../../src/qa/util/id.js";
+import { citeAll, loadStory, makeScriptedClient, report, step } from "./helpers.js";
 
 describe("CLI adapter e2e — bc calculator", () => {
   test("pass: bc performs arithmetic", async () => {
@@ -31,7 +31,11 @@ describe("CLI adapter e2e — bc calculator", () => {
 
     try {
       await adapter.start("bc -q");
-      const result = await runAgent(card, adapter, client, logger, undefined, { runId: makeRunId(card.id), budgetMs: 60_000, reflectionInterval: 0 });
+      const result = await runAgent(card, adapter, client, logger, undefined, {
+        runId: makeRunId(card.id),
+        budgetMs: 60_000,
+        reflectionInterval: 0,
+      });
 
       expect(result.status).toBe("pass");
       expect(result.scenario).toBe("bc-arithmetic-pass");
@@ -54,7 +58,7 @@ describe("CLI adapter e2e — bc calculator", () => {
         "fail",
         "bc has no help command",
         "Typing help produced an error, not a help menu",
-        citeAll(card, "fail")
+        citeAll(card, "fail"),
       ),
     ];
 
@@ -62,7 +66,11 @@ describe("CLI adapter e2e — bc calculator", () => {
 
     try {
       await adapter.start("bc -q");
-      const result = await runAgent(card, adapter, client, logger, undefined, { runId: makeRunId(card.id), budgetMs: 60_000, reflectionInterval: 0 });
+      const result = await runAgent(card, adapter, client, logger, undefined, {
+        runId: makeRunId(card.id),
+        budgetMs: 60_000,
+        reflectionInterval: 0,
+      });
 
       expect(result.status).toBe("fail");
       expect(result.scenario).toBe("bc-help-fail");

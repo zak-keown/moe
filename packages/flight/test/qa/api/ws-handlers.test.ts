@@ -1,11 +1,11 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import { RunBroadcaster } from "../../../src/qa/api/ws.js";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { ActiveRunRegistry } from "../../../src/qa/api/active-runs.js";
-import { handleWsOpen, handleSetWsOpen } from "../../../src/qa/api/ws-handlers.js";
 import { RunSetBroadcaster } from "../../../src/qa/api/run-set-broadcaster.js";
+import { RunBroadcaster } from "../../../src/qa/api/ws.js";
+import { handleSetWsOpen, handleWsOpen } from "../../../src/qa/api/ws-handlers.js";
 
 function makeWs() {
   const sent: string[] = [];
@@ -99,8 +99,20 @@ describe("handleWsOpen", () => {
     test("sends transcriptSnapshot when run.jsonl exists on disk", () => {
       mkdirSync(join(resultsRoot, RUN_ID), { recursive: true });
       const events = [
-        { eventId: 1, parentEventId: 0, ts: "2026-04-21T00:00:00.000Z", type: "run_start", runId: RUN_ID },
-        { eventId: 2, parentEventId: 1, ts: "2026-04-21T00:00:00.001Z", type: "system_prompt", content: "be helpful" },
+        {
+          eventId: 1,
+          parentEventId: 0,
+          ts: "2026-04-21T00:00:00.000Z",
+          type: "run_start",
+          runId: RUN_ID,
+        },
+        {
+          eventId: 2,
+          parentEventId: 1,
+          ts: "2026-04-21T00:00:00.001Z",
+          type: "system_prompt",
+          content: "be helpful",
+        },
       ];
       writeFileSync(
         join(resultsRoot, RUN_ID, "run.jsonl"),
@@ -207,7 +219,17 @@ describe("handleSetWsOpen", () => {
     const flightRoot = join(projectRoot, ".moe-flight");
     const id = "single_20260430T000000Z_test";
     mkdirSync(join(flightRoot, "run-sets", id), { recursive: true });
-    const manifest = { schemaVersion: 1, runSetId: id, kind: "single", passes: 1, cards: ["c"], runs: [], summary: null, createdAt: "x", completedAt: null };
+    const manifest = {
+      schemaVersion: 1,
+      runSetId: id,
+      kind: "single",
+      passes: 1,
+      cards: ["c"],
+      runs: [],
+      summary: null,
+      createdAt: "x",
+      completedAt: null,
+    };
     writeFileSync(join(flightRoot, "run-sets", id, "set.json"), JSON.stringify(manifest));
 
     const broadcaster = new RunSetBroadcaster();

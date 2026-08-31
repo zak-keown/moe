@@ -1,8 +1,8 @@
-import { describe, test, expect, beforeEach } from "vitest";
+import { mkdirSync, mkdtempSync, writeFileSync } from "fs";
 import { Hono } from "hono";
-import { mkdtempSync, mkdirSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { beforeEach, describe, expect, test } from "vitest";
 import { runSetRoutes } from "../../../src/qa/api/routes/run-sets.js";
 import { CancelTokenRegistry } from "../../../src/qa/api/run-cancel.js";
 
@@ -23,11 +23,16 @@ const fakeManifest = (id: string) => ({
     { runId: "card-a_t3_z", cardId: "card-a", attemptNumber: 3, status: "pass" },
   ],
   summary: {
-    perCard: [{
-      cardId: "card-a", passes: 3,
-      byStatus: { pass: 3, fail: 0, investigate: 0, errored: 0, cancelled: 0 },
-      cardStatus: "consistent_pass", medianTurns: 5, medianDurationMs: 4000,
-    }],
+    perCard: [
+      {
+        cardId: "card-a",
+        passes: 3,
+        byStatus: { pass: 3, fail: 0, investigate: 0, errored: 0, cancelled: 0 },
+        cardStatus: "consistent_pass",
+        medianTurns: 5,
+        medianDurationMs: 4000,
+      },
+    ],
     overall: {
       totalRuns: 3,
       byStatus: { pass: 3, fail: 0, investigate: 0, errored: 0, cancelled: 0 },
@@ -83,7 +88,9 @@ describe("DELETE /api/run-sets/:id", () => {
     const app = new Hono();
     app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".moe-flight"), cancelTokens));
 
-    const res = await app.request("/api/run-sets/single_20260430T000000Z_abcd", { method: "DELETE" });
+    const res = await app.request("/api/run-sets/single_20260430T000000Z_abcd", {
+      method: "DELETE",
+    });
     expect(res.status).toBe(202);
     const body = await res.json();
     expect(body.status).toBe("cancelling");
@@ -92,14 +99,22 @@ describe("DELETE /api/run-sets/:id", () => {
 
   test("returns 404 if no in-flight set with that id", async () => {
     const app = new Hono();
-    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".moe-flight"), new CancelTokenRegistry()));
-    const res = await app.request("/api/run-sets/single_20260430T000000Z_xyz", { method: "DELETE" });
+    app.route(
+      "/api/run-sets",
+      runSetRoutes(join(projectRoot, ".moe-flight"), new CancelTokenRegistry()),
+    );
+    const res = await app.request("/api/run-sets/single_20260430T000000Z_xyz", {
+      method: "DELETE",
+    });
     expect(res.status).toBe(404);
   });
 
   test("rejects invalid id format with 400", async () => {
     const app = new Hono();
-    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".moe-flight"), new CancelTokenRegistry()));
+    app.route(
+      "/api/run-sets",
+      runSetRoutes(join(projectRoot, ".moe-flight"), new CancelTokenRegistry()),
+    );
     const res = await app.request("/api/run-sets/..%2F..%2Fetc%2Fpasswd", { method: "DELETE" });
     expect(res.status).toBe(400);
   });

@@ -1,14 +1,14 @@
-import { describe, test, expect, afterEach } from "vitest";
-import { runAgent } from "../../../src/qa/agent/agent.js";
-import { TUIAdapter } from "../../../src/qa/adapters/tui/adapter.js";
-import { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
-import { makeRunId } from "../../../src/qa/util/id.js";
-import type { AgentResponse } from "../../../src/qa/models/provider.js";
-import { mkdtempSync, readFileSync, existsSync } from "fs";
-import { join } from "path";
+import { existsSync, mkdtempSync, readFileSync } from "fs";
 import { tmpdir } from "os";
-import { citeAll, loadStory, step, report, makeScriptedClient } from "./helpers.js";
+import { join } from "path";
+import { afterEach, describe, expect, test } from "vitest";
+import { TUIAdapter } from "../../../src/qa/adapters/tui/adapter.js";
+import { runAgent } from "../../../src/qa/agent/agent.js";
+import { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
+import type { AgentResponse } from "../../../src/qa/models/provider.js";
 import { spawnSync } from "../../../src/qa/runtime/spawn.js";
+import { makeRunId } from "../../../src/qa/util/id.js";
+import { citeAll, loadStory, makeScriptedClient, report, step } from "./helpers.js";
 
 const hasTmux = (() => {
   try {
@@ -98,9 +98,7 @@ describe.skipIf(!hasTmux)("TUI adapter e2e — colored-alphabet capture evidence
       .trim()
       .split("\n")
       .map((l) => JSON.parse(l));
-    const toolResult = jsonl.find(
-      (e) => e.type === "tool_result" && e.name === "read_screen",
-    );
+    const toolResult = jsonl.find((e) => e.type === "tool_result" && e.name === "read_screen");
     expect(toolResult).toBeDefined();
     expect(toolResult.text).toBe("captures/000.ansi");
     // Defense: the inline ANSI should NOT appear in the tool_result row.
@@ -108,9 +106,7 @@ describe.skipIf(!hasTmux)("TUI adapter e2e — colored-alphabet capture evidence
 
     // A tui_capture anomaly event was logged — the broadcaster forwards
     // this to WS clients subscribed to the run.
-    const captureEvent = jsonl.find(
-      (e) => e.type === "event" && e.name === "tui_capture",
-    );
+    const captureEvent = jsonl.find((e) => e.type === "event" && e.name === "tui_capture");
     expect(captureEvent).toBeDefined();
     expect(captureEvent.path).toBe("captures/000.ansi");
     expect(captureEvent.cols).toBe(120);

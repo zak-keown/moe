@@ -1,10 +1,10 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { findCard, loadAllCards } from "../../../src/qa/cards/store.js";
-import { ErrorLog } from "../../../src/qa/util/error-log.js";
-import { flightPath } from "../../../src/qa/paths.js";
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync, readdirSync } from "fs";
-import { join } from "path";
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
+import { join } from "path";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { findCard, loadAllCards } from "../../../src/qa/cards/store.js";
+import { flightPath } from "../../../src/qa/paths.js";
+import { ErrorLog } from "../../../src/qa/util/error-log.js";
 
 function cardMd(id: string, title: string, extraFields: string[] = []): string {
   const lines = [
@@ -57,10 +57,7 @@ describe("findCard", () => {
     // has id `story-001-a` but the filename doesn't match a direct hit
     // on `story-001-a.md`... actually it does. Let's make a true fallback:
     // the frontmatter id doesn't match the filename stem.
-    writeFileSync(
-      join(storiesDir, "legacy-filename.md"),
-      cardMd("story-xyz", "Legacy card"),
-    );
+    writeFileSync(join(storiesDir, "legacy-filename.md"), cardMd("story-xyz", "Legacy card"));
 
     const entry = findCard(projectRoot, ".moe-flight", "story-xyz");
     expect(entry).toBeDefined();
@@ -93,14 +90,8 @@ describe("findCard", () => {
     // File at story-001.md has a mismatched frontmatter id. Someone
     // renamed the file without updating the id. Scan should still find
     // the real story-001 living elsewhere.
-    writeFileSync(
-      join(storiesDir, "story-001.md"),
-      cardMd("wrong-id", "Mislabeled"),
-    );
-    writeFileSync(
-      join(storiesDir, "correct.md"),
-      cardMd("story-001", "Correct"),
-    );
+    writeFileSync(join(storiesDir, "story-001.md"), cardMd("wrong-id", "Mislabeled"));
+    writeFileSync(join(storiesDir, "correct.md"), cardMd("story-001", "Correct"));
 
     const entry = findCard(projectRoot, ".moe-flight", "story-001");
     expect(entry).toBeDefined();
@@ -112,10 +103,7 @@ describe("findCard", () => {
     // Direct hit misses (no `target.md`), fallback engages. One file in
     // the scan is broken — it must be skipped, not propagate.
     writeFileSync(join(storiesDir, "broken.md"), "garbage");
-    writeFileSync(
-      join(storiesDir, "legacy.md"),
-      cardMd("target", "Target card"),
-    );
+    writeFileSync(join(storiesDir, "legacy.md"), cardMd("target", "Target card"));
 
     const log = new ErrorLog();
     const entry = findCard(projectRoot, ".moe-flight", "target", log);

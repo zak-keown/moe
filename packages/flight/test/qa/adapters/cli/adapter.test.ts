@@ -1,7 +1,7 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { CLIAdapter } from "../../../../src/qa/adapters/cli/adapter.js";
 import type { EvidenceLogger } from "../../../../src/qa/evidence/logger.js";
 import { withCredentialFixture } from "../../helpers/credential-fixture.js";
@@ -91,13 +91,10 @@ describe("CLIAdapter", () => {
   });
 
   test("omits fetch_credential when credentialResolver is undefined", async () => {
-    await withCredentialFixture(
-      { contextFiles: { "alice.md": "anything" } },
-      ({ contextDir }) => {
-        const adapter = new CLIAdapter({ contextRoot: contextDir });
-        expect(adapter.toolDefinitions().map((t) => t.name)).not.toContain("fetch_credential");
-      },
-    );
+    await withCredentialFixture({ contextFiles: { "alice.md": "anything" } }, ({ contextDir }) => {
+      const adapter = new CLIAdapter({ contextRoot: contextDir });
+      expect(adapter.toolDefinitions().map((t) => t.name)).not.toContain("fetch_credential");
+    });
   });
 
   test("omits fetch_credential when contextRoot is empty even if resolver is set", async () => {

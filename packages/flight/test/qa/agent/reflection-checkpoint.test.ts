@@ -1,10 +1,15 @@
-import { describe, test, expect } from "vitest";
-import { runAgent } from "../../../src/qa/agent/agent.js";
-import { makeRunId } from "../../../src/qa/util/id.js";
-import type { LLMClient, AgentResponse, ToolCall, ToolResult } from "../../../src/qa/models/provider.js";
+import { describe, expect, test } from "vitest";
 import type { Adapter } from "../../../src/qa/adapters/adapter.js";
+import { runAgent } from "../../../src/qa/agent/agent.js";
 import type { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
 import type { StoryCard } from "../../../src/qa/format/story-card.js";
+import type {
+  AgentResponse,
+  LLMClient,
+  ToolCall,
+  ToolResult,
+} from "../../../src/qa/models/provider.js";
+import { makeRunId } from "../../../src/qa/util/id.js";
 
 const card: StoryCard = {
   id: "test-checkpoint",
@@ -18,7 +23,10 @@ const card: StoryCard = {
   raw: "",
 };
 
-function makeLogger(): EvidenceLogger & { events: Array<{ kind: string; payload: unknown }>; userMessages: Array<{ turn: number; text: string }> } {
+function makeLogger(): EvidenceLogger & {
+  events: Array<{ kind: string; payload: unknown }>;
+  userMessages: Array<{ turn: number; text: string }>;
+} {
   const events: Array<{ kind: string; payload: unknown }> = [];
   const userMessages: Array<{ turn: number; text: string }> = [];
   return {
@@ -32,25 +40,52 @@ function makeLogger(): EvidenceLogger & { events: Array<{ kind: string; payload:
     logRunStart: () => {},
     logSystemPrompt: () => {},
     logToolDefinitions: () => {},
-    logUserMessage: (turn: number, text: string) => { userMessages.push({ turn, text }); },
+    logUserMessage: (turn: number, text: string) => {
+      userMessages.push({ turn, text });
+    },
     logLlmRequest: () => {},
     logLlmResponse: () => {},
     logToolCall: () => {},
     logToolResult: () => {},
-    logEvent: (kind: string, payload: unknown) => { events.push({ kind, payload }); },
+    logEvent: (kind: string, payload: unknown) => {
+      events.push({ kind, payload });
+    },
     logRunEnd: () => {},
     events,
     userMessages,
-  } as unknown as EvidenceLogger & { events: Array<{ kind: string; payload: unknown }>; userMessages: Array<{ turn: number; text: string }> };
+  } as unknown as EvidenceLogger & {
+    events: Array<{ kind: string; payload: unknown }>;
+    userMessages: Array<{ turn: number; text: string }>;
+  };
 }
 
 function makeAdapter(mutatingNames: Set<string> = new Set(["click", "type"])): Adapter {
   return {
     name: "test",
     toolDefinitions: () => [
-      { name: "screenshot", description: "screenshot", parameters: { type: "object", properties: {} } },
-      { name: "click", description: "click", parameters: { type: "object", properties: { selector: { type: "string" } }, required: ["selector"] } },
-      { name: "type", description: "type", parameters: { type: "object", properties: { text: { type: "string" } }, required: ["text"] } },
+      {
+        name: "screenshot",
+        description: "screenshot",
+        parameters: { type: "object", properties: {} },
+      },
+      {
+        name: "click",
+        description: "click",
+        parameters: {
+          type: "object",
+          properties: { selector: { type: "string" } },
+          required: ["selector"],
+        },
+      },
+      {
+        name: "type",
+        description: "type",
+        parameters: {
+          type: "object",
+          properties: { text: { type: "string" } },
+          required: ["text"],
+        },
+      },
     ],
     executeTool: async (name: string) => ({ text: `${name}-ok` }),
     start: async () => {},
@@ -77,7 +112,9 @@ function makeClient(responses: AgentResponse[]): MockClient {
       if (!r) throw new Error("no more mock responses");
       return r;
     },
-    userMessage(content: string) { return { role: "user", content }; },
+    userMessage(content: string) {
+      return { role: "user", content };
+    },
     toolResultMessages(calls: ToolCall[], results: ToolResult[], extraUserText?: string) {
       _extraTexts.push(extraUserText);
       const msgs: unknown[] = calls.map((c, idx) => ({
@@ -109,11 +146,18 @@ function clickResponse(turn: number, selector: string): AgentResponse {
 function reportResponse(): AgentResponse {
   return {
     text: "",
-    toolCalls: [{
-      id: "rr",
-      name: "report_result",
-      arguments: { status: "investigate", summary: "stuck", observations: [], reasoning: "circling" },
-    }],
+    toolCalls: [
+      {
+        id: "rr",
+        name: "report_result",
+        arguments: {
+          status: "investigate",
+          summary: "stuck",
+          observations: [],
+          reasoning: "circling",
+        },
+      },
+    ],
     stopReason: "tool_use",
     rawAssistantMessage: { role: "assistant", content: [] },
     usage: { inputTokens: 1, outputTokens: 1 },
@@ -126,10 +170,10 @@ describe("runAgent — reflection checkpoints", () => {
     const responses: AgentResponse[] = [
       clickResponse(1, "#a"),
       clickResponse(2, "#b"),
-      clickResponse(3, "#c"),  // 1st checkpoint emitted with this turn's tool_result
+      clickResponse(3, "#c"), // 1st checkpoint emitted with this turn's tool_result
       clickResponse(4, "#d"),
       clickResponse(5, "#e"),
-      clickResponse(6, "#f"),  // 2nd checkpoint
+      clickResponse(6, "#f"), // 2nd checkpoint
       reportResponse(),
     ];
     const client = makeClient(responses);
@@ -163,13 +207,17 @@ describe("runAgent — reflection checkpoints", () => {
     expect(extras[5]).toContain('click(selector="#f")');
 
     // Evidence: a reflection_checkpoint event per firing.
-    const checkpoints = (logger as unknown as { events: Array<{ kind: string; payload: unknown }> })
-      .events.filter((e) => e.kind === "reflection_checkpoint");
+    const checkpoints = (
+      logger as unknown as { events: Array<{ kind: string; payload: unknown }> }
+    ).events.filter((e) => e.kind === "reflection_checkpoint");
     expect(checkpoints).toHaveLength(2);
 
     // The injected text appears as a user_message log row too.
-    const userReminders = (logger as unknown as { userMessages: Array<{ turn: number; text: string }> })
-      .userMessages.filter((m) => m.text.includes("<SYSTEM-REMINDER>") && m.text.includes("Reflection checkpoint"));
+    const userReminders = (
+      logger as unknown as { userMessages: Array<{ turn: number; text: string }> }
+    ).userMessages.filter(
+      (m) => m.text.includes("<SYSTEM-REMINDER>") && m.text.includes("Reflection checkpoint"),
+    );
     expect(userReminders).toHaveLength(2);
   });
 
@@ -186,7 +234,7 @@ describe("runAgent — reflection checkpoints", () => {
     const responses: AgentResponse[] = [
       clickResponse(1, "#login"),
       screenshotResp(2),
-      screenshotResp(3),  // checkpoint fires with this turn's tool_result
+      screenshotResp(3), // checkpoint fires with this turn's tool_result
       reportResponse(),
     ];
     const client = makeClient(responses);
@@ -217,8 +265,9 @@ describe("runAgent — reflection checkpoints", () => {
       reflectionInterval: 0,
     });
     expect(client._extraTexts.every((t) => t === undefined)).toBe(true);
-    const checkpoints = (logger as unknown as { events: Array<{ kind: string; payload: unknown }> })
-      .events.filter((e) => e.kind === "reflection_checkpoint");
+    const checkpoints = (
+      logger as unknown as { events: Array<{ kind: string; payload: unknown }> }
+    ).events.filter((e) => e.kind === "reflection_checkpoint");
     expect(checkpoints).toHaveLength(0);
   });
 });

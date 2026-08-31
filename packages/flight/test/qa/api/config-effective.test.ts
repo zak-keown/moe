@@ -1,12 +1,14 @@
-import { describe, test, expect } from "vitest";
 import { Hono } from "hono";
+import { describe, expect, test } from "vitest";
 import { configEffectiveRoutes } from "../../../src/qa/api/routes/config-effective.js";
-import { loadConfig } from "../../../src/qa/config.js";
 import { createApp } from "../../../src/qa/api/server.js";
+import { loadConfig } from "../../../src/qa/config.js";
 
 describe("GET /api/config/effective", () => {
   test("returns moe-flight + sdkEnv payload", async () => {
-    const config = loadConfig({}, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
+    const config = loadConfig({}, {
+      MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+    } as NodeJS.ProcessEnv);
     const app = new Hono();
     app.route("/api/config/effective", configEffectiveRoutes(config));
     const res = await app.request("/api/config/effective");
@@ -37,7 +39,9 @@ describe("GET /api/config/effective", () => {
   });
 
   test("createApp mounts /api/config/effective alongside /api/config", async () => {
-    const config = loadConfig({ projectRoot: "." }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
+    const config = loadConfig({ projectRoot: "." }, {
+      MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+    } as NodeJS.ProcessEnv);
     const app = createApp(config);
 
     const eff = await app.request("/api/config/effective");

@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { serve } from "../../../src/qa/runtime/serve.js";
 import { pickFreePort } from "../../../src/qa/util/pick-free-port.js";
 

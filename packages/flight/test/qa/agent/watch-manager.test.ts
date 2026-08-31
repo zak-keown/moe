@@ -1,10 +1,9 @@
-import { describe, test, expect } from "vitest";
-import { mkdtempSync, writeFileSync, appendFileSync } from "fs";
+import { createRequire } from "node:module";
+import { appendFileSync, mkdtempSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
 import { WatchManager } from "../../../src/qa/agent/watch-manager.js";
-
-import { createRequire } from "node:module";
 
 // The CDP library under src/qa/adapters/web/lib/ is vendored CommonJS.
 // Bun tolerated a bare `require()` in an ESM file; Node and vitest do

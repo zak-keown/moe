@@ -1,10 +1,10 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
-  formatToolCall,
-  renderTrace,
   buildReflectionReminder,
-  MAX_TRACE_ENTRIES,
+  formatToolCall,
   MAX_ARG_VALUE_LEN,
+  MAX_TRACE_ENTRIES,
+  renderTrace,
 } from "../../../src/qa/agent/reflection.js";
 
 describe("formatToolCall", () => {
@@ -61,10 +61,7 @@ describe("renderTrace", () => {
       { name: "click", arguments: { selector: "#a" } },
       { name: "type", arguments: { selector: "input", text: "hi" } },
     ]);
-    expect(text).toBe(
-      '  1. click(selector="#a")\n' +
-      '  2. type(selector="input", text="hi")',
-    );
+    expect(text).toBe('  1. click(selector="#a")\n' + '  2. type(selector="input", text="hi")');
   });
 
   test("returns explicit empty-list marker when no calls", () => {
@@ -90,7 +87,7 @@ describe("renderTrace", () => {
 
 describe("buildReflectionReminder", () => {
   test("wraps the trace in a <SYSTEM-REMINDER> block with the give-up framing", () => {
-    const out = buildReflectionReminder("  1. click(selector=\"#login\")");
+    const out = buildReflectionReminder('  1. click(selector="#login")');
     expect(out).toContain("<SYSTEM-REMINDER>");
     expect(out).toContain("</SYSTEM-REMINDER>");
     expect(out).toContain("Reflection checkpoint");
@@ -102,8 +99,8 @@ describe("buildReflectionReminder", () => {
   });
 
   test("reminder text is identical across firings (trace is the only variable)", () => {
-    const a = buildReflectionReminder("  1. click(selector=\"#a\")");
-    const b = buildReflectionReminder("  1. click(selector=\"#b\")");
+    const a = buildReflectionReminder('  1. click(selector="#a")');
+    const b = buildReflectionReminder('  1. click(selector="#b")');
     // Strip the trace and verify the rest is byte-equal.
     const stripA = a.replace('  1. click(selector="#a")', "<TRACE>");
     const stripB = b.replace('  1. click(selector="#b")', "<TRACE>");

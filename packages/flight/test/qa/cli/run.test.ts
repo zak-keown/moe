@@ -1,12 +1,11 @@
-import { describe, test, expect, afterAll } from "vitest";
-import { mkdtempSync, rmSync, readdirSync, readFileSync, writeFileSync } from "fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { afterAll, describe, expect, test } from "vitest";
 import { run } from "../../../src/qa/cli/run.js";
 import type { AppConfig } from "../../../src/qa/config.js";
-import { report, makeScriptedClient } from "../integration/helpers.js";
-
 import { makeConfig } from "../helpers/make-config.js";
+import { makeScriptedClient, report } from "../integration/helpers.js";
 
 const MINIMAL_CARD = `---
 id: run-multi-pass-test
@@ -21,7 +20,9 @@ describe("run — multi-pass RunSet integration", () => {
   const tmpdirs: string[] = [];
   afterAll(() => {
     for (const d of tmpdirs) {
-      try { rmSync(d, { recursive: true, force: true }); } catch {}
+      try {
+        rmSync(d, { recursive: true, force: true });
+      } catch {}
     }
   });
 
@@ -67,9 +68,7 @@ describe("run — multi-pass RunSet integration", () => {
     expect(setEntries[0]).toMatch(/^single_/);
 
     // Assert: set.json has 3 runs with correct attemptNumbers.
-    const setJson = JSON.parse(
-      readFileSync(join(runSetsDir, setEntries[0], "set.json"), "utf8"),
-    );
+    const setJson = JSON.parse(readFileSync(join(runSetsDir, setEntries[0], "set.json"), "utf8"));
     expect(setJson.kind).toBe("single");
     expect(setJson.passes).toBe(3);
     expect(setJson.runs).toHaveLength(3);
@@ -87,9 +86,7 @@ describe("run — multi-pass RunSet integration", () => {
     // Assert: each per-run result.json carries the runSet field with correct setId.
     const setId = setEntries[0];
     for (const d of runDirs) {
-      const resultJson = JSON.parse(
-        readFileSync(join(resultsDir, d, "result.json"), "utf8"),
-      );
+      const resultJson = JSON.parse(readFileSync(join(resultsDir, d, "result.json"), "utf8"));
       expect(resultJson.runSet?.runSetId).toBe(setId);
     }
   });

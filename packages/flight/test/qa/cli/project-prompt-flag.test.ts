@@ -1,9 +1,18 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { parseArgs } from "../../../src/qa/cli/args.js";
 
 describe("--project-prompt flag", () => {
   test("parses --project-prompt with positional card path before flags", () => {
-    const args = parseArgs(["bun", "moe-flight", "run", "./card.md", "--target", "http://x", "--project-prompt", "./extra.md"]);
+    const args = parseArgs([
+      "bun",
+      "moe-flight",
+      "run",
+      "./card.md",
+      "--target",
+      "http://x",
+      "--project-prompt",
+      "./extra.md",
+    ]);
     expect(args.command).toBe("run");
     if (args.command === "run") {
       expect(args.scenarioPath).toBe("./card.md");
@@ -12,7 +21,16 @@ describe("--project-prompt flag", () => {
   });
 
   test("parses --project-prompt before positional", () => {
-    const args = parseArgs(["bun", "moe-flight", "run", "--target", "http://x", "--project-prompt", "./extra.md", "./card.md"]);
+    const args = parseArgs([
+      "bun",
+      "moe-flight",
+      "run",
+      "--target",
+      "http://x",
+      "--project-prompt",
+      "./extra.md",
+      "./card.md",
+    ]);
     expect(args.command).toBe("run");
     if (args.command === "run") {
       expect(args.scenarioPath).toBe("./card.md");
@@ -30,14 +48,31 @@ describe("--project-prompt flag", () => {
 
   test("rejects --project-prompt for batch (batch will get this in a future task)", () => {
     expect(() =>
-      parseArgs(["bun", "moe-flight", "batch", "./card.md", "--target", "http://x", "--project-prompt", "./extra.md"])
+      parseArgs([
+        "bun",
+        "moe-flight",
+        "batch",
+        "./card.md",
+        "--target",
+        "http://x",
+        "--project-prompt",
+        "./extra.md",
+      ]),
     ).toThrow(/Unknown flag/);
   });
 });
 
 describe("--show-prompt-and-exit flag", () => {
   test("bareword flag sets showPromptAndExit=true", () => {
-    const args = parseArgs(["bun", "moe-flight", "run", "./card.md", "--target", "http://x", "--show-prompt-and-exit"]);
+    const args = parseArgs([
+      "bun",
+      "moe-flight",
+      "run",
+      "./card.md",
+      "--target",
+      "http://x",
+      "--show-prompt-and-exit",
+    ]);
     expect(args.command).toBe("run");
     if (args.command === "run") {
       expect(args.showPromptAndExit).toBe(true);
@@ -54,7 +89,15 @@ describe("--show-prompt-and-exit flag", () => {
 
   test("rejected for batch", () => {
     expect(() =>
-      parseArgs(["bun", "moe-flight", "batch", "./card.md", "--target", "http://x", "--show-prompt-and-exit"])
+      parseArgs([
+        "bun",
+        "moe-flight",
+        "batch",
+        "./card.md",
+        "--target",
+        "http://x",
+        "--show-prompt-and-exit",
+      ]),
     ).toThrow(/Unknown flag/);
   });
 });

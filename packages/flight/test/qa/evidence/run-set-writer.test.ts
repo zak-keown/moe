@@ -1,7 +1,7 @@
-import { describe, test, expect } from "vitest";
-import { mkdtempSync, readFileSync, existsSync } from "fs";
+import { existsSync, mkdtempSync, readFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
 import { RunSetWriter } from "../../../src/qa/evidence/run-set-writer.js";
 import type { RunSetCtx } from "../../../src/qa/runs/run-set-types.js";
 import type { VerdictResult } from "../../../src/qa/types.js";
@@ -16,7 +16,11 @@ const baseCtx = (overrides: Partial<RunSetCtx> = {}): RunSetCtx => ({
   ...overrides,
 });
 
-const fakeResult = (status: VerdictResult["status"], turns = 5, duration = 4000): VerdictResult => ({
+const fakeResult = (
+  status: VerdictResult["status"],
+  turns = 5,
+  duration = 4000,
+): VerdictResult => ({
   schemaVersion: 2,
   runId: "card-a_20260430T000001Z_x000",
   scenario: "card-a",
@@ -63,7 +67,9 @@ describe("RunSetWriter", () => {
       { runId: "r3", cardId: "card-a", attemptNumber: 3 },
     ]);
     w.recordRunStart("r2");
-    const set = JSON.parse(readFileSync(join(root, "run-sets", baseCtx().runSetId, "set.json"), "utf8"));
+    const set = JSON.parse(
+      readFileSync(join(root, "run-sets", baseCtx().runSetId, "set.json"), "utf8"),
+    );
     expect(set.runs[1].status).toBe("running");
     expect(set.runs[0].status).toBe("queued");
   });
@@ -73,7 +79,9 @@ describe("RunSetWriter", () => {
     const w = new RunSetWriter(root, baseCtx());
     w.start([{ runId: "r1", cardId: "card-a", attemptNumber: 1 }]);
     w.recordRunEnd("r1", "pass");
-    const set = JSON.parse(readFileSync(join(root, "run-sets", baseCtx().runSetId, "set.json"), "utf8"));
+    const set = JSON.parse(
+      readFileSync(join(root, "run-sets", baseCtx().runSetId, "set.json"), "utf8"),
+    );
     expect(set.runs[0].status).toBe("pass");
   });
 
@@ -85,13 +93,19 @@ describe("RunSetWriter", () => {
       { runId: "r2", cardId: "card-a", attemptNumber: 2 },
       { runId: "r3", cardId: "card-a", attemptNumber: 3 },
     ]);
-    const results = [fakeResult("pass", 5, 4000), fakeResult("pass", 6, 5000), fakeResult("pass", 7, 6000)];
+    const results = [
+      fakeResult("pass", 5, 4000),
+      fakeResult("pass", 6, 5000),
+      fakeResult("pass", 7, 6000),
+    ];
     w.finalize((runId) => {
       const i = ["r1", "r2", "r3"].indexOf(runId);
       return results[i];
     });
 
-    const set = JSON.parse(readFileSync(join(root, "run-sets", baseCtx().runSetId, "set.json"), "utf8"));
+    const set = JSON.parse(
+      readFileSync(join(root, "run-sets", baseCtx().runSetId, "set.json"), "utf8"),
+    );
     expect(set.summary.perCard[0].cardStatus).toBe("consistent_pass");
     expect(set.summary.perCard[0].byStatus.pass).toBe(3);
     expect(set.summary.perCard[0].medianTurns).toBe(6);
@@ -111,7 +125,9 @@ describe("RunSetWriter", () => {
     ]);
     const results = [fakeResult("pass"), fakeResult("pass"), fakeResult("investigate")];
     w.finalize((runId) => results[["r1", "r2", "r3"].indexOf(runId)]);
-    const set = JSON.parse(readFileSync(join(root, "run-sets", baseCtx().runSetId, "set.json"), "utf8"));
+    const set = JSON.parse(
+      readFileSync(join(root, "run-sets", baseCtx().runSetId, "set.json"), "utf8"),
+    );
     expect(set.summary.perCard[0].cardStatus).toBe("mixed");
   });
 
@@ -129,7 +145,9 @@ describe("RunSetWriter", () => {
       if (runId === "r3") return null;
       return results[["r1", "r2"].indexOf(runId)];
     });
-    const set = JSON.parse(readFileSync(join(root, "run-sets", baseCtx().runSetId, "set.json"), "utf8"));
+    const set = JSON.parse(
+      readFileSync(join(root, "run-sets", baseCtx().runSetId, "set.json"), "utf8"),
+    );
     expect(set.summary.perCard[0].cardStatus).toBe("mixed_with_errors");
     expect(set.summary.perCard[0].byStatus.errored).toBe(1);
     expect(set.summary.perCard[0].byStatus.pass).toBe(2);
@@ -145,7 +163,9 @@ describe("RunSetWriter", () => {
     w.recordRunEnd("r1", "errored");
     w.recordRunEnd("r2", "errored");
     w.finalize(() => null);
-    const set = JSON.parse(readFileSync(join(root, "run-sets", baseCtx().runSetId, "set.json"), "utf8"));
+    const set = JSON.parse(
+      readFileSync(join(root, "run-sets", baseCtx().runSetId, "set.json"), "utf8"),
+    );
     expect(set.summary.perCard[0].cardStatus).toBe("errored");
     expect(set.summary.overall.overallStatus).toBe("errored");
   });
@@ -177,7 +197,13 @@ describe("RunSetWriter", () => {
     const set = JSON.parse(readFileSync(join(root, "run-sets", ctx.runSetId, "set.json"), "utf8"));
     expect(set.summary.perCard[0].cardStatus).toBe("consistent_pass");
     expect(set.summary.perCard[1].cardStatus).toBe("consistent_fail");
-    expect(set.summary.overall.byStatus).toEqual({ pass: 2, fail: 2, investigate: 0, errored: 0, cancelled: 0 });
+    expect(set.summary.overall.byStatus).toEqual({
+      pass: 2,
+      fail: 2,
+      investigate: 0,
+      errored: 0,
+      cancelled: 0,
+    });
     expect(set.summary.overall.overallStatus).toBe("mixed");
   });
 });

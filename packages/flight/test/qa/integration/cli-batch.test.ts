@@ -1,10 +1,10 @@
-import { describe, test, expect, beforeEach } from "vitest";
-import { mkdtempSync, readdirSync, writeFileSync, existsSync } from "fs";
+import { existsSync, mkdtempSync, readdirSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { beforeEach, describe, expect, test } from "vitest";
 
 import { runBatch } from "../../../src/qa/cli/batch.js";
-import { report, makeScriptedClient } from "./helpers.js";
+import { makeScriptedClient, report } from "./helpers.js";
 
 // Cards: description and acceptanceCriteria come from the markdown body,
 // not from frontmatter. We only need id + title in frontmatter to parse.

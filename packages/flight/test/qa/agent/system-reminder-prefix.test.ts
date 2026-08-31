@@ -1,6 +1,6 @@
-import { describe, test, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
 import { buildReflectionReminder } from "../../../src/qa/agent/reflection.js";
 import { isSystemReminder } from "../../../ui/src/lib/transcript-blocks.js";
 

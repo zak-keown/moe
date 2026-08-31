@@ -4,7 +4,9 @@ import { loadConfig } from "../../../src/qa/config.js";
 
 describe("API server error handler", () => {
   test("returns JSON 500 for unhandled route exceptions", async () => {
-    const config = loadConfig({ projectRoot: "." }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
+    const config = loadConfig({ projectRoot: "." }, {
+      MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+    } as NodeJS.ProcessEnv);
     const app = createApp(config);
     app.get("/boom", () => {
       throw new Error("boom");

@@ -1,8 +1,8 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
+import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import { spawnSync } from "node:child_process";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 // The examples tree is a set of demo *targets*, not shipped library code, so
 // it is not compiled by `tsc -b`. `tsx` runs it in place — which is also what
@@ -37,7 +37,7 @@ describe("cli", () => {
   test("add prints a row with an id and unchecked box", () => {
     const r = run(["add", "buy milk"]);
     expect(r.exitCode).toBe(0);
-    expect(r.stdout).toMatch(/^[a-km-np-z2-9]{4}  \[ \] buy milk$/m);
+    expect(r.stdout).toMatch(/^[a-km-np-z2-9]{4} {2}\[ \] buy milk$/m);
   });
 
   test("list prints items with the always-on Filter footer", () => {

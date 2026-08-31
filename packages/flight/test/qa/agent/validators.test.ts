@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
   checkCriteriaConsistency,
   parseReportCriteria,
@@ -191,10 +191,8 @@ describe("salvageReportResult", () => {
   test("keeps a valid verdict and drops the observation with a truncated kind enum (PRI-2140)", () => {
     const result = salvageReportResult({
       status: "pass",
-      summary:
-        "Pi successfully executed the Go fractals plan end-to-end. All tests pass.",
-      reasoning:
-        "Plan executed, build green, fractal renders match expectations.",
+      summary: "Pi successfully executed the Go fractals plan end-to-end. All tests pass.",
+      reasoning: "Plan executed, build green, fractal renders match expectations.",
       observations: [
         { kind: "suggestion", description: "README could mention the -iterations flag" },
         { kind: "ux", description: "progress output is noisy" },
@@ -360,7 +358,8 @@ describe("parseReportCriteria", () => {
         {
           criterion: "login works",
           verdict: "pass",
-          evidence: "After submitting, the dashboard header 'Welcome back' rendered (screenshot 003)",
+          evidence:
+            "After submitting, the dashboard header 'Welcome back' rendered (screenshot 003)",
         },
         {
           criterion: "wrong password error",
@@ -517,11 +516,7 @@ describe("validateToolArgs", () => {
   });
 
   test("rejects string where object given", () => {
-    const result = validateToolArgs(
-      "click",
-      { selector: { css: "#foo" } },
-      clickSchema,
-    );
+    const result = validateToolArgs("click", { selector: { css: "#foo" } }, clickSchema);
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.reason).toContain("selector");
@@ -530,11 +525,7 @@ describe("validateToolArgs", () => {
   });
 
   test("rejects wrong type for number", () => {
-    const result = validateToolArgs(
-      "wait_for",
-      { timeout: "5000" },
-      waitForSchema,
-    );
+    const result = validateToolArgs("wait_for", { timeout: "5000" }, waitForSchema);
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.reason).toContain("timeout");

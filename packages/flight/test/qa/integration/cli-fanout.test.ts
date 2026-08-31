@@ -1,13 +1,12 @@
-import { describe, test, expect } from "vitest";
-import { generateFanout } from "../../../src/qa/fanout/generator.js";
-import { generateFromObservations } from "../../../src/qa/fanout/generator.js";
-import { parseStoryCard } from "../../../src/qa/format/story-card.js";
+import { mkdtempSync, readFileSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { describe, expect, test } from "vitest";
+import { generateFanout, generateFromObservations } from "../../../src/qa/fanout/generator.js";
 import type { StoryCard } from "../../../src/qa/format/story-card.js";
+import { parseStoryCard } from "../../../src/qa/format/story-card.js";
 import type { LLMClient } from "../../../src/qa/models/provider.js";
 import type { VerdictResult } from "../../../src/qa/types.js";
-import { mkdtempSync, writeFileSync, readFileSync } from "fs";
-import { join } from "path";
-import { tmpdir } from "os";
 
 function makeMockClient(responseText: string): LLMClient {
   return {
@@ -67,9 +66,7 @@ Verify that a very long todo input is handled gracefully.
 
 describe("fanout e2e: round-trip", () => {
   test("generateFanout produces parseable cards that survive file round-trip", async () => {
-    const client = makeMockClient(
-      [variationA, variationB].join("\n---CARD---\n")
-    );
+    const client = makeMockClient([variationA, variationB].join("\n---CARD---\n"));
 
     const cards = await generateFanout(parentCard, client);
 
@@ -144,9 +141,7 @@ No loading indicator is shown during payment processing.
 
 - Loading spinner appears during payment request`;
 
-    const client = makeMockClient(
-      [obsCardA, obsCardB].join("\n---CARD---\n")
-    );
+    const client = makeMockClient([obsCardA, obsCardB].join("\n---CARD---\n"));
 
     const cards = await generateFromObservations(result, client);
 

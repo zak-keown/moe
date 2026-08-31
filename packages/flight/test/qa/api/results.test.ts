@@ -1,11 +1,11 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { ActiveRunRegistry } from "../../../src/qa/api/active-runs.js";
 import { createApp } from "../../../src/qa/api/server.js";
 import { loadConfig } from "../../../src/qa/config.js";
 import { flightPath } from "../../../src/qa/paths.js";
-import { ActiveRunRegistry } from "../../../src/qa/api/active-runs.js";
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from "fs";
-import { join } from "path";
-import { tmpdir } from "os";
 
 const makeApp = (projectRoot: string, uiDir?: string) =>
   createApp(loadConfig({ projectRoot }, {} as NodeJS.ProcessEnv), uiDir);
@@ -37,7 +37,7 @@ describe("Results API", () => {
         observations: [],
         evidence: { screenshots: [], log: "run.jsonl" },
         duration_ms: 1234,
-      })
+      }),
     );
     mkdirSync(join(resultsDir, "test-002_20260401T110000Z_bbbb"), { recursive: true });
     writeFileSync(
@@ -48,12 +48,10 @@ describe("Results API", () => {
         status: "fail",
         summary: "Button broken",
         reasoning: "Click didn't work",
-        observations: [
-          { kind: "bug", description: "Submit button unresponsive" },
-        ],
+        observations: [{ kind: "bug", description: "Submit button unresponsive" }],
         evidence: { screenshots: ["001.png"], log: "run.jsonl" },
         duration_ms: 5678,
-      })
+      }),
     );
 
     app = makeApp(projectRoot);
@@ -92,7 +90,7 @@ describe("Results API", () => {
         observations: [],
         evidence: { screenshots: [], log: "run.jsonl" },
         duration_ms: 2000,
-      })
+      }),
     );
 
     const res = await app.request("/api/results?cardId=test-001");
@@ -123,7 +121,7 @@ describe("Results API", () => {
           observations: [],
           evidence: { screenshots: [], log: "run.jsonl" },
           duration_ms: 0,
-        })
+        }),
       );
     }
 
@@ -178,7 +176,10 @@ describe("Results API", () => {
     mkdirSync(flightPath(badDir, ".moe-flight", "stories"), { recursive: true });
     const resultsDir = flightPath(badDir, ".moe-flight", "results");
     mkdirSync(join(resultsDir, "bad-001_20260401T000000Z_aaaa"), { recursive: true });
-    writeFileSync(join(resultsDir, "bad-001_20260401T000000Z_aaaa", "result.json"), "not valid json{{{");
+    writeFileSync(
+      join(resultsDir, "bad-001_20260401T000000Z_aaaa", "result.json"),
+      "not valid json{{{",
+    );
 
     const badApp = makeApp(badDir);
     const res = await badApp.request("/api/results");
@@ -259,7 +260,9 @@ describe("Results API", () => {
     // screenshot files are listed. A request for a screenshot file should
     // 404 even if it exists on disk (manifest is authoritative post-run).
     const resultsDir = flightPath(projectRoot, ".moe-flight", "results");
-    mkdirSync(join(resultsDir, "test-001_20260401T100000Z_aaaa", "screenshots"), { recursive: true });
+    mkdirSync(join(resultsDir, "test-001_20260401T100000Z_aaaa", "screenshots"), {
+      recursive: true,
+    });
     writeFileSync(
       join(resultsDir, "test-001_20260401T100000Z_aaaa", "screenshots", "stray.png"),
       Buffer.from("stray"),

@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { installSigintHandler } from "../../../src/qa/cli/signals.js";
 
 describe("installSigintHandler", () => {

@@ -1,15 +1,20 @@
-import { describe, test, expect, afterAll } from "vitest";
-import { mkdtempSync, rmSync, readdirSync, readFileSync } from "fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import type { EventObserver } from "../../../src/qa/evidence/logger.js";
+import { afterAll, describe, expect, test } from "vitest";
 import { runBatch } from "../../../src/qa/cli/batch.js";
 import type { AppConfig } from "../../../src/qa/config.js";
+import type { EventObserver } from "../../../src/qa/evidence/logger.js";
 
 import { makeConfig } from "../helpers/make-config.js";
 
 function collectSink() {
-  const obj = { out: "", write(s: string) { obj.out += s; } };
+  const obj = {
+    out: "",
+    write(s: string) {
+      obj.out += s;
+    },
+  };
   return obj;
 }
 
@@ -23,11 +28,19 @@ describe("runBatch", () => {
       // Drive the observer with a minimal happy-path event sequence.
       let observer: EventObserver | null = null;
       const fakeLog: any = {
-        addEventObserver(fn: EventObserver) { observer = fn; return () => {}; },
+        addEventObserver(fn: EventObserver) {
+          observer = fn;
+          return () => {};
+        },
         logEvent: () => {},
       };
       const detach = opts.onLogger?.(fakeLog) ?? (() => {});
-      observer?.({ type: "run_start", runId: `run-${opts.scenarioPath}`, cardId: opts.scenarioPath, budgetMs: 300_000 } as any);
+      observer?.({
+        type: "run_start",
+        runId: `run-${opts.scenarioPath}`,
+        cardId: opts.scenarioPath,
+        budgetMs: 300_000,
+      } as any);
       observer?.({ type: "llm_response", turn: 3, stopReason: "end_turn" } as any);
       observer?.({ type: "run_end", status: "pass", durationMs: 1000, usage: { turns: 4 } } as any);
       detach();
@@ -73,10 +86,16 @@ describe("runBatch — error handling", () => {
     const stub: any = async (opts: any) => {
       calls.push(opts.scenarioPath);
       if (i++ === 0) throw new Error("boom");
-      const observer = (await new Promise<EventObserver>((resolve) => {
-        const fakeLog: any = { addEventObserver: (fn: EventObserver) => { resolve(fn); return () => {}; }, logEvent: () => {} };
+      const observer = await new Promise<EventObserver>((resolve) => {
+        const fakeLog: any = {
+          addEventObserver: (fn: EventObserver) => {
+            resolve(fn);
+            return () => {};
+          },
+          logEvent: () => {},
+        };
         opts.onLogger?.(fakeLog);
-      }));
+      });
       observer({ type: "run_start", runId: "r2", cardId: "b.md", budgetMs: 300_000 } as any);
       observer({ type: "run_end", status: "pass", usage: { turns: 1 } } as any);
       return { runId: "r2", outDir: "/tmp/b.md", result: { status: "pass" } };
@@ -85,9 +104,14 @@ describe("runBatch — error handling", () => {
     const exitCode = await runBatch(
       {
         scenarioPaths: ["a.md", "b.md"],
-        target: "x", adapterType: "cli", config: makeConfig("/tmp/x"),
-        silent: false, format: undefined, noColor: true,
-        sink, isTTY: false,
+        target: "x",
+        adapterType: "cli",
+        config: makeConfig("/tmp/x"),
+        silent: false,
+        format: undefined,
+        noColor: true,
+        sink,
+        isTTY: false,
         passes: 1,
       },
       stub,
@@ -106,11 +130,22 @@ describe("runBatch — error handling", () => {
   test("any non-pass result yields exit code 1", async () => {
     const sink = collectSink();
     const stub: any = async (opts: any) => {
-      const observer = (await new Promise<EventObserver>((resolve) => {
-        const fakeLog: any = { addEventObserver: (fn: EventObserver) => { resolve(fn); return () => {}; }, logEvent: () => {} };
+      const observer = await new Promise<EventObserver>((resolve) => {
+        const fakeLog: any = {
+          addEventObserver: (fn: EventObserver) => {
+            resolve(fn);
+            return () => {};
+          },
+          logEvent: () => {},
+        };
         opts.onLogger?.(fakeLog);
-      }));
-      observer({ type: "run_start", runId: "r", cardId: opts.scenarioPath, budgetMs: 300_000 } as any);
+      });
+      observer({
+        type: "run_start",
+        runId: "r",
+        cardId: opts.scenarioPath,
+        budgetMs: 300_000,
+      } as any);
       observer({ type: "run_end", status: "investigate", usage: { turns: 1 } } as any);
       return { runId: "r", outDir: "/tmp/x", result: { status: "investigate" } };
     };
@@ -118,9 +153,14 @@ describe("runBatch — error handling", () => {
     const exitCode = await runBatch(
       {
         scenarioPaths: ["a.md"],
-        target: "x", adapterType: "cli", config: makeConfig("/tmp/x"),
-        silent: false, format: undefined, noColor: true,
-        sink, isTTY: false,
+        target: "x",
+        adapterType: "cli",
+        config: makeConfig("/tmp/x"),
+        silent: false,
+        format: undefined,
+        noColor: true,
+        sink,
+        isTTY: false,
         passes: 1,
       },
       stub,
@@ -134,10 +174,16 @@ describe("runBatch — output modes", () => {
   test("--format jsonl emits one event per line with runId injected", async () => {
     const sink = collectSink();
     const stub: any = async (opts: any) => {
-      const observer = (await new Promise<EventObserver>((resolve) => {
-        const fakeLog: any = { addEventObserver: (fn: EventObserver) => { resolve(fn); return () => {}; }, logEvent: () => {} };
+      const observer = await new Promise<EventObserver>((resolve) => {
+        const fakeLog: any = {
+          addEventObserver: (fn: EventObserver) => {
+            resolve(fn);
+            return () => {};
+          },
+          logEvent: () => {},
+        };
         opts.onLogger?.(fakeLog);
-      }));
+      });
       observer({ type: "run_start", runId: "RUN-1", cardId: "a", budgetMs: 300_000 } as any);
       observer({ type: "llm_response", turn: 1, stopReason: "end_turn" } as any);
       observer({ type: "run_end", status: "pass", usage: { turns: 1 } } as any);
@@ -147,9 +193,14 @@ describe("runBatch — output modes", () => {
     await runBatch(
       {
         scenarioPaths: ["a.md"],
-        target: "x", adapterType: "cli", config: makeConfig("/tmp/x"),
-        silent: false, format: "jsonl", noColor: true,
-        sink, isTTY: false,
+        target: "x",
+        adapterType: "cli",
+        config: makeConfig("/tmp/x"),
+        silent: false,
+        format: "jsonl",
+        noColor: true,
+        sink,
+        isTTY: false,
         passes: 1,
       },
       stub,
@@ -169,13 +220,21 @@ describe("runBatch — output modes", () => {
     const sink = collectSink();
     const stderrLines: string[] = [];
     const origErr = console.error;
-    console.error = (...a: unknown[]) => { stderrLines.push(a.join(" ")); };
+    console.error = (...a: unknown[]) => {
+      stderrLines.push(a.join(" "));
+    };
 
     const stub: any = async (opts: any) => {
-      const observer = (await new Promise<EventObserver>((resolve) => {
-        const fakeLog: any = { addEventObserver: (fn: EventObserver) => { resolve(fn); return () => {}; }, logEvent: () => {} };
+      const observer = await new Promise<EventObserver>((resolve) => {
+        const fakeLog: any = {
+          addEventObserver: (fn: EventObserver) => {
+            resolve(fn);
+            return () => {};
+          },
+          logEvent: () => {},
+        };
         opts.onLogger?.(fakeLog);
-      }));
+      });
       observer({ type: "run_start", runId: "r", cardId: "a", budgetMs: 300_000 } as any);
       observer({ type: "run_end", status: "pass", usage: { turns: 1 } } as any);
       return { runId: "r", outDir: "/tmp/a", result: { status: "pass" } };
@@ -185,9 +244,14 @@ describe("runBatch — output modes", () => {
       await runBatch(
         {
           scenarioPaths: ["a.md"],
-          target: "x", adapterType: "cli", config: makeConfig("/tmp/x"),
-          silent: true, format: undefined, noColor: true,
-          sink, isTTY: false,
+          target: "x",
+          adapterType: "cli",
+          config: makeConfig("/tmp/x"),
+          silent: true,
+          format: undefined,
+          noColor: true,
+          sink,
+          isTTY: false,
           passes: 1,
         },
         stub,
@@ -206,7 +270,9 @@ describe("runBatch — RunSet artifact", () => {
   const tmpdirs: string[] = [];
   afterAll(() => {
     for (const d of tmpdirs) {
-      try { rmSync(d, { recursive: true, force: true }); } catch {}
+      try {
+        rmSync(d, { recursive: true, force: true });
+      } catch {}
     }
   });
 
@@ -231,7 +297,10 @@ describe("runBatch — RunSet artifact", () => {
       calls.push(opts.scenarioPath);
       let observer: EventObserver | null = null;
       const fakeLog: any = {
-        addEventObserver(fn: EventObserver) { observer = fn; return () => {}; },
+        addEventObserver(fn: EventObserver) {
+          observer = fn;
+          return () => {};
+        },
         logEvent: () => {},
       };
       const detach = opts.onLogger?.(fakeLog) ?? (() => {});
@@ -244,7 +313,12 @@ describe("runBatch — RunSet artifact", () => {
   }
 
   test("moe-flight qa batch a.md b.md (passes=1) produces a RunSet artifact with 2 runs", async () => {
-    const sink = { out: "", write(s: string) { this.out += s; } };
+    const sink = {
+      out: "",
+      write(s: string) {
+        this.out += s;
+      },
+    };
     const config = makeTmpConfig();
     const calls: string[] = [];
 
@@ -273,9 +347,7 @@ describe("runBatch — RunSet artifact", () => {
     expect(entries.length).toBe(1);
     expect(entries[0]).toMatch(/^batch_/);
 
-    const setJson = JSON.parse(
-      readFileSync(join(runSetsDir, entries[0], "set.json"), "utf8"),
-    );
+    const setJson = JSON.parse(readFileSync(join(runSetsDir, entries[0], "set.json"), "utf8"));
     expect(setJson.kind).toBe("batch");
     expect(setJson.passes).toBe(1);
     expect(setJson.runs).toHaveLength(2);
@@ -285,7 +357,12 @@ describe("runBatch — RunSet artifact", () => {
   });
 
   test("moe-flight qa batch a.md b.md --passes 2 produces a RunSet artifact with 4 runs", async () => {
-    const sink = { out: "", write(s: string) { this.out += s; } };
+    const sink = {
+      out: "",
+      write(s: string) {
+        this.out += s;
+      },
+    };
     const config = makeTmpConfig();
     const calls: string[] = [];
 
@@ -313,16 +390,19 @@ describe("runBatch — RunSet artifact", () => {
     const entries = readdirSync(runSetsDir);
     expect(entries.length).toBe(1);
 
-    const setJson = JSON.parse(
-      readFileSync(join(runSetsDir, entries[0], "set.json"), "utf8"),
-    );
+    const setJson = JSON.parse(readFileSync(join(runSetsDir, entries[0], "set.json"), "utf8"));
     expect(setJson.passes).toBe(2);
     expect(setJson.runs).toHaveLength(4);
     expect(setJson.summary.overall.overallStatus).toBe("consistent_pass");
   });
 
   test("moe-flight qa batch a.md (passes=1) does NOT produce a RunSet artifact", async () => {
-    const sink = { out: "", write(s: string) { this.out += s; } };
+    const sink = {
+      out: "",
+      write(s: string) {
+        this.out += s;
+      },
+    };
     const config = makeTmpConfig();
     const calls: string[] = [];
 

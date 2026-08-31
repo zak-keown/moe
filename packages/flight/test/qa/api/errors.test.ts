@@ -1,7 +1,7 @@
-import { describe, test, expect } from "vitest";
-import { ErrorLog } from "../../../src/qa/util/error-log.js";
-import { errorRoutes } from "../../../src/qa/api/routes/errors.js";
 import { Hono } from "hono";
+import { describe, expect, test } from "vitest";
+import { errorRoutes } from "../../../src/qa/api/routes/errors.js";
+import { ErrorLog } from "../../../src/qa/util/error-log.js";
 
 describe("ErrorLog", () => {
   test("stores errors up to capacity", () => {

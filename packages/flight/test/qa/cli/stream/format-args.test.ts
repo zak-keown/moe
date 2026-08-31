@@ -1,10 +1,11 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { formatToolArgs } from "../../../../src/qa/cli/stream/format-args.js";
 
 describe("formatToolArgs", () => {
   test("read: body is the path", () => {
-    expect(formatToolArgs("read", { path: "profiles/fred/profile.md" }))
-      .toEqual({ body: "profiles/fred/profile.md" });
+    expect(formatToolArgs("read", { path: "profiles/fred/profile.md" })).toEqual({
+      body: "profiles/fred/profile.md",
+    });
   });
 
   test("read_output: empty body, no marker", () => {
@@ -16,12 +17,11 @@ describe("formatToolArgs", () => {
   });
 
   test("type (CLI shape): body is quoted text only", () => {
-    expect(formatToolArgs("type", { text: "client-ledger" }))
-      .toEqual({ body: '"client-ledger"' });
+    expect(formatToolArgs("type", { text: "client-ledger" })).toEqual({ body: '"client-ledger"' });
   });
 
-  test("type (web shape): body is selector ← \"text\"", () => {
-    const r = formatToolArgs("type", { selector: "input[name=\"q\"]", text: "hello" });
+  test('type (web shape): body is selector ← "text"', () => {
+    const r = formatToolArgs("type", { selector: 'input[name="q"]', text: "hello" });
     expect(r.body).toBe('input[name="q"] ← "hello"');
     expect(r.marker).toBeUndefined();
   });
@@ -39,20 +39,23 @@ describe("formatToolArgs", () => {
   });
 
   test("click: body is selector, marker if return_screenshot", () => {
-    expect(formatToolArgs("click", { selector: ".x" }))
-      .toEqual({ body: ".x", marker: undefined });
-    expect(formatToolArgs("click", { selector: ".x", return_screenshot: true }))
-      .toEqual({ body: ".x", marker: "📷" });
+    expect(formatToolArgs("click", { selector: ".x" })).toEqual({ body: ".x", marker: undefined });
+    expect(formatToolArgs("click", { selector: ".x", return_screenshot: true })).toEqual({
+      body: ".x",
+      marker: "📷",
+    });
   });
 
   test("navigate: url + screenshot marker", () => {
-    expect(formatToolArgs("navigate", { url: "http://localhost:4444", return_screenshot: true }))
-      .toEqual({ body: "http://localhost:4444", marker: "📷" });
+    expect(
+      formatToolArgs("navigate", { url: "http://localhost:4444", return_screenshot: true }),
+    ).toEqual({ body: "http://localhost:4444", marker: "📷" });
   });
 
   test("install_cookies: body is the path", () => {
-    expect(formatToolArgs("install_cookies", { path: "profiles/fred/cookies.yaml" }))
-      .toEqual({ body: "profiles/fred/cookies.yaml" });
+    expect(formatToolArgs("install_cookies", { path: "profiles/fred/cookies.yaml" })).toEqual({
+      body: "profiles/fred/cookies.yaml",
+    });
   });
 
   test("screenshot: empty body, 📷 marker", () => {
@@ -60,8 +63,9 @@ describe("formatToolArgs", () => {
   });
 
   test("unknown tool: falls back to JSON dump", () => {
-    expect(formatToolArgs("mystery", { foo: 1, bar: "x" }))
-      .toEqual({ body: '{"foo":1,"bar":"x"}' });
+    expect(formatToolArgs("mystery", { foo: 1, bar: "x" })).toEqual({
+      body: '{"foo":1,"bar":"x"}',
+    });
   });
 
   test("unknown tool with empty args: empty body", () => {

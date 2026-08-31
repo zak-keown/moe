@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { buildRevivalAddendum } from "../../../src/qa/revival/system-prompt-addendum.js";
 
 describe("buildRevivalAddendum", () => {

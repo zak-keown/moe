@@ -1,6 +1,6 @@
-import { describe, test, expect } from "vitest";
-import { runConfigCommand } from "../../../src/qa/cli/config-command.js";
+import { describe, expect, test } from "vitest";
 import type { ConfigArgs } from "../../../src/qa/cli/args.js";
+import { runConfigCommand } from "../../../src/qa/cli/config-command.js";
 
 const minimalArgs = (cli = {}): ConfigArgs => ({ command: "config", json: false, cli });
 
@@ -21,19 +21,17 @@ describe("runConfigCommand", () => {
   });
 
   test("text output shows source attribution", () => {
-    const result = runConfigCommand(
-      minimalArgs({ projectRoot: "/flag" }),
-      { MOE_FLIGHT_PORT: "5500" } as NodeJS.ProcessEnv,
-    );
+    const result = runConfigCommand(minimalArgs({ projectRoot: "/flag" }), {
+      MOE_FLIGHT_PORT: "5500",
+    } as NodeJS.ProcessEnv);
     expect(result).toMatch(/projectRoot:\s+\/flag\s+\(flag\)/);
     expect(result).toMatch(/port:\s+5500\s+\(env\)/);
   });
 
   test("runConfigCommand propagates loadConfig errors (caller responsible for display)", () => {
-    expect(() => runConfigCommand(
-      minimalArgs(),
-      { MOE_FLIGHT_CHROME: "not-valid" } as NodeJS.ProcessEnv,
-    )).toThrow(/MOE_FLIGHT_CHROME/);
+    expect(() =>
+      runConfigCommand(minimalArgs(), { MOE_FLIGHT_CHROME: "not-valid" } as NodeJS.ProcessEnv),
+    ).toThrow(/MOE_FLIGHT_CHROME/);
   });
 
   test("sdkEnv section only shows presence for secrets", () => {

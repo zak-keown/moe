@@ -1,7 +1,7 @@
-import { describe, test, expect, afterEach } from "vitest";
-import { mkdtempSync, mkdirSync, rmSync } from "fs";
-import { join } from "path";
+import { mkdirSync, mkdtempSync, rmSync } from "fs";
 import { tmpdir } from "os";
+import { join } from "path";
+import { afterEach, describe, expect, test } from "vitest";
 import { parseArgs } from "../../../src/qa/cli/args.js";
 import { ask } from "../../../src/qa/cli/ask.js";
 
@@ -23,7 +23,9 @@ describe("parseArgs ask", () => {
   });
 
   test("rejects unknown flags", () => {
-    expect(() => parseArgs(["bun", "moe-flight", "ask", "rid", "--bogus", "x"])).toThrow(/Unknown flag/);
+    expect(() => parseArgs(["bun", "moe-flight", "ask", "rid", "--bogus", "x"])).toThrow(
+      /Unknown flag/,
+    );
   });
 
   test("requires a runId positional", () => {
@@ -45,12 +47,14 @@ describe("ask error paths", () => {
     cleanups.push(projRoot);
     const errors: string[] = [];
     const origErr = console.error;
-    console.error = (...msg: unknown[]) => { errors.push(msg.map((m) => String(m)).join(" ")); };
+    console.error = (...msg: unknown[]) => {
+      errors.push(msg.map((m) => String(m)).join(" "));
+    };
     try {
-      const code = await ask(
-        { command: "ask", runId: "nonexistent_run", cli: {} },
-        { projectRoot: projRoot, stateDirName: ".moe-flight" } as never,
-      );
+      const code = await ask({ command: "ask", runId: "nonexistent_run", cli: {} }, {
+        projectRoot: projRoot,
+        stateDirName: ".moe-flight",
+      } as never);
       expect(code).toBe(1);
       expect(errors.some((e) => e.includes("Run not found"))).toBe(true);
     } finally {
@@ -64,12 +68,14 @@ describe("ask error paths", () => {
     mkdirSync(join(projRoot, ".moe-flight", "results", "empty_run"), { recursive: true });
     const errors: string[] = [];
     const origErr = console.error;
-    console.error = (...msg: unknown[]) => { errors.push(msg.map((m) => String(m)).join(" ")); };
+    console.error = (...msg: unknown[]) => {
+      errors.push(msg.map((m) => String(m)).join(" "));
+    };
     try {
-      const code = await ask(
-        { command: "ask", runId: "empty_run", cli: {} },
-        { projectRoot: projRoot, stateDirName: ".moe-flight" } as never,
-      );
+      const code = await ask({ command: "ask", runId: "empty_run", cli: {} }, {
+        projectRoot: projRoot,
+        stateDirName: ".moe-flight",
+      } as never);
       expect(code).toBe(1);
       expect(errors.some((e) => e.includes("no run.jsonl"))).toBe(true);
     } finally {

@@ -1,10 +1,9 @@
-import { describe, test, expect } from "vitest";
-import { parseStoryCard, } from "../../../src/qa/format/story-card.js";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
+import { parseStoryCard } from "../../../src/qa/format/story-card.js";
 
-const fixture = (name: string) =>
-  readFileSync(join(__dirname, "../fixtures", name), "utf-8");
+const fixture = (name: string) => readFileSync(join(__dirname, "../fixtures", name), "utf-8");
 
 describe("parseStoryCard", () => {
   test("parses full story card with all fields", () => {
@@ -17,9 +16,7 @@ describe("parseStoryCard", () => {
     expect(card.parent).toBeUndefined();
     expect(card.description).toContain("As a new user");
     expect(card.acceptanceCriteria).toHaveLength(3);
-    expect(card.acceptanceCriteria[0]).toBe(
-      "User can type a todo item and press Enter"
-    );
+    expect(card.acceptanceCriteria[0]).toBe("User can type a todo item and press Enter");
   });
 
   test("parses minimal story card", () => {
@@ -51,15 +48,11 @@ describe("parseStoryCard", () => {
   });
 
   test("throws on missing id", () => {
-    expect(() =>
-      parseStoryCard("---\ntitle: No ID\n---\nSome body")
-    ).toThrow();
+    expect(() => parseStoryCard("---\ntitle: No ID\n---\nSome body")).toThrow();
   });
 
   test("throws on missing title", () => {
-    expect(() =>
-      parseStoryCard("---\nid: story-x\n---\nSome body")
-    ).toThrow();
+    expect(() => parseStoryCard("---\nid: story-x\n---\nSome body")).toThrow();
   });
 
   // Regression: PRI-2160. Soft-wrapped (multi-line) acceptance criteria
@@ -75,9 +68,7 @@ describe("parseStoryCard", () => {
     expect(dupCriterion).toContain(
       "The duplicated report-formatting logic was flagged openly by the per-task quality review",
     );
-    expect(dupCriterion).toContain(
-      "only the final whole-branch review catching it",
-    );
+    expect(dupCriterion).toContain("only the final whole-branch review catching it");
     // Joined as one logical line — no internal newlines.
     expect(dupCriterion).not.toContain("\n");
     // The last criterion keeps its full wrapped text too.

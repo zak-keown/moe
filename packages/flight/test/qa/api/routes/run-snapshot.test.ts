@@ -1,12 +1,12 @@
-import { describe, test, expect } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from "fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
+import { Hono } from "hono";
 import { tmpdir } from "os";
 import { join } from "path";
-import { Hono } from "hono";
+import { describe, expect, test } from "vitest";
 import { runRoutes } from "../../../../src/qa/api/routes/run.js";
-import { flightPath } from "../../../../src/qa/paths.js";
 import type { AppConfig } from "../../../../src/qa/config.js";
 import type { LLMClient } from "../../../../src/qa/models/provider.js";
+import { flightPath } from "../../../../src/qa/paths.js";
 
 function stubClient(): LLMClient {
   // Non-network client. The detached executeRun may call chat() — return
@@ -30,8 +30,7 @@ describe("POST /run/:id — snapshot", () => {
     try {
       const storiesDir = flightPath(projectRoot, ".moe-flight", "stories");
       mkdirSync(storiesDir, { recursive: true });
-      const storyBody =
-        "---\nid: snap-story\ntitle: Snap\n---\n# Snap\n\nBody.\n";
+      const storyBody = "---\nid: snap-story\ntitle: Snap\n---\n# Snap\n\nBody.\n";
       writeFileSync(join(storiesDir, "snap-story.md"), storyBody);
 
       const ctxRoot = flightPath(projectRoot, ".moe-flight", "context");
@@ -55,7 +54,9 @@ describe("POST /run/:id — snapshot", () => {
       const app = new Hono();
       app.route(
         "/run",
-        runRoutes(config, undefined, undefined, undefined, undefined, undefined, () => stubClient()),
+        runRoutes(config, undefined, undefined, undefined, undefined, undefined, () =>
+          stubClient(),
+        ),
       );
 
       const res = await app.request("/run/snap-story", {
@@ -72,8 +73,9 @@ describe("POST /run/:id — snapshot", () => {
       const runDir = flightPath(projectRoot, ".moe-flight", "results", body.runs[0].runId);
       expect(existsSync(join(runDir, "inputs", "story.md"))).toBe(true);
       expect(readFileSync(join(runDir, "inputs", "story.md"), "utf-8")).toBe(storyBody);
-      expect(readFileSync(join(runDir, "inputs", "context", "matt", "identity.md"), "utf-8"))
-        .toBe("name: matt");
+      expect(readFileSync(join(runDir, "inputs", "context", "matt", "identity.md"), "utf-8")).toBe(
+        "name: matt",
+      );
     } finally {
       rmSync(projectRoot, { recursive: true, force: true });
     }

@@ -1,7 +1,7 @@
-import { describe, test, expect } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
 import { resolveProjectPrompt } from "../../../src/qa/runs/orchestrator.js";
 
 describe("resolveProjectPrompt", () => {

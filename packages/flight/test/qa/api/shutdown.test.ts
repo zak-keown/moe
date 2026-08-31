@@ -1,10 +1,10 @@
-import { describe, test, expect } from "vitest";
 import { mkdtempSync, readFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import { ShutdownState, drainShutdown } from "../../../src/qa/api/shutdown.js";
-import { RunBroadcaster } from "../../../src/qa/api/ws.js";
+import { describe, expect, test } from "vitest";
 import { RunSetBroadcaster } from "../../../src/qa/api/run-set-broadcaster.js";
+import { drainShutdown, ShutdownState } from "../../../src/qa/api/shutdown.js";
+import { RunBroadcaster } from "../../../src/qa/api/ws.js";
 
 type Closeable = {
   readyState: number;
@@ -59,7 +59,9 @@ describe("RunBroadcaster.closeAll", () => {
   test("tolerates clients whose .close throws (one bad client doesn't block the rest)", () => {
     const b = new RunBroadcaster();
     const bad = fakeWs();
-    bad.close = () => { throw new Error("boom"); };
+    bad.close = () => {
+      throw new Error("boom");
+    };
     const good = fakeWs();
     b.addClient("run-1", bad);
     b.addClient("run-2", good);
@@ -152,7 +154,10 @@ describe("drainShutdown", () => {
     let abortAllCalled = 0;
     const registry = {
       list: () => stuck,
-      abortAll: () => { abortAllCalled++; return 1; },
+      abortAll: () => {
+        abortAllCalled++;
+        return 1;
+      },
     };
     const resultsRoot = mkdtempSync(join(tmpdir(), "moe-flight-shutdown-stub-"));
 
@@ -218,7 +223,7 @@ describe("createApp drain middleware", () => {
     });
 
     expect(res.status).toBe(503);
-    const body = await res.json() as { error: string };
+    const body = (await res.json()) as { error: string };
     expect(body.error).toBe("shutting_down");
   });
 

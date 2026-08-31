@@ -1,14 +1,14 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import * as YAML from "yaml";
 import {
   buildInstallPasskeyTool,
-  readPasskeyFile,
   type PasskeyCredential,
-  type WebAuthnDriver,
+  readPasskeyFile,
   type VirtualAuthenticatorOptions,
+  type WebAuthnDriver,
 } from "../../../../src/qa/adapters/web/passkey.js";
 import type { EvidenceLogger } from "../../../../src/qa/evidence/logger.js";
 
@@ -73,10 +73,7 @@ describe("readPasskeyFile", () => {
     const dir = join(tmp, ".moe-flight", "context", "partial");
     mkdirSync(dir, { recursive: true });
     const filePath = join(dir, "passkey.yaml");
-    writeFileSync(
-      filePath,
-      YAML.stringify({ credentialId: "x", rpId: "example.com" }),
-    );
+    writeFileSync(filePath, YAML.stringify({ credentialId: "x", rpId: "example.com" }));
     expect(() => readPasskeyFile(filePath)).toThrow(/privateKey/);
   });
 
@@ -189,7 +186,9 @@ function makeDriver(failOn?: DriverFailPoint): {
           if (failOn === "addCred") throw new Error("addCred failed");
           calls.addCred.push({ authenticatorId, credential });
         },
-        close() { calls.close += 1; },
+        close() {
+          calls.close += 1;
+        },
       };
     },
   };
@@ -197,7 +196,10 @@ function makeDriver(failOn?: DriverFailPoint): {
   return { driver, calls };
 }
 
-interface LoggedAction { action: string; params: Record<string, unknown> }
+interface LoggedAction {
+  action: string;
+  params: Record<string, unknown>;
+}
 
 function makeFakeLogger(): { logger: EvidenceLogger; actions: LoggedAction[] } {
   const actions: LoggedAction[] = [];

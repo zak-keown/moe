@@ -1,5 +1,9 @@
-import { describe, test, expect } from "vitest";
-import { UnknownModelProviderError, parseModelFlags, resolveProvider } from "../../../src/qa/models/resolve.js";
+import { describe, expect, test } from "vitest";
+import {
+  parseModelFlags,
+  resolveProvider,
+  UnknownModelProviderError,
+} from "../../../src/qa/models/resolve.js";
 
 describe("resolveProvider", () => {
   test("returns anthropic for claude models", () => {

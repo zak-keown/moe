@@ -5,10 +5,6 @@
   "tags": [],
   "stakeholder": "matt",
   "description": "Matt opens the app, signs in, and writes a friends-only post about teaching guitar.",
-  "acceptanceCriteria": [
-    "Signed in as Matt",
-    "Wrote a Post",
-    "Post indicates Friends Only"
-  ],
+  "acceptanceCriteria": ["Signed in as Matt", "Wrote a Post", "Post indicates Friends Only"],
   "raw": ""
 }

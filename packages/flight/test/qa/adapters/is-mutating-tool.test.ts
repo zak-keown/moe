@@ -1,7 +1,7 @@
-import { describe, test, expect } from "vitest";
-import { WebAdapter } from "../../../src/qa/adapters/web/adapter.js";
-import { TUIAdapter } from "../../../src/qa/adapters/tui/adapter.js";
+import { describe, expect, test } from "vitest";
 import { CLIAdapter } from "../../../src/qa/adapters/cli/adapter.js";
+import { TUIAdapter } from "../../../src/qa/adapters/tui/adapter.js";
+import { WebAdapter } from "../../../src/qa/adapters/web/adapter.js";
 
 // We don't start() any adapter — isMutatingTool is a pure classification
 // over tool names and must work without a live target.
@@ -10,9 +10,20 @@ describe("WebAdapter.isMutatingTool", () => {
   const web = new WebAdapter({ viewport: { width: 1024, height: 768 } });
 
   const mutating = [
-    "click", "type", "press", "hover", "double_click", "right_click",
-    "drag", "mouse_move", "scroll", "file_upload", "navigate", "eval",
-    "new_tab", "close_tab",
+    "click",
+    "type",
+    "press",
+    "hover",
+    "double_click",
+    "right_click",
+    "drag",
+    "mouse_move",
+    "scroll",
+    "file_upload",
+    "navigate",
+    "eval",
+    "new_tab",
+    "close_tab",
   ];
   const informational = ["screenshot", "extract", "wait_for"];
 

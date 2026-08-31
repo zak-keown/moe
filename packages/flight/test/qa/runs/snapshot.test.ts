@@ -1,7 +1,15 @@
-import { describe, test, expect } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync, rmSync } from "fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
 import { snapshotRunInputs } from "../../../src/qa/runs/snapshot.js";
 
 describe("snapshotRunInputs", () => {
@@ -36,10 +44,7 @@ describe("snapshotRunInputs", () => {
       const contextRoot = join(tmp, "ctx");
       mkdirSync(join(contextRoot, "matt"), { recursive: true });
       writeFileSync(join(contextRoot, "matt", "identity.md"), "name: matt");
-      writeFileSync(
-        join(contextRoot, "matt", "passkey.yaml"),
-        "credentialId: abc\n",
-      );
+      writeFileSync(join(contextRoot, "matt", "passkey.yaml"), "credentialId: abc\n");
       mkdirSync(join(contextRoot, "alice"), { recursive: true });
       writeFileSync(join(contextRoot, "alice", "identity.md"), "name: alice");
 
@@ -47,8 +52,9 @@ describe("snapshotRunInputs", () => {
 
       const snapCtx = join(runDir, "inputs", "context");
       expect(readFileSync(join(snapCtx, "matt", "identity.md"), "utf-8")).toBe("name: matt");
-      expect(readFileSync(join(snapCtx, "matt", "passkey.yaml"), "utf-8"))
-        .toBe("credentialId: abc\n");
+      expect(readFileSync(join(snapCtx, "matt", "passkey.yaml"), "utf-8")).toBe(
+        "credentialId: abc\n",
+      );
       expect(readFileSync(join(snapCtx, "alice", "identity.md"), "utf-8")).toBe("name: alice");
     } finally {
       rmSync(tmp, { recursive: true, force: true });
@@ -118,8 +124,9 @@ describe("snapshotRunInputs", () => {
       // Snapshot and scratch are independent copies — mutating scratch must
       // not affect the snapshot.
       writeFileSync(join(scratch, "notes.md"), "tampered");
-      expect(readFileSync(join(runDir, "inputs", "context", "notes.md"), "utf-8"))
-        .toBe("blood type: O-negative\n");
+      expect(readFileSync(join(runDir, "inputs", "context", "notes.md"), "utf-8")).toBe(
+        "blood type: O-negative\n",
+      );
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

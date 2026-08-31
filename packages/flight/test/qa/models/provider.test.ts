@@ -1,5 +1,10 @@
-import { describe, test, expect } from "vitest";
-import type { ToolCall, ToolResult, AgentResponse, LLMClient } from "../../../src/qa/models/provider.js";
+import { describe, expect, test } from "vitest";
+import type {
+  AgentResponse,
+  LLMClient,
+  ToolCall,
+  ToolResult,
+} from "../../../src/qa/models/provider.js";
 
 describe("provider types", () => {
   test("ToolCall has id field", () => {
@@ -47,10 +52,7 @@ describe("provider types", () => {
 
     expect(client.userMessage("hi")).toEqual({ role: "user", content: "hi" });
     expect(
-      client.toolResultMessages(
-        [{ id: "1", name: "test", arguments: {} }],
-        [{ text: "ok" }]
-      )
+      client.toolResultMessages([{ id: "1", name: "test", arguments: {} }], [{ text: "ok" }]),
     ).toEqual([{ id: "1", result: "ok" }]);
   });
 });

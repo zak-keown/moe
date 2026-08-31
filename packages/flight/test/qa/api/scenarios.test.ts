@@ -1,10 +1,10 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { createApp } from "../../../src/qa/api/server.js";
 import { loadConfig } from "../../../src/qa/config.js";
 import { flightPath } from "../../../src/qa/paths.js";
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from "fs";
-import { join } from "path";
-import { tmpdir } from "os";
 
 const makeApp = (projectRoot: string, uiDir?: string) =>
   createApp(loadConfig({ projectRoot }, {} as NodeJS.ProcessEnv), uiDir);
@@ -20,12 +20,12 @@ describe("Scenarios API", () => {
 
     writeFileSync(
       join(storiesDir, "story-001-test.md"),
-      "---\nid: story-001\ntitle: Test story\nstatus: draft\ntags: core\n---\n\nA test story.\n\n## Acceptance Criteria\n- Something works\n"
+      "---\nid: story-001\ntitle: Test story\nstatus: draft\ntags: core\n---\n\nA test story.\n\n## Acceptance Criteria\n- Something works\n",
     );
 
     writeFileSync(
       join(storiesDir, "story-002-another.md"),
-      "---\nid: story-002\ntitle: Another story\nstatus: ready\n---\n\nAnother story.\n"
+      "---\nid: story-002\ntitle: Another story\nstatus: ready\n---\n\nAnother story.\n",
     );
 
     app = makeApp(projectRoot);

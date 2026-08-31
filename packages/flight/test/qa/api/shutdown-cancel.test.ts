@@ -1,10 +1,10 @@
-import { describe, test, expect } from "vitest";
-import { mkdtempSync, writeFileSync, readFileSync, mkdirSync } from "fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import { ShutdownState, drainShutdown } from "../../../src/qa/api/shutdown.js";
-import { RunBroadcaster } from "../../../src/qa/api/ws.js";
+import { describe, expect, test } from "vitest";
 import { RunSetBroadcaster } from "../../../src/qa/api/run-set-broadcaster.js";
+import { drainShutdown, ShutdownState } from "../../../src/qa/api/shutdown.js";
+import { RunBroadcaster } from "../../../src/qa/api/ws.js";
 
 // PRI-1507 — full shutdown drain story tests. Distinct from
 // shutdown.test.ts (which covers the basic mechanics from PRI-1477A);
@@ -132,7 +132,10 @@ describe("drainShutdown — PRI-1507 paths", () => {
     // NOT overwrite it.
     const yDir = join(resultsRoot, "r-y");
     mkdirSync(yDir, { recursive: true });
-    writeFileSync(join(yDir, "result.json"), JSON.stringify({ status: "pass", real: true, runId: "r-y" }));
+    writeFileSync(
+      join(yDir, "result.json"),
+      JSON.stringify({ status: "pass", real: true, runId: "r-y" }),
+    );
 
     const result = await drainShutdown({
       signal: "SIGTERM",
@@ -175,7 +178,12 @@ describe("drainShutdown — PRI-1507 paths", () => {
       broadcaster: new RunBroadcaster(),
       setBroadcaster: new RunSetBroadcaster(),
       registry,
-      cancelTokens: { cancelAll: () => { cancelAllCalls.count++; return 0; } },
+      cancelTokens: {
+        cancelAll: () => {
+          cancelAllCalls.count++;
+          return 0;
+        },
+      },
       resultsRoot,
       graceMs: 200,
       postAbortMs: 100,
@@ -210,10 +218,20 @@ describe("drainShutdown — PRI-1507 paths", () => {
       broadcaster: new RunBroadcaster(),
       setBroadcaster: new RunSetBroadcaster(),
       registry: {
-        list: () => { return registry.list(); },
-        abortAll: (r) => { callOrder.push("abortAll"); return registry.abortAll(r); },
+        list: () => {
+          return registry.list();
+        },
+        abortAll: (r) => {
+          callOrder.push("abortAll");
+          return registry.abortAll(r);
+        },
       },
-      cancelTokens: { cancelAll: () => { callOrder.push("cancelAll"); return 1; } },
+      cancelTokens: {
+        cancelAll: () => {
+          callOrder.push("cancelAll");
+          return 1;
+        },
+      },
       resultsRoot,
       graceMs: 100,
       postAbortMs: 200,

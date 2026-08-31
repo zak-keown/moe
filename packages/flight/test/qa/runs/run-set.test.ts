@@ -1,10 +1,10 @@
-import { describe, test, expect } from "vitest";
-import { mkdtempSync, existsSync } from "fs";
+import { existsSync, mkdtempSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
 import { runRunSet } from "../../../src/qa/runs/run-set.js";
-import type { VerdictResult } from "../../../src/qa/types.js";
 import type { RunSetCtx } from "../../../src/qa/runs/run-set-types.js";
+import type { VerdictResult } from "../../../src/qa/types.js";
 
 const baseConfig = (overrides = {}) => ({
   resultsRoot: mkdtempSync(join(tmpdir(), "moe-flight-runset-")),
@@ -122,7 +122,9 @@ describe("runRunSet — orchestrator loop", () => {
     expect(handle.runs).toHaveLength(2);
 
     // set.json stub must exist on disk before completion resolves.
-    expect(existsSync(join(config.resultsRoot, "run-sets", handle.runSetId, "set.json"))).toBe(true);
+    expect(existsSync(join(config.resultsRoot, "run-sets", handle.runSetId, "set.json"))).toBe(
+      true,
+    );
 
     // Now wait for the loop to actually finish.
     const result = await handle.completion;

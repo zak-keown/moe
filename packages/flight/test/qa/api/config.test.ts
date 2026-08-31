@@ -1,7 +1,7 @@
-import { describe, test, expect } from "vitest";
+import { Hono } from "hono";
+import { describe, expect, test } from "vitest";
 import { configRoutes } from "../../../src/qa/api/routes/config.js";
 import { loadConfig } from "../../../src/qa/config.js";
-import { Hono } from "hono";
 
 describe("Config API", () => {
   test("GET /api/config returns models from MOE_FLIGHT_MODELS", async () => {
@@ -47,10 +47,9 @@ describe("Config API", () => {
   });
 
   test("GET /api/config reflects flag-sourced model (flag beats env)", async () => {
-    const config = loadConfig(
-      { models: { agent: "claude-opus-4-6" } },
-      { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv,
-    );
+    const config = loadConfig({ models: { agent: "claude-opus-4-6" } }, {
+      MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+    } as NodeJS.ProcessEnv);
     const app = new Hono();
     app.route("/api/config", configRoutes(config));
     const res = await app.request("/api/config");

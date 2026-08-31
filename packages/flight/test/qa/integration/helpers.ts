@@ -1,13 +1,13 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 import { parseStoryCard, type StoryCard } from "../../../src/qa/format/story-card.js";
-import type { CriterionVerdict } from "../../../src/qa/types.js";
 import type {
+  AgentResponse,
   LLMClient,
   ToolCall,
   ToolResult,
-  AgentResponse,
 } from "../../../src/qa/models/provider.js";
-import { join } from "path";
-import { readFileSync } from "fs";
+import type { CriterionVerdict } from "../../../src/qa/types.js";
 import { sleep } from "../helpers/mock-http.js";
 
 const STORIES_DIR = join(import.meta.dirname, "../fixtures/stories");
@@ -16,11 +16,7 @@ export function loadStory(filename: string) {
   return parseStoryCard(readFileSync(join(STORIES_DIR, filename), "utf-8"));
 }
 
-export function step(
-  id: string,
-  name: string,
-  args: Record<string, unknown>
-): AgentResponse {
+export function step(id: string, name: string, args: Record<string, unknown>): AgentResponse {
   return {
     text: `Executing ${name}`,
     toolCalls: [{ id, name, arguments: args }],
@@ -39,7 +35,7 @@ export function step(
 export function citeAll(
   card: StoryCard,
   verdict: CriterionVerdict["verdict"],
-  evidence = "scripted run: observed via adapter output"
+  evidence = "scripted run: observed via adapter output",
 ): CriterionVerdict[] {
   return card.acceptanceCriteria.map((criterion) => ({
     criterion,
@@ -52,7 +48,7 @@ export function report(
   status: string,
   summary: string,
   reasoning: string,
-  criteria?: CriterionVerdict[]
+  criteria?: CriterionVerdict[],
 ): AgentResponse {
   return {
     text: summary,
@@ -72,10 +68,7 @@ export function report(
   };
 }
 
-export function makeScriptedClient(
-  steps: AgentResponse[],
-  sleepMs = 200
-): LLMClient {
+export function makeScriptedClient(steps: AgentResponse[], sleepMs = 200): LLMClient {
   let callIndex = 0;
 
   return {
@@ -98,18 +91,11 @@ export function makeScriptedClient(
   };
 }
 
-export function withTimeout<T>(
-  promise: Promise<T>,
-  ms: number,
-  label: string
-): Promise<T> {
+export function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return Promise.race([
     promise,
     new Promise<never>((_, reject) =>
-      setTimeout(
-        () => reject(new Error(`${label} timed out after ${ms}ms`)),
-        ms
-      )
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms),
     ),
   ]);
 }

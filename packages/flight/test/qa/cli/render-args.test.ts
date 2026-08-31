@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { parseArgs } from "../../../src/qa/cli/args.js";
 
 describe("parseArgs render", () => {
@@ -10,11 +10,14 @@ describe("parseArgs render", () => {
 
   test("accepts --state-dir and --project-dir flags", () => {
     const parsed = parseArgs([
-      "bun", "index.ts",
+      "bun",
+      "index.ts",
       "render",
       "/abs/path/to/run-dir",
-      "--state-dir", ".my-state",
-      "--project-dir", "/proj",
+      "--state-dir",
+      ".my-state",
+      "--project-dir",
+      "/proj",
     ]);
     if (parsed.command !== "render") throw new Error("unreachable");
     expect(parsed.runIdOrPath).toBe("/abs/path/to/run-dir");
@@ -23,8 +26,9 @@ describe("parseArgs render", () => {
   });
 
   test("rejects unknown flags", () => {
-    expect(() => parseArgs(["bun", "index.ts", "render", "some-id", "--unknown", "x"]))
-      .toThrow(/unknown flag/i);
+    expect(() => parseArgs(["bun", "index.ts", "render", "some-id", "--unknown", "x"])).toThrow(
+      /unknown flag/i,
+    );
   });
 
   test("missing positional throws usage error", () => {

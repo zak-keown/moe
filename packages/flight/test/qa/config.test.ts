@@ -1,8 +1,13 @@
-import { describe, test, expect } from "vitest";
-import { mkdtempSync, writeFileSync, chmodSync, rmSync } from "node:fs";
+import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { loadConfig, validateRunBody, mergeRunConfig, requireLlmCapable } from "../../src/qa/config.js";
+import { describe, expect, test } from "vitest";
+import {
+  loadConfig,
+  mergeRunConfig,
+  requireLlmCapable,
+  validateRunBody,
+} from "../../src/qa/config.js";
 
 describe("loadConfig", () => {
   const emptyEnv = {} as NodeJS.ProcessEnv;
@@ -41,10 +46,9 @@ describe("loadConfig", () => {
     });
 
     test("--state-dir flag overrides env", () => {
-      const c = loadConfig(
-        { stateDirName: ".gnt" },
-        { MOE_FLIGHT_STATE_DIR: "moe-flight" } as NodeJS.ProcessEnv,
-      );
+      const c = loadConfig({ stateDirName: ".gnt" }, {
+        MOE_FLIGHT_STATE_DIR: "moe-flight",
+      } as NodeJS.ProcessEnv);
       expect(c.stateDirName).toBe(".gnt");
       expect(c.sources.stateDirName).toBe("flag");
     });
@@ -56,8 +60,9 @@ describe("loadConfig", () => {
     test("rejects slashes", () => {
       expect(() => loadConfig({ stateDirName: "a/b" }, emptyEnv)).toThrow(/single path segment/);
       expect(() => loadConfig({ stateDirName: "a\\b" }, emptyEnv)).toThrow(/single path segment/);
-      expect(() => loadConfig({}, { MOE_FLIGHT_STATE_DIR: "x/y" } as NodeJS.ProcessEnv))
-        .toThrow(/single path segment/);
+      expect(() => loadConfig({}, { MOE_FLIGHT_STATE_DIR: "x/y" } as NodeJS.ProcessEnv)).toThrow(
+        /single path segment/,
+      );
     });
 
     test("rejects . and ..", () => {
@@ -88,8 +93,18 @@ describe("loadConfig", () => {
 
   test("CLI args override env vars", () => {
     const c = loadConfig(
-      { port: 6600, projectRoot: "/flag", chrome: "flag-host:9444", models: { agent: "claude-opus-4-6" } },
-      { MOE_FLIGHT_PORT: "5500", MOE_FLIGHT_PROJECT_ROOT: "/env", MOE_FLIGHT_CHROME: "env:9333", MOE_FLIGHT_AGENT_MODEL: "gpt-4o" } as NodeJS.ProcessEnv,
+      {
+        port: 6600,
+        projectRoot: "/flag",
+        chrome: "flag-host:9444",
+        models: { agent: "claude-opus-4-6" },
+      },
+      {
+        MOE_FLIGHT_PORT: "5500",
+        MOE_FLIGHT_PROJECT_ROOT: "/env",
+        MOE_FLIGHT_CHROME: "env:9333",
+        MOE_FLIGHT_AGENT_MODEL: "gpt-4o",
+      } as NodeJS.ProcessEnv,
     );
     expect(c.port).toBe(6600);
     expect(c.projectRoot).toBe("/flag");
@@ -102,18 +117,19 @@ describe("loadConfig", () => {
   });
 
   test("invalid MOE_FLIGHT_CHROME format throws", () => {
-    expect(() => loadConfig({}, { MOE_FLIGHT_CHROME: "no-port-here" } as NodeJS.ProcessEnv))
-      .toThrow(/MOE_FLIGHT_CHROME/);
+    expect(() =>
+      loadConfig({}, { MOE_FLIGHT_CHROME: "no-port-here" } as NodeJS.ProcessEnv),
+    ).toThrow(/MOE_FLIGHT_CHROME/);
   });
 
   test("invalid --chrome format throws", () => {
-    expect(() => loadConfig({ chrome: "no-port-here" }, emptyEnv))
-      .toThrow(/chrome/i);
+    expect(() => loadConfig({ chrome: "no-port-here" }, emptyEnv)).toThrow(/chrome/i);
   });
 
   test("invalid port in env throws", () => {
-    expect(() => loadConfig({}, { MOE_FLIGHT_PORT: "not-a-number" } as NodeJS.ProcessEnv))
-      .toThrow(/MOE_FLIGHT_PORT/);
+    expect(() => loadConfig({}, { MOE_FLIGHT_PORT: "not-a-number" } as NodeJS.ProcessEnv)).toThrow(
+      /MOE_FLIGHT_PORT/,
+    );
   });
 
   test("available models defaults to [] (no allow-list) when MOE_FLIGHT_MODELS unset", () => {
@@ -122,7 +138,10 @@ describe("loadConfig", () => {
   });
 
   test("apiKeys reflects both providers when both keys set", () => {
-    const c = loadConfig({}, { ANTHROPIC_API_KEY: "sk-ant-xxx", OPENAI_API_KEY: "sk-xxx" } as NodeJS.ProcessEnv);
+    const c = loadConfig({}, {
+      ANTHROPIC_API_KEY: "sk-ant-xxx",
+      OPENAI_API_KEY: "sk-xxx",
+    } as NodeJS.ProcessEnv);
     expect(c.apiKeys).toEqual({ anthropic: true, openai: true });
   });
 
@@ -151,17 +170,17 @@ describe("loadConfig", () => {
   });
 
   test("--save-screencast flag overrides env", () => {
-    const c = loadConfig(
-      { saveScreencast: true },
-      { MOE_FLIGHT_SAVE_SCREENCAST: "0" } as NodeJS.ProcessEnv,
-    );
+    const c = loadConfig({ saveScreencast: true }, {
+      MOE_FLIGHT_SAVE_SCREENCAST: "0",
+    } as NodeJS.ProcessEnv);
     expect(c.defaultSaveScreencast).toBe(true);
     expect(c.sources.defaultSaveScreencast).toBe("flag");
   });
 
   test("invalid MOE_FLIGHT_SAVE_SCREENCAST throws", () => {
-    expect(() => loadConfig({}, { MOE_FLIGHT_SAVE_SCREENCAST: "maybe" } as NodeJS.ProcessEnv))
-      .toThrow(/MOE_FLIGHT_SAVE_SCREENCAST/);
+    expect(() =>
+      loadConfig({}, { MOE_FLIGHT_SAVE_SCREENCAST: "maybe" } as NodeJS.ProcessEnv),
+    ).toThrow(/MOE_FLIGHT_SAVE_SCREENCAST/);
   });
 
   test("defaultReflectionInterval defaults to 10", () => {
@@ -183,26 +202,25 @@ describe("loadConfig", () => {
   });
 
   test("--reflection-interval flag overrides env", () => {
-    const c = loadConfig(
-      { reflectionInterval: 7 },
-      { MOE_FLIGHT_REFLECTION_INTERVAL: "20" } as NodeJS.ProcessEnv,
-    );
+    const c = loadConfig({ reflectionInterval: 7 }, {
+      MOE_FLIGHT_REFLECTION_INTERVAL: "20",
+    } as NodeJS.ProcessEnv);
     expect(c.defaultReflectionInterval).toBe(7);
     expect(c.sources.defaultReflectionInterval).toBe("flag");
   });
 
   test("invalid MOE_FLIGHT_REFLECTION_INTERVAL throws", () => {
-    expect(() => loadConfig({}, { MOE_FLIGHT_REFLECTION_INTERVAL: "-1" } as NodeJS.ProcessEnv))
-      .toThrow(/MOE_FLIGHT_REFLECTION_INTERVAL/);
-    expect(() => loadConfig({}, { MOE_FLIGHT_REFLECTION_INTERVAL: "abc" } as NodeJS.ProcessEnv))
-      .toThrow(/MOE_FLIGHT_REFLECTION_INTERVAL/);
+    expect(() =>
+      loadConfig({}, { MOE_FLIGHT_REFLECTION_INTERVAL: "-1" } as NodeJS.ProcessEnv),
+    ).toThrow(/MOE_FLIGHT_REFLECTION_INTERVAL/);
+    expect(() =>
+      loadConfig({}, { MOE_FLIGHT_REFLECTION_INTERVAL: "abc" } as NodeJS.ProcessEnv),
+    ).toThrow(/MOE_FLIGHT_REFLECTION_INTERVAL/);
   });
 
   test("invalid --reflection-interval throws", () => {
-    expect(() => loadConfig({ reflectionInterval: -3 }, emptyEnv))
-      .toThrow(/reflection-interval/);
-    expect(() => loadConfig({ reflectionInterval: 1.5 }, emptyEnv))
-      .toThrow(/reflection-interval/);
+    expect(() => loadConfig({ reflectionInterval: -3 }, emptyEnv)).toThrow(/reflection-interval/);
+    expect(() => loadConfig({ reflectionInterval: 1.5 }, emptyEnv)).toThrow(/reflection-interval/);
   });
 
   test("MOE_FLIGHT_CREDENTIAL_RESOLVER populates credentialResolver", () => {
@@ -237,10 +255,12 @@ describe("loadConfig", () => {
 
   test("invalid MOE_FLIGHT_CREDENTIAL_RESOLVER_TIMEOUT_MS throws", () => {
     withExecutableResolver((resolverPath) => {
-      expect(() => loadConfig({}, {
-        MOE_FLIGHT_CREDENTIAL_RESOLVER: resolverPath,
-        MOE_FLIGHT_CREDENTIAL_RESOLVER_TIMEOUT_MS: "abc",
-      } as NodeJS.ProcessEnv)).toThrow(/MOE_FLIGHT_CREDENTIAL_RESOLVER_TIMEOUT_MS/);
+      expect(() =>
+        loadConfig({}, {
+          MOE_FLIGHT_CREDENTIAL_RESOLVER: resolverPath,
+          MOE_FLIGHT_CREDENTIAL_RESOLVER_TIMEOUT_MS: "abc",
+        } as NodeJS.ProcessEnv),
+      ).toThrow(/MOE_FLIGHT_CREDENTIAL_RESOLVER_TIMEOUT_MS/);
     });
   });
 
@@ -313,8 +333,9 @@ describe("validateRunBody", () => {
   });
 
   test("rejects unknown field", () => {
-    expect(() => validateRunBody({ target: "http://x", screenshotQuality: 99 }))
-      .toThrow(/Unknown field.*screenshotQuality/);
+    expect(() => validateRunBody({ target: "http://x", screenshotQuality: 99 })).toThrow(
+      /Unknown field.*screenshotQuality/,
+    );
   });
 
   test("rejects missing target", () => {
@@ -338,15 +359,20 @@ describe("validateRunBody", () => {
   });
 
   test("rejects non-boolean saveScreencast", () => {
-    expect(() => validateRunBody({ target: "http://x", saveScreencast: "yes" }))
-      .toThrow(/saveScreencast/);
-    expect(() => validateRunBody({ target: "http://x", saveScreencast: 1 }))
-      .toThrow(/saveScreencast/);
+    expect(() => validateRunBody({ target: "http://x", saveScreencast: "yes" })).toThrow(
+      /saveScreencast/,
+    );
+    expect(() => validateRunBody({ target: "http://x", saveScreencast: 1 })).toThrow(
+      /saveScreencast/,
+    );
   });
 });
 
 describe("mergeRunConfig", () => {
-  const app = loadConfig({}, { MOE_FLIGHT_CHROME: "server-default:9000", MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
+  const app = loadConfig({}, {
+    MOE_FLIGHT_CHROME: "server-default:9000",
+    MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+  } as NodeJS.ProcessEnv);
 
   test("falls through to server defaults when body has only target", () => {
     const eff = mergeRunConfig(app, { target: "http://x" });
@@ -367,8 +393,7 @@ describe("mergeRunConfig", () => {
   });
 
   test("invalid chrome format in body throws", () => {
-    expect(() => mergeRunConfig(app, { target: "http://x", chrome: "no-port" }))
-      .toThrow(/chrome/i);
+    expect(() => mergeRunConfig(app, { target: "http://x", chrome: "no-port" })).toThrow(/chrome/i);
   });
 
   test("chrome is undefined when neither body nor server config specified (default source)", () => {
@@ -429,13 +454,17 @@ describe("requireLlmCapable", () => {
   });
 
   test("passes when only a subscription OAuth token is set", () => {
-    const config = loadConfig({}, { CLAUDE_CODE_OAUTH_TOKEN: "sk-ant-oat01-xxx" } as NodeJS.ProcessEnv);
+    const config = loadConfig({}, {
+      CLAUDE_CODE_OAUTH_TOKEN: "sk-ant-oat01-xxx",
+    } as NodeJS.ProcessEnv);
     expect(() => requireLlmCapable(config)).not.toThrow();
   });
 
   test("passes when both keys are set", () => {
-    const config = loadConfig({}, { ANTHROPIC_API_KEY: "sk-ant-xxx", OPENAI_API_KEY: "sk-xxx" } as NodeJS.ProcessEnv);
+    const config = loadConfig({}, {
+      ANTHROPIC_API_KEY: "sk-ant-xxx",
+      OPENAI_API_KEY: "sk-xxx",
+    } as NodeJS.ProcessEnv);
     expect(() => requireLlmCapable(config)).not.toThrow();
   });
 });
-

@@ -1,7 +1,7 @@
-import { describe, test, expect } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync } from "fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join, resolve as resolvePath } from "path";
+import { describe, expect, test } from "vitest";
 import { flightPath, isSafePath, resolveInside, resolveRunDir } from "../../src/qa/paths.js";
 
 describe("flightPath", () => {

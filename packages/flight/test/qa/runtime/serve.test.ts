@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { serve, type WsLike } from "../../../src/qa/runtime/serve.js";
 
 function freePort(): number {

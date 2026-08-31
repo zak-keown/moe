@@ -1,8 +1,8 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { writeResultFiles } from "../../../src/qa/evidence/writer.js";
-import { mkdtempSync, rmSync, readFileSync, readdirSync, existsSync } from "fs";
-import { join } from "path";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "fs";
 import { tmpdir } from "os";
+import { join } from "path";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { writeResultFiles } from "../../../src/qa/evidence/writer.js";
 import type { VerdictResult } from "../../../src/qa/types.js";
 
 describe("writeResultFiles", () => {

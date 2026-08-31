@@ -11,7 +11,7 @@
  * block-by-block migrations. If it goes red, the migration mistakenly
  * changed an attribution.
  */
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { loadConfig, mergeRunConfig } from "../../../src/qa/config.js";
 
 describe("source attribution (load-bearing for mergeRunConfig)", () => {
@@ -45,10 +45,7 @@ describe("source attribution (load-bearing for mergeRunConfig)", () => {
   });
 
   it("sources.defaultTarget === 'flag' when arg overrides env", () => {
-    const config = loadConfig(
-      { target: "http://flag" },
-      { MOE_FLIGHT_TARGET: "http://env" },
-    );
+    const config = loadConfig({ target: "http://flag" }, { MOE_FLIGHT_TARGET: "http://env" });
     expect(config.sources.defaultTarget).toBe("flag");
     expect(config.defaultTarget).toBe("http://flag");
   });
@@ -62,14 +59,17 @@ describe("source attribution (load-bearing for mergeRunConfig)", () => {
     expect(def.sources.defaultViewport).toBe("default");
     expect(def.sources.defaultSaveScreencast).toBe("default");
 
-    const envOnly = loadConfig({}, {
-      MOE_FLIGHT_PROJECT_ROOT: "/tmp/x",
-      MOE_FLIGHT_PORT: "5500",
-      MOE_FLIGHT_MAX_TIME: "60s",
-      MOE_FLIGHT_REFLECTION_INTERVAL: "5",
-      MOE_FLIGHT_VIEWPORT: "1024x768",
-      MOE_FLIGHT_SAVE_SCREENCAST: "true",
-    });
+    const envOnly = loadConfig(
+      {},
+      {
+        MOE_FLIGHT_PROJECT_ROOT: "/tmp/x",
+        MOE_FLIGHT_PORT: "5500",
+        MOE_FLIGHT_MAX_TIME: "60s",
+        MOE_FLIGHT_REFLECTION_INTERVAL: "5",
+        MOE_FLIGHT_VIEWPORT: "1024x768",
+        MOE_FLIGHT_SAVE_SCREENCAST: "true",
+      },
+    );
     expect(envOnly.sources.projectRoot).toBe("env");
     expect(envOnly.sources.port).toBe("env");
     expect(envOnly.sources.defaultBudgetMs).toBe("env");
@@ -77,21 +77,24 @@ describe("source attribution (load-bearing for mergeRunConfig)", () => {
     expect(envOnly.sources.defaultViewport).toBe("env");
     expect(envOnly.sources.defaultSaveScreencast).toBe("env");
 
-    const withFlag = loadConfig({
-      projectRoot: "/tmp/y",
-      port: 6600,
-      maxTime: "30s",
-      reflectionInterval: 7,
-      viewport: "800x600",
-      saveScreencast: false,
-    }, {
-      MOE_FLIGHT_PROJECT_ROOT: "/tmp/x",
-      MOE_FLIGHT_PORT: "5500",
-      MOE_FLIGHT_MAX_TIME: "60s",
-      MOE_FLIGHT_REFLECTION_INTERVAL: "5",
-      MOE_FLIGHT_VIEWPORT: "1024x768",
-      MOE_FLIGHT_SAVE_SCREENCAST: "true",
-    });
+    const withFlag = loadConfig(
+      {
+        projectRoot: "/tmp/y",
+        port: 6600,
+        maxTime: "30s",
+        reflectionInterval: 7,
+        viewport: "800x600",
+        saveScreencast: false,
+      },
+      {
+        MOE_FLIGHT_PROJECT_ROOT: "/tmp/x",
+        MOE_FLIGHT_PORT: "5500",
+        MOE_FLIGHT_MAX_TIME: "60s",
+        MOE_FLIGHT_REFLECTION_INTERVAL: "5",
+        MOE_FLIGHT_VIEWPORT: "1024x768",
+        MOE_FLIGHT_SAVE_SCREENCAST: "true",
+      },
+    );
     expect(withFlag.sources.projectRoot).toBe("flag");
     expect(withFlag.sources.port).toBe("flag");
     expect(withFlag.sources.defaultBudgetMs).toBe("flag");
@@ -109,14 +112,17 @@ describe("source attribution (load-bearing for mergeRunConfig)", () => {
     expect(def.sources.wsIdleTimeoutSec).toBe("default");
     expect(def.sources.wsOriginAllowlist).toBe("default");
 
-    const envSet = loadConfig({}, {
-      MOE_FLIGHT_SHUTDOWN_GRACE_MS: "5000",
-      MOE_FLIGHT_MAX_REQUEST_BODY_SIZE: "2048",
-      MOE_FLIGHT_MAX_CONCURRENT_RUNS: "8",
-      MOE_FLIGHT_ACTIVE_RUN_TARGET_MAX_BYTES: "512",
-      MOE_FLIGHT_WS_IDLE_TIMEOUT_SEC: "30",
-      MOE_FLIGHT_WS_ORIGIN_ALLOWLIST: "http://a,http://b",
-    });
+    const envSet = loadConfig(
+      {},
+      {
+        MOE_FLIGHT_SHUTDOWN_GRACE_MS: "5000",
+        MOE_FLIGHT_MAX_REQUEST_BODY_SIZE: "2048",
+        MOE_FLIGHT_MAX_CONCURRENT_RUNS: "8",
+        MOE_FLIGHT_ACTIVE_RUN_TARGET_MAX_BYTES: "512",
+        MOE_FLIGHT_WS_IDLE_TIMEOUT_SEC: "30",
+        MOE_FLIGHT_WS_ORIGIN_ALLOWLIST: "http://a,http://b",
+      },
+    );
     expect(envSet.sources.shutdownGraceMs).toBe("env");
     expect(envSet.sources.maxRequestBodySize).toBe("env");
     expect(envSet.sources.maxConcurrentRuns).toBe("env");
@@ -131,16 +137,22 @@ describe("source attribution (load-bearing for mergeRunConfig)", () => {
     expect(def.sources["models.agent"]).toBe("default");
     expect(def.sources["models.fanout"]).toBe("unset");
 
-    const envSet = loadConfig({}, {
-      MOE_FLIGHT_AGENT_MODEL: "claude-opus-4-7",
-      MOE_FLIGHT_FANOUT_MODEL: "claude-sonnet-4-6",
-    });
+    const envSet = loadConfig(
+      {},
+      {
+        MOE_FLIGHT_AGENT_MODEL: "claude-opus-4-7",
+        MOE_FLIGHT_FANOUT_MODEL: "claude-sonnet-4-6",
+      },
+    );
     expect(envSet.sources["models.agent"]).toBe("env");
     expect(envSet.sources["models.fanout"]).toBe("env");
 
-    const withFlag = loadConfig({
-      models: { agent: "claude-opus-4-7", fanout: "claude-sonnet-4-6" },
-    }, {});
+    const withFlag = loadConfig(
+      {
+        models: { agent: "claude-opus-4-7", fanout: "claude-sonnet-4-6" },
+      },
+      {},
+    );
     expect(withFlag.sources["models.agent"]).toBe("flag");
     expect(withFlag.sources["models.fanout"]).toBe("flag");
   });

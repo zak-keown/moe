@@ -1,14 +1,14 @@
-import { describe, test, expect, afterEach } from "vitest";
-import { runAgent } from "../../../src/qa/agent/agent.js";
-import { TUIAdapter } from "../../../src/qa/adapters/tui/adapter.js";
-import { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
-import { makeRunId } from "../../../src/qa/util/id.js";
-import type { AgentResponse } from "../../../src/qa/models/provider.js";
-import { mkdtempSync, writeFileSync, unlinkSync } from "fs";
-import { join } from "path";
+import { mkdtempSync, unlinkSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
-import { citeAll, loadStory, step, report, makeScriptedClient } from "./helpers.js";
+import { join } from "path";
+import { afterEach, describe, expect, test } from "vitest";
+import { TUIAdapter } from "../../../src/qa/adapters/tui/adapter.js";
+import { runAgent } from "../../../src/qa/agent/agent.js";
+import { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
+import type { AgentResponse } from "../../../src/qa/models/provider.js";
 import { spawnSync } from "../../../src/qa/runtime/spawn.js";
+import { makeRunId } from "../../../src/qa/util/id.js";
+import { citeAll, loadStory, makeScriptedClient, report, step } from "./helpers.js";
 
 const hasTmux = (() => {
   try {
@@ -71,14 +71,18 @@ describe.skipIf(!hasTmux || !hasNano)("TUI adapter e2e — nano editor", () => {
         "pass",
         "nano opens, accepts typed text, and saves files",
         "Opened file with initial content, typed text, used Ctrl+O to save, confirmed filename",
-        citeAll(card, "pass")
+        citeAll(card, "pass"),
       ),
     ];
 
     const client = makeScriptedClient(steps, 500);
 
     await adapter.start(`nano ${tempFile}`);
-    const result = await runAgent(card, adapter, client, logger, undefined, { runId: makeRunId(card.id), budgetMs: 60_000, reflectionInterval: 0 });
+    const result = await runAgent(card, adapter, client, logger, undefined, {
+      runId: makeRunId(card.id),
+      budgetMs: 60_000,
+      reflectionInterval: 0,
+    });
 
     expect(result.status).toBe("pass");
     expect(result.scenario).toBe("nano-open-save-pass");
@@ -100,14 +104,18 @@ describe.skipIf(!hasTmux || !hasNano)("TUI adapter e2e — nano editor", () => {
         "fail",
         "nano does not support tabbed editing",
         "The screen shows a single file view with no tab bar or tab switching interface",
-        citeAll(card, "fail")
+        citeAll(card, "fail"),
       ),
     ];
 
     const client = makeScriptedClient(steps, 500);
 
     await adapter.start(`nano ${tempFile}`);
-    const result = await runAgent(card, adapter, client, logger, undefined, { runId: makeRunId(card.id), budgetMs: 60_000, reflectionInterval: 0 });
+    const result = await runAgent(card, adapter, client, logger, undefined, {
+      runId: makeRunId(card.id),
+      budgetMs: 60_000,
+      reflectionInterval: 0,
+    });
 
     expect(result.status).toBe("fail");
     expect(result.scenario).toBe("nano-tabs-fail");

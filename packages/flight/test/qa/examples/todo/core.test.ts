@@ -1,18 +1,18 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, rmSync, writeFileSync, existsSync, readFileSync } from "fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import {
+  activeCount,
+  addItem,
+  clearCompleted,
+  deleteItem,
   loadState,
   saveState,
-  addItem,
-  toggleItem,
-  deleteItem,
   setFilter,
-  visibleItems,
-  activeCount,
-  clearCompleted,
   type TodoState,
+  toggleItem,
+  visibleItems,
 } from "../../../../examples/todo/core.js";
 
 let tmp: string;

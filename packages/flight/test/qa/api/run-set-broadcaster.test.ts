@@ -1,10 +1,12 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { RunSetBroadcaster } from "../../../src/qa/api/run-set-broadcaster.js";
 
 class FakeWs {
   readyState = 1;
   sent: string[] = [];
-  send(msg: string) { this.sent.push(msg); }
+  send(msg: string) {
+    this.sent.push(msg);
+  }
 }
 
 describe("RunSetBroadcaster", () => {

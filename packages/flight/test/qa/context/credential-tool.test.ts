@@ -1,13 +1,13 @@
-import { describe, test, expect } from "vitest";
-import { mkdtempSync, writeFileSync, rmSync } from "fs";
+import { mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join, resolve } from "path";
+import { describe, expect, test } from "vitest";
+import type { CredentialResolverConfig } from "../../../src/qa/config.js";
 import {
-  runResolver,
   buildFetchCredentialTool,
   FETCH_CREDENTIAL_TOOL_DESCRIPTION,
+  runResolver,
 } from "../../../src/qa/context/credential-tool.js";
-import type { CredentialResolverConfig } from "../../../src/qa/config.js";
 
 const FIXTURES = resolve(__dirname, "../fixtures");
 const OK = resolve(FIXTURES, "credential-resolver-ok.sh");
@@ -77,26 +77,38 @@ describe("runResolver", () => {
   });
 });
 
-interface RecordedEvent { name: string; payload: Record<string, unknown>; }
+interface RecordedEvent {
+  name: string;
+  payload: Record<string, unknown>;
+}
 
-function makeLogger(): { events: RecordedEvent[]; logger: { logEvent(name: string, payload: Record<string, unknown>): void } } {
+function makeLogger(): {
+  events: RecordedEvent[];
+  logger: { logEvent(name: string, payload: Record<string, unknown>): void };
+} {
   const events: RecordedEvent[] = [];
   return {
     events,
-    logger: { logEvent(name, payload) { events.push({ name, payload }); } },
+    logger: {
+      logEvent(name, payload) {
+        events.push({ name, payload });
+      },
+    },
   };
 }
 
-async function withPopulatedContextRoot<T>(
-  fn: (root: string) => T | Promise<T>,
-): Promise<T> {
+async function withPopulatedContextRoot<T>(fn: (root: string) => T | Promise<T>): Promise<T> {
   // Async so callers can `await` work inside `fn` before the temp dir
   // is deleted. A sync `try/finally` would `rmSync` the dir the
   // instant `fn` returned its Promise, racing against any unresolved
   // awaits inside.
   const tmp = mkdtempSync(join(tmpdir(), "moe-flight-credtool-"));
   writeFileSync(join(tmp, "marker.md"), "anything");
-  try { return await fn(tmp); } finally { rmSync(tmp, { recursive: true, force: true }); }
+  try {
+    return await fn(tmp);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
 }
 
 describe("buildFetchCredentialTool", () => {
@@ -177,7 +189,9 @@ describe("buildFetchCredentialTool", () => {
       const { events, logger } = makeLogger();
       const tool = buildFetchCredentialTool(root, cfg(SLOW, 200))!;
       const result = await tool.execute({ entity: "alice", key: "otp" }, logger);
-      expect(result.text).toMatch(/Error: fetch_credential resolver timed out after 200ms for alice:otp/);
+      expect(result.text).toMatch(
+        /Error: fetch_credential resolver timed out after 200ms for alice:otp/,
+      );
       expect(events[0]?.name).toBe("fetch_credential_failed");
       expect(events[0]?.payload).toMatchObject({
         entity: "alice",
@@ -193,7 +207,9 @@ describe("buildFetchCredentialTool", () => {
       const { events, logger } = makeLogger();
       const tool = buildFetchCredentialTool(root, cfg(EMPTY))!;
       const result = await tool.execute({ entity: "alice", key: "otp" }, logger);
-      expect(result.text).toMatch(/Error: fetch_credential resolver returned empty success for alice:otp/);
+      expect(result.text).toMatch(
+        /Error: fetch_credential resolver returned empty success for alice:otp/,
+      );
       expect(events[0]?.name).toBe("fetch_credential_failed");
       expect(events[0]?.payload?.step).toBe("empty_stdout");
     });
@@ -204,7 +220,9 @@ describe("buildFetchCredentialTool", () => {
       const { events, logger } = makeLogger();
       const tool = buildFetchCredentialTool(root, cfg(OVERFLOW))!;
       const result = await tool.execute({ entity: "alice", key: "otp" }, logger);
-      expect(result.text).toMatch(/Error: fetch_credential resolver stdout exceeded 64 KiB for alice:otp/);
+      expect(result.text).toMatch(
+        /Error: fetch_credential resolver stdout exceeded 64 KiB for alice:otp/,
+      );
       expect(events[0]?.name).toBe("fetch_credential_failed");
       expect(events[0]?.payload?.step).toBe("stdout_overflow");
     });
@@ -215,7 +233,9 @@ describe("buildFetchCredentialTool", () => {
       const { events, logger } = makeLogger();
       const tool = buildFetchCredentialTool(root, cfg(STDERR_OVERFLOW))!;
       const result = await tool.execute({ entity: "alice", key: "otp" }, logger);
-      expect(result.text).toMatch(/Error: fetch_credential resolver stderr exceeded 8 KiB for alice:otp/);
+      expect(result.text).toMatch(
+        /Error: fetch_credential resolver stderr exceeded 8 KiB for alice:otp/,
+      );
       expect(events[0]?.name).toBe("fetch_credential_failed");
       expect(events[0]?.payload?.step).toBe("stderr_overflow");
     });
@@ -224,7 +244,11 @@ describe("buildFetchCredentialTool", () => {
   test("execute spawn failure returns spawn error and logs spawn event", async () => {
     await withPopulatedContextRoot(async (root) => {
       const { events, logger } = makeLogger();
-      const missing: CredentialResolverConfig = { path: "/nonexistent/resolver.sh", timeoutMs: 5000, includeInTranscripts: false };
+      const missing: CredentialResolverConfig = {
+        path: "/nonexistent/resolver.sh",
+        timeoutMs: 5000,
+        includeInTranscripts: false,
+      };
       const tool = buildFetchCredentialTool(root, missing)!;
       const result = await tool.execute({ entity: "alice", key: "otp" }, logger);
       expect(result.text).toMatch(/Error: fetch_credential resolver failed to spawn/);

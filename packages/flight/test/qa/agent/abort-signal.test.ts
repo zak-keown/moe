@@ -1,11 +1,16 @@
-import { describe, test, expect } from "vitest";
-import { runAgent } from "../../../src/qa/agent/agent.js";
-import { makeRunId } from "../../../src/qa/util/id.js";
-import { textResult } from "../../../src/qa/models/provider.js";
-import type { LLMClient, AgentResponse, ToolCall, ToolResult } from "../../../src/qa/models/provider.js";
+import { describe, expect, test } from "vitest";
 import type { Adapter } from "../../../src/qa/adapters/adapter.js";
+import { runAgent } from "../../../src/qa/agent/agent.js";
 import type { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
 import type { StoryCard } from "../../../src/qa/format/story-card.js";
+import type {
+  AgentResponse,
+  LLMClient,
+  ToolCall,
+  ToolResult,
+} from "../../../src/qa/models/provider.js";
+import { textResult } from "../../../src/qa/models/provider.js";
+import { makeRunId } from "../../../src/qa/util/id.js";
 
 // PRI-1507 — the agent loop must observe `abortSignal` at two boundaries:
 // between turns, and between adjacent tool calls within a turn. On either
@@ -91,7 +96,11 @@ function makeClient(responses: AgentResponse[]): LLMClient {
       return { role: "user", content };
     },
     toolResultMessages(calls: ToolCall[], results: ToolResult[]) {
-      return calls.map((c, i) => ({ role: "tool_result", tool_call_id: c.id, content: results[i].text }));
+      return calls.map((c, i) => ({
+        role: "tool_result",
+        tool_call_id: c.id,
+        content: results[i].text,
+      }));
     },
   } as LLMClient;
 }

@@ -1,13 +1,13 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import * as YAML from "yaml";
 import {
   buildInstallCookiesTool,
-  readCookiesFile,
   type CookieParam,
   type CookiesDriver,
+  readCookiesFile,
   type SetCookieResult,
 } from "../../../../src/qa/adapters/web/cookies.js";
 import type { EvidenceLogger } from "../../../../src/qa/evidence/logger.js";
@@ -98,10 +98,7 @@ describe("readCookiesFile", () => {
     const dir = join(tmp, ".moe-flight", "context", "noname");
     mkdirSync(dir, { recursive: true });
     const filePath = join(dir, "cookies.yaml");
-    writeFileSync(
-      filePath,
-      YAML.stringify([{ value: "v", url: "https://e.test/" }]),
-    );
+    writeFileSync(filePath, YAML.stringify([{ value: "v", url: "https://e.test/" }]));
     expect(() => readCookiesFile(filePath)).toThrow(/name/);
   });
 
@@ -109,10 +106,7 @@ describe("readCookiesFile", () => {
     const dir = join(tmp, ".moe-flight", "context", "noval");
     mkdirSync(dir, { recursive: true });
     const filePath = join(dir, "cookies.yaml");
-    writeFileSync(
-      filePath,
-      YAML.stringify([{ name: "_x", url: "https://e.test/" }]),
-    );
+    writeFileSync(filePath, YAML.stringify([{ name: "_x", url: "https://e.test/" }]));
     expect(() => readCookiesFile(filePath)).toThrow(/value/);
   });
 
@@ -130,9 +124,7 @@ describe("readCookiesFile", () => {
     const filePath = join(dir, "cookies.yaml");
     writeFileSync(
       filePath,
-      YAML.stringify([
-        { name: "_x", value: "y", url: "https://e.test/", samesite: "Lax" },
-      ]),
+      YAML.stringify([{ name: "_x", value: "y", url: "https://e.test/", samesite: "Lax" }]),
     );
     expect(() => readCookiesFile(filePath)).toThrow(/sameSite/);
   });
@@ -143,9 +135,7 @@ describe("readCookiesFile", () => {
     const filePath = join(dir, "cookies.yaml");
     writeFileSync(
       filePath,
-      YAML.stringify([
-        { name: "_x", value: "y", url: "https://e.test/", banana: "split" },
-      ]),
+      YAML.stringify([{ name: "_x", value: "y", url: "https://e.test/", banana: "split" }]),
     );
     expect(() => readCookiesFile(filePath)).toThrow(/banana/);
   });
@@ -182,9 +172,10 @@ interface DriverCalls {
   setCookies: Array<{ tab: number; cookies: CookieParam[] }>;
 }
 
-function makeDriver(
-  results: SetCookieResult[] | "throw",
-): { driver: CookiesDriver; calls: DriverCalls } {
+function makeDriver(results: SetCookieResult[] | "throw"): {
+  driver: CookiesDriver;
+  calls: DriverCalls;
+} {
   const calls: DriverCalls = { setCookies: [] };
   const driver: CookiesDriver = {
     async setCookies(tab, cookies) {
@@ -198,7 +189,10 @@ function makeDriver(
   return { driver, calls };
 }
 
-interface LoggedAction { action: string; params: Record<string, unknown> }
+interface LoggedAction {
+  action: string;
+  params: Record<string, unknown>;
+}
 
 function makeFakeLogger(): { logger: EvidenceLogger; actions: LoggedAction[] } {
   const actions: LoggedAction[] = [];
@@ -293,7 +287,7 @@ describe("buildInstallCookiesTool", () => {
     const expected =
       "Install cookies into the browser, reading them from a YAML file under " +
       "the project's context directory. The path is relative to " +
-      ".moe-flight/context/ (example: \"alice/cookies.yaml\"). The file is a list " +
+      '.moe-flight/context/ (example: "alice/cookies.yaml"). The file is a list ' +
       "of cookie entries; each entry mirrors Chrome's Network.setCookie " +
       "parameters (name, value, plus either url or domain+path, and optional " +
       "secure, httpOnly, sameSite, expires). Call this once, before navigating " +

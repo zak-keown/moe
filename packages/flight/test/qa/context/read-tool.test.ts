@@ -1,7 +1,7 @@
-import { describe, test, expect } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
 import { buildReadTool, READ_TOOL_DESCRIPTION } from "../../../src/qa/context/read-tool.js";
 
 // This is the authoritative prose from Flight v1.5 spec §3.1.

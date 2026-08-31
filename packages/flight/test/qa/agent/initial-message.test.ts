@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { buildInitialUserMessage } from "../../../src/qa/agent/initial-message.js";
 
 describe("buildInitialUserMessage", () => {
@@ -6,7 +6,7 @@ describe("buildInitialUserMessage", () => {
     const adapter = { describeTarget: (t: string) => `Open ${t} in Chromium.` };
     const result = buildInitialUserMessage(adapter, "http://x");
     expect(result).toBe(
-      "Begin testing. Use the available tools to interact with the application.\n\nOpen http://x in Chromium."
+      "Begin testing. Use the available tools to interact with the application.\n\nOpen http://x in Chromium.",
     );
   });
 });

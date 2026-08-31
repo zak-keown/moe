@@ -1,6 +1,6 @@
-import { describe, test, expect } from "vitest";
-import { WatchManager } from "../../../src/qa/agent/watch-manager.js";
+import { describe, expect, test } from "vitest";
 import { buildWatchLogsTool } from "../../../src/qa/agent/watch-logs-tool.js";
+import { WatchManager } from "../../../src/qa/agent/watch-manager.js";
 import type { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
 
 function noopLogger(): EvidenceLogger {
@@ -14,7 +14,7 @@ describe("watch_logs tool", () => {
     expect(tool.definition.name).toBe("watch_logs");
     const params = tool.definition.parameters as Record<string, unknown>;
     expect((params.properties as Record<string, unknown>).glob).toBeDefined();
-    expect((params.required as string[])).toContain("glob");
+    expect(params.required as string[]).toContain("glob");
   });
 
   test("registers a glob and returns watching list", async () => {

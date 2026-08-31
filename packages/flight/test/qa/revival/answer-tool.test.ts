@@ -1,6 +1,6 @@
-import { describe, test, expect } from "vitest";
-import { ANSWER_TOOL, extractAnswer } from "../../../src/qa/revival/answer-tool.js";
+import { describe, expect, test } from "vitest";
 import type { ToolCall } from "../../../src/qa/models/provider.js";
+import { ANSWER_TOOL, extractAnswer } from "../../../src/qa/revival/answer-tool.js";
 
 describe("ANSWER_TOOL", () => {
   test("has shape compatible with ToolDefinition", () => {
@@ -15,14 +15,23 @@ describe("ANSWER_TOOL", () => {
 
 describe("extractAnswer", () => {
   test("returns {kind:'structured', text} when an answer tool call is present", () => {
-    const calls: ToolCall[] = [{ id: "t1", name: "answer", arguments: { answer: "Because the form had validation errors." } }];
+    const calls: ToolCall[] = [
+      {
+        id: "t1",
+        name: "answer",
+        arguments: { answer: "Because the form had validation errors." },
+      },
+    ];
     const result = extractAnswer(calls, "ignored fallback text");
     expect(result).toEqual({ kind: "structured", text: "Because the form had validation errors." });
   });
 
   test("returns {kind:'unstructured', text} when no answer tool call but text is present", () => {
     const result = extractAnswer([], "I clicked because the page told me to.");
-    expect(result).toEqual({ kind: "unstructured", text: "I clicked because the page told me to." });
+    expect(result).toEqual({
+      kind: "unstructured",
+      text: "I clicked because the page told me to.",
+    });
   });
 
   test("ignores non-answer tool calls and falls back to text", () => {
@@ -32,7 +41,9 @@ describe("extractAnswer", () => {
   });
 
   test("handles non-string answer arg gracefully", () => {
-    const calls: ToolCall[] = [{ id: "t1", name: "answer", arguments: { answer: 42 as unknown as string } }];
+    const calls: ToolCall[] = [
+      { id: "t1", name: "answer", arguments: { answer: 42 as unknown as string } },
+    ];
     const result = extractAnswer(calls, "fallback");
     expect(result).toEqual({ kind: "unstructured", text: "fallback" });
   });

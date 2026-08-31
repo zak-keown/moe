@@ -1,11 +1,16 @@
-import { describe, test, expect } from "vitest";
-import { runAgent, synthesizeFilledAssistantMessage } from "../../../src/qa/agent/agent.js";
-import { makeRunId } from "../../../src/qa/util/id.js";
-import { textResult } from "../../../src/qa/models/provider.js";
-import type { LLMClient, AgentResponse, ToolCall, ToolResult } from "../../../src/qa/models/provider.js";
+import { describe, expect, test } from "vitest";
 import type { Adapter } from "../../../src/qa/adapters/adapter.js";
+import { runAgent, synthesizeFilledAssistantMessage } from "../../../src/qa/agent/agent.js";
 import type { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
 import type { StoryCard } from "../../../src/qa/format/story-card.js";
+import type {
+  AgentResponse,
+  LLMClient,
+  ToolCall,
+  ToolResult,
+} from "../../../src/qa/models/provider.js";
+import { textResult } from "../../../src/qa/models/provider.js";
+import { makeRunId } from "../../../src/qa/util/id.js";
 
 const card: StoryCard = {
   id: "empty-end-turn-001",
@@ -41,8 +46,7 @@ function makeRecordingLogger(events: CapturedEvent[]): EvidenceLogger {
     logLlmResponse: () => {},
     logToolCall: () => {},
     logToolResult: () => {},
-    logEvent: (name: string, payload: Record<string, unknown>) =>
-      events.push({ name, payload }),
+    logEvent: (name: string, payload: Record<string, unknown>) => events.push({ name, payload }),
     logRunEnd: () => {},
   } as unknown as EvidenceLogger;
 }

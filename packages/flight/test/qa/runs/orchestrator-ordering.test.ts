@@ -1,11 +1,11 @@
-import { describe, test, expect } from "vitest";
 import { mkdtempSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import { parseStoryCard } from "../../../src/qa/format/story-card.js";
-import { report, makeScriptedClient } from "../integration/helpers.js";
-import { executeRunCore } from "../../../src/qa/runs/orchestrator.js";
+import { describe, expect, test } from "vitest";
 import { writeResultFiles as realWriteResultFiles } from "../../../src/qa/evidence/writer.js";
+import { parseStoryCard } from "../../../src/qa/format/story-card.js";
+import { executeRunCore } from "../../../src/qa/runs/orchestrator.js";
+import { makeScriptedClient, report } from "../integration/helpers.js";
 
 // PRI-1507 — load-bearing ordering invariant:
 //   writeResultFiles must complete BEFORE the wrapper's afterClose hook

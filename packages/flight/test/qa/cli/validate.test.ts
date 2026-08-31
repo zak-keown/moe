@@ -1,6 +1,6 @@
-import { describe, test, expect } from "vitest";
-import { validateScenario } from "../../../src/qa/cli/validate.js";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
+import { validateScenario } from "../../../src/qa/cli/validate.js";
 
 const fixtureDir = join(__dirname, "../fixtures");
 

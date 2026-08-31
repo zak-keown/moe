@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { buildSystemPrompt } from "../../../src/qa/agent/prompts.js";
 import type { StoryCard } from "../../../src/qa/format/story-card.js";
 
@@ -97,7 +97,7 @@ describe("buildSystemPrompt", () => {
       "## Context\n\n" +
       "Below is the complete list of files available for this run. Use the\n" +
       "`read` tool with a name from this tree to fetch any file's contents.\n\n" +
-      "Stories will often refer to users by name (\"Alice\", \"as bob\") without\n" +
+      'Stories will often refer to users by name ("Alice", "as bob") without\n' +
       "spelling out credentials. When that happens, look for a matching path in\n" +
       "the tree below, `read` the relevant files, and use what you find to log\n" +
       "in via the regular browser tools. A profile directory typically contains\n" +

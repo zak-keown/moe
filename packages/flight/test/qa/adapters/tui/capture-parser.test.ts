@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { XtermCaptureParser } from "../../../../src/qa/adapters/tui/capture-parser.js";
 
 describe("XtermCaptureParser", () => {
@@ -71,11 +71,7 @@ describe("XtermCaptureParser", () => {
     //   n=15  → base palette bright white → #ffffff
     //   n=1   → base palette red → #cd3131
     const ansi =
-      "\x1b[38;5;202mA" +
-      "\x1b[38;5;240mB" +
-      "\x1b[38;5;15mC" +
-      "\x1b[38;5;1mD" +
-      "\x1b[0m";
+      "\x1b[38;5;202mA" + "\x1b[38;5;240mB" + "\x1b[38;5;15mC" + "\x1b[38;5;1mD" + "\x1b[0m";
     const capture = await parser.parse(ansi, 8, 1);
     const row = capture.cells[0];
     expect(row[0].fg).toBe("#ff5f00");

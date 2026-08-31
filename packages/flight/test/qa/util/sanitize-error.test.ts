@@ -1,6 +1,10 @@
-import { describe, test, expect } from "vitest";
 import { inspect } from "util";
-import { sanitizeLlmError, LlmError, withLlmErrorSanitization } from "../../../src/qa/util/sanitize-error.js";
+import { describe, expect, test } from "vitest";
+import {
+  LlmError,
+  sanitizeLlmError,
+  withLlmErrorSanitization,
+} from "../../../src/qa/util/sanitize-error.js";
 
 // Mimic the shape of @anthropic-ai/sdk's APIError without dragging the SDK
 // constructor in — we only care that sanitizeLlmError reads from `status`,

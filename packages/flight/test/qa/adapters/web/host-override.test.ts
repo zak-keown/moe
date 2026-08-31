@@ -1,6 +1,5 @@
-import { describe, test, expect } from "vitest";
-
 import { createRequire } from "node:module";
+import { describe, expect, test } from "vitest";
 
 // The CDP library under src/qa/adapters/web/lib/ is vendored CommonJS.
 // Bun tolerated a bare `require()` in an ESM file; Node and vitest do

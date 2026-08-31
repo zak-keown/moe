@@ -1,6 +1,5 @@
-import { describe, test, expect } from "vitest";
-
 import { createRequire } from "node:module";
+import { describe, expect, test } from "vitest";
 
 // The CDP library under src/qa/adapters/web/lib/ is vendored CommonJS.
 // Bun tolerated a bare `require()` in an ESM file; Node and vitest do
@@ -66,7 +65,7 @@ describe("generateHtmlDiff (Myers)", () => {
     const before = "";
     const after = Array.from({ length: 200 }, (_, i) => `<p>line ${i}</p>`).join("\n");
     const diff = generateHtmlDiff(before, after);
-    const addedLines = diff.split("\n").filter(l => l.startsWith("+ "));
+    const addedLines = diff.split("\n").filter((l) => l.startsWith("+ "));
     expect(addedLines.length).toBe(50);
     expect(diff).toMatch(/and 150 more added lines/);
   });

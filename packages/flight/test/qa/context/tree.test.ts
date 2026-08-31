@@ -1,7 +1,7 @@
-import { describe, test, expect } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
 import { renderContextTree } from "../../../src/qa/context/tree.js";
 
 describe("renderContextTree", () => {
@@ -138,9 +138,7 @@ describe("renderContextTree", () => {
       const lines = tree.split("\n");
       // 3 rendered entries + 1 truncation line.
       expect(lines.length).toBe(4);
-      expect(lines[3]).toBe(
-        "... (truncated: 7 more entries not shown — this run cannot see them)",
-      );
+      expect(lines[3]).toBe("... (truncated: 7 more entries not shown — this run cannot see them)");
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

@@ -1,7 +1,7 @@
-import { describe, test, expect } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync } from "fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
 import { buildSharedTools } from "../../../src/qa/agent/shared-tools.js";
 
 function emptyContextRoot(): string {
@@ -17,7 +17,10 @@ function populatedContextRoot(): string {
 
 describe("buildSharedTools", () => {
   test("mounts read when context root populated", () => {
-    const bundle = buildSharedTools({ contextRoot: populatedContextRoot(), cwd: emptyContextRoot() });
+    const bundle = buildSharedTools({
+      contextRoot: populatedContextRoot(),
+      cwd: emptyContextRoot(),
+    });
     const names = bundle.definitions().map((d) => d.name);
     expect(names).toContain("read");
     expect(bundle.canExecute("read")).toBe(true);
@@ -42,11 +45,9 @@ describe("buildSharedTools", () => {
 
   test("dispatches bash to the underlying tool", async () => {
     const bundle = buildSharedTools({ cwd: emptyContextRoot() });
-    const result = await bundle.execute(
-      "bash",
-      { command: "echo from-bundle" },
-      { logEvent: () => {} } as any,
-    );
+    const result = await bundle.execute("bash", { command: "echo from-bundle" }, {
+      logEvent: () => {},
+    } as any);
     expect((result as { text: string }).text).toContain("from-bundle");
   });
 });

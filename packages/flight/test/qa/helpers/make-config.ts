@@ -11,10 +11,7 @@ import type { AppConfig } from "../../../src/qa/config.js";
  * type here surfaces field-name drift at compile time instead of hiding
  * it behind a cast. PRI-1640.
  */
-export function makeConfig(
-  projectRoot: string,
-  overrides: Partial<AppConfig> = {},
-): AppConfig {
+export function makeConfig(projectRoot: string, overrides: Partial<AppConfig> = {}): AppConfig {
   const base: AppConfig = {
     projectRoot,
     stateDirName: ".moe-flight",

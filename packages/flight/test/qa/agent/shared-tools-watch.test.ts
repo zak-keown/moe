@@ -1,7 +1,7 @@
-import { describe, test, expect } from "vitest";
 import { mkdtempSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
 import { buildSharedTools } from "../../../src/qa/agent/shared-tools.js";
 import type { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
 
@@ -30,11 +30,7 @@ describe("buildSharedTools exposes watch_logs + wake_on_idle_log", () => {
   test("execute routes watch_logs and wake_on_idle_log end-to-end", async () => {
     const dir = freshDir();
     const shared = buildSharedTools({ cwd: dir });
-    const wlog = await shared.execute(
-      "watch_logs",
-      { glob: join(dir, "*.log") },
-      noopLogger(),
-    );
+    const wlog = await shared.execute("watch_logs", { glob: join(dir, "*.log") }, noopLogger());
     expect(JSON.parse(wlog.text).watching).toEqual([join(dir, "*.log")]);
 
     setTimeout(() => writeFileSync(join(dir, "x.log"), "y\n"), 50);

@@ -1,8 +1,8 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
-import { mkdtempSync, rmSync, readFileSync, existsSync } from "fs";
-import { join } from "path";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
 import { tmpdir } from "os";
+import { join } from "path";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
 
 describe("EvidenceLogger", () => {
   let outDir: string;
@@ -26,19 +26,14 @@ describe("EvidenceLogger", () => {
     const path = logger.saveScreenshot(fakePng, "step-001");
 
     expect(path).toBe("screenshots/step-001.png");
-    expect(
-      readFileSync(join(outDir, "screenshots", "step-001.png"))
-    ).toEqual(fakePng);
+    expect(readFileSync(join(outDir, "screenshots", "step-001.png"))).toEqual(fakePng);
   });
 
   test("tracks screenshot list", () => {
     logger.saveScreenshot(Buffer.from("a"), "step-001");
     logger.saveScreenshot(Buffer.from("b"), "step-002");
 
-    expect(logger.screenshots).toEqual([
-      "screenshots/step-001.png",
-      "screenshots/step-002.png",
-    ]);
+    expect(logger.screenshots).toEqual(["screenshots/step-001.png", "screenshots/step-002.png"]);
   });
 
   test("auto-increments screenshot names", () => {
@@ -121,9 +116,7 @@ describe("EvidenceLogger", () => {
       arguments: { url: "http://localhost:3000" },
     });
 
-    expect(received).toEqual([
-      { name: "navigate", args: { url: "http://localhost:3000" } },
-    ]);
+    expect(received).toEqual([{ name: "navigate", args: { url: "http://localhost:3000" } }]);
   });
 
   test("logRunStart writes the first event with eventId 1 and parentEventId 0", () => {
@@ -223,11 +216,7 @@ describe("EvidenceLogger", () => {
 
     expect(rows.map((r) => r.eventId)).toEqual([1, 2, 3]);
     expect(rows.map((r) => r.parentEventId)).toEqual([0, 1, 2]);
-    expect(rows.map((r) => r.type)).toEqual([
-      "system_prompt",
-      "user_message",
-      "event",
-    ]);
+    expect(rows.map((r) => r.type)).toEqual(["system_prompt", "user_message", "event"]);
   });
 
   test("logEvent emits an event row with the name and params inlined", () => {
@@ -409,8 +398,12 @@ describe("EvidenceLogger", () => {
   test("addEventObserver and addProgressObserver fire independently on the same logger", () => {
     const actionEvents: Array<{ action: string }> = [];
     const fullEvents: Array<Record<string, unknown>> = [];
-    logger.addProgressObserver((action) => { actionEvents.push({ action }); });
-    logger.addEventObserver((event) => { fullEvents.push(event); });
+    logger.addProgressObserver((action) => {
+      actionEvents.push({ action });
+    });
+    logger.addEventObserver((event) => {
+      fullEvents.push(event);
+    });
 
     logger.logToolCall({
       turn: 1,

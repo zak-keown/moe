@@ -1,10 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
-import {
-  BUNDLED_PROMPT_NAMES,
-  loadPromptFile,
-} from "../../../src/qa/agent/prompts/loader.js";
+import { BUNDLED_PROMPT_NAMES, loadPromptFile } from "../../../src/qa/agent/prompts/loader.js";
 
 /**
  * Upstream bundled the seven prompt bodies with Bun's

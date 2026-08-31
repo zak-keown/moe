@@ -1,7 +1,7 @@
-import { describe, test, expect } from "vitest";
 import { mkdtempSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
 import { buildBashTool } from "../../../src/qa/agent/bash-tool.js";
 import type { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
 
@@ -13,7 +13,10 @@ function freshCwd(): string {
   return mkdtempSync(join(tmpdir(), "moe-flight-bash-test-"));
 }
 
-interface CapturedEvent { name: string; payload: Record<string, unknown> }
+interface CapturedEvent {
+  name: string;
+  payload: Record<string, unknown>;
+}
 function recordingLogger(events: CapturedEvent[]): EvidenceLogger {
   return {
     logEvent: (name: string, payload: Record<string, unknown>) => {
@@ -82,10 +85,7 @@ describe("buildBashTool", () => {
   test("timeout kills the command and sets timed_out flag", async () => {
     const tool = buildBashTool({ cwd: freshCwd() });
     const start = Date.now();
-    const result = await tool.execute(
-      { command: "sleep 30", timeout_ms: 200 },
-      noopLogger(),
-    );
+    const result = await tool.execute({ command: "sleep 30", timeout_ms: 200 }, noopLogger());
     const elapsed = Date.now() - start;
     expect(elapsed).toBeLessThan(2500);
     expect(result.text).toContain("timed_out: true");
@@ -113,7 +113,11 @@ describe("buildBashTool", () => {
     // Give SIGKILL a moment to land
     await new Promise((r) => setTimeout(r, 100));
     let alive = true;
-    try { process.kill(childPid, 0); } catch { alive = false; }
+    try {
+      process.kill(childPid, 0);
+    } catch {
+      alive = false;
+    }
     expect(alive).toBe(false);
   });
 
@@ -122,7 +126,7 @@ describe("buildBashTool", () => {
     try {
       const tool = buildBashTool({ cwd: freshCwd() });
       const result = await tool.execute(
-        { command: "echo \"LEAK=${MOE_FLIGHT_BASH_LEAK_TEST:-clean}\"" },
+        { command: 'echo "LEAK=${MOE_FLIGHT_BASH_LEAK_TEST:-clean}"' },
         noopLogger(),
       );
       expect(result.text).toContain("LEAK=clean");
@@ -135,10 +139,7 @@ describe("buildBashTool", () => {
     process.env.ANTHROPIC_API_KEY = "sk-test-passthrough";
     try {
       const tool = buildBashTool({ cwd: freshCwd() });
-      const result = await tool.execute(
-        { command: "echo \"K=$ANTHROPIC_API_KEY\"" },
-        noopLogger(),
-      );
+      const result = await tool.execute({ command: 'echo "K=$ANTHROPIC_API_KEY"' }, noopLogger());
       expect(result.text).toContain("K=sk-test-passthrough");
     } finally {
       delete process.env.ANTHROPIC_API_KEY;
@@ -147,7 +148,10 @@ describe("buildBashTool", () => {
 
   test("env includes minimal base vars", async () => {
     const tool = buildBashTool({ cwd: freshCwd() });
-    const result = await tool.execute({ command: "echo \"P=${PATH:+set} H=${HOME:+set}\"" }, noopLogger());
+    const result = await tool.execute(
+      { command: 'echo "P=${PATH:+set} H=${HOME:+set}"' },
+      noopLogger(),
+    );
     expect(result.text).toContain("P=set");
     expect(result.text).toContain("H=set");
   });

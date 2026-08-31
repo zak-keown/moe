@@ -1,17 +1,25 @@
-import { describe, test, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
 import { JsonlRenderer } from "../../../../src/qa/cli/stream/jsonl.js";
 
 function collect(): { out: string; write: (s: string) => void } {
-  const obj = { out: "", write(s: string) { obj.out += s; } };
+  const obj = {
+    out: "",
+    write(s: string) {
+      obj.out += s;
+    },
+  };
   return obj;
 }
 
 describe("JsonlRenderer", () => {
   test("writes each event as one JSON line verbatim", () => {
     const fixture = readFileSync(join(import.meta.dirname, "fixtures/happy.jsonl"), "utf8");
-    const events = fixture.split("\n").filter(Boolean).map((l) => JSON.parse(l));
+    const events = fixture
+      .split("\n")
+      .filter(Boolean)
+      .map((l) => JSON.parse(l));
 
     const sink = collect();
     const r = new JsonlRenderer(sink);

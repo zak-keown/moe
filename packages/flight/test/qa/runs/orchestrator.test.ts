@@ -1,10 +1,10 @@
-import { describe, test, expect } from "vitest";
-import { mkdtempSync, writeFileSync, readFileSync, existsSync } from "fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
 import { parseStoryCard } from "../../../src/qa/format/story-card.js";
-import { report, makeScriptedClient } from "../integration/helpers.js";
 import { executeRunCore } from "../../../src/qa/runs/orchestrator.js";
+import { makeScriptedClient, report } from "../integration/helpers.js";
 
 describe("executeRunCore — skeleton", () => {
   test("module exports executeRunCore", () => {
@@ -244,9 +244,15 @@ describe("executeRunCore — lifecycle hooks", () => {
           calls.push("onLogger.attach");
           return () => calls.push("onLogger.detach");
         },
-        beforeAgent: () => { calls.push("beforeAgent"); },
-        beforeClose: () => { calls.push("beforeClose"); },
-        afterClose: () => { calls.push("afterClose"); },
+        beforeAgent: () => {
+          calls.push("beforeAgent");
+        },
+        beforeClose: () => {
+          calls.push("beforeClose");
+        },
+        afterClose: () => {
+          calls.push("afterClose");
+        },
       },
     });
 
@@ -288,10 +294,19 @@ describe("executeRunCore — error path", () => {
           budgetMs: 600_000,
         },
         hooks: {
-          onLogger: () => { calls.push("attach"); return () => calls.push("detach"); },
-          onError: () => { calls.push("onError"); },
-          beforeClose: () => { calls.push("beforeClose"); },
-          afterClose: () => { calls.push("afterClose"); },
+          onLogger: () => {
+            calls.push("attach");
+            return () => calls.push("detach");
+          },
+          onError: () => {
+            calls.push("onError");
+          },
+          beforeClose: () => {
+            calls.push("beforeClose");
+          },
+          afterClose: () => {
+            calls.push("afterClose");
+          },
         },
       }),
     ).rejects.toThrow(/No more scripted responses/);
@@ -301,13 +316,7 @@ describe("executeRunCore — error path", () => {
     // streamer-stop slot (beforeClose), then adapter.close, then the
     // detach, then afterClose. Locking the full sequence — adding a new
     // hook here is supposed to surface as a test break.
-    expect(calls).toEqual([
-      "attach",
-      "onError",
-      "beforeClose",
-      "detach",
-      "afterClose",
-    ]);
+    expect(calls).toEqual(["attach", "onError", "beforeClose", "detach", "afterClose"]);
 
     // Find the orch-err output dir and read run.jsonl
     const { readdirSync } = await import("fs");
@@ -317,7 +326,10 @@ describe("executeRunCore — error path", () => {
       join(projectRoot, ".moe-flight", "results", outDirs[0], "run.jsonl"),
       "utf-8",
     );
-    const lines = runJsonl.trim().split("\n").map((l) => JSON.parse(l));
+    const lines = runJsonl
+      .trim()
+      .split("\n")
+      .map((l) => JSON.parse(l));
     const errorEvent = lines.find((l) => l.type === "run_error");
     expect(errorEvent).toBeDefined();
     expect(errorEvent.message).toMatch(/No more scripted responses/);
@@ -336,7 +348,7 @@ describe("executeRunCore — boundary", () => {
     expect(src).not.toContain("ScreencastStreamer");
     expect(src).not.toContain("RunSetBroadcaster");
     expect(src).not.toContain("ErrorLog");
-    expect(src).not.toContain("from \"hono\"");
+    expect(src).not.toContain('from "hono"');
   });
 });
 
@@ -382,4 +394,3 @@ describe("executeRunCore — abort signal", () => {
     expect(onDisk.error?.type).toBe("shutdown_interrupted");
   });
 }, 15000);
-

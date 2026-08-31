@@ -1,13 +1,21 @@
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, mkdirSync, rmSync, existsSync, readFileSync, writeFileSync, chmodSync } from "fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { CLIAdapter } from "../../../src/qa/adapters/cli/adapter.js";
 import { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
 
 function pidStillAlive(pid: number): boolean {
   try {
-    process.kill(pid, 0);  // signal 0 = check only
+    process.kill(pid, 0); // signal 0 = check only
     return true;
   } catch {
     return false;
@@ -54,7 +62,7 @@ describe("CLIAdapter — shell session", () => {
     const msg = adapter.describeTarget("docker");
     expect(msg).toContain("bash");
     expect(msg).toContain("docker");
-    expect(msg).toContain("exit");  // tells the agent to type exit when done
+    expect(msg).toContain("exit"); // tells the agent to type exit when done
   });
 
   test("describeTarget omits the target sentence when target is empty", () => {
@@ -70,11 +78,7 @@ describe("CLIAdapter — close cleanup", () => {
     const adapter = new CLIAdapter({ contextRoot: undefined, runDir, logger });
     await adapter.start("");
     await new Promise((r) => setTimeout(r, 300));
-    await adapter.executeTool(
-      "type",
-      { text: "sleep 999 & echo PID=$!\n" },
-      logger,
-    );
+    await adapter.executeTool("type", { text: "sleep 999 & echo PID=$!\n" }, logger);
     await new Promise((r) => setTimeout(r, 300));
     const out = await adapter.executeTool("read_output", {}, logger);
     const match = out.text.match(/PID=(\d+)/);

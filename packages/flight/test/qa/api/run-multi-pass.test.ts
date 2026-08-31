@@ -1,14 +1,14 @@
-import { describe, test, expect, beforeEach } from "vitest";
+import { mkdirSync, mkdtempSync, writeFileSync } from "fs";
 import { Hono } from "hono";
-import { mkdtempSync, mkdirSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import { loadConfig } from "../../../src/qa/config.js";
-import { runRoutes } from "../../../src/qa/api/routes/run.js";
+import { beforeEach, describe, expect, test } from "vitest";
 import { ActiveRunRegistry } from "../../../src/qa/api/active-runs.js";
-import { RunBroadcaster } from "../../../src/qa/api/ws.js";
-import { RunSetBroadcaster } from "../../../src/qa/api/run-set-broadcaster.js";
+import { runRoutes } from "../../../src/qa/api/routes/run.js";
 import { CancelTokenRegistry } from "../../../src/qa/api/run-cancel.js";
+import { RunSetBroadcaster } from "../../../src/qa/api/run-set-broadcaster.js";
+import { RunBroadcaster } from "../../../src/qa/api/ws.js";
+import { loadConfig } from "../../../src/qa/config.js";
 
 const STORY_MD = `---
 id: api-multi-pass-test
@@ -38,13 +38,18 @@ describe("POST /api/run/:id with passes > 1", () => {
     const prev = process.env.ANTHROPIC_API_KEY;
     process.env.ANTHROPIC_API_KEY = "test-key";
     try {
-      const config = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as any);
+      const config = loadConfig({ projectRoot }, {
+        MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+      } as any);
       const registry = new ActiveRunRegistry();
       const broadcaster = new RunBroadcaster();
       const setBroadcaster = new RunSetBroadcaster();
       const cancelTokens = new CancelTokenRegistry();
       const app = new Hono();
-      app.route("/api/run", runRoutes(config, broadcaster, undefined, registry, setBroadcaster, cancelTokens));
+      app.route(
+        "/api/run",
+        runRoutes(config, broadcaster, undefined, registry, setBroadcaster, cancelTokens),
+      );
 
       const res = await app.request("/api/run/api-multi-pass-test", {
         method: "POST",
@@ -76,7 +81,9 @@ describe("POST /api/run/:id with passes > 1", () => {
     const prev = process.env.ANTHROPIC_API_KEY;
     process.env.ANTHROPIC_API_KEY = "test-key";
     try {
-      const config = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as any);
+      const config = loadConfig({ projectRoot }, {
+        MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+      } as any);
       const registry = new ActiveRunRegistry();
       const app = new Hono();
       app.route("/api/run", runRoutes(config, undefined, undefined, registry));
@@ -97,7 +104,9 @@ describe("POST /api/run/:id with passes > 1", () => {
   });
 
   test("rejects passes outside [1, 50]", async () => {
-    const config = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as any);
+    const config = loadConfig({ projectRoot }, {
+      MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+    } as any);
     const app = new Hono();
     app.route("/api/run", runRoutes(config));
 

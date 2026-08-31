@@ -1,5 +1,5 @@
-import { describe, test, expect } from "vitest";
-import { loadPromptFile, BUNDLED_PROMPT_NAMES } from "../../../src/qa/agent/prompts/loader.js";
+import { describe, expect, test } from "vitest";
+import { BUNDLED_PROMPT_NAMES, loadPromptFile } from "../../../src/qa/agent/prompts/loader.js";
 
 describe("loadPromptFile", () => {
   test("loads each bundled prompt file by name", () => {
@@ -43,7 +43,15 @@ describe("loadPromptFile", () => {
 
   test("BUNDLED_PROMPT_NAMES exposes all seven known names", () => {
     expect(new Set(BUNDLED_PROMPT_NAMES)).toEqual(
-      new Set(["persona", "evaluation", "context", "adapter-web", "adapter-cli", "adapter-tui", "shell-access"]),
+      new Set([
+        "persona",
+        "evaluation",
+        "context",
+        "adapter-web",
+        "adapter-cli",
+        "adapter-tui",
+        "shell-access",
+      ]),
     );
   });
 });

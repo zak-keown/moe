@@ -1,8 +1,13 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { BatchTableRenderer } from "../../../../src/qa/cli/stream/batch-table.js";
 
 function collect(): { out: string; write: (s: string) => void } {
-  const obj = { out: "", write(s: string) { obj.out += s; } };
+  const obj = {
+    out: "",
+    write(s: string) {
+      obj.out += s;
+    },
+  };
   return obj;
 }
 
@@ -56,7 +61,10 @@ describe("BatchTableRenderer (append mode)", () => {
 
   test("finalize emits a results line pointing to resultsRoot", () => {
     const sink = collect();
-    const r = new BatchTableRenderer(sink, { ...NON_TTY, resultsRoot: "/some/proj/.moe-flight/results" });
+    const r = new BatchTableRenderer(sink, {
+      ...NON_TTY,
+      resultsRoot: "/some/proj/.moe-flight/results",
+    });
     r.setQueued("story-a");
     r.setDone("story-a", "pass", 3);
     r.finalize();

@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { softWrap, truncateArgs } from "../../../../src/qa/cli/stream/wrap.js";
 
 describe("softWrap", () => {

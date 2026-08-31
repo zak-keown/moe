@@ -10,12 +10,13 @@
  * `Bun.serve` reported its own assigned port for `port: 0`; neither
  * replacement does, so every caller picks a port first.
  */
-import { createServer } from "node:http";
+
 import type { IncomingMessage, Server } from "node:http";
+import { createServer } from "node:http";
 import type { Duplex } from "node:stream";
 import { serve as honoServe } from "@hono/node-server";
-import { WebSocketServer } from "ws";
 import type { WebSocket } from "ws";
+import { WebSocketServer } from "ws";
 import { pickFreePort } from "../../../src/qa/util/pick-free-port.js";
 
 export interface MockServer {

@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { decideUpgrade } from "../../../src/qa/api/ws-upgrade.js";
 import { parseRunId, parseRunSetId } from "../../../src/qa/util/id.js";
 
@@ -92,19 +92,33 @@ describe("decideUpgrade", () => {
     const goodUrl = url("/api/ws?run=login-001_20260416T142301Z_k3xm");
 
     test("accepts when allowlist is empty (allowlist disabled)", () => {
-      expect(decideUpgrade(goodUrl, headers({ origin: "http://evil.example.com" }), { originAllowlist: [] })).not.toBeNull();
+      expect(
+        decideUpgrade(goodUrl, headers({ origin: "http://evil.example.com" }), {
+          originAllowlist: [],
+        }),
+      ).not.toBeNull();
     });
 
     test("accepts when Origin matches an allowlist entry", () => {
-      expect(decideUpgrade(goodUrl, headers({ origin: "http://localhost:4400" }), { originAllowlist: ["http://localhost:4400"] })).not.toBeNull();
+      expect(
+        decideUpgrade(goodUrl, headers({ origin: "http://localhost:4400" }), {
+          originAllowlist: ["http://localhost:4400"],
+        }),
+      ).not.toBeNull();
     });
 
     test("rejects when allowlist is set and Origin does not match", () => {
-      expect(decideUpgrade(goodUrl, headers({ origin: "http://evil.example.com" }), { originAllowlist: ["http://localhost:4400"] })).toBeNull();
+      expect(
+        decideUpgrade(goodUrl, headers({ origin: "http://evil.example.com" }), {
+          originAllowlist: ["http://localhost:4400"],
+        }),
+      ).toBeNull();
     });
 
     test("rejects when allowlist is set and Origin is missing", () => {
-      expect(decideUpgrade(goodUrl, headers({}), { originAllowlist: ["http://localhost:4400"] })).toBeNull();
+      expect(
+        decideUpgrade(goodUrl, headers({}), { originAllowlist: ["http://localhost:4400"] }),
+      ).toBeNull();
     });
   });
 });

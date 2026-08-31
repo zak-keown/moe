@@ -1,13 +1,13 @@
-import { describe, test, expect } from "vitest";
 import { mkdtempSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
+import { buildWakeOnIdleLogTool } from "../../../src/qa/agent/wake-on-idle-log-tool.js";
 import {
-  WatchManager,
   WAKE_IDLE_MS_MIN,
   WAKE_TIMEOUT_MS_MAX,
+  WatchManager,
 } from "../../../src/qa/agent/watch-manager.js";
-import { buildWakeOnIdleLogTool } from "../../../src/qa/agent/wake-on-idle-log-tool.js";
 import type { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
 
 function noopLogger(): EvidenceLogger {
@@ -64,10 +64,7 @@ describe("wake_on_idle_log tool", () => {
   test("rejects negative timeout_ms", async () => {
     const m = new WatchManager();
     const tool = buildWakeOnIdleLogTool({ manager: m });
-    const result = await tool.execute(
-      { idle_ms: 60_000, timeout_ms: -1 },
-      noopLogger(),
-    );
+    const result = await tool.execute({ idle_ms: 60_000, timeout_ms: -1 }, noopLogger());
     const payload = JSON.parse(result.text);
     expect(payload.error).toBeDefined();
   });
@@ -75,10 +72,7 @@ describe("wake_on_idle_log tool", () => {
   test("rejects non-number idle_ms", async () => {
     const m = new WatchManager();
     const tool = buildWakeOnIdleLogTool({ manager: m });
-    const result = await tool.execute(
-      { idle_ms: "fast", timeout_ms: 5_000 },
-      noopLogger(),
-    );
+    const result = await tool.execute({ idle_ms: "fast", timeout_ms: 5_000 }, noopLogger());
     const payload = JSON.parse(result.text);
     expect(payload.error).toBeDefined();
   });

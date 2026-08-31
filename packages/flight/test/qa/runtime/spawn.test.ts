@@ -1,8 +1,8 @@
-import { describe, test, expect } from "vitest";
-import { spawn, spawnSync } from "../../../src/qa/runtime/spawn.js";
 import { mkdtempSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
+import { spawn, spawnSync } from "../../../src/qa/runtime/spawn.js";
 
 async function readAll(stream: ReadableStream<Uint8Array>): Promise<string> {
   const reader = stream.getReader();
@@ -103,7 +103,7 @@ describe("spawn options + new fields", () => {
   });
 
   test("spawn replaces child env when env option provided", async () => {
-    const proc = spawn(["bash", "-c", "echo \"FOO=$FOO PATH_PRESENT=${PATH:+yes}\""], {
+    const proc = spawn(["bash", "-c", 'echo "FOO=$FOO PATH_PRESENT=${PATH:+yes}"'], {
       env: { PATH: process.env.PATH ?? "/usr/bin:/bin", FOO: "bar" },
     });
     const reader = proc.stdout.getReader();
@@ -121,7 +121,7 @@ describe("spawn options + new fields", () => {
   test("spawn drops parent env vars not in env option", async () => {
     process.env.MOE_FLIGHT_TEST_LEAK = "leaked";
     try {
-      const proc = spawn(["bash", "-c", "echo \"LEAK=${MOE_FLIGHT_TEST_LEAK:-clean}\""], {
+      const proc = spawn(["bash", "-c", 'echo "LEAK=${MOE_FLIGHT_TEST_LEAK:-clean}"'], {
         env: { PATH: process.env.PATH ?? "/usr/bin:/bin" },
       });
       const reader = proc.stdout.getReader();

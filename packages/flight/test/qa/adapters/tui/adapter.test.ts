@@ -1,11 +1,10 @@
-import { describe, test, expect, afterEach, beforeEach } from "vitest";
+import { createRequire } from "node:module";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { TUIAdapter } from "../../../../src/qa/adapters/tui/adapter.js";
 import { EvidenceLogger } from "../../../../src/qa/evidence/logger.js";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync, existsSync } from "fs";
-import { join } from "path";
-import { tmpdir } from "os";
-
-import { createRequire } from "node:module";
 import { spawnSync } from "../../../../src/qa/runtime/spawn.js";
 
 // The CDP library under src/qa/adapters/web/lib/ is vendored CommonJS.
@@ -180,7 +179,7 @@ describe.skipIf(!tmuxAvailable)("TUIAdapter", () => {
       // flush; the grace window must let it complete.
       const marker = join(localRunDir, "flushed.marker");
       await adapter.type(
-        `bash -c 'sleep 999 & S=$!; trap "sleep 0.3; echo done > ${marker}; kill \$S; exit 0" HUP; wait'\n`,
+        `bash -c 'sleep 999 & S=$!; trap "sleep 0.3; echo done > ${marker}; kill $S; exit 0" HUP; wait'\n`,
       );
       await new Promise((r) => setTimeout(r, 500));
 
@@ -205,8 +204,11 @@ describe.skipIf(!tmuxAvailable)("TUIAdapter", () => {
       await adapter.close();
       adapter = null;
       const jsonl = (() => {
-        try { return readFileSync(join(localLogDir, "run.jsonl"), "utf-8"); }
-        catch { return ""; }
+        try {
+          return readFileSync(join(localLogDir, "run.jsonl"), "utf-8");
+        } catch {
+          return "";
+        }
       })();
       expect(jsonl).not.toContain("tui_session_descendants_reaped");
     } finally {
@@ -237,7 +239,14 @@ describe.skipIf(!tmuxAvailable)("TUIAdapter", () => {
     expect(result.text).toContain("20");
 
     const logPath = join(logDir, "run.jsonl");
-    const logExists = (() => { try { readFileSync(logPath); return true; } catch { return false; } })();
+    const logExists = (() => {
+      try {
+        readFileSync(logPath);
+        return true;
+      } catch {
+        return false;
+      }
+    })();
     if (logExists) {
       const logContent = readFileSync(logPath, "utf-8");
       expect(logContent).not.toContain('"type":"tool_call"');

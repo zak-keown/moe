@@ -1,13 +1,18 @@
-import { describe, test, expect } from "vitest";
-import { runAgent } from "../../../src/qa/agent/agent.js";
-import { CLIAdapter } from "../../../src/qa/adapters/cli/adapter.js";
-import { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
-import { makeRunId } from "../../../src/qa/util/id.js";
-import type { LLMClient, ToolCall, ToolResult, AgentResponse } from "../../../src/qa/models/provider.js";
-import type { StoryCard } from "../../../src/qa/format/story-card.js";
-import { join } from "path";
 import { mkdtempSync } from "fs";
 import { tmpdir } from "os";
+import { join } from "path";
+import { describe, expect, test } from "vitest";
+import { CLIAdapter } from "../../../src/qa/adapters/cli/adapter.js";
+import { runAgent } from "../../../src/qa/agent/agent.js";
+import { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
+import type { StoryCard } from "../../../src/qa/format/story-card.js";
+import type {
+  AgentResponse,
+  LLMClient,
+  ToolCall,
+  ToolResult,
+} from "../../../src/qa/models/provider.js";
+import { makeRunId } from "../../../src/qa/util/id.js";
 import { sleep } from "../helpers/mock-http.js";
 
 const card: StoryCard = {
@@ -56,9 +61,7 @@ describe("CLI adapter e2e smoke test", () => {
       // Turn 1: type to launch the echo app inside the shell
       {
         text: "Launch the echo app",
-        toolCalls: [
-          { id: "call_0", name: "type", arguments: { text: `bash ${FIXTURE_PATH}\n` } },
-        ],
+        toolCalls: [{ id: "call_0", name: "type", arguments: { text: `bash ${FIXTURE_PATH}\n` } }],
         stopReason: "tool_use",
         rawAssistantMessage: { role: "assistant", content: "launch echo" },
         usage: { inputTokens: 0, outputTokens: 0 },
@@ -74,9 +77,7 @@ describe("CLI adapter e2e smoke test", () => {
       // Turn 3: type "hello world\n"
       {
         text: "I see the welcome message, let me type something",
-        toolCalls: [
-          { id: "call_2", name: "type", arguments: { text: "hello world\n" } },
-        ],
+        toolCalls: [{ id: "call_2", name: "type", arguments: { text: "hello world\n" } }],
         stopReason: "tool_use",
         rawAssistantMessage: { role: "assistant", content: "typing" },
         usage: { inputTokens: 0, outputTokens: 0 },
@@ -99,8 +100,7 @@ describe("CLI adapter e2e smoke test", () => {
             arguments: {
               status: "pass",
               summary: "Echo app correctly echoes input",
-              reasoning:
-                "The app displayed a welcome message and echoed back the typed input",
+              reasoning: "The app displayed a welcome message and echoed back the typed input",
               criteria: [
                 {
                   criterion: "App echoes typed input",
@@ -121,7 +121,11 @@ describe("CLI adapter e2e smoke test", () => {
 
     try {
       await adapter.start(`bash ${FIXTURE_PATH}`);
-      const result = await runAgent(card, adapter, client, logger, undefined, { runId: makeRunId(card.id), budgetMs: 60_000, reflectionInterval: 0 });
+      const result = await runAgent(card, adapter, client, logger, undefined, {
+        runId: makeRunId(card.id),
+        budgetMs: 60_000,
+        reflectionInterval: 0,
+      });
 
       expect(result.status).toBe("pass");
       expect(result.scenario).toBe("cli-smoke-001");

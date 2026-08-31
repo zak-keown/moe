@@ -1,16 +1,15 @@
-import { describe, test, expect } from "vitest";
-import {
-  createAnthropicClient,
-  anthropicToolResultMessages,
-  convertResponse,
-  resolveAnthropicAuth,
-  buildAnthropicSystemBlocks,
-  buildAnthropicClientOptions,
-  CLAUDE_CODE_IDENTITY,
-} from "../../../src/qa/models/anthropic.js";
 import type Anthropic from "@anthropic-ai/sdk";
-
-import { maxOutputTokensForModel } from "../../../src/qa/models/anthropic.js";
+import { describe, expect, test } from "vitest";
+import {
+  anthropicToolResultMessages,
+  buildAnthropicClientOptions,
+  buildAnthropicSystemBlocks,
+  CLAUDE_CODE_IDENTITY,
+  convertResponse,
+  createAnthropicClient,
+  maxOutputTokensForModel,
+  resolveAnthropicAuth,
+} from "../../../src/qa/models/anthropic.js";
 
 describe("resolveAnthropicAuth", () => {
   test("prefers a subscription OAuth token (CLAUDE_CODE_OAUTH_TOKEN) over an API key", () => {
@@ -36,9 +35,7 @@ describe("resolveAnthropicAuth", () => {
   });
 
   test("throws when neither an OAuth token nor an API key is set", () => {
-    expect(() => resolveAnthropicAuth({})).toThrow(
-      /CLAUDE_CODE_OAUTH_TOKEN|ANTHROPIC_API_KEY/,
-    );
+    expect(() => resolveAnthropicAuth({})).toThrow(/CLAUDE_CODE_OAUTH_TOKEN|ANTHROPIC_API_KEY/);
   });
 });
 
@@ -73,9 +70,7 @@ describe("buildAnthropicSystemBlocks", () => {
     // Anthropic gates subscription tokens on the first system block being the
     // exact Claude Code identity (verified: wrong/second-place → 429).
     expect(blocks[0]).toEqual({ type: "text", text: CLAUDE_CODE_IDENTITY });
-    expect(CLAUDE_CODE_IDENTITY).toBe(
-      "You are Claude Code, Anthropic's official CLI for Claude.",
-    );
+    expect(CLAUDE_CODE_IDENTITY).toBe("You are Claude Code, Anthropic's official CLI for Claude.");
     expect(blocks[1]).toEqual({
       type: "text",
       text: "QA PROMPT",
@@ -146,9 +141,7 @@ describe("anthropicToolResultMessages", () => {
   });
 
   test("handles undefined text gracefully", () => {
-    const calls = [
-      { id: "toolu_abc", name: "eval", arguments: {} },
-    ];
+    const calls = [{ id: "toolu_abc", name: "eval", arguments: {} }];
     const results = [{ kind: "text" as const, text: undefined as unknown as string }];
 
     const messages = anthropicToolResultMessages(calls, results);
@@ -159,14 +152,14 @@ describe("anthropicToolResultMessages", () => {
   });
 
   test("handles undefined text in image result", () => {
-    const calls = [
-      { id: "toolu_img", name: "screenshot", arguments: {} },
+    const calls = [{ id: "toolu_img", name: "screenshot", arguments: {} }];
+    const results = [
+      {
+        kind: "image" as const,
+        text: undefined as unknown as string,
+        image: { data: "aGVsbG8=", mediaType: "image/png" },
+      },
     ];
-    const results = [{
-      kind: "image" as const,
-      text: undefined as unknown as string,
-      image: { data: "aGVsbG8=", mediaType: "image/png" },
-    }];
 
     const messages = anthropicToolResultMessages(calls, results);
 
@@ -178,14 +171,14 @@ describe("anthropicToolResultMessages", () => {
   });
 
   test("embeds image content block when image is present", () => {
-    const calls = [
-      { id: "toolu_img", name: "screenshot", arguments: {} },
+    const calls = [{ id: "toolu_img", name: "screenshot", arguments: {} }];
+    const results = [
+      {
+        kind: "image" as const,
+        text: "Screenshot saved to screenshots/001.png",
+        image: { data: "aGVsbG8=", mediaType: "image/png" },
+      },
     ];
-    const results = [{
-      kind: "image" as const,
-      text: "Screenshot saved to screenshots/001.png",
-      image: { data: "aGVsbG8=", mediaType: "image/png" },
-    }];
 
     const messages = anthropicToolResultMessages(calls, results);
 
@@ -217,7 +210,9 @@ describe("convertResponse stop_reason pass-through", () => {
       type: "message",
       role: "assistant",
       model: "claude-sonnet-4-6",
-      content: [{ type: "text", text: "hello", citations: null }] as unknown as Anthropic.Message["content"],
+      content: [
+        { type: "text", text: "hello", citations: null },
+      ] as unknown as Anthropic.Message["content"],
       stop_reason: "end_turn",
       stop_sequence: null,
       usage: {
@@ -273,7 +268,9 @@ describe("convertResponse cache token capture", () => {
       type: "message",
       role: "assistant",
       model: "claude-sonnet-4-6",
-      content: [{ type: "text", text: "hello", citations: null }] as unknown as Anthropic.Message["content"],
+      content: [
+        { type: "text", text: "hello", citations: null },
+      ] as unknown as Anthropic.Message["content"],
       stop_reason: "end_turn",
       stop_sequence: null,
       usage: usage as unknown as Anthropic.Message["usage"],
