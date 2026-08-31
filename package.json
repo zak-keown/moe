@@ -14,7 +14,7 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "mint": "turbo run mint:generate",
-    "mint:check": "pnpm mint && git diff --exit-code -- plugins && test -z \"$(git status --porcelain -- plugins)\" || (echo '\\nplugins/ is not reproducible from source. Regenerate with `pnpm mint` and commit, or move the hand edit into packages/<pkg>/mint/<plugin>.yaml.' && git status --short -- plugins && exit 1)",
+    "mint:check": "turbo run mint:generate --force && git diff --exit-code -- plugins && test -z \"$(git status --porcelain -- plugins)\" || (echo '\\nplugins/ is not reproducible from source. Regenerate with `pnpm mint` and commit, or move the hand edit into packages/<pkg>/mint/<plugin>.yaml.' && git status --short -- plugins && exit 1)",
     "mint:generate": "node scripts/mint-plugins.mjs",
     "proof:test": "uv run --project py/proof pytest py/proof",
     "tab:build": "cargo build --release --manifest-path packages/tab/Cargo.toml",
