@@ -12,7 +12,7 @@ Not a plugin. A library/CLI consumed by other packages.
 |---|---|---|
 | `obol` | `28e3dba` | Apache-2.0 |
 
-Snapshots are in `.references/` (gitignored). They are the spec — not upstream
+Snapshots are in `../.moe-references/` (gitignored). They are the spec — not upstream
 `main`. See [PARITY.md](../../PARITY.md).
 
 ## Import notes

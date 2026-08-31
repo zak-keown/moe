@@ -13,7 +13,7 @@ Ships as the **`moe-memory`** plugin, generated into `/plugins/moe-memory` by `@
 | `episodic-memory` | `1075769` | MIT |
 | `private-journal-mcp` | `016953f` | MIT |
 
-Snapshots are in `.references/` (gitignored). They are the spec — not upstream
+Snapshots are in `../.moe-references/` (gitignored). They are the spec — not upstream
 `main`. See [PARITY.md](../../PARITY.md).
 
 ## Import notes

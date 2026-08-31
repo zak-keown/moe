@@ -12,7 +12,7 @@ Ships as the **`moe-crew`** plugin, generated into `/plugins/moe-crew` by `@bubs
 |---|---|---|
 | `claude-session-driver` | `d97d1eb` | MIT |
 
-Snapshots are in `.references/` (gitignored). They are the spec — not upstream
+Snapshots are in `../.moe-references/` (gitignored). They are the spec — not upstream
 `main`. See [PARITY.md](../../PARITY.md).
 
 ## Import notes

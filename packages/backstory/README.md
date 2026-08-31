@@ -12,7 +12,7 @@ Ships as the **`moe-backstory`** plugin, generated into `/plugins/moe-backstory`
 |---|---|---|
 | `greenfield` | `6e6d4b4` | Apache-2.0 |
 
-Snapshots are in `.references/` (gitignored). They are the spec — not upstream
+Snapshots are in `../.moe-references/` (gitignored). They are the spec — not upstream
 `main`. See [PARITY.md](../../PARITY.md).
 
 ## Import notes

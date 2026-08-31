@@ -39,7 +39,7 @@ not links to us.
 1. **A repository is not an installable plugin.** Source lives in `packages/`;
    plugin manifests are generated into `/plugins/` by `@bubstack/moe-mint`. Never
    hand-edit a generated manifest.
-2. **The snapshots in `.references/` are the spec, not upstream HEAD.** Pinned
+2. **The snapshots in `../.moe-references/` are the spec, not upstream HEAD.** Pinned
    revisions are in [PARITY.md](./PARITY.md). Parity against a moving target is
    unfalsifiable.
 

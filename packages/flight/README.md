@@ -13,7 +13,7 @@ Not a plugin. A library/CLI consumed by other packages.
 | `gauntlet` | `91b6f7e` | Apache-2.0 |
 | `superpowers-evals` | `114f725` | UNLICENSED |
 
-Snapshots are in `.references/` (gitignored). They are the spec — not upstream
+Snapshots are in `../.moe-references/` (gitignored). They are the spec — not upstream
 `main`. See [PARITY.md](../../PARITY.md).
 
 ## Import notes

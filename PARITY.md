@@ -6,7 +6,7 @@ this file is how a pre-fork decision gets reconstructed: find the artifact, not
 the person.
 
 **Snapshots are the spec, not upstream HEAD.** The 19 repositories live in
-`.references/` (gitignored). They are shallow clones — one commit each, so there
+`../.moe-references/` (gitignored). They are shallow clones — one commit each, so there
 is no upstream history to preserve and no `git subtree` or `filter-repo` import
 to attempt. Do not consult upstream `main`: parity against a moving target is
 unfalsifiable.
@@ -14,7 +14,7 @@ unfalsifiable.
 Regenerate the pinned column with:
 
 ```sh
-cd .references && for r in */; do n=${r%/}
+cd ../.moe-references && for r in */; do n=${r%/}
   printf '| `%s` | %s | %s |\n' "$n" "$(git -C $n rev-parse --short HEAD)" "$(git -C $n log -1 --format=%cs)"
 done
 ```

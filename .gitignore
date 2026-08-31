@@ -1,6 +1,6 @@
 # Upstream reference snapshots: 19 nested git repos, pinned in PARITY.md.
 # Never tracked here — they are the parity spec, not our source.
-.references/
+../.moe-references/
 
 node_modules/
 dist/

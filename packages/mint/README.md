@@ -13,7 +13,7 @@ Not a plugin. A library/CLI consumed by other packages.
 | `everyharness` | `4f7c5e2` | MIT |
 | `everyharness-container` | `2467bd7` | MIT |
 
-Snapshots are in `.references/` (gitignored). They are the spec — not upstream
+Snapshots are in `../.moe-references/` (gitignored). They are the spec — not upstream
 `main`. See [PARITY.md](../../PARITY.md).
 
 ## Import notes

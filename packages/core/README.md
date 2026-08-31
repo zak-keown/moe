@@ -17,7 +17,7 @@ Ships as the **`moe-core`** plugin, generated into `/plugins/moe-core` by `@bubs
 | `superpowers-developing-for-claude-code` | `74afe93` | MIT |
 | `double-shot-latte` | `dfe7567` | MIT |
 
-Snapshots are in `.references/` (gitignored). They are the spec — not upstream
+Snapshots are in `../.moe-references/` (gitignored). They are the spec — not upstream
 `main`. See [PARITY.md](../../PARITY.md).
 
 ## Import notes

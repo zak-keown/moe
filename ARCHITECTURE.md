@@ -51,7 +51,7 @@ objection binds only if source layout dictates install layout. It doesn't.
 moe/
 ├── .claude-plugin/
 │   └── marketplace.json        # the one marketplace (replaces two upstream stubs)
-├── .references/                # gitignored: 19 pinned snapshots, see PARITY.md
+├── ../.moe-references/                # gitignored: 19 pinned snapshots, see PARITY.md
 ├── packages/
 │   ├── core/                   # 28 skills + hooks         [content]
 │   ├── backstory/              # 22 skills + 2 agents      [content]
