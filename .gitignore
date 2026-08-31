@@ -21,3 +21,7 @@ __pycache__/
 *.log
 .env
 .env.*
+
+# Claude Code session state, including live workflow git worktrees. Never tracked:
+# `git add -A` while a workflow is running would otherwise stage them as embedded repos.
+.claude/
