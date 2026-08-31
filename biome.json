@@ -1,17 +1,8 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.11/schema.json",
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
-  },
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
   "files": {
-    "includes": [
-      "**",
-      "!**/dist",
-      "!**/.references",
-      "!plugins"
-    ]
+    "includes": ["**", "!**/dist/**", "!**/.references/**", "!plugins/**"]
   },
   "formatter": {
     "enabled": true,
@@ -19,28 +10,17 @@
     "indentWidth": 2,
     "lineWidth": 100
   },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "preset": "recommended"
-    }
-  },
-  "assist": {
-    "actions": {
-      "source": {
-        "organizeImports": "on"
-      }
-    }
-  },
+  "linter": { "enabled": true, "rules": { "preset": "recommended" } },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "overrides": [
     {
-      "//": "Inherited code. Upstream ran biome with the formatter OFF and recommended OFF, enabling four rules by name; this mirrors that so the import stays diffable against the pinned snapshot. Adopting house style here is a separate, isolated commit \u2014 never mixed with an import.",
-      "includes": [
-        "packages/glass/**"
-      ],
-      "formatter": {
-        "enabled": false
-      },
+      // Inherited code. Upstream ran biome with the formatter OFF and
+      // `recommended` OFF, enabling four rules by name. This mirrors that so the
+      // import stays diffable against the pinned snapshot in .references/.
+      // Adopting house style here is a separate, isolated commit — never mixed
+      // into an import commit.
+      "includes": ["packages/glass/**"],
+      "formatter": { "enabled": false },
       "linter": {
         "rules": {
           "recommended": false,
@@ -49,12 +29,8 @@
             "noUnusedImports": "error",
             "noUnusedFunctionParameters": "warn"
           },
-          "style": {
-            "useConst": "error"
-          },
-          "suspicious": {
-            "noVar": "error"
-          }
+          "style": { "useConst": "error" },
+          "suspicious": { "noVar": "error" }
         }
       }
     }
