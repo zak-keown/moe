@@ -29,6 +29,7 @@ done
 | `iterative-development` | `c05889a` | 2026-06-06 | Apache-2.0 | `@bubstack/moe-core` |
 | `the-elements-of-style` | `05fc4f0` | 2026-08-12 | Public domain | `@bubstack/moe-core` |
 | `double-shot-latte` | `dfe7567` | 2026-02-25 | MIT | `@bubstack/moe-core` (hooks) |
+| `mattpocock-skills` | `6654f6b` | 2026-08-24 | MIT | `@bubstack/moe-core` |
 | `greenfield` | `6e6d4b4` | 2026-08-06 | Apache-2.0 | `@bubstack/moe-backstory` |
 | `episodic-memory` | `1075769` | 2026-05-21 | MIT | `@bubstack/moe-memory` |
 | `private-journal-mcp` | `016953f` | 2026-08-11 | MIT | `@bubstack/moe-memory` |

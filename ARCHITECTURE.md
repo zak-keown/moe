@@ -46,22 +46,23 @@ into `/plugins/` by `@bubstack/moe-mint`. Plugin boundaries — a lean `moe-core
 `moe-everything` — are a build-time choice, made once, changeable without moving
 a file.
 
-This is what makes a 27-skill `@bubstack/moe-core` acceptable. (**27, not the 28
-this document said before.** Counted by frontmatter `name:` across the six pinned
-sources: superpowers 14, iterative-development 6, superpowers-lab 4,
-sp-dev-for-cc 2, the-elements-of-style 1, double-shot-latte 0. The 28th was
-almost certainly `example-workflow`, a pseudo-skill inside an example plugin that
-is not a skill. `packages/core/test/metadata.test.ts` asserts 27, and
-`packages/core/README.md` raised this as a root change.)
+This is what makes a 31-skill `@bubstack/moe-core` acceptable. (**31 as of the
+mattpocock-skills import; was 27, and 28 before that in this document.** Counted
+by frontmatter `name:` across the seven pinned sources: superpowers 14,
+iterative-development 6, superpowers-lab 4, mattpocock-skills 4, sp-dev-for-cc 2,
+the-elements-of-style 1, double-shot-latte 0. The original 28th was almost
+certainly `example-workflow`, a pseudo-skill inside an example plugin that is not
+a skill. `packages/core/test/metadata.test.ts` asserts 31, and
+`packages/core/README.md` raised the 27 correction as a root change.)
 
 The usual objection to a large plugin is context cost — every skill description
 loads every session — and it binds only if source layout dictates install
 layout, which it doesn't. **But the objection is also much smaller than it
 sounds, and that is worth stating rather than leaving as a reason someone can
-lean on later.** Measured: all 27 `name` + `description` pairs are 5,914
-characters, roughly 1,480 tokens, and that is the entire resident cost. The
-bodies are 230,342 characters, roughly 57,600 tokens, and Claude Code loads them
-on demand — the frontmatter descriptions *are* the dispatch table, nothing else
+lean on later.** Measured before the mattpocock-skills import: all 27 `name`
++ `description` pairs were 5,914 characters, roughly 1,480 tokens, and that was
+the entire resident cost. The bodies were 230,342 characters, roughly 57,600
+tokens, and Claude Code loads them on demand — the frontmatter descriptions *are* the dispatch table, nothing else
 is resident. So the lean plugin saves on the order of a few hundred tokens a
 session, not tens of thousands.
 
@@ -77,7 +78,7 @@ context windows.
 | Plugin | Contents |
 |---|---|
 | `moe-core` | The everyday set. Lean enough that twenty people leave it on permanently. |
-| `moe-everything` | All 27 skills, for whoever wants the full library. |
+| `moe-everything` | All 31 skills, for whoever wants the full library. |
 
 The lean set is a curation call, and it was the one open question this decision
 created. It was *proposed* with per-skill rationale rather than chosen silently
@@ -140,7 +141,7 @@ moe/
 │   └── marketplace.json        # the one marketplace (replaces two upstream stubs)
 ├── ../.moe-references/                # gitignored: 19 pinned snapshots, see PARITY.md
 ├── packages/
-│   ├── core/                   # 27 skills + hooks         [content]
+│   ├── core/                   # 31 skills + hooks         [content]
 │   ├── backstory/              # 22 skills + 2 agents      [content]
 │   ├── memory/                 # MCP: moe-memory           [L1]
 │   ├── flight/                 # QA + agent-eval harness   [L2]
@@ -170,7 +171,7 @@ moe/
 
 | Package | Absorbs | Job |
 |---|---|---|
-| `@bubstack/moe-core` | superpowers, superpowers-lab, iterative-development, the-elements-of-style, superpowers-developing-for-claude-code, double-shot-latte | The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring, and the stop-hook. 27 skills. |
+| `@bubstack/moe-core` | superpowers, superpowers-lab, iterative-development, the-elements-of-style, superpowers-developing-for-claude-code, double-shot-latte, mattpocock-skills | The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring, codebase design, and the stop-hook. 31 skills. |
 | `@bubstack/moe-backstory` | greenfield | Recover a behavioral spec from a codebase that never had one. 22 skills, 2 agents. |
 | `@bubstack/moe-memory` | episodic-memory, private-journal-mcp | One embedding layer, one store, two record types (conversation turn, journal entry), one MCP server. **Both halves are kept and genuinely reconciled** — decided 2026-08-31. |
 | `@bubstack/moe-flight` | gauntlet, superpowers-evals (quorum) | Drive a target — web, CLI, or TUI — through acceptance criteria and grade it. Also drives nine agent CLIs side by side. |
