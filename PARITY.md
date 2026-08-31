@@ -81,10 +81,27 @@ carry `"private": true`, and `flight` is absent from
 `.claude-plugin/marketplace.json`. Anyone removing either should read this section
 first.
 
-The cheap resolution is still open and still worth doing — ask Prime Radiant to
-state a license, or to confirm the omission was an oversight. Every other
-repository they published is MIT or Apache-2.0, so a permissive answer is the
-likely one.
+**The cheap resolution is exhausted, not pending.** A license request was opened on
+`prime-radiant-inc/superpowers-evals` around 2026-08-01 and is still unacknowledged
+thirty days later. Do not open another; that path has been tried.
+
+Two things follow, and they point in opposite directions:
+
+- **It strengthens the position.** There is a documented, public, good-faith attempt
+  to clarify, made before the fork and left unanswered.
+- **It grants nothing.** Silence is not permission. Thirty days of no response is
+  evidence that the repository is inattentive or abandoned — not evidence of a
+  grant. Anyone reading this later should not round "we asked and they did not
+  answer" up to "they said it was fine."
+
+So the *Prime Radiant states a license* row above is now unlikely to ever fire. The
+distribution boundary is not a stopgap until an answer arrives; it is the permanent
+control. Treat it that way.
+
+This is also the second independent signal that the upstream is unreachable — the
+first being that every snapshot in `../.moe-references/` is a shallow, single-commit
+clone with no history to consult. Which is exactly why this file exists: when there
+is no author to ask, the written record is the only way a decision survives.
 
 ## Rebrand footprint
 
