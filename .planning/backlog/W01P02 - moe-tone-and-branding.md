@@ -5,15 +5,13 @@ idea: |
   - Branding with Moe identity/tone through docs (add tone to skills?)
 status: backlog
 size: M
-estimate: 4-5 h
-depends_on: [DO-NOW-1, DO-NOW-2]
+estimate: 4 h
+depends_on: []
 blocks: []
-conflicts_with: [native-renderers, contributing-flow-docs, installer-hq-dx, tc-standards-conformance, moe-bare-binary-dispatcher]
+conflicts_with: [installer-hq-dx, tc-standards-conformance, moe-bare-binary-dispatcher]
 touches:
   - packages/core/skills/writing-clearly-and-concisely/
   - packages/core/skills/writing-skills/SKILL.md
-  - packages/core/mint/moe-everything.yaml
-  - plugins/moe-everything/
   - .claude-plugin/marketplace.json
   - .gitlab-ci.yml
 decision_needed: no
@@ -162,30 +160,38 @@ marketing description should not carry a number a test has to keep true.
 
 ## Prerequisites
 
-- **DO-NOW-1.** `packages/core` is a stub on main; the artifact lands in the
-  worktree copy, so it cannot be written until the three `import/*` branches
-  merge.
-- **DO-NOW-2.** Determines whether `writing-clearly-and-concisely` stays
-  `tier: core`. `skill-tiers.yaml:139-149` flags it as "THE MOST ARGUABLE CALL IN
-  THIS PROPOSAL". If it moves to `everything`, the house-voice file ships only in
-  `moe-everything` and reaches far fewer sessions. Do not write the file before
-  that call is made.
-- Not DO-NOW-3. `moe-mint.yaml:46-49` emits `skills/`, `commands/`, `agents/`,
-  `hooks/hooks.json`, `.mcp.json` — and **not** `docs/`. That decides the
-  artifact's location on its own (below).
+**Both DO-NOW blockers have landed; `depends_on` is empty.**
+
+- **DO-NOW-1 done.** `packages/core/skills/` is on main with 27 skills plus
+  `_shared`, so the artifact no longer has to be written into a worktree.
+- **DO-NOW-2 done, and it went the way this item needed.**
+  `packages/core/skill-tiers.yaml` now opens "REVIEWED AND SETTLED 2026-08-31,
+  Zak Keown", and `writing-clearly-and-concisely` stayed `tier: core` (:157-158)
+  despite being flagged as the most arguable call in the proposal. That is what
+  makes Option C worth doing: the house-voice file reaches the lean plugin that
+  twenty people leave on permanently, not just `moe-everything`. The "+1 h if it
+  gets demoted" risk is gone.
 - **Not `skill-set-fidelity-refactor`, deliberately — keep it that way.** It is
   the other Wave 1 item (WAVES.md:16), and its decision D4 pre-added
   `["skills/writing-clearly-and-concisely/house-voice.md", ["superpowers"]]` to
-  the `provenance` map at `packages/core/test/metadata.test.ts:530-534`
+  the `provenance` map in `packages/core/test/metadata.test.ts`
   precisely so the two run in parallel without an edge; adding one would waste
-  that. The entry is inert until the file exists (`provenance.get(rel) ?? []`,
-  :550), so nothing needs activating, and because `commentish()` returns true for
-  `.md` (:538-543) the exemption covers the whole file rather than comment lines.
+  that. The entry is inert until the file exists (`provenance.get(rel) ?? []`),
+  so nothing needs activating, and because `commentish()` returns true for
+  `.md` the exemption covers the whole file rather than comment lines.
   If that item ever slips out of Wave 1, this file drops the word rather than
   gaining a dependency.
-- **Not `moe-bare-binary-dispatcher`**, but a file conflict: it amends
-  ARCHITECTURE.md:252-253 and this item edits ARCHITECTURE.md too (status line,
-  skill count). Not the same wave.
+- **Not `moe-bare-binary-dispatcher`**, but a file conflict on `.gitlab-ci.yml`,
+  where this item adds the `provenance` job and that one edits CI for the new bin.
+  `tc-standards-conformance` and `installer-hq-dx` collide the same way —
+  `.gitlab-ci.yml` and `.claude-plugin/marketplace.json` respectively. Verified
+  against their `touches`, not assumed: `native-renderers` and
+  `contributing-flow-docs` were previously listed here on the strength of
+  README.md and `writing-skills/SKILL.md`, and neither overlap survives —
+  `native-renderers` touches seven other skill paths but not the two prose
+  skills, and this item no longer edits README.md. Both dropped.
+- Mint emits `skills/`, `commands/`, `agents/`, `hooks/hooks.json`, `.mcp.json`
+  and **not** `docs/`, which is what decides the artifact's location (below).
 
 ## Proposed approach
 
@@ -299,15 +305,16 @@ Steps:
    package README without the pointer, then with it, scoring the observable
    sub-rules (verb-phrase opening, counted `**Status:**`, no invented tavern
    noun). `writing-skills/testing-skills-with-subagents.md` is the procedure.
-6. Two marketplace-facing strings, both in the same sentence. Drop the count
-   from `packages/core/mint/moe-everything.yaml:19` and from
-   `marketplace.json:23`, then run `pnpm mint` so the nine generated copies under
-   `plugins/moe-everything/` follow, and commit source and generated output
-   together. `/plugins/` is committed and the `plugins` CI job
-   (`.gitlab-ci.yml:67-70`, `pnpm mint:check`) asserts byte-identical
-   regeneration, so hand-editing a manifest fails and skipping the regen fails.
-   Same step adds "Just ask Moe." to `marketplace.json:8`'s
-   `metadata.description` — decision #26, that one place only.
+6. `.claude-plugin/marketplace.json` only: drop the count from `:23`, and add
+   "Just ask Moe." to `:8`'s `metadata.description` — decision #26, that one place
+   only. That file is hand-maintained (its last three commits are hand edits) and
+   `pnpm mint:check` guards only `plugins/` (`git diff --exit-code -- plugins`),
+   so this needs no regeneration and touches nothing generated.
+
+   **`packages/core/mint/moe-everything.yaml:19` is deliberately NOT here** — see
+   Scope boundary. Accepting it would pull `plugins/moe-everything/`'s nine
+   generated files into this item and collide with the other Wave 1 item, which
+   has to regenerate them anyway.
 
 ¹ https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview and
 https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills
@@ -315,22 +322,38 @@ https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-a
 ## Scope boundary
 
 **In:** one `house-voice.md`; two small pointers; a subagent test for the edit;
-the provenance check + CI job; the stale front-door facts; the tagline into
-`marketplace.json:8`.
+the provenance check + CI job; `marketplace.json` `:8` and `:23`.
 
 **Out:**
+- **`packages/core/mint/moe-everything.yaml:19`'s "all 27 skills", and the nine
+  generated copies under `plugins/moe-everything/`.** Handed back to
+  `skill-set-fidelity-refactor`, which listed it out of scope for the
+  regeneration coupling — but that item changes `skill-tiers.yaml`, which the
+  `plugins` CI job's own comment names as an input to generated output, so it
+  must run `pnpm mint` and commit `plugins/` regardless. Its `touches` does not
+  yet list `plugins/`; it should. Marginal cost there is zero; taking it here
+  would put two Wave 1 items in the same nine generated files and cost the
+  parallelism D4 was designed to buy. It is also the item whose two-list model
+  makes the count wrong in the first place. One wave of `marketplace.json`
+  omitting the count while that yaml still states it is a cosmetic mismatch
+  between a hand-maintained descriptor and a local-dev one; nothing compares them.
 - **Agent-facing skill instruction prose** — all 48 "your human partner"s and
   every ALL-CAPS block stay. Settled 2026-08-31 (decision #27).
+- **The mascot, and any further use of it** — `assets/moe.png` and README.md:9-10
+  landed in `0e6a5f7`. This item quotes the premise into `house-voice.md`; it does
+  not restyle, re-crop or propagate the image.
 - **Output format** — tables vs prose, renderers, artifacts. `native-renderers`.
 - **What to run when and why** — `contributing-flow-docs`.
 - **MR-description and branch-name conventions** — `tc-standards-conformance`
   owns those; it should *cite* `house-voice.md`, not restate it.
 - **Skill renaming and the lean/full split** — `tiered-workflow-naming` and
   DO-NOW-2.
-- **The bare-`moe` dispatcher and the ARCHITECTURE.md:252-253 amendment it
-  needs** — `moe-bare-binary-dispatcher`. This item records the naming *policy*;
-  that one builds the bin.
-- Any new logo, colour, ASCII banner or persona. Nobody asked.
+- **The bare-`moe` dispatcher and the ARCHITECTURE.md §7 amendment it needs** —
+  `moe-bare-binary-dispatcher`. This item records the naming *policy*; that one
+  builds the bin. This item no longer edits ARCHITECTURE.md at all: `0e6a5f7` and
+  the DO-NOW sweep already fixed the status line and every stale skill count.
+- Any new logo, colour, ASCII banner or persona. One mascot has landed; nobody
+  asked for more.
 
 ## Open questions for Zak
 
@@ -353,7 +376,7 @@ the provenance check + CI job; the stale front-door facts; the tagline into
    live. moedex's main bin returns to `moedex`, freeing the bare name that
    `/Users/ZKeown/.local/bin/moe` holds today. **This repo is `@bubstack/moe`**
    and claims bare `moe` as a dispatcher (`moe flight`, `moe tab`, `moe mint`),
-   with `moe-<thing>` kept as aliases — amending ARCHITECTURE.md:252-253, which
+   with `moe-<thing>` kept as aliases — amending ARCHITECTURE.md §7, which
    `moe-bare-binary-dispatcher` owns. Only the policy sentence lands here.
 
 ## Effort
@@ -364,15 +387,16 @@ the provenance check + CI job; the stale front-door facts; the tagline into
 | Two skill pointers | 15 min | |
 | Subagent test for the edit (Iron Law) | 45 min | not optional; see the Iron Law note above |
 | Provenance check script + CI job | 45 min | small; it passes on day one |
-| Front-door fixes (8 places) | 25 min | |
+| `marketplace.json` `:8` + `:23` | 10 min | hand-maintained; no regen |
 | `pnpm lint && pnpm test` | 20 min | |
 
-**Total 4-5 h**, up from 3-4 h because the Iron Law obliges a subagent test for
-an edit, not just for a new skill. What makes it slower: if DO-NOW-2 demotes
-`writing-clearly-and-concisely` to `everything`, step 1 needs a rethink of where
-the file lives (add ~1 h). If the provenance check surfaces a hit in a package
-nobody has audited, deciding whether a token is provenance or self-reference is a
-judgment call — budget 10 minutes per hit.
+**Total 4 h.** The Iron Law adds a subagent test (+45 min); `0e6a5f7` and the
+DO-NOW sweep already did the front-door work this item used to carry (-35 min);
+DO-NOW-2 keeping `writing-clearly-and-concisely` at `tier: core` removed the
+relocation risk that was the largest remaining unknown. What makes it slower now:
+if the provenance check surfaces a hit in a package nobody has audited, deciding
+whether a token is provenance or self-reference is a judgment call — budget 10
+minutes per hit.
 
 ## Verification
 
@@ -383,12 +407,10 @@ judgment call — budget 10 minutes per hit.
   or the pointers are broken. No new test needed for step 2.
 - The subagent test from step 5 fails on the baseline (no pointer) and passes with
   it, scored on the observable sub-rules. Iron Law obligation.
-- **The four forbidden literals are absent.** `metadata.test.ts` tests :195, :212
-  and :569 pass with no exemption added to any of them — that is the real
-  assertion for step 1, and adding an exemption instead of rewording is a failure,
-  not a fix.
-- **No test guards "no 28th skill."** `metadata.test.ts:115`
-  (`expect(skills.length).toBe(27)`) implied it; `skill-set-fidelity-refactor`
+- **The four forbidden literals are absent.** The three named tests pass with no
+  exemption added to any of them — that is the real assertion for step 1, and
+  adding an exemption instead of rewording is a failure, not a fix.
+- **No test guards "no 28th skill."** The old fixed-count assertion implied it; `skill-set-fidelity-refactor`
   replaces it with `it("pins the IMPORTED skill set at exactly 27")`, counting
   `imported:` in `skill-tiers.yaml`, which a reference file cannot disturb. So the
   count stays 27 and green — but nothing enforces the decision. It lives in
@@ -398,10 +420,9 @@ judgment call — budget 10 minutes per hit.
   fixture README whose `## Forked from` upstream column names a Moe package
   instead of an upstream repo. Red on a synthetic case, since there is no live
   defect to fail on.
-- `grep -rn "Target-shape only" README.md` returns nothing.
-- `grep -rnE "28[- ]skills?" .claude-plugin/marketplace.json ARCHITECTURE.md`
-  returns nothing. Five hits today: `marketplace.json:23`, ARCHITECTURE.md:44,
-  :53, :70, :98.
 - `jq -r '.metadata.description' .claude-plugin/marketplace.json` contains "Just
-  ask Moe."
+  ask Moe.", and `jq -r '.plugins[1].description'` no longer contains a skill
+  count.
+- `pnpm mint:check` green and `git status --porcelain -- plugins` empty — proof
+  this item changed nothing generated.
 - `pnpm lint && pnpm typecheck && pnpm test` green.

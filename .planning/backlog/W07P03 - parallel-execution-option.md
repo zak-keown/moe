@@ -85,11 +85,11 @@ loses the ledger, the review gate and the recovery map along with it.
 
 There was also a documented falsehood in the tiering ledger — `skill-tiers.yaml` justified
 demoting `dispatching-parallel-agents` on the grounds that "subagent-driven-development
-already covers the parallel case inside the everyday flow", which SDD:282 contradicts.
-**W01P01 has already corrected it** (branch `worktree-wf_81b8d9e1-32f-3`,
-`skill-tiers.yaml:194-205`): the entry now states the claim was false, cites SDD:282, and
-records the skill as HELD at `everything`. So that argument is spent — what remains is the
-substantive gap, not the bad rationale. Nothing in the package REQUIREs
+already covers the parallel case inside the everyday flow", which the ban contradicts.
+**Commit `0b1571d` has already corrected it** (Zak Keown, 2026-08-31; on main and on every
+live branch): the entry now states that claim was false, quotes the ban, and records the
+skill as HELD at `everything` pending this item. So that argument is spent — what remains
+is the substantive gap, not the bad rationale. Nothing in the package REQUIREs
 `dispatching-parallel-agents`; the only reference outside its own directory is a passing
 mention in `skills/using-moe/references/codex-tools.md:11`. It is an orphan skill about
 the one thing the everyday flow bans.
@@ -152,11 +152,13 @@ every line cite into it drifts.** Names and symbols survive; numbers do not.
 
 **DO-NOW-1 — discharged.** Core is merged; `packages/core/skills/` is on main.
 
-**DO-NOW-2 — discharged, against this doc's original step 5.** The tiering decision was
-taken in debate review and recorded in the two authority documents: `PARITY.md:90` keeps
-`dispatching-parallel-agents` at `everything`, and `ARCHITECTURE.md:105-109` gives the
-reason (a missed parallel dispatch yields serial execution — correct, merely slower). See
-the decisions block above.
+**DO-NOW-2 — discharged, against this doc's original step 5.** Approved in commit
+`0b1571d` ("DO-NOW-2, reviewed and approved. The split stands"), which also deleted the
+ERR SMALL tiebreak and rewrote this skill's rationale. The debate review then declined the
+promotion; `PARITY.md:90` keeps `dispatching-parallel-agents` at `everything` and
+`ARCHITECTURE.md:105-109` gives the reason (a missed parallel dispatch yields serial
+execution — correct, merely slower). See the decisions block above. **`PARITY.md:90` is
+on main as of `9c62e62`; a branch cut before that commit will not have it.**
 
 **W01P01 `skill-set-fidelity-refactor`** — scheduled six waves ahead of this one, and it
 restructures a file in `touches`. `skill-tiers.yaml`'s flat `skills:` map becomes
@@ -221,17 +223,58 @@ many workers a wave gets, and both existing options need the answer. Do this:
    `BASE`→`HEAD` diff (`:290`). Parallel workers in separate worktrees produce N
    branches, and something must merge them and re-run the suite before the next wave.
    This is the single largest piece of new prose in the change.
+
+   It must also carry a **divergent-tree rule**, which this backlog round demonstrated
+   the hard way. Three agents disputed one citation — `PARITY.md:90` — and reached three
+   answers: two greps said it was dangling, one said it resolved. Nobody ran a bad
+   command. The row was added by `9c62e62`, which one worktree's branch point predated,
+   so *the same path and line number held different content in two live trees*. That is
+   not an anecdote about carelessness; it is the standing failure mode of fan-out
+   execution, and the gate has to answer it:
+   - A worker's findings are scoped to the tree it read. Its report names the SHA it
+     read at, and a reviewer comparing two workers' claims compares SHAs first.
+   - Cite by test name, symbol, or quoted sentence — not by line number — in anything
+     that crosses a worker boundary. Line numbers are only valid within one tree at one
+     commit, which is precisely what a wave does not have.
+   - Before a wave starts, workers branch from one recorded base. A worker branched from
+     an older base is not merely behind; it will read and cite a different file.
 4. **`using-git-worktrees` Step 1c: one worktree per parallel worker**, via the native
    tool, per Step 1a's existing "never fight the harness" rule (`:51-57`). This repo's
    worktrees live in `.claude/worktrees/`, gitignored at `.gitignore:25-27` — evidence
    the native path is the one in use.
-5. **Close out the `why`, without touching the tier.** W01P01 leaves
-   `dispatching-parallel-agents` recorded as "HELD at everything for now" and defers the
-   tier question to this work (`skill-tiers.yaml:194-205` on branch
-   `worktree-wf_81b8d9e1-32f-3`, which names this doc). The debate review has since
-   settled it at `everything` (`PARITY.md:90`). Rewrite that `why` to state the settled
-   answer and cite PARITY, so the ledger stops pointing at an open question that is
-   closed. **No `tier:` change, no lean-count change, no test-constant change.**
+5. **Fix the stale filename in the `why:`; keep its hedge.** The entry for
+   `dispatching-parallel-agents` in `skill-tiers.yaml` was fully rewritten by commit
+   `0b1571d` ("core: settle the lean/full tiering…", Zak Keown, 2026-08-31, body opens
+   "DO-NOW-2, reviewed and approved"). Three separate things, and only the first is a
+   defect:
+   - **Stale cross-reference — already being fixed on main, not by this item.** Committed
+     main (`b929e31`) still reads `See .planning/backlog/W01P01 -
+     parallel-execution-option.md`, a path that no longer exists. It was *correct when
+     written* — `0b1571d --stat` shows the doc created at exactly that path — and went
+     stale when the orchestrator renumbered the backlog, moving this slug to W07P03 and
+     giving W01P01 to `skill-set-fidelity-refactor`. **Main's working tree already carries
+     the fix, and it is a better one than renumbering:** cite the item *by slug*, with the
+     reason inline — "that prefix IS the wave schedule and moves whenever the backlog is
+     re-waved." Do not "fix" this to `W07P03`; that reintroduces a numbered path which
+     breaks at the next re-wave. This bullet is therefore someone else's in-flight work —
+     recorded here only so this item does not duplicate or revert it.
+   - **The "for now" hedge — keep it.** `0b1571d`'s body puts it there deliberately:
+     "Held at `everything` for now rather than promoted, because […] reopens exactly that
+     prohibition […]; moving the tier now would move it twice." The hedge and the forward
+     pointer *are* the approved decision, not residue from before it. Do not delete them
+     to "state the settled answer" — an earlier draft of this step said to, and that was
+     wrong.
+   - **The outcome — record it when this work lands, not before.** `PARITY.md:90`
+     resolves whether to *remove* the skill ("all six are kept"), and notes it sits at
+     `everything`; `ARCHITECTURE.md:105-109` supplies the silent-failure argument. Once
+     this item executes and declines the promotion, replace the hedge with that outcome,
+     citing `0b1571d` and `PARITY.md:90`. Sequencing matters: the hedge is correct until
+     the thing it defers to has actually decided.
+   - Also de-number the `why:`'s own citation of
+     `subagent-driven-development/SKILL.md:282` — exact today, but this work moves that
+     file. The quoted sentence it already carries is the durable reference.
+
+   **No `tier:` change, no lean-count change, no test-constant change.**
 6. **Fix crew's example.** `packages/crew/skills/driving-claude-code-sessions/SKILL.md:195-209`
    gets one worktree per worker instead of a shared `~/proj`, and a pointer to the gate.
    Same rule, stated where crew's readers are; no REQUIRED edge, so the REQUIRED-marker
@@ -266,11 +309,15 @@ fan-out correction.
    both execution families is a human call, not a research finding. If the answer is no,
    the deliverable shrinks to step 5 alone — close out the deferred `why` — and the rest
    of this doc is dropped.
-2. ~~**Does `dispatching-parallel-agents` move to the lean tier?**~~ **Answered: no.**
-   `PARITY.md:90` keeps it at `everything`; `ARCHITECTURE.md:105-109` gives the reason.
-   The gate therefore lives in a skill most people will not have installed, so the
-   execution skills must carry enough of it inline to be correct on their own — a real
-   cost of the decision, and the reason step 2 routes rather than delegates.
+2. ~~**Does `dispatching-parallel-agents` move to the lean tier?**~~ **Answered: no** — by
+   the debate review recorded in the decisions block above. Supporting record: `0b1571d`
+   is the approved tiering commit; `PARITY.md:90` resolves the separate proposal to
+   *remove* the skill ("all six are kept") and notes it sits at `everything`;
+   `ARCHITECTURE.md:105-109` supplies the silent-failure argument — a missed dispatch
+   yields serial execution, correct and merely slower. The gate therefore lives in a skill
+   most people will not have installed, so the execution skills must carry enough of it
+   inline to be correct on their own — a real cost of the decision, and the reason step 2
+   routes rather than delegates.
 3. **Claude-Code-only, or portable?** Worktree isolation is a Claude Code feature; no
    other harness reference documents an equivalent. Portable means writing the ladder in
    all seven reference files (adds ~1 h and collides with `runtime-pruning`, which is

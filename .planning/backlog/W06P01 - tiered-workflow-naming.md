@@ -201,13 +201,25 @@ condition, not a closed question, and the "for now" plus the forward pointer are
 bearing — whoever edits that block should keep both rather than "state the settled
 answer."
 
-What *did* close it is later and lives in this doc: the debate-review decision above
-rejects the promotion. So the block is stale, but not in the way I first said — it is
-stale because it still advertises a promotion that has since been rejected, not because
-its hedging is leftover. Net effect for this item is unchanged (stays `everything`, lean
-count stays 13), but the yaml and the debate-review decision now disagree in writing and
-whoever owns that file has to reconcile them. The parallel *prohibition* remains genuinely
-open and remains `parallel-execution-option`'s.
+What closed it is later, and it is ratified in the repo rather than only in this doc:
+`PARITY.md:90` on **main**, under `### Inherited skills, resolved` (`:77`), reads "**Keep
+at `everything`** — which is `skill-tiers.yaml`'s own criterion. See
+`parallel-execution-option`", and `parallel-execution-option`'s own doc says "**The tier
+promotion is rejected.**", recorded against PARITY.md and ARCHITECTURE.md §2. So the yaml
+block is stale — not because its hedging is leftover, as I first said, but because it
+still advertises a promotion that has since been rejected. Net effect for this item is
+unchanged (stays `everything`, lean count stays 13). The parallel *prohibition* remains
+genuinely open and remains `parallel-execution-option`'s.
+
+**Read authority documents on `main`, not in a worktree.** I first reported that PARITY.md
+never mentions this skill, having grepped it inside the core worktree. That tree's
+PARITY.md is 276 lines; main's is 315, and the `### Inherited skills, resolved` section
+does not exist in the worktree at all. Worse, the surrounding line numbers agree while the
+content differs completely — `:86-92` in the worktree is an unrelated licensing passage —
+so a line-numbered citation into PARITY.md can resolve to real text and still be the wrong
+text. `packages/core/**` in this doc is read from the core worktree deliberately, because
+that is where the package lives; `PARITY.md` and `ARCHITECTURE.md` are read from `main`,
+because that is where they live.
 
 **Do not cite wave IDs in source files.** *(FIXED on main: `skill-tiers.yaml`'s
 `dispatching-parallel-agents` `why:` block now cites the slug and carries this
@@ -224,7 +236,17 @@ re-planned — `W01P01` is now `skill-set-fidelity-refactor` and the slug moved 
 `W07P03` restores it only until the next re-plan, and the plan has already renumbered once
 mid-session. Cite the **slug** (`parallel-execution-option`), never the wave ID. Same
 principle as citing `LEAN_TIER_BUDGET` by name instead of a line, and it is why this doc
-names slugs throughout.
+names slugs throughout. `main:PARITY.md:90` already does it right — its pointer is the bare
+slug. The same rot is visible one row up at `PARITY.md:89`, which cites
+`metadata.test.ts:475` for the closure test; that test has moved to `:687` and `:475` is
+now `it("every shell script and node script parses")` — a citation that still resolves, to
+the wrong thing. Cite `it("no core-tier skill REQUIREs an everything-tier skill")` by name.
+`parallel-execution-option` owns that fix.
+
+Both numbers in that example are already provisional — they are `e3a4737`'s, and an earlier
+draft of this paragraph had the closure test one line off. That is the argument, not an
+aside: a line number is wrong the moment someone edits above it, and a reader cannot tell a
+stale line number from a live one because both resolve to real code.
 
 ## Proposed approach
 
@@ -283,8 +305,8 @@ the open question about whether they supersede those three or coexist with them.
 
 `dispatching-parallel-agents` keeps its row because the behaviour is real at `feature`
 depth, not because every reader will have the skill — the promotion to lean is **rejected**
-and it stays `tier: everything` (the debate-review decision above, not `0b1571d`, which
-held it only provisionally). The row is narrow for a
+and it stays `tier: everything` (`main:PARITY.md:90` and `parallel-execution-option`'s own
+decision record — not `0b1571d`, which held it only provisionally). The row is narrow for a
 second reason: the everyday flow bans parallel *implementation* subagents outright
 (`subagent-driven-development/SKILL.md:282`), so it can only cover independent work
 outside that ban. `parallel-execution-option` owns the wording.
