@@ -1,0 +1,382 @@
+import { describe, it, expect } from 'vitest'
+import { cpSync, mkdtempSync, mkdirSync, existsSync, readFileSync, writeFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join, dirname } from 'node:path'
+import { generate } from '../src/generate.js'
+import { MANIFEST_PATH, checkDrift } from '../src/manifest.js'
+import type { HarnessAdapter } from '../src/adapters/index.js'
+import { opencode } from '../src/adapters/opencode.js'
+import { pi } from '../src/adapters/pi.js'
+import { hermes } from '../src/adapters/hermes.js'
+
+const fullSupport = {
+  skills: 'full',
+  commands: 'full',
+  agents: 'full',
+  hooks: 'full',
+  mcp: 'full',
+  bootstrap: 'full',
+} as const
+
+function freshFixture(): string {
+  const dir = mkdtempSync(join(tmpdir(), 'mint-gen-'))
+  cpSync('fixtures/kitchen-sink', dir, { recursive: true })
+  return dir
+}
+
+describe('generate', () => {
+  it('writes adapter files and a clean manifest', () => {
+    const dir = freshFixture()
+    const result = generate(dir)
+    expect(result.adaptersRun).toEqual(['claude-code', 'cursor', 'codex', 'devin', 'kimi', 'gemini', 'opencode', 'pi', 'hermes', 'agent-plugins-1.0', 'agents-marketplace'])
+    expect(existsSync(join(dir, '.claude-plugin/plugin.json'))).toBe(true)
+    expect(existsSync(join(dir, MANIFEST_PATH))).toBe(true)
+    expect(checkDrift(dir).clean).toBe(true)
+  })
+
+  it('emits docs/support-matrix.md as a normal generated file, tracked in the manifest and drift-clean', () => {
+    const dir = freshFixture()
+    const result = generate(dir)
+    expect(result.files.some((f) => f.path === 'docs/support-matrix.md')).toBe(true)
+    expect(existsSync(join(dir, 'docs/support-matrix.md'))).toBe(true)
+    expect(checkDrift(dir).clean).toBe(true)
+    const manifest = JSON.parse(readFileSync(join(dir, MANIFEST_PATH), 'utf8'))
+    expect(manifest.files['docs/support-matrix.md']).toBeDefined()
+  })
+
+  it('injects the install matrix into README.md between the markers, reports readmeInjected, and leaves validate clean since README.md is not manifest-tracked', () => {
+    const dir = freshFixture()
+    const result = generate(dir)
+
+    expect(result.readmeInjected).toBe(true)
+    const readme = readFileSync(join(dir, 'README.md'), 'utf8')
+    expect(readme).toContain('<!-- moe-mint:install:start -->')
+    expect(readme).toContain('<!-- moe-mint:install:end -->')
+    expect(readme).toContain('| Harness | Install |')
+    expect(readme).toContain('| Claude Code | see docs/install/claude-code.md |')
+    expect(readme).not.toContain('(install instructions go here)')
+
+    const manifest = JSON.parse(readFileSync(join(dir, MANIFEST_PATH), 'utf8'))
+    expect(manifest.files['README.md']).toBeUndefined()
+    expect(checkDrift(dir).clean).toBe(true)
+  })
+
+  it('re-injecting the README on a second generate is idempotent (no change, readmeInjected false)', () => {
+    const dir = freshFixture()
+    generate(dir)
+    const afterFirst = readFileSync(join(dir, 'README.md'), 'utf8')
+
+    const second = generate(dir)
+
+    expect(second.readmeInjected).toBe(false)
+    expect(readFileSync(join(dir, 'README.md'), 'utf8')).toBe(afterFirst)
+    expect(checkDrift(dir).clean).toBe(true)
+  })
+
+  it('prunes docs/install/<name>.md when its adapter is later excluded, like any other generated file', () => {
+    const dir = freshFixture()
+    generate(dir)
+    expect(existsSync(join(dir, 'docs/install/claude-code.md'))).toBe(true)
+
+    const yaml = readFileSync(join(dir, 'moe-mint.yaml'), 'utf8')
+    writeFileSync(join(dir, 'moe-mint.yaml'), yaml.replace('harnesses:\n', 'harnesses:\n  exclude: [claude-code]\n'))
+    const result = generate(dir)
+
+    expect(result.pruned).toContain('docs/install/claude-code.md')
+    expect(existsSync(join(dir, 'docs/install/claude-code.md'))).toBe(false)
+    expect(existsSync(join(dir, 'docs/support-matrix.md'))).toBe(true) // unaffected: independent of the active adapter list
+  })
+
+  it('is idempotent', () => {
+    const dir = freshFixture()
+    generate(dir)
+    const first = readFileSync(join(dir, '.claude-plugin/plugin.json'), 'utf8')
+    generate(dir)
+    expect(readFileSync(join(dir, '.claude-plugin/plugin.json'), 'utf8')).toBe(first)
+    expect(checkDrift(dir).clean).toBe(true)
+  })
+
+  it('respects harnesses.exclude', () => {
+    const dir = freshFixture()
+    const yaml = readFileSync(join(dir, 'moe-mint.yaml'), 'utf8')
+    const patched = yaml.replace('harnesses:\n', 'harnesses:\n  exclude: [claude-code]\n')
+    writeFileSync(join(dir, 'moe-mint.yaml'), patched)
+    const result = generate(dir)
+    expect(result.adaptersRun).toEqual(['cursor', 'codex', 'devin', 'kimi', 'gemini', 'opencode', 'pi', 'hermes', 'agent-plugins-1.0', 'agents-marketplace'])
+    expect(existsSync(join(dir, '.claude-plugin/plugin.json'))).toBe(false)
+  })
+
+  it('snapshots the generated tree for the kitchen-sink fixture', () => {
+    const dir = freshFixture()
+    const result = generate(dir)
+    const tree = [...result.files]
+      .sort((a, b) => a.path.localeCompare(b.path))
+      .map((f) => `=== ${f.path} ===\n${f.content}`)
+      .join('\n')
+    expect(tree).toMatchSnapshot()
+  })
+
+  it('throws a ConfigError naming both adapters when they emit the same path', () => {
+    const dir = freshFixture()
+    const a: HarnessAdapter = {
+      name: 'adapter-a',
+      support: fullSupport,
+      emit: () => ({ files: [{ path: 'gen/collide.txt', content: 'a' }], warnings: [] }),
+    }
+    const b: HarnessAdapter = {
+      name: 'adapter-b',
+      support: fullSupport,
+      emit: () => ({ files: [{ path: 'gen/collide.txt', content: 'b' }], warnings: [] }),
+    }
+    expect(() => generate(dir, [a, b])).toThrowError(/both emit/)
+    try {
+      generate(dir, [a, b])
+    } catch (err) {
+      expect((err as Error).message).toContain('adapter-a')
+      expect((err as Error).message).toContain('adapter-b')
+    }
+    expect(existsSync(join(dir, MANIFEST_PATH))).toBe(false)
+  })
+
+  it('prefixes warnings with the adapter name', () => {
+    const dir = freshFixture()
+    const synthetic: HarnessAdapter = {
+      name: 'synthetic',
+      support: fullSupport,
+      emit: () => ({
+        files: [{ path: 'gen/x.txt', content: 'x' }],
+        warnings: ['thing not supported'],
+      }),
+    }
+    const result = generate(dir, [synthetic])
+    expect(result.warnings).toEqual(['[synthetic] thing not supported'])
+  })
+
+  it('dedupes identical-content collisions between adapters', () => {
+    const dir = freshFixture()
+    const file = { path: 'gen/shared.txt', content: 'same', executable: undefined }
+    const a = { name: 'adapter-a', support: fullSupport, emit: () => ({ files: [{ ...file }], warnings: [] }) }
+    const b = { name: 'adapter-b', support: fullSupport, emit: () => ({ files: [{ ...file }], warnings: [] }) }
+    const result = generate(dir, [a, b])
+    expect(result.files.filter((f) => f.path === 'gen/shared.txt')).toHaveLength(1)
+    expect(result.warnings).toEqual([])
+  })
+
+  it('still rejects differing-content collisions', () => {
+    const dir = freshFixture()
+    const a = { name: 'adapter-a', support: fullSupport, emit: () => ({ files: [{ path: 'gen/x.txt', content: 'one' }], warnings: [] }) }
+    const b = { name: 'adapter-b', support: fullSupport, emit: () => ({ files: [{ path: 'gen/x.txt', content: 'two' }], warnings: [] }) }
+    expect(() => generate(dir, [a, b])).toThrowError(/both emit/)
+  })
+
+  it('rejects an adapter emitting over a source component path', () => {
+    const dir = freshFixture()
+    const evil = { name: 'evil', support: fullSupport, emit: () => ({ files: [{ path: 'moe-mint.yaml', content: 'gotcha' }], warnings: [] }) }
+    expect(() => generate(dir, [evil])).toThrowError(/would overwrite source/)
+    const evil2 = { name: 'evil2', support: fullSupport, emit: () => ({ files: [{ path: 'skills/greeting/SKILL.md', content: 'x' }], warnings: [] }) }
+    expect(() => generate(dir, [evil2])).toThrowError(/would overwrite source/)
+  })
+
+  it('rejects adapter emission over source paths even when components have trailing slashes', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mint-gen-trailing-'))
+    writeFileSync(join(dir, 'moe-mint.yaml'), [
+      'name: test-trailing',
+      'version: 1.0.0',
+      'description: Test with trailing slashes',
+      'components:',
+      '  skills: skills/',
+      'bootstrap: none',
+    ].join('\n'))
+    mkdirSync(join(dir, 'skills'))
+    writeFileSync(join(dir, 'skills', 'demo.md'), '# Demo Skill\n')
+    const evilAdapter = { name: 'evil', support: fullSupport, emit: () => ({ files: [{ path: 'skills/demo.md', content: 'overwritten' }], warnings: [] }) }
+    expect(() => generate(dir, [evilAdapter])).toThrowError(/would overwrite source/)
+  })
+
+  it('isSourcePath: allows non-.md siblings under commands/agents but still blocks .md and any skills path', () => {
+    const dir = freshFixture()
+    const toml = { name: 'toml', support: fullSupport, emit: () => ({ files: [{ path: 'commands/x.toml', content: 'x' }], warnings: [] }) }
+    expect(() => generate(dir, [toml])).not.toThrow()
+
+    const md = { name: 'md', support: fullSupport, emit: () => ({ files: [{ path: 'commands/x.md', content: 'x' }], warnings: [] }) }
+    expect(() => generate(dir, [md])).toThrowError(/would overwrite source/)
+
+    const skillFile = { name: 'skill-file', support: fullSupport, emit: () => ({ files: [{ path: 'skills/x/whatever.txt', content: 'x' }], warnings: [] }) }
+    expect(() => generate(dir, [skillFile])).toThrowError(/would overwrite source/)
+  })
+
+  it('prunes files dropped from the new generation when unmodified', () => {
+    const dir = freshFixture()
+    const a = { name: 'a', support: fullSupport, emit: () => ({ files: [{ path: 'gen/old.txt', content: 'v1' }], warnings: [] }) }
+    generate(dir, [a])
+    const b = { name: 'a', support: fullSupport, emit: () => ({ files: [{ path: 'gen2/new.txt', content: 'v2' }], warnings: [] }) }
+    const result = generate(dir, [b])
+    expect(result.pruned).toEqual(['gen/old.txt'])
+    expect(existsSync(join(dir, 'gen/old.txt'))).toBe(false)
+    expect(existsSync(join(dir, 'gen'))).toBe(false) // empty parent removed
+    expect(existsSync(join(dir, 'gen2/new.txt'))).toBe(true)
+  })
+
+  it('leaves hand-modified stale files and warns', () => {
+    const dir = freshFixture()
+    const a = { name: 'a', support: fullSupport, emit: () => ({ files: [{ path: 'gen/old.txt', content: 'v1' }], warnings: [] }) }
+    generate(dir, [a])
+    writeFileSync(join(dir, 'gen/old.txt'), 'edited')
+    const result = generate(dir, [{ name: 'a', support: fullSupport, emit: () => ({ files: [], warnings: [] }) }])
+    expect(result.pruned).toEqual([])
+    expect(result.warnings.join('\n')).toMatch(/stale generated file gen\/old\.txt/)
+    expect(existsSync(join(dir, 'gen/old.txt'))).toBe(true)
+  })
+
+  it('ignores manifest entries with unsafe paths and warns', () => {
+    const dir = freshFixture()
+    const synthetic: HarnessAdapter = {
+      name: 'synthetic',
+      support: fullSupport,
+      emit: () => ({ files: [{ path: 'gen/file.txt', content: 'v1' }], warnings: [] }),
+    }
+    generate(dir, [synthetic])
+
+    // Hand-edit manifest to add an unsafe entry with parent-directory traversal
+    const manifestPath = join(dir, MANIFEST_PATH)
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
+    manifest.files['../escape.txt'] = {
+      sha256: '0000000000000000000000000000000000000000000000000000000000000000',
+    }
+    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n')
+
+    // Create a file outside the plugin root
+    const parentDir = dirname(dir)
+    const outsideFile = join(parentDir, 'escape.txt')
+    writeFileSync(outsideFile, 'should not be deleted')
+
+    try {
+      // Regenerate with empty adapter — should skip the unsafe entry and warn
+      const result = generate(dir, [{ name: 'empty', support: fullSupport, emit: () => ({ files: [], warnings: [] }) }])
+
+      expect(existsSync(outsideFile)).toBe(true)
+      expect(result.pruned).not.toContain('../escape.txt')
+      expect(result.warnings.join('\n')).toMatch(/unsafe path.*\.\.\/escape\.txt/)
+    } finally {
+      rmSync(outsideFile, { force: true })
+    }
+  })
+
+  it('recovers from a corrupt manifest instead of dead-ending, and rewrites it valid', () => {
+    const dir = freshFixture()
+    generate(dir)
+    writeFileSync(join(dir, MANIFEST_PATH), 'null')
+
+    const result = generate(dir) // content is unchanged, so no --force is needed
+
+    expect(result.warnings.join('\n')).toMatch(/unreadable generation manifest/)
+    expect(checkDrift(dir).clean).toBe(true)
+    const manifest = JSON.parse(readFileSync(join(dir, MANIFEST_PATH), 'utf8'))
+    expect(manifest.schema).toBe(1)
+    expect(Object.keys(manifest.files).length).toBeGreaterThan(0)
+  })
+
+  it('refuses to overwrite a pre-existing hand-written file not created by moe-mint', () => {
+    const dir = freshFixture()
+    writeFileSync(join(dir, 'GEMINI.md'), 'hand-written content, not generated\n')
+    expect(() => generate(dir)).toThrowError(/refusing to overwrite existing file\(s\).*GEMINI\.md/)
+    expect(readFileSync(join(dir, 'GEMINI.md'), 'utf8')).toBe('hand-written content, not generated\n')
+    expect(existsSync(join(dir, MANIFEST_PATH))).toBe(false)
+  })
+
+  it('appends an actionable note when the refused-overwrite list includes a pre-existing package.json', () => {
+    const dir = freshFixture()
+    writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'hand-written', private: true }))
+    expect(() => generate(dir)).toThrowError(/REPLACE your package\.json/)
+    try {
+      generate(dir)
+    } catch (err) {
+      expect((err as Error).message).toContain('package.json merging is not yet supported')
+      expect((err as Error).message).toContain('harnesses.exclude')
+    }
+    expect(existsSync(join(dir, MANIFEST_PATH))).toBe(false)
+  })
+
+  it('overwrites a pre-existing hand-written file when force is set', () => {
+    const dir = freshFixture()
+    writeFileSync(join(dir, 'GEMINI.md'), 'hand-written content, not generated\n')
+    const result = generate(dir, undefined, { force: true })
+    const generatedGemini = result.files.find((f) => f.path === 'GEMINI.md')!
+    expect(readFileSync(join(dir, 'GEMINI.md'), 'utf8')).toBe(generatedGemini.content)
+    expect(readFileSync(join(dir, 'GEMINI.md'), 'utf8')).not.toBe('hand-written content, not generated\n')
+    expect(existsSync(join(dir, MANIFEST_PATH))).toBe(true)
+  })
+
+  it('warns about a stray root mcp.json when the MCP source default was not customized away from .mcp.json', () => {
+    const dir = freshFixture()
+    rmSync(join(dir, '.mcp.json'))
+    writeFileSync(join(dir, 'mcp.json'), JSON.stringify({ mcpServers: {} }))
+    const result = generate(dir)
+    expect(result.warnings).toContain(
+      'found mcp.json at the plugin root; the source MCP default is .mcp.json — rename it if it is your MCP config',
+    )
+  })
+
+  it('does not warn about mcp.json for the kitchen-sink fixture, where agent-plugins-1.0 legitimately emits it', () => {
+    const dir = freshFixture()
+    const result = generate(dir)
+    expect(result.warnings.some((w) => w.includes('found mcp.json at the plugin root'))).toBe(false)
+  })
+
+  it('does not warn about a stray root mcp.json when components.mcp is explicitly set to mcp.json', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mint-gen-mcp-explicit-'))
+    writeFileSync(join(dir, 'moe-mint.yaml'), [
+      'name: explicit-mcp-json',
+      'version: 1.0.0',
+      'description: components.mcp explicitly set to mcp.json',
+      'components:',
+      '  mcp: mcp.json',
+      'bootstrap: none',
+    ].join('\n'))
+    writeFileSync(join(dir, 'mcp.json'), JSON.stringify({ mcpServers: { demo: { command: 'node' } } }))
+    const result = generate(dir)
+    expect(result.warnings.some((w) => w.includes('found mcp.json at the plugin root'))).toBe(false)
+  })
+
+  it('succeeds with agent-plugins-1.0 active when components.mcp collides with the spec on-disk mcp.json name, warning instead of throwing', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mint-gen-mcp-collision-'))
+    writeFileSync(join(dir, 'moe-mint.yaml'), [
+      'name: explicit-mcp-json',
+      'version: 1.0.0',
+      'description: components.mcp explicitly set to mcp.json',
+      'components:',
+      '  mcp: mcp.json',
+      'bootstrap: none',
+    ].join('\n'))
+    writeFileSync(join(dir, 'mcp.json'), JSON.stringify({ mcpServers: { demo: { command: 'node' } } }))
+    const result = generate(dir)
+    expect(result.warnings).toContain(
+      '[agent-plugins-1.0] mcp.json is occupied by the source MCP config (components.mcp); agent-plugins-1.0 mcp output skipped — rename the source to .mcp.json',
+    )
+    expect(result.files.some((f) => f.path === 'mcp.json')).toBe(false)
+    expect(existsSync(join(dir, 'plugin.json'))).toBe(true)
+  })
+
+  it('emits hooks/moe-mint/bootstrap.md when only the in-process adapters (opencode, pi, hermes) are active in bootstrap.generate mode', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mint-gen-inprocess-bootstrap-'))
+    writeFileSync(
+      join(dir, 'moe-mint.yaml'),
+      'name: inprocess-demo\nversion: 1.0.0\ndescription: in-process adapters generate-mode fixture\nbootstrap: generate\n',
+    )
+    const result = generate(dir, [opencode, pi, hermes])
+    expect(result.adaptersRun).toEqual(['opencode', 'pi', 'hermes'])
+    expect(existsSync(join(dir, 'hooks/moe-mint/bootstrap.md'))).toBe(true)
+    expect(readFileSync(join(dir, 'hooks/moe-mint/bootstrap.md'), 'utf8')).toContain('# inprocess-demo plugin')
+  })
+
+  it('does not refuse a pre-existing file whose content is byte-identical to what would be generated', () => {
+    const referenceDir = freshFixture()
+    const referenceResult = generate(referenceDir)
+    const generatedGeminiContent = referenceResult.files.find((f) => f.path === 'GEMINI.md')!.content
+
+    const dir = freshFixture()
+    writeFileSync(join(dir, 'GEMINI.md'), generatedGeminiContent)
+    expect(() => generate(dir)).not.toThrow()
+    expect(existsSync(join(dir, MANIFEST_PATH))).toBe(true)
+  })
+})

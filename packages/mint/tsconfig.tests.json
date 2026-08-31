@@ -1,0 +1,15 @@
+{
+  "//": "Test-only compile. The suites are TypeScript and import src/ directly, so they need their own project: the runtime tsconfig is composite with rootDir src and cannot include them. Not composite and emits nothing — vitest transpiles at run time. This exists so the strict base is enforced on the ~5.4k lines of test code that upstream's include:[src] never typechecked.",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true
+  },
+  "include": [
+    "src/**/*",
+    "test/**/*",
+    "vitest.config.ts"
+  ]
+}

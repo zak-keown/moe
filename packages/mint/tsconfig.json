@@ -1,10 +1,12 @@
 {
-  "//": "Runtime DAG for this package: one reference per package.json dependency. Empty until source is imported.",
+  "//": "Runtime DAG for this package: no workspace dependencies. mint reads content packages as data (a directory tree), not as modules, so there is no reference to add when core and backstory land.",
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist"
   },
-  "include": [],
+  "include": [
+    "src/**/*"
+  ],
   "references": []
 }
