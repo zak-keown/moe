@@ -3,18 +3,26 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Launch, control and monitor worker Claude sessions over tmux.",
-  "license": "Apache-2.0",
+  "description": "Launch, control and monitor worker coding-agent sessions (Claude Code, Codex, Pi) over tmux.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
   "bin": {
-    "moe-crew": "./dist/cli.js"
+    "moe-crew": "./dist/moe-crew.cjs"
   },
   "scripts": {
-    "lint": "biome check .",
-    "build": "tsc -b",
-    "typecheck": "tsc -b --pretty",
-    "test": "vitest run --passWithNoTests"
+    "build": "tsc -b && tsup",
+    "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --pretty",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check ."
   },
   "devDependencies": {
+    "@earendil-works/pi-coding-agent": "0.74.0",
+    "@types/node": "^24.7.0",
+    "smol-toml": "^1.6.1",
+    "tsup": "^8.5.0",
     "typescript": "^5.9.0"
   }
 }
