@@ -19,6 +19,13 @@ numbering gap at IV, and the absence of VI (Spelling) and VII (Exercises), is
 curation, not a conversion bug — the All Rules list below matches the file
 exactly. Do not "fix" the numbering.
 
+**The house voice.** Strunk gives you the sentence; [house-voice.md](./house-voice.md)
+gives you the moves this repo already makes. Read it before writing a README, a
+package doc or a merge-request description. Two of its moves are the ones agents
+reliably skip: a `**Status:**` line carrying real numbers AND what is not done,
+and an explicit plugin-or-not declaration near the top. Numbers spent in prose at
+the bottom do not count.
+
 ## When to Use This Skill
 
 Use this skill whenever you write prose for humans:

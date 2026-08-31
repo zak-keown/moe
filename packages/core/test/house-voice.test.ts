@@ -106,3 +106,56 @@ describe("the baseline arm, written WITHOUT the house-voice pointer", () => {
     }
   });
 });
+
+describe("the with-pointer arm, and the discrimination", () => {
+  const baseline = arm("baseline");
+  const withPointer = arm("with-pointer");
+
+  it("is the three runs actually captured", () => {
+    expect(withPointer.map((r) => r.file)).toEqual([
+      "with-pointer/01.md",
+      "with-pointer/02.md",
+      "with-pointer/03.md",
+    ]);
+  });
+
+  // THE assertion this whole directory exists for. Swap a with-pointer file for a
+  // baseline file and it goes red — verified by doing exactly that, because a
+  // discrimination test that cannot fail is worse than none.
+  it("scores strictly higher on the house-specific rubric than the baseline", () => {
+    const base = mean(baseline.map((r) => r.houseScore));
+    const pointed = mean(withPointer.map((r) => r.houseScore));
+    expect(pointed).toBeGreaterThan(base);
+    // Recorded, not aspirational: 5.00 against 2.33 on 2026-08-31.
+    expect(pointed).toBeCloseTo(5, 5);
+    expect(base).toBeCloseTo(7 / 3, 5);
+  });
+
+  it("clears a floor of 4/5 on every run", () => {
+    for (const r of withPointer) {
+      expect(r.houseScore, r.file).toBeGreaterThanOrEqual(4);
+    }
+  });
+
+  // The two moves the baseline missed 3/3. This is the narrow, strong result;
+  // the means above are a summary of it.
+  it("makes the two moves no baseline run made", () => {
+    for (const f of ["with-pointer/01.md", "with-pointer/02.md", "with-pointer/03.md"]) {
+      const s = score(readFileSync(join(DIR, f), "utf8"));
+      const passed = s.house
+        .filter((d: { pass: boolean }) => d.pass)
+        .map((d: { id: string }) => d.id);
+      expect(passed, f).toContain("counted-status");
+      expect(passed, f).toContain("plugin-declaration");
+    }
+  });
+
+  // Deliberately EXCLUDED from the comparison above. Both arms hold
+  // elements-of-style.md, so these rules are free and crediting the pointer with
+  // them would inflate the effect with something it did not cause.
+  it("does not move the Strunk-reachable group, because both arms already had it", () => {
+    for (const r of [...baseline, ...withPointer]) {
+      expect(r.strunkScore, r.file).toBe(2);
+    }
+  });
+});
