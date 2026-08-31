@@ -1,12 +1,31 @@
 # Wave schedule
 
 Recomputed 2026-08-31 after Zak challenged the previous schedule as
-under-parallelised. He was right. **15 items, 89 h of effort, 4 waves, ~31 h wall
-clock** — down from 7 waves and 49 h, for exactly the same work.
+under-parallelised. He was right. **15 items, 4 waves, ~32 h wall clock.**
 
-The `W##P##` prefix on each filename is this schedule. `W` is the wave; `P` orders
-within a wave by effort, longest first, so the wave's critical path starts first.
-Nothing else is implied by `P`.
+Effort is now **101.5 h**, up from 89.2 h — the Wave 1 Q&A tripled
+`tc-standards-conformance` (Moe replaces the sibling fork `ai/claude-code-platform-plugin`:
+4-5 h becomes 12-17 h) and grew `gsd-core-skill-import` (census plus an upstream-MIT
+import: 3-5 h becomes 5-7 h). Wall clock barely moved, 31 h to 31.8 h, because
+`tc-standards-conformance` at 14.5 h merely took over the W01 critical path from
+`installer-hq-dx` at 13.5 h. **That is the parallel schedule earning its keep: 12 h
+of new work cost 0.8 h of calendar.**
+
+The `W##` prefix on each filename is this schedule's wave assignment, and it is
+kept accurate. **`P##` is not.** It was originally "orders within a wave by effort,
+longest first" and is now assigned once and left alone.
+
+Two reasons. First, `P` carries no information the table below does not already
+state — the table lists each wave's items in effort order explicitly, so re-deriving
+`P` renames files to communicate something the reader can already see. Second, the
+prefix has been re-waved **twice in one session**, and each rename invalidated every
+cross-reference written against the old filename. One such citation went stale in
+`packages/core/skill-tiers.yaml` and read as correct for hours, because
+`W01P01 - parallel-execution-option.md` had genuinely been the right path when it
+was written.
+
+**Cite the slug, never the `W##P##` prefix.** The slug is stable; the prefix is a
+schedule, and schedules move. Where `P` disagrees with the table, the table wins.
 
 ## The schedule
 
@@ -15,10 +34,14 @@ whole backlog is startable.
 
 | Wave | Items | Effort | Wall |
 |---|---|---|---|
-| **W01** | `installer-hq-dx` (14 h) · `native-renderers` (8.5 h) · `verification-split-and-firing-rate` (8.5 h) · `runtime-pruning` (5 h) · `tc-standards-conformance` (4.5 h) · `gsd-core-skill-import` (4 h) · `moe-tone-and-branding` (4 h) · ~~`skill-set-fidelity-refactor`~~ **merged** | 53.5 h | 14 h |
+| **W01** | `tc-standards-conformance` (14.5 h) · `installer-hq-dx` (13.5 h) · `native-renderers` (8.5 h) · `verification-split-and-firing-rate` (8.5 h) · `gsd-core-skill-import` (6 h) · `runtime-pruning` (5 h) · `moe-tone-and-branding` (4 h) · ~~`skill-set-fidelity-refactor`~~ **merged** | 65.5 h | 14.5 h |
 | **W02** | `codegraph-context-layer` (8 h) · `deterministic-task-dag` (8 h) · `moe-bare-binary-dispatcher` (4.5 h) · `parallel-execution-option` (2.5 h) | 23 h | 8 h |
 | **W03** | `tiered-workflow-naming` (5 h) · `tc-governance-integration` (3.75 h) | 8.75 h | 5 h |
-| **W04** | `contributing-flow-docs` (4 h) | 4 h | 4 h |
+| **W04** | `contributing-flow-docs` (4.25 h) | 4.25 h | 4.25 h |
+
+W01's critical path is **co-held** by `tc-standards-conformance` (14.5 h) and
+`installer-hq-dx` (13.5 h) — within an hour of each other, so slippage in either
+sets the wave.
 
 `skill-set-fidelity-refactor` merged to main on 2026-08-31.
 `moe-tone-and-branding` is complete on a branch and awaiting merge.

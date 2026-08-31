@@ -8,7 +8,7 @@ idea: |
       - Explore how to keep these up-to-date
 status: backlog
 size: M
-estimate: 4-5 h
+estimate: 12-17 h
 depends_on: [DO-NOW-1, DO-NOW-2, DO-NOW-3, DO-NOW-5]
 blocks: [tc-governance-integration]
 conflicts_with: [moe-tone-and-branding, native-renderers, tiered-workflow-naming, contributing-flow-docs]
@@ -21,7 +21,7 @@ touches:
   - .gitlab/merge_request_templates/
   - CODEOWNERS
   - .gitlab-ci.yml
-decision_needed: yes
+decision_needed: no
 ---
 
 # TC Standards Conformance For Git Skills
@@ -225,7 +225,44 @@ the branch-name derivation step in `using-git-worktrees`; root `CODEOWNERS` and
 - The AI Governance doc and TC Guide — `tc-governance-integration`, which reuses
   the mechanism this doc lands.
 
-## Open questions for Zak
+## Decisions (2026-08-31, Zak)
+
+**Q1 — the sibling fork: MOE REPLACES IT.** `ai/claude-code-platform-plugin` is
+retired in favour of Moe; its deltas are ported wholesale rather than reimplemented
+as a fragment, and `tc-using-platform`'s session-start bootstrap is retired so
+`using-moe` is the only one. This is the option that resolves the bootstrap
+collision by elimination — the other two leave a real user able to install both and
+get two competing "you MUST invoke skills" directives with nondeterministic
+dispatch.
+
+**This roughly triples the item, and that is accepted, not overlooked.** 4-5 h
+becomes **12-17 h**: 17 `tc-*` skills to reconcile rather than one fragment to
+write. The doc's own earlier warning — "that turns a fragment into a 17-skill
+reconciliation and is a different, larger item" — is now the plan. Two consequences
+to carry:
+
+- It becomes W01's co-critical path alongside `installer-hq-dx`, so the wave's wall
+  clock is set by whichever of the two runs longer, not by installer alone.
+- `contributing-flow-docs` and `tc-governance-integration` both `depends_on` this
+  item. Tripling it delays them; neither moves wave, because both were already
+  downstream.
+
+**Q2 — trust-map gate: still open, and deliberately deferred.** Whether
+`tc-finishing-branch`'s `getTrustRating`/`analyzeTrust` block and `ui-approvers`
+auto-assignment come across is a live question, but it is a *port* decision inside
+the 17 skills rather than a precondition for starting. Decide it while porting that
+skill, with the evidence in front of you.
+
+**Q3 — canonical branch format: still open.** Three sources disagree and the
+replace decision does not settle it. See the original question below; it now has to
+be answered against `ai/claude-code-platform-plugin`'s own usage too, which is new
+evidence the earlier framing did not have.
+
+**Q4 — confirmed: this slug owns the shared up-to-date mechanism**, with
+`tc-governance-integration` adding two rows to the same manifest. `blocks:` stays
+as written.
+
+*The original questions, kept as written:*
 
 1. **`ai/claude-code-platform-plugin` is a sibling fork of the same upstream,
    already TC-mutated.** Does Moe replace it, coexist with it, or absorb its 17

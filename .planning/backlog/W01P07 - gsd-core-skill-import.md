@@ -5,7 +5,7 @@ idea: |
   - Examine GSD-core for skills to import
 status: backlog
 size: M
-estimate: 3-5 h
+estimate: 5-7 h
 depends_on: [DO-NOW-1, DO-NOW-2]
 blocks: [tiered-workflow-naming]
 conflicts_with: [parallel-execution-option, tiered-workflow-naming, deterministic-task-dag, native-renderers, moe-tone-and-branding]
@@ -15,7 +15,7 @@ touches:
   - packages/core/skills/systematic-debugging/
   - packages/core/skill-tiers.yaml
   - packages/core/test/metadata.test.ts
-decision_needed: yes
+decision_needed: no
 ---
 
 # GSD-Core Census And Debugger Reference Import
@@ -263,7 +263,72 @@ context — `codegraph-context-layer`. MR and branch conventions —
 **Also out: deleting or modifying anything under `~/.claude/`.** Nothing in this item
 touches the install; it only reads it.
 
-## Open questions for Zak
+## Decisions (2026-08-31, Zak)
+
+**Import the upstream-MIT GSD material and add an `open-gsd/gsd-core` row to
+PARITY.md.** Note the label trap: this doc's "Option A" is *census only, import
+nothing*, and the decision is the opposite of that. The orchestrator's question
+mislabelled the options; the choice was re-confirmed against the actual content
+before being recorded here.
+
+Scope of the import, and the line that must not be crossed:
+
+- **IN — upstream MIT, pinned:** the `debugger-*.md` reference cluster and
+  `references/security-asvs-levels.md`, which the census found has no counterpart
+  in this fork. Import **from upstream, never from the local install** — the
+  install has no revision to pin and no repo to pin it against. MIT sits inside
+  `PARITY.md:50-53`'s existing envelope, so this adds a row, not an exception.
+- **The "unlicensed" local-only material is NOT unlicensed. Zak wrote it.**
+  Corrected 2026-08-31 on his word: *"the panel stuff in moe-core is my own
+  invention — we can use or not."* So `panel-protocol.md`, `convergence-loop.md`,
+  `codex-post-dispatch.md` and the four workflows `says-what` / `says-how` /
+  `takeover` / `verify-phase` carry **no licence obstacle at all**. They are the
+  fork owner's own authored work and are freely available to import.
+
+  **This census reached the wrong conclusion, and the mechanism is worth naming.**
+  It wrote "No license has been located for any of it, and none is locatable" from
+  three real observations — no LICENSE file in the tree,
+  `gitlab.com/moe-ai/moe-cc` returning HTTP 403, source repo gone — and inferred
+  third-party provenance from the absence of a notice. Every observation was
+  correct; the inference was wrong, and it was answerable by asking. The rule this
+  repo already applies to *pre-fork* decisions (reconstruct from artifacts, because
+  the author is unreachable) was applied to material whose author was reachable.
+  Artifact archaeology is the fallback, not the method.
+
+  **PARITY.md's knowingly-accepted exceptions stay at one** — not because this
+  material is excluded, but because it never needed an exception.
+
+**Q2 — answered, and acted on the same day. The material is rescued.** All of it
+was copied to `~/Code/.moe-references/moe-core-local-only/` on 2026-08-31: 46 files
+(each workflow carries `steps/` and `templates/` trees plus `bin/lib/*-contract.cjs`
+implementations, so it was far more than the seven artifacts the census named), with
+a `MANIFEST.sha256` verifying all 46 and a README recording provenance. **Deleting
+`~/.claude/moe-core` no longer risks anything.**
+
+It was staged outside the repo on a licence caution that turned out to be
+unnecessary — see above; Zak authored it. The copy is still worth having, because
+the original lives in an unmaintained directory and the snapshot is now
+checksummed. But it is a **staging area, not a quarantine**: anything wanted can
+move into the repo directly, with no licence question to answer first.
+
+**Whether to import it is a live decision, delegated ("we can use or not").**
+Recommendation: **not wholesale.** 46 files of convergence protocol is scope, and
+this fork's thesis is shrinking 19 repos into 9 packages. Instead, target it:
+`panel-protocol.md` (181 lines) is a more developed form of something core already
+ships as `_shared/parallel-adversarial-review.md`, and
+`verification-split-and-firing-rate` — same wave, W01 — is the item whose whole
+subject is evidence and completion. That item should read `panel-protocol.md` and
+take what earns its place, rather than this slug importing seven artifacts on the
+grounds that they exist.
+
+**Q1 — closed by work that has already merged.** The exact-27 assertion is gone:
+`skill-set-fidelity-refactor` merged on 2026-08-31, splitting the registry into
+`imported:` (pinned at 27, with drop detection intact) and `authored:` (open). The
+question "what replaces the exact-27 assertion" has a shipped answer, and the two
+other items that hit this wall — `parallel-execution-option` and
+`native-renderers` — inherit it.
+
+*The original questions, kept as written:*
 
 1. **Does the fork admit non-upstream skills, and what replaces the exact-27
    assertion when it does?** `metadata.test.ts:115` and the enumeration at `:156-192`

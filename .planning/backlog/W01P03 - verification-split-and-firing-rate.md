@@ -18,7 +18,7 @@ touches:
   - packages/core/README.md
   - .gitattributes
   - .gitignore
-decision_needed: yes
+decision_needed: no
 ---
 
 # Verification Split In Two, Plus A Firing-Rate Counter
@@ -194,7 +194,32 @@ Any CI job that gates on `.audit/` contents; capture first, gate later, if ever.
 The per-tier skill compilation the review's cost-tier panel recommended —
 rejected in ARCHITECTURE.md §2, and both polarities already ship to everyone.
 
-## Open questions for Zak
+## Decisions (2026-08-31)
+
+**Q4 — Zak: KEEP BOTH.** `claude-judge-continuation` is not retired. The
+deterministic `.audit/` record answers *whether evidence exists*; the judge assesses
+*whether the work is actually complete*. Those are different questions, and this
+doc's own three-rules framing is the argument: every catch splits into a
+mechanizable half and a judgment half, and the judgment half cannot be mechanized.
+Retiring the judge because the mechanical half now exists would be exactly the
+error that framing warns against. It ships off by default and stays that way.
+
+**Q1, Q2, Q3, Q5 — taken on the doc's own recommendations, by the orchestrator,
+and all cheap to reverse:**
+
+- **Q1 `.audit/` is repo-local and gitignored.** The evidence should travel with the
+  work; a completion claim is about *this* branch. `$HOME` would make the record
+  ambiguous across worktrees, and this repo runs every wave in a worktree — the
+  same property that broke `dogfood.test.ts`.
+- **Q2 warn, do not block.** A false block on legitimate work is the failure mode
+  that gets a hook disabled permanently, and a disabled hook catches nothing.
+- **Q3 default on.** The latte hook is off because it spends a model call and
+  overrides the agent's judgment; this one does neither.
+- **Q5 per-session files, with the aggregate derived from them.** Auditability is
+  the property that cannot be reconstructed later; a counter can always be
+  recomputed from the files, but the files cannot be recovered from a counter.
+
+*The original questions, kept as written:*
 
 1. **Where does `.audit/` live** — repo-local and gitignored, or
    `$HOME/.claude/moe/audit/` following the latte hook's precedent? Repo-local

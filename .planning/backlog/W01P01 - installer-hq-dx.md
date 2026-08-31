@@ -320,7 +320,28 @@ actively removing Grok and swapping Gemini for Antigravity; install prose tone,
 owned by `moe-tone-and-branding`. And per settled decision: no curl-to-bash, no
 public URL, no publish outside the GitLab instance registry.
 
-## Open questions for Zak
+## Decisions
+
+**Q1 — answered by Zak on 2026-08-31: WSL 2 is the supported Windows path for now.**
+His words: *"WSL2 is the answer for now. Windows can become first class once this
+works solidly on macOS."* That is the doc's own recommendation with the emphasis
+sharpened — not "support both, WSL recommended", but **WSL 2 supported and native
+Windows explicitly not yet**, with first-class native support deferred until macOS
+is solid.
+
+So the doctor's Windows branch collapses to one honest warning rather than four
+separate gaps: on native Windows, `moe-crew` cannot run, Claude Code sandboxing is
+unsupported, `better-sqlite3` needs MSVC build tools unless the npm prebuild covers
+win32, and the bootstrap hook needs Git for Windows or it silently skips. State all
+four; do not paper over them. `run-hook.cmd` already prints the WSL 2 recommendation
+when it finds no bash, so the doctor and the hook say the same thing.
+
+**Q2 — Windows headcount: still needed, and it is a fact only Zak has.** Not a
+design question. The clean-`HOME` smoke test needs at least one real Windows box,
+and whether that box is native or WSL 2 changes what the test proves. Does not block
+starting; does block claiming Windows is verified.
+
+*The original questions, kept as written:*
 
 1. **Is native Windows supported, or is WSL the supported Windows path?** This is
    the one real fork left. Native Windows costs: bash is optional so the bootstrap
