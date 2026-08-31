@@ -1,0 +1,30 @@
+{
+  "name": "moe-memory",
+  "version": "0.0.0",
+  "description": "Semantic recall over past sessions and journal entries.",
+  "author": {
+    "name": "Zak Keown",
+    "email": "zak@turncommerce.com"
+  },
+  "license": "MIT",
+  "repository": "https://gitlab.tcdevops.com/bubstack/moe",
+  "homepage": "https://gitlab.tcdevops.com/bubstack/moe",
+  "type": "module",
+  "main": "./.opencode/plugins/moe-memory.js",
+  "pi": {
+    "extensions": [
+      "./.pi/extensions/moe-memory.ts"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  },
+  "keywords": [
+    "memory",
+    "search",
+    "embeddings",
+    "journal",
+    "mcp",
+    "pi-package"
+  ]
+}

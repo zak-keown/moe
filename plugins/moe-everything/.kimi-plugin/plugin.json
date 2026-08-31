@@ -1,0 +1,28 @@
+{
+  "name": "moe-everything",
+  "version": "0.0.0",
+  "description": "The full Moe skill library: all 27 skills, including the ones you invoke deliberately by name.",
+  "author": {
+    "name": "Zak Keown",
+    "email": "zak@turncommerce.com"
+  },
+  "homepage": "https://gitlab.tcdevops.com/bubstack/moe",
+  "repository": "https://gitlab.tcdevops.com/bubstack/moe",
+  "license": "MIT AND Apache-2.0",
+  "keywords": [
+    "skills",
+    "brainstorming",
+    "planning",
+    "tdd",
+    "debugging",
+    "code-review",
+    "workflow",
+    "writing",
+    "windows",
+    "plugin-authoring"
+  ],
+  "skills": "./skills/",
+  "sessionStart": {
+    "skill": "using-moe"
+  }
+}

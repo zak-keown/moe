@@ -1,0 +1,25 @@
+{
+  "name": "moe-everything-dev",
+  "description": "Development marketplace for moe-everything",
+  "plugins": [
+    {
+      "name": "moe-everything",
+      "description": "The full Moe skill library: all 27 skills, including the ones you invoke deliberately by name.",
+      "version": "0.0.0",
+      "source": "./",
+      "author": {
+        "name": "Zak Keown",
+        "email": "zak@turncommerce.com"
+      },
+      "category": "development",
+      "keywords": [
+        "skills",
+        "workflow"
+      ]
+    }
+  ],
+  "owner": {
+    "name": "Zak Keown",
+    "email": "zak@turncommerce.com"
+  }
+}

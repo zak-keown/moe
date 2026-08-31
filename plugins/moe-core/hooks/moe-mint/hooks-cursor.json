@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "./hooks/moe-mint/run-hook.cmd session-start"
+      }
+    ]
+  }
+}

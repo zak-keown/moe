@@ -1,0 +1,25 @@
+{
+  "name": "moe-core-dev",
+  "description": "Development marketplace for moe-core",
+  "plugins": [
+    {
+      "name": "moe-core",
+      "description": "The house skills: brainstorming, planning, TDD, systematic debugging, code review and finishing a branch — the everyday set, lean enough to leave on.",
+      "version": "0.0.0",
+      "source": "./",
+      "author": {
+        "name": "Zak Keown",
+        "email": "zak@turncommerce.com"
+      },
+      "category": "development",
+      "keywords": [
+        "skills",
+        "workflow"
+      ]
+    }
+  ],
+  "owner": {
+    "name": "Zak Keown",
+    "email": "zak@turncommerce.com"
+  }
+}

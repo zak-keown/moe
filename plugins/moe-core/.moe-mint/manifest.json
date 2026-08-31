@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "tool": "moe-mint@0.0.0",
+  "files": {
+    ".agents/plugins/marketplace.json": {
+      "sha256": "35224a1a6b5bd6a4dc3dc8503275aabc10068edde443cc9309207840f6b16df0"
+    },
+    ".claude-plugin/marketplace.json": {
+      "sha256": "0f81e3984c44e2119337edd8e04301f10aa82aeb97e7bd5e0ab726d83a0770ec"
+    },
+    ".claude-plugin/plugin.json": {
+      "sha256": "115cb938273945f9a8ef61317db8276aa9fb0cb9b2a29c2adcf3382654cc2cfe"
+    },
+    ".codex-plugin/plugin.json": {
+      "sha256": "b1f658079a08017a74a5e3abb56da545153532bf103a2b253fad0e9574bec76b"
+    },
+    ".cursor-plugin/plugin.json": {
+      "sha256": "28930c23773f9b03c59f7cbfc447f83cfaee2119e909e4561f659cc116f6884c"
+    },
+    ".devin-plugin/plugin.json": {
+      "sha256": "127764a0b1f6b51a4bb3cdf6de5fd5ef32b7ae0950c66c810d78813df329c502"
+    },
+    ".hermes-plugin/__init__.py": {
+      "sha256": "1b72d25dd41380ff8f61adcf97f2c153b3f8def48da48ef0cc27de587729ebfa"
+    },
+    ".hermes-plugin/plugin.yaml": {
+      "sha256": "c8c3af3d9772e0f1c54af81638b98b9f66e1f550eda8d8f2a1b1793b413720fa"
+    },
+    ".kimi-plugin/plugin.json": {
+      "sha256": "081ef2d659eb294e71a80215287ffdd9eedab155f9652318fc5aad36193605f6"
+    },
+    ".opencode/plugins/moe-core.js": {
+      "sha256": "96d1c0da952c9ea8fe2cd7888d5caeab50a9a3e28a40d3c616e044e5c361974f"
+    },
+    ".pi/extensions/moe-core.ts": {
+      "sha256": "11f0bfa514e8ad0ba57840a9f0e18d23c37572e9607c3da25e5f90e2cb4bb55b"
+    },
+    "GEMINI.md": {
+      "sha256": "7710add3aa4c13a250e8d95586828e79c10942ed090f1a2fd30b91c9a638b69c"
+    },
+    "docs/install/agent-plugins-1.0.md": {
+      "sha256": "2dd888b45ffd6674c3369a0ecc4409723fee45b8a9a735ae7c6d4e01fe59d960"
+    },
+    "docs/install/agents-marketplace.md": {
+      "sha256": "f7549f763247a1851bd76f69a5e697a075083741ee72331f909726d0ca70163e"
+    },
+    "docs/install/claude-code.md": {
+      "sha256": "24fc5f318e52c9bf9d9bbb101719c9fc84bd1d189964f53fbf2c5be0a23aa42a"
+    },
+    "docs/install/codex.md": {
+      "sha256": "5e18088b9e7034a12fff8f1017d498ed5cbf1e518a635203746a66b93f2dfe25"
+    },
+    "docs/install/cursor.md": {
+      "sha256": "11b427273b16c409acf8c94fbf0c0f2bb145add6e43d9a6ace85b0743db46345"
+    },
+    "docs/install/devin.md": {
+      "sha256": "77fad7fe8aeee5773e14ce5533ac0e2ee99d267e97909b776600ba8eb5021392"
+    },
+    "docs/install/gemini.md": {
+      "sha256": "e4f72521dac702e3785c50fb156d563936f57f206af185f8cea662537e096c87"
+    },
+    "docs/install/hermes.md": {
+      "sha256": "52797cc7116d2943ca786f3bc8ef4c7d76013f62a761b2fc32c28e94e8ff373a"
+    },
+    "docs/install/kimi.md": {
+      "sha256": "e0b93771796a5de298f6d8e9ea7e651ee19c07cee0f59193bd836109cdc5f9a6"
+    },
+    "docs/install/opencode.md": {
+      "sha256": "a06145f2fdcad0f164e578d82d2b727264d81c9ab373b6fad21690f9c29368bb"
+    },
+    "docs/install/pi.md": {
+      "sha256": "6be40f6e3ee3ba3d223156ed1170a3b928a31a15dc77540e1d0c1ccada53b0e1"
+    },
+    "docs/support-matrix.md": {
+      "sha256": "9423d78b816ff61042fe412f60c9efb1b07cf3ee55b8da7d573983eb566574d6"
+    },
+    "gemini-extension.json": {
+      "sha256": "7bc0c1ecb9a03716e1bf70eb28a75bdfb4558282f5fde015b6b6166e56502757"
+    },
+    "hooks/moe-mint/hooks-cursor.json": {
+      "sha256": "7653af3eca8918a0fa45c4d67c321723d3906b8d3d6966959461be208f67d8a5"
+    },
+    "hooks/moe-mint/hooks.json": {
+      "sha256": "e76acddeaaae5b12b1634f4524479352d83f42f7c0c23d24477115a679c7e94f"
+    },
+    "hooks/moe-mint/run-hook.cmd": {
+      "sha256": "1091dc12af883e19c6f322221281ad7e1a9816d0e266ca60088dfbc278a50db8",
+      "executable": true
+    },
+    "hooks/moe-mint/session-start": {
+      "sha256": "9e83d2c8a0e39d26771e8e8c929f4808e292ad4a2ed056e82499a9cf5941f42b",
+      "executable": true
+    },
+    "package.json": {
+      "sha256": "3a808792126ced7fec278707cd886c7b3796666a06dba72bd66ea7d27fa3cf7a"
+    },
+    "plugin.json": {
+      "sha256": "1a4a0d7e6a59fb5884765d73813341de7c313a3e965b9f3e1731499cca72bb26"
+    }
+  }
+}

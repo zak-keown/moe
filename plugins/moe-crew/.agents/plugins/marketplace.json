@@ -1,0 +1,20 @@
+{
+  "name": "moe-crew-dev",
+  "interface": {
+    "displayName": "moe-crew"
+  },
+  "plugins": [
+    {
+      "name": "moe-crew",
+      "source": {
+        "source": "url",
+        "url": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "development"
+    }
+  ]
+}

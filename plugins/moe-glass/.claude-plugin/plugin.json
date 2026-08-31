@@ -1,0 +1,19 @@
+{
+  "name": "moe-glass",
+  "version": "0.0.0",
+  "description": "Direct Chrome DevTools Protocol access. Skill mode plus MCP mode, zero dependencies.",
+  "author": {
+    "name": "Zak Keown",
+    "email": "zak@turncommerce.com"
+  },
+  "license": "MIT",
+  "repository": "https://gitlab.tcdevops.com/bubstack/moe",
+  "homepage": "https://gitlab.tcdevops.com/bubstack/moe",
+  "keywords": [
+    "chrome",
+    "devtools-protocol",
+    "browser",
+    "automation",
+    "screenshots"
+  ]
+}

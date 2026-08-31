@@ -1,0 +1,88 @@
+# moe-mint config for the LEAN plugin, moe-core.
+#
+# Preserved from the-elements-of-style's `everyharness.yaml` @ 05fc4f0 — the only
+# real upstream consumer of the plugin generator, and therefore the seed of this
+# pipeline. Every field below was rewritten; the file's shape and its habit of
+# explaining each non-obvious choice in a comment are what survived.
+#
+# HOW THIS IS BUILT. moe-mint reads exactly `<root>/moe-mint.yaml` and uses one
+# root for both config-in and files-out. So `scripts/mint-plugins.mjs` STAGES:
+# it copies this file to `plugins/moe-core/moe-mint.yaml` along with the skills
+# for this tier, then runs `moe-mint generate --dir plugins/moe-core`. The plugin
+# root is therefore the staging directory, never `packages/core`.
+#
+# Two things fall out of that, and both were previously blockers:
+#
+#   - Two plugins from one source tree. moe-everything is this same tree with all
+#     27 skills instead of the lean 13; see ./moe-everything.yaml. Nothing has to
+#     move, because each gets its own staging root.
+#   - All 11 harness adapters can run. opencode and pi were excluded here because
+#     they emit a FULL-REPLACEMENT package.json into the plugin root — which used
+#     to be `packages/core`, whose package.json is the pnpm workspace manifest.
+#     Against a staging root that file is just another generated artifact, and
+#     `plugins/*` is not a pnpm workspace glob so nothing picks it up.
+#
+# Which skills land here is decided by `../skill-tiers.yaml`, not by this file.
+
+name: moe-core
+version: 0.0.0
+description: >-
+  The house skills: brainstorming, planning, TDD, systematic debugging, code
+  review and finishing a branch — the everyday set, lean enough to leave on.
+author:
+  name: Zak Keown
+  email: zak@turncommerce.com
+license: MIT AND Apache-2.0
+repository: https://gitlab.tcdevops.com/bubstack/moe
+homepage: https://gitlab.tcdevops.com/bubstack/moe
+keywords:
+  - skills
+  - brainstorming
+  - planning
+  - tdd
+  - debugging
+  - code-review
+  - workflow
+  - writing
+
+# The bootstrap skill is what makes the rest fire without being asked for; every
+# harness reads it at session start. Upstream superpowers hand-maintained the
+# SessionStart hook that injected it, wrapped in `<EXTREMELY_IMPORTANT>You have
+# superpowers.` plus an explicit "it is ALREADY LOADED, do not load it again".
+# moe-mint's generated wrapper is `<plugin-bootstrap plugin="moe-core">` instead.
+# That is a behaviour change to the single most load-bearing string in the merge,
+# so both dropped instructions were moved INTO skills/using-moe/SKILL.md, which
+# mint cats verbatim inside its own wrapper. Flagged for review; unverified
+# behaviourally — see README.md.
+bootstrap:
+  skill: using-moe
+
+# components: are all defaults (skills/, commands/, agents/, hooks/hooks.json,
+# .mcp.json) and therefore omitted. This package has no commands/, no agents/
+# and no .mcp.json; hooks/hooks.json carries the Stop hook only, and mint merges
+# its own SessionStart entry into hooks/moe-mint/hooks.json.
+
+# harnesses: no exclusions. All 11 adapters emit. opencode and pi used to be
+# excluded here (see the header) and the staging root removed the reason.
+
+marketplace:
+  # Local-dev descriptor only. The marketplace people actually install from is
+  # the hand-maintained root .claude-plugin/marketplace.json, which lists every
+  # Moe plugin and points at /plugins/<name>.
+  source: local
+  category: development
+  tags:
+    - skills
+    - workflow
+
+release:
+  audit:
+    # `moe-mint bump --audit` sweeps the plugin root for stray copies of the
+    # current version string. It runs against the STAGING root, which holds only
+    # skills/ and hooks/ — so the four entries this list used to carry
+    # (docs/history, licenses, test/latte/scenarios) named paths that are no
+    # longer in scope and are dropped. This one still is: the example plugin
+    # inside developing-claude-code-plugins ships its own plugin.json with its
+    # own version, which is not this plugin's.
+    exclude:
+      - skills/developing-claude-code-plugins/examples

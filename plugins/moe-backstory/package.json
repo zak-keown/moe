@@ -1,0 +1,30 @@
+{
+  "name": "moe-backstory",
+  "version": "0.0.0",
+  "description": "Recover a behavioral spec from a codebase that never had one.",
+  "author": {
+    "name": "Zak Keown",
+    "email": "zak@turncommerce.com"
+  },
+  "license": "Apache-2.0",
+  "repository": "https://gitlab.tcdevops.com/bubstack/moe",
+  "homepage": "https://gitlab.tcdevops.com/bubstack/moe",
+  "type": "module",
+  "main": "./.opencode/plugins/moe-backstory.js",
+  "pi": {
+    "extensions": [
+      "./.pi/extensions/moe-backstory.ts"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  },
+  "keywords": [
+    "reverse-engineering",
+    "specification",
+    "analysis",
+    "archaeology",
+    "documentation",
+    "pi-package"
+  ]
+}

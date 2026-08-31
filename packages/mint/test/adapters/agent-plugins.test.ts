@@ -105,6 +105,25 @@ describe('agent-plugins-1.0 mcp server translation', () => {
     expect(result.warnings).toEqual(['mcp server "demo" env key "PLUGIN_ROOT" is reserved by Agent Plugins; dropped'])
   })
 
+  it('normalizes a bare "." cwd to "./" so the emitted mcp.json validates', () => {
+    // `cwd: "."` is ordinary in a Claude Code .mcp.json and is the same path as
+    // "./", but the Agent Plugins schema anchors cwd on
+    // `^(?:\./|\$\{PLUGIN_ROOT\}(?:/|$)|\$\{PLUGIN_DATA\}(?:/|$))`. Passed
+    // through verbatim it produced output that mint's own `validate` rejected —
+    // found by wiring packages/memory, whose .mcp.json says `"cwd": "."`.
+    const result = agentPlugins.emit(mcpFixtureModel({ demo: { command: 'node', args: ['x.js'], cwd: '.' } }))
+    const mcp = JSON.parse(mustGet(byPathMap(result.files), 'mcp.json'))
+    expect(mcp.mcpServers.demo.cwd).toBe('./')
+  })
+
+  it('leaves an already-valid cwd alone', () => {
+    for (const cwd of ['./dist', '${PLUGIN_ROOT}', '${PLUGIN_ROOT}/dist', '${PLUGIN_DATA}']) {
+      const result = agentPlugins.emit(mcpFixtureModel({ demo: { command: 'node', cwd } }))
+      const mcp = JSON.parse(mustGet(byPathMap(result.files), 'mcp.json'))
+      expect(mcp.mcpServers.demo.cwd, cwd).toBe(cwd)
+    }
+  })
+
   it('warns and skips a server with neither command nor url', () => {
     const result = agentPlugins.emit(mcpFixtureModel({ demo: {} }))
     const mcp = JSON.parse(result.files.find((f) => f.path === 'mcp.json')!.content)

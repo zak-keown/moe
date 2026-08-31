@@ -1,0 +1,25 @@
+{
+  "name": "moe-core",
+  "displayName": "moe-core",
+  "description": "The house skills: brainstorming, planning, TDD, systematic debugging, code review and finishing a branch — the everyday set, lean enough to leave on.",
+  "version": "0.0.0",
+  "author": {
+    "name": "Zak Keown",
+    "email": "zak@turncommerce.com"
+  },
+  "homepage": "https://gitlab.tcdevops.com/bubstack/moe",
+  "repository": "https://gitlab.tcdevops.com/bubstack/moe",
+  "license": "MIT AND Apache-2.0",
+  "keywords": [
+    "skills",
+    "brainstorming",
+    "planning",
+    "tdd",
+    "debugging",
+    "code-review",
+    "workflow",
+    "writing"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/moe-mint/hooks-cursor.json"
+}

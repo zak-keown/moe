@@ -497,6 +497,35 @@ describe("the lean/full curation", () => {
     }
     expect(offenders).toEqual([]);
   });
+
+  // The tiering used to be data with no mechanism: skill-tiers.yaml recorded a
+  // split that nothing acted on, because moe-mint's readSkills() has no
+  // skill-level filter and would emit all 27 either way. The filter now happens
+  // at STAGE time in scripts/mint-plugins.mjs, which copies only the skills for
+  // a tier into plugins/<name>/ before generating. These two assertions are what
+  // make that claim falsifiable.
+  it("emits exactly the core tier into the lean plugin, plus _shared", () => {
+    const emitted = readdirSync(join(PKG, "../../plugins/moe-core/skills")).sort();
+    const expected = [
+      "_shared",
+      ...Object.entries(tiers.skills)
+        .filter(([, e]) => e.tier === "core")
+        .map(([n]) => n),
+    ].sort();
+    expect(emitted).toEqual(expected);
+  });
+
+  it("emits every skill into the full plugin, so it is a strict superset", () => {
+    const lean = readdirSync(join(PKG, "../../plugins/moe-core/skills"));
+    const full = readdirSync(join(PKG, "../../plugins/moe-everything/skills"));
+    expect([...full].sort()).toEqual(["_shared", ...skillNames].sort());
+    for (const name of lean) {
+      expect(
+        full.includes(name),
+        `moe-everything is missing ${name}, so it is not a superset`,
+      ).toBe(true);
+    }
+  });
 });
 
 describe("the rebrand", () => {
@@ -505,7 +534,13 @@ describe("the rebrand", () => {
   const zoneA = [
     ...walk(SKILLS, { skipExamples: false }),
     ...walk(join(PKG, "hooks"), { skipExamples: false }),
-    join(PKG, "moe-mint.yaml"),
+    // Both plugin configs. They moved from `<pkg>/moe-mint.yaml` to
+    // `<pkg>/mint/<plugin>.yaml` when scripts/mint-plugins.mjs began staging:
+    // one source tree emits two plugins, so one file at one fixed name could not
+    // hold both. Enumerated rather than globbed so adding a third plugin config
+    // without adding it here is a visible omission.
+    join(PKG, "mint/moe-core.yaml"),
+    join(PKG, "mint/moe-everything.yaml"),
     join(PKG, "package.json"),
   ].filter((p) => !/\.(png|svg|jpg|ico)$/.test(p));
 
@@ -530,7 +565,8 @@ describe("the rebrand", () => {
     const provenance = new Map<string, string[]>([
       ["skills/brainstorming/scripts/server.cjs", ["primeradiant"]],
       ["hooks/claude-judge-continuation", ["double-shot-latte"]],
-      ["moe-mint.yaml", ["superpowers", "everyharness"]],
+      ["mint/moe-core.yaml", ["superpowers", "everyharness"]],
+      ["mint/moe-everything.yaml", ["superpowers", "everyharness"]],
       ["skills/using-moe/references/opencode-tools.md", ["superpowers"]],
     ]);
     // In a Markdown document there is no "live code" position, so an enumerated
@@ -592,9 +628,11 @@ describe("the rebrand", () => {
   });
 
   it("rewrites self-referential URLs to GitLab and keeps provenance on GitHub", () => {
-    const config = readFileSync(join(PKG, "moe-mint.yaml"), "utf8");
-    expect(config).toContain("https://gitlab.tcdevops.com/bubstack/moe");
-    expect(config).not.toContain("github.com");
+    for (const rel of ["mint/moe-core.yaml", "mint/moe-everything.yaml"]) {
+      const config = readFileSync(join(PKG, rel), "utf8");
+      expect(config, rel).toContain("https://gitlab.tcdevops.com/bubstack/moe");
+      expect(config, rel).not.toContain("github.com");
+    }
 
     // Provenance that must NOT be rewritten: the bash 5.3 heredoc workaround in
     // upstream's own issue tracker, cited by the hook it explains.

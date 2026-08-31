@@ -1,0 +1,44 @@
+# moe-mint config for moe-backstory.
+#
+# Built by `scripts/mint-plugins.mjs`, which stages this file plus the package's
+# skills/, commands/ and agents/ into `plugins/moe-backstory/` and runs
+# `moe-mint generate` there.
+
+name: moe-backstory
+version: 0.0.0
+description: Recover a behavioral spec from a codebase that never had one.
+author:
+  name: Zak Keown
+  email: zak@turncommerce.com
+license: Apache-2.0
+repository: https://gitlab.tcdevops.com/bubstack/moe
+homepage: https://gitlab.tcdevops.com/bubstack/moe
+keywords:
+  - reverse-engineering
+  - specification
+  - analysis
+  - archaeology
+  - documentation
+
+# bootstrap: none.
+#
+# 22 skills, and every one of them belongs to a job you start deliberately:
+# "recover a spec for this codebase". Injecting any of it at session start would
+# load an archaeology pipeline into sessions doing ordinary work. The two
+# commands (`/analyze`, `/sanitize`) are the entry points, and a command is an
+# explicit invocation by definition.
+bootstrap: none
+
+# components: skills/, commands/ and agents/ are defaults and all present. No
+# hooks/hooks.json and no .mcp.json in this package.
+
+# harnesses: no exclusions. All 11 adapters emit. Note that not every harness has
+# a commands/ concept; the adapters that do not simply omit them, which is why
+# the two commands are not duplicated as skills.
+
+marketplace:
+  source: local
+  category: development
+  tags:
+    - analysis
+    - documentation

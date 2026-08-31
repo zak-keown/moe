@@ -1,0 +1,20 @@
+{
+  "name": "moe-glass-dev",
+  "interface": {
+    "displayName": "moe-glass"
+  },
+  "plugins": [
+    {
+      "name": "moe-glass",
+      "source": {
+        "source": "url",
+        "url": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "development"
+    }
+  ]
+}

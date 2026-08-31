@@ -1,0 +1,47 @@
+# moe-mint config for moe-memory.
+#
+# Built by `scripts/mint-plugins.mjs`, which stages this file plus the package's
+# skills/, agents/, hooks/ and .mcp.json into `plugins/moe-memory/` and runs
+# `moe-mint generate` there.
+
+name: moe-memory
+version: 0.0.0
+description: Semantic recall over past sessions and journal entries.
+author:
+  name: Zak Keown
+  email: zak@turncommerce.com
+license: MIT
+repository: https://gitlab.tcdevops.com/bubstack/moe
+homepage: https://gitlab.tcdevops.com/bubstack/moe
+keywords:
+  - memory
+  - search
+  - embeddings
+  - journal
+  - mcp
+
+# bootstrap: skill.
+#
+# This is the one non-core plugin that earns a bootstrap. `remembering-conversations`
+# has to fire WITHOUT being asked: the whole value is recalling something the user
+# has forgotten they told you, and a skill you must remember to invoke cannot do
+# that. It is the same argument that puts `using-moe` in moe-core.
+bootstrap:
+  skill: remembering-conversations
+
+# components: skills/, agents/, hooks/hooks.json and .mcp.json are all defaults
+# and all present. `.mcp.json` registers the `moe-memory` MCP server — a renamed
+# identifier (upstream `episodic-memory`), recorded in PARITY.md.
+#
+# hooks/hooks.json already registers memory's OWN SessionStart hook. mint merges
+# its bootstrap entry alongside rather than replacing it, so both run. That is
+# per-package behaviour, not mint-exclusive ownership of SessionStart.
+
+# harnesses: no exclusions. All 11 adapters emit.
+
+marketplace:
+  source: local
+  category: productivity
+  tags:
+    - memory
+    - search

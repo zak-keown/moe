@@ -17,6 +17,21 @@
     },
     "lint": {
       "outputs": []
+    },
+    "//#mint:generate": {
+      "dependsOn": ["@bubstack/moe-mint#build"],
+      "inputs": [
+        "scripts/mint-plugins.mjs",
+        ".claude-plugin/marketplace.json",
+        "packages/core/skill-tiers.yaml",
+        "packages/*/mint/*.yaml",
+        "packages/*/skills/**",
+        "packages/*/commands/**",
+        "packages/*/agents/**",
+        "packages/*/hooks/**",
+        "packages/*/.mcp.json"
+      ],
+      "outputs": ["plugins/**"]
     }
   }
 }

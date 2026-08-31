@@ -1,0 +1,40 @@
+# moe-mint config for moe-crew.
+#
+# Built by `scripts/mint-plugins.mjs`, which stages this file plus the package's
+# skills/ and hooks/ into `plugins/moe-crew/` and runs `moe-mint generate` there.
+
+name: moe-crew
+version: 0.0.0
+description: Launch, control and monitor worker Claude sessions over tmux.
+author:
+  name: Zak Keown
+  email: zak@turncommerce.com
+license: MIT
+repository: https://gitlab.tcdevops.com/bubstack/moe
+homepage: https://gitlab.tcdevops.com/bubstack/moe
+keywords:
+  - tmux
+  - orchestration
+  - subagents
+  - sessions
+
+# bootstrap: none. `driving-claude-code-sessions` is invoked when you already
+# know you want a worker session; nothing about ordinary work should pull it in.
+#
+# Note for the WSL2 decision (ARCHITECTURE.md section 6): this plugin has no
+# native-Windows story at all, because tmux does not exist there. Under WSL2 it
+# works normally.
+bootstrap: none
+
+# components: skills/ is a default. hooks/hooks.json carries crew's own event
+# emitter; mint merges its SessionStart entry into hooks/moe-mint/hooks.json
+# rather than replacing this file.
+
+# harnesses: no exclusions. All 11 adapters emit.
+
+marketplace:
+  source: local
+  category: development
+  tags:
+    - orchestration
+    - tmux

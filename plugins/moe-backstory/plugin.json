@@ -1,0 +1,20 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "moe-backstory",
+  "version": "0.0.0",
+  "description": "Recover a behavioral spec from a codebase that never had one.",
+  "author": {
+    "name": "Zak Keown",
+    "email": "zak@turncommerce.com"
+  },
+  "homepage": "https://gitlab.tcdevops.com/bubstack/moe",
+  "repository": "https://gitlab.tcdevops.com/bubstack/moe",
+  "license": "Apache-2.0",
+  "keywords": [
+    "reverse-engineering",
+    "specification",
+    "analysis",
+    "archaeology",
+    "documentation"
+  ]
+}

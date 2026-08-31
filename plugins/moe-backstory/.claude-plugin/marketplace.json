@@ -1,0 +1,25 @@
+{
+  "name": "moe-backstory-dev",
+  "description": "Development marketplace for moe-backstory",
+  "plugins": [
+    {
+      "name": "moe-backstory",
+      "description": "Recover a behavioral spec from a codebase that never had one.",
+      "version": "0.0.0",
+      "source": "./",
+      "author": {
+        "name": "Zak Keown",
+        "email": "zak@turncommerce.com"
+      },
+      "category": "development",
+      "keywords": [
+        "analysis",
+        "documentation"
+      ]
+    }
+  ],
+  "owner": {
+    "name": "Zak Keown",
+    "email": "zak@turncommerce.com"
+  }
+}

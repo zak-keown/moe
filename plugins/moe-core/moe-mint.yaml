@@ -5,10 +5,24 @@
 # pipeline. Every field below was rewritten; the file's shape and its habit of
 # explaining each non-obvious choice in a comment are what survived.
 #
-# The full plugin, moe-everything, is the same source tree with every skill
-# instead of the lean thirteen. It has no config file yet, because moe-mint reads
-# exactly `<root>/moe-mint.yaml` and takes one plugin root for both config-in and
-# files-out. See skill-tiers.yaml and README.md ("Two plugins, one source tree").
+# HOW THIS IS BUILT. moe-mint reads exactly `<root>/moe-mint.yaml` and uses one
+# root for both config-in and files-out. So `scripts/mint-plugins.mjs` STAGES:
+# it copies this file to `plugins/moe-core/moe-mint.yaml` along with the skills
+# for this tier, then runs `moe-mint generate --dir plugins/moe-core`. The plugin
+# root is therefore the staging directory, never `packages/core`.
+#
+# Two things fall out of that, and both were previously blockers:
+#
+#   - Two plugins from one source tree. moe-everything is this same tree with all
+#     27 skills instead of the lean 13; see ./moe-everything.yaml. Nothing has to
+#     move, because each gets its own staging root.
+#   - All 11 harness adapters can run. opencode and pi were excluded here because
+#     they emit a FULL-REPLACEMENT package.json into the plugin root — which used
+#     to be `packages/core`, whose package.json is the pnpm workspace manifest.
+#     Against a staging root that file is just another generated artifact, and
+#     `plugins/*` is not a pnpm workspace glob so nothing picks it up.
+#
+# Which skills land here is decided by `../skill-tiers.yaml`, not by this file.
 
 name: moe-core
 version: 0.0.0
@@ -48,15 +62,8 @@ bootstrap:
 # and no .mcp.json; hooks/hooks.json carries the Stop hook only, and mint merges
 # its own SessionStart entry into hooks/moe-mint/hooks.json.
 
-harnesses:
-  # Both adapters emit a FULL-REPLACEMENT package.json into the plugin root, and
-  # this plugin root is packages/core — whose package.json is the pnpm workspace
-  # manifest. mint's own generate.ts says so in its conflict message: "--force
-  # will REPLACE your package.json entirely." Excluded until the plugin root is
-  # a staging directory rather than the source tree.
-  exclude:
-    - opencode
-    - pi
+# harnesses: no exclusions. All 11 adapters emit. opencode and pi used to be
+# excluded here (see the header) and the staging root removed the reason.
 
 marketplace:
   # Local-dev descriptor only. The marketplace people actually install from is
@@ -70,10 +77,12 @@ marketplace:
 
 release:
   audit:
-    # `moe-mint bump --audit` sweeps the package for stray copies of the current
-    # version string. These four hold versions that are not this plugin's.
+    # `moe-mint bump --audit` sweeps the plugin root for stray copies of the
+    # current version string. It runs against the STAGING root, which holds only
+    # skills/ and hooks/ — so the four entries this list used to carry
+    # (docs/history, licenses, test/latte/scenarios) named paths that are no
+    # longer in scope and are dropped. This one still is: the example plugin
+    # inside developing-claude-code-plugins ships its own plugin.json with its
+    # own version, which is not this plugin's.
     exclude:
-      - docs/history
-      - licenses
       - skills/developing-claude-code-plugins/examples
-      - test/latte/scenarios

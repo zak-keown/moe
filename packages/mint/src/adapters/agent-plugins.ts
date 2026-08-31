@@ -95,7 +95,15 @@ function translateMcpServer(name: string, source: unknown): { entry?: Record<str
       }
       if (Object.keys(env).length) entry.env = env
     }
-    if (typeof source.cwd === 'string') entry.cwd = source.cwd
+    // Normalize a bare "." to "./".
+    //
+    // Both are the same path, and `cwd: "."` is a perfectly ordinary thing to
+    // write in a Claude Code .mcp.json — but the Agent Plugins schema anchors
+    // cwd on `^(?:\./|\$\{PLUGIN_ROOT\}(?:/|$)|\$\{PLUGIN_DATA\}(?:/|$))`, which
+    // "." does not match. Passing it through verbatim meant valid input produced
+    // output that mint's own `validate` then rejected — caught by wiring
+    // packages/memory, whose .mcp.json says `"cwd": "."`.
+    if (typeof source.cwd === 'string') entry.cwd = source.cwd === '.' ? './' : source.cwd
     return { entry, warnings }
   }
 

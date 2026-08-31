@@ -1,0 +1,18 @@
+{
+  "name": "moe-crew",
+  "version": "0.0.0",
+  "description": "Launch, control and monitor worker Claude sessions over tmux.",
+  "author": {
+    "name": "Zak Keown",
+    "email": "zak@turncommerce.com"
+  },
+  "homepage": "https://gitlab.tcdevops.com/bubstack/moe",
+  "repository": "https://gitlab.tcdevops.com/bubstack/moe",
+  "license": "MIT",
+  "keywords": [
+    "tmux",
+    "orchestration",
+    "subagents",
+    "sessions"
+  ]
+}

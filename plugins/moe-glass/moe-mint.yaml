@@ -1,0 +1,46 @@
+# moe-mint config for moe-glass.
+#
+# Built by `scripts/mint-plugins.mjs`, which stages this file plus the package's
+# skills/ and agents/ into `plugins/moe-glass/` and runs `moe-mint generate`
+# there. The plugin root is the staging directory, never `packages/glass`.
+
+name: moe-glass
+version: 0.0.0
+description: >-
+  Direct Chrome DevTools Protocol access. Skill mode plus MCP mode, zero
+  dependencies.
+author:
+  name: Zak Keown
+  email: zak@turncommerce.com
+license: MIT
+repository: https://gitlab.tcdevops.com/bubstack/moe
+homepage: https://gitlab.tcdevops.com/bubstack/moe
+keywords:
+  - chrome
+  - devtools-protocol
+  - browser
+  - automation
+  - screenshots
+
+# bootstrap: none.
+#
+# `browsing` is a deliberate, invoked-by-name skill — you reach for a browser
+# when you want a browser — so there is nothing to inject at session start. It is
+# also the only skill here, so a bootstrap would load the entire plugin into
+# every session for a capability most sessions never touch. That is the exact
+# cost moe-core's tiering exists to avoid; see ARCHITECTURE.md section 2.
+bootstrap: none
+
+# components: skills/ and agents/ are defaults. There is no hooks/hooks.json and
+# no .mcp.json in the package: glass's MCP server is registered by the consumer,
+# not shipped as a plugin-level .mcp.json, because the server key (`moe-glass`)
+# has to match what the user's own config names.
+
+# harnesses: no exclusions. All 11 adapters emit.
+
+marketplace:
+  source: local
+  category: development
+  tags:
+    - browser
+    - automation

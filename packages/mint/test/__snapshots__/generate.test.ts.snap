@@ -835,6 +835,13 @@ if %ERRORLEVEL% equ 0 (
     exit /b %ERRORLEVEL%
 )
 
+REM No bash found. Say so, then exit 0 anyway. This wrapper dispatches the
+REM SessionStart hook that bootstraps the plugin, so a silent skip here means
+REM the plugin is simply off with nothing anywhere saying why. Still exit 0: a
+REM non-zero SessionStart hook can break every session on the machine.
+echo run-hook.cmd: no bash found, so hook "%~1" did NOT run. >&2
+echo   This plugin's hooks are shell scripts and need a bash on this machine. >&2
+echo   Install Git for Windows, or use WSL2. >&2
 exit /b 0
 CMDBLOCK
 

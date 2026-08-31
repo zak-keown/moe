@@ -1,0 +1,20 @@
+{
+  "name": "moe-memory-dev",
+  "interface": {
+    "displayName": "moe-memory"
+  },
+  "plugins": [
+    {
+      "name": "moe-memory",
+      "source": {
+        "source": "url",
+        "url": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "productivity"
+    }
+  ]
+}

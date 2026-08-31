@@ -9,9 +9,11 @@ Ships as **two** generated plugins from this one source tree — `moe-core` (the
 everyday set) and `moe-everything` (all of them) — built into `/plugins/` by
 `@bubstack/moe-mint`. Never hand-edit a generated manifest.
 
-**Status:** imported. 27 skills. 205 tests passing, 5 skipped, across five
-suites — see [Verification](#verification). The lean/full split is a **proposal
-awaiting review**; see [Two plugins, one source tree](#two-plugins-one-source-tree).
+**Status:** imported and building. 27 skills. Both plugins now generate into
+`/plugins/` for all 11 harnesses — see
+[Two plugins, one source tree](#two-plugins-one-source-tree). 207 tests passing,
+5 skipped, across five suites; see [Verification](#verification). The lean/full
+split was **reviewed and settled 2026-08-31**.
 
 ## Forked from
 
@@ -94,12 +96,14 @@ hooks/
                         copies; see below.
   claude-judge-continuation   The Stop hook. Opt-in, default OFF.
 scripts/validate_skill.py     Frontmatter validator, exercised by test/iterative-development/.
-moe-mint.yaml           The moe-core plugin config. Seeded from
+mint/
+  moe-core.yaml         The lean plugin's config. Seeded from
                         the-elements-of-style's everyharness.yaml.
-skill-tiers.yaml        The lean/full curation, as data. A PROPOSAL.
+  moe-everything.yaml   The full plugin's config. Same tree, all 27 skills.
+skill-tiers.yaml        The lean/full curation, as data. Settled 2026-08-31.
 licenses/               One verbatim notice per inbound license.
 test/
-  metadata.test.ts      30 vitest assertions. THE verification for this package.
+  metadata.test.ts      32 vitest assertions. THE verification for this package.
   iterative-development/  37 Python unittest tests over the 9 skill CLIs.
   brainstorm-server/    130 upstream node:assert + `ws` tests over server.cjs.
   shell/                8 bash assertions over find-polluter.sh and render-graphs.mjs.
@@ -122,8 +126,12 @@ opposite directions:
   in a lean-tier skill naming a skill the reader does not have installed is a
   dead end mid-workflow. So the target is lean-tier too.
   `test/metadata.test.ts` enforces this.
-- **Err small.** Where closure does not force the answer, the tie goes to
-  `everything`.
+- ~~**Err small.**~~ Deleted 2026-08-31: it justified demotions by a resident
+  context cost that measurement did not support (all 27 descriptions are ~1,480
+  tokens; the bodies load on demand). Replaced by **trigger collision** — the tie
+  goes to `everything` only if the skill claims a trigger a core-tier skill
+  already claims. Absent a collision the tie now goes to `core`. See
+  `skill-tiers.yaml` and ARCHITECTURE.md §2.
 
 Closure is what sets the size. The everyday spine is
 brainstorm → plan → execute → review → finish, and four of the thirteen
@@ -140,22 +148,43 @@ separate file opened on demand. If the reviewer disagrees, this is the one to
 move — it breaks no closure edge. Every other rationale is in
 `skill-tiers.yaml` next to the skill it justifies.
 
-### The mechanism does not exist yet
+### The mechanism, and where the filtering actually happens
 
-`moe-mint` reads exactly `<root>/moe-mint.yaml`, and `readSkills()` takes every
-subdirectory of one `components.skills` path that contains a `SKILL.md`
-(`packages/mint/src/model.ts`). There is no skill-level filter, and `--dir` is
-one argument for both config-in and files-out. So:
+**Built 2026-08-31, and it needed no `moe-mint` change at all.**
 
-- `moe-mint.yaml` here describes **`moe-core` only**, and generating it today
-  would emit all 27 skills, not 13.
-- `moe-everything` has no config file, because a second one at this root could
-  not be read.
+The problem was real. `moe-mint` reads exactly `<root>/moe-mint.yaml`, and
+`readSkills()` takes every subdirectory of one `components.skills` path that
+contains a `SKILL.md` (`packages/mint/src/model.ts`). There is no skill-level
+filter, and `--dir` is one argument for both config-in and files-out. So a
+single root could hold neither two configs nor two outputs, and generating from
+this package would have emitted all 27 skills into `moe-core`.
 
-`skill-tiers.yaml` is therefore the spec for the mint feature as much as the
-curation itself. Two ways to close it, both a mint change: a skill-level
-include/exclude in the config, or a `--config` flag plus a staging step. Listed
-in the follow-ups.
+Both follow-ups proposed a mint feature — a skill-level include/exclude, or a
+`--config` flag. Neither was needed. `scripts/mint-plugins.mjs` **stages**: for
+each plugin it copies the config plus exactly the skills for that tier into
+`plugins/<name>/`, then runs `moe-mint generate --dir plugins/<name>`. The
+plugin root is the staging directory, so:
+
+- The two configs live at `mint/moe-core.yaml` and `mint/moe-everything.yaml`
+  and each is copied to `moe-mint.yaml` in its own staging root. Nothing
+  collides.
+- The skill filter is a copy filter. `readSkills()` still takes everything it
+  finds — it just finds 13 for the lean plugin and 27 for the full one.
+- `_shared/` is staged for both tiers regardless. It has no `SKILL.md`, is not in
+  `skill-tiers.yaml`, and is the 28th directory for 27 skills; a lean-tier skill
+  including a fragment that got filtered out is the same dead end the tier
+  closure rule exists to prevent.
+
+It also unblocked the two harness adapters this config had excluded. `opencode`
+and `pi` emit a full-replacement `package.json` into the plugin root, which used
+to be `packages/core` — the pnpm workspace manifest. Against a staging root that
+file is just another generated artifact, and `plugins/*` is not a pnpm workspace
+glob. All **11** adapters now emit.
+
+Two assertions in `test/metadata.test.ts` keep the claim falsifiable: the lean
+plugin's `skills/` must equal the core tier plus `_shared`, and the full
+plugin's must equal every skill. Smuggling an everything-tier skill into
+`plugins/moe-core/skills/` fails the first one.
 
 ## What changed on import
 
@@ -712,10 +741,10 @@ misses two brand-token *filenames* with token-free bodies).
 
 ## Follow-ups
 
-- **The lean/full split cannot be built.** `moe-mint` needs either a skill-level
-  include/exclude in `moe-mint.yaml` or a `--config` flag plus a staging step, and
-  `--dir` needs to stop conflating config-in with files-out. `skill-tiers.yaml` is
-  the spec. Until then this package generates one plugin containing all 27 skills.
+- ~~**The lean/full split cannot be built.**~~ **DONE 2026-08-31**, by the
+  staging step alone — `--dir` still conflates config-in with files-out and it
+  turned out not to matter. See "The mechanism, and where the filtering actually
+  happens" above.
 - **`moe-mint` does not detect duplicate skill `name:`.** `readSkills()` maps
   directory → `{name, dir}` and sorts; two directories declaring the same
   frontmatter `name` emit two manifest entries with the same name, silently. Here

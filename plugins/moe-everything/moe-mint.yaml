@@ -1,0 +1,62 @@
+# moe-mint config for the FULL plugin, moe-everything.
+#
+# The same source tree as ./moe-core.yaml with every skill instead of the lean
+# thirteen. See that file's header for how staging makes two plugins from one
+# tree possible, and ../skill-tiers.yaml for which skill lands where.
+#
+# moe-everything is a strict SUPERSET of moe-core: 13 + 14 = 27. Installing both
+# is not an error but buys nothing, and the marketplace descriptions say so.
+#
+# Everything below that is not the identity — name, description, keywords — is
+# deliberately identical to moe-core.yaml. If the two ever need to differ in
+# behaviour, that is a decision worth a comment here rather than a silent drift,
+# and `pnpm mint:check` will not catch it: it asserts the OUTPUT is reproducible,
+# not that the two configs agree.
+
+name: moe-everything
+version: 0.0.0
+description: >-
+  The full Moe skill library: all 27 skills, including the ones you invoke
+  deliberately by name.
+author:
+  name: Zak Keown
+  email: zak@turncommerce.com
+license: MIT AND Apache-2.0
+repository: https://gitlab.tcdevops.com/bubstack/moe
+homepage: https://gitlab.tcdevops.com/bubstack/moe
+keywords:
+  - skills
+  - brainstorming
+  - planning
+  - tdd
+  - debugging
+  - code-review
+  - workflow
+  - writing
+  - windows
+  - plugin-authoring
+
+# Same bootstrap as the lean plugin, and it has to be: `using-moe` is what makes
+# every other skill fire without being asked for, and it is a core-tier skill so
+# it is present in both stagings. See moe-core.yaml for the note on the wrapper
+# string change, which applies identically here.
+bootstrap:
+  skill: using-moe
+
+# components: all defaults. No commands/, no agents/, no .mcp.json in this
+# package; hooks/hooks.json carries the Stop hook and mint merges its own
+# SessionStart entry into hooks/moe-mint/hooks.json.
+
+# harnesses: no exclusions. All 11 adapters emit.
+
+marketplace:
+  source: local
+  category: development
+  tags:
+    - skills
+    - workflow
+
+release:
+  audit:
+    exclude:
+      - skills/developing-claude-code-plugins/examples
