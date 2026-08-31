@@ -10,7 +10,7 @@
 ## Installing
 
 ```
-pi install git:github.com/<your-repo>
+pi install git:gitlab.tcdevops.com/Zak/moe
 ```
 
 Pi discovers the extension and skills directory through the `pi` field in `package.json`. Consult Pi's extension docs if this command doesn't match your installed version.

@@ -1,0 +1,214 @@
+#!/usr/bin/env node
+// moe-install — install, upgrade, uninstall, or migrate Moe over the
+// `claude plugin` CLI. Dependency-free ESM, cross-platform.
+//
+// Follows the recommendation in `.planning/backlog/W01P01 - installer-hq-dx.md`
+// (Option C): the marketplace lives at `gitlab.tcdevops.com/Zak/moe`, four of
+// six plugins install from a sparse clone of `.claude-plugin/` and `plugins/`,
+// two (memory, glass) install from the `@bubstack` npm scope. Neither shape
+// requires the user to have cloned the repo or run pnpm.
+//
+// Every real action is `claude plugin …` under the hood — this script does not
+// touch registries directly, just orchestrates the CLI and reports what it
+// intends to do first. That means `--dry-run` is the default for readers: with
+// no flags the script prints the plan and refuses to change anything.
+
+import { spawnSync } from 'node:child_process'
+import { allProbes, overallExit } from './lib/probes.mjs'
+import { findRenamedKeys, renderMigrationReport } from './lib/migrate.mjs'
+
+const MARKETPLACE = 'moe'
+const MARKETPLACE_URL = 'https://gitlab.tcdevops.com/Zak/moe.git'
+const PLUGINS = ['moe-core', 'moe-everything', 'moe-backstory', 'moe-crew', 'moe-memory', 'moe-glass']
+
+function usage() {
+  return [
+    'moe-install — install, upgrade, uninstall, or migrate Moe.',
+    '',
+    'Usage:',
+    '  moe-install                    Print the install plan and exit (dry-run).',
+    '  moe-install --apply            Run moe-doctor, then install every plugin.',
+    '  moe-install --upgrade          Update the marketplace and every installed plugin.',
+    '  moe-install --uninstall        Uninstall every Moe plugin and remove the marketplace.',
+    '  moe-install --migrate          Report renamed MCP keys across scopes. Reports only.',
+    '  moe-install --migrate --apply  Execute `claude mcp remove` for each renamed key found.',
+    '  moe-install --skip-doctor      Skip the doctor probe on --apply (not recommended).',
+    '  moe-install --scope <s>        Pass --scope user|project|local to `claude plugin`.',
+    '  moe-install --help             Show this message.',
+    '',
+    'The default is intentionally read-only. Nothing changes without --apply.',
+    '',
+  ].join('\n')
+}
+
+function parseArgs(argv) {
+  const flags = new Set()
+  let scope
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i]
+    if (arg === '--scope') {
+      scope = argv[++i]
+      continue
+    }
+    if (arg.startsWith('--')) flags.add(arg)
+  }
+  return { flags, scope }
+}
+
+function run(cmd, args, { dryRun }) {
+  const printable = [cmd, ...args].join(' ')
+  if (dryRun) {
+    process.stdout.write(`  [dry-run] ${printable}\n`)
+    return 0
+  }
+  process.stdout.write(`  $ ${printable}\n`)
+  const result = spawnSync(cmd, args, { stdio: 'inherit' })
+  if (result.error) {
+    process.stderr.write(`moe-install: failed to spawn ${cmd}: ${result.error.message}\n`)
+    return 127
+  }
+  return result.status ?? 1
+}
+
+function scopeArgs(scope) {
+  return scope ? ['--scope', scope] : []
+}
+
+function runDoctor() {
+  process.stdout.write('Running moe-doctor first...\n\n')
+  const results = allProbes()
+  for (const r of results) {
+    const tag = r.ok ? 'ok' : r.tier === 'hard' ? 'MISS' : 'warn'
+    const version = r.version ? ` (${r.version})` : ''
+    process.stdout.write(`  [${tag}] ${r.name}${version}\n`)
+    if (!r.ok && r.fixHint) process.stdout.write(`         fix: ${r.fixHint}\n`)
+  }
+  const exit = overallExit(results)
+  process.stdout.write(exit === 0 ? '\nDoctor passed. Proceeding with install.\n\n' : '\nDoctor found HARD gaps. Fix them and re-run.\n')
+  return exit
+}
+
+function planInstall(scope) {
+  const s = scopeArgs(scope)
+  const lines = []
+  lines.push(`claude plugin marketplace add ${MARKETPLACE_URL}${s.length ? ' ' + s.join(' ') : ''}`)
+  for (const p of PLUGINS) lines.push(`claude plugin install ${p}@${MARKETPLACE}${s.length ? ' ' + s.join(' ') : ''}`)
+  return lines
+}
+
+function planUpgrade(scope) {
+  const s = scopeArgs(scope)
+  const lines = []
+  lines.push(`claude plugin marketplace update ${MARKETPLACE}${s.length ? ' ' + s.join(' ') : ''}`)
+  for (const p of PLUGINS) lines.push(`claude plugin update ${p}@${MARKETPLACE}${s.length ? ' ' + s.join(' ') : ''}`)
+  return lines
+}
+
+function planUninstall(scope) {
+  const s = scopeArgs(scope)
+  const lines = []
+  for (const p of PLUGINS) lines.push(`claude plugin uninstall ${p}@${MARKETPLACE}${s.length ? ' ' + s.join(' ') : ''}`)
+  lines.push(`claude plugin marketplace remove ${MARKETPLACE}${s.length ? ' ' + s.join(' ') : ''}`)
+  return lines
+}
+
+function doAction(planFn, actionArgs, scope, dryRun) {
+  const s = scopeArgs(scope)
+  for (const [cmd, ...args] of actionArgs(scope)) {
+    const status = run(cmd, args, { dryRun })
+    if (status !== 0 && !dryRun) {
+      process.stderr.write(`moe-install: ${cmd} ${args.join(' ')} exited ${status}\n`)
+      return status
+    }
+    void s
+    void planFn
+  }
+  return 0
+}
+
+function installActions(scope) {
+  const s = scopeArgs(scope)
+  const actions = [['claude', 'plugin', 'marketplace', 'add', MARKETPLACE_URL, ...s]]
+  for (const p of PLUGINS) actions.push(['claude', 'plugin', 'install', `${p}@${MARKETPLACE}`, ...s])
+  return actions
+}
+
+function upgradeActions(scope) {
+  const s = scopeArgs(scope)
+  const actions = [['claude', 'plugin', 'marketplace', 'update', MARKETPLACE, ...s]]
+  for (const p of PLUGINS) actions.push(['claude', 'plugin', 'update', `${p}@${MARKETPLACE}`, ...s])
+  return actions
+}
+
+function uninstallActions(scope) {
+  const s = scopeArgs(scope)
+  const actions = []
+  for (const p of PLUGINS) actions.push(['claude', 'plugin', 'uninstall', `${p}@${MARKETPLACE}`, ...s])
+  actions.push(['claude', 'plugin', 'marketplace', 'remove', MARKETPLACE, ...s])
+  return actions
+}
+
+function runMigrate(apply) {
+  const findings = findRenamedKeys(process.cwd())
+  process.stdout.write(renderMigrationReport(findings) + '\n')
+  if (findings.length === 0) return 0
+  if (!apply) return 0
+  process.stdout.write('\n--apply set. Executing:\n')
+  for (const f of findings) {
+    const parts = f.command.split(/\s+/)
+    const status = run(parts[0], parts.slice(1), { dryRun: false })
+    if (status !== 0) {
+      process.stderr.write(`moe-install --migrate: ${f.command} exited ${status}. Continuing.\n`)
+    }
+  }
+  return 0
+}
+
+// -------- entry --------
+
+const { flags, scope } = parseArgs(process.argv.slice(2))
+
+if (flags.has('--help') || flags.has('-h')) {
+  process.stdout.write(usage())
+  process.exit(0)
+}
+
+const apply = flags.has('--apply')
+const skipDoctor = flags.has('--skip-doctor')
+
+if (flags.has('--migrate')) {
+  process.exit(runMigrate(apply))
+}
+
+let mode = 'install'
+if (flags.has('--upgrade')) mode = 'upgrade'
+else if (flags.has('--uninstall')) mode = 'uninstall'
+
+let plan
+let actions
+if (mode === 'install') {
+  plan = planInstall(scope)
+  actions = installActions(scope)
+} else if (mode === 'upgrade') {
+  plan = planUpgrade(scope)
+  actions = upgradeActions(scope)
+} else {
+  plan = planUninstall(scope)
+  actions = uninstallActions(scope)
+}
+
+process.stdout.write(`moe-install: mode=${mode}${scope ? ` scope=${scope}` : ''}\n\n`)
+if (!apply) {
+  process.stdout.write('Plan (dry-run — re-run with --apply to execute):\n')
+  for (const line of plan) process.stdout.write(`  ${line}\n`)
+  process.stdout.write('\nCaveat: removing the marketplace from its last scope uninstalls every plugin from it.\n')
+  process.exit(0)
+}
+
+if (mode === 'install' && !skipDoctor) {
+  const doctorExit = runDoctor()
+  if (doctorExit !== 0) process.exit(doctorExit)
+}
+
+const exit = doAction(planInstall, () => actions, scope, false)
+process.exit(exit)

@@ -71,18 +71,58 @@ const COMPONENTS = ["skills", "commands", "agents", "hooks", ".mcp.json"];
  * link. Both fail silently otherwise, which is why it is checked here rather
  * than left to discovery.
  */
+/**
+ * `distribution` is how installers get the plugin, not how it's staged for
+ * generation. Every plugin is generated the same way ("./plugins/<name>/"),
+ * but the marketplace listing points elsewhere depending on how a user
+ * installs it:
+ *
+ *   - "local": marketplace listing is "./plugins/<name>", installed from
+ *     the checkout (contributor path) or a sparse marketplace clone (main
+ *     end-user path for content plugins).
+ *   - { npm: "<package-name>" }: marketplace listing is the npm-source
+ *     shape `{"source":"npm","package":"…"}`, installed by `claude plugin`
+ *     from the `@bubstack` scope. Used for the two MCP-server plugins
+ *     (memory, glass) so a native-Windows user gets prebuilt `better-sqlite3`
+ *     without an MSVC toolchain — see the installer-hq-dx backlog item.
+ *
+ * checkMarketplace() below asserts the marketplace listing agrees with each
+ * plugin's declared distribution, and rejects any surprise combinations.
+ */
 const PLUGINS = [
-  { name: "moe-core", pkg: "core", config: "mint/moe-core.yaml", tiers: ["core"] },
+  {
+    name: "moe-core",
+    pkg: "core",
+    config: "mint/moe-core.yaml",
+    tiers: ["core"],
+    distribution: "local",
+  },
   {
     name: "moe-everything",
     pkg: "core",
     config: "mint/moe-everything.yaml",
     tiers: ["core", "everything"],
+    distribution: "local",
   },
-  { name: "moe-backstory", pkg: "backstory", config: "mint/moe-backstory.yaml" },
-  { name: "moe-memory", pkg: "memory", config: "mint/moe-memory.yaml" },
-  { name: "moe-glass", pkg: "glass", config: "mint/moe-glass.yaml" },
-  { name: "moe-crew", pkg: "crew", config: "mint/moe-crew.yaml" },
+  {
+    name: "moe-backstory",
+    pkg: "backstory",
+    config: "mint/moe-backstory.yaml",
+    distribution: "local",
+  },
+  {
+    name: "moe-memory",
+    pkg: "memory",
+    config: "mint/moe-memory.yaml",
+    distribution: { npm: "@bubstack/moe-memory" },
+  },
+  {
+    name: "moe-glass",
+    pkg: "glass",
+    config: "mint/moe-glass.yaml",
+    distribution: { npm: "@bubstack/moe-glass" },
+  },
+  { name: "moe-crew", pkg: "crew", config: "mint/moe-crew.yaml", distribution: "local" },
 ];
 
 /**
@@ -204,24 +244,54 @@ function generate(plugin, dest) {
  * listed but not generated is a broken link. Both are silent, so both are
  * checked here rather than left to discovery.
  */
+/** Human-readable string form of the two accepted marketplace `source`
+ *  shapes, for diffing in the error message. */
+function describeSource(source) {
+  if (typeof source === "string") return JSON.stringify(source);
+  if (source && typeof source === "object" && source.source === "npm") {
+    return `{ source: "npm", package: ${JSON.stringify(source.package)} }`;
+  }
+  return JSON.stringify(source);
+}
+
+/** The `source` value the marketplace listing must carry for the given
+ *  plugin registry entry, derived from `distribution` above. */
+function expectedSource(plugin) {
+  if (plugin.distribution === "local") return `./plugins/${plugin.name}`;
+  if (plugin.distribution?.npm) {
+    return { source: "npm", package: plugin.distribution.npm };
+  }
+  fail(`unknown distribution for ${plugin.name}: ${JSON.stringify(plugin.distribution)}`);
+}
+
+/** Two `source` values agree. Object shape only — no deep-merge tolerance. */
+function sourcesMatch(actual, expected) {
+  if (typeof expected === "string") return actual === expected;
+  if (!actual || typeof actual !== "object") return false;
+  return actual.source === expected.source && actual.package === expected.package;
+}
+
 function checkMarketplace() {
   const file = path.join(ROOT, ".claude-plugin/marketplace.json");
   const listed = JSON.parse(fs.readFileSync(file, "utf8")).plugins ?? [];
   const listedNames = new Set(listed.map((p) => p.name));
-  const built = new Set(PLUGINS.map((p) => p.name));
+  const built = new Map(PLUGINS.map((p) => [p.name, p]));
 
   const problems = [];
-  for (const name of built) {
+  for (const name of built.keys()) {
     if (!listedNames.has(name))
       problems.push(`${name} is generated but absent from marketplace.json`);
   }
   for (const entry of listed) {
-    if (!built.has(entry.name))
+    const plugin = built.get(entry.name);
+    if (!plugin) {
       problems.push(`${entry.name} is in marketplace.json but nothing generates it`);
-    const expected = `./plugins/${entry.name}`;
-    if (built.has(entry.name) && entry.source !== expected) {
+      continue;
+    }
+    const expected = expectedSource(plugin);
+    if (!sourcesMatch(entry.source, expected)) {
       problems.push(
-        `${entry.name}: marketplace source is "${entry.source}", expected "${expected}"`,
+        `${entry.name}: marketplace source is ${describeSource(entry.source)}, expected ${describeSource(expected)}`,
       );
     }
   }

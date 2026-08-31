@@ -11,7 +11,7 @@
 Register the marketplace, then install the plugin:
 
 ```
-claude /plugin marketplace add <your-repo>
+claude /plugin marketplace add https://gitlab.tcdevops.com/Zak/moe
 ```
 
 ```
