@@ -582,7 +582,7 @@ because the questions below were written before the answers arrived and read as 
    start at `everything` for now, regardless of how the lean/full review resolves the 27
    imported ones.** So the extra assertion offered below is the branch taken. It is
    recorded in `skill-tiers.yaml` and enforced in practice by the lean-count assertion
-   (`LEAN_TIER_BUDGET`), which is worth knowing because the failure message names the
+   (`LEAN_TIER_COUNT`), which is worth knowing because the failure message names the
    lean tier rather than D2, and reversal is a one-constant edit.
 2. **Does `PARITY.md` get the "Authored here" section?** **No — decision D3: leave
    `PARITY.md` a pure import record.** `skill-tiers.yaml`'s `authored:` map is therefore

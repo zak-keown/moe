@@ -133,7 +133,14 @@ const registry: Record<string, { tier: string; from: string; why: string }> = {
 // descriptions cost resident context — that rule was deleted 2026-08-31 in
 // 0b1571d after its premise was measured and did not hold (all 27
 // name+description pairs are ~1,480 tokens; the bodies load on demand).
-const LEAN_TIER_BUDGET = 13;
+//
+// Named COUNT, not BUDGET, deliberately. "Budget" is the ERR SMALL framing —
+// that the lean tier is small because descriptions cost resident context — and
+// that premise is the one that was measured false. What this constant actually
+// guards is membership: the lean tier is an INSTALLED INTERFACE for ~20 people
+// who leave it on permanently, so which skills are in it must not change
+// silently. A deliberate change here is one edit; an accidental one is a red test.
+const LEAN_TIER_COUNT = 13;
 
 // Every markdown file we are allowed to make assertions about: the skill bodies
 // and companion documents this fork authored or rebranded. Excludes third-party
@@ -679,8 +686,8 @@ describe("the lean/full curation", () => {
 
   it("keeps the lean tier lean", () => {
     const core = Object.entries(registry).filter(([, e]) => e.tier === "core");
-    expect(core.length, "lean tier moved — update LEAN_TIER_BUDGET deliberately").toBe(
-      LEAN_TIER_BUDGET,
+    expect(core.length, "lean tier membership changed — update LEAN_TIER_COUNT deliberately").toBe(
+      LEAN_TIER_COUNT,
     );
   });
 
