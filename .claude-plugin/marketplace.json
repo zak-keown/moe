@@ -5,7 +5,7 @@
     "email": "zak@turncommerce.com"
   },
   "metadata": {
-    "description": "Moe \u2014 skills, memory, browser control and session orchestration for coding agents.",
+    "description": "Moe \u2014 skills, memory, browser control and session orchestration for coding agents. Just ask Moe.",
     "version": "0.0.0"
   },
   "plugins": [

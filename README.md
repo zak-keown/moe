@@ -13,8 +13,10 @@ A hard fork of the Superpowers ecosystem — 19 repositories, one workspace,
 
 ## Status
 
-Target-shape only. No code imported yet. `ARCHITECTURE.md` is the spec; read it
-before writing anything.
+All nine packages imported and censused, and `/plugins/` is generated — six
+plugins for all eleven harnesses, with CI asserting it regenerates
+byte-identically. Each package README carries its own counted status.
+`ARCHITECTURE.md` is the spec, and now also the record.
 
 Origin is GitLab (`gitlab.tcdevops.com`); packages publish to the GitLab Package
 Registry under `@bubstack`. Upstream stays on GitHub — those URLs are provenance,
