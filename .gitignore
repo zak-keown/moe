@@ -25,3 +25,17 @@ __pycache__/
 # Claude Code session state, including live workflow git worktrees. Never tracked:
 # `git add -A` while a workflow is running would otherwise stage them as embedded repos.
 .claude/
+
+# Build artifacts from packages/tab's release and binding scripts. Root covers
+# target/, dist/, __pycache__ and *.egg-info; these seven it does not.
+packages/tab/bindings/typescript/native/
+packages/tab/wheelhouse/
+packages/tab/.pricing/
+packages/tab/bindings/python/moe_tab/libmoe_tab_ffi.*
+packages/tab/bindings/go/tab/total
+packages/tab/bindings/go/cmd/total/total
+.pytest_cache/
+
+# Output of `moe-proof run`. Path-scoped deliberately: a bare `runs/` would hide
+# legitimate directories elsewhere in the monorepo.
+py/proof/examples/*/runs/

@@ -10,15 +10,16 @@
   "packageManager": "pnpm@11.23.0",
   "scripts": {
     "build": "turbo run build",
-    "test": "turbo run test",
-    "typecheck": "turbo run typecheck",
+    "check": "pnpm lint && turbo run typecheck test",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "check": "pnpm lint && turbo run typecheck test",
-    "mint": "pnpm --filter @bubstack/moe-mint exec moe-mint generate",
+    "mint": "echo 'not wired yet: moe-mint needs a target content package and a --dir. See packages/mint/README.md' && exit 1",
+    "proof:test": "uv run --project py/proof pytest py/proof",
     "tab:build": "cargo build --release --manifest-path packages/tab/Cargo.toml",
     "tab:test": "cargo test --manifest-path packages/tab/Cargo.toml",
-    "proof:test": "uv run --project py/proof pytest"
+    "tab:test:bindings": "pnpm tab:build && uv run --project packages/tab/bindings/python pytest packages/tab/bindings/python",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",

@@ -147,13 +147,32 @@ L2         flight ─────────────┘
   `workspace:*`.
 - `flight` internal — quorum → gauntlet.
 
-**Candidate edges, pending an import census.** Do not encode these in a
-`package.json` until the census confirms them:
+**Census results, 2026-08-31.** Five packages imported and censused — `crew`,
+`mint`, `backstory`, `tab`, `proof`. Result: **zero internal edges among them.**
+Every one is a leaf. Specifically:
+
+- `mint` has no workspace dependencies in either direction. It reads plugin trees
+  through the filesystem, not through module imports, so its tsconfig `references`
+  stays `[]`. Confirms its L0 placement — stated positively here so nobody goes
+  looking for the edge.
+- **`proof → tab` is REFUTED.** It was inferred from the fact that `tab` ships a
+  Python binding and `proof` is Python. `proof` contains no reference to it. Do not
+  add the dependency without new evidence.
+
+**Still candidate, untestable until `flight` lands:**
 
 - `flight → glass` — gauntlet's `web` adapter speaks CDP; glass is a CDP client.
 - `flight → crew` — gauntlet's `tui` adapter hosts sessions in tmux; crew is the
-  tmux layer. Both use tmux, for different purposes. Unverified.
-- `proof → tab` — via tab's Python binding, for cost data.
+  tmux layer. Both use tmux for different purposes. Unverified.
+
+**`flight → tab` remains the only confirmed edge in the graph**, from
+`superpowers-evals`' dependency on `@primeradianthq/obol`.
+
+An edge is not always a module import. `glass`'s MCP server reaches its own skill
+lib through `createRequire(join(__dirname, '../skills/...'))` — a runtime file path
+with real breakage potential that no dependency graph shows. `tab`'s bindings reach
+the Rust core across a C ABI. Both count; classify them, don't miss them.
+
 
 Derive every edge by import census, not by reading names. A package may import
 exactly what its own `package.json` `dependencies` names; transitive

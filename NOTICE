@@ -34,7 +34,7 @@ Prime Radiant, Inc. (github.com/prime-radiant-inc)
   Licensed under the MIT License:
     everyharness
     everyharness-container
-    smevals
+    smevals  (authored by Simon Willison; copyright Prime Radiant, Inc.)
 
   See obol/NOTICE in the upstream snapshot for obol's own attributions,
   which are carried forward into packages/tab.

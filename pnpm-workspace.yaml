@@ -16,3 +16,12 @@ linkWorkspacePackages: true
 # ERR_PNPM_IGNORED_BUILDS.
 allowBuilds:
   esbuild: true
+  # koffi is @bubstack/moe-tab's Node FFI backend and must compile. packages/crew
+  # pulls it transitively too and does not need it (its pi-coding-agent dependency
+  # is type-only) — but `true` is the resolution, because a skipped build breaks tab
+  # and costs crew only a compile it never calls.
+  koffi: true
+  # Reached only through crew's type-only @earendil-works/pi-coding-agent. Nothing
+  # in this repo executes pi, so neither needs to build.
+  '@google/genai': false
+  protobufjs: false

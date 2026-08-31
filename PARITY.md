@@ -154,6 +154,33 @@ deliberate mapping rather than a regex:
 | npm package | `@primeradianthq/obol` | `@bubstack/moe-tab` (`workspace:*`) |
 | PyPI package | `smevals` | `moe-proof` |
 
+### Identifiers confirmed by the imports of 2026-08-31
+
+Surfaced by the five package imports; each is as breaking as a bin rename for
+anyone holding an artifact produced by the upstream tool.
+
+| Package | Kind | Upstream | Moe |
+|---|---|---|---|
+| crew | env vars (229 occurrences) | `CSD_*` | `MOE_CREW_*` |
+| crew | bundle | `csd.cjs` | `moe-crew.cjs` |
+| mint | config file | `everyharness.yaml` | `moe-mint.yaml` |
+| mint | state dir | `.everyharness/` | `.moe-mint/` |
+| mint | generated hooks dir | `hooks/everyharness/` | `hooks/moe-mint/` |
+| mint | env vars | `EH_PLUGIN_NAME`, `EH_PLUGIN_ROOT` | `MOE_MINT_PLUGIN_NAME`, `MOE_MINT_PLUGIN_ROOT` |
+| mint | container image | GHCR image | `registry.gitlab.tcdevops.com/...` — must exist before `moe-mint test` works without `--image` |
+| tab | cargo crates | `obol-core`, `obol-cli`, `obol-ffi` | `moe-tab-core`, `moe-tab-cli`, `moe-tab-ffi` |
+| tab | C ABI symbols + cdylib | 4 exported symbols, `libobol_ffi` | 4 renamed symbols, `libmoe_tab_ffi` |
+| tab | env vars | `OBOL_*` | `MOE_TAB_{PRICING_DIR,LIB,WHEEL_PLAT}` |
+| tab | XDG data dir | `$XDG_DATA_HOME/obol` | `$XDG_DATA_HOME/moe/tab` |
+| tab | Go module path, PyPI dist/import | obol forms | moe-tab / `moe_tab` |
+| proof | module dir | `smevals/` | `moe_proof/` |
+
+**The C ABI rename is the load-bearing one.** It has to land identically in the
+Rust FFI, the committed header, and all three bindings, or nothing `dlopen`s. It is
+verified by `pnpm tab:test:bindings`, which is deliberately outside `pnpm test`
+because it needs the cdylib built first.
+
+
 Watch for these beyond source: `${CLAUDE_PLUGIN_ROOT}` paths in plugin manifests,
 skill frontmatter `name:` fields, hook script paths, and `catalog-info.yaml`
 service identifiers.
@@ -179,7 +206,7 @@ pointing at PyPI, GitHub releases, and GitHub Actions.
 
 | Upstream repo | Workflows |
 |---|---|
-| `obol` | `ci.yml`, `release.yml`, `crates-release.yml`, `pypi-release.yml` |
+| `obol` | `ci.yml`, `release.yml`, `crates-release.yml`, `pypi-release.yml` — **resolved 2026-08-31: not ported.** The two release workflows are void under the no-public-publishing decision. `ci.yml` is covered by the turbo tasks; its five-language equivalence gate is not yet wired and needs an image with cargo + node + go + python. |
 | `smevals` | `test.yml`, `publish.yml` |
 | `claude-session-driver` | `ci.yml` |
 | `everyharness` | `ci.yml` |

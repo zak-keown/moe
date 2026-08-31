@@ -105,19 +105,19 @@ describe('agents-marketplace adapter installDoc', () => {
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
       [
-        'name: elements-of-style',
+        'name: example-plugin',
         'version: 1.0.0',
         'description: test fixture for install doc',
-        'repository: https://github.com/example/elements-of-style',
+        'repository: https://github.com/example/example-plugin',
       ].join('\n'),
     )
     const testModel = buildModel(dir)
     const doc = agentsMarketplace.installDoc!(testModel)
     // droid uses repo basename, not declared name with -dev
-    expect(doc).toContain('droid plugin install elements-of-style@elements-of-style')
-    expect(doc).not.toContain('droid plugin install elements-of-style@elements-of-style-dev')
+    expect(doc).toContain('droid plugin install example-plugin@example-plugin')
+    expect(doc).not.toContain('droid plugin install example-plugin@example-plugin-dev')
     // copilot uses declared name with -dev suffix
-    expect(doc).toContain('copilot plugin install elements-of-style@elements-of-style-dev')
+    expect(doc).toContain('copilot plugin install example-plugin@example-plugin-dev')
     // grok has its own command structure
     expect(doc).toContain('grok plugin install')
   })
@@ -173,17 +173,17 @@ describe('agents-marketplace adapter installDoc', () => {
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
       [
-        'name: elements-of-style',
+        'name: example-plugin',
         'version: 1.0.0',
         'description: test fixture for .git suffix handling',
-        'repository: https://github.com/example/elements-of-style.git',
+        'repository: https://github.com/example/example-plugin.git',
       ].join('\n'),
     )
     const testModel = buildModel(dir)
     const doc = agentsMarketplace.installDoc!(testModel)
     // droid should use repo basename without .git suffix in the install command
-    expect(doc).toContain('droid plugin install elements-of-style@elements-of-style')
-    expect(doc).not.toContain('@elements-of-style.git')
+    expect(doc).toContain('droid plugin install example-plugin@example-plugin')
+    expect(doc).not.toContain('@example-plugin.git')
   })
 
   it('strips trailing slash from repository URL', () => {
@@ -191,15 +191,15 @@ describe('agents-marketplace adapter installDoc', () => {
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
       [
-        'name: elements-of-style',
+        'name: example-plugin',
         'version: 1.0.0',
         'description: test fixture for trailing slash handling',
-        'repository: https://github.com/example/elements-of-style/',
+        'repository: https://github.com/example/example-plugin/',
       ].join('\n'),
     )
     const testModel = buildModel(dir)
     const doc = agentsMarketplace.installDoc!(testModel)
     // droid should use repo basename, properly handling trailing slash
-    expect(doc).toContain('droid plugin install elements-of-style@elements-of-style')
+    expect(doc).toContain('droid plugin install example-plugin@example-plugin')
   })
 })

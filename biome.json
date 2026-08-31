@@ -29,7 +29,7 @@
   },
   "overrides": [
     {
-      "includes": ["**/packages/glass/**"],
+      "includes": ["**/packages/glass/**", "**/packages/mint/**"],
       "formatter": {
         "enabled": false
       },
@@ -51,6 +51,48 @@
       },
       "assist": {
         "enabled": false
+      }
+    },
+    {
+      "includes": ["**/packages/crew/test/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noNonNullAssertion": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "**/packages/tab/crates/moe-tab-core/prices/**",
+        "**/packages/tab/crates/moe-tab-core/tests/fixtures/**",
+        "**/packages/tab/bindings/testdata/**"
+      ],
+      "formatter": {
+        "enabled": false
+      },
+      "assist": {
+        "enabled": false
+      }
+    },
+    {
+      "includes": ["**/py/proof/**"],
+      "linter": {
+        "rules": {
+          "recommended": false,
+          "correctness": {
+            "noUnusedVariables": "error",
+            "noUnusedImports": "error",
+            "noUnusedFunctionParameters": "warn"
+          },
+          "style": {
+            "useConst": "error"
+          },
+          "suspicious": {
+            "noVar": "error"
+          }
+        }
       }
     },
     {
