@@ -6,7 +6,12 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/dist", "!**/.references", "!plugins"]
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/.references",
+      "!plugins"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -26,5 +31,32 @@
         "organizeImports": "on"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "//": "Inherited code. Upstream ran biome with the formatter OFF and recommended OFF, enabling four rules by name; this mirrors that so the import stays diffable against the pinned snapshot. Adopting house style here is a separate, isolated commit \u2014 never mixed with an import.",
+      "includes": [
+        "packages/glass/**"
+      ],
+      "formatter": {
+        "enabled": false
+      },
+      "linter": {
+        "rules": {
+          "recommended": false,
+          "correctness": {
+            "noUnusedVariables": "error",
+            "noUnusedImports": "error",
+            "noUnusedFunctionParameters": "warn"
+          },
+          "style": {
+            "useConst": "error"
+          },
+          "suspicious": {
+            "noVar": "error"
+          }
+        }
+      }
+    }
+  ]
 }

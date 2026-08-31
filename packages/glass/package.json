@@ -3,18 +3,30 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Zero-dependency Chrome DevTools Protocol client. Skill mode plus MCP mode.",
-  "license": "Apache-2.0",
+  "description": "Direct Chrome DevTools Protocol access. Skill mode (17 CLI commands) plus MCP mode (single use_browser tool). Auto-starts Chrome.",
+  "license": "MIT",
+  "main": "dist/index.js",
   "bin": {
-    "moe-glass": "./dist/cli.js"
+    "moe-glass": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=24"
   },
   "scripts": {
-    "lint": "biome check .",
-    "build": "tsc -b",
+    "build": "tsc -b && esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:fsevents",
     "typecheck": "tsc -b --pretty",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --project unit",
+    "test:chrome": "vitest run --project chrome",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/node": "^24.7.0",
+    "esbuild": "^0.25.11",
+    "jsdom": "^29.0.2",
     "typescript": "^5.9.0"
   }
 }
