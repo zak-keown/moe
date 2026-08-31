@@ -25,3 +25,21 @@ allowBuilds:
   # in this repo executes pi, so neither needs to build.
   '@google/genai': false
   protobufjs: false
+  # The three below arrive with @bubstack/moe-memory and all three MUST build.
+  # pnpm 11 wrote these three keys into this file itself during `pnpm install`,
+  # as `set this to true or false` placeholders, and the install cannot complete
+  # while they are unresolved — see packages/memory/README.md.
+  #
+  # better-sqlite3 is the store. Its native binding is compiled by
+  # node-gyp/prebuild-install at install time; skip the build and every db.ts
+  # call throws at require time, with no other symptom.
+  better-sqlite3: true
+  # onnxruntime-node is the ONNX backend transformers.js runs the embedding model
+  # on. Its install script downloads the ORT binaries; without them the encoder
+  # cannot load and both record types lose semantic search.
+  onnxruntime-node: true
+  # sharp arrives with @huggingface/transformers and is imported EAGERLY, so a
+  # skipped build fails at module load rather than at first use. Nothing here
+  # asks transformers.js to decode an image; the build is the price of importing
+  # the library at all.
+  sharp: true
