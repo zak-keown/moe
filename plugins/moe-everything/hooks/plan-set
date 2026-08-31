@@ -1,0 +1,444 @@
+#!/usr/bin/env node
+// plan-set: the deterministic scheduler behind the `sequencing-plans` skill.
+//
+// A single project can grow past what one plan holds. `writing-plans` says so
+// ("suggest breaking this into separate plans - one per subsystem"), and
+// `brainstorming` before it ("decompose into sub-projects: what are the
+// independent pieces, how do they relate, what order should they be built?").
+// Neither writes that decomposition to a file, and once decomposed nothing in
+// this fork tracks which plan runs after which. On a context reset the agent
+// re-derives the order from prose, which is the failure mode
+// `subagent-driven-development` calls "the single most expensive failure
+// observed" one level down inside a plan and does not catch one level up.
+//
+// This CLI answers "which plan is runnable now" from a committed manifest, so a
+// fresh session on a partly-finished project reads the answer instead of
+// guessing. Manifest lives at `docs/moe/plans/<project>-MANIFEST.md`, one entry
+// per plan, YAML in a fenced code block.
+//
+// Verbs:
+//   next          Print every id whose dependencies are all `done` and whose
+//                 own status is `pending`. One id per line. `blocked` is
+//                 terminal and propagates transitively — a `blocked` node and
+//                 all of its dependents are never in the output.
+//   done <id> <range>
+//                 Mark <id> as done and record its commit range. Fails if <id>
+//                 is unknown, if any of its dependencies are not `done`, or if
+//                 the range is not two 7+-char SHA-ish tokens joined by `..`.
+//   check         Validate: unique ids, all plan files exist, all deps resolve
+//                 to known ids, no cycle (Kahn), no plan path listed twice.
+//                 Non-zero on any failure; a cycle names its nodes on stderr.
+//
+// This file lives under `packages/core/hooks/` rather than
+// `skills/sequencing-plans/scripts/`. `sequencing-plans` is `everything`-tier
+// per decision D2, so it does not ship in `moe-core`; scripts under a skill
+// directory are filtered out with the skill by scripts/mint-plugins.mjs, while
+// `hooks/` is staged unfiltered. Keeping the CLI under `hooks/` lets a lean
+// user run `plan-set next` even without the skill installed. See
+// .planning/backlog/W02P02-deterministic-task-dag.md.
+//
+// Only Node built-ins. The CLI ships as a plugin hook and cannot assume the
+// user has run `pnpm install` inside their project.
+
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
+
+const USAGE = `plan-set: sequence a set of plans in one project.
+
+Usage:
+  plan-set next             [--manifest <path>]
+  plan-set done <id> <base>..<head> [--manifest <path>]
+  plan-set check            [--manifest <path>]
+
+If --manifest is omitted, plan-set looks for exactly one file matching
+docs/moe/plans/*-MANIFEST.md under the current directory.`;
+
+// -----------------------------------------------------------------------------
+// Small argv parser: --manifest <path> optional, positional args after.
+
+function parseArgs(argv) {
+  const args = { manifest: null, positional: [] };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === "--manifest") {
+      args.manifest = argv[++i];
+      if (!args.manifest) die(`--manifest needs a path`);
+    } else if (a === "--help" || a === "-h") {
+      process.stdout.write(USAGE + "\n");
+      process.exit(0);
+    } else {
+      args.positional.push(a);
+    }
+  }
+  return args;
+}
+
+function die(msg, code = 2) {
+  process.stderr.write(`plan-set: ${msg}\n`);
+  process.exit(code);
+}
+
+// -----------------------------------------------------------------------------
+// Manifest discovery and parse.
+//
+// The .md wrapper is a courtesy for humans: the file is prose plus one YAML
+// fenced block, and the block is what plan-set reads. Only one fenced block
+// with the language tag `yaml` is allowed, and the shape it must hold is small
+// enough to parse without a dependency: a top-level `plans:` list, each entry
+// with `id`, `plan`, `depends_on`, `status`, and optionally `commits`.
+
+function locateManifest(explicit) {
+  if (explicit) {
+    if (!existsSync(explicit)) die(`manifest not found: ${explicit}`);
+    return resolve(explicit);
+  }
+  const dir = join(process.cwd(), "docs", "moe", "plans");
+  if (!existsSync(dir)) {
+    die(
+      `no manifest found. Expected exactly one docs/moe/plans/*-MANIFEST.md ` +
+        `under ${process.cwd()}, or pass --manifest.`,
+    );
+  }
+  const candidates = readdirSync(dir)
+    .filter((f) => f.endsWith("-MANIFEST.md"))
+    .map((f) => join(dir, f));
+  if (candidates.length === 0) {
+    die(
+      `no manifest found. Expected exactly one docs/moe/plans/*-MANIFEST.md ` +
+        `under ${process.cwd()}, or pass --manifest.`,
+    );
+  }
+  if (candidates.length > 1) {
+    die(
+      `more than one manifest found under docs/moe/plans/. Pass --manifest to ` +
+        `pick one:\n  - ${candidates.map((c) => relative(process.cwd(), c)).join("\n  - ")}`,
+    );
+  }
+  return candidates[0];
+}
+
+function extractYaml(text, manifestPath) {
+  const rx = /```yaml\r?\n([\s\S]*?)\r?\n```/g;
+  const blocks = [...text.matchAll(rx)];
+  if (blocks.length === 0) {
+    die(`${manifestPath}: no \`\`\`yaml fenced block found`);
+  }
+  if (blocks.length > 1) {
+    die(`${manifestPath}: more than one \`\`\`yaml fenced block; keep the manifest in exactly one`);
+  }
+  return blocks[0][1];
+}
+
+// Minimal YAML parser for the manifest shape only.
+//
+// Accepts one top-level key `plans:` whose value is a list of maps. Each map
+// key must be one of id/plan/depends_on/status/commits, indented two spaces
+// past the `-`. `depends_on` is a flow list `[a, b]` or an empty `[]`.
+//
+// A generic YAML parser would work — bringing one in as a dep for a hook that
+// ships in a plugin does not. This parser fails loudly on anything it does not
+// recognise so a malformed manifest does not silently degrade to "no plans".
+function parseManifestYaml(body, manifestPath) {
+  const lines = body.split(/\r?\n/);
+  const doc = { plans: [] };
+  let i = 0;
+  // Skip leading blanks and comments.
+  while (i < lines.length && /^\s*(#|$)/.test(lines[i])) i++;
+  if (i >= lines.length || !/^plans:\s*$/.test(lines[i])) {
+    die(`${manifestPath}: expected top-level "plans:" key at start of yaml block`);
+  }
+  i++;
+  let current = null;
+  const push = () => {
+    if (current !== null) doc.plans.push(current);
+    current = null;
+  };
+  for (; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^\s*(#|$)/.test(line)) continue;
+    // New list item: `  - id: foo` OR `  -`
+    let m = /^\s{2}-\s+([a-z_]+):\s*(.*)$/.exec(line);
+    if (m) {
+      push();
+      current = { id: null, plan: null, depends_on: [], status: null, commits: null };
+      applyKV(current, m[1], m[2], manifestPath, i + 1);
+      continue;
+    }
+    // Continuation: `    key: value`
+    m = /^\s{4}([a-z_]+):\s*(.*)$/.exec(line);
+    if (m) {
+      if (!current) die(`${manifestPath}:${i + 1}: continuation before a list item`);
+      applyKV(current, m[1], m[2], manifestPath, i + 1);
+      continue;
+    }
+    die(`${manifestPath}:${i + 1}: unrecognised line: ${line}`);
+  }
+  push();
+  return doc;
+}
+
+function applyKV(entry, key, rawValue, path, lineNo) {
+  const value = rawValue.trim();
+  const allowed = ["id", "plan", "depends_on", "status", "commits"];
+  if (!allowed.includes(key)) die(`${path}:${lineNo}: unknown key "${key}"`);
+  if (key === "depends_on") {
+    entry.depends_on = parseFlowList(value, path, lineNo);
+  } else {
+    entry[key] = value === "" ? null : stripQuotes(value);
+  }
+}
+
+function stripQuotes(v) {
+  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+    return v.slice(1, -1);
+  }
+  return v;
+}
+
+function parseFlowList(v, path, lineNo) {
+  if (!v.startsWith("[") || !v.endsWith("]")) {
+    die(`${path}:${lineNo}: depends_on must be a flow list like [] or [a, b]`);
+  }
+  const inner = v.slice(1, -1).trim();
+  if (inner === "") return [];
+  return inner.split(",").map((s) => stripQuotes(s.trim()));
+}
+
+// -----------------------------------------------------------------------------
+// Manifest validation shared by `check` and every other verb.
+//
+// A validation failure that shows up under `next` but not `check` would be a
+// second, invisible spec; run the same walk both times and report every
+// failure at once rather than the first.
+
+const VALID_STATUS = new Set(["pending", "running", "done", "blocked"]);
+
+function validate(doc, manifestPath) {
+  const errors = [];
+  const ids = new Map(); // id -> line-ish
+  const planPaths = new Map(); // plan -> id
+  const manifestDir = dirname(manifestPath);
+
+  for (const [i, p] of doc.plans.entries()) {
+    const at = `entry ${i + 1}`;
+    if (!p.id) errors.push(`${at}: missing "id"`);
+    if (!p.plan) errors.push(`${at}: missing "plan"`);
+    if (!p.status) errors.push(`${at}: missing "status"`);
+    if (p.status && !VALID_STATUS.has(p.status)) {
+      errors.push(
+        `${at} (${p.id ?? "?"}): status "${p.status}" is not one of ` +
+          `${[...VALID_STATUS].join("/")}`,
+      );
+    }
+    if (p.id) {
+      if (ids.has(p.id)) errors.push(`duplicate id "${p.id}" (also at ${ids.get(p.id)})`);
+      else ids.set(p.id, at);
+    }
+    if (p.plan) {
+      if (planPaths.has(p.plan)) {
+        errors.push(`plan file "${p.plan}" listed by both ${planPaths.get(p.plan)} and ${p.id}`);
+      } else planPaths.set(p.plan, p.id ?? at);
+      const absPlan = isAbsolute(p.plan) ? p.plan : resolve(manifestDir, "..", "..", "..", p.plan);
+      // A path is what the manifest lists. Try three anchors, in order:
+      //   1. relative to CWD, for `plan: docs/moe/plans/X.md` when the CLI is
+      //      run from the repo root.
+      //   2. relative to the manifest's grandparent's parent, for the same
+      //      shape when the CLI is run from anywhere under the repo (a
+      //      manifest under docs/moe/plans/ implies a repo root three levels
+      //      up).
+      //   3. relative to the manifest itself, for fixtures and standalone
+      //      test manifests that keep plans in a sibling directory.
+      const candidates = [
+        resolve(process.cwd(), p.plan),
+        absPlan,
+        resolve(manifestDir, p.plan),
+        resolve(manifestDir, basename(p.plan)),
+      ];
+      if (!candidates.some((c) => existsSync(c))) {
+        errors.push(`${at} (${p.id ?? "?"}): plan file not found — ${p.plan}`);
+      }
+    }
+  }
+
+  // Dep resolution and cycle detection (Kahn's algorithm).
+  const known = new Set(ids.keys());
+  const indeg = new Map();
+  const adj = new Map(); // dep -> [dependents]
+  for (const id of known) {
+    indeg.set(id, 0);
+    adj.set(id, []);
+  }
+  for (const p of doc.plans) {
+    if (!p.id) continue;
+    for (const d of p.depends_on) {
+      if (!known.has(d)) {
+        errors.push(`${p.id}: depends_on "${d}" — not a known id`);
+        continue;
+      }
+      indeg.set(p.id, (indeg.get(p.id) ?? 0) + 1);
+      adj.get(d).push(p.id);
+    }
+  }
+
+  // Kahn: pull zero-indegree nodes off, decrement neighbors. Anything left
+  // with indegree > 0 is on a cycle.
+  const q = [];
+  const remaining = new Map(indeg);
+  for (const [id, deg] of remaining) if (deg === 0) q.push(id);
+  let seen = 0;
+  while (q.length) {
+    const id = q.shift();
+    seen++;
+    for (const n of adj.get(id) ?? []) {
+      remaining.set(n, remaining.get(n) - 1);
+      if (remaining.get(n) === 0) q.push(n);
+    }
+  }
+  const inCycle = [...remaining.entries()].filter(([, d]) => d > 0).map(([id]) => id);
+  if (inCycle.length > 0) {
+    errors.push(`cycle detected among: ${inCycle.sort().join(", ")}`);
+  }
+
+  return { errors, indeg: new Map(indeg), adj, ids: known };
+}
+
+// -----------------------------------------------------------------------------
+// Verbs.
+
+function verbCheck(doc, manifestPath) {
+  const { errors } = validate(doc, manifestPath);
+  if (errors.length > 0) {
+    for (const e of errors) process.stderr.write(`plan-set: ${e}\n`);
+    process.exit(1);
+  }
+  process.stdout.write(`plan-set: ${manifestPath} ok — ${doc.plans.length} plans\n`);
+}
+
+function statusOf(doc) {
+  const m = new Map();
+  for (const p of doc.plans) if (p.id) m.set(p.id, p.status);
+  return m;
+}
+
+// Transitive block set: every id reachable from a `blocked` node in the
+// dependency direction (dependents), plus the blocked nodes themselves. A
+// plan whose foundation is blocked is not ready no matter what its own status
+// says — moe-core #2830 is the failure this exists to preclude.
+function blockedClosure(doc) {
+  const status = statusOf(doc);
+  const adj = new Map(); // dep -> dependents
+  for (const p of doc.plans) if (p.id) adj.set(p.id, []);
+  for (const p of doc.plans) {
+    if (!p.id) continue;
+    for (const d of p.depends_on) {
+      if (adj.has(d)) adj.get(d).push(p.id);
+    }
+  }
+  const closure = new Set();
+  const stack = [];
+  for (const [id, s] of status) if (s === "blocked") stack.push(id);
+  while (stack.length) {
+    const id = stack.pop();
+    if (closure.has(id)) continue;
+    closure.add(id);
+    for (const n of adj.get(id) ?? []) if (!closure.has(n)) stack.push(n);
+  }
+  return closure;
+}
+
+function verbNext(doc) {
+  const status = statusOf(doc);
+  const blocked = blockedClosure(doc);
+  const ready = [];
+  for (const p of doc.plans) {
+    if (!p.id) continue;
+    if (blocked.has(p.id)) continue;
+    if (p.status !== "pending") continue;
+    const allDone = p.depends_on.every((d) => status.get(d) === "done");
+    if (allDone) ready.push(p.id);
+  }
+  // Deterministic order: as-written in the manifest is already deterministic
+  // (JS Map keys preserve insertion order), so no re-sort.
+  for (const id of ready) process.stdout.write(id + "\n");
+}
+
+function verbDone(doc, id, range, manifestPath, rawText) {
+  if (!id) die(`done: usage: plan-set done <id> <base>..<head>`);
+  if (!range) die(`done: usage: plan-set done <id> <base>..<head>`);
+  if (!/^[0-9a-f]{7,40}\.\.[0-9a-f]{7,40}$/.test(range)) {
+    die(`done: range "${range}" is not two 7+-char hex SHAs joined by ".."`);
+  }
+  const status = statusOf(doc);
+  if (!status.has(id)) die(`done: unknown id "${id}"`);
+  const entry = doc.plans.find((p) => p.id === id);
+  for (const d of entry.depends_on) {
+    if (status.get(d) !== "done") {
+      die(`done: cannot mark ${id} done — dep "${d}" is ${status.get(d) ?? "unknown"}`);
+    }
+  }
+  // Rewrite the manifest in place. Preserve everything outside the yaml block;
+  // the block itself is regenerated from the parsed model so hand-formatting
+  // may not survive but the semantics do.
+  entry.status = "done";
+  entry.commits = range;
+  const newBlock = renderYaml(doc);
+  const newText = rawText.replace(/```yaml\r?\n([\s\S]*?)\r?\n```/, "```yaml\n" + newBlock + "```");
+  writeFileSync(manifestPath, newText);
+  process.stdout.write(`plan-set: marked ${id} done (${range})\n`);
+}
+
+function renderYaml(doc) {
+  const lines = ["plans:"];
+  for (const p of doc.plans) {
+    lines.push(`  - id: ${p.id}`);
+    lines.push(`    plan: ${p.plan}`);
+    lines.push(`    depends_on: [${(p.depends_on ?? []).join(", ")}]`);
+    lines.push(`    status: ${p.status}`);
+    if (p.commits) lines.push(`    commits: ${p.commits}`);
+  }
+  return lines.join("\n") + "\n";
+}
+
+// -----------------------------------------------------------------------------
+// main.
+
+function main() {
+  const argv = process.argv.slice(2);
+  if (argv.length === 0 || argv[0] === "--help" || argv[0] === "-h") {
+    process.stdout.write(USAGE + "\n");
+    process.exit(argv.length === 0 ? 2 : 0);
+  }
+  const verb = argv[0];
+  const rest = parseArgs(argv.slice(1));
+  const manifestPath = locateManifest(rest.manifest);
+  const rawText = readFileSync(manifestPath, "utf8");
+  const body = extractYaml(rawText, manifestPath);
+  const doc = parseManifestYaml(body, manifestPath);
+
+  if (verb === "check") {
+    verbCheck(doc, manifestPath);
+    return;
+  }
+
+  // next and done require a valid manifest; a cycle in the graph would give
+  // both wrong answers, so run validate first.
+  const { errors } = validate(doc, manifestPath);
+  if (errors.length > 0) {
+    for (const e of errors) process.stderr.write(`plan-set: ${e}\n`);
+    process.exit(1);
+  }
+
+  if (verb === "next") {
+    verbNext(doc);
+    return;
+  }
+  if (verb === "done") {
+    verbDone(doc, rest.positional[0], rest.positional[1], manifestPath, rawText);
+    return;
+  }
+  die(`unknown verb "${verb}"\n${USAGE}`);
+}
+
+// Only file, only entry point. If this raises, node prints the stack and exits
+// non-zero, which is what a hook wrapper wants.
+main();
