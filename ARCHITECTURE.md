@@ -147,9 +147,9 @@ L2         flight ─────────────┘
   `workspace:*`.
 - `flight` internal — quorum → gauntlet.
 
-**Census results, 2026-08-31.** Five packages imported and censused — `crew`,
-`mint`, `backstory`, `tab`, `proof`. Result: **zero internal edges among them.**
-Every one is a leaf. Specifically:
+**Census results, 2026-08-31.** All nine packages are now imported and censused.
+Wave A covered five — `crew`, `mint`, `backstory`, `tab`, `proof` — with **zero
+internal edges among them.** Every one is a leaf. Specifically:
 
 - `mint` has no workspace dependencies in either direction. It reads plugin trees
   through the filesystem, not through module imports, so its tsconfig `references`
@@ -159,14 +159,42 @@ Every one is a leaf. Specifically:
   Python binding and `proof` is Python. `proof` contains no reference to it. Do not
   add the dependency without new evidence.
 
-**Still candidate, untestable until `flight` lands:**
+**Wave B/C census, 2026-08-31.** `core`, `memory` and `flight` are in, and both
+candidate edges out of `flight` are now settled. Neither is an edge.
 
-- `flight → glass` — gauntlet's `web` adapter speaks CDP; glass is a CDP client.
-- `flight → crew` — gauntlet's `tui` adapter hosts sessions in tmux; crew is the
-  tmux layer. Both use tmux for different purposes. Unverified.
+- **`flight → tab` is CONFIRMED and is the only inter-package code edge in the
+  graph.** `packages/flight/src/lab/tab/index.ts` imports `CostEstimate` and
+  `estimatePath` from `@bubstack/moe-tab`; `package.json` carries it as
+  `workspace:*` and `tsconfig.json` references `../tab/bindings/typescript`. This
+  is the edge `superpowers-evals`' dependency on `@primeradianthq/obol`
+  predicted, and it survived the rename.
+- **`flight → glass` is REFUTED as an edge, though the lineage is real.**
+  `packages/flight/src/qa/adapters/web/lib/` is a hand-maintained *vendored fork*
+  of what is now `packages/glass/skills/browsing/lib/` — 3 of 28 files still
+  byte-identical, 22 diverged, and flight's fork carries six functions glass does
+  not have (`setCookies`, `clearBrowserData`, `webAuthnOpenSession`,
+  `openObserverSession`, `onCdpEvent`, `offCdpEvent`) that its passkey tool,
+  evidence logger and screencast all depend on. There is **no import, require or
+  resolved path** from flight to glass: flight requires its own copy at
+  `./lib/chrome-ws-lib.js`, scoped back to CommonJS by a marker `package.json` —
+  the same mechanism glass uses at `skills/browsing/package.json`. Converging
+  them is a refactor, not a wiring change, and it is deferred deliberately.
+  `packages/flight/docs/history/upstream-sync.md` is the spec for either
+  direction.
+- **`flight → crew` is REFUTED.** The single occurrence of `crew` anywhere in
+  flight is `packages/flight/docker/Dockerfile:53`, a
+  `COPY packages/crew/package.json` line that exists because the image copies
+  every workspace manifest before installing. No code reference in either
+  direction. They are independent implementations of the same tmux CLI and
+  disagree on every load-bearing detail — private `-L <socket>` server versus the
+  default shared one, `kill-server` with descendant reaping versus `kill-session`,
+  synchronous `spawnSync` versus an async `execFile` factory.
 
-**`flight → tab` remains the only confirmed edge in the graph**, from
-`superpowers-evals`' dependency on `@primeradianthq/obol`.
+**`flight`'s two frontends are build-output edges, not module imports.**
+`@bubstack/moe-flight-dashboard` and `@bubstack/moe-flight-ui` are `workspace:*`
+dependencies so that turbo orders their builds and flight can serve their emitted
+assets by path. `tsconfig.json` references `./dashboard` for the same reason.
+Classify them as such; nothing in flight's `src/` imports a symbol from either.
 
 An edge is not always a module import. `glass`'s MCP server reaches its own skill
 lib through `createRequire(join(__dirname, '../skills/...'))` — a runtime file path

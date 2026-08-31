@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/dist", "!plugins"]
+    "includes": ["**", "!**/dist", "!**/dist-static", "!plugins"]
   },
   "formatter": {
     "enabled": true,
@@ -29,7 +29,12 @@
   },
   "overrides": [
     {
-      "includes": ["**/packages/glass/**", "**/packages/mint/**"],
+      "includes": [
+        "**/packages/glass/**",
+        "**/packages/mint/**",
+        "**/packages/flight/src/qa/adapters/web/lib/**",
+        "**/packages/flight/test/qa/adapters/web/lib/**"
+      ],
       "formatter": {
         "enabled": false
       },
@@ -93,6 +98,40 @@
             "noVar": "error"
           }
         }
+      }
+    },
+    {
+      "includes": [
+        "**/packages/core/skills/**",
+        "**/packages/core/test/brainstorm-server/**",
+        "**/packages/core/test/iterative-development/fixtures/**"
+      ],
+      "formatter": {
+        "enabled": false
+      },
+      "assist": {
+        "enabled": false
+      },
+      "linter": {
+        "rules": {
+          "recommended": false,
+          "correctness": {
+            "noUnusedVariables": "error",
+            "noUnusedImports": "error"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/packages/flight/dashboard/src/static/**"],
+      "formatter": {
+        "enabled": false
+      },
+      "assist": {
+        "enabled": false
+      },
+      "linter": {
+        "enabled": false
       }
     },
     {
