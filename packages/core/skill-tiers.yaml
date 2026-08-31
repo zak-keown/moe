@@ -325,7 +325,24 @@ imported:
 # guarantee neither provided.
 # ---------------------------------------------------------------------------
 authored:
-  {}
+  sequencing-plans:
+    tier: everything
+    from: moe
+    why: >-
+      The first fork-authored skill, and the one D2 was written for: a
+      deterministic scheduler for the multi-plan case that neither
+      `writing-plans` nor `subagent-driven-development` covers. The description
+      fires warm ("use when a project has more than one plan and you need to
+      know which is runnable"); the cold case — a fresh session on a
+      partly-finished project — is caught by the `plan-set-notice` SessionStart
+      hook in `packages/core/hooks/`, which prints the ready set with no model
+      in the loop. `plan-set` (the CLI) lives under `hooks/` rather than inside
+      this skill's directory, because `scripts/mint-plugins.mjs` filters skills
+      by tier but stages hooks unfiltered — a lean-tier user gets a working
+      command from the hook even though this skill is not installed in their
+      plugin. See .planning/backlog/W02P02-deterministic-task-dag.md for the
+      argument, and D2 (`skill-tiers.yaml` policy block above) for the tier
+      choice, which is reversible.
 
 # Not a skill: skills/_shared/ holds the three PAR reference documents the
 # iterative-development cluster reads at runtime. It carries no SKILL.md, so

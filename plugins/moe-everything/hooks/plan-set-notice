@@ -1,0 +1,126 @@
+#!/bin/bash
+# plan-set-notice: SessionStart hook that announces an incomplete plan set.
+#
+# The `sequencing-plans` skill's description is the warm trigger — "use when a
+# project has more than one plan and you need to know which is runnable." The
+# cold trigger — "new session, four plans exist, which are done?" — cannot be a
+# description, because in a fresh session on a partly-finished project nothing
+# in the transcript names the manifest. That case is what this hook is for.
+#
+# Deterministic and announce-only: read the manifest, run `plan-set next`, and
+# print the runnable id(s) as SessionStart additionalContext. It does NOT
+# invoke the skill by name, so a lean-tier user (who does not have
+# `sequencing-plans` installed) still gets the answer plus a working command
+# — the CLI ships in `hooks/` unfiltered, per D2 and the tier collision noted
+# in .planning/backlog/W02P02-deterministic-task-dag.md.
+#
+# Every failure path exits 0 with no context. A broken notice must never fail a
+# session start: a non-zero SessionStart hook can block every session on the
+# machine, which is worse than a missing notice.
+
+set -u
+
+# The extensionless file is here rather than under a skill directory (see the
+# CLI's header). Fall through silently if it is missing (a partial install, a
+# tier filter that removed too much) or not executable (a broken chmod copy).
+PLAN_SET_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLAN_SET="${PLAN_SET_DIR}/plan-set"
+if [ ! -f "$PLAN_SET" ]; then
+    exit 0
+fi
+
+# The hook payload is a JSON object on stdin. `cwd` is where the session was
+# launched from. We only care about that one field, so grep it out with a
+# tiny regex rather than depending on jq — jq is missing on some Windows/WSL
+# installs, and a hook that fails on missing jq fails silently for everyone.
+EVENT="$(cat 2>/dev/null || true)"
+if [ -z "$EVENT" ]; then
+    exit 0
+fi
+
+# Best-effort cwd extraction: match a "cwd": "<value>" pair, respecting simple
+# backslash escapes. Falls back to $PWD if the payload has no cwd (older
+# harnesses).
+CWD="$(printf '%s' "$EVENT" | sed -n 's/.*"cwd"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
+if [ -z "$CWD" ]; then
+    CWD="${PWD:-.}"
+fi
+if [ ! -d "$CWD" ]; then
+    exit 0
+fi
+
+# Only fire when the project actually has a plan set. A project with no
+# manifest gets no notice — the point is to catch the multi-plan case, not to
+# announce this hook's existence to every session on the machine.
+MANIFESTS=("$CWD"/docs/moe/plans/*-MANIFEST.md)
+if [ ! -f "${MANIFESTS[0]}" ]; then
+    exit 0
+fi
+if [ "${#MANIFESTS[@]}" -gt 1 ]; then
+    # More than one manifest under docs/moe/plans/ is a policy call, not this
+    # hook's problem — the CLI itself refuses to guess. Say something helpful,
+    # still exit 0.
+    printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"plan-set-notice: %d MANIFEST files under docs/moe/plans/. Pass --manifest to plan-set to pick one."}}\n' "${#MANIFESTS[@]}"
+    exit 0
+fi
+MANIFEST="${MANIFESTS[0]}"
+
+# Need node on PATH to run the CLI. If not present, say nothing — the plugin
+# still works, the announce just does not fire.
+if ! command -v node >/dev/null 2>&1; then
+    exit 0
+fi
+
+# Ask the CLI which plan is next. Redirect stderr away so a validation error
+# in the manifest does not spam the transcript — `check` would report it, and
+# a broken manifest is not this hook's job to fix.
+NEXT_OUT="$(node "$PLAN_SET" next --manifest "$MANIFEST" 2>/dev/null || true)"
+# Trim trailing whitespace.
+NEXT_OUT="${NEXT_OUT%$'\n'}"
+
+if [ -z "$NEXT_OUT" ]; then
+    # No pending plans with ready deps: either the manifest is all-done, or
+    # everything ready is blocked. Silent in both cases — an announcement that
+    # says "there is nothing to say" is worse than nothing.
+    exit 0
+fi
+
+# Compose the additionalContext. Escape backslashes then double quotes then
+# newlines, in that order, so a printf into a JSON string literal is safe.
+compose_context() {
+    # Convert the newline-separated list to a comma-separated one for the
+    # human sentence, but keep the exact CLI invocation somewhere so the agent
+    # can copy it verbatim.
+    local ids
+    ids="$(printf '%s' "$NEXT_OUT" | tr '\n' ' ' | sed 's/ *$//' | tr ' ' ',')"
+    # Manifest path relative to CWD if possible, absolute otherwise, so the
+    # command works when pasted.
+    local rel="${MANIFEST#$CWD/}"
+    printf 'A plan set exists at %s. Next runnable plan(s): %s. Run `plan-set next --manifest %s` to re-check, and `plan-set done <id> <base>..<head>` after each plan finishes.' \
+        "$rel" "$ids" "$rel"
+}
+
+escape_for_json() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//$'\n'/\\n}"
+    s="${s//$'\r'/\\r}"
+    s="${s//$'\t'/\\t}"
+    printf '%s' "$s"
+}
+
+CONTEXT_ESCAPED="$(escape_for_json "$(compose_context)")"
+
+# SessionStart output format matches moe-mint's session-start bootstrap: the
+# hookSpecificOutput shape is what Claude Code reads. `additional_context` is
+# the Cursor form; both are emitted so the hook works in either harness.
+if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
+    printf '{"additional_context":"%s"}\n' "$CONTEXT_ESCAPED"
+elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -z "${COPILOT_CLI:-}" ]; then
+    printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s"}}\n' "$CONTEXT_ESCAPED"
+else
+    printf '{"additionalContext":"%s"}\n' "$CONTEXT_ESCAPED"
+fi
+
+exit 0
