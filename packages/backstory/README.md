@@ -18,8 +18,8 @@ lines of Markdown. No TypeScript, no build step, no tests.
 |---|---|---|
 | `greenfield` | `6e6d4b4` | Apache-2.0 |
 
-Snapshot lives in `../../../.moe-references/greenfield` (gitignored). The snapshot is the
-spec, not upstream `main`. See [PARITY.md](../../PARITY.md).
+Snapshot lives in `../../../.moe-references/greenfield` (gitignored). The
+snapshot is the spec, not upstream `main`. See [PARITY.md](../../PARITY.md).
 
 ### Statement of changes (Apache-2.0 §4(b))
 
@@ -29,9 +29,8 @@ modified copy of the corresponding file in `greenfield` at `6e6d4b4`.** The
 modification is the rebrand described below — 99 identifier and prose
 substitutions across 10 of the 26 imported files; the other 16 are
 byte-identical to `6e6d4b4` (verified with `diff -rq` against the snapshot). No
-methodology, no prompt, no gate, no threshold and no output
-format was changed. Upstream `LICENSE` (Copyright 2026 Prime Radiant, Inc.) is
-retained verbatim.
+methodology, no prompt, no gate, no threshold and no output format was changed.
+Upstream `LICENSE` (Copyright 2026 Prime Radiant, Inc.) is retained verbatim.
 
 ## Layout
 
@@ -54,11 +53,14 @@ The 22 skills, grouped the way the pipeline uses them:
 | L5 sanitization | `spec-sanitization` |
 | Re-runs | `incremental-analysis` |
 
-## Two agents, thirty roles
+## Two agents, thirty-odd roles
 
 The whole pipeline runs on two agent definitions. `analyzer` is dispatched under
-~29 role names (`doc-researcher`, `chunk-analyzer`, `deep-dive-analyzer`,
-`fidelity-validator`, …) with a role prompt naming which skill to follow;
+role names — 29 are listed in `docs/history/UPSTREAM-README.md`, and
+`commands/analyze.md` names several the upstream README does not
+(`integration-test-miner`, `web-ui-explorer`, `ux-documenter`,
+`binary-surveyor`, `binary-deep-analyzer`, `test-reader`, `test-runner`,
+`contamination-judge`) — each with a role prompt naming which skill to follow;
 `sanitizer` handles Layer 5 and remediation. The roles are prompt-level, not
 file-level — so `agents/` has two files, and `commands/analyze.md` (1,396 lines)
 carries the role prompts. That is why the command file is the largest thing here
@@ -83,16 +85,16 @@ skips this package.
 
 **Relocated to `docs/history/`, verbatim:**
 
-- `README.md` → `UPSTREAM-README.md`. The user-facing pipeline table and the full
-  list of ~29 analyzer role names live here. Kept because this fork has no
-  reachable upstream author, and this is the only place upstream states what the
-  plugin claimed to do in its own words.
+- `README.md` → `UPSTREAM-README.md`. The user-facing pipeline table and 29 of
+  the analyzer role names live here. Kept because this fork has no reachable
+  upstream author, and this is the only place upstream states what the plugin
+  claimed to do in its own words.
 - `ABOUT.md` → `UPSTREAM-ABOUT.md`. A generated project-map descriptor
   ("Maintained by the maintaining-project-map skill. Do not hand-edit;
-  regenerated"). The generator is an upstream skill bound for
-  `@bubstack/moe-core`; regenerating it for a monorepo package is a `mint`-era
-  decision, not an import-time one. Left as the upstream record rather than
-  hand-edited into a lie.
+  regenerated"). **That skill is in none of the 19 pinned snapshots** — only its
+  output is, in nine of them. There is nothing in this fork that can regenerate
+  the file, so hand-editing it would produce a permanently stale artifact
+  claiming to be generated. Left as the upstream record instead.
 - `catalog-info.yaml` → `UPSTREAM-catalog-info.yaml`. A Backstage component
   descriptor for a *repository* — `owner: user:obra`, `system: superpowers`, and
   a `prime-radiant.com/repo-map-rev` annotation pointing at a commit in
@@ -134,8 +136,14 @@ resumed.
 
 **No brand token appears in any skill `name:` field.** All 22 are descriptive
 (`source-analysis`, `git-archaeology`, …) and each matches its directory name.
-None collides with the 30 skill names in the six repositories bound for
-`@bubstack/moe-core` (checked against the pinned snapshots, not against a guess).
+None collides with any of the 30 distinct `name:` values found in the six
+repositories bound for `@bubstack/moe-core` — checked against the pinned
+snapshots, not guessed. (30, not the 28 ARCHITECTURE.md projects: two of the 30
+are not skills at all. `example-workflow` is inside
+`superpowers-developing-for-claude-code/examples/full-featured-plugin/`, and
+`Skill-Name-With-Hyphens` is a frontmatter example quoted inside the body of
+`superpowers/skills/writing-skills/SKILL.md`. Both are noise in the census, and
+neither is a name backstory could collide with.)
 
 **`Cobra` in `skills/source-completeness/SKILL.md` is not the upstream author.**
 It is the Go CLI framework, in a list beside `clap` and `argparse`. A
@@ -180,16 +188,17 @@ multiple files and buy no identity by changing. Same reasoning glass applied to
   registers in a service catalog it wants a single root `catalog-info.yaml`
   describing one component with Moe owners — not a per-package copy of an
   upstream repo descriptor. Decide once, at the root, rather than per import.
-- **`ABOUT.md` is a generated artifact with no generator in this fork yet.** The
-  `maintaining-project-map` skill that writes it is bound for
-  `@bubstack/moe-core`. Once core lands, decide whether Moe runs that skill over
-  `packages/*` — and if so, regenerate rather than hand-write.
+- **`ABOUT.md` is a generated artifact whose generator was not forked.** Nine of
+  the 19 snapshots ship one, so four other packages will face this same call.
+  Either fork `maintaining-project-map` from wherever upstream keeps it and run
+  it over `packages/*`, or accept that every `ABOUT.md` in the fork is history.
+  A per-package coin flip is the one outcome to avoid.
 - **No tests, and none are obviously missing.** Nothing here executes. The
   invariants that *could* be checked mechanically are structural: every
   `moe-backstory:<skill>` reference in `agents/` and `commands/` resolves to a
   `skills/<name>/SKILL.md`, and every skill's `name:` matches its directory. Both
   hold today — the 24 distinct `moe-backstory:*` references resolve to the 22
   skills plus the 2 agents, with nothing dangling and nothing orphaned. A
-  `mint`-level manifest validation
-  would cover this for every content package at once and is the better place for
-  it than a vitest suite in a package with no runtime.
+  `mint`-level manifest validation would cover that for every content package at
+  once, and is a better home for it than a vitest suite in a package with no
+  runtime.
