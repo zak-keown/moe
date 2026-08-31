@@ -4,13 +4,13 @@ import type { PluginModel } from '../model.js'
 import type { HarnessAdapter, EmitResult } from './types.js'
 import { json, marketplaceName } from './shared.js'
 
-// Droid and Grok install the Claude-style layout through this descriptor, so
-// their real support profile equals claude-code's — the all-'none' support row
-// below reflects only what THIS adapter emits (matrix docs clarifying this land
-// in Plan 4). The agents-marketplace descriptor is a distribution-only file
-// that declares this plugin as installable on Anthropic's agents marketplace.
-// No components are emitted; the descriptor is read by install tooling to set
-// up the .agents/plugins/ layout.
+// Droid installs the Claude-style layout through this descriptor, so its real
+// support profile equals claude-code's — the all-'none' support row below
+// reflects only what THIS adapter emits (matrix docs clarifying this land in
+// Plan 4). The agents-marketplace descriptor is a distribution-only file that
+// declares this plugin as installable on Anthropic's agents marketplace. No
+// components are emitted; the descriptor is read by install tooling to set up
+// the .agents/plugins/ layout.
 //
 // Copilot is different: CONFIRMED (2026-08-12, empirical, GitHub Copilot CLI
 // 1.0.78 in the moe-mint container) that `copilot plugin marketplace add`
@@ -61,7 +61,6 @@ function marketplaceDescriptor(model: PluginModel): Record<string, unknown> {
 //   .claude-plugin/marketplace.json is emitted and `copilot plugin marketplace
 //   add` fails outright (verified) — Copilot has no path through this descriptor,
 //   so this line assumes claude-code is present, as it is by default.
-// - grok: `grok plugin install <url> --trust` (grok takes a URL/path directly, no marketplace)
 function installDoc(model: PluginModel): string {
   const { config } = model
   const url = config.repository ?? '<your-repo>'
@@ -92,13 +91,7 @@ function installDoc(model: PluginModel): string {
     `copilot plugin install ${config.name}@${marketplaceName(config)}`,
     '```',
     '',
-    'On Grok:',
-    '',
-    '```',
-    `grok plugin install ${url} --trust`,
-    '```',
-    '',
-    "All three clients install the plugin's real claude-code-style layout (skills/, commands/, agents/, hooks/, .mcp.json) — their effective support matches claude-code's, not the all-`none` row this adapter reports in the support matrix (which reflects only the descriptor file itself, not what those clients receive through it). Droid and Grok read the descriptor this adapter emits (`.agents/plugins/marketplace.json`); Copilot instead reads Claude Code's `.claude-plugin/marketplace.json`, so its install id above uses that marketplace's name and it needs the claude-code adapter enabled. Consult each client's docs if these commands don't match your installed version.",
+    "Both clients install the plugin's real claude-code-style layout (skills/, commands/, agents/, hooks/, .mcp.json) — their effective support matches claude-code's, not the all-`none` row this adapter reports in the support matrix (which reflects only the descriptor file itself, not what those clients receive through it). Droid reads the descriptor this adapter emits (`.agents/plugins/marketplace.json`); Copilot instead reads Claude Code's `.claude-plugin/marketplace.json`, so its install id above uses that marketplace's name and it needs the claude-code adapter enabled. Consult each client's docs if these commands don't match your installed version.",
   ]
   return lines.join('\n')
 }

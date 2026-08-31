@@ -78,7 +78,6 @@ const COMPARED_FILES = [
   '.devin-plugin/plugin.json',
   '.kimi-plugin/plugin.json',
   '.cursor-plugin/plugin.json',
-  'gemini-extension.json',
   '.agents/plugins/marketplace.json',
 ] as const
 type ComparedFile = (typeof COMPARED_FILES)[number]
@@ -87,10 +86,14 @@ type ComparedFile = (typeof COMPARED_FILES)[number]
 // generate() runs. Each one is either a manifest generate() is about to
 // rewrite (and would otherwise refuse to clobber) or a hand-authored
 // equivalent of a file moe-mint emits itself under a different name/path
-// (package.json, .opencode/, .pi/, GEMINI.md). Everything else in the real
+// (package.json, .opencode/, .pi/). Everything else in the real
 // tree (skills/, hooks/hooks.json, docs/, tests/, README.md, ...) is left in
 // place: skills/ and hooks/hooks.json are component sources moe-mint
 // reads, and the rest doesn't collide with anything generate() writes.
+// Gemini's hand-authored gemini-extension.json / GEMINI.md are also stripped
+// so a fresh checkout of a superpowers snapshot that still carries them can't
+// trip generate()'s refuse-to-clobber path against an adapter that no longer
+// exists to reclaim them.
 const HAND_MAINTAINED_PATHS = [
   '.claude-plugin',
   '.codex-plugin',
@@ -167,7 +170,6 @@ function buildConfig(originals: Record<ComparedFile, Record<string, unknown>>): 
   const devin = originals['.devin-plugin/plugin.json']
   const kimi = originals['.kimi-plugin/plugin.json']
   const cursor = originals['.cursor-plugin/plugin.json']
-  const gemini = originals['gemini-extension.json']
   const agentsMarketplace = originals['.agents/plugins/marketplace.json'] as {
     interface: { displayName: string }
     plugins: unknown[]
@@ -208,14 +210,6 @@ function buildConfig(originals: Record<ComparedFile, Record<string, unknown>>): 
           displayName: cursor.displayName,
           description: cursor.description,
           hooks: cursor.hooks,
-        },
-      },
-      // gemini: only description differs from the shared base (gemini's
-      // extensionManifest doesn't include author/homepage/repository/
-      // license/keywords at all).
-      gemini: {
-        manifest: {
-          description: gemini.description,
         },
       },
       // codex: its own description + keyword set, an extra author.url

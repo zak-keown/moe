@@ -313,3 +313,5 @@ consumable outside the repo goes to the GitLab instance registry under
 | `superpowers/.github/ISSUE_TEMPLATE/` | Rebuild as GitLab issue templates rather than translate. |
 | `superpowers-evals/.github/CODEOWNERS` | Becomes root `CODEOWNERS` with Moe owners. |
 | `*/.github/PULL_REQUEST_TEMPLATE.md` | Becomes `.gitlab/merge_request_templates/`. |
+| `everyharness/src/adapters/gemini.ts` (Gemini CLI adapter) | dropped, not discontinued: the harness still ships, but the maintenance cost of a per-harness TOML translation, an `@`-imported `GEMINI.md`, and a two-prompt install path no longer earns its keep for this fork's audience. Removed in the runtime-pruning wave. |
+| `everyharness`'s Grok Build CLI wiring (`grok plugin install …` in the agents-marketplace install doc, the deep `install-grok` check, and its container `npm install` line) | dropped, not discontinued: Grok still installs Claude-format plugins through the same descriptor Droid does, so keeping a bespoke install block and exec-bits check duplicated coverage a Droid-shaped user already gets. Removed in the runtime-pruning wave. |

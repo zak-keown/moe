@@ -9,7 +9,7 @@ as a unit.
 **Status:** written as a target-shape document, and the target is hit. All nine
 packages are imported and censused (Wave A: crew, mint, tab, glass, proof; Wave
 B/C: core, memory, flight), and `/plugins/` is generated — six plugins for all
-eleven harnesses, built by `pnpm mint`, with CI asserting it regenerates
+ten harnesses, built by `pnpm mint`, with CI asserting it regenerates
 byte-identically. Every entry in §3's tree now exists. Sections describing
 decisions are records; sections describing structure describe what is there.
 Where a section is still forward-looking it says so.
@@ -18,15 +18,15 @@ Where a section is still forward-looking it says so.
 
 ## 1. Why a monorepo
 
-The fork inherits five package managers (pnpm, npm, bun, cargo, pip), four
-manifest formats per plugin (`plugin.json`, `gemini-extension.json`, `GEMINI.md`,
-`AGENTS.md`) hand-maintained in parallel, and one real cross-repo dependency
-consumed through the npm registry. The DX cost is concentrated in three places:
+The fork inherits five package managers (pnpm, npm, bun, cargo, pip), two
+manifest formats per plugin (`plugin.json`, `AGENTS.md`) hand-maintained in
+parallel, and one real cross-repo dependency consumed through the npm registry.
+The DX cost is concentrated in three places:
 
 1. **Release friction.** `superpowers-evals` depends on
    `@primeradianthq/obol@^0.9.0`, which is `obol/bindings/typescript` in the repo
    next door. Changing a cost model today means publish-to-npm, then test.
-2. **Manifest drift.** `superpowers` maintains its Claude Code, Gemini and agent
+2. **Manifest drift.** `superpowers` maintains its Claude Code and agent
    manifests by hand. `everyharness` exists to generate exactly those from one
    config file, and only `the-elements-of-style` uses it.
 3. **Duplicated substrate.** `episodic-memory` and `private-journal-mcp` ship the

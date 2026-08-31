@@ -187,16 +187,16 @@ describe('loadConfig', () => {
       ].join('\n')))).toThrow(ConfigError)
     })
 
-    it('rejects hooks: own on a non-hook-emitting harness (gemini)', () => {
+    it('rejects hooks: own on a non-hook-emitting harness (codex)', () => {
       expect(() => loadConfig(repoWith([
         'name: x',
         'version: 1.0.0',
         'description: x',
         'bootstrap: generate',
         'harnesses:',
-        '  gemini:',
+        '  codex:',
         '    hooks: own',
-      ].join('\n')))).toThrow(/gemini.*hook-emitting.*claude-code.*cursor/s)
+      ].join('\n')))).toThrow(/codex.*hook-emitting.*claude-code.*cursor/s)
     })
 
     it('rejects hooks: own when bootstrap is none', () => {

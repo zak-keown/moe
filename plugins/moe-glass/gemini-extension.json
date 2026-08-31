@@ -1,6 +1,0 @@
-{
-  "name": "moe-glass",
-  "description": "Direct Chrome DevTools Protocol access. Skill mode plus MCP mode, zero dependencies.",
-  "version": "0.0.0",
-  "contextFileName": "GEMINI.md"
-}

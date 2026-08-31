@@ -38,14 +38,11 @@
     ".pi/extensions/moe-memory.ts": {
       "sha256": "750a23a7a0ee816d093aa4e3eb0fe42462023dff175a8309165ec7bbf48dd7af"
     },
-    "GEMINI.md": {
-      "sha256": "609b1468a605c58bf12b15eee5cb7261ff3b308b4b4623f35da19542927ba51d"
-    },
     "docs/install/agent-plugins-1.0.md": {
       "sha256": "6fa8acc74c24eacf5328208d2def4a7dea966c8e14bedcb339288c5d7a37851b"
     },
     "docs/install/agents-marketplace.md": {
-      "sha256": "5c96ae3d96db598291a70ed61c35c6779d7f2b9b89aeb21e17e237db885efbf5"
+      "sha256": "6b582e3ed3a347d0156bc6b02159858728a2060d44003b6415d2da9ed091b5cc"
     },
     "docs/install/claude-code.md": {
       "sha256": "77fac9e59652d496c09782916a171c3d1787dfbb04c7896ac6946571d9d9ee60"
@@ -58,9 +55,6 @@
     },
     "docs/install/devin.md": {
       "sha256": "ed61e82915e7ffa0de280e92c2ded1247eec12d490f61a038d5aed2e3c90bb97"
-    },
-    "docs/install/gemini.md": {
-      "sha256": "a0a4006e343b84712fde85482dd0a00ebeb6b7b63be0fdc7002d3a7a5b703bd7"
     },
     "docs/install/hermes.md": {
       "sha256": "608f91e74fb0d677082777d61c5c9d9341ad9d16466f0bcac929c18d5683fb9f"
@@ -75,10 +69,7 @@
       "sha256": "5dcae176b8f566a3edf17052a7f9a5c47f6cd99e6d0bc740bc8dc65ae181ac6c"
     },
     "docs/support-matrix.md": {
-      "sha256": "9c56182404b7fc3ee7cc08fa5bbdedec79c028f73eb0f08ac5d48fe093bfb904"
-    },
-    "gemini-extension.json": {
-      "sha256": "afef7176a18faf8133fb349d5746ae5ab268b8f80d4b2f181fec02c72ad52e9d"
+      "sha256": "5ad993f9f58f097d17ec1a4b5a9bedc4d6c8da28ea80087a66e78e7ac90b505f"
     },
     "hooks/moe-mint/hooks-cursor.json": {
       "sha256": "7653af3eca8918a0fa45c4d67c321723d3906b8d3d6966959461be208f67d8a5"

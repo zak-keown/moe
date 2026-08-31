@@ -23,7 +23,7 @@ function isSourcePath(path: string, config: MintConfig): boolean {
   const { skills, commands, agents } = config.components
   if (path === skills || path.startsWith(`${skills}/`)) return true
   // commands/agents source files are always .md; adapters may emit
-  // non-.md siblings into the same directory (e.g. Gemini's TOML commands)
+  // non-.md siblings into the same directory (e.g. TOML commands)
   // without risking a source clobber.
   for (const dir of [commands, agents]) {
     if (path.endsWith('.md') && (path === dir || path.startsWith(`${dir}/`))) return true
@@ -113,7 +113,7 @@ export function generate(
   }
 
   // Refuse to clobber files that already exist on disk but weren't produced by a
-  // prior moe-mint run — e.g. a hand-written GEMINI.md dropped in before the
+  // prior moe-mint run — e.g. a hand-written plugin.json dropped in before the
   // first `generate`. A file absent from the prior manifest (or with no prior
   // manifest at all) is only a conflict if its content actually differs from what
   // we're about to write; byte-identical files are left alone so a first run
