@@ -1,6 +1,6 @@
-import { describe, test, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { describe, expect, test } from "vitest";
 import {
   applyEvent,
   computePromptPairings,
@@ -11,11 +11,11 @@ import {
   isSoftErrorResult,
   parseJsonl,
   reduceTranscript,
-  turnsInOrder,
-  totalUsage,
-  type TranscriptEvent,
   type ToolCallEvent,
   type ToolResultEvent,
+  type TranscriptEvent,
+  totalUsage,
+  turnsInOrder,
 } from "../src/lib/transcript";
 
 const FIXTURE_PATH = join(
@@ -77,9 +77,30 @@ describe("reduceTranscript", () => {
 
   test("multiple user_messages at different turns are kept by turn key", () => {
     const evs: TranscriptEvent[] = [
-      { eventId: 1, parentEventId: 0, ts: "t1", type: "user_message", turn: 0, content: "initial prompt" },
-      { eventId: 2, parentEventId: 0, ts: "t2", type: "user_message", turn: 4, content: "<SYSTEM-REMINDER>\nReflection checkpoint." },
-      { eventId: 3, parentEventId: 0, ts: "t3", type: "user_message", turn: 9, content: "<SYSTEM-REMINDER>\nYou have used your time budget" },
+      {
+        eventId: 1,
+        parentEventId: 0,
+        ts: "t1",
+        type: "user_message",
+        turn: 0,
+        content: "initial prompt",
+      },
+      {
+        eventId: 2,
+        parentEventId: 0,
+        ts: "t2",
+        type: "user_message",
+        turn: 4,
+        content: "<SYSTEM-REMINDER>\nReflection checkpoint.",
+      },
+      {
+        eventId: 3,
+        parentEventId: 0,
+        ts: "t3",
+        type: "user_message",
+        turn: 9,
+        content: "<SYSTEM-REMINDER>\nYou have used your time budget",
+      },
     ];
     const model = reduceTranscript(evs);
     expect(model.userMessages.size).toBe(3);
@@ -146,7 +167,9 @@ describe("reduceTranscript", () => {
     };
     let warned = 0;
     const origWarn = console.warn;
-    console.warn = () => { warned += 1; };
+    console.warn = () => {
+      warned += 1;
+    };
     try {
       const model = reduceTranscript([orphan]);
       expect(warned).toBe(1);
@@ -206,9 +229,18 @@ describe("reduceTranscript", () => {
 describe("soft-error detection", () => {
   function mkResult(text: string, error = false): ToolResultEvent {
     return {
-      eventId: 1, parentEventId: 0, ts: "x",
-      type: "tool_result", turn: 1, toolUseId: "t", name: "read",
-      durationMs: 0, text, image: null, artifact: null, error,
+      eventId: 1,
+      parentEventId: 0,
+      ts: "x",
+      type: "tool_result",
+      turn: 1,
+      toolUseId: "t",
+      name: "read",
+      durationMs: 0,
+      text,
+      image: null,
+      artifact: null,
+      error,
     };
   }
 
@@ -251,13 +283,15 @@ describe("parseJsonl", () => {
   test("skips empty lines and malformed JSON with warn", () => {
     let warned = 0;
     const origWarn = console.warn;
-    console.warn = () => { warned += 1; };
+    console.warn = () => {
+      warned += 1;
+    };
     try {
       const events = parseJsonl(
         '{"eventId":1,"parentEventId":0,"ts":"x","type":"user_message","turn":0,"content":"hi"}\n' +
-        '\n' +
-        'not json\n' +
-        '{"eventId":2,"parentEventId":1,"ts":"y","type":"run_end","status":"pass","summary":"","reasoning":"","observationCount":0,"durationMs":0,"usage":{"inputTokens":0,"outputTokens":0,"turns":0}}\n',
+          "\n" +
+          "not json\n" +
+          '{"eventId":2,"parentEventId":1,"ts":"y","type":"run_end","status":"pass","summary":"","reasoning":"","observationCount":0,"durationMs":0,"usage":{"inputTokens":0,"outputTokens":0,"turns":0}}\n',
       );
       expect(events.length).toBe(2);
       expect(warned).toBe(1);
@@ -269,7 +303,9 @@ describe("parseJsonl", () => {
   test("skips objects without a type field", () => {
     let warned = 0;
     const origWarn = console.warn;
-    console.warn = () => { warned += 1; };
+    console.warn = () => {
+      warned += 1;
+    };
     try {
       const events = parseJsonl('{"eventId":1}\n');
       expect(events.length).toBe(0);
@@ -286,9 +322,7 @@ describe("extractPromptLine", () => {
   });
 
   test("returns the only line, trimmed", () => {
-    expect(extractPromptLine("package name: (scratch-npm) ")).toBe(
-      "package name: (scratch-npm)",
-    );
+    expect(extractPromptLine("package name: (scratch-npm) ")).toBe("package name: (scratch-npm)");
   });
 
   test("returns the last non-empty line for multi-line buffers", () => {
@@ -390,13 +424,28 @@ describe("computePromptPairings", () => {
   test("does not pair a read_output that errored", () => {
     let m = emptyTranscript();
     const call: ToolCallEvent = {
-      eventId: 10, parentEventId: 9, ts: "t", type: "tool_call",
-      turn: 1, toolUseId: "ro1", name: "read_output", arguments: {},
+      eventId: 10,
+      parentEventId: 9,
+      ts: "t",
+      type: "tool_call",
+      turn: 1,
+      toolUseId: "ro1",
+      name: "read_output",
+      arguments: {},
     };
     const result: ToolResultEvent = {
-      eventId: 11, parentEventId: 10, ts: "t", type: "tool_result",
-      turn: 1, toolUseId: "ro1", name: "read_output", durationMs: 0,
-      text: "boom", image: null, artifact: null, error: true,
+      eventId: 11,
+      parentEventId: 10,
+      ts: "t",
+      type: "tool_result",
+      turn: 1,
+      toolUseId: "ro1",
+      name: "read_output",
+      durationMs: 0,
+      text: "boom",
+      image: null,
+      artifact: null,
+      error: true,
     };
     m = applyEvent(m, call as TranscriptEvent);
     m = applyEvent(m, result as TranscriptEvent);

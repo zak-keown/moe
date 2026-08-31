@@ -22,11 +22,20 @@ export function ArtifactDrawer({ runId, path, onClose }: Props) {
     setLoading(true);
     setError(null);
     setText(null);
-    api.results.fileText(runId, path)
-      .then((t) => { if (!cancelled) setText(t); })
-      .catch((e) => { if (!cancelled) setError(e instanceof Error ? e.message : "failed to load"); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+    api.results
+      .fileText(runId, path)
+      .then((t) => {
+        if (!cancelled) setText(t);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : "failed to load");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [runId, path]);
 
   useEffect(() => {
@@ -52,10 +61,15 @@ export function ArtifactDrawer({ runId, path, onClose }: Props) {
           <div>
             <div className="tr-drawer-path">{filename}</div>
             <div className="tr-drawer-meta">
-              {loading ? "loading…" : text ? `${bytes.toLocaleString()} bytes` : error ?? ""}
+              {loading ? "loading…" : text ? `${bytes.toLocaleString()} bytes` : (error ?? "")}
             </div>
           </div>
-          <button type="button" className="tr-drawer-close" onClick={onClose} aria-label="Close drawer">
+          <button
+            type="button"
+            className="tr-drawer-close"
+            onClick={onClose}
+            aria-label="Close drawer"
+          >
             ×
           </button>
         </header>
@@ -75,9 +89,13 @@ export function ArtifactDrawer({ runId, path, onClose }: Props) {
           >
             Copy
           </button>
-          <a href={rawUrl} target="_blank" rel="noreferrer">Open raw</a>
+          <a href={rawUrl} target="_blank" rel="noreferrer">
+            Open raw
+          </a>
           <div style={{ flex: 1 }} />
-          <button type="button" onClick={onClose}>Close</button>
+          <button type="button" onClick={onClose}>
+            Close
+          </button>
         </footer>
       </aside>
     </>
@@ -100,7 +118,17 @@ function LineNumberedPre({ text }: { text: string }) {
 function LineRow({ n, content }: { n: number; content: string }) {
   return (
     <>
-      <span style={{ color: "var(--tr-slate-soft)", userSelect: "none", textAlign: "right", paddingRight: "8px", fontVariantNumeric: "tabular-nums" }}>{n}</span>
+      <span
+        style={{
+          color: "var(--tr-slate-soft)",
+          userSelect: "none",
+          textAlign: "right",
+          paddingRight: "8px",
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
+        {n}
+      </span>
       <code style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{content || " "}</code>
     </>
   );

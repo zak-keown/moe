@@ -13,6 +13,6 @@ if (root) {
       <BrowserRouter>
         <StaticRunPage />
       </BrowserRouter>
-    </StrictMode>
+    </StrictMode>,
   );
 }

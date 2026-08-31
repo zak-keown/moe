@@ -30,9 +30,15 @@ export function NewCardForm({ onCreated, onCancel }: NewCardFormProps) {
         id: id.trim(),
         title: title.trim(),
         status: "draft",
-        tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+        tags: tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
         description: description,
-        acceptanceCriteria: criteria.split("\n").map((c) => c.trim()).filter(Boolean),
+        acceptanceCriteria: criteria
+          .split("\n")
+          .map((c) => c.trim())
+          .filter(Boolean),
       });
       onCreated(id.trim());
     } catch (e) {
@@ -47,9 +53,7 @@ export function NewCardForm({ onCreated, onCancel }: NewCardFormProps) {
       <h1 className="heading-display text-2xl mb-6">New Card</h1>
 
       {error && (
-        <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
+        <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
       <div className="space-y-4">
@@ -104,18 +108,10 @@ export function NewCardForm({ onCreated, onCancel }: NewCardFormProps) {
         </div>
 
         <div className="flex items-center gap-3 pt-2">
-          <button
-            className="btn-primary"
-            onClick={handleSubmit}
-            disabled={saving}
-          >
+          <button className="btn-primary" onClick={handleSubmit} disabled={saving}>
             {saving ? "Creating..." : "Create"}
           </button>
-          <button
-            className="btn-secondary"
-            onClick={onCancel}
-            disabled={saving}
-          >
+          <button className="btn-secondary" onClick={onCancel} disabled={saving}>
             Cancel
           </button>
         </div>

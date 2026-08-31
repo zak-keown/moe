@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { useTranscript } from "../../hooks/useTranscript";
+import { Link, useParams } from "react-router-dom";
 import { useLiveTranscript } from "../../hooks/useLiveTranscript";
+import { useTranscript } from "../../hooks/useTranscript";
 import { api, type VerdictResult } from "../../lib/api";
+import { formatRunTimestamp, parseRunId } from "../../lib/runId";
 import type { TranscriptModel } from "../../lib/transcript";
-import { parseRunId, formatRunTimestamp } from "../../lib/runId";
 import { Spinner } from "../shared";
-import { Transcript } from "./Transcript";
 import { ArtifactDrawer } from "./ArtifactDrawer";
 import type { Observation } from "./RunEndPanel";
+import { Transcript } from "./Transcript";
 import "../../styles/transcript.css";
 
 interface Props {
@@ -25,9 +25,21 @@ export function TranscriptView({ mode, runId: runIdProp }: Props) {
 
   if (!runId) return <div style={{ padding: 24 }}>No run selected.</div>;
 
-  return mode === "posthoc"
-    ? <PosthocView runId={runId} artifactPath={artifactPath} onOpen={setArtifactPath} onClose={() => setArtifactPath(null)} />
-    : <LiveView runId={runId} artifactPath={artifactPath} onOpen={setArtifactPath} onClose={() => setArtifactPath(null)} />;
+  return mode === "posthoc" ? (
+    <PosthocView
+      runId={runId}
+      artifactPath={artifactPath}
+      onOpen={setArtifactPath}
+      onClose={() => setArtifactPath(null)}
+    />
+  ) : (
+    <LiveView
+      runId={runId}
+      artifactPath={artifactPath}
+      onOpen={setArtifactPath}
+      onClose={() => setArtifactPath(null)}
+    />
+  );
 }
 
 interface InnerProps {
@@ -43,20 +55,41 @@ function PosthocView({ runId, artifactPath, onOpen, onClose }: InnerProps) {
 
   useEffect(() => {
     let cancelled = false;
-    api.results.get(runId)
-      .then((r) => { if (!cancelled) setResult(r); })
-      .catch(() => { /* non-fatal — verdict pane will just lack observations */ });
-    return () => { cancelled = true; };
+    api.results
+      .get(runId)
+      .then((r) => {
+        if (!cancelled) setResult(r);
+      })
+      .catch(() => {
+        /* non-fatal — verdict pane will just lack observations */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [runId]);
 
   if (loading) {
-    return <Container runId={runId}><div style={{ padding: 24 }}><Spinner label="Loading transcript..." /></div></Container>;
+    return (
+      <Container runId={runId}>
+        <div style={{ padding: 24 }}>
+          <Spinner label="Loading transcript..." />
+        </div>
+      </Container>
+    );
   }
   if (error === "not-found") {
-    return <Container runId={runId}><NoTranscript runId={runId} /></Container>;
+    return (
+      <Container runId={runId}>
+        <NoTranscript runId={runId} />
+      </Container>
+    );
   }
   if (error) {
-    return <Container runId={runId}><div style={{ padding: 24, color: "#a33" }}>Failed to load transcript ({error}).</div></Container>;
+    return (
+      <Container runId={runId}>
+        <div style={{ padding: 24, color: "#a33" }}>Failed to load transcript ({error}).</div>
+      </Container>
+    );
   }
   if (!model) return null;
 
@@ -85,10 +118,17 @@ function LiveView({ runId, artifactPath, onOpen, onClose }: InnerProps) {
   useEffect(() => {
     if (!model.runEnd) return;
     let cancelled = false;
-    api.results.get(runId)
-      .then((r) => { if (!cancelled) setObservations(r.observations ?? []); })
-      .catch(() => { /* non-fatal */ });
-    return () => { cancelled = true; };
+    api.results
+      .get(runId)
+      .then((r) => {
+        if (!cancelled) setObservations(r.observations ?? []);
+      })
+      .catch(() => {
+        /* non-fatal */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [runId, model.runEnd]);
 
   const currentTurn = detectCurrentTurn(model);
@@ -163,13 +203,17 @@ function Container({
           <div style={{ color: "var(--tr-slate, #6a7788)", fontSize: 12, marginTop: 2 }}>
             {live ? (
               <>
-                <span style={{ color: connected ? "var(--tr-teal, #1a6b5a)" : "var(--tr-slate, #6a7788)" }}>
+                <span
+                  style={{
+                    color: connected ? "var(--tr-teal, #1a6b5a)" : "var(--tr-slate, #6a7788)",
+                  }}
+                >
                   {connected ? "● live" : "○ connecting"}
                 </span>
                 {when && <> · {when}</>}
               </>
             ) : (
-              when ?? ""
+              (when ?? "")
             )}
           </div>
         </div>
@@ -177,10 +221,13 @@ function Container({
           {status && (
             <span
               className={`text-sm px-2 py-1 rounded ${
-                status === "pass" ? "bg-green-100 text-green-800" :
-                status === "fail" ? "bg-red-100 text-red-800" :
-                status === "errored" ? "bg-red-100 text-red-800" :
-                "bg-yellow-100 text-yellow-800"
+                status === "pass"
+                  ? "bg-green-100 text-green-800"
+                  : status === "fail"
+                    ? "bg-red-100 text-red-800"
+                    : status === "errored"
+                      ? "bg-red-100 text-red-800"
+                      : "bg-yellow-100 text-yellow-800"
               }`}
             >
               {status === "errored" ? "interrupted" : status}

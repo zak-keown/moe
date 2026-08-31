@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { CardSummary } from "../lib/api";
 import { StatusBadge } from "./shared";
 
@@ -67,26 +67,17 @@ export function CardsList({ cards, selectedId, onSelect }: CardsListProps) {
               onClick={() => onSelect(card.id)}
               className={`w-full text-left border-b border-edge-light transition-colors duration-150 ${
                 card.parent ? "pl-6 pr-3" : "px-3"
-              } py-2.5 ${
-                selectedId === card.id
-                  ? "bg-teal-wash"
-                  : "hover:bg-panel"
-              }`}
+              } py-2.5 ${selectedId === card.id ? "bg-teal-wash" : "hover:bg-panel"}`}
             >
               <div className="flex items-start justify-between gap-2">
-                <span className="text-sm font-medium text-ink leading-snug">
-                  {card.title}
-                </span>
+                <span className="text-sm font-medium text-ink leading-snug">{card.title}</span>
                 <StatusBadge status={card.status} />
               </div>
               <div className="mt-0.5 text-xs text-slate">{card.id}</div>
               {card.tags.length > 0 && (
                 <div className="mt-1 flex flex-wrap gap-1">
                   {card.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded bg-panel px-1.5 py-0.5 text-xs text-slate"
-                    >
+                    <span key={tag} className="rounded bg-panel px-1.5 py-0.5 text-xs text-slate">
                       {tag}
                     </span>
                   ))}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { isSoftErrorResult, type ToolPair } from "../../lib/transcript";
-import { Screenshot } from "./Screenshot";
 import { ArtifactChip } from "./ArtifactChip";
+import { Screenshot } from "./Screenshot";
 import { TuiCapture } from "./TuiCapture";
 
 interface Props {
@@ -62,13 +62,16 @@ export function ToolPairCard({ runId, pair, respondingTo, activeArtifact, onOpen
         <span className="tr-tool-id" title={call.toolUseId}>
           {shortId(call.toolUseId)}
         </span>
-        {result && (
-          <span className="tr-tool-duration">{formatDuration(result.durationMs)}</span>
-        )}
+        {result && <span className="tr-tool-duration">{formatDuration(result.durationMs)}</span>}
         {running && <span className="tr-tool-flag">running…</span>}
         {isError && <span className="tr-tool-flag">error</span>}
         {isSoftError && !isError && (
-          <span className="tr-tool-flag tr-tool-flag-warn" title="Tool succeeded but returned an error message. The agent likely spent extra turns recovering.">recoverable</span>
+          <span
+            className="tr-tool-flag tr-tool-flag-warn"
+            title="Tool succeeded but returned an error message. The agent likely spent extra turns recovering."
+          >
+            recoverable
+          </span>
         )}
       </div>
       <div className="tr-tool-body">
@@ -88,16 +91,15 @@ export function ToolPairCard({ runId, pair, respondingTo, activeArtifact, onOpen
           <>
             {result.textTruncated ? (
               <div className="tr-tool-result-label">
-                result — spilled to artifact ({result.textBytes ? `${(result.textBytes / 1024).toFixed(1)}kB` : "large"})
+                result — spilled to artifact (
+                {result.textBytes ? `${(result.textBytes / 1024).toFixed(1)}kB` : "large"})
               </div>
             ) : capturePath ? (
               <div className="tr-tool-result-label">screen capture</div>
             ) : text.length > 0 ? (
               <div className="tr-tool-result-label">result</div>
             ) : null}
-            {capturePath && (
-              <TuiCapture runId={runId} ansiPath={capturePath} />
-            )}
+            {capturePath && <TuiCapture runId={runId} ansiPath={capturePath} />}
             {!capturePath && text.length > 0 && !result.textTruncated && (
               <>
                 <pre className="tr-tool-result">{shownText}</pre>

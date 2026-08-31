@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export function Spinner({ label = "Loading..." }: { label?: string | undefined }) {
   return (
@@ -111,9 +111,7 @@ export function ConfirmDialog({
     }
   }, [open]);
 
-  const confirmClass = danger
-    ? "btn-danger"
-    : "btn-primary";
+  const confirmClass = danger ? "btn-danger" : "btn-primary";
 
   if (!open) return <dialog ref={dialogRef} />;
 

@@ -1,17 +1,13 @@
-import type { Observation } from "./RunEndPanel";
-import {
-  computePromptPairings,
-  findSoftErrors,
-  type TranscriptModel,
-} from "../../lib/transcript";
+import { computePromptPairings, findSoftErrors, type TranscriptModel } from "../../lib/transcript";
 import { buildBlocks } from "../../lib/transcript-blocks";
+import { ErrorBanner } from "./ErrorBanner";
+import { EventLine } from "./EventLine";
+import type { Observation } from "./RunEndPanel";
+import { RunEndPanel } from "./RunEndPanel";
 import { SystemPromptPanel } from "./SystemPromptPanel";
-import { UserMessagePanel } from "./UserMessagePanel";
 import { SystemReminderPanel } from "./SystemReminderPanel";
 import { TurnBlock } from "./TurnBlock";
-import { EventLine } from "./EventLine";
-import { RunEndPanel } from "./RunEndPanel";
-import { ErrorBanner } from "./ErrorBanner";
+import { UserMessagePanel } from "./UserMessagePanel";
 
 interface Props {
   runId: string;
@@ -27,7 +23,14 @@ interface Props {
 // inline where they appear in the stream — so the initial prompt lands at
 // the top (logged before any turn events) and reflection / grace reminders
 // land between the turns that bracket them.
-export function Transcript({ runId, model, currentTurn, activeArtifact, onOpenArtifact, observations }: Props) {
+export function Transcript({
+  runId,
+  model,
+  currentTurn,
+  activeArtifact,
+  onOpenArtifact,
+  observations,
+}: Props) {
   const promptPairings = computePromptPairings(model);
   const blocks = buildBlocks(model);
   const anomaliesById = new Map(model.anomalies.map((a) => [a.eventId, a]));

@@ -1,7 +1,7 @@
-import { useRunStream } from "../hooks/useRunStream";
 import { useEffect, useRef } from "react";
-import { useParams, useNavigate, Navigate, Link } from "react-router-dom";
-import { type ActiveRun } from "../lib/api";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { useRunStream } from "../hooks/useRunStream";
+import type { ActiveRun } from "../lib/api";
 import { parseRunId } from "../lib/runId";
 import { Spinner } from "./shared";
 
@@ -53,19 +53,21 @@ export function LiveRun({ activeRuns, activeRunsLoaded, onComplete }: LiveRunPro
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <Link
-            to={`/runs/live/${runId}/transcript`}
-            className="text-xs text-teal hover:underline"
-          >
+          <Link to={`/runs/live/${runId}/transcript`} className="text-xs text-teal hover:underline">
             View transcript →
           </Link>
           {result && (
-            <span className={`text-sm px-2 py-1 rounded ${
-              result.status === "pass" ? "bg-green-100 text-green-800" :
-              result.status === "fail" ? "bg-red-100 text-red-800" :
-              result.status === "errored" ? "bg-red-100 text-red-800" :
-              "bg-yellow-100 text-yellow-800"
-            }`}>
+            <span
+              className={`text-sm px-2 py-1 rounded ${
+                result.status === "pass"
+                  ? "bg-green-100 text-green-800"
+                  : result.status === "fail"
+                    ? "bg-red-100 text-red-800"
+                    : result.status === "errored"
+                      ? "bg-red-100 text-red-800"
+                      : "bg-yellow-100 text-yellow-800"
+              }`}
+            >
               {result.status === "errored" ? "interrupted" : result.status}
             </span>
           )}
@@ -76,10 +78,7 @@ export function LiveRun({ activeRuns, activeRunsLoaded, onComplete }: LiveRunPro
         <div className="mx-4 mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3">
           <h3 className="text-sm font-medium text-red-800">Run error</h3>
           <p className="text-sm text-red-700 mt-1">{error}</p>
-          <button
-            className="btn-secondary mt-3"
-            onClick={() => navigate("/runs")}
-          >
+          <button className="btn-secondary mt-3" onClick={() => navigate("/runs")}>
             Back to Runs
           </button>
         </div>
@@ -88,7 +87,11 @@ export function LiveRun({ activeRuns, activeRunsLoaded, onComplete }: LiveRunPro
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 bg-ink flex items-center justify-center p-2 min-h-0">
           {frame ? (
-            <img src={frame} alt="Browser view" className="max-w-full max-h-full object-contain rounded" />
+            <img
+              src={frame}
+              alt="Browser view"
+              className="max-w-full max-h-full object-contain rounded"
+            />
           ) : activeRunsLoaded && !active ? (
             <div className="text-slate text-sm">Run not found</div>
           ) : (
@@ -102,7 +105,9 @@ export function LiveRun({ activeRuns, activeRunsLoaded, onComplete }: LiveRunPro
         >
           {messages.length === 0 && <div className="text-slate">Waiting for output...</div>}
           {messages.map((msg, i) => (
-            <div key={i} className="text-ink-light whitespace-pre-wrap">{msg}</div>
+            <div key={i} className="text-ink-light whitespace-pre-wrap">
+              {msg}
+            </div>
           ))}
         </div>
       </div>

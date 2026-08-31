@@ -1,4 +1,4 @@
-import type { TranscriptModel, TranscriptEvent } from "./transcript";
+import type { TranscriptEvent, TranscriptModel } from "./transcript";
 
 export type Block =
   | { kind: "user_message"; eventId: number; turn: number; content: string; isReminder: boolean }
@@ -44,9 +44,7 @@ export function buildBlocks(model: TranscriptModel): Block[] {
   return blocks;
 }
 
-function isTurnEvent(
-  ev: TranscriptEvent,
-): ev is Extract<TranscriptEvent, { turn: number }> {
+function isTurnEvent(ev: TranscriptEvent): ev is Extract<TranscriptEvent, { turn: number }> {
   return (
     ev.type === "llm_request" ||
     ev.type === "llm_response" ||

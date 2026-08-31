@@ -35,14 +35,8 @@ export function Sidebar({ tabs, activeTab, onTabChange, action, liveRun, childre
           <span className="text-teal-dark font-medium truncate">Running: {liveRun.title}</span>
         </button>
       )}
-      {action && (
-        <div className="p-3 border-b border-edge">
-          {action}
-        </div>
-      )}
-      <div className="flex-1 overflow-y-auto">
-        {children}
-      </div>
+      {action && <div className="p-3 border-b border-edge">{action}</div>}
+      <div className="flex-1 overflow-y-auto">{children}</div>
     </div>
   );
 }

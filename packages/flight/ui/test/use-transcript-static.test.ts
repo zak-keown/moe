@@ -1,7 +1,5 @@
-import { describe, test, expect } from "vitest";
-import {
-  parseTranscriptFromStaticPayload,
-} from "../src/lib/transcript";
+import { describe, expect, test } from "vitest";
+import { parseTranscriptFromStaticPayload } from "../src/lib/transcript";
 
 // Minimal run_start + run_end jsonl for static-mode testing
 const MINIMAL_JSONL = [

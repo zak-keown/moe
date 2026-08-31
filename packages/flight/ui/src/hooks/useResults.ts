@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api, type VerdictResult } from "../lib/api";
 
 const DEFAULT_PAGE_SIZE = 50;

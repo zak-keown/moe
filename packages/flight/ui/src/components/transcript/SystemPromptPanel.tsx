@@ -25,10 +25,20 @@ export function SystemPromptPanel({ content }: Props) {
     >
       <div className="tr-system-prompt-label">System prompt</div>
       <div className="tr-system-prompt-meta">
-        {open ? "click to collapse" : `${(firstLine ?? "").slice(0, 80)}${(firstLine ?? "").length > 80 ? "…" : ""} · ${(bytes / 1024).toFixed(1)}kB · click to expand`}
+        {open
+          ? "click to collapse"
+          : `${(firstLine ?? "").slice(0, 80)}${(firstLine ?? "").length > 80 ? "…" : ""} · ${(bytes / 1024).toFixed(1)}kB · click to expand`}
       </div>
       {open && (
-        <pre style={{ whiteSpace: "pre-wrap", marginTop: "12px", fontFamily: "var(--tr-font-mono, ui-monospace, monospace)", fontSize: "12px", lineHeight: 1.6 }}>
+        <pre
+          style={{
+            whiteSpace: "pre-wrap",
+            marginTop: "12px",
+            fontFamily: "var(--tr-font-mono, ui-monospace, monospace)",
+            fontSize: "12px",
+            lineHeight: 1.6,
+          }}
+        >
           {content}
         </pre>
       )}

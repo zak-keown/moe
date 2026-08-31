@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { api, type VerdictResult, type FanoutResult } from "../lib/api";
+import { api, type FanoutResult, type VerdictResult } from "../lib/api";
 import type { NewRunPrefill } from "./NewRunModal";
 import { RunSummaryCard } from "./RunSummaryCard";
 
@@ -55,7 +55,8 @@ export function RunDetail({ result, onFanout, onRunAgain }: RunDetailProps) {
           <Link to={`/run-sets/${result.runSet.runSetId}`} className="text-teal underline">
             {result.runSet.runSetId}
           </Link>
-          {" — attempt "}{result.runSet.attemptNumber} of {result.runSet.passes}
+          {" — attempt "}
+          {result.runSet.attemptNumber} of {result.runSet.passes}
         </div>
       )}
 
@@ -81,7 +82,9 @@ export function RunDetail({ result, onFanout, onRunAgain }: RunDetailProps) {
           <ul className="mt-2 space-y-1">
             {generated.map((card) => (
               <li key={card.id} className="text-sm text-green-700">
-                <a href={`/cards/${card.id}`} className="hover:underline font-medium">{card.title}</a>
+                <a href={`/cards/${card.id}`} className="hover:underline font-medium">
+                  {card.title}
+                </a>
                 <span className="text-green-500 ml-1">({card.id})</span>
               </li>
             ))}
@@ -105,43 +108,33 @@ export function RunDetail({ result, onFanout, onRunAgain }: RunDetailProps) {
         {onRunAgain && result.config && (
           <button
             className="btn-secondary"
-            onClick={() => onRunAgain({
-              cardId: result.scenario,
-              target: result.config!.target,
-              model: result.config!.model,
-              adapter: result.config!.adapter,
-              // Spread rather than assign `undefined`: the prefill is a
-              // partial by design and the modal distinguishes "not set" from
-              // "set to nothing".
-              ...(result.config!.chrome !== undefined
-                ? { chrome: result.config!.chrome }
-                : {}),
-              ...(result.config!.viewport !== undefined
-                ? { viewport: result.config!.viewport }
-                : {}),
-              ...(result.runSet?.passes !== undefined
-                ? { passes: result.runSet.passes }
-                : {}),
-            })}
+            onClick={() =>
+              onRunAgain({
+                cardId: result.scenario,
+                target: result.config!.target,
+                model: result.config!.model,
+                adapter: result.config!.adapter,
+                // Spread rather than assign `undefined`: the prefill is a
+                // partial by design and the modal distinguishes "not set" from
+                // "set to nothing".
+                ...(result.config!.chrome !== undefined ? { chrome: result.config!.chrome } : {}),
+                ...(result.config!.viewport !== undefined
+                  ? { viewport: result.config!.viewport }
+                  : {}),
+                ...(result.runSet?.passes !== undefined ? { passes: result.runSet.passes } : {}),
+              })
+            }
           >
             Run Again
           </button>
         )}
         {result.observations.length > 0 && (
-          <button
-            className="btn-primary"
-            onClick={handleFromObservations}
-            disabled={acting}
-          >
+          <button className="btn-primary" onClick={handleFromObservations} disabled={acting}>
             {acting ? "Generating..." : "Generate Test Cards from Observations"}
           </button>
         )}
         {result.status === "fail" && (
-          <button
-            className="btn-secondary"
-            onClick={handleAnalyzeFailure}
-            disabled={acting}
-          >
+          <button className="btn-secondary" onClick={handleAnalyzeFailure} disabled={acting}>
             {acting ? "Generating..." : "Generate Test Cards from Failure"}
           </button>
         )}

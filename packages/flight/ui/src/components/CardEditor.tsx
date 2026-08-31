@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useBlocker } from "react-router-dom";
 import { api, type CardDetail } from "../lib/api";
-import { useToast, Toast, ConfirmDialog } from "./shared";
+import { ConfirmDialog, Toast, useToast } from "./shared";
 
 interface CardEditorProps {
   card: CardDetail;
@@ -64,10 +64,16 @@ export function CardEditor({ card, onSave, onDelete }: CardEditorProps) {
       await api.cards.update(card.id, {
         title,
         status,
-        tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+        tags: tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
         stakeholder: stakeholder || undefined,
         description,
-        acceptanceCriteria: criteria.split("\n").map((c) => c.trim()).filter(Boolean),
+        acceptanceCriteria: criteria
+          .split("\n")
+          .map((c) => c.trim())
+          .filter(Boolean),
       });
       onSave();
       toast.show("Saved");
@@ -126,19 +132,13 @@ export function CardEditor({ card, onSave, onDelete }: CardEditorProps) {
       <p className="text-sm text-slate mb-6">{card.id}</p>
 
       {error && (
-        <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
+        <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
       <div className="space-y-4">
         <div>
           <label className="section-label block mb-1">Title</label>
-          <input
-            className="input-field"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+          <input className="input-field" value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
 
         <div>
@@ -198,34 +198,18 @@ export function CardEditor({ card, onSave, onDelete }: CardEditorProps) {
         </div>
 
         <div className="flex items-center gap-3 pt-2">
-          <button
-            className="btn-primary"
-            onClick={handleSave}
-            disabled={saving}
-          >
+          <button className="btn-primary" onClick={handleSave} disabled={saving}>
             {saving ? "Saving..." : "Save"}
           </button>
           {status === "draft" && (
-            <button
-              className="btn-primary"
-              onClick={handleApprove}
-              disabled={saving}
-            >
+            <button className="btn-primary" onClick={handleApprove} disabled={saving}>
               Approve
             </button>
           )}
-          <button
-            className="btn-secondary"
-            onClick={handleFanout}
-            disabled={fanning}
-          >
+          <button className="btn-secondary" onClick={handleFanout} disabled={fanning}>
             {fanning ? "Generating..." : "Fanout"}
           </button>
-          <button
-            className="btn-danger"
-            onClick={() => setConfirmDelete(true)}
-            disabled={saving}
-          >
+          <button className="btn-danger" onClick={() => setConfirmDelete(true)} disabled={saving}>
             Delete
           </button>
         </div>

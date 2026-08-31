@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { api, type RunSetManifest } from "../lib/api";
-import { StatusBadge, Spinner } from "./shared";
+import { Spinner, StatusBadge } from "./shared";
 
 export function RunSetDetail() {
   const { id } = useParams<{ id: string }>();
@@ -15,16 +15,24 @@ export function RunSetDetail() {
     let cancelled = false;
     api.runSets
       .get(id)
-      .then((m) => { if (!cancelled) setManifest(m); })
-      .catch((e) => { if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load run set"); });
-    return () => { cancelled = true; };
+      .then((m) => {
+        if (!cancelled) setManifest(m);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load run set");
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   // WS subscription — snapshot on connect, re-fetch on pass_end / set_done
   useEffect(() => {
     if (!id) return;
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const ws = new WebSocket(`${protocol}//${window.location.host}/api/ws/run-sets/${encodeURIComponent(id)}`);
+    const ws = new WebSocket(
+      `${protocol}//${window.location.host}/api/ws/run-sets/${encodeURIComponent(id)}`,
+    );
     ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data);
@@ -32,11 +40,18 @@ export function RunSetDetail() {
           setManifest(msg.manifest);
         } else if (msg.kind === "pass_end" || msg.kind === "set_done") {
           // Re-fetch to pick up updated statuses and summary
-          api.runSets.get(id).then(setManifest).catch(() => {});
+          api.runSets
+            .get(id)
+            .then(setManifest)
+            .catch(() => {});
         }
-      } catch { /* ignore malformed frames */ }
+      } catch {
+        /* ignore malformed frames */
+      }
     };
-    return () => { ws.close(); };
+    return () => {
+      ws.close();
+    };
   }, [id]);
 
   const handleCancel = async () => {
@@ -94,11 +109,7 @@ export function RunSetDetail() {
           {manifest.completedAt && <div>Completed: {manifest.completedAt}</div>}
         </div>
         {inFlight && (
-          <button
-            onClick={handleCancel}
-            disabled={cancelling}
-            className="btn-secondary"
-          >
+          <button onClick={handleCancel} disabled={cancelling} className="btn-secondary">
             {cancelling ? "Cancelling…" : "Cancel"}
           </button>
         )}
@@ -148,9 +159,7 @@ export function RunSetDetail() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-ink">
                   Attempt {r.attemptNumber} of {manifest.passes}
-                  {manifest.cards.length > 1 && (
-                    <span className="text-slate"> · {r.cardId}</span>
-                  )}
+                  {manifest.cards.length > 1 && <span className="text-slate"> · {r.cardId}</span>}
                 </span>
                 <StatusBadge status={r.status} />
               </div>

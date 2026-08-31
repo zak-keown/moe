@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import type { VerdictResult, ActiveRun } from "../lib/api";
-import { StatusBadge, formatDuration } from "./shared";
+import type { ActiveRun, VerdictResult } from "../lib/api";
 import { formatRunTimestamp } from "../lib/runId";
+import { formatDuration, StatusBadge } from "./shared";
 
 interface RunsListProps {
   results: VerdictResult[];
@@ -108,7 +108,8 @@ export function RunsList({
   if (groups.length === 0) {
     return (
       <div className="p-3 text-sm text-slate">
-        No runs yet. Use the <span className="font-medium text-ink">New Run</span> button above to start one.
+        No runs yet. Use the <span className="font-medium text-ink">New Run</span> button above to
+        start one.
       </div>
     );
   }
@@ -167,9 +168,7 @@ function CardGroupRow({ group, selectedId, onSelect, onSelectActive }: CardGroup
           )}
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          {runCount > 1 && (
-            <span className="text-xs text-slate">{runCount} runs</span>
-          )}
+          {runCount > 1 && <span className="text-xs text-slate">{runCount} runs</span>}
           {!hasActive && <StatusBadge status={group.latestStatus} />}
         </div>
       </div>
@@ -199,9 +198,7 @@ function CardGroupRow({ group, selectedId, onSelect, onSelectActive }: CardGroup
             }`}
           >
             <div className="flex items-start justify-between gap-2">
-              <span className="text-xs text-slate">
-                {when ? `Run at ${when}` : result.runId}
-              </span>
+              <span className="text-xs text-slate">{when ? `Run at ${when}` : result.runId}</span>
               <div className="flex items-center gap-2 flex-shrink-0">
                 {result.runSet && (
                   <Link
@@ -219,7 +216,8 @@ function CardGroupRow({ group, selectedId, onSelect, onSelectActive }: CardGroup
               <span>{formatDuration(result.duration_ms)}</span>
               {result.observations.length > 0 && (
                 <span>
-                  {result.observations.length} observation{result.observations.length !== 1 ? "s" : ""}
+                  {result.observations.length} observation
+                  {result.observations.length !== 1 ? "s" : ""}
                 </span>
               )}
             </div>

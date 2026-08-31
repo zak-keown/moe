@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { api, type VerdictResult } from "../lib/api";
-import { StatusBadge, formatDuration } from "./shared";
 import { formatRunTimestamp } from "../lib/runId";
+import { formatDuration, StatusBadge } from "./shared";
 
 export interface RunSummaryCardProps {
   result: VerdictResult;
@@ -33,13 +33,9 @@ export function RunSummaryCard({ result, trailingHeaderContent }: RunSummaryCard
       <div className={`flex items-center gap-3 ${when ? "mb-2" : "mb-6"}`}>
         <h1 className="heading-display text-2xl">{result.scenario}</h1>
         <StatusBadge status={result.status} size="md" />
-        {trailingHeaderContent && (
-          <span className="ml-auto">{trailingHeaderContent}</span>
-        )}
+        {trailingHeaderContent && <span className="ml-auto">{trailingHeaderContent}</span>}
       </div>
-      {when && (
-        <p className="text-sm text-slate mb-6">Run at {when}</p>
-      )}
+      {when && <p className="text-sm text-slate mb-6">Run at {when}</p>}
 
       {/* Video playback is not yet wired up — the writer records screencast
           frames under frames/ but does not stitch them into a video. When that
@@ -59,9 +55,7 @@ export function RunSummaryCard({ result, trailingHeaderContent }: RunSummaryCard
 
         {result.observations.length > 0 && (
           <div className="card p-4">
-            <h2 className="section-label mb-2">
-              Observations ({result.observations.length})
-            </h2>
+            <h2 className="section-label mb-2">Observations ({result.observations.length})</h2>
             <ul className="space-y-2">
               {result.observations.map((obs, i) => (
                 <li key={i} className="text-sm">
@@ -97,14 +91,14 @@ export function RunSummaryCard({ result, trailingHeaderContent }: RunSummaryCard
             <div className="flex gap-4 text-sm text-slate">
               <span>Input: {result.usage.inputTokens.toLocaleString()} tokens</span>
               <span>Output: {result.usage.outputTokens.toLocaleString()} tokens</span>
-              <span>{result.usage.turns} turn{result.usage.turns !== 1 ? "s" : ""}</span>
+              <span>
+                {result.usage.turns} turn{result.usage.turns !== 1 ? "s" : ""}
+              </span>
             </div>
           </div>
         )}
 
-        <div className="text-xs text-slate">
-          Duration: {formatDuration(result.duration_ms)}
-        </div>
+        <div className="text-xs text-slate">Duration: {formatDuration(result.duration_ms)}</div>
       </div>
     </>
   );

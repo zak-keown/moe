@@ -79,9 +79,7 @@ export function TuiCapture({ runId, ansiPath }: Props) {
       >
         {expanded ? "Hide" : "Show"} screen capture ({ansiPath})
       </button>
-      {expanded && !capture && !error && (
-        <div className="tr-tui-capture-status">loading…</div>
-      )}
+      {expanded && !capture && !error && <div className="tr-tui-capture-status">loading…</div>}
       {expanded && error && (
         <div className="tr-tui-capture-status tr-tui-capture-error">
           Failed to load capture: {error}
@@ -114,11 +112,7 @@ function CaptureGrid({ capture }: { capture: Capture }) {
           if (cell.underline) style.textDecoration = "underline";
           if (cell.width === 2) style.gridColumn = "span 2";
           return (
-            <span
-              key={`${y}:${x}`}
-              className="tr-tui-cell"
-              style={style}
-            >
+            <span key={`${y}:${x}`} className="tr-tui-cell" style={style}>
               {cell.ch === " " || cell.ch === "" ? " " : cell.ch}
             </span>
           );

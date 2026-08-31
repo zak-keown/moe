@@ -1,9 +1,5 @@
-import { describe, test, expect } from "vitest";
-import {
-  emptyTranscript,
-  applyEvent,
-  type TranscriptEvent,
-} from "../src/lib/transcript";
+import { describe, expect, test } from "vitest";
+import { applyEvent, emptyTranscript, type TranscriptEvent } from "../src/lib/transcript";
 import { buildBlocks } from "../src/lib/transcript-blocks";
 
 function reduce(evs: TranscriptEvent[]) {
@@ -11,8 +7,27 @@ function reduce(evs: TranscriptEvent[]) {
 }
 
 const baseTurnEvents = (turn: number, eventIdStart: number): TranscriptEvent[] => [
-  { eventId: eventIdStart,     parentEventId: 0, ts: `t${eventIdStart}`,   type: "llm_request",  turn, messageCount: 1 },
-  { eventId: eventIdStart + 1, parentEventId: 0, ts: `t${eventIdStart + 1}`, type: "llm_response", turn, stopReason: "end_turn", text: "", thinking: [], toolCalls: [], usage: { inputTokens: 0, outputTokens: 0 }, rawAssistantMessage: null },
+  {
+    eventId: eventIdStart,
+    parentEventId: 0,
+    ts: `t${eventIdStart}`,
+    type: "llm_request",
+    turn,
+    messageCount: 1,
+  },
+  {
+    eventId: eventIdStart + 1,
+    parentEventId: 0,
+    ts: `t${eventIdStart + 1}`,
+    type: "llm_response",
+    turn,
+    stopReason: "end_turn",
+    text: "",
+    thinking: [],
+    toolCalls: [],
+    usage: { inputTokens: 0, outputTokens: 0 },
+    rawAssistantMessage: null,
+  },
 ];
 
 describe("buildBlocks", () => {
@@ -38,17 +53,24 @@ describe("buildBlocks", () => {
       ...baseTurnEvents(1, 2),
       ...baseTurnEvents(2, 4),
       ...baseTurnEvents(3, 6),
-      { eventId: 8, parentEventId: 0, ts: "t8", type: "user_message", turn: 3, content: "<SYSTEM-REMINDER>\nReflection checkpoint." },
+      {
+        eventId: 8,
+        parentEventId: 0,
+        ts: "t8",
+        type: "user_message",
+        turn: 3,
+        content: "<SYSTEM-REMINDER>\nReflection checkpoint.",
+      },
       ...baseTurnEvents(4, 9),
     ]);
     const blocks = buildBlocks(model);
     expect(blocks.map((b) => b.kind)).toEqual([
       "user_message", // initial turn-0
-      "turn",         // 1
-      "turn",         // 2
-      "turn",         // 3
+      "turn", // 1
+      "turn", // 2
+      "turn", // 3
       "user_message", // reminder
-      "turn",         // 4
+      "turn", // 4
     ]);
     expect(blocks[4]).toMatchObject({ kind: "user_message", turn: 3, isReminder: true });
   });
@@ -59,7 +81,14 @@ describe("buildBlocks", () => {
     const model = reduce([
       { eventId: 1, parentEventId: 0, ts: "t1", type: "user_message", turn: 0, content: "go" },
       ...baseTurnEvents(1, 2),
-      { eventId: 4, parentEventId: 0, ts: "t4", type: "user_message", turn: 2, content: "<SYSTEM-REMINDER>\nYou have used your time budget" },
+      {
+        eventId: 4,
+        parentEventId: 0,
+        ts: "t4",
+        type: "user_message",
+        turn: 2,
+        content: "<SYSTEM-REMINDER>\nYou have used your time budget",
+      },
       ...baseTurnEvents(2, 5),
     ]);
     const blocks = buildBlocks(model);
@@ -70,7 +99,14 @@ describe("buildBlocks", () => {
 
   test("recognizes <SYSTEM-REMINDER> prefix with optional leading whitespace", () => {
     const model = reduce([
-      { eventId: 1, parentEventId: 0, ts: "t1", type: "user_message", turn: 0, content: "  \n<SYSTEM-REMINDER>\nbody" },
+      {
+        eventId: 1,
+        parentEventId: 0,
+        ts: "t1",
+        type: "user_message",
+        turn: 0,
+        content: "  \n<SYSTEM-REMINDER>\nbody",
+      },
     ]);
     const blocks = buildBlocks(model);
     expect(blocks[0]).toMatchObject({ kind: "user_message", isReminder: true });
@@ -78,7 +114,14 @@ describe("buildBlocks", () => {
 
   test("does NOT mark plain user content as reminder", () => {
     const model = reduce([
-      { eventId: 1, parentEventId: 0, ts: "t1", type: "user_message", turn: 0, content: "Verify the login flow" },
+      {
+        eventId: 1,
+        parentEventId: 0,
+        ts: "t1",
+        type: "user_message",
+        turn: 0,
+        content: "Verify the login flow",
+      },
     ]);
     const blocks = buildBlocks(model);
     expect(blocks[0]).toMatchObject({ kind: "user_message", isReminder: false });

@@ -1,4 +1,4 @@
-import { describe, test, expect, afterEach } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 import { getStaticRunPayload } from "../src/components/StaticRunPage";
 import type { StaticRunPayload, VerdictResult } from "../src/lib/api";
 

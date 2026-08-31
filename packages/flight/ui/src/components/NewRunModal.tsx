@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { api, type CardSummary } from "../lib/api";
 import { Spinner } from "./shared";
 
@@ -46,13 +46,12 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
   // Screencast disk persistence. Prefill from caller ("Run again") > server
   // default (hydrated from /api/config below). Passed through to the body
   // as-is so POST /api/run/:id overrides the server default per-run.
-  const [saveScreencast, setSaveScreencast] = useState<boolean>(
-    prefill?.saveScreencast ?? false,
-  );
+  const [saveScreencast, setSaveScreencast] = useState<boolean>(prefill?.saveScreencast ?? false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.cards.list()
+    api.cards
+      .list()
       .then((list) => {
         setCards(list);
         if (list[0] !== undefined && !selectedCard) setSelectedCard(list[0].id);
@@ -60,7 +59,8 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
       .catch((e) => setCardError(e instanceof Error ? e.message : "Failed to load cards"))
       .finally(() => setLoadingCards(false));
 
-    api.config.get()
+    api.config
+      .get()
       .then((config) => {
         setAvailableModels(config.models);
         // Prefill from user intent > server defaults. Never clobber a
@@ -69,7 +69,9 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
         if (!prefill?.target && config.defaultTarget) setTarget(config.defaultTarget);
         if (prefill?.saveScreencast === undefined) setSaveScreencast(config.defaultSaveScreencast);
       })
-      .catch(() => { /* config fetch is best-effort */ });
+      .catch(() => {
+        /* config fetch is best-effort */
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -130,9 +132,7 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
         <h2 className="heading-display text-xl mb-5">New Run</h2>
 
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
+          <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
         )}
 
         <div className="space-y-4">
@@ -178,7 +178,9 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
                 onChange={(e) => setModel(e.target.value)}
               >
                 {availableModels.map((m) => (
-                  <option key={m} value={m}>{m}</option>
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
                 ))}
               </select>
             ) : (
@@ -232,9 +234,8 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
               <span>Save screencast to disk</span>
             </label>
             <p className="text-xs text-slate mt-1 ml-6">
-              Off by default. Live view keeps working either way; this only
-              controls whether frames are written to the run directory
-              (100MB–1GB per run).
+              Off by default. Live view keeps working either way; this only controls whether frames
+              are written to the run directory (100MB–1GB per run).
             </p>
           </div>
 

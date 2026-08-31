@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, type VerdictResult } from "../lib/api";
 
 type RunMessage =
@@ -47,9 +47,15 @@ export function useRunStream(runId: string | null): UseRunStreamResult {
     const ws = new WebSocket(`${protocol}//${window.location.host}/api/ws?run=${runId}`);
     wsRef.current = ws;
 
-    ws.onopen = () => { if (!cancelled) setConnected(true); };
-    ws.onclose = () => { if (!cancelled) setConnected(false); };
-    ws.onerror = () => { if (!cancelled) setConnected(false); };
+    ws.onopen = () => {
+      if (!cancelled) setConnected(true);
+    };
+    ws.onclose = () => {
+      if (!cancelled) setConnected(false);
+    };
+    ws.onerror = () => {
+      if (!cancelled) setConnected(false);
+    };
 
     ws.onmessage = (event) => {
       if (cancelled) return;
@@ -83,9 +89,14 @@ export function useRunStream(runId: string | null): UseRunStreamResult {
           // If the run already finished on disk, fetch the result so the
           // LiveRun screen can transition into RunDetail. Guard against
           // the promise resolving after unmount / runId change.
-          api.results.get(runId)
-            .then((r) => { if (!cancelled) setResult(r); })
-            .catch(() => { /* fall through */ });
+          api.results
+            .get(runId)
+            .then((r) => {
+              if (!cancelled) setResult(r);
+            })
+            .catch(() => {
+              /* fall through */
+            });
           break;
       }
     };

@@ -1,22 +1,22 @@
-import { useState, useEffect, useCallback } from "react";
-import { Routes, Route, Navigate, useNavigate, useLocation, useParams } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
-import { Sidebar } from "./components/Sidebar";
-import { CardsList } from "./components/CardsList";
 import { CardEditor } from "./components/CardEditor";
-import { NewCardForm } from "./components/NewCardForm";
-import { RunsList } from "./components/RunsList";
-import { RunDetail } from "./components/RunDetail";
-import { NewRunModal, type NewRunPrefill } from "./components/NewRunModal";
+import { CardsList } from "./components/CardsList";
 import { LiveRun } from "./components/LiveRun";
+import { NewCardForm } from "./components/NewCardForm";
+import { NewRunModal, type NewRunPrefill } from "./components/NewRunModal";
+import { RunDetail } from "./components/RunDetail";
 import { RunSetDetail } from "./components/RunSetDetail";
-import { TranscriptView } from "./components/transcript";
+import { RunsList } from "./components/RunsList";
+import { Sidebar } from "./components/Sidebar";
 import { Spinner } from "./components/shared";
-import { api, type VerdictResult, type ActiveRun } from "./lib/api";
-import { useCards } from "./hooks/useCards";
-import { useCard } from "./hooks/useCard";
-import { useResults } from "./hooks/useResults";
+import { TranscriptView } from "./components/transcript";
 import { useActiveRuns } from "./hooks/useActiveRuns";
+import { useCard } from "./hooks/useCard";
+import { useCards } from "./hooks/useCards";
+import { useResults } from "./hooks/useResults";
+import { type ActiveRun, api, type VerdictResult } from "./lib/api";
 
 const TABS = [
   { label: "Cards", path: "/cards" },
@@ -37,7 +37,11 @@ function CardDetailPage({ onRefreshList }: { onRefreshList: () => void }) {
   const navigate = useNavigate();
 
   if (loading) {
-    return <div className="p-6"><Spinner label="Loading card..." /></div>;
+    return (
+      <div className="p-6">
+        <Spinner label="Loading card..." />
+      </div>
+    );
   }
 
   if (error) {
@@ -63,7 +67,13 @@ function CardDetailPage({ onRefreshList }: { onRefreshList: () => void }) {
   );
 }
 
-function NewCardPage({ onCreated, onCancel }: { onCreated: (id: string) => void; onCancel: () => void }) {
+function NewCardPage({
+  onCreated,
+  onCancel,
+}: {
+  onCreated: (id: string) => void;
+  onCancel: () => void;
+}) {
   return <NewCardForm onCreated={onCreated} onCancel={onCancel} />;
 }
 
@@ -75,7 +85,13 @@ function RunsPage() {
   );
 }
 
-function RunDetailPage({ onFanout, onRunAgain }: { onFanout: () => void; onRunAgain: (prefill: NewRunPrefill) => void }) {
+function RunDetailPage({
+  onFanout,
+  onRunAgain,
+}: {
+  onFanout: () => void;
+  onRunAgain: (prefill: NewRunPrefill) => void;
+}) {
   // Route path uses :id for historical reasons; the value is a runId
   // (`<cardId>_<YYYYMMDDTHHMMSSZ>_<nonce>`), which is the directory name
   // under .moe-flight/results/ and the primary key backend-side.
@@ -88,14 +104,19 @@ function RunDetailPage({ onFanout, onRunAgain }: { onFanout: () => void; onRunAg
     if (!runId) return;
     setLoading(true);
     setError(null);
-    api.results.get(runId)
+    api.results
+      .get(runId)
       .then(setResult)
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load result"))
       .finally(() => setLoading(false));
   }, [runId]);
 
   if (loading) {
-    return <div className="p-6"><Spinner label="Loading run..." /></div>;
+    return (
+      <div className="p-6">
+        <Spinner label="Loading run..." />
+      </div>
+    );
   }
 
   if (error) {
@@ -125,7 +146,11 @@ function CardsSidebar({
   const navigate = useNavigate();
 
   if (loading) {
-    return <div className="p-3"><Spinner label="Loading cards..." /></div>;
+    return (
+      <div className="p-3">
+        <Spinner label="Loading cards..." />
+      </div>
+    );
   }
 
   if (error) {
@@ -140,11 +165,7 @@ function CardsSidebar({
   }
 
   return (
-    <CardsList
-      cards={cards}
-      selectedId={selectedId}
-      onSelect={(id) => navigate(`/cards/${id}`)}
-    />
+    <CardsList cards={cards} selectedId={selectedId} onSelect={(id) => navigate(`/cards/${id}`)} />
   );
 }
 
@@ -172,7 +193,11 @@ function RunsSidebar({
   const navigate = useNavigate();
 
   if (loading && activeRuns.length === 0 && results.length === 0) {
-    return <div className="p-3"><Spinner label="Loading runs..." /></div>;
+    return (
+      <div className="p-3">
+        <Spinner label="Loading runs..." />
+      </div>
+    );
   }
 
   if (error) {
@@ -234,11 +259,14 @@ export default function App() {
     refreshResults();
   }
 
-  const handleRunComplete = useCallback((runId: string) => {
-    refreshActive();
-    refreshResults();
-    navigate(`/runs/${runId}`);
-  }, [refreshActive, refreshResults, navigate]);
+  const handleRunComplete = useCallback(
+    (runId: string) => {
+      refreshActive();
+      refreshResults();
+      navigate(`/runs/${runId}`);
+    },
+    [refreshActive, refreshResults, navigate],
+  );
 
   return (
     <>
@@ -248,19 +276,25 @@ export default function App() {
             tabs={TABS}
             activeTab={activeTab}
             onTabChange={(path) => navigate(path)}
-            liveRun={topActiveRun ? {
-              title: topActiveRun.title,
-              onClick: () => navigate(`/runs/live/${topActiveRun.id}`),
-            } : null}
-            action={activeTab === "/cards" ? (
-              <button className="btn-primary w-full" onClick={() => navigate("/cards/new")}>
-                New Card
-              </button>
-            ) : (
-              <button className="btn-primary w-full" onClick={() => setRunModal({})}>
-                New Run
-              </button>
-            )}
+            liveRun={
+              topActiveRun
+                ? {
+                    title: topActiveRun.title,
+                    onClick: () => navigate(`/runs/live/${topActiveRun.id}`),
+                  }
+                : null
+            }
+            action={
+              activeTab === "/cards" ? (
+                <button className="btn-primary w-full" onClick={() => navigate("/cards/new")}>
+                  New Card
+                </button>
+              ) : (
+                <button className="btn-primary w-full" onClick={() => setRunModal({})}>
+                  New Run
+                </button>
+              )
+            }
           >
             {activeTab === "/cards" ? (
               <CardsSidebar
@@ -289,32 +323,49 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/cards" replace />} />
           <Route path="/cards" element={<CardsPage />} />
-          <Route path="/cards/new" element={
-            <NewCardPage
-              onCreated={(id) => { navigate(`/cards/${id}`); refreshCards(); }}
-              onCancel={() => navigate("/cards")}
-            />
-          } />
+          <Route
+            path="/cards/new"
+            element={
+              <NewCardPage
+                onCreated={(id) => {
+                  navigate(`/cards/${id}`);
+                  refreshCards();
+                }}
+                onCancel={() => navigate("/cards")}
+              />
+            }
+          />
           <Route path="/cards/:id" element={<CardDetailPage onRefreshList={refreshCards} />} />
           <Route path="/runs" element={<RunsPage />} />
-          <Route path="/runs/live" element={
-            topActiveRun
-              ? <Navigate to={`/runs/live/${topActiveRun.id}`} replace />
-              : <Navigate to="/runs" replace />
-          } />
-          <Route path="/runs/live/:id" element={
-            <LiveRun
-              activeRuns={activeRuns}
-              activeRunsLoaded={activeRunsLoaded}
-              onComplete={handleRunComplete}
-            />
-          } />
-          <Route path="/runs/:id" element={
-            <RunDetailPage
-              onFanout={handleFanout}
-              onRunAgain={(prefill) => setRunModal({ prefill })}
-            />
-          } />
+          <Route
+            path="/runs/live"
+            element={
+              topActiveRun ? (
+                <Navigate to={`/runs/live/${topActiveRun.id}`} replace />
+              ) : (
+                <Navigate to="/runs" replace />
+              )
+            }
+          />
+          <Route
+            path="/runs/live/:id"
+            element={
+              <LiveRun
+                activeRuns={activeRuns}
+                activeRunsLoaded={activeRunsLoaded}
+                onComplete={handleRunComplete}
+              />
+            }
+          />
+          <Route
+            path="/runs/:id"
+            element={
+              <RunDetailPage
+                onFanout={handleFanout}
+                onRunAgain={(prefill) => setRunModal({ prefill })}
+              />
+            }
+          />
           <Route path="/runs/:id/transcript" element={<TranscriptView mode="posthoc" />} />
           <Route path="/runs/live/:id/transcript" element={<TranscriptView mode="live" />} />
           <Route path="/run-sets/:id" element={<RunSetDetail />} />

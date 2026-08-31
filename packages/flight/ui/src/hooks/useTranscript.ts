@@ -41,10 +41,13 @@ export function useTranscript(runId: string | null): UseTranscriptResult {
         if (!cancelled) setError("parse");
       }
       if (!cancelled) setLoading(false);
-      return () => { cancelled = true; };
+      return () => {
+        cancelled = true;
+      };
     }
 
-    api.results.fileText(runId, "run.jsonl")
+    api.results
+      .fileText(runId, "run.jsonl")
       .then((text) => {
         if (cancelled) return;
         try {
@@ -66,7 +69,9 @@ export function useTranscript(runId: string | null): UseTranscriptResult {
         if (!cancelled) setLoading(false);
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [runId]);
 
   return { model, loading, error };

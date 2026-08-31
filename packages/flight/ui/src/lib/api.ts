@@ -78,14 +78,26 @@ export interface RunSetSummary {
   perCard: Array<{
     cardId: string;
     passes: number;
-    byStatus: { pass: number; fail: number; investigate: number; errored: number; cancelled: number };
+    byStatus: {
+      pass: number;
+      fail: number;
+      investigate: number;
+      errored: number;
+      cancelled: number;
+    };
     cardStatus: string;
     medianTurns: number;
     medianDurationMs: number;
   }>;
   overall: {
     totalRuns: number;
-    byStatus: { pass: number; fail: number; investigate: number; errored: number; cancelled: number };
+    byStatus: {
+      pass: number;
+      fail: number;
+      investigate: number;
+      errored: number;
+      cancelled: number;
+    };
     overallStatus: string;
   };
 }
@@ -193,22 +205,26 @@ export const api = {
         method: "PUT",
         body: JSON.stringify(data),
       }),
-    approve: (id: string) =>
-      request<CardDetail>(`/scenarios/${id}/approve`, { method: "POST" }),
-    create: (data: Omit<CardDetail, "acceptanceCriteria"> & { acceptanceCriteria?: string[] | undefined }) =>
+    approve: (id: string) => request<CardDetail>(`/scenarios/${id}/approve`, { method: "POST" }),
+    create: (
+      data: Omit<CardDetail, "acceptanceCriteria"> & { acceptanceCriteria?: string[] | undefined },
+    ) =>
       request<CardDetail>("/scenarios", {
         method: "POST",
         body: JSON.stringify(data),
       }),
-    delete: (id: string) =>
-      request<void>(`/scenarios/${id}`, { method: "DELETE" }),
+    delete: (id: string) => request<void>(`/scenarios/${id}`, { method: "DELETE" }),
   },
   results: {
     // Paginated listing. See `GET /api/results` in src/api/routes/results.ts.
     // Server clamps `limit` to [1,200] and `offset` to ≥0; callers can pass
     // a raw user intent without guarding. `cardId` narrows to a single
     // card's run history.
-    list: (params?: { limit?: number | undefined; offset?: number | undefined; cardId?: string | undefined }) => {
+    list: (params?: {
+      limit?: number | undefined;
+      offset?: number | undefined;
+      cardId?: string | undefined;
+    }) => {
       const q = new URLSearchParams();
       if (params?.limit !== undefined) q.set("limit", String(params.limit));
       if (params?.offset !== undefined) q.set("offset", String(params.offset));
@@ -239,8 +255,7 @@ export const api = {
   fanout: {
     // `generate` takes a cardId — it fans out a card into related variations
     // without needing a run to exist.
-    generate: (cardId: string) =>
-      request<FanoutResult>(`/fanout/${cardId}`, { method: "POST" }),
+    generate: (cardId: string) => request<FanoutResult>(`/fanout/${cardId}`, { method: "POST" }),
     // These two key off an on-disk run result, so the path segment is a
     // runId (results directory name) — not a cardId.
     fromObservations: (runId: string) =>
@@ -249,15 +264,18 @@ export const api = {
       request<FanoutResult>(`/fanout/${runId}/failure`, { method: "POST" }),
   },
   run: {
-    start: (cardId: string, body: {
-      target: string;
-      model?: string | undefined;
-      adapter?: string | undefined;
-      chrome?: string | undefined;
-      viewport?: { width: number; height: number };
-      saveScreencast?: boolean | undefined;
-      passes?: number | undefined;
-    }) =>
+    start: (
+      cardId: string,
+      body: {
+        target: string;
+        model?: string | undefined;
+        adapter?: string | undefined;
+        chrome?: string | undefined;
+        viewport?: { width: number; height: number };
+        saveScreencast?: boolean | undefined;
+        passes?: number | undefined;
+      },
+    ) =>
       request<StartRunResponse>(`/run/${cardId}`, {
         method: "POST",
         body: JSON.stringify(body),
@@ -266,12 +284,13 @@ export const api = {
       request<{ status: "cancelling" }>(`/runs/${encodeURIComponent(runId)}`, { method: "DELETE" }),
   },
   runSets: {
-    get: (runSetId: string) =>
-      request<RunSetManifest>(`/run-sets/${encodeURIComponent(runSetId)}`),
+    get: (runSetId: string) => request<RunSetManifest>(`/run-sets/${encodeURIComponent(runSetId)}`),
     summary: (runSetId: string) =>
       request<RunSetSummary>(`/run-sets/${encodeURIComponent(runSetId)}/summary`),
     cancel: (runSetId: string) =>
-      request<{ status: "cancelling" }>(`/run-sets/${encodeURIComponent(runSetId)}`, { method: "DELETE" }),
+      request<{ status: "cancelling" }>(`/run-sets/${encodeURIComponent(runSetId)}`, {
+        method: "DELETE",
+      }),
   },
   activeRuns: {
     list: () => request<{ runs: ActiveRun[] }>("/runs/active").then((r) => r.runs),

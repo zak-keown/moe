@@ -38,22 +38,30 @@ export function RunEndPanel({ runEnd, observations }: Props) {
   // but render the label as "Interrupted" rather than the literal status
   // so operators see the cause at a glance.
   const isFail = runEnd.status === "fail" || runEnd.status === "errored";
-  const verdictLabel = runEnd.status === "errored"
-    ? "Interrupted"
-    : runEnd.status.charAt(0).toUpperCase() + runEnd.status.slice(1);
+  const verdictLabel =
+    runEnd.status === "errored"
+      ? "Interrupted"
+      : runEnd.status.charAt(0).toUpperCase() + runEnd.status.slice(1);
 
   return (
     <section className={`tr-run-end${isFail ? " tr-fail" : ""}`}>
       <header className="tr-run-end-head">
         <div>
-          <div style={{ fontFamily: "Fraunces, serif", fontStyle: "italic", fontSize: "24px", marginBottom: "4px" }}>
+          <div
+            style={{
+              fontFamily: "Fraunces, serif",
+              fontStyle: "italic",
+              fontSize: "24px",
+              marginBottom: "4px",
+            }}
+          >
             Verdict — {verdictLabel}
           </div>
         </div>
         <div className="tr-run-end-timing">
-          {formatDurationMs(runEnd.durationMs)} · {runEnd.usage.turns} turn{runEnd.usage.turns !== 1 ? "s" : ""} ·
-          {" "}{runEnd.usage.inputTokens.toLocaleString()} in ·
-          {" "}{runEnd.usage.outputTokens.toLocaleString()} out
+          {formatDurationMs(runEnd.durationMs)} · {runEnd.usage.turns} turn
+          {runEnd.usage.turns !== 1 ? "s" : ""} · {runEnd.usage.inputTokens.toLocaleString()} in ·{" "}
+          {runEnd.usage.outputTokens.toLocaleString()} out
         </div>
       </header>
 
@@ -71,9 +79,7 @@ export function RunEndPanel({ runEnd, observations }: Props) {
       {suggestions.length > 0 && (
         <ObservationGroup title="Suggestions" items={suggestions} tone="neutral" />
       )}
-      {notes.length > 0 && (
-        <ObservationGroup title="Notes" items={notes} tone="neutral" />
-      )}
+      {notes.length > 0 && <ObservationGroup title="Notes" items={notes} tone="neutral" />}
     </section>
   );
 }
@@ -101,7 +107,10 @@ function ObservationGroup({ title, items, tone }: ObservationGroupProps) {
       </div>
       <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
         {items.map((o, i) => (
-          <li key={i} style={{ padding: "6px 0", borderTop: i === 0 ? "none" : "1px dashed var(--tr-edge)" }}>
+          <li
+            key={i}
+            style={{ padding: "6px 0", borderTop: i === 0 ? "none" : "1px dashed var(--tr-edge)" }}
+          >
             <span
               style={{
                 display: "inline-block",

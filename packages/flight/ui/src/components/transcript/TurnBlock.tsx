@@ -33,7 +33,14 @@ function formatUsage(turn: TurnModel): string {
   return `${u.inputTokens.toLocaleString()} in · ${u.outputTokens.toLocaleString()} out`;
 }
 
-export function TurnBlock({ runId, turn, isCurrent, promptPairings, activeArtifact, onOpenArtifact }: Props) {
+export function TurnBlock({
+  runId,
+  turn,
+  isCurrent,
+  promptPairings,
+  activeArtifact,
+  onOpenArtifact,
+}: Props) {
   const duration = turnDuration(turn);
   const usage = formatUsage(turn);
   const thinking = turn.llmResponse?.thinking ?? [];
@@ -64,12 +71,12 @@ export function TurnBlock({ runId, turn, isCurrent, promptPairings, activeArtifa
         <ThinkingBlock key={`think-${i}`} text={t.text} />
       ))}
 
-      {reasoning && (
-        <ThinkingBlock text={reasoning} label="reasoning summary" />
-      )}
+      {reasoning && <ThinkingBlock text={reasoning} label="reasoning summary" />}
 
       {text && (
-        <p className="tr-assistant-text" style={{ whiteSpace: "pre-wrap" }}>{text}</p>
+        <p className="tr-assistant-text" style={{ whiteSpace: "pre-wrap" }}>
+          {text}
+        </p>
       )}
 
       {turn.tools.map((pair) => (

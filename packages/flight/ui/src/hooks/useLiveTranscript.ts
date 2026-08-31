@@ -38,12 +38,20 @@ export function useLiveTranscript(runId: string | null): UseLiveTranscriptResult
 
     let cancelled = false;
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const ws = new WebSocket(`${protocol}//${window.location.host}/api/ws?run=${encodeURIComponent(runId)}`);
+    const ws = new WebSocket(
+      `${protocol}//${window.location.host}/api/ws?run=${encodeURIComponent(runId)}`,
+    );
     wsRef.current = ws;
 
-    ws.onopen = () => { if (!cancelled) setConnected(true); };
-    ws.onclose = () => { if (!cancelled) setConnected(false); };
-    ws.onerror = () => { if (!cancelled) setConnected(false); };
+    ws.onopen = () => {
+      if (!cancelled) setConnected(true);
+    };
+    ws.onclose = () => {
+      if (!cancelled) setConnected(false);
+    };
+    ws.onerror = () => {
+      if (!cancelled) setConnected(false);
+    };
 
     ws.onmessage = (evt) => {
       if (cancelled) return;
@@ -55,7 +63,12 @@ export function useLiveTranscript(runId: string | null): UseLiveTranscriptResult
       }
       switch (msg.type) {
         case "transcriptSnapshot":
-          setModel((m) => (msg as { type: "transcriptSnapshot"; events: TranscriptEvent[] }).events.reduce(applyEvent, m));
+          setModel((m) =>
+            (msg as { type: "transcriptSnapshot"; events: TranscriptEvent[] }).events.reduce(
+              applyEvent,
+              m,
+            ),
+          );
           break;
         case "event":
           setModel((m) => applyEvent(m, (msg as { type: "event"; event: TranscriptEvent }).event));

@@ -163,12 +163,13 @@ function cloneTurn(turn: TurnModel): TurnModel {
   };
 }
 
-function ensureTurn(model: TranscriptModel, turnNumber: number): [Map<number, TurnModel>, TurnModel] {
+function ensureTurn(
+  model: TranscriptModel,
+  turnNumber: number,
+): [Map<number, TurnModel>, TurnModel] {
   const turns = new Map(model.turns);
   const existing = turns.get(turnNumber);
-  const turn: TurnModel = existing
-    ? cloneTurn(existing)
-    : { turn: turnNumber, tools: [] };
+  const turn: TurnModel = existing ? cloneTurn(existing) : { turn: turnNumber, tools: [] };
   turns.set(turnNumber, turn);
   return [turns, turn];
 }
