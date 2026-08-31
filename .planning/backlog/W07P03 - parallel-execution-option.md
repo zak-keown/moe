@@ -315,13 +315,31 @@ zero write conflicts, *and* produced the three-way citation dispute that the int
 requirements below now exist to prevent. Parallel execution was safe on the axis the ban
 names and unsafe on an axis it does not.
 
-**Question 3 (Claude-Code-only vs portable) follows from this and is closed as
-Claude-Code-only** — recorded as the orchestrator's call rather than Zak's, and cheap to
-reverse. The reasoning: you cannot gate on worktree isolation in a harness that has no
-worktree isolation. Writing the ladder into all seven reference files would either state
-a gate that never opens or open it without the isolation, and it collides with
-`runtime-pruning`, which is rewriting `gemini-tools.md` in W02. The gate fails closed
-elsewhere and everyone else runs serial, which is correct today.
+**Question 3 (Claude-Code-only vs portable): PORTABLE.** I first recorded this as
+Claude-Code-only, reasoning that "you cannot gate on worktree isolation in a harness that
+has no worktree isolation." Zak corrected the premise on 2026-08-31: **`git worktree` is
+a git feature, not a Claude Code feature.** Claude Code only wraps it (`isolation:
+"worktree"`); any harness that shells out to git has the same isolation available, and
+every one of the eleven targets runs shell commands.
+
+That makes the gate portable *and* deterministic, which is better than the
+Claude-Code-only version on both counts:
+
+- **The check is a git question, not a harness question.** A worker is in a linked
+  worktree when `git rev-parse --git-common-dir` differs from `git rev-parse --git-dir`.
+  That is one command, the same on all eleven targets, with no harness feature
+  detection and no model in the loop — which is exactly the shape ARCHITECTURE §2 asks
+  for when a missed check fails silently, and a missed isolation check fails silently by
+  definition: the writes just collide.
+- **No harness-capability matrix to maintain.** The rejected design needed one entry per
+  target and would have gone stale the way every other inherited support matrix in this
+  fork did.
+
+Cost: the ladder goes into all seven reference files (+~1 h), and it collides with
+`runtime-pruning`, which is rewriting `gemini-tools.md` in W02. Both are in
+`conflicts_with` already or are different waves — this item is W07, `runtime-pruning` is
+W02, so the collision is scheduled apart. Update the Effort table's "slower if" row:
+portable is now the chosen path, not the contingency.
 
 *The original question, kept because the answer rests on its framing:*
 
@@ -355,7 +373,10 @@ elsewhere and everyone else runs serial, which is correct today.
 | Close out the deferred `why` in `skill-tiers.yaml`; run `pnpm --filter @bubstack/moe-core test` | 15 m |
 | crew fan-out example | 20 m |
 
-**Slower if:** question 3 answers "portable" (+1 h, seven files). The rejected promotion
+**Slower if:** ~~question 3 answers "portable"~~ — it did, so the +1 h for seven
+reference files is in the estimate rather than a contingency. See the decision block
+above: `git worktree` is a git feature, so the gate is one `git rev-parse
+--git-common-dir` check and portable across all eleven targets. The rejected promotion
 also costs time rather than saving it: because the gate now lives in a plugin most people
 will not have installed, its operative rule has to be restated inline in both execution
 skills and kept in sync with the canonical copy.
