@@ -693,8 +693,8 @@ describe("the lean/full curation", () => {
     // Anti-vacuity guard, and it is load-bearing rather than defensive.
     //
     // The loop below SKIPS any skill whose tier does not resolve. Before the two
-    // maps existed, a broken lookup threw — `tiers.skills[n]` on an undefined
-    // map is a TypeError — so the failure was loud by accident. The merged
+    // maps existed, a broken lookup threw — indexing an undefined map is a
+    // TypeError — so the failure was loud by accident. The merged
     // registry removed that accident: `{...undefined}` evaluates to `{}` in
     // silence, so one mistyped spread key would leave every tier undefined, skip
     // all 27 iterations, and let this test pass with an empty body and the
