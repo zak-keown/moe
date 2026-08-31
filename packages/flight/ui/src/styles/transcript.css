@@ -1,5 +1,5 @@
 /* ============================================================
-   Gauntlet · transcript view
+   Flight · transcript view
    Scoped stylesheet. All classes prefixed `.tr-` to coexist with
    Tailwind v4 without collisions. Imported by TranscriptView.tsx
    (not main.tsx), so it's tree-shaken out of routes that don't

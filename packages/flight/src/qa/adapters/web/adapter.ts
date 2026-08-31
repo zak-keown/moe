@@ -39,7 +39,6 @@ import { buildReturnScreenshot } from "./tools/return-screenshot.js";
 import {
   executeNewTab,
   executeCloseTab,
-  MAX_TAB_DEPTH,
   type WebTabsCtx,
 } from "./tools/tabs.js";
 import type { WebToolCtx } from "./tools/types.js";
@@ -52,7 +51,7 @@ import type { WebToolCtx } from "./tools/types.js";
 // `"type": "module"`.
 // PRI-1436: chrome-ws-lib's only top-level export is now `createSession()`.
 // Each WebAdapter instance gets its own session-bag so concurrent web runs
-// in `gauntlet serve` don't share globals (activePort, profile name,
+// in `moe-flight qa serve` don't share globals (activePort, profile name,
 // connection pool, etc.).
 //
 // The session is dynamically typed (the underlying lib is JS); we model
@@ -211,7 +210,7 @@ export class WebAdapter implements Adapter {
   private toolSchemas: Map<string, ToolDefinition["parameters"]> | null = null;
   /**
    * PRI-1436: per-WebAdapter chrome-ws-lib session. Concurrent web runs
-   * in `gauntlet serve` each construct their own WebAdapter and therefore
+   * in `moe-flight qa serve` each construct their own WebAdapter and therefore
    * their own session — no shared activePort / chromeProcess / profile
    * name / connection pool. Tests may inject a stubbed session via
    * `options.chromeSession`.

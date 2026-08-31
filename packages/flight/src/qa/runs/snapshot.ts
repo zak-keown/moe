@@ -2,12 +2,12 @@ import { mkdirSync, cpSync, readdirSync, statSync } from "fs";
 import { join } from "path";
 
 export interface SnapshotInputs {
-  /** Absolute path to the run output directory (`.gauntlet/results/<runId>`). */
+  /** Absolute path to the run output directory (`.moe-flight/results/<runId>`). */
   runDir: string;
   /** Absolute path to the resolved story file. Copied to `<runDir>/inputs/story.md`. */
   storyPath: string;
   /**
-   * Absolute path to the *source* context root (`.gauntlet/context/`). Copied
+   * Absolute path to the *source* context root (`.moe-flight/context/`). Copied
    * recursively to `<runDir>/inputs/context/`. If the source is missing or
    * empty, an empty `inputs/context/` is created — matching the existing
    * "degrade gracefully when no context is present" semantics.

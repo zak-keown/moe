@@ -11,7 +11,7 @@ const NON_TTY = {
   color: false,
   columns: 100,
   target: "",
-  resultsRoot: "/tmp/.gauntlet/results",
+  resultsRoot: "/tmp/.moe-flight/results",
 };
 
 const TTY = {
@@ -19,7 +19,7 @@ const TTY = {
   color: false,
   columns: 100,
   target: "https://app.local",
-  resultsRoot: "/tmp/.gauntlet/results",
+  resultsRoot: "/tmp/.moe-flight/results",
 };
 
 describe("BatchTableRenderer (append mode)", () => {
@@ -56,11 +56,11 @@ describe("BatchTableRenderer (append mode)", () => {
 
   test("finalize emits a results line pointing to resultsRoot", () => {
     const sink = collect();
-    const r = new BatchTableRenderer(sink, { ...NON_TTY, resultsRoot: "/some/proj/.gauntlet/results" });
+    const r = new BatchTableRenderer(sink, { ...NON_TTY, resultsRoot: "/some/proj/.moe-flight/results" });
     r.setQueued("story-a");
     r.setDone("story-a", "pass", 3);
     r.finalize();
-    expect(sink.out).toContain("results: /some/proj/.gauntlet/results");
+    expect(sink.out).toContain("results: /some/proj/.moe-flight/results");
   });
 });
 
@@ -210,7 +210,7 @@ describe("BatchTableRenderer header", () => {
     r.setRunning("story-a", "run-a-1", 1, 1);
     r.setDone("story-a", "pass", 5, 1);
     r.finalize();
-    expect(sink.out).toContain("Gauntlet");
+    expect(sink.out).toContain("Flight");
     expect(sink.out).toContain("1 card");
     expect(sink.out).not.toContain("attempts");
   });
@@ -271,7 +271,7 @@ describe("BatchTableRenderer (TTY mode — Mock B ticker)", () => {
     r.setQueued("a");
     r.setQueued("b");
     r.setRunning("a", "run-a-1");
-    expect(sink.out).toContain("Gauntlet");
+    expect(sink.out).toContain("Flight");
     expect(sink.out).toContain("2 cards");
     expect(sink.out).toContain("https://app.local");
     expect(sink.out).toContain("[1/2]");
@@ -282,7 +282,7 @@ describe("BatchTableRenderer (TTY mode — Mock B ticker)", () => {
     r.finalize();
   });
 
-  test("setDone commits a result line with the VetStatus and the result-dir path", () => {
+  test("setDone commits a result line with the VerdictStatus and the result-dir path", () => {
     const sink = collect();
     const r = new BatchTableRenderer(sink, TTY);
     r.setQueued("a");
@@ -293,7 +293,7 @@ describe("BatchTableRenderer (TTY mode — Mock B ticker)", () => {
     expect(sink.out).toContain("!"); // investigate glyph
     expect(sink.out).toContain("investigate");
     expect(sink.out).toContain("7 turns");
-    expect(sink.out).toContain("/tmp/.gauntlet/results/run-a-1/");
+    expect(sink.out).toContain("/tmp/.moe-flight/results/run-a-1/");
   });
 
   test("setErrored before start commits a flush result line under the header", () => {
@@ -302,7 +302,7 @@ describe("BatchTableRenderer (TTY mode — Mock B ticker)", () => {
     r.setQueued("a");
     r.setErrored("a", null, "card path missing");
     r.finalize();
-    expect(sink.out).toContain("Gauntlet");
+    expect(sink.out).toContain("Flight");
     expect(sink.out).toContain("✗");
     expect(sink.out).toContain("error");
     expect(sink.out).toContain("before start");
@@ -325,6 +325,6 @@ describe("BatchTableRenderer (TTY mode — Mock B ticker)", () => {
     expect(sink.out).toContain("pass");
     expect(sink.out).toContain("timeout");
     expect(sink.out).toContain("batch: 1 pass · 0 fail · 0 investigate · 1 errored");
-    expect(sink.out).toContain("results: /tmp/.gauntlet/results");
+    expect(sink.out).toContain("results: /tmp/.moe-flight/results");
   });
 });

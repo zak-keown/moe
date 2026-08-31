@@ -70,7 +70,7 @@ function attachScreenshot({ getPageSession }) {
     }
   }
 
-  // GAUNTLET DIVERGENCE #6 (PRI-1517): optional opts.timeoutMs threads to
+  // MOE-FLIGHT DIVERGENCE #6 (PRI-1517): optional opts.timeoutMs threads to
   // the page-session send timeout for Page.captureScreenshot. Default
   // behavior unchanged for callers that pass nothing (page-session's 30s
   // default applies). Used by the adapter's takeReturnScreenshot to cap
@@ -115,7 +115,7 @@ function attachScreenshot({ getPageSession }) {
       clip = { x: 0, y: 0, width, height, scale: 1 };
     }
 
-    // GAUNTLET DIVERGENCE #6 (PRI-1517): opts.timeoutMs threads to the
+    // MOE-FLIGHT DIVERGENCE #6 (PRI-1517): opts.timeoutMs threads to the
     // page-session send timeout. Mitigation for the screenshot-during-nav
     // wedge — kept because the wedge mechanism wasn't pinned down.
     const result = await ps.send('Page.captureScreenshot', {

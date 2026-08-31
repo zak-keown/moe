@@ -32,12 +32,12 @@ describe("CLIAdapter", () => {
   });
 
   test("includes `read` tool when context root is non-empty", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-cli-read-wire-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-cli-read-wire-"));
     try {
-      mkdirSync(join(tmp, ".gauntlet", "context"), { recursive: true });
-      writeFileSync(join(tmp, ".gauntlet", "context", "alice.md"), "A");
+      mkdirSync(join(tmp, ".moe-flight", "context"), { recursive: true });
+      writeFileSync(join(tmp, ".moe-flight", "context", "alice.md"), "A");
       adapter = new CLIAdapter({
-        contextRoot: join(tmp, ".gauntlet", "context"),
+        contextRoot: join(tmp, ".moe-flight", "context"),
       });
       const names = adapter.toolDefinitions().map((t) => t.name);
       expect(names).toContain("read");
@@ -47,15 +47,15 @@ describe("CLIAdapter", () => {
   });
 
   test("executeTool(read) returns file contents via the `read` tool", async () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-cli-read-exec-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-cli-read-exec-"));
     try {
-      mkdirSync(join(tmp, ".gauntlet", "context", "alice"), { recursive: true });
+      mkdirSync(join(tmp, ".moe-flight", "context", "alice"), { recursive: true });
       writeFileSync(
-        join(tmp, ".gauntlet", "context", "alice", "credentials.md"),
+        join(tmp, ".moe-flight", "context", "alice", "credentials.md"),
         "Username: alice\nPassword: hunter2",
       );
       adapter = new CLIAdapter({
-        contextRoot: join(tmp, ".gauntlet", "context"),
+        contextRoot: join(tmp, ".moe-flight", "context"),
       });
       const result = await adapter.executeTool(
         "read",
@@ -115,7 +115,7 @@ describe("CLIAdapter", () => {
 
   test("toolDefinitions includes bash", () => {
     const adapter = new CLIAdapter({
-      runDir: mkdtempSync(join(tmpdir(), "gauntlet-bash-adapter-")),
+      runDir: mkdtempSync(join(tmpdir(), "moe-flight-bash-adapter-")),
     });
     const names = adapter.toolDefinitions().map((d) => d.name);
     expect(names).toContain("bash");

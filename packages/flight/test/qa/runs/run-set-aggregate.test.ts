@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { RunSetWriter } from "../../../src/qa/evidence/run-set-writer.js";
-import type { VetResult } from "../../../src/qa/types.js";
+import type { VerdictResult } from "../../../src/qa/types.js";
 import type { RunSetCtx } from "../../../src/qa/runs/run-set-types.js";
 
 // PRI-1507 — when a v5 "errored" run still has a result.json on disk
@@ -23,7 +23,7 @@ function makeCtx(passes: number): RunSetCtx {
   };
 }
 
-function makeResult(overrides: Partial<VetResult>): VetResult {
+function makeResult(overrides: Partial<VerdictResult>): VerdictResult {
   return {
     schemaVersion: 5,
     runId: "r",

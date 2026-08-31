@@ -1,7 +1,7 @@
 // Forked from https://github.com/obra/superpowers-chrome
 // Original author: Jesse Vincent
 //
-// GAUNTLET DIVERGENCE: upstream exports module-load constants
+// MOE-FLIGHT DIVERGENCE: upstream exports module-load constants
 // (CHROME_DEBUG_HOST, CHROME_DEBUG_PORT, CHROME_DEBUG_BASE, WS_OVERRIDE_ENABLED).
 // We also export mutable getters + setDefaults() so WebAdapter can point the
 // library at a remote Chrome at runtime without mutating process.env.
@@ -65,10 +65,10 @@ function rewriteWsUrl(originalUrl, host, port) {
 // private state-bag (host/port/overrideEnabled). PRI-1436 origin, since
 // contributed upstream as PR #33 and merged 2026-05-05. As of upstream
 // a9e2d0c (the sync state recorded in docs/upstream-sync.md), this
-// factory is the upstream baseline, not a Gauntlet-specific divergence.
+// factory is the upstream baseline, not a Flight-specific divergence.
 //
 // The legacy mutable getters above and the load-time snapshot constants
-// below are kept as Gauntlet-specific divergence #2 — upstream's
+// below are kept as Flight-specific divergence #2 — upstream's
 // 51d0d68 removed them and we deliberately did not port that removal,
 // since callers that destructure CHROME_DEBUG_HOST/PORT/BASE/
 // WS_OVERRIDE_ENABLED keep working across syncs.
@@ -149,7 +149,7 @@ function createOverride({ host, port } = {}) {
 // ===== createOverride() factory END =====
 
 module.exports = {
-  // Gauntlet API — runtime-mutable endpoint (legacy module-level singleton).
+  // Flight API — runtime-mutable endpoint (legacy module-level singleton).
   setDefaults,
   getHost,
   getPort,
@@ -157,7 +157,7 @@ module.exports = {
   isOverrideEnabled,
   rewriteWsUrl,
 
-  // PRI-1436: per-instance factory. New Gauntlet callers should prefer this
+  // PRI-1436: per-instance factory. New Flight callers should prefer this
   // over the module-level getters above so concurrent web runs don't share
   // host/port state.
   createOverride,

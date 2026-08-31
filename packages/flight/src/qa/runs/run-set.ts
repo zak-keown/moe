@@ -2,7 +2,7 @@ import { readFileSync } from "fs";
 import { RunSetWriter } from "../evidence/run-set-writer.js";
 import { makeRunSetId, makeRunId } from "../util/id.js";
 import type { RunSetCtx, RunSetKind } from "./run-set-types.js";
-import type { VetResult } from "../types.js";
+import type { VerdictResult } from "../types.js";
 import type { CardId, RunId, RunSetId } from "../util/brands.js";
 
 export interface ExecutorArgs {
@@ -14,7 +14,7 @@ export interface ExecutorArgs {
 export interface ExecutorReturn {
   runId: RunId;
   outDir: string;
-  result: VetResult;
+  result: VerdictResult;
 }
 
 export type Executor = (args: ExecutorArgs) => Promise<ExecutorReturn>;
@@ -59,7 +59,7 @@ export async function runRunSet(cfg: RunSetConfig): Promise<RunSetHandle> {
 
   // Eagerly generate all runIds so set.json is fully populated up front.
   const allRuns: Array<{ runId: RunId; cardId: CardId; attemptNumber: number }> = [];
-  for (const [cardIndex, cardId] of cfg.cards.entries()) {
+  for (const [_cardIndex, cardId] of cfg.cards.entries()) {
     for (let attemptNumber = 1; attemptNumber <= cfg.passes; attemptNumber++) {
       allRuns.push({
         runId: gen(cardId, attemptNumber),
@@ -96,7 +96,7 @@ async function runLoop(args: {
 }): Promise<RunSetResult> {
   const { cfg, writer, ctx0, allRuns, runSetId } = args;
 
-  const resultsByRunId = new Map<string, VetResult>();
+  const resultsByRunId = new Map<string, VerdictResult>();
   const processedRunIds = new Set<string>();
 
   outer: for (const [cardIndex, cardId] of cfg.cards.entries()) {

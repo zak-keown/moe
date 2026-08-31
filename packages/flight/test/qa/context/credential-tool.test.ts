@@ -94,14 +94,14 @@ async function withPopulatedContextRoot<T>(
   // is deleted. A sync `try/finally` would `rmSync` the dir the
   // instant `fn` returned its Promise, racing against any unresolved
   // awaits inside.
-  const tmp = mkdtempSync(join(tmpdir(), "gauntlet-credtool-"));
+  const tmp = mkdtempSync(join(tmpdir(), "moe-flight-credtool-"));
   writeFileSync(join(tmp, "marker.md"), "anything");
   try { return await fn(tmp); } finally { rmSync(tmp, { recursive: true, force: true }); }
 }
 
 describe("buildFetchCredentialTool", () => {
   test("returns null when contextRoot is empty (no files)", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-credtool-empty-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-credtool-empty-"));
     try {
       const tool = buildFetchCredentialTool(tmp, cfg(OK));
       expect(tool).toBeNull();

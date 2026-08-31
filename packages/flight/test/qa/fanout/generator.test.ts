@@ -11,7 +11,7 @@ import {
 import { parseStoryCard } from "../../../src/qa/format/story-card.js";
 import type { StoryCard } from "../../../src/qa/format/story-card.js";
 import type { LLMClient } from "../../../src/qa/models/provider.js";
-import type { VetResult } from "../../../src/qa/types.js";
+import type { VerdictResult } from "../../../src/qa/types.js";
 
 function makeMockClient(responseText: string): LLMClient & { callCount: number } {
   const client = {
@@ -36,7 +36,7 @@ function makeMockClient(responseText: string): LLMClient & { callCount: number }
   return client;
 }
 
-function makeVetResult(overrides: Partial<VetResult> = {}): VetResult {
+function makeVerdictResult(overrides: Partial<VerdictResult> = {}): VerdictResult {
   return {
     schemaVersion: 1,
     runId: "login-flow_20260416T142301Z_test",
@@ -203,7 +203,7 @@ describe("splitAndValidateCards", () => {
 
 describe("buildObservationPrompt", () => {
   test("includes observation details and parent scenario", () => {
-    const result = makeVetResult({
+    const result = makeVerdictResult({
       scenario: "checkout-flow",
       observations: [
         { kind: "bug", description: "Button overlaps on mobile" },
@@ -224,7 +224,7 @@ describe("buildObservationPrompt", () => {
 
 describe("generateFromObservations", () => {
   test("creates cards from observations", async () => {
-    const result = makeVetResult({
+    const result = makeVerdictResult({
       scenario: "checkout-flow",
       observations: [
         { kind: "bug", description: "Button overlaps on mobile" },
@@ -244,7 +244,7 @@ describe("generateFromObservations", () => {
   });
 
   test("returns empty array when no observations", async () => {
-    const result = makeVetResult({ observations: [] });
+    const result = makeVerdictResult({ observations: [] });
     const client = makeMockClient("should not be called");
     const cards = await generateFromObservations(result, client);
 
@@ -257,7 +257,7 @@ describe("generateFromObservations", () => {
 
 describe("buildFailurePrompt", () => {
   test("includes failure details for fail results", () => {
-    const result = makeVetResult({
+    const result = makeVerdictResult({
       scenario: "login-flow",
       status: "fail",
       summary: "Login button unresponsive",
@@ -274,14 +274,14 @@ describe("buildFailurePrompt", () => {
   });
 
   test("returns null for non-fail results", () => {
-    expect(buildFailurePrompt(makeVetResult({ status: "pass" }))).toBeNull();
-    expect(buildFailurePrompt(makeVetResult({ status: "investigate" }))).toBeNull();
+    expect(buildFailurePrompt(makeVerdictResult({ status: "pass" }))).toBeNull();
+    expect(buildFailurePrompt(makeVerdictResult({ status: "investigate" }))).toBeNull();
   });
 });
 
 describe("generateFromFailure", () => {
   test("creates cards from failed run", async () => {
-    const result = makeVetResult({
+    const result = makeVerdictResult({
       scenario: "login-flow",
       status: "fail",
       summary: "Login button unresponsive",
@@ -303,7 +303,7 @@ describe("generateFromFailure", () => {
   });
 
   test("returns empty for non-fail results and does not call LLM", async () => {
-    const result = makeVetResult({ status: "pass" });
+    const result = makeVerdictResult({ status: "pass" });
     const client = makeMockClient("should not be called");
     const cards = await generateFromFailure(result, client);
 

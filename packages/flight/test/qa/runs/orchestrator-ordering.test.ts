@@ -31,7 +31,7 @@ Minimal card.
 
 describe("executeRunCore — ordering invariant (PRI-1507)", () => {
   test("writeResultFiles runs strictly before afterClose hook", async () => {
-    const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-orch-order-"));
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-orch-order-"));
     const storyPath = join(projectRoot, "card.md");
     writeFileSync(storyPath, ORDERING_CARD);
     const card = parseStoryCard(ORDERING_CARD);
@@ -46,7 +46,7 @@ describe("executeRunCore — ordering invariant (PRI-1507)", () => {
       client,
       runConfig: {
         projectRoot,
-        stateDirName: ".gauntlet",
+        stateDirName: ".moe-flight",
         model: "claude-sonnet-4-6",
         adapter: "cli",
         target: "true",

@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
 import { createApp } from "../../../src/qa/api/server.js";
 import { loadConfig } from "../../../src/qa/config.js";
-import { gauntletPath } from "../../../src/qa/paths.js";
+import { flightPath } from "../../../src/qa/paths.js";
 import { ActiveRunRegistry } from "../../../src/qa/api/active-runs.js";
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
@@ -18,13 +18,13 @@ describe("Results API", () => {
   let app: ReturnType<typeof createApp>;
 
   beforeEach(() => {
-    projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-results-api-"));
+    projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-results-api-"));
     // Create stories dir (needed by scenarioRoutes)
-    mkdirSync(gauntletPath(projectRoot, ".gauntlet", "stories"), { recursive: true });
+    mkdirSync(flightPath(projectRoot, ".moe-flight", "stories"), { recursive: true });
     // Create results. Directory names are runIds (`cardId_ts_nonce`); the
     // older tests used cardIds directly because runId wasn't yet primary,
     // but the route itself treats the directory name opaquely as the runId.
-    const resultsDir = gauntletPath(projectRoot, ".gauntlet", "results");
+    const resultsDir = flightPath(projectRoot, ".moe-flight", "results");
     mkdirSync(join(resultsDir, "test-001_20260401T100000Z_aaaa"), { recursive: true });
     writeFileSync(
       join(resultsDir, "test-001_20260401T100000Z_aaaa", "result.json"),
@@ -79,7 +79,7 @@ describe("Results API", () => {
   test("GET /api/results?cardId=<id> filters to that card's runs only", async () => {
     // Add a second run for test-001 to prove the filter does more than pass
     // through a single row.
-    const resultsDir = gauntletPath(projectRoot, ".gauntlet", "results");
+    const resultsDir = flightPath(projectRoot, ".moe-flight", "results");
     mkdirSync(join(resultsDir, "test-001_20260401T120000Z_cccc"), { recursive: true });
     writeFileSync(
       join(resultsDir, "test-001_20260401T120000Z_cccc", "result.json"),
@@ -107,7 +107,7 @@ describe("Results API", () => {
 
   test("GET /api/results honors limit and offset", async () => {
     // Add enough rows to exercise pagination.
-    const resultsDir = gauntletPath(projectRoot, ".gauntlet", "results");
+    const resultsDir = flightPath(projectRoot, ".moe-flight", "results");
     for (let i = 0; i < 5; i++) {
       const ts = `20260402T10000${i}Z`;
       const dir = `pad-${i}_${ts}_aaaa`;
@@ -174,9 +174,9 @@ describe("Results API", () => {
   });
 
   test("GET /api/results handles malformed result.json gracefully", async () => {
-    const badDir = mkdtempSync(join(tmpdir(), "gauntlet-bad-json-"));
-    mkdirSync(gauntletPath(badDir, ".gauntlet", "stories"), { recursive: true });
-    const resultsDir = gauntletPath(badDir, ".gauntlet", "results");
+    const badDir = mkdtempSync(join(tmpdir(), "moe-flight-bad-json-"));
+    mkdirSync(flightPath(badDir, ".moe-flight", "stories"), { recursive: true });
+    const resultsDir = flightPath(badDir, ".moe-flight", "results");
     mkdirSync(join(resultsDir, "bad-001_20260401T000000Z_aaaa"), { recursive: true });
     writeFileSync(join(resultsDir, "bad-001_20260401T000000Z_aaaa", "result.json"), "not valid json{{{");
 
@@ -193,9 +193,9 @@ describe("Results API", () => {
   });
 
   test("GET /api/results/:runId returns 500 for malformed result.json", async () => {
-    const badDir = mkdtempSync(join(tmpdir(), "gauntlet-bad-json2-"));
-    mkdirSync(gauntletPath(badDir, ".gauntlet", "stories"), { recursive: true });
-    const resultsDir = gauntletPath(badDir, ".gauntlet", "results");
+    const badDir = mkdtempSync(join(tmpdir(), "moe-flight-bad-json2-"));
+    mkdirSync(flightPath(badDir, ".moe-flight", "stories"), { recursive: true });
+    const resultsDir = flightPath(badDir, ".moe-flight", "results");
     mkdirSync(join(resultsDir, "bad-002"), { recursive: true });
     writeFileSync(join(resultsDir, "bad-002", "result.json"), "not json");
 
@@ -217,9 +217,9 @@ describe("Results API", () => {
     // A run that's in flight: no result.json yet, but screenshots and
     // run.jsonl are being written. The file route should skip the
     // manifest check when the run is in the active registry.
-    const liveDir = mkdtempSync(join(tmpdir(), "gauntlet-live-"));
-    mkdirSync(gauntletPath(liveDir, ".gauntlet", "stories"), { recursive: true });
-    const resultsDir = gauntletPath(liveDir, ".gauntlet", "results");
+    const liveDir = mkdtempSync(join(tmpdir(), "moe-flight-live-"));
+    mkdirSync(flightPath(liveDir, ".moe-flight", "stories"), { recursive: true });
+    const resultsDir = flightPath(liveDir, ".moe-flight", "results");
     const runId = "live-001_20260422T000000Z_aaaa";
     const runDir = join(resultsDir, runId);
     mkdirSync(join(runDir, "screenshots"), { recursive: true });
@@ -258,7 +258,7 @@ describe("Results API", () => {
     // Existing test-001 has result.json with evidence.screenshots=[] — no
     // screenshot files are listed. A request for a screenshot file should
     // 404 even if it exists on disk (manifest is authoritative post-run).
-    const resultsDir = gauntletPath(projectRoot, ".gauntlet", "results");
+    const resultsDir = flightPath(projectRoot, ".moe-flight", "results");
     mkdirSync(join(resultsDir, "test-001_20260401T100000Z_aaaa", "screenshots"), { recursive: true });
     writeFileSync(
       join(resultsDir, "test-001_20260401T100000Z_aaaa", "screenshots", "stray.png"),
@@ -272,8 +272,8 @@ describe("Results API", () => {
   });
 
   test("GET /api/results returns empty page when no results dir", async () => {
-    const emptyDir = mkdtempSync(join(tmpdir(), "gauntlet-empty-"));
-    mkdirSync(gauntletPath(emptyDir, ".gauntlet", "stories"), { recursive: true });
+    const emptyDir = mkdtempSync(join(tmpdir(), "moe-flight-empty-"));
+    mkdirSync(flightPath(emptyDir, ".moe-flight", "stories"), { recursive: true });
     const emptyApp = makeApp(emptyDir);
     const res = await emptyApp.request("/api/results");
     expect(res.status).toBe(200);

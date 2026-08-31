@@ -12,7 +12,7 @@
  * - The timestamp is the primary source of uniqueness; the 4-char nonce
  *   only resolves same-second collisions.
  * - Lex-sortable (left-anchored cardId, then chrono) — agents reading
- *   `.gauntlet/results/` can tell which card tested and when at a glance.
+ *   `.moe-flight/results/` can tell which card tested and when at a glance.
  */
 import { asRunId, asRunSetId, type RunId, type RunSetId } from "./brands.js";
 

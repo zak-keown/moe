@@ -216,7 +216,7 @@ test('GET / renders the grid with the tally header and every cell id', async () 
   const html = await res.text();
 
   // The tally header.
-  expect(html).toContain('<b>quorum</b>');
+  expect(html).toContain('<b>moe-flight</b>');
   expect(html).toContain('scenarios ×');
 
   // Every (scenario, agent, os) cell id is present (cartesian product).

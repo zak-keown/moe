@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import type { VetResult, ActiveRun } from "../lib/api";
+import type { VerdictResult, ActiveRun } from "../lib/api";
 import { StatusBadge, formatDuration } from "./shared";
 import { formatRunTimestamp } from "../lib/runId";
 
 interface RunsListProps {
-  results: VetResult[];
+  results: VerdictResult[];
   activeRuns: ActiveRun[];
   /** The runId of the currently-selected row, if any. */
   selectedId?: string | undefined;
@@ -26,13 +26,13 @@ interface RunsListProps {
 interface CardGroup {
   cardId: string;
   /** Status shown on the card header: pulled from the most recent completed run. */
-  latestStatus: VetResult["status"];
-  runs: VetResult[]; // sorted newest-first
+  latestStatus: VerdictResult["status"];
+  runs: VerdictResult[]; // sorted newest-first
   activeRuns: ActiveRun[]; // sorted newest-first
 }
 
-function groupByCard(results: VetResult[], activeRuns: ActiveRun[]): CardGroup[] {
-  const byCard = new Map<string, { completed: VetResult[]; active: ActiveRun[] }>();
+function groupByCard(results: VerdictResult[], activeRuns: ActiveRun[]): CardGroup[] {
+  const byCard = new Map<string, { completed: VerdictResult[]; active: ActiveRun[] }>();
   // Dedupe: a run may briefly appear in both lists (result.json is written
   // before the registry unregister). Active wins for the moment.
   const activeRunIds = new Set(activeRuns.map((r) => r.id));

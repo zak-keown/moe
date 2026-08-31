@@ -1,5 +1,5 @@
-// Gauntlet divergence: host-override.js lives in lib/ (not the parent dir as
-// upstream), since Gauntlet has no skills/browsing/ outer layer. Path is
+// Flight divergence: host-override.js lives in lib/ (not the parent dir as
+// upstream), since Flight has no skills/browsing/ outer layer. Path is
 // './host-override' here, not '../host-override'.
 const { createOverride } = require('./host-override');
 
@@ -42,9 +42,9 @@ function createState({ host, port } = {}) {
     chromeProcess: null,
     chromeHeadless: true,
     chromeUserDataDir: null,
-    // Gauntlet divergence: profile name default is 'gauntlet', not
+    // Flight divergence: profile name default is 'moe-flight', not
     // 'superpowers-chrome'. We must not share the profile dir with upstream.
-    chromeProfileName: 'gauntlet',
+    chromeProfileName: 'moe-flight',
   };
 }
 

@@ -6,7 +6,7 @@ import type { EvidenceLogger } from "../../evidence/logger.js";
 import { buildSharedTools, type SharedTools } from "../../agent/shared-tools.js";
 import type { CredentialResolverConfig } from "../../config.js";
 import { validateToolArgs } from "../../agent/validators.js";
-import { spawn, spawnSync, type SpawnedProcess } from "../../runtime/spawn.js";
+import { spawn, type SpawnedProcess } from "../../runtime/spawn.js";
 import { listDescendants, killProcessTree } from "../../runtime/process-tree.js";
 
 const KEY_MAP: Record<string, string> = {

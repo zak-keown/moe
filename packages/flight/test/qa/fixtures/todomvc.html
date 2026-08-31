@@ -166,7 +166,7 @@
       const active = todos.filter(t => !t.completed);
       const completed = todos.filter(t => t.completed);
 
-      todos.forEach((todo, i) => {
+      todos.forEach((todo, _i) => {
         const li = document.createElement('li');
         if (todo.completed) li.classList.add('completed');
         const visible =

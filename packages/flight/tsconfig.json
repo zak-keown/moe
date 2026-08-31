@@ -1,5 +1,5 @@
 {
-  "//": "Runtime DAG for this package: one reference per workspace dependency. `@bubstack/moe-flight-dashboard` is the only one — `src/cli.ts` dispatches `moe-flight dashboard` into it. The candidate edges to glass and crew are REFUTED and CONFIRMED-BUT-DEFERRED respectively; see README.md, 'The two candidate edges'. `include` stays strictly src-scoped: loosening it pulls ui/src and dashboard/src into this program, which double-compiles them and trips TS6059.",
+  "//": "Runtime DAG for this package: one reference per workspace dependency. Two: `@bubstack/moe-flight-dashboard`, which `src/cli.ts` dispatches `moe-flight dashboard` into, and `@bubstack/moe-tab`, imported by `src/lab/tab/index.ts` — ARCHITECTURE.md §5's one confirmed edge, and the reason this monorepo exists. `@bubstack/moe-flight-ui` is a package.json dependency with NO reference here on purpose: flight consumes its BUILD OUTPUT by file path (`ui/dist`, `ui/dist-static/static.html`), never its types, and it is not a composite project. The candidate edges to glass and crew are REFUTED and CONFIRMED-BUT-DEFERRED respectively; see README.md, 'The two candidate edges'. `include` stays strictly src-scoped: loosening it pulls ui/src and dashboard/src into this program, which double-compiles them and trips TS6059.",
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
@@ -10,6 +10,9 @@
   "references": [
     {
       "path": "./dashboard"
+    },
+    {
+      "path": "../tab/bindings/typescript"
     }
   ]
 }

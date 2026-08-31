@@ -8,7 +8,7 @@ import {
   resolveProvider,
 } from "../../models/resolve.js";
 import { makeRunId } from "../../util/id.js";
-import { gauntletPath } from "../../paths.js";
+import { flightPath } from "../../paths.js";
 import { mergeRunConfig, validateRunBody, type AppConfig } from "../../config.js";
 import { runRunSet } from "../../runs/run-set.js";
 import {
@@ -107,7 +107,7 @@ export async function executeHttpRun(
         const chromeSession = webAdapter.getChromeSession();
         const framesDir = effective.saveScreencast === false
           ? undefined
-          : join(gauntletPath(projectRoot, effective.stateDirName, "results", runId), "frames");
+          : join(flightPath(projectRoot, effective.stateDirName, "results", runId), "frames");
         streamer = new ScreencastStreamer(0, (frame) => {
           broadcaster?.send(runId, {
             type: "frame",
@@ -196,7 +196,7 @@ export function runRoutes(
     }
 
     if (config.models.available.length > 0 && !config.models.available.includes(effective.model)) {
-      return c.json({ error: `model "${effective.model}" is not in GAUNTLET_MODELS allow-list` }, 400);
+      return c.json({ error: `model "${effective.model}" is not in MOE_FLIGHT_MODELS allow-list` }, 400);
     }
 
     // Concurrency cap (PRI-1478). Refuse new runs when at the operator-
@@ -228,7 +228,7 @@ export function runRoutes(
       : createClientForProvider(effective.model, provider);
 
     const passes = body.passes ?? 1;
-    const storyPath = join(gauntletPath(config.projectRoot, config.stateDirName, "stories"), entry.filename);
+    const storyPath = join(flightPath(config.projectRoot, config.stateDirName, "stories"), entry.filename);
 
     if (passes === 1) {
       // ── Solo path ──
@@ -287,7 +287,7 @@ export function runRoutes(
     const controllers = new Map<string, AbortController>();
 
     const handle = await runRunSet({
-      resultsRoot: gauntletPath(config.projectRoot, config.stateDirName),
+      resultsRoot: flightPath(config.projectRoot, config.stateDirName),
       cards: [entry.card.id],
       passes,
       kind: "single",

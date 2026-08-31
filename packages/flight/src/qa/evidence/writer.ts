@@ -1,8 +1,8 @@
 import { writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
-import type { VetResult, Observation } from "../types.js";
+import type { VerdictResult, Observation } from "../types.js";
 
-export function writeResultFiles(outDir: string, result: VetResult): void {
+export function writeResultFiles(outDir: string, result: VerdictResult): void {
   // Write result.json
   writeFileSync(join(outDir, "result.json"), JSON.stringify(result, null, 2) + "\n");
 
@@ -22,7 +22,7 @@ export function writeResultFiles(outDir: string, result: VetResult): void {
   }
 }
 
-function renderResultMarkdown(result: VetResult): string {
+function renderResultMarkdown(result: VerdictResult): string {
   const lines: string[] = [];
   lines.push(`# Test Result: ${result.scenario}`);
   lines.push("");
@@ -56,7 +56,7 @@ function renderResultMarkdown(result: VetResult): string {
   return lines.join("\n");
 }
 
-function renderObservationMarkdown(obs: Observation, result: VetResult): string {
+function renderObservationMarkdown(obs: Observation, result: VerdictResult): string {
   const lines: string[] = [];
   lines.push(`# ${obs.kind.charAt(0).toUpperCase() + obs.kind.slice(1)}: ${obs.description}`);
   lines.push("");

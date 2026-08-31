@@ -13,7 +13,7 @@ import { errorRoutes } from "./routes/errors.js";
 import { ErrorLog } from "../util/error-log.js";
 import { activeRunRoutes } from "./routes/active-runs.js";
 import { getMimeType } from "./mime-types.js";
-import { isSafePath, gauntletPath } from "../paths.js";
+import { isSafePath, flightPath } from "../paths.js";
 import type { RunBroadcaster } from "./ws.js";
 import type { ActiveRunRegistry } from "./active-runs.js";
 import type { RunSetBroadcaster } from "./run-set-broadcaster.js";
@@ -67,10 +67,10 @@ export function createApp(
 
   const api = new Hono();
   api.route("/scenarios", scenarioRoutes(projectRoot, stateDirName, errorLog));
-  api.route("/results", resultRoutes(gauntletPath(projectRoot, stateDirName, "results"), registry));
+  api.route("/results", resultRoutes(flightPath(projectRoot, stateDirName, "results"), registry));
   api.route("/fanout", fanoutRoutes(config, undefined, errorLog));
   api.route("/run", runRoutes(config, broadcaster, errorLog, registry, setBroadcaster, cancelTokens));
-  api.route("/run-sets", runSetRoutes(gauntletPath(projectRoot, stateDirName), cancelTokens));
+  api.route("/run-sets", runSetRoutes(flightPath(projectRoot, stateDirName), cancelTokens));
   api.route("/config", configRoutes(config));
   api.route("/config/effective", configEffectiveRoutes(config));
   api.route("/errors", errorRoutes(errorLog));

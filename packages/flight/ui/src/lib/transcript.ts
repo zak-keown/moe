@@ -357,7 +357,7 @@ export function computePromptPairings(model: TranscriptModel): Map<string, strin
 // but the tool's response tells the agent something went wrong — typically a
 // misused argument or a rejected input. Worth surfacing because the agent
 // usually spends extra turns recovering, which is a signal for improving
-// Gauntlet (tool ergonomics), the system prompt (how to use the tool), or
+// Flight (tool ergonomics), the system prompt (how to use the tool), or
 // the story (what the run needs the agent to know upfront).
 const SOFT_ERROR_PATTERN = /^\s*(error|failed|cannot|could\s+not|unable\s+to)\b[\s:]/i;
 

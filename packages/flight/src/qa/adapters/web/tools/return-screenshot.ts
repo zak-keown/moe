@@ -30,7 +30,7 @@ export function buildReturnScreenshot(opts: {
     if (!args.return_screenshot) return {};
     const targetTab = tabOverride ?? defaultTab;
     const t0 = Date.now();
-    const tmpFile = join(tmpdir(), `gauntlet-screenshot-${Date.now()}.png`);
+    const tmpFile = join(tmpdir(), `moe-flight-screenshot-${Date.now()}.png`);
     try {
       await chrome.screenshot(targetTab, tmpFile, null, false, {
         timeoutMs: RETURN_SCREENSHOT_TIMEOUT_MS,
@@ -55,7 +55,7 @@ export function buildReturnScreenshot(opts: {
       const reason = err instanceof Error ? err.message : String(err);
       const elapsed = Date.now() - t0;
       console.warn(
-        `[gauntlet] return_screenshot skipped (${toolName}, ${elapsed}ms): ${reason}`,
+        `[moe-flight] return_screenshot skipped (${toolName}, ${elapsed}ms): ${reason}`,
       );
       return { screenshotSkipped: reason };
     }

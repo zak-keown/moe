@@ -37,8 +37,8 @@ const fakeManifest = (id: string) => ({
 });
 
 beforeEach(() => {
-  projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-runsets-api-"));
-  runSetsDir = join(projectRoot, ".gauntlet", "run-sets");
+  projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-runsets-api-"));
+  runSetsDir = join(projectRoot, ".moe-flight", "run-sets");
   mkdirSync(runSetsDir, { recursive: true });
 });
 
@@ -49,7 +49,7 @@ describe("GET /api/run-sets/:id", () => {
     writeFileSync(join(runSetsDir, id, "set.json"), JSON.stringify(fakeManifest(id)));
 
     const app = new Hono();
-    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".gauntlet")));
+    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".moe-flight")));
 
     const res = await app.request(`/api/run-sets/${id}`);
     expect(res.status).toBe(200);
@@ -61,14 +61,14 @@ describe("GET /api/run-sets/:id", () => {
 
   test("returns 404 for unknown run set", async () => {
     const app = new Hono();
-    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".gauntlet")));
+    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".moe-flight")));
     const res = await app.request("/api/run-sets/single_20260430T000000Z_xyz");
     expect(res.status).toBe(404);
   });
 
   test("rejects path-traversal attempts", async () => {
     const app = new Hono();
-    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".gauntlet")));
+    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".moe-flight")));
     const res = await app.request("/api/run-sets/..%2F..%2Fetc%2Fpasswd");
     expect(res.status).toBe(400);
   });
@@ -81,7 +81,7 @@ describe("DELETE /api/run-sets/:id", () => {
     cancelTokens.register("single_20260430T000000Z_abcd", token);
 
     const app = new Hono();
-    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".gauntlet"), cancelTokens));
+    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".moe-flight"), cancelTokens));
 
     const res = await app.request("/api/run-sets/single_20260430T000000Z_abcd", { method: "DELETE" });
     expect(res.status).toBe(202);
@@ -92,14 +92,14 @@ describe("DELETE /api/run-sets/:id", () => {
 
   test("returns 404 if no in-flight set with that id", async () => {
     const app = new Hono();
-    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".gauntlet"), new CancelTokenRegistry()));
+    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".moe-flight"), new CancelTokenRegistry()));
     const res = await app.request("/api/run-sets/single_20260430T000000Z_xyz", { method: "DELETE" });
     expect(res.status).toBe(404);
   });
 
   test("rejects invalid id format with 400", async () => {
     const app = new Hono();
-    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".gauntlet"), new CancelTokenRegistry()));
+    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".moe-flight"), new CancelTokenRegistry()));
     const res = await app.request("/api/run-sets/..%2F..%2Fetc%2Fpasswd", { method: "DELETE" });
     expect(res.status).toBe(400);
   });
@@ -112,7 +112,7 @@ describe("GET /api/run-sets/:id/summary", () => {
     writeFileSync(join(runSetsDir, id, "set.json"), JSON.stringify(fakeManifest(id)));
 
     const app = new Hono();
-    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".gauntlet")));
+    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".moe-flight")));
 
     const res = await app.request(`/api/run-sets/${id}/summary`);
     expect(res.status).toBe(200);
@@ -129,7 +129,7 @@ describe("GET /api/run-sets/:id/summary", () => {
     writeFileSync(join(runSetsDir, id, "set.json"), JSON.stringify(m));
 
     const app = new Hono();
-    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".gauntlet")));
+    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".moe-flight")));
     const res = await app.request(`/api/run-sets/${id}/summary`);
     expect(res.status).toBe(404);
   });

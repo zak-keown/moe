@@ -5,7 +5,7 @@ import { createClient } from "../models/resolve.js";
 import { executeRunCore, type RunAdapterType } from "../runs/orchestrator.js";
 import type { AppConfig } from "../config.js";
 import type { LLMClient } from "../models/provider.js";
-import type { VetResult } from "../types.js";
+import type { VerdictResult } from "../types.js";
 import type { RunSetCtx } from "../runs/run-set-types.js";
 import type { RunId } from "../util/brands.js";
 
@@ -33,14 +33,14 @@ export interface RunOneOptions {
   clientFactory?: ((model: string) => LLMClient) | undefined;
   /** Optional explicit Project prompt path. Forwarded to `executeRunCore`
    * which resolves it via `resolveProjectPrompt`. Undefined means "fall
-   * through to .gauntlet/project.md auto-load". */
+   * through to .moe-flight/project.md auto-load". */
   projectPromptPath?: string | undefined;
 }
 
 export interface RunOneSummary {
   runId: RunId;
   outDir: string;
-  result: VetResult;
+  result: VerdictResult;
 }
 
 export async function runOne(opts: RunOneOptions): Promise<RunOneSummary> {

@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from "fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { WebAdapter, composeResult } from "../../../../src/qa/adapters/web/adapter.js";
@@ -103,10 +103,10 @@ describe("WebAdapter", () => {
   });
 
   test("omits install_passkey and install_cookies when context root is empty", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-web-nopasskey-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-web-nopasskey-"));
     try {
-      mkdirSync(join(tmp, ".gauntlet", "context"), { recursive: true });
-      const adapter = new WebAdapter({ contextRoot: join(tmp, ".gauntlet", "context") });
+      mkdirSync(join(tmp, ".moe-flight", "context"), { recursive: true });
+      const adapter = new WebAdapter({ contextRoot: join(tmp, ".moe-flight", "context") });
       const names = adapter.toolDefinitions().map((t) => t.name);
       expect(names).not.toContain("install_passkey");
       expect(names).not.toContain("install_cookies");
@@ -122,7 +122,7 @@ describe("WebAdapter", () => {
   });
 
   test("omits `read` tool when context root is empty", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-web-read-empty-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-web-read-empty-"));
     try {
       const adapter = new WebAdapter({ contextRoot: tmp });
       const names = adapter.toolDefinitions().map((t) => t.name);
@@ -133,12 +133,12 @@ describe("WebAdapter", () => {
   });
 
   test("includes `read` tool when context root is non-empty", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-web-read-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-web-read-"));
     try {
-      mkdirSync(join(tmp, ".gauntlet", "context"), { recursive: true });
-      writeFileSync(join(tmp, ".gauntlet", "context", "alice.md"), "A");
+      mkdirSync(join(tmp, ".moe-flight", "context"), { recursive: true });
+      writeFileSync(join(tmp, ".moe-flight", "context", "alice.md"), "A");
       const adapter = new WebAdapter({
-        contextRoot: join(tmp, ".gauntlet", "context"),
+        contextRoot: join(tmp, ".moe-flight", "context"),
       });
       const names = adapter.toolDefinitions().map((t) => t.name);
       expect(names).toContain("read");
@@ -155,23 +155,23 @@ describe("WebAdapter", () => {
     // conventions, which spec §2.1 forbids. If the author has no
     // credentials, the agent sees the tools in its registry but never
     // calls them.
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-web-credentials-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-web-credentials-"));
     try {
-      mkdirSync(join(tmp, ".gauntlet", "context", "matt"), { recursive: true });
+      mkdirSync(join(tmp, ".moe-flight", "context", "matt"), { recursive: true });
       // Stress the filename-blindness claim by planting files that LOOK
       // like the credential files by name but are malformed: if the
       // predicate ever started parsing them, this test would fail. The
       // tools register anyway because the predicate only checks
       // directory population.
       writeFileSync(
-        join(tmp, ".gauntlet", "context", "matt", "passkey.yaml"),
+        join(tmp, ".moe-flight", "context", "matt", "passkey.yaml"),
         "this is not valid passkey YAML",
       );
       writeFileSync(
-        join(tmp, ".gauntlet", "context", "matt", "cookies.yaml"),
+        join(tmp, ".moe-flight", "context", "matt", "cookies.yaml"),
         ":\n  : :",
       );
-      const adapter = new WebAdapter({ contextRoot: join(tmp, ".gauntlet", "context") });
+      const adapter = new WebAdapter({ contextRoot: join(tmp, ".moe-flight", "context") });
       const names = adapter.toolDefinitions().map((t) => t.name);
       expect(names).toContain("install_passkey");
       expect(names).toContain("install_cookies");
@@ -184,8 +184,8 @@ describe("WebAdapter", () => {
     const { mkdtempSync, writeFileSync, chmodSync, rmSync } = require("fs");
     const { tmpdir } = require("os");
     const { join } = require("path");
-    const ctxTmp = mkdtempSync(join(tmpdir(), "gauntlet-web-cred-ctx-"));
-    const resTmp = mkdtempSync(join(tmpdir(), "gauntlet-web-cred-res-"));
+    const ctxTmp = mkdtempSync(join(tmpdir(), "moe-flight-web-cred-ctx-"));
+    const resTmp = mkdtempSync(join(tmpdir(), "moe-flight-web-cred-res-"));
     try {
       writeFileSync(join(ctxTmp, "alice.md"), "anything");
       const resolverPath = join(resTmp, "r.sh");
@@ -208,7 +208,7 @@ describe("WebAdapter", () => {
     const { mkdtempSync, writeFileSync, rmSync } = require("fs");
     const { tmpdir } = require("os");
     const { join } = require("path");
-    const ctxTmp = mkdtempSync(join(tmpdir(), "gauntlet-web-cred-ctx-"));
+    const ctxTmp = mkdtempSync(join(tmpdir(), "moe-flight-web-cred-ctx-"));
     try {
       writeFileSync(join(ctxTmp, "alice.md"), "anything");
       const adapter = new WebAdapter({ contextRoot: ctxTmp });
@@ -224,8 +224,8 @@ describe("WebAdapter", () => {
     const { mkdtempSync, writeFileSync, chmodSync, rmSync } = require("fs");
     const { tmpdir } = require("os");
     const { join } = require("path");
-    const ctxTmp = mkdtempSync(join(tmpdir(), "gauntlet-web-cred-ctx-empty-"));
-    const resTmp = mkdtempSync(join(tmpdir(), "gauntlet-web-cred-res-"));
+    const ctxTmp = mkdtempSync(join(tmpdir(), "moe-flight-web-cred-ctx-empty-"));
+    const resTmp = mkdtempSync(join(tmpdir(), "moe-flight-web-cred-res-"));
     try {
       const resolverPath = join(resTmp, "r.sh");
       writeFileSync(resolverPath, "#!/bin/sh\necho ok\n");
@@ -312,7 +312,7 @@ describe("WebAdapter", () => {
     test("local mode: startChrome receives the per-run profile name", async () => {
       const { session, calls } = makeStubSession();
       const adapter = new WebAdapter({
-        chromeProfileName: "gauntlet-run-abc123-card1",
+        chromeProfileName: "moe-flight-run-abc123-card1",
         chromeSession: session,
       });
       await adapter.start("http://localhost:3000/");
@@ -320,15 +320,15 @@ describe("WebAdapter", () => {
       expect(startCall).toBeDefined();
       // signature: startChrome(headless, profileName, port?)
       expect(startCall![1][0]).toBe(true);
-      expect(startCall![1][1]).toBe("gauntlet-run-abc123-card1");
+      expect(startCall![1][1]).toBe("moe-flight-run-abc123-card1");
       // clearBrowserData must NOT fire in local mode
       const clear = calls.find((c) => c[0] === "clearBrowserData");
       expect(clear).toBeUndefined();
     });
 
     test("local mode: close() deletes the per-run profile dir after killChrome", async () => {
-      const tmpRoot = mkdtempSync(join(tmpdir(), "gauntlet-profile-cleanup-"));
-      const fakeProfileDir = join(tmpRoot, "gauntlet-run-xyz-cardA");
+      const tmpRoot = mkdtempSync(join(tmpdir(), "moe-flight-profile-cleanup-"));
+      const fakeProfileDir = join(tmpRoot, "moe-flight-run-xyz-cardA");
       mkdirSync(fakeProfileDir, { recursive: true });
       writeFileSync(join(fakeProfileDir, "sentinel"), "x");
 
@@ -342,7 +342,7 @@ describe("WebAdapter", () => {
       });
       try {
         const adapter = new WebAdapter({
-          chromeProfileName: "gauntlet-run-xyz-cardA",
+          chromeProfileName: "moe-flight-run-xyz-cardA",
           chromeSession: session,
         });
         await adapter.close();
@@ -372,10 +372,10 @@ describe("WebAdapter", () => {
       // doesn't exist (e.g., Chrome never actually launched), close()
       // must still succeed.
       const { session } = makeStubSession({
-        getChromeProfileDir: () => "/nonexistent/should/not/matter/gauntlet-run-ghost",
+        getChromeProfileDir: () => "/nonexistent/should/not/matter/moe-flight-run-ghost",
       });
       const adapter = new WebAdapter({
-        chromeProfileName: "gauntlet-run-ghost-card",
+        chromeProfileName: "moe-flight-run-ghost-card",
         chromeSession: session,
       });
       await adapter.close();
@@ -391,7 +391,7 @@ describe("WebAdapter", () => {
       const { session, calls } = makeStubSession();
       const adapter = new WebAdapter({
         chrome: { host: "remote-host", port: 9333 },
-        chromeProfileName: "gauntlet-run-remote-card",
+        chromeProfileName: "moe-flight-run-remote-card",
         chromeSession: session,
       });
       await adapter.start("http://localhost:3000/");
@@ -412,7 +412,7 @@ describe("WebAdapter", () => {
       const { session, calls } = makeStubSession();
       const adapter = new WebAdapter({
         chrome: { host: "remote-host", port: 9334 },
-        chromeProfileName: "gauntlet-run-remote-card",
+        chromeProfileName: "moe-flight-run-remote-card",
         chromeSession: session,
       });
       await adapter.close();
@@ -432,7 +432,7 @@ describe("WebAdapter", () => {
       const session: Record<string, unknown> = {
         generateMarkdown: async () => big,
       };
-      const outDir = mkdtempSync(join(tmpdir(), "gauntlet-extract-"));
+      const outDir = mkdtempSync(join(tmpdir(), "moe-flight-extract-"));
       try {
         const logger = new EvidenceLogger(outDir);
         const adapter = new WebAdapter({ chromeSession: session as never });
@@ -560,7 +560,7 @@ describe("WebAdapter", () => {
     }
 
     function tmpLogger() {
-      const dir = mkdtempSync(join(tmpdir(), "gauntlet-side-trip-"));
+      const dir = mkdtempSync(join(tmpdir(), "moe-flight-side-trip-"));
       const logger = new EvidenceLogger(dir);
       return { logger, dir };
     }
@@ -1016,9 +1016,9 @@ describe("WebAdapter", () => {
       // Build a tmp context root with a passkey-shaped file so the
       // passkey tool registers (the predicate only checks that the dir
       // is non-empty).
-      const tmpCtx = mkdtempSync(join(tmpdir(), "gauntlet-passkey-depth-"));
-      mkdirSync(join(tmpCtx, ".gauntlet", "context", "alice"), { recursive: true });
-      writeFileSync(join(tmpCtx, ".gauntlet", "context", "alice", "passkey.yaml"), "x");
+      const tmpCtx = mkdtempSync(join(tmpdir(), "moe-flight-passkey-depth-"));
+      mkdirSync(join(tmpCtx, ".moe-flight", "context", "alice"), { recursive: true });
+      writeFileSync(join(tmpCtx, ".moe-flight", "context", "alice", "passkey.yaml"), "x");
       const stub = makeSideTripStub();
       // Stub out webAuthnOpenSession so the passkey tool can run far
       // enough to be invoked (it'll fail downstream, but we only care
@@ -1031,7 +1031,7 @@ describe("WebAdapter", () => {
         logger.logEvent = (name, data) => { events.push({ name, data }); return orig(name, data); };
         const adapter = new WebAdapter({
           chromeSession: stub.session as never,
-          contextRoot: join(tmpCtx, ".gauntlet", "context"),
+          contextRoot: join(tmpCtx, ".moe-flight", "context"),
         });
         await adapter.start("https://example.com/");
         await adapter.executeTool("new_tab", { url: "https://side/" }, logger);
@@ -1181,7 +1181,7 @@ describe("takeReturnScreenshot via WebAdapter (PRI-1517)", () => {
       },
     };
 
-    const outDir = mkdtempSync(join(tmpdir(), "gauntlet-pri1517-t2a-"));
+    const outDir = mkdtempSync(join(tmpdir(), "moe-flight-pri1517-t2a-"));
     try {
       const logger = new EvidenceLogger(outDir);
       const adapter = new WebAdapter({ chromeSession: session as never });
@@ -1223,7 +1223,7 @@ describe("takeReturnScreenshot via WebAdapter (PRI-1517)", () => {
       },
     };
 
-    const outDir = mkdtempSync(join(tmpdir(), "gauntlet-pri1517-t1ok-"));
+    const outDir = mkdtempSync(join(tmpdir(), "moe-flight-pri1517-t1ok-"));
     try {
       const logger = new EvidenceLogger(outDir);
       const adapter = new WebAdapter({ chromeSession: session as never });
@@ -1253,7 +1253,7 @@ describe("takeReturnScreenshot via WebAdapter (PRI-1517)", () => {
       },
     };
 
-    const outDir = mkdtempSync(join(tmpdir(), "gauntlet-pri1517-t1no-"));
+    const outDir = mkdtempSync(join(tmpdir(), "moe-flight-pri1517-t1no-"));
     try {
       const logger = new EvidenceLogger(outDir);
       const adapter = new WebAdapter({ chromeSession: session as never });
@@ -1274,7 +1274,7 @@ describe("takeReturnScreenshot via WebAdapter (PRI-1517)", () => {
 
   test("toolDefinitions includes bash", () => {
     const adapter = new WebAdapter({
-      runDir: mkdtempSync(join(tmpdir(), "gauntlet-bash-adapter-")),
+      runDir: mkdtempSync(join(tmpdir(), "moe-flight-bash-adapter-")),
     });
     const names = adapter.toolDefinitions().map((d) => d.name);
     expect(names).toContain("bash");

@@ -9,7 +9,7 @@ import type { StoryCard } from "../../../src/qa/format/story-card.js";
 
 // PRI-1507 — the agent loop must observe `abortSignal` at two boundaries:
 // between turns, and between adjacent tool calls within a turn. On either
-// observation it MUST return a synthetic `errored` VetResult, not throw —
+// observation it MUST return a synthetic `errored` VerdictResult, not throw —
 // see the spec invariant in `2026-05-13-shutdown-drain-cancellation-spec.md`
 // (§1). Tests in this file are also the tripwire for that invariant: if a
 // future refactor moves to throw-based abort, Case 1's assertion that

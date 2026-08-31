@@ -38,7 +38,7 @@ export type SlotKind = (typeof SLOT_KINDS)[number];
 export type RunFinal = 'pass' | 'fail' | 'indeterminate' | 'unknown';
 
 // phase.json, written by the runner at each boundary it owns. `pid` is the
-// `quorum run` process id — required, since liveness comes from it (phase mtime
+// `moe-flight lab run` process id — required, since liveness comes from it (phase mtime
 // is NOT a liveness signal: a phase can last tens of minutes). `identity` is the
 // run's self-identity, so the dashboard can place an in-flight run in its cell
 // without parsing the run-dir name. It is optional (a pre-identity phase.json
@@ -108,15 +108,15 @@ export type DashboardVerdict = z.infer<typeof DashboardVerdictSchema>;
 // (YYYYMMDDTHHMMSSZ); finished_at is the verdict's ISO-8601 value or null.
 // cost_usd is strictly agent-scoped (economics.coding_agent.est_cost_usd), null
 // when the agent block is absent — it NEVER falls back to the combined total, so
-// the gauntlet QA-driver spend can't masquerade as the cost of the task under
-// test. Use run_total_cost_usd for the run-total (gauntlet + agent combined).
+// the moe-flight QA-driver spend can't masquerade as the cost of the task under
+// test. Use run_total_cost_usd for the run-total (moe-flight + agent combined).
 export interface RunRecord {
   readonly run_id: string;
   readonly started_at: string;
   readonly final: RunFinal;
   /** Agent-scoped cost; null when absent (no fallback to the run total). */
   readonly cost_usd: number | null;
-  /** Run-total cost (gauntlet QA + coding agent). For labeled display only. */
+  /** Run-total cost (moe-flight QA + coding agent). For labeled display only. */
   readonly run_total_cost_usd: number | null;
   /** Coding-agent wall-clock duration in ms, or null when not reported. */
   readonly duration_ms: number | null;
@@ -192,7 +192,7 @@ export interface CardRow {
 
 // The detail hover card: exact age, per-run rows (oldest..newest), the
 // drift explanation line when a drift marker is present, and the labeled
-// run-total cost of the newest run (gauntlet + agent; distinct from the
+// run-total cost of the newest run (moe-flight + agent; distinct from the
 // agent-scoped per-run cost in CardRow.cost).
 export interface CardView {
   readonly age: string;

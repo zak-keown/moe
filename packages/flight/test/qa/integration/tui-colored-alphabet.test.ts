@@ -42,7 +42,7 @@ describe.skipIf(!hasTmux)("TUI adapter e2e — colored-alphabet capture evidence
 
   test("read_screen writes capture files and references them from run.jsonl", async () => {
     const card = loadStory("colored-alphabet-pass.md");
-    const logDir = mkdtempSync(join(tmpdir(), "gauntlet-cap-alpha-"));
+    const logDir = mkdtempSync(join(tmpdir(), "moe-flight-cap-alpha-"));
     adapter = new TUIAdapter({ runDir: logDir });
     const logger = new EvidenceLogger(logDir);
 

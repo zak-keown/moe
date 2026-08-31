@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Launcher for the Gauntlet TUI adapter. Isolated scratch dir +
+# Launcher for the Flight TUI adapter. Isolated scratch dir +
 # state file, then exec the TUI directly.
 set -e
 SCRATCH="$(mktemp -d -t todo-card-XXXXXX)"

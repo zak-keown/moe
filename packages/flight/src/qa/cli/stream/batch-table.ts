@@ -1,5 +1,5 @@
 import type { WriteSink } from "./jsonl.js";
-import type { VetStatus } from "../../types.js";
+import type { VerdictStatus } from "../../types.js";
 import { deriveBucket, median } from "../../runs/aggregate.js";
 import type { ByStatus } from "../../runs/aggregate.js";
 import type { SetBucket } from "../../runs/run-set-types.js";
@@ -11,7 +11,7 @@ interface CardRow {
   runId: string | null;
   state: "queued" | "running" | "done" | "errored";
   turn: number;
-  finalStatus: VetStatus | null;
+  finalStatus: VerdictStatus | null;
   errorTurn: number | null;
   errorMessage: string | null;
   startedAt: number;        // ms; 0 until setRunning
@@ -25,8 +25,8 @@ export interface BatchTableOptions {
   /** Target URL surfaced in the TTY header; ignored in non-TTY mode. */
   target: string;
   /** Path to surface in the final summary so the user knows where evidence
-   * landed (e.g., `<projectRoot>/.gauntlet/results`). batch.ts derives it
-   * from `gauntletPath(config.projectRoot, "results")`. */
+   * landed (e.g., `<projectRoot>/.moe-flight/results`). batch.ts derives it
+   * from `flightPath(config.projectRoot, "results")`. */
   resultsRoot: string;
 }
 
@@ -133,7 +133,7 @@ export class BatchTableRenderer {
     if (this.activeKey === key) this.drawSpinner();
   }
 
-  setDone(cardId: string, finalStatus: VetStatus, turn: number, attemptNumber = 1): void {
+  setDone(cardId: string, finalStatus: VerdictStatus, turn: number, attemptNumber = 1): void {
     const key = this.rowKey(cardId, attemptNumber);
     const row = this.rows.get(key);
     if (!row) return;
@@ -225,7 +225,7 @@ export class BatchTableRenderer {
     }
 
     this.sink.write(
-      `${c.bold}Gauntlet${c.reset}${c.dim} · ${label} · target ${c.reset}${c.cyan}${target}${c.reset}\n\n`,
+      `${c.bold}Flight${c.reset}${c.dim} · ${label} · target ${c.reset}${c.cyan}${target}${c.reset}\n\n`,
     );
     this.headerWritten = true;
   }

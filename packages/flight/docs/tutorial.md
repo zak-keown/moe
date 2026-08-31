@@ -1,6 +1,6 @@
-# Gauntlet tutorial — same agent, three surfaces
+# Flight tutorial — same agent, three surfaces
 
-A six-story walk through Gauntlet's three adapters: **CLI**,
+A six-story walk through Flight's three adapters: **CLI**,
 **TUI**, and **Web**. Same agent at every level. The adapters
 change what the agent looks at, not how it thinks.
 
@@ -11,14 +11,14 @@ Three things accumulate as we move through the tutorial:
   cursor position, panels. At the Web level it is the DOM and
   pixel screenshots.
 - **Reasoning** — multi-step navigation, search, edit, verify.
-- **Context** — the `.gauntlet/context/` folder. Plain-language
+- **Context** — the `.moe-flight/context/` folder. Plain-language
   fixtures (a persona, sign-in instructions, content the agent
   has to read) that fill in details and inform choices.
 
 Vision is the dimension that *graduates*. The other two are
 present from the first story.
 
-> **The trap to avoid.** Gauntlet stories describe **outcomes
+> **The trap to avoid.** Flight stories describe **outcomes
 > with conditions**. Not click sequences. Not selectors. The
 > whole point of an LLM in the loop is that you don't write
 > `click #submit-button` — the agent figures out the path.
@@ -51,7 +51,7 @@ uses whoever's written into the relevant profile.
 
 Before you start, you need:
 
-- `gauntlet` on your `$PATH` (see the [main README](../README.md)
+- `moe-flight` on your `$PATH` (see the [main README](../README.md)
   for install).
 - An LLM API key in your environment
   (`ANTHROPIC_API_KEY` or `OPENAI_API_KEY`).
@@ -65,7 +65,7 @@ Before you start, you need:
 cd examples/tutorial
 ```
 
-Open `.gauntlet/context/` before you start. That's where Fred,
+Open `.moe-flight/context/` before you start. That's where Fred,
 Deborah, and Quinn live — each as a `profile.md` under
 `profiles/`, plus Fred's `cookies.yaml` for the cookie-based
 sign-in story. Every story below leans on these files, and the
@@ -78,13 +78,13 @@ Each tutorial below tells you which target tool (`npm`, `bun`,
 
 ## Tutorial 1 · CLI · `npm init`
 
-The simplest version of Gauntlet. No screenshots, no rendered
+The simplest version of Flight. No screenshots, no rendered
 screen — just a program asking for input on stdin and writing
 to stdout. The agent's "vision" here is the most basic kind:
 read what the program is asking for and decide what to send
 back.
 
-This is also the cleanest demonstration that **Gauntlet is not
+This is also the cleanest demonstration that **Flight is not
 expect**. We do not write a script of inputs in order. We tell
 the agent: *create a package.json for Fred; fill in author from
 the profile; accept sensible defaults.* The agent reads each
@@ -93,7 +93,7 @@ question order tomorrow, the story still works.
 
 ### The card
 
-[`.gauntlet/stories/01-npm-init.md`](../examples/tutorial/.gauntlet/stories/01-npm-init.md).
+[`.moe-flight/stories/01-npm-init.md`](../examples/tutorial/.moe-flight/stories/01-npm-init.md).
 Read it before running. Notice what's *not* there: the prompts
 npm asks (name, version, description, entry point, …) are not
 enumerated. The card describes the goal; the agent works out
@@ -102,7 +102,7 @@ the prompts.
 ### Run it
 
 ```bash
-gauntlet run .gauntlet/stories/01-npm-init.md \
+moe-flight qa run .moe-flight/stories/01-npm-init.md \
   --adapter cli \
   --target "npm init" \
   --max-time 3m
@@ -114,7 +114,7 @@ the target name via the system prompt; the agent decides when and
 how to invoke it.
 
 The CLI adapter creates a per-run scratch directory under
-`.gauntlet/results/<runId>/scratch/` and uses it as the shell's
+`.moe-flight/results/<runId>/scratch/` and uses it as the shell's
 working directory. Anything the agent writes (e.g. `package.json`
 from `npm init`) lands there and is cleaned up with the rest of the
 run's evidence. You no longer need to wrap the target in `mkdir`/`cd`.
@@ -150,7 +150,7 @@ yellow underline.
 
 ### The card
 
-[`.gauntlet/stories/02-bun-init.md`](../examples/tutorial/.gauntlet/stories/02-bun-init.md).
+[`.moe-flight/stories/02-bun-init.md`](../examples/tutorial/.moe-flight/stories/02-bun-init.md).
 Profile says Fred prefers the `Library` template. After Library
 is selected, `bun init` follows up with a text prompt — *package
 name* — that the agent has to answer. (Decoy profiles say
@@ -160,7 +160,7 @@ agent picks the wrong profile, you will see it.)
 ### Run it
 
 ```bash
-gauntlet run .gauntlet/stories/02-bun-init.md \
+moe-flight qa run .moe-flight/stories/02-bun-init.md \
   --adapter tui \
   --target "bun init" \
   --max-time 3m
@@ -168,7 +168,7 @@ gauntlet run .gauntlet/stories/02-bun-init.md \
 
 Same scratch-dir pattern as tutorial 1.
 
-For TUI runs, Gauntlet starts a detached `tmux` session at
+For TUI runs, Flight starts a detached `tmux` session at
 120×40 and runs the target command inside it. Keystrokes go to
 that session with `tmux send-keys`; `read_screen` uses
 `tmux capture-pane -p -e` to read the rendered screen with ANSI
@@ -221,12 +221,12 @@ What's new at this level:
 
 ### The card
 
-[`.gauntlet/stories/03-vim-split.md`](../examples/tutorial/.gauntlet/stories/03-vim-split.md).
+[`.moe-flight/stories/03-vim-split.md`](../examples/tutorial/.moe-flight/stories/03-vim-split.md).
 
 ### Run it
 
 ```bash
-gauntlet run .gauntlet/stories/03-vim-split.md \
+moe-flight qa run .moe-flight/stories/03-vim-split.md \
   --adapter tui \
   --target "vim -u ./vimrc notes.md" \
   --max-time 5m
@@ -279,12 +279,12 @@ a clean slate (sessions, posts are all in process memory).
 
 ### The card
 
-[`.gauntlet/stories/04-login-credentials.md`](../examples/tutorial/.gauntlet/stories/04-login-credentials.md).
+[`.moe-flight/stories/04-login-credentials.md`](../examples/tutorial/.moe-flight/stories/04-login-credentials.md).
 
 ### Run it
 
 ```bash
-gauntlet run .gauntlet/stories/04-login-credentials.md \
+moe-flight qa run .moe-flight/stories/04-login-credentials.md \
   --adapter web \
   --target "http://localhost:4444" \
   --max-time 5m
@@ -309,7 +309,7 @@ page — the same way a human would.
 ## Tutorial 5 · Web · Sign in with cookies (Fred)
 
 A different auth path against the same target. Fred's profile
-has a `cookies.yaml` instead of a password. Gauntlet's
+has a `cookies.yaml` instead of a password. Flight's
 `install_cookies` tool reads it and registers the session
 directly with the browser, bypassing the sign-in form
 entirely.
@@ -323,7 +323,7 @@ that.
 The teaching points are:
 
 - `install_cookies` does what its name says.
-- The cookie lifecycle has a quirk: Gauntlet's first navigate
+- The cookie lifecycle has a quirk: Flight's first navigate
   happens *before* any tool runs, so a cookie installed
   afterward needs a fresh page load to apply.
 - The agent finds the right cookie file by inference. With
@@ -331,12 +331,12 @@ The teaching points are:
 
 ### The card
 
-[`.gauntlet/stories/05-login-cookies.md`](../examples/tutorial/.gauntlet/stories/05-login-cookies.md).
+[`.moe-flight/stories/05-login-cookies.md`](../examples/tutorial/.moe-flight/stories/05-login-cookies.md).
 
 ### Run it
 
 ```bash
-gauntlet run .gauntlet/stories/05-login-cookies.md \
+moe-flight qa run .moe-flight/stories/05-login-cookies.md \
   --adapter web \
   --target "http://localhost:4444" \
   --max-time 5m
@@ -349,7 +349,7 @@ gauntlet run .gauntlet/stories/05-login-cookies.md \
   link.
 - After `install_cookies`, the agent navigates again. This is
   the lifecycle quirk `credentials.md` calls out: cookies
-  installed after Gauntlet's initial navigate need a fresh
+  installed after Flight's initial navigate need a fresh
   page load to apply.
 - The post-navigation screenshot shows `@fred` in the nav and
   a logout link the agent did **not** click.
@@ -388,12 +388,12 @@ last invariant.
 
 ### The card
 
-[`.gauntlet/stories/06-post-and-verify.md`](../examples/tutorial/.gauntlet/stories/06-post-and-verify.md).
+[`.moe-flight/stories/06-post-and-verify.md`](../examples/tutorial/.moe-flight/stories/06-post-and-verify.md).
 
 ### Run it
 
 ```bash
-gauntlet run .gauntlet/stories/06-post-and-verify.md \
+moe-flight qa run .moe-flight/stories/06-post-and-verify.md \
   --adapter web \
   --target "http://localhost:4444" \
   --max-time 8m
@@ -417,7 +417,7 @@ The longer time budget reflects the cross-identity flow.
 
 You now have:
 
-- A `.gauntlet/context/` tree with three personas and content
+- A `.moe-flight/context/` tree with three personas and content
   fixtures.
 - Six working stories spanning all three adapters.
 - A small local webapp that demonstrates cookie-based auth,
@@ -426,7 +426,7 @@ You now have:
   at each level.
 
 Before any of that, open the most recent `result.json` under
-`.gauntlet/results/`. The agent reports observations alongside
+`.moe-flight/results/`. The agent reports observations alongside
 its verdict — `bug`, `ux`, `typo`, `a11y`, `suggestion`,
 `performance`. None of the cards above asked for those; the
 agent surfaces them anyway. Read them as starting points, not
@@ -438,13 +438,13 @@ Three good next moves:
 1. **Write a story for your own app.** Copy a card, change the
    persona to yourself, point `--target` at your app. Iterate
    by editing the card.
-2. **Try `gauntlet fanout`.** It generates variations from a
+2. **Try `moe-flight qa fanout`.** It generates variations from a
    parent card — edge cases, error paths, alternate personas.
    Useful when you have one good card and want a small suite.
-3. **Try `gauntlet batch`.** Run several stories in one go:
-   `gauntlet batch .gauntlet/stories/04-login-credentials.md
-   .gauntlet/stories/05-login-cookies.md
-   .gauntlet/stories/06-post-and-verify.md --target
+3. **Try `moe-flight qa batch`.** Run several stories in one go:
+   `moe-flight qa batch .moe-flight/stories/04-login-credentials.md
+   .moe-flight/stories/05-login-cookies.md
+   .moe-flight/stories/06-post-and-verify.md --target
    http://localhost:4444`. The live ticker is satisfying.
 
 When the agent gets confused, the fix is almost always a

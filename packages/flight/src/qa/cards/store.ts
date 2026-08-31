@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from "fs";
 import { join } from "path";
 import { parseStoryCard, type StoryCard } from "../format/story-card.js";
-import { gauntletPath } from "../paths.js";
+import { flightPath } from "../paths.js";
 import type { ErrorLog } from "../util/error-log.js";
 
 export interface CardEntry {
@@ -27,7 +27,7 @@ export function findCard(
   id: string,
   errorLog?: ErrorLog,
 ): CardEntry | undefined {
-  const storiesDir = gauntletPath(projectRoot, stateDirName, "stories");
+  const storiesDir = flightPath(projectRoot, stateDirName, "stories");
   const directPath = join(storiesDir, `${id}.md`);
 
   if (existsSync(directPath)) {
@@ -54,7 +54,7 @@ export function loadAllCards(
   stateDirName: string,
   errorLog?: ErrorLog,
 ): CardEntry[] {
-  const storiesDir = gauntletPath(projectRoot, stateDirName, "stories");
+  const storiesDir = flightPath(projectRoot, stateDirName, "stories");
   if (!existsSync(storiesDir)) return [];
 
   const files = readdirSync(storiesDir)

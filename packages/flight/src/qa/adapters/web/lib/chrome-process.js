@@ -7,25 +7,25 @@ const {
   buildChromeArgs,
   getChromeProfileDir,
 } = require('./chrome-launcher-helpers');
-// GAUNTLET DIVERGENCE #3: pickFreePort instead of findAvailablePort.
+// MOE-FLIGHT DIVERGENCE #3: pickFreePort instead of findAvailablePort.
 // Free-port picker used in launch mode. When no endpoint is configured
 // via CHROME_WS_PORT or createSession({host, port}), we let the OS
 // assign an ephemeral port for --remote-debugging-port so multiple
-// Gauntlet instances (and co-tenants on 9222) don't collide. Upstream
+// Flight instances (and co-tenants on 9222) don't collide. Upstream
 // uses findAvailablePort() scanning 9222..12111 instead.
 const { pickFreePort } = require('./pick-free-port');
 const { spawn } = require('child_process');
 const { existsSync, mkdirSync } = require('fs');
 const os = require('os');
 
-// GAUNTLET DIVERGENCE: silence per-run lifecycle banners
+// MOE-FLIGHT DIVERGENCE: silence per-run lifecycle banners
 // Upstream prints "Chrome started in <mode> mode (PID: ..., port: ...,
-// profile: ...)" and similar per-run banners on stderr. In Gauntlet those
-// fire once per card during a `gauntlet batch` run and clutter the output
+// profile: ...)" and similar per-run banners on stderr. In Flight those
+// fire once per card during a `moe-flight qa batch` run and clutter the output
 // without buying anything actionable. Silenced by default; set
-// GAUNTLET_CHROME_VERBOSE=1 to restore the banners for debugging chrome
+// MOE_FLIGHT_CHROME_VERBOSE=1 to restore the banners for debugging chrome
 // startup.
-const CHROME_VERBOSE = !!process.env.GAUNTLET_CHROME_VERBOSE;
+const CHROME_VERBOSE = !!process.env.MOE_FLIGHT_CHROME_VERBOSE;
 
 /**
  * Chrome process lifecycle + profile management. Reads and writes session
@@ -45,7 +45,7 @@ function attachChromeProcess({ state, chromeHttp, getTabs, newTab, closeBridge }
 
   // Try to spawn Chrome on a specific port. Returns the proc handle if Chrome
   // is alive on that port within the poll deadline, otherwise null. Used by
-  // the GAUNTLET DIVERGENCE port-selection block below to retry on TOCTOU.
+  // the MOE-FLIGHT DIVERGENCE port-selection block below to retry on TOCTOU.
   async function trySpawnOn(chosenPort, chromePath) {
     const args = buildChromeArgs({
       chosenPort,
@@ -135,7 +135,7 @@ function attachChromeProcess({ state, chromeHttp, getTabs, newTab, closeBridge }
       mkdirSync(state.chromeUserDataDir, { recursive: true });
     }
 
-    // ===== GAUNTLET DIVERGENCE START: port strategy via pickFreePort =====
+    // ===== MOE-FLIGHT DIVERGENCE START: port strategy via pickFreePort =====
     // Upstream scans findAvailablePort(PORT_RANGE_START..END). We use
     // pickFreePort() (OS-assigned ephemeral) because fixed-range scanning
     // raced with co-tenants on 9222.
@@ -173,7 +173,7 @@ function attachChromeProcess({ state, chromeHttp, getTabs, newTab, closeBridge }
         }
       }
     }
-    // ===== GAUNTLET DIVERGENCE END =====
+    // ===== MOE-FLIGHT DIVERGENCE END =====
 
     state.chromeProcess = proc;
     state.activePort = chosenPort;
@@ -244,9 +244,9 @@ function attachChromeProcess({ state, chromeHttp, getTabs, newTab, closeBridge }
     clearProfileMeta(state.chromeProfileName);
     state.chromeProcess = null;
     state.activePort = CHROME_DEBUG_PORT;
-    // GAUNTLET DIVERGENCE (PRI-1280): reset user-data-dir so the next
+    // MOE-FLIGHT DIVERGENCE (PRI-1280): reset user-data-dir so the next
     // startChrome() with a fresh profile name recomputes it. Without this,
-    // a long-lived process (e.g. `gauntlet serve`) reuses the first run's
+    // a long-lived process (e.g. `moe-flight qa serve`) reuses the first run's
     // profile dir forever and cookies leak across runs.
     state.chromeUserDataDir = null;
   }

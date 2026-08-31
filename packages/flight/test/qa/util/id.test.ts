@@ -39,7 +39,7 @@ describe("makeRunId", () => {
 
   test("composes safely into a Chrome profile name (no collisions with /^[a-zA-Z0-9_-]+$/)", () => {
     // chrome-ws-lib's setProfileName enforces /^[a-zA-Z0-9_-]+$/. The runId
-    // is embedded into `gauntlet-run-<runId>` directly, so it must remain
+    // is embedded into `moe-flight-run-<runId>` directly, so it must remain
     // within that character set on its own.
     for (let i = 0; i < 20; i++) {
       expect(makeRunId("card-001")).toMatch(/^[a-zA-Z0-9_-]+$/);

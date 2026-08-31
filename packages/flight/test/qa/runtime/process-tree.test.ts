@@ -38,7 +38,7 @@ test("killProcessTree SIGKILLs the pgid and reaps descendants", async () => {
   const { mkdtempSync, readFileSync } = await import("fs");
   const { tmpdir } = await import("os");
   const { join } = await import("path");
-  const dir = mkdtempSync(join(tmpdir(), "gauntlet-killtree-"));
+  const dir = mkdtempSync(join(tmpdir(), "moe-flight-killtree-"));
   const pidFile = join(dir, "child.pid");
 
   const parent = spawn(

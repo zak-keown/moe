@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Launcher for the Gauntlet Web adapter target. Isolated state
+# Launcher for the Flight Web adapter target. Isolated state
 # file per invocation, then runs the server in the foreground.
-# Gauntlet's Web runner expects the server already up — invoke
-# this in one terminal, then run `gauntlet run` against the URL
+# Flight's Web runner expects the server already up — invoke
+# this in one terminal, then run `moe-flight qa run` against the URL
 # in another.
 set -e
 SCRATCH="$(mktemp -d -t todo-web-XXXXXX)"

@@ -1,7 +1,7 @@
 import type { StoryCard } from "../format/story-card.js";
 import { parseStoryCard } from "../format/story-card.js";
 import type { LLMClient } from "../models/provider.js";
-import type { VetResult } from "../types.js";
+import type { VerdictResult } from "../types.js";
 
 export function buildFanoutPrompt(card: StoryCard): string {
   return `You are a QA test designer. Given a story card, generate variation scenarios that test edge cases, error paths, alternate personas, and boundary conditions.
@@ -95,7 +95,7 @@ export function splitAndValidateCards(text: string): string[] {
 
 // --- Observation promotion ---
 
-export function buildObservationPrompt(result: VetResult): string {
+export function buildObservationPrompt(result: VerdictResult): string {
   const observationList = result.observations
     .map((o) => `- [${o.kind}] ${o.description}`)
     .join("\n");
@@ -120,7 +120,7 @@ Generate one story card per observation. Output each as a complete story card in
 }
 
 export async function generateFromObservations(
-  result: VetResult,
+  result: VerdictResult,
   client: LLMClient
 ): Promise<string[]> {
   if (result.observations.length === 0) return [];
@@ -137,7 +137,7 @@ export async function generateFromObservations(
 
 // --- Failure analysis ---
 
-export function buildFailurePrompt(result: VetResult): string | null {
+export function buildFailurePrompt(result: VerdictResult): string | null {
   if (result.status !== "fail") return null;
 
   return `You are a QA analyst. A test scenario has failed. Generate 2-3 follow-up story cards that investigate the root cause and verify the fix.
@@ -160,7 +160,7 @@ Generate 2-3 follow-up cards. Output each as a complete story card in markdown f
 }
 
 export async function generateFromFailure(
-  result: VetResult,
+  result: VerdictResult,
   client: LLMClient
 ): Promise<string[]> {
   const prompt = buildFailurePrompt(result);

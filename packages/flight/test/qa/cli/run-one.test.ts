@@ -3,7 +3,6 @@ import { mkdtempSync, writeFileSync, readFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { runOne } from "../../../src/qa/cli/run-one.js";
-import type { AppConfig } from "../../../src/qa/config.js";
 import type { RunSetCtx } from "../../../src/qa/runs/run-set-types.js";
 import { report, makeScriptedClient } from "../integration/helpers.js";
 
@@ -20,7 +19,7 @@ A minimal card for runSetCtx threading tests.
 
 describe("runOne — runSetCtx threading", () => {
   test("runSetCtx is written into result.json when provided", async () => {
-    const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-runone-ctx-"));
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-runone-ctx-"));
     const cardPath = join(projectRoot, "card.md");
     writeFileSync(cardPath, MINIMAL_CARD);
 
@@ -49,7 +48,7 @@ describe("runOne — runSetCtx threading", () => {
   });
 
   test("runSet field is absent from result.json when runSetCtx is not provided", async () => {
-    const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-runone-noctx-"));
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-runone-noctx-"));
     const cardPath = join(projectRoot, "card.md");
     writeFileSync(cardPath, MINIMAL_CARD);
 
@@ -70,7 +69,7 @@ describe("runOne — runSetCtx threading", () => {
 
 describe("runOne", () => {
   test("propagates parseStoryCard errors and never calls onLogger when parse fails", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "gauntlet-runone-"));
+    const dir = mkdtempSync(join(tmpdir(), "moe-flight-runone-"));
     const badCard = join(dir, "bad.md");
     writeFileSync(badCard, "this is not a valid story card");
 

@@ -73,7 +73,7 @@ describe("buildSystemPrompt", () => {
     expect(prompt).toContain("explore");
   });
 
-  // Context section — Gauntlet v1.5 spec §4.1. The three-paragraph
+  // Context section — Flight v1.5 spec §4.1. The three-paragraph
   // prose is load-bearing; these assertions are fixed strings so any
   // drift breaks at CI time and the author has to either change the
   // spec (via amendment) or revert.
@@ -127,13 +127,13 @@ describe("buildSystemPrompt", () => {
     test("section is omitted when contextTree is undefined", () => {
       const prompt = buildSystemPrompt(baseCard, undefined, undefined, undefined);
       expect(prompt).not.toContain("## Context");
-      expect(prompt).not.toContain(".gauntlet/context/");
+      expect(prompt).not.toContain(".moe-flight/context/");
     });
 
     test("section is omitted when contextTree is the empty string", () => {
       const prompt = buildSystemPrompt(baseCard, "", undefined, undefined);
       expect(prompt).not.toContain("## Context");
-      expect(prompt).not.toContain(".gauntlet/context/");
+      expect(prompt).not.toContain(".moe-flight/context/");
     });
 
     test("immutability-invariant prose is present", () => {
@@ -145,9 +145,9 @@ describe("buildSystemPrompt", () => {
       expect(prompt).toContain("so you do not need to —\nand cannot — re-list it");
     });
 
-    test("never leaks the .gauntlet/context/ path to the agent (PRI-1614)", () => {
+    test("never leaks the .moe-flight/context/ path to the agent (PRI-1614)", () => {
       const prompt = buildSystemPrompt(baseCard, SAMPLE_TREE, undefined, undefined);
-      expect(prompt).not.toContain(".gauntlet/context/");
+      expect(prompt).not.toContain(".moe-flight/context/");
     });
   });
 

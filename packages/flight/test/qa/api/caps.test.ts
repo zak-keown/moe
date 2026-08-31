@@ -8,7 +8,8 @@ import { activeRunRoutes } from "../../../src/qa/api/routes/active-runs.js";
 import { ActiveRunRegistry } from "../../../src/qa/api/active-runs.js";
 import { createApp } from "../../../src/qa/api/server.js";
 import { loadConfig, validateRunBody } from "../../../src/qa/config.js";
-import { gauntletPath } from "../../../src/qa/paths.js";
+import { flightPath } from "../../../src/qa/paths.js";
+import type { LLMClient } from "../../../src/qa/models/provider.js";
 
 const STORY_MD = `---
 id: cap-test-card
@@ -24,8 +25,8 @@ A test story.
 `;
 
 function makeProjectRoot(): string {
-  const root = mkdtempSync(join(tmpdir(), "gauntlet-caps-"));
-  const stories = gauntletPath(root, ".gauntlet", "stories");
+  const root = mkdtempSync(join(tmpdir(), "moe-flight-caps-"));
+  const stories = flightPath(root, ".moe-flight", "stories");
   mkdirSync(stories, { recursive: true });
   writeFileSync(join(stories, "cap-test-card.md"), STORY_MD);
   return root;
@@ -42,30 +43,48 @@ describe("validateRunBody: body.turns is rejected", () => {
   });
 });
 
-describe("loadConfig: GAUNTLET_MAX_TIME", () => {
+describe("loadConfig: MOE_FLIGHT_MAX_TIME", () => {
   test("default budget is 5 minutes", () => {
     const c = loadConfig({}, {} as NodeJS.ProcessEnv);
     expect(c.defaultBudgetMs).toBe(300_000);
   });
 
-  test("GAUNTLET_MAX_TIME accepts duration strings", () => {
-    const c = loadConfig({}, { GAUNTLET_MAX_TIME: "30s" } as NodeJS.ProcessEnv);
+  test("MOE_FLIGHT_MAX_TIME accepts duration strings", () => {
+    const c = loadConfig({}, { MOE_FLIGHT_MAX_TIME: "30s" } as NodeJS.ProcessEnv);
     expect(c.defaultBudgetMs).toBe(30_000);
   });
 
   test("CLI --max-time overrides env", () => {
     const c = loadConfig(
       { maxTime: "10s" } as any,
-      { GAUNTLET_MAX_TIME: "5m" } as NodeJS.ProcessEnv,
+      { MOE_FLIGHT_MAX_TIME: "5m" } as NodeJS.ProcessEnv,
     );
     expect(c.defaultBudgetMs).toBe(10_000);
   });
 
-  test("invalid GAUNTLET_MAX_TIME throws with the offending value", () => {
+  test("invalid MOE_FLIGHT_MAX_TIME throws with the offending value", () => {
     expect(() =>
-      loadConfig({}, { GAUNTLET_MAX_TIME: "xyz" } as NodeJS.ProcessEnv),
-    ).toThrow(/GAUNTLET_MAX_TIME.*xyz/);
+      loadConfig({}, { MOE_FLIGHT_MAX_TIME: "xyz" } as NodeJS.ProcessEnv),
+    ).toThrow(/MOE_FLIGHT_MAX_TIME.*xyz/);
   });
+});
+
+// The cap tests POST a real run, and the sub-cap case is SUPPOSED to be
+// accepted — which fires the run in the background, where it builds an LLM
+// client. With no ANTHROPIC_API_KEY on the box that rejects after the test has
+// already resolved, and vitest reports it as an unhandled error attributed to
+// whichever test was running. Under `bun test` it was invisible; here it made
+// the suite intermittently red (observed once in ~15 runs).
+//
+// `runRoutes`' 7th parameter exists for exactly this. The stub is never called
+// for anything these tests assert — they assert the HTTP status — so it only
+// has to exist.
+const stubClientFactory = (): LLMClient => ({
+  chat: () => {
+    throw new Error("caps.test: the stub LLM client must not be called");
+  },
+  userMessage: (content: string) => ({ role: "user", content }),
+  toolResultMessages: () => [],
 });
 
 describe("PRI-1478: concurrency cap", () => {
@@ -73,15 +92,15 @@ describe("PRI-1478: concurrency cap", () => {
     const projectRoot = makeProjectRoot();
     try {
       const config = loadConfig({ projectRoot }, {
-        GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6",
-        GAUNTLET_MAX_CONCURRENT_RUNS: "2",
+        MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+        MOE_FLIGHT_MAX_CONCURRENT_RUNS: "2",
       } as NodeJS.ProcessEnv);
       const registry = new ActiveRunRegistry();
       registry.register({ id: "run-a", cardId: "x", title: "x", target: "http://x", model: "claude-sonnet-4-6", startedAt: 1, status: "running" });
       registry.register({ id: "run-b", cardId: "x", title: "x", target: "http://x", model: "claude-sonnet-4-6", startedAt: 2, status: "running" });
 
       const app = new Hono();
-      app.route("/api/run", runRoutes(config, undefined, undefined, registry));
+      app.route("/api/run", runRoutes(config, undefined, undefined, registry, undefined, undefined, stubClientFactory));
 
       const res = await app.request("/api/run/cap-test-card", {
         method: "POST",
@@ -102,15 +121,15 @@ describe("PRI-1478: concurrency cap", () => {
     const projectRoot = makeProjectRoot();
     try {
       const config = loadConfig({ projectRoot }, {
-        GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6",
-        GAUNTLET_MAX_CONCURRENT_RUNS: "10",
+        MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+        MOE_FLIGHT_MAX_CONCURRENT_RUNS: "10",
       } as NodeJS.ProcessEnv);
       const registry = new ActiveRunRegistry();
       // Sub-cap; the request should not 429.
       registry.register({ id: "run-a", cardId: "x", title: "x", target: "http://x", model: "claude-sonnet-4-6", startedAt: 1, status: "running" });
 
       const app = new Hono();
-      app.route("/api/run", runRoutes(config, undefined, undefined, registry));
+      app.route("/api/run", runRoutes(config, undefined, undefined, registry, undefined, undefined, stubClientFactory));
 
       const res = await app.request("/api/run/cap-test-card", {
         method: "POST",
@@ -173,8 +192,8 @@ describe("PRI-1478: body size cap (Hono bodyLimit middleware)", () => {
     const projectRoot = makeProjectRoot();
     try {
       const config = loadConfig({ projectRoot }, {
-        GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6",
-        GAUNTLET_MAX_REQUEST_BODY_SIZE: "1024",
+        MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+        MOE_FLIGHT_MAX_REQUEST_BODY_SIZE: "1024",
       } as NodeJS.ProcessEnv);
       const app = createApp(config);
       const huge = "x".repeat(2048);
@@ -203,8 +222,8 @@ describe("PRI-1478: body size cap (Hono bodyLimit middleware)", () => {
     const projectRoot = makeProjectRoot();
     try {
       const config = loadConfig({ projectRoot }, {
-        GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6",
-        GAUNTLET_MAX_REQUEST_BODY_SIZE: "10240",
+        MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+        MOE_FLIGHT_MAX_REQUEST_BODY_SIZE: "10240",
       } as NodeJS.ProcessEnv);
       const app = createApp(config);
       const small = JSON.stringify({ target: "http://x" });
@@ -224,7 +243,7 @@ describe("PRI-1478: config env var parsing", () => {
   test("loadConfig populates caps with defaults when env unset", () => {
     const projectRoot = mkdtempSync(join(tmpdir(), "caps-cfg-"));
     try {
-      const c = loadConfig({ projectRoot }, { GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
+      const c = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
       expect(c.maxRequestBodySize).toBe(1024 * 1024);
       expect(c.maxConcurrentRuns).toBe(4);
       expect(c.activeRunTargetMaxBytes).toBe(1024);
@@ -237,10 +256,10 @@ describe("PRI-1478: config env var parsing", () => {
     const projectRoot = mkdtempSync(join(tmpdir(), "caps-cfg-"));
     try {
       const c = loadConfig({ projectRoot }, {
-        GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6",
-        GAUNTLET_MAX_REQUEST_BODY_SIZE: "65536",
-        GAUNTLET_MAX_CONCURRENT_RUNS: "8",
-        GAUNTLET_ACTIVE_RUN_TARGET_MAX_BYTES: "2048",
+        MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+        MOE_FLIGHT_MAX_REQUEST_BODY_SIZE: "65536",
+        MOE_FLIGHT_MAX_CONCURRENT_RUNS: "8",
+        MOE_FLIGHT_ACTIVE_RUN_TARGET_MAX_BYTES: "2048",
       } as NodeJS.ProcessEnv);
       expect(c.maxRequestBodySize).toBe(65536);
       expect(c.maxConcurrentRuns).toBe(8);
@@ -253,9 +272,9 @@ describe("PRI-1478: config env var parsing", () => {
   test("rejects non-numeric env values with a clear error", () => {
     expect(() =>
       loadConfig({}, {
-        GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6",
-        GAUNTLET_MAX_REQUEST_BODY_SIZE: "not-a-number",
+        MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
+        MOE_FLIGHT_MAX_REQUEST_BODY_SIZE: "not-a-number",
       } as NodeJS.ProcessEnv)
-    ).toThrow(/GAUNTLET_MAX_REQUEST_BODY_SIZE/);
+    ).toThrow(/MOE_FLIGHT_MAX_REQUEST_BODY_SIZE/);
   });
 });

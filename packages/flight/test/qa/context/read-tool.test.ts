@@ -4,7 +4,7 @@ import { tmpdir } from "os";
 import { join } from "path";
 import { buildReadTool, READ_TOOL_DESCRIPTION } from "../../../src/qa/context/read-tool.js";
 
-// This is the authoritative prose from Gauntlet v1.5 spec §3.1.
+// This is the authoritative prose from Flight v1.5 spec §3.1.
 // DO NOT edit without going through the amendment protocol (spec §13).
 // If this string and the spec ever disagree, the spec is right.
 const SPEC_READ_TOOL_DESCRIPTION =
@@ -27,7 +27,7 @@ describe("buildReadTool", () => {
   });
 
   test("returns null when contextRoot is empty", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-read-empty-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-read-empty-"));
     try {
       const tool = buildReadTool(tmp);
       expect(tool).toBeNull();
@@ -37,7 +37,7 @@ describe("buildReadTool", () => {
   });
 
   test("registers as `read` with a path parameter when contextRoot has files", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-read-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-read-"));
     try {
       writeFileSync(join(tmp, "alice.md"), "hi");
       const tool = buildReadTool(tmp);
@@ -55,7 +55,7 @@ describe("buildReadTool", () => {
   });
 
   test("reads a file's contents verbatim", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-read-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-read-"));
     try {
       mkdirSync(join(tmp, "alice"), { recursive: true });
       writeFileSync(
@@ -71,7 +71,7 @@ describe("buildReadTool", () => {
   });
 
   test("returns an error result for missing path argument", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-read-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-read-"));
     try {
       writeFileSync(join(tmp, "alice.md"), "x");
       const tool = buildReadTool(tmp)!;
@@ -83,7 +83,7 @@ describe("buildReadTool", () => {
   });
 
   test("returns an error result for file-not-found", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-read-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-read-"));
     try {
       writeFileSync(join(tmp, "alice.md"), "x");
       const tool = buildReadTool(tmp)!;
@@ -96,7 +96,7 @@ describe("buildReadTool", () => {
   });
 
   test("returns an error result for `..` path escape attempts", () => {
-    const parent = mkdtempSync(join(tmpdir(), "gauntlet-read-parent-"));
+    const parent = mkdtempSync(join(tmpdir(), "moe-flight-read-parent-"));
     try {
       const root = join(parent, "root");
       mkdirSync(root);
@@ -112,7 +112,7 @@ describe("buildReadTool", () => {
   });
 
   test("returns an error result for absolute paths", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-read-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-read-"));
     try {
       writeFileSync(join(tmp, "alice.md"), "x");
       const tool = buildReadTool(tmp)!;
@@ -124,7 +124,7 @@ describe("buildReadTool", () => {
   });
 
   test("returns an error result when target is a directory, not a file", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-read-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-read-"));
     try {
       mkdirSync(join(tmp, "alice"), { recursive: true });
       writeFileSync(join(tmp, "alice", "x.md"), "x");
@@ -137,7 +137,7 @@ describe("buildReadTool", () => {
   });
 
   test("returns an error result for binary files", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-read-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-read-"));
     try {
       // NUL byte in the first 8 KB triggers the binary sniff.
       const data = Buffer.from([0x00, 0x01, 0x02, 0x03]);

@@ -71,10 +71,14 @@ async function main(): Promise<void> {
     case "dashboard": {
       // The dashboard is its own workspace package (packages/flight/dashboard)
       // because it has a genuinely different dependency set — zod only, no LLM
-      // SDKs. Reached by path rather than by module edge for the same reason
-      // glass reaches its skill lib by path: it is a sibling artifact, not a
-      // library this half consumes.
-      const { runDashboardCli } = await import("../dashboard/dist/index.js");
+      // SDKs — and it imports nothing from the harness.
+      //
+      // By module specifier, not by relative path into its dist/. The path form
+      // typechecked only while dashboard/dist/ happened to exist and failed on
+      // a clean tree; the specifier resolves through the workspace link, which
+      // is what tsconfig.json's `references` entry and turbo's
+      // `typecheck dependsOn ^build` are both already expressing.
+      const { runDashboardCli } = await import("@bubstack/moe-flight-dashboard");
       await runDashboardCli(rest);
       return;
     }

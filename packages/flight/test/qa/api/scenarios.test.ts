@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
 import { createApp } from "../../../src/qa/api/server.js";
 import { loadConfig } from "../../../src/qa/config.js";
-import { gauntletPath } from "../../../src/qa/paths.js";
+import { flightPath } from "../../../src/qa/paths.js";
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -14,8 +14,8 @@ describe("Scenarios API", () => {
   let app: ReturnType<typeof createApp>;
 
   beforeEach(() => {
-    projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-api-"));
-    const storiesDir = gauntletPath(projectRoot, ".gauntlet", "stories");
+    projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-api-"));
+    const storiesDir = flightPath(projectRoot, ".moe-flight", "stories");
     mkdirSync(storiesDir, { recursive: true });
 
     writeFileSync(
@@ -74,7 +74,7 @@ describe("Scenarios API", () => {
   });
 
   test("GET /api/scenarios returns empty array when stories dir doesn't exist", async () => {
-    const emptyDir = mkdtempSync(join(tmpdir(), "gauntlet-no-stories-"));
+    const emptyDir = mkdtempSync(join(tmpdir(), "moe-flight-no-stories-"));
     const emptyApp = makeApp(emptyDir);
     const res = await emptyApp.request("/api/scenarios");
     expect(res.status).toBe(200);

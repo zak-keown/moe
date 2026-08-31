@@ -21,9 +21,9 @@ if (!HAVE_DIST) {
 }
 
 function setupProject(): { dir: string; cardPath: string } {
-  const dir = mkdtempSync(join(tmpdir(), "gauntlet-spae-"));
-  mkdirSync(join(dir, ".gauntlet", "context"), { recursive: true });
-  writeFileSync(join(dir, ".gauntlet", "context", "HOW-TO-LOGIN.md"), "Use email and password.", "utf-8");
+  const dir = mkdtempSync(join(tmpdir(), "moe-flight-spae-"));
+  mkdirSync(join(dir, ".moe-flight", "context"), { recursive: true });
+  writeFileSync(join(dir, ".moe-flight", "context", "HOW-TO-LOGIN.md"), "Use email and password.", "utf-8");
   const cardPath = join(dir, "card.md");
   writeFileSync(cardPath, [
     "---",

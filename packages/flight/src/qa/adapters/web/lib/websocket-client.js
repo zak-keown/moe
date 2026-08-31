@@ -1,4 +1,4 @@
-// GAUNTLET DIVERGENCE #1: WebSocketClient uses a WebSocket client library
+// MOE-FLIGHT DIVERGENCE #1: WebSocketClient uses a WebSocket client library
 // rather than upstream's `http.request` + hand-rolled frame parser. The public
 // API (`on/connect/send/close/isConnected`) matches upstream's, so callers
 // don't need to know which backend is in use.

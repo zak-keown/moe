@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
-import type { VetResult } from "../types.js";
+import type { VerdictResult } from "../types.js";
 import { RESULT_SCHEMA_VERSION } from "../types.js";
 import type { CardId, RunId } from "../util/brands.js";
 
@@ -53,7 +53,7 @@ export function writeShutdownStubs(
       mkdirSync(dirname(stubPath), { recursive: true });
     }
 
-    const stub: VetResult = {
+    const stub: VerdictResult = {
       schemaVersion: RESULT_SCHEMA_VERSION,
       runId: t.runId,
       scenario: t.cardId,

@@ -7,12 +7,12 @@
 // v3: RunConfigSnapshot.turns replaced with budgetMs (wall-clock budget
 //     in ms) and maxStuckRetries (prompt-injected stuck-retry hint).
 //     Reflects the time-budget loop replacing maxTurns. See
-//     docs/superpowers/specs/2026-05-11-time-budget-and-stuck-detection-spec.md.
+//     docs/history/specs/2026-05-11-time-budget-and-stuck-detection-spec.md.
 // v4: Removed maxStuckRetries (the stuck-handling system-prompt block it
 //     templated into has been retired in favor of mid-loop reflection
 //     checkpoints — see docs/reflection-checkpoints-spec.md, PRI-1569).
-// v5: Added "errored" to VetStatus and optional error: {type, message}
-//     field on VetResult. Today's only emitter is shutdown drain
+// v5: Added "errored" to VerdictStatus and optional error: {type, message}
+//     field on VerdictResult. Today's only emitter is shutdown drain
 //     (PRI-1507) — type is "shutdown_interrupted". The error.type field
 //     is open-typed (string) so additive new categories don't require a
 //     schema bump or TypeScript widening; consumers MUST tolerate
@@ -42,7 +42,7 @@ export interface RunConfigSnapshot {
   viewport?: { width: number; height: number } | undefined;
 }
 
-export type VetStatus = "pass" | "fail" | "investigate" | "errored";
+export type VerdictStatus = "pass" | "fail" | "investigate" | "errored";
 
 export type ObservationKind =
   | "bug"
@@ -75,7 +75,7 @@ export interface CriterionVerdict {
 }
 
 /**
- * Base shape — the fields shared by every VetResult variant. `VetResult`
+ * Base shape — the fields shared by every VerdictResult variant. `VerdictResult`
  * itself is a discriminated union on `status`: "errored" variants carry
  * a required `error` object; non-errored variants don't have the field.
  *
@@ -83,7 +83,7 @@ export interface CriterionVerdict {
  * `error` field; a non-errored result already omits it. No
  * RESULT_SCHEMA_VERSION bump.
  */
-interface VetResultBase {
+interface VerdictResultBase {
   schemaVersion: number;
   /**
    * Self-describing primary key for the run, set by the caller (route or
@@ -145,9 +145,9 @@ interface VetResultBase {
   runSet?: RunSetCtx | undefined;
 }
 
-export type VetResult =
-  | (VetResultBase & { status: "pass" | "fail" | "investigate" })
-  | (VetResultBase & {
+export type VerdictResult =
+  | (VerdictResultBase & { status: "pass" | "fail" | "investigate" })
+  | (VerdictResultBase & {
       status: "errored";
       /**
        * Categorizes the cause so consumers can distinguish shutdown

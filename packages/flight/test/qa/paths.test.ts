@@ -2,42 +2,42 @@ import { describe, test, expect } from "vitest";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync } from "fs";
 import { tmpdir } from "os";
 import { join, resolve as resolvePath } from "path";
-import { gauntletPath, isSafePath, resolveInside, resolveRunDir } from "../../src/qa/paths.js";
+import { flightPath, isSafePath, resolveInside, resolveRunDir } from "../../src/qa/paths.js";
 
-describe("gauntletPath", () => {
-  test("composes <root>/.gauntlet/<sub> for a single segment", () => {
-    expect(gauntletPath("/project", ".gauntlet", "stories")).toBe("/project/.gauntlet/stories");
+describe("flightPath", () => {
+  test("composes <root>/.moe-flight/<sub> for a single segment", () => {
+    expect(flightPath("/project", ".moe-flight", "stories")).toBe("/project/.moe-flight/stories");
   });
 
   test("composes multiple segments", () => {
-    expect(gauntletPath("/project", ".gauntlet", "results", "run-001")).toBe(
-      "/project/.gauntlet/results/run-001",
+    expect(flightPath("/project", ".moe-flight", "results", "run-001")).toBe(
+      "/project/.moe-flight/results/run-001",
     );
-    expect(gauntletPath("/project", ".gauntlet", "context", "alice", "notes.md")).toBe(
-      "/project/.gauntlet/context/alice/notes.md",
+    expect(flightPath("/project", ".moe-flight", "context", "alice", "notes.md")).toBe(
+      "/project/.moe-flight/context/alice/notes.md",
     );
   });
 
   test("works with an absolute projectRoot", () => {
-    expect(gauntletPath("/abs/path/to/project", ".gauntlet", "stories")).toBe(
-      "/abs/path/to/project/.gauntlet/stories",
+    expect(flightPath("/abs/path/to/project", ".moe-flight", "stories")).toBe(
+      "/abs/path/to/project/.moe-flight/stories",
     );
   });
 
   test("works with a relative projectRoot", () => {
-    expect(gauntletPath(".", ".gauntlet", "stories")).toBe(".gauntlet/stories");
-    expect(gauntletPath("./my-app", ".gauntlet", "results")).toBe("my-app/.gauntlet/results");
+    expect(flightPath(".", ".moe-flight", "stories")).toBe(".moe-flight/stories");
+    expect(flightPath("./my-app", ".moe-flight", "results")).toBe("my-app/.moe-flight/results");
   });
 
-  test("returns just the .gauntlet dir when no subdirs are given", () => {
-    expect(gauntletPath("/project", ".gauntlet")).toBe("/project/.gauntlet");
-    expect(gauntletPath(".", ".gauntlet")).toBe(".gauntlet");
+  test("returns just the .moe-flight dir when no subdirs are given", () => {
+    expect(flightPath("/project", ".moe-flight")).toBe("/project/.moe-flight");
+    expect(flightPath(".", ".moe-flight")).toBe(".moe-flight");
   });
 
   test("honors a custom stateDirName", () => {
-    expect(gauntletPath("/project", "gauntlet", "stories")).toBe("/project/gauntlet/stories");
-    expect(gauntletPath("/project", ".gnt", "results", "run-1")).toBe("/project/.gnt/results/run-1");
-    expect(gauntletPath(".", "state", "context")).toBe("state/context");
+    expect(flightPath("/project", "moe-flight", "stories")).toBe("/project/moe-flight/stories");
+    expect(flightPath("/project", ".gnt", "results", "run-1")).toBe("/project/.gnt/results/run-1");
+    expect(flightPath(".", "state", "context")).toBe("state/context");
   });
 });
 
@@ -86,7 +86,7 @@ describe("isSafePath", () => {
   // `realpathSync` when the target exists, so the symlink is resolved
   // to its real location and the containment check runs on that.
   test("rejects a symlink inside base that points outside base", () => {
-    const parent = mkdtempSync(join(tmpdir(), "gauntlet-safepath-"));
+    const parent = mkdtempSync(join(tmpdir(), "moe-flight-safepath-"));
     try {
       const base = join(parent, "base");
       const outside = join(parent, "outside");
@@ -105,7 +105,7 @@ describe("isSafePath", () => {
   });
 
   test("accepts a legitimate nested file under base (symlink-aware)", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-safepath-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-safepath-"));
     try {
       mkdirSync(join(tmp, "sub"));
       const file = join(tmp, "sub", "ok.txt");
@@ -119,7 +119,7 @@ describe("isSafePath", () => {
 
 describe("resolveInside", () => {
   test("resolves a simple relative path under the root", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-path-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-path-"));
     try {
       const file = join(tmp, "alice.md");
       writeFileSync(file, "x");
@@ -131,7 +131,7 @@ describe("resolveInside", () => {
   });
 
   test("resolves a nested relative path under the root", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-path-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-path-"));
     try {
       mkdirSync(join(tmp, "alice"), { recursive: true });
       const file = join(tmp, "alice", "credentials.md");
@@ -144,7 +144,7 @@ describe("resolveInside", () => {
   });
 
   test("rejects `..` segments", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-path-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-path-"));
     try {
       expect(() => resolveInside(tmp, "../etc/passwd")).toThrow(/\.\./);
       expect(() => resolveInside(tmp, "alice/../../etc/passwd")).toThrow(/\.\./);
@@ -154,7 +154,7 @@ describe("resolveInside", () => {
   });
 
   test("rejects absolute paths (POSIX style)", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-path-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-path-"));
     try {
       expect(() => resolveInside(tmp, "/etc/passwd")).toThrow(/relative/);
     } finally {
@@ -163,7 +163,7 @@ describe("resolveInside", () => {
   });
 
   test("rejects empty input", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-path-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-path-"));
     try {
       expect(() => resolveInside(tmp, "")).toThrow();
     } finally {
@@ -172,7 +172,7 @@ describe("resolveInside", () => {
   });
 
   test("rejects escapes via `..` even when target exists", () => {
-    const parent = mkdtempSync(join(tmpdir(), "gauntlet-path-parent-"));
+    const parent = mkdtempSync(join(tmpdir(), "moe-flight-path-parent-"));
     try {
       const root = join(parent, "root");
       mkdirSync(root);
@@ -184,7 +184,7 @@ describe("resolveInside", () => {
   });
 
   test("allows legitimate nested subdirectories at arbitrary depth", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-path-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-path-"));
     try {
       mkdirSync(join(tmp, "users", "alice", "secrets"), { recursive: true });
       const file = join(tmp, "users", "alice", "secrets", "key.json");
@@ -197,7 +197,7 @@ describe("resolveInside", () => {
   });
 
   test("rejects a symlink inside root that points outside", () => {
-    const parent = mkdtempSync(join(tmpdir(), "gauntlet-path-parent-"));
+    const parent = mkdtempSync(join(tmpdir(), "moe-flight-path-parent-"));
     try {
       const root = join(parent, "root");
       const outside = join(parent, "outside");
@@ -215,8 +215,8 @@ describe("resolveInside", () => {
 
 describe("resolveRunDir", () => {
   test("composes results-root + runId", () => {
-    const path = resolveRunDir("/proj", ".gauntlet", "01-add-one_20260514T220510Z_u116");
-    expect(path).toBe("/proj/.gauntlet/results/01-add-one_20260514T220510Z_u116");
+    const path = resolveRunDir("/proj", ".moe-flight", "01-add-one_20260514T220510Z_u116");
+    expect(path).toBe("/proj/.moe-flight/results/01-add-one_20260514T220510Z_u116");
   });
 
   test("honours a custom state-dir name", () => {

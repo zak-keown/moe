@@ -3,11 +3,11 @@ import { mkdtempSync, existsSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { runRunSet } from "../../../src/qa/runs/run-set.js";
-import type { VetResult } from "../../../src/qa/types.js";
+import type { VerdictResult } from "../../../src/qa/types.js";
 import type { RunSetCtx } from "../../../src/qa/runs/run-set-types.js";
 
 const baseConfig = (overrides = {}) => ({
-  resultsRoot: mkdtempSync(join(tmpdir(), "gauntlet-runset-")),
+  resultsRoot: mkdtempSync(join(tmpdir(), "moe-flight-runset-")),
   cards: ["card-a"],
   passes: 1,
   kind: "single" as const,
@@ -15,7 +15,7 @@ const baseConfig = (overrides = {}) => ({
   ...overrides,
 });
 
-const fakeResult = (status: VetResult["status"]): VetResult => ({
+const fakeResult = (status: VerdictResult["status"]): VerdictResult => ({
   schemaVersion: 2,
   runId: "x",
   scenario: "x",

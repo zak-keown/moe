@@ -6,10 +6,10 @@ import type { AppConfig } from "../config.js";
 import type { LLMClient } from "../models/provider.js";
 import { rebuildMessages, ANSWER_TOOL, extractAnswer } from "../revival/index.js";
 import { createClient, UnknownModelProviderError } from "../models/resolve.js";
-import { gauntletPath } from "../paths.js";
+import { flightPath } from "../paths.js";
 
 export async function ask(args: AskArgs, config: AppConfig): Promise<number> {
-  const runDir = gauntletPath(config.projectRoot, config.stateDirName, "results", args.runId);
+  const runDir = flightPath(config.projectRoot, config.stateDirName, "results", args.runId);
   if (!existsSync(runDir)) {
     console.error(`Run not found: ${args.runId} (looked in ${runDir})`);
     return 1;

@@ -10,14 +10,14 @@ import { createRequire } from "node:module";
 // not. Same fix as src/qa/adapters/web/adapter.ts.
 const require = createRequire(import.meta.url);
 
-// PRI-1280 regression: within a single process (as in `gauntlet serve`),
+// PRI-1280 regression: within a single process (as in `moe-flight qa serve`),
 // successive startChrome calls with different profile names must launch
 // Chrome against different --user-data-dirs. Before the fix, the module
 // cached the first run's dir and reused it for every later run, leaking
 // cookies across scenarios.
 describe("chrome profile rotation (PRI-1280)", () => {
   const originalXdg = process.env.XDG_CACHE_HOME;
-  const cacheRoot = mkdtempSync(join(tmpdir(), "gauntlet-profile-rotation-"));
+  const cacheRoot = mkdtempSync(join(tmpdir(), "moe-flight-profile-rotation-"));
 
   beforeAll(() => {
     process.env.XDG_CACHE_HOME = cacheRoot;
@@ -49,8 +49,8 @@ describe("chrome profile rotation (PRI-1280)", () => {
         return;
       }
 
-      const profileA = "gauntlet-run-rotation-a";
-      const profileB = "gauntlet-run-rotation-b";
+      const profileA = "moe-flight-run-rotation-a";
+      const profileB = "moe-flight-run-rotation-b";
       const dirA = chrome.getChromeProfileDir(profileA);
       const dirB = chrome.getChromeProfileDir(profileB);
       expect(dirA).not.toBe(dirB);
@@ -81,7 +81,7 @@ describe("chrome profile rotation (PRI-1280)", () => {
         // Reset module-level profile name so subsequent tests in the
         // same process don't inherit our rotation-b profile in their logs.
         try {
-          chrome.setProfileName("gauntlet");
+          chrome.setProfileName("moe-flight");
         } catch {
           // best-effort
         }

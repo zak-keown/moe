@@ -26,13 +26,13 @@ status: ready
 stub
 `;
 
-describe("gauntlet batch — e2e against CLI adapter", () => {
+describe("moe-flight qa batch — e2e against CLI adapter", () => {
   let projectRoot: string;
   let pathA: string;
   let pathB: string;
 
   beforeEach(() => {
-    projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-batch-e2e-"));
+    projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-batch-e2e-"));
     pathA = join(projectRoot, "a.md");
     pathB = join(projectRoot, "b.md");
     writeFileSync(pathA, STORY_A);
@@ -59,7 +59,7 @@ describe("gauntlet batch — e2e against CLI adapter", () => {
       adapterType: "cli",
       config: {
         projectRoot,
-        stateDirName: ".gauntlet",
+        stateDirName: ".moe-flight",
         port: 4400,
         defaultChrome: { host: "127.0.0.1", port: 9222 },
         defaultBudgetMs: 300000,
@@ -83,7 +83,7 @@ describe("gauntlet batch — e2e against CLI adapter", () => {
     expect(sink.out).toContain("done (fail)");
     expect(sink.out).toContain("batch: 1 pass · 1 fail");
 
-    const resultsRoot = join(projectRoot, ".gauntlet", "results");
+    const resultsRoot = join(projectRoot, ".moe-flight", "results");
     expect(existsSync(resultsRoot)).toBe(true);
     // RunIds embed the batch cardId as their stem (`<cardId>_<ts>_<nonce>`).
     // The batch cardId is the file stem (basename without extension), not the

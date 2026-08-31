@@ -2,7 +2,7 @@
 // Single-shot CLI frontend for the TODO fixture. Each invocation:
 // load state, mutate, save, exit. Output format is stable and
 // stdout-parseable — see examples/todo/README.md and the spec at
-// docs/superpowers/specs/2026-05-14-todo-fixture-design.md.
+// docs/history/specs/2026-05-14-todo-fixture-design.md.
 
 import {
   loadState,

@@ -6,11 +6,11 @@
  * interpolated into larger CDP `expression` payloads.
  */
 
-// ===== GAUNTLET DIVERGENCE #4: parseContains + :contains() support =====
+// ===== MOE-FLIGHT DIVERGENCE #4: parseContains + :contains() support =====
 // Upstream has no :contains() helper. We added one because LLM agents reach
 // for jQuery-style `button:contains('Log in')` anyway, and a silent CSS
 // syntax error wastes turns. getElementSelector / getElementSelectorAll
-// below consume this — both have matching Gauntlet-only branches.
+// below consume this — both have matching Flight-only branches.
 //
 // Parse a :contains('text') / :contains("text") clause at the end of a
 // selector. Returns { base, text } or null if the selector doesn't use
@@ -22,9 +22,9 @@ function parseContains(selector) {
   const base = m[1].trim();
   return { base: base || '*', text: m[3] };
 }
-// ===== GAUNTLET DIVERGENCE END =====
+// ===== MOE-FLIGHT DIVERGENCE END =====
 
-// Generate element selection code (supports CSS, XPath, and Gauntlet's
+// Generate element selection code (supports CSS, XPath, and Flight's
 // jQuery-style :contains('text')). Prefers visible elements (non-zero
 // bounding rect) over hidden ones; falls back to first DOM match with a
 // console.warn if all matches are hidden. For XPath with text()='...', also
@@ -54,12 +54,12 @@ function getElementSelector(selector) {
         return r.width > 0 && r.height > 0;
       });
       if (visible) return visible;
-      console.warn('[superpowers-chrome] All ' + all.length + ' elements matching XPath have zero dimensions; using first match');
+      console.warn('[moe-flight] All ' + all.length + ' elements matching XPath have zero dimensions; using first match');
       return all[0];
     })()`;
   }
 
-  // GAUNTLET DIVERGENCE #4: jQuery-style :contains('text') — translate to a
+  // MOE-FLIGHT DIVERGENCE #4: jQuery-style :contains('text') — translate to a
   // querySelectorAll walk. Prefer visible matches, consistent with the CSS
   // and XPath branches.
   const contains = parseContains(selector);
@@ -75,7 +75,7 @@ function getElementSelector(selector) {
         return r.width > 0 && r.height > 0;
       });
       if (visible) return visible;
-      console.warn('[superpowers-chrome] All ' + all.length + ' elements matching :contains() have zero dimensions; using first match');
+      console.warn('[moe-flight] All ' + all.length + ' elements matching :contains() have zero dimensions; using first match');
       return all[0];
     })()`;
   }
@@ -89,7 +89,7 @@ function getElementSelector(selector) {
       return r.width > 0 && r.height > 0;
     });
     if (visible) return visible;
-    console.warn('[superpowers-chrome] All ' + all.length + ' elements matching ' + ${JSON.stringify(JSON.stringify(selector))} + ' have zero dimensions; using first match');
+    console.warn('[moe-flight] All ' + all.length + ' elements matching ' + ${JSON.stringify(JSON.stringify(selector))} + ' have zero dimensions; using first match');
     return all[0];
   })()`;
 }
@@ -124,7 +124,7 @@ function getElementSelectorAll(selector) {
     })()`;
   }
 
-  // GAUNTLET DIVERGENCE #4: jQuery-style :contains('text') — same translation
+  // MOE-FLIGHT DIVERGENCE #4: jQuery-style :contains('text') — same translation
   // as getElementSelector, but returns all matches (no visible-preference).
   const contains = parseContains(selector);
   if (contains) {

@@ -98,7 +98,7 @@ describe("cdp-router", () => {
   test("messages tagged with an unregistered sessionId silently drop", () => {
     let onEventHandler: any = null;
     const fakeBrowser = { onEvent: (fn: any) => { onEventHandler = fn; } };
-    const router = createCdpRouter({ browser: fakeBrowser });
+    const _router = createCdpRouter({ browser: fakeBrowser });
 
     expect(() => onEventHandler({ method: "Foo", sessionId: "ghost" })).not.toThrow();
     expect(() => onEventHandler({ id: 1, result: {}, sessionId: "ghost" })).not.toThrow();

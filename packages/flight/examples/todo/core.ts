@@ -1,9 +1,9 @@
-// Shared TODO model + state I/O for the Gauntlet fixture under
+// Shared TODO model + state I/O for the Flight fixture under
 // examples/todo. All three frontends (cli, tui, web) import from
 // here; nothing else touches the on-disk JSON.
 //
 // State path resolution: explicit argument > $TODO_STATE_FILE >
-// ./.todo-state.json. The Gauntlet harness sets $TODO_STATE_FILE
+// ./.todo-state.json. The Flight harness sets $TODO_STATE_FILE
 // per run for isolation.
 //
 // This is a fixture. No locking, no schema migration, no validation

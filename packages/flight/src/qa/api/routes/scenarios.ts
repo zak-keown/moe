@@ -5,7 +5,7 @@ import { serializeStoryCard } from "../../format/story-card.js";
 import type { StoryCard } from "../../format/story-card.js";
 import { asCardId } from "../../util/brands.js";
 import { loadAllCards, findCard } from "../../cards/store.js";
-import { isSafePath, gauntletPath } from "../../paths.js";
+import { isSafePath, flightPath } from "../../paths.js";
 import type { ErrorLog } from "../../util/error-log.js";
 
 /**
@@ -101,7 +101,7 @@ function parseScenarioBody(raw: unknown, kind: "create" | "update"): ScenarioBod
 
 export function scenarioRoutes(projectRoot: string, stateDirName: string, errorLog?: ErrorLog) {
   const router = new Hono();
-  const storiesDir = gauntletPath(projectRoot, stateDirName, "stories");
+  const storiesDir = flightPath(projectRoot, stateDirName, "stories");
 
   router.get("/", (c) => {
     const entries = loadAllCards(projectRoot, stateDirName, errorLog);

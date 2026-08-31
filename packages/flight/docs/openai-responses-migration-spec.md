@@ -7,7 +7,7 @@
 
 ## Problem
 
-The Gauntlet OpenAI provider (`src/models/openai.ts`) talks to the
+The Flight OpenAI provider (`src/models/openai.ts`) talks to the
 Chat Completions API. This has two consequences the project wants to
 fix:
 
@@ -344,7 +344,7 @@ testing shows the defaults are wrong.
 
 ## Acceptance criteria
 
-1. A Gauntlet run with `--model gpt-5.4-mini` against the
+1. A Flight run with `--model gpt-5.4-mini` against the
    `tutorial-04-login-credentials` fixture completes and produces a
    `run.jsonl` where reasoning summaries are visible on assistant
    turns (not empty, when the model produced reasoning).

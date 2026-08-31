@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { renderRunFromTemplate } from "../../../src/qa/render/render-run.js";
 
 function makeFixtureRun(): { runDir: string; templatePath: string; base: string } {
-  const base = mkdtempSync(join(tmpdir(), "gauntlet-render-"));
+  const base = mkdtempSync(join(tmpdir(), "moe-flight-render-"));
   const runDir = join(base, "run-1");
   mkdirSync(runDir);
   writeFileSync(join(runDir, "result.json"), JSON.stringify({
@@ -23,7 +23,7 @@ function makeFixtureRun(): { runDir: string; templatePath: string; base: string 
     JSON.stringify({ eventId: "e1", ts: "2026-05-22T00:00:00Z", type: "run_start" }) + "\n");
   const templatePath = join(base, "template.html");
   writeFileSync(templatePath,
-    `<!doctype html><html><head><script type="application/json" id="__GAUNTLET_RUN__">{}</script></head><body></body></html>`);
+    `<!doctype html><html><head><script type="application/json" id="__MOE_FLIGHT_RUN__">{}</script></head><body></body></html>`);
   return { runDir, templatePath, base };
 }
 
@@ -34,7 +34,7 @@ describe("renderRunFromTemplate", () => {
     expect(outPath).toBe(join(runDir, "index.html"));
     expect(existsSync(outPath)).toBe(true);
     const html = readFileSync(outPath, "utf-8");
-    expect(html).toContain('id="__GAUNTLET_RUN__"');
+    expect(html).toContain('id="__MOE_FLIGHT_RUN__"');
     expect(html).toContain('"runId":"card_2026T000000Z_aaaa"');
     expect(html).toContain('"status":"pass"');
     expect(html).toContain('"runJsonl"');
@@ -54,7 +54,7 @@ describe("renderRunFromTemplate", () => {
     // Negative: scan only the JSON region — between the end of the opening
     // <script ...> tag and the start of the legitimate closing </script>.
     // No raw </script must appear inside that region.
-    const idIdx = html.indexOf('id="__GAUNTLET_RUN__"');
+    const idIdx = html.indexOf('id="__MOE_FLIGHT_RUN__"');
     const openEnd = html.indexOf(">", idIdx) + 1;          // end of opening <script ...>
     const closeStart = html.indexOf("</script>", openEnd); // legit closing tag
     const jsonRegion = html.slice(openEnd, closeStart);
@@ -79,7 +79,7 @@ describe("renderRunFromTemplate", () => {
     const { runDir, base } = makeFixtureRun();
     const altTemplate = join(base, "alt-template.html");
     writeFileSync(altTemplate,
-      `<!doctype html><html><head><script id="__GAUNTLET_RUN__" type="application/json">{}</script></head><body></body></html>`);
+      `<!doctype html><html><head><script id="__MOE_FLIGHT_RUN__" type="application/json">{}</script></head><body></body></html>`);
     const outPath = await renderRunFromTemplate({ runDir, templatePath: altTemplate });
     const html = readFileSync(outPath, "utf-8");
     expect(html).toContain('"runId":"card_2026T000000Z_aaaa"');
@@ -90,6 +90,6 @@ describe("renderRunFromTemplate", () => {
     const noPlaceholder = join(base, "no-placeholder.html");
     writeFileSync(noPlaceholder,
       `<!doctype html><html><head></head><body></body></html>`);
-    await expect(renderRunFromTemplate({ runDir, templatePath: noPlaceholder })).rejects.toThrow(/__GAUNTLET_RUN__/);
+    await expect(renderRunFromTemplate({ runDir, templatePath: noPlaceholder })).rejects.toThrow(/__MOE_FLIGHT_RUN__/);
   });
 });

@@ -138,8 +138,7 @@ export async function qaMain(argv: string[]): Promise<void> {
       const { handleWsOpen, handleSetWsOpen } = await import("./api/ws-handlers.js");
       const { ShutdownState, drainShutdown, installShutdownHandlers } = await import("./api/shutdown.js");
       const { decideUpgrade } = await import("./api/ws-upgrade.js");
-      const { join } = await import("path");
-      const { gauntletPath } = await import("./paths.js");
+      const { flightPath } = await import("./paths.js");
       const { serve } = await import("./runtime/serve.js");
 
       const config = await loadConfigOrThrow(args.cli);
@@ -147,8 +146,8 @@ export async function qaMain(argv: string[]): Promise<void> {
 
       const { uiDistDir } = await import("../package-root.js");
       const uiDir = uiDistDir();
-      const gauntletRoot = gauntletPath(config.projectRoot, config.stateDirName);
-      const resultsRoot = gauntletPath(config.projectRoot, config.stateDirName, "results");
+      const flightRoot = flightPath(config.projectRoot, config.stateDirName);
+      const resultsRoot = flightPath(config.projectRoot, config.stateDirName, "results");
       const broadcaster = new RunBroadcaster();
       const registry = new ActiveRunRegistry();
       const setBroadcaster = new RunSetBroadcaster();
@@ -156,7 +155,7 @@ export async function qaMain(argv: string[]): Promise<void> {
       const shutdownState = new ShutdownState();
       const app = createApp(config, uiDir, broadcaster, registry, setBroadcaster, cancelTokens, shutdownState);
       const port = config.port;
-      console.error(`gauntlet server listening on port ${port}`);
+      console.error(`moe-flight server listening on port ${port}`);
       type WsData = { runId?: string | undefined; runSetId?: string | undefined };
       const server = serve<WsData>({
         port,
@@ -173,7 +172,7 @@ export async function qaMain(argv: string[]): Promise<void> {
           },
           open(ws, data) {
             if (data.runSetId) {
-              handleSetWsOpen(setBroadcaster, data.runSetId, ws, gauntletRoot);
+              handleSetWsOpen(setBroadcaster, data.runSetId, ws, flightRoot);
             } else if (data.runId) {
               handleWsOpen(registry, broadcaster, data.runId, ws, resultsRoot);
             }
@@ -210,7 +209,7 @@ export async function qaMain(argv: string[]): Promise<void> {
             graceMs: config.shutdownGraceMs,
             postAbortMs: 1000,
             pollMs: 100,
-            log: (msg) => process.stderr.write(`gauntlet: ${msg}\n`),
+            log: (msg) => process.stderr.write(`moe-flight: ${msg}\n`),
           });
         } finally {
           await server.stop();

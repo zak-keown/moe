@@ -3,7 +3,7 @@ import { pushAssistantTurn, textResult } from "../models/provider.js";
 import type { Adapter } from "../adapters/adapter.js";
 import type { EvidenceLogger } from "../evidence/logger.js";
 import type { StoryCard } from "../format/story-card.js";
-import type { VetResult, VetStatus } from "../types.js";
+import type { VerdictResult, VerdictStatus } from "../types.js";
 import { RESULT_SCHEMA_VERSION } from "../types.js";
 import type { RunId } from "../util/brands.js";
 import { buildSystemPrompt } from "./prompts.js";
@@ -33,7 +33,7 @@ const MAX_REPORT_VALIDATION_RETRIES = 2;
 // polling a frozen surface. Warn at the third identical turn; force a
 // final report at the sixth. Byte-identity is deliberately conservative —
 // any change in the surface (clock, spinner, scrolling log) resets the
-// counter. See docs/superpowers/specs/2026-06-11-stall-watchdog-spec.md.
+// counter. See docs/history/specs/2026-06-11-stall-watchdog-spec.md.
 const STALL_WARNING_AFTER = 2;
 const STALL_FORCED_REPORT_AFTER = 5;
 
@@ -147,7 +147,7 @@ export interface AgentOptions {
    * Rendered tree listing for the system prompt's Context section,
    * produced by `renderContextTree` in `src/context/tree.ts`. May be
    * undefined or empty, in which case the Context section is omitted.
-   * Per Gauntlet v1.5 spec §4.2, the tree is built **once per run** —
+   * Per Flight v1.5 spec §4.2, the tree is built **once per run** —
    * the runner calls `renderContextTree` and passes the result here.
    * `runAgent` does not re-render or refresh it.
    */
@@ -180,7 +180,7 @@ export interface AgentOptions {
   projectPrompt?: string | undefined;
   /**
    * Optional cancellation signal. When aborted, the agent loop **returns**
-   * a synthetic `errored` VetResult at its next abort check (between
+   * a synthetic `errored` VerdictResult at its next abort check (between
    * turns, or between adjacent tool calls within a turn). It does NOT
    * throw — the orchestrator's success path is the one that writes
    * `result.json`; throwing would skip that and force the §3 stub
@@ -273,7 +273,7 @@ export async function runAgent(
   logger: EvidenceLogger,
   target: string | undefined,
   options: AgentOptions,
-): Promise<VetResult> {
+): Promise<VerdictResult> {
   const startTime = Date.now();
   const { runId, budgetMs } = options;
   const systemPrompt = buildSystemPrompt(
@@ -345,7 +345,7 @@ export async function runAgent(
   const reflectionInterval = options.reflectionInterval ?? 0;
 
   /**
-   * Build a terminal VetResult with shared scaffolding (schema, evidence,
+   * Build a terminal VerdictResult with shared scaffolding (schema, evidence,
    * duration, usage). Used by every early-exit: report_result, max_tokens
    * truncation, empty response, and the max-turns fallthrough.
    *
@@ -357,25 +357,25 @@ export async function runAgent(
     status: "pass" | "fail" | "investigate";
     summary: string;
     reasoning: string;
-    observations?: VetResult["observations"] | undefined;
-    criteria?: VetResult["criteria"] | undefined;
-  }): VetResult;
+    observations?: VerdictResult["observations"] | undefined;
+    criteria?: VerdictResult["criteria"] | undefined;
+  }): VerdictResult;
   function buildResult(partial: {
     status: "errored";
     summary: string;
     reasoning: string;
-    observations?: VetResult["observations"] | undefined;
-    criteria?: VetResult["criteria"] | undefined;
+    observations?: VerdictResult["observations"] | undefined;
+    criteria?: VerdictResult["criteria"] | undefined;
     error: { type: string; message: string };
-  }): VetResult;
+  }): VerdictResult;
   function buildResult(partial: {
-    status: VetStatus;
+    status: VerdictStatus;
     summary: string;
     reasoning: string;
-    observations?: VetResult["observations"] | undefined;
-    criteria?: VetResult["criteria"] | undefined;
+    observations?: VerdictResult["observations"] | undefined;
+    criteria?: VerdictResult["criteria"] | undefined;
     error?: { type: string; message: string };
-  }): VetResult {
+  }): VerdictResult {
     const base = {
       schemaVersion: RESULT_SCHEMA_VERSION,
       runId,
@@ -399,7 +399,7 @@ export async function runAgent(
         turns,
       },
     };
-    const result: VetResult = partial.status === "errored"
+    const result: VerdictResult = partial.status === "errored"
       ? { ...base, status: "errored", error: partial.error! }
       : { ...base, status: partial.status };
     logger.logRunEnd({
@@ -437,7 +437,7 @@ export async function runAgent(
     status: "pass" | "fail" | "investigate",
     rawArgs: unknown,
     turn: number,
-  ): { status: "pass" | "fail" | "investigate"; criteria?: VetResult["criteria"] | undefined } {
+  ): { status: "pass" | "fail" | "investigate"; criteria?: VerdictResult["criteria"] | undefined } {
     const rawCriteria =
       rawArgs && typeof rawArgs === "object" && !Array.isArray(rawArgs)
         ? (rawArgs as Record<string, unknown>).criteria
@@ -465,7 +465,7 @@ export async function runAgent(
   }
 
   const isAborted = (): boolean => options.abortSignal?.aborted === true;
-  const abortedResult = (): VetResult => {
+  const abortedResult = (): VerdictResult => {
     logger.logShutdownSignaled({
       turn: turns,
       reason: String(options.abortSignal?.reason ?? "unknown"),
@@ -518,8 +518,8 @@ export async function runAgent(
       rawAssistantMessage: response.rawAssistantMessage,
     });
 
-    // Emit the obol cost-sidecar row: the provider's raw usage object,
-    // verbatim. obol normalizes per-provider at read time (PRI-2125). Guarded
+    // Emit the moe-tab cost-sidecar row: the provider's raw usage object,
+    // verbatim. moe-tab normalizes per-provider at read time (PRI-2125). Guarded
     // so adapters/tests that don't surface rawUsage simply emit nothing.
     if (response.rawUsage !== undefined) {
       logger.logUsageRow(response.rawUsage);
@@ -918,7 +918,7 @@ export async function runAgent(
    */
   async function finalReportTurn(
     fallback: { summary: string; reasoning: string; malformedEvent: string },
-  ): Promise<VetResult> {
+  ): Promise<VerdictResult> {
     const graceTurn = turns + 1;
     logger.logLlmRequest(graceTurn, messages.length);
     const graceResponse = await client.chat(messages, [REPORT_TOOL], systemPrompt, { runId });

@@ -8,14 +8,14 @@ describe("runConfigCommand", () => {
   test("returns JSON when json flag true", () => {
     const result = runConfigCommand({ ...minimalArgs(), json: true }, {});
     const parsed = JSON.parse(result);
-    expect(parsed.gauntlet.projectRoot).toBe(".");
-    expect(parsed.gauntlet.port).toBe(4400);
+    expect(parsed.flight.projectRoot).toBe(".");
+    expect(parsed.flight.port).toBe(4400);
     expect(parsed.sdkEnv.ANTHROPIC_API_KEY).toBe("unset");
   });
 
   test("returns text format when json flag false", () => {
     const result = runConfigCommand(minimalArgs(), {});
-    expect(result).toContain("# Gauntlet configuration");
+    expect(result).toContain("# Flight configuration");
     expect(result).toContain("projectRoot:");
     expect(result).toContain("anthropic:");
   });
@@ -23,7 +23,7 @@ describe("runConfigCommand", () => {
   test("text output shows source attribution", () => {
     const result = runConfigCommand(
       minimalArgs({ projectRoot: "/flag" }),
-      { GAUNTLET_PORT: "5500" } as NodeJS.ProcessEnv,
+      { MOE_FLIGHT_PORT: "5500" } as NodeJS.ProcessEnv,
     );
     expect(result).toMatch(/projectRoot:\s+\/flag\s+\(flag\)/);
     expect(result).toMatch(/port:\s+5500\s+\(env\)/);
@@ -32,8 +32,8 @@ describe("runConfigCommand", () => {
   test("runConfigCommand propagates loadConfig errors (caller responsible for display)", () => {
     expect(() => runConfigCommand(
       minimalArgs(),
-      { GAUNTLET_CHROME: "not-valid" } as NodeJS.ProcessEnv,
-    )).toThrow(/GAUNTLET_CHROME/);
+      { MOE_FLIGHT_CHROME: "not-valid" } as NodeJS.ProcessEnv,
+    )).toThrow(/MOE_FLIGHT_CHROME/);
   });
 
   test("sdkEnv section only shows presence for secrets", () => {

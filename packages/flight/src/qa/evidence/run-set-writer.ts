@@ -2,13 +2,13 @@ import { mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
 import type { RunSetCtx, SetBucket } from "../runs/run-set-types.js";
 import { deriveBucket, median } from "../runs/aggregate.js";
-import type { VetResult, VetStatus } from "../types.js";
+import type { VerdictResult, VerdictStatus } from "../types.js";
 
 interface RunEntry {
   runId: string;
   cardId: string;
   attemptNumber: number;
-  status: "queued" | "running" | "cancelled" | VetStatus | "errored";
+  status: "queued" | "running" | "cancelled" | VerdictStatus | "errored";
 }
 
 interface CardSummary {
@@ -68,13 +68,13 @@ export class RunSetWriter {
     this.flush();
   }
 
-  recordRunEnd(runId: string, status: VetStatus | "errored" | "cancelled"): void {
+  recordRunEnd(runId: string, status: VerdictStatus | "errored" | "cancelled"): void {
     const r = this.manifest.runs.find((x) => x.runId === runId);
     if (r) r.status = status;
     this.flush();
   }
 
-  finalize(lookup: (runId: string) => VetResult | null): void {
+  finalize(lookup: (runId: string) => VerdictResult | null): void {
     // Track which run IDs had results provided via lookup (vs explicitly errored/cancelled)
     const processedIds = new Set<string>();
     for (const run of this.manifest.runs) {
@@ -102,7 +102,7 @@ export class RunSetWriter {
 function summarizeCard(
   cardId: string,
   cardRuns: RunEntry[],
-  lookup: (runId: string) => VetResult | null,
+  lookup: (runId: string) => VerdictResult | null,
 ): CardSummary {
   const byStatus = { pass: 0, fail: 0, investigate: 0, errored: 0, cancelled: 0 };
   const turns: number[] = [];
@@ -129,7 +129,7 @@ function summarizeCard(
       continue;
     }
 
-    // For queued/running runs, or runs with a VetStatus, use the lookup to get the result.
+    // For queued/running runs, or runs with a VerdictStatus, use the lookup to get the result.
     // If lookup returns null the run is treated as errored (failed to produce a result).
     const result = lookup(r.runId);
     if (r.status === "queued" || r.status === "running") {
@@ -143,7 +143,7 @@ function summarizeCard(
       }
       continue;
     }
-    // r.status is a VetStatus: pass | fail | investigate
+    // r.status is a VerdictStatus: pass | fail | investigate
     byStatus[r.status]++;
     if (result) {
       if (result.usage?.turns != null) turns.push(result.usage.turns);

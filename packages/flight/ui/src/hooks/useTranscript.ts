@@ -33,7 +33,7 @@ export function useTranscript(runId: string | null): UseTranscriptResult {
     setError(null);
     setModel(null);
 
-    const staticPayload = typeof window !== "undefined" ? window.__GAUNTLET_RUN__ : undefined;
+    const staticPayload = typeof window !== "undefined" ? window.__MOE_FLIGHT_RUN__ : undefined;
     if (staticPayload?.runJsonl) {
       try {
         if (!cancelled) setModel(parseTranscriptFromStaticPayload(staticPayload.runJsonl));

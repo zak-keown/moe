@@ -26,14 +26,14 @@ describe("run — multi-pass RunSet integration", () => {
   });
 
   function makeTmpConfig(): { config: AppConfig; cardPath: string } {
-    const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-run-test-"));
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-run-test-"));
     tmpdirs.push(projectRoot);
     const cardPath = join(projectRoot, "card.md");
     writeFileSync(cardPath, MINIMAL_CARD);
     return { config: makeConfig(projectRoot), cardPath };
   }
 
-  test("gauntlet run --passes 3 creates 3 per-run dirs and a single_* RunSet artifact", async () => {
+  test("moe-flight qa run --passes 3 creates 3 per-run dirs and a single_* RunSet artifact", async () => {
     const { config, cardPath } = makeTmpConfig();
 
     // Each of the 3 passes gets one scripted client call.
@@ -55,13 +55,13 @@ describe("run — multi-pass RunSet integration", () => {
       clientFactory: () => client,
     });
 
-    // Assert: 3 per-run dirs under .gauntlet/results/
-    const resultsDir = join(config.projectRoot, ".gauntlet", "results");
+    // Assert: 3 per-run dirs under .moe-flight/results/
+    const resultsDir = join(config.projectRoot, ".moe-flight", "results");
     const runDirs = readdirSync(resultsDir);
     expect(runDirs).toHaveLength(3);
 
     // Assert: exactly one run-sets/single_*/ dir was created.
-    const runSetsDir = join(config.projectRoot, ".gauntlet", "run-sets");
+    const runSetsDir = join(config.projectRoot, ".moe-flight", "run-sets");
     const setEntries = readdirSync(runSetsDir);
     expect(setEntries).toHaveLength(1);
     expect(setEntries[0]).toMatch(/^single_/);
@@ -94,7 +94,7 @@ describe("run — multi-pass RunSet integration", () => {
     }
   });
 
-  test("gauntlet run --passes 1 does NOT produce a RunSet artifact", async () => {
+  test("moe-flight qa run --passes 1 does NOT produce a RunSet artifact", async () => {
     const { config, cardPath } = makeTmpConfig();
 
     const client = makeScriptedClient([report("pass", "ok", "looks good")]);
@@ -114,7 +114,7 @@ describe("run — multi-pass RunSet integration", () => {
     // The single-pass path must not create any run-sets directory.
     let runSetsDirExists = false;
     try {
-      readdirSync(join(config.projectRoot, ".gauntlet", "run-sets"));
+      readdirSync(join(config.projectRoot, ".moe-flight", "run-sets"));
       runSetsDirExists = true;
     } catch {}
     expect(runSetsDirExists).toBe(false);

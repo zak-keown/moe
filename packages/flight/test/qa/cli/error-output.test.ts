@@ -57,10 +57,10 @@ describe("formatCliError — TTY (interactive)", () => {
 
   test("preserves multi-line messages including the usage hint pattern", () => {
     const out = formatCliError(
-      new Error("Missing runId\n\nUsage: gauntlet ask <runId>"),
+      new Error("Missing runId\n\nUsage: moe-flight qa ask <runId>"),
       { verbose: false, isTty: true },
     );
-    expect(out).toBe("Missing runId\n\nUsage: gauntlet ask <runId>\n");
+    expect(out).toBe("Missing runId\n\nUsage: moe-flight qa ask <runId>\n");
   });
 
   test("does not double-newline when the message already ends with a newline", () => {
@@ -78,8 +78,8 @@ describe("formatCliError — TTY (interactive)", () => {
 });
 
 describe("isVerboseRequest", () => {
-  test("returns true when GAUNTLET_DEBUG=1", () => {
-    expect(isVerboseRequest({ GAUNTLET_DEBUG: "1" }, [])).toBe(true);
+  test("returns true when MOE_FLIGHT_DEBUG=1", () => {
+    expect(isVerboseRequest({ MOE_FLIGHT_DEBUG: "1" }, [])).toBe(true);
   });
 
   test("returns true when --verbose appears in argv", () => {
@@ -90,9 +90,9 @@ describe("isVerboseRequest", () => {
     expect(isVerboseRequest({}, ["bun", "src/index.ts", "run", "story.md"])).toBe(false);
   });
 
-  test("ignores GAUNTLET_DEBUG values other than '1' (avoid surprising behavior)", () => {
-    expect(isVerboseRequest({ GAUNTLET_DEBUG: "0" }, [])).toBe(false);
-    expect(isVerboseRequest({ GAUNTLET_DEBUG: "" }, [])).toBe(false);
-    expect(isVerboseRequest({ GAUNTLET_DEBUG: "true" }, [])).toBe(false);
+  test("ignores MOE_FLIGHT_DEBUG values other than '1' (avoid surprising behavior)", () => {
+    expect(isVerboseRequest({ MOE_FLIGHT_DEBUG: "0" }, [])).toBe(false);
+    expect(isVerboseRequest({ MOE_FLIGHT_DEBUG: "" }, [])).toBe(false);
+    expect(isVerboseRequest({ MOE_FLIGHT_DEBUG: "true" }, [])).toBe(false);
   });
 });

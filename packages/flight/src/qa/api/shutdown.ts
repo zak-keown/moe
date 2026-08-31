@@ -1,10 +1,10 @@
 /**
- * Graceful daemon shutdown for `gauntlet serve`. PRI-1477A + PRI-1507.
+ * Graceful daemon shutdown for `moe-flight qa serve`. PRI-1477A + PRI-1507.
  *
  * On SIGTERM/SIGINT/SIGHUP the daemon should:
  *   1. Mark itself as draining so new POSTs return 503
  *   2. Close existing WS connections with code 1001 ("going away")
- *   3. Wait up to `GAUNTLET_SHUTDOWN_GRACE_MS` for in-flight runs to complete
+ *   3. Wait up to `MOE_FLIGHT_SHUTDOWN_GRACE_MS` for in-flight runs to complete
  *   4. If runs are still in flight after grace:
  *      a. cancelTokens.cancelAll() — gate run-set loops from starting more attempts
  *      b. registry.abortAll() — fire per-run AbortControllers so agent loops exit
@@ -12,7 +12,7 @@
  *      d. writeShutdownStubs for any run still missing result.json
  *   5. Stop the HTTP server and `process.exit(0)`
  *
- * See spec/plan: docs/superpowers/specs/2026-05-13-shutdown-drain-cancellation-spec.md
+ * See spec/plan: docs/history/specs/2026-05-13-shutdown-drain-cancellation-spec.md
  */
 
 import { writeShutdownStubs } from "./shutdown-stub-writer.js";
@@ -136,7 +136,7 @@ export async function drainShutdown(opts: DrainShutdownOptions): Promise<DrainRe
   log(`aborted ${aborted} in-flight run(s)`);
 
   // Patience window: agent loops should observe the abort at their next
-  // check, then return a synthetic errored VetResult; the orchestrator's
+  // check, then return a synthetic errored VerdictResult; the orchestrator's
   // success path writes result.json and the wrapper's afterClose hook
   // unregisters. Most cooperative agents drain within a few hundred ms.
   const patienceMs = postAbortMs ?? 1000;

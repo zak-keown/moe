@@ -1,4 +1,21 @@
-FROM debian:bookworm-slim
+# A standalone headless browser on :9222, for pointing `moe-flight qa run
+# --chrome <host>:9222` at a browser this image did not start.
+#
+# Deliberately NOT the same browser as docker/Dockerfile. That image installs
+# Debian's `chromium`, which is multi-arch; this one installs Google's
+# `google-chrome-stable`, which Google publishes for amd64 only. Upstream's apt
+# source line said `arch=amd64` and the build simply failed on arm64 with a
+# "no candidate" error several layers in — on the arm64 Macs in this shop, that
+# is every developer.
+#
+# So the arch constraint is now declared rather than discovered: build it with
+#
+#   docker build --platform linux/amd64 -f packages/flight/docker/Dockerfile.chrome .
+#
+# and expect emulation on Apple Silicon. If you want a browser that builds
+# natively, use docker/Dockerfile's chromium instead — the CDP surface the web
+# adapter drives is the same.
+FROM --platform=linux/amd64 debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget gnupg2 ca-certificates \

@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { mkdtempSync, writeFileSync, readFileSync, existsSync, mkdirSync } from "fs";
+import { mkdtempSync, writeFileSync, readFileSync, mkdirSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { ShutdownState, drainShutdown } from "../../../src/qa/api/shutdown.js";

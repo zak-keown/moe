@@ -5,13 +5,13 @@ import type { CancelTokenRegistry } from "../run-cancel.js";
 
 const RUN_SET_ID_RE = /^[a-z]+_\d{8}T\d{6}Z_[a-z0-9]+$/;
 
-export function runSetRoutes(gauntletRoot: string, cancelTokens?: CancelTokenRegistry) {
+export function runSetRoutes(flightRoot: string, cancelTokens?: CancelTokenRegistry) {
   const router = new Hono();
 
   router.get("/:id", (c) => {
     const id = c.req.param("id");
     if (!RUN_SET_ID_RE.test(id)) return c.json({ error: "invalid run set id" }, 400);
-    const path = join(gauntletRoot, "run-sets", id, "set.json");
+    const path = join(flightRoot, "run-sets", id, "set.json");
     if (!existsSync(path)) return c.json({ error: "not found" }, 404);
     const manifest = JSON.parse(readFileSync(path, "utf8"));
     return c.json(manifest);
@@ -20,7 +20,7 @@ export function runSetRoutes(gauntletRoot: string, cancelTokens?: CancelTokenReg
   router.get("/:id/summary", (c) => {
     const id = c.req.param("id");
     if (!RUN_SET_ID_RE.test(id)) return c.json({ error: "invalid run set id" }, 400);
-    const path = join(gauntletRoot, "run-sets", id, "set.json");
+    const path = join(flightRoot, "run-sets", id, "set.json");
     if (!existsSync(path)) return c.json({ error: "not found" }, 404);
     const manifest = JSON.parse(readFileSync(path, "utf8"));
     if (!manifest.summary) return c.json({ error: "summary not yet computed" }, 404);

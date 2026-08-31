@@ -85,7 +85,7 @@ export class ScreencastStreamer {
       });
     });
 
-    // Defaults tuned for local dev: Gauntlet runs on the developer's
+    // Defaults tuned for local dev: Flight runs on the developer's
     // machine, not over a network, so CPU-to-encode is the only cost of
     // higher quality. JPEG quality 70 at 1280×720 (CDP's stock "streaming"
     // setting) produced visible compression artifacts and downscaling

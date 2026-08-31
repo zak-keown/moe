@@ -119,9 +119,9 @@ describe("spawn options + new fields", () => {
   });
 
   test("spawn drops parent env vars not in env option", async () => {
-    process.env.GAUNTLET_TEST_LEAK = "leaked";
+    process.env.MOE_FLIGHT_TEST_LEAK = "leaked";
     try {
-      const proc = spawn(["bash", "-c", "echo \"LEAK=${GAUNTLET_TEST_LEAK:-clean}\""], {
+      const proc = spawn(["bash", "-c", "echo \"LEAK=${MOE_FLIGHT_TEST_LEAK:-clean}\""], {
         env: { PATH: process.env.PATH ?? "/usr/bin:/bin" },
       });
       const reader = proc.stdout.getReader();
@@ -135,7 +135,7 @@ describe("spawn options + new fields", () => {
       await proc.exited;
       expect(out.trim()).toBe("LEAK=clean");
     } finally {
-      delete process.env.GAUNTLET_TEST_LEAK;
+      delete process.env.MOE_FLIGHT_TEST_LEAK;
     }
   });
 

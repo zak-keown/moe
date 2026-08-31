@@ -4,7 +4,7 @@ import { tmpdir } from "os";
 import { join } from "path";
 import { RunSetWriter } from "../../../src/qa/evidence/run-set-writer.js";
 import type { RunSetCtx } from "../../../src/qa/runs/run-set-types.js";
-import type { VetResult } from "../../../src/qa/types.js";
+import type { VerdictResult } from "../../../src/qa/types.js";
 
 const baseCtx = (overrides: Partial<RunSetCtx> = {}): RunSetCtx => ({
   runSetId: "single_20260430T000000Z_test",
@@ -16,7 +16,7 @@ const baseCtx = (overrides: Partial<RunSetCtx> = {}): RunSetCtx => ({
   ...overrides,
 });
 
-const fakeResult = (status: VetResult["status"], turns = 5, duration = 4000): VetResult => ({
+const fakeResult = (status: VerdictResult["status"], turns = 5, duration = 4000): VerdictResult => ({
   schemaVersion: 2,
   runId: "card-a_20260430T000001Z_x000",
   scenario: "card-a",
@@ -31,7 +31,7 @@ const fakeResult = (status: VetResult["status"], turns = 5, duration = 4000): Ve
 
 describe("RunSetWriter", () => {
   test("start() creates dir and stub set.json with all attempts queued", () => {
-    const root = mkdtempSync(join(tmpdir(), "gauntlet-rsw-"));
+    const root = mkdtempSync(join(tmpdir(), "moe-flight-rsw-"));
     const ctx = baseCtx();
     const allRuns = [
       { runId: "card-a_t1_a000", cardId: "card-a", attemptNumber: 1 },
@@ -55,7 +55,7 @@ describe("RunSetWriter", () => {
   });
 
   test("recordRunStart marks attempt as running", () => {
-    const root = mkdtempSync(join(tmpdir(), "gauntlet-rsw-"));
+    const root = mkdtempSync(join(tmpdir(), "moe-flight-rsw-"));
     const w = new RunSetWriter(root, baseCtx());
     w.start([
       { runId: "r1", cardId: "card-a", attemptNumber: 1 },
@@ -69,7 +69,7 @@ describe("RunSetWriter", () => {
   });
 
   test("recordRunEnd marks attempt with the final status", () => {
-    const root = mkdtempSync(join(tmpdir(), "gauntlet-rsw-"));
+    const root = mkdtempSync(join(tmpdir(), "moe-flight-rsw-"));
     const w = new RunSetWriter(root, baseCtx());
     w.start([{ runId: "r1", cardId: "card-a", attemptNumber: 1 }]);
     w.recordRunEnd("r1", "pass");
@@ -78,7 +78,7 @@ describe("RunSetWriter", () => {
   });
 
   test("finalize() — consistent_pass for 3 passes", () => {
-    const root = mkdtempSync(join(tmpdir(), "gauntlet-rsw-"));
+    const root = mkdtempSync(join(tmpdir(), "moe-flight-rsw-"));
     const w = new RunSetWriter(root, baseCtx({ passes: 3 }));
     w.start([
       { runId: "r1", cardId: "card-a", attemptNumber: 1 },
@@ -102,7 +102,7 @@ describe("RunSetWriter", () => {
   });
 
   test("finalize() — mixed bucket for pass + investigate", () => {
-    const root = mkdtempSync(join(tmpdir(), "gauntlet-rsw-"));
+    const root = mkdtempSync(join(tmpdir(), "moe-flight-rsw-"));
     const w = new RunSetWriter(root, baseCtx({ passes: 3 }));
     w.start([
       { runId: "r1", cardId: "card-a", attemptNumber: 1 },
@@ -116,7 +116,7 @@ describe("RunSetWriter", () => {
   });
 
   test("finalize() — mixed_with_errors covers errored present + non-errored", () => {
-    const root = mkdtempSync(join(tmpdir(), "gauntlet-rsw-"));
+    const root = mkdtempSync(join(tmpdir(), "moe-flight-rsw-"));
     const w = new RunSetWriter(root, baseCtx({ passes: 3 }));
     w.start([
       { runId: "r1", cardId: "card-a", attemptNumber: 1 },
@@ -136,7 +136,7 @@ describe("RunSetWriter", () => {
   });
 
   test("finalize() — errored bucket when all errored", () => {
-    const root = mkdtempSync(join(tmpdir(), "gauntlet-rsw-"));
+    const root = mkdtempSync(join(tmpdir(), "moe-flight-rsw-"));
     const w = new RunSetWriter(root, baseCtx({ passes: 2 }));
     w.start([
       { runId: "r1", cardId: "card-a", attemptNumber: 1 },
@@ -151,7 +151,7 @@ describe("RunSetWriter", () => {
   });
 
   test("finalize() — batch overall sums across cards", () => {
-    const root = mkdtempSync(join(tmpdir(), "gauntlet-rsw-"));
+    const root = mkdtempSync(join(tmpdir(), "moe-flight-rsw-"));
     const ctx: RunSetCtx = {
       runSetId: "batch_20260430T000000Z_test",
       kind: "batch",
@@ -167,7 +167,7 @@ describe("RunSetWriter", () => {
       { runId: "b1", cardId: "card-b", attemptNumber: 1 },
       { runId: "b2", cardId: "card-b", attemptNumber: 2 },
     ]);
-    const map: Record<string, VetResult> = {
+    const map: Record<string, VerdictResult> = {
       a1: fakeResult("pass"),
       a2: fakeResult("pass"),
       b1: fakeResult("fail"),

@@ -519,7 +519,7 @@ test('scanResults: cost_usd is null when agent cost is absent (no fallback to ru
   });
   const r = grid.cells.get(cellKey('s', 'claude', 'none', 'linux'))?.window[0];
   // No agent block -> agent-scoped cost is unknown, NOT the combined run total.
-  // The gauntlet QA spend folded into total_est_cost_usd must never surface as
+  // The moe-flight QA spend folded into total_est_cost_usd must never surface as
   // the cell's cost; the combined total lives only in run_total_cost_usd.
   expect(r?.cost_usd).toBeNull();
   expect(r?.run_total_cost_usd).toBe(4.5);

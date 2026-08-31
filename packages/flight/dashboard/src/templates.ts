@@ -88,7 +88,7 @@ function costBarHtml(slots: readonly SlotView[]): string {
 // cell so SSE partial swaps carry it; app.js clones it to #card-host on hover.
 // Rows are oldest..newest. Every interpolated string is escaped.
 // Each row shows: verdict | agent cost | duration | tokens | timestamp | run_id.
-// The card footer shows the run-total cost (gauntlet + agent), labeled.
+// The card footer shows the run-total cost (moe-flight + agent), labeled.
 function cardHtml(card: CardView): string {
   const rows = card.rows
     .map(
@@ -222,7 +222,7 @@ export function cellHtml(view: CellView): string {
 }
 
 // The header tally line (`.pghead` body):
-//   quorum · N scenarios × M agents · C cells · P pass · F fail · I indeterminate
+//   moe-flight · N scenarios × M agents · C cells · P pass · F fail · I indeterminate
 //     · X not run · Z ineligible
 // `cells` is the flattened (agent, os) sub-column count; `ineligible` is a
 // distinct segment so excluded cells don't read as not-run. Counts are integers,
@@ -230,7 +230,7 @@ export function cellHtml(view: CellView): string {
 export function tallyHtml(tally: HeaderTally): string {
   const sep = `<span class="sep">·</span>`;
   return (
-    `<b>quorum</b>${sep}` +
+    `<b>moe-flight</b>${sep}` +
     `${tally.scenarios} scenarios × ${tally.agents} agents` +
     `${sep}${tally.columns} cells` +
     `${sep}<span class="kpass">${tally.passed} pass</span>` +
@@ -376,7 +376,7 @@ export function layoutHtml(args: LayoutArgs): string {
     `<head>\n` +
     `  <meta charset="utf-8">\n` +
     `  <meta name="viewport" content="width=device-width, initial-scale=1">\n` +
-    `  <title>quorum dashboard</title>\n` +
+    `  <title>moe-flight dashboard</title>\n` +
     `  <link rel="stylesheet" href="/static/styles.css">\n` +
     `  <script src="/static/htmx.min.js" defer></script>\n` +
     `  <script src="/static/htmx-ext-sse.js" defer></script>\n` +

@@ -98,7 +98,7 @@ describe.skipIf(!tmuxAvailable)("TUIAdapter", () => {
 
   test("executeTool dispatches type_and_submit", async () => {
     adapter = new TUIAdapter({ runDir });
-    const logDir = mkdtempSync(join(tmpdir(), "gauntlet-tui-tas-"));
+    const logDir = mkdtempSync(join(tmpdir(), "moe-flight-tui-tas-"));
     const innerLogger = new EvidenceLogger(logDir);
     await adapter.start("");
     await new Promise((r) => setTimeout(r, 300));
@@ -217,7 +217,7 @@ describe.skipIf(!tmuxAvailable)("TUIAdapter", () => {
 
   test("executeTool dispatches correctly and returns expected results", async () => {
     adapter = new TUIAdapter({ runDir });
-    const logDir = mkdtempSync(join(tmpdir(), "gauntlet-tui-exec-"));
+    const logDir = mkdtempSync(join(tmpdir(), "moe-flight-tui-exec-"));
     const innerLogger = new EvidenceLogger(logDir);
 
     await adapter.start("bc");
@@ -246,7 +246,7 @@ describe.skipIf(!tmuxAvailable)("TUIAdapter", () => {
 
   test("read_screen writes capture files and returns capturePath", async () => {
     adapter = new TUIAdapter({ runDir });
-    const logDir = mkdtempSync(join(tmpdir(), "gauntlet-tui-cap-"));
+    const logDir = mkdtempSync(join(tmpdir(), "moe-flight-tui-cap-"));
     const innerLogger = new EvidenceLogger(logDir);
 
     await adapter.start("");
@@ -330,12 +330,12 @@ describe("TUIAdapter defaultViewport", () => {
 
 describe("TUIAdapter context tool wiring", () => {
   test("includes `read` tool when context root is non-empty", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-tui-read-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-tui-read-"));
     try {
-      mkdirSync(join(tmp, ".gauntlet", "context"), { recursive: true });
-      writeFileSync(join(tmp, ".gauntlet", "context", "alice.md"), "A");
+      mkdirSync(join(tmp, ".moe-flight", "context"), { recursive: true });
+      writeFileSync(join(tmp, ".moe-flight", "context", "alice.md"), "A");
       const adapter = new TUIAdapter({
-        contextRoot: join(tmp, ".gauntlet", "context"),
+        contextRoot: join(tmp, ".moe-flight", "context"),
       });
       const names = adapter.toolDefinitions().map((t) => t.name);
       expect(names).toContain("read");
@@ -348,8 +348,8 @@ describe("TUIAdapter context tool wiring", () => {
     const { mkdtempSync, writeFileSync, chmodSync, rmSync } = require("fs");
     const { tmpdir } = require("os");
     const { join } = require("path");
-    const ctxTmp = mkdtempSync(join(tmpdir(), "gauntlet-tui-cred-ctx-"));
-    const resTmp = mkdtempSync(join(tmpdir(), "gauntlet-tui-cred-res-"));
+    const ctxTmp = mkdtempSync(join(tmpdir(), "moe-flight-tui-cred-ctx-"));
+    const resTmp = mkdtempSync(join(tmpdir(), "moe-flight-tui-cred-res-"));
     try {
       writeFileSync(join(ctxTmp, "alice.md"), "anything");
       const resolverPath = join(resTmp, "r.sh");
@@ -370,7 +370,7 @@ describe("TUIAdapter context tool wiring", () => {
     const { mkdtempSync, writeFileSync, rmSync } = require("fs");
     const { tmpdir } = require("os");
     const { join } = require("path");
-    const ctxTmp = mkdtempSync(join(tmpdir(), "gauntlet-tui-cred-ctx-"));
+    const ctxTmp = mkdtempSync(join(tmpdir(), "moe-flight-tui-cred-ctx-"));
     try {
       writeFileSync(join(ctxTmp, "alice.md"), "anything");
       const adapter = new TUIAdapter({ contextRoot: ctxTmp });
@@ -384,8 +384,8 @@ describe("TUIAdapter context tool wiring", () => {
     const { mkdtempSync, writeFileSync, chmodSync, rmSync } = require("fs");
     const { tmpdir } = require("os");
     const { join } = require("path");
-    const ctxTmp = mkdtempSync(join(tmpdir(), "gauntlet-tui-cred-ctx-empty-"));
-    const resTmp = mkdtempSync(join(tmpdir(), "gauntlet-tui-cred-res-"));
+    const ctxTmp = mkdtempSync(join(tmpdir(), "moe-flight-tui-cred-ctx-empty-"));
+    const resTmp = mkdtempSync(join(tmpdir(), "moe-flight-tui-cred-res-"));
     try {
       const resolverPath = join(resTmp, "r.sh");
       writeFileSync(resolverPath, "#!/bin/sh\necho ok\n");
@@ -403,7 +403,7 @@ describe("TUIAdapter context tool wiring", () => {
 
   test("toolDefinitions includes bash", () => {
     const adapter = new TUIAdapter({
-      runDir: mkdtempSync(join(tmpdir(), "gauntlet-bash-adapter-")),
+      runDir: mkdtempSync(join(tmpdir(), "moe-flight-bash-adapter-")),
     });
     const names = adapter.toolDefinitions().map((d) => d.name);
     expect(names).toContain("bash");

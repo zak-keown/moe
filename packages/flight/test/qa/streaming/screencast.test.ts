@@ -6,7 +6,7 @@ import { ScreencastStreamer } from "../../../src/qa/streaming/screencast.js";
 
 // PRI-1436: streamer requires a chrome-ws-lib session. The session surface used
 // by screencast.ts is documented at
-// docs/superpowers/specs/2026-05-18-screencast-lifecycle-surface.md — this stub
+// docs/history/specs/2026-05-18-screencast-lifecycle-surface.md — this stub
 // mirrors that surface exactly. If screencast.ts changes which methods it
 // calls on the session, update the doc first, then this stub.
 
@@ -71,7 +71,7 @@ describe("ScreencastStreamer", () => {
 
   test("does NOT create any directory on disk when saveDir is undefined", () => {
     const session = makeStubSession();
-    const root = mkdtempSync(join(tmpdir(), "gauntlet-screencast-gate-"));
+    const root = mkdtempSync(join(tmpdir(), "moe-flight-screencast-gate-"));
     try {
       const framesDir = join(root, "frames");
       expect(existsSync(framesDir)).toBe(false);
@@ -86,7 +86,7 @@ describe("ScreencastStreamer", () => {
 
   test("creates the saveDir eagerly when provided", () => {
     const session = makeStubSession();
-    const root = mkdtempSync(join(tmpdir(), "gauntlet-screencast-gate-"));
+    const root = mkdtempSync(join(tmpdir(), "moe-flight-screencast-gate-"));
     try {
       const framesDir = join(root, "frames");
       expect(existsSync(framesDir)).toBe(false);
@@ -100,7 +100,7 @@ describe("ScreencastStreamer", () => {
 
   // Lifecycle assertions (replacing the prior `can be constructed` smoke test).
   // The stub session mirrors the surface documented in
-  // docs/superpowers/specs/2026-05-18-screencast-lifecycle-surface.md.
+  // docs/history/specs/2026-05-18-screencast-lifecycle-surface.md.
 
   test("start() invokes Page.startScreencast on the page session", async () => {
     const session = makeStubSession();
@@ -147,7 +147,7 @@ describe("ScreencastStreamer", () => {
 
   test("a frame received while saveDir is set writes a file synchronously", async () => {
     const session = makeStubSession();
-    const root = mkdtempSync(join(tmpdir(), "gauntlet-screencast-save-"));
+    const root = mkdtempSync(join(tmpdir(), "moe-flight-screencast-save-"));
     try {
       const framesDir = join(root, "frames");
       const streamer = new ScreencastStreamer(0, () => {}, session.chrome, framesDir);

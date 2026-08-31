@@ -27,8 +27,8 @@ let projectRoot: string;
 let storiesDir: string;
 
 beforeEach(() => {
-  projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-mp-api-"));
-  storiesDir = join(projectRoot, ".gauntlet", "stories");
+  projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-mp-api-"));
+  storiesDir = join(projectRoot, ".moe-flight", "stories");
   mkdirSync(storiesDir, { recursive: true });
   writeFileSync(join(storiesDir, "api-multi-pass-test.md"), STORY_MD);
 });
@@ -38,7 +38,7 @@ describe("POST /api/run/:id with passes > 1", () => {
     const prev = process.env.ANTHROPIC_API_KEY;
     process.env.ANTHROPIC_API_KEY = "test-key";
     try {
-      const config = loadConfig({ projectRoot }, { GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6" } as any);
+      const config = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as any);
       const registry = new ActiveRunRegistry();
       const broadcaster = new RunBroadcaster();
       const setBroadcaster = new RunSetBroadcaster();
@@ -76,7 +76,7 @@ describe("POST /api/run/:id with passes > 1", () => {
     const prev = process.env.ANTHROPIC_API_KEY;
     process.env.ANTHROPIC_API_KEY = "test-key";
     try {
-      const config = loadConfig({ projectRoot }, { GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6" } as any);
+      const config = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as any);
       const registry = new ActiveRunRegistry();
       const app = new Hono();
       app.route("/api/run", runRoutes(config, undefined, undefined, registry));
@@ -97,7 +97,7 @@ describe("POST /api/run/:id with passes > 1", () => {
   });
 
   test("rejects passes outside [1, 50]", async () => {
-    const config = loadConfig({ projectRoot }, { GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6" } as any);
+    const config = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as any);
     const app = new Hono();
     app.route("/api/run", runRoutes(config));
 

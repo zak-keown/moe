@@ -23,7 +23,7 @@ A minimal card.
 
 describe("executeRunCore — happy path", () => {
   test("snapshots inputs, runs the agent, writes result.json and run.jsonl", async () => {
-    const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-orch-happy-"));
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-orch-happy-"));
     const storyPath = join(projectRoot, "card.md");
     writeFileSync(storyPath, HAPPY_CARD);
 
@@ -36,7 +36,7 @@ describe("executeRunCore — happy path", () => {
       client,
       runConfig: {
         projectRoot,
-        stateDirName: ".gauntlet",
+        stateDirName: ".moe-flight",
         model: "claude-sonnet-4-6",
         adapter: "cli",
         target: "true",
@@ -58,7 +58,7 @@ import type { RunSetCtx } from "../../../src/qa/runs/run-set-types.js";
 
 describe("executeRunCore — result metadata", () => {
   test("stamps result.config with the run config snapshot", async () => {
-    const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-orch-cfg-"));
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-orch-cfg-"));
     const storyPath = join(projectRoot, "card.md");
     writeFileSync(storyPath, HAPPY_CARD);
     const card = parseStoryCard(HAPPY_CARD);
@@ -70,7 +70,7 @@ describe("executeRunCore — result metadata", () => {
       client,
       runConfig: {
         projectRoot,
-        stateDirName: ".gauntlet",
+        stateDirName: ".moe-flight",
         model: "claude-sonnet-4-6",
         adapter: "cli",
         target: "true",
@@ -88,7 +88,7 @@ describe("executeRunCore — result metadata", () => {
   });
 
   test("stamps result.runSet when runSetCtx is provided", async () => {
-    const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-orch-rsctx-"));
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-orch-rsctx-"));
     const storyPath = join(projectRoot, "card.md");
     writeFileSync(storyPath, HAPPY_CARD);
     const card = parseStoryCard(HAPPY_CARD);
@@ -109,7 +109,7 @@ describe("executeRunCore — result metadata", () => {
       client,
       runConfig: {
         projectRoot,
-        stateDirName: ".gauntlet",
+        stateDirName: ".moe-flight",
         model: "claude-sonnet-4-6",
         adapter: "cli",
         target: "true",
@@ -123,7 +123,7 @@ describe("executeRunCore — result metadata", () => {
   });
 
   test("omits result.runSet when runSetCtx is not provided", async () => {
-    const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-orch-norsctx-"));
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-orch-norsctx-"));
     const storyPath = join(projectRoot, "card.md");
     writeFileSync(storyPath, HAPPY_CARD);
     const card = parseStoryCard(HAPPY_CARD);
@@ -135,7 +135,7 @@ describe("executeRunCore — result metadata", () => {
       client,
       runConfig: {
         projectRoot,
-        stateDirName: ".gauntlet",
+        stateDirName: ".moe-flight",
         model: "claude-sonnet-4-6",
         adapter: "cli",
         target: "true",
@@ -150,7 +150,7 @@ describe("executeRunCore — result metadata", () => {
 
 describe("executeRunCore — onLogger hook", () => {
   test("invokes onLogger before runAgent and detaches after adapter close", async () => {
-    const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-orch-onlog-"));
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-orch-onlog-"));
     const storyPath = join(projectRoot, "card.md");
     writeFileSync(storyPath, HAPPY_CARD);
     const card = parseStoryCard(HAPPY_CARD);
@@ -165,14 +165,14 @@ describe("executeRunCore — onLogger hook", () => {
       client,
       runConfig: {
         projectRoot,
-        stateDirName: ".gauntlet",
+        stateDirName: ".moe-flight",
         model: "claude-sonnet-4-6",
         adapter: "cli",
         target: "true",
         budgetMs: 600_000,
       },
       hooks: {
-        onLogger: (logger) => {
+        onLogger: (_logger) => {
           attached = true;
           calls.push("attach");
           return () => {
@@ -188,7 +188,7 @@ describe("executeRunCore — onLogger hook", () => {
   });
 
   test("onLogger return value undefined is allowed (no detach)", async () => {
-    const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-orch-onlog2-"));
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-orch-onlog2-"));
     const storyPath = join(projectRoot, "card.md");
     writeFileSync(storyPath, HAPPY_CARD);
     const card = parseStoryCard(HAPPY_CARD);
@@ -201,7 +201,7 @@ describe("executeRunCore — onLogger hook", () => {
       client,
       runConfig: {
         projectRoot,
-        stateDirName: ".gauntlet",
+        stateDirName: ".moe-flight",
         model: "claude-sonnet-4-6",
         adapter: "cli",
         target: "true",
@@ -219,7 +219,7 @@ describe("executeRunCore — onLogger hook", () => {
 
 describe("executeRunCore — lifecycle hooks", () => {
   test("calls hooks in spec order: onLogger.attach → beforeAgent → beforeClose → adapter.close → onLogger.detach → afterClose", async () => {
-    const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-orch-hooks-"));
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-orch-hooks-"));
     const storyPath = join(projectRoot, "card.md");
     writeFileSync(storyPath, HAPPY_CARD);
     const card = parseStoryCard(HAPPY_CARD);
@@ -233,7 +233,7 @@ describe("executeRunCore — lifecycle hooks", () => {
       client,
       runConfig: {
         projectRoot,
-        stateDirName: ".gauntlet",
+        stateDirName: ".moe-flight",
         model: "claude-sonnet-4-6",
         adapter: "cli",
         target: "true",
@@ -262,7 +262,7 @@ describe("executeRunCore — lifecycle hooks", () => {
 
 describe("executeRunCore — error path", () => {
   test("logs run_error to run.jsonl, calls onError, runs cleanup, then rethrows", async () => {
-    const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-orch-err-"));
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-orch-err-"));
     const storyPath = join(projectRoot, "card.md");
     writeFileSync(storyPath, HAPPY_CARD);
     const card = parseStoryCard(HAPPY_CARD);
@@ -281,7 +281,7 @@ describe("executeRunCore — error path", () => {
         client,
         runConfig: {
           projectRoot,
-          stateDirName: ".gauntlet",
+          stateDirName: ".moe-flight",
           model: "claude-sonnet-4-6",
           adapter: "cli",
           target: "true",
@@ -311,10 +311,10 @@ describe("executeRunCore — error path", () => {
 
     // Find the orch-err output dir and read run.jsonl
     const { readdirSync } = await import("fs");
-    const outDirs = readdirSync(join(projectRoot, ".gauntlet", "results"));
+    const outDirs = readdirSync(join(projectRoot, ".moe-flight", "results"));
     expect(outDirs.length).toBe(1);
     const runJsonl = readFileSync(
-      join(projectRoot, ".gauntlet", "results", outDirs[0], "run.jsonl"),
+      join(projectRoot, ".moe-flight", "results", outDirs[0], "run.jsonl"),
       "utf-8",
     );
     const lines = runJsonl.trim().split("\n").map((l) => JSON.parse(l));
@@ -349,7 +349,7 @@ describe("executeRunCore — boundary", () => {
 // the existsSync assertion.
 describe("executeRunCore — abort signal", () => {
   test("forwards aborted signal; success path writes errored result.json", async () => {
-    const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-orch-abort-"));
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-orch-abort-"));
     const storyPath = join(projectRoot, "card.md");
     writeFileSync(storyPath, HAPPY_CARD);
     const card = parseStoryCard(HAPPY_CARD);
@@ -364,7 +364,7 @@ describe("executeRunCore — abort signal", () => {
       client,
       runConfig: {
         projectRoot,
-        stateDirName: ".gauntlet",
+        stateDirName: ".moe-flight",
         model: "claude-sonnet-4-6",
         adapter: "cli",
         target: "true",

@@ -1,4 +1,4 @@
-# Example cookies.yaml — copy under .gauntlet/context/<author>/cookies.yaml
+# Example cookies.yaml — copy under .moe-flight/context/<author>/cookies.yaml
 # and have the runner agent call install_cookies({ path: "alice/cookies.yaml" })
 # before navigating to a cookie-gated origin.
 #
@@ -20,7 +20,7 @@
 # Quick way to populate this from a real session: open DevTools on the
 # target site → Application → Cookies → copy each cookie row by hand.
 # The runner image will use whatever you paste here, so treat real values
-# as secrets and keep them out of git (.gauntlet/context/ is gitignored).
+# as secrets and keep them out of git (.moe-flight/context/ is gitignored).
 
 # --- Session cookie (domain form) ---
 - name: _session

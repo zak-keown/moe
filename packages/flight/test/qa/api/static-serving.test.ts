@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
 import { createApp } from "../../../src/qa/api/server.js";
 import { loadConfig } from "../../../src/qa/config.js";
-import { gauntletPath } from "../../../src/qa/paths.js";
+import { flightPath } from "../../../src/qa/paths.js";
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -14,8 +14,8 @@ describe("Static UI serving", () => {
   let app: ReturnType<typeof createApp>;
 
   beforeEach(() => {
-    projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-static-"));
-    mkdirSync(gauntletPath(projectRoot, ".gauntlet", "stories"), { recursive: true });
+    projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-static-"));
+    mkdirSync(flightPath(projectRoot, ".moe-flight", "stories"), { recursive: true });
   });
 
   afterEach(() => {
@@ -25,14 +25,14 @@ describe("Static UI serving", () => {
   test("serves index.html for unknown routes when UI is built", async () => {
     const uiDir = join(projectRoot, "ui-dist");
     mkdirSync(uiDir, { recursive: true });
-    writeFileSync(join(uiDir, "index.html"), "<html><body>gauntlet ui</body></html>");
+    writeFileSync(join(uiDir, "index.html"), "<html><body>moe-flight ui</body></html>");
 
     app = makeApp(projectRoot, uiDir);
     const res = await app.request("/cards");
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("text/html");
     const text = await res.text();
-    expect(text).toContain("gauntlet ui");
+    expect(text).toContain("moe-flight ui");
   });
 
   test("serves static assets from UI dist", async () => {

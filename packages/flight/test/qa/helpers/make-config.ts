@@ -17,7 +17,7 @@ export function makeConfig(
 ): AppConfig {
   const base: AppConfig = {
     projectRoot,
-    stateDirName: ".gauntlet",
+    stateDirName: ".moe-flight",
     port: 4400,
     defaultChrome: { host: "127.0.0.1", port: 9222 },
     defaultBudgetMs: 300_000,

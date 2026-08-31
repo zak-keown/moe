@@ -2,11 +2,11 @@
  * Chrome WebSocket Library — Core CDP automation functions
  *
  * Forked from https://github.com/obra/superpowers-chrome and adapted for
- * Gauntlet (Bun runtime, multiple concurrent sessions, custom extensions).
+ * Flight (Bun runtime, multiple concurrent sessions, custom extensions).
  *
  * This is the orchestrator: a thin wiring layer over `lib/*.js` modules.
  * Per `docs/upstream-sync.md`, the structural layout mirrors upstream HEAD
- * `a9e2d0c`'s 234-line orchestrator. Search for "GAUNTLET DIVERGENCE" in
+ * `a9e2d0c`'s 234-line orchestrator. Search for "MOE-FLIGHT DIVERGENCE" in
  * this file (and across `src/adapters/web/lib/`) to find the regions a
  * future upstream sync needs to preserve.
  *
@@ -15,7 +15,7 @@
  * one CDP WebSocket to /devtools/browser/<id> serves all page sessions via
  * `Target.attachToTarget({flatten:true})` + sessionId routing. Page-action
  * commands ride that single WS instead of per-page sockets. See
- * `docs/superpowers/specs/2026-05-08-chrome-ws-lib-flatten-mode-design.md`.
+ * `docs/history/specs/2026-05-08-chrome-ws-lib-flatten-mode-design.md`.
  */
 
 const { getElementSelector, getElementSelectorAll, parseContains } = require('./element-selector');
@@ -221,7 +221,12 @@ function createSession({ host, port } = {}) {
   // (Note: `getPageSession` is referenced lazily inside the helpers — the
   // function value is read at call time, not destructure time. As long as
   // we name-resolve at call time we're fine.)
-  const { evaluate, evaluateJson, evaluateRaw } = attachEvaluation({ getPageSession: (arg) => getPageSession(arg) });
+  // MOE-FLIGHT DIVERGENCE (import): `evaluateJson` and `evaluateRaw` were
+  // destructured here and never used or exported. Dropped so the workspace
+  // lint rule that catches dead bindings does not have to be turned off for
+  // 4,500 lines of vendored code. One line; re-add on a sync if upstream
+  // starts using them.
+  const { evaluate } = attachEvaluation({ getPageSession: (arg) => getPageSession(arg) });
 
   const { extractText, getHtml, getAttribute } = attachExtraction({ getPageSession: (arg) => getPageSession(arg) });
 
@@ -260,8 +265,8 @@ function createSession({ host, port } = {}) {
   const { setViewport, clearViewport, getViewport } = attachViewport({ getPageSession: (arg) => getPageSession(arg) });
   const { clearCookies } = attachCookies({ getPageSession: (arg) => getPageSession(arg) });
 
-  // ===== GAUNTLET DIVERGENCE START: Gauntlet-only additions =====
-  // These functions exist only in Gauntlet. New upstream functions must NOT
+  // ===== MOE-FLIGHT DIVERGENCE START: Flight-only additions =====
+  // These functions exist only in Flight. New upstream functions must NOT
   // land inside this block — put them above it, in roughly the same position
   // as their upstream counterpart, so the orchestrator stays comparable to
   // upstream's chrome-ws-lib.js.
@@ -597,7 +602,7 @@ function createSession({ host, port } = {}) {
       _cdpEventUnsubs.delete(tabIndex);
     }
   }
-  // ===== GAUNTLET DIVERGENCE END =====
+  // ===== MOE-FLIGHT DIVERGENCE END =====
 
   return {
     // Internal helpers (exported for testing)

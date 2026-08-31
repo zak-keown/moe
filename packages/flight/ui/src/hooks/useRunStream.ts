@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { api, type VetResult } from "../lib/api";
+import { api, type VerdictResult } from "../lib/api";
 
 type RunMessage =
   | { type: "frame"; data: string; width: number; height: number }
   | { type: "progress"; message: string }
-  | { type: "complete"; result: VetResult }
+  | { type: "complete"; result: VerdictResult }
   | { type: "error"; message: string }
   | {
       type: "snapshot";
@@ -16,7 +16,7 @@ type RunMessage =
 export interface UseRunStreamResult {
   frame: string | null;
   messages: string[];
-  result: VetResult | null;
+  result: VerdictResult | null;
   connected: boolean;
   error: string | null;
   /** True when the server told us the run is no longer active (and we should fall back to the completed result). */
@@ -26,7 +26,7 @@ export interface UseRunStreamResult {
 export function useRunStream(runId: string | null): UseRunStreamResult {
   const [frame, setFrame] = useState<string | null>(null);
   const [messages, setMessages] = useState<string[]>([]);
-  const [result, setResult] = useState<VetResult | null>(null);
+  const [result, setResult] = useState<VerdictResult | null>(null);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gone, setGone] = useState(false);

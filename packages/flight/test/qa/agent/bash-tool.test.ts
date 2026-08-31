@@ -10,7 +10,7 @@ function noopLogger(): EvidenceLogger {
 }
 
 function freshCwd(): string {
-  return mkdtempSync(join(tmpdir(), "gauntlet-bash-test-"));
+  return mkdtempSync(join(tmpdir(), "moe-flight-bash-test-"));
 }
 
 interface CapturedEvent { name: string; payload: Record<string, unknown> }
@@ -118,16 +118,16 @@ describe("buildBashTool", () => {
   });
 
   test("env is scrubbed: random parent vars do not leak", async () => {
-    process.env.GAUNTLET_BASH_LEAK_TEST = "should-not-appear";
+    process.env.MOE_FLIGHT_BASH_LEAK_TEST = "should-not-appear";
     try {
       const tool = buildBashTool({ cwd: freshCwd() });
       const result = await tool.execute(
-        { command: "echo \"LEAK=${GAUNTLET_BASH_LEAK_TEST:-clean}\"" },
+        { command: "echo \"LEAK=${MOE_FLIGHT_BASH_LEAK_TEST:-clean}\"" },
         noopLogger(),
       );
       expect(result.text).toContain("LEAK=clean");
     } finally {
-      delete process.env.GAUNTLET_BASH_LEAK_TEST;
+      delete process.env.MOE_FLIGHT_BASH_LEAK_TEST;
     }
   });
 

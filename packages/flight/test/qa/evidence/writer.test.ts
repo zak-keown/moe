@@ -3,13 +3,13 @@ import { writeResultFiles } from "../../../src/qa/evidence/writer.js";
 import { mkdtempSync, rmSync, readFileSync, readdirSync, existsSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
-import type { VetResult } from "../../../src/qa/types.js";
+import type { VerdictResult } from "../../../src/qa/types.js";
 
 describe("writeResultFiles", () => {
   let outDir: string;
 
   beforeEach(() => {
-    outDir = mkdtempSync(join(tmpdir(), "gauntlet-writer-"));
+    outDir = mkdtempSync(join(tmpdir(), "moe-flight-writer-"));
   });
 
   afterEach(() => {
@@ -17,7 +17,7 @@ describe("writeResultFiles", () => {
   });
 
   test("writes result.json with both runId and scenario for self-identifying artifacts", () => {
-    const result: VetResult = {
+    const result: VerdictResult = {
       schemaVersion: 1,
       runId: "story-001_20260416T142301Z_test",
       scenario: "story-001",
@@ -38,7 +38,7 @@ describe("writeResultFiles", () => {
   });
 
   test("writes result.md", () => {
-    const result: VetResult = {
+    const result: VerdictResult = {
       schemaVersion: 1,
       runId: "story-001_20260416T142301Z_test",
       scenario: "story-001",
@@ -58,7 +58,7 @@ describe("writeResultFiles", () => {
   });
 
   test("writes individual issue files", () => {
-    const result: VetResult = {
+    const result: VerdictResult = {
       schemaVersion: 1,
       runId: "story-001_20260416T142301Z_test",
       scenario: "story-001",
@@ -90,7 +90,7 @@ describe("writeResultFiles", () => {
   });
 
   test("skips issues dir when no observations", () => {
-    const result: VetResult = {
+    const result: VerdictResult = {
       schemaVersion: 1,
       runId: "story-001_20260416T142301Z_test",
       scenario: "story-001",

@@ -1,6 +1,6 @@
-# Credentials in Gauntlet
+# Credentials in Flight
 
-When Gauntlet drives a real web app, it often needs to be
+When Flight drives a real web app, it often needs to be
 *already authenticated* before the test can do useful work.
 Four paths cover the common cases:
 
@@ -20,7 +20,7 @@ Four paths cover the common cases:
   values which can't live in a static file.
 
 The two install tools read their inputs from YAML files in your
-project's `.gauntlet/context/` tree. The tool descriptions the
+project's `.moe-flight/context/` tree. The tool descriptions the
 agent sees at runtime are authoritative; this document is the
 human-facing reference that mirrors them.
 
@@ -110,7 +110,7 @@ Cookies and passkeys live alongside a persona in the context
 tree. A typical layout:
 
 ```
-.gauntlet/context/
+.moe-flight/context/
   profiles/
     alice/
       profile.md       prose: who Alice is
@@ -123,7 +123,7 @@ tree. A typical layout:
 
 "Everything for one person under that person's folder" is
 convention, not a requirement — the tools accept any path
-under `.gauntlet/context/`. But colocation is what makes the
+under `.moe-flight/context/`. But colocation is what makes the
 agent's inference work cleanly: if the story says *"as Alice"*,
 the agent reads `profiles/alice/profile.md` for identity, then
 finds `cookies.yaml` / `passkey.yaml` next to it for the
@@ -141,7 +141,7 @@ parameters.
 |-------|----------|-------------|
 | `name` | yes | Cookie name |
 | `value` | yes | Cookie value. Must be a **quoted** string in YAML — an unquoted token like `value: 12345` is rejected because YAML coerces it to a number first. |
-| `url` | one of | Full URL the cookie is for. Chrome derives the cookie's domain and path from this URL — Gauntlet passes the field through to CDP unchanged. |
+| `url` | one of | Full URL the cookie is for. Chrome derives the cookie's domain and path from this URL — Flight passes the field through to CDP unchanged. |
 | `domain` | one of | Cookie's domain (e.g., `app.example.com`). Pair with `path`. |
 | `path` | no | Cookie's path (default `/` when `domain` is given) |
 | `secure` | no | Boolean. Required if `sameSite: None`. |
@@ -180,7 +180,7 @@ silently dropped.
 - **Install once, before navigating** to the cookie-gated origin.
 - Cookies persist across same-origin navigations — you do not
   need to re-install.
-- Gauntlet performs an initial `navigate` before any tool runs,
+- Flight performs an initial `navigate` before any tool runs,
   so for apps that require a session cookie you must `navigate`
   *again* after installing.
 - The tool returns a per-cookie summary: how many were accepted
@@ -203,7 +203,7 @@ answers WebAuthn challenges without a user-presence prompt.
 | `isResidentCredential` | no | Boolean. Default false. |
 | `userHandle` | no | Base64 or base64url. Required for resident-key flows. |
 
-Both base64 and base64url encodings are accepted; Gauntlet
+Both base64 and base64url encodings are accepted; Flight
 normalizes to standard base64 (with padding) before passing to
 Chrome, working around a CDP quirk where the protocol docs
 say base64url but the implementation requires standard base64.
@@ -245,9 +245,9 @@ inbox; in customer CI / locked-down staging that surface often
 doesn't exist.
 
 `fetch_credential` covers this case. When the caller configures
-`GAUNTLET_CREDENTIAL_RESOLVER` to the path of an executable, Gauntlet
+`MOE_FLIGHT_CREDENTIAL_RESOLVER` to the path of an executable, Flight
 exposes a new agent tool `fetch_credential(entity, key)`. The agent
-calls it; Gauntlet invokes the executable with `<entity> <key>` as
+calls it; Flight invokes the executable with `<entity> <key>` as
 argv; the executable's stdout becomes the tool's markdown result.
 When the env var is unset, the tool is invisible and runs behave
 exactly as they do today.
@@ -255,14 +255,14 @@ exactly as they do today.
 ### Resolver protocol
 
 ```
-$ "$GAUNTLET_CREDENTIAL_RESOLVER" <entity> <key>
+$ "$MOE_FLIGHT_CREDENTIAL_RESOLVER" <entity> <key>
 ```
 
 - Two positional argv arguments, no stdin payload.
 - stdout: markdown returned to the agent.
 - Exit 0 = success; non-zero = failure (stderr surfaced to the agent).
 - 10-second default timeout (configurable via
-  `GAUNTLET_CREDENTIAL_RESOLVER_TIMEOUT_MS`). On timeout, Gauntlet
+  `MOE_FLIGHT_CREDENTIAL_RESOLVER_TIMEOUT_MS`). On timeout, Flight
   sends SIGTERM, waits 2 seconds, then SIGKILL.
 - stdout cap: 64 KiB. stderr cap: 8 KiB. Overflow kills the process
   and is reported to the agent.
@@ -311,7 +311,7 @@ Marketing manager at Acme.
 - `signup_verification` — code emailed at account creation
 ```
 
-Gauntlet does not parse this section. It's there so the agent
+Flight does not parse this section. It's there so the agent
 reading the file knows which `key` values to ask for. Drift between
 declared keys and resolver behavior surfaces as visible runtime
 errors, not silent failure.
@@ -325,7 +325,7 @@ errors, not silent failure.
 - Transcripts and exported run artifacts redact the resolver
   stdout by default, leaving a marker like
   `<credential redacted: entity=alice key=otp len=6>`.
-- Setting `GAUNTLET_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS=1` keeps the
+- Setting `MOE_FLIGHT_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS=1` keeps the
   raw bytes in transcripts. Intended for local debugging only; do
   not set in shared CI.
 - Once a credential reaches the agent's live context the LLM may
@@ -338,11 +338,11 @@ errors, not silent failure.
 
 | Env var | Default | Purpose |
 |---|---|---|
-| `GAUNTLET_CREDENTIAL_RESOLVER` | unset | Path to caller-provided executable. Relative paths resolve against `projectRoot`. When unset, the tool is not registered. |
-| `GAUNTLET_CREDENTIAL_RESOLVER_TIMEOUT_MS` | `10000` | Per-invocation timeout (milliseconds). |
-| `GAUNTLET_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS` | `0` | Boolean. Set to `1` to keep resolver stdout in transcripts. Off by default. |
+| `MOE_FLIGHT_CREDENTIAL_RESOLVER` | unset | Path to caller-provided executable. Relative paths resolve against `projectRoot`. When unset, the tool is not registered. |
+| `MOE_FLIGHT_CREDENTIAL_RESOLVER_TIMEOUT_MS` | `10000` | Per-invocation timeout (milliseconds). |
+| `MOE_FLIGHT_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS` | `0` | Boolean. Set to `1` to keep resolver stdout in transcripts. Off by default. |
 
-Gauntlet validates the resolver path at boot: must exist, be a
+Flight validates the resolver path at boot: must exist, be a
 regular file, and have at least one execute bit set. A misconfigured
 resolver is a clean boot-time error, not a runtime surprise.
 
@@ -369,7 +369,7 @@ auth material even for test accounts.
 The run's action log (`run.jsonl`) records only the *length* of
 each cookie value and never the bytes themselves; same for
 passkey `credentialId` and `privateKey` fields. So the evidence
-files Gauntlet writes to disk don't leak the secrets, even
+files Flight writes to disk don't leak the secrets, even
 though the YAML inputs do contain them.
 
 ## Lifecycle reference
@@ -388,5 +388,5 @@ though the YAML inputs do contain them.
   and [`src/adapters/web/passkey.ts`](../src/adapters/web/passkey.ts).
   These are what the agent reads at run time.
 - Architecture review at
-  [`docs/superpowers/plans/2026-04-15-gauntlet-v1.5-architecture-review.md`](./superpowers/plans/2026-04-15-gauntlet-v1.5-architecture-review.md)
+  [`docs/history/plans/2026-04-15-gauntlet-v1.5-architecture-review.md`](./history/plans/2026-04-15-gauntlet-v1.5-architecture-review.md)
   §3.2 (passkey) and §3.4 (cookies) for deeper rationale.

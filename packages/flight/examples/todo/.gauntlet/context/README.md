@@ -1,6 +1,6 @@
 # TODO fixture
 
-A Gauntlet adapter-regression fixture. One TODO core, three frontends
+A Flight adapter-regression fixture. One TODO core, three frontends
 (CLI / TUI / Web), one shared set of cards. The card you're running
 narrates the work — this file just tells you the surface.
 

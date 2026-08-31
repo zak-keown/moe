@@ -2,7 +2,7 @@ import { describe, test, expect, afterAll } from "vitest";
 import { mkdtempSync, rmSync, readdirSync, readFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import type { EvidenceLogger, EventObserver } from "../../../src/qa/evidence/logger.js";
+import type { EventObserver } from "../../../src/qa/evidence/logger.js";
 import { runBatch } from "../../../src/qa/cli/batch.js";
 import type { AppConfig } from "../../../src/qa/config.js";
 
@@ -211,11 +211,11 @@ describe("runBatch — RunSet artifact", () => {
   });
 
   function makeTmpConfig(): AppConfig {
-    const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-batch-test-"));
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-batch-test-"));
     tmpdirs.push(projectRoot);
     return {
       projectRoot,
-      stateDirName: ".gauntlet",
+      stateDirName: ".moe-flight",
       port: 4400,
       defaultChrome: { host: "127.0.0.1", port: 9222 },
       defaultBudgetMs: 300000,
@@ -243,7 +243,7 @@ describe("runBatch — RunSet artifact", () => {
     };
   }
 
-  test("gauntlet batch a.md b.md (passes=1) produces a RunSet artifact with 2 runs", async () => {
+  test("moe-flight qa batch a.md b.md (passes=1) produces a RunSet artifact with 2 runs", async () => {
     const sink = { out: "", write(s: string) { this.out += s; } };
     const config = makeTmpConfig();
     const calls: string[] = [];
@@ -267,8 +267,8 @@ describe("runBatch — RunSet artifact", () => {
     expect(exitCode).toBe(0);
     expect(calls).toEqual(["a.md", "b.md"]);
 
-    // Assert that .gauntlet/run-sets/batch_*/ was created.
-    const runSetsDir = join(config.projectRoot, ".gauntlet", "run-sets");
+    // Assert that .moe-flight/run-sets/batch_*/ was created.
+    const runSetsDir = join(config.projectRoot, ".moe-flight", "run-sets");
     const entries = readdirSync(runSetsDir);
     expect(entries.length).toBe(1);
     expect(entries[0]).toMatch(/^batch_/);
@@ -284,7 +284,7 @@ describe("runBatch — RunSet artifact", () => {
     expect(setJson.summary.overall.overallStatus).toBe("consistent_pass");
   });
 
-  test("gauntlet batch a.md b.md --passes 2 produces a RunSet artifact with 4 runs", async () => {
+  test("moe-flight qa batch a.md b.md --passes 2 produces a RunSet artifact with 4 runs", async () => {
     const sink = { out: "", write(s: string) { this.out += s; } };
     const config = makeTmpConfig();
     const calls: string[] = [];
@@ -309,7 +309,7 @@ describe("runBatch — RunSet artifact", () => {
     // 2 cards × 2 passes = 4 executor calls.
     expect(calls).toHaveLength(4);
 
-    const runSetsDir = join(config.projectRoot, ".gauntlet", "run-sets");
+    const runSetsDir = join(config.projectRoot, ".moe-flight", "run-sets");
     const entries = readdirSync(runSetsDir);
     expect(entries.length).toBe(1);
 
@@ -321,7 +321,7 @@ describe("runBatch — RunSet artifact", () => {
     expect(setJson.summary.overall.overallStatus).toBe("consistent_pass");
   });
 
-  test("gauntlet batch a.md (passes=1) does NOT produce a RunSet artifact", async () => {
+  test("moe-flight qa batch a.md (passes=1) does NOT produce a RunSet artifact", async () => {
     const sink = { out: "", write(s: string) { this.out += s; } };
     const config = makeTmpConfig();
     const calls: string[] = [];
@@ -348,7 +348,7 @@ describe("runBatch — RunSet artifact", () => {
     // The else branch must not create any run-sets directory.
     let runSetsDirExists = false;
     try {
-      readdirSync(join(config.projectRoot, ".gauntlet", "run-sets"));
+      readdirSync(join(config.projectRoot, ".moe-flight", "run-sets"));
       runSetsDirExists = true;
     } catch {}
     expect(runSetsDirExists).toBe(false);

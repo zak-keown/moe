@@ -6,7 +6,7 @@
  * Output contract:
  *   - When `isTty` is true (stderr attached to a terminal), output is
  *     plain prose — humans don't want to read a JSON envelope. With
- *     `--verbose` or `GAUNTLET_DEBUG=1`, a stack trace follows.
+ *     `--verbose` or `MOE_FLIGHT_DEBUG=1`, a stack trace follows.
  *   - When `isTty` is false (stderr piped to a file or another process),
  *     output is the JSON envelope `{ error: { message, code? } }` so
  *     programmatic consumers (CI scripts, the web UI shell-out path)
@@ -45,14 +45,14 @@ export function formatCliError(err: unknown, opts: FormatCliErrorOptions): strin
 }
 
 /**
- * `--verbose` (anywhere in argv) or `GAUNTLET_DEBUG=1` (env) enables stack
+ * `--verbose` (anywhere in argv) or `MOE_FLIGHT_DEBUG=1` (env) enables stack
  * traces on top-level errors. The flag is read directly from process.argv
  * so it works even when arg parsing itself failed (e.g. an unknown command
  * or invalid flag value crashed `parseArgs` before we knew which command
  * was running).
  */
 export function isVerboseRequest(env: Record<string, string | undefined>, argv: string[]): boolean {
-  if (env.GAUNTLET_DEBUG === "1") return true;
+  if (env.MOE_FLIGHT_DEBUG === "1") return true;
   if (argv.includes("--verbose")) return true;
   return false;
 }

@@ -12,7 +12,7 @@ import { citeAll, loadStory, step, report, makeScriptedClient } from "./helpers.
 describe("CLI adapter e2e — bc calculator", () => {
   test("pass: bc performs arithmetic", async () => {
     const card = loadStory("bc-arithmetic-pass.md");
-    const logDir = mkdtempSync(join(tmpdir(), "gauntlet-bc-arith-"));
+    const logDir = mkdtempSync(join(tmpdir(), "moe-flight-bc-arith-"));
     const adapter = new CLIAdapter({ runDir: logDir });
     const logger = new EvidenceLogger(logDir);
 
@@ -42,7 +42,7 @@ describe("CLI adapter e2e — bc calculator", () => {
 
   test("fail: bc has no help command", async () => {
     const card = loadStory("bc-help-fail.md");
-    const logDir = mkdtempSync(join(tmpdir(), "gauntlet-bc-help-"));
+    const logDir = mkdtempSync(join(tmpdir(), "moe-flight-bc-help-"));
     const adapter = new CLIAdapter({ runDir: logDir });
     const logger = new EvidenceLogger(logDir);
 

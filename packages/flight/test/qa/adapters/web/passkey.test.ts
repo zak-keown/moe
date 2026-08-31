@@ -33,7 +33,7 @@ describe("readPasskeyFile", () => {
   let tmp: string;
 
   beforeEach(() => {
-    tmp = mkdtempSync(join(tmpdir(), "gauntlet-passkey-read-"));
+    tmp = mkdtempSync(join(tmpdir(), "moe-flight-passkey-read-"));
   });
 
   afterEach(() => {
@@ -41,7 +41,7 @@ describe("readPasskeyFile", () => {
   });
 
   test("parses a valid passkey YAML", () => {
-    const dir = join(tmp, ".gauntlet", "context", "matt");
+    const dir = join(tmp, ".moe-flight", "context", "matt");
     mkdirSync(dir, { recursive: true });
     const filePath = join(dir, "passkey.yaml");
     writeFileSync(filePath, YAML.stringify(SAMPLE_PASSKEY));
@@ -60,7 +60,7 @@ describe("readPasskeyFile", () => {
   });
 
   test("throws when the YAML is malformed", () => {
-    const dir = join(tmp, ".gauntlet", "context", "bad");
+    const dir = join(tmp, ".moe-flight", "context", "bad");
     mkdirSync(dir, { recursive: true });
     const filePath = join(dir, "passkey.yaml");
     // A YAML document that is structurally invalid: a mapping key with
@@ -70,7 +70,7 @@ describe("readPasskeyFile", () => {
   });
 
   test("throws when required fields are missing", () => {
-    const dir = join(tmp, ".gauntlet", "context", "partial");
+    const dir = join(tmp, ".moe-flight", "context", "partial");
     mkdirSync(dir, { recursive: true });
     const filePath = join(dir, "passkey.yaml");
     writeFileSync(
@@ -81,7 +81,7 @@ describe("readPasskeyFile", () => {
   });
 
   test("throws when signCount is missing (CDP requires integer)", () => {
-    const dir = join(tmp, ".gauntlet", "context", "nocount");
+    const dir = join(tmp, ".moe-flight", "context", "nocount");
     mkdirSync(dir, { recursive: true });
     const filePath = join(dir, "passkey.yaml");
     writeFileSync(
@@ -106,7 +106,7 @@ describe("readPasskeyFile", () => {
     //   10 chars → mod 4 == 2 → 2 pad chars
     //   11 chars → mod 4 == 3 → 1 pad char
     //   12 chars → mod 4 == 0 → no pad
-    const root = join(tmp, ".gauntlet", "context");
+    const root = join(tmp, ".moe-flight", "context");
     mkdirSync(root, { recursive: true });
     const cases = [
       {
@@ -212,10 +212,10 @@ function makeFakeLogger(): { logger: EvidenceLogger; actions: LoggedAction[] } {
   return { logger, actions };
 }
 
-// Creates `<tmp>/.gauntlet/context/<name>/passkey.yaml` for each name and
+// Creates `<tmp>/.moe-flight/context/<name>/passkey.yaml` for each name and
 // returns the context root directory.
 function setupContext(tmp: string, names: string[]): string {
-  const root = join(tmp, ".gauntlet", "context");
+  const root = join(tmp, ".moe-flight", "context");
   mkdirSync(root, { recursive: true });
   for (const n of names) {
     mkdirSync(join(root, n));
@@ -228,7 +228,7 @@ describe("buildInstallPasskeyTool", () => {
   let tmp: string;
 
   beforeEach(() => {
-    tmp = mkdtempSync(join(tmpdir(), "gauntlet-passkey-tool-"));
+    tmp = mkdtempSync(join(tmpdir(), "moe-flight-passkey-tool-"));
   });
 
   afterEach(() => {
@@ -236,12 +236,12 @@ describe("buildInstallPasskeyTool", () => {
   });
 
   test("returns null when contextRoot does not exist", () => {
-    const root = join(tmp, ".gauntlet", "context");
+    const root = join(tmp, ".moe-flight", "context");
     expect(buildInstallPasskeyTool(root, 0, makeDriver().driver)).toBeNull();
   });
 
   test("returns null when contextRoot is empty", () => {
-    const root = join(tmp, ".gauntlet", "context");
+    const root = join(tmp, ".moe-flight", "context");
     mkdirSync(root, { recursive: true });
     expect(buildInstallPasskeyTool(root, 0, makeDriver().driver)).toBeNull();
   });
@@ -258,7 +258,7 @@ describe("buildInstallPasskeyTool", () => {
     // honors spec §2.1's principle that the runner does not interpret
     // filenames. If the author has no passkeys, the agent sees the
     // tool but never calls it.
-    const root = join(tmp, ".gauntlet", "context");
+    const root = join(tmp, ".moe-flight", "context");
     mkdirSync(root, { recursive: true });
     writeFileSync(join(root, "alice.md"), "flat profile, no passkey");
     const tool = buildInstallPasskeyTool(root, 0, makeDriver().driver);
@@ -290,7 +290,7 @@ describe("buildInstallPasskeyTool", () => {
     const expected =
       "Install a passkey credential into the browser's virtual authenticator, " +
       "reading the credential YAML from a file under the project's context " +
-      "directory. The path is relative to .gauntlet/context/ (example: " +
+      "directory. The path is relative to .moe-flight/context/ (example: " +
       '"alice/passkey.yaml"). You must re-call this tool after every navigate() ' +
       "and before any click that triggers WebAuthn — Chrome clears virtual " +
       "authenticators on every same-target navigation, and the authenticator does " +

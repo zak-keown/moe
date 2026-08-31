@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
 import { createApp } from "../../../src/qa/api/server.js";
 import { loadConfig } from "../../../src/qa/config.js";
-import { gauntletPath } from "../../../src/qa/paths.js";
+import { flightPath } from "../../../src/qa/paths.js";
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -17,7 +17,7 @@ describe("Manifest-gated file route", () => {
   let app: ReturnType<typeof createApp>;
 
   beforeEach(() => {
-    projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-file-"));
+    projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-file-"));
     app = makeApp(projectRoot);
   });
 
@@ -26,7 +26,7 @@ describe("Manifest-gated file route", () => {
   });
 
   function makeRun(scenario: string, manifest: Record<string, unknown>) {
-    const runDir = gauntletPath(projectRoot, ".gauntlet", "results", scenario);
+    const runDir = flightPath(projectRoot, ".moe-flight", "results", scenario);
     mkdirSync(runDir, { recursive: true });
     writeFileSync(join(runDir, "result.json"), JSON.stringify(manifest));
     return runDir;
@@ -74,7 +74,7 @@ describe("Manifest-gated file route", () => {
   });
 
   test("404s when the run directory has no result.json", async () => {
-    const runDir = gauntletPath(projectRoot, ".gauntlet", "results", "no-manifest");
+    const runDir = flightPath(projectRoot, ".moe-flight", "results", "no-manifest");
     mkdirSync(runDir, { recursive: true });
     writeFileSync(join(runDir, "video.webm"), "fake-video-data");
 

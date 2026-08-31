@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { api, type VetResult } from "../lib/api";
+import { api, type VerdictResult } from "../lib/api";
 
 const DEFAULT_PAGE_SIZE = 50;
 
@@ -23,7 +23,7 @@ export function useResults(params?: UseResultsParams) {
   const limit = params?.limit ?? DEFAULT_PAGE_SIZE;
   const cardId = params?.cardId;
 
-  const [results, setResults] = useState<VetResult[]>([]);
+  const [results, setResults] = useState<VerdictResult[]>([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);

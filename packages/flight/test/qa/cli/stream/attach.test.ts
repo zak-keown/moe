@@ -12,7 +12,7 @@ describe("attachRenderer", () => {
   const sink = { write: (s: string) => { captured += s; } };
 
   beforeEach(() => {
-    outDir = mkdtempSync(join(tmpdir(), "gauntlet-stream-"));
+    outDir = mkdtempSync(join(tmpdir(), "moe-flight-stream-"));
     logger = new EvidenceLogger(outDir);
     captured = "";
   });

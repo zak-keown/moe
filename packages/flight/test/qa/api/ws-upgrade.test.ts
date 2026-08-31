@@ -13,7 +13,7 @@ describe("parseRunId", () => {
 
   test("rejects undefined-shaped values", () => {
     // Exercising a missed-validation path from an untyped caller. Upstream
-    // used `@ts-expect-error`, which this file never saw (gauntlet's tsconfig
+    // used `@ts-expect-error`, which this file never saw (moe-flight's tsconfig
     // excluded test/), and which reports as unused once it is checked.
     expect(parseRunId(undefined as unknown as string)).toBeNull();
   });

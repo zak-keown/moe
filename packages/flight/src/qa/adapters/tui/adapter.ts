@@ -125,7 +125,7 @@ export class TUIAdapter implements Adapter {
     if (!this.runDir) {
       throw new Error("TUIAdapter: runDir is required to start a session");
     }
-    const id = `gauntlet-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const id = `moe-flight-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     this._sessionName = id;
     this._socket = id;
     const scratch = join(this.runDir, "scratch");

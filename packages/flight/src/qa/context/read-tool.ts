@@ -3,10 +3,10 @@ import { textResult, type ToolDefinition, type ToolResult } from "../models/prov
 import { contextRootIsPopulated, resolveInside } from "../paths.js";
 
 // The `read` tool is the agent-facing primitive for pulling file contents
-// out of `.gauntlet/context/`. It is a pure filesystem primitive — the
+// out of `.moe-flight/context/`. It is a pure filesystem primitive — the
 // runner never interprets filenames, never caches results, and never
 // writes into the context directory. Path resolution goes through
-// `resolveInside` from `../paths.ts`, which matches Gauntlet v1.5 spec §3.1
+// `resolveInside` from `../paths.ts`, which matches Flight v1.5 spec §3.1
 // verbatim.
 
 export interface ReadTool {
@@ -14,7 +14,7 @@ export interface ReadTool {
   execute(args: Record<string, unknown>): ToolResult;
 }
 
-// Tool description — authoritative prose from Gauntlet v1.5 spec §3.1.
+// Tool description — authoritative prose from Flight v1.5 spec §3.1.
 // DO NOT edit without going through the amendment protocol (spec §13).
 // Tests assert this exact string; if a typo sneaks in, the prompts test
 // will fail at CI time.

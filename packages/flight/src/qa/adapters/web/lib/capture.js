@@ -29,7 +29,7 @@ function ensureProcessHandlersRegistered() {
  * Auto-capture: every DOM-mutating action drops a {prefix}.html / .md / .png /
  * -console.txt set into the session directory so the user (or model) can
  * read what the page looked like instead of re-querying via CDP. The
- * session dir is XDG-rooted at ~/.cache/superpowers/browser/YYYY-MM-DD/
+ * session dir is XDG-rooted at ~/.cache/moe/browser/YYYY-MM-DD/
  * session-{timestamp} and is cleaned up on process exit / SIGINT / SIGTERM.
  *
  * Three layers:
@@ -47,12 +47,12 @@ function ensureProcessHandlersRegistered() {
 function attachCapture({ state, getPageSession, getHtml, screenshot, actions }) {
   function initializeSession() {
     if (!state.sessionDir) {
-      // ~/.cache/superpowers/browser/YYYY-MM-DD/session-{timestamp}
+      // ~/.cache/moe/browser/YYYY-MM-DD/session-{timestamp}
       const cacheHome = getXdgCacheHome();
       const dateStr = new Date().toISOString().split('T')[0];
       const sessionId = `session-${Date.now()}`;
 
-      state.sessionDir = path.join(cacheHome, 'superpowers', 'browser', dateStr, sessionId);
+      state.sessionDir = path.join(cacheHome, 'moe', 'browser', dateStr, sessionId);
       fs.mkdirSync(state.sessionDir, { recursive: true });
       state.captureCounter = 0;
 

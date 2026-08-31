@@ -34,7 +34,7 @@ const OBSERVATION_KINDS: readonly ObservationKind[] = [
   "a11y",
   "performance",
 ];
-const VET_STATUSES: readonly ReportableStatus[] = ["pass", "fail", "investigate"];
+const VERDICT_STATUSES: readonly ReportableStatus[] = ["pass", "fail", "investigate"];
 const CRITERION_VERDICTS: readonly CriterionVerdict["verdict"][] = [
   "pass",
   "fail",
@@ -56,10 +56,10 @@ function parseCoreFields(args: Record<string, unknown>): ParseResult<{
   if (typeof statusRaw !== "string") {
     return { ok: false, reason: `status: expected string, got ${typeName(statusRaw)}` };
   }
-  if (!VET_STATUSES.includes(statusRaw as ReportableStatus)) {
+  if (!VERDICT_STATUSES.includes(statusRaw as ReportableStatus)) {
     return {
       ok: false,
-      reason: `status: "${statusRaw}" not in [${VET_STATUSES.join(", ")}]`,
+      reason: `status: "${statusRaw}" not in [${VERDICT_STATUSES.join(", ")}]`,
     };
   }
 
@@ -129,7 +129,7 @@ function parseObservation(obs: unknown, i: number): ParseResult<Observation> {
 }
 
 /**
- * Validate `report_result` tool call arguments against the VetResult shape.
+ * Validate `report_result` tool call arguments against the VerdictResult shape.
  *
  * Required fields: status (enum), summary (string), reasoning (string).
  * Optional: observations (array of {kind, description}).

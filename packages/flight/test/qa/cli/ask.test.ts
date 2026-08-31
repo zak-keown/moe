@@ -7,27 +7,27 @@ import { ask } from "../../../src/qa/cli/ask.js";
 
 describe("parseArgs ask", () => {
   test("parses positional runId", () => {
-    const r = parseArgs(["bun", "gauntlet", "ask", "login-001_20260101T000000Z_abcd"]);
+    const r = parseArgs(["bun", "moe-flight", "ask", "login-001_20260101T000000Z_abcd"]);
     expect(r.command).toBe("ask");
     expect((r as { runId: string }).runId).toBe("login-001_20260101T000000Z_abcd");
   });
 
   test("parses --turn", () => {
-    const r = parseArgs(["bun", "gauntlet", "ask", "rid", "--turn", "5"]);
+    const r = parseArgs(["bun", "moe-flight", "ask", "rid", "--turn", "5"]);
     expect((r as { upToTurn?: number }).upToTurn).toBe(5);
   });
 
   test("parses --model as a bare model id", () => {
-    const r = parseArgs(["bun", "gauntlet", "ask", "rid", "--model", "claude-opus-4-7"]);
+    const r = parseArgs(["bun", "moe-flight", "ask", "rid", "--model", "claude-opus-4-7"]);
     expect((r as { modelOverride?: string }).modelOverride).toBe("claude-opus-4-7");
   });
 
   test("rejects unknown flags", () => {
-    expect(() => parseArgs(["bun", "gauntlet", "ask", "rid", "--bogus", "x"])).toThrow(/Unknown flag/);
+    expect(() => parseArgs(["bun", "moe-flight", "ask", "rid", "--bogus", "x"])).toThrow(/Unknown flag/);
   });
 
   test("requires a runId positional", () => {
-    expect(() => parseArgs(["bun", "gauntlet", "ask"])).toThrow(/runId|Usage/);
+    expect(() => parseArgs(["bun", "moe-flight", "ask"])).toThrow(/runId|Usage/);
   });
 });
 
@@ -41,7 +41,7 @@ describe("ask error paths", () => {
   });
 
   test("returns 1 and logs when the run directory does not exist", async () => {
-    const projRoot = mkdtempSync(join(tmpdir(), "gauntlet-ask-"));
+    const projRoot = mkdtempSync(join(tmpdir(), "moe-flight-ask-"));
     cleanups.push(projRoot);
     const errors: string[] = [];
     const origErr = console.error;
@@ -49,7 +49,7 @@ describe("ask error paths", () => {
     try {
       const code = await ask(
         { command: "ask", runId: "nonexistent_run", cli: {} },
-        { projectRoot: projRoot, stateDirName: ".gauntlet" } as never,
+        { projectRoot: projRoot, stateDirName: ".moe-flight" } as never,
       );
       expect(code).toBe(1);
       expect(errors.some((e) => e.includes("Run not found"))).toBe(true);
@@ -59,16 +59,16 @@ describe("ask error paths", () => {
   });
 
   test("returns 1 and logs when the run directory exists but run.jsonl is missing", async () => {
-    const projRoot = mkdtempSync(join(tmpdir(), "gauntlet-ask-"));
+    const projRoot = mkdtempSync(join(tmpdir(), "moe-flight-ask-"));
     cleanups.push(projRoot);
-    mkdirSync(join(projRoot, ".gauntlet", "results", "empty_run"), { recursive: true });
+    mkdirSync(join(projRoot, ".moe-flight", "results", "empty_run"), { recursive: true });
     const errors: string[] = [];
     const origErr = console.error;
     console.error = (...msg: unknown[]) => { errors.push(msg.map((m) => String(m)).join(" ")); };
     try {
       const code = await ask(
         { command: "ask", runId: "empty_run", cli: {} },
-        { projectRoot: projRoot, stateDirName: ".gauntlet" } as never,
+        { projectRoot: projRoot, stateDirName: ".moe-flight" } as never,
       );
       expect(code).toBe(1);
       expect(errors.some((e) => e.includes("no run.jsonl"))).toBe(true);

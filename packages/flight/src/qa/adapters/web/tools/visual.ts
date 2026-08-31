@@ -19,7 +19,7 @@ export async function executeScreenshot(
   ctx: WebToolCtx,
   args: Record<string, unknown>,
 ): Promise<ToolResult> {
-  const tmpFile = join(tmpdir(), `gauntlet-screenshot-${Date.now()}.png`);
+  const tmpFile = join(tmpdir(), `moe-flight-screenshot-${Date.now()}.png`);
   await ctx.chrome.screenshot(
     ctx.tab,
     tmpFile,

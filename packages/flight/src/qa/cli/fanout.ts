@@ -3,7 +3,7 @@ import { join } from "path";
 import { parseStoryCard } from "../format/story-card.js";
 import { generateFanout, generateFromObservations, generateFromFailure } from "../fanout/generator.js";
 import { createClient } from "../models/resolve.js";
-import type { ModelConfig, VetResult } from "../types.js";
+import type { ModelConfig, VerdictResult } from "../types.js";
 
 export async function fanout(
   scenarioPath: string | undefined,
@@ -49,7 +49,7 @@ async function fanoutFromResult(
 ): Promise<void> {
   const resultPath = join(resultDir, "result.json");
   const content = readFileSync(resultPath, "utf-8");
-  const result: VetResult = JSON.parse(content);
+  const result: VerdictResult = JSON.parse(content);
 
   const model = models.fanout || models.agent;
   const client = createClient(model);

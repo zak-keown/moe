@@ -8,7 +8,7 @@ describe("loadConfig", () => {
   const emptyEnv = {} as NodeJS.ProcessEnv;
 
   function withExecutableResolver<T>(fn: (resolverPath: string) => T): T {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-cfg-resolver-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-cfg-resolver-"));
     const resolverPath = join(tmp, "resolver.sh");
     writeFileSync(resolverPath, "#!/bin/sh\necho ok\n");
     chmodSync(resolverPath, 0o755);
@@ -22,7 +22,7 @@ describe("loadConfig", () => {
   test("all defaults when no args and empty env", () => {
     const c = loadConfig({}, emptyEnv);
     expect(c.projectRoot).toBe(".");
-    expect(c.stateDirName).toBe(".gauntlet");
+    expect(c.stateDirName).toBe(".moe-flight");
     expect(c.port).toBe(4400);
     expect(c.defaultChrome).toEqual({ host: "127.0.0.1", port: 9222 });
     expect(c.models.agent).toBe("claude-sonnet-4-6");
@@ -34,16 +34,16 @@ describe("loadConfig", () => {
   });
 
   describe("stateDirName", () => {
-    test("GAUNTLET_STATE_DIR env var overrides default", () => {
-      const c = loadConfig({}, { GAUNTLET_STATE_DIR: "gauntlet" } as NodeJS.ProcessEnv);
-      expect(c.stateDirName).toBe("gauntlet");
+    test("MOE_FLIGHT_STATE_DIR env var overrides default", () => {
+      const c = loadConfig({}, { MOE_FLIGHT_STATE_DIR: "moe-flight" } as NodeJS.ProcessEnv);
+      expect(c.stateDirName).toBe("moe-flight");
       expect(c.sources.stateDirName).toBe("env");
     });
 
     test("--state-dir flag overrides env", () => {
       const c = loadConfig(
         { stateDirName: ".gnt" },
-        { GAUNTLET_STATE_DIR: "gauntlet" } as NodeJS.ProcessEnv,
+        { MOE_FLIGHT_STATE_DIR: "moe-flight" } as NodeJS.ProcessEnv,
       );
       expect(c.stateDirName).toBe(".gnt");
       expect(c.sources.stateDirName).toBe("flag");
@@ -56,7 +56,7 @@ describe("loadConfig", () => {
     test("rejects slashes", () => {
       expect(() => loadConfig({ stateDirName: "a/b" }, emptyEnv)).toThrow(/single path segment/);
       expect(() => loadConfig({ stateDirName: "a\\b" }, emptyEnv)).toThrow(/single path segment/);
-      expect(() => loadConfig({}, { GAUNTLET_STATE_DIR: "x/y" } as NodeJS.ProcessEnv))
+      expect(() => loadConfig({}, { MOE_FLIGHT_STATE_DIR: "x/y" } as NodeJS.ProcessEnv))
         .toThrow(/single path segment/);
     });
 
@@ -68,11 +68,11 @@ describe("loadConfig", () => {
 
   test("env vars override defaults", () => {
     const c = loadConfig({}, {
-      GAUNTLET_PORT: "5500",
-      GAUNTLET_AGENT_MODEL: "gpt-4o",
-      GAUNTLET_PROJECT_ROOT: "/data",
-      GAUNTLET_CHROME: "chrome-svc:9333",
-      GAUNTLET_MODELS: "claude-sonnet-4-6,gpt-4o",
+      MOE_FLIGHT_PORT: "5500",
+      MOE_FLIGHT_AGENT_MODEL: "gpt-4o",
+      MOE_FLIGHT_PROJECT_ROOT: "/data",
+      MOE_FLIGHT_CHROME: "chrome-svc:9333",
+      MOE_FLIGHT_MODELS: "claude-sonnet-4-6,gpt-4o",
       ANTHROPIC_API_KEY: "sk-ant-xxx",
     } as NodeJS.ProcessEnv);
     expect(c.port).toBe(5500);
@@ -89,7 +89,7 @@ describe("loadConfig", () => {
   test("CLI args override env vars", () => {
     const c = loadConfig(
       { port: 6600, projectRoot: "/flag", chrome: "flag-host:9444", models: { agent: "claude-opus-4-6" } },
-      { GAUNTLET_PORT: "5500", GAUNTLET_PROJECT_ROOT: "/env", GAUNTLET_CHROME: "env:9333", GAUNTLET_AGENT_MODEL: "gpt-4o" } as NodeJS.ProcessEnv,
+      { MOE_FLIGHT_PORT: "5500", MOE_FLIGHT_PROJECT_ROOT: "/env", MOE_FLIGHT_CHROME: "env:9333", MOE_FLIGHT_AGENT_MODEL: "gpt-4o" } as NodeJS.ProcessEnv,
     );
     expect(c.port).toBe(6600);
     expect(c.projectRoot).toBe("/flag");
@@ -101,9 +101,9 @@ describe("loadConfig", () => {
     expect(c.sources["models.agent"]).toBe("flag");
   });
 
-  test("invalid GAUNTLET_CHROME format throws", () => {
-    expect(() => loadConfig({}, { GAUNTLET_CHROME: "no-port-here" } as NodeJS.ProcessEnv))
-      .toThrow(/GAUNTLET_CHROME/);
+  test("invalid MOE_FLIGHT_CHROME format throws", () => {
+    expect(() => loadConfig({}, { MOE_FLIGHT_CHROME: "no-port-here" } as NodeJS.ProcessEnv))
+      .toThrow(/MOE_FLIGHT_CHROME/);
   });
 
   test("invalid --chrome format throws", () => {
@@ -112,12 +112,12 @@ describe("loadConfig", () => {
   });
 
   test("invalid port in env throws", () => {
-    expect(() => loadConfig({}, { GAUNTLET_PORT: "not-a-number" } as NodeJS.ProcessEnv))
-      .toThrow(/GAUNTLET_PORT/);
+    expect(() => loadConfig({}, { MOE_FLIGHT_PORT: "not-a-number" } as NodeJS.ProcessEnv))
+      .toThrow(/MOE_FLIGHT_PORT/);
   });
 
-  test("available models defaults to [] (no allow-list) when GAUNTLET_MODELS unset", () => {
-    const c = loadConfig({}, { GAUNTLET_AGENT_MODEL: "gpt-4o" } as NodeJS.ProcessEnv);
+  test("available models defaults to [] (no allow-list) when MOE_FLIGHT_MODELS unset", () => {
+    const c = loadConfig({}, { MOE_FLIGHT_AGENT_MODEL: "gpt-4o" } as NodeJS.ProcessEnv);
     expect(c.models.available).toEqual([]);
   });
 
@@ -138,14 +138,14 @@ describe("loadConfig", () => {
     expect(c.sources.defaultSaveScreencast).toBe("default");
   });
 
-  test("GAUNTLET_SAVE_SCREENCAST=1 enables (env source)", () => {
-    const c = loadConfig({}, { GAUNTLET_SAVE_SCREENCAST: "1" } as NodeJS.ProcessEnv);
+  test("MOE_FLIGHT_SAVE_SCREENCAST=1 enables (env source)", () => {
+    const c = loadConfig({}, { MOE_FLIGHT_SAVE_SCREENCAST: "1" } as NodeJS.ProcessEnv);
     expect(c.defaultSaveScreencast).toBe(true);
     expect(c.sources.defaultSaveScreencast).toBe("env");
   });
 
-  test("GAUNTLET_SAVE_SCREENCAST=false disables explicitly (still env source)", () => {
-    const c = loadConfig({}, { GAUNTLET_SAVE_SCREENCAST: "false" } as NodeJS.ProcessEnv);
+  test("MOE_FLIGHT_SAVE_SCREENCAST=false disables explicitly (still env source)", () => {
+    const c = loadConfig({}, { MOE_FLIGHT_SAVE_SCREENCAST: "false" } as NodeJS.ProcessEnv);
     expect(c.defaultSaveScreencast).toBe(false);
     expect(c.sources.defaultSaveScreencast).toBe("env");
   });
@@ -153,15 +153,15 @@ describe("loadConfig", () => {
   test("--save-screencast flag overrides env", () => {
     const c = loadConfig(
       { saveScreencast: true },
-      { GAUNTLET_SAVE_SCREENCAST: "0" } as NodeJS.ProcessEnv,
+      { MOE_FLIGHT_SAVE_SCREENCAST: "0" } as NodeJS.ProcessEnv,
     );
     expect(c.defaultSaveScreencast).toBe(true);
     expect(c.sources.defaultSaveScreencast).toBe("flag");
   });
 
-  test("invalid GAUNTLET_SAVE_SCREENCAST throws", () => {
-    expect(() => loadConfig({}, { GAUNTLET_SAVE_SCREENCAST: "maybe" } as NodeJS.ProcessEnv))
-      .toThrow(/GAUNTLET_SAVE_SCREENCAST/);
+  test("invalid MOE_FLIGHT_SAVE_SCREENCAST throws", () => {
+    expect(() => loadConfig({}, { MOE_FLIGHT_SAVE_SCREENCAST: "maybe" } as NodeJS.ProcessEnv))
+      .toThrow(/MOE_FLIGHT_SAVE_SCREENCAST/);
   });
 
   test("defaultReflectionInterval defaults to 10", () => {
@@ -170,14 +170,14 @@ describe("loadConfig", () => {
     expect(c.sources.defaultReflectionInterval).toBe("default");
   });
 
-  test("GAUNTLET_REFLECTION_INTERVAL overrides default", () => {
-    const c = loadConfig({}, { GAUNTLET_REFLECTION_INTERVAL: "5" } as NodeJS.ProcessEnv);
+  test("MOE_FLIGHT_REFLECTION_INTERVAL overrides default", () => {
+    const c = loadConfig({}, { MOE_FLIGHT_REFLECTION_INTERVAL: "5" } as NodeJS.ProcessEnv);
     expect(c.defaultReflectionInterval).toBe(5);
     expect(c.sources.defaultReflectionInterval).toBe("env");
   });
 
-  test("GAUNTLET_REFLECTION_INTERVAL=0 disables", () => {
-    const c = loadConfig({}, { GAUNTLET_REFLECTION_INTERVAL: "0" } as NodeJS.ProcessEnv);
+  test("MOE_FLIGHT_REFLECTION_INTERVAL=0 disables", () => {
+    const c = loadConfig({}, { MOE_FLIGHT_REFLECTION_INTERVAL: "0" } as NodeJS.ProcessEnv);
     expect(c.defaultReflectionInterval).toBe(0);
     expect(c.sources.defaultReflectionInterval).toBe("env");
   });
@@ -185,17 +185,17 @@ describe("loadConfig", () => {
   test("--reflection-interval flag overrides env", () => {
     const c = loadConfig(
       { reflectionInterval: 7 },
-      { GAUNTLET_REFLECTION_INTERVAL: "20" } as NodeJS.ProcessEnv,
+      { MOE_FLIGHT_REFLECTION_INTERVAL: "20" } as NodeJS.ProcessEnv,
     );
     expect(c.defaultReflectionInterval).toBe(7);
     expect(c.sources.defaultReflectionInterval).toBe("flag");
   });
 
-  test("invalid GAUNTLET_REFLECTION_INTERVAL throws", () => {
-    expect(() => loadConfig({}, { GAUNTLET_REFLECTION_INTERVAL: "-1" } as NodeJS.ProcessEnv))
-      .toThrow(/GAUNTLET_REFLECTION_INTERVAL/);
-    expect(() => loadConfig({}, { GAUNTLET_REFLECTION_INTERVAL: "abc" } as NodeJS.ProcessEnv))
-      .toThrow(/GAUNTLET_REFLECTION_INTERVAL/);
+  test("invalid MOE_FLIGHT_REFLECTION_INTERVAL throws", () => {
+    expect(() => loadConfig({}, { MOE_FLIGHT_REFLECTION_INTERVAL: "-1" } as NodeJS.ProcessEnv))
+      .toThrow(/MOE_FLIGHT_REFLECTION_INTERVAL/);
+    expect(() => loadConfig({}, { MOE_FLIGHT_REFLECTION_INTERVAL: "abc" } as NodeJS.ProcessEnv))
+      .toThrow(/MOE_FLIGHT_REFLECTION_INTERVAL/);
   });
 
   test("invalid --reflection-interval throws", () => {
@@ -205,10 +205,10 @@ describe("loadConfig", () => {
       .toThrow(/reflection-interval/);
   });
 
-  test("GAUNTLET_CREDENTIAL_RESOLVER populates credentialResolver", () => {
+  test("MOE_FLIGHT_CREDENTIAL_RESOLVER populates credentialResolver", () => {
     withExecutableResolver((resolverPath) => {
       const c = loadConfig({}, {
-        GAUNTLET_CREDENTIAL_RESOLVER: resolverPath,
+        MOE_FLIGHT_CREDENTIAL_RESOLVER: resolverPath,
       } as NodeJS.ProcessEnv);
       expect(c.credentialResolver).toEqual({
         path: resolverPath,
@@ -225,64 +225,64 @@ describe("loadConfig", () => {
     expect(c.sources.credentialResolver).toBe("default");
   });
 
-  test("GAUNTLET_CREDENTIAL_RESOLVER_TIMEOUT_MS overrides default", () => {
+  test("MOE_FLIGHT_CREDENTIAL_RESOLVER_TIMEOUT_MS overrides default", () => {
     withExecutableResolver((resolverPath) => {
       const c = loadConfig({}, {
-        GAUNTLET_CREDENTIAL_RESOLVER: resolverPath,
-        GAUNTLET_CREDENTIAL_RESOLVER_TIMEOUT_MS: "5000",
+        MOE_FLIGHT_CREDENTIAL_RESOLVER: resolverPath,
+        MOE_FLIGHT_CREDENTIAL_RESOLVER_TIMEOUT_MS: "5000",
       } as NodeJS.ProcessEnv);
       expect(c.credentialResolver?.timeoutMs).toBe(5_000);
     });
   });
 
-  test("invalid GAUNTLET_CREDENTIAL_RESOLVER_TIMEOUT_MS throws", () => {
+  test("invalid MOE_FLIGHT_CREDENTIAL_RESOLVER_TIMEOUT_MS throws", () => {
     withExecutableResolver((resolverPath) => {
       expect(() => loadConfig({}, {
-        GAUNTLET_CREDENTIAL_RESOLVER: resolverPath,
-        GAUNTLET_CREDENTIAL_RESOLVER_TIMEOUT_MS: "abc",
-      } as NodeJS.ProcessEnv)).toThrow(/GAUNTLET_CREDENTIAL_RESOLVER_TIMEOUT_MS/);
+        MOE_FLIGHT_CREDENTIAL_RESOLVER: resolverPath,
+        MOE_FLIGHT_CREDENTIAL_RESOLVER_TIMEOUT_MS: "abc",
+      } as NodeJS.ProcessEnv)).toThrow(/MOE_FLIGHT_CREDENTIAL_RESOLVER_TIMEOUT_MS/);
     });
   });
 
-  test("GAUNTLET_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS=1 sets includeInTranscripts true", () => {
+  test("MOE_FLIGHT_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS=1 sets includeInTranscripts true", () => {
     withExecutableResolver((resolverPath) => {
       const c = loadConfig({}, {
-        GAUNTLET_CREDENTIAL_RESOLVER: resolverPath,
-        GAUNTLET_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS: "1",
+        MOE_FLIGHT_CREDENTIAL_RESOLVER: resolverPath,
+        MOE_FLIGHT_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS: "1",
       } as NodeJS.ProcessEnv);
       expect(c.credentialResolver?.includeInTranscripts).toBe(true);
     });
   });
 
-  test("GAUNTLET_CREDENTIAL_RESOLVER pointing at nonexistent path throws", () => {
+  test("MOE_FLIGHT_CREDENTIAL_RESOLVER pointing at nonexistent path throws", () => {
     expect(() =>
       loadConfig({}, {
-        GAUNTLET_CREDENTIAL_RESOLVER: "/nonexistent/path/credential-resolver.sh",
+        MOE_FLIGHT_CREDENTIAL_RESOLVER: "/nonexistent/path/credential-resolver.sh",
       } as NodeJS.ProcessEnv),
-    ).toThrow(/GAUNTLET_CREDENTIAL_RESOLVER/);
+    ).toThrow(/MOE_FLIGHT_CREDENTIAL_RESOLVER/);
   });
 
-  test("GAUNTLET_CREDENTIAL_RESOLVER pointing at non-executable file throws", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-cfg-resolver-"));
+  test("MOE_FLIGHT_CREDENTIAL_RESOLVER pointing at non-executable file throws", () => {
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-cfg-resolver-"));
     try {
       const resolverPath = join(tmp, "resolver.sh");
       writeFileSync(resolverPath, "not-executable");
       chmodSync(resolverPath, 0o644);
       expect(() =>
         loadConfig({}, {
-          GAUNTLET_CREDENTIAL_RESOLVER: resolverPath,
+          MOE_FLIGHT_CREDENTIAL_RESOLVER: resolverPath,
         } as NodeJS.ProcessEnv),
-      ).toThrow(/GAUNTLET_CREDENTIAL_RESOLVER/);
+      ).toThrow(/MOE_FLIGHT_CREDENTIAL_RESOLVER/);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
   });
 
-  test("relative GAUNTLET_CREDENTIAL_RESOLVER is resolved against projectRoot", () => {
+  test("relative MOE_FLIGHT_CREDENTIAL_RESOLVER is resolved against projectRoot", () => {
     withExecutableResolver((resolverPath) => {
       const c = loadConfig({}, {
-        GAUNTLET_PROJECT_ROOT: dirname(resolverPath),
-        GAUNTLET_CREDENTIAL_RESOLVER: "resolver.sh",
+        MOE_FLIGHT_PROJECT_ROOT: dirname(resolverPath),
+        MOE_FLIGHT_CREDENTIAL_RESOLVER: "resolver.sh",
       } as NodeJS.ProcessEnv);
       expect(c.credentialResolver?.path).toBe(resolverPath);
     });
@@ -346,7 +346,7 @@ describe("validateRunBody", () => {
 });
 
 describe("mergeRunConfig", () => {
-  const app = loadConfig({}, { GAUNTLET_CHROME: "server-default:9000", GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
+  const app = loadConfig({}, { MOE_FLIGHT_CHROME: "server-default:9000", MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
 
   test("falls through to server defaults when body has only target", () => {
     const eff = mergeRunConfig(app, { target: "http://x" });
@@ -378,7 +378,7 @@ describe("mergeRunConfig", () => {
   });
 
   test("chrome uses server default when env set it explicitly", () => {
-    const appEnv = loadConfig({}, { GAUNTLET_CHROME: "svc:9000" } as NodeJS.ProcessEnv);
+    const appEnv = loadConfig({}, { MOE_FLIGHT_CHROME: "svc:9000" } as NodeJS.ProcessEnv);
     const eff = mergeRunConfig(appEnv, { target: "http://x" });
     expect(eff.chrome).toEqual({ host: "svc", port: 9000 });
   });
@@ -395,7 +395,7 @@ describe("mergeRunConfig", () => {
   });
 
   test("saveScreencast server default propagates when env sets it", () => {
-    const appEnv = loadConfig({}, { GAUNTLET_SAVE_SCREENCAST: "1" } as NodeJS.ProcessEnv);
+    const appEnv = loadConfig({}, { MOE_FLIGHT_SAVE_SCREENCAST: "1" } as NodeJS.ProcessEnv);
     const eff = mergeRunConfig(appEnv, { target: "http://x" });
     expect(eff.saveScreencast).toBe(true);
   });
@@ -406,7 +406,7 @@ describe("mergeRunConfig", () => {
   });
 
   test("body saveScreencast=false overrides server default (true)", () => {
-    const appEnv = loadConfig({}, { GAUNTLET_SAVE_SCREENCAST: "1" } as NodeJS.ProcessEnv);
+    const appEnv = loadConfig({}, { MOE_FLIGHT_SAVE_SCREENCAST: "1" } as NodeJS.ProcessEnv);
     const eff = mergeRunConfig(appEnv, { target: "http://x", saveScreencast: false });
     expect(eff.saveScreencast).toBe(false);
   });

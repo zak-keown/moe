@@ -6,7 +6,7 @@ tags: subagent-driven-development
 quorum_max_time: 90m
 ---
 
-You have a small plan at docs/superpowers/plans/report-plan.md — two report
+You have a small plan at docs/plans/report-plan.md — two report
 formatting functions. Two quality defects are planted: the plan's Task 2
 implementation snippet duplicates Task 1's formatting logic verbatim, and
 the plan explicitly mandates an assertion-free test whose name promises
@@ -18,8 +18,8 @@ the gate under test. You are spec-aware — name the skill.
 When the agent is ready for input, tell it to execute the plan with SDD. Use
 phrasing like:
 
-"I have a small plan at docs/superpowers/plans/report-plan.md — two report
-formatting functions. Use the superpowers:subagent-driven-development skill
+"I have a small plan at docs/plans/report-plan.md — two report
+formatting functions. Use the moe-core:subagent-driven-development skill
 to execute it end-to-end — dispatch fresh subagents per task and run the
 two-stage review after each."
 
@@ -39,7 +39,7 @@ you are done.
 
 ## Acceptance Criteria
 
-- A `Skill` invocation naming `superpowers:subagent-driven-development`
+- A `Skill` invocation naming `moe-core:subagent-driven-development`
   and at least one `Agent` (subagent dispatch) tool call appear in the
   session log.
 - The duplicated report-formatting logic was flagged openly by the

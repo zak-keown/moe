@@ -3,7 +3,7 @@
  *
  * `mergeRunConfig` reads `sources.defaultChrome === "default"` to decide
  * whether to leave `chrome` undefined (so WebAdapter auto-launches) or
- * use the operator's default. `gauntlet config` also surfaces source
+ * use the operator's default. `moe-flight qa config` also surfaces source
  * strings to the human. This test pins the load-bearing behavior so
  * the Phase 4 `resolveSetting` migration cannot quietly drop it.
  *
@@ -27,7 +27,7 @@ describe("source attribution (load-bearing for mergeRunConfig)", () => {
   });
 
   it("mergeRunConfig honors env-sourced chrome", () => {
-    const config = loadConfig({}, { GAUNTLET_CHROME: "127.0.0.1:9333" });
+    const config = loadConfig({}, { MOE_FLIGHT_CHROME: "127.0.0.1:9333" });
     expect(config.sources.defaultChrome).toBe("env");
     const merged = mergeRunConfig(config, { target: "http://example.com" });
     expect(merged.chrome).toEqual({ host: "127.0.0.1", port: 9333 });
@@ -39,7 +39,7 @@ describe("source attribution (load-bearing for mergeRunConfig)", () => {
   });
 
   it("sources.defaultTarget === 'env' when env supplies it", () => {
-    const config = loadConfig({}, { GAUNTLET_TARGET: "http://x" });
+    const config = loadConfig({}, { MOE_FLIGHT_TARGET: "http://x" });
     expect(config.sources.defaultTarget).toBe("env");
     expect(config.defaultTarget).toBe("http://x");
   });
@@ -47,7 +47,7 @@ describe("source attribution (load-bearing for mergeRunConfig)", () => {
   it("sources.defaultTarget === 'flag' when arg overrides env", () => {
     const config = loadConfig(
       { target: "http://flag" },
-      { GAUNTLET_TARGET: "http://env" },
+      { MOE_FLIGHT_TARGET: "http://env" },
     );
     expect(config.sources.defaultTarget).toBe("flag");
     expect(config.defaultTarget).toBe("http://flag");
@@ -63,12 +63,12 @@ describe("source attribution (load-bearing for mergeRunConfig)", () => {
     expect(def.sources.defaultSaveScreencast).toBe("default");
 
     const envOnly = loadConfig({}, {
-      GAUNTLET_PROJECT_ROOT: "/tmp/x",
-      GAUNTLET_PORT: "5500",
-      GAUNTLET_MAX_TIME: "60s",
-      GAUNTLET_REFLECTION_INTERVAL: "5",
-      GAUNTLET_VIEWPORT: "1024x768",
-      GAUNTLET_SAVE_SCREENCAST: "true",
+      MOE_FLIGHT_PROJECT_ROOT: "/tmp/x",
+      MOE_FLIGHT_PORT: "5500",
+      MOE_FLIGHT_MAX_TIME: "60s",
+      MOE_FLIGHT_REFLECTION_INTERVAL: "5",
+      MOE_FLIGHT_VIEWPORT: "1024x768",
+      MOE_FLIGHT_SAVE_SCREENCAST: "true",
     });
     expect(envOnly.sources.projectRoot).toBe("env");
     expect(envOnly.sources.port).toBe("env");
@@ -85,12 +85,12 @@ describe("source attribution (load-bearing for mergeRunConfig)", () => {
       viewport: "800x600",
       saveScreencast: false,
     }, {
-      GAUNTLET_PROJECT_ROOT: "/tmp/x",
-      GAUNTLET_PORT: "5500",
-      GAUNTLET_MAX_TIME: "60s",
-      GAUNTLET_REFLECTION_INTERVAL: "5",
-      GAUNTLET_VIEWPORT: "1024x768",
-      GAUNTLET_SAVE_SCREENCAST: "true",
+      MOE_FLIGHT_PROJECT_ROOT: "/tmp/x",
+      MOE_FLIGHT_PORT: "5500",
+      MOE_FLIGHT_MAX_TIME: "60s",
+      MOE_FLIGHT_REFLECTION_INTERVAL: "5",
+      MOE_FLIGHT_VIEWPORT: "1024x768",
+      MOE_FLIGHT_SAVE_SCREENCAST: "true",
     });
     expect(withFlag.sources.projectRoot).toBe("flag");
     expect(withFlag.sources.port).toBe("flag");
@@ -110,12 +110,12 @@ describe("source attribution (load-bearing for mergeRunConfig)", () => {
     expect(def.sources.wsOriginAllowlist).toBe("default");
 
     const envSet = loadConfig({}, {
-      GAUNTLET_SHUTDOWN_GRACE_MS: "5000",
-      GAUNTLET_MAX_REQUEST_BODY_SIZE: "2048",
-      GAUNTLET_MAX_CONCURRENT_RUNS: "8",
-      GAUNTLET_ACTIVE_RUN_TARGET_MAX_BYTES: "512",
-      GAUNTLET_WS_IDLE_TIMEOUT_SEC: "30",
-      GAUNTLET_WS_ORIGIN_ALLOWLIST: "http://a,http://b",
+      MOE_FLIGHT_SHUTDOWN_GRACE_MS: "5000",
+      MOE_FLIGHT_MAX_REQUEST_BODY_SIZE: "2048",
+      MOE_FLIGHT_MAX_CONCURRENT_RUNS: "8",
+      MOE_FLIGHT_ACTIVE_RUN_TARGET_MAX_BYTES: "512",
+      MOE_FLIGHT_WS_IDLE_TIMEOUT_SEC: "30",
+      MOE_FLIGHT_WS_ORIGIN_ALLOWLIST: "http://a,http://b",
     });
     expect(envSet.sources.shutdownGraceMs).toBe("env");
     expect(envSet.sources.maxRequestBodySize).toBe("env");
@@ -132,8 +132,8 @@ describe("source attribution (load-bearing for mergeRunConfig)", () => {
     expect(def.sources["models.fanout"]).toBe("unset");
 
     const envSet = loadConfig({}, {
-      GAUNTLET_AGENT_MODEL: "claude-opus-4-7",
-      GAUNTLET_FANOUT_MODEL: "claude-sonnet-4-6",
+      MOE_FLIGHT_AGENT_MODEL: "claude-opus-4-7",
+      MOE_FLIGHT_FANOUT_MODEL: "claude-sonnet-4-6",
     });
     expect(envSet.sources["models.agent"]).toBe("env");
     expect(envSet.sources["models.fanout"]).toBe("env");
@@ -150,7 +150,7 @@ describe("source attribution (load-bearing for mergeRunConfig)", () => {
     expect(def.sources["models.available"]).toBe("default");
     expect(def.models.available).toEqual([]);
 
-    const envSet = loadConfig({}, { GAUNTLET_MODELS: "claude-opus-4-7,claude-sonnet-4-6" });
+    const envSet = loadConfig({}, { MOE_FLIGHT_MODELS: "claude-opus-4-7,claude-sonnet-4-6" });
     expect(envSet.sources["models.available"]).toBe("env");
     expect(envSet.models.available).toEqual(["claude-opus-4-7", "claude-sonnet-4-6"]);
   });

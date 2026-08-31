@@ -1,5 +1,4 @@
 import { describe, test, expect } from "vitest";
-import { Hono } from "hono";
 import { mkdtempSync, readFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
@@ -103,7 +102,7 @@ describe("drainShutdown", () => {
       broadcaster,
       setBroadcaster,
       registry: { list: () => [], abortAll: () => 0 },
-      resultsRoot: "/tmp/gauntlet-test-unused",
+      resultsRoot: "/tmp/moe-flight-test-unused",
       graceMs: 5000,
       pollMs: 25,
       log: (m) => log.push(m),
@@ -137,7 +136,7 @@ describe("drainShutdown", () => {
       broadcaster: new RunBroadcaster(),
       setBroadcaster: new RunSetBroadcaster(),
       registry,
-      resultsRoot: "/tmp/gauntlet-test-unused",
+      resultsRoot: "/tmp/moe-flight-test-unused",
       graceMs: 5000,
       pollMs: 25,
       log: () => {},
@@ -155,7 +154,7 @@ describe("drainShutdown", () => {
       list: () => stuck,
       abortAll: () => { abortAllCalled++; return 1; },
     };
-    const resultsRoot = mkdtempSync(join(tmpdir(), "gauntlet-shutdown-stub-"));
+    const resultsRoot = mkdtempSync(join(tmpdir(), "moe-flight-shutdown-stub-"));
 
     const before = Date.now();
     const result = await drainShutdown({
@@ -197,7 +196,7 @@ describe("createApp drain middleware", () => {
 
     const config = {
       projectRoot: "/tmp/does-not-matter-for-this-test",
-      stateDirName: ".gauntlet",
+      stateDirName: ".moe-flight",
       port: 4400,
       defaultChrome: { host: "127.0.0.1", port: 9222 },
       defaultBudgetMs: 300_000,
@@ -231,7 +230,7 @@ describe("createApp drain middleware", () => {
 
     const config = {
       projectRoot: "/tmp/does-not-matter-for-this-test",
-      stateDirName: ".gauntlet",
+      stateDirName: ".moe-flight",
       port: 4400,
       defaultChrome: { host: "127.0.0.1", port: 9222 },
       defaultBudgetMs: 300_000,

@@ -57,7 +57,7 @@ describe("agent event stream", () => {
   let logger: EvidenceLogger;
 
   beforeEach(() => {
-    outDir = mkdtempSync(join(tmpdir(), "gauntlet-agent-"));
+    outDir = mkdtempSync(join(tmpdir(), "moe-flight-agent-"));
     logger = new EvidenceLogger(outDir);
   });
   afterEach(() => rmSync(outDir, { recursive: true, force: true }));

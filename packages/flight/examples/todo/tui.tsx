@@ -2,7 +2,7 @@
 // Reads state at startup, mutates in-memory, writes after every
 // change. Keybinds documented in the spec and shown in the footer.
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { render, Box, Text, useInput, useApp } from "ink";
 import {
   loadState,

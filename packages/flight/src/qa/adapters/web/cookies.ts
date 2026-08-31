@@ -45,7 +45,7 @@ export interface CookiesTool {
   execute(args: Record<string, unknown>): Promise<ToolResult>;
 }
 
-// Tool description — authoritative prose from Gauntlet v1.5 spec §3.4.
+// Tool description — authoritative prose from Flight v1.5 spec §3.4.
 // DO NOT edit without going through the amendment protocol (spec §13).
 // The clauses "Call this once, before navigating to a cookie-gated
 // origin", "Cookies persist across same-origin navigations", and "you
@@ -55,7 +55,7 @@ export interface CookiesTool {
 const TOOL_DESCRIPTION =
   "Install cookies into the browser, reading them from a YAML file under " +
   "the project's context directory. The path is relative to " +
-  ".gauntlet/context/ (example: \"alice/cookies.yaml\"). The file is a list " +
+  ".moe-flight/context/ (example: \"alice/cookies.yaml\"). The file is a list " +
   "of cookie entries; each entry mirrors Chrome's Network.setCookie " +
   "parameters (name, value, plus either url or domain+path, and optional " +
   "secure, httpOnly, sameSite, expires). Call this once, before navigating " +

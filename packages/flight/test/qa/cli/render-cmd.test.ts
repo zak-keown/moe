@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach } from "vitest";
+import { describe, test, expect, } from "vitest";
 import { mkdtempSync, writeFileSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -6,8 +6,8 @@ import { render } from "../../../src/qa/cli/render.js";
 import type { AppConfig } from "../../../src/qa/config.js";
 
 function makeRun(): { projectRoot: string; runId: string } {
-  const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-render-cmd-"));
-  const stateDir = join(projectRoot, ".gauntlet");
+  const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-render-cmd-"));
+  const stateDir = join(projectRoot, ".moe-flight");
   const runId = "card_2026T000000Z_zzzz";
   const runDir = join(stateDir, "results", runId);
   mkdirSync(runDir, { recursive: true });
@@ -24,7 +24,7 @@ function makeRun(): { projectRoot: string; runId: string } {
 describe("render command", () => {
   test("resolves run-id under state-dir and emits index.html", async () => {
     const { projectRoot, runId } = makeRun();
-    const config = { projectRoot, stateDirName: ".gauntlet" } as AppConfig;
+    const config = { projectRoot, stateDirName: ".moe-flight" } as AppConfig;
     const logs: string[] = [];
     await render({ command: "render", runIdOrPath: runId, cli: {} as any }, config, { log: (m) => logs.push(m) });
     expect(logs.length).toBe(1);
@@ -33,8 +33,8 @@ describe("render command", () => {
 
   test("accepts an absolute path to a run-dir directly", async () => {
     const { projectRoot, runId } = makeRun();
-    const runDir = join(projectRoot, ".gauntlet", "results", runId);
-    const config = { projectRoot, stateDirName: ".gauntlet" } as AppConfig;
+    const runDir = join(projectRoot, ".moe-flight", "results", runId);
+    const config = { projectRoot, stateDirName: ".moe-flight" } as AppConfig;
     const logs: string[] = [];
     await render({ command: "render", runIdOrPath: runDir, cli: {} as any }, config, { log: (m) => logs.push(m) });
     expect(logs[0]).toBe(runDir + "/index.html");
@@ -42,7 +42,7 @@ describe("render command", () => {
 
   test("throws when the run-id can't be resolved", async () => {
     const { projectRoot } = makeRun();
-    const config = { projectRoot, stateDirName: ".gauntlet" } as AppConfig;
+    const config = { projectRoot, stateDirName: ".moe-flight" } as AppConfig;
     await expect(
       render({ command: "render", runIdOrPath: "nonexistent-run", cli: {} as any }, config)
     ).rejects.toThrow(/Run dir not found/);

@@ -4,7 +4,7 @@ import { tmpdir } from "os";
 import { anthropicToolResultMessages } from "../../../src/qa/models/anthropic.js";
 
 export function makeRunDir(events: Array<Record<string, unknown>>): string {
-  const dir = mkdtempSync(join(tmpdir(), "gauntlet-revival-"));
+  const dir = mkdtempSync(join(tmpdir(), "moe-flight-revival-"));
   mkdirSync(join(dir, "screenshots"), { recursive: true });
   mkdirSync(join(dir, "artifacts"), { recursive: true });
   let lastId = 0;

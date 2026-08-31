@@ -10,7 +10,7 @@ function noopLogger(): EvidenceLogger {
 }
 
 function freshDir(): string {
-  return mkdtempSync(join(tmpdir(), "gauntlet-shared-watch-"));
+  return mkdtempSync(join(tmpdir(), "moe-flight-shared-watch-"));
 }
 
 describe("buildSharedTools exposes watch_logs + wake_on_idle_log", () => {

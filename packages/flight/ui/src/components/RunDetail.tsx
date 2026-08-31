@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { api, type VetResult, type FanoutResult } from "../lib/api";
+import { api, type VerdictResult, type FanoutResult } from "../lib/api";
 import type { NewRunPrefill } from "./NewRunModal";
 import { RunSummaryCard } from "./RunSummaryCard";
 
 interface RunDetailProps {
-  result: VetResult;
+  result: VerdictResult;
   onFanout: () => void;
   onRunAgain?: (prefill: NewRunPrefill) => void;
 }
@@ -16,7 +16,7 @@ export function RunDetail({ result, onFanout, onRunAgain }: RunDetailProps) {
   const [generated, setGenerated] = useState<FanoutResult["generated"] | null>(null);
 
   // Fanout from observations/failure reads the result.json under
-  // .gauntlet/results/<runId>/, so this path segment must be the runId.
+  // .moe-flight/results/<runId>/, so this path segment must be the runId.
   async function handleFromObservations() {
     try {
       setActing(true);

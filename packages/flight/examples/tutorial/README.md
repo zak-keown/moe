@@ -1,4 +1,4 @@
-# Gauntlet tutorial — runnable scaffolding
+# Flight tutorial — runnable scaffolding
 
 This folder is the data side of [`docs/tutorial.md`](../../docs/tutorial.md).
 Read the tutorial doc first; it walks you through six stories
@@ -6,7 +6,7 @@ across the CLI, TUI, and Web adapters. The files here are what
 those stories read.
 
 ```
-.gauntlet/
+.moe-flight/
   context/
     profiles/
       fred/
@@ -40,7 +40,7 @@ bun webapp/server.ts
 Then run a story:
 
 ```bash
-gauntlet run .gauntlet/stories/01-npm-init.md \
+moe-flight qa run .moe-flight/stories/01-npm-init.md \
   --adapter cli \
   --target "npm init"
 ```

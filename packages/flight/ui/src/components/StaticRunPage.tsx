@@ -3,11 +3,11 @@ import { RunSummaryCard } from "./RunSummaryCard";
 import { TranscriptView } from "./transcript";
 
 /**
- * Reads `window.__GAUNTLET_RUN__` if available. Pure and SSR-safe.
+ * Reads `window.__MOE_FLIGHT_RUN__` if available. Pure and SSR-safe.
  */
 export function getStaticRunPayload(): StaticRunPayload | null {
   if (typeof window === "undefined") return null;
-  return window.__GAUNTLET_RUN__ ?? null;
+  return window.__MOE_FLIGHT_RUN__ ?? null;
 }
 
 /**
@@ -15,7 +15,7 @@ export function getStaticRunPayload(): StaticRunPayload | null {
  * build time. Composes display-only components — no action buttons, no
  * navigation. The transcript is inline below the summary.
  *
- * Data source: window.__GAUNTLET_RUN__ (set by the HTML generator).
+ * Data source: window.__MOE_FLIGHT_RUN__ (set by the HTML generator).
  */
 export function StaticRunPage() {
   const payload = getStaticRunPayload();

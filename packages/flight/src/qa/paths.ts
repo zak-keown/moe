@@ -1,20 +1,20 @@
-// The one and only path-safety guard for Gauntlet. All containment checks go through this.
+// The one and only path-safety guard for Flight. All containment checks go through this.
 
 import { isAbsolute, join, resolve as resolvePath, sep } from "path";
 import { readdirSync, realpathSync, statSync } from "fs";
 
-export const DEFAULT_STATE_DIR_NAME = ".gauntlet";
+export const DEFAULT_STATE_DIR_NAME = ".moe-flight";
 
 /**
- * Compose a path under the project's state directory (default `.gauntlet`,
- * configurable via `--state-dir` / `GAUNTLET_STATE_DIR`). Centralizes the
+ * Compose a path under the project's state directory (default `.moe-flight`,
+ * configurable via `--state-dir` / `MOE_FLIGHT_STATE_DIR`). Centralizes the
  * state-dir convention so no call site joins the literal name.
  *
- *   gauntletPath(root, ".gauntlet", "stories")              → <root>/.gauntlet/stories
- *   gauntletPath(root, ".gauntlet", "results", runId)       → <root>/.gauntlet/results/<runId>
- *   gauntletPath(root, "gauntlet",  "context", user, "foo") → <root>/gauntlet/context/<user>/foo
+ *   flightPath(root, ".moe-flight", "stories")              → <root>/.moe-flight/stories
+ *   flightPath(root, ".moe-flight", "results", runId)       → <root>/.moe-flight/results/<runId>
+ *   flightPath(root, "moe-flight",  "context", user, "foo") → <root>/moe-flight/context/<user>/foo
  */
-export function gauntletPath(projectRoot: string, stateDirName: string, ...sub: string[]): string {
+export function flightPath(projectRoot: string, stateDirName: string, ...sub: string[]): string {
   return join(projectRoot, stateDirName, ...sub);
 }
 
@@ -23,7 +23,7 @@ export function gauntletPath(projectRoot: string, stateDirName: string, ...sub: 
  * The run-id is itself a directory name (`<cardId>_<ts>_<nonce>`).
  */
 export function resolveRunDir(projectRoot: string, stateDirName: string, runId: string): string {
-  return gauntletPath(projectRoot, stateDirName, "results", runId);
+  return flightPath(projectRoot, stateDirName, "results", runId);
 }
 
 // Canonicalize a path to its realpath if it exists; otherwise walk up
@@ -89,7 +89,7 @@ export function isSafePath(base: string, target: string): boolean {
 
 /**
  * Compose `rel` against `root` and enforce containment. Behavior matches
- * Gauntlet v1.5 spec §3.1:
+ * Flight v1.5 spec §3.1:
  *
  * - reject non-string or empty `rel`
  * - reject absolute `rel`

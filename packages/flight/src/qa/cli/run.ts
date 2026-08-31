@@ -5,7 +5,7 @@ import { attachRenderer } from "./stream/attach.js";
 import { resolveStreamOptions } from "./stream/format.js";
 import { runRunSet } from "../runs/run-set.js";
 import { installSigintHandler } from "./signals.js";
-import { gauntletPath } from "../paths.js";
+import { flightPath } from "../paths.js";
 import { parseStoryCard } from "../format/story-card.js";
 import { BatchTableRenderer } from "./stream/batch-table.js";
 import type { AppConfig } from "../config.js";
@@ -111,8 +111,8 @@ export async function run(opts: RunCommandOptions): Promise<void> {
   const content = readFileSync(opts.scenarioPath, "utf-8");
   const card = parseStoryCard(content);
 
-  const gauntletRoot = gauntletPath(opts.config.projectRoot, opts.config.stateDirName);
-  const resultsRoot = gauntletPath(opts.config.projectRoot, opts.config.stateDirName, "results");
+  const flightRoot = flightPath(opts.config.projectRoot, opts.config.stateDirName);
+  const resultsRoot = flightPath(opts.config.projectRoot, opts.config.stateDirName, "results");
 
   const sink = { write: (s: string) => process.stdout.write(s) };
   const useTable = !opts.silent && opts.format !== "jsonl";
@@ -141,7 +141,7 @@ export async function run(opts: RunCommandOptions): Promise<void> {
   let setResult;
   try {
     const handle = await runRunSet({
-      resultsRoot: gauntletRoot,
+      resultsRoot: flightRoot,
       cards: [card.id],
       passes: opts.passes,
       kind: "single",

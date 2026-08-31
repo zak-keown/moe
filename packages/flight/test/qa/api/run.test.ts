@@ -3,7 +3,7 @@ import { runRoutes, executeHttpRun } from "../../../src/qa/api/routes/run.js";
 import { ActiveRunRegistry } from "../../../src/qa/api/active-runs.js";
 import { RunBroadcaster } from "../../../src/qa/api/ws.js";
 import { loadConfig, mergeRunConfig, validateRunBody } from "../../../src/qa/config.js";
-import { gauntletPath } from "../../../src/qa/paths.js";
+import { flightPath } from "../../../src/qa/paths.js";
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -30,8 +30,8 @@ describe("Run API", () => {
   let storiesDir: string;
 
   beforeEach(() => {
-    projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-run-api-"));
-    storiesDir = gauntletPath(projectRoot, ".gauntlet", "stories");
+    projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-run-api-"));
+    storiesDir = flightPath(projectRoot, ".moe-flight", "stories");
     mkdirSync(storiesDir, { recursive: true });
     writeFileSync(join(storiesDir, "story-001-test.md"), STORY_MD);
   });
@@ -41,7 +41,7 @@ describe("Run API", () => {
   });
 
   test("POST /api/run/:id returns 404 for unknown scenario", async () => {
-    const config = loadConfig({ projectRoot }, { GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
+    const config = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
     const app = new Hono();
     app.route("/api/run", runRoutes(config));
 
@@ -56,7 +56,7 @@ describe("Run API", () => {
   });
 
   test("POST /api/run/:id returns 400 when target is missing", async () => {
-    const config = loadConfig({ projectRoot }, { GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
+    const config = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
     const app = new Hono();
     app.route("/api/run", runRoutes(config));
 
@@ -71,7 +71,7 @@ describe("Run API", () => {
   });
 
   test("POST /api/run/:id returns 400 when body includes turns field", async () => {
-    const config = loadConfig({ projectRoot }, { GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
+    const config = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
     const app = new Hono();
     app.route("/api/run", runRoutes(config));
 
@@ -86,7 +86,7 @@ describe("Run API", () => {
   });
 
   test("POST /api/run/:id returns JSON 400 for unknown model prefix before registering a run", async () => {
-    const config = loadConfig({ projectRoot }, { GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
+    const config = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
     const registry = new ActiveRunRegistry();
     const app = new Hono();
     app.route("/api/run", runRoutes(config, undefined, undefined, registry));
@@ -115,7 +115,7 @@ describe("Run API", () => {
     const prev = process.env.ANTHROPIC_API_KEY;
     process.env.ANTHROPIC_API_KEY = "test-key";
     try {
-    const config = loadConfig({ projectRoot }, { GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
+    const config = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
     const registry = new ActiveRunRegistry();
     const broadcaster = new RunBroadcaster();
     const app = new Hono();
@@ -207,12 +207,12 @@ describe("Run API", () => {
     broadcaster.addClient(runId, ws as any);
 
     // Write a minimal story file so snapshotRunInputs has something to copy.
-    const storyDir = gauntletPath(projectRoot, ".gauntlet", "stories");
+    const storyDir = flightPath(projectRoot, ".moe-flight", "stories");
     mkdirSync(storyDir, { recursive: true });
     const storyPath = join(storyDir, "story-001.md");
     writeFileSync(storyPath, `---\nid: story-001\ntitle: Test\nstatus: draft\ntags: core\n---\n\nbody\n\n## Acceptance Criteria\n- works\n`);
 
-    const cfg = loadConfig({ projectRoot }, { GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
+    const cfg = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
     const effective = mergeRunConfig(cfg, validateRunBody({
       target: "http://localhost:3000",
       adapter: "cli",
@@ -228,7 +228,7 @@ describe("Run API", () => {
       client: stubClient,
       effective,
       projectRoot,
-      stateDirName: ".gauntlet",
+      stateDirName: ".moe-flight",
       broadcaster,
       registry,
       adapterFactory: () => stubAdapter,
@@ -248,7 +248,7 @@ describe("Run API", () => {
     const { mergeRunConfig, validateRunBody } = await import("../../../src/qa/config.js");
     const config = loadConfig(
       { projectRoot },
-      { GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6", GAUNTLET_CHROME: "server:9100" } as NodeJS.ProcessEnv,
+      { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6", MOE_FLIGHT_CHROME: "server:9100" } as NodeJS.ProcessEnv,
     );
     const body = validateRunBody({ target: "http://localhost:3000", chrome: "override:9333", adapter: "cli" });
     const eff = mergeRunConfig(config, body);
@@ -278,10 +278,10 @@ describe("Run API", () => {
   });
 
   test("POST /api/run/:id returns 400 when model is not in allow-list", async () => {
-    // GAUNTLET_MODELS, when set, is enforced at the route layer.
+    // MOE_FLIGHT_MODELS, when set, is enforced at the route layer.
     const config = loadConfig(
       { projectRoot },
-      { GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6", GAUNTLET_MODELS: "claude-sonnet-4-6" } as NodeJS.ProcessEnv,
+      { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6", MOE_FLIGHT_MODELS: "claude-sonnet-4-6" } as NodeJS.ProcessEnv,
     );
     const app = new Hono();
     app.route("/api/run", runRoutes(config));
@@ -299,7 +299,7 @@ describe("Run API", () => {
   test("rejects unknown adapter value with 400", async () => {
     const config = loadConfig(
       { projectRoot },
-      { GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv,
+      { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv,
     );
     const app = new Hono();
     app.route("/api/run", runRoutes(config));
@@ -359,12 +359,12 @@ describe("Run API", () => {
     const runId = `story-001_20260422T120000Z_${saveScreencast ? "save" : "drop"}`;
 
     // Write a minimal story file so snapshotRunInputs has something to copy.
-    const storyDir = gauntletPath(projectRoot, ".gauntlet", "stories");
+    const storyDir = flightPath(projectRoot, ".moe-flight", "stories");
     mkdirSync(storyDir, { recursive: true });
     const storyPath = join(storyDir, "story-001.md");
     writeFileSync(storyPath, `---\nid: story-001\ntitle: Test\nstatus: draft\ntags: core\n---\n\nbody\n\n## Acceptance Criteria\n- works\n`);
 
-    const cfg = loadConfig({ projectRoot }, { GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
+    const cfg = loadConfig({ projectRoot }, { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv);
     const effective = mergeRunConfig(cfg, validateRunBody({
       target: "http://localhost:3000",
       adapter: "web",
@@ -381,12 +381,12 @@ describe("Run API", () => {
       client: stubClient,
       effective,
       projectRoot,
-      stateDirName: ".gauntlet",
+      stateDirName: ".moe-flight",
       registry,
       adapterFactory: () => stubAdapter,
     }).catch(() => { /* swallow expected streamer failure */ });
 
-    return { framesDir: join(gauntletPath(projectRoot, ".gauntlet", "results", runId), "frames") };
+    return { framesDir: join(flightPath(projectRoot, ".moe-flight", "results", runId), "frames") };
   }
 
   test("screencast gate: saveScreencast=false does NOT create frames/ on disk", async () => {

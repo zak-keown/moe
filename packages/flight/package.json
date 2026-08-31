@@ -19,18 +19,21 @@
     "test:chrome": "vitest run --project chrome",
     "test:tmux": "vitest run --project tmux",
     "test:watch": "vitest",
-    "lint": "biome check ."
+    "lint": "biome check .",
+    "test:ffi": "vitest run --project ffi"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
     "@bubstack/moe-flight-dashboard": "workspace:*",
     "@bubstack/moe-flight-ui": "workspace:*",
+    "@bubstack/moe-tab": "workspace:*",
     "@hono/node-server": "^2.0.1",
     "@xterm/headless": "^6.0.0",
     "hono": "^4.12.5",
     "openai": "^6.27.0",
     "ws": "^8.20.0",
-    "yaml": "^2.8.3"
+    "yaml": "^2.8.3",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^24.7.0",

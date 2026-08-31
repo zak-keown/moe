@@ -5,7 +5,7 @@ import { ADAPTER_TYPES, isAdapterType, type AdapterType } from "../adapters/adap
  * parseInt("abc", 10) returns NaN, which propagates through loadConfig
  * (typeof NaN === "number") and ultimately crashes Bun.serve. Reject
  * non-integer values up front with a clean error, matching how
- * GAUNTLET_PORT is validated inside loadConfig.
+ * MOE_FLIGHT_PORT is validated inside loadConfig.
  */
 function parseIntFlag(raw: string | undefined, label: string): number | undefined {
   if (raw === undefined) return undefined;
@@ -74,7 +74,7 @@ function rejectUnknownFlags(
   if (unknown.length > 0) {
     const validList = [...allowed].sort().map((f) => `--${f}`).join(", ");
     throw new Error(
-      `Unknown flag${unknown.length > 1 ? "s" : ""} for "gauntlet ${command}": ${unknown.map((f) => `--${f}`).join(", ")}\n\nValid flags: ${validList || "(none)"}`,
+      `Unknown flag${unknown.length > 1 ? "s" : ""} for "moe-flight ${command}": ${unknown.map((f) => `--${f}`).join(", ")}\n\nValid flags: ${validList || "(none)"}`,
     );
   }
 }
@@ -206,7 +206,7 @@ function parseConfigArgs(args: string[]): ConfigArgs {
 function parseAskArgs(args: string[]): AskArgs {
   const positional = extractPositional(args);
   if (!positional) {
-    throw new Error("Missing runId\n\nUsage: gauntlet ask <runId> [--turn N] [--model MODEL]");
+    throw new Error("Missing runId\n\nUsage: moe-flight qa ask <runId> [--turn N] [--model MODEL]");
   }
   const flags = parseFlags(args);
   rejectUnknownFlags(flags, ASK_ALLOWED, "ask");
@@ -227,7 +227,7 @@ function parseAskArgs(args: string[]): AskArgs {
 function parseRenderArgs(args: string[]): RenderArgs {
   const positional = extractPositional(args);
   if (!positional) {
-    throw new Error("Missing run-id or path\n\nUsage: gauntlet render <run-id-or-path>");
+    throw new Error("Missing run-id or path\n\nUsage: moe-flight qa render <run-id-or-path>");
   }
   const flags = parseFlags(args);
   rejectUnknownFlags(flags, RENDER_ALLOWED, "render");
@@ -241,7 +241,7 @@ function parseRenderArgs(args: string[]): RenderArgs {
 function parseRunArgs(args: string[]): RunArgs {
   const positional = extractPositional(args);
   if (!positional) {
-    throw new Error("Missing story path\n\nUsage: gauntlet run <story.md> --target <url>");
+    throw new Error("Missing story path\n\nUsage: moe-flight qa run <story.md> --target <url>");
   }
 
   const flags = parseFlags(args);
@@ -305,7 +305,7 @@ function parseBatchArgs(args: string[]): BatchArgs {
     positionals.push(a);
   }
   if (positionals.length === 0) {
-    throw new Error("Missing card paths\n\nUsage: gauntlet batch <story.md> [more.md ...] --target <url>\n\nAt least one card path is required.");
+    throw new Error("Missing card paths\n\nUsage: moe-flight qa batch <story.md> [more.md ...] --target <url>\n\nAt least one card path is required.");
   }
 
   const flags = parseFlags(args);
@@ -357,7 +357,7 @@ function parseBatchArgs(args: string[]): BatchArgs {
 function parseValidateArgs(args: string[]): ValidateArgs {
   const positional = extractPositional(args);
   if (!positional) {
-    throw new Error("Missing story path\n\nUsage: gauntlet validate <story.md>");
+    throw new Error("Missing story path\n\nUsage: moe-flight qa validate <story.md>");
   }
 
   const flags = parseFlags(args);
@@ -376,7 +376,7 @@ function parseFanoutArgs(args: string[]): FanoutArgs {
   const resultDir = flags["from-result"];
 
   if (!positional && !resultDir) {
-    throw new Error("Missing story path or --from-result\n\nUsage: gauntlet fanout <story.md> | --from-result <result-dir>");
+    throw new Error("Missing story path or --from-result\n\nUsage: moe-flight qa fanout <story.md> | --from-result <result-dir>");
   }
 
   return {
@@ -497,7 +497,7 @@ function parseFlags(args: string[]): Record<string, string> & { model?: string[]
 }
 
 function usage(): string {
-  return `Usage: gauntlet <command> [options]
+  return `Usage: moe-flight <command> [options]
 
 Commands:
   run <story.md>    Run a story
@@ -511,8 +511,8 @@ Commands:
     --save-screencast    Persist screencast frames to disk (default: off; live WS stream is always on)
     --out <dir>          Evidence output directory (default: <project>/<state-dir>/results/<runId>)
     --project-dir <dir>  Project root (contains the state dir)
-    --state-dir <name>   State directory leaf name (default: .gauntlet). Single segment, no slashes.
-                         A non-dotted name (e.g. "gauntlet") is committed by default — add to .gitignore yourself.
+    --state-dir <name>   State directory leaf name (default: .moe-flight). Single segment, no slashes.
+                         A non-dotted name (e.g. "moe-flight") is committed by default — add to .gitignore yourself.
     --silent             Suppress the streaming transcript (default: stream)
     --format <mode>      Stream format: pretty | jsonl (default: auto by TTY)
     --no-color           Disable ANSI color (also respects NO_COLOR env var)
@@ -543,7 +543,7 @@ Commands:
   serve                    Start the API server
     --port <n>               Server port (default: 4400)
     --project-dir <dir>      Project root (contains the state dir)
-    --state-dir <name>       State directory leaf name (default: .gauntlet)
+    --state-dir <name>       State directory leaf name (default: .moe-flight)
     --chrome host:port       Default Chrome endpoint for runs
     --target <url>           Default target (prefilled in the UI; request body still overrides)
     --max-time <duration>    Default time budget per run (default: 5m). Accepts ms/s/m/h suffixes or bare seconds.
@@ -560,29 +560,29 @@ Commands:
     --turn N                 Cut off at turn N (default: include all turns)
     --model <model-id>       Override the recorded model (default: pin to recorded)
     --project-dir <dir>      Project root (contains <state-dir>/results/<runId>)
-    --state-dir <name>       State directory leaf name (default: .gauntlet)
+    --state-dir <name>       State directory leaf name (default: .moe-flight)
 
   render <runIdOrPath>     Re-render an existing run's HTML report (<runDir>/index.html)
     --project-dir <dir>      Project root (contains the state dir)
-    --state-dir <name>       State directory leaf name (default: .gauntlet)
+    --state-dir <name>       State directory leaf name (default: .moe-flight)
 
 Environment:
-  GAUNTLET_PORT              Server port
-  GAUNTLET_PROJECT_ROOT      Project root (contains the state dir)
-  GAUNTLET_STATE_DIR         State directory leaf name (default: .gauntlet)
-  GAUNTLET_CHROME            Default Chrome endpoint (host:port)
-  GAUNTLET_TARGET            Default target URL (UI prefill)
-  GAUNTLET_MAX_TIME          Default time budget (duration string, e.g. 5m)
-  GAUNTLET_REFLECTION_INTERVAL Default reflection-checkpoint interval (turns; 0 disables)
-  GAUNTLET_VIEWPORT          Default browser viewport (WxH, e.g. 1440x900)
-  GAUNTLET_SAVE_SCREENCAST   Persist screencast frames to disk (1/0, default: 0)
-  GAUNTLET_AGENT_MODEL       Default agent model
-  GAUNTLET_FANOUT_MODEL      Default fanout model
-  GAUNTLET_MODELS            Comma-separated model allow-list
+  MOE_FLIGHT_PORT              Server port
+  MOE_FLIGHT_PROJECT_ROOT      Project root (contains the state dir)
+  MOE_FLIGHT_STATE_DIR         State directory leaf name (default: .moe-flight)
+  MOE_FLIGHT_CHROME            Default Chrome endpoint (host:port)
+  MOE_FLIGHT_TARGET            Default target URL (UI prefill)
+  MOE_FLIGHT_MAX_TIME          Default time budget (duration string, e.g. 5m)
+  MOE_FLIGHT_REFLECTION_INTERVAL Default reflection-checkpoint interval (turns; 0 disables)
+  MOE_FLIGHT_VIEWPORT          Default browser viewport (WxH, e.g. 1440x900)
+  MOE_FLIGHT_SAVE_SCREENCAST   Persist screencast frames to disk (1/0, default: 0)
+  MOE_FLIGHT_AGENT_MODEL       Default agent model
+  MOE_FLIGHT_FANOUT_MODEL      Default fanout model
+  MOE_FLIGHT_MODELS            Comma-separated model allow-list
 
   CLAUDE_CODE_OAUTH_TOKEN  Claude subscription token (claude setup-token); preferred over ANTHROPIC_API_KEY
   ANTHROPIC_API_KEY        Read by the Anthropic SDK (if using Claude models)
   OPENAI_API_KEY           Read by the OpenAI SDK (if using GPT models)
 
-Run 'gauntlet config' to see effective configuration at any time.`;
+Run 'moe-flight qa config' to see effective configuration at any time.`;
 }

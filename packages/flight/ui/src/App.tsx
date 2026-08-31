@@ -12,7 +12,7 @@ import { LiveRun } from "./components/LiveRun";
 import { RunSetDetail } from "./components/RunSetDetail";
 import { TranscriptView } from "./components/transcript";
 import { Spinner } from "./components/shared";
-import { api, type VetResult, type ActiveRun } from "./lib/api";
+import { api, type VerdictResult, type ActiveRun } from "./lib/api";
 import { useCards } from "./hooks/useCards";
 import { useCard } from "./hooks/useCard";
 import { useResults } from "./hooks/useResults";
@@ -78,9 +78,9 @@ function RunsPage() {
 function RunDetailPage({ onFanout, onRunAgain }: { onFanout: () => void; onRunAgain: (prefill: NewRunPrefill) => void }) {
   // Route path uses :id for historical reasons; the value is a runId
   // (`<cardId>_<YYYYMMDDTHHMMSSZ>_<nonce>`), which is the directory name
-  // under .gauntlet/results/ and the primary key backend-side.
+  // under .moe-flight/results/ and the primary key backend-side.
   const { id: runId } = useParams();
-  const [result, setResult] = useState<VetResult | null>(null);
+  const [result, setResult] = useState<VerdictResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

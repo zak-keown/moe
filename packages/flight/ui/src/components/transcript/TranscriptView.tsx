@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useTranscript } from "../../hooks/useTranscript";
 import { useLiveTranscript } from "../../hooks/useLiveTranscript";
-import { api, type VetResult } from "../../lib/api";
+import { api, type VerdictResult } from "../../lib/api";
 import type { TranscriptModel } from "../../lib/transcript";
 import { parseRunId, formatRunTimestamp } from "../../lib/runId";
 import { Spinner } from "../shared";
@@ -39,7 +39,7 @@ interface InnerProps {
 
 function PosthocView({ runId, artifactPath, onOpen, onClose }: InnerProps) {
   const { model, loading, error } = useTranscript(runId);
-  const [result, setResult] = useState<VetResult | null>(null);
+  const [result, setResult] = useState<VerdictResult | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -140,7 +140,7 @@ function Container({
   children,
 }: {
   runId: string;
-  result?: VetResult | null | undefined;
+  result?: VerdictResult | null | undefined;
   live?: boolean | undefined;
   connected?: boolean | undefined;
   children: React.ReactNode;

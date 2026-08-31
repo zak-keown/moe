@@ -55,7 +55,7 @@ describe("Web e2e — form-post + return_screenshot (PRI-1517 T2b)", () => {
       }
 
       const card = loadStory("click-and-screenshot-pass.md");
-      const logDir = mkdtempSync(join(tmpdir(), "gauntlet-pri1517-"));
+      const logDir = mkdtempSync(join(tmpdir(), "moe-flight-pri1517-"));
       const logger = new EvidenceLogger(logDir);
       const server = await serveFormFixture();
       const adapter = new WebAdapter();

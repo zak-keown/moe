@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { parseStoryCard, type StoryCard } from "../../../src/qa/format/story-card.js";
+import { parseStoryCard, } from "../../../src/qa/format/story-card.js";
 import { readFileSync } from "fs";
 import { join } from "path";
 

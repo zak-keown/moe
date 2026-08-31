@@ -1,13 +1,13 @@
 ---
-name: writing-gauntlet-stories
-description: Use when writing or reviewing a Gauntlet story card. Establishes the calibration framing — outcomes, persona binding, observable acceptance criteria — and explicitly rules out wrong-shaped frames (Agile user stories, QA step-scripts, BDD Given/When/Then) so prior knowledge does not contaminate the card.
+name: writing-flight-stories
+description: Use when writing or reviewing a Flight story card. Establishes the calibration framing — outcomes, persona binding, observable acceptance criteria — and explicitly rules out wrong-shaped frames (Agile user stories, QA step-scripts, BDD Given/When/Then) so prior knowledge does not contaminate the card.
 ---
 
-# Writing Gauntlet Stories
+# Writing Flight Stories
 
 ## Thesis
 
-> A Gauntlet story is **an outcome, scoped by a persona, graded by observable conditions — with the mechanics deliberately left out.**
+> A Flight story is **an outcome, scoped by a persona, graded by observable conditions — with the mechanics deliberately left out.**
 
 The agent figures out the *how*. The card specifies *what counts as success* in a way that distinguishes a real pass from a confident-sounding bluff.
 
@@ -19,7 +19,7 @@ Three familiar frames look right and are wrong in contagious ways. Read these be
 
 - **Agile user story (`As a X, I want Y, so that Z`).** Not this. The persona is not a stakeholder whose needs are being designed for. It is an identity the agent inhabits during the run, used to anchor inference into the context tree.
 - **QA step-script (Step 1: navigate. Step 2: type. Step 3: assert).** Not this. The whole point of an LLM in the loop is that the agent figures out the path. Enumerating steps recreates exactly what we are trying to escape.
-- **BDD Given/When/Then.** Not this. Acceptance criteria here are end-state conditions, not consequents of a prescribed sequence. A Gauntlet AC presupposes nothing about how you got there.
+- **BDD Given/When/Then.** Not this. Acceptance criteria here are end-state conditions, not consequents of a prescribed sequence. A Flight AC presupposes nothing about how you got there.
 
 If your card reads like any of these, rewrite it.
 

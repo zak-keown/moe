@@ -362,7 +362,7 @@ test('incomplete cell with error_stage shows stage as tooltip on status glyph', 
 
 // --- tallyHtml -----------------------------------------------------------------
 
-test('tallyHtml renders the quorum header tally line', () => {
+test('tallyHtml renders the moe-flight header tally line', () => {
   const tally: HeaderTally = {
     scenarios: 54,
     agents: 10,
@@ -374,7 +374,7 @@ test('tallyHtml renders the quorum header tally line', () => {
     ineligible: 0,
   };
   const html = tallyHtml(tally);
-  expect(html).toContain('<b>quorum</b>');
+  expect(html).toContain('<b>moe-flight</b>');
   expect(html).toContain('54 scenarios × 10 agents');
   expect(html).toContain('class="kpass">301 pass<');
   expect(html).toContain('class="kfail">9 fail<');
@@ -598,7 +598,7 @@ test('cellHtml carries data-agent and data-os on an ineligible (c-na) cell', () 
 
 test('layoutHtml wires htmx + the SSE extension and references the static assets', () => {
   const html = layoutHtml({
-    tallyHtml: '<b>quorum</b>',
+    tallyHtml: '<b>moe-flight</b>',
     gridHtml: '<table></table>',
     mode: 'full',
   });
@@ -617,13 +617,13 @@ test('layoutHtml wires htmx + the SSE extension and references the static assets
   expect(html).not.toContain('id="runbar"');
   expect(html).not.toContain('id="confirm-host"');
   // the slotted bodies are inlined unescaped (already-rendered HTML).
-  expect(html).toContain('<b>quorum</b>');
+  expect(html).toContain('<b>moe-flight</b>');
   expect(html).toContain('<table></table>');
 });
 
 test('layoutHtml renders the mode banner only in results-only mode', () => {
   const resultsOnly = layoutHtml({
-    tallyHtml: '<b>quorum</b>',
+    tallyHtml: '<b>moe-flight</b>',
     gridHtml: '<table></table>',
     mode: 'results-only',
   });
@@ -631,7 +631,7 @@ test('layoutHtml renders the mode banner only in results-only mode', () => {
   expect(resultsOnly).toContain('grid-manifest.json not found');
 
   const full = layoutHtml({
-    tallyHtml: '<b>quorum</b>',
+    tallyHtml: '<b>moe-flight</b>',
     gridHtml: '<table></table>',
     mode: 'full',
   });

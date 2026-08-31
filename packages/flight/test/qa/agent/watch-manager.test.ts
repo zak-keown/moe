@@ -12,7 +12,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 
 function freshDir(): string {
-  return mkdtempSync(join(tmpdir(), "gauntlet-watch-test-"));
+  return mkdtempSync(join(tmpdir(), "moe-flight-watch-test-"));
 }
 
 describe("WatchManager.addGlob", () => {

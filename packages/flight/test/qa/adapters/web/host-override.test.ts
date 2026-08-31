@@ -19,7 +19,7 @@ const require = createRequire(import.meta.url);
 //
 // The legacy module-level singleton API is left intact for upstream-compat
 // (unmodified upstream code that destructures `CHROME_DEBUG_HOST` etc.
-// keeps working). New Gauntlet callers go through `createOverride()`.
+// keeps working). New Flight callers go through `createOverride()`.
 
 describe("host-override createOverride() isolation (PRI-1436)", () => {
   test("returns independent instances", () => {

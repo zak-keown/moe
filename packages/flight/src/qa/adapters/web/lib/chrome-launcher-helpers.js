@@ -51,31 +51,31 @@ function getXdgCacheHome() {
 }
 
 function getChromeProfileDir(profileName) {
-  // Explicit nullish-coalesce instead of `profileName = 'gauntlet'` —
+  // Explicit nullish-coalesce instead of `profileName = 'moe-flight'` —
   // JS default-params only fire on `undefined`, not `null`. WebAdapter
   // defaults `chromeProfileName` to `null` when no option is passed
   // (`src/adapters/web/adapter.ts:258`), so a default-param would have
   // let `null` reach `path.join` and (in Bun) produce a literal "null"
   // segment, creating a `./null/` directory next to the spawn cwd
   // populated with Chrome state. See PRI-1639.
-  const name = profileName ?? 'gauntlet';
-  return path.join(getXdgCacheHome(), 'superpowers', 'browser-profiles', name);
+  const name = profileName ?? 'moe-flight';
+  return path.join(getXdgCacheHome(), 'moe', 'browser-profiles', name);
 }
 
 // --- Per-profile meta.json ---
 //
 // Each profile gets a sibling meta.json file next to its data directory:
-//   ~/.cache/superpowers/browser-profiles/superpowers-chrome/       ← profile data
-//   ~/.cache/superpowers/browser-profiles/superpowers-chrome.meta.json ← port/pid tracking
+//   ~/.cache/moe/browser-profiles/moe-flight/       ← profile data
+//   ~/.cache/moe/browser-profiles/moe-flight.meta.json ← port/pid tracking
 //
 // Enables: reconnection across sessions, parallel Chrome instances per
 // profile, and collision detection.
 
-function getProfileMetaPath(profileName = 'gauntlet') {
-  return path.join(getXdgCacheHome(), 'superpowers', 'browser-profiles', `${profileName}.meta.json`);
+function getProfileMetaPath(profileName = 'moe-flight') {
+  return path.join(getXdgCacheHome(), 'moe', 'browser-profiles', `${profileName}.meta.json`);
 }
 
-function readProfileMeta(profileName = 'gauntlet') {
+function readProfileMeta(profileName = 'moe-flight') {
   try {
     const data = fs.readFileSync(getProfileMetaPath(profileName), 'utf8');
     return JSON.parse(data);

@@ -89,7 +89,7 @@ describe("handleWsOpen", () => {
     let resultsRoot: string;
 
     beforeEach(() => {
-      resultsRoot = mkdtempSync(join(tmpdir(), "gauntlet-ws-test-"));
+      resultsRoot = mkdtempSync(join(tmpdir(), "moe-flight-ws-test-"));
     });
 
     afterEach(() => {
@@ -203,18 +203,18 @@ describe("handleWsOpen", () => {
 
 describe("handleSetWsOpen", () => {
   test("subscribes the ws and sends snapshot if manifest exists", () => {
-    const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-set-ws-"));
-    const gauntletRoot = join(projectRoot, ".gauntlet");
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-set-ws-"));
+    const flightRoot = join(projectRoot, ".moe-flight");
     const id = "single_20260430T000000Z_test";
-    mkdirSync(join(gauntletRoot, "run-sets", id), { recursive: true });
+    mkdirSync(join(flightRoot, "run-sets", id), { recursive: true });
     const manifest = { schemaVersion: 1, runSetId: id, kind: "single", passes: 1, cards: ["c"], runs: [], summary: null, createdAt: "x", completedAt: null };
-    writeFileSync(join(gauntletRoot, "run-sets", id, "set.json"), JSON.stringify(manifest));
+    writeFileSync(join(flightRoot, "run-sets", id, "set.json"), JSON.stringify(manifest));
 
     const broadcaster = new RunSetBroadcaster();
     const sent: string[] = [];
     const ws = { readyState: 1, send: (s: string) => sent.push(s) };
 
-    handleSetWsOpen(broadcaster, id, ws as any, gauntletRoot);
+    handleSetWsOpen(broadcaster, id, ws as any, flightRoot);
 
     // Subscribed
     broadcaster.send(id, { kind: "test_event" });
@@ -224,15 +224,15 @@ describe("handleSetWsOpen", () => {
   });
 
   test("subscribes the ws but sends nothing if manifest doesn't exist yet", () => {
-    const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-set-ws-"));
-    const gauntletRoot = join(projectRoot, ".gauntlet");
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-set-ws-"));
+    const flightRoot = join(projectRoot, ".moe-flight");
     const id = "single_20260430T000000Z_inflight";
 
     const broadcaster = new RunSetBroadcaster();
     const sent: string[] = [];
     const ws = { readyState: 1, send: (s: string) => sent.push(s) };
 
-    handleSetWsOpen(broadcaster, id, ws as any, gauntletRoot);
+    handleSetWsOpen(broadcaster, id, ws as any, flightRoot);
 
     expect(sent).toHaveLength(0);
     broadcaster.send(id, { kind: "test_event" });

@@ -15,7 +15,7 @@ function noopLogger(): EvidenceLogger {
 }
 
 function freshDir(): string {
-  return mkdtempSync(join(tmpdir(), "gauntlet-wake-test-"));
+  return mkdtempSync(join(tmpdir(), "moe-flight-wake-test-"));
 }
 
 describe("wake_on_idle_log tool", () => {

@@ -4,7 +4,7 @@ import { generateFromObservations } from "../../../src/qa/fanout/generator.js";
 import { parseStoryCard } from "../../../src/qa/format/story-card.js";
 import type { StoryCard } from "../../../src/qa/format/story-card.js";
 import type { LLMClient } from "../../../src/qa/models/provider.js";
-import type { VetResult } from "../../../src/qa/types.js";
+import type { VerdictResult } from "../../../src/qa/types.js";
 import { mkdtempSync, writeFileSync, readFileSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -83,7 +83,7 @@ describe("fanout e2e: round-trip", () => {
     }
 
     // Write cards to temp dir, re-read, re-parse
-    const dir = mkdtempSync(join(tmpdir(), "gauntlet-fanout-e2e-"));
+    const dir = mkdtempSync(join(tmpdir(), "moe-flight-fanout-e2e-"));
     for (let i = 0; i < cards.length; i++) {
       const filePath = join(dir, `card-${i}.md`);
       writeFileSync(filePath, cards[i], "utf-8");
@@ -101,7 +101,7 @@ describe("fanout e2e: round-trip", () => {
 
 describe("fanout e2e: observation promotion", () => {
   test("generateFromObservations creates parseable cards with correct parent and tags", async () => {
-    const result: VetResult = {
+    const result: VerdictResult = {
       schemaVersion: 1,
       runId: "checkout-flow_20260416T142301Z_test",
       scenario: "checkout-flow",

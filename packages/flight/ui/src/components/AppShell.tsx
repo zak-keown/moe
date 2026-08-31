@@ -23,7 +23,7 @@ export function AppShell({ sidebar, children }: AppShellProps) {
   return (
     <div className="flex h-screen flex-col bg-surface">
       <header className="flex items-center justify-between border-b border-edge bg-white px-4 py-2">
-        <h1 className="heading-display text-lg">gauntlet</h1>
+        <h1 className="heading-display text-lg">moe-flight</h1>
         <button
           className="relative flex items-center gap-1.5 text-sm text-slate hover:text-ink transition-colors"
           onClick={() => { setShowErrors(!showErrors); refreshErrors(); }}

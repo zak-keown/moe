@@ -12,7 +12,7 @@ const require = createRequire(import.meta.url);
 // singleton — every WebAdapter shared activePort, chromeProcess, the
 // connection pool, the per-tab consoleMessages map, the chosen profile
 // name, and the host-override snapshot. Two concurrent web runs in
-// `gauntlet serve` stomped each other's endpoint and (worse) shared a
+// `moe-flight qa serve` stomped each other's endpoint and (worse) shared a
 // single Chrome process across runs that were supposed to be isolated.
 //
 // If this test ever fails, we've reintroduced the bug. The assertions
@@ -39,15 +39,15 @@ describe("chrome-ws-lib createSession() isolation (PRI-1436)", () => {
     const { createSession } = require("../../../../src/qa/adapters/web/lib/chrome-ws-lib.js");
     const a = createSession();
     const b = createSession();
-    // Default both sessions report the gauntlet default (PRI-1444 — we
+    // Default both sessions report the moe-flight default (PRI-1444 — we
     // intentionally diverge from upstream's 'superpowers-chrome' default).
-    expect(a.getProfileName()).toBe("gauntlet");
-    expect(b.getProfileName()).toBe("gauntlet");
+    expect(a.getProfileName()).toBe("moe-flight");
+    expect(b.getProfileName()).toBe("moe-flight");
     a.setProfileName("alpha-profile");
     expect(a.getProfileName()).toBe("alpha-profile");
     // The bug: pre-1436 b would also see "alpha-profile" because the
     // chromeProfileName binding was module-scope.
-    expect(b.getProfileName()).toBe("gauntlet");
+    expect(b.getProfileName()).toBe("moe-flight");
     b.setProfileName("beta-profile");
     expect(a.getProfileName()).toBe("alpha-profile");
     expect(b.getProfileName()).toBe("beta-profile");
@@ -63,7 +63,7 @@ describe("chrome-ws-lib createSession() isolation (PRI-1436)", () => {
     // Mutating the session A's profile (which is one of the underlying
     // module-level lets pre-1436) must not bleed into B.
     a.setProfileName("xprofile");
-    expect(b.getProfileName()).toBe("gauntlet");
+    expect(b.getProfileName()).toBe("moe-flight");
   });
 
   test("bridge surface (targets / createBrowserContext) is per-session — distinct closures", () => {

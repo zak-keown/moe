@@ -13,7 +13,7 @@ tool-call/tool-result traffic by turn 20+ and stopped driving behavior.
 That block has now been retired (the reflection checkpoints supersede
 its practical effect).
 
-Empirical evidence from `examples/tutorial/.gauntlet/results/`: a
+Empirical evidence from `examples/tutorial/.moe-flight/results/`: a
 representative `tutorial-04-login-credentials` run burned 23 tool calls
 (24 LLM turns) without ever calling `report_result`, and ultimately hit
 the deadline grace path. Several sibling runs in that directory show the
@@ -177,7 +177,7 @@ tonal escalation in the framing.
 
 ## Configuration
 
-- **Env var:** `GAUNTLET_REFLECTION_INTERVAL` (positive integer, default
+- **Env var:** `MOE_FLIGHT_REFLECTION_INTERVAL` (positive integer, default
   `10`). Set to `0` to disable.
 - **CLI flag:** `--reflection-interval N`.
 - **Config field:** `defaultReflectionInterval` in app config; threaded

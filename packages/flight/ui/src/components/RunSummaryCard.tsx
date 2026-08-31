@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
-import { api, type VetResult } from "../lib/api";
+import { api, type VerdictResult } from "../lib/api";
 import { StatusBadge, formatDuration } from "./shared";
 import { formatRunTimestamp } from "../lib/runId";
 
 export interface RunSummaryCardProps {
-  result: VetResult;
+  result: VerdictResult;
   /**
    * Optional content rendered at the trailing end of the heading row (e.g. a
    * "View transcript" link in the server view). The component does not know

@@ -10,7 +10,7 @@ describe("renderContextTree", () => {
   });
 
   test("returns empty string when root is a file, not a dir", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-tree-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-tree-"));
     try {
       const f = join(tmp, "foo");
       writeFileSync(f, "x");
@@ -21,7 +21,7 @@ describe("renderContextTree", () => {
   });
 
   test("returns empty string when root is empty", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-tree-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-tree-"));
     try {
       expect(renderContextTree(tmp)).toBe("");
     } finally {
@@ -30,7 +30,7 @@ describe("renderContextTree", () => {
   });
 
   test("renders a single file", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-tree-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-tree-"));
     try {
       writeFileSync(join(tmp, "alice.md"), "hello");
       const tree = renderContextTree(tmp);
@@ -41,7 +41,7 @@ describe("renderContextTree", () => {
   });
 
   test("renders the anchor Alice-and-Bob layout from spec §4.3", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-tree-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-tree-"));
     try {
       mkdirSync(join(tmp, "alice"));
       mkdirSync(join(tmp, "bob"));
@@ -69,7 +69,7 @@ describe("renderContextTree", () => {
   });
 
   test("directories come before files at each level", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-tree-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-tree-"));
     try {
       writeFileSync(join(tmp, "aaa.md"), "x");
       mkdirSync(join(tmp, "zzz"));
@@ -85,7 +85,7 @@ describe("renderContextTree", () => {
   });
 
   test("alphabetical ordering is case-insensitive", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-tree-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-tree-"));
     try {
       writeFileSync(join(tmp, "BOB.md"), "x");
       writeFileSync(join(tmp, "alice.md"), "x");
@@ -99,7 +99,7 @@ describe("renderContextTree", () => {
   });
 
   test("hidden entries (starting with dot) are skipped", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-tree-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-tree-"));
     try {
       writeFileSync(join(tmp, "alice.md"), "x");
       writeFileSync(join(tmp, ".hidden"), "x");
@@ -113,7 +113,7 @@ describe("renderContextTree", () => {
   });
 
   test("indentation is two spaces per depth level", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-tree-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-tree-"));
     try {
       mkdirSync(join(tmp, "a", "b", "c"), { recursive: true });
       writeFileSync(join(tmp, "a", "b", "c", "deep.md"), "x");
@@ -129,7 +129,7 @@ describe("renderContextTree", () => {
   });
 
   test("entries-budget truncation emits the truncation line with the spec wording", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-tree-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-tree-"));
     try {
       for (let i = 0; i < 10; i++) {
         writeFileSync(join(tmp, `file-${i}.md`), "x");
@@ -147,7 +147,7 @@ describe("renderContextTree", () => {
   });
 
   test("byte-budget truncation fires before entry budget when smaller", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-tree-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-tree-"));
     try {
       for (let i = 0; i < 10; i++) {
         writeFileSync(join(tmp, `file-${i}.md`), "x");

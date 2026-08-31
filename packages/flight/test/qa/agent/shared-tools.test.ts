@@ -5,11 +5,11 @@ import { join } from "path";
 import { buildSharedTools } from "../../../src/qa/agent/shared-tools.js";
 
 function emptyContextRoot(): string {
-  return mkdtempSync(join(tmpdir(), "gauntlet-shared-ctx-"));
+  return mkdtempSync(join(tmpdir(), "moe-flight-shared-ctx-"));
 }
 
 function populatedContextRoot(): string {
-  const root = mkdtempSync(join(tmpdir(), "gauntlet-shared-ctx-"));
+  const root = mkdtempSync(join(tmpdir(), "moe-flight-shared-ctx-"));
   mkdirSync(join(root, "users"), { recursive: true });
   writeFileSync(join(root, "users", "alice.md"), "# Alice");
   return root;

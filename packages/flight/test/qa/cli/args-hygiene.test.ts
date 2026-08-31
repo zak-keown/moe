@@ -3,13 +3,13 @@ import { parseArgs } from "../../../src/qa/cli/args.js";
 
 describe("CLI flag hygiene", () => {
   test("parseServeArgs rejects unknown flag", () => {
-    expect(() => parseArgs(["bun", "gauntlet", "serve", "--bogus", "x"]))
+    expect(() => parseArgs(["bun", "moe-flight", "serve", "--bogus", "x"]))
       .toThrow(/unknown flag.*--bogus/i);
   });
 
   test("parseServeArgs accepts --chrome, --project-dir, --port, --model, --target", () => {
     const args = parseArgs([
-      "bun", "gauntlet", "serve",
+      "bun", "moe-flight", "serve",
       "--port", "4400",
       "--project-dir", "/tmp/x",
       "--chrome", "localhost:9222",
@@ -21,13 +21,13 @@ describe("CLI flag hygiene", () => {
   });
 
   test("parseRunArgs rejects unknown flag", () => {
-    expect(() => parseArgs(["bun", "gauntlet", "run", "foo.md", "--target", "http://x", "--nope", "y"]))
+    expect(() => parseArgs(["bun", "moe-flight", "run", "foo.md", "--target", "http://x", "--nope", "y"]))
       .toThrow(/unknown flag.*--nope/i);
   });
 
   test("parseRunArgs accepts --target, --model, --chrome, --adapter, --out", () => {
     const args = parseArgs([
-      "bun", "gauntlet", "run", "foo.md",
+      "bun", "moe-flight", "run", "foo.md",
       "--target", "http://localhost:3000",
       "--model", "agent=claude-sonnet-4-6",
       "--chrome", "localhost:9222",
@@ -38,19 +38,19 @@ describe("CLI flag hygiene", () => {
   });
 
   test("parseFanoutArgs rejects unknown flag", () => {
-    expect(() => parseArgs(["bun", "gauntlet", "fanout", "foo.md", "--bogus", "y"]))
+    expect(() => parseArgs(["bun", "moe-flight", "fanout", "foo.md", "--bogus", "y"]))
       .toThrow(/unknown flag.*--bogus/i);
   });
 
   test("parseFanoutArgs yields undefined cli.models when no --model given", () => {
-    const args = parseArgs(["bun", "gauntlet", "fanout", "scenario.md"]) as any;
+    const args = parseArgs(["bun", "moe-flight", "fanout", "scenario.md"]) as any;
     expect(args.command).toBe("fanout");
     expect(args.cli.models).toBeUndefined();
   });
 
   test("parseFanoutArgs threads --model agent= into cli.models.agent", () => {
     const args = parseArgs([
-      "bun", "gauntlet", "fanout", "scenario.md",
+      "bun", "moe-flight", "fanout", "scenario.md",
       "--model", "agent=gpt-4o",
     ]) as any;
     expect(args.command).toBe("fanout");
@@ -58,13 +58,13 @@ describe("CLI flag hygiene", () => {
   });
 
   test("parseValidateArgs rejects unknown flag", () => {
-    expect(() => parseArgs(["bun", "gauntlet", "validate", "foo.md", "--bogus", "y"]))
+    expect(() => parseArgs(["bun", "moe-flight", "validate", "foo.md", "--bogus", "y"]))
       .toThrow(/unknown flag.*--bogus/i);
   });
 
   test("error mentions valid flags for command", () => {
     try {
-      parseArgs(["bun", "gauntlet", "serve", "--bogus", "x"]);
+      parseArgs(["bun", "moe-flight", "serve", "--bogus", "x"]);
       throw new Error("expected throw");
     } catch (e) {
       const msg = (e as Error).message;
@@ -76,7 +76,7 @@ describe("CLI flag hygiene", () => {
 
   test("bareword flag followed by another flag does not eat it", () => {
     const args = parseArgs([
-      "bun", "gauntlet", "config",
+      "bun", "moe-flight", "config",
       "--json",
       "--project-dir", "/tmp/x",
     ]);
@@ -86,17 +86,17 @@ describe("CLI flag hygiene", () => {
   });
 
   test("bareword --json alone parses correctly", () => {
-    const args = parseArgs(["bun", "gauntlet", "config", "--json"]);
+    const args = parseArgs(["bun", "moe-flight", "config", "--json"]);
     expect((args as any).json).toBe(true);
   });
 
   test("--json true still works (explicit value form)", () => {
-    const args = parseArgs(["bun", "gauntlet", "config", "--json", "true"]);
+    const args = parseArgs(["bun", "moe-flight", "config", "--json", "true"]);
     expect((args as any).json).toBe(true);
   });
 
   test("--port with non-integer value throws", () => {
-    expect(() => parseArgs(["bun", "gauntlet", "serve", "--port", "abc"]))
+    expect(() => parseArgs(["bun", "moe-flight", "serve", "--port", "abc"]))
       .toThrow(/--port/);
   });
 });

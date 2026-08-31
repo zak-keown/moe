@@ -2,7 +2,7 @@ import { basename, extname } from "path";
 import type { AppConfig } from "../config.js";
 import type { EvidenceLogger, EventObserver } from "../evidence/logger.js";
 import type { LLMClient } from "../models/provider.js";
-import { gauntletPath } from "../paths.js";
+import { flightPath } from "../paths.js";
 import { runOne, type RunOneOptions, type RunOneSummary } from "./run-one.js";
 import { safeEmitIndexHtml } from "./auto-emit-html.js";
 import { runRunSet } from "../runs/run-set.js";
@@ -81,7 +81,7 @@ export async function runBatch(
   runOneImpl: RunOneFn = runOne,
 ): Promise<number> {
   const cards = opts.scenarioPaths.map((p) => ({ scenarioPath: p, id: cardIdForPath(p) }));
-  const resultsRoot = gauntletPath(opts.config.projectRoot, opts.config.stateDirName, "results");
+  const resultsRoot = flightPath(opts.config.projectRoot, opts.config.stateDirName, "results");
   const useTable = !opts.silent && opts.format !== "jsonl";
   const table = useTable
     ? new BatchTableRenderer(opts.sink, {
@@ -109,14 +109,14 @@ export async function runBatch(
     };
 
     // The state dir is the parent of both results/ and run-sets/.
-    const gauntletRoot = gauntletPath(opts.config.projectRoot, opts.config.stateDirName);
+    const flightRoot = flightPath(opts.config.projectRoot, opts.config.stateDirName);
 
     const cancelToken = { cancelled: false };
     const detach = installSigintHandler(cancelToken);
     let setResult;
     try {
       const handle = await runRunSet({
-        resultsRoot: gauntletRoot,
+        resultsRoot: flightRoot,
         cards: cardIds,
         passes: opts.passes,
         kind: "batch",
@@ -234,7 +234,7 @@ export async function runBatch(
         case "errored": errored++; break;
         default: {
           const _exhaustive: never = s;
-          throw new Error(`unexpected VetStatus: ${JSON.stringify(_exhaustive)}`);
+          throw new Error(`unexpected VerdictStatus: ${JSON.stringify(_exhaustive)}`);
         }
       }
     } catch (err) {

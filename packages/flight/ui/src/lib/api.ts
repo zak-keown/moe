@@ -26,7 +26,7 @@ export interface RunConfigSnapshot {
   viewport?: { width: number; height: number };
 }
 
-export interface VetResult {
+export interface VerdictResult {
   schemaVersion: number;
   /**
    * Primary key for this run: `<cardId>_<YYYYMMDDTHHMMSSZ>_<nonce>`. Matches
@@ -64,13 +64,13 @@ export interface VetResult {
  * normally fetch should read from this object instead.
  */
 export interface StaticRunPayload {
-  result: VetResult;
+  result: VerdictResult;
   runJsonl: string;
 }
 
 declare global {
   interface Window {
-    __GAUNTLET_RUN__?: StaticRunPayload | undefined;
+    __MOE_FLIGHT_RUN__?: StaticRunPayload | undefined;
   }
 }
 
@@ -111,7 +111,7 @@ export interface StartRunResponse {
 
 /** Paginated `GET /api/results` response. */
 export interface ResultsPage {
-  results: VetResult[];
+  results: VerdictResult[];
   total: number;
   limit: number;
   offset: number;
@@ -216,11 +216,11 @@ export const api = {
       const qs = q.toString();
       return request<ResultsPage>(`/results${qs ? `?${qs}` : ""}`);
     },
-    get: (runId: string) => request<VetResult>(`/results/${runId}`),
+    get: (runId: string) => request<VerdictResult>(`/results/${runId}`),
     // Build a URL for any file inside a run directory, given the relative
     // path stored in the manifest (e.g. "screenshots/001.png", "run.jsonl").
     // This is the one place in the FE that turns a manifest path into a URL.
-    // The path segment is a runId (directory name under .gauntlet/results/),
+    // The path segment is a runId (directory name under .moe-flight/results/),
     // not a cardId.
     fileUrl: (runId: string, relPath: string) =>
       `/api/results/${encodeURIComponent(runId)}/file/${relPath

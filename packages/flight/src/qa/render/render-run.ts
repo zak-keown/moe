@@ -14,10 +14,10 @@ export interface RenderRunOptions {
 /**
  * Render a run's HTML report using a caller-supplied template. Reads
  * result.json + run.jsonl from runDir, splices them into the template's
- * <script id="__GAUNTLET_RUN__"> tag, and writes the result to runDir.
+ * <script id="__MOE_FLIGHT_RUN__"> tag, and writes the result to runDir.
  *
  * The renderer is the single source of truth for the data shape the
- * static page reads from window.__GAUNTLET_RUN__.
+ * static page reads from window.__MOE_FLIGHT_RUN__.
  */
 export async function renderRunFromTemplate(opts: RenderRunOptions): Promise<string> {
   const resultPath = join(opts.runDir, "result.json");
@@ -41,9 +41,9 @@ export async function renderRunFromTemplate(opts: RenderRunOptions): Promise<str
   const json = JSON.stringify(payload).replace(/<\/script/gi, "<\\/script");
 
   // Lookaheads confirm both attributes are present without prescribing order.
-  const re = /(<script\b(?=[^>]*\btype="application\/json")(?=[^>]*\bid="__GAUNTLET_RUN__")[^>]*>)([\s\S]*?)(<\/script>)/i;
+  const re = /(<script\b(?=[^>]*\btype="application\/json")(?=[^>]*\bid="__MOE_FLIGHT_RUN__")[^>]*>)([\s\S]*?)(<\/script>)/i;
   if (!re.test(template)) {
-    throw new Error("renderRun: template is missing the __GAUNTLET_RUN__ script tag");
+    throw new Error("renderRun: template is missing the __MOE_FLIGHT_RUN__ script tag");
   }
   const rendered = template.replace(re, (_match, open, _body, close) => `${open}${json}${close}`);
 

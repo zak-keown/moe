@@ -2,7 +2,7 @@
  * Config-parser combinator. Replaces the ~15 hand-rolled
  * `let value; let source: ... ; if (env) ... ; if (arg) ...` blocks in
  * `config.ts` with a single declarative helper. The plan is documented in
- * docs/superpowers/plans/2026-05-18-pri-1628-cleanup-sweep.md (Phase 4).
+ * docs/history/plans/2026-05-18-pri-1628-cleanup-sweep.md (Phase 4).
  *
  * The `noValueSource` generic parameter handles the three source-union
  * shapes that exist in `AppConfig.sources` today:

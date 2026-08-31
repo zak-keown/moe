@@ -1,4 +1,4 @@
-# Session revival spec: `gauntlet ask`
+# Session revival spec: `moe-flight qa ask`
 
 Status: draft, post-review. Spec, not plan — describes *what* and *why*;
 the implementation breakdown comes after.
@@ -16,12 +16,12 @@ explicit in §"How messages get rebuilt" and §"Terminal-turn handling".
 
 ## What this is
 
-A CLI command that lets a human or another Bob open a **completed** Gauntlet
+A CLI command that lets a human or another Bob open a **completed** Flight
 run and ask the agent that produced it questions about its decisions. No
 writes back to the run. No work continues from where the agent stopped.
 
 ```
-gauntlet ask <runId> [--turn N] [--model MODEL]
+moe-flight qa ask <runId> [--turn N] [--model MODEL]
 ```
 
 This is "mode A" — snapshot interrogation — from the research doc.
@@ -46,7 +46,7 @@ batch results can query individual runs without spawning a full subagent.
 
 ## What it does, in order
 
-1. Reads `.gauntlet/results/<runId>/run.jsonl` and `result.json`.
+1. Reads `.moe-flight/results/<runId>/run.jsonl` and `result.json`.
 2. Reconstructs the agent's conversation state up to the chosen turn:
    the system prompt, the message history, and any image or large-text
    artifacts the agent saw.
@@ -56,7 +56,7 @@ batch results can query individual runs without spawning a full subagent.
    (recorded <date>)`) and each reply prints a turn-cost line
    (`tokens: 4200 in / 800 out`).
 4. On exit (Ctrl-D, Ctrl-C, or `:quit`), writes nothing under
-   `.gauntlet/`.
+   `.moe-flight/`.
 
 ## Fidelity contract
 
@@ -317,7 +317,7 @@ undocumented drift.
   rebuild function is designed so it's the same code path whichever
   mode plugs in on top, but no continuation logic ships here.
 - **Web UI integration.** The CLI is the v1 surface. Adding a "chat
-  with this run" panel to the Gauntlet UI is a follow-on; the API
+  with this run" panel to the Flight UI is a follow-on; the API
   primitive it would need (`rebuildMessages` + a thin `askOnce(runId,
   question, opts)` helper) is designed in v1 so the UI is reachable
   without a refactor.
@@ -348,7 +348,7 @@ on its own.
    v1.1. v1 ships a plain prompt-and-response REPL with header
    (provenance), per-reply usage line, and three exit triggers
    (Ctrl-D, Ctrl-C, `:quit`).
-4. **No writes.** Revival sessions write nothing under `.gauntlet/`.
+4. **No writes.** Revival sessions write nothing under `.moe-flight/`.
    Operating-system-level traces (shell history, Anthropic prompt
    cache, etc.) are acknowledged but not load-bearing — the contract
    is about the run directory.

@@ -10,7 +10,7 @@ export interface RenderDeps {
 }
 
 /**
- * Implements `gauntlet render <run-id-or-path>`. If the positional
+ * Implements `moe-flight qa render <run-id-or-path>`. If the positional
  * resolves to an existing directory, treat it as a run-dir path. Otherwise
  * treat it as a run-id and look it up under the configured state dir.
  */

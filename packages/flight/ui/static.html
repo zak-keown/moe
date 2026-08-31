@@ -3,18 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gauntlet run report</title>
-    <script type="application/json" id="__GAUNTLET_RUN__">{}</script>
+    <title>Flight run report</title>
+    <script type="application/json" id="__MOE_FLIGHT_RUN__">{}</script>
     <script>
-      // Hydrate window.__GAUNTLET_RUN__ from the inline JSON above. The
+      // Hydrate window.__MOE_FLIGHT_RUN__ from the inline JSON above. The
       // runtime renderer replaces the JSON contents per run; this glue
       // is build-time-stable.
       try {
-        const node = document.getElementById("__GAUNTLET_RUN__");
+        const node = document.getElementById("__MOE_FLIGHT_RUN__");
         if (node && node.textContent && node.textContent.trim() !== "{}") {
-          window.__GAUNTLET_RUN__ = JSON.parse(node.textContent);
+          window.__MOE_FLIGHT_RUN__ = JSON.parse(node.textContent);
         }
-      } catch (e) { console.error("Failed to parse __GAUNTLET_RUN__", e); }
+      } catch (e) { console.error("Failed to parse __MOE_FLIGHT_RUN__", e); }
     </script>
   </head>
   <body>

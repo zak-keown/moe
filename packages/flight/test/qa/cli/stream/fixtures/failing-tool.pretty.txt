@@ -5,7 +5,7 @@
   model     claude-sonnet-4-6
   adapter   web · viewport 1440×900
   max time  5m
-  evidence  .gauntlet/results/r-ff01/
+  evidence  .moe-flight/results/r-ff01/
 ──────────────────────────────────────────────────────
 
 » Clicking login. · t1
@@ -19,7 +19,7 @@
   duration  3.5s
   turns     1
   usage     in 1.2k  out 40
-  evidence  .gauntlet/results/r-ff01/
+  evidence  .moe-flight/results/r-ff01/
 
   Summary
     Could not find login button

@@ -24,7 +24,7 @@ export function resultRoutes(resultsDir: string, registry?: ActiveRunRegistry) {
   const router = new Hono();
 
   // Paginated list. Response shape:
-  //   { results: VetResult[]; total: number; limit: number; offset: number }
+  //   { results: VerdictResult[]; total: number; limit: number; offset: number }
   //
   // Query params:
   //   ?limit=<n>   max entries (default 50, clamped to 1..200)

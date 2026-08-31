@@ -1,8 +1,8 @@
 import { describe, test, expect, afterEach } from "vitest";
 import { getStaticRunPayload } from "../src/components/StaticRunPage";
-import type { StaticRunPayload, VetResult } from "../src/lib/api";
+import type { StaticRunPayload, VerdictResult } from "../src/lib/api";
 
-const FIXTURE_RESULT: VetResult = {
+const FIXTURE_RESULT: VerdictResult = {
   schemaVersion: 5,
   runId: "card_20260101T000000Z_aaaa",
   scenario: "card",
@@ -15,19 +15,19 @@ const FIXTURE_RESULT: VetResult = {
 };
 
 afterEach(() => {
-  if (typeof window !== "undefined") delete (window as any).__GAUNTLET_RUN__;
+  if (typeof window !== "undefined") delete (window as any).__MOE_FLIGHT_RUN__;
 });
 
 describe("getStaticRunPayload", () => {
-  test("returns the payload when window.__GAUNTLET_RUN__ is set", () => {
+  test("returns the payload when window.__MOE_FLIGHT_RUN__ is set", () => {
     (globalThis as any).window = (globalThis as any).window ?? globalThis;
     const payload: StaticRunPayload = { result: FIXTURE_RESULT, runJsonl: "" };
-    (window as any).__GAUNTLET_RUN__ = payload;
+    (window as any).__MOE_FLIGHT_RUN__ = payload;
     expect(getStaticRunPayload()).toBe(payload);
   });
 
-  test("returns null when window.__GAUNTLET_RUN__ is missing", () => {
-    if (typeof window !== "undefined") delete (window as any).__GAUNTLET_RUN__;
+  test("returns null when window.__MOE_FLIGHT_RUN__ is missing", () => {
+    if (typeof window !== "undefined") delete (window as any).__MOE_FLIGHT_RUN__;
     expect(getStaticRunPayload()).toBeNull();
   });
 });

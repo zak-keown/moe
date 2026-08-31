@@ -21,12 +21,12 @@ describe("Web e2e smoke test", () => {
       try {
         const mod = await import("../../../src/qa/adapters/web/adapter.js");
         WebAdapter = mod.WebAdapter;
-      } catch (err) {
+      } catch (_err) {
         console.log("Skipping web e2e: chrome-ws-lib not available");
         return;
       }
 
-      const outDir = mkdtempSync(join(tmpdir(), "gauntlet-e2e-web-"));
+      const outDir = mkdtempSync(join(tmpdir(), "moe-flight-e2e-web-"));
       const logger = new EvidenceLogger(outDir);
 
       // Serve the test page

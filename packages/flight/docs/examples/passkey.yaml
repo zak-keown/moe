@@ -1,4 +1,4 @@
-# Example passkey.yaml — copy under .gauntlet/context/<author>/passkey.yaml
+# Example passkey.yaml — copy under .moe-flight/context/<author>/passkey.yaml
 # and have the runner agent call install_passkey({ path: "alice/passkey.yaml" })
 # after navigating to the login page and BEFORE clicking the passkey button.
 #
@@ -19,7 +19,7 @@
 # real registration ceremony. There's no DevTools shortcut — you need a
 # WebAuthn dance, save the resulting credential, and reuse it from here.
 # Treat real values as secrets and keep them out of git
-# (.gauntlet/context/ is gitignored).
+# (.moe-flight/context/ is gitignored).
 
 # All values below are SYNTHETIC — base64 of literal placeholder strings.
 # rpId uses the reserved .test TLD so this can never collide with a live

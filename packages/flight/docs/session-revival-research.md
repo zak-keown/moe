@@ -2,7 +2,7 @@
 
 Status: research / pre-spec. Author: Ianto@7f02be88 (Bob session). Date: 2026-05-12.
 
-The goal: let a human or agent open a completed Gauntlet run and **chat with the
+The goal: let a human or agent open a completed Flight run and **chat with the
 agent that produced it** — ask "why did you do X?", "what would have changed
 your mind?", "what were you considering on turn 14?" — without continuing the
 run or writing back to it.
@@ -45,7 +45,7 @@ A only needs to *reconstruct what the agent saw*, then ask it something new.
   than what we want. They replay "generalized experiences" at varying
   abstraction levels rather than exact traces. Useful framing for thinking
   about what's worth recording (state vs. operations) but their approach
-  doesn't map cleanly to Gauntlet's per-run debugging needs.
+  doesn't map cleanly to Flight's per-run debugging needs.
 - LangSmith / Langfuse / OpenTelemetry-for-LLMs — generally support
   *viewing* traces; some support *re-running prompts* against new models.
   None of the popular ones, as of this writing, have a first-class
@@ -60,7 +60,7 @@ operation ("ask the agent why") is barely named.
 
 ## 2. What `run.jsonl` already gives us
 
-Gauntlet's existing event log is most of the way to mode A. Reading
+Flight's existing event log is most of the way to mode A. Reading
 `src/evidence/logger.ts` and `src/agent/agent.ts`:
 
 **Present and sufficient:**
@@ -155,12 +155,12 @@ That's the read-only Q&A. No state mutates. No new run is created.
 A CLI command, callable by humans and Bobs:
 
 ```
-gauntlet ask <runId> [--turn N]
+moe-flight qa ask <runId> [--turn N]
 ```
 
 Behavior:
 
-1. Open the run directory under `.gauntlet/results/<runId>/`.
+1. Open the run directory under `.moe-flight/results/<runId>/`.
 2. Read `run.jsonl`. Reconstruct `systemPrompt` and `messages[]` up to the
    end of turn N (or the end of the run if `--turn` is omitted).
 3. Read `result.json` for context (`config.model`, `config.adapter`).
@@ -236,7 +236,7 @@ given the snapshot." Worth saying out loud in the docs.
    `schemaVersion` only if a reader needs it — additive change should be
    fine.
 2. **Write the spec** (Spec, not Plan — per the spec-before-plan
-   discipline) for `gauntlet ask <runId> [--turn N]`. Spec covers the
+   discipline) for `moe-flight qa ask <runId> [--turn N]`. Spec covers the
    CLI shape, the messages-rebuild contract, the model-pinning policy,
    and the no-tools / stubbed-tools decision.
 3. **Sign off on the spec before implementation.** Specifically:
@@ -262,7 +262,7 @@ For the next person (human or Bob) thinking about revivifying agent runs:
   re-execution, and counterfactual branching are three different
   operations with three different fidelity bars. Name the one you mean.
 - **The cheapest useful primitive is snapshot Q&A.** If your trace logs
-  raw assistant messages and tool I/O (most do — Gauntlet does), Q&A is
+  raw assistant messages and tool I/O (most do — Flight does), Q&A is
   ~200 lines of code away. Build it first.
 - **Log tool *definitions*, not just tool *calls*.** Tool calls tell you
   what the model picked; tool definitions tell you what it had to pick

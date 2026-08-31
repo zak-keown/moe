@@ -21,7 +21,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Tutorial: setup-creating stories (npm init, bun init) run
 # inside scratch-* subdirs so they don't clobber the fixtures
-# (notes.md, setup.ts, vimrc, README.md, .gauntlet/).
+# (notes.md, setup.ts, vimrc, README.md, .moe-flight/).
 # Anything in a scratch dir is throwaway.
 scratch-*/
 
@@ -35,10 +35,10 @@ tsconfig.json
 index.ts
 CLAUDE.md
 
-# Gauntlet writes per-run state under .gauntlet/results/ and
-# .gauntlet/runs/. Stories and context stay tracked.
-.gauntlet/results/
-.gauntlet/runs/
+# Flight writes per-run state under .moe-flight/results/ and
+# .moe-flight/runs/. Stories and context stay tracked.
+.moe-flight/results/
+.moe-flight/runs/
 
 # Auth fixtures — keep these out of git even for test accounts.
 # See docs/credentials.md.
@@ -49,4 +49,4 @@ passkey.yaml
 # trusts the cookie value verbatim, so these specific fixtures
 # are safe to commit. Don't add other profiles' cookies.yaml
 # to this list.
-!.gauntlet/context/profiles/fred/cookies.yaml
+!.moe-flight/context/profiles/fred/cookies.yaml

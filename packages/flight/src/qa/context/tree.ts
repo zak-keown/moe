@@ -2,7 +2,7 @@ import { readdirSync, statSync } from "fs";
 import { join } from "path";
 
 // Compact tree renderer for the system prompt's Context section.
-// Format is authoritative prose from Gauntlet v1.5 spec §4.3:
+// Format is authoritative prose from Flight v1.5 spec §4.3:
 //
 //   1. Depth-first, alphabetical (case-insensitive). Directories first.
 //   2. Two spaces of indent per depth level.

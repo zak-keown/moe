@@ -1,4 +1,4 @@
-# Gauntlet run format
+# Flight run format
 
 Each test run produces a self-contained directory on disk. This document
 describes what's in it and how to read it.
@@ -6,10 +6,10 @@ describes what's in it and how to read it.
 ## Directory layout
 
 ```
-<projectRoot>/.gauntlet/results/<runId>/
+<projectRoot>/.moe-flight/results/<runId>/
   inputs/            Hermetic snapshot of what the agent was given:
-                       story.md — copy of .gauntlet/stories/<id>.md at run start
-                       context/ — copy of .gauntlet/context/ at run start
+                       story.md — copy of .moe-flight/stories/<id>.md at run start
+                       context/ — copy of .moe-flight/context/ at run start
                      Captured once, synchronously, before the agent starts.
                      Edits to the source files after that point do not
                      affect the run's view.
@@ -47,12 +47,12 @@ describes what's in it and how to read it.
 
 The four `*.jsonl` browser-event files exist on disk but are not listed in `result.json`'s manifest. The HTTP file route only serves files that the manifest names; consumers reading off disk see them, consumers reading via the API do not.
 
-The `tool_definitions` event captures the full set of tool schemas exposed to the agent (adapter tools plus `report_result`) so post-hoc consumers — e.g. `gauntlet ask` — can faithfully tell a revival model what was available during the original run. It is written once immediately after `system_prompt`.
+The `tool_definitions` event captures the full set of tool schemas exposed to the agent (adapter tools plus `report_result`) so post-hoc consumers — e.g. `moe-flight qa ask` — can faithfully tell a revival model what was available during the original run. It is written once immediately after `system_prompt`.
 
 The `tool_result` event optionally carries a `mediaType` string when `image` is set, recording the image's media type so revival can slot the bytes back into a provider-native image block without guessing.
 
-`projectRoot` is the Gauntlet project directory (default: cwd). Gauntlet
-owns the `.gauntlet/` subdirectory inside it. `runId` is the primary
+`projectRoot` is the Flight project directory (default: cwd). Flight
+owns the `.moe-flight/` subdirectory inside it. `runId` is the primary
 identity for a run — see below.
 
 Copying a run directory preserves the full record of the run.
@@ -71,7 +71,7 @@ Parts:
 - **4-char base36 nonce** — disambiguates same-second collisions.
 
 runIds are designed to be read by humans and by LLMs scanning the
-results directory. `ls .gauntlet/results/` tells you which card each run
+results directory. `ls .moe-flight/results/` tells you which card each run
 tested and when, without a lookup.
 
 ## `result.json`
@@ -166,11 +166,11 @@ agent's reasoning, the observations, and pointers to the evidence files.
   Used by the UI to offer "Run again" without re-asking the user for
   parameters. Optional for back-compat with v1 results on disk.
 - `runSet` (optional) — context for runs that were spawned as part of a
-  set (a multi-pass single run, or a `gauntlet batch` invocation). Fields:
+  set (a multi-pass single run, or a `moe-flight qa batch` invocation). Fields:
   `runSetId`, `kind` (`"single"` \| `"batch"`), `passes`, `cards` (array of
   cardIds in deterministic order), `cardIndex` (0-indexed position in
   `cards`), `attemptNumber` (1-indexed within the cards × attempts loop).
-  Omitted for one-off `gauntlet run` invocations.
+  Omitted for one-off `moe-flight qa run` invocations.
 
 ### Path references
 
@@ -184,7 +184,7 @@ The server exposes each run through endpoints under `/api/results`:
 
 - `GET /api/results` — list runs. Supports query params `limit`, `offset`,
   and `cardId` for pagination and filtering. Returns
-  `{ results: VetResult[], total, limit, offset }`.
+  `{ results: VerdictResult[], total, limit, offset }`.
 - `GET /api/results/:runId` — one run's parsed `result.json`.
 - `GET /api/results/:runId/file/:relativePath` — fetch a file inside a run
   directory. **The file must be listed in that run's `result.json`**;
@@ -211,7 +211,7 @@ message types; consumers may dispatch on `type` and ignore the rest.
   LiveRun.
 - `progress` — stringified `[action] {...params}` lines (legacy observer
   channel, different from `event`). Consumed by LiveRun.
-- `complete` — run finished; carries the full `VetResult` object.
+- `complete` — run finished; carries the full `VerdictResult` object.
 - `error` — fatal run error; carries a message string.
 - `gone` — the server has no active run for this id. Clients should fall
   back to the on-disk `result.json` + `run.jsonl` via the HTTP endpoints.
@@ -228,8 +228,8 @@ do not require a bump.
 
 ### Changelog
 
-- **v5** — Added `"errored"` to `VetStatus` and optional `error: {type,
-  message}` field on `VetResult`. Today's only emitter is shutdown drain
+- **v5** — Added `"errored"` to `VerdictStatus` and optional `error: {type,
+  message}` field on `VerdictResult`. Today's only emitter is shutdown drain
   (PRI-1507): when the daemon's shutdown grace window expires with runs
   in flight, an AbortSignal-driven cancellation fires through the agent
   loop, which returns a synthetic errored result with `error.type:

@@ -51,7 +51,7 @@ const DEFAULT_AUTHENTICATOR_OPTIONS: VirtualAuthenticatorOptions = {
   automaticPresenceSimulation: true,
 };
 
-// Tool description — authoritative prose from Gauntlet v1.5 spec §3.2.
+// Tool description — authoritative prose from Flight v1.5 spec §3.2.
 // DO NOT edit without going through the amendment protocol (spec §13);
 // Ponder's field notes confirm the agent learned the "after every
 // navigate() and before any click that triggers WebAuthn" ordering from
@@ -59,7 +59,7 @@ const DEFAULT_AUTHENTICATOR_OPTIONS: VirtualAuthenticatorOptions = {
 const TOOL_DESCRIPTION =
   "Install a passkey credential into the browser's virtual authenticator, " +
   "reading the credential YAML from a file under the project's context " +
-  "directory. The path is relative to .gauntlet/context/ (example: " +
+  "directory. The path is relative to .moe-flight/context/ (example: " +
   '"alice/passkey.yaml"). You must re-call this tool after every navigate() ' +
   "and before any click that triggers WebAuthn — Chrome clears virtual " +
   "authenticators on every same-target navigation, and the authenticator does " +

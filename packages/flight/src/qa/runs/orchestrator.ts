@@ -10,11 +10,11 @@ import { writeResultFiles } from "../evidence/writer.js";
 import { runAgent } from "../agent/agent.js";
 import { resolveProvider } from "../models/resolve.js";
 import type { LLMClient } from "../models/provider.js";
-import { gauntletPath } from "../paths.js";
+import { flightPath } from "../paths.js";
 import { snapshotRunInputs } from "./snapshot.js";
 import { makeRunId } from "../util/id.js";
 import type { StoryCard } from "../format/story-card.js";
-import { snapshotRunConfig, type VetResult } from "../types.js";
+import { snapshotRunConfig, type VerdictResult } from "../types.js";
 import type { RunSetCtx } from "./run-set-types.js";
 
 export type RunAdapterType = "web" | "cli" | "tui";
@@ -35,7 +35,7 @@ export function resolveProjectPrompt(
     }
     return readFileSync(explicitPath, "utf-8").replace(/\s+$/, "");
   }
-  const defaultPath = gauntletPath(projectRoot, stateDirName, "project.md");
+  const defaultPath = flightPath(projectRoot, stateDirName, "project.md");
   if (existsSync(defaultPath)) {
     return readFileSync(defaultPath, "utf-8").replace(/\s+$/, "");
   }
@@ -95,7 +95,7 @@ export interface ExecuteRunCoreOptions {
   projectPromptPath?: string | undefined;
   /**
    * Optional cancellation signal forwarded to `runAgent`. When aborted,
-   * the agent loop returns a synthetic `errored` VetResult; the
+   * the agent loop returns a synthetic `errored` VerdictResult; the
    * orchestrator's success path then writes `result.json` as normal.
    * The catch block is NOT involved — the load-bearing invariant
    * (spec §1) is that the agent returns rather than throws. Production
@@ -118,7 +118,7 @@ export interface ExecuteRunCoreOptions {
 export interface ExecuteRunCoreResult {
   runId: RunId;
   outDir: string;
-  result: VetResult;
+  result: VerdictResult;
 }
 
 function viewportString(v: Viewport | undefined): string | undefined {
@@ -148,7 +148,7 @@ async function buildDefaultAdapter(
         chrome,
         contextRoot,
         logger,
-        chromeProfileName: `gauntlet-run-${runId}`,
+        chromeProfileName: `moe-flight-run-${runId}`,
         viewport,
         credentialResolver,
         runDir,
@@ -163,12 +163,12 @@ export async function executeRunCore(
   const { card, storyPath, runConfig, client, runSetCtx, hooks } = opts;
 
   const runId = opts.runId ?? makeRunId(card.id);
-  const outDir = opts.outDir ?? gauntletPath(runConfig.projectRoot, runConfig.stateDirName, "results", runId);
+  const outDir = opts.outDir ?? flightPath(runConfig.projectRoot, runConfig.stateDirName, "results", runId);
 
   snapshotRunInputs({
     runDir: outDir,
     storyPath,
-    contextRoot: gauntletPath(runConfig.projectRoot, runConfig.stateDirName, "context"),
+    contextRoot: flightPath(runConfig.projectRoot, runConfig.stateDirName, "context"),
   });
 
   const logger = new EvidenceLogger(outDir);

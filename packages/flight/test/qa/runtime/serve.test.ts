@@ -7,7 +7,7 @@ function freePort(): number {
   return 40000 + Math.floor(Math.random() * 10000);
 }
 
-async function waitForOpen(ws: WebSocket): Promise<void> {
+async function _waitForOpen(ws: WebSocket): Promise<void> {
   if (ws.readyState === WebSocket.OPEN) return;
   await new Promise<void>((resolve, reject) => {
     ws.addEventListener("open", () => resolve(), { once: true });

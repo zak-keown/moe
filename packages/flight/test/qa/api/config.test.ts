@@ -4,10 +4,10 @@ import { loadConfig } from "../../../src/qa/config.js";
 import { Hono } from "hono";
 
 describe("Config API", () => {
-  test("GET /api/config returns models from GAUNTLET_MODELS", async () => {
+  test("GET /api/config returns models from MOE_FLIGHT_MODELS", async () => {
     const config = loadConfig({}, {
-      GAUNTLET_MODELS: "claude-sonnet-4-6,claude-opus-4-6",
-      GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6",
+      MOE_FLIGHT_MODELS: "claude-sonnet-4-6,claude-opus-4-6",
+      MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
     } as NodeJS.ProcessEnv);
 
     const app = new Hono();
@@ -19,11 +19,11 @@ describe("Config API", () => {
     expect(body.defaultModel).toBe("claude-sonnet-4-6");
   });
 
-  test("GET /api/config returns empty allow-list when GAUNTLET_MODELS unset", async () => {
-    // GAUNTLET_MODELS is opt-in; when unset, the available list is empty
+  test("GET /api/config returns empty allow-list when MOE_FLIGHT_MODELS unset", async () => {
+    // MOE_FLIGHT_MODELS is opt-in; when unset, the available list is empty
     // (no restriction). The defaultModel still reflects the agent default.
     const config = loadConfig({}, {
-      GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6",
+      MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
     } as NodeJS.ProcessEnv);
 
     const app = new Hono();
@@ -40,7 +40,7 @@ describe("Config API", () => {
     app.route("/api/config", configRoutes(config));
     const res = await app.request("/api/config");
     const body = await res.json();
-    // GAUNTLET_MODELS is unset, so the allow-list is empty; the UI falls
+    // MOE_FLIGHT_MODELS is unset, so the allow-list is empty; the UI falls
     // back to a free-form text input pre-populated with defaultModel.
     expect(body.models).toEqual([]);
     expect(body.defaultModel).toBe("claude-sonnet-4-6");
@@ -49,7 +49,7 @@ describe("Config API", () => {
   test("GET /api/config reflects flag-sourced model (flag beats env)", async () => {
     const config = loadConfig(
       { models: { agent: "claude-opus-4-6" } },
-      { GAUNTLET_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv,
+      { MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6" } as NodeJS.ProcessEnv,
     );
     const app = new Hono();
     app.route("/api/config", configRoutes(config));
@@ -66,7 +66,7 @@ describe("Config API", () => {
     const b1 = await (await app1.request("/api/config")).json();
     expect(b1.defaultSaveScreencast).toBe(false);
 
-    const appEnv = loadConfig({}, { GAUNTLET_SAVE_SCREENCAST: "1" } as NodeJS.ProcessEnv);
+    const appEnv = loadConfig({}, { MOE_FLIGHT_SAVE_SCREENCAST: "1" } as NodeJS.ProcessEnv);
     const app2 = new Hono();
     app2.route("/api/config", configRoutes(appEnv));
     const b2 = await (await app2.request("/api/config")).json();

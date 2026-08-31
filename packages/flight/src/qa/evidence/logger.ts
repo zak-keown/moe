@@ -108,7 +108,7 @@ export interface RunEndFields {
   observationCount: number;
   observations: Array<{ kind: string; description: string; evidence?: string[] | undefined }>;
   /** Per-acceptance-criterion cited verdicts (PRI-2160). Present only
-   * when the result carries them — mirrors VetResult.criteria. */
+   * when the result carries them — mirrors VerdictResult.criteria. */
   criteria?: Array<{ criterion: string; verdict: string; evidence: string }> | undefined;
   durationMs: number;
   usage: {
@@ -126,12 +126,31 @@ export interface RunEndFields {
 
 const INLINE_TEXT_LIMIT = 32 * 1024;
 
-/** obol usage-sidecar schema version (ISO date, matched as an opaque string). PRI-2125. */
+/**
+ * The `type` value of a `usage.jsonl` row, and one half of a cross-package
+ * contract: `@bubstack/moe-tab`'s `tab` dialect declares
+ * `ROW_TYPES = ["moe.tab.usage", "obol.usage"]`
+ * (packages/tab/crates/moe-tab-core/src/transcript/tab.rs) and SKIPS rows whose
+ * type it does not claim — it does not error. Get this string wrong and every
+ * sidecar reads as "no usage", so the QA-driver's cost silently reports zero.
+ *
+ * Upstream this was `"obol.usage"`. moe-tab still accepts that value read-only,
+ * explicitly because the fork renamed it, so pre-fork files stay priceable.
+ *
+ * Pinned by test/lab/usage-row-contract.test.ts.
+ */
+export const USAGE_ROW_TYPE = "moe.tab.usage" as const;
+
+/** moe-tab usage-sidecar schema version (ISO date, matched as an opaque string). PRI-2125.
+ *
+ * `v` deliberately does NOT move with the rebrand: moe-tab matches it as an
+ * opaque string, and bumping it would orphan rows for no gain. The `type`
+ * string DID move — see USAGE_ROW_TYPE. */
 const USAGE_SCHEMA_VERSION = "2026-06-08";
 
 export class EvidenceLogger {
   private outDir: string;
-  // Captured at run_start and stamped onto every usage.jsonl row. A Gauntlet
+  // Captured at run_start and stamped onto every usage.jsonl row. A Flight
   // run is single-model, so the run-level provider/model is right for each call.
   private runProvider?: string;
   private runModel?: string;
@@ -218,18 +237,18 @@ export class EvidenceLogger {
   }
 
   /**
-   * Append one obol cost-sidecar row (`usage.jsonl`) for a single LLM call:
+   * Append one moe-tab cost-sidecar row (`usage.jsonl`) for a single LLM call:
    * the provider's raw `usage` object, verbatim, tagged with the run's
    * provider/model (captured at run_start). The producer does no token math —
-   * obol normalizes per-provider at read time (PRI-2125). `service_tier` is
+   * moe-tab normalizes per-provider at read time (PRI-2125). `service_tier` is
    * hoisted from the raw usage when the provider includes it (Anthropic does),
-   * else omitted so obol assumes the standard tier.
+   * else omitted so moe-tab assumes the standard tier.
    */
   logUsageRow(rawUsage: unknown): void {
     const tier = (rawUsage as { service_tier?: unknown | undefined } | null | undefined)
       ?.service_tier;
     const row = {
-      type: "obol.usage",
+      type: USAGE_ROW_TYPE,
       v: USAGE_SCHEMA_VERSION,
       provider: this.runProvider,
       model: this.runModel,

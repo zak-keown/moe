@@ -47,7 +47,7 @@ interface Post {
   visibility: Visibility;
 }
 
-let posts: Post[] = [];
+const posts: Post[] = [];
 let nextPostId = 1;
 
 function getCookie(req: Request, name: string): string | null {

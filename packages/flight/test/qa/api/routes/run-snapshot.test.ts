@@ -4,7 +4,7 @@ import { tmpdir } from "os";
 import { join } from "path";
 import { Hono } from "hono";
 import { runRoutes } from "../../../../src/qa/api/routes/run.js";
-import { gauntletPath } from "../../../../src/qa/paths.js";
+import { flightPath } from "../../../../src/qa/paths.js";
 import type { AppConfig } from "../../../../src/qa/config.js";
 import type { LLMClient } from "../../../../src/qa/models/provider.js";
 
@@ -26,21 +26,21 @@ function stubClient(): LLMClient {
 
 describe("POST /run/:id — snapshot", () => {
   test("writes <runDir>/inputs/{story.md,context/} synchronously in the handler", async () => {
-    const projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-api-snap-"));
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-api-snap-"));
     try {
-      const storiesDir = gauntletPath(projectRoot, ".gauntlet", "stories");
+      const storiesDir = flightPath(projectRoot, ".moe-flight", "stories");
       mkdirSync(storiesDir, { recursive: true });
       const storyBody =
         "---\nid: snap-story\ntitle: Snap\n---\n# Snap\n\nBody.\n";
       writeFileSync(join(storiesDir, "snap-story.md"), storyBody);
 
-      const ctxRoot = gauntletPath(projectRoot, ".gauntlet", "context");
+      const ctxRoot = flightPath(projectRoot, ".moe-flight", "context");
       mkdirSync(join(ctxRoot, "matt"), { recursive: true });
       writeFileSync(join(ctxRoot, "matt", "identity.md"), "name: matt");
 
       const config: AppConfig = {
         projectRoot,
-        stateDirName: ".gauntlet",
+        stateDirName: ".moe-flight",
         // "claude-stub" (vs "stub") so resolveProvider() in the handler
         // succeeds (anthropic branch). clientFactory below still short-
         // circuits createClient, so no real network client is built.
@@ -69,7 +69,7 @@ describe("POST /run/:id — snapshot", () => {
       // Snapshot is synchronous in the request handler — so it MUST be
       // present as soon as the 202 is returned, regardless of what the
       // detached executeRun goes on to do (including failing).
-      const runDir = gauntletPath(projectRoot, ".gauntlet", "results", body.runs[0].runId);
+      const runDir = flightPath(projectRoot, ".moe-flight", "results", body.runs[0].runId);
       expect(existsSync(join(runDir, "inputs", "story.md"))).toBe(true);
       expect(readFileSync(join(runDir, "inputs", "story.md"), "utf-8")).toBe(storyBody);
       expect(readFileSync(join(runDir, "inputs", "context", "matt", "identity.md"), "utf-8"))

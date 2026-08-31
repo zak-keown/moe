@@ -10,7 +10,7 @@ interface Props {
 // Each entry jumps to the turn via the anchor id set on TurnBlock.
 //
 // The UI surfaces "here's where the run got stuck"; the human decides the
-// category (Gauntlet tool ergonomics, system prompt, story setup) from
+// category (Flight tool ergonomics, system prompt, story setup) from
 // reading the tool + arguments + error text in the linked turn.
 export function ErrorBanner({ sites }: Props) {
   if (sites.length === 0) return null;

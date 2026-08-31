@@ -9,7 +9,7 @@ describe("EvidenceLogger", () => {
   let logger: EvidenceLogger;
 
   beforeEach(() => {
-    outDir = mkdtempSync(join(tmpdir(), "gauntlet-test-"));
+    outDir = mkdtempSync(join(tmpdir(), "moe-flight-test-"));
     logger = new EvidenceLogger(outDir);
   });
 
@@ -154,7 +154,7 @@ describe("EvidenceLogger", () => {
     expect(row.budgetMs).toBe(300_000);
   });
 
-  test("logUsageRow writes an obol.usage sidecar row stamped with run-start provider/model and the raw usage verbatim", () => {
+  test("logUsageRow writes a moe.tab.usage sidecar row stamped with run-start provider/model and the raw usage verbatim", () => {
     logger.logRunStart({
       runId: "r",
       cardId: "card-001",
@@ -180,7 +180,7 @@ describe("EvidenceLogger", () => {
       .split("\n")
       .map((l) => JSON.parse(l));
 
-    expect(row.type).toBe("obol.usage");
+    expect(row.type).toBe("moe.tab.usage");
     expect(row.v).toBe("2026-06-08");
     expect(row.provider).toBe("anthropic");
     expect(row.model).toBe("claude-opus-4-8");

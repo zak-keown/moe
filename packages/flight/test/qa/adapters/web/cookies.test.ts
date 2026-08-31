@@ -50,7 +50,7 @@ describe("readCookiesFile", () => {
   let tmp: string;
 
   beforeEach(() => {
-    tmp = mkdtempSync(join(tmpdir(), "gauntlet-cookies-read-"));
+    tmp = mkdtempSync(join(tmpdir(), "moe-flight-cookies-read-"));
   });
 
   afterEach(() => {
@@ -58,7 +58,7 @@ describe("readCookiesFile", () => {
   });
 
   test("parses a valid cookies YAML (list of entries)", () => {
-    const dir = join(tmp, ".gauntlet", "context", "matt");
+    const dir = join(tmp, ".moe-flight", "context", "matt");
     mkdirSync(dir, { recursive: true });
     const filePath = join(dir, "cookies.yaml");
     writeFileSync(filePath, YAML.stringify(SAMPLE_COOKIES));
@@ -78,7 +78,7 @@ describe("readCookiesFile", () => {
   });
 
   test("throws on malformed YAML with line/column info from the parser", () => {
-    const dir = join(tmp, ".gauntlet", "context", "bad");
+    const dir = join(tmp, ".moe-flight", "context", "bad");
     mkdirSync(dir, { recursive: true });
     const filePath = join(dir, "cookies.yaml");
     // Structurally invalid: keyless mapping with garbage values.
@@ -87,7 +87,7 @@ describe("readCookiesFile", () => {
   });
 
   test("throws when the document is not a list", () => {
-    const dir = join(tmp, ".gauntlet", "context", "wrongshape");
+    const dir = join(tmp, ".moe-flight", "context", "wrongshape");
     mkdirSync(dir, { recursive: true });
     const filePath = join(dir, "cookies.yaml");
     writeFileSync(filePath, YAML.stringify({ name: "x", value: "y", url: "https://e.test/" }));
@@ -95,7 +95,7 @@ describe("readCookiesFile", () => {
   });
 
   test("throws when a required field is missing (name)", () => {
-    const dir = join(tmp, ".gauntlet", "context", "noname");
+    const dir = join(tmp, ".moe-flight", "context", "noname");
     mkdirSync(dir, { recursive: true });
     const filePath = join(dir, "cookies.yaml");
     writeFileSync(
@@ -106,7 +106,7 @@ describe("readCookiesFile", () => {
   });
 
   test("throws when a required field is missing (value)", () => {
-    const dir = join(tmp, ".gauntlet", "context", "noval");
+    const dir = join(tmp, ".moe-flight", "context", "noval");
     mkdirSync(dir, { recursive: true });
     const filePath = join(dir, "cookies.yaml");
     writeFileSync(
@@ -117,7 +117,7 @@ describe("readCookiesFile", () => {
   });
 
   test("throws when origin info is missing (no url, no domain)", () => {
-    const dir = join(tmp, ".gauntlet", "context", "noorigin");
+    const dir = join(tmp, ".moe-flight", "context", "noorigin");
     mkdirSync(dir, { recursive: true });
     const filePath = join(dir, "cookies.yaml");
     writeFileSync(filePath, YAML.stringify([{ name: "_x", value: "y" }]));
@@ -125,7 +125,7 @@ describe("readCookiesFile", () => {
   });
 
   test("throws on a typo'd `samesite` (should be `sameSite`) with a hint", () => {
-    const dir = join(tmp, ".gauntlet", "context", "samesite");
+    const dir = join(tmp, ".moe-flight", "context", "samesite");
     mkdirSync(dir, { recursive: true });
     const filePath = join(dir, "cookies.yaml");
     writeFileSync(
@@ -138,7 +138,7 @@ describe("readCookiesFile", () => {
   });
 
   test("throws on an unknown field with a generic message", () => {
-    const dir = join(tmp, ".gauntlet", "context", "unknown");
+    const dir = join(tmp, ".moe-flight", "context", "unknown");
     mkdirSync(dir, { recursive: true });
     const filePath = join(dir, "cookies.yaml");
     writeFileSync(
@@ -154,7 +154,7 @@ describe("readCookiesFile", () => {
     // Note: CDP allows specifying both — domain+path acts as a fallback
     // when url is omitted. We don't try to enforce mutual exclusion here;
     // Chrome's setCookie is the source of truth on what it accepts.
-    const dir = join(tmp, ".gauntlet", "context", "bothforms");
+    const dir = join(tmp, ".moe-flight", "context", "bothforms");
     mkdirSync(dir, { recursive: true });
     const filePath = join(dir, "cookies.yaml");
     writeFileSync(
@@ -213,10 +213,10 @@ function makeFakeLogger(): { logger: EvidenceLogger; actions: LoggedAction[] } {
   return { logger, actions };
 }
 
-// Creates `<tmp>/.gauntlet/context/<name>/cookies.yaml` for each name
+// Creates `<tmp>/.moe-flight/context/<name>/cookies.yaml` for each name
 // (with SAMPLE_COOKIES content) and returns the context root directory.
 function setupContext(tmp: string, names: string[]): string {
-  const root = join(tmp, ".gauntlet", "context");
+  const root = join(tmp, ".moe-flight", "context");
   mkdirSync(root, { recursive: true });
   for (const n of names) {
     mkdirSync(join(root, n));
@@ -233,7 +233,7 @@ describe("buildInstallCookiesTool", () => {
   let tmp: string;
 
   beforeEach(() => {
-    tmp = mkdtempSync(join(tmpdir(), "gauntlet-cookies-tool-"));
+    tmp = mkdtempSync(join(tmpdir(), "moe-flight-cookies-tool-"));
   });
 
   afterEach(() => {
@@ -241,12 +241,12 @@ describe("buildInstallCookiesTool", () => {
   });
 
   test("returns null when contextRoot does not exist", () => {
-    const root = join(tmp, ".gauntlet", "context");
+    const root = join(tmp, ".moe-flight", "context");
     expect(buildInstallCookiesTool(root, 0, makeDriver([]).driver)).toBeNull();
   });
 
   test("returns null when contextRoot is empty", () => {
-    const root = join(tmp, ".gauntlet", "context");
+    const root = join(tmp, ".moe-flight", "context");
     mkdirSync(root, { recursive: true });
     expect(buildInstallCookiesTool(root, 0, makeDriver([]).driver)).toBeNull();
   });
@@ -261,7 +261,7 @@ describe("buildInstallCookiesTool", () => {
     // Mirrors the install_passkey predicate: non-empty directory only.
     // The runner does not scan for `cookies.yaml` (spec §2.1 — runner
     // does not interpret filenames).
-    const root = join(tmp, ".gauntlet", "context");
+    const root = join(tmp, ".moe-flight", "context");
     mkdirSync(root, { recursive: true });
     writeFileSync(join(root, "alice.md"), "flat profile, no cookies");
     const tool = buildInstallCookiesTool(root, 0, makeDriver([]).driver);
@@ -293,7 +293,7 @@ describe("buildInstallCookiesTool", () => {
     const expected =
       "Install cookies into the browser, reading them from a YAML file under " +
       "the project's context directory. The path is relative to " +
-      ".gauntlet/context/ (example: \"alice/cookies.yaml\"). The file is a list " +
+      ".moe-flight/context/ (example: \"alice/cookies.yaml\"). The file is a list " +
       "of cookie entries; each entry mirrors Chrome's Network.setCookie " +
       "parameters (name, value, plus either url or domain+path, and optional " +
       "secure, httpOnly, sameSite, expires). Call this once, before navigating " +

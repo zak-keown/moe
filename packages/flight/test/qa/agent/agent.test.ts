@@ -351,7 +351,7 @@ describe("runAgent", () => {
     });
   });
 
-  test("emits an obol usage row per LLM call carrying the provider's raw usage", async () => {
+  test("emits a moe.tab.usage row per LLM call carrying the provider's raw usage", async () => {
     const rows: unknown[] = [];
     const logger = {
       ...makeMockLogger(),
@@ -907,7 +907,7 @@ describe("runAgent", () => {
           id: "call_1",
           name: "report_result",
           arguments: {
-            status: "success", // not a valid VetStatus — core verdict unusable
+            status: "success", // not a valid VerdictStatus — core verdict unusable
             summary: "x",
             reasoning: "y",
           },

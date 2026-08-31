@@ -80,12 +80,12 @@ export function handleSetWsOpen(
   setBroadcaster: RunSetBroadcaster,
   runSetId: string,
   ws: WsLike,
-  gauntletRoot: string,
+  flightRoot: string,
 ): void {
   setBroadcaster.addClient(runSetId, ws);
 
   // Send initial snapshot if the set already has a manifest on disk.
-  const path = join(gauntletRoot, "run-sets", runSetId, "set.json");
+  const path = join(flightRoot, "run-sets", runSetId, "set.json");
   if (existsSync(path)) {
     try {
       const manifest = JSON.parse(readFileSync(path, "utf8"));

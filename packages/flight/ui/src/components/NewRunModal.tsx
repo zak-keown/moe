@@ -191,7 +191,7 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
             )}
             {!model && availableModels.length === 0 && (
               <p className="text-xs text-red-600 mt-1">
-                No model configured. Set GAUNTLET_MODELS or GAUNTLET_AGENT_MODEL on the server.
+                No model configured. Set MOE_FLIGHT_MODELS or MOE_FLIGHT_AGENT_MODEL on the server.
               </p>
             )}
           </div>

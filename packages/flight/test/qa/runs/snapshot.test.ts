@@ -6,7 +6,7 @@ import { snapshotRunInputs } from "../../../src/qa/runs/snapshot.js";
 
 describe("snapshotRunInputs", () => {
   test("copies the story file byte-for-byte", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-snap-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-snap-"));
     try {
       const runDir = join(tmp, "run");
       mkdirSync(runDir);
@@ -27,7 +27,7 @@ describe("snapshotRunInputs", () => {
   });
 
   test("copies a populated context tree verbatim", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-snap-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-snap-"));
     try {
       const runDir = join(tmp, "run");
       mkdirSync(runDir);
@@ -56,7 +56,7 @@ describe("snapshotRunInputs", () => {
   });
 
   test("empty source context yields an empty inputs/context/", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-snap-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-snap-"));
     try {
       const runDir = join(tmp, "run");
       mkdirSync(runDir);
@@ -76,7 +76,7 @@ describe("snapshotRunInputs", () => {
   });
 
   test("missing source context yields an empty inputs/context/", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-snap-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-snap-"));
     try {
       const runDir = join(tmp, "run");
       mkdirSync(runDir);
@@ -95,7 +95,7 @@ describe("snapshotRunInputs", () => {
   });
 
   test("seeds scratch/ from context (cp -r), structure preserved", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-snap-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-snap-"));
     try {
       const runDir = join(tmp, "run");
       mkdirSync(runDir);
@@ -126,7 +126,7 @@ describe("snapshotRunInputs", () => {
   });
 
   test("empty context still creates an empty scratch/", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-snap-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-snap-"));
     try {
       const runDir = join(tmp, "run");
       mkdirSync(runDir);
@@ -146,7 +146,7 @@ describe("snapshotRunInputs", () => {
   });
 
   test("missing context still creates an empty scratch/", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-snap-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-snap-"));
     try {
       const runDir = join(tmp, "run");
       mkdirSync(runDir);
@@ -165,7 +165,7 @@ describe("snapshotRunInputs", () => {
   });
 
   test("creates inputs/ even when runDir does not exist yet", () => {
-    const tmp = mkdtempSync(join(tmpdir(), "gauntlet-snap-"));
+    const tmp = mkdtempSync(join(tmpdir(), "moe-flight-snap-"));
     try {
       const runDir = join(tmp, "not-yet", "run-xyz");
       const storyPath = join(tmp, "story.md");

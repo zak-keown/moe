@@ -2,7 +2,7 @@ import type { ConfigArgs } from "./args.js";
 import { loadConfig, type AppConfig } from "../config.js";
 
 interface ConfigOutput {
-  gauntlet: {
+  flight: {
     projectRoot: string;
     stateDirName: string;
     port: number;
@@ -42,7 +42,7 @@ interface ConfigOutput {
 
 export function buildConfigOutput(config: AppConfig, env: NodeJS.ProcessEnv): ConfigOutput {
   return {
-    gauntlet: {
+    flight: {
       projectRoot: config.projectRoot,
       stateDirName: config.stateDirName,
       port: config.port,
@@ -86,32 +86,32 @@ export function buildConfigOutput(config: AppConfig, env: NodeJS.ProcessEnv): Co
 
 export function formatConfigText(output: ConfigOutput): string {
   const lines: string[] = [];
-  lines.push("# Gauntlet configuration");
+  lines.push("# Flight configuration");
   lines.push("");
-  lines.push(`  projectRoot:    ${output.gauntlet.projectRoot}  (${output.gauntlet.sources.projectRoot})`);
-  lines.push(`  stateDirName:   ${output.gauntlet.stateDirName}  (${output.gauntlet.sources.stateDirName})`);
-  lines.push(`  port:           ${output.gauntlet.port}  (${output.gauntlet.sources.port})`);
-  lines.push(`  defaultChrome:  ${output.gauntlet.defaultChrome.host}:${output.gauntlet.defaultChrome.port}  (${output.gauntlet.sources.defaultChrome})`);
-  lines.push(`  defaultTarget:  ${output.gauntlet.defaultTarget ?? "(unset)"}  (${output.gauntlet.sources.defaultTarget})`);
-  lines.push(`  defaultBudgetMs: ${output.gauntlet.defaultBudgetMs}  (${output.gauntlet.sources.defaultBudgetMs})`);
-  lines.push(`  defaultReflectionInterval: ${output.gauntlet.defaultReflectionInterval}  (${output.gauntlet.sources.defaultReflectionInterval})`);
-  lines.push(`  defaultViewport: ${output.gauntlet.defaultViewport.width}x${output.gauntlet.defaultViewport.height}  (${output.gauntlet.sources.defaultViewport})`);
-  lines.push(`  defaultSaveScreencast: ${output.gauntlet.defaultSaveScreencast}  (${output.gauntlet.sources.defaultSaveScreencast})`);
-  lines.push(`  shutdownGraceMs: ${output.gauntlet.shutdownGraceMs}  (${output.gauntlet.sources.shutdownGraceMs})`);
-  lines.push(`  maxRequestBodySize: ${output.gauntlet.maxRequestBodySize}  (${output.gauntlet.sources.maxRequestBodySize})`);
-  lines.push(`  maxConcurrentRuns: ${output.gauntlet.maxConcurrentRuns}  (${output.gauntlet.sources.maxConcurrentRuns})`);
-  lines.push(`  activeRunTargetMaxBytes: ${output.gauntlet.activeRunTargetMaxBytes}  (${output.gauntlet.sources.activeRunTargetMaxBytes})`);
-  lines.push(`  wsIdleTimeoutSec: ${output.gauntlet.wsIdleTimeoutSec}  (${output.gauntlet.sources.wsIdleTimeoutSec})`);
-  lines.push(`  wsOriginAllowlist: [${output.gauntlet.wsOriginAllowlist.join(", ")}]  (${output.gauntlet.sources.wsOriginAllowlist})`);
-  lines.push(`  models.agent:   ${output.gauntlet.models.agent}  (${output.gauntlet.sources["models.agent"]})`);
-  lines.push(`  models.fanout:  ${output.gauntlet.models.fanout ?? "(unset)"}  (${output.gauntlet.sources["models.fanout"]})`);
-  lines.push(`  models.available: [${output.gauntlet.models.available.join(", ")}]  (${output.gauntlet.sources["models.available"]})`);
+  lines.push(`  projectRoot:    ${output.flight.projectRoot}  (${output.flight.sources.projectRoot})`);
+  lines.push(`  stateDirName:   ${output.flight.stateDirName}  (${output.flight.sources.stateDirName})`);
+  lines.push(`  port:           ${output.flight.port}  (${output.flight.sources.port})`);
+  lines.push(`  defaultChrome:  ${output.flight.defaultChrome.host}:${output.flight.defaultChrome.port}  (${output.flight.sources.defaultChrome})`);
+  lines.push(`  defaultTarget:  ${output.flight.defaultTarget ?? "(unset)"}  (${output.flight.sources.defaultTarget})`);
+  lines.push(`  defaultBudgetMs: ${output.flight.defaultBudgetMs}  (${output.flight.sources.defaultBudgetMs})`);
+  lines.push(`  defaultReflectionInterval: ${output.flight.defaultReflectionInterval}  (${output.flight.sources.defaultReflectionInterval})`);
+  lines.push(`  defaultViewport: ${output.flight.defaultViewport.width}x${output.flight.defaultViewport.height}  (${output.flight.sources.defaultViewport})`);
+  lines.push(`  defaultSaveScreencast: ${output.flight.defaultSaveScreencast}  (${output.flight.sources.defaultSaveScreencast})`);
+  lines.push(`  shutdownGraceMs: ${output.flight.shutdownGraceMs}  (${output.flight.sources.shutdownGraceMs})`);
+  lines.push(`  maxRequestBodySize: ${output.flight.maxRequestBodySize}  (${output.flight.sources.maxRequestBodySize})`);
+  lines.push(`  maxConcurrentRuns: ${output.flight.maxConcurrentRuns}  (${output.flight.sources.maxConcurrentRuns})`);
+  lines.push(`  activeRunTargetMaxBytes: ${output.flight.activeRunTargetMaxBytes}  (${output.flight.sources.activeRunTargetMaxBytes})`);
+  lines.push(`  wsIdleTimeoutSec: ${output.flight.wsIdleTimeoutSec}  (${output.flight.sources.wsIdleTimeoutSec})`);
+  lines.push(`  wsOriginAllowlist: [${output.flight.wsOriginAllowlist.join(", ")}]  (${output.flight.sources.wsOriginAllowlist})`);
+  lines.push(`  models.agent:   ${output.flight.models.agent}  (${output.flight.sources["models.agent"]})`);
+  lines.push(`  models.fanout:  ${output.flight.models.fanout ?? "(unset)"}  (${output.flight.sources["models.fanout"]})`);
+  lines.push(`  models.available: [${output.flight.models.available.join(", ")}]  (${output.flight.sources["models.available"]})`);
   lines.push("");
   lines.push("# API keys");
-  lines.push(`  anthropic:      ${output.gauntlet.apiKeys.anthropic}`);
-  lines.push(`  openai:         ${output.gauntlet.apiKeys.openai}`);
+  lines.push(`  anthropic:      ${output.flight.apiKeys.anthropic}`);
+  lines.push(`  openai:         ${output.flight.apiKeys.openai}`);
   lines.push("");
-  lines.push("# SDK-visible environment variables (pass through to SDKs, not read by Gauntlet)");
+  lines.push("# SDK-visible environment variables (pass through to SDKs, not read by Flight)");
   for (const [k, v] of Object.entries(output.sdkEnv)) {
     lines.push(`  ${k.padEnd(22)}${v === null ? "(unset)" : v}`);
   }

@@ -23,8 +23,8 @@ export interface CredentialResolverConfig {
 export interface AppConfig {
   projectRoot: string;
   /**
-   * Name of the per-project state directory (default `.gauntlet`). Overridable
-   * via `--state-dir` or `GAUNTLET_STATE_DIR` for users who prefer a different
+   * Name of the per-project state directory (default `.moe-flight`). Overridable
+   * via `--state-dir` or `MOE_FLIGHT_STATE_DIR` for users who prefer a different
    * leaf name. Must be a single path segment — no slashes, no `..`. Lives at
    * `<projectRoot>/<stateDirName>/`.
    */
@@ -33,7 +33,7 @@ export interface AppConfig {
   defaultChrome: ChromeEndpoint;
   /**
    * Default target URL, surfaced to the UI as a prefill for the New Run
-   * form. Sourced from --target or GAUNTLET_TARGET. Undefined when the
+   * form. Sourced from --target or MOE_FLIGHT_TARGET. Undefined when the
    * operator did not supply one; in that case the UI leaves the field
    * blank.
    */
@@ -41,7 +41,7 @@ export interface AppConfig {
   /**
    * Wall-clock budget for an agent run in milliseconds. The agent loop
    * exits when `Date.now() >= deadline`. Default 300_000 (5 min); override
-   * via `--max-time` or `GAUNTLET_MAX_TIME`.
+   * via `--max-time` or `MOE_FLIGHT_MAX_TIME`.
    */
   defaultBudgetMs: number;
   /**
@@ -68,7 +68,7 @@ export interface AppConfig {
    */
   defaultSaveScreencast: boolean;
   /**
-   * Maximum time (ms) `gauntlet serve` waits for in-flight runs to
+   * Maximum time (ms) `moe-flight qa serve` waits for in-flight runs to
    * complete naturally after receiving SIGTERM/SIGINT/SIGHUP before
    * forcing exit. PRI-1477.
    */
@@ -100,7 +100,7 @@ export interface AppConfig {
   /**
    * If non-empty, only accept WebSocket upgrades whose `Origin` header
    * matches one of these strings exactly. Defense-in-depth, opt-in via
-   * `GAUNTLET_WS_ORIGIN_ALLOWLIST`. PRI-1483.
+   * `MOE_FLIGHT_WS_ORIGIN_ALLOWLIST`. PRI-1483.
    */
   wsOriginAllowlist: string[];
   models: {
@@ -116,7 +116,7 @@ export interface AppConfig {
    * Caller-provided runtime credential resolver. When set, the
    * `fetch_credential` agent tool is registered and invokes this
    * executable per call with `<entity> <key>` as argv. Undefined when
-   * GAUNTLET_CREDENTIAL_RESOLVER is unset. PRI-1605.
+   * MOE_FLIGHT_CREDENTIAL_RESOLVER is unset. PRI-1605.
    */
   credentialResolver?: CredentialResolverConfig | undefined;
   sources: {
@@ -222,7 +222,7 @@ function assertViewportBounds(v: Viewport, label: string): void {
   }
 }
 
-export function validateRunBody(body: unknown, opts: Record<string, never> = {}): RunRequestBody {
+export function validateRunBody(body: unknown, _opts: Record<string, never> = {}): RunRequestBody {
   if (!body || typeof body !== "object") {
     throw new Error("run request body must be an object");
   }
@@ -231,7 +231,7 @@ export function validateRunBody(body: unknown, opts: Record<string, never> = {})
   // a targeted error instead of "unknown field: turns".
   if (bodyObj.turns !== undefined) {
     throw new Error(
-      "run request body: field `turns` is no longer accepted; configure budget server-side via --max-time or GAUNTLET_MAX_TIME",
+      "run request body: field `turns` is no longer accepted; configure budget server-side via --max-time or MOE_FLIGHT_MAX_TIME",
     );
   }
   const unknown = Object.keys(bodyObj).filter((k) => !RUN_BODY_ALLOWED.has(k));
@@ -292,7 +292,7 @@ export function mergeRunConfig(app: AppConfig, body: RunRequestBody): ResolvedRu
   // Source attribution is the tiebreaker — if the user never specified a
   // chrome endpoint anywhere, leave it undefined so WebAdapter falls back
   // to its auto-launch path instead of trying to attach to the default
-  // 127.0.0.1:9222 (which silently breaks plain `gauntlet run`).
+  // 127.0.0.1:9222 (which silently breaks plain `moe-flight qa run`).
   const chrome: ChromeEndpoint | undefined = body.chrome
     ? parseChromeEndpoint(body.chrome, "body.chrome")
     : app.sources.defaultChrome === "default"
@@ -314,7 +314,7 @@ export function mergeRunConfig(app: AppConfig, body: RunRequestBody): ResolvedRu
 }
 
 const DEFAULT_PROJECT_ROOT = ".";
-const DEFAULT_STATE_DIR_NAME = ".gauntlet";
+const DEFAULT_STATE_DIR_NAME = ".moe-flight";
 const DEFAULT_PORT = 4400;
 const DEFAULT_CHROME: ChromeEndpoint = { host: "127.0.0.1", port: 9222 };
 const DEFAULT_SHUTDOWN_GRACE_MS = 10000;
@@ -385,18 +385,18 @@ function resolveCredentialResolver(
     stat = statSync(absolute);
   } catch (err) {
     throw new Error(
-      `Invalid GAUNTLET_CREDENTIAL_RESOLVER "${rawPath}": cannot stat "${absolute}" (${(err as Error).message})`,
+      `Invalid MOE_FLIGHT_CREDENTIAL_RESOLVER "${rawPath}": cannot stat "${absolute}" (${(err as Error).message})`,
     );
   }
   if (!stat.isFile()) {
     throw new Error(
-      `Invalid GAUNTLET_CREDENTIAL_RESOLVER "${rawPath}": "${absolute}" is not a regular file`,
+      `Invalid MOE_FLIGHT_CREDENTIAL_RESOLVER "${rawPath}": "${absolute}" is not a regular file`,
     );
   }
   // Any execute bit set (owner, group, or other).
   if ((stat.mode & 0o111) === 0) {
     throw new Error(
-      `Invalid GAUNTLET_CREDENTIAL_RESOLVER "${rawPath}": "${absolute}" is not executable (mode ${(stat.mode & 0o777).toString(8)})`,
+      `Invalid MOE_FLIGHT_CREDENTIAL_RESOLVER "${rawPath}": "${absolute}" is not executable (mode ${(stat.mode & 0o777).toString(8)})`,
     );
   }
   return absolute;
@@ -417,7 +417,7 @@ export function requireLlmCapable(config: AppConfig): void {
     throw new Error(
       "No LLM provider configured. Set CLAUDE_CODE_OAUTH_TOKEN (a Claude " +
       "subscription token from `claude setup-token`) or ANTHROPIC_API_KEY (for " +
-      "Claude models), or OPENAI_API_KEY (for GPT models). Run 'gauntlet config' " +
+      "Claude models), or OPENAI_API_KEY (for GPT models). Run 'moe-flight qa config' " +
       "to see current state.",
     );
   }
@@ -427,17 +427,17 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   // projectRoot
   const projectRootR = resolveSetting({
     default: DEFAULT_PROJECT_ROOT,
-    env: { name: "GAUNTLET_PROJECT_ROOT", parse: (s) => s },
+    env: { name: "MOE_FLIGHT_PROJECT_ROOT", parse: (s) => s },
     arg: { value: args.projectRoot },
   }, env);
   const projectRoot = projectRootR.value;
   const projectRootSource = projectRootR.source;
 
   // stateDirName — leaf name of the per-project state directory under
-  // projectRoot. Single segment only (validated). Default ".gauntlet".
+  // projectRoot. Single segment only (validated). Default ".moe-flight".
   const stateDirNameR = resolveSetting({
     default: DEFAULT_STATE_DIR_NAME,
-    env: { name: "GAUNTLET_STATE_DIR", parse: (s) => parseStateDirName(s, "GAUNTLET_STATE_DIR") },
+    env: { name: "MOE_FLIGHT_STATE_DIR", parse: (s) => parseStateDirName(s, "MOE_FLIGHT_STATE_DIR") },
     arg: { value: args.stateDirName !== undefined ? parseStateDirName(args.stateDirName, "--state-dir") : undefined },
   }, env);
   const stateDirName = stateDirNameR.value;
@@ -446,7 +446,7 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   // port
   const portR = resolveSetting({
     default: DEFAULT_PORT,
-    env: { name: "GAUNTLET_PORT", parse: (s) => parsePortNumber(s, "GAUNTLET_PORT") },
+    env: { name: "MOE_FLIGHT_PORT", parse: (s) => parsePortNumber(s, "MOE_FLIGHT_PORT") },
     arg: { value: args.port },
   }, env);
   const port = portR.value;
@@ -457,7 +457,7 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   // reads it to decide whether to auto-launch Chrome.
   const chromeR = resolveSetting({
     default: DEFAULT_CHROME,
-    env: { name: "GAUNTLET_CHROME", parse: (s) => parseChromeEndpoint(s, "GAUNTLET_CHROME") },
+    env: { name: "MOE_FLIGHT_CHROME", parse: (s) => parseChromeEndpoint(s, "MOE_FLIGHT_CHROME") },
     arg: { value: args.chrome !== undefined ? parseChromeEndpoint(args.chrome, "--chrome") : undefined },
   }, env);
   const defaultChrome = chromeR.value;
@@ -468,7 +468,7 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   const targetR = resolveSetting<string | undefined, "unset">({
     default: undefined,
     noValueSource: "unset",
-    env: { name: "GAUNTLET_TARGET", parse: (s) => s },
+    env: { name: "MOE_FLIGHT_TARGET", parse: (s) => s },
     arg: { value: args.target },
   }, env);
   const defaultTarget = targetR.value;
@@ -477,7 +477,7 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   // defaultViewport
   const viewportR = resolveSetting({
     default: DEFAULT_VIEWPORT,
-    env: { name: "GAUNTLET_VIEWPORT", parse: (s) => parseViewportString(s, "GAUNTLET_VIEWPORT") },
+    env: { name: "MOE_FLIGHT_VIEWPORT", parse: (s) => parseViewportString(s, "MOE_FLIGHT_VIEWPORT") },
     arg: { value: args.viewport !== undefined ? parseViewportString(args.viewport, "--viewport") : undefined },
   }, env);
   const defaultViewport = viewportR.value;
@@ -489,7 +489,7 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   // unaffected either way.
   const saveScreencastR = resolveSetting({
     default: false,
-    env: { name: "GAUNTLET_SAVE_SCREENCAST", parse: (s) => parseBoolEnv(s, "GAUNTLET_SAVE_SCREENCAST") },
+    env: { name: "MOE_FLIGHT_SAVE_SCREENCAST", parse: (s) => parseBoolEnv(s, "MOE_FLIGHT_SAVE_SCREENCAST") },
     arg: { value: args.saveScreencast },
   }, env);
   const defaultSaveScreencast = saveScreencastR.value;
@@ -506,7 +506,7 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   };
   const budgetR = resolveSetting({
     default: DEFAULT_BUDGET_MS,
-    env: { name: "GAUNTLET_MAX_TIME", parse: (s) => parseBudget(s, "GAUNTLET_MAX_TIME") },
+    env: { name: "MOE_FLIGHT_MAX_TIME", parse: (s) => parseBudget(s, "MOE_FLIGHT_MAX_TIME") },
     arg: { value: args.maxTime !== undefined ? parseBudget(args.maxTime, "--max-time") : undefined },
   }, env);
   const defaultBudgetMs = budgetR.value;
@@ -523,10 +523,10 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   const reflectionR = resolveSetting({
     default: DEFAULT_REFLECTION_INTERVAL,
     env: {
-      name: "GAUNTLET_REFLECTION_INTERVAL",
+      name: "MOE_FLIGHT_REFLECTION_INTERVAL",
       parse: (raw) => {
         if (!/^\d+$/.test(raw)) {
-          throw new Error(`Invalid GAUNTLET_REFLECTION_INTERVAL "${raw}": expected non-negative integer (0 disables)`);
+          throw new Error(`Invalid MOE_FLIGHT_REFLECTION_INTERVAL "${raw}": expected non-negative integer (0 disables)`);
         }
         return parseInt(raw, 10);
       },
@@ -551,7 +551,7 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   // No flag override; this is an operator-level knob (env only).
   const shutdownGraceR = resolveEnvOnlySetting({
     default: DEFAULT_SHUTDOWN_GRACE_MS,
-    env: { name: "GAUNTLET_SHUTDOWN_GRACE_MS", parse: (s) => parseNonNegInt(s, "GAUNTLET_SHUTDOWN_GRACE_MS") },
+    env: { name: "MOE_FLIGHT_SHUTDOWN_GRACE_MS", parse: (s) => parseNonNegInt(s, "MOE_FLIGHT_SHUTDOWN_GRACE_MS") },
   }, env);
   const shutdownGraceMs = shutdownGraceR.value;
   const shutdownGraceMsSource = shutdownGraceR.source;
@@ -559,21 +559,21 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   // PRI-1478 caps — operator-level knobs (env only).
   const maxRequestBodySizeR = resolveEnvOnlySetting({
     default: DEFAULT_MAX_REQUEST_BODY_SIZE,
-    env: { name: "GAUNTLET_MAX_REQUEST_BODY_SIZE", parse: (s) => parseNonNegInt(s, "GAUNTLET_MAX_REQUEST_BODY_SIZE") },
+    env: { name: "MOE_FLIGHT_MAX_REQUEST_BODY_SIZE", parse: (s) => parseNonNegInt(s, "MOE_FLIGHT_MAX_REQUEST_BODY_SIZE") },
   }, env);
   const maxRequestBodySize = maxRequestBodySizeR.value;
   const maxRequestBodySizeSource = maxRequestBodySizeR.source;
 
   const maxConcurrentRunsR = resolveEnvOnlySetting({
     default: DEFAULT_MAX_CONCURRENT_RUNS,
-    env: { name: "GAUNTLET_MAX_CONCURRENT_RUNS", parse: (s) => parseNonNegInt(s, "GAUNTLET_MAX_CONCURRENT_RUNS") },
+    env: { name: "MOE_FLIGHT_MAX_CONCURRENT_RUNS", parse: (s) => parseNonNegInt(s, "MOE_FLIGHT_MAX_CONCURRENT_RUNS") },
   }, env);
   const maxConcurrentRuns = maxConcurrentRunsR.value;
   const maxConcurrentRunsSource = maxConcurrentRunsR.source;
 
   const activeRunTargetMaxBytesR = resolveEnvOnlySetting({
     default: DEFAULT_ACTIVE_RUN_TARGET_MAX_BYTES,
-    env: { name: "GAUNTLET_ACTIVE_RUN_TARGET_MAX_BYTES", parse: (s) => parseNonNegInt(s, "GAUNTLET_ACTIVE_RUN_TARGET_MAX_BYTES") },
+    env: { name: "MOE_FLIGHT_ACTIVE_RUN_TARGET_MAX_BYTES", parse: (s) => parseNonNegInt(s, "MOE_FLIGHT_ACTIVE_RUN_TARGET_MAX_BYTES") },
   }, env);
   const activeRunTargetMaxBytes = activeRunTargetMaxBytesR.value;
   const activeRunTargetMaxBytesSource = activeRunTargetMaxBytesR.source;
@@ -581,14 +581,14 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   // PRI-1483 WebSocket hygiene knobs.
   const wsIdleTimeoutSecR = resolveEnvOnlySetting({
     default: DEFAULT_WS_IDLE_TIMEOUT_SEC,
-    env: { name: "GAUNTLET_WS_IDLE_TIMEOUT_SEC", parse: (s) => parseNonNegInt(s, "GAUNTLET_WS_IDLE_TIMEOUT_SEC") },
+    env: { name: "MOE_FLIGHT_WS_IDLE_TIMEOUT_SEC", parse: (s) => parseNonNegInt(s, "MOE_FLIGHT_WS_IDLE_TIMEOUT_SEC") },
   }, env);
   const wsIdleTimeoutSec = wsIdleTimeoutSecR.value;
   const wsIdleTimeoutSecSource = wsIdleTimeoutSecR.source;
 
   const wsOriginAllowlistR = resolveEnvOnlySetting<string[]>({
     default: [],
-    env: { name: "GAUNTLET_WS_ORIGIN_ALLOWLIST", parse: (s) => s.split(",").map((x) => x.trim()).filter(Boolean) },
+    env: { name: "MOE_FLIGHT_WS_ORIGIN_ALLOWLIST", parse: (s) => s.split(",").map((x) => x.trim()).filter(Boolean) },
   }, env);
   const wsOriginAllowlist = wsOriginAllowlistR.value;
   const wsOriginAllowlistSource = wsOriginAllowlistR.source;
@@ -596,7 +596,7 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   // models.agent
   const agentR = resolveSetting({
     default: DEFAULT_AGENT_MODEL,
-    env: { name: "GAUNTLET_AGENT_MODEL", parse: (s) => s },
+    env: { name: "MOE_FLIGHT_AGENT_MODEL", parse: (s) => s },
     arg: { value: args.models?.agent },
   }, env);
   const agentModel = agentR.value;
@@ -606,7 +606,7 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   const fanoutR = resolveSetting<string | undefined, "unset">({
     default: undefined,
     noValueSource: "unset",
-    env: { name: "GAUNTLET_FANOUT_MODEL", parse: (s) => s },
+    env: { name: "MOE_FLIGHT_FANOUT_MODEL", parse: (s) => s },
     arg: { value: args.models?.fanout },
   }, env);
   const fanoutModel = fanoutR.value;
@@ -614,12 +614,12 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
 
   // models.available — operator-controlled allow-list. Empty means "no
   // restriction": per-request body model overrides flow through unchecked.
-  // When the operator sets GAUNTLET_MODELS, the route layer enforces it.
+  // When the operator sets MOE_FLIGHT_MODELS, the route layer enforces it.
   // (sources tracker typed `default | env | flag` for back-compat; flag
   // is unreachable since there is no --models flag.)
   const availableR = resolveEnvOnlySetting<string[]>({
     default: [],
-    env: { name: "GAUNTLET_MODELS", parse: (s) => s.split(",").map((x) => x.trim()).filter(Boolean) },
+    env: { name: "MOE_FLIGHT_MODELS", parse: (s) => s.split(",").map((x) => x.trim()).filter(Boolean) },
   }, env);
   const availableModels = availableR.value;
   const availableSource: "default" | "env" | "flag" = availableR.source;
@@ -644,17 +644,17 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   // through it would be noisier than the explicit block.
   let credentialResolver: CredentialResolverConfig | undefined;
   let credentialResolverSource: "default" | "env" = "default";
-  if (env.GAUNTLET_CREDENTIAL_RESOLVER) {
+  if (env.MOE_FLIGHT_CREDENTIAL_RESOLVER) {
     const resolvedPath = resolveCredentialResolver(
-      env.GAUNTLET_CREDENTIAL_RESOLVER,
+      env.MOE_FLIGHT_CREDENTIAL_RESOLVER,
       projectRoot,
     );
-    const rawTimeout = env.GAUNTLET_CREDENTIAL_RESOLVER_TIMEOUT_MS;
+    const rawTimeout = env.MOE_FLIGHT_CREDENTIAL_RESOLVER_TIMEOUT_MS;
     const timeoutMs = rawTimeout
-      ? parseNonNegInt(rawTimeout, "GAUNTLET_CREDENTIAL_RESOLVER_TIMEOUT_MS")
+      ? parseNonNegInt(rawTimeout, "MOE_FLIGHT_CREDENTIAL_RESOLVER_TIMEOUT_MS")
       : DEFAULT_CREDENTIAL_RESOLVER_TIMEOUT_MS;
-    const includeInTranscripts = env.GAUNTLET_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS
-      ? parseBoolEnv(env.GAUNTLET_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS, "GAUNTLET_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS")
+    const includeInTranscripts = env.MOE_FLIGHT_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS
+      ? parseBoolEnv(env.MOE_FLIGHT_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS, "MOE_FLIGHT_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS")
       : false;
     credentialResolver = { path: resolvedPath, timeoutMs, includeInTranscripts };
     credentialResolverSource = "env";

@@ -390,7 +390,7 @@ After step 5: `bun test` passes.
 Run against the established fixture:
 
 ```
-bun run gauntlet run examples/tutorial/tutorial-04-login-credentials.md \
+bun run moe-flight qa run examples/tutorial/tutorial-04-login-credentials.md \
   --model gpt-5.4-mini \
   --reflection-interval 10000
 ```

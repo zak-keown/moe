@@ -4,9 +4,9 @@ import { join } from "path";
 import { parseStoryCard } from "../../format/story-card.js";
 import { generateFanout, generateFromObservations, generateFromFailure } from "../../fanout/generator.js";
 import { createClient } from "../../models/resolve.js";
-import { gauntletPath } from "../../paths.js";
+import { flightPath } from "../../paths.js";
 import type { LLMClient } from "../../models/provider.js";
-import type { VetResult } from "../../types.js";
+import type { VerdictResult } from "../../types.js";
 import type { AppConfig } from "../../config.js";
 import { findCard } from "../../cards/store.js";
 import type { ErrorLog } from "../../util/error-log.js";
@@ -16,7 +16,7 @@ function resolveClient(config: AppConfig, clientFactory?: () => LLMClient): Pars
   if (clientFactory) return { ok: true, value: clientFactory() };
   const model = config.models.fanout ?? config.models.agent;
   if (config.models.available.length > 0 && !config.models.available.includes(model)) {
-    return { ok: false, reason: `model "${model}" is not in GAUNTLET_MODELS allow-list` };
+    return { ok: false, reason: `model "${model}" is not in MOE_FLIGHT_MODELS allow-list` };
   }
   return { ok: true, value: createClient(model) };
 }
@@ -52,13 +52,13 @@ function writeCards(
 type Mode = "observations" | "failure";
 
 interface ModeConfig {
-  generator: (result: VetResult, client: LLMClient) => Promise<string[]>;
+  generator: (result: VerdictResult, client: LLMClient) => Promise<string[]>;
   errorLabel: string;
   // Returns an error message to send as 400, or null to proceed.
   // Observations has no precondition check (zero observations is a success
   // with empty results, handled separately below); failure requires
   // status === "fail".
-  preflight?: ((result: VetResult) => string | null) | undefined;
+  preflight?: ((result: VerdictResult) => string | null) | undefined;
 }
 
 const MODES: Record<Mode, ModeConfig> = {
@@ -81,7 +81,7 @@ export function fanoutRoutes(config: AppConfig, clientFactory?: () => LLMClient,
   const router = new Hono();
   const projectRoot = config.projectRoot;
   const stateDirName = config.stateDirName;
-  const storiesDir = gauntletPath(projectRoot, stateDirName, "stories");
+  const storiesDir = flightPath(projectRoot, stateDirName, "stories");
 
   router.post("/:id", async (c) => {
     const cardId = c.req.param("id");
@@ -108,10 +108,10 @@ export function fanoutRoutes(config: AppConfig, clientFactory?: () => LLMClient,
     const modeConfig = MODES[mode];
 
     const runId = c.req.param("id");
-    const resultPath = gauntletPath(projectRoot, stateDirName, "results", runId, "result.json");
+    const resultPath = flightPath(projectRoot, stateDirName, "results", runId, "result.json");
     if (!existsSync(resultPath)) return c.json({ error: "not found" }, 404);
 
-    const result: VetResult = JSON.parse(readFileSync(resultPath, "utf-8"));
+    const result: VerdictResult = JSON.parse(readFileSync(resultPath, "utf-8"));
     const cardId = result.scenario;
 
     const preflightError = modeConfig.preflight?.(result);

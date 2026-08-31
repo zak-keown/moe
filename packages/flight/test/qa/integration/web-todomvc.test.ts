@@ -36,13 +36,13 @@ describe("Web e2e — TodoMVC", () => {
       try {
         const mod = await import("../../../src/qa/adapters/web/adapter.js");
         WebAdapter = mod.WebAdapter;
-      } catch (err) {
+      } catch (_err) {
         console.log("Skipping web e2e: chrome-ws-lib not available");
         return;
       }
 
       const card = loadStory("todomvc-add-pass.md");
-      const logDir = mkdtempSync(join(tmpdir(), "gauntlet-todomvc-add-"));
+      const logDir = mkdtempSync(join(tmpdir(), "moe-flight-todomvc-add-"));
       const logger = new EvidenceLogger(logDir);
       const server = await serveTodomvc();
       const adapter = new WebAdapter();
@@ -96,13 +96,13 @@ describe("Web e2e — TodoMVC", () => {
       try {
         const mod = await import("../../../src/qa/adapters/web/adapter.js");
         WebAdapter = mod.WebAdapter;
-      } catch (err) {
+      } catch (_err) {
         console.log("Skipping web e2e: chrome-ws-lib not available");
         return;
       }
 
       const card = loadStory("todomvc-edit-fail.md");
-      const logDir = mkdtempSync(join(tmpdir(), "gauntlet-todomvc-edit-"));
+      const logDir = mkdtempSync(join(tmpdir(), "moe-flight-todomvc-edit-"));
       const logger = new EvidenceLogger(logDir);
       const server = await serveTodomvc();
       const adapter = new WebAdapter();

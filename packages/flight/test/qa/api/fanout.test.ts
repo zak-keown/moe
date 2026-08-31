@@ -1,12 +1,11 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest";
 import { fanoutRoutes } from "../../../src/qa/api/routes/fanout.js";
-import { gauntletPath } from "../../../src/qa/paths.js";
+import { flightPath } from "../../../src/qa/paths.js";
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync, readdirSync, readFileSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import { Hono } from "hono";
 import type { LLMClient } from "../../../src/qa/models/provider.js";
-import type { AppConfig } from "../../../src/qa/config.js";
 
 import { makeConfig } from "../helpers/make-config.js";
 
@@ -70,8 +69,8 @@ describe("Fanout API", () => {
   let storiesDir: string;
 
   beforeEach(() => {
-    projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-fanout-api-"));
-    storiesDir = gauntletPath(projectRoot, ".gauntlet", "stories");
+    projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-fanout-api-"));
+    storiesDir = flightPath(projectRoot, ".moe-flight", "stories");
     mkdirSync(storiesDir, { recursive: true });
     writeFileSync(join(storiesDir, "story-001-test.md"), STORY_MD);
   });
@@ -193,8 +192,8 @@ describe("Fanout observations API", () => {
   let storiesDir: string;
 
   beforeEach(() => {
-    projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-fanout-obs-"));
-    storiesDir = gauntletPath(projectRoot, ".gauntlet", "stories");
+    projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-fanout-obs-"));
+    storiesDir = flightPath(projectRoot, ".moe-flight", "stories");
     mkdirSync(storiesDir, { recursive: true });
   });
 
@@ -204,7 +203,7 @@ describe("Fanout observations API", () => {
 
   test("POST /api/fanout/:id/observations promotes observations to story cards", async () => {
     const runId = "test-001_20260416T142301Z_k3xm";
-    const resultsDir = gauntletPath(projectRoot, ".gauntlet", "results", runId);
+    const resultsDir = flightPath(projectRoot, ".moe-flight", "results", runId);
     mkdirSync(resultsDir, { recursive: true });
     writeFileSync(
       join(resultsDir, "result.json"),
@@ -247,7 +246,7 @@ describe("Fanout observations API", () => {
 
   test("POST /api/fanout/:id/observations returns empty generated when no observations", async () => {
     const runId = "test-noobs_20260416T142301Z_q9x2";
-    const resultsDir = gauntletPath(projectRoot, ".gauntlet", "results", runId);
+    const resultsDir = flightPath(projectRoot, ".moe-flight", "results", runId);
     mkdirSync(resultsDir, { recursive: true });
     writeFileSync(
       join(resultsDir, "result.json"),
@@ -298,8 +297,8 @@ describe("Fanout failure API", () => {
   let storiesDir: string;
 
   beforeEach(() => {
-    projectRoot = mkdtempSync(join(tmpdir(), "gauntlet-fanout-fail-"));
-    storiesDir = gauntletPath(projectRoot, ".gauntlet", "stories");
+    projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-fanout-fail-"));
+    storiesDir = flightPath(projectRoot, ".moe-flight", "stories");
     mkdirSync(storiesDir, { recursive: true });
   });
 
@@ -309,7 +308,7 @@ describe("Fanout failure API", () => {
 
   test("POST /api/fanout/:id/failure generates follow-up stories from a failed run", async () => {
     const runId = "test-002_20260416T142301Z_f7v1";
-    const resultsDir = gauntletPath(projectRoot, ".gauntlet", "results", runId);
+    const resultsDir = flightPath(projectRoot, ".moe-flight", "results", runId);
     mkdirSync(resultsDir, { recursive: true });
     writeFileSync(
       join(resultsDir, "result.json"),
@@ -348,7 +347,7 @@ describe("Fanout failure API", () => {
 
   test("POST /api/fanout/:id/failure returns 400 when result is not a failure", async () => {
     const runId = "test-003_20260416T142301Z_p2xq";
-    const resultsDir = gauntletPath(projectRoot, ".gauntlet", "results", runId);
+    const resultsDir = flightPath(projectRoot, ".moe-flight", "results", runId);
     mkdirSync(resultsDir, { recursive: true });
     writeFileSync(
       join(resultsDir, "result.json"),

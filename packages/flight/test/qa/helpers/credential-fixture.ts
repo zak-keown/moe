@@ -33,7 +33,7 @@ export async function withCredentialFixture<T>(
   opts: CredentialFixtureOpts,
   fn: (fx: CredentialFixture) => Promise<T> | T,
 ): Promise<T> {
-  const prefix = opts.prefix ?? "gauntlet-cred-";
+  const prefix = opts.prefix ?? "moe-flight-cred-";
   const contextDir = mkdtempSync(join(tmpdir(), `${prefix}ctx-`));
   let resolverDir: string | undefined;
   let resolverPath: string | undefined;

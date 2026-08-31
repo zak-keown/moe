@@ -1,7 +1,7 @@
 import { defineConfig } from "vitest/config";
 
 /**
- * Three projects, because two groups of suites need something a container does
+ * Four projects, because three groups of suites need something a container does
  * not have.
  *
  * Upstream ran all 145 suites in one `bun test` pass. The tmux suites probe for
@@ -43,6 +43,13 @@ const CHROME_SUITES = [
   "test/qa/integration/web-todomvc.test.ts",
 ];
 
+/**
+ * Suites that dlopen `@bubstack/moe-tab`'s cdylib. Its own project for the same
+ * reason packages/tab/bindings/typescript splits: the library only exists after
+ * `pnpm tab:build`, and CI's node:24 image has no cargo.
+ */
+const FFI_SUITES = ["test/lab/tab-ffi.test.ts", "test/lab/usage-row-contract.test.ts"];
+
 /** Suites that need a `tmux` binary. Each also probes and self-skips. */
 const TMUX_SUITES = [
   "test/qa/adapters/tui/adapter.test.ts",
@@ -57,8 +64,8 @@ export default defineConfig({
         test: {
           name: "unit",
           root: import.meta.dirname,
-          include: ["test/qa/**/*.test.ts"],
-          exclude: [...CHROME_SUITES, ...TMUX_SUITES, "**/node_modules/**"],
+          include: ["test/qa/**/*.test.ts", "test/lab/**/*.test.ts"],
+          exclude: [...CHROME_SUITES, ...TMUX_SUITES, ...FFI_SUITES, "**/node_modules/**"],
           environment: "node",
         },
       },
@@ -70,6 +77,20 @@ export default defineConfig({
           environment: "node",
           testTimeout: 60_000,
           hookTimeout: 60_000,
+        },
+      },
+      {
+        test: {
+          name: "ffi",
+          root: import.meta.dirname,
+          include: FFI_SUITES,
+          environment: "node",
+          // One file, run alone under `--project ffi`, so there is no
+          // cross-file race over the process-global MOE_TAB_PRICING_DIR the
+          // dlopen'd core reads back through getenv. Add a second FFI suite and
+          // this needs root-level `fileParallelism: false`, the way
+          // packages/tab/bindings/typescript does it.
+          testTimeout: 30_000,
         },
       },
       {

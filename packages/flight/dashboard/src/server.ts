@@ -17,7 +17,7 @@ import { scanResults } from './scan.js';
 import { cellHtml, gridHtml, layoutHtml, tallyHtml } from './templates.js';
 import { type CellIdentity, cellView, diffGrids, headerTally } from './view.js';
 
-// The Bun.serve fetch handler + scanner loop for the quorum dashboard. Native
+// The Bun.serve fetch handler + scanner loop for the moe-flight dashboard. Native
 // Bun.serve + a ReadableStream SSE body; no external web stack. Read-only: the
 // filesystem is the single source of truth and the dashboard never launches runs.
 //
