@@ -45,6 +45,20 @@ This is what makes a 28-skill `@bubstack/moe-core` acceptable. The objection to 
 plugin is context cost: every skill description loads every session. That
 objection binds only if source layout dictates install layout. It doesn't.
 
+**Decided 2026-08-31: `core` ships as two generated plugins from one source tree.**
+
+| Plugin | Contents |
+|---|---|
+| `moe-core` | The everyday set. Lean enough that twenty people leave it on permanently. |
+| `moe-everything` | All 28 skills, for whoever wants the full library. |
+
+The lean set is a curation call, and it is the one open question this decision
+creates. It gets *proposed*, with per-skill rationale, and reviewed — never chosen
+silently during an import. The selection principle: a skill earns a place in
+`moe-core` if it fires on ordinary work without being asked for. A skill you invoke
+deliberately, by name, when you already know you want it, belongs in
+`moe-everything`.
+
 ## 3. Target tree
 
 ```
@@ -83,7 +97,7 @@ moe/
 |---|---|---|
 | `@bubstack/moe-core` | superpowers, superpowers-lab, iterative-development, the-elements-of-style, superpowers-developing-for-claude-code, double-shot-latte | The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring, and the stop-hook. 28 skills. |
 | `@bubstack/moe-backstory` | greenfield | Recover a behavioral spec from a codebase that never had one. 22 skills, 2 agents. |
-| `@bubstack/moe-memory` | episodic-memory, private-journal-mcp | One embedding layer, one store, two record types (conversation turn, journal entry), one MCP server. |
+| `@bubstack/moe-memory` | episodic-memory, private-journal-mcp | One embedding layer, one store, two record types (conversation turn, journal entry), one MCP server. **Both halves are kept and genuinely reconciled** — decided 2026-08-31. |
 | `@bubstack/moe-flight` | gauntlet, superpowers-evals (quorum) | Drive a target — web, CLI, or TUI — through acceptance criteria and grade it. Also drives nine agent CLIs side by side. |
 | `@bubstack/moe-mint` | everyharness, everyharness-container | Generate native plugin manifests for every harness from one config. The monorepo's plugin build step. |
 | `@bubstack/moe-crew` | claude-session-driver | Launch, control and monitor worker Claude sessions over tmux. |
@@ -92,6 +106,10 @@ moe/
 | `moe-proof` | smevals | Evals against small models. Python; stays Python. |
 
 ### Why these and not others
+
+**Decided 2026-08-31: both of `flight`'s frontends are imported and made green** —
+the React + Vite SPA (from `gauntlet/ui`) and the server-side reporter (from
+quorum's `@quorum/dashboard`). They are not duplicates, and neither is dropped.
 
 - **`flight` is one package, not two.** quorum's README states it drives agent
   CLIs *through a Gauntlet QA agent*; gauntlet is referenced across ~8 of
@@ -266,11 +284,15 @@ Upstream ships **11 GitHub Actions workflows across 7 repositories**. None
 survive; they port to a single root `.gitlab-ci.yml` driving turbo, with rules
 scoped by changed path so a docs edit does not rebuild the Rust crate.
 
-`obol` carries the awkward ones: `crates-release.yml` and `pypi-release.yml`
-publish to crates.io and PyPI respectively. Decide per artifact whether Moe
-publishes publicly at all, or whether `@bubstack/moe-tab` and its bindings stay
-on the instance registry. `smevals`' `publish.yml` raises the same question for
-`moe-proof`.
+**Decided 2026-08-31: Moe publishes nothing publicly.** All four upstream release
+workflows — `obol`'s `crates-release.yml`, `pypi-release.yml` and `release.yml`, and
+`smevals`' `publish.yml` — are **deleted, not ported**. Nothing goes to crates.io or
+PyPI. A package that must be consumable outside this repo goes to the GitLab
+instance registry under `@bubstack`; nothing else leaves the company.
+
+That is the same boundary `flight`'s license decision draws (PARITY.md, License
+exposure): no distribution anywhere in the tree means no exposure anywhere in the
+tree. Reversing it for any package means revisiting that section first.
 
 `superpowers/.github/FUNDING.yml` is **deleted, not ported** — it solicits
 sponsorship for the upstream author. `superpowers-evals/.github/CODEOWNERS` and
