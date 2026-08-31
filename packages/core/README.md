@@ -684,7 +684,9 @@ Confined to this package otherwise; these four need a root file.
 2. **`.gitignore`** — add `packages/core/skills/working-with-claude-code/references/`.
    That is the on-demand Claude Code docs cache `update_docs.cjs` writes. Until it
    lands, running the populate script leaves 42 untracked files.
-3. **`ARCHITECTURE.md` §4 and `.claude-plugin/marketplace.json`** — both say
+3. ~~**`ARCHITECTURE.md` §4 and `.claude-plugin/marketplace.json`**~~ — **DONE
+   2026-08-31.** Both fixed, along with two more `28` claims in ARCHITECTURE.md
+   §2 and §3 that this note had not spotted. Kept here for the reasoning: both said
    `moe-core` has **28 skills**. It has **27**. Counting frontmatter `name:`
    across the six pinned sources: superpowers 14, iterative-development 6,
    superpowers-lab 4, sp-dev-for-cc 2, the-elements-of-style 1,

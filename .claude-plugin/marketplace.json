@@ -20,7 +20,7 @@
       "name": "moe-everything",
       "source": "./plugins/moe-everything",
       "version": "0.0.0",
-      "description": "The full Moe skill library: all 28 skills, including the ones you invoke deliberately by name.",
+      "description": "The full Moe skill library: all 27 skills, including the ones you invoke deliberately by name.",
       "strict": true
     },
     {

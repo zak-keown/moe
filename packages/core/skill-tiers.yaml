@@ -2,8 +2,10 @@
 #
 # ARCHITECTURE.md section 2: core ships as TWO generated plugins from ONE source
 # tree — `moe-core` (the everyday set) and `moe-everything` (all of them). This
-# file is the boundary between them. It is a PROPOSAL awaiting human review, not
-# a settled decision.
+# file is the boundary between them.
+#
+# REVIEWED AND SETTLED 2026-08-31, Zak Keown. The split stands. One of the two
+# tiebreak rules did not: see ERR SMALL below.
 #
 # The selection principle, quoted from ARCHITECTURE.md section 2:
 #
@@ -19,9 +21,25 @@
 #   have installed is a dead end mid-workflow. test/metadata.test.ts enforces
 #   this: it fails if any core-tier skill REQUIREs an everything-tier skill.
 #
-#   ERR SMALL. Where closure does not force the answer, the tie goes to
-#   `everything`. Every description in an installed plugin costs context in every
-#   session, for ~20 people who will leave the lean plugin on permanently.
+#   ~~ERR SMALL~~ — DELETED 2026-08-31. It said: where closure does not force
+#   the answer, the tie goes to `everything`, because every description in an
+#   installed plugin costs context in every session. The premise was measured
+#   and does not hold. All 27 name+description pairs are 5,914 characters,
+#   about 1,480 tokens, and that is the whole resident cost — the bodies are
+#   230,342 characters, ~57,600 tokens, and they load ON DEMAND. Shipping every
+#   skill in the lean plugin would cost roughly 1.5k tokens a session. That is
+#   not a budget worth curating against, and a rule that cites a cost it does
+#   not have will keep producing demotions nobody can defend. Exactly one skill
+#   was demoted on this rule alone; see dispatching-parallel-agents.
+#
+#   TRIGGER COLLISION. The replacement tiebreak, and it is about dispatch
+#   quality rather than token count. Where closure does not force the answer,
+#   the tie goes to `everything` only if the skill's description claims a
+#   trigger a core-tier skill already claims. Two skills asserting the same
+#   "use when …" is what actually degrades selection: the model picks one, and
+#   which one is not something the author controls. Absent a collision the tie
+#   goes to `core` — an unasked-for skill that fires correctly is the entire
+#   point of the lean plugin, and 1.5k tokens buys a lot of them.
 #
 # `tier: core`       ships in BOTH moe-core and moe-everything.
 # `tier: everything` ships in moe-everything ONLY.
@@ -154,10 +172,18 @@ skills:
     tier: everything
     from: superpowers
     why: >-
-      ERR SMALL. "Use when facing 2+ independent tasks" is a recognition
-      trigger, but nothing REQUIREs it and subagent-driven-development already
-      covers the parallel case inside the everyday flow. An optimisation you
-      reach for.
+      "Use when facing 2+ independent tasks" is a recognition trigger and
+      nothing REQUIREs it, so closure does not force the answer. HELD at
+      everything for now, but on a corrected and much weaker basis: this was
+      the one skill demoted on ERR SMALL alone, and ERR SMALL is deleted. Its
+      other stated reason was false — subagent-driven-development does NOT
+      "cover the parallel case", it forbids it outright
+      (subagent-driven-development/SKILL.md:282, "Never dispatch multiple
+      implementation subagents in parallel"). Promotion to core is part of the
+      parallel-execution-option work, which reopens exactly that prohibition;
+      moving it now would change the tier twice. See
+      .planning/backlog/W01P01 - parallel-execution-option.md, whose
+      depends_on names this decision and whose touches names this file.
 
   writing-skills:
     tier: everything

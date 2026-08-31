@@ -6,8 +6,13 @@ A hard fork of the Superpowers ecosystem: 19 upstream repositories collapsed int
 **9 packages** in one pnpm workspace, rebranded stem to stern, built and released
 as a unit.
 
-**Status:** target-shape document. No code has been imported yet. This is the
-input to the import work, not a description of what exists.
+**Status:** written as a target-shape document, and the target is now largely
+hit. All nine packages are imported and censused (Wave A: crew, mint, tab, glass,
+proof; Wave B/C: core, memory, flight). What remains is `/plugins/` — mint is
+imported but not yet wired to generate it, so §3's `plugins/` entry is still the
+only part of the tree that does not exist. Sections describing decisions are
+records; sections describing structure now describe what is there. Where a
+section is still forward-looking it says so.
 
 ---
 
@@ -41,16 +46,38 @@ into `/plugins/` by `@bubstack/moe-mint`. Plugin boundaries — a lean `moe-core
 `moe-everything` — are a build-time choice, made once, changeable without moving
 a file.
 
-This is what makes a 28-skill `@bubstack/moe-core` acceptable. The objection to a large
-plugin is context cost: every skill description loads every session. That
-objection binds only if source layout dictates install layout. It doesn't.
+This is what makes a 27-skill `@bubstack/moe-core` acceptable. (**27, not the 28
+this document said before.** Counted by frontmatter `name:` across the six pinned
+sources: superpowers 14, iterative-development 6, superpowers-lab 4,
+sp-dev-for-cc 2, the-elements-of-style 1, double-shot-latte 0. The 28th was
+almost certainly `example-workflow`, a pseudo-skill inside an example plugin that
+is not a skill. `packages/core/test/metadata.test.ts` asserts 27, and
+`packages/core/README.md` raised this as a root change.)
+
+The usual objection to a large plugin is context cost — every skill description
+loads every session — and it binds only if source layout dictates install
+layout, which it doesn't. **But the objection is also much smaller than it
+sounds, and that is worth stating rather than leaving as a reason someone can
+lean on later.** Measured: all 27 `name` + `description` pairs are 5,914
+characters, roughly 1,480 tokens, and that is the entire resident cost. The
+bodies are 230,342 characters, roughly 57,600 tokens, and Claude Code loads them
+on demand — the frontmatter descriptions *are* the dispatch table, nothing else
+is resident. So the lean plugin saves on the order of a few hundred tokens a
+session, not tens of thousands.
+
+Which means the tiering is not justified by token budget, and
+`packages/core/skill-tiers.yaml` no longer claims it is. It is justified by
+**dispatch quality**: two skills claiming the same "use when …" trigger degrade
+selection, and a skill you only ever invoke by name earns nothing by competing
+for attention on every turn. That is a real cost and it does not shrink with
+context windows.
 
 **Decided 2026-08-31: `core` ships as two generated plugins from one source tree.**
 
 | Plugin | Contents |
 |---|---|
 | `moe-core` | The everyday set. Lean enough that twenty people leave it on permanently. |
-| `moe-everything` | All 28 skills, for whoever wants the full library. |
+| `moe-everything` | All 27 skills, for whoever wants the full library. |
 
 The lean set is a curation call, and it is the one open question this decision
 creates. It gets *proposed*, with per-skill rationale, and reviewed — never chosen
@@ -67,7 +94,7 @@ moe/
 │   └── marketplace.json        # the one marketplace (replaces two upstream stubs)
 ├── ../.moe-references/                # gitignored: 19 pinned snapshots, see PARITY.md
 ├── packages/
-│   ├── core/                   # 28 skills + hooks         [content]
+│   ├── core/                   # 27 skills + hooks         [content]
 │   ├── backstory/              # 22 skills + 2 agents      [content]
 │   ├── memory/                 # MCP: moe-memory           [L1]
 │   ├── flight/                 # QA + agent-eval harness   [L2]
@@ -95,7 +122,7 @@ moe/
 
 | Package | Absorbs | Job |
 |---|---|---|
-| `@bubstack/moe-core` | superpowers, superpowers-lab, iterative-development, the-elements-of-style, superpowers-developing-for-claude-code, double-shot-latte | The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring, and the stop-hook. 28 skills. |
+| `@bubstack/moe-core` | superpowers, superpowers-lab, iterative-development, the-elements-of-style, superpowers-developing-for-claude-code, double-shot-latte | The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring, and the stop-hook. 27 skills. |
 | `@bubstack/moe-backstory` | greenfield | Recover a behavioral spec from a codebase that never had one. 22 skills, 2 agents. |
 | `@bubstack/moe-memory` | episodic-memory, private-journal-mcp | One embedding layer, one store, two record types (conversation turn, journal entry), one MCP server. **Both halves are kept and genuinely reconciled** — decided 2026-08-31. |
 | `@bubstack/moe-flight` | gauntlet, superpowers-evals (quorum) | Drive a target — web, CLI, or TUI — through acceptance criteria and grade it. Also drives nine agent CLIs side by side. |
