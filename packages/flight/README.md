@@ -490,6 +490,10 @@ CI will skip the `tmux` project and cannot run `chrome` or `ffi` at all yet.
 - **CI needs tmux, a Chrome, and cargo** before `test:tmux`, `test:chrome` and
   `test:ffi` are more than opt-in. Until then 20 tests are permanently skipped
   rather than passing, and 85 are unreachable in CI.
+- **`.dockerignore` is inert as placed.** Docker reads it from the build-context
+  root, and `docker/Dockerfile`'s context is the monorepo root now. Kept as the
+  record of what upstream excluded, with a header saying so; a root-level
+  equivalent is the actual fix.
 - **`.env.example` is untracked.** The root `.gitignore`'s `.env.*` swallows it,
   so a template upstream tracked vanishes on clone. Needs a `!` negation — see
   the root-changes note in the import report.
