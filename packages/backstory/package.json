@@ -3,11 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Recover a behavioral spec from a codebase that never had one.",
+  "description": "Recover a behavioral spec from a codebase that never had one. 22 skills, 2 agents, 2 commands.",
   "license": "Apache-2.0",
   "scripts": {
-    "lint": "biome check .",
-    "typecheck": "echo 'content package: no TypeScript'"
-  },
-  "devDependencies": {}
+    "lint": "biome check ."
+  }
 }
