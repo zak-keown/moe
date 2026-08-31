@@ -1,0 +1,14 @@
+{
+  "name": "@bubstack/moe-flight-ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "React + Vite SPA for moe-flight. Forked from gauntlet/ui.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "lint": "biome check ."
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

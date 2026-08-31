@@ -1,0 +1,13 @@
+{
+  "name": "@bubstack/moe-backstory",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Recover a behavioral spec from a codebase that never had one.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "lint": "biome check .",
+    "typecheck": "echo 'content package: no TypeScript'"
+  },
+  "devDependencies": {}
+}

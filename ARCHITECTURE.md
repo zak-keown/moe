@@ -143,13 +143,57 @@ reachability is not importability.
 
 ## 6. Toolchain
 
-- **pnpm workspaces + Turborepo.** One Node toolchain, one cached task graph.
-- **`tab`** builds with cargo; its TypeScript binding is the workspace package,
-  built from the local crate. Cargo runs as a turbo task.
-- **`py/proof`** builds with uv, wired as a turbo task. It does not enter the
-  pnpm workspace.
-- **`flight`** arrives on bun. It converges onto pnpm during import; the bun
-  lockfiles do not survive.
+pnpm workspaces + Turborepo. 11 workspace members; `packages/tab` (cargo) and
+`py/proof` (uv) sit outside the pnpm graph and are driven by root scripts.
+
+Upstream arrives fragmented. One choice per concern, each picked as the option
+already most used upstream:
+
+| Concern | Upstream spread | Moe |
+|---|---|---|
+| Package manager | pnpm ×1, npm ×3, bun ×2 | **pnpm 11** |
+| Test runner | vitest ×3, bun test ×2, jest ×1, `node --test` ×1 | **vitest 3** |
+| Lint + format | biome ×3, eslint + prettier ×1, none ×rest | **biome 2** |
+| Library build | tsc ×3, tsup ×1, esbuild bundle ×1, `bun build --compile` ×1 | **`tsc -b`**, with tsup/esbuild/vite only where a bundle is genuinely needed |
+| TypeScript | ^5.7 – ^5.9 | **^5.9.0** |
+| Git hooks | lefthook ×1, custom shell ×1 | one root-level mechanism |
+
+**TypeScript stays on 5.9 deliberately.** Upstream is on ^5.9 and TypeScript 7
+is out. Importing ^5.9 code under a new major mixes two migrations; the upgrade
+is a separate, deliberate step once the code is in.
+
+### Two configs per package, and they must agree
+
+Adopted from the sibling `askmoe` workspace, where it is load-bearing:
+
+- `tsconfig.json` `references` — the **runtime** DAG, mirroring `dependencies`
+  one for one.
+- `tsconfig.tests.json` `references` — **test-only** edges, including the ones
+  that point *up*. A test-fixture inversion is legal in pnpm `devDependencies`
+  and produces `TS6202: Project references may not form a circular graph` if you
+  put it in `tsconfig.json`.
+
+Both are empty today. Populate them from an import census, not from names.
+
+### Local prerequisites
+
+`pnpm install && pnpm check` passes on a clean checkout. Two packages cannot
+build on this machine yet:
+
+| Missing | Blocks |
+|---|---|
+| `cargo` | `pnpm tab:build`, `pnpm tab:test` |
+| `uv`, and Python ≥ 3.10 (system is 3.9.6) | `pnpm proof:test` |
+
+Neither blocks the seven TypeScript packages.
+
+### Gotcha worth remembering
+
+pnpm 11 refuses to install until every transitive postinstall script is approved
+by name in `pnpm-workspace.yaml` under `allowBuilds` — which supersedes pnpm 10's
+`onlyBuiltDependencies`, so the older key is silently ignored. `esbuild` arrives
+via vitest and needs an entry. Leave one unresolved and
+`pnpm install --frozen-lockfile` fails in CI with `ERR_PNPM_IGNORED_BUILDS`.
 
 ## 7. Naming
 
@@ -185,8 +229,11 @@ is on GitHub and stays there — `github.com/obra` and
 
 ### Packages and registry
 
-Eight packages publish to the GitLab Package Registry under the `@bubstack`
-scope; `moe-proof` is Python and PyPI has no scopes, so it stays `moe-proof`.
+All eight TypeScript packages carry the `@bubstack` scope for workspace
+addressing. Which of them become npm artifacts is a release decision, not a
+naming one: `moe-core` and `moe-backstory` are skill content and ship as
+*generated plugins* through the marketplace, never as npm tarballs. `moe-proof`
+is Python and PyPI has no scopes, so it stays `moe-proof`.
 
 ```
 @bubstack/moe-core        @bubstack/moe-mint

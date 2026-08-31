@@ -1,0 +1,27 @@
+{
+  "//": "Solution file: lists every composite member. Inter-package edges live in each package's own tsconfig.json references and stay empty until an import census confirms them (ARCHITECTURE.md \u00a75). Test-only edges, including inversions that would be circular here, go in tsconfig.tests.json.",
+  "files": [],
+  "references": [
+    {
+      "path": "packages/crew"
+    },
+    {
+      "path": "packages/glass"
+    },
+    {
+      "path": "packages/memory"
+    },
+    {
+      "path": "packages/mint"
+    },
+    {
+      "path": "packages/flight"
+    },
+    {
+      "path": "packages/flight/dashboard"
+    },
+    {
+      "path": "packages/tab/bindings/typescript"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@bubstack/moe-tab",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "TypeScript binding for the moe-tab transcript pricer. Replaces @primeradianthq/obol.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty",
+    "test": "vitest run --passWithNoTests",
+    "lint": "biome check ."
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

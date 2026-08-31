@@ -1,0 +1,5 @@
+{
+  "//": "Test-only edges, including inversions that would be circular in the runtime DAG. Populated as test suites are imported.",
+  "files": [],
+  "references": []
+}

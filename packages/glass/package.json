@@ -1,0 +1,20 @@
+{
+  "name": "@bubstack/moe-glass",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Zero-dependency Chrome DevTools Protocol client. Skill mode plus MCP mode.",
+  "license": "Apache-2.0",
+  "bin": {
+    "moe-glass": "./dist/cli.js"
+  },
+  "scripts": {
+    "lint": "biome check .",
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

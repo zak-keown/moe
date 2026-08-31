@@ -1,0 +1,10 @@
+{
+  "//": "Runtime DAG for this package: one reference per package.json dependency. Empty until source is imported.",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": [],
+  "references": []
+}

@@ -1,0 +1,66 @@
+# Replaces 11 GitHub Actions workflows across 7 upstream repositories.
+# Inventory and porting notes: PARITY.md#ci-to-port
+#
+# The four upstream release workflows (obol crates.io + PyPI, smevals PyPI) are
+# deliberately absent. They need a publish-publicly-or-not decision first.
+
+stages: [install, check, build]
+
+default:
+  image: node:24
+  interruptible: true
+  cache:
+    key:
+      files: [pnpm-lock.yaml]
+    paths: [.pnpm-store]
+
+variables:
+  PNPM_HOME: /usr/local/bin
+  TURBO_TELEMETRY_DISABLED: "1"
+
+.pnpm: &pnpm
+  before_script:
+    - corepack enable
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install --frozen-lockfile
+
+install:
+  stage: install
+  <<: *pnpm
+  script: [pnpm --version]
+
+lint:
+  stage: check
+  <<: *pnpm
+  script: [pnpm lint]
+
+typecheck:
+  stage: check
+  <<: *pnpm
+  script: [pnpm typecheck]
+
+test:
+  stage: check
+  <<: *pnpm
+  script: [pnpm test]
+
+build:
+  stage: build
+  <<: *pnpm
+  script: [pnpm build]
+
+# Path-scoped so a docs edit does not rebuild the Rust crate.
+tab:
+  stage: check
+  image: rust:latest
+  script: [cargo test --manifest-path packages/tab/Cargo.toml]
+  rules:
+    - changes: [packages/tab/**/*]
+
+proof:
+  stage: check
+  image: python:3.12
+  before_script: [pip install uv]
+  script: [uv run --project py/proof pytest]
+  rules:
+    - changes: [py/proof/**/*]

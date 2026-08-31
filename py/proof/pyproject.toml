@@ -1,0 +1,16 @@
+[project]
+name = "moe-proof"
+version = "0.0.0"
+description = "Evals against small (and large) models"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+moe-proof = "moe_proof.cli:cli"
+
+[build-system]
+requires = ["uv_build>=0.11.0,<0.12.0"]
+build-backend = "uv_build"

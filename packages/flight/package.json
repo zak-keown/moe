@@ -1,0 +1,20 @@
+{
+  "name": "@bubstack/moe-flight",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Drive web, CLI or TUI targets through acceptance criteria and grade them. Also drives nine agent CLIs side by side.",
+  "license": "Apache-2.0",
+  "bin": {
+    "moe-flight": "./dist/cli.js"
+  },
+  "scripts": {
+    "lint": "biome check .",
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

@@ -1,0 +1,12 @@
+[workspace]
+resolver = "2"
+members = ["crates/moe-tab-core", "crates/moe-tab-cli", "crates/moe-tab-ffi"]
+
+[workspace.package]
+edition = "2021"
+version = "0.0.0"
+license = "Apache-2.0"
+
+# Forked from obol @ 28e3dba (Apache-2.0). Crates rename obol-core -> moe-tab-core,
+# obol-cli -> moe-tab-cli, obol-ffi -> moe-tab-ffi. Driven by root `pnpm tab:build`,
+# not by pnpm directly. cargo is not installed on this machine.

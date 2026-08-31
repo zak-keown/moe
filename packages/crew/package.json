@@ -1,0 +1,20 @@
+{
+  "name": "@bubstack/moe-crew",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Launch, control and monitor worker Claude sessions over tmux.",
+  "license": "Apache-2.0",
+  "bin": {
+    "moe-crew": "./dist/cli.js"
+  },
+  "scripts": {
+    "lint": "biome check .",
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@bubstack/moe-mint",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Generate native plugin manifests for every harness from one config. The monorepo's plugin build step.",
+  "license": "Apache-2.0",
+  "bin": {
+    "moe-mint": "./dist/cli.js"
+  },
+  "scripts": {
+    "lint": "biome check .",
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

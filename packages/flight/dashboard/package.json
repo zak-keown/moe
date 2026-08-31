@@ -1,0 +1,17 @@
+{
+  "name": "@bubstack/moe-flight-dashboard",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Server-side run reporter for moe-flight. Forked from quorum's @quorum/dashboard.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty",
+    "test": "vitest run --passWithNoTests",
+    "lint": "biome check ."
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

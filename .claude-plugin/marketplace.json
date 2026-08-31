@@ -1,0 +1,48 @@
+{
+  "name": "moe",
+  "owner": {
+    "name": "Zak Keown",
+    "email": "zak@turncommerce.com"
+  },
+  "metadata": {
+    "description": "Moe \u2014 skills, memory, browser control and session orchestration for coding agents.",
+    "version": "0.0.0"
+  },
+  "plugins": [
+    {
+      "name": "moe-core",
+      "source": "./plugins/moe-core",
+      "version": "0.0.0",
+      "description": "The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring.",
+      "strict": true
+    },
+    {
+      "name": "moe-backstory",
+      "source": "./plugins/moe-backstory",
+      "version": "0.0.0",
+      "description": "Recover a behavioral spec from a codebase that never had one.",
+      "strict": true
+    },
+    {
+      "name": "moe-memory",
+      "source": "./plugins/moe-memory",
+      "version": "0.0.0",
+      "description": "Semantic recall over past sessions and journal entries.",
+      "strict": true
+    },
+    {
+      "name": "moe-glass",
+      "source": "./plugins/moe-glass",
+      "version": "0.0.0",
+      "description": "Direct Chrome DevTools Protocol access. Skill mode plus MCP mode, zero dependencies.",
+      "strict": true
+    },
+    {
+      "name": "moe-crew",
+      "source": "./plugins/moe-crew",
+      "version": "0.0.0",
+      "description": "Launch, control and monitor worker Claude sessions over tmux.",
+      "strict": true
+    }
+  ]
+}

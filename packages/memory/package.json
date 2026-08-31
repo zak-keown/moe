@@ -1,0 +1,20 @@
+{
+  "name": "@bubstack/moe-memory",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Semantic recall over past sessions and journal entries. One MCP server.",
+  "license": "Apache-2.0",
+  "bin": {
+    "moe-memory": "./dist/cli.js"
+  },
+  "scripts": {
+    "lint": "biome check .",
+    "build": "tsc -b",
+    "typecheck": "tsc -b --pretty",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

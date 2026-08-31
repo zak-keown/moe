@@ -1,0 +1,18 @@
+# Eight TypeScript workspace packages. Two members are not pnpm packages and are
+# driven by root scripts instead: packages/tab (cargo) and py/proof (uv).
+packages:
+  - 'packages/*'
+  - 'packages/flight/ui'
+  - 'packages/flight/dashboard'
+  - 'packages/tab/bindings/typescript'
+
+# Workspace packages resolve to each other by link, not from the registry.
+linkWorkspacePackages: true
+
+# pnpm 11 refuses to install until every postinstall script is approved by name
+# (`allowBuilds`, which supersedes pnpm 10's `onlyBuiltDependencies`). esbuild
+# arrives transitively via vitest and compiles a native binary. Leave an entry
+# unresolved and `pnpm install --frozen-lockfile` fails in CI with
+# ERR_PNPM_IGNORED_BUILDS.
+allowBuilds:
+  esbuild: true

@@ -1,0 +1,30 @@
+{
+  "name": "moe",
+  "private": true,
+  "type": "module",
+  "description": "Moe \u2014 a hard fork of the Superpowers ecosystem, one workspace.",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.23.0",
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "check": "pnpm lint && turbo run typecheck test",
+    "mint": "pnpm --filter @bubstack/moe-mint exec moe-mint generate",
+    "tab:build": "cargo build --release --manifest-path packages/tab/Cargo.toml",
+    "tab:test": "cargo test --manifest-path packages/tab/Cargo.toml",
+    "proof:test": "uv run --project py/proof pytest"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@types/node": "^24.7.0",
+    "turbo": "^2.10.12",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.4"
+  }
+}
