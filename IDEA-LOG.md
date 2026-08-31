@@ -9,6 +9,7 @@
 - Examine GSD-core for skills to import
     - Explore tiered workflows with better naming, GSD uses fast, quick, and default. The idea is tier 1 is a fix that needs no more tracking or planning than the git commit. Tier 2 adds planning but does not verify/review. Tier 3 is the full monte. 
 - Documentation: ideal total flow for contributing to Moe--what to run when and why
+- Verification, split in two: let the harness capture the evidence and keep the judgment in prose. Count which skills actually fire while we are in there.
 
 ## TC-Specific
 
