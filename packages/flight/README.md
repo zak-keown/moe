@@ -52,6 +52,8 @@ skills/writing-flight-stories/
                        The one skill gauntlet shipped: a 200-line calibration doc
                        on what a story card is and is not.
 docs/                  Technical reference that describes current behaviour.
+docs/upstream-sync.md  The hand-port protocol for the vendored CDP library. Live,
+                       not history: we intend to execute it. See below.
 docs/history/          Upstream plans, specs and research notes. Inherited record,
                        byte-identical to the snapshot — see below.
 ```
@@ -238,8 +240,8 @@ the imported code.
 **`flight → glass`: real lineage, NOT an edge. Deferred, deliberately.**
 
 `src/qa/adapters/web/lib/` is a hand-maintained fork of what is now
-`packages/glass/skills/browsing/lib/`. `docs/history/upstream-sync.md` is a
-170-line sync protocol naming the repo, the per-file mapping, the fork point
+`packages/glass/skills/browsing/lib/`. `docs/upstream-sync.md` is a
+sync protocol naming the repo, the per-file mapping, the fork point
 (`70b2c6c`, v1.8.0) and the last sync (`60b44e2`). Measured after the rebrand:
 
 - 3 of 28 lib files are still **byte-identical** to glass: `cdp-utils.js`,
@@ -259,7 +261,7 @@ requires its own copy at `./lib/chrome-ws-lib.js`. Wiring the workspace
 dependency would be a refactor, not an import, and it is blocked on three real
 things: glass exposes the lib as a skill directory of CJS files with no export
 map, glass is three months ahead, and the divergences flow both ways. Recorded as
-its own piece of work in [Follow-ups](#follow-ups); `docs/history/upstream-sync.md`
+its own piece of work in [Follow-ups](#follow-ups); `docs/upstream-sync.md`
 is the spec for either direction.
 
 **`flight → crew`: REFUTED.** Zero cross-references either way — no `moe-crew`,
@@ -299,7 +301,7 @@ own substitutions rather than left to a lowercase pass:
 | CLI usage text | `gauntlet <cmd>` | `moe-flight qa <cmd>` | 53 |
 | config `--json` object key | `.gauntlet` | `.flight` | 47 |
 | static-report hydration id | `__GAUNTLET_RUN__` | `__MOE_FLIGHT_RUN__` | 24 |
-| sync-protocol marker | `GAUNTLET DIVERGENCE` | `MOE-FLIGHT DIVERGENCE` | 17 |
+| sync-protocol marker | `GAUNTLET DIVERGENCE` | `MOE-FLIGHT DIVERGENCE` | 20 |
 | type | `VetStatus` | `VerdictStatus` | 16 |
 | doc cross-references | `docs/superpowers/{plans,specs}/` | `docs/history/{plans,specs}/` | 10 |
 | dashboard header + title | `quorum` | `moe-flight` | 9 |
@@ -383,7 +385,7 @@ The subtree also has no edge out of itself any more. `chrome-process.js` did
 TypeScript, which Bun resolved and Node does not, and which is never emitted
 under vitest. 20 lines of `node:net` are duplicated into the lib instead;
 changing a vendored fork's function signature is what
-`docs/history/upstream-sync.md` exists to avoid.
+`docs/upstream-sync.md` exists to avoid.
 
 **Chrome profile and cache.** The cache root is `~/.cache/moe/`, matching glass.
 The profile name is **`moe-flight`, never `moe-glass`** — sharing a
@@ -481,7 +483,7 @@ CI will skip the `tmux` project and cannot run `chrome` or `ffi` at all yet.
 - **The `flight ↔ glass` reconciliation.** Two honest options, both real work:
   port glass's three months of lib changes into this fork, or port this fork's
   ten divergences into glass and have flight consume it. The second needs glass
-  to expose the lib as a package export first. `docs/history/upstream-sync.md` is
+  to expose the lib as a package export first. `docs/upstream-sync.md` is
   the spec either way; its per-file mapping and fork SHAs are still accurate.
 - **The FFI suites are not hermetic against the price sheet.** They assert
   `est_cost_usd > 0` for `claude-opus-4-8` against whatever snapshot moe-tab

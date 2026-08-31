@@ -1,34 +1,45 @@
 # Upstream sync: `superpowers-chrome`
 
-Gauntlet's web adapter is built on a fork of the CDP library from
+Flight's web adapter is built on a fork of the CDP library from
 [`obra/superpowers-chrome`](https://github.com/obra/superpowers-chrome). We
 intend to pull new features and bugfixes from upstream periodically. We have
 also made non-trivial local changes, so these syncs are always a hand-port,
 not a clean merge. This doc is the protocol.
 
+> **This file lives in `docs/`, not `docs/history/`, and that is deliberate.**
+> It arrived under `docs/history/` with the import, alongside upstream's plans,
+> specs and research notes — a zone this fork keeps byte-identical to the pinned
+> snapshot on the grounds that editing a recorded artifact is editing evidence.
+> A protocol we intend to *execute* is not a record of what upstream did, and
+> freezing it made it wrong: after the port every path in it named
+> `src/adapters/web/`, the divergence markers had been renamed, and the test
+> layout it described was `bun test`. Kept frozen it was misleading as evidence
+> and broken at step 1 as protocol. It is now a live document and tracks the
+> code. `docs/history/` is unchanged and still verifies.
+
 ## Files in scope
 
-The `src/adapters/web/lib/` directory is a forked copy of upstream's
+The `src/qa/adapters/web/lib/` directory is a forked copy of upstream's
 modular layout:
 
-- `src/adapters/web/lib/chrome-ws-lib.js` ←
+- `src/qa/adapters/web/lib/chrome-ws-lib.js` ←
   `skills/browsing/chrome-ws-lib.js` (the orchestrator)
-- `src/adapters/web/lib/host-override.js` ←
+- `src/qa/adapters/web/lib/host-override.js` ←
   `skills/browsing/host-override.js`
-- `src/adapters/web/lib/<module>.js` ←
+- `src/qa/adapters/web/lib/<module>.js` ←
   `skills/browsing/lib/<module>.js`
-- `src/adapters/web/lib/page-scripts/` ←
+- `src/qa/adapters/web/lib/page-scripts/` ←
   `skills/browsing/lib/page-scripts/`
 
 The browser-WS bridge files — `browser-session.js`, `browser-bridge.js`,
-`page-session.js`, `cdp-router.js` — used to be Gauntlet-only (added in
+`page-session.js`, `cdp-router.js` — were fork-only (added in
 PRI-1535) but as of the 2026-05-08 sync are now upstream files: the
 flatten-mode migration was contributed back to
 `obra/superpowers-chrome` and merged. Treat them like any other
 synced module going forward.
 
-Everything else under `src/adapters/web/` (adapter.ts, passkey.ts, etc.)
-is Gauntlet-native and not synced from upstream.
+Everything else under `src/qa/adapters/web/` (adapter.ts, passkey.ts, etc.)
+is Flight-native and not synced from upstream.
 
 ## Sync state
 
@@ -40,15 +51,36 @@ is Gauntlet-native and not synced from upstream.
 
 > Bump "last synced upstream HEAD" each time a sync cycle completes.
 
-## Intentional Gauntlet divergences
+## Intentional Flight divergences
 
-Grep `chrome-ws-lib.js` for `GAUNTLET DIVERGENCE` to find these in-line.
+Grep the whole lib for `MOE-FLIGHT DIVERGENCE` to find these in-line — **not
+just `chrome-ws-lib.js`.** Upstream modularised the monolith, so the 20 markers
+are spread across 8 files:
 
-1. **`WebSocketClient` class** uses the standard WebSocket API (works in
-   Node and Bun) rather than upstream's `http.request` + hand-rolled frame
-   parser. Required for Bun. When syncing, preserve this class body verbatim
-   — upstream features above it call `sendCdpCommand()` and friends, which
-   don't touch raw WS internals.
+```sh
+grep -rn 'MOE-FLIGHT DIVERGENCE' src/qa/adapters/web/lib/
+```
+
+The marker was `GAUNTLET DIVERGENCE` before the rebrand. `packages/flight/README.md`
+records the mapping in its rename ledger; the old string appears nowhere in code.
+
+1. **`WebSocketClient` class** wraps a WebSocket client library rather than
+   upstream's `http.request` + hand-rolled frame parser, keeping upstream's
+   public API (`on/connect/send/close/isConnected`). When syncing, preserve this
+   class body verbatim — upstream features above it call `sendCdpCommand()` and
+   friends, which don't touch raw WS internals.
+
+   **The backend changed on import.** Upstream needed this class for Bun and
+   used the *global* `WebSocket` with `{ perMessageDeflate: false }` — a
+   Bun-only extension, since the standard constructor's second argument is
+   `protocols`. Under Node's global WebSocket (undici) a non-string second
+   argument is ignored outright, so the PRI-1690 compression opt-out silently
+   stopped working and Chrome's intermittently malformed deflate frames closed
+   the socket with `code=1002` mid-run. The backend is now the `ws` package,
+   which honours `perMessageDeflate: false` for real and is already a declared
+   runtime dependency. `test/qa/adapters/web/lib/websocket-client-no-compression.test.ts`
+   is the regression test. Do not "simplify" this back to the global
+   `WebSocket`: Bun is no longer the runtime, and that is what makes it a trap.
 
 2. **`host-override.js`** exports mutable getters (`getHost`, `getPort`,
    `setDefaults`) so WebAdapter can point the library at a remote Chrome
@@ -57,7 +89,7 @@ Grep `chrome-ws-lib.js` for `GAUNTLET DIVERGENCE` to find these in-line.
    `WS_OVERRIDE_ENABLED`) are re-exported as module-load snapshots for
    compat, so unmodified upstream code that destructures them keeps
    working. As of upstream `51d0d68` (post-PR-#33) upstream itself
-   removed those legacy exports; Gauntlet preserves them deliberately —
+   removed those legacy exports; Flight preserves them deliberately —
    that removal is the one upstream commit explicitly NOT ported by
    the 2026-05-06 sync.
 
@@ -68,12 +100,12 @@ Grep `chrome-ws-lib.js` for `GAUNTLET DIVERGENCE` to find these in-line.
    absent.
 
 4. **`parseContains`** plus `:contains('text')` support in
-   `getElementSelector` / `getElementSelectorAll`. Gauntlet-only —
+   `getElementSelector` / `getElementSelectorAll`. Flight-only —
    jQuery-style `:contains` selectors from LLM agents are translated to
    a JS walk rather than failing as CSS syntax errors.
 
-5. **Appended Gauntlet-only functions** (between the
-   `GAUNTLET DIVERGENCE START: Gauntlet-only additions` marker and its
+5. **Appended Flight-only functions** (between the
+   `MOE-FLIGHT DIVERGENCE START: Flight-only additions` marker and its
    matching END):
    - `clearBrowserData(tab)` — best-effort CDP state reset for
      remote-Chrome runs (spec §5.1 profile isolation).
@@ -89,7 +121,7 @@ Grep `chrome-ws-lib.js` for `GAUNTLET DIVERGENCE` to find these in-line.
    `sendCdpCommand` call's timeout argument. When `undefined`, the
    underlying `sendCdpCommand` 30s default applies — so all upstream
    callers stay green. Marked with a `// PRI-1517` comment above the
-   function. Used by Gauntlet's adapter `takeReturnScreenshot` to cap
+   function. Used by Flight's adapter `takeReturnScreenshot` to cap
    bundled-screenshot wall-time at 5s instead of 30s.
 
 > **Historical: former Divergence #6 (`createSession()` / `createOverride()`
@@ -102,7 +134,7 @@ Grep `chrome-ws-lib.js` for `GAUNTLET DIVERGENCE` to find these in-line.
 > body is intentionally column-0 unindented for diff readability. Note
 > upstream's `51d0d68` removed the legacy `CHROME_DEBUG_HOST` /
 > `CHROME_DEBUG_PORT` / `CHROME_DEBUG_BASE` / `WS_OVERRIDE_ENABLED` /
-> top-level `rewriteWsUrl` exports; Gauntlet preserves them as part of
+> top-level `rewriteWsUrl` exports; Flight preserves them as part of
 > Divergence #2 above and did NOT port that removal.
 
 ## Sync recipe
@@ -132,20 +164,20 @@ Grep `chrome-ws-lib.js` for `GAUNTLET DIVERGENCE` to find these in-line.
      because of the divergences).
    - **New function added below everything upstream has** → add the
      function in the same relative location in our file, *above* the
-     `GAUNTLET DIVERGENCE START: Gauntlet-only additions` block. Export
+     `MOE-FLIGHT DIVERGENCE START: Flight-only additions` block. Export
      it from `module.exports` if callers need it.
    - **Touches a divergence region** → audit carefully. The
      WebSocketClient class in particular should almost never need an
      upstream change; if it does, discuss before porting.
    - **Documentation/harness/test-only** → decide whether the tests are
-     portable to our `bun test` layout under `test/adapters/web/`. The
+     portable to our vitest layout under `test/qa/adapters/web/`. The
      invariant is usually worth a test even if the literal file isn't.
 
-4. **For each feature that becomes a new Gauntlet tool**, update
-   `src/adapters/web/adapter.ts` to surface it in `toolDefinitions()` and
+4. **For each feature that becomes a new Flight tool**, update
+   `src/qa/adapters/web/adapter.ts` to surface it in `toolDefinitions()` and
    dispatch it in `executeTool()`.
 
-5. **Commit per logical change.** One upstream commit → one Gauntlet
+5. **Commit per logical change.** One upstream commit → one Flight
    commit is the usual mapping. Reference the upstream SHA in the
    commit body so the trail is grep-able. Example:
    ```
@@ -161,7 +193,7 @@ Grep `chrome-ws-lib.js` for `GAUNTLET DIVERGENCE` to find these in-line.
 ## When a sync is big enough to need help
 
 If the upstream delta is more than ~5 commits or spans multiple feature
-areas, dispatch a Guppy per logical chunk with a tight spec (upstream SHA,
+areas, dispatch a subagent per logical chunk with a tight spec (upstream SHA,
 target function, which divergence markers to respect). Review each chunk
 before merging. Treating each upstream commit as its own task makes
 regressions easier to bisect.

@@ -9,7 +9,7 @@
  * vitest the file is never emitted, so the whole CDP library failed to
  * load. Duplicating 20 lines of `node:net` is the cheaper of the two
  * fixes — the alternative changes a vendored fork's function signature,
- * which is the thing docs/history/upstream-sync.md exists to avoid.
+ * which is the thing docs/upstream-sync.md exists to avoid.
  *
  * Picking a free port at all is itself a divergence from
  * obra/superpowers-chrome, which range-scans 9222..12111 (divergence #5 in

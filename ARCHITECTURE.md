@@ -179,7 +179,7 @@ candidate edges out of `flight` are now settled. Neither is an edge.
   `./lib/chrome-ws-lib.js`, scoped back to CommonJS by a marker `package.json` —
   the same mechanism glass uses at `skills/browsing/package.json`. Converging
   them is a refactor, not a wiring change, and it is deferred deliberately.
-  `packages/flight/docs/history/upstream-sync.md` is the spec for either
+  `packages/flight/docs/upstream-sync.md` is the spec for either
   direction.
 - **`flight → crew` is REFUTED.** The single occurrence of `crew` anywhere in
   flight is `packages/flight/docker/Dockerfile:53`, a
