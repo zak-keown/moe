@@ -11,7 +11,7 @@ everyday set) and `moe-everything` (all of them) — built into `/plugins/` by
 
 **Status:** imported and building. 27 skills. Both plugins now generate into
 `/plugins/` for all 11 harnesses — see
-[Two plugins, one source tree](#two-plugins-one-source-tree). 207 tests passing,
+[Two plugins, one source tree](#two-plugins-one-source-tree). 211 tests passing,
 5 skipped, across five suites; see [Verification](#verification). The lean/full
 split was **reviewed and settled 2026-08-31**.
 
@@ -99,11 +99,13 @@ scripts/validate_skill.py     Frontmatter validator, exercised by test/iterative
 mint/
   moe-core.yaml         The lean plugin's config. Seeded from
                         the-elements-of-style's everyharness.yaml.
-  moe-everything.yaml   The full plugin's config. Same tree, all 27 skills.
-skill-tiers.yaml        The lean/full curation, as data. Settled 2026-08-31.
+  moe-everything.yaml   The full plugin's config. Same tree, every skill in it.
+skill-tiers.yaml        The lean/full curation AND the provenance registry, as
+                        data. `imported:` frozen, `authored:` open. Settled
+                        2026-08-31.
 licenses/               One verbatim notice per inbound license.
 test/
-  metadata.test.ts      32 vitest assertions. THE verification for this package.
+  metadata.test.ts      36 vitest assertions. THE verification for this package.
   iterative-development/  37 Python unittest tests over the 9 skill CLIs.
   brainstorm-server/    130 upstream node:assert + `ws` tests over server.cjs.
   shell/                8 bash assertions over find-polluter.sh and render-graphs.mjs.
@@ -117,6 +119,17 @@ docs/history/           62 files. Inherited record — see below. Byte-identical
 skills. `tier: core` ships in both plugins; `tier: everything` ships in
 `moe-everything` only. Thirteen core, fourteen everything-only, and
 `moe-everything` is a strict superset.
+
+The file holds **two** maps, and the split is what lets the fork author its own
+skills without loosening the import record. `imported:` is the frozen record of
+the 27 skills the six upstream sources shipped — a diff inside it is a fidelity
+decision, and `test/metadata.test.ts` asserts its key set equal to a pinned
+literal, which is the drop-and-rename detector for the whole import.
+`authored:` is open and currently empty. Between them they must account for every
+skill on disk exactly once: nothing may exist unregistered, nothing may be
+registered without existing, and no name may sit in both. The lean-tier count
+lives in that test as a named `LEAN_TIER_BUDGET`, so moving a skill between tiers
+is a deliberate two-file diff rather than a silently recomputed total.
 
 The principle is ARCHITECTURE.md §2's: *a skill earns `moe-core` if it fires on
 ordinary work without being asked for.* Two rules were layered on it, pulling in
@@ -146,7 +159,34 @@ prose humans will read", so it fires more often than anything else here; its
 lean cost is one description line, because the ~12,000-token 1918 text is a
 separate file opened on demand. If the reviewer disagrees, this is the one to
 move — it breaks no closure edge. Every other rationale is in
-`skill-tiers.yaml` next to the skill it justifies.
+`skill-tiers.yaml` under `imported:`, next to the skill it justifies.
+
+### Adding a skill the fork authored
+
+Register it under `authored:`, not `imported:` — the pinned 27-name literal is
+aimed at `imported:` alone, so an entry here does not disturb it:
+
+```yaml
+authored:
+  your-skill-name:
+    tier: everything
+    from: moe
+    why: >-
+      More than 40 characters, earning the skill's place the same way an
+      imported entry does.
+```
+
+`from:` must be the fork's own value and may not name an upstream source; the
+directory and the manifest entry must land together, or the completeness
+assertion fails. `tier:` must be `everything`: that is **current policy** as of
+2026-08-31, and it is **reversible** — it exists so the first core-tier authored
+skill is a conversation somebody has on purpose rather than a default nobody
+chose. Flip the assertion when that conversation happens; do not work around it.
+
+`authored:` is also the **only** registry of fork-original skills. PARITY.md
+deliberately stays a pure import record (decision D3, 2026-08-31), so it gains no
+"authored here" section and a Moe-original skill is discoverable only from this
+map.
 
 ### The mechanism, and where the filtering actually happens
 
@@ -170,10 +210,10 @@ plugin root is the staging directory, so:
   collides.
 - The skill filter is a copy filter. `readSkills()` still takes everything it
   finds — it just finds 13 for the lean plugin and 27 for the full one.
-- `_shared/` is staged for both tiers regardless. It has no `SKILL.md`, is not in
-  `skill-tiers.yaml`, and is the 28th directory for 27 skills; a lean-tier skill
-  including a fragment that got filtered out is the same dead end the tier
-  closure rule exists to prevent.
+- `_shared/` is staged for both tiers regardless. It has no `SKILL.md`, is in
+  neither of `skill-tiers.yaml`'s maps, and is the 28th directory for 27 skills;
+  a lean-tier skill including a fragment that got filtered out is the same dead
+  end the tier closure rule exists to prevent.
 
 It also unblocked the two harness adapters this config had excluded. `opencode`
 and `pi` emit a full-replacement `package.json` into the plugin root, which used
@@ -600,7 +640,7 @@ Every number below was produced by running the command, on this machine, at the
 commit this README ships in.
 
 ```
-pnpm --filter @bubstack/moe-core test              #  30 passed  (vitest, test/metadata.test.ts)
+pnpm --filter @bubstack/moe-core test              #  36 passed  (vitest, test/metadata.test.ts)
 pnpm --filter @bubstack/moe-core test:python       #  37 passed  (python3 -m unittest, 6 modules)
 pnpm --filter @bubstack/moe-core test:brainstorm   # 130 passed  (9 suites: 32+15+3+20+3+33+13+4+7)
 pnpm --filter @bubstack/moe-core test:shell        #   8 passed,  5 skipped (no graphviz)
@@ -608,8 +648,8 @@ pnpm --filter @bubstack/moe-core lint              #   0 errors, needs the biome
 pnpm --filter @bubstack/moe-core typecheck         #   content package: no TypeScript
 ```
 
-**205 passed, 5 skipped.** `pnpm test` (and therefore `turbo run test` and
-`pnpm check`) runs only the 30 metadata assertions, which is the deliberate
+**211 passed, 5 skipped.** `pnpm test` (and therefore `turbo run test` and
+`pnpm check`) runs only the 36 metadata assertions, which is the deliberate
 choice: they are the verification this package's correctness actually rests on,
 and they need nothing but node. The other four suites are opt-in for the reasons
 `vitest.config.ts` records.
