@@ -198,18 +198,23 @@ export function CardEditor({ card, onSave, onDelete }: CardEditorProps) {
         </div>
 
         <div className="flex items-center gap-3 pt-2">
-          <button className="btn-primary" onClick={handleSave} disabled={saving}>
+          <button type="button" className="btn-primary" onClick={handleSave} disabled={saving}>
             {saving ? "Saving..." : "Save"}
           </button>
           {status === "draft" && (
-            <button className="btn-primary" onClick={handleApprove} disabled={saving}>
+            <button type="button" className="btn-primary" onClick={handleApprove} disabled={saving}>
               Approve
             </button>
           )}
-          <button className="btn-secondary" onClick={handleFanout} disabled={fanning}>
+          <button type="button" className="btn-secondary" onClick={handleFanout} disabled={fanning}>
             {fanning ? "Generating..." : "Fanout"}
           </button>
-          <button className="btn-danger" onClick={() => setConfirmDelete(true)} disabled={saving}>
+          <button
+            type="button"
+            className="btn-danger"
+            onClick={() => setConfirmDelete(true)}
+            disabled={saving}
+          >
             Delete
           </button>
         </div>

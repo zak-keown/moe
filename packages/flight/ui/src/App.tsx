@@ -157,7 +157,7 @@ function CardsSidebar({
     return (
       <div className="p-3">
         <div className="text-sm text-red-700">{error}</div>
-        <button onClick={onRetry} className="mt-2 text-xs text-teal hover:underline">
+        <button type="button" onClick={onRetry} className="mt-2 text-xs text-teal hover:underline">
           Retry
         </button>
       </div>
@@ -204,7 +204,7 @@ function RunsSidebar({
     return (
       <div className="p-3">
         <div className="text-sm text-red-700">{error}</div>
-        <button onClick={onRetry} className="mt-2 text-xs text-teal hover:underline">
+        <button type="button" onClick={onRetry} className="mt-2 text-xs text-teal hover:underline">
           Retry
         </button>
       </div>
@@ -286,11 +286,19 @@ export default function App() {
             }
             action={
               activeTab === "/cards" ? (
-                <button className="btn-primary w-full" onClick={() => navigate("/cards/new")}>
+                <button
+                  type="button"
+                  className="btn-primary w-full"
+                  onClick={() => navigate("/cards/new")}
+                >
                   New Card
                 </button>
               ) : (
-                <button className="btn-primary w-full" onClick={() => setRunModal({})}>
+                <button
+                  type="button"
+                  className="btn-primary w-full"
+                  onClick={() => setRunModal({})}
+                >
                   New Run
                 </button>
               )

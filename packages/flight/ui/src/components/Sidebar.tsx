@@ -15,6 +15,7 @@ export function Sidebar({ tabs, activeTab, onTabChange, action, liveRun, childre
       <div className="top-tab-bar">
         {tabs.map((tab) => (
           <button
+            type="button"
             key={tab.path}
             className={activeTab === tab.path ? "active" : ""}
             onClick={() => onTabChange(tab.path)}
@@ -25,6 +26,7 @@ export function Sidebar({ tabs, activeTab, onTabChange, action, liveRun, childre
       </div>
       {liveRun && (
         <button
+          type="button"
           className="flex items-center gap-2 w-full px-3 py-2 bg-teal-wash border-b border-edge text-left text-sm hover:bg-teal-100 transition-colors"
           onClick={liveRun.onClick}
         >

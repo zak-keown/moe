@@ -129,6 +129,7 @@ export function RunsList({
         {hasMore && onLoadMore && (
           <div className="border-b border-edge-light p-3">
             <button
+              type="button"
               onClick={onLoadMore}
               className="w-full text-center text-xs text-teal hover:underline"
             >
@@ -175,6 +176,7 @@ function CardGroupRow({ group, selectedId, onSelect, onSelectActive }: CardGroup
       {/* Individual run rows: active on top, then completed, newest-first. */}
       {group.activeRuns.map((run) => (
         <button
+          type="button"
           key={`active-${run.id}`}
           onClick={() => onSelectActive(run.id)}
           className={`w-full text-left pl-6 pr-3 py-2 border-t border-edge-light transition-colors duration-150 ${
@@ -191,6 +193,7 @@ function CardGroupRow({ group, selectedId, onSelect, onSelectActive }: CardGroup
         const when = formatRunTimestamp(result.runId);
         return (
           <button
+            type="button"
             key={result.runId}
             onClick={() => onSelect(result.runId)}
             className={`w-full text-left pl-6 pr-3 py-2 border-t border-edge-light transition-colors duration-150 ${

@@ -109,7 +109,12 @@ export function RunSetDetail() {
           {manifest.completedAt && <div>Completed: {manifest.completedAt}</div>}
         </div>
         {inFlight && (
-          <button onClick={handleCancel} disabled={cancelling} className="btn-secondary">
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={cancelling}
+            className="btn-secondary"
+          >
             {cancelling ? "Cancelling…" : "Cancel"}
           </button>
         )}

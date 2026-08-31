@@ -73,6 +73,7 @@ export function RunDetail({ result, onFanout, onRunAgain }: RunDetailProps) {
               Generated {generated.length} test card{generated.length !== 1 ? "s" : ""}
             </h3>
             <button
+              type="button"
               className="text-xs text-green-600 hover:text-green-800"
               onClick={() => setGenerated(null)}
             >
@@ -107,6 +108,7 @@ export function RunDetail({ result, onFanout, onRunAgain }: RunDetailProps) {
       <div className="flex items-center gap-3 pt-2">
         {onRunAgain && result.config && (
           <button
+            type="button"
             className="btn-secondary"
             onClick={() =>
               onRunAgain({
@@ -129,12 +131,22 @@ export function RunDetail({ result, onFanout, onRunAgain }: RunDetailProps) {
           </button>
         )}
         {result.observations.length > 0 && (
-          <button className="btn-primary" onClick={handleFromObservations} disabled={acting}>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={handleFromObservations}
+            disabled={acting}
+          >
             {acting ? "Generating..." : "Generate Test Cards from Observations"}
           </button>
         )}
         {result.status === "fail" && (
-          <button className="btn-secondary" onClick={handleAnalyzeFailure} disabled={acting}>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={handleAnalyzeFailure}
+            disabled={acting}
+          >
             {acting ? "Generating..." : "Generate Test Cards from Failure"}
           </button>
         )}

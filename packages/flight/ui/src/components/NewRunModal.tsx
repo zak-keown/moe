@@ -241,10 +241,10 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
           </div>
 
           <div className="flex items-center gap-3 pt-2">
-            <button className="btn-primary" onClick={handleStart}>
+            <button type="button" className="btn-primary" onClick={handleStart}>
               Start
             </button>
-            <button className="btn-secondary" onClick={onClose}>
+            <button type="button" className="btn-secondary" onClick={onClose}>
               Cancel
             </button>
           </div>

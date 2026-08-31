@@ -108,10 +108,10 @@ export function NewCardForm({ onCreated, onCancel }: NewCardFormProps) {
         </div>
 
         <div className="flex items-center gap-3 pt-2">
-          <button className="btn-primary" onClick={handleSubmit} disabled={saving}>
+          <button type="button" className="btn-primary" onClick={handleSubmit} disabled={saving}>
             {saving ? "Creating..." : "Create"}
           </button>
-          <button className="btn-secondary" onClick={onCancel} disabled={saving}>
+          <button type="button" className="btn-secondary" onClick={onCancel} disabled={saving}>
             Cancel
           </button>
         </div>

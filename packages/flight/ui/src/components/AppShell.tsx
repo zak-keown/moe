@@ -28,6 +28,7 @@ export function AppShell({ sidebar, children }: AppShellProps) {
       <header className="flex items-center justify-between border-b border-edge bg-white px-4 py-2">
         <h1 className="heading-display text-lg">moe-flight</h1>
         <button
+          type="button"
           className="relative flex items-center gap-1.5 text-sm text-slate hover:text-ink transition-colors"
           onClick={() => {
             setShowErrors(!showErrors);
@@ -48,6 +49,7 @@ export function AppShell({ sidebar, children }: AppShellProps) {
           <div className="flex items-center justify-between px-4 py-2 border-b border-edge">
             <h3 className="text-sm font-medium text-ink">Error Log</h3>
             <button
+              type="button"
               className="text-xs text-slate hover:text-ink"
               onClick={() => setShowErrors(false)}
             >

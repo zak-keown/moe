@@ -63,6 +63,7 @@ export function CardsList({ cards, selectedId, onSelect }: CardsListProps) {
         ) : (
           filtered.map((card) => (
             <button
+              type="button"
               key={card.id}
               onClick={() => onSelect(card.id)}
               className={`w-full text-left border-b border-edge-light transition-colors duration-150 ${

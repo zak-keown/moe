@@ -79,7 +79,7 @@ export function LiveRun({ activeRuns, activeRunsLoaded, onComplete }: LiveRunPro
         <div className="mx-4 mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3">
           <h3 className="text-sm font-medium text-red-800">Run error</h3>
           <p className="text-sm text-red-700 mt-1">{error}</p>
-          <button className="btn-secondary mt-3" onClick={() => navigate("/runs")}>
+          <button type="button" className="btn-secondary mt-3" onClick={() => navigate("/runs")}>
             Back to Runs
           </button>
         </div>
