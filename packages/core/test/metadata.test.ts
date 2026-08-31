@@ -90,6 +90,32 @@ const skills: Skill[] = skillDirs
 
 const skillNames = new Set(skills.map((s) => s.name));
 
+// skill-tiers.yaml, hoisted to module scope because two describes now read it:
+// the pinned 27-name literal in "skill inventory" asserts against `imported:`,
+// and "the lean/full curation" reads tiers off the merged registry.
+//
+// Two maps, not one map with an `origin:` discriminator (decision D1,
+// 2026-08-31): `imported:` is the frozen record of what the six upstream sources
+// shipped, `authored:` is what this fork wrote. The equality that detects an
+// upstream drop or rename is aimed at `imported:` alone, which is what lets a
+// fork-authored skill exist at all without loosening it.
+const tiers = parseYaml(readFileSync(join(PKG, "skill-tiers.yaml"), "utf8")) as {
+  imported: Record<string, { tier: string; from: string; why: string }> | null;
+  authored: Record<string, { tier: string; from: string; why: string }> | null;
+};
+const imported = tiers.imported ?? {};
+const authored = tiers.authored ?? {};
+
+// Built in exactly ONE place, on purpose. `{...undefined}` evaluates to `{}`
+// silently, so a single mistyped spread key here would make every tier lookup
+// return undefined and quietly empty the closure rule's loop below rather than
+// throwing. The "resolves a tier for every skill" assertion inside that test is
+// what catches it; this comment is why there is only one place to mistype.
+const registry: Record<string, { tier: string; from: string; why: string }> = {
+  ...imported,
+  ...authored,
+};
+
 // Every markdown file we are allowed to make assertions about: the skill bodies
 // and companion documents this fork authored or rebranded. Excludes third-party
 // verbatim text and the example plugins.
@@ -542,13 +568,9 @@ describe("hooks", () => {
 });
 
 describe("the lean/full curation", () => {
-  const tiers = parseYaml(readFileSync(join(PKG, "skill-tiers.yaml"), "utf8")) as {
-    skills: Record<string, { tier: string; from: string; why: string }>;
-  };
-
   it("assigns every skill exactly one recorded tier, with a rationale", () => {
-    expect(Object.keys(tiers.skills).sort()).toEqual([...skillNames].sort());
-    for (const [name, entry] of Object.entries(tiers.skills)) {
+    expect(Object.keys(registry).sort()).toEqual([...skillNames].sort());
+    for (const [name, entry] of Object.entries(registry)) {
       expect(["core", "everything"], `${name}.tier`).toContain(entry.tier);
       expect(entry.from, `${name}.from`).toBeTruthy();
       expect(
@@ -559,7 +581,7 @@ describe("the lean/full curation", () => {
   });
 
   it("keeps the lean tier lean", () => {
-    const core = Object.entries(tiers.skills).filter(([, e]) => e.tier === "core");
+    const core = Object.entries(registry).filter(([, e]) => e.tier === "core");
     expect(core.length).toBe(13);
     expect(core.length).toBeLessThan(skills.length / 2 + 1);
   });
@@ -568,7 +590,7 @@ describe("the lean/full curation", () => {
     // The closure rule. A `**REQUIRED SUB-SKILL:**` pointing at a skill the
     // reader does not have installed is a dead end mid-workflow, and the lean
     // plugin is the one most people will be running.
-    const tierOf = (n: string) => tiers.skills[n]?.tier;
+    const tierOf = (n: string) => registry[n]?.tier;
     const offenders: string[] = [];
     for (const s of skills) {
       if (tierOf(s.name) !== "core") continue;
@@ -601,7 +623,7 @@ describe("the lean/full curation", () => {
     const emitted = readdirSync(join(PKG, "../../plugins/moe-core/skills")).sort();
     const expected = [
       "_shared",
-      ...Object.entries(tiers.skills)
+      ...Object.entries(registry)
         .filter(([, e]) => e.tier === "core")
         .map(([n]) => n),
     ].sort();

@@ -46,6 +46,15 @@
 #
 # moe-everything is a strict superset: 13 + 14 = 27.
 
+# NOT THE SHIPPED DESCRIPTIONS. Nothing parses this block: scripts/mint-plugins.mjs
+# reads only the skill maps below, and test/metadata.test.ts only the same. The
+# descriptions marketplace.json actually ships are in mint/moe-core.yaml and
+# mint/moe-everything.yaml, which scripts/mint-plugins.mjs byte-copies into
+# plugins/<name>/moe-mint.yaml — editing either regenerates committed output, so
+# they are deliberately left alone here.
+#
+# Kept because it documents the intent of each tier in the file that defines the
+# tiers. Deleting it outright is a separate decision.
 plugins:
   moe-core:
     description: >-
@@ -54,11 +63,21 @@ plugins:
     tiers: [core]
   moe-everything:
     description: >-
-      The full Moe skill library: all 27 skills, including the ones you invoke
-      deliberately by name.
+      The full Moe skill library: every skill in the tree, including the ones you
+      invoke deliberately by name.
     tiers: [core, everything]
 
-skills:
+# ---------------------------------------------------------------------------
+# imported: the 27 skills that came in from the six upstream sources. FROZEN.
+#
+# A diff inside this map is a FIDELITY decision, not an edit. These entries are
+# the fork's record of what it inherited and from where, so renaming, adding or
+# dropping a key here fails test/metadata.test.ts against the pinned 27-name
+# literal — that assertion is the drop-and-rename detector for the whole
+# import, and it is aimed at THIS map rather than at the skills/ directory so
+# that a fork-authored skill can arrive without weakening it.
+# ---------------------------------------------------------------------------
+imported:
   # ---------------------------------------------------------------- core (13)
 
   using-moe:
@@ -276,8 +295,31 @@ skills:
     why: >-
       Part of the cluster. The orchestrator's post-iteration gate.
 
+
+# ---------------------------------------------------------------------------
+# authored: skills this fork wrote. OPEN, and empty until something is.
+#
+# Same three keys as an imported entry. Its `from:` is always the value `moe`,
+# because there is no upstream to name, and its `why:` earns the skill's place
+# the same way an imported one does.
+#
+# CURRENT POLICY, 2026-08-31 (Zak Keown, decision D2): a fork-authored skill is
+# `tier: everything` only, and test/metadata.test.ts asserts it. This is
+# REVERSIBLE and deliberately so: it exists to make the first core-tier
+# authored skill a conversation someone has on purpose rather than a default
+# nobody chose. Flip the assertion when that conversation happens.
+#
+# The `{}` on the next line is load-bearing. A bare `authored:` with nothing
+# under it parses as null rather than as an empty map, which would make
+# Object.keys() throw a TypeError far from the cause.
+# ---------------------------------------------------------------------------
+authored:
+  {}
+
 # Not a skill: skills/_shared/ holds the three PAR reference documents the
 # iterative-development cluster reads at runtime. It carries no SKILL.md, so
 # moe-mint's readSkills() skips it, and it ships with the skills directory in
-# both plugins. Was skills/shared/ upstream; renamed to sort first and to signal
-# that it is not a skill in a directory that now holds 27 of them.
+# both plugins. It is in NEITHER map above — not `imported:`, not `authored:` —
+# which is what scripts/mint-plugins.mjs's ALWAYS_STAGE set exists to handle.
+# Was skills/shared/ upstream; renamed to sort first and to signal that it is
+# not a skill in a directory that now holds 27 of them.

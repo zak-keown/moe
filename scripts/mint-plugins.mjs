@@ -62,7 +62,8 @@ const COMPONENTS = ["skills", "commands", "agents", "hooks", ".mcp.json"];
 
 /**
  * The plugin registry. `tier` is set only where one source tree emits more than
- * one plugin: it names the `skill-tiers.yaml` tiers whose skills to stage.
+ * one plugin: it names the `skill-tiers.yaml` tiers whose skills to stage, read
+ * from that file's merged `imported:` + `authored:` maps.
  *
  * `checkMarketplace()` below asserts this list agrees with
  * `.claude-plugin/marketplace.json`, in both directions: a plugin generated but
@@ -87,9 +88,9 @@ const PLUGINS = [
 /**
  * Skill directories that are not skills.
  *
- * `_shared/` holds fragments that skills include; it has no SKILL.md, is not in
- * `skill-tiers.yaml`, and is why `packages/core/skills/` has 28 entries for 27
- * skills. It is staged for EVERY tier — a lean-tier skill including a shared
+ * `_shared/` holds fragments that skills include; it has no SKILL.md, is in
+ * NEITHER of `skill-tiers.yaml`'s maps (not `imported:`, not `authored:`), and is
+ * why `packages/core/skills/` has 28 entries for 27 skills. It is staged for EVERY tier — a lean-tier skill including a shared
  * fragment that was filtered out is a dead link mid-workflow, which is the same
  * failure the tier closure rule exists to prevent.
  */
@@ -129,7 +130,12 @@ function skillsForTiers(pkgDir, tiers) {
   const parsed = parseYaml(fs.readFileSync(tiersPath, "utf8"));
   const wanted = new Set(tiers);
   const names = new Set();
-  for (const [name, entry] of Object.entries(parsed.skills ?? {})) {
+  // Both maps, merged. `imported:` is the frozen record of the 27 upstream
+  // skills; `authored:` is what this fork wrote. A skill's tier is read the same
+  // way whichever map it came from, because a lean-plugin reader hits the same
+  // dead end at a missing skill no matter who authored it.
+  const registry = { ...(parsed.imported ?? {}), ...(parsed.authored ?? {}) };
+  for (const [name, entry] of Object.entries(registry)) {
     if (wanted.has(entry.tier)) names.add(name);
   }
   if (names.size === 0) fail(`no skills matched tiers ${tiers.join(", ")} in skill-tiers.yaml`);
