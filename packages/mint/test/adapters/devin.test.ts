@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { byPathMap, mustGet } from '../helpers.js'
+import { mkdtempSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { buildModel } from '../../src/model.js'
 import { devin } from '../../src/adapters/devin.js'
 import { adapters, getAdapter } from '../../src/adapters/index.js'
@@ -48,5 +51,25 @@ describe('devin adapter', () => {
       mcp: 'none',
       bootstrap: 'none',
     })
+  })
+})
+
+describe('devin adapter installDoc', () => {
+  it('uses `owner/repo` shorthand for github (kitchen-sink fixture)', () => {
+    expect(devin.installDoc!(model)).toContain('devin plugins install example/kitchen-sink')
+  })
+
+  it('emits the full URL for a non-github host', () => {
+    // Regression: previously the helper only matched github.com, so any
+    // gitlab.tcdevops.com repository fell back to a <your-repo> placeholder.
+    const dir = mkdtempSync(join(tmpdir(), 'mint-devin-installdoc-nongithub-'))
+    writeFileSync(
+      join(dir, 'moe-mint.yaml'),
+      'name: gh\nversion: 1.0.0\ndescription: self-hosted gitlab fixture\nrepository: https://gitlab.tcdevops.com/Zak/moe\nbootstrap: none\n',
+    )
+    const gitlabModel = buildModel(dir)
+    const body = devin.installDoc!(gitlabModel)
+    expect(body).toContain('devin plugins install https://gitlab.tcdevops.com/Zak/moe')
+    expect(body).not.toContain('<your-repo>')
   })
 })

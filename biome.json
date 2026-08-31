@@ -70,6 +70,16 @@
       }
     },
     {
+      "includes": ["**/bin/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noUndeclaredEnvVars": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": ["**/packages/crew/test/**"],
       "linter": {
         "rules": {
