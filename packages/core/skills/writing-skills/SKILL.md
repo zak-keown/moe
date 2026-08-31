@@ -287,6 +287,12 @@ Use skill name only, with explicit requirement markers:
 
 **Why no @ links:** `@` syntax force-loads files immediately, consuming 200k+ context before you need them.
 
+## Register: Skill Bodies vs Prose Humans Read
+
+Skill BODIES keep the enforcement register — ALL-CAPS blocks, rationalization tables, Red Flags lists, "your human partner". Bulletproofing Skills Against Rationalization documents those as behavioural devices tested against subagents, so softening them for tone would change agent behaviour.
+
+House voice governs prose HUMANS read: READMEs, architecture docs, commit and merge-request messages. `writing-clearly-and-concisely` owns it. Do not apply one register to the other.
+
 ## Flowchart Usage
 
 ```dot
