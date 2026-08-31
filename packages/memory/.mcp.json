@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "moe-memory": {
+      "command": "node",
+      "args": ["./dist/cli.js", "mcp-server"],
+      "cwd": ".",
+      "env_vars": [
+        "MOE_MEMORY_CONFIG_DIR",
+        "MOE_MEMORY_DB_PATH",
+        "MOE_MEMORY_JOURNAL_PATH",
+        "MOE_MEMORY_MODEL_CACHE_DIR",
+        "MOE_DATA_DIR",
+        "XDG_CONFIG_HOME",
+        "CONVERSATION_SEARCH_EXCLUDE_PROJECTS"
+      ]
+    }
+  }
+}

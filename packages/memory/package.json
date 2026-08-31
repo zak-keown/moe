@@ -4,17 +4,57 @@
   "private": true,
   "type": "module",
   "description": "Semantic recall over past sessions and journal entries. One MCP server.",
-  "license": "Apache-2.0",
+  "license": "MIT",
+  "author": {
+    "name": "Zak Keown",
+    "email": "zak@turncommerce.com"
+  },
+  "homepage": "https://gitlab.tcdevops.com/bubstack/moe",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.tcdevops.com/bubstack/moe.git"
+  },
+  "keywords": [
+    "claude-code",
+    "codex",
+    "conversations",
+    "journal",
+    "search",
+    "semantic-search",
+    "embeddings"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "moe-memory": "./dist/cli.js"
   },
   "scripts": {
-    "lint": "biome check .",
     "build": "tsc -b",
-    "typecheck": "tsc -b --pretty",
-    "test": "vitest run --passWithNoTests"
+    "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --pretty",
+    "test": "vitest run --project unit",
+    "test:model": "vitest run --project model",
+    "test:claude-e2e": "node test/manual/claude-e2e.js",
+    "test:codex-e2e": "node test/manual/codex-e2e.js",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.126",
+    "@huggingface/transformers": "^4.2.0",
+    "@modelcontextprotocol/sdk": "^1.20.0",
+    "better-sqlite3": "^12.4.1",
+    "marked": "^16.4.0",
+    "proper-lockfile": "^4.1.2",
+    "sqlite-vec": "^0.1.7-alpha.2",
+    "zod": "^4.4.2"
   },
   "devDependencies": {
-    "typescript": "^5.9.0"
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^24.7.0",
+    "@types/proper-lockfile": "^4.1.4",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.4"
   }
 }

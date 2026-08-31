@@ -1,0 +1,14 @@
+{
+  "//": "Test-only typecheck. Upstream's tsconfig had `exclude: [\"test\"]`, so all 38 suites were never typechecked at all — the strict base found real errors in them on first contact. This project is non-composite and noEmit, so it is NOT referenced from the root solution; `pnpm typecheck` runs it directly. No cross-package test edges to declare.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": ["src/**/*", "test/**/*.ts", "vitest.config.ts"],
+  "exclude": ["test/manual/**"],
+  "references": []
+}
