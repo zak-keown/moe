@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, expect, test } from 'vitest';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { startDashboard } from '../src/index.js';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, expect, test } from "vitest";
+import { startDashboard } from "../src/index.js";
 
 // The e2e dashboard fixture: a results/ tree with one of each cell state, plus a
 // scenarios/ + coding-agents/ tree so the grid renders the full cartesian
@@ -16,8 +16,8 @@ import { startDashboard } from '../src/index.js';
 //  - drift  x claude  -> 3 runs, the latest >1.5x median of priors (▲)
 //  - drift  x codex   -> an ABANDONED dir (phase.json with a dead pid, no verdict)
 
-const KNOWN_AGENTS = ['claude', 'codex'] as const;
-const SCENARIOS = ['drift', 'flaky', 'good'] as const; // sorted
+const KNOWN_AGENTS = ["claude", "codex"] as const;
+const SCENARIOS = ["drift", "flaky", "good"] as const; // sorted
 
 interface Fixture {
   readonly root: string;
@@ -48,9 +48,9 @@ function identityFor(dir: string): {
   credential: string;
   os: string;
 } {
-  const base = dir.split('/').at(-1) ?? '';
-  const [scenario = '', agent = ''] = base.split('-');
-  return { scenario, agent, credential: 'none', os: 'linux' };
+  const base = dir.split("/").at(-1) ?? "";
+  const [scenario = "", agent = ""] = base.split("-");
+  return { scenario, agent, credential: "none", os: "linux" };
 }
 
 function writeVerdict(dir: string, final: string, cost: number | null): void {
@@ -58,16 +58,14 @@ function writeVerdict(dir: string, final: string, cost: number | null): void {
   // cost is the coding-agent (subject) cost — the cell's displayed cost reads
   // economics.coding_agent.est_cost_usd, never the combined total.
   const economics =
-    cost !== null
-      ? { coding_agent: { est_cost_usd: cost }, total_est_cost_usd: cost }
-      : null;
+    cost !== null ? { coding_agent: { est_cost_usd: cost }, total_est_cost_usd: cost } : null;
   const id = identityFor(dir);
   writeFileSync(
-    join(dir, 'verdict.json'),
+    join(dir, "verdict.json"),
     JSON.stringify({
       final,
       economics,
-      finished_at: '2026-06-12T00:00:00Z',
+      finished_at: "2026-06-12T00:00:00Z",
       scenario: id.scenario,
       coding_agent: id.agent,
       credential: id.credential,
@@ -79,10 +77,10 @@ function writeVerdict(dir: string, final: string, cost: number | null): void {
 function writePhaseOnly(dir: string, phase: string, pid: number): void {
   mkdirSync(dir, { recursive: true });
   writeFileSync(
-    join(dir, 'phase.json'),
+    join(dir, "phase.json"),
     JSON.stringify({
       phase,
-      updated_at: '2026-06-12T00:00:00Z',
+      updated_at: "2026-06-12T00:00:00Z",
       pid,
       identity: identityFor(dir),
     }),
@@ -97,17 +95,17 @@ function writeManifest(root: string): string {
     KNOWN_AGENTS.map((agent) => ({
       scenario,
       agent,
-      credential: 'none',
-      os: 'linux',
+      credential: "none",
+      os: "linux",
       eligible: true,
       skipped_reason: null,
     })),
   );
-  const path = join(root, 'grid-manifest.json');
+  const path = join(root, "grid-manifest.json");
   writeFileSync(
     path,
     JSON.stringify({
-      generated_at: '2026-06-12T00:00:00Z',
+      generated_at: "2026-06-12T00:00:00Z",
       scenarios: [...SCENARIOS],
       agents: [...KNOWN_AGENTS],
       cells,
@@ -117,35 +115,27 @@ function writeManifest(root: string): string {
 }
 
 function makeFixture(): Fixture {
-  const root = mkdtempSync(join(tmpdir(), 'dash-srv-'));
-  const resultsRoot = join(root, 'results');
+  const root = mkdtempSync(join(tmpdir(), "dash-srv-"));
+  const resultsRoot = join(root, "results");
   mkdirSync(resultsRoot, { recursive: true });
 
   // good x claude -> pass
-  writeVerdict(runDir(resultsRoot, 'good', 'claude', 0, 'aaaa'), 'pass', 1.0);
+  writeVerdict(runDir(resultsRoot, "good", "claude", 0, "aaaa"), "pass", 1.0);
   // good x codex -> fail
-  writeVerdict(runDir(resultsRoot, 'good', 'codex', 0, 'bbbb'), 'fail', 2.0);
+  writeVerdict(runDir(resultsRoot, "good", "codex", 0, "bbbb"), "fail", 2.0);
   // flaky x claude -> indeterminate
-  writeVerdict(
-    runDir(resultsRoot, 'flaky', 'claude', 0, 'cccc'),
-    'indeterminate',
-    1.5,
-  );
+  writeVerdict(runDir(resultsRoot, "flaky", "claude", 0, "cccc"), "indeterminate", 1.5);
   // flaky x codex -> live in-flight dir (this process's pid IS alive)
-  writePhaseOnly(
-    runDir(resultsRoot, 'flaky', 'codex', 0, 'dddd'),
-    'agent',
-    process.pid,
-  );
+  writePhaseOnly(runDir(resultsRoot, "flaky", "codex", 0, "dddd"), "agent", process.pid);
   // drift x claude -> 3 runs, latest >1.5x median of priors ([1,1,3]) -> ▲
-  writeVerdict(runDir(resultsRoot, 'drift', 'claude', 0, 'e001'), 'pass', 1.0);
-  writeVerdict(runDir(resultsRoot, 'drift', 'claude', 1, 'e002'), 'pass', 1.0);
-  writeVerdict(runDir(resultsRoot, 'drift', 'claude', 2, 'e003'), 'pass', 3.0);
+  writeVerdict(runDir(resultsRoot, "drift", "claude", 0, "e001"), "pass", 1.0);
+  writeVerdict(runDir(resultsRoot, "drift", "claude", 1, "e002"), "pass", 1.0);
+  writeVerdict(runDir(resultsRoot, "drift", "claude", 2, "e003"), "pass", 3.0);
   // drift x codex -> abandoned dir (dead pid, no verdict) -> renders empty (the
   // manifest cell exists, but there is no displayable run).
   writePhaseOnly(
-    runDir(resultsRoot, 'drift', 'codex', 0, 'ffff'),
-    'agent',
+    runDir(resultsRoot, "drift", "codex", 0, "ffff"),
+    "agent",
     2_000_000_000, // out-of-range pid: never alive
   );
 
@@ -158,14 +148,14 @@ function makeFixture(): Fixture {
 function sliceCell(html: string, cellIdValue: string): string {
   const open = html.indexOf(`id="${cellIdValue}"`);
   if (open === -1) {
-    return '';
+    return "";
   }
-  const tdStart = html.lastIndexOf('<td', open);
-  const tdEnd = html.indexOf('</td>', open);
+  const tdStart = html.lastIndexOf("<td", open);
+  const tdEnd = html.indexOf("</td>", open);
   if (tdStart === -1 || tdEnd === -1) {
-    return '';
+    return "";
   }
-  return html.slice(tdStart, tdEnd + '</td>'.length);
+  return html.slice(tdStart, tdEnd + "</td>".length);
 }
 
 let fixtures: Fixture[] = [];
@@ -208,16 +198,16 @@ async function start(
   };
 }
 
-test('GET / renders the grid with the tally header and every cell id', async () => {
+test("GET / renders the grid with the tally header and every cell id", async () => {
   const { base } = await start();
   const res = await fetch(`${base}/`);
   expect(res.status).toBe(200);
-  expect(res.headers.get('content-type')).toContain('text/html');
+  expect(res.headers.get("content-type")).toContain("text/html");
   const html = await res.text();
 
   // The tally header.
-  expect(html).toContain('<b>moe-flight</b>');
-  expect(html).toContain('scenarios ×');
+  expect(html).toContain("<b>moe-flight</b>");
+  expect(html).toContain("scenarios ×");
 
   // Every (scenario, agent, os) cell id is present (cartesian product).
   for (const s of SCENARIOS) {
@@ -227,111 +217,107 @@ test('GET / renders the grid with the tally header and every cell id', async () 
   }
 });
 
-test('GET / reflects pass/fail/indeterminate and the live in-flight cell', async () => {
+test("GET / reflects pass/fail/indeterminate and the live in-flight cell", async () => {
   const { base } = await start();
   const html = await fetch(`${base}/`).then((r) => r.text());
 
   // good x claude pass -> b-pass band, cost bottom.
-  expect(sliceCell(html, 'cell-good-claude-none-linux')).toContain('b-pass');
+  expect(sliceCell(html, "cell-good-claude-none-linux")).toContain("b-pass");
   // good x codex fail -> b-fail band.
-  expect(sliceCell(html, 'cell-good-codex-none-linux')).toContain('b-fail');
+  expect(sliceCell(html, "cell-good-codex-none-linux")).toContain("b-fail");
   // flaky x claude indeterminate -> b-indet band.
-  expect(sliceCell(html, 'cell-flaky-claude-none-linux')).toContain('b-indet');
+  expect(sliceCell(html, "cell-flaky-claude-none-linux")).toContain("b-indet");
   // flaky x codex live -> running class + the phase word.
-  const liveTd = sliceCell(html, 'cell-flaky-codex-none-linux');
-  expect(liveTd).toContain('running');
-  expect(liveTd).toContain('agent');
+  const liveTd = sliceCell(html, "cell-flaky-codex-none-linux");
+  expect(liveTd).toContain("running");
+  expect(liveTd).toContain("agent");
 });
 
-test('GET / shows the drift marker and omits the abandoned cell', async () => {
+test("GET / shows the drift marker and omits the abandoned cell", async () => {
   const { base } = await start();
   const html = await fetch(`${base}/`).then((r) => r.text());
 
   // drift x claude carries the ▲ marker.
-  expect(sliceCell(html, 'cell-drift-claude-none-linux')).toContain('▲');
+  expect(sliceCell(html, "cell-drift-claude-none-linux")).toContain("▲");
 
   // drift x codex is abandoned (dead pid, no verdict) -> renders as not_run (the
   // middle-dot placeholder), NOT a running/done cell. Slice out just that cell's
   // <td>…</td> so the assertion can't bleed into a later cell's bands.
-  const codexTd = sliceCell(html, 'cell-drift-codex-none-linux');
-  expect(codexTd).toContain('status-not_run');
-  expect(codexTd).not.toContain('b-pass');
-  expect(codexTd).not.toContain('running');
+  const codexTd = sliceCell(html, "cell-drift-codex-none-linux");
+  expect(codexTd).toContain("status-not_run");
+  expect(codexTd).not.toContain("b-pass");
+  expect(codexTd).not.toContain("running");
 });
 
-test('GET /static/styles.css serves text/css', async () => {
+test("GET /static/styles.css serves text/css", async () => {
   const { base } = await start();
   const res = await fetch(`${base}/static/styles.css`);
   expect(res.status).toBe(200);
-  expect(res.headers.get('content-type')).toContain('text/css');
+  expect(res.headers.get("content-type")).toContain("text/css");
   const body = await res.text();
-  expect(body).toContain('.cb-slot');
+  expect(body).toContain(".cb-slot");
 });
 
-test('GET /static/app.js serves text/javascript', async () => {
+test("GET /static/app.js serves text/javascript", async () => {
   const { base } = await start();
   const res = await fetch(`${base}/static/app.js`);
   expect(res.status).toBe(200);
-  expect(res.headers.get('content-type')).toContain('javascript');
+  expect(res.headers.get("content-type")).toContain("javascript");
 });
 
-test('GET /static/fonts/*.woff2 serves font/woff2', async () => {
+test("GET /static/fonts/*.woff2 serves font/woff2", async () => {
   const { base } = await start();
   const res = await fetch(`${base}/static/fonts/Inter-Regular.woff2`);
   expect(res.status).toBe(200);
-  expect(res.headers.get('content-type')).toContain('woff2');
+  expect(res.headers.get("content-type")).toContain("woff2");
 });
 
-test('GET /static/* rejects path traversal outside the static dir', async () => {
+test("GET /static/* rejects path traversal outside the static dir", async () => {
   const { base } = await start();
   const res = await fetch(`${base}/static/../server.ts`);
   // Bun's URL normalization collapses ../ before the request reaches us, so the
   // path is either 404 (no such static file) or rejected — never the .ts source.
   const body = await res.text();
   expect(res.status).toBe(404);
-  expect(body).not.toContain('createDashboard');
+  expect(body).not.toContain("createDashboard");
 });
 
-test('GET /events responds with text/event-stream', async () => {
+test("GET /events responds with text/event-stream", async () => {
   const { base } = await start();
   const res = await fetch(`${base}/events`);
   expect(res.status).toBe(200);
-  expect(res.headers.get('content-type')).toContain('text/event-stream');
-  expect(res.headers.get('cache-control')).toContain('no-cache');
+  expect(res.headers.get("content-type")).toContain("text/event-stream");
+  expect(res.headers.get("cache-control")).toContain("no-cache");
   // Drop the stream so the test doesn't hang on an open SSE connection.
   await res.body?.cancel();
 });
 
-test('GET / on an unknown route is 404', async () => {
+test("GET / on an unknown route is 404", async () => {
   const { base } = await start();
   const res = await fetch(`${base}/nope`);
   expect(res.status).toBe(404);
 });
 
-test('an SSE cell frame is delivered after a scanner tick mutates a dir', async () => {
+test("an SSE cell frame is delivered after a scanner tick mutates a dir", async () => {
   const { fixture, base } = await start();
 
   // Connect an SSE client. The scanner only ticks while a client is connected.
   const res = await fetch(`${base}/events`);
-  expect(res.headers.get('content-type')).toContain('text/event-stream');
+  expect(res.headers.get("content-type")).toContain("text/event-stream");
   const reader = res.body?.getReader();
   if (reader === undefined) {
-    throw new Error('expected an SSE body reader');
+    throw new Error("expected an SSE body reader");
   }
 
   // Land a verdict.json into the previously-live (flaky x codex) dir so the next
   // scanner tick sees its signature change (running -> verdict-appeared) and
   // publishes a cell-flaky-codex-none-linux frame.
-  writeVerdict(
-    runDir(fixture.resultsRoot, 'flaky', 'codex', 0, 'dddd'),
-    'pass',
-    0.5,
-  );
+  writeVerdict(runDir(fixture.resultsRoot, "flaky", "codex", 0, "dddd"), "pass", 0.5);
 
   // Read frames until we see the cell event or time out. The scanner cadence is
   // ~1s; allow a few ticks.
   const decoder = new TextDecoder();
-  let buf = '';
+  let buf = "";
   const deadline = Date.now() + 6000;
   let sawCellFrame = false;
   while (Date.now() < deadline && !sawCellFrame) {
@@ -344,12 +330,12 @@ test('an SSE cell frame is delivered after a scanner tick mutates a dir', async 
     if (chunk.value !== undefined) {
       buf += decoder.decode(chunk.value, { stream: true });
     }
-    if (buf.includes('event: cell-flaky-codex-none-linux')) {
+    if (buf.includes("event: cell-flaky-codex-none-linux")) {
       sawCellFrame = true;
     }
   }
   await reader.cancel();
   expect(sawCellFrame).toBe(true);
   // The frame's data line is single-line HTML carrying the cell id.
-  expect(buf).toContain('cell-flaky-codex-none-linux');
+  expect(buf).toContain("cell-flaky-codex-none-linux");
 });

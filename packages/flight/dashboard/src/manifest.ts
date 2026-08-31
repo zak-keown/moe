@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { z } from 'zod';
+import { readFileSync } from "node:fs";
+import { z } from "zod";
 
 // The dashboard's LOCAL read-type for grid-manifest.json. The on-disk JSON is
 // the contract — the dashboard deliberately does NOT import the harness's
@@ -13,12 +13,10 @@ const GridManifestCellSchema = z.object({
   agent: z.string(),
   // The credential name this cell runs under. Defaulted so a pre-credential
   // manifest still parses ('' = the agent's default / credential-less).
-  credential: z.string().default(''),
+  credential: z.string().default(""),
   os: z.string(),
   eligible: z.boolean(),
-  skipped_reason: z
-    .enum(['directive', 'draft', 'tier', 'harness', 'os'])
-    .nullable(),
+  skipped_reason: z.enum(["directive", "draft", "tier", "harness", "os"]).nullable(),
 });
 
 const GridManifestSchema = z.object({
@@ -37,7 +35,7 @@ export type GridManifest = z.infer<typeof GridManifestSchema>;
 export function loadGridManifest(path: string): GridManifest | null {
   let raw: unknown;
   try {
-    raw = JSON.parse(readFileSync(path, 'utf8'));
+    raw = JSON.parse(readFileSync(path, "utf8"));
   } catch {
     return null;
   }

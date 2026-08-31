@@ -1,8 +1,7 @@
-import { createReadStream } from 'node:fs';
-import { Readable } from 'node:stream';
-import { existsSync, statSync } from 'node:fs';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { createReadStream, existsSync, statSync } from "node:fs";
+import { join } from "node:path";
+import { Readable } from "node:stream";
+import { fileURLToPath } from "node:url";
 import {
   type AgentColumns,
   type AgentSubColumn,
@@ -10,12 +9,12 @@ import {
   cellId,
   cellKey,
   type Grid,
-} from './contracts.js';
-import { EventBus } from './event-bus.js';
-import type { GridManifest, GridManifestCell } from './manifest.js';
-import { scanResults } from './scan.js';
-import { cellHtml, gridHtml, layoutHtml, tallyHtml } from './templates.js';
-import { type CellIdentity, cellView, diffGrids, headerTally } from './view.js';
+} from "./contracts.js";
+import { EventBus } from "./event-bus.js";
+import type { GridManifest, GridManifestCell } from "./manifest.js";
+import { scanResults } from "./scan.js";
+import { cellHtml, gridHtml, layoutHtml, tallyHtml } from "./templates.js";
+import { type CellIdentity, cellView, diffGrids, headerTally } from "./view.js";
 
 // The Bun.serve fetch handler + scanner loop for the moe-flight dashboard. Native
 // Bun.serve + a ReadableStream SSE body; no external web stack. Read-only: the
@@ -55,55 +54,53 @@ export interface Dashboard {
 // copies no assets, so the build has a step that copies src/static -> dist/static
 // (scripts/copy-static.mjs); without it every /static/* request 404s and the
 // grid renders with no CSS and no htmx.
-const STATIC_DIR = fileURLToPath(new URL('./static', import.meta.url));
+const STATIC_DIR = fileURLToPath(new URL("./static", import.meta.url));
 
 // SSE data MUST be a single line: each `data:` field is one line, and a newline
 // inside the HTML would split the frame. The cell/strip partials are already
 // single-element HTML, but collapse any stray newline defensively.
 function oneLine(html: string): string {
-  return html.replaceAll('\n', '');
+  return html.replaceAll("\n", "");
 }
 
 // content-type for a static asset by extension. woff2 is binary; everything else
 // the dashboard serves is text. Unknown extensions fall back to octet-stream.
 function contentTypeFor(path: string): string {
-  if (path.endsWith('.css')) {
-    return 'text/css; charset=utf-8';
+  if (path.endsWith(".css")) {
+    return "text/css; charset=utf-8";
   }
-  if (path.endsWith('.js')) {
-    return 'text/javascript; charset=utf-8';
+  if (path.endsWith(".js")) {
+    return "text/javascript; charset=utf-8";
   }
-  if (path.endsWith('.woff2')) {
-    return 'font/woff2';
+  if (path.endsWith(".woff2")) {
+    return "font/woff2";
   }
-  if (path.endsWith('.txt')) {
-    return 'text/plain; charset=utf-8';
+  if (path.endsWith(".txt")) {
+    return "text/plain; charset=utf-8";
   }
-  if (path.endsWith('.html')) {
-    return 'text/html; charset=utf-8';
+  if (path.endsWith(".html")) {
+    return "text/html; charset=utf-8";
   }
-  return 'application/octet-stream';
+  return "application/octet-stream";
 }
 
 // The hover "why" for a not-applicable cell (an empty cell that can never run
 // here), by the manifest's skip reason. directive is the common case (a
 // scenario's `# coding-agents:` line excludes this agent).
-function naTitle(
-  reason: 'directive' | 'draft' | 'tier' | 'harness' | 'os' | null,
-): string {
+function naTitle(reason: "directive" | "draft" | "tier" | "harness" | "os" | null): string {
   switch (reason) {
-    case 'directive':
+    case "directive":
       return "not eligible — this scenario's coding-agents directive excludes this agent";
-    case 'draft':
-      return 'draft scenario — not run by default';
-    case 'tier':
-      return 'filtered out by tier';
-    case 'harness':
+    case "draft":
+      return "draft scenario — not run by default";
+    case "tier":
+      return "filtered out by tier";
+    case "harness":
       return "not eligible — this credential's harnesses exclude this agent";
-    case 'os':
-      return 'not eligible — credential/agent OS support excludes this OS';
+    case "os":
+      return "not eligible — credential/agent OS support excludes this OS";
     default:
-      return 'not run-eligible';
+      return "not run-eligible";
   }
 }
 
@@ -130,10 +127,7 @@ function distinctAgents(grid: Grid): string[] {
 // The cell identities to render, in row-major (scenario, then agent) order. With
 // a manifest, this is its declared cells (so ineligible/not-run cells render);
 // without one, the observed grid cells.
-function gridIdentities(
-  grid: Grid,
-  manifest: GridManifest | null,
-): CellIdentity[] {
+function gridIdentities(grid: Grid, manifest: GridManifest | null): CellIdentity[] {
   if (manifest !== null) {
     return manifest.cells.map((c) => ({
       scenario: c.scenario,
@@ -233,20 +227,8 @@ export function createDashboard(args: CreateDashboardArgs): Dashboard {
   // they're present from the very first scan. If that invariant ever changed (e.g.
   // a manifest hot-reload), publishCell would need the same overlay logic.
   const publishCell = (cell: Cell): void => {
-    const mc = manifestCellFor(
-      cell.scenario,
-      cell.agent,
-      cell.credential,
-      cell.os,
-    );
-    const view = cellView(
-      cell,
-      cell.scenario,
-      cell.agent,
-      cell.credential,
-      cell.os,
-      mc,
-    );
+    const mc = manifestCellFor(cell.scenario, cell.agent, cell.credential, cell.os);
+    const view = cellView(cell, cell.scenario, cell.agent, cell.credential, cell.os, mc);
     bus.publish({
       event: cellId(cell.scenario, cell.agent, cell.credential, cell.os),
       data: oneLine(cellHtml(view)),
@@ -306,10 +288,7 @@ export function createDashboard(args: CreateDashboardArgs): Dashboard {
     }
     for (const c of manifest.cells) {
       if (!c.eligible) {
-        skipped.set(
-          cellKey(c.scenario, c.agent, c.credential, c.os),
-          naTitle(c.skipped_reason),
-        );
+        skipped.set(cellKey(c.scenario, c.agent, c.credential, c.os), naTitle(c.skipped_reason));
       }
     }
     return skipped;
@@ -331,18 +310,9 @@ export function createDashboard(args: CreateDashboardArgs): Dashboard {
     const views = new Map<string, ReturnType<typeof cellView>>();
     for (const id of identities) {
       const key = cellKey(id.scenario, id.agent, id.credential, id.os);
-      const cell =
-        grid.cells.get(key) ??
-        emptyCell(id.scenario, id.agent, id.credential, id.os);
+      const cell = grid.cells.get(key) ?? emptyCell(id.scenario, id.agent, id.credential, id.os);
       const mc = manifestCellFor(id.scenario, id.agent, id.credential, id.os);
-      const view = cellView(
-        cell,
-        id.scenario,
-        id.agent,
-        id.credential,
-        id.os,
-        mc,
-      );
+      const view = cellView(cell, id.scenario, id.agent, id.credential, id.os, mc);
       // Ineligible cells: the status field already carries 'ineligible' (set by
       // cellView via cellStatus). The opacity/title overlay is kept for the
       // existing "n/a" rendering in cellHtml (state=empty + title => c-na class).
@@ -351,7 +321,7 @@ export function createDashboard(args: CreateDashboardArgs): Dashboard {
       const naReason = skipped.get(key);
       views.set(
         key,
-        view.state === 'empty' && naReason !== undefined
+        view.state === "empty" && naReason !== undefined
           ? { ...view, opacity: 0.3, title: naReason }
           : view,
       );
@@ -366,10 +336,7 @@ export function createDashboard(args: CreateDashboardArgs): Dashboard {
       }
     }
     const collapseOsRow = displayedOses.size <= 1;
-    const columnCount = agentColumns.reduce(
-      (sum, ac) => sum + ac.subcols.length,
-      0,
-    );
+    const columnCount = agentColumns.reduce((sum, ac) => sum + ac.subcols.length, 0);
 
     const tally = headerTally(
       grid,
@@ -380,7 +347,7 @@ export function createDashboard(args: CreateDashboardArgs): Dashboard {
       manifestCellFor,
     );
 
-    const mode = manifest === null ? 'results-only' : 'full';
+    const mode = manifest === null ? "results-only" : "full";
     const page = layoutHtml({
       tallyHtml: tallyHtml(tally),
       gridHtml: gridHtml({
@@ -392,7 +359,7 @@ export function createDashboard(args: CreateDashboardArgs): Dashboard {
       mode,
     });
     return new Response(page, {
-      headers: { 'content-type': 'text/html; charset=utf-8' },
+      headers: { "content-type": "text/html; charset=utf-8" },
     });
   };
 
@@ -407,7 +374,7 @@ export function createDashboard(args: CreateDashboardArgs): Dashboard {
         // browser/fetch waiting on an idle dashboard with no headers at all
         // (sse-starlette sends an analogous opening ping). Comment lines
         // (": ...") are ignored by EventSource.
-        controller.enqueue(encoder.encode(': connected\n\n'));
+        controller.enqueue(encoder.encode(": connected\n\n"));
         let idleTicks = 0;
         // Drain the client's queue on a short interval, writing one SSE frame
         // per buffered message. Frames are `event: <name>\ndata: <oneline>\n\n`.
@@ -421,15 +388,13 @@ export function createDashboard(args: CreateDashboardArgs): Dashboard {
             // proxy or a non-idleTimeout-0 server never severs a quiet stream.
             if (idleTicks >= 25) {
               idleTicks = 0;
-              controller.enqueue(encoder.encode(': keepalive\n\n'));
+              controller.enqueue(encoder.encode(": keepalive\n\n"));
             }
             return;
           }
           idleTicks = 0;
           for (const msg of messages) {
-            controller.enqueue(
-              encoder.encode(`event: ${msg.event}\ndata: ${msg.data}\n\n`),
-            );
+            controller.enqueue(encoder.encode(`event: ${msg.event}\ndata: ${msg.data}\n\n`));
           }
         }, 200);
       },
@@ -443,51 +408,47 @@ export function createDashboard(args: CreateDashboardArgs): Dashboard {
     });
     return new Response(stream, {
       headers: {
-        'content-type': 'text/event-stream',
-        'cache-control': 'no-cache',
-        connection: 'keep-alive',
+        "content-type": "text/event-stream",
+        "cache-control": "no-cache",
+        connection: "keep-alive",
       },
     });
   };
 
   const handleStatic = (pathname: string): Response => {
     // Strip "/static/" and reject any path that escapes the static dir.
-    const rest = pathname.slice('/static/'.length);
+    const rest = pathname.slice("/static/".length);
     const target = join(STATIC_DIR, rest);
-    const normalizedRoot = STATIC_DIR.endsWith('/')
-      ? STATIC_DIR
-      : `${STATIC_DIR}/`;
+    const normalizedRoot = STATIC_DIR.endsWith("/") ? STATIC_DIR : `${STATIC_DIR}/`;
     if (target !== STATIC_DIR && !target.startsWith(normalizedRoot)) {
-      return new Response('not found', { status: 404 });
+      return new Response("not found", { status: 404 });
     }
     // The existence probe predates the port: Bun.file was lazy, so a
     // missing/dir target served a 200 with an empty body. `createReadStream`
     // fails differently — asynchronously, after the Response is already
     // returned — which would be worse, not better. Keep the probe.
     if (!existsSync(target) || statSync(target).isDirectory()) {
-      return new Response('not found', { status: 404 });
+      return new Response("not found", { status: 404 });
     }
-    const body = Readable.toWeb(
-      createReadStream(target),
-    ) as unknown as ReadableStream<Uint8Array>;
+    const body = Readable.toWeb(createReadStream(target)) as unknown as ReadableStream<Uint8Array>;
     return new Response(body, {
-      headers: { 'content-type': contentTypeFor(target) },
+      headers: { "content-type": contentTypeFor(target) },
     });
   };
 
   const fetchHandler = (req: Request): Response => {
     const url = new URL(req.url);
     const { pathname } = url;
-    if (req.method === 'GET' && pathname === '/') {
+    if (req.method === "GET" && pathname === "/") {
       return renderRoot();
     }
-    if (req.method === 'GET' && pathname === '/events') {
+    if (req.method === "GET" && pathname === "/events") {
       return handleEvents();
     }
-    if (req.method === 'GET' && pathname.startsWith('/static/')) {
+    if (req.method === "GET" && pathname.startsWith("/static/")) {
       return handleStatic(pathname);
     }
-    return new Response('not found', { status: 404 });
+    return new Response("not found", { status: 404 });
   };
 
   return {
@@ -499,12 +460,7 @@ export function createDashboard(args: CreateDashboardArgs): Dashboard {
 
 // An empty placeholder cell for a (scenario, agent, credential, os) with no scan
 // entry.
-function emptyCell(
-  scenario: string,
-  agent: string,
-  credential: string,
-  os: string,
-): Cell {
+function emptyCell(scenario: string, agent: string, credential: string, os: string): Cell {
   return { scenario, agent, credential, os, window: [], running: null };
 }
 

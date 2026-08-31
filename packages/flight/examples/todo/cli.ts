@@ -5,18 +5,18 @@
 // docs/history/specs/2026-05-14-todo-fixture-design.md.
 
 import {
+  activeCount,
+  addItem,
+  clearCompleted,
+  deleteItem,
+  type Filter,
   loadState,
   saveState,
-  addItem,
-  toggleItem,
-  deleteItem,
   setFilter,
-  visibleItems,
-  activeCount,
-  clearCompleted,
-  type Filter,
   type TodoItem,
   type TodoState,
+  toggleItem,
+  visibleItems,
 } from "./core.js";
 
 function formatRow(item: TodoItem): string {

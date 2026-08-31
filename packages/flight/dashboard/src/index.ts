@@ -1,8 +1,8 @@
-import { isAbsolute, join, resolve } from 'node:path';
-import { Server as HttpServer } from 'node:http';
-import { serve as honoServe } from '@hono/node-server';
-import { loadGridManifest } from './manifest.js';
-import { createDashboard } from './server.js';
+import { Server as HttpServer } from "node:http";
+import { isAbsolute, join, resolve } from "node:path";
+import { serve as honoServe } from "@hono/node-server";
+import { loadGridManifest } from "./manifest.js";
+import { createDashboard } from "./server.js";
 
 // The dashboard entry point. Binds createDashboard's fetch handler to an HTTP
 // server and starts the scanner loop. The read-only web dashboard and the e2e
@@ -38,37 +38,32 @@ export interface DashboardCliArgs {
 // 'results'), --port <n> (default 8787), --root <repo> (default process.cwd()),
 // --manifest <path> (default <results>/grid-manifest.json). Unknown flags are
 // ignored. `cwd` is injectable for testability (defaults to process.cwd()).
-export function parseArgs(
-  argv: readonly string[],
-  cwd: string = process.cwd(),
-): DashboardCliArgs {
-  let resultsDir = 'results';
+export function parseArgs(argv: readonly string[], cwd: string = process.cwd()): DashboardCliArgs {
+  let resultsDir = "results";
   let port = 8787;
   let root = cwd;
   let manifest: string | undefined;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--results') {
+    if (a === "--results") {
       resultsDir = argv[++i] ?? resultsDir;
-    } else if (a === '--port') {
+    } else if (a === "--port") {
       const n = Number(argv[++i]);
       if (Number.isFinite(n)) port = n;
-    } else if (a === '--root') {
+    } else if (a === "--root") {
       root = argv[++i] ?? root;
-    } else if (a === '--manifest') {
+    } else if (a === "--manifest") {
       manifest = argv[++i];
     }
   }
   const defaultManifestPath = isAbsolute(resultsDir)
-    ? join(resultsDir, 'grid-manifest.json')
-    : join(root, resultsDir, 'grid-manifest.json');
+    ? join(resultsDir, "grid-manifest.json")
+    : join(root, resultsDir, "grid-manifest.json");
   const manifestPath = manifest ?? defaultManifestPath;
   return { resultsDir, port, manifestPath, root };
 }
 
-export async function startDashboard(
-  args: StartDashboardArgs,
-): Promise<DashboardHandle> {
+export async function startDashboard(args: StartDashboardArgs): Promise<DashboardHandle> {
   // The grid manifest is the scenario × agent × credential × os eligibility
   // matrix; null when absent/malformed (a results-only board). Identity comes
   // from each run's verdict.json / phase.json, so the dashboard needs no
@@ -85,7 +80,7 @@ export async function startDashboard(
   // node:http's Server and silently dropping them is the failure mode this
   // whole block is here to prevent.
   if (!(listening instanceof HttpServer)) {
-    throw new Error('dashboard: expected a node:http server from @hono/node-server');
+    throw new Error("dashboard: expected a node:http server from @hono/node-server");
   }
   const server: HttpServer = listening;
 
@@ -100,10 +95,10 @@ export async function startDashboard(
   server.timeout = 0;
 
   const boundPort = await new Promise<number>((res, rej) => {
-    server.once('error', rej);
-    server.once('listening', () => {
+    server.once("error", rej);
+    server.once("listening", () => {
       const addr = server.address();
-      res(typeof addr === 'object' && addr !== null ? addr.port : args.port);
+      res(typeof addr === "object" && addr !== null ? addr.port : args.port);
     });
   });
 

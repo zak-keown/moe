@@ -1,5 +1,5 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
 import {
   type Cell,
   cellKey,
@@ -11,8 +11,8 @@ import {
   type RunFinal,
   type RunningRun,
   type RunRecord,
-} from './contracts.js';
-import type { GridManifest } from './manifest.js';
+} from "./contracts.js";
+import type { GridManifest } from "./manifest.js";
 
 // Read side of the dashboard: scan results/, bucket runs into cells, and resolve
 // each cell's window, liveness, and verdicts. The filesystem is the single
@@ -32,7 +32,7 @@ export function pidAlive(pid: number): boolean {
     process.kill(pid, 0);
     return true;
   } catch (err: unknown) {
-    return err instanceof Error && 'code' in err && err.code === 'EPERM';
+    return err instanceof Error && "code" in err && err.code === "EPERM";
   }
 }
 
@@ -52,7 +52,7 @@ export function readDashboardVerdict(runDir: string): DashboardVerdict | null {
   if (cached !== undefined) {
     return cached;
   }
-  const result = parseDashboardVerdict(join(runDir, 'verdict.json'));
+  const result = parseDashboardVerdict(join(runDir, "verdict.json"));
   if (result !== null) {
     _verdictCache.set(runDir, result);
   }
@@ -62,7 +62,7 @@ export function readDashboardVerdict(runDir: string): DashboardVerdict | null {
 function parseDashboardVerdict(path: string): DashboardVerdict | null {
   let raw: unknown;
   try {
-    raw = JSON.parse(readFileSync(path, 'utf8'));
+    raw = JSON.parse(readFileSync(path, "utf8"));
   } catch {
     return null;
   }
@@ -77,13 +77,13 @@ function parseDashboardVerdict(path: string): DashboardVerdict | null {
 function readPhase(
   runDir: string,
 ): { phase: string; pid: number; identity?: PhaseIdentity } | null {
-  const path = join(runDir, 'phase.json');
+  const path = join(runDir, "phase.json");
   if (!existsSync(path)) {
     return null;
   }
   let raw: unknown;
   try {
-    raw = JSON.parse(readFileSync(path, 'utf8'));
+    raw = JSON.parse(readFileSync(path, "utf8"));
   } catch {
     return null;
   }
@@ -97,10 +97,10 @@ function readPhase(
 
 function finalOf(verdict: DashboardVerdict): RunFinal {
   const final = verdict.final;
-  if (final === 'pass' || final === 'fail' || final === 'indeterminate') {
+  if (final === "pass" || final === "fail" || final === "indeterminate") {
     return final;
   }
-  return 'unknown';
+  return "unknown";
 }
 
 // The list of run-dir base names under results/ (excluding batches/ and
@@ -111,7 +111,7 @@ function listRunDirNames(resultsDir: string): string[] {
   }
   const names: string[] = [];
   for (const name of readdirSync(resultsDir)) {
-    if (name === 'batches') {
+    if (name === "batches") {
       continue;
     }
     if (!statSync(join(resultsDir, name)).isDirectory()) {
@@ -159,8 +159,8 @@ function scanRunDir(resultsDir: string, name: string): ScannedRun | null {
       name,
       scenario: verdict.scenario,
       agent: verdict.coding_agent,
-      credential: verdict.credential ?? '',
-      os: verdict.os ?? 'linux',
+      credential: verdict.credential ?? "",
+      os: verdict.os ?? "linux",
       startedAt,
     };
   }
@@ -191,10 +191,7 @@ function scanRunDir(resultsDir: string, name: string): ScannedRun | null {
 // results-only board). When a manifest is present, EVERY manifest cell exists in
 // the grid — observed runs filled in, and an empty cell for any manifest cell
 // with no displayable run, so not_run/ineligible cells render.
-export function scanResults(args: {
-  resultsDir: string;
-  manifest: GridManifest | null;
-}): Grid {
+export function scanResults(args: { resultsDir: string; manifest: GridManifest | null }): Grid {
   const { resultsDir, manifest } = args;
   const cells = new Map<string, Cell>();
 
@@ -204,12 +201,7 @@ export function scanResults(args: {
     if (scanned === null) {
       continue;
     }
-    const key = cellKey(
-      scanned.scenario,
-      scanned.agent,
-      scanned.credential,
-      scanned.os,
-    );
+    const key = cellKey(scanned.scenario, scanned.agent, scanned.credential, scanned.os);
     const bucket = buckets.get(key);
     if (bucket === undefined) {
       buckets.set(key, [scanned]);

@@ -10,14 +10,14 @@ import { Readable } from "node:stream";
 import { serve } from "@hono/node-server";
 import { resolve } from "path";
 import {
+  addItem,
+  clearCompleted,
+  deleteItem,
+  type Filter,
   loadState,
   saveState,
-  addItem,
-  toggleItem,
-  deleteItem,
   setFilter,
-  clearCompleted,
-  type Filter,
+  toggleItem,
 } from "../core.js";
 
 const PORT = Number(process.env.TODO_WEB_PORT ?? 7891);
@@ -68,11 +68,7 @@ async function handleApi(req: Request, url: URL): Promise<Response> {
   }
   if (method === "POST" && path === "/api/filter") {
     const body = (await req.json()) as { filter?: Filter };
-    if (
-      body.filter !== "all" &&
-      body.filter !== "active" &&
-      body.filter !== "completed"
-    ) {
+    if (body.filter !== "all" && body.filter !== "active" && body.filter !== "completed") {
       return jsonResponse({ error: "filter must be all|active|completed" }, 400);
     }
     setFilter(state, body.filter);

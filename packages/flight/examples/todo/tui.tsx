@@ -2,20 +2,20 @@
 // Reads state at startup, mutates in-memory, writes after every
 // change. Keybinds documented in the spec and shown in the footer.
 
+import { Box, render, Text, useApp, useInput } from "ink";
 import { useState } from "react";
-import { render, Box, Text, useInput, useApp } from "ink";
 import {
+  activeCount,
+  addItem,
+  clearCompleted,
+  deleteItem,
+  type Filter,
   loadState,
   saveState,
-  addItem,
-  toggleItem,
-  deleteItem,
   setFilter,
-  visibleItems,
-  activeCount,
-  clearCompleted,
   type TodoState,
-  type Filter,
+  toggleItem,
+  visibleItems,
 } from "./core.js";
 
 interface Props {
@@ -134,7 +134,7 @@ function App({ initial }: Props) {
         );
       })}
       <Text dimColor>
-        [i] add  [j/k] move  [space] toggle  [d] delete  [1/2/3] filter  [c] clear-completed  [q] quit
+        [i] add [j/k] move [space] toggle [d] delete [1/2/3] filter [c] clear-completed [q] quit
       </Text>
     </Box>
   );

@@ -17,7 +17,7 @@
  * Usage: node scripts/gen-prompts.mjs [--check]
  */
 import { readFileSync, writeFileSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -43,7 +43,7 @@ function render() {
     "// Source: src/qa/agent/prompts/*.md. Regenerate with `pnpm gen:prompts`.",
     "// Guarded by test/qa/agent/prompts-drift.test.ts.",
     "//",
-    "// Replaces upstream's `import … from \"./persona.md\" with { type: \"text\" }`,",
+    '// Replaces upstream\'s `import … from "./persona.md" with { type: "text" }`,',
     "// which only Bun's loader understands. See scripts/gen-prompts.mjs.",
     "",
   ];

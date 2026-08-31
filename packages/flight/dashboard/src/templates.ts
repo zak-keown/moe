@@ -6,9 +6,9 @@ import type {
   HeaderTally,
   SlotKind,
   SlotView,
-} from './contracts.js';
-import { cellId, cellKey } from './contracts.js';
-import { assertNever } from './invariant.js';
+} from "./contracts.js";
+import { cellId, cellKey } from "./contracts.js";
+import { assertNever } from "./invariant.js";
 
 // Typed template-literal HTML renderers. No templating dependency — pure string
 // functions, no IO. Every class name and data-* attribute here must match what
@@ -21,11 +21,11 @@ import { assertNever } from './invariant.js';
 // body. Ampersand first so existing entities are not double-broken on the wrong
 // side (we escape the `&` once, intentionally, rather than skip it).
 const HTML_ESCAPES: Record<string, string> = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;',
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
 };
 
 // Escape the five HTML metacharacters. A single regex `.replace` over the
@@ -45,18 +45,18 @@ function f3(n: number): string {
 // handled inline; the rest map to b-* band classes; unknown is the catch-all.
 function bandClass(kind: SlotKind): string {
   switch (kind) {
-    case 'ghost':
-      return 'vs-slot ghost';
-    case 'running':
-      return 'vs-slot runslot';
-    case 'fail':
-      return 'vs-slot b-fail';
-    case 'indeterminate':
-      return 'vs-slot b-indet';
-    case 'pass':
-      return 'vs-slot b-pass';
-    case 'unknown':
-      return 'vs-slot b-unknown';
+    case "ghost":
+      return "vs-slot ghost";
+    case "running":
+      return "vs-slot runslot";
+    case "fail":
+      return "vs-slot b-fail";
+    case "indeterminate":
+      return "vs-slot b-indet";
+    case "pass":
+      return "vs-slot b-pass";
+    case "unknown":
+      return "vs-slot b-unknown";
     default:
       return assertNever(kind);
   }
@@ -65,9 +65,7 @@ function bandClass(kind: SlotKind): string {
 // The verdict-ribbon row (`.vs`): one band per slot, left-to-right (newest
 // rightmost; ghost padding already on the left from cellView).
 function ribbonHtml(slots: readonly SlotView[]): string {
-  return slots
-    .map((slot) => `<i class="${bandClass(slot.kind)}"></i>`)
-    .join('');
+  return slots.map((slot) => `<i class="${bandClass(slot.kind)}"></i>`).join("");
 }
 
 // The cost-bar row (`.cb`): ghost/running slots use the 0.18 height floor via the
@@ -76,12 +74,12 @@ function ribbonHtml(slots: readonly SlotView[]): string {
 function costBarHtml(slots: readonly SlotView[]): string {
   return slots
     .map((slot) => {
-      if (slot.kind === 'ghost' || slot.kind === 'running') {
+      if (slot.kind === "ghost" || slot.kind === "running") {
         return '<i class="cb-slot gh" style="--h:0.180"></i>';
       }
       return `<i class="cb-slot" style="--h:${f3(slot.height)}"></i>`;
     })
-    .join('');
+    .join("");
 }
 
 // The detail hover card (`.cell-card[data-card][hidden]`). Rendered inside the
@@ -102,11 +100,9 @@ function cardHtml(card: CardView): string {
         `<span class="ccr-id">${esc(row.run_id)}</span>` +
         `</div>`,
     )
-    .join('');
+    .join("");
   const drift =
-    card.drift_line !== null
-      ? `<div class="card-drift">${esc(card.drift_line)}</div>`
-      : '';
+    card.drift_line !== null ? `<div class="card-drift">${esc(card.drift_line)}</div>` : "";
   const runTotal =
     `<div class="card-run-total">` +
     `<span class="crt-label">run total</span>` +
@@ -126,16 +122,16 @@ function cardHtml(card: CardView): string {
 // a distinct shape glyph so the triad is not color-only.
 function statusGlyph(status: CellStatus): { glyph: string; cls: string } {
   switch (status) {
-    case 'pass':
-      return { glyph: '✓', cls: 'status-pass' };
-    case 'failed':
-      return { glyph: '✗', cls: 'status-failed' };
-    case 'incomplete':
-      return { glyph: '~', cls: 'status-incomplete' };
-    case 'not_run':
-      return { glyph: '·', cls: 'status-not_run' };
-    case 'ineligible':
-      return { glyph: '·', cls: 'status-ineligible' };
+    case "pass":
+      return { glyph: "✓", cls: "status-pass" };
+    case "failed":
+      return { glyph: "✗", cls: "status-failed" };
+    case "incomplete":
+      return { glyph: "~", cls: "status-incomplete" };
+    case "not_run":
+      return { glyph: "·", cls: "status-not_run" };
+    case "ineligible":
+      return { glyph: "·", cls: "status-ineligible" };
   }
 }
 
@@ -153,7 +149,7 @@ export function cellHtml(view: CellView): string {
     `data-credential="${esc(view.credential)}" data-os="${esc(view.os)}"`;
   const open = `<td class="c" id="${id}" sse-swap="${id}" hx-swap="outerHTML" ${col}>`;
 
-  if (view.state === 'empty') {
+  if (view.state === "empty") {
     const sg = statusGlyph(view.status);
     // Ineligible cell: title set by server (naTitle), opacity dimmed, status
     // class carries the ineligible glyph. This is the ONE ineligible rendering
@@ -168,16 +164,14 @@ export function cellHtml(view: CellView): string {
     }
     // not_run: plain middle-dot, no tooltip, default opacity.
     return (
-      `${open}` +
-      `<div class="cell"><span class="${sg.cls}">${sg.glyph}</span></div>` +
-      `</td>`
+      `${open}` + `<div class="cell"><span class="${sg.cls}">${sg.glyph}</span></div>` + `</td>`
     );
   }
 
-  const stateClass = view.state === 'running' ? ' running' : '';
+  const stateClass = view.state === "running" ? " running" : "";
 
-  const drift = view.drift ? `<span class="drift">▲</span>` : '';
-  const card = view.card !== null ? cardHtml(view.card) : '';
+  const drift = view.drift ? `<span class="drift">▲</span>` : "";
+  const card = view.card !== null ? cardHtml(view.card) : "";
 
   // Status glyph: shown for done cells. For running cells, the shimmer
   // communicates in-progress state — skip the outcome glyph.
@@ -185,18 +179,16 @@ export function cellHtml(view: CellView): string {
   // For incomplete cells, surface the error stage (if any) as a tooltip on
   // the status glyph so it's visible on hover without consuming bottom space.
   const stageTitle =
-    view.status === 'incomplete' && view.error_stage !== null
+    view.status === "incomplete" && view.error_stage !== null
       ? ` title="${esc(view.error_stage)}"`
-      : '';
+      : "";
   const statusSpan =
-    view.state !== 'running'
-      ? `<span class="${sg.cls}"${stageTitle}>${sg.glyph}</span>`
-      : '';
+    view.state !== "running" ? `<span class="${sg.cls}"${stageTitle}>${sg.glyph}</span>` : "";
 
   // For done cells: two-line face (time headline + agent cost).
   // For running cells: phase word. Bottom is '—' for done cells (not rendered).
   let faceHtml: string;
-  if (view.state === 'done') {
+  if (view.state === "done") {
     faceHtml =
       `<div class="dc">` +
       `${drift}${statusSpan}` +
@@ -258,25 +250,20 @@ export interface GridArgs {
 // A defensive empty cell for a (scenario, agent, credential, os) sub-column the
 // views map doesn't carry. The server populates every sub-column, so this is
 // defensive only — but it keeps a partial views map rendering a full grid.
-function fallbackCell(
-  scenario: string,
-  agent: string,
-  credential: string,
-  os: string,
-): CellView {
+function fallbackCell(scenario: string, agent: string, credential: string, os: string): CellView {
   return {
     cell_id: cellId(scenario, agent, credential, os),
     scenario,
     agent,
     credential,
     os,
-    state: 'empty',
-    status: 'not_run',
+    state: "empty",
+    status: "not_run",
     error_stage: null,
     slots: [],
-    bottom: '—',
-    face_time: '—',
-    face_cost: '—',
+    bottom: "—",
+    face_time: "—",
+    face_cost: "—",
     drift: false,
     opacity: 1,
     card: null,
@@ -291,11 +278,7 @@ export function gridHtml(args: GridArgs): string {
   const { scenarios, agentColumns, views, collapseOsRow } = args;
 
   if (scenarios.length === 0 || agentColumns.length === 0) {
-    return (
-      `<div class="empty-state">` +
-      `No runs yet — results/ is empty.` +
-      `</div>`
-    );
+    return `<div class="empty-state">` + `No runs yet — results/ is empty.` + `</div>`;
   }
 
   // Row 1: agent groups, each spanning its (credential, os) sub-columns.
@@ -305,7 +288,7 @@ export function gridHtml(args: GridArgs): string {
         `<th class="agent-col" data-agent="${esc(ac.agent)}" ` +
         `colspan="${ac.subcols.length}" scope="colgroup">${esc(ac.agent)}</th>`,
     )
-    .join('');
+    .join("");
 
   // Row 2: one OS-label sub-column per (agent, credential, os). The label shows
   // the OS; the credential rides in data-credential. Always in the DOM; CSS
@@ -319,8 +302,8 @@ export function gridHtml(args: GridArgs): string {
           `data-os="${esc(sc.os)}" scope="col">${esc(sc.os)}</th>`,
       ),
     )
-    .join('');
-  const osHeaderClass = collapseOsRow ? 'os-header collapsed' : 'os-header';
+    .join("");
+  const osHeaderClass = collapseOsRow ? "os-header collapsed" : "os-header";
 
   const bodyRows = scenarios
     .map((scenario) => {
@@ -333,7 +316,7 @@ export function gridHtml(args: GridArgs): string {
             return cellHtml(view);
           }),
         )
-        .join('');
+        .join("");
       return (
         `<tr>` +
         `<td class="rl" data-scenario="${esc(scenario)}" scope="row">${esc(scenario)}</td>` +
@@ -341,7 +324,7 @@ export function gridHtml(args: GridArgs): string {
         `</tr>`
       );
     })
-    .join('');
+    .join("");
 
   return (
     `<table class="mx" id="grid">` +
@@ -362,14 +345,14 @@ export interface LayoutArgs {
   readonly gridHtml: string;
   // 'full' when a grid manifest drove the columns/eligibility; 'results-only'
   // when no manifest was found and the grid shows observed runs only.
-  readonly mode: 'full' | 'results-only';
+  readonly mode: "full" | "results-only";
 }
 
 export function layoutHtml(args: LayoutArgs): string {
   const banner =
-    args.mode === 'results-only'
+    args.mode === "results-only"
       ? `  <div class="mode-banner">results-only — grid-manifest.json not found; showing observed runs only</div>\n`
-      : '';
+      : "";
   return (
     `<!doctype html>\n` +
     `<html lang="en" data-theme="dark">\n` +

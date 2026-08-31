@@ -1,4 +1,5 @@
 import { serve } from "@hono/node-server";
+
 // Tutorial webapp — a tiny social network for the Web tutorials
 // in docs/tutorial.md. Pre-seeded users (Fred / Deborah / Quinn),
 // hardcoded friend graph, in-memory posts, sessions trusted at
@@ -220,7 +221,9 @@ ${visible.length === 0 ? "<p>No posts visible to you.</p>" : visible.map(renderP
 
     if (url.pathname === "/login" && req.method === "POST") {
       const form = await req.formData();
-      const username = String(form.get("username") ?? "").trim().toLowerCase();
+      const username = String(form.get("username") ?? "")
+        .trim()
+        .toLowerCase();
       const password = String(form.get("password") ?? "");
       if (PASSWORDS[username] !== undefined && PASSWORDS[username] === password) {
         return redirect("/", {

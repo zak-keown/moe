@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Dashboard read-side contracts. The literal unions and zod schemas here are the
 // single source of truth for the grid model; scan.ts, view.ts, templates.ts,
@@ -6,36 +6,23 @@ import { z } from 'zod';
 
 // The three cell display states. Closed union so renders + state machines stay
 // exhaustive (assertNever on the default).
-export const CELL_STATES = ['empty', 'done', 'running'] as const;
+export const CELL_STATES = ["empty", "done", "running"] as const;
 export type CellState = (typeof CELL_STATES)[number];
 
 // The five outcome statuses for a (scenario, agent, credential, os) cell.
 // Orthogonal to `state` (empty/done/running), which drives slot/shimmer
 // rendering.
-export const CELL_STATUSES = [
-  'pass',
-  'failed',
-  'incomplete',
-  'not_run',
-  'ineligible',
-] as const;
+export const CELL_STATUSES = ["pass", "failed", "incomplete", "not_run", "ineligible"] as const;
 export type CellStatus = (typeof CELL_STATUSES)[number];
 
 // The six verdict-ribbon slot kinds. `ghost` is left-padding; `running` is the
 // shimmer slot for an in-flight run.
-export const SLOT_KINDS = [
-  'pass',
-  'fail',
-  'indeterminate',
-  'unknown',
-  'ghost',
-  'running',
-] as const;
+export const SLOT_KINDS = ["pass", "fail", "indeterminate", "unknown", "ghost", "running"] as const;
 export type SlotKind = (typeof SLOT_KINDS)[number];
 
 // A resolved run's final, as the grid reads it. A verdict whose `final` is
 // outside pass/fail/indeterminate (or missing) collapses to 'unknown'.
-export type RunFinal = 'pass' | 'fail' | 'indeterminate' | 'unknown';
+export type RunFinal = "pass" | "fail" | "indeterminate" | "unknown";
 
 // phase.json, written by the runner at each boundary it owns. `pid` is the
 // `moe-flight lab run` process id — required, since liveness comes from it (phase mtime
@@ -151,23 +138,13 @@ export interface Grid {
 
 // The cell map key helper — the one place the composite key is formed. Tab is
 // absent from every identity segment, so it is a safe composite separator.
-export function cellKey(
-  scenario: string,
-  agent: string,
-  credential: string,
-  os: string,
-): string {
+export function cellKey(scenario: string, agent: string, credential: string, os: string): string {
   return `${scenario}\t${agent}\t${credential}\t${os}`;
 }
 
 // The DOM id / SSE event name for a cell. Both the `id` and `sse-swap`
 // attributes equal this; cell events are addressed to it.
-export function cellId(
-  scenario: string,
-  agent: string,
-  credential: string,
-  os: string,
-): string {
+export function cellId(scenario: string, agent: string, credential: string, os: string): string {
   return `cell-${scenario}-${agent}-${credential}-${os}`;
 }
 

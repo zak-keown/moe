@@ -1,4 +1,4 @@
-import type { SseMessage } from './contracts.js';
+import type { SseMessage } from "./contracts.js";
 
 // Bounded SSE fan-out. The dashboard's scheduler events are published to every
 // connected SSE client; each client reads through its own BoundedQueue. There

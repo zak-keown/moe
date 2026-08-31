@@ -11,7 +11,7 @@ import {
   type RunFinal,
   type RunRecord,
   type SlotView,
-} from './contracts.js';
+} from "./contracts.js";
 
 // Pure derivations for the dashboard read side: fade/drift/cost math, the header
 // tally, and the per-cell render-ready view. No IO and no wall-clock except the
@@ -22,7 +22,7 @@ const SECONDS_PER_DAY = 86_400;
 // Format a duration in milliseconds as a human-readable string.
 // 161000 -> '2m41s'; 65000 -> '1m5s'; 9000 -> '9s'; 3661000 -> '1h1m'; null -> '—'
 export function formatDuration(ms: number | null): string {
-  if (ms === null) return '—';
+  if (ms === null) return "—";
   const s = Math.round(ms / 1000);
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
@@ -35,7 +35,7 @@ export function formatDuration(ms: number | null): string {
 // Format a token count compactly.
 // 48200 -> '48.2k'; 999 -> '999'; 1_500_000 -> '1.5M'; null -> '—'
 export function formatTokens(n: number | null): string {
-  if (n === null) return '—';
+  if (n === null) return "—";
   if (n < 1000) return String(n);
   if (n < 1_000_000) return `${(n / 1000).toFixed(1)}k`;
   return `${(n / 1_000_000).toFixed(1)}M`;
@@ -127,10 +127,7 @@ export function latestAgeDays(cell: Cell, now?: Date): number {
   }
   const fromStamp = parseDirStamp(latest.started_at);
   if (fromStamp !== null) {
-    return Math.max(
-      0,
-      (reference.getTime() - fromStamp) / 1000 / SECONDS_PER_DAY,
-    );
+    return Math.max(0, (reference.getTime() - fromStamp) / 1000 / SECONDS_PER_DAY);
   }
   return 0;
 }
@@ -184,13 +181,7 @@ export interface CellIdentity {
 // or a test stub.
 export interface ManifestCellLike {
   readonly eligible: boolean;
-  readonly skipped_reason:
-    | 'directive'
-    | 'draft'
-    | 'tier'
-    | 'harness'
-    | 'os'
-    | null;
+  readonly skipped_reason: "directive" | "draft" | "tier" | "harness" | "os" | null;
 }
 
 // Grid-wide rollup over the 5-state taxonomy (cellStatus) of each identity.
@@ -229,16 +220,16 @@ export function headerTally(
       } as Cell);
     const mc = manifestCellFor(id.scenario, id.agent, id.credential, id.os);
     switch (cellStatus(cell, mc)) {
-      case 'pass':
+      case "pass":
         passed += 1;
         break;
-      case 'failed':
+      case "failed":
         failed += 1;
         break;
-      case 'incomplete':
+      case "incomplete":
         indeterminate += 1;
         break;
-      case 'ineligible':
+      case "ineligible":
         ineligible += 1;
         break;
       default:
@@ -262,7 +253,7 @@ export function headerTally(
 // partial). NOT "$0.00" — that would falsely read as a free run (build spec:
 // "never as $0"); "$—" reads as a cost field with an unknown value.
 function rowCost(costUsd: number | null): string {
-  return costUsd !== null ? `$${costUsd.toFixed(2)}` : '$—';
+  return costUsd !== null ? `$${costUsd.toFixed(2)}` : "$—";
 }
 
 // Compact card-row timestamp. Prefers the dir-name started_at (always present)
@@ -272,21 +263,17 @@ function rowTimestamp(rec: RunRecord): string {
   const ms = parseDirStamp(rec.started_at);
   if (ms !== null) {
     const d = new Date(ms);
-    const yyyy = d.getUTCFullYear().toString().padStart(4, '0');
-    const mm = (d.getUTCMonth() + 1).toString().padStart(2, '0');
-    const dd = d.getUTCDate().toString().padStart(2, '0');
-    const hh = d.getUTCHours().toString().padStart(2, '0');
-    const min = d.getUTCMinutes().toString().padStart(2, '0');
+    const yyyy = d.getUTCFullYear().toString().padStart(4, "0");
+    const mm = (d.getUTCMonth() + 1).toString().padStart(2, "0");
+    const dd = d.getUTCDate().toString().padStart(2, "0");
+    const hh = d.getUTCHours().toString().padStart(2, "0");
+    const min = d.getUTCMinutes().toString().padStart(2, "0");
     return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
   }
   return rec.finished_at ?? rec.started_at;
 }
 
-function cardView(
-  cell: Cell,
-  showDrift: boolean,
-  now: Date | undefined,
-): CardView | null {
+function cardView(cell: Cell, showDrift: boolean, now: Date | undefined): CardView | null {
   if (cell.window.length === 0) {
     return null;
   }
@@ -319,16 +306,15 @@ export function cellStatus(
 ): CellStatus {
   const newest = cell.window[cell.window.length - 1];
   if (newest !== undefined) {
-    if (newest.final === 'pass') return 'pass';
-    if (newest.final === 'fail') return 'failed';
-    if (newest.final === 'indeterminate') return 'incomplete';
+    if (newest.final === "pass") return "pass";
+    if (newest.final === "fail") return "failed";
+    if (newest.final === "indeterminate") return "incomplete";
     // 'unknown' (malformed/legacy verdict): treat as incomplete (it ran but we can't grade it)
-    return 'incomplete';
+    return "incomplete";
   }
   // empty window:
-  if (manifestCell !== null && manifestCell.eligible === false)
-    return 'ineligible';
-  return 'not_run';
+  if (manifestCell !== null && manifestCell.eligible === false) return "ineligible";
+  return "not_run";
 }
 
 // The error stage of the newest run, or null. Only relevant when status is
@@ -355,14 +341,14 @@ export function cellView(
   if (cell.running !== null && cell.window.length === 0) {
     // Pure running cell (no resolved history yet): shimmer the newest slot.
     const slots: SlotView[] = ghostSlots(4);
-    slots.push({ kind: 'running', height: 0 });
+    slots.push({ kind: "running", height: 0 });
     return {
       cell_id: id,
       scenario,
       agent,
       credential,
       os,
-      state: 'running',
+      state: "running",
       status: cellStatus(cell, manifestCell),
       error_stage: null,
       slots,
@@ -370,8 +356,8 @@ export function cellView(
       drift: false,
       opacity: 1.0,
       card: null,
-      face_time: '—',
-      face_cost: '—',
+      face_time: "—",
+      face_cost: "—",
     };
   }
 
@@ -382,16 +368,16 @@ export function cellView(
       agent,
       credential,
       os,
-      state: 'empty',
+      state: "empty",
       status: cellStatus(cell, manifestCell),
       error_stage: null,
       slots: [],
-      bottom: '—',
+      bottom: "—",
       drift: false,
       opacity: 1.0,
       card: null,
-      face_time: '—',
-      face_cost: '—',
+      face_time: "—",
+      face_cost: "—",
     };
   }
 
@@ -402,21 +388,20 @@ export function cellView(
   let face_cost: string;
   if (cell.running !== null) {
     // In-flight on top of history: newest slot shimmers, no latest $ yet.
-    slots = [...slots.slice(1), { kind: 'running', height: 0 }];
+    slots = [...slots.slice(1), { kind: "running", height: 0 }];
     bottom = cell.running.phase;
     drift = false;
-    face_time = '—';
-    face_cost = '—';
+    face_time = "—";
+    face_cost = "—";
   } else {
     const latest = cell.window[cell.window.length - 1] as RunRecord;
-    bottom = '—';
+    bottom = "—";
     drift = driftFlag(cellCosts(cell));
     face_time = formatDuration(effectiveDuration(latest));
     face_cost = rowCost(latest.cost_usd);
   }
-  const state = cell.running !== null ? 'running' : 'done';
-  const opacity =
-    cell.running !== null ? 1.0 : staleOpacity(latestAgeDays(cell, now));
+  const state = cell.running !== null ? "running" : "done";
+  const opacity = cell.running !== null ? 1.0 : staleOpacity(latestAgeDays(cell, now));
   return {
     cell_id: id,
     scenario,
@@ -439,7 +424,7 @@ export function cellView(
 function ghostSlots(n: number): SlotView[] {
   const out: SlotView[] = [];
   for (let i = 0; i < n; i++) {
-    out.push({ kind: 'ghost', height: 0 });
+    out.push({ kind: "ghost", height: 0 });
   }
   return out;
 }
@@ -470,9 +455,7 @@ interface CellSignature {
 }
 
 function newestId(cell: Cell): string | null {
-  return cell.window.length > 0
-    ? (cell.window[cell.window.length - 1] as RunRecord).run_id
-    : null;
+  return cell.window.length > 0 ? (cell.window[cell.window.length - 1] as RunRecord).run_id : null;
 }
 
 function cellSignature(cell: Cell): CellSignature {
@@ -499,11 +482,7 @@ function signaturesEqual(a: CellSignature, b: CellSignature): boolean {
 // swap, so the exact reason never matters to correctness).
 export interface GridChange {
   readonly cell_id: string;
-  readonly reason:
-    | 'appeared'
-    | 'vanished'
-    | 'verdict-appeared'
-    | 'phase-changed';
+  readonly reason: "appeared" | "vanished" | "verdict-appeared" | "phase-changed";
 }
 
 // Compare two scan snapshots, returning a change for every cell whose displayed
@@ -514,47 +493,36 @@ export function diffGrids(oldGrid: Grid, newGrid: Grid): GridChange[] {
   const newCells = newGrid.cells;
 
   for (const [key, newCell] of newCells) {
-    const id = cellId(
-      newCell.scenario,
-      newCell.agent,
-      newCell.credential,
-      newCell.os,
-    );
+    const id = cellId(newCell.scenario, newCell.agent, newCell.credential, newCell.os);
     const oldCell = oldCells.get(key);
     if (oldCell === undefined) {
-      changes.push({ cell_id: id, reason: 'appeared' });
+      changes.push({ cell_id: id, reason: "appeared" });
       continue;
     }
     if (signaturesEqual(cellSignature(oldCell), cellSignature(newCell))) {
       continue;
     }
-    const wasRunningUnresolved =
-      oldCell.running !== null && newestId(oldCell) === null;
+    const wasRunningUnresolved = oldCell.running !== null && newestId(oldCell) === null;
     if (wasRunningUnresolved && newestId(newCell) !== null) {
-      changes.push({ cell_id: id, reason: 'verdict-appeared' });
+      changes.push({ cell_id: id, reason: "verdict-appeared" });
     } else if (
       oldCell.running !== null &&
       newCell.running !== null &&
       oldCell.running.phase !== newCell.running.phase
     ) {
-      changes.push({ cell_id: id, reason: 'phase-changed' });
+      changes.push({ cell_id: id, reason: "phase-changed" });
     } else if (newestId(oldCell) !== newestId(newCell)) {
-      changes.push({ cell_id: id, reason: 'verdict-appeared' });
+      changes.push({ cell_id: id, reason: "verdict-appeared" });
     } else {
-      changes.push({ cell_id: id, reason: 'phase-changed' });
+      changes.push({ cell_id: id, reason: "phase-changed" });
     }
   }
 
   for (const [key, oldCell] of oldCells) {
     if (!newCells.has(key)) {
       changes.push({
-        cell_id: cellId(
-          oldCell.scenario,
-          oldCell.agent,
-          oldCell.credential,
-          oldCell.os,
-        ),
-        reason: 'vanished',
+        cell_id: cellId(oldCell.scenario, oldCell.agent, oldCell.credential, oldCell.os),
+        reason: "vanished",
       });
     }
   }
