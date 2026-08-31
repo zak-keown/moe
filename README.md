@@ -1,9 +1,14 @@
 # Moe
 
+<img src="./assets/moe.png" alt="Moe: a green, many-armed alien in a headset, working eight control surfaces at once, thoroughly unimpressed" width="220" align="right">
+
 > Just ask Moe.
 
 A hard fork of the Superpowers ecosystem — 19 repositories, one workspace,
 9 packages, rebranded stem to stern.
+
+Eight arms, eight control surfaces, one bored expression. That is the whole
+premise: one operator driving every harness at once, from one place.
 
 | | |
 |---|---|
@@ -13,12 +18,26 @@ A hard fork of the Superpowers ecosystem — 19 repositories, one workspace,
 
 ## Status
 
-Target-shape only. No code imported yet. `ARCHITECTURE.md` is the spec; read it
-before writing anything.
+**All 19 upstream repositories are imported and integrated.** Nine packages
+build, ~3,400 tests pass, and `pnpm mint` generates six installable plugins into
+`/plugins/` from one config each. `ARCHITECTURE.md` remains the spec — read it
+before writing anything, because it records *why* the shape is what it is, which
+the tree cannot tell you.
 
-Origin is GitLab (`gitlab.tcdevops.com`); packages publish to the GitLab Package
-Registry under `@bubstack`. Upstream stays on GitHub — those URLs are provenance,
-not links to us.
+What is not done: nothing is published to any registry, the eval container image
+has not been built, and 15 items sit in `.planning/backlog/` on a seven-wave
+schedule (`.planning/backlog/WAVES.md`).
+
+Origin is GitLab, self-hosted at `gitlab.tcdevops.com/Zak/moe`. A private mirror
+exists at `gitlab.com/moe-ai/moe`; the self-hosted one is canonical, and every
+self-referential URL in the tree points there. Upstream stays on GitHub — those
+URLs are provenance, not links to us.
+
+> **Note on the `@bubstack` scope.** It no longer matches the project's
+> top-level group, which is `Zak`. GitLab's *instance-level* npm registry
+> requires scope to equal group, so publishing would need the *project-level*
+> endpoint instead. This blocks nothing today because nothing publishes; see
+> ARCHITECTURE §8.
 
 ## The 9 packages
 
