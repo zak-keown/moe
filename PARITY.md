@@ -156,8 +156,10 @@ deliberate mapping rather than a regex:
 
 ### Identifiers confirmed by the imports of 2026-08-31
 
-Surfaced by the five package imports; each is as breaking as a bin rename for
-anyone holding an artifact produced by the upstream tool.
+Surfaced by the nine package imports; each is as breaking as a bin rename for
+anyone holding an artifact produced by the upstream tool. On-disk paths, wire
+keys and resolver-visible names qualify; a source-level type rename does not,
+and the one that appears here is marked.
 
 | Package | Kind | Upstream | Moe |
 |---|---|---|---|
@@ -174,6 +176,51 @@ anyone holding an artifact produced by the upstream tool.
 | tab | XDG data dir | `$XDG_DATA_HOME/obol` | `$XDG_DATA_HOME/moe/tab` |
 | tab | Go module path, PyPI dist/import | obol forms | moe-tab / `moe_tab` |
 | proof | module dir | `smevals/` | `moe_proof/` |
+| core | skill-tool namespace (32 occurrences, 11 targets) | `superpowers:<skill>` | bare backticked name — no prefix |
+| core | bootstrap skill name, load-bearing in five resolvers | `using-superpowers` | `using-moe` |
+| core | state dir **in the user's repo** | `.superpowers/{sdd,brainstorm}/` | `.moe/{sdd,brainstorm}/` |
+| core | taught output path, 57 occurrences, prose only | `docs/superpowers/{plans,specs,iterations}/` | `docs/moe/…` |
+| memory | data dir + the env var pointing at it | `~/.config/superpowers/`, `PERSONAL_SUPERPOWERS_DIR` | `~/.config/moe/memory/`, `MOE_DATA_DIR` |
+| memory | env vars, 14 distinct | `EPISODIC_MEMORY_*` | `MOE_MEMORY_*` |
+| memory | plugin-id prefix | `episodic-memory@episodic-memory-dev` | `moe-memory@moe` |
+| memory | marketplace name | `episodic-memory-dev` | `moe` |
+| memory | Claude Code tool name (two renamed identifiers in one string) | `mcp__plugin_episodic-memory_episodic-memory__search` | `mcp__plugin_moe-memory_moe-memory__search_conversations` |
+| memory | Codex's underscore-normalised tool name | `mcp__episodic_memory__` | `mcp__moe_memory__` |
+| flight | state dir, on disk, per project | `.gauntlet/` | `.moe-flight/` |
+| flight | env vars, 26 distinct | `GAUNTLET_*` | `MOE_FLIGHT_*` |
+| flight | `config --json` object key — a wire surface | `.gauntlet` | `.flight`, **not** `.moe-flight` (not a legal property access) |
+| flight | static-report hydration id | `__GAUNTLET_RUN__` | `__MOE_FLIGHT_RUN__` |
+| flight | XDG cache namespace, shared with glass | `~/.cache/superpowers/` | `~/.cache/moe/` |
+| flight | Chrome profile — never `moe-glass`, sharing a `--user-data-dir` is what upstream warns against | `gauntlet` | `moe-flight` |
+| flight | usage-sidecar wire row type, cross-package with tab | `obol.usage` | `moe.tab.usage` |
+| flight | skill frontmatter `name:` | `writing-gauntlet-stories` | `writing-flight-stories` |
+| flight | **source-only**, not artifact-visible — see below | `VetResult`, `VetStatus`, `VET_STATUSES` | `VerdictResult`, `VerdictStatus`, `VERDICT_STATUSES` |
+
+**`vet` was not a brand token and was renamed anyway.** It is a *pre-`gauntlet`*
+name for the project — upstream's `bun.lock` still recorded the workspace as
+`"vet"` — so it is brand residue that the token list simply never caught, and
+`Verdict*` is both descriptive and the vocabulary the QA and lab halves already
+share. 135 substitutions. It is listed as source-only because the on-disk
+`result.json` never carried the token (`status`, `scenario`, `runId`), so unlike
+every other row above it breaks no artifact. Recorded here because renaming a
+token that is *not* on the list is a judgment call, and an unrecorded judgment
+call is indistinguishable from an over-rename.
+
+**`PRIVATE_JOURNAL_PATH` is the reverse call: a brand token deliberately kept.**
+Unsetting an override does not error, it silently relocates data — a
+containerised deployment writing to `/data/journals` would start writing to
+`cwd` with no message. So `moe-memory` honours the upstream name,
+`MOE_MEMORY_JOURNAL_PATH` wins when both are set, and a deprecation warning
+prints once per process.
+
+**`.superpowers/` → `.moe/` and `~/.config/superpowers/` → `~/.config/moe/memory/`
+are user-data migrations, not renames.** Neither has a fallback read. core's
+`sdd-workspace` will create a fresh empty directory beside the user's existing
+SDD ledgers; memory's `findLegacyDataDir()` at least detects the old directory
+and both `moe-memory sync` and `moe-memory doctor codex` print where it is,
+because the alternative is silently re-downloading the model, re-embedding
+everything and re-running *paid* summarisation over the user's whole history.
+Both belong in a release note.
 
 **The C ABI rename is the load-bearing one.** It has to land identically in the
 Rust FFI, the committed header, and all three bindings, or nothing `dlopen`s. It is

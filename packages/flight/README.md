@@ -312,12 +312,16 @@ own substitutions rather than left to a lowercase pass:
 | Chrome profile | `gauntlet` | `moe-flight` | 1 |
 | wire row type | `obol.usage` | `moe.tab.usage` | 2 |
 
-`vet` was not in PARITY.md's brand-token list and needs a row: `VerdictResult` and
-friends are 131 live occurrences, and `vet` is a pre-`gauntlet` name for the
-project — `bun.lock` still recorded the workspace as `"vet"`. It is renamed to
-`Verdict*`, which is descriptive and is the vocabulary both halves share. The
-on-disk `result.json` never carried the token (`status`, `scenario`, `runId`), so
-this is a pure type rename with no format break.
+`vet` was not in PARITY.md's brand-token list, and **now has a row there** — see
+*Identifiers confirmed by the imports of 2026-08-31*, where it is the one entry
+marked source-only. `VerdictResult` and friends are 131 live occurrences, and
+`vet` is a pre-`gauntlet` name for the project — `bun.lock` still recorded the
+workspace as `"vet"`. It is renamed to `Verdict*`, which is descriptive and is
+the vocabulary both halves share. The on-disk `result.json` never carried the
+token (`status`, `scenario`, `runId`), so this is a pure type rename with no
+format break. Recorded in the ledger because renaming a token that is *not* on
+the list is a judgment call, and an unrecorded judgment call is
+indistinguishable from an over-rename.
 
 **Three substitutions the audit stopped before they landed.**
 
