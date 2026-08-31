@@ -290,6 +290,23 @@ or `rustup default stable` once rustup's shim dir is on PATH. The repo scripts
 call bare `cargo` deliberately — pinning a machine-specific path in
 `package.json` would not survive a second developer.
 
+**Windows: WSL2, and that is the answer for now.** Decided 2026-08-31, Zak
+Keown. Native Windows becomes first-class once this works solidly on macOS, not
+before. What that buys and what it defers:
+
+| | Under WSL2 | Native Windows, deferred |
+|---|---|---|
+| hooks | Linux shell scripts run directly; `run-hook.cmd`'s cmd half is never reached | needs a bash (Git for Windows); the wrapper now *says so* instead of exiting silently |
+| `moe crew` | tmux works | no story at all — tmux does not exist |
+| CI | none needed; `.gitlab-ci.yml` runs `node:24` | would need a Windows runner |
+| line endings | native LF | `core.autocrlf=true` breaks the cmd/bash polyglot — see `.gitattributes` |
+
+Two things are still done natively-correctly, because they were free: every
+package bin carries a `#!/usr/bin/env node` shebang (cmd-shim reads it to pick
+an interpreter, and `moe-crew` had none), and `.gitattributes` pins LF. Both
+also matter under WSL2 the moment someone clones on the Windows side and reaches
+the tree through `/mnt/c`, which is a normal thing to do by accident.
+
 ### Gotcha worth remembering
 
 pnpm 11 refuses to install until every transitive postinstall script is approved

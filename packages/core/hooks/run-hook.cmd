@@ -34,8 +34,21 @@ if %ERRORLEVEL% equ 0 (
     exit /b %ERRORLEVEL%
 )
 
-REM No bash found - exit silently rather than error
-REM (plugin still works, it just skips the hook)
+REM No bash found. Say so, then exit 0 anyway.
+REM
+REM Upstream exited silently here, with the comment "plugin still works, it just
+REM skips the hook". The exit code is right and the silence is not: this wrapper
+REM dispatches the SessionStart hook that bootstraps Moe, so on a native Windows
+REM box with no Git for Windows bash, Moe's central mechanism is simply off --
+REM and nothing anywhere says why. A skill that never fires looks identical to a
+REM skill that fired and decided not to act.
+REM
+REM Still `exit /b 0`: a non-zero SessionStart hook can block or noisily break
+REM every session on the machine, which is a worse failure than a missing hook.
+REM Diagnosable beats silent; broken-loudly does not beat working.
+echo run-hook.cmd: no bash found, so hook "%~1" did NOT run. >&2
+echo   Moe's hooks are shell scripts and need a bash on this machine. >&2
+echo   Install Git for Windows, or use WSL2 (the supported path today). >&2
 exit /b 0
 CMDBLOCK
 

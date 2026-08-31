@@ -1,0 +1,70 @@
+# Line endings, and why this file is load-bearing.
+#
+# RESTORED. Upstream `superpowers/.gitattributes` pinned `*.sh`, `*.cmd` and
+# `hooks/session-start` to `eol=lf`. It was dropped silently during the import
+# and is absent from PARITY.md — the only upstream file whose *absence* is a
+# functional regression rather than a deletion decision.
+#
+# It matters more here than it did upstream, for two reasons:
+#
+#   1. `/plugins/` is GENERATED AND COMMITTED. moe-mint emits the hook wrappers
+#      into it, so those bytes go through a checkout on every machine that
+#      installs a plugin — including Windows ones.
+#   2. `hooks/run-hook.cmd` is a cmd/bash POLYGLOT. Both interpreters parse the
+#      same bytes. A CRLF checkout breaks it in BOTH: bash chokes on the
+#      trailing \r, and cmd's `: << 'CMDBLOCK'` heredoc guard stops matching.
+#      There is no half-working state to notice — the hook just does not run.
+#
+# The mechanism is Git for Windows' `core.autocrlf=true`, which many installers
+# still set by default: it rewrites LF to CRLF on checkout unless told not to.
+# WSL2 is the supported Windows story for now, and WSL2 clones do not hit this —
+# but a clone made on the Windows side and reached through /mnt/c does, and that
+# is a normal thing for someone to do by accident.
+#
+# Verified safe when added: `git ls-files | xargs file` found zero tracked files
+# with CRLF, so normalisation is a no-op on today's tree and this can only
+# prevent future damage.
+
+# Normalise everything git detects as text; check out LF everywhere.
+* text=auto eol=lf
+
+# Belt and braces on the files where a CRLF is a functional break, not cosmetic.
+*.sh    text eol=lf
+*.cmd   text eol=lf
+*.ps1   text eol=lf
+
+# Extensionless hook scripts. The missing extension is deliberate: Claude Code's
+# Windows auto-detection prepends `bash` to any command containing `.sh`, which
+# would run bash twice through the wrapper. So they cannot be caught by a `*.sh`
+# rule and need naming.
+hooks/**            text eol=lf
+packages/*/hooks/** text eol=lf
+plugins/**/hooks/** text eol=lf
+
+# Byte-frozen zones: inherited evidence, verified with `diff -r` and `shasum -c`
+# and asserted by tests. `-text` means git will not normalise these under any
+# setting, so no future core.autocrlf or eol config can alter a recorded
+# artifact. Editing a recorded artifact is editing evidence.
+packages/*/docs/history/**                  -text
+packages/flight/dashboard/src/static/**     -text
+packages/flight/ui/src/lib/__fixtures__/**  -text
+
+# Licenses travel verbatim; all three inherited licenses require retaining the
+# notice as-is.
+LICENSE       -text
+**/LICENSE    -text
+**/*.LICENSE  -text
+
+# Binary.
+*.woff2 binary
+*.woff  binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.so    binary
+*.dylib binary
+*.dll   binary
+*.wasm  binary
