@@ -123,7 +123,7 @@ export const cursor: HarnessAdapter = {
       }
     } else if (config.bootstrap.kind === 'generate') {
       // The generated bootstrap content file is emitted regardless of
-      // emitHooks: other adapters (gemini, opencode, pi, hermes) read it at
+      // emitHooks: other adapters (opencode, pi, hermes) read it at
       // runtime, independent of whether cursor wires its own shell hook to
       // it.
       files.push({ path: GENERATED_BOOTSTRAP_PATH, content: generatedBootstrap(model) })

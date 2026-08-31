@@ -19,11 +19,11 @@ function tmpFixture(yaml: string): string {
 }
 
 describe('adapter registry', () => {
-  it('registers opencode between gemini and pi', () => {
+  it('registers opencode between kimi and pi', () => {
     const names = adapters.map((a) => a.name)
     expect(names).toContain('opencode')
     expect(getAdapter('opencode')).toBe(opencode)
-    expect(names.indexOf('opencode')).toBe(names.indexOf('gemini') + 1)
+    expect(names.indexOf('opencode')).toBe(names.indexOf('kimi') + 1)
     expect(names.indexOf('opencode')).toBe(names.indexOf('pi') - 1)
   })
 })

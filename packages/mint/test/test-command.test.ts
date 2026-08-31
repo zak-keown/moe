@@ -55,11 +55,9 @@ function dockerShimBin(argvFile: string): string {
 // line for — exactly the harnesses named in checks/run-checks.sh's deep tier.
 const DEEP_HARNESSES = [
   'claude-code',
-  'gemini',
   'codex',
   'copilot',
   'opencode',
-  'grok',
   'droid',
   'hermes',
   'pi',
@@ -70,7 +68,7 @@ const DEEP_HARNESSES = [
 
 // A bin directory holding symlinks to ONLY the generic tools the checks
 // script needs (bash, git, jq, node, python3, coreutils) — deliberately
-// none of the harness CLIs (claude, codex, gemini, opencode, …). Running the
+// none of the harness CLIs (claude, codex, opencode, …). Running the
 // script with PATH narrowed to this makes every harness binary "absent",
 // which is (a) how a clean CI runner without harness CLIs behaves and (b)
 // what keeps the deep tier from firing real, mutating installs against the
@@ -498,7 +496,7 @@ describe('checks/run-checks.sh', () => {
       },
     })
     expect(result.stdout).toMatch(/^ok exec-bits-source: /m)
-    for (const harness of ['claude-code', 'gemini', 'codex', 'copilot', 'droid', 'grok', 'hermes']) {
+    for (const harness of ['claude-code', 'codex', 'copilot', 'droid', 'hermes']) {
       expect(result.stdout).toMatch(new RegExp(`^skip exec-bits-${harness}: `, 'm'))
     }
     expect(result.stdout).toMatch(/^skip exec-bits-kimi: install is TUI-only/m)

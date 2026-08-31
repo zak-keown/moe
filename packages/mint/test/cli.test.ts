@@ -24,18 +24,17 @@ function runCli(args: string[], cwd: string) {
 describe('CLI end-to-end', () => {
   // dist/cli.js is built once via test/global-setup.ts (vitest globalSetup),
   // before any test file runs.
-  it('generate exits 0 and reports 11 harnesses with all adapter names', () => {
+  it('generate exits 0 and reports 10 harnesses with all adapter names', () => {
     const dir = tmpPluginDir()
     const result = runCli(['generate'], dir)
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('Generated')
-    expect(result.stdout).toContain('11 harness')
+    expect(result.stdout).toContain('10 harness')
     expect(result.stdout).toContain('claude-code')
     expect(result.stdout).toContain('cursor')
     expect(result.stdout).toContain('codex')
     expect(result.stdout).toContain('devin')
     expect(result.stdout).toContain('kimi')
-    expect(result.stdout).toContain('gemini')
     expect(result.stdout).toContain('opencode')
     expect(result.stdout).toContain('pi')
     expect(result.stdout).toContain('hermes')
@@ -84,24 +83,27 @@ describe('CLI end-to-end', () => {
     runCli(['generate'], dir)
     const yamlPath = join(dir, 'moe-mint.yaml')
     const yaml = readFileSync(yamlPath, 'utf8')
-    writeFileSync(yamlPath, yaml.replace('harnesses:\n', 'harnesses:\n  exclude: [gemini]\n'))
+    // Excluding opencode drops its four uniquely-owned files (the plugin JS,
+    // the translated command/agent .md files, and the install doc); the shared
+    // package.json stays because pi still emits it byte-identically.
+    writeFileSync(yamlPath, yaml.replace('harnesses:\n', 'harnesses:\n  exclude: [opencode]\n'))
 
     const result = runCli(['generate'], dir)
 
     expect(result.status).toBe(0)
-    const geminiExtIndex = result.stdout.indexOf('pruned: gemini-extension.json')
-    const geminiMdIndex = result.stdout.indexOf('pruned: GEMINI.md')
-    const geminiCommandIndex = result.stdout.indexOf('pruned: commands/ks-hello.toml')
-    const geminiInstallDocIndex = result.stdout.indexOf('pruned: docs/install/gemini.md')
+    const pluginJsIndex = result.stdout.indexOf('pruned: .opencode/plugins/kitchen-sink.js')
+    const commandIndex = result.stdout.indexOf('pruned: .opencode/command/ks-hello.md')
+    const agentIndex = result.stdout.indexOf('pruned: .opencode/agent/ks-reviewer.md')
+    const installDocIndex = result.stdout.indexOf('pruned: docs/install/opencode.md')
     const countIndex = result.stdout.indexOf('Pruned 4 stale file(s)')
-    expect(geminiExtIndex).toBeGreaterThanOrEqual(0)
-    expect(geminiMdIndex).toBeGreaterThanOrEqual(0)
-    expect(geminiCommandIndex).toBeGreaterThanOrEqual(0)
-    expect(geminiInstallDocIndex).toBeGreaterThanOrEqual(0)
-    expect(countIndex).toBeGreaterThan(geminiExtIndex)
-    expect(countIndex).toBeGreaterThan(geminiMdIndex)
-    expect(countIndex).toBeGreaterThan(geminiCommandIndex)
-    expect(countIndex).toBeGreaterThan(geminiInstallDocIndex)
+    expect(pluginJsIndex).toBeGreaterThanOrEqual(0)
+    expect(commandIndex).toBeGreaterThanOrEqual(0)
+    expect(agentIndex).toBeGreaterThanOrEqual(0)
+    expect(installDocIndex).toBeGreaterThanOrEqual(0)
+    expect(countIndex).toBeGreaterThan(pluginJsIndex)
+    expect(countIndex).toBeGreaterThan(commandIndex)
+    expect(countIndex).toBeGreaterThan(agentIndex)
+    expect(countIndex).toBeGreaterThan(installDocIndex)
   })
 
   it('second generate run prunes nothing and validate exits 0', () => {
@@ -132,7 +134,7 @@ describe('CLI end-to-end', () => {
 
   it('generate refuses a pre-existing hand-written file, and --force overwrites it', () => {
     const dir = tmpPluginDir()
-    writeFileSync(join(dir, 'GEMINI.md'), 'hand-written content, not generated\n')
+    writeFileSync(join(dir, 'plugin.json'), 'hand-written content, not generated\n')
 
     const refused = runCli(['generate'], dir)
     expect(refused.status).toBe(1)
