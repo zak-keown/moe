@@ -9,6 +9,12 @@
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" plan-set-notice",
             "shell": "bash",
             "async": false
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/moe-completion-evidence\"",
+            "shell": "bash",
+            "async": false
           }
         ]
       },
