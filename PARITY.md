@@ -49,6 +49,46 @@ done
 |---|---|---|
 | `superpowers-autoresearch` | `6e6f33f` | 16 MB of research campaigns, logs, raw captures and reports. Data, not code, and no LICENSE. Kept as a reference snapshot only. |
 
+## Upstream tracking, frozen
+
+**Decided 2026-08-31.** This ledger is **frozen at the upstreams it already
+names.** No new drift-tracking rows.
+
+On the record because it reverses a pattern three backlog items were about to
+extend. Every upstream here is pinned to a shallow, single-commit snapshot in
+`../.moe-references/`, and this file's own rule is that the snapshots are the
+spec, not upstream HEAD — Moe pulls from nobody. So what the ledger holds is not
+a dependency. It is provenance, and provenance exists to be **spent**: every row
+resolves, eventually, to keep, prune, or rewrite. A ledger that only grows is an
+archive, and an archive of decisions nobody makes is the maintenance tax without
+the benefit.
+
+**Carve-out, non-negotiable.** The freeze covers drift tracking only. License and
+attribution obligations — `NOTICE`, the per-package `licenses/` directories, an
+Apache-2.0 statement of changes — are legal requirements and are unaffected. New
+inbound material still records its provenance here.
+
+**What the freeze changes elsewhere.** `tc-standards-conformance` may no longer
+justify a pinned-SHA-plus-drift-CI mechanism by citing this file as precedent;
+`tc-governance-integration`'s request for a watch-only row kind is withdrawn;
+`skill-set-fidelity-refactor`'s `imported:` `from:` value set stays at five
+names.
+
+### Inherited skills, resolved
+
+The freeze's first payment. The same external panel review recommended removing
+six inherited skills. Each was argued against the file rather than the name, and
+**all six are kept.** Recorded so the argument is not re-run from scratch.
+
+| Skill | Objection | What the file says | Resolution |
+|---|---|---|---|
+| `brainstorming` | Meta-cognitive; demote to a slash-command | `SKILL.md:14-20` is the `<HARD-GATE>` — the human approval gate — plus a seven-row table of label-gaming | **Keep.** An approval gate that fires only when invoked is not a gate |
+| `receiving-code-review` | Meta-reflection; frontier models do not need it | `:27-38` bans "You're absolutely right!" and "Great point!" — an anti-sycophancy catch | **Keep.** Claude Code's own system prompt ships an independently authored version of the same catch |
+| `writing-plans` | Wrong shape for long-horizon attention | External-memory artifact — `Files:` / `Interfaces:` / `Consumes:` / `Produces:`, because "a task's implementer sees only their own task" (`:96-99`) | **Keep.** The objection is an argument *for* the artifact |
+| `using-moe` | Self-referential loader loop | mint's `bootstrap: { skill: }` target, injected deterministically at session start | **Keep.** The only skill already meeting the explicit-invocation bar |
+| `subagent-driven-development` | 568 lines, wasteful even at frontier | Bodies load on demand; resident cost is one description, ~55 tokens (ARCHITECTURE.md §2) | **Keep.** And `writing-plans:61,166` REQUIRE it, so a tier move would trip `metadata.test.ts:475` |
+| `dispatching-parallel-agents` | Harmful below frontier | Deliberately invoked, by name, when you already know you want it | **Keep at `everything`** — which is `skill-tiers.yaml`'s own criterion. See `parallel-execution-option` |
+
 ## License exposure
 
 Everything forked is MIT, Apache-2.0, or public domain, and all three require
@@ -226,7 +266,6 @@ Both belong in a release note.
 Rust FFI, the committed header, and all three bindings, or nothing `dlopen`s. It is
 verified by `pnpm tab:test:bindings`, which is deliberately outside `pnpm test`
 because it needs the cdylib built first.
-
 
 Watch for these beyond source: `${CLAUDE_PLUGIN_ROOT}` paths in plugin manifests,
 skill frontmatter `name:` fields, hook script paths, and `catalog-info.yaml`
