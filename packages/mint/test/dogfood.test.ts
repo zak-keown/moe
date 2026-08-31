@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { execSync } from 'node:child_process'
 import { mkdtempSync, existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { stringify } from 'yaml'
 import { fileURLToPath } from 'node:url'
 import { generate } from '../src/generate.js'
@@ -35,12 +35,34 @@ import { generate } from '../src/generate.js'
 // ../.moe-references/ is gitignored and outside the repo, so this runs locally
 // and skips in CI, exactly as upstream's version did. MOE_MINT_DOGFOOD_REPO
 // overrides the location.
-const DEFAULT_SUPERPOWERS_REPO = join(
-  fileURLToPath(new URL('../../..', import.meta.url)),
-  '..',
-  '.moe-references',
-  'superpowers',
-)
+//
+// WHY THIS WALKS UP rather than joining a fixed '../../../..'. The fixed form
+// resolved relative to THIS FILE, so from a git worktree under
+// `.claude/worktrees/<id>/` it landed on `.claude/worktrees/.moe-references/`,
+// found nothing, and sent the whole suite through `describe.skipIf` -- 8 tests
+// reported SKIPPED, not failed, so it read as green. Every wave of work in this
+// repo happens in a worktree, which meant the one assertion protecting the
+// pinned upstream spec (README rule 2: "the snapshots in ../.moe-references/
+// are the spec, not upstream HEAD") was silently off in exactly the trees where
+// changes get made. Walking up finds it from any depth and still finds nothing
+// in CI, so the intended CI skip is unchanged.
+function findReferenceSnapshot(): string {
+  const historical = join(
+    fileURLToPath(new URL('../../..', import.meta.url)),
+    '..',
+    '.moe-references',
+    'superpowers',
+  )
+  let dir = fileURLToPath(new URL('.', import.meta.url))
+  for (;;) {
+    const candidate = join(dir, '..', '.moe-references', 'superpowers')
+    if (existsSync(join(candidate, '.git'))) return candidate
+    const parent = dirname(dir)
+    if (parent === dir) return historical
+    dir = parent
+  }
+}
+const DEFAULT_SUPERPOWERS_REPO = findReferenceSnapshot()
 const SUPERPOWERS_REPO = process.env.MOE_MINT_DOGFOOD_REPO ?? DEFAULT_SUPERPOWERS_REPO
 const SUPERPOWERS_AVAILABLE = existsSync(join(SUPERPOWERS_REPO, '.git'))
 

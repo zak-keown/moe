@@ -181,9 +181,13 @@ skills:
       (subagent-driven-development/SKILL.md:282, "Never dispatch multiple
       implementation subagents in parallel"). Promotion to core is part of the
       parallel-execution-option work, which reopens exactly that prohibition;
-      moving it now would change the tier twice. See
-      .planning/backlog/W01P01 - parallel-execution-option.md, whose
-      depends_on names this decision and whose touches names this file.
+      moving it now would change the tier twice. See the
+      parallel-execution-option item in .planning/backlog/ -- cited by slug, not
+      by its W##P## filename prefix, because that prefix IS the wave schedule
+      and moves whenever the backlog is re-waved. This citation already broke
+      once that way: it read W01P01 when written, which was true then, and the
+      re-wave in ab19751 made W01P01 skill-set-fidelity-refactor and moved this
+      item to W07P03. The slug is stable; the prefix is not.
 
   writing-skills:
     tier: everything

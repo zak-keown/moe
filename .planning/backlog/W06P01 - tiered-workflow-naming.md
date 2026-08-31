@@ -175,7 +175,7 @@ lean count is the named constant `LEAN_TIER_BUDGET`. This item adds no skill, so
 not strictly need that — but the mechanism section below assumes adding one is
 *permitted*, and the follow-on `commands/` item does need it.
 
-`verification-split-and-firing-rate` (scheduled W03P01, ahead of this item) is now a
+`verification-split-and-firing-rate` (scheduled ahead of this item) is now a
 **prerequisite rather than a collision**. Its Part A puts the mechanical evidence floor in
 a `Stop` hook, which is what lets depth stop relaxing
 `verification-before-completion` — so this item no longer edits that skill, and the
@@ -192,11 +192,39 @@ is commit `0b1571d`, "core: settle the lean/full tiering, and delete the rule wh
 premise was false" — DO-NOW-2's landing — not `skill-set-fidelity-refactor`'s `75dc87c`,
 which touched no entry body. Nothing left for this item to do there.
 
-The tier question itself is settled: `dispatching-parallel-agents` stays
-`tier: everything`, so the lean count stays 13. What is *not* settled is the parallel
-prohibition it was demoted against, which `parallel-execution-option` reopens — so expect
-that `why:` prose to be rewritten again under that item. Cite the decision (`0b1571d`),
-not the block's line numbers.
+On the tier question, correcting an overstatement of mine: `0b1571d` did **not** settle
+it. Its body says "Held at `everything` **for now** rather than promoted... moving the
+tier now would move it twice", and the `why:` block says "HELD at everything for now, but
+on a corrected and much weaker basis" and "Promotion to core is part of the
+parallel-execution-option work." That is a provisional hold with a named revisit
+condition, not a closed question, and the "for now" plus the forward pointer are load-
+bearing — whoever edits that block should keep both rather than "state the settled
+answer."
+
+What *did* close it is later and lives in this doc: the debate-review decision above
+rejects the promotion. So the block is stale, but not in the way I first said — it is
+stale because it still advertises a promotion that has since been rejected, not because
+its hedging is leftover. Net effect for this item is unchanged (stays `everything`, lean
+count stays 13), but the yaml and the debate-review decision now disagree in writing and
+whoever owns that file has to reconcile them. The parallel *prohibition* remains genuinely
+open and remains `parallel-execution-option`'s.
+
+**Do not cite wave IDs in source files.** *(FIXED on main: `skill-tiers.yaml`'s
+`dispatching-parallel-agents` `why:` block now cites the slug and carries this
+rule inline, including why the original was not a typo. The line numbers below
+are left as written because they were accurate in the tree this was drafted
+against; on main the block is ~19 lines earlier, which is itself the argument.)*
+
+`skill-tiers.yaml:204-205` said "See
+`.planning/backlog/W01P01 - parallel-execution-option.md`", and `0b1571d`'s body says
+".planning/backlog/W01P01 reopens exactly that prohibition". Neither is a typo: when that
+commit was written, `W01P01` *was* `parallel-execution-option`. The orchestrator has since
+re-planned — `W01P01` is now `skill-set-fidelity-refactor` and the slug moved to `W07P03`
+— so a correct citation was invalidated from outside the file. Swapping `W01P01` for
+`W07P03` restores it only until the next re-plan, and the plan has already renumbered once
+mid-session. Cite the **slug** (`parallel-execution-option`), never the wave ID. Same
+principle as citing `LEAN_TIER_BUDGET` by name instead of a line, and it is why this doc
+names slugs throughout.
 
 ## Proposed approach
 
@@ -255,7 +283,8 @@ the open question about whether they supersede those three or coexist with them.
 
 `dispatching-parallel-agents` keeps its row because the behaviour is real at `feature`
 depth, not because every reader will have the skill — the promotion to lean is **rejected**
-and it stays `tier: everything` (settled in `0b1571d`). The row is narrow for a
+and it stays `tier: everything` (the debate-review decision above, not `0b1571d`, which
+held it only provisionally). The row is narrow for a
 second reason: the everyday flow bans parallel *implementation* subagents outright
 (`subagent-driven-development/SKILL.md:282`), so it can only cover independent work
 outside that ban. `parallel-execution-option` owns the wording.
