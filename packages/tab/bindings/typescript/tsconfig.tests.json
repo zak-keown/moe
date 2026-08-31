@@ -1,0 +1,13 @@
+{
+  "//": "Test-only program. Not composite: it emits nothing, and vitest transpiles the suites itself. It reads the built dist/ through the project reference, so `tsc -b` must run first (the typecheck script does exactly that).",
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "types": ["node"]
+  },
+  "include": ["test/**/*", "vitest.config.ts"],
+  "references": [{ "path": "." }]
+}

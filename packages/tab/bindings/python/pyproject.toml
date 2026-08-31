@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "moe-tab"
+version = "0.0.0"
+description = "Estimate the USD cost of an AI-agent transcript (ATIF trajectory or moe-tab usage sidecar)."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Bubstack" }]
+keywords = ["llm", "cost", "tokens", "transcript", "ai-agents"]
+classifiers = [
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Rust",
+  "Topic :: Software Development :: Libraries",
+]
+
+[project.urls]
+Homepage = "https://gitlab.tcdevops.com/bubstack/moe"
+Repository = "https://gitlab.tcdevops.com/bubstack/moe"
+
+[tool.setuptools]
+packages = ["moe_tab"]
+
+[tool.setuptools.package-data]
+moe_tab = ["libmoe_tab_ffi.dylib", "libmoe_tab_ffi.so"]

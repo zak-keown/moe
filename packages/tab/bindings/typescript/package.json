@@ -3,15 +3,36 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "TypeScript binding for the moe-tab transcript pricer. Replaces @primeradianthq/obol.",
+  "description": "TypeScript binding for the moe-tab transcript pricer, over its C ABI (Bun + Node). Replaces @primeradianthq/obol.",
   "license": "Apache-2.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "native",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "build": "tsc -b",
-    "typecheck": "tsc -b --pretty",
-    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --pretty",
+    "test": "vitest run --project unit",
+    "test:ffi": "vitest run --project ffi",
     "lint": "biome check ."
   },
+  "dependencies": {
+    "koffi": "2.16.2"
+  },
   "devDependencies": {
+    "@types/node": "^24.7.0",
     "typescript": "^5.9.0"
   }
 }

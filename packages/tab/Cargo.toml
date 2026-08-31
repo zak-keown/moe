@@ -6,7 +6,13 @@ members = ["crates/moe-tab-core", "crates/moe-tab-cli", "crates/moe-tab-ffi"]
 edition = "2021"
 version = "0.0.0"
 license = "Apache-2.0"
+repository = "https://gitlab.tcdevops.com/bubstack/moe"
+homepage = "https://gitlab.tcdevops.com/bubstack/moe"
 
-# Forked from obol @ 28e3dba (Apache-2.0). Crates rename obol-core -> moe-tab-core,
-# obol-cli -> moe-tab-cli, obol-ffi -> moe-tab-ffi. Driven by root `pnpm tab:build`,
-# not by pnpm directly. cargo is not installed on this machine.
+[workspace.dependencies]
+moe-tab-core = { path = "crates/moe-tab-core", version = "0.0.0" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+ureq = { version = "2", features = ["json"] }
+clap = { version = "4", features = ["derive"] }
