@@ -6,8 +6,8 @@ members = ["crates/moe-tab-core", "crates/moe-tab-cli", "crates/moe-tab-ffi"]
 edition = "2021"
 version = "0.0.0"
 license = "Apache-2.0"
-repository = "https://gitlab.tcdevops.com/bubstack/moe"
-homepage = "https://gitlab.tcdevops.com/bubstack/moe"
+repository = "https://gitlab.tcdevops.com/Zak/moe"
+homepage = "https://gitlab.tcdevops.com/Zak/moe"
 
 [workspace.dependencies]
 moe-tab-core = { path = "crates/moe-tab-core", version = "0.0.0" }

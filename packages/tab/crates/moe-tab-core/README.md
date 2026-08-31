@@ -25,5 +25,5 @@ disk. The library has no clock — the caller supplies the `as_of` stamp. Output
 `CostEstimate` carrying `unpriced_models`, `approximations` and `pricing_source` — not a JSON
 blob, and never a silent $0.
 
-Part of [Moe](https://gitlab.tcdevops.com/bubstack/moe), forked from
+Part of [Moe](https://gitlab.tcdevops.com/Zak/moe), forked from
 [obol](https://github.com/prime-radiant-inc/obol). Apache-2.0.

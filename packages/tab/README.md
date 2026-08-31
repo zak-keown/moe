@@ -142,7 +142,7 @@ About 575 substitutions across 60 files. The ones that are interface changes, no
 | C header | `include/obol.h`, guard `OBOL_H` | `include/moe_tab.h`, guard `MOE_TAB_H` |
 | npm package | `@primeradianthq/obol` | `@bubstack/moe-tab` (`workspace:*`) |
 | PyPI dist / import | `primeradianthq-obol` / `obol` | `moe-tab` / `moe_tab` |
-| Go module / package | `github.com/prime-radiant-inc/obol/bindings/go`, package `obol` | `gitlab.tcdevops.com/bubstack/moe/packages/tab/bindings/go`, package `tab` |
+| Go module / package | `github.com/prime-radiant-inc/obol/bindings/go`, package `obol` | `gitlab.tcdevops.com/Zak/moe/packages/tab/bindings/go`, package `tab` |
 | env vars | `OBOL_PRICING_DIR`, `OBOL_LIB`, `OBOL_WHEEL_PLAT` | `MOE_TAB_PRICING_DIR`, `MOE_TAB_LIB`, `MOE_TAB_WHEEL_PLAT` |
 | data dir | `$XDG_DATA_HOME/obol` | `$XDG_DATA_HOME/moe/tab` |
 | error type | `ObolError` / `TabError` in five languages | `TabError` everywhere |
@@ -178,7 +178,7 @@ clap listing the valid values, and a loud failure needs no compatibility shim.
 - **Provenance URLs stay on GitHub.** `github.com/prime-radiant-inc/obol` in a "forked from"
   sentence, `github.com/kenn-io/agentsview` in the acknowledgement, `github.com/ebitengine/purego`
   as a dependency. Only self-reference — `repository`, `homepage`, "part of" links — became
-  `gitlab.tcdevops.com/bubstack/moe`.
+  `gitlab.tcdevops.com/Zak/moe`.
 - **`atif` keeps its name.** It is an external interchange format (Agent Trajectory Interchange
   Format), not an upstream brand.
 - **`ATIF-` schema prefix, `litellm`/`openrouter` namespace keys, the `v` schema date

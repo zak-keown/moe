@@ -9,16 +9,16 @@
       "sha256": "2eebd1516b8c79bfcd1f531072c418332f852ed9668bd13e6f2e213004fe2fff"
     },
     ".claude-plugin/plugin.json": {
-      "sha256": "6a46c674a1a885326800027c05378738615982521b5237405876663fbc5a2579"
+      "sha256": "e375bb0eb33e708578f221c9ee33ab7dbd9937d25fc2adf975d7672ef59241ad"
     },
     ".codex-plugin/plugin.json": {
-      "sha256": "9f732c60376c3b2e62c63f81eed5c933c59177d34cf4a49dc86e7c14f723ae70"
+      "sha256": "54a525256729bef0ad3f400f1b8a1884274f9e7cfe4f1b2fb0a25992c7ef07f5"
     },
     ".cursor-plugin/plugin.json": {
-      "sha256": "d178a91cb1651b2830aad93a0d2ff8ebaf295de659f4105b4d83709f3dee33a7"
+      "sha256": "b634d7c1ce35f2093e3593d28d0c885513ab7c8d68cd747701a27a02ba0d35fe"
     },
     ".devin-plugin/plugin.json": {
-      "sha256": "b5722b4bd65c800729b2796cf81da7719f8b1fb319721e094d0e003d9d04e568"
+      "sha256": "095630d6514ad53b0d3341f8da0122c5f5f45d96424f6f3c59b3c3871e453d7e"
     },
     ".hermes-plugin/__init__.py": {
       "sha256": "11f7aa1c113830370378dfdcc64ea709cdc08f389ab42a2dfc46c68ca375f534"
@@ -27,7 +27,7 @@
       "sha256": "7ad16b2edc819cfb91009f6d1b4a19aa0e81c6079bb19af461e0ea06613ea9bd"
     },
     ".kimi-plugin/plugin.json": {
-      "sha256": "7ef5ab61832bef3ac0bb197229944f4efc61fcea3b50cff453678edb0b447c71"
+      "sha256": "56e3bd14c9eda7120a222f3d1c27f665ff2d6e9fd335cfa4b493707627d0e9cc"
     },
     ".opencode/agent/analyzer.md": {
       "sha256": "dcc48cb7960f39cfebea82fe2b0eddd094d2b3d3f58aeb0f7792f16c3403a5ef"
@@ -60,7 +60,7 @@
       "sha256": "58e2d23574934d6074a980aaa894059d925a4a33ce71cd9fe440f60f293a44c8"
     },
     "docs/install/agents-marketplace.md": {
-      "sha256": "4220fd926f126545b86365f2aefe0f8b1c4b2679e230ddad4f9043c916b975c3"
+      "sha256": "1190f01dceb7882b51c7f46ed3143ee388f2c8148e2e988e522c1ef1844dc289"
     },
     "docs/install/claude-code.md": {
       "sha256": "1ef11d0659f2960b60bf45ac5e61a2120d338eee875e6ba2b1989a0fec1e1c88"
@@ -75,16 +75,16 @@
       "sha256": "bf83cb55370a2d73cca65daff7d8375c7f65eb51f19b0216b077c22ea44538f3"
     },
     "docs/install/gemini.md": {
-      "sha256": "46ec654501d4000766c9a1e918387e678d70a123108d7efd4b21a7e1806ec2bf"
+      "sha256": "cbb2491e777b2f51c6be165311517dd1a85c246753a1f9c3dd1f35bea7c56d48"
     },
     "docs/install/hermes.md": {
       "sha256": "a13490dee343ca3824a07fd6db17bab3edf4f8b32e86f05fb43941a2fe6214ef"
     },
     "docs/install/kimi.md": {
-      "sha256": "c14bc9db0224b81b4b0d22643601cd9539aff415ee254a1a3a5421dac03ac597"
+      "sha256": "e1b33a0a9aecca32d4cbb1a22574fa4fa2678542c10f7698485d03d04d75e55d"
     },
     "docs/install/opencode.md": {
-      "sha256": "bf24326bcd4832e68ea622340dd8b89b22dbd3661274db7531eec202da2db162"
+      "sha256": "5c719c9a15a9418bee237337221153e48a0342953dd9771c83bf2b42f24cf52e"
     },
     "docs/install/pi.md": {
       "sha256": "a1726d5cf3ed6d6c2c51ad28085a3bd13f9ced4fb9c8fcd860b98ed99e2be715"
@@ -96,10 +96,10 @@
       "sha256": "7fee51a071da7f106d3a169cc3a1b58ff3b096dd5f726719b2077db6f0ce9273"
     },
     "package.json": {
-      "sha256": "af47e6fdd8fd38d39baa266767db9928da5090cbf09a2937ce01fcac2a6e0dc8"
+      "sha256": "a4653a2a12b23f413ed6aadcc38cf2c1d85496ccb8c598bd52b6943c9c1301b7"
     },
     "plugin.json": {
-      "sha256": "e13f8ffc41717cfa9e5c8b9a6aecbe758e2f01ca34429fdeb34914e4da1cc1d9"
+      "sha256": "8ce79b1bbd6a0ca1b11ba7112e8b9fd075efe26a0b70a30793137acf938ec611"
     }
   }
 }

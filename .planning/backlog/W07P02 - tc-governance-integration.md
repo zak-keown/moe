@@ -89,7 +89,7 @@ MCP `rag_search`/`rag_context`. A TC-context retriever therefore already exists.
 - **No `.ai-privacy.yml`** anywhere in the repo (`find . -name '.ai-privacy.yml'` → empty).
 - Root `.gitlab-ci.yml` has **no `include:`**, so the `add_ai_privacy` job from
   `Development.Infrastructure/gitlab-ci-files:ai/add_privacy.yml` will not run on
-  `bubstack/moe` after DO-NOW-5. That job is `.pre`-stage, skips when the file already
+  `Zak/moe` after DO-NOW-5. That job is `.pre`-stage, skips when the file already
   exists, curls the template from `ai/ai-privacy.yml`, commits and pushes; it needs an
   `AI_PRIVACY_KEY` CI variable.
 - `packages/core/hooks/hooks.json` (core worktree `.claude/worktrees/wf_238bb49d-362-13`)

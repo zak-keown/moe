@@ -57,13 +57,15 @@ published build's digest, and the "bump pins one CLI per PR" workflow.
 `@bubstack/moe-mint`'s `DEFAULT_IMAGE` (`src/test-command.ts`) points at:
 
 ```
-registry.gitlab.tcdevops.com/bubstack/moe/moe-container:latest
+registry.gitlab.tcdevops.com/Zak/moe/moe-container:latest
 ```
 
-**This reference is an assumption, not a confirmed fact.** ARCHITECTURE.md §8
-flags the project path `bubstack/moe` as unconfirmed, and the registry hostname
-for a self-hosted GitLab is a per-instance setting (`registry.<host>` vs
-`<host>:5050`). Nothing has been pushed there. `moe-mint test --image <ref>`
+**The project path is now confirmed; the registry reference still is not.**
+`Zak/moe` was settled on 2026-08-31 (ARCHITECTURE.md §8). What remains a guess is
+the *registry* half: the hostname for a self-hosted GitLab is a per-instance
+setting (`registry.<host>` vs `<host>:5050`), and nothing has been pushed there.
+Do not read the confirmed path as a confirmed image ref — they were one
+assumption and are now two, only one of which is closed. `moe-mint test --image <ref>`
 overrides it, so this is a default to correct, not a dependency to unblock.
 
 ## Version-pin policy

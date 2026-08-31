@@ -18,7 +18,7 @@ DEST="$1"; DYLIBS="$2"; VERSION="${3:-0.0.0}"
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="$REPO/bindings/go/tab"
 PUREGO_VERSION="v0.10.1"
-MODULE_PATH="${MODULE_PATH:-gitlab.tcdevops.com/bubstack/moe-tab-go}"
+MODULE_PATH="${MODULE_PATH:-gitlab.tcdevops.com/Zak/moe-tab-go}"
 
 # 1. Wipe previously generated module files (keep .git, .gitignore, README seed).
 ( cd "$DEST"

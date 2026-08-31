@@ -9,7 +9,7 @@
 ## Installing
 
 ```
-/plugins install https://gitlab.tcdevops.com/bubstack/moe
+/plugins install https://gitlab.tcdevops.com/Zak/moe
 ```
 
 Or find it through the Kimi marketplace. Consult Kimi Code's plugin docs if this command doesn't match your installed version.

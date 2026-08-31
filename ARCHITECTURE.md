@@ -93,6 +93,45 @@ and kept the split. The mechanism that acts on it is
 and two assertions in `packages/core/test/metadata.test.ts` keep that
 falsifiable.
 
+**Decided 2026-08-31 (second pass): three rules that follow from dispatch
+quality.** A review of two external panel debates — on whether prompt-scaffolding
+frameworks still earn their keep on current models — produced seven
+recommendations. Three survived contact with this tree, and they extend the
+dispatch-quality argument above rather than replacing it.
+
+1. **A skill earns a deterministic trigger when a missed trigger fails
+   silently.** Descriptions are semantic triggers, and `using-moe`'s twelve-row
+   Red Flags table is upstream's own record of them under-firing. That is
+   tolerable wherever a miss is loud: a skipped `dispatching-parallel-agents`
+   yields serial execution, which is correct and merely slower. It is not
+   tolerable for `verification-before-completion`, where a miss yields a false
+   completion claim and no signal at all. Silent failure is the test, and today
+   it selects exactly one skill.
+2. **Firing rate is the tiebreaker for tier, trigger and removal.**
+   `using-moe:16` routes every skill but itself through the Skill tool, so
+   invocation is a tool call in the session transcript — countable
+   deterministically, with no model in the loop. Zero firing is decisive (dead
+   weight, or a trigger that never fires); high firing is *not* proof of value,
+   because invocation is not compliance. It is a removal signal, not a keep
+   signal, and removal is the decision this repo has least evidence for.
+3. **Every catch splits into a mechanizable half and a judgment half, and the
+   halves are maintained separately.** `verification-before-completion` is
+   evidence capture (mechanical) plus goal-backward checking (judgment).
+   `receiving-code-review`'s YAGNI check is a usage grep (mechanical) plus scope
+   judgment. Anti-stub is a diff grep (mechanical); "more than was asked" is
+   not. Where a half is mechanizable it belongs in a hook or a CI job and should
+   not be re-litigated in prose; where it is not, prose is the only place it can
+   live, and no tier of model removes the need for it.
+
+A corollary on authoring, from the same review: **a catch phrased as an
+unconditional instruction inverts badly across model tiers; a catch phrased as a
+conditional, evidence-gated procedure does not.** `receiving-code-review:88-97`
+fires only on review feedback and greps for real usage before it proposes
+anything, so no path through it ends in a stub. That is why this repo ships both
+polarities to every tier at once — anti-stub at `writing-plans:131-138`,
+anti-over-engineering at `receiving-code-review:88-97` — instead of compiling a
+per-tier skill set the way the review's cost-tier panel recommended.
+
 ## 3. Target tree
 
 ```
@@ -237,7 +276,6 @@ lib through `createRequire(join(__dirname, '../skills/...'))` — a runtime file
 with real breakage potential that no dependency graph shows. `tab`'s bindings reach
 the Rust core across a C ABI. Both count; classify them, don't miss them.
 
-
 Derive every edge by import census, not by reading names. A package may import
 exactly what its own `package.json` `dependencies` names; transitive
 reachability is not importability.
@@ -350,11 +388,28 @@ is on GitHub and stays there — `github.com/obra` and
 - **Self-referential URLs** — `homepage`, `repository`, `bugs`, badge links,
   "clone this repo", issue links — become GitLab.
 
-> **Assumption to confirm:** project path `bubstack/moe`, i.e.
-> `git@gitlab.tcdevops.com:bubstack/moe.git`. The **group** is not really a
-> guess — GitLab's instance-level npm registry requires the package scope to
-> equal the top-level group name, so `@bubstack` implies a `bubstack` group. Only
-> the project name is unconfirmed. Correct it before the first push.
+> **Confirmed 2026-08-31: the project path is `Zak/moe`**, i.e.
+> `git@gitlab.tcdevops.com:Zak/moe.git`. The earlier guess was `bubstack/moe`,
+> swept out of the tree in the same commit that recorded this.
+>
+> **The npm scope and the project path are now decoupled, and that is a real
+> constraint, not a tidiness note.** GitLab's *instance-level* npm registry
+> requires the package scope to equal the **top-level group** name — so
+> `@bubstack/*` implies a `bubstack` group, which `Zak/moe` is not. The scope was
+> left as `@bubstack` deliberately: renaming it touches every `package.json`,
+> every `workspace:*` edge and `pnpm-lock.yaml`, for no benefit while nothing is
+> published. The consequence to carry forward: **`@bubstack` packages cannot use
+> the instance-level registry from `Zak/moe`.** Publishing, if it ever happens,
+> must use the *project-level* endpoint
+> (`/api/v4/projects/:id/packages/npm/`), which has no scope-equals-group rule.
+> Either that, or move the project under a `bubstack` group and revert the path.
+> This is a release-time decision; it blocks nothing today, because nothing
+> publishes.
+>
+> A second remote exists: `gitlab.com/moe-ai/moe`, a private mirror on GitLab
+> SaaS. `gitlab.tcdevops.com/Zak/moe` stays canonical — every self-referential
+> URL in the tree points there — because it is the only one on company
+> infrastructure.
 
 ### Packages and registry
 

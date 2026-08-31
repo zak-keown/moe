@@ -12,7 +12,7 @@
 Add the plugin to your project's `opencode.json`:
 
 ```json
-{ "plugin": ["moe-crew@git+https://gitlab.tcdevops.com/bubstack/moe.git"] }
+{ "plugin": ["moe-crew@git+https://gitlab.tcdevops.com/Zak/moe.git"] }
 ```
 
 OpenCode loads the plugin module on startup: it registers the skills directory through a config hook (no symlinks needed) and reads commands/agents translated under `.opencode/`. Consult the OpenCode plugin docs if this doesn't match your installed version.

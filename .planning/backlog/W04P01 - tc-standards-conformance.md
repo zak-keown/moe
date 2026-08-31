@@ -267,7 +267,7 @@ the branch-name derivation step in `using-git-worktrees`; root `CODEOWNERS` and
 **~4-5 h.** Slower if Q1 comes back "absorb the sibling fork" — that turns a
 fragment into a 17-skill reconciliation and is a different, larger item. Slower
 if the drift job needs a GitLab token with `ai/skills` read plus MR-create on
-`bubstack/moe`; if that provisioning stalls, land steps 1-6 and leave step 7
+`Zak/moe`; if that provisioning stalls, land steps 1-6 and leave step 7
 behind a follow-up.
 
 ## Verification

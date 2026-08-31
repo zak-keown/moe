@@ -13,7 +13,7 @@
 Install the extension directly from its repository:
 
 ```
-gemini extensions install https://gitlab.tcdevops.com/bubstack/moe
+gemini extensions install https://gitlab.tcdevops.com/Zak/moe
 ```
 
 `GEMINI.md` is loaded automatically as the extension's context file; each command becomes a `/name` slash command. Consult the Gemini CLI extensions docs if this command doesn't match your installed version.

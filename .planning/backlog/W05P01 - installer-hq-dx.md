@@ -188,7 +188,9 @@ to install and every marketplace entry is a dangling path. **DO-NOW-1** matters
 because `memory` and `core` — both install targets — exist only in worktrees, and
 memory contributes the `better-sqlite3` / `onnxruntime-node` `allowBuilds` entries.
 **DO-NOW-5** matters because the install URL does not resolve until the remote
-exists, and `bubstack/moe` is still unconfirmed (ARCHITECTURE.md:272-276).
+exists. The path itself is no longer a question: `Zak/moe` was confirmed on
+2026-08-31 (ARCHITECTURE.md §8 — cited by section, because the line numbers this
+doc originally gave have already moved once).
 
 `moe-bare-binary-dispatcher` is not a blocker but should land first or in the same
 wave — see the split below.
@@ -220,7 +222,7 @@ every component, but pushes the whole toolchain onto all twenty people — and o
 Windows that means MSVC build tools for `better-sqlite3`.
 
 **Option B — Sparse marketplace clone from GitLab.** One command:
-`claude plugin marketplace add https://gitlab.tcdevops.com/bubstack/moe.git --sparse .claude-plugin plugins`.
+`claude plugin marketplace add https://gitlab.tcdevops.com/Zak/moe.git --sparse .claude-plugin plugins`.
 *Trade-off:* one command and zero toolchain for content plugins and for glass;
 `moe-memory` is dead in a sparse clone.
 
@@ -280,7 +282,7 @@ Concretely:
    platform and that crew is WSL-only there.
 7. **Fix the install docs mint emits.** `githubOwnerRepo()`
    (`packages/mint/src/adapters/shared.ts:60-64`) returns a slug only for
-   `github.com`, so with `repository: https://gitlab.tcdevops.com/bubstack/moe` —
+   `github.com`, so with `repository: https://gitlab.tcdevops.com/Zak/moe` —
    what `packages/core/moe-mint.yaml:22` sets — the claude-code, devin, hermes and
    pi install docs emit a `<your-repo>` placeholder instead of a working command,
    and pi's template hardcodes `pi install git:github.com/${repo}`. Generalize the
@@ -381,7 +383,7 @@ output.
   `claude mcp remove episodic-memory --scope user` command — and changes nothing
   without an explicit flag. Verified once per platform, since the path differs.
 - A new case in `packages/mint/test/adapters/claude-code.test.ts` asserts that
-  `repository: https://gitlab.tcdevops.com/bubstack/moe` yields
-  `claude /plugin marketplace add bubstack/moe`, not `<your-repo>`.
+  `repository: https://gitlab.tcdevops.com/Zak/moe` yields
+  `claude /plugin marketplace add Zak/moe`, not `<your-repo>`.
   `pnpm --filter @bubstack/moe-mint test` stays green.
 - `grep -c -i windows ARCHITECTURE.md` is greater than zero.

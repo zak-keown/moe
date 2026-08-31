@@ -7,8 +7,8 @@
     "email": "zak@turncommerce.com"
   },
   "license": "MIT",
-  "repository": "https://gitlab.tcdevops.com/bubstack/moe",
-  "homepage": "https://gitlab.tcdevops.com/bubstack/moe",
+  "repository": "https://gitlab.tcdevops.com/Zak/moe",
+  "homepage": "https://gitlab.tcdevops.com/Zak/moe",
   "keywords": [
     "tmux",
     "orchestration",

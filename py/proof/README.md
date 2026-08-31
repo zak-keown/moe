@@ -190,11 +190,14 @@ markdown dialect, not a host.
   through the framework. If the edge is ever wanted, it belongs in an example
   Checker, and `packages/tab/bindings/python` would become a dev dependency of
   `examples/`, not of `moe-proof`.
-- **The publish decision is still open.** `pyproject.toml` deliberately carries no
-  `[project.urls]`: ARCHITECTURE.md flags the GitLab project path `bubstack/moe` as
-  an assumption to confirm, and `@bubstack/moe-glass` set the precedent of shipping
-  no self-referential URLs until it is. Add `Homepage`/`Repository`/`Issues` once
-  the path is confirmed.
+- **The publish decision is still open, but its stated blocker is gone.** The
+  GitLab project path `Zak/moe` was confirmed on 2026-08-31 (ARCHITECTURE.md §8),
+  so the reason `pyproject.toml` carries no `[project.urls]` no longer holds.
+  What remains is the actual decision — whether `moe-proof` publishes at all —
+  and the precedent `@bubstack/moe-glass` set by shipping no self-referential
+  URLs. Adding `Homepage`/`Repository`/`Issues` pointing at
+  `https://gitlab.tcdevops.com/Zak/moe` is now a one-line change whenever that
+  decision is taken.
 - **CI floats `uv`.** The root `.gitlab-ci.yml` `proof:` job does
   `pip install uv`, while ARCHITECTURE.md pins `uv ≥ 0.12`. Pinning
   `pip install 'uv==0.12.7'` (or using an `astral-sh/uv` image) would make the

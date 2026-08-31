@@ -9,10 +9,10 @@
     "name": "Zak Keown",
     "email": "zak@turncommerce.com"
   },
-  "homepage": "https://gitlab.tcdevops.com/bubstack/moe",
+  "homepage": "https://gitlab.tcdevops.com/Zak/moe",
   "repository": {
     "type": "git",
-    "url": "https://gitlab.tcdevops.com/bubstack/moe.git"
+    "url": "https://gitlab.tcdevops.com/Zak/moe.git"
   },
   "keywords": [
     "claude-code",

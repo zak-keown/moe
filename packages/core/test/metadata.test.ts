@@ -630,7 +630,7 @@ describe("the rebrand", () => {
   it("rewrites self-referential URLs to GitLab and keeps provenance on GitHub", () => {
     for (const rel of ["mint/moe-core.yaml", "mint/moe-everything.yaml"]) {
       const config = readFileSync(join(PKG, rel), "utf8");
-      expect(config, rel).toContain("https://gitlab.tcdevops.com/bubstack/moe");
+      expect(config, rel).toContain("https://gitlab.tcdevops.com/Zak/moe");
       expect(config, rel).not.toContain("github.com");
     }
 

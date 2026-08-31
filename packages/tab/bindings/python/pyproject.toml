@@ -19,8 +19,8 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://gitlab.tcdevops.com/bubstack/moe"
-Repository = "https://gitlab.tcdevops.com/bubstack/moe"
+Homepage = "https://gitlab.tcdevops.com/Zak/moe"
+Repository = "https://gitlab.tcdevops.com/Zak/moe"
 
 [tool.setuptools]
 packages = ["moe_tab"]

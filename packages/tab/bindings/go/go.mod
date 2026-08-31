@@ -1,4 +1,4 @@
-module gitlab.tcdevops.com/bubstack/moe/packages/tab/bindings/go
+module gitlab.tcdevops.com/Zak/moe/packages/tab/bindings/go
 
 go 1.21
 

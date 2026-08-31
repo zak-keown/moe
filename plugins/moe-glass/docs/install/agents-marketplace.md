@@ -11,7 +11,7 @@
 On Factory Droid:
 
 ```
-droid plugin marketplace add https://gitlab.tcdevops.com/bubstack/moe
+droid plugin marketplace add https://gitlab.tcdevops.com/Zak/moe
 droid plugin install moe-glass@moe
 ```
 
@@ -20,14 +20,14 @@ Note: Droid names the marketplace after the repository source (its basename), no
 On Copilot:
 
 ```
-copilot plugin marketplace add https://gitlab.tcdevops.com/bubstack/moe
+copilot plugin marketplace add https://gitlab.tcdevops.com/Zak/moe
 copilot plugin install moe-glass@moe-glass-dev
 ```
 
 On Grok:
 
 ```
-grok plugin install https://gitlab.tcdevops.com/bubstack/moe --trust
+grok plugin install https://gitlab.tcdevops.com/Zak/moe --trust
 ```
 
 All three clients install the plugin's real claude-code-style layout (skills/, commands/, agents/, hooks/, .mcp.json) — their effective support matches claude-code's, not the all-`none` row this adapter reports in the support matrix (which reflects only the descriptor file itself, not what those clients receive through it). Droid and Grok read the descriptor this adapter emits (`.agents/plugins/marketplace.json`); Copilot instead reads Claude Code's `.claude-plugin/marketplace.json`, so its install id above uses that marketplace's name and it needs the claude-code adapter enabled. Consult each client's docs if these commands don't match your installed version.
