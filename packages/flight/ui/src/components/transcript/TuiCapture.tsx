@@ -112,6 +112,7 @@ function CaptureGrid({ capture }: { capture: Capture }) {
           if (cell.underline) style.textDecoration = "underline";
           if (cell.width === 2) style.gridColumn = "span 2";
           return (
+            // biome-ignore lint/suspicious/noArrayIndexKey: (y, x) is a fixed terminal-grid coordinate, not a list position — cells never reorder, so the grid coordinate is the correct, stable key.
             <span key={`${y}:${x}`} className="tr-tui-cell" style={style}>
               {cell.ch === " " || cell.ch === "" ? " " : cell.ch}
             </span>

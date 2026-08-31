@@ -122,10 +122,14 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
   }, [onClose]);
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: modal backdrop click-to-dismiss. Keyboard users already have an equivalent close path (the Escape handler above and the Cancel button below); this onClick is a mouse-only convenience on a non-interactive overlay, not the only way to close the modal.
+    // biome-ignore lint/a11y/useKeyWithClickEvents: same as above — Escape and the Cancel button are the keyboard paths.
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
       onClick={onClose}
     >
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: stopPropagation guard so clicks inside the dialog don't bubble to the backdrop's dismiss handler — not itself an interactive control. */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: same as above. */}
       <div
         className="w-full max-w-lg bg-white border border-edge rounded-lg p-6"
         onClick={(e) => e.stopPropagation()}

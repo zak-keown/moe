@@ -106,6 +106,7 @@ export function LiveRun({ activeRuns, activeRunsLoaded, onComplete }: LiveRunPro
         >
           {messages.length === 0 && <div className="text-slate">Waiting for output...</div>}
           {messages.map((msg, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: messages is an append-only log stream — entries are never reordered, inserted, or removed mid-list, and duplicate lines are common so content can't be the key.
             <div key={i} className="text-ink-light whitespace-pre-wrap">
               {msg}
             </div>

@@ -68,6 +68,7 @@ export function TurnBlock({
       </header>
 
       {thinking.map((t, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: thinking is a fixed, already-completed array from the turn's transcript — it never reorders or splices after render.
         <ThinkingBlock key={`think-${i}`} text={t.text} />
       ))}
 

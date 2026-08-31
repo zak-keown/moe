@@ -55,6 +55,8 @@ export function ArtifactDrawer({ runId, path, onClose }: Props) {
 
   return (
     <>
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: drawer backdrop click-to-dismiss. Keyboard users already have an equivalent close path (the Escape handler above and the close button below); this onClick is a mouse-only convenience on a non-interactive overlay. */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: same as above — Escape and the close button are the keyboard paths. */}
       <div className="tr-drawer-backdrop" onClick={onClose} />
       <aside className="tr-drawer" role="dialog" aria-label={`Artifact ${filename}`}>
         <header className="tr-drawer-head">
@@ -108,6 +110,7 @@ function LineNumberedPre({ text }: { text: string }) {
     <div className="tr-artifact-lines">
       <div style={{ display: "contents" }}>
         {lines.map((line, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: lines is the file's content split by line — a fixed, ordered array that never reorders or splices after render, and duplicate lines are common so content can't be the key.
           <LineRow key={i} n={i + 1} content={line} />
         ))}
       </div>

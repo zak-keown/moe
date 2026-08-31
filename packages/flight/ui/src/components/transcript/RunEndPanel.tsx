@@ -108,6 +108,7 @@ function ObservationGroup({ title, items, tone }: ObservationGroupProps) {
       <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
         {items.map((o, i) => (
           <li
+            // biome-ignore lint/suspicious/noArrayIndexKey: items is a fixed, already-completed array from the run result — it never reorders or splices after render.
             key={i}
             style={{ padding: "6px 0", borderTop: i === 0 ? "none" : "1px dashed var(--tr-edge)" }}
           >

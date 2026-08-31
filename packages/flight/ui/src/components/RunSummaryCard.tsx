@@ -58,6 +58,7 @@ export function RunSummaryCard({ result, trailingHeaderContent }: RunSummaryCard
             <h2 className="section-label mb-2">Observations ({result.observations.length})</h2>
             <ul className="space-y-2">
               {result.observations.map((obs, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: observations is a fixed, already-completed array from the run result — it never reorders or splices after render.
                 <li key={i} className="text-sm">
                   <span className="inline-block rounded bg-panel px-1.5 py-0.5 text-xs font-medium text-slate mr-2">
                     {obs.kind}

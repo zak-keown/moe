@@ -95,7 +95,11 @@ export function RunSetDetail() {
           {manifest.passes === 1 ? "attempt" : "attempts"}
         </h1>
         {inFlight && (
-          <span className="relative flex h-2 w-2 flex-shrink-0" aria-label="Run in progress">
+          <span
+            role="img"
+            className="relative flex h-2 w-2 flex-shrink-0"
+            aria-label="Run in progress"
+          >
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-teal" />
           </span>

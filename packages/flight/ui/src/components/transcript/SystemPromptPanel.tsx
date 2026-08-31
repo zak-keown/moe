@@ -10,6 +10,7 @@ export function SystemPromptPanel({ content }: Props) {
   const firstLine = content.split("\n")[0];
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: intentional div-as-button (role="button" + tabIndex + Enter/Space handling below, per WAI-ARIA APG). Swapping to a native <button> risks a layout regression — .tr-system-prompt's flex/block toggling relies on the div's block-level default sizing, which a <button> doesn't have, and there's no way to visually verify the swap here.
     <div
       className="tr-system-prompt"
       data-open={open ? "true" : "false"}

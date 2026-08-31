@@ -162,7 +162,11 @@ function CardGroupRow({ group, selectedId, onSelect, onSelectActive }: CardGroup
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-sm font-medium text-ink truncate">{group.cardId}</span>
           {hasActive && (
-            <span className="relative flex h-2 w-2 flex-shrink-0" aria-label="Run in progress">
+            <span
+              role="img"
+              className="relative flex h-2 w-2 flex-shrink-0"
+              aria-label="Run in progress"
+            >
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-teal" />
             </span>
