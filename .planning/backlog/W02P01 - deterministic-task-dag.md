@@ -8,7 +8,7 @@ idea: |
 status: backlog
 size: M
 estimate: 7-9 h
-depends_on: [DO-NOW-1, DO-NOW-2, skill-set-fidelity-refactor]
+depends_on: [DO-NOW-1, skill-set-fidelity-refactor]
 blocks: []
 conflicts_with: [parallel-execution-option, gsd-core-skill-import, tiered-workflow-naming, moe-tone-and-branding, native-renderers, tc-governance-integration]
 touches: [packages/core/skills/, packages/core/skill-tiers.yaml, packages/core/test/metadata.test.ts, packages/core/hooks/, packages/core/hooks/hooks.json]
@@ -187,11 +187,16 @@ where they *do* fit is `native-renderers`.
 ## Prerequisites
 
 - **DO-NOW-1** — every path cited above is on `import/packages-core`.
-- **DO-NOW-2** — the new skill needs a tier, and the lean/full framework has to
-  be settled before one can be assigned. A tier recommendation is below, as input.
-- **`skill-set-fidelity-refactor`** — hard prerequisite. It replaces
-  `metadata.test.ts:115` / `:153-190` / `:470` with an upstream-pinned set plus an
-  open fork-authored set. Until it lands, a 28th skill directory fails all three.
+- **`skill-set-fidelity-refactor`** — hard prerequisite. On branch
+  `worktree-wf_81b8d9e1-32f-3` it splits `skill-tiers.yaml` into `imported:`
+  (27 entries, frozen, `:80`) and `authored:` (open, `{}` at `:316-317`), and
+  re-aims both drop-detectors at `imported:`. A new completeness/disjointness pair
+  (`test/metadata.test.ts:237-244`) requires the union of both maps to equal the
+  skills on disk, so a directory and its manifest entry land together or the suite
+  is red. Until it merges, a 28th skill directory is impossible.
+- **DO-NOW-2 is not a prerequisite.** Decision D2 pins every fork-authored skill
+  to `everything` regardless of how the lean/full review resolves the 27 imported
+  ones, so this item's tier no longer waits on it.
 
 ## Proposed approach
 
@@ -237,31 +242,52 @@ Borrow exactly two things from moe-core: the frontmatter vocabulary
 hard error naming the nodes, blocked propagating transitively and diamond-safe).
 It already paid for those edge cases and names them in comments.
 
-### Tier: `core`, with a REQUIRED edge from `writing-plans`
+### Tier: `everything`, per decision D2
 
-`skill-tiers.yaml`'s own principle is "A skill earns a place in `moe-core` if it
-fires on ordinary work without being asked for." Multi-plan work is ordinary for
-anyone building a feature that spans subsystems, and `writing-plans:23` already
-routes there unprompted. The `ERR SMALL` rule would send a tie to `everything`
-— **except `ERR SMALL` was deleted by DO-NOW-2 (`0b1571d`) and replaced by `TRIGGER
-COLLISION`, which sends an absent-collision tie to `core`. That strengthens this
-recommendation rather than weakening it: no core-tier skill's description claims a
-multi-plan-set trigger, so there is no collision.** And it is not a tie anyway: the
-file's own note says the lean plugin is what "~20
-people will leave on permanently," and a recovery mechanism that is not installed
-when the reset happens is not a recovery mechanism. The everyday flow
-(`writing-plans` → SDD, both core) can produce a multi-plan project, so the thing
-that tracks the set ships with it. That is a closure argument, and it makes
-`writing-plans:23` a `**REQUIRED SUB-SKILL:**` pointer.
+Register under `authored:` as `tier: everything`, `from: moe`, with a `why:` over
+40 characters (the suite applies the same rationale bar to both maps).
+`skill-tiers.yaml:306-310` states the policy: "a fork-authored skill is `tier:
+everything` only… This is REVERSIBLE and deliberately so: it exists to make the
+first core-tier authored skill a conversation someone has on purpose rather than
+a default nobody chose."
 
-The coupling to state plainly for DO-NOW-2's reviewer: **tier and pointer
-strength are one decision, not two.** `metadata.test.ts:474` forbids a core-tier
-skill from REQUIRing an everything-tier skill, so if the reviewer puts this in
-`everything`, the `writing-plans` pointer must soften to "consider" or the suite
-fails. Also minor: `:460` asserts `entry.from` is truthy for every
-`skill-tiers.yaml` entry, and every current value names an upstream repo — a
-fork-authored skill needs a value (`from: moe`) that `skill-set-fidelity-refactor`
-should define rather than this item inventing.
+Complying. With the SessionStart hook now owning the cold-start case, the
+ergonomic half of the core-tier argument is largely answered and should not force
+that conversation early. What follows is a different, structural reason to have it.
+
+### The hook and D2 collide, and nothing in the suite catches it
+
+Verified on the refactor branch: `scripts/mint-plugins.mjs:167` tier-filters
+**only** the skills component — `if (component === "skills" && keep)` — and `:176`
+`copyInto(src, path.join(dest, component))` copies every other component, `hooks`
+included, into **both** plugins unfiltered.
+
+So `plan-set-notice` ships in `moe-core` *and* `moe-everything`, while
+`sequencing-plans` — everything-tier under D2 — ships in only one. A lean user
+gets a deterministic session-start notice pointing at a skill they do not have,
+and at `skills/sequencing-plans/scripts/plan-set`, a path the tier filter removed
+from their plugin. That is structurally the dead end the closure rule exists to
+prevent, and the closure rule cannot see it: it scans `**REQUIRED SUB-SKILL:**`
+markers in markdown only, never hooks.
+
+**Design consequence, not optional: `plan-set` lives in `packages/core/hooks/`,
+not inside the skill.** Hooks stage unfiltered, so the CLI then exists in both
+plugins. The hook announces the manifest and prints a runnable `plan-set next`
+command naming no skill; a lean user gets notice plus a working query and drives
+SDD per plan by hand, which is what they do today. The skill stays the ergonomic
+wrapper that carries the loop. This keeps the hook announce-only, as the
+debate-review requires, and it is the only arrangement satisfying both D2 and the
+hook.
+
+One oddity to name: every other skill here keeps its scripts under its own
+directory. Splitting them is a consequence of the tier filter, not a preference,
+and the script's head comment should say so.
+
+**This is the stronger input to D2's reversal conversation** — a structural defect
+rather than a preference. Flipping this skill to `core` would let the script sit
+inside it like every other one, and is a one-line change to `keeps the lean tier
+lean` (`toBe(13)` → `toBe(14)`). The arrangement above is correct until that
+decision is taken.
 
 ### Name
 
@@ -294,16 +320,21 @@ consumes this doc's ready set and must follow it.
 ## Scope boundary
 
 **In:** the `sequencing-plans` skill directory and SKILL.md; the manifest schema;
-`scripts/plan-set` with `next`/`done`/`check`; cycle detection; transitive blocked
-propagation; the `skill-tiers.yaml` entry; the REQUIRED pointer at
-`writing-plans:23`; two test-allowlist lines; vitest coverage; **the `SessionStart`
+`plan-set` in `packages/core/hooks/` with `next`/`done`/`check`; cycle detection;
+transitive blocked propagation; the `authored:` entry in `skill-tiers.yaml`; a
+plain conditional mention at `writing-plans:23` (not a REQUIRED marker — the
+closure rule forbids core→everything); two test-allowlist lines; vitest coverage;
+**the `SessionStart`
 entry in `packages/core/hooks/hooks.json` and the extensionless `plan-set-notice`
 hook that announces an incomplete plan set.**
 
 **Out:**
 - Lifting the parallel-write ban, or dispatching the ready set concurrently —
   `parallel-execution-option`.
-- Redesigning the fidelity assertions — `skill-set-fidelity-refactor`.
+- Redesigning the fidelity assertions, and enforcing D2's `tier`/`from` rules in
+  code — `skill-set-fidelity-refactor`.
+- Extending `hooks.json` beyond the one entry this item adds —
+  `verification-split-and-firing-rate` (W03) and `tc-governance-integration` (W07).
 - Final naming and tier vocabulary — `tiered-workflow-naming`.
 - Lifting code or templates out of `~/.claude/moe-core` — `gsd-core-skill-import`.
 - Everything the `iterative-development` cluster owns: requirements extraction,
@@ -319,55 +350,67 @@ hook that announces an incomplete plan set.**
 
 ## Open questions for Zak
 
-None. #34 is settled above, and the A-vs-B-vs-hook re-price the debate review demanded
-was answered on 2026-08-31: **both**, recorded at the top of this doc with its four
-consequences. The tier recommendation (`core`, with the
-pointer-strength coupling) is input to DO-NOW-2, not a separate question. The name
-is provisional pending `tiered-workflow-naming`. The manifest location, the
-three-verb CLI surface, and `blocked` semantics are calls made above.
+One, and it is a decision rather than a question: **should `sequencing-plans` be
+core-tier after all?** D2 says everything-tier for now and explicitly invites the
+conversation. The hook/tier collision above is the concrete reason to have it,
+because the compliant workaround splits a skill from its own script. Reversing D2
+for this skill is one line (`toBe(13)` → `toBe(14)`) and needs nothing else, since
+the `writing-plans` mention is already non-REQUIRED. **Not blocking** — the item
+ships correctly either way.
+
+#34 is settled above, and the A-vs-B-vs-hook re-price the debate review demanded
+was answered on 2026-08-31: **both**, recorded at the top of this doc with its
+four consequences. The name is provisional pending `tiered-workflow-naming`; the
+manifest location, the three-verb CLI surface, and `blocked` semantics are calls
+made above.
 
 ## Effort
 
 | Step | Time |
 |---|---|
 | `sequencing-plans/SKILL.md` + manifest schema | 2-2.5 h |
-| `scripts/plan-set`: three verbs, Kahn, cycle error, blocked propagation | 1.5-2 h |
+| `hooks/plan-set`: three verbs, Kahn, cycle error, blocked propagation | 1.5-2 h |
 | Vitest fixtures + the two allowlist lines | 1-1.5 h |
-| `skill-tiers.yaml` entry + REQUIRED pointer at `writing-plans:23` | 0.5 h |
+| `authored:` entry + conditional mention at `writing-plans:23` | 0.5 h |
 | `plan-set-notice` hook + `hooks.json` `SessionStart` entry + its test | 1 h |
 | Dry run on a real three-plan project | 1 h |
 
-**7-9 h** — 6-8 h for the skill plus 1 h for the hook. The skill half sits between the
-two earlier figures: the 9 h estimate assumed writing a
-methodology-sized skill and arguing a tier from scratch; the 4-6 h assumed no
-skill at all. This is a focused ~120-line skill plus a tier entry, and
-`skill-set-fidelity-refactor` absorbs the assertion work that made the first
-estimate high. Slower if DO-NOW-2 lands on `everything` — the REQUIRED pointer
-must then be reworked and re-argued. Faster because the algorithm is ~40 lines
-with a reference implementation to read.
+**7-9 h** — 6-8 h for the skill plus 1 h for the hook. The skill half sits between
+the two earlier figures: 9 h assumed a methodology-sized skill and a tier argued
+from scratch; 4-6 h assumed no skill at all. This is a focused ~120-line skill
+plus a three-key manifest entry, with `skill-set-fidelity-refactor` absorbing the
+assertion work and D2 removing the tier debate. Faster because the algorithm is
+~40 lines with a reference implementation to read; slower if the dry run finds the
+manifest wants a field the schema lacks.
 
 ## Verification
 
-1. `pnpm --filter @bubstack/moe-core test` green, including the two-list fidelity
-   assertions from `skill-set-fidelity-refactor` with `sequencing-plans` in the
-   fork-authored set, the `skill-tiers.yaml` completeness check, and `:474`'s
-   closure rule (which passes only if tier and pointer strength agree).
-2. New vitest suite for `plan-set`, one fixture manifest per case: `next` on a
+1. `pnpm --filter @bubstack/moe-core test` green with `sequencing-plans` in
+   `authored:` — specifically the completeness/disjointness pair
+   (`metadata.test.ts:237-244`), the untouched `imported:` drop-detectors, and the
+   closure rule, which passes because the `writing-plans` mention is not REQUIRED.
+2. `grep -c 'from: moe' packages/core/skill-tiers.yaml` returns 1, up from 0 —
+   `skill-set-fidelity-refactor`'s own gate value, claimed by this item.
+3. **`plugins/moe-core/hooks/plan-set` exists after `pnpm mint`**, alongside
+   `plugins/moe-everything/hooks/plan-set` — the assertion that the lean plugin's
+   hook is not pointing at a filtered-out script. `plugins/moe-core/skills/` must
+   NOT contain `sequencing-plans`, per the existing core-tier emission assertion.
+4. New vitest suite for `plan-set`, one fixture manifest per case: `next` on a
    diamond returns both middle ids once the root is `done`; a cycle exits
    non-zero naming the nodes; a `blocked` node's transitive dependents never
    appear in `next`; `check` fails on a duplicate id, an unresolvable dep, and a
    missing `plan:` file.
-3. `plan-set` appears in both hardcoded allowlists — `metadata.test.ts:312-328`
-   (execute bit) and `:356-360` (`node --check`) — which are path lists, not
-   on-disk discovery, so a new script is not covered until added.
-4. For the dry-run project, after `plan-set done` on plan 1 a fresh session with
+5. `plan-set` and `plan-set-notice` appear in both hardcoded allowlists (execute
+   bit, `node --check`) — path lists, not on-disk discovery, so a new script is
+   uncovered until added.
+6. For the dry-run project, after `plan-set done` on plan 1 a fresh session with
    no prior context runs `plan-set next` and gets plan 2 — the context-reset
    claim tested as a command rather than asserted in prose.
-5. A fresh session in a project with an incomplete `docs/moe/plans/*-MANIFEST.md`
+7. A fresh session in a project with an incomplete `docs/moe/plans/*-MANIFEST.md`
    prints the hook's notice; the same session in a project with no manifest, and in one
    where every entry is `done`, prints nothing. The hook exits 0 in all three, and also
    when `plan-set` is missing or non-executable — a broken notice must never fail a
    session start.
-6. `pnpm lint` and `pnpm build` green.
+8. `pnpm lint` and `pnpm build` green.
 
 Sources: [A harness for every task: dynamic workflows in Claude Code](https://claude.com/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code)

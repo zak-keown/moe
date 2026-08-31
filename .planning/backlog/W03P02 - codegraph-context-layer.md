@@ -215,8 +215,10 @@ integrations."
 ## Prerequisites
 
 **DO-NOW-1** merges the `import/packages-core` worktree the files land in.
-**skill-set-fidelity-refactor** replaces `metadata.test.ts`'s closed-set
-assertions with a two-list model; without it a new core skill cannot exist.
+**skill-set-fidelity-refactor** splits `skill-tiers.yaml` into a frozen
+`imported:` (the 27 upstream names) and an `authored:` map for what this fork
+writes, and re-aims `metadata.test.ts`'s count and equality assertions at
+`imported:` alone (`:148`, `:228`); without it a new core skill cannot exist.
 **DO-NOW-2** decides the lean/full tiering, which this skill needs an entry in.
 **DO-NOW-3** generates `/plugins/`, which is how skills and agents reach users at
 all — today root `pnpm mint` is `package.json` → `"mint": "echo … && exit 1"`.
@@ -256,10 +258,17 @@ Retrieval discipline is the former by definition: "search before you answer" tha
 waits to be asked for has already failed. That also makes it a *methodology*
 skill, which is what core holds — `test-driven-development`,
 `verification-before-completion`, `systematic-debugging` — rather than a memory
-feature. The second argument is reachability: `metadata.test.ts:242` resolves
-`**REQUIRED SUB-SKILL:**` markers against core's own names only, so **only a core
-skill can be REQUIREd by core skills**. `writing-plans` and `brainstorming`
-should be able to point at this one; from `packages/memory` they never could.
+feature. The second argument is reachability, and `skill-set-fidelity-refactor`
+has since made it decisive rather than incidental. `metadata.test.ts:290-304`
+resolves `**REQUIRED SUB-SKILL:**` and `**REQUIRED BACKGROUND:**` markers against
+`packages/core/skills/` only, and the rule is now strict: **every** backticked
+token on a marker line must resolve (`:304`, `resolved.length !== named.length`),
+where the old rule flagged a line only if *nothing* resolved. So a core skill
+pointing at a `packages/memory` skill now fails outright instead of passing on
+the strength of a co-named core skill. **Only a core skill can be REQUIREd by
+core skills**, stated by a test rather than by convention — `writing-plans` and
+`brainstorming` should be able to point at this one, and from `packages/memory`
+they provably never could.
 
 My earlier `packages/memory` recommendation was a workaround for the closed-set
 assertion, and it does not survive being decided on merit. What genuinely
@@ -269,20 +278,43 @@ this fork publishes nothing and serves ~20 people in one company, so
 "core is generic, TC infra is not" is an upstream OSS posture the fork does not
 hold.
 
-**Two consequences to accept.** Core has **no `agents/` directory** today
+**Three consequences to accept.** Core has **no `agents/` directory** today
 (`ls packages/core/` — and `moe-mint.yaml:46-49` says so in a comment that will
 go stale); mint's default components already include `agents/`, so it is picked up
-with no config change, but this is core's first. And the two agents restate the
+with no config change, but this is core's first. The two agents restate the
 `### Summary` / `### Sources` / `### For Follow-Up` format inline rather than
 sharing `packages/memory/prompts/search-agent.md` — a deliberate small
 duplication, chosen because a cross-package file path is exactly the unclassified
 non-import edge ARCHITECTURE.md §5 warns about with `glass`'s `createRequire`.
 
-**Tier: `core`**, not `everything` — it meets the criterion above. That takes the
-lean tier from 13 to 14, so it is an input to DO-NOW-2 rather than my call, and
-`skill-tiers.yaml:22-24`'s ERR SMALL rule ("every description in an installed
-plugin costs context in every session, for ~20 people who will leave the lean
-plugin on permanently") is the argument against.
+And the strict marker rule cuts **both** ways: `retrieving-context` must itself
+carry **no** `**REQUIRED SUB-SKILL:**` line naming `remembering-conversations`,
+which lives in `packages/memory` and would fail `:304`. That costs nothing real —
+the routing rule reaches memory through its **MCP tools** (`search_conversations`,
+`search_journal`, `process_thoughts`), and tools are not skills, so they are
+outside the check. Where the skill wants to mention the memory skill by name it
+does so in prose, without the marker.
+
+**No cross-package REQUIRED mechanism is needed, and I recommend not building
+one.** The core placement makes every marker same-package, so the strict rule is
+satisfied natively; inventing a resolver would loosen a check that just became
+usefully sharper, to buy an edge this design does not need. One residual gap worth
+naming rather than fixing: the test scans only `packages/core`, so a marker in
+*memory's* files naming a core skill is unchecked in either direction. This item
+adds no such marker.
+
+**Tier: `core`**, not `everything` — it meets the criterion above, and the reason
+is the defect itself: a retrieval-discipline skill's whole value is firing
+unprompted, so shipping it only in `moe-everything` withholds it from exactly the
+population that has the problem (the ~20 people who run the lean plugin
+permanently). The cost is precise and small: `metadata.test.ts:613` still asserts
+`core.length === 13`, so `tier: core` means editing that one number to 14, while
+`tier: everything` costs no test change at all. `skill-set-fidelity-refactor`
+un-froze the *inventory* count (`:148` now counts `imported:`, and `:142-144`
+says the directory grand total is deliberately no longer asserted) but left the
+*curation* count pinned — so the lean tier stays a conscious decision, which is
+DO-NOW-2's to make, not mine. `skill-tiers.yaml:22-24`'s ERR SMALL rule is the
+argument against.
 
 **On `blocks`.** Empty. `tc-governance-integration` can ship TC Guide and the AI
 Governance doc as skill content with no retrieval mechanism, so blocking would
@@ -308,9 +340,12 @@ anything external — both backends are `*.tcdevops.com` or loopback.
 ## Open questions for Zak
 
 **One.** Should `retrieving-context` be `tier: core` (lean, ships to everyone) or
-`tier: everything`? I recommend `core` on the "fires on ordinary work" criterion,
-but it moves the lean tier 13 → 14 against the ERR SMALL rule, and the tiering is
-DO-NOW-2's decision to make. This item is an input to it, not a separate fork.
+`tier: everything`? I recommend `core`: the skill's value is firing unprompted, so
+`everything` withholds it from the people who run the lean plugin permanently —
+the ones with the problem. Concrete cost either way: `core` means changing
+`metadata.test.ts:613` from 13 to 14 and nothing else; `everything` needs no test
+change. The tiering is DO-NOW-2's decision, so this item is an input to it rather
+than a separate fork.
 
 Everything else previously open here is now answered by the settled decisions
 above: moedex's role, what it indexes, and the data-handling question.
@@ -335,9 +370,17 @@ baseline work.
    frontmatter; `packages/core/agents/search-{codegraph,moedex}.md` exist with
    `model: haiku` and explicit `tools:` allowlists, matching the shape at
    `packages/memory/agents/search-conversations.md:1-6`.
-2. `packages/core/skill-tiers.yaml` has a `retrieving-context` entry, and
-   `metadata.test.ts`'s tier-closure test still passes: nothing this skill
-   REQUIREs may sit in a higher tier than it does.
+2. `packages/core/skill-tiers.yaml` gains a `retrieving-context` entry **under
+   `authored:`** (line 316, currently `{}`) — never under `imported:`, which is
+   the frozen upstream record that `metadata.test.ts:148,228` assert at 27 names.
+   `metadata.test.ts:240`'s registered-vs-directory check and `:617`'s
+   tier-closure test both pass: nothing this skill REQUIREs may sit in a higher
+   tier than it does.
+   **New assertion this item must add:** `retrieving-context/SKILL.md` carries no
+   `**REQUIRED SUB-SKILL:**` or `**REQUIRED BACKGROUND:**` line naming a skill
+   outside `packages/core/skills/`. `metadata.test.ts:290-304` enforces it as a
+   side effect, so the check is that the file passes it rather than that a new
+   test exists.
 3. `pnpm check` green from the root (`biome check .` + `turbo run typecheck
    test`), including core's `metadata.test.ts` under
    `skill-set-fidelity-refactor`'s two-list model.

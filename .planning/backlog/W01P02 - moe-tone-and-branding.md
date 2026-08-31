@@ -12,8 +12,8 @@ conflicts_with: [native-renderers, contributing-flow-docs, installer-hq-dx, tc-s
 touches:
   - packages/core/skills/writing-clearly-and-concisely/
   - packages/core/skills/writing-skills/SKILL.md
-  - README.md
-  - ARCHITECTURE.md
+  - packages/core/mint/moe-everything.yaml
+  - plugins/moe-everything/
   - .claude-plugin/marketplace.json
   - .gitlab-ci.yml
 decision_needed: no
@@ -60,18 +60,27 @@ now (see Current state), and that is a legal exposure, not a style preference.
 
 ## Current state
 
-**Three things exist and only one of them is a voice.**
+**Four things exist and only one of them is a voice.**
 
-1. **A name system, complete.** ARCHITECTURE.md:246-258 — "a tavern and its
-   measures: you run a `tab`, you order a `flight`, you check the `proof`, you
-   look through the `glass`." The word "tavern" appears in exactly one line of
-   the whole repo (ARCHITECTURE.md:249, and its three worktree copies). It is
-   never explained to a user, and no package README references it.
+1. **A name system, complete.** ARCHITECTURE.md §7 — "a tavern and its measures:
+   you run a `tab`, you order a `flight`, you check the `proof`, you look through
+   the `glass`." The word "tavern" appears in exactly one line of the whole repo.
+   It is never explained to a user, and no package README references it.
 
-2. **A tagline, barely deployed.** "Just ask Moe." appears in exactly two files:
-   README.md:3 and ARCHITECTURE.md:3. Absent from
-   `.claude-plugin/marketplace.json`, from all nine package READMEs, from every
-   skill, and from every CLI usage string.
+2. **A tagline, barely deployed.** "Just ask Moe." is in README.md:5 and
+   ARCHITECTURE.md:3 and nowhere else — not in
+   `.claude-plugin/marketplace.json`, not in any of the nine package READMEs, not
+   in a skill, not in a CLI usage string.
+
+3. **A mascot and a stated premise — new, and it changes this item's job.**
+   `0e6a5f7` added `assets/moe.png` (a green many-armed alien in a headset
+   driving eight control surfaces, unimpressed) and, at README.md:9-10, the
+   thesis: "Eight arms, eight control surfaces, one bored expression. That is the
+   whole premise: one operator driving every harness at once, from one place."
+   That is the first real identity statement in the repo, and it is better than
+   anything this item would have invented. **So `house-voice.md` records that
+   premise; it does not author one.** The alt text is also the house voice working
+   correctly under constraint — concrete, specific, no adjectives spent on mood.
 
 3. **A prose voice, already consistent 9/9.** All nine package READMEs follow
    the same shape and register — `crew`, `mint`, `tab`, `proof`, `backstory`,
@@ -130,14 +139,26 @@ So the rule is enforced by attention. It survived one 257-occurrence sweep
 because someone was watching; the next sweep may not be. That is a prevention
 argument for a check, not a remediation one.
 
-**Two front-door facts are stale.** README.md:16 "Target-shape only. No code
-imported yet." and ARCHITECTURE.md:9-10 say the same, but `87912e0` landed five
-packages and 1420 tests. And the skill count disagrees with itself:
-`marketplace.json:23` and ARCHITECTURE.md:44, :53, :70, :98 say 28;
-`packages/core/skill-tiers.yaml:29` and
-`packages/core/test/metadata.test.ts:109-116` say 27, with the test comment
-already explaining why (the 28th was `example-workflow`, a pseudo-skill inside an
-example plugin).
+**The front-door fixes this item used to own are already done.** `0e6a5f7`
+replaced README.md's "Target-shape only. No code imported yet."; ARCHITECTURE.md's
+status line now reads "written as a target-shape document, and the target is hit";
+and `grep -rnE "28[- ]skills?" ARCHITECTURE.md .claude-plugin/marketplace.json`
+returns nothing — every 28 became 27. Scope drops accordingly.
+
+**One count survives, in ten files, and the fix is to delete the number rather
+than correct it.** `packages/core/mint/moe-everything.yaml:19` says "all 27
+skills", which mint byte-copies into nine generated manifests — `plugins/
+moe-everything/{plugin.json,package.json,gemini-extension.json,moe-mint.yaml}`
+plus the `.claude-plugin`, `.cursor-plugin`, `.devin-plugin`, `.kimi-plugin` and
+`.hermes-plugin` variants — and `marketplace.json:23` carries the same sentence
+by hand. 27 is correct *today*: it is the imported count that
+`skill-set-fidelity-refactor` now pins with `it("pins the IMPORTED skill set at
+exactly 27")`. But that item introduces a two-list model where authored skills sit
+alongside imported ones, so a description promising "all 27 skills" goes wrong the
+first time anyone authors one — and `gsd-core-skill-import` intends to.
+`skill-set-fidelity-refactor` already set the pattern by *dropping* the count from
+`packages/core/README.md:102` rather than updating it. Do the same here: a
+marketing description should not carry a number a test has to keep true.
 
 ## Prerequisites
 
@@ -152,11 +173,16 @@ example plugin).
 - Not DO-NOW-3. `moe-mint.yaml:46-49` emits `skills/`, `commands/`, `agents/`,
   `hooks/hooks.json`, `.mcp.json` — and **not** `docs/`. That decides the
   artifact's location on its own (below).
-- **Not `skill-set-fidelity-refactor`**, because this item adds no skill — it
-  becomes a hard dependency only if a reviewer overrides the recommendation and
-  takes Option A. One consequence either way: it replaces
-  `metadata.test.ts:115`, so after it lands nothing enforces "no 28th skill" and
-  `house-voice.md` has to carry the decision itself.
+- **Not `skill-set-fidelity-refactor`, deliberately — keep it that way.** It is
+  the other Wave 1 item (WAVES.md:16), and its decision D4 pre-added
+  `["skills/writing-clearly-and-concisely/house-voice.md", ["superpowers"]]` to
+  the `provenance` map at `packages/core/test/metadata.test.ts:530-534`
+  precisely so the two run in parallel without an edge; adding one would waste
+  that. The entry is inert until the file exists (`provenance.get(rel) ?? []`,
+  :550), so nothing needs activating, and because `commentish()` returns true for
+  `.md` (:538-543) the exemption covers the whole file rather than comment lines.
+  If that item ever slips out of Wave 1, this file drops the word rather than
+  gaining a dependency.
 - **Not `moe-bare-binary-dispatcher`**, but a file conflict: it amends
   ARCHITECTURE.md:252-253 and this item edits ARCHITECTURE.md too (status line,
   skill count). Not the same wave.
@@ -206,8 +232,10 @@ discriminate; it just means C owes a subagent test too. That is now in Effort.
 **The single condition that would flip this:** if
 `writing-clearly-and-concisely` measurably under-fires on README and
 MR-description work — i.e. agents write prose without it triggering — then
-discoverability is a real gap and a second trigger earns its keep. That is
-falsifiable, and C's subagent test is where you would see it.
+discoverability is a real gap and a second trigger earns its keep. That is now
+measurable rather than rhetorical: `verification-split-and-firing-rate` Part C
+builds the firing-rate counter and names this exact condition at its line 182.
+Revisit Option A when that counter has data, not before.
 
 Steps:
 
@@ -226,6 +254,35 @@ Steps:
    proof`, `moe glass` reads as ordering at a bar, which turns "Just ask Moe."
    from decoration into a literal description of the CLI — the strongest argument
    yet for keeping the tavern vocabulary closed.
+
+   **Four literals none of the three files in `packages/core` may contain** —
+   `house-voice.md` and both `SKILL.md` pointers are all scanned. The Wave 1
+   exemption buys the bare word `superpowers` and nothing else; three tests in
+   `packages/core/test/metadata.test.ts` have no exemption mechanism, and a
+   fourth hazard is broader than it looks. None is needed in a style guide, so
+   **request no loosening** — these are among the sharpest assertions in the file.
+
+   Cited by test name, not line: the assertions live in
+   `skill-set-fidelity-refactor`'s branch, whose numbering has already moved once
+   (the exemption entry went from :530 to :805 between reports).
+
+   | Forbidden | Test | Say instead |
+   |---|---|---|
+   | `.superpowers/`, `docs/superpowers/` | "keeps the upstream state and output paths renamed everywhere" | "the old state directory", or cite `.moe/sdd` |
+   | `using-superpowers`, `superpowers:brainstorm*`, `testing-anti-patterns`, `superpowers:code-reviewer` | "no reference to a retired upstream skill name survives" | "the bootstrap skill, renamed to `using-moe`" |
+   | `superpowers:<skill>` | "no plugin-qualified skill reference survives" | a bare backticked skill name |
+
+   Two sharp edges in that table. **The retired-names test matches substrings**,
+   so `superpowers:brainstorming` trips it via the `superpowers:brainstorm`
+   literal — and it trips the plugin-qualified test too, so one phrase fails two
+   assertions. And **the plugin-qualified test is not `superpowers`-specific**: it
+   matches `/([a-z0-9][a-z0-9-]*):([a-z0-9][a-z0-9-]*)/g` and fails on **any**
+   `word:skillname` pair where the suffix is a real skill name and no space
+   follows the colon. A file about writing that names skills constantly is the
+   likeliest place in the repo to trip that — `note:brainstorming` and
+   `SUB-SKILL:test-driven-development` both fail, with no upstream token present.
+   Keep a space after every colon that precedes a skill name. `SKILL.md:476`-style
+   citations are safe: the suffix is digits, and digits are not skill names.
 2. Add a three-line "House voice" pointer to
    `writing-clearly-and-concisely/SKILL.md`. Frontmatter untouched.
 3. Add a two-line note in `writing-skills/SKILL.md` near §5: skill *bodies* keep
@@ -242,9 +299,14 @@ Steps:
    package README without the pointer, then with it, scoring the observable
    sub-rules (verb-phrase opening, counted `**Status:**`, no invented tavern
    noun). `writing-skills/testing-skills-with-subagents.md` is the procedure.
-6. Front-door fixes: README.md:14-16 Status block, ARCHITECTURE.md:9-10,
-   28 → 27 in five places (`marketplace.json:23`, ARCHITECTURE.md:44, :53, :70,
-   :98), and "Just ask Moe." into `marketplace.json:8`'s
+6. Two marketplace-facing strings, both in the same sentence. Drop the count
+   from `packages/core/mint/moe-everything.yaml:19` and from
+   `marketplace.json:23`, then run `pnpm mint` so the nine generated copies under
+   `plugins/moe-everything/` follow, and commit source and generated output
+   together. `/plugins/` is committed and the `plugins` CI job
+   (`.gitlab-ci.yml:67-70`, `pnpm mint:check`) asserts byte-identical
+   regeneration, so hand-editing a manifest fails and skipping the regen fails.
+   Same step adds "Just ask Moe." to `marketplace.json:8`'s
    `metadata.description` — decision #26, that one place only.
 
 ¹ https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview and
@@ -300,7 +362,7 @@ the provenance check + CI job; the stale front-door facts; the tagline into
 |---|---|---|
 | Write `house-voice.md` with real cited examples | 1.5 h | the bulk; getting it short is the work |
 | Two skill pointers | 15 min | |
-| Subagent test for the edit (Iron Law) | 45 min | added after correcting the argument above; not optional |
+| Subagent test for the edit (Iron Law) | 45 min | not optional; see the Iron Law note above |
 | Provenance check script + CI job | 45 min | small; it passes on day one |
 | Front-door fixes (8 places) | 25 min | |
 | `pnpm lint && pnpm test` | 20 min | |
@@ -320,14 +382,18 @@ judgment call — budget 10 minutes per hit.
   `skills/` resolves on disk") already covers the two new pointers — it passes,
   or the pointers are broken. No new test needed for step 2.
 - The subagent test from step 5 fails on the baseline (no pointer) and passes with
-  it, scored on the observable sub-rules. This is the Iron Law obligation, and it
-  is also the measurement that would reveal the one condition for flipping to
-  Option A.
+  it, scored on the observable sub-rules. Iron Law obligation.
+- **The four forbidden literals are absent.** `metadata.test.ts` tests :195, :212
+  and :569 pass with no exemption added to any of them — that is the real
+  assertion for step 1, and adding an exemption instead of rewording is a failure,
+  not a fix.
 - **No test guards "no 28th skill."** `metadata.test.ts:115`
-  (`expect(skills.length).toBe(27)`) implied it, but `skill-set-fidelity-refactor`
-  replaces that assertion. Done here means the decision and its reasoning are
-  written into `house-voice.md`, not that a suite enforces it. Said plainly so
-  nobody later assumes a green build ratified it.
+  (`expect(skills.length).toBe(27)`) implied it; `skill-set-fidelity-refactor`
+  replaces it with `it("pins the IMPORTED skill set at exactly 27")`, counting
+  `imported:` in `skill-tiers.yaml`, which a reference file cannot disturb. So the
+  count stays 27 and green — but nothing enforces the decision. It lives in
+  `house-voice.md`. Said plainly so nobody later reads a green build as
+  ratification.
 - The `provenance` CI job passes on the tree as merged, and fails against a
   fixture README whose `## Forked from` upstream column names a Moe package
   instead of an upstream repo. Red on a synthetic case, since there is no live

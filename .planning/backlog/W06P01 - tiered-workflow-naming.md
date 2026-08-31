@@ -7,15 +7,14 @@ idea: |
 status: backlog
 size: M
 estimate: 4-6 h
-depends_on: [DO-NOW-1, DO-NOW-2, DO-NOW-3, skill-set-fidelity-refactor]
+depends_on: [DO-NOW-1, DO-NOW-2, DO-NOW-3, skill-set-fidelity-refactor, verification-split-and-firing-rate]
 blocks: [contributing-flow-docs]
-conflicts_with: [native-renderers, moe-tone-and-branding, parallel-execution-option, gsd-core-skill-import, tc-standards-conformance]
+conflicts_with: [verification-split-and-firing-rate, native-renderers, moe-tone-and-branding, parallel-execution-option, gsd-core-skill-import, tc-standards-conformance]
 touches:
   - packages/core/skills/brainstorming/SKILL.md
   - packages/core/skills/writing-plans/SKILL.md
   - packages/core/skills/subagent-driven-development/SKILL.md
   - packages/core/skills/executing-plans/SKILL.md
-  - packages/core/skills/verification-before-completion/SKILL.md
   - packages/core/skills/using-moe/SKILL.md
   - packages/core/test/metadata.test.ts
 decision_needed: yes
@@ -112,9 +111,14 @@ in prose — no slash command, no tracking row, because neither exists yet.
 
 ### "tier" is already overloaded three ways
 
-**Packaging** — `skill-tiers.yaml`'s `tier: core` / `tier: everything`, the
-lean/full plugin split (13 of 27 today, 14 after decision #6), enforced by three tests
-at `test/metadata.test.ts:452-495` including the lean count at `:470`.
+**Packaging** — `skill-tiers.yaml`'s `tier: core` / `tier: everything`, the lean/full
+plugin split (13 of 27), enforced by the three tests under `describe("the lean/full
+curation")` in `test/metadata.test.ts`, whose count lives in one constant,
+`LEAN_TIER_BUDGET`. Cite that file by symbol name, not by line: it grew ~330 lines across
+`skill-set-fidelity-refactor` and every line number in it has already moved once.
+Checked and clean: that item added a second axis to the YAML — `imported:` (frozen, 27
+entries) vs `authored:` (open, `{}`) — but that is *provenance*, orthogonal to both
+packaging and depth, and it does not want the word.
 **Model selection** — `subagent-driven-development/SKILL.md:199-214`, "small fix diffs
 take a cheap-to-mid tier", "a model at least one tier above". **Auditor fan-out** —
 `iterative-development/SKILL.md:59,163`, "three-tier: deep evidence + impacted
@@ -164,25 +168,35 @@ the settled edition split, not the proposal. **DO-NOW-3** — until `moe-mint` g
 verbatim, the approach here changes from "author" to "port", so let it land first.
 One datum for it: upstream gsd-core is MIT.
 
-`skill-set-fidelity-refactor` replaces `test/metadata.test.ts:115`, `:153-190` and
-`:470` with a pinned-upstream set plus an open fork-authored set. This item does not
-add a skill, so it does not strictly need that landed — but the mechanism section below
-is written on the assumption that adding one is *permitted*, and the follow-on
-`commands/` item does need it, so it belongs in the chain.
+`skill-set-fidelity-refactor` has landed in full (Part A `75dc87c`, Part B `796233e`,
+HEAD `e3a4737`): `skill-tiers.yaml`'s `skills:` map is now `imported:` (frozen 27) plus
+`authored:` (open, `{}`), the 27-name equality is re-aimed at `imported:` alone, and the
+lean count is the named constant `LEAN_TIER_BUDGET`. This item adds no skill, so it does
+not strictly need that — but the mechanism section below assumes adding one is
+*permitted*, and the follow-on `commands/` item does need it.
 
-One note on DO-NOW-2's artifact, since this doc is about that file's vocabulary.
-`skill-tiers.yaml:157-160` demotes `dispatching-parallel-agents` on the grounds that
-"subagent-driven-development already covers the parallel case inside the everyday
-flow." It does not: `subagent-driven-development/SKILL.md:282` says "Never dispatch
-multiple implementation subagents in parallel (conflicts)" and
-`implementing-tasks/SKILL.md:101` repeats the ban, so the skill was demoted for a reason
-that inverts the actual state. Decision #6 promotes it to lean, which fixes the
-*outcome* — but the `why:` prose still argues for the demotion that was just reversed,
-so whoever lands #6 has to rewrite it or the file will document a false reason for a
-decision that no longer holds. The lean count moves 13→14 (and the lean description
-budget 281→298 words) via `parallel-execution-option`, which is why that slug is in
-`conflicts_with`: the same `test/metadata.test.ts` assertion this item's depth table
-reads is the one that promotion edits.
+`verification-split-and-firing-rate` (scheduled W03P01, ahead of this item) is now a
+**prerequisite rather than a collision**. Its Part A puts the mechanical evidence floor in
+a `Stop` hook, which is what lets depth stop relaxing
+`verification-before-completion` — so this item no longer edits that skill, and the
+`touches` list above dropped it. What remains shared is `test/metadata.test.ts`, hence the
+`conflicts_with` entry both docs carry. Its firing-rate counter is also the only way to
+find out whether the depths get used once they ship, which is worth knowing before anyone
+builds the `commands/` follow-on.
+
+The false-rationale defect this doc flagged in `dispatching-parallel-agents`' `why:`
+block — it claimed subagent-driven-development "already covers the parallel case" when
+`subagent-driven-development/SKILL.md:282` forbids it outright — **has been fixed**, and
+the rewritten block cites that exact line. Correcting my own earlier attribution: the fix
+is commit `0b1571d`, "core: settle the lean/full tiering, and delete the rule whose
+premise was false" — DO-NOW-2's landing — not `skill-set-fidelity-refactor`'s `75dc87c`,
+which touched no entry body. Nothing left for this item to do there.
+
+The tier question itself is settled: `dispatching-parallel-agents` stays
+`tier: everything`, so the lean count stays 13. What is *not* settled is the parallel
+prohibition it was demoted against, which `parallel-execution-option` reopens — so expect
+that `why:` prose to be rewritten again under that item. Cite the decision (`0b1571d`),
+not the block's line numbers.
 
 ## Proposed approach
 
@@ -234,14 +248,24 @@ the open question about whether they supersede those three or coexist with them.
 | `dispatching-parallel-agents` | no | no | when tasks are genuinely independent |
 | `requesting-code-review` | no | no | yes |
 | `receiving-code-review` | no | no | yes |
-| `verification-before-completion` | inline evidence, no separate pass | inline evidence, no separate pass | yes — full pass |
+| `verification-before-completion` | mechanical floor at every depth (hook); prose judgment scales | " | " — plus the full prose pass |
 | `finishing-a-development-branch` | no — commit lands where you are | yes | yes |
+| **failure to watch for** | gold-plating a two-line fix | scope creep past the plan | stub-and-declare |
+| **catch that already ships** | `receiving-code-review:88-97` YAGNI check | both | `writing-plans:131-138` No Placeholders |
 
-`dispatching-parallel-agents` joins the table because decision #6 promotes it to the
-lean tier, so every reader will have it. Its row is deliberately narrow: the everyday
-flow bans parallel *implementation* subagents (`subagent-driven-development/SKILL.md:282`),
-so at `feature` depth it applies to independent work outside that ban.
-`parallel-execution-option` owns what that row should actually say.
+`dispatching-parallel-agents` keeps its row because the behaviour is real at `feature`
+depth, not because every reader will have the skill — the promotion to lean is **rejected**
+and it stays `tier: everything` (settled in `0b1571d`). The row is narrow for a
+second reason: the everyday flow bans parallel *implementation* subagents outright
+(`subagent-driven-development/SKILL.md:282`), so it can only cover independent work
+outside that ban. `parallel-execution-option` owns the wording.
+
+The last two rows are labelling, not new behaviour. Depth predicts *which way* work fails:
+at `patch` the risk is gold-plating a two-line fix, at `feature` it is stub-and-declare.
+Both catches already ship — `receiving-code-review:88-97` is a YAGNI check that greps for
+actual usage before "implementing properly", and `writing-plans:131-138` ("No
+Placeholders") forbids "TBD", "add appropriate error handling" and steps that say what
+without showing how. Naming the polarity per depth is the whole addition.
 
 ### The line depth must not cross — SETTLED
 
@@ -260,18 +284,22 @@ the task; the approval gate never does." And `verification-before-completion`'s
 description is "evidence before assertions always", with "Violating the letter of this
 rule is violating the spirit of this rule" in its body.
 
-Consequence for implementation: `patch` and `change` relax
-`verification-before-completion` from *a pass* to *inline evidence* — a wording change
-in that skill, not a removal. Nothing touches the approval gate.
+Consequence for implementation: **nothing.** An earlier draft of this doc had `patch`
+and `change` relax `verification-before-completion` from *a pass* to *inline evidence*.
+That is withdrawn — `verification-split-and-firing-rate` Part A moves the mechanical
+evidence floor into a `Stop` hook, which costs nothing to leave armed at every depth, so
+only the prose judgment half scales. Depth stops needing to touch that skill at all,
+which also keeps depth from being conflated with model tier. Nothing touches the approval
+gate either. This item edits no gate.
 
 ### Mechanism, re-weighed after new skills were permitted
 
 **What changed.** My earlier recommendation rested on two legs. The first was that
-`test/metadata.test.ts:115` and `:153-190` admit exactly the 27 upstream skills — an
-equality assertion, so any added skill fails it — which disqualified all three
-skill-adding mechanisms outright. Zak has decided new skills are permitted and
-`skill-set-fidelity-refactor` replaces those assertions with a pinned-upstream set plus
-an open fork-authored set. **That leg is gone and I am not going to pretend otherwise.**
+`test/metadata.test.ts` admitted exactly the 27 upstream skills — an equality assertion
+on the name set, so any added skill failed it — which disqualified all three
+skill-adding mechanisms outright. Zak decided new skills are permitted, and
+`skill-set-fidelity-refactor` has since re-aimed that equality at `imported:` alone.
+**That leg is gone and I am not going to pretend otherwise.**
 
 The second leg was "cheaper, and avoids two classifiers that can disagree." On
 inspection that leg is weaker than I framed it: it is an argument against adding a
@@ -291,26 +319,45 @@ for the new names to land *inside* the existing classifier. So: **extend
 `executing-plans` each gain a short "at this depth" note.
 
 **Why the other two lose on their own merits, assertions aside.** *One skill with three
-modes* is precisely the second classifier: a description's cost plus the disagreement
-risk, buying nothing `brainstorming` does not already provide. *A router* adds a
-description and still has nothing to route to but skills the model can already reach —
-the GSD-lineage Moe carries three routers (`workflows/do.md`, `smart-entry.md`,
-`next.md`) because it has ~70 commands and a `STATE.md` to route against, and this fork
-has neither. Neither was ever held up only by the test wall.
+modes* is precisely the second classifier, and it collides on trigger for the same reason
+three skills do — one description claiming "use when classifying how much process this
+needs" against `brainstorming`'s existing claim on the same moment. *A router* adds that
+same colliding description and still has nothing to route to but skills the model can
+already reach; the GSD-lineage Moe carries three routers (`workflows/do.md`,
+`smart-entry.md`, `next.md`) because it has ~70 commands and a `STATE.md` to route
+against, and this fork has neither. Neither was ever held up only by the test wall.
 
-**Three separate skills is no longer rejected — it is deferred, and reframed as three
-commands.** `patch`/`change`/`feature` are addressable, imperative nouns. Every one of
-the 27 existing skills is a gerund phrase naming an activity the agent performs; a skill
-named `feature`, with a description reading "Use when the work is a feature", is a
-classifier wearing a skill's clothes. Those are *command* names — which is exactly what
-GSD's `fast`/`quick` are, and what makes a depth invocable by name (my earlier open
-question 3, now effectively answered: yes, and Zak's naming choice is the evidence).
-`moe-mint.yaml` records that this package has no `commands/`, so that is the follow-on
-item, after DO-NOW-3 proves the mint pipeline. Note the cost it will carry: three
-descriptions permanently in the lean plugin, against a lean budget that is 298 words at
-14 skills (281 + `dispatching-parallel-agents`' 17), on a package whose own rule is "ERR
-SMALL... Every description in an installed plugin costs context in every session"
-(`skill-tiers.yaml`).
+**Retraction: my description-cost argument against three skills is dead.** I argued
+three new descriptions would be ~+20% on a lean budget, citing `skill-tiers.yaml`'s ERR
+SMALL rule. That rule was **deleted on 2026-08-31** with measurements
+(`skill-tiers.yaml:24-33`): all 27 name+description pairs are 5,914 characters, ~1,480
+tokens, and that is the entire resident cost because bodies load on demand. Shipping all
+27 in the lean plugin costs ~1.5k tokens a session. Three more descriptions is on the
+order of 80 tokens. The file's own words: "a rule that cites a cost it does not have will
+keep producing demotions nobody can defend." Retracted — token cost is not an argument
+against anything here.
+
+**But its replacement rule is a much better argument, and it is the repo's own.**
+`skill-tiers.yaml:35-42` installs **TRIGGER COLLISION** as the tiebreak: a skill goes to
+`everything` "only if the skill's description claims a trigger a core-tier skill already
+claims," because "Two skills asserting the same 'use when …' is what actually degrades
+selection: the model picks one, and which one is not something the author controls."
+Three skills named `patch`/`change`/`feature` would each claim a trigger — "use when the
+work is a patch" — that `brainstorming` already claims, since classifying the work is
+precisely what its Three Paths do. That is a textbook trigger collision under the rule
+the fork just codified, and it is the same objection as "two classifiers that can
+disagree", now stated as dispatch quality rather than my weaker cost framing.
+
+**So three separate skills is deferred and reframed as three commands.**
+`patch`/`change`/`feature` are addressable, imperative nouns; every one of the 27 existing
+skills is a gerund phrase naming an activity. A skill named `feature` whose description
+reads "Use when the work is a feature" is a classifier wearing a skill's clothes — and it
+collides. Those are *command* names, which is exactly what GSD's `fast`/`quick` are, and
+what makes a depth invocable by name (my earlier open question 3, answered: yes, and
+Zak's naming choice is the evidence). Commands have no description competing in the skill
+dispatcher, so the collision does not arise there. `moe-mint.yaml` records that this
+package has no `commands/`, so that is the follow-on item, after DO-NOW-3 proves the mint
+pipeline.
 
 **Net: the recommendation did not move, but it is now a sequencing claim rather than a
 prohibition.** Depth selection lands in `brainstorming` now; depth becomes invocable as
@@ -319,11 +366,10 @@ commands later. If Zak would rather do it once, the whole item should wait for t
 
 ## Scope boundary
 
-**In:** the depth vocabulary and the three level names; the depth table above landed
-into `brainstorming`; per-depth notes in `writing-plans`, `executing-plans`,
-`subagent-driven-development`; the wording change in `verification-before-completion`
-separating "inline evidence" from "a verification pass"; a test asserting no SKILL.md
-uses "tier" for workflow depth.
+**In:** the depth vocabulary and the three level names; the depth table above landed into
+`brainstorming`, including its two failure-polarity rows; per-depth notes in
+`writing-plans`, `executing-plans`, `subagent-driven-development`; a test asserting no
+SKILL.md uses "tier" for workflow depth.
 
 **Out:** importing or adapting any GSD file (`gsd-core-skill-import`); renaming
 `skill-tiers.yaml`'s `tier:` key or moving any skill between editions (DO-NOW-2 and
@@ -374,7 +420,7 @@ One genuine fork remains, created by the naming decision.
 | Settle whether `patch`/`change`/`feature` supersede spike/bounded/architectural (the one open question) | 20-30 min |
 | Depth section into `brainstorming/SKILL.md`, wired into the existing Three Paths rather than bolted beside them | 1-1.5 h |
 | Per-depth notes in `writing-plans`, `executing-plans`, `subagent-driven-development` | 45 min |
-| Wording change in `verification-before-completion` splitting inline evidence from a pass | 30-45 min |
+| Failure-polarity rows, labelling the two catches that already ship | 20 min |
 | Tests in `test/metadata.test.ts` (see below) | 45 min |
 | Read-through for contradictions against the two hard gates | 30 min |
 
@@ -395,11 +441,10 @@ across the 27 skills and the docs that cite them — call that another 1-1.5 h.
 - `grep -c 'REQUIRED SUB-SKILL' skills/*/SKILL.md` unchanged from the counts at
   `writing-plans/SKILL.md:61,166,170` and `executing-plans/SKILL.md:37` — depth adds
   levels without cutting a chain edge, so no reader hits a dead end.
-- Under `skill-set-fidelity-refactor`'s two-list model: the **pinned-upstream list is
-  unchanged** by this item's diff, and the **fork-authored list is still empty**. That
-  is the same check the old "assertions unmodified" bullet was reaching for, expressed
-  in terms of the new model — this item edits inherited skills in place and authors
-  none, so a new entry in the fork-authored list means the mechanism was widened into
-  adding a skill and the `commands/` follow-on was done early.
+- This item's diff touches neither `imported:` in `skill-tiers.yaml` nor the pinned
+  27-name literal that `it("pins the IMPORTED skill set at exactly 27")` compares against,
+  leaves `authored:` as `{}`, and does not move `LEAN_TIER_BUDGET`. It edits inherited
+  skills in place and authors none, so any of those moving means the mechanism was widened
+  into adding a skill and the `commands/` follow-on was done early.
 - Manual: read `brainstorming/SKILL.md` end to end, confirming no depth row
   contradicts the `<HARD-GATE>` at `:14-20`.

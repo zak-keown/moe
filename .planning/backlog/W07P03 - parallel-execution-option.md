@@ -6,7 +6,7 @@ idea: |
 status: backlog
 size: S
 estimate: 2-3 h
-depends_on: [DO-NOW-1, DO-NOW-2]
+depends_on: [DO-NOW-1, DO-NOW-2, skill-set-fidelity-refactor]
 blocks: []
 conflicts_with: [tiered-workflow-naming, deterministic-task-dag, gsd-core-skill-import, native-renderers, moe-tone-and-branding]
 touches:
@@ -60,8 +60,10 @@ Recorded in PARITY.md ("Inherited skills, resolved") and ARCHITECTURE.md §2.
   invoke deliberately, by name, when you already know you want it, belongs in
   `moe-everything` — and so does the silent-failure test: a missed parallel
   dispatch yields serial execution, which is correct and merely slower.
-- **So step 5 goes away.** No `skill-tiers.yaml` edit, no `metadata.test.ts:470`
-  13 → 14. The lean tier stays at 13.
+- **So step 5 goes away.** No `skill-tiers.yaml` tier change, no lean-count bump
+  13 → 14 (the assertion is `"keeps the lean tier lean"`, and after W01P01 the
+  number lives in `LEAN_TIER_BUDGET`). The lean tier stays at 13. Step 5 survives
+  only as a `why:` correction — see the Proposed approach.
 - **The rest of Option B stands, and it is the valuable half.** The bans at
   `subagent-driven-development/SKILL.md:282` and `implementing-tasks/SKILL.md:101`
   cite a hazard the harness removed; correcting a false statement is maintenance,
@@ -81,18 +83,22 @@ plan with eight independent tasks is executed as eight serial round-trips becaus
 skill says to, and the person running it either obeys and waits, or ignores the skill and
 loses the ledger, the review gate and the recovery map along with it.
 
-Fixing it also removes a documented falsehood. `skill-tiers.yaml:157-160` justifies
-demoting `dispatching-parallel-agents` to the `everything` tier on the grounds that
-"subagent-driven-development already covers the parallel case inside the everyday flow."
-SDD line 282 says the opposite. Nothing in the package REQUIREs
-`dispatching-parallel-agents` — the only reference outside its own directory is a passing
+There was also a documented falsehood in the tiering ledger — `skill-tiers.yaml` justified
+demoting `dispatching-parallel-agents` on the grounds that "subagent-driven-development
+already covers the parallel case inside the everyday flow", which SDD:282 contradicts.
+**W01P01 has already corrected it** (branch `worktree-wf_81b8d9e1-32f-3`,
+`skill-tiers.yaml:194-205`): the entry now states the claim was false, cites SDD:282, and
+records the skill as HELD at `everything`. So that argument is spent — what remains is the
+substantive gap, not the bad rationale. Nothing in the package REQUIREs
+`dispatching-parallel-agents`; the only reference outside its own directory is a passing
 mention in `skills/using-moe/references/codex-tools.md:11`. It is an orphan skill about
 the one thing the everyday flow bans.
 
 ## Current state
 
-Read in the `core` worktree (`.claude/worktrees/wf_238bb49d-362-13`), not `packages/core`
-on main, which is a stub.
+Citations are to `packages/core` **on main**, where core landed with DO-NOW-1 (main
+`0e6a5f7`). Every skill line number below was re-verified against main after that merge;
+none moved.
 
 **What exists.** Parallel dispatch mechanics are documented once, well:
 `dispatching-parallel-agents/SKILL.md:66-77` ("Multiple dispatch calls in one response =
@@ -123,47 +129,75 @@ same** `~/proj` (`skills/driving-claude-code-sessions/SKILL.md:195-209`) — the
 hazard SDD:282 bans. crew is not the missing capability; it is the second consumer of the
 same missing rule.
 
-**The tests that constrain any answer** (`packages/core/test/metadata.test.ts`):
+**The tests that constrain any answer** — all in `packages/core/test/metadata.test.ts`.
+**Cited by test name, not line number: W01P01 grows that file from ~595 to 925 lines, so
+every line cite into it drifts.** Names and symbols survive; numbers do not.
 
-- `:115` asserts exactly 27 skills; `:156-190` asserts the skill-name set equals a
-  hardcoded enumeration of the six upstream sources. There is no slot for a
-  fork-original skill.
-- `:469-470` asserts the lean tier is exactly 13.
-- `:242` resolves every `**REQUIRED SUB-SKILL:**` name against core's own 27 skills, so a
-  REQUIRED edge from a core skill to crew's `driving-claude-code-sessions` fails.
+- `"ships exactly 27 skills"` (renamed by W01P01 to `"pins the IMPORTED skill set at
+  exactly 27"`) and `"accounts for every skill the six upstream sources shipped"`. On main
+  these two together leave no slot for a fork-original skill; after W01P01 both target
+  `imported:` rather than the directory.
+- `"keeps the lean tier lean"` — asserts the lean count, via the `LEAN_TIER_BUDGET`
+  constant after W01P01. Moot here: the promotion is rejected, so this work must not touch
+  it.
+- `"accounts for every skill on disk in exactly one of the two maps"` — new in W01P01.
+  Completeness and disjointness in both directions: nothing on disk without a manifest
+  entry, nothing registered without existing, no name in both maps.
+- `"every REQUIRED marker names a skill that exists"` — resolves every `**REQUIRED
+  SUB-SKILL:**` name against core's own skills, so a REQUIRED edge from a core skill to
+  crew's `driving-claude-code-sessions` fails. **W01P01 does not touch this one, and it is
+  the constraint that decides Option C.**
 
 ## Prerequisites
 
-**DO-NOW-1** — core is only on a branch. Editing five of its SKILL.md files before the
-merge means resolving those edits in the merge.
+**DO-NOW-1 — discharged.** Core is merged; `packages/core/skills/` is on main.
 
-**DO-NOW-2** — this work moves `dispatching-parallel-agents` from `everything` to `core`
-and changes the lean count from 13 to 14. That is the same decision DO-NOW-2 is putting
-in front of a human; it should be one decision, not two.
+**DO-NOW-2 — discharged, against this doc's original step 5.** The tiering decision was
+taken in debate review and recorded in the two authority documents: `PARITY.md:90` keeps
+`dispatching-parallel-agents` at `everything`, and `ARCHITECTURE.md:105-109` gives the
+reason (a missed parallel dispatch yields serial execution — correct, merely slower). See
+the decisions block above.
 
-No backlog slug blocks this. `deterministic-task-dag` is the natural successor, not a
-prerequisite: task disjointness computed from a plan's own `Files:` blocks is enough for
-waves inside one plan, and a DAG is what you need once scheduling crosses plans and
-phases. Whichever lands first should define the wave record the other reads.
+**W01P01 `skill-set-fidelity-refactor`** — scheduled six waves ahead of this one, and it
+restructures a file in `touches`. `skill-tiers.yaml`'s flat `skills:` map becomes
+`imported:` (frozen, the 27) plus `authored:` (`{}`), and `metadata.test.ts` re-points its
+assertions at `imported:` rather than at the directory. Two consequences here: the
+`dispatching-parallel-agents` entry body is textually unchanged, so the small `why`
+correction this work owes it merges cleanly; and **Option A gets much cheaper** — see
+below.
+
+No backlog slug blocks this. `deterministic-task-dag` (W02P01) is the natural successor,
+not a prerequisite: task disjointness computed from a plan's own `Files:` blocks is enough
+for waves inside one plan, and a DAG is what you need once scheduling crosses plans and
+phases. It lands five waves earlier, so it should define the wave record this work reads.
 
 ## Proposed approach
 
 **Option A — a third execution option: a new `parallel-execution` skill.** Matches the
-idea's wording. Cost: it is the fork's first original skill, so it breaks
-`metadata.test.ts:115`, `:190` and the tier map at `:457`, and forces a decision about how
-that test separates inherited skills from authored ones — a decision
-`gsd-core-skill-import` also needs. And it spends a permanent description line on a mode
-that is a property of the other two options rather than a rival to them.
+idea's wording. **Its cost has dropped sharply and the doc's original objection no longer
+holds.** On main it would have been the fork's first original skill, failing both the
+27-count and the pinned upstream enumeration at once. After W01P01 those assertions target
+`imported:` instead of the directory, the grand total is deliberately unasserted, and the
+test's own comment says adding a Moe-original skill "is now a two-line manifest diff, not
+a wall": a directory plus an `authored:` entry. Two lines, not zero, and they must land in
+the **same commit** — `"accounts for every skill on disk in exactly one of the two maps"`
+is bidirectional, so a skill directory with no manifest entry is red. The entry would also
+be constrained: `tier: everything` per decision D2 (`skill-tiers.yaml:306`, current policy
+and reversible), and `from:` set to the fork's own value rather than an upstream name.
+What survives is therefore not a test cost but a design objection: parallelism is a
+property of the other two options, not a rival to them, and a fourth routing target is a
+permanent description line for twenty people.
 
 **Option B — make parallelism a mode of the two existing options.** Replace the blanket
 bans at `subagent-driven-development/SKILL.md:282` and `implementing-tasks/SKILL.md:101`
-with a gate; teach `using-git-worktrees` a "one worktree per parallel worker" step;
-promote `dispatching-parallel-agents` to the lean tier and route the execution skills into
-it, which turns an orphan into the thing it always described. No new skill, so no
-inventory-test surgery beyond two counted constants.
+with a gate; teach `using-git-worktrees` a "one worktree per parallel worker" step; route
+the execution skills into `dispatching-parallel-agents`, which turns an orphan into the
+thing it always described. No new skill, and — with the promotion rejected — no tier or
+counted-constant change either.
 
 **Option C — wire it to crew.** Real long-lived workers, human-inspectable in tmux,
-three harnesses, a lifecycle event stream. But `metadata.test.ts:242` forbids a REQUIRED
+three harnesses, a lifecycle event stream. But `"every REQUIRED marker names a skill that
+exists"` forbids a REQUIRED
 edge from core to a crew skill, crew's workers are heavier than a fan-out of eight
 one-file tasks needs, and crew's own fan-out example has the same worktree bug — so this
 is downstream of the rule, not a substitute for it.
@@ -186,17 +220,22 @@ many workers a wave gets, and both existing options need the answer. Do this:
 3. **Add the integration step SDD does not have.** Its review loop is a per-task
    `BASE`→`HEAD` diff (`:290`). Parallel workers in separate worktrees produce N
    branches, and something must merge them and re-run the suite before the next wave.
-   This is the single largest piece of new prose and the reason this is M, not S.
+   This is the single largest piece of new prose in the change.
 4. **`using-git-worktrees` Step 1c: one worktree per parallel worker**, via the native
    tool, per Step 1a's existing "never fight the harness" rule (`:51-57`). This repo's
    worktrees live in `.claude/worktrees/`, gitignored at `.gitignore:25-27` — evidence
    the native path is the one in use.
-5. **Tier and test.** `skill-tiers.yaml`: `dispatching-parallel-agents` → `tier: core`,
-   with a `why` that replaces the false claim at :157-160. `metadata.test.ts:470`: 13 →
-   14.
+5. **Close out the `why`, without touching the tier.** W01P01 leaves
+   `dispatching-parallel-agents` recorded as "HELD at everything for now" and defers the
+   tier question to this work (`skill-tiers.yaml:194-205` on branch
+   `worktree-wf_81b8d9e1-32f-3`, which names this doc). The debate review has since
+   settled it at `everything` (`PARITY.md:90`). Rewrite that `why` to state the settled
+   answer and cite PARITY, so the ledger stops pointing at an open question that is
+   closed. **No `tier:` change, no lean-count change, no test-constant change.**
 6. **Fix crew's example.** `packages/crew/skills/driving-claude-code-sessions/SKILL.md:195-209`
    gets one worktree per worker instead of a shared `~/proj`, and a pointer to the gate.
-   Same rule, stated where crew's readers are; no REQUIRED edge, so `:242` stays green.
+   Same rule, stated where crew's readers are; no REQUIRED edge, so the REQUIRED-marker
+   test stays green.
 
 ## Scope boundary
 
@@ -225,11 +264,13 @@ fan-out correction.
 
 1. **Is parallel implementation allowed at all?** Reversing an inherited safety rule in
    both execution families is a human call, not a research finding. If the answer is no,
-   the honest deliverable shrinks to a one-line fix: correct the false `why` at
-   `skill-tiers.yaml:157-160` so the ledger stops claiming SDD covers a case it bans.
-2. **Does `dispatching-parallel-agents` move to the lean tier?** It is the only sane home
-   for the gate, and a rule that lives in a plugin most people do not have installed is
-   not a rule. This is a DO-NOW-2 input.
+   the deliverable shrinks to step 5 alone — close out the deferred `why` — and the rest
+   of this doc is dropped.
+2. ~~**Does `dispatching-parallel-agents` move to the lean tier?**~~ **Answered: no.**
+   `PARITY.md:90` keeps it at `everything`; `ARCHITECTURE.md:105-109` gives the reason.
+   The gate therefore lives in a skill most people will not have installed, so the
+   execution skills must carry enough of it inline to be correct on their own — a real
+   cost of the decision, and the reason step 2 routes rather than delegates.
 3. **Claude-Code-only, or portable?** Worktree isolation is a Claude Code feature; no
    other harness reference documents an equivalent. Portable means writing the ladder in
    all seven reference files (adds ~1 h and collides with `runtime-pruning`, which is
@@ -244,17 +285,19 @@ fan-out correction.
 | SDD: wave grouping, replace :282, wire the review loop per wave | 1.5 h |
 | The merge-between-waves step (new prose, no precedent in the skill) | 1 h |
 | `using-git-worktrees` Step 1c; `implementing-tasks:101`; `writing-plans` handoff | 45 m |
-| `skill-tiers.yaml` + `metadata.test.ts:470`; run `pnpm --filter @bubstack/moe-core test` | 30 m |
+| Close out the deferred `why` in `skill-tiers.yaml`; run `pnpm --filter @bubstack/moe-core test` | 15 m |
 | crew fan-out example | 20 m |
 
-**Slower if:** question 3 answers "portable" (+1 h, seven files); or
-`dispatching-parallel-agents` stays in `everything`, in which case the gate must be
-duplicated into both execution skills and kept in sync — worse prose, and more of it.
+**Slower if:** question 3 answers "portable" (+1 h, seven files). The rejected promotion
+also costs time rather than saving it: because the gate now lives in a plugin most people
+will not have installed, its operative rule has to be restated inline in both execution
+skills and kept in sync with the canonical copy.
 
 ## Verification
 
-- `pnpm --filter @bubstack/moe-core run test` green, with `metadata.test.ts:470`
-  asserting 14 and the tier map at `:457` still covering all 27 skills.
+- `pnpm --filter @bubstack/moe-core run test` green, with `LEAN_TIER_BUDGET` still 13 and
+  `dispatching-parallel-agents` still `tier: everything` under `imported:` — this work must
+  not move the tier. If the diff touches `LEAN_TIER_BUDGET`, it has exceeded its scope.
 - `grep -rn "Never dispatch multiple implementation subagents in parallel"
   packages/core/skills/` returns nothing; the same grep for the gate's phrasing returns
   hits in `dispatching-parallel-agents`, `subagent-driven-development` and
