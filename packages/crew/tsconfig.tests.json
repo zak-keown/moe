@@ -1,0 +1,13 @@
+{
+  "//": "Test-only typecheck. Upstream ran one `tsc --noEmit` over src + tests + the two config files; the composite build above cannot (it emits, and `test/` is outside rootDir). This project is non-composite and noEmit, so it is NOT referenced from the root tsconfig.tests.json solution — `pnpm typecheck` runs it directly. There are no cross-package test edges to declare.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": ["src/**/*", "test/**/*", "tsup.config.ts", "vitest.config.ts"],
+  "references": []
+}

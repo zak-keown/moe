@@ -1,10 +1,10 @@
 {
-  "//": "Runtime DAG for this package: one reference per package.json dependency. Empty until source is imported.",
+  "//": "Runtime DAG for this package: no workspace dependencies, so no references. The pi extension imports @earendil-works/pi-coding-agent for types only; the hook and CLI bundles resolve each other by file path at runtime, not as module edges.",
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist"
   },
-  "include": [],
+  "include": ["src/**/*"],
   "references": []
 }
