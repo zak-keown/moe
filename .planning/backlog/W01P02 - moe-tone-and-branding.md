@@ -3,7 +3,7 @@ slug: moe-tone-and-branding
 title: House Voice, Written Down Once
 idea: |
   - Branding with Moe identity/tone through docs (add tone to skills?)
-status: backlog
+status: done
 size: M
 estimate: 4-5 h
 depends_on: [DO-NOW-1, DO-NOW-2]
@@ -311,6 +311,37 @@ an edit, not just for a new skill. What makes it slower: if DO-NOW-2 demotes
 the file lives (add ~1 h). If the provenance check surfaces a hit in a package
 nobody has audited, deciding whether a token is provenance or self-reference is a
 judgment call — budget 10 minutes per hit.
+
+## Landed 2026-08-31
+
+Implemented on branch `worktree-wf_81b8d9e1-32f-4`, five commits. What differs
+from the plan above, so a later reader is not misled by the research:
+
+- **The research below is unrevised and several of its line numbers are stale**
+  (it predates DO-NOW-3 and today's ARCHITECTURE.md rewrites). Notably: the
+  provenance-vs-self-reference rule is ARCHITECTURE.md §8, not `:266-269`; the
+  tavern sentence is §7, not `:249`; `**`proof → tab` is REFUTED.**` is in §5;
+  the count of "your human partner" is **46** across 15 files, not 48; the five
+  `28 → 27` sites were ALREADY 27 and that sub-item had zero work; and
+  ARCHITECTURE.md needed **no edit at all**, which dissolves the predicted
+  conflict with `moe-bare-binary-dispatcher`.
+- **`/plugins/` is generated AND tracked**, which this doc never mentions and
+  which was the largest gap in its mechanics. Every skill edit needs `pnpm mint`
+  in the same commit or CI's `plugins:` job goes red.
+- **There is a tenth `## Forked from` README**, `infra/container/README.md:14`.
+  Any provenance check hardcoded to "the nine package READMEs" misses it.
+- **The provenance check grew** from the doc's ~40 lines to ~190, mostly comments
+  and a `--min-readmes` floor, plus a red fixture asserted inside the CI job so
+  the check is seen failing rather than claimed to fail.
+- **house-voice.md names the upstream project once**, so
+  `metadata.test.ts:602`'s brand-token sweep is RED until
+  `skill-set-fidelity-refactor` adds the per-file exemption. Expected and
+  pre-authorised; not worked around. Every other assertion in that suite is
+  green.
+- **The subagent test discriminates**: baseline mean 2.33/5, with-pointer 5.00/5,
+  with two detectors going 0/3 to 3/3. Both the link assertion and the
+  discrimination assertion were falsified by hand before being trusted. Procedure,
+  raw output and honest limits: `packages/core/test/house-voice/README.md`.
 
 ## Verification
 
