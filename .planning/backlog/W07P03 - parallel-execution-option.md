@@ -18,7 +18,7 @@ touches:
   - packages/core/skill-tiers.yaml
   - packages/core/test/metadata.test.ts
   - packages/crew/skills/driving-claude-code-sessions/SKILL.md
-decision_needed: yes
+decision_needed: no
 ---
 
 # Parallelism As A First-Class Execution Option
@@ -304,6 +304,26 @@ fan-out correction.
 - **The lean/full tiering of anything except `dispatching-parallel-agents`** — DO-NOW-2.
 
 ## Open questions for Zak
+
+**ANSWERED 2026-08-31 (Zak): YES — as a mode of the two existing execution options,
+gated on worktree isolation.** Not a third option. The full scope of this doc stands.
+
+The ban's own stated reason is `(conflicts)` — two agents writing the same file — and
+worktree isolation removes that cause rather than accepting the risk. This session is
+the evidence in both directions: five agents ran concurrently in separate worktrees with
+zero write conflicts, *and* produced the three-way citation dispute that the integration
+requirements below now exist to prevent. Parallel execution was safe on the axis the ban
+names and unsafe on an axis it does not.
+
+**Question 3 (Claude-Code-only vs portable) follows from this and is closed as
+Claude-Code-only** — recorded as the orchestrator's call rather than Zak's, and cheap to
+reverse. The reasoning: you cannot gate on worktree isolation in a harness that has no
+worktree isolation. Writing the ladder into all seven reference files would either state
+a gate that never opens or open it without the isolation, and it collides with
+`runtime-pruning`, which is rewriting `gemini-tools.md` in W02. The gate fails closed
+elsewhere and everyone else runs serial, which is correct today.
+
+*The original question, kept because the answer rests on its framing:*
 
 1. **Is parallel implementation allowed at all?** Reversing an inherited safety rule in
    both execution families is a human call, not a research finding. If the answer is no,

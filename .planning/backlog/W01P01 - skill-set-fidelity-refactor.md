@@ -8,7 +8,7 @@ idea: |
   fork-authored skill impossible, and four backlog items were written around
   that wall. This item removes the wall without removing the guarantee it was
   protecting.
-status: backlog
+status: done
 size: M
 estimate: 5-6 h
 depends_on: [DO-NOW-1, DO-NOW-2]  # both landed as of main a9f981d — satisfied
@@ -20,7 +20,7 @@ touches:
   - packages/core/README.md
   - scripts/mint-plugins.mjs
   - PARITY.md
-decision_needed: yes
+decision_needed: no
 ---
 
 # Two-List Skill Fidelity, Upstream Pinned
@@ -574,6 +574,27 @@ If it deletes an `expect` without an at-least-as-strong replacement on the same
 fact, that is the finding.
 
 ## Open questions for Zak
+
+**Both were already answered, and this item shipped on those answers.** Recorded here
+because the questions below were written before the answers arrived and read as open.
+
+1. **May a fork-authored skill take `tier: core`?** **No — decision D2: authored skills
+   start at `everything` for now, regardless of how the lean/full review resolves the 27
+   imported ones.** So the extra assertion offered below is the branch taken. It is
+   recorded in `skill-tiers.yaml` and enforced in practice by the lean-count assertion
+   (`LEAN_TIER_BUDGET`), which is worth knowing because the failure message names the
+   lean tier rather than D2, and reversal is a one-constant edit.
+2. **Does `PARITY.md` get the "Authored here" section?** **No — decision D3: leave
+   `PARITY.md` a pure import record.** `skill-tiers.yaml`'s `authored:` map is therefore
+   the only place fork-authored content is registered. The cost D3 accepts is real and
+   worth restating: an auditor reading only the ledger concludes core is entirely
+   imported. `authored:` being load-bearing for that is the mitigation.
+
+**Merged to main 2026-08-31** as a `--no-ff` merge after a clean trial merge and a full
+gate run. Its own best find was unasked-for: the execute-bit allowlist had drifted by
+four `.py` files and structurally could not notice, being checked in one direction only.
+
+*The original questions, kept as written:*
 
 1. **May a fork-authored skill take `tier: core`? — largely answered already;
    confirm and I will drop it.** I asked this as the ERR SMALL trade-off applied to

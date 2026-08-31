@@ -17,7 +17,7 @@ touches:
   - packages/core/skills/executing-plans/SKILL.md
   - packages/core/skills/using-moe/SKILL.md
   - packages/core/test/metadata.test.ts
-decision_needed: yes
+decision_needed: no
 ---
 
 # Workflow Depth Levels And Their Names
@@ -441,7 +441,24 @@ Answered and closed: the names are `patch`/`change`/`feature`; the approval gate
 at every depth (#25); new skills are permitted (#2); depth will be invocable by name,
 as commands, in a follow-on item.
 
-One genuine fork remains, created by the naming decision.
+**ANSWERED 2026-08-31 (Zak): SUPERSEDE.** `patch`/`change`/`feature` becomes the one
+work-shape classifier. `spike` survives as a modifier — "a spike is a `patch` whose
+output you discard" — because its distinguishing property is that the output is thrown
+away, which is orthogonal to depth and therefore does not collide.
+
+Consequences this item now owns:
+
+- **+1-1.5 h for a reference sweep.** Every citation of `spike`/`bounded`/
+  `architectural` has to be found and updated. This is a rename of *inherited*
+  behaviour, so the sweep is the deliverable, not a tidy-up: a half-renamed vocabulary
+  is worse than either whole one, because both sets then appear live.
+- **Sweep by name, not by line.** `brainstorming/SKILL.md:22-51` is the anchor today and
+  will move. Cite the Three Paths section by its heading text.
+- The rationale is the repo's own rule: two work-shape vocabularies in one skill is a
+  TRIGGER COLLISION, and coexist would have produced nine cells nobody holds while
+  re-creating the collision this item exists to remove.
+
+*The original fork, kept because it is the reasoning the answer rests on:*
 
 1. **Do `patch`/`change`/`feature` supersede `spike`/`bounded`/`architectural`, or sit
    beside them?** `brainstorming/SKILL.md:22-51` already classifies every task into
