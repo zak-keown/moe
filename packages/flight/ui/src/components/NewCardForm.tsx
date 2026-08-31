@@ -58,8 +58,11 @@ export function NewCardForm({ onCreated, onCancel }: NewCardFormProps) {
 
       <div className="space-y-4">
         <div>
-          <label className="section-label block mb-1">ID</label>
+          <label htmlFor="new-card-id" className="section-label block mb-1">
+            ID
+          </label>
           <input
+            id="new-card-id"
             className={`input-field ${attempted && !id.trim() ? "!border-red-400" : ""}`}
             value={id}
             onChange={(e) => setId(e.target.value)}
@@ -68,8 +71,11 @@ export function NewCardForm({ onCreated, onCancel }: NewCardFormProps) {
         </div>
 
         <div>
-          <label className="section-label block mb-1">Title</label>
+          <label htmlFor="new-card-title" className="section-label block mb-1">
+            Title
+          </label>
           <input
+            id="new-card-title"
             className={`input-field ${attempted && !title.trim() ? "!border-red-400" : ""}`}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -77,8 +83,11 @@ export function NewCardForm({ onCreated, onCancel }: NewCardFormProps) {
         </div>
 
         <div>
-          <label className="section-label block mb-1">Tags</label>
+          <label htmlFor="new-card-tags" className="section-label block mb-1">
+            Tags
+          </label>
           <input
+            id="new-card-tags"
             className="input-field"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
@@ -87,8 +96,11 @@ export function NewCardForm({ onCreated, onCancel }: NewCardFormProps) {
         </div>
 
         <div>
-          <label className="section-label block mb-1">Description</label>
+          <label htmlFor="new-card-description" className="section-label block mb-1">
+            Description
+          </label>
           <textarea
+            id="new-card-description"
             className="input-field"
             rows={4}
             value={description}
@@ -97,8 +109,11 @@ export function NewCardForm({ onCreated, onCancel }: NewCardFormProps) {
         </div>
 
         <div>
-          <label className="section-label block mb-1">Acceptance Criteria</label>
+          <label htmlFor="new-card-criteria" className="section-label block mb-1">
+            Acceptance Criteria
+          </label>
           <textarea
+            id="new-card-criteria"
             className="input-field"
             rows={6}
             value={criteria}

@@ -138,7 +138,9 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
 
         <div className="space-y-4">
           <div>
-            <label className="section-label block mb-1">Story Card</label>
+            <label htmlFor="new-run-card" className="section-label block mb-1">
+              Story Card
+            </label>
             {loadingCards ? (
               <Spinner label="Loading cards..." />
             ) : cardError ? (
@@ -147,6 +149,7 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
               <div className="text-sm text-slate">No cards available. Create a card first.</div>
             ) : (
               <select
+                id="new-run-card"
                 className="input-field"
                 value={selectedCard}
                 onChange={(e) => setSelectedCard(e.target.value)}
@@ -161,8 +164,11 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
           </div>
 
           <div>
-            <label className="section-label block mb-1">Target URL</label>
+            <label htmlFor="new-run-target" className="section-label block mb-1">
+              Target URL
+            </label>
             <input
+              id="new-run-target"
               className="input-field"
               value={target}
               onChange={(e) => setTarget(e.target.value)}
@@ -171,9 +177,12 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
           </div>
 
           <div>
-            <label className="section-label block mb-1">Model</label>
+            <label htmlFor="new-run-model" className="section-label block mb-1">
+              Model
+            </label>
             {availableModels.length > 0 ? (
               <select
+                id="new-run-model"
                 className="input-field"
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
@@ -186,6 +195,7 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
               </select>
             ) : (
               <input
+                id="new-run-model"
                 className="input-field"
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
@@ -200,8 +210,11 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
           </div>
 
           <div>
-            <label className="section-label block mb-1">Passes</label>
+            <label htmlFor="new-run-passes" className="section-label block mb-1">
+              Passes
+            </label>
             <input
+              id="new-run-passes"
               className="input-field"
               type="number"
               min={1}
@@ -216,8 +229,11 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
           </div>
 
           <div>
-            <label className="section-label block mb-1">Chrome Endpoint</label>
+            <label htmlFor="new-run-chrome" className="section-label block mb-1">
+              Chrome Endpoint
+            </label>
             <input
+              id="new-run-chrome"
               className="input-field"
               value={chrome}
               onChange={(e) => setChrome(e.target.value)}

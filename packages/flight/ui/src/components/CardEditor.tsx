@@ -137,13 +137,23 @@ export function CardEditor({ card, onSave, onDelete }: CardEditorProps) {
 
       <div className="space-y-4">
         <div>
-          <label className="section-label block mb-1">Title</label>
-          <input className="input-field" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <label htmlFor="card-title" className="section-label block mb-1">
+            Title
+          </label>
+          <input
+            id="card-title"
+            className="input-field"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
         </div>
 
         <div>
-          <label className="section-label block mb-1">Status</label>
+          <label htmlFor="card-status" className="section-label block mb-1">
+            Status
+          </label>
           <select
+            id="card-status"
             className="input-field"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
@@ -157,8 +167,11 @@ export function CardEditor({ card, onSave, onDelete }: CardEditorProps) {
         </div>
 
         <div>
-          <label className="section-label block mb-1">Tags</label>
+          <label htmlFor="card-tags" className="section-label block mb-1">
+            Tags
+          </label>
           <input
+            id="card-tags"
             className="input-field"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
@@ -167,8 +180,11 @@ export function CardEditor({ card, onSave, onDelete }: CardEditorProps) {
         </div>
 
         <div>
-          <label className="section-label block mb-1">Stakeholder</label>
+          <label htmlFor="card-stakeholder" className="section-label block mb-1">
+            Stakeholder
+          </label>
           <input
+            id="card-stakeholder"
             className="input-field"
             value={stakeholder}
             onChange={(e) => setStakeholder(e.target.value)}
@@ -177,8 +193,11 @@ export function CardEditor({ card, onSave, onDelete }: CardEditorProps) {
         </div>
 
         <div>
-          <label className="section-label block mb-1">Description</label>
+          <label htmlFor="card-description" className="section-label block mb-1">
+            Description
+          </label>
           <textarea
+            id="card-description"
             className="input-field"
             rows={4}
             value={description}
@@ -187,8 +206,11 @@ export function CardEditor({ card, onSave, onDelete }: CardEditorProps) {
         </div>
 
         <div>
-          <label className="section-label block mb-1">Acceptance Criteria</label>
+          <label htmlFor="card-criteria" className="section-label block mb-1">
+            Acceptance Criteria
+          </label>
           <textarea
+            id="card-criteria"
             className="input-field"
             rows={6}
             value={criteria}
