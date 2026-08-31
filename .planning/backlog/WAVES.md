@@ -1,15 +1,15 @@
 # Wave schedule
 
 Recomputed 2026-08-31 after Zak challenged the previous schedule as
-under-parallelised. He was right. **15 items, 4 waves, ~32 h wall clock.**
+under-parallelised. He was right. **16 items, 4 waves, ~32 h wall clock.**
 
-Effort is now **101.5 h**, up from 89.2 h — the Wave 1 Q&A tripled
+Effort is now **106.5 h**, up from 89.2 h — the Wave 1 Q&A tripled
 `tc-standards-conformance` (Moe replaces the sibling fork `ai/claude-code-platform-plugin`:
 4-5 h becomes 12-17 h) and grew `gsd-core-skill-import` (census plus an upstream-MIT
-import: 3-5 h becomes 5-7 h). Wall clock barely moved, 31 h to 31.8 h, because
-`tc-standards-conformance` at 14.5 h merely took over the W01 critical path from
-`installer-hq-dx` at 13.5 h. **That is the parallel schedule earning its keep: 12 h
-of new work cost 0.8 h of calendar.**
+import: 3-5 h becomes 5-7 h), and a second-upstream census — `mattpocock-skills-import`
+— added a new W02 item at 5 h. Wall clock is unchanged at 31.8 h: the new item sits
+in W02, whose wall (8 h) is bound by `codegraph-context-layer` and
+`deterministic-task-dag`, so 5 h of new work cost 0 h of calendar.
 
 The `W##` prefix on each filename is this schedule's wave assignment, and it is
 kept accurate. **`P##` is not.** It was originally "orders within a wave by effort,
@@ -35,7 +35,7 @@ whole backlog is startable.
 | Wave | Items | Effort | Wall |
 |---|---|---|---|
 | **W01** | `tc-standards-conformance` (14.5 h) · `installer-hq-dx` (13.5 h) · `native-renderers` (8.5 h) · `verification-split-and-firing-rate` (8.5 h) · `gsd-core-skill-import` (6 h) · `runtime-pruning` (5 h) · `moe-tone-and-branding` (4 h) · ~~`skill-set-fidelity-refactor`~~ **merged** | 65.5 h | 14.5 h |
-| **W02** | `codegraph-context-layer` (8 h) · `deterministic-task-dag` (8 h) · `moe-bare-binary-dispatcher` (4.5 h) · `parallel-execution-option` (2.5 h) | 23 h | 8 h |
+| **W02** | `codegraph-context-layer` (8 h) · `deterministic-task-dag` (8 h) · `mattpocock-skills-import` (5 h) · `moe-bare-binary-dispatcher` (4.5 h) · `parallel-execution-option` (2.5 h) | 28 h | 8 h |
 | **W03** | `tiered-workflow-naming` (5 h) · `tc-governance-integration` (3.75 h) | 8.75 h | 5 h |
 | **W04** | `contributing-flow-docs` (4.25 h) | 4.25 h | 4.25 h |
 

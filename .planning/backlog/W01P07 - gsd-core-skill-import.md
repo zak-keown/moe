@@ -197,6 +197,10 @@ returns **zero hits**. `systematic-debugging` (283 lines, 11 files) has no
 fault-localization step and no bug classification. Additive, prose-only,
 methodology-compatible — the opposite of the other 70.
 
+**Cross-checked against `mattpocock/skills` @ `6654f6b` by
+`mattpocock-skills-import` (2026-08-31) — no overlap; the 9 references remain
+the only source for SBFL / bug-taxonomy / ASVS content.**
+
 ## The license and provenance question
 
 **Resolved for everything recommended, and the diff is the proof.** All nine debugger
