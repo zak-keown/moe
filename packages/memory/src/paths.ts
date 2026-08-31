@@ -347,6 +347,61 @@ export function resolveUserJournalPath(): string {
 }
 
 /**
+ * Upstream's journal directory name, on both halves of the split.
+ *
+ * private-journal-mcp used `<project>/.private-journal` and
+ * `~/.private-journal`. Here they are `<project>/.moe-journal` and
+ * `<data dir>/journal`.
+ */
+export const LEGACY_JOURNAL_DIR_NAME = ".private-journal";
+
+/**
+ * Upstream journal directories that still exist and are NOT already being
+ * walked, project first.
+ *
+ * This exists because `journal import-legacy` looked only at the current roots.
+ * The command's entire purpose is to reconcile private-journal-mcp's
+ * `.embedding` sidecars — and the paths moved, so on any install that had not
+ * already hand-copied its journal across, the importer searched exactly the two
+ * directories the sidecars provably are not in. It reported
+ * "Legacy .embedding sidecars found: 0", which reads as "nothing to import"
+ * rather than "I did not look where your data is".
+ *
+ * Deliberately read-only and deliberately not a migration, matching
+ * `findLegacyDataDir`: the caller announces what it found and prints the copy
+ * command. Moving someone's journal behind their back is worse than telling
+ * them where it is — and unlike the conversation archive, journal entries carry
+ * private reflections, so quietly relocating them is a worse trade again.
+ *
+ * A legacy path that is already a current root is omitted: that is the
+ * `PRIVATE_JOURNAL_PATH` case, where the override points at the upstream
+ * directory and the normal walk already covers it. Reporting it would tell the
+ * user to copy a directory onto itself.
+ */
+export function findLegacyJournalRoots(): string[] {
+  const current = new Set(journalRoots());
+  const home = process.env.HOME || process.env.USERPROFILE || os.homedir();
+
+  const candidates = [
+    path.join(process.cwd(), LEGACY_JOURNAL_DIR_NAME),
+    path.join(home, LEGACY_JOURNAL_DIR_NAME),
+  ];
+
+  const found: string[] = [];
+  for (const candidate of candidates) {
+    const resolved = path.resolve(candidate);
+    if (current.has(resolved) || found.includes(resolved)) continue;
+    try {
+      if (!fs.statSync(resolved).isDirectory()) continue;
+    } catch {
+      continue; // Does not exist, or is unreadable — either way, nothing to announce.
+    }
+    found.push(resolved);
+  }
+  return found;
+}
+
+/**
  * The journal roots to read, resolved and de-duplicated.
  *
  * De-duplication is the fix for an upstream defect: when the path override is

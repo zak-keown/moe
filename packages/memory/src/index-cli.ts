@@ -10,7 +10,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createInterface } from "node:readline";
+import { initDatabase } from "./db.js";
 import { indexConversations, indexSession, indexUnprocessed } from "./indexer.js";
+import { JournalStore } from "./journal/store.js";
 import { getArchiveDir, getDbPath } from "./paths.js";
 import { repairIndex, verifyIndex } from "./verify.js";
 
@@ -173,6 +175,36 @@ export async function runIndex(args: string[]): Promise<number> {
 
     console.log("Re-indexing all conversations...");
     await indexConversations(undefined, undefined, concurrency, noSummaries);
+
+    // Re-index the journal too.
+    //
+    // `getDbPath()` is ONE database holding both record types — conversation
+    // turns and journal entries (src/db.ts). So `--rebuild` deletes the journal
+    // index as well, and re-indexing conversations does not bring it back: the
+    // command used to return 0 having silently emptied half the store. Journal
+    // markdown is the source of truth and always survives, so nothing was
+    // unrecoverable, but the user was never told they now had to run
+    // `moe-memory journal index` by hand, and a search would just quietly
+    // return nothing.
+    //
+    // Failure here is reported and does not fail the rebuild: the conversation
+    // re-index above may have taken hours and cost money in summarisation, and
+    // throwing that away over a journal walk would be the worse outcome.
+    console.log("Re-indexing the journal...");
+    const journalDb = initDatabase();
+    try {
+      const journal = await new JournalStore().indexJournal(journalDb);
+      console.log(
+        `✅ Journal re-indexed: ${journal.indexed} indexed, ${journal.failed} failed, ${journal.total} entries on disk`,
+      );
+    } catch (error) {
+      console.error(
+        `⚠️  Journal re-index failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      console.error("    Run `moe-memory journal index` to retry. Your entries are safe on disk.");
+    } finally {
+      journalDb.close();
+    }
     return 0;
   }
 

@@ -26,12 +26,27 @@
  * It is opt-in (`moe-memory journal import-legacy`) and never runs on its own:
  * deleting a file the user might still want read by an upstream install is not
  * something to do silently.
+ *
+ * FIXED: it searched only the CURRENT roots. The command exists because the
+ * paths moved on import — `<project>/.private-journal` → `<project>/.moe-journal`
+ * and `~/.private-journal` → `<data dir>/journal` — so on any install that had
+ * not already hand-copied its journal across, it walked exactly the two
+ * directories the sidecars provably are not in, found nothing, and printed
+ * "Legacy .embedding sidecars found: 0". Indistinguishable from success. It now
+ * also surveys the upstream directories (`findLegacyJournalRoots`) and reports
+ * them in `legacy`, so the caller can tell the user their data is over there.
+ *
+ * It reports rather than migrates, deliberately, matching `findLegacyDataDir`.
+ * Journal entries are private reflections; quietly relocating them is worse
+ * than quietly relocating a conversation archive, and that was already judged
+ * too much to do behind someone's back.
  */
 
 import fs from "node:fs/promises";
 import path from "node:path";
 import type Database from "better-sqlite3";
 import { getJournalIndexState } from "../db.js";
+import { findLegacyJournalRoots } from "../paths.js";
 import { DAY_DIR_PATTERN, journalEntryId } from "./markdown.js";
 import type { JournalStore } from "./store.js";
 
@@ -44,6 +59,43 @@ export interface LegacyImportResult {
   removed: number;
   /** Sidecars with no surviving `.md` beside them. */
   orphaned: string[];
+  /**
+   * Upstream journal directories that exist but are NOT being walked, with what
+   * is sitting in them.
+   *
+   * Empty is the normal case. Non-empty means this command cannot do its job
+   * yet: the paths moved on import (`.private-journal` → `.moe-journal`,
+   * `~/.private-journal` → `<data dir>/journal`), so the sidecars are still
+   * over there and nothing here can see them. Reported rather than migrated —
+   * see `findLegacyJournalRoots`.
+   */
+  legacy: Array<{ root: string; entries: number; sidecars: number }>;
+}
+
+/** Count `.md` entries and `.embedding` sidecars under a journal root. */
+async function surveyRoot(root: string): Promise<{ entries: number; sidecars: number }> {
+  let entries = 0;
+  let sidecars = 0;
+  let dayDirs: string[];
+  try {
+    dayDirs = await fs.readdir(root);
+  } catch {
+    return { entries, sidecars };
+  }
+  for (const dayDir of dayDirs) {
+    if (!DAY_DIR_PATTERN.test(dayDir)) continue;
+    let files: string[];
+    try {
+      files = await fs.readdir(path.join(root, dayDir));
+    } catch {
+      continue;
+    }
+    for (const file of files) {
+      if (file.endsWith(".md")) entries++;
+      else if (file.endsWith(".embedding")) sidecars++;
+    }
+  }
+  return { entries, sidecars };
 }
 
 export async function importLegacyJournalSidecars(
@@ -51,7 +103,20 @@ export async function importLegacyJournalSidecars(
   store: JournalStore,
   options: { remove?: boolean } = {},
 ): Promise<LegacyImportResult> {
-  const result: LegacyImportResult = { found: 0, indexed: 0, removed: 0, orphaned: [] };
+  const result: LegacyImportResult = {
+    found: 0,
+    indexed: 0,
+    removed: 0,
+    orphaned: [],
+    legacy: [],
+  };
+
+  // Look where the data actually is before reporting zero.
+  for (const legacyRoot of findLegacyJournalRoots()) {
+    const survey = await surveyRoot(legacyRoot);
+    if (survey.entries === 0 && survey.sidecars === 0) continue;
+    result.legacy.push({ root: legacyRoot, ...survey });
+  }
 
   // Re-index first: the markdown files are the source of truth, and every
   // sidecar's entry has to exist in the new index before we consider deleting it.

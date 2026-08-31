@@ -519,6 +519,45 @@ What is left, and why:
 | `style/noNonNullAssertion` | 18 | All in `test/`, on lock handles and mock calls the test has just asserted exist. The offered autofix is *unsafe* and would weaken the assertions (`expect(h!.path)` → `expect(h?.path)` passes on null), so `packages/crew`'s root-override answer applies here too. |
 | `suspicious/noTemplateCurlyInString` | 1 | `test/hooks.test.ts` asserts the literal `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` shell expansion in `hooks.json`. It is supposed to be a `${...}` inside a plain string. |
 
+## Four defects found by the post-merge audit, all fixed
+
+None of these were upstream bugs. Three are fork-introduced, and they cluster
+around the same structural change — one database now holds both record types,
+and both journals now share it across every project on the machine.
+
+1. **The journal index leaked and deleted across projects.** `journal_entries`
+   had no `root` column, so a `project`-scope id was
+   `md5("project:<day>/<file>.md")` — two repos that journalled in the same
+   second collided, `indexJournal()`'s prune deleted every row it had not just
+   walked (i.e. every *other* project's entries, on every server start), and
+   search returned other projects' private entries. One missing column, three
+   defects, both directions of the privacy property. Fixed with the column, a
+   `j.root IN (…)` retrieval filter, a prune restricted to walked roots, and a
+   migration that clears the derived index rather than guessing a backfill.
+   `test/journal-project-isolation.test.ts`.
+2. **`moe-memory index --rebuild` emptied the journal index and never rebuilt
+   it.** It deletes `getDbPath()`, which is *one* database holding both record
+   types, then re-indexed conversations only — and returned 0. Recoverable
+   (markdown is the source of truth) but never announced. It now re-indexes the
+   journal too, and reports a failure there without failing the rebuild, because
+   the conversation pass above it can cost hours and paid summarisation.
+3. **`journal import-legacy` looked only where the sidecars are not.** It walked
+   the current roots, but the command exists *because* the paths moved
+   (`<project>/.private-journal` → `.moe-journal`, `~/.private-journal` →
+   `<data dir>/journal`). Every upgraded install got
+   "Legacy .embedding sidecars found: 0" — indistinguishable from success.
+   `findLegacyJournalRoots()` now surveys the upstream directories and the CLI
+   prints what it found and the copy command. It reports rather than migrates,
+   matching `findLegacyDataDir`: journal entries are private reflections, so
+   relocating them silently is a worse trade than relocating an archive.
+4. **`journal search --limit 5 foo` searched for `"5 foo"`.** The query was
+   `rest.filter((a) => !a.startsWith("--")).join(" ")`, which drops flag names
+   but keeps their values — so `--scope`, `--limit` and `--journal-path` all
+   leaked into the search string. A semantic search does not fail on a polluted
+   query, it silently ranks worse, which is why nothing caught it. Replaced with
+   a single-pass parser (`parseJournalArgs`) so positionals and flags cannot
+   disagree. `test/journal-cli-args.test.ts`.
+
 ## Follow-ups
 
 - **`moe-mint` must generate this plugin's manifest**, and the generated tree
