@@ -1,0 +1,32 @@
+# kitchen-sink: fixture plugin — comment here guards bump's comment-preservation
+name: kitchen-sink
+version: 0.1.0
+description: Fixture plugin exercising every component type
+author: { name: Bubstack, email: dev@bubstack.example }
+license: MIT
+# Placeholder, in the same style as the homepage below — kitchen-sink is a
+# synthetic plugin, not Moe, so this is not self-reference and must not point at
+# the fork's own repo. It stays a github.com host on purpose: githubOwnerRepo()
+# (src/adapters/shared.ts) only shortens github.com URLs to an owner/repo slug,
+# and four adapters' install docs depend on that branch being exercised here.
+repository: https://github.com/example/kitchen-sink
+keywords: [fixture]
+
+bootstrap:
+  skill: using-kitchen-sink
+
+harnesses:
+  claude-code:
+    manifest:
+      homepage: https://example.com/kitchen-sink
+
+marketplace:
+  name: kitchen-sink-market
+  category: Developer Tools
+  tags: [demo, fixture]
+
+release:
+  files:
+    - { path: release.json, field: version }
+  audit:
+    exclude: []

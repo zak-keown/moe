@@ -1,0 +1,102 @@
+import { describe, it, expect, vi } from 'vitest'
+import { cpSync, mkdtempSync, writeFileSync, readFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { generate } from '../src/generate.js'
+import { validate } from '../src/validate.js'
+import { ConfigError } from '../src/config.js'
+
+function generatedFixture(): string {
+  const dir = mkdtempSync(join(tmpdir(), 'mint-val-'))
+  cpSync('fixtures/kitchen-sink', dir, { recursive: true })
+  generate(dir)
+  return dir
+}
+
+// Reproduces issue #10: a plugin generated under a prior moe-mint
+// version (committed files + manifest still valid) whose moe-mint.yaml
+// has since been hand-edited into v1 syntax. generate() already refuses this
+// via loadConfig; validate() must refuse it too instead of reporting clean.
+function v1ConfigFixture(): string {
+  const dir = generatedFixture()
+  const yamlPath = join(dir, 'moe-mint.yaml')
+  const yaml = readFileSync(yamlPath, 'utf8')
+  const v1Yaml = yaml.replace('bootstrap:\n  skill: using-kitchen-sink', 'bootstrap:\n  generate: true')
+  expect(v1Yaml).not.toEqual(yaml) // guard: fail loudly if the fixture's bootstrap block ever changes shape
+  writeFileSync(yamlPath, v1Yaml)
+  return dir
+}
+
+describe('validate', () => {
+  it('passes on a freshly generated plugin', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const result = validate(generatedFixture())
+    expect(result.drift.clean).toBe(true)
+    expect(result.schemaErrors).toEqual([])
+    expect(result.ok).toBe(true)
+    expect(errorSpy).not.toHaveBeenCalled()
+    expect(warnSpy).not.toHaveBeenCalled()
+    errorSpy.mockRestore()
+    warnSpy.mockRestore()
+  })
+
+  it('reports drift when a generated file is hand-edited', () => {
+    const dir = generatedFixture()
+    writeFileSync(join(dir, '.claude-plugin/plugin.json'), '{"name":"tampered"}')
+    const result = validate(dir)
+    expect(result.ok).toBe(false)
+    expect(result.drift.modified).toEqual(['.claude-plugin/plugin.json'])
+  })
+
+  it('reports schema violations in generated manifests', () => {
+    const dir = generatedFixture()
+    // Corrupt plugin.json in a schema-relevant way AND refresh the recorded
+    // hash so this test isolates schema checking from drift checking.
+    const manifestPath = join(dir, '.claude-plugin/plugin.json')
+    const broken = JSON.stringify({ version: '0.1.0' }) + '\n' // missing required "name"
+    writeFileSync(manifestPath, broken)
+    const recorded = JSON.parse(readFileSync(join(dir, '.moe-mint/manifest.json'), 'utf8'))
+    recorded.files['.claude-plugin/plugin.json'] = {
+      sha256: createHash('sha256').update(broken).digest('hex')
+    }
+    writeFileSync(join(dir, '.moe-mint/manifest.json'), JSON.stringify(recorded))
+    const result = validate(dir)
+    expect(result.drift.clean).toBe(true)
+    expect(result.ok).toBe(false)
+    expect(result.schemaErrors.join('\n')).toMatch(/name/)
+  })
+
+  it('reports schema violations against the 2020-dialect agent-plugins schema', () => {
+    const dir = generatedFixture()
+    // Corrupt the agent-plugins-1.0 plugin.json (validated under Ajv2020, not
+    // the plain Ajv used for the draft-07 claude-code schema) and refresh its
+    // recorded hash so this isolates the 2020-dialect check from drift.
+    const manifestPath = join(dir, 'plugin.json')
+    const broken = JSON.stringify({ version: '0.1.0' }) + '\n' // missing required "$schema" and "name"
+    writeFileSync(manifestPath, broken)
+    const recorded = JSON.parse(readFileSync(join(dir, '.moe-mint/manifest.json'), 'utf8'))
+    recorded.files['plugin.json'] = {
+      sha256: createHash('sha256').update(broken).digest('hex')
+    }
+    writeFileSync(join(dir, '.moe-mint/manifest.json'), JSON.stringify(recorded))
+    const result = validate(dir)
+    expect(result.drift.clean).toBe(true)
+    expect(result.ok).toBe(false)
+    expect(result.schemaErrors.join('\n')).toMatch(/name/)
+  })
+
+  it('throws ConfigError instead of reporting clean when moe-mint.yaml is v1 syntax (issue #10)', () => {
+    const dir = v1ConfigFixture()
+    expect(() => validate(dir)).toThrow(ConfigError)
+    expect(() => validate(dir)).toThrow(/bootstrap is now a tagged value/)
+  })
+
+  it('reports the ConfigError, not a drift report, when a v1 config AND drift are both present', () => {
+    const dir = v1ConfigFixture()
+    writeFileSync(join(dir, '.claude-plugin/plugin.json'), '{"name":"tampered"}')
+    expect(() => validate(dir)).toThrow(ConfigError)
+    expect(() => validate(dir)).toThrow(/bootstrap is now a tagged value/)
+  })
+})
