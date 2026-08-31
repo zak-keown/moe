@@ -1,0 +1,23 @@
+# Upstream reference snapshots: 19 nested git repos, pinned in PARITY.md.
+# Never tracked here — they are the parity spec, not our source.
+.references/
+
+node_modules/
+dist/
+build/
+target/
+.turbo/
+*.tsbuildinfo
+
+# Python (py/proof)
+__pycache__/
+.venv/
+*.egg-info/
+
+# Generated plugin manifests — produced by @moe/mint, never hand-edited.
+/plugins/
+
+.DS_Store
+*.log
+.env
+.env.*

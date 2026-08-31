@@ -1,0 +1,53 @@
+Moe
+Copyright 2026 Zak Keown
+
+This product is a hard fork of, and contains code and documentation derived
+from, the following upstream projects. Exact forked revisions are recorded in
+PARITY.md.
+
+--------------------------------------------------------------------------------
+Jesse Vincent <jesse@fsck.com> (github.com/obra)
+  Licensed under the MIT License:
+    superpowers
+    superpowers-lab
+    superpowers-developing-for-claude-code
+    superpowers-chrome
+    superpowers-marketplace
+    episodic-memory
+    private-journal-mcp
+    claude-session-driver
+    double-shot-latte
+
+  Public domain:
+    the-elements-of-style
+      (writing guidance after William Strunk Jr., "The Elements of Style", 1918)
+
+--------------------------------------------------------------------------------
+Prime Radiant, Inc. (github.com/prime-radiant-inc)
+  Licensed under the Apache License, Version 2.0:
+    gauntlet
+    greenfield
+    iterative-development
+    obol
+    prime-radiant-marketplace
+
+  Licensed under the MIT License:
+    everyharness
+    everyharness-container
+    smevals
+
+  See obol/NOTICE in the upstream snapshot for obol's own attributions,
+  which are carried forward into packages/tab.
+
+--------------------------------------------------------------------------------
+UNRESOLVED
+
+  superpowers-evals (Prime Radiant, Inc.) ships no LICENSE file and no
+  package.json license field. No grant of rights has been located. It is the
+  largest single body of forked material (796 files). See PARITY.md
+  "License exposure" before this code is redistributed outside the team.
+
+--------------------------------------------------------------------------------
+
+Copies of the MIT License and the Apache License 2.0 as received from upstream
+are retained alongside the code derived from them, under each package.
