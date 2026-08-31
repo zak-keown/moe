@@ -63,7 +63,7 @@
       "sha256": "1190f01dceb7882b51c7f46ed3143ee388f2c8148e2e988e522c1ef1844dc289"
     },
     "docs/install/claude-code.md": {
-      "sha256": "1ef11d0659f2960b60bf45ac5e61a2120d338eee875e6ba2b1989a0fec1e1c88"
+      "sha256": "317a0023e5c3c26418b198d83f60c9931f279e50d05ec545c9185c611d0c87cc"
     },
     "docs/install/codex.md": {
       "sha256": "6afac6f4e7a74e3005e5fd5e8dc1d54f947356e823785e037136aece34116ba4"
@@ -72,13 +72,13 @@
       "sha256": "9543fd176f86f854eec3a3fd68c0c4cc66bfc8ee8d5dda6b95e74e7b91e3ea57"
     },
     "docs/install/devin.md": {
-      "sha256": "bf83cb55370a2d73cca65daff7d8375c7f65eb51f19b0216b077c22ea44538f3"
+      "sha256": "15487ed67cb1867fa66ffea69e93e3f8aa148ff5e7add31a083e497c7319601c"
     },
     "docs/install/gemini.md": {
       "sha256": "cbb2491e777b2f51c6be165311517dd1a85c246753a1f9c3dd1f35bea7c56d48"
     },
     "docs/install/hermes.md": {
-      "sha256": "a13490dee343ca3824a07fd6db17bab3edf4f8b32e86f05fb43941a2fe6214ef"
+      "sha256": "ad46dbaff6bdbf321c3d70a72e21f240cc4d2918378a0b4c5f98fd3ebb5e0957"
     },
     "docs/install/kimi.md": {
       "sha256": "e1b33a0a9aecca32d4cbb1a22574fa4fa2678542c10f7698485d03d04d75e55d"
@@ -87,7 +87,7 @@
       "sha256": "5c719c9a15a9418bee237337221153e48a0342953dd9771c83bf2b42f24cf52e"
     },
     "docs/install/pi.md": {
-      "sha256": "a1726d5cf3ed6d6c2c51ad28085a3bd13f9ced4fb9c8fcd860b98ed99e2be715"
+      "sha256": "bfc0deb9298ace7ca6343b03045c6e80e1fe30d3a035ca046559a8bb274d7855"
     },
     "docs/support-matrix.md": {
       "sha256": "8bb548a7a88bc4bd2d32351dc53dfa15523fcf8c82a35fdb0ee4b65ccf644700"

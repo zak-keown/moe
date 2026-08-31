@@ -5,7 +5,7 @@ import type { MintConfig } from '../config.js'
 import type { HarnessAdapter, EmitResult } from './types.js'
 import { sessionStartScript, runHookCmd, mergedClaudeHooks } from '../bootstrap/shell-hook.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
-import { baseManifestFields, json, githubOwnerRepo, marketplaceName, bootstrapEmitsHooks } from './shared.js'
+import { baseManifestFields, json, claudeMarketplaceTarget, marketplaceName, bootstrapEmitsHooks } from './shared.js'
 
 // Where the claude-code adapter emits the bootstrap SessionStart hook and its
 // merged hooks.json, when config.bootstrap.kind === 'skill'.
@@ -98,14 +98,16 @@ function marketplaceManifest(model: PluginModel): Record<string, unknown> {
 }
 
 // Ground truth per Design decision 4: `claude /plugin marketplace add REPO`
-// then `/plugin install <name>@<marketplace-name>`, with REPO substituted from
-// config.repository when it's a github.com URL and a `<your-repo>`
-// placeholder otherwise (never a fabricated marketplace listing), and
-// marketplace-name resolved by marketplaceName() — config.marketplace.name
-// when set, otherwise the local-dev default `<name>-dev`.
+// then `/plugin install <name>@<marketplace-name>`, with REPO substituted
+// from config.repository — `owner/repo` shorthand for github.com URLs and
+// the full URL for any other supported host (`gitlab.tcdevops.com`, etc.);
+// falls back to `<your-repo>` only for ssh/file inputs or when no repository
+// is set. Marketplace-name resolved by marketplaceName() —
+// config.marketplace.name when set, otherwise the local-dev default
+// `<name>-dev`.
 function installDoc(model: PluginModel): string {
   const { config } = model
-  const repo = githubOwnerRepo(config.repository) ?? '<your-repo>'
+  const repo = claudeMarketplaceTarget(config.repository) ?? '<your-repo>'
   const bootstrapActive = bootstrapEmitsHooks(config, claudeCode.name)
 
   const emitted = ['`.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`']

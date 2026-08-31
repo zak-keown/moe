@@ -2,7 +2,7 @@ import { stringify } from 'yaml'
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
 import type { HarnessAdapter, EmitResult } from './types.js'
-import { githubOwnerRepo } from './shared.js'
+import { parseRepo } from './shared.js'
 import { bootstrapContentPath } from '../bootstrap/node-package.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
 
@@ -216,11 +216,14 @@ function initPyFile(model: PluginModel): GeneratedFile {
 }
 
 // Ground truth per Design decision 4: `hermes plugins install REPO --enable`,
-// with REPO substituted from config.repository when it's a github.com URL
-// and a `<your-repo>` placeholder otherwise (never a fabricated listing).
+// with REPO substituted from config.repository — `owner/repo` shorthand on
+// github.com, the full http(s) URL for any other supported host (Hermes
+// installs from either shape) — and a `<your-repo>` placeholder otherwise
+// (never a fabricated listing).
 function installDoc(model: PluginModel): string {
   const { config } = model
-  const repo = githubOwnerRepo(config.repository) ?? '<your-repo>'
+  const ref = parseRepo(config.repository)
+  const repo = ref ? (ref.host === 'github.com' ? ref.ownerRepo : ref.url) : '<your-repo>'
 
   const emitted = [
     "`.hermes-plugin/plugin.yaml` and `.hermes-plugin/__init__.py`, which register every skill natively and (when bootstrap is configured) inject bootstrap content via `pre_llm_call`",

@@ -323,6 +323,15 @@ Both are empty today. Populate them from an import census, not from names.
 | `cargo` ≥ 1.98 | `pnpm tab:build`, `pnpm tab:test` | installed, **needs a PATH entry** |
 | `uv` ≥ 0.12 | `pnpm proof:test` | installed; resolves Python 3.14 |
 
+**The end-user install path has its own diagnostic.** `bin/moe-doctor`
+probes every prerequisite Moe cares about (Node, pnpm, git, bash on win32,
+`claude` CLI, plus five soft capabilities), names the capability each miss
+disables, and gives one concrete fix per gap. `bin/moe-install` orchestrates
+`claude plugin marketplace add` and `claude plugin install` calls (dry-run
+by default; `--apply` executes; `--migrate` handles the renamed MCP keys
+from §7). Both are dependency-free ESM Node so they work on a fresh checkout
+with nothing installed but Node itself. See `INSTALL.md`.
+
 **cargo is installed but not on PATH.** rustup owns the toolchain, brew's `rust`
 formula could not link over rustup's shims, and `brew cleanup` then pruned
 `/opt/homebrew/bin/{cargo,rustc}`. There is no `~/.cargo/bin`. The working binary

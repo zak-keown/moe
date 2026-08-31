@@ -21,7 +21,8 @@
     "tab:build": "cargo build --release --manifest-path packages/tab/Cargo.toml",
     "tab:test": "cargo test --manifest-path packages/tab/Cargo.toml",
     "tab:test:bindings": "pnpm tab:build && uv run --project packages/tab/bindings/python pytest packages/tab/bindings/python",
-    "test": "turbo run test",
+    "test": "turbo run test && pnpm test:bin",
+    "test:bin": "node --test bin/test/*.test.mjs",
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {

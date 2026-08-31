@@ -217,6 +217,22 @@ describe('hermes adapter installDoc', () => {
     const doc = hermes.installDoc?.(model)
     expect(doc).toContain('__pycache__')
   })
+
+  it('uses `owner/repo` shorthand for github and the full URL for a non-github host', () => {
+    // Regression: the previous helper returned undefined for non-github URLs,
+    // so `hermes plugins install <your-repo> --enable` was emitted for Moe's
+    // own gitlab.tcdevops.com repository. Now the full URL is used.
+    const dir = tmpFixture(
+      'name: gh\nversion: 1.0.0\ndescription: self-hosted gitlab fixture\nrepository: https://gitlab.tcdevops.com/Zak/moe\nbootstrap: none\n',
+    )
+    const gitlabModel = buildModel(dir)
+    const gitlabDoc = hermes.installDoc?.(gitlabModel)
+    expect(gitlabDoc).toContain('hermes plugins install https://gitlab.tcdevops.com/Zak/moe --enable')
+    expect(gitlabDoc).not.toContain('<your-repo>')
+
+    // Kitchen-sink still uses owner/repo shorthand on github.com.
+    expect(hermes.installDoc?.(model)).toContain('hermes plugins install example/kitchen-sink --enable')
+  })
 })
 
 describe('hermes plugin.py -- execution smoke test', () => {

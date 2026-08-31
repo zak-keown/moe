@@ -50,15 +50,45 @@ export function marketplaceName(config: MintConfig): string {
   return config.marketplace?.name ?? `${config.name}-dev`
 }
 
-const GITHUB_REPO_URL = /^https?:\/\/github\.com\/([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/
+// Any http(s) URL of the shape `https://<host>/<owner>/<repo>[.git]`.
+// The three git-hosting shapes moe currently supports — github.com,
+// gitlab.com, gitlab.tcdevops.com — all match this. ssh syntax
+// (`git@host:owner/repo.git`) and file paths are deliberately NOT matched;
+// callers fall back to a `<your-repo>` placeholder in those cases, because
+// no install command reliably accepts them across harnesses.
+const REPO_URL = /^https?:\/\/([^/\s]+)\/([^/\s]+)\/([^/\s]+?)(?:\.git)?\/?$/
 
-// Extracts "owner/repo" from config.repository when it's a github.com URL —
-// used by installDoc bodies to build a concrete install command instead of
-// falling back to a placeholder. Any other form (a different host, ssh
-// syntax, or no repository at all) returns undefined; callers substitute
-// their own placeholder rather than guess.
-export function githubOwnerRepo(repository: string | undefined): string | undefined {
+// A parsed http(s) repository URL, split into the pieces every install-doc
+// path needs: the host (so pi's `git:HOST/OWNER/REPO` shape and non-github
+// harness commands can be built), `owner/repo` (used verbatim in
+// github-shorthand commands and after `git:HOST/`), and the normalized URL
+// (used verbatim by harnesses that want a full URL). `url` preserves a
+// trailing `.git` when the input had one — a bare `https://gitlab.…/owner/repo`
+// resolves against non-`.git` git remotes and Claude Code accepts both.
+export type RepoRef = {
+  host: string
+  ownerRepo: string
+  url: string
+}
+
+// Parses config.repository. Returns undefined for missing input or any
+// non-http(s) form (ssh, file path) — callers substitute their own placeholder
+// rather than guess a shape that might not resolve.
+export function parseRepo(repository: string | undefined): RepoRef | undefined {
   if (!repository) return undefined
-  const match = GITHUB_REPO_URL.exec(repository.trim())
-  return match ? `${match[1]}/${match[2]}` : undefined
+  const trimmed = repository.trim()
+  const match = REPO_URL.exec(trimmed)
+  if (!match) return undefined
+  const [, host, owner, repo] = match
+  return { host: host!, ownerRepo: `${owner}/${repo}`, url: trimmed.replace(/\/$/, '') }
+}
+
+// The claude-code marketplace-add target: `owner/repo` shorthand on
+// github.com (what `claude /plugin marketplace add` accepts natively), and
+// the full URL otherwise. Returns undefined when parseRepo fails so callers
+// keep their `<your-repo>` fallback.
+export function claudeMarketplaceTarget(repository: string | undefined): string | undefined {
+  const ref = parseRepo(repository)
+  if (!ref) return undefined
+  return ref.host === 'github.com' ? ref.ownerRepo : ref.url
 }
