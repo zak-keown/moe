@@ -116,6 +116,25 @@ const registry: Record<string, { tier: string; from: string; why: string }> = {
   ...authored,
 };
 
+// How many skills the lean plugin ships. A BUDGET, not a fidelity check, and
+// not a token budget either.
+//
+// The number is stated here rather than derived from the manifest on purpose:
+// its whole job is to make any tier reassignment a two-file diff, so that moving
+// a skill between tiers shows up in review as a deliberate act instead of a
+// silently recomputed total. Nothing breaks if it changes — change it, in the
+// same commit as the `tier:` line that made it wrong.
+//
+// The live tiebreak behind the split is TRIGGER COLLISION
+// (skill-tiers.yaml:35-42): where the closure rule does not force the answer,
+// the tie goes to `everything` only if the skill's description claims a trigger
+// a core-tier skill already claims, and absent a collision it goes to `core`.
+// It is NOT "ERR SMALL", which said the tie goes to `everything` because
+// descriptions cost resident context — that rule was deleted 2026-08-31 in
+// 0b1571d after its premise was measured and did not hold (all 27
+// name+description pairs are ~1,480 tokens; the bodies load on demand).
+const LEAN_TIER_BUDGET = 13;
+
 // Every markdown file we are allowed to make assertions about: the skill bodies
 // and companion documents this fork authored or rebranded. Excludes third-party
 // verbatim text and the example plugins.
@@ -132,13 +151,20 @@ describe("skill inventory", () => {
     expect(nonSkill).toEqual(["_shared"]);
   });
 
-  it("ships exactly 27 skills", () => {
+  it("pins the IMPORTED skill set at exactly 27", () => {
     // ARCHITECTURE.md section 4 and the root marketplace both say 28. The real
     // count across the six sources is 27: superpowers 14, iterative-development
     // 6, superpowers-lab 4, superpowers-developing-for-claude-code 2,
     // the-elements-of-style 1, double-shot-latte 0 (hooks only). The 28th was
     // `example-workflow`, a pseudo-skill inside an example plugin.
-    expect(skills.length).toBe(27);
+    //
+    // Counts `imported:`, not the directory. The GRAND total is deliberately no
+    // longer asserted anywhere: it follows from the completeness equality below,
+    // and asserting it as well is what used to make a fork-authored skill
+    // impossible — a 28th directory failed this line and the pinned literal at
+    // once, on two assertions whose real job is detecting an upstream DROP.
+    // Adding a Moe-original skill is now a two-line manifest diff, not a wall.
+    expect(Object.keys(imported).length).toBe(27);
   });
 
   it("every skill has a non-empty name and description", () => {
@@ -213,7 +239,28 @@ describe("skill inventory", () => {
       "developing-claude-code-plugins",
       "working-with-claude-code",
     ].sort();
-    expect([...skillNames].sort()).toEqual(expected);
+    // Asserted against `imported:` rather than against the directory, and it
+    // must stay `toEqual`. This is the drop-and-rename detector for the whole
+    // import: a skill deleted from the tree still fails, via the completeness
+    // equality below, and a skill RENAMED in only one of the two places fails
+    // here. Weakening this to a superset check would retire the detector.
+    expect(Object.keys(imported).sort()).toEqual(expected);
+  });
+
+  it("accounts for every skill on disk in exactly one of the two maps", () => {
+    // Completeness and disjointness, the pair that replaces the old
+    // `Object.keys(skills).sort()).toEqual([...skillNames].sort())`. Together
+    // with the pinned literal above they are strictly stronger than what they
+    // replaced: nothing may exist on disk without a manifest entry, nothing may
+    // be registered without existing, and no name may sit in both maps.
+    expect(authored, "authored: parsed as null — it needs an explicit {}").not.toBeNull();
+    expect(typeof authored).toBe("object");
+
+    const registered = [...Object.keys(imported), ...Object.keys(authored)].sort();
+    expect(registered, "skills/ and skill-tiers.yaml disagree").toEqual([...skillNames].sort());
+
+    const inBoth = Object.keys(imported).filter((n) => n in authored);
+    expect(inBoth, "registered as both imported and authored").toEqual([]);
   });
 });
 
@@ -580,10 +627,61 @@ describe("the lean/full curation", () => {
     }
   });
 
+  it("records a known provenance for every skill, per map", () => {
+    // The five upstream sources, distributed 14/6/4/2/1 = 27. A sixth value
+    // appearing under `imported:` means a skill arrived from somewhere nobody
+    // recorded, which is the thing PARITY.md exists to prevent; a value here
+    // that is not in that ledger is drift between the two.
+    const UPSTREAM = [
+      "superpowers",
+      "superpowers-lab",
+      "superpowers-developing-for-claude-code",
+      "iterative-development",
+      "the-elements-of-style",
+    ];
+    for (const [name, entry] of Object.entries(imported)) {
+      expect(UPSTREAM, `imported.${name}.from is not a known upstream source`).toContain(
+        entry.from,
+      );
+    }
+    // An authored skill has no upstream to name. Asserted in both directions so
+    // neither map can borrow the other's vocabulary: an authored entry claiming
+    // `from: superpowers` would launder a fork-original as inherited, and an
+    // imported entry claiming the authored value would erase a real provenance.
+    for (const [name, entry] of Object.entries(authored)) {
+      expect(entry.from, `authored.${name}.from must be the fork's own value`).toBe("moe");
+      expect(UPSTREAM, `authored.${name}.from names an upstream source`).not.toContain(entry.from);
+    }
+    for (const [name, entry] of Object.entries(imported)) {
+      expect(entry.from, `imported.${name}.from is the fork's own value`).not.toBe("moe");
+    }
+  });
+
+  it("keeps every fork-authored skill in the everything tier", () => {
+    // DECISION D2, Zak Keown, 2026-08-31. A fork-authored skill is
+    // `tier: everything` only, FOR NOW.
+    //
+    // This is CURRENT POLICY and it is REVERSIBLE — it is not a law, and it is
+    // not a claim that a Moe-original skill could never earn the lean tier. It
+    // exists so that the FIRST core-tier authored skill is a conversation
+    // somebody has on purpose, rather than a default nobody chose. When that
+    // conversation happens, flip this assertion; do not work around it.
+    //
+    // Vacuous while `authored:` is empty, which is why it was driven RED once
+    // against a throwaway entry rather than trusted because the suite was green.
+    for (const [name, entry] of Object.entries(authored)) {
+      expect(
+        entry.tier,
+        `authored.${name}.tier is "${entry.tier}". Fork-authored skills are everything-tier only — CURRENT POLICY (D2, 2026-08-31), reversible by deliberate decision, not by editing this manifest.`,
+      ).toBe("everything");
+    }
+  });
+
   it("keeps the lean tier lean", () => {
     const core = Object.entries(registry).filter(([, e]) => e.tier === "core");
-    expect(core.length).toBe(13);
-    expect(core.length).toBeLessThan(skills.length / 2 + 1);
+    expect(core.length, "lean tier moved — update LEAN_TIER_BUDGET deliberately").toBe(
+      LEAN_TIER_BUDGET,
+    );
   });
 
   it("no core-tier skill REQUIREs an everything-tier skill", () => {
@@ -591,6 +689,19 @@ describe("the lean/full curation", () => {
     // reader does not have installed is a dead end mid-workflow, and the lean
     // plugin is the one most people will be running.
     const tierOf = (n: string) => registry[n]?.tier;
+
+    // Anti-vacuity guard, and it is load-bearing rather than defensive.
+    //
+    // The loop below SKIPS any skill whose tier does not resolve. Before the two
+    // maps existed, a broken lookup threw — `tiers.skills[n]` on an undefined
+    // map is a TypeError — so the failure was loud by accident. The merged
+    // registry removed that accident: `{...undefined}` evaluates to `{}` in
+    // silence, so one mistyped spread key would leave every tier undefined, skip
+    // all 27 iterations, and let this test pass with an empty body and the
+    // closure rule gone. An empty list here is what earns the loop below.
+    const unresolved = skills.filter((s) => tierOf(s.name) === undefined).map((s) => s.name);
+    expect(unresolved, "no tier resolved for these — the loop below would skip them").toEqual([]);
+
     const offenders: string[] = [];
     for (const s of skills) {
       if (tierOf(s.name) !== "core") continue;
@@ -683,6 +794,15 @@ describe("the rebrand", () => {
       ["mint/moe-core.yaml", ["superpowers", "everyharness"]],
       ["mint/moe-everything.yaml", ["superpowers", "everyharness"]],
       ["skills/using-moe/references/opencode-tools.md", ["superpowers"]],
+      // Added PRE-EMPTIVELY for W01P02 (moe-tone-and-branding), decision D4.
+      // That item creates this file — a reference document inside an existing
+      // skill directory, not a 28th skill, so it moves no count. A house-voice
+      // document explaining this fork's tone will very likely name the upstream
+      // project it diverged from, and the sweep below walks every .md under
+      // skills/. The entry is INERT until the file exists: the loop reads
+      // `provenance.get(rel)` for files found on DISK, so a key naming nothing
+      // is never looked up and nothing asserts a key must resolve.
+      ["skills/writing-clearly-and-concisely/house-voice.md", ["superpowers"]],
     ]);
     // In a Markdown document there is no "live code" position, so an enumerated
     // exemption covers the whole file. In config and code, it covers comments
