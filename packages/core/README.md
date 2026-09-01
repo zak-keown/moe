@@ -91,10 +91,13 @@ skills/                 27 skills, one flat namespace. Six upstreams merged here
   _shared/              3 PAR reference documents. NOT a skill — no SKILL.md, so
                         moe-mint's readSkills() skips it. Was skills/shared/.
 hooks/
-  hooks.json            The Stop hook only. moe-mint owns SessionStart.
+  hooks.json            Two Stop entries. moe-mint owns SessionStart.
   run-hook.cmd          The cmd/bash polyglot dispatcher. One of four upstream
                         copies; see below.
-  claude-judge-continuation   The Stop hook. Opt-in, default OFF.
+  claude-judge-continuation   Stop hook 1: judge model. Opt-in, default OFF.
+  moe-completion-evidence     Stop hook 2: transcript evidence + Skill-firing
+                        counter, default ON. Set MOE_EVIDENCE_DISABLED=1 to
+                        disable. Writes $HOME/.claude/moe/audit/<repo>/.
 scripts/validate_skill.py     Frontmatter validator, exercised by test/iterative-development/.
 mint/
   moe-core.yaml         The lean plugin's config. Seeded from

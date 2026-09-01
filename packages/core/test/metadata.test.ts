@@ -412,8 +412,7 @@ describe("cross-references", () => {
       const text = readFileSync(p, "utf8");
       // Either the skill carries the fallback vocabulary itself, or it
       // references the PAR document that carries the fallback for it.
-      const hasFallback =
-        /\b(sequential|serial|fallback)\b/i.test(text) || text.includes(parRef);
+      const hasFallback = /\b(sequential|serial|fallback)\b/i.test(text) || text.includes(parRef);
       if (!hasFallback) offenders.push(name);
     }
     expect(
@@ -443,6 +442,7 @@ const NOT_COMMITTED = new Set(["/skills/working-with-claude-code/references/"]);
 // are `require`d rather than executed and correctly carry no bit.
 const X_BIT_ALLOWLIST = [
   "hooks/claude-judge-continuation",
+  "hooks/moe-completion-evidence",
   "hooks/plan-set",
   "hooks/plan-set-notice",
   "hooks/run-hook.cmd",
@@ -581,7 +581,13 @@ describe("runtime paths", () => {
       } else if (base.endsWith(".cjs") || base.endsWith(".mjs")) {
         node.push(rel);
       } else if (!base.includes(".")) {
-        // Read only the first line: some of these are long.
+        // Read only the first line: some of these are long. Route by the
+        // shebang's interpreter — bash/sh go to `bash -n`, node goes to
+        // `node --check`, so a Node-shebang extensionless hook (the
+        // moe-completion-evidence pattern) is syntax-checked by the right
+        // tool. Only the four extensionless bash scripts existed before
+        // that routing was added, and the metadata test relied on none of
+        // them ever being anything but bash.
         const first = readFileSync(abs, "utf8").split(/\r?\n/)[0] ?? "";
         if (/^#!.*\b(bash|sh)\b/.test(first)) bash.push(rel);
         else if (/^#!.*\bnode\b/.test(first)) node.push(rel);
@@ -590,10 +596,11 @@ describe("runtime paths", () => {
 
     // Floors. A walk that stopped finding anything — a moved directory, a
     // tightened filter — would otherwise satisfy every assertion below by
-    // iterating zero times. Node floor is 5 now, not 4: the four .cjs/.mjs
-    // scripts plus the extensionless `hooks/plan-set` with a node shebang.
+    // iterating zero times. Node floor is 6 now, not 5: the four .cjs/.mjs
+    // scripts plus the two extensionless Node hooks (`hooks/plan-set` and
+    // `hooks/moe-completion-evidence`) with node shebangs.
     expect(bash.length, "bash targets discovered").toBeGreaterThanOrEqual(11);
-    expect(node.length, "node targets discovered").toBeGreaterThanOrEqual(5);
+    expect(node.length, "node targets discovered").toBeGreaterThanOrEqual(6);
     for (const rel of [
       "hooks/claude-judge-continuation",
       "hooks/plan-set-notice",
@@ -607,9 +614,11 @@ describe("runtime paths", () => {
       expect(bash, `extensionless script ${rel} not routed to bash -n`).toContain(rel);
     }
     // Extensionless node script(s). Same regression concern in the mirror
-    // direction: if the node-shebang branch above is removed, plan-set falls
+    // direction: if the node-shebang branch above is removed, these fall
     // through and node's floor could still be met by the .cjs/.mjs four.
-    for (const rel of ["hooks/plan-set"]) {
+    // Both plan-set (deterministic-task-dag) and moe-completion-evidence
+    // (verification-split-and-firing-rate) are extensionless Node hooks.
+    for (const rel of ["hooks/plan-set", "hooks/moe-completion-evidence"]) {
       expect(node, `extensionless script ${rel} not routed to node --check`).toContain(rel);
     }
     expect(bash).not.toContain("hooks/run-hook.cmd");
@@ -632,7 +641,10 @@ describe("runtime paths", () => {
 
 describe("hooks", () => {
   const hooks = JSON.parse(readFileSync(join(PKG, "hooks/hooks.json"), "utf8")) as {
-    hooks: Record<string, Array<{ hooks: Array<{ command: string; shell?: string }> }>>;
+    hooks: Record<
+      string,
+      Array<{ matcher?: string; hooks: Array<{ command: string; shell?: string }> }>
+    >;
   };
 
   it("registers the SessionStart and Stop hooks, and nothing else", () => {
@@ -659,6 +671,7 @@ describe("hooks", () => {
     const entry = hooks.hooks.SessionStart?.[0]?.hooks?.[0];
     expect(entry).toBeDefined();
     const cmd = entry?.command as string;
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal from hooks.json
     expect(cmd).toContain('"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd" plan-set-notice');
     expect(entry?.shell).toBe("bash");
     // The matcher covers the three lifecycle events that give the notice a
@@ -673,15 +686,36 @@ describe("hooks", () => {
     const entry = hooks.hooks.Stop?.[0]?.hooks?.[0];
     expect(entry).toBeDefined();
     const cmd = entry?.command as string;
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal from hooks.json
     expect(cmd).toContain("${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd");
     // Quoted, because ${CLAUDE_PLUGIN_ROOT} may contain a space, and
     // `"shell": "bash"` so a Windows box does not hand the command to
     // PowerShell — the two are one fix, not two.
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal from hooks.json
     expect(cmd).toContain('"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd"');
     expect(entry?.shell).toBe("bash");
     const script = cmd.trim().split(/\s+/).pop() as string;
     expect(script).not.toMatch(/\.sh$/); // Windows auto-prepends bash to any .sh
     expect(existsSync(join(PKG, "hooks", script)), `hooks/${script}`).toBe(true);
+  });
+
+  it("invokes moe-completion-evidence as the second Stop hook, directly via node", () => {
+    // The evidence hook does not go through run-hook.cmd. It is Node, not
+    // bash, so wrapping it in the polyglot dispatcher would exec bash
+    // just to have bash exec node — pointless indirection, and it would
+    // hide the module-type gotcha the hook's own header documents.
+    const entry = hooks.hooks.Stop?.[0]?.hooks?.[1];
+    expect(entry, "Stop[0].hooks[1] should register moe-completion-evidence").toBeDefined();
+    const cmd = entry?.command as string;
+    // Quoted CLAUDE_PLUGIN_ROOT for the same reason run-hook.cmd is quoted:
+    // a plugin root with a space breaks unquoted expansion, on any OS.
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal from hooks.json
+    expect(cmd).toContain('node "${CLAUDE_PLUGIN_ROOT}/hooks/moe-completion-evidence"');
+    expect(entry?.shell).toBe("bash");
+    expect(
+      existsSync(join(PKG, "hooks/moe-completion-evidence")),
+      "hooks/moe-completion-evidence",
+    ).toBe(true);
   });
 
   it("run-hook.cmd is dash-safe and needs no execute bit on the hook script", () => {
@@ -704,6 +738,20 @@ describe("hooks", () => {
     const out = execFileSync("bash", [join(PKG, "hooks/claude-judge-continuation")], {
       input: JSON.stringify({ stop_hook_active: false, session_id: "t", transcript_path: "" }),
       env: { ...process.env, MOE_LATTE_ENABLED: "" },
+      encoding: "utf8",
+    });
+    expect(out).toBe("");
+  });
+
+  it("the evidence hook is default-ON and exits 0 empty when MOE_EVIDENCE_DISABLED is set", () => {
+    // Inverted from the latte gate above: this hook only OBSERVES (writes
+    // an audit JSON, never blocks a stop), so it ships default-on and the
+    // env var opts OUT rather than in. Exit-0-with-empty-stdout under the
+    // disabled flag is the proof that a downstream user can turn the whole
+    // thing off in one variable without patching anything.
+    const out = execFileSync(process.execPath, [join(PKG, "hooks/moe-completion-evidence")], {
+      input: JSON.stringify({ session_id: "t", transcript_path: "" }),
+      env: { ...process.env, MOE_EVIDENCE_DISABLED: "1" },
       encoding: "utf8",
     });
     expect(out).toBe("");

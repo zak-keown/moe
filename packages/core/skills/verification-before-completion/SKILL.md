@@ -47,6 +47,47 @@ Skip any step = lying, not verifying
 | Agent completed | VCS diff shows changes | Agent reports "success" |
 | Requirements met | Line-by-line checklist | Tests passing |
 
+## Goal-Backward Verification
+
+The gate function above stops the most common failure — claiming without
+running the command. It does not stop the next-most-common one: running
+the wrong command. A test-suite pass is evidence for "these tests pass",
+not for "the user's stated goal is met", and confusing the two is how a
+green suite still ships a broken feature.
+
+Work backward from what the user asked for:
+
+1. **Restate the goal in a single testable sentence.** If the user said
+   "make the export button work", the sentence is not "the button click
+   handler runs" — it is "clicking Export downloads a file with today's
+   data".
+2. **Name the observation that would prove that sentence true.** Not a
+   proxy. Not "the network call fires". The end-to-end artifact the user
+   would look at: a downloaded CSV with today's rows, a rendered page, a
+   deployed URL returning 200.
+3. **Choose a verification command that produces THAT observation.** A
+   unit test is evidence for a unit; the goal-observation is what needs a
+   command of its own — a manual click, a curl, an end-to-end run, a
+   screenshot.
+4. **Only then run the local sanity checks.** Tests, lint, build. They
+   are necessary and insufficient: they catch regressions in the pieces,
+   but a green suite over the wrong pieces is silent.
+
+The failure to catch: every step of the plan passed its own tests, no
+step's evidence was the goal, and the finished stack does not do the
+thing. Fixture: [tests/goal-backward-scenario.md](tests/goal-backward-scenario.md).
+
+| Local-check evidence | Goal-backward evidence |
+|---|---|
+| "The 34 unit tests pass" | "I clicked Export and a CSV with today's 12 rows downloaded" |
+| "The build exits 0" | "The deployed URL returns 200 and renders the new field" |
+| "The migration ran" | "SELECT on the new column returns the expected shape" |
+| "The API test passes" | "The UI that calls that API shows the new value" |
+
+Both belong in the evidence you cite. The local checks catch regressions;
+the goal-backward observation catches the wrong-thing-passing-its-tests
+failure mode a green suite cannot see.
+
 ## Red Flags - STOP
 
 - Using "should", "probably", "seems to"
@@ -118,3 +159,13 @@ Skip any step = lying, not verifying
 - Paraphrases and synonyms
 - Implications of success
 - ANY communication suggesting completion/correctness
+
+## How this is watched
+
+The `moe-completion-evidence` Stop hook (default-on) reads the transcript
+window **for this turn only** — bounded by the last `type:"user"` entry —
+and writes an audit record to `$HOME/.claude/moe/audit/<repo>/`. If it
+sees a completion-claim phrase in this turn's assistant text with no
+verification command in this turn's tool_uses, the record carries a
+warning and stderr says so. The hook never blocks a stop; it makes the
+silence falsifiable. Set `MOE_EVIDENCE_DISABLED=1` to opt out.

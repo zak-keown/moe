@@ -1,0 +1,268 @@
+#!/usr/bin/env node
+// Stop hook: capture verification EVIDENCE (test/build tool_uses) for
+// THIS TURN — bounded by the last `type:"user"` boundary in the transcript
+// — and a session-cumulative Skill-firing counter, into
+// $HOME/.claude/moe/audit/<repo>/. Never blocks a stop; only observes.
+//
+// The two windows are deliberately different: evidence and the completion
+// claim it is paired against are BOTH per-turn (a stop event is per-turn,
+// so cross-turn evidence is misattribution), while the skill-firing
+// counter is session-cumulative (the question it answers — "did any
+// core-tier skill fire this session?" — is a session question).
+//
+// Companion to verification-before-completion/SKILL.md ("evidence before
+// claims, always") and the skill-firing signal auditing-progress reasons
+// about. Two different silences this makes falsifiable:
+//
+//   1. The assistant said "tests pass" but no test command ran this turn.
+//   2. A skill this tier declares core-tier never fired all session.
+//
+// DEFAULT-ON. Set MOE_EVIDENCE_DISABLED to a truthy value to disable.
+//
+// Storage. Default is $HOME/.claude/moe/audit/<repo-basename>/. Repo-local
+// .audit/ is what the plan first drafted — it looks tidy in this monorepo
+// and pollutes the tree of every downstream user of the plugin, so it is
+// off by default. Set MOE_EVIDENCE_HERE=1 to opt into repo-local writes.
+//
+// -- Extensionless-file / module-type gotcha, worked around deliberately --
+// packages/core/package.json declares "type": "module". Installed as a
+// plugin, plugins/*/ has no package.json, so Node treats extensionless
+// files as CommonJS. This file uses only:
+//   (a) syntax legal in BOTH ESM and CJS (function calls including
+//       `require`, plain if / const / process.exit), and
+//   (b) an early exit that touches only globals (process.env, process.exit)
+//       before the first require.
+// So `node --check` under packages/core (ESM) passes on syntax alone, the
+// gate `MOE_EVIDENCE_DISABLED=1 node .../moe-completion-evidence` returns
+// 0 via the early exit under ESM, and the real work runs under CJS in the
+// installed plugin. Same pitfall packages/core/README's "Module format"
+// section records for render-graphs and update_docs.
+
+// ---------------------------------------------------------- disabled gate
+{
+  const raw = String(process.env.MOE_EVIDENCE_DISABLED || '').toLowerCase();
+  if (raw && raw !== '0' && raw !== 'false' && raw !== 'no' && raw !== 'off') {
+    process.exit(0);
+  }
+}
+
+// ---------------------------------------------------------- CJS from here
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
+const { execFileSync } = require('node:child_process');
+
+// stdin is the hook event. Empty/malformed input is not an error — nothing
+// this hook writes affects the stop, so just exit clean.
+let event;
+try {
+  event = JSON.parse(fs.readFileSync(0, 'utf8') || '{}');
+} catch (_e) {
+  process.exit(0);
+}
+
+const sessionId = String(event.session_id || 'unknown').replace(/[^A-Za-z0-9_-]/g, '_');
+const transcriptPath = typeof event.transcript_path === 'string' ? event.transcript_path : '';
+
+// ---------------------------------------------------------- output dir
+function repoBasename() {
+  try {
+    const top = execFileSync('git', ['rev-parse', '--show-toplevel'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    if (top) return path.basename(top);
+  } catch (_e) {
+    // Not a git repo — fall through.
+  }
+  return 'no-repo';
+}
+
+const hereRaw = String(process.env.MOE_EVIDENCE_HERE || '').toLowerCase();
+const writeHere = hereRaw && hereRaw !== '0' && hereRaw !== 'false' && hereRaw !== 'no' && hereRaw !== 'off';
+const outDir = writeHere
+  ? path.join(process.cwd(), '.audit')
+  : path.join(os.homedir(), '.claude', 'moe', 'audit', repoBasename());
+
+try {
+  fs.mkdirSync(outDir, { recursive: true });
+} catch (_e) {
+  process.exit(0);
+}
+
+// ---------------------------------------------------------- transcript
+// Verification-command allowlist. Pattern-matched against Bash tool_use.input.command,
+// leading-anchored so `# not a real: pnpm test` does not match. Broad on
+// purpose: false positives here are extra evidence in a JSON file, not a
+// blocked stop.
+const VERIFY_PATTERNS = [
+  /^\s*pnpm\s+(?:--filter\s+\S+\s+)*(?:test|build|lint|typecheck|check|mint(?::check)?|test:python|test:brainstorm|test:shell)\b/,
+  /^\s*turbo\s+run\s+/,
+  /^\s*(?:npx\s+)?vitest\b/,
+  /^\s*(?:npx\s+)?tsc\b/,
+  /^\s*(?:npx\s+)?biome\s+check\b/,
+  /^\s*python3?\s+-m\s+unittest\b/,
+  /^\s*node\s+--check\b/,
+];
+const isVerify = (cmd) => VERIFY_PATTERNS.some((r) => r.test(cmd));
+
+// Completion-claim phrases. Regex list mirrors what verification-before-completion's
+// "Red Flags" enumerates. Detected in the LAST assistant text block only.
+// The bare `done|complete|finished|ready|all set` was intentionally dropped:
+// it fired on ordinary status prose ("done reading", "ready to try") and
+// buried the actual claim-without-evidence signal in noise.
+const CLAIM_PATTERNS = [
+  /\b(?:tests?|test\s+suite|build|lint|typecheck)\s+(?:pass(?:es|ing|ed)?|succeed(?:s|ed)?|clean|green)\b/i,
+  /\ball\s+tests?\s+pass(?:ing|ed)?\b/i,
+  /\bverif(?:ied|ication\s+complete)\b/i,
+  /\b(?:it|this|that)\s+works\b/i,
+];
+
+let transcriptLines = [];
+if (transcriptPath && fs.existsSync(transcriptPath)) {
+  try {
+    transcriptLines = fs.readFileSync(transcriptPath, 'utf8').split('\n');
+  } catch (_e) {
+    // A truncated transcript is normal mid-write. Nothing to do.
+  }
+}
+
+// Two passes: first index tool_results by id (they may follow or precede
+// their tool_use in JSONL depending on the client) AND remember where the
+// last user boundary sits, then walk assistant entries only AFTER that
+// boundary. Without the per-turn cut, evidence and skillsFired would
+// accumulate across every stop event since transcript start, and a single
+// verifying command near the top of the session would look like proof for
+// every later claim — the opposite of what this hook is for.
+const toolResults = new Map();
+let lastUserIndex = -1;
+for (let i = 0; i < transcriptLines.length; i++) {
+  const line = transcriptLines[i];
+  if (!line) continue;
+  let entry;
+  try {
+    entry = JSON.parse(line);
+  } catch (_e) {
+    continue;
+  }
+  if (entry && entry.type === 'user') lastUserIndex = i;
+  const content = entry && entry.message && entry.message.content;
+  if (!Array.isArray(content)) continue;
+  for (const item of content) {
+    if (item && item.type === 'tool_result' && typeof item.tool_use_id === 'string') {
+      let text = '';
+      if (typeof item.content === 'string') text = item.content;
+      else if (Array.isArray(item.content)) {
+        text = item.content
+          .map((c) => (c && typeof c.text === 'string' ? c.text : ''))
+          .join('');
+      }
+      toolResults.set(item.tool_use_id, { output: text, isError: !!item.is_error });
+    }
+  }
+}
+
+const evidence = [];
+const skillsFired = [];
+let lastAssistantText = '';
+
+// Per-turn window: only assistant entries after the last user boundary
+// count toward evidence, skill-firings, and the completion-claim text
+// scanned for CLAIM_PATTERNS. First-turn (no prior user entry) still
+// works because lastUserIndex = -1 and the loop starts at 0.
+for (let i = lastUserIndex + 1; i < transcriptLines.length; i++) {
+  const line = transcriptLines[i];
+  if (!line) continue;
+  let entry;
+  try {
+    entry = JSON.parse(line);
+  } catch (_e) {
+    continue;
+  }
+  if (!entry || entry.type !== 'assistant') continue;
+  const content = entry.message && entry.message.content;
+  if (!Array.isArray(content)) continue;
+  for (const item of content) {
+    if (!item) continue;
+    if (item.type === 'text' && typeof item.text === 'string') {
+      lastAssistantText = item.text;
+    } else if (item.type === 'tool_use') {
+      if (item.name === 'Skill') {
+        const name = item.input && typeof item.input.skill === 'string' ? item.input.skill : '';
+        skillsFired.push(name);
+      } else if (item.name === 'Bash') {
+        const cmd = item.input && typeof item.input.command === 'string' ? item.input.command : '';
+        if (cmd && isVerify(cmd)) {
+          const result = toolResults.get(item.id);
+          const output = result ? result.output : '';
+          evidence.push({
+            command: cmd,
+            is_error: !!(result && result.isError),
+            output_tail: output.length > 4000 ? output.slice(-4000) : output,
+          });
+        }
+      }
+    }
+  }
+}
+
+const claims = CLAIM_PATTERNS.filter((r) => r.test(lastAssistantText)).map((r) => r.source);
+
+// Monotonic per-turn identifier. Wall-clock milliseconds are unique across
+// stop events within a session in practice, and sortable in a directory
+// listing. A collision would just overwrite the identical-content file.
+const turn = Date.now();
+
+const payload = {
+  session_id: sessionId,
+  turn,
+  transcript_path: transcriptPath,
+  verification_commands: evidence,
+  completion_claims_detected: claims,
+  warning:
+    claims.length > 0 && evidence.length === 0
+      ? 'completion-claim without matching verification command this turn'
+      : null,
+};
+
+try {
+  fs.writeFileSync(
+    path.join(outDir, `${sessionId}-${turn}.json`),
+    `${JSON.stringify(payload, null, 2)}\n`,
+  );
+} catch (_e) {
+  // Best-effort. Don't block the stop over a full disk.
+}
+
+// -------------------------------------------------------- firing counter
+// Session-cumulative, because the signal this backs — "a core-tier skill
+// never fired all session" — is a session claim, not a per-turn one. The
+// evidence walk above is per-turn (bounded by the last user boundary) so
+// that "no verification this turn" is a per-turn assertion; the firing
+// counter has to accumulate to answer the session question, so it appends
+// this turn's skillsFired to whatever the file already carried.
+const firingFile = path.join(outDir, `${sessionId}-firing.json`);
+let firing = { session_id: sessionId, skill_tool_uses: 0, skills: [] };
+try {
+  if (fs.existsSync(firingFile)) {
+    firing = JSON.parse(fs.readFileSync(firingFile, 'utf8'));
+  }
+} catch (_e) {
+  // Reset silently if the prior file was corrupted.
+}
+const priorSkills = Array.isArray(firing.skills) ? firing.skills : [];
+firing.skills = priorSkills.concat(skillsFired);
+firing.skill_tool_uses = firing.skills.length;
+firing.last_updated = new Date().toISOString();
+try {
+  fs.writeFileSync(firingFile, `${JSON.stringify(firing, null, 2)}\n`);
+} catch (_e) {}
+
+// The signal, printed to stderr so it is not swallowed by the Stop-hook
+// output contract (stdout is reserved for the decision JSON — see
+// claude-judge-continuation). Warning-only; the stop is never blocked.
+if (payload.warning) {
+  process.stderr.write(`moe-completion-evidence: ${payload.warning}\n`);
+}
+
+process.exit(0);
