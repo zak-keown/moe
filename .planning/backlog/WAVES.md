@@ -285,13 +285,19 @@ of it — the wave numbering in their filenames is filename convention only, per
 
 - **`codebase-review-skills`** — two fork-authored skills for repo-wide review and
   TDD repair. In flight elsewhere as of 2026-09-01.
-- **`tc-domain-skills-port`** — the scope `tc-standards-conformance` deferred.
-  Logged 2026-09-01 because it was the one identified piece of work tracked in no
-  ledger for a day. Its census found that **13 of the 17 deferred `tc-*` skills are
-  near-duplicates of skills this fork already ships**, so the item is four skills
-  and one decision, not seventeen ports.
+- **`tc-domain-skills-port`** — **resolved 2026-09-01, nothing landed here.** Its
+  census is kept as the record: 13 of the 17 deferred `tc-*` skills are
+  near-duplicates of skills this fork ships, 3 were dispatch wrappers over tools
+  that do not exist here, and the 1 piece of real content went to `ai/kb` as MR
+  `ai/kb!17` — that corpus is what `rag_search` indexes, so a doc there reaches
+  every TC engineer while a Moe skill reaches only Moe installs.
+- **`cross-stack-tracing`** — what replaced the port. Zak asked whether the trace
+  capability could be built against CodeGraph alone rather than moedex, and it
+  mostly can: `HTTP_CALLS` carries `source_repo`/`target_repo`, so
+  "what breaks if I change this endpoint?" is complete on the baseline. Everything-
+  tier, 5-7 h, no open decisions.
 
-Neither has a dependency on the other or on anything above. If a third arrives,
+None of these depend on each other or on anything above. If a fourth arrives,
 re-run the solver rather than appending to this table — it is a record now, not a
 plan.
 
