@@ -76,15 +76,13 @@ readable output for automation.
 you know what you're doing), then:
 
 1. `claude plugin marketplace add https://gitlab.com/moe-ai/moe.git`
-2. `claude plugin install <name>@moe` for each of the six plugins:
-   `moe-core`, `moe-everything`, `moe-backstory`, `moe-crew`, `moe-memory`,
-   `moe-glass`.
+2. `claude plugin install <name>@moe` for each of the five plugins:
+   `moe`, `moe-backstory`, `moe-crew`, `moe-memory`, `moe-glass`.
 
-Four plugins install from a sparse clone of `.claude-plugin/` + `plugins/`
+Three plugins install from a sparse clone of `.claude-plugin/` + `plugins/`
 (content only — no toolchain needed). `moe-memory` and `moe-glass` install
-from the `@bubstack` npm scope via the GitLab instance registry: prebuilt
-`better-sqlite3` on every platform including native Windows, no MSVC
-build tools required.
+from the `@bubstack` npm scope: prebuilt `better-sqlite3` on every platform
+including native Windows, no MSVC build tools required.
 
 ## Upgrading
 

@@ -1,0 +1,34 @@
+{
+  "name": "moe",
+  "version": "0.0.0",
+  "description": "The Moe skill library — brainstorming, planning, TDD, systematic debugging, code review, worktrees, parallel dispatch, plugin authoring, and more.",
+  "author": {
+    "name": "Zak Keown",
+    "email": "zak.keown@outlook.com"
+  },
+  "license": "MIT AND Apache-2.0",
+  "repository": "https://gitlab.com/moe-ai/moe",
+  "homepage": "https://gitlab.com/moe-ai/moe",
+  "type": "module",
+  "main": "./.opencode/plugins/moe.js",
+  "pi": {
+    "extensions": [
+      "./.pi/extensions/moe.ts"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  },
+  "keywords": [
+    "skills",
+    "brainstorming",
+    "planning",
+    "tdd",
+    "debugging",
+    "code-review",
+    "workflow",
+    "writing",
+    "plugin-authoring",
+    "pi-package"
+  ]
+}

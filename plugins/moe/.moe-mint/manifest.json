@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "tool": "moe-mint@0.0.0",
+  "files": {
+    ".agents/plugins/marketplace.json": {
+      "sha256": "fb14245e6a89311cd0edebb68e0ef3a5105183ac4ad6a10f895bd9454aff72b0"
+    },
+    ".claude-plugin/marketplace.json": {
+      "sha256": "b1387b8edba2c51f12dff69c2ed05fb346eac8ae275740b082e98d6b994b69a8"
+    },
+    ".claude-plugin/plugin.json": {
+      "sha256": "b372e4345933076f234bebf0a987684ef81dc05eec89422c36ad33b706a494fa"
+    },
+    ".codex-plugin/plugin.json": {
+      "sha256": "5e3991951d1cc83f67a1f0aa4a75508184bf36fa1a3991c47adfddfcdc9c96af"
+    },
+    ".cursor-plugin/plugin.json": {
+      "sha256": "ca4fe306ede2add53dc6adf5484ecbd949c0ee78acdc50eb6632c5555a6f7dc9"
+    },
+    ".kimi-plugin/plugin.json": {
+      "sha256": "b7c8b7e1e6489bbc93c3fe7ac7f33f27d847113af9fe6eda32344b0b1ab431b7"
+    },
+    ".opencode/agent/review-shard.md": {
+      "sha256": "b6b834d2a4065e12a9e295bb44740af4c791800a6d2b9beadb42dbb7d73261cf"
+    },
+    ".opencode/agent/search-moedex.md": {
+      "sha256": "6e8f892fa41820a8e5529917df9099a99e73140c9f550f0ad6cf6a79d59e5b4d"
+    },
+    ".opencode/agent/verify-finding.md": {
+      "sha256": "cdd11cd4356887cffb9504549a8905e887653b205b97c7e436cd963e8f655a4f"
+    },
+    ".opencode/plugins/moe.js": {
+      "sha256": "3299911a2a01eecdcadc9035e1594cc05c2165b0630698354a189cdbb9dc0152"
+    },
+    ".pi/extensions/moe.ts": {
+      "sha256": "708ba7095e0523531076ac9c11b94418050fafbbc4fe541e1f6728362be938c8"
+    },
+    "docs/install/agent-plugins-1.0.md": {
+      "sha256": "591cd3fe9915144fe777b52dfda59ce93407a3070ef57198734f6f21f03802d2"
+    },
+    "docs/install/claude-code.md": {
+      "sha256": "6e02e0899307477692690757f8645c755a61b94e7ea5f6f72b19aa68fe948a9a"
+    },
+    "docs/install/codex.md": {
+      "sha256": "1f3ab8d896db25d7a0dfc48639c48e3c487e92853072811f3bcbb9377a26ab40"
+    },
+    "docs/install/copilot.md": {
+      "sha256": "44442c031d9ebfa132bba275f9a8866c15cf62b7b05de5c235ed6a96b2784dda"
+    },
+    "docs/install/cursor.md": {
+      "sha256": "d0031e1f8b5b27973670f8a4248d505b69c7382633c4cdf04f465375328dff9d"
+    },
+    "docs/install/kimi.md": {
+      "sha256": "5dd5aaac82453d827b35fd0032b05381d8b0bde616a2a333193cf78cbfdf49f0"
+    },
+    "docs/install/opencode.md": {
+      "sha256": "08c66af68133b271d9a47a0ce744c8b2561677dec96b56e0fd66f7a95cd146ef"
+    },
+    "docs/install/pi.md": {
+      "sha256": "45e0f336a6460368dcca63f4a405171ac7182ad07956c2f7f2d02766c2e0055b"
+    },
+    "docs/support-matrix.md": {
+      "sha256": "dd0b9dfb0c900a754d0ad12b729e61562245f9ba283f1f463b327433467b67c8"
+    },
+    "hooks/moe-mint/hooks-cursor.json": {
+      "sha256": "7653af3eca8918a0fa45c4d67c321723d3906b8d3d6966959461be208f67d8a5"
+    },
+    "hooks/moe-mint/hooks.json": {
+      "sha256": "fc8bd0df72b9b9695a5adab194d407858067a9072810ba43083cc56189545118"
+    },
+    "hooks/moe-mint/run-hook.cmd": {
+      "sha256": "1091dc12af883e19c6f322221281ad7e1a9816d0e266ca60088dfbc278a50db8",
+      "executable": true
+    },
+    "hooks/moe-mint/session-start": {
+      "sha256": "22c83296f07522da880ed027c1c522681371d59b1388ba28ca7113c699c80edb",
+      "executable": true
+    },
+    "package.json": {
+      "sha256": "e720256e1bd09674c40f8b95de090fd81c58094fdc5c072c0dce616a5a768635"
+    },
+    "plugin.json": {
+      "sha256": "94b122c45a16c8e382364a51be44e75c3a67d41396abd68721a046aa2568b7e5"
+    }
+  }
+}

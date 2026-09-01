@@ -25,7 +25,7 @@ keywords:
 # This is the one non-core plugin that earns a bootstrap. `remembering-conversations`
 # has to fire WITHOUT being asked: the whole value is recalling something the user
 # has forgotten they told you, and a skill you must remember to invoke cannot do
-# that. It is the same argument that puts `using-moe` in moe-core.
+# that. It is the same argument that puts `using-moe` in the `moe` plugin.
 bootstrap:
   skill: remembering-conversations
 
