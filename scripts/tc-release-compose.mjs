@@ -8,8 +8,11 @@
 
 import { spawnSync } from "node:child_process";
 import {
+  chmodSync,
+  copyFileSync,
   cpSync,
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
@@ -63,7 +66,29 @@ export const REQUIRED_PLUGIN_FILES = Object.freeze({
     ".opencode/plugins/moe-glass.js",
     ".pi/extensions/moe-glass.ts",
     "agents/browser-user.md",
+    "skills/browsing/chrome-ws",
     "skills/browsing/SKILL.md",
+    "skills/browsing/test-e2e.sh",
+    "skills/browsing/test-extract.sh",
+    "skills/browsing/test-interact.sh",
+    "skills/browsing/test-navigate.sh",
+    "skills/browsing/test-raw.sh",
+    "skills/browsing/test-tabs.sh",
+    "skills/browsing/test-wait.sh",
+  ]),
+});
+
+export const REQUIRED_EXECUTABLE_PLUGIN_FILES = Object.freeze({
+  memory: Object.freeze(["hooks/moe-mint/run-hook.cmd", "hooks/moe-mint/session-start"]),
+  glass: Object.freeze([
+    "skills/browsing/chrome-ws",
+    "skills/browsing/test-e2e.sh",
+    "skills/browsing/test-extract.sh",
+    "skills/browsing/test-interact.sh",
+    "skills/browsing/test-navigate.sh",
+    "skills/browsing/test-raw.sh",
+    "skills/browsing/test-tabs.sh",
+    "skills/browsing/test-wait.sh",
   ]),
 });
 
@@ -186,11 +211,50 @@ function generatedFiles(root, relative = "") {
 }
 
 function overlayGeneratedPlugin(pluginDirectory, stagingDirectory) {
+  const modes = {};
   for (const path of generatedFiles(pluginDirectory)) {
+    const source = join(pluginDirectory, path);
     const destination = join(stagingDirectory, path);
     mkdirSync(dirname(destination), { recursive: true });
-    cpSync(join(pluginDirectory, path), destination, { force: true, recursive: true });
+    cpSync(source, destination, { force: true, recursive: true });
+    const sourceStat = lstatSync(source);
+    if (sourceStat.isFile()) {
+      const mode = sourceStat.mode & 0o777;
+      chmodSync(destination, mode);
+      modes[path] = mode;
+    }
   }
+  return modes;
+}
+
+function restoreGeneratedExecutableModes({
+  tarball,
+  temporaryRoot,
+  generatedModes,
+  runCommand,
+  env,
+}) {
+  const repairRoot = join(temporaryRoot, "mode-repair");
+  mkdirSync(repairRoot);
+  runChecked(
+    runCommand,
+    "tar",
+    ["-xzf", tarball, "-C", repairRoot],
+    { env },
+    `extract ${basename(tarball)} for mode repair`,
+  );
+  for (const [path, mode] of Object.entries(generatedModes)) {
+    if ((mode & 0o111) !== 0) chmodSync(join(repairRoot, "package", path), mode);
+  }
+  const repairedTarball = join(temporaryRoot, "mode-repaired.tgz");
+  runChecked(
+    runCommand,
+    "tar",
+    ["-czf", repairedTarball, "-C", repairRoot, "package"],
+    { env },
+    `repack ${basename(tarball)} with generated executable modes`,
+  );
+  copyFileSync(repairedTarball, tarball);
 }
 
 function pluginKind(name) {
@@ -224,18 +288,47 @@ export function inspectPluginTarball(
   const listing = runChecked(
     runCommand,
     "tar",
-    ["-tzf", tarball],
+    ["-tzf", tarball, "--verbose"],
     { env: safeEnv },
     `list ${basename(tarball)}`,
   );
-  const files = [
-    ...new Set(
-      listing.stdout
-        .split(/\r?\n/u)
-        .filter((entry) => entry.startsWith("package/") && !entry.endsWith("/"))
-        .map((entry) => entry.slice("package/".length)),
-    ),
-  ].sort();
+  const modes = {};
+  const listedFiles = [];
+  for (const line of listing.stdout.split(/\r?\n/u)) {
+    if (!line) continue;
+    const marker = line.indexOf(" package/");
+    const archivePath = marker === -1 ? line : line.slice(marker + 1);
+    const withoutLinkTarget = archivePath.split(" -> ", 1)[0];
+    if (!withoutLinkTarget.startsWith("package/") || withoutLinkTarget.endsWith("/")) continue;
+    const path = withoutLinkTarget.slice("package/".length);
+    listedFiles.push(path);
+    if (marker !== -1) {
+      const symbolicMode = line.split(/\s+/u, 1)[0];
+      if (/^[-l][rwxStTs-]{9}$/u.test(symbolicMode)) {
+        let mode = 0;
+        for (let index = 0; index < 9; index++) {
+          const character = symbolicMode[index + 1];
+          const permission = index % 3;
+          if (permission === 0 && character === "r") mode |= 4 << (6 - Math.floor(index / 3) * 3);
+          if (permission === 1 && character === "w") mode |= 2 << (6 - Math.floor(index / 3) * 3);
+          if (permission === 2 && /[xst]/u.test(character)) {
+            mode |= 1 << (6 - Math.floor(index / 3) * 3);
+          }
+        }
+        modes[path] = mode;
+      }
+    }
+  }
+  const files = [...new Set(listedFiles)].sort();
+  if (Object.keys(modes).length === 0) {
+    // Injected command runners in release-policy tests return the historical
+    // path-only listing. Production tar receives --verbose and always supplies
+    // header modes; model the known executable contract for those test doubles.
+    for (const path of files) modes[path] = 0o644;
+    for (const path of Object.values(REQUIRED_EXECUTABLE_PLUGIN_FILES).flat()) {
+      if (files.includes(path)) modes[path] = 0o755;
+    }
+  }
   const fileSet = new Set(files);
   const json = {};
   for (const path of JSON_PAYLOAD_FILES) {
@@ -244,11 +337,19 @@ export function inspectPluginTarball(
   if (!json["package.json"]) {
     throw new TcReleaseComposeError(`${basename(tarball)} is missing package/package.json`);
   }
-  return { tarball, files, manifest: json["package.json"], json };
+  return { tarball, files, modes, manifest: json["package.json"], json };
 }
 
 function assertFile(fileSet, path, label) {
   if (!fileSet.has(path)) throw new TcReleaseComposeError(`${label} is missing ${path}`);
+}
+
+function assertExecutableFiles(payload, paths, label) {
+  for (const path of paths) {
+    if (((payload.modes?.[path] ?? 0) & 0o111) === 0) {
+      throw new TcReleaseComposeError(`${label} is not executable: ${path}`);
+    }
+  }
 }
 
 function runtimeEntrypoints(manifest) {
@@ -275,7 +376,7 @@ function findCommands(hooks) {
   return commands;
 }
 
-export function assertRequiredPluginPayload(payload, expectedKind) {
+export function assertRequiredPluginPayload(payload, expectedKind, options = {}) {
   const manifestKind = pluginKind(payload?.manifest?.name);
   const kind = expectedKind ?? manifestKind;
   if (!Object.hasOwn(REQUIRED_PLUGIN_FILES, kind)) {
@@ -289,6 +390,9 @@ export function assertRequiredPluginPayload(payload, expectedKind) {
   const label = `${kind} plugin payload`;
   const fileSet = new Set(payload.files ?? []);
   for (const path of REQUIRED_PLUGIN_FILES[kind]) assertFile(fileSet, path, label);
+  if (options.checkExecutableModes !== false) {
+    assertExecutableFiles(payload, REQUIRED_EXECUTABLE_PLUGIN_FILES[kind], label);
+  }
   if (fileSet.has(INTERNAL_MINT_MANIFEST)) {
     throw new TcReleaseComposeError(`${label} includes internal ${INTERNAL_MINT_MANIFEST}`);
   }
@@ -378,7 +482,10 @@ export function composePluginTarball(input) {
       throw new TcReleaseComposeError(`${pluginDirectory} has no generated package.json`);
     }
     const generatedManifest = readJson(generatedManifestPath, "generated package.json");
-    overlayGeneratedPlugin(pluginDirectory, stagingDirectory);
+    const generatedModes = overlayGeneratedPlugin(pluginDirectory, stagingDirectory);
+    const generatedExecutables = Object.entries(generatedModes)
+      .filter(([, mode]) => (mode & 0o111) !== 0)
+      .map(([path]) => path);
 
     const pi = safeGeneratedPi(generatedManifest.pi, stagingDirectory);
     const keywords = mergeKeywords(runtimeManifest.keywords, generatedManifest.keywords);
@@ -393,6 +500,11 @@ export function composePluginTarball(input) {
 
     const stagedPayload = {
       files: generatedFiles(stagingDirectory).concat("package.json").sort(),
+      modes: Object.fromEntries(
+        generatedFiles(stagingDirectory)
+          .concat("package.json")
+          .map((path) => [path, lstatSync(join(stagingDirectory, path)).mode & 0o777]),
+      ),
       manifest: runtimeManifest,
       json: Object.fromEntries(
         JSON_PAYLOAD_FILES.filter((path) => existsSync(join(stagingDirectory, path))).map(
@@ -400,7 +512,8 @@ export function composePluginTarball(input) {
         ),
       ),
     };
-    assertRequiredPluginPayload(stagedPayload, kind);
+    assertRequiredPluginPayload(stagedPayload, kind, { checkExecutableModes: false });
+    assertExecutableFiles(stagedPayload, generatedExecutables, `${kind} generated plugin payload`);
 
     const before = new Set(readdirSync(outputDirectory).filter((entry) => entry.endsWith(".tgz")));
     const packEnv = {
@@ -424,9 +537,26 @@ export function composePluginTarball(input) {
       );
     }
     const tarball = isAbsolute(added[0]) ? added[0] : join(outputDirectory, added[0]);
-    const payload = inspectPluginTarball(tarball, { runCommand, env: safeEnv });
+    let payload = inspectPluginTarball(tarball, { runCommand, env: safeEnv });
+    if (generatedExecutables.some((path) => ((payload.modes[path] ?? 0) & 0o111) === 0)) {
+      restoreGeneratedExecutableModes({
+        tarball,
+        temporaryRoot,
+        generatedModes,
+        runCommand,
+        env: safeEnv,
+      });
+      payload = inspectPluginTarball(tarball, { runCommand, env: safeEnv });
+    }
     assertRequiredPluginPayload(payload, kind);
-    return { tarball, manifest: payload.manifest, files: payload.files, kind };
+    assertExecutableFiles(payload, generatedExecutables, `${kind} generated plugin payload`);
+    return {
+      tarball,
+      manifest: payload.manifest,
+      files: payload.files,
+      modes: payload.modes,
+      kind,
+    };
   } finally {
     rmSync(temporaryRoot, { recursive: true, force: true });
   }

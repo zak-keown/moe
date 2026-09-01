@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { afterEach, describe, it } from "node:test";
@@ -8,6 +16,7 @@ import {
   assertRequiredPluginPayload,
   composePluginTarball,
   inspectPluginTarball,
+  REQUIRED_EXECUTABLE_PLUGIN_FILES,
   REQUIRED_PLUGIN_FILES,
 } from "../tc-release-compose.mjs";
 
@@ -113,6 +122,11 @@ function memoryMergedHooks({ bootstrap = true } = {}) {
 function generatedPluginFixture(root, kind, { bootstrap = true } = {}) {
   const pluginDirectory = join(root, `plugin-${kind}`);
   for (const path of REQUIRED_PLUGIN_FILES[kind]) write(join(pluginDirectory, path));
+  for (const path of REQUIRED_EXECUTABLE_PLUGIN_FILES[kind]) {
+    const executable = join(pluginDirectory, path);
+    write(executable, "#!/bin/sh\nexit 0\n");
+    chmodSync(executable, 0o755);
+  }
   const generatedName = `moe-${kind}`;
   writeJson(join(pluginDirectory, "package.json"), {
     name: generatedName,
@@ -248,6 +262,9 @@ describe("TC npm plugin composition", () => {
       for (const path of REQUIRED_PLUGIN_FILES[kind]) {
         assert.ok(payload.files.includes(path), `${kind} tarball is missing ${path}`);
       }
+      for (const path of REQUIRED_EXECUTABLE_PLUGIN_FILES[kind]) {
+        assert.equal(payload.modes[path], 0o755, `${kind} tarball changed mode on ${path}`);
+      }
     }
   });
 
@@ -268,6 +285,32 @@ describe("TC npm plugin composition", () => {
     ]) {
       assert.ok(result.files.includes(path), `pnpm pack dropped ${path}`);
     }
+    assert.equal(result.modes["skills/browsing/chrome-ws"], 0o755);
+  });
+
+  it("rejects a real tar header that lost a generated executable mode", () => {
+    const executable = "hooks/moe-mint/run-hook.cmd";
+    const fixture = composeFixture("memory");
+    const result = composePluginTarball(fixture.input);
+    const extracted = join(fixture.root, "tampered");
+    mkdirSync(extracted);
+    const unpacked = spawnSync("tar", ["-xzf", result.tarball, "-C", extracted], {
+      encoding: "utf8",
+    });
+    assert.equal(unpacked.status, 0, unpacked.stderr);
+    chmodSync(join(extracted, "package", executable), 0o644);
+    const tamperedTarball = join(fixture.root, "tampered.tgz");
+    const repacked = spawnSync("tar", ["-czf", tamperedTarball, "-C", extracted, "package"], {
+      encoding: "utf8",
+    });
+    assert.equal(repacked.status, 0, repacked.stderr);
+    const payload = inspectPluginTarball(tamperedTarball);
+    assert.equal(payload.modes[executable], 0o644);
+
+    assert.throws(
+      () => assertRequiredPluginPayload(payload, "memory"),
+      new RegExp(`memory plugin payload is not executable: ${executable.replaceAll(".", "\\.")}`),
+    );
   });
 
   it("rejects memory without the bootstrap session-start command", () => {
