@@ -179,16 +179,20 @@ describe('pi adapter', () => {
     ])
   })
 
+  // 30s timeout: these spawn `npx tsc`, which on a cold CI runner (no npx
+  // cache, no warmed tsc binary) can exceed vitest's 5000ms default by 2–4x.
+  // Local warm runs finish in ~1s; the ceiling is here to survive the cold
+  // GitLab node:24 runner, not to hide a real regression.
   it('type-checks the emitted skill-mode extension under strict NodeNext', () => {
     expect(() => typeCheckExtension(mustGet(byPath, '.pi/extensions/kitchen-sink.ts'))).not.toThrow()
-  })
+  }, 30000)
 
   it('rejects a variant with a typo in the context event\'s messages property (stub has teeth)', () => {
     const ts = mustGet(byPath, '.pi/extensions/kitchen-sink.ts')
     const broken = ts.replaceAll('messages', 'messagesTYPO')
     expect(broken).not.toBe(ts)
     expect(typeCheckExitStatus(broken)).not.toBe(0)
-  })
+  }, 30000)
 })
 
 describe('pi adapter without commands/agents/hooks/mcp', () => {
