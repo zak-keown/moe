@@ -12,6 +12,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { checkDownstreamScope } from "./check-downstream-scope.mjs";
 import { PROGET_REGISTRY, validateRelease } from "./tc-release-validate.mjs";
 
 export const EXPECTED_RELEASE_PACKAGES = Object.freeze([
@@ -236,6 +237,15 @@ export function packRelease(input) {
     : resolve(root, input.outputDir);
   if (existsSync(artifactsDir) && readdirSync(artifactsDir).length > 0) {
     throw new TcReleaseError(`artifact directory must be empty: ${artifactsDir}`);
+  }
+
+  const downstreamScope = checkDownstreamScope(root);
+  if (!downstreamScope.ok) {
+    throw new TcReleaseError(
+      `downstream scope check failed:\n${downstreamScope.problems
+        .map((problem) => `[${problem.code}] ${problem.location}: ${problem.message}`)
+        .join("\n")}`,
+    );
   }
 
   const validation = validateRelease({

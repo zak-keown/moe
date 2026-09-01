@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { afterEach, describe, it } from "node:test";
+import { MANIFEST_IDENTITIES, PRIVATE_FLIGHT_MANIFESTS } from "../check-downstream-scope.mjs";
 import { EXPECTED_RELEASE_PACKAGES, packRelease } from "../tc-release-pack.mjs";
 import { publishRelease } from "../tc-release-publish.mjs";
 import { PROGET_REGISTRY } from "../tc-release-validate.mjs";
@@ -43,8 +44,11 @@ function releaseFixture() {
     upstreamCommit: SHA,
     tcRelease: 4,
   });
-  for (const expected of EXPECTED_RELEASE_PACKAGES) {
-    writeJson(join(root, expected.path), packageManifest(expected.name));
+  for (const [path, name] of Object.entries(MANIFEST_IDENTITIES)) {
+    writeJson(
+      join(root, path),
+      packageManifest(name, PRIVATE_FLIGHT_MANIFESTS.includes(path) ? { private: true } : {}),
+    );
   }
   return root;
 }
@@ -139,6 +143,23 @@ describe("TC release packing", () => {
           runCommand: fake.runCommand,
         }),
       /release validation failed/,
+    );
+    assert.equal(fake.calls.length, 0);
+  });
+
+  it("aborts before pack when an active install surface leaks an upstream identity", () => {
+    const root = releaseFixture();
+    const fake = fakePackRunner();
+    writeFileSync(join(root, "INSTALL.md"), "Install with `npx @bubstack/moe install`.\n");
+
+    assert.throws(
+      () =>
+        packRelease({
+          ...releaseInput(root),
+          outputDir: join(root, "artifacts"),
+          runCommand: fake.runCommand,
+        }),
+      /downstream scope check failed.*scope\.upstream-leak/s,
     );
     assert.equal(fake.calls.length, 0);
   });
