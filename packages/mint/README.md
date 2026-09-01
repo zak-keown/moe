@@ -1,9 +1,9 @@
 # @bubstack/moe-mint
 
-Generate native plugin manifests for every harness from one config. Eleven
-adapters covering twelve harnesses, from a single `moe-mint.yaml`: Claude Code,
-Codex, Gemini CLI, Cursor, Copilot CLI, OpenCode, Pi, Kimi Code, Hermes, Devin
-CLI, Factory Droid, Grok Build CLI.
+Generate native plugin manifests for every harness from one config. Ten
+adapters covering ten harnesses, from a single `moe-mint.yaml`: Claude Code,
+Codex, Cursor, Copilot CLI, OpenCode, Pi, Kimi Code, Hermes, Devin CLI, and
+Factory Droid.
 
 Not a plugin. A CLI (`moe-mint`) and the monorepo's eventual plugin build step —
 it is the thing that will read `packages/core` and `packages/backstory` as data
@@ -13,10 +13,11 @@ in working; adopting it across the content packages is separate work.
 Usage and the full `moe-mint.yaml` reference: [docs/CONFIG.md](docs/CONFIG.md).
 What it is and who it's for: [docs/BROCHURE.md](docs/BROCHURE.md).
 
-**Status:** imported. 29 suites, 427 tests: 413 pass and 14 skip on a bare
-checkout; 421 pass and 6 skip when the pinned `superpowers` reference snapshot is
-present, which enables the eight dogfood comparisons. The remaining 6 skips need
-a `python3` with `tomllib`.
+**Status:** imported. The vitest suite passes on a bare checkout, with the
+dogfood suite skipping unless the pinned `superpowers` reference snapshot in
+`../.moe-references/` is present. Suite/test counts drift as adapters are
+added or removed; run `pnpm --filter @bubstack/moe-mint test` for the live
+number.
 
 ## Forked from
 
@@ -37,7 +38,7 @@ that directory's README.
 ## Layout
 
 ```
-src/                 The CLI. 11 adapters + config, model, generate, validate,
+src/                 The CLI. 10 adapters + config, model, generate, validate,
                      manifest, bump, init, import, docs-emit, matrix, test.
 src/adapters/        One per harness. Each emits a FileSet and its install doc.
 schemas/             Three vendored third-party JSON Schemas (Claude Code's plugin
@@ -115,7 +116,7 @@ the code could not prove: a regex capture group, two `segments[i]` walks in
 never met a compiler. A second project, `tsconfig.tests.json` (non-composite,
 `noEmit`), now covers `test/**` under the same strict base. That surfaced 40
 errors, all `noUncheckedIndexedAccess` on fixture lookups. The fix is a shared
-`test/helpers.ts` with `byPathMap` and `mustGet`: eleven adapter suites built the
+`test/helpers.ts` with `byPathMap` and `mustGet`: ten adapter suites built the
 same `Object.fromEntries` path→content map and indexed it directly, so a path
 typo or a dropped emission surfaced as `JSON.parse(undefined)` — "Unexpected
 token 'u'" — instead of naming the missing path. `mustGet` throws with the path
@@ -211,7 +212,7 @@ release framing was dropped. This file records the import instead — same split
 `packages/glass` uses, with a different starting shape.
 
 **`checks/run-checks.sh` and the fixture keep their names.** `run-checks.sh`
-describes what it is. So do `kitchen-sink`, the eleven adapter names, and the
+describes what it is. So do `kitchen-sink`, the ten adapter names, and the
 `.claude-plugin` / `.codex-plugin` / `.hermes-plugin` output paths — those last
 are the harnesses' formats, not ours to rename.
 
@@ -267,11 +268,6 @@ upstream's single-quote, no-semicolon style.
   exercise it locally against the fixture with no harness CLIs on `PATH`, where
   every deep check degrades to `skip`. The install checks that matter have only
   ever run inside the container image, which does not exist yet.
-- **Six tests skip without `python3` ≥ 3.11.** `test/adapters/gemini.test.ts`
-  validates emitted TOML through `python3 -m tomllib`, and this machine's
-  `python3` has no `tomllib`. Environment-gated upstream too, but it means the
-  "emitted TOML is really TOML" claim is unverified on any machine that hasn't
-  checked.
 - **`init` writes a `getting-started` skill whose content is upstream's.**
   Not audited during this import; `src/init.ts` is the only place that authors
   prose a user will read.

@@ -86,7 +86,6 @@ RUN curl -fsSL https://mise.run | MISE_INSTALL_PATH=/usr/local/bin/mise sh \
 RUN npm install -g \
     @anthropic-ai/claude-code@2.1.209 \
     @openai/codex@0.146.0 \
-    @google/gemini-cli@0.50.0 \
     opencode-ai@1.18.1 \
     @github/copilot@1.0.78 \
     @factory/cli@0.171.0 \
@@ -98,7 +97,6 @@ RUN npm install -g \
     cline@3.0.40 \
     @earendil-works/pi-coding-agent@0.80.7 \
     pi-subagents@0.34.0 \
-    @xai-official/grok@0.2.101 \
   && if command -v kilocode >/dev/null 2>&1 && ! command -v kilo >/dev/null 2>&1; then ln -s "$(command -v kilocode)" /usr/local/bin/kilo; fi \
   && if command -v factory >/dev/null 2>&1 && ! command -v droid >/dev/null 2>&1; then ln -s "$(command -v factory)" /usr/local/bin/droid; fi \
   && if command -v kimi >/dev/null 2>&1 && [ "$(command -v kimi)" != /usr/local/bin/kimi ]; then ln -s "$(command -v kimi)" /usr/local/bin/kimi; fi

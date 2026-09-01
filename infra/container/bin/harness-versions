@@ -21,11 +21,9 @@ core_tools=(
 agent_tools=(
   claude
   codex
-  gemini
   opencode
   pi
   copilot
-  grok
   droid
   qwen
   kilo
