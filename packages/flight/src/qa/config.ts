@@ -137,7 +137,7 @@ export interface AppConfig {
     wsOriginAllowlist: "default" | "env";
     "models.agent": "default" | "env" | "flag";
     "models.fanout": "default" | "env" | "flag" | "unset";
-    "models.available": "default" | "env" | "flag";
+    "models.available": "default" | "env";
     credentialResolver: "default" | "env";
   };
 }
@@ -729,8 +729,6 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   // models.available — operator-controlled allow-list. Empty means "no
   // restriction": per-request body model overrides flow through unchecked.
   // When the operator sets MOE_FLIGHT_MODELS, the route layer enforces it.
-  // (sources tracker typed `default | env | flag` for back-compat; flag
-  // is unreachable since there is no --models flag.)
   const availableR = resolveEnvOnlySetting<string[]>(
     {
       default: [],
@@ -746,7 +744,7 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
     env,
   );
   const availableModels = availableR.value;
-  const availableSource: "default" | "env" | "flag" = availableR.source;
+  const availableSource = availableR.source;
 
   // apiKeys (presence only). A Claude subscription is an Anthropic credential
   // too: a `claude setup-token` OAuth token (CLAUDE_CODE_OAUTH_TOKEN, or the
