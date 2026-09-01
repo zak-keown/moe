@@ -684,6 +684,13 @@ describe('chrome-process: spawn failure surfaces as an error, not a crash', () =
   it('startChrome rejects when the spawned proc emits error', async () => {
     const origHelpers = require.cache[HELPERS_PATH];
     const origCp = require.cache['child_process'];
+    // Bypass the hard-coded Chrome path auto-detection in chrome-process.js
+    // (the fakeHelpers replacement below does not cover the inline path scan
+    // at chrome-process.js:154). Pointing CHROME_WS_BROWSER at any existing
+    // path — /tmp is a directory, so it clears the existsSync guard and then
+    // spawn is what fails, which is exactly the scenario under test.
+    const origWsBrowser = process.env.CHROME_WS_BROWSER;
+    process.env.CHROME_WS_BROWSER = '/tmp';
 
     const fakeHelpers = {
       readProfileMeta: () => null,
@@ -742,6 +749,8 @@ describe('chrome-process: spawn failure surfaces as an error, not a crash', () =
       else { delete require.cache['child_process']; }
       delete require.cache[CHROME_PROCESS_PATH];
       require(CHROME_PROCESS_PATH);
+      if (origWsBrowser === undefined) { delete process.env.CHROME_WS_BROWSER; }
+      else { process.env.CHROME_WS_BROWSER = origWsBrowser; }
     }
   });
 });

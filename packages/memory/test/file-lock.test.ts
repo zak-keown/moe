@@ -1,12 +1,4 @@
-import {
-  chmodSync,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -77,20 +69,12 @@ describe("file-lock — proper-lockfile wrapper (#97)", () => {
   });
 
   it('propagates unexpected I/O errors instead of masking them as "lock contention"', () => {
-    // chmod the directory read-only so openSync('a') hits EACCES on the lock
-    // target. The wrapper must throw rather than return null — otherwise sync
-    // would report "already running" for what's actually a disk problem.
-    const restrictedDir = join(testDir, "no-write");
-    mkdirSync(restrictedDir);
-    try {
-      chmodSync(restrictedDir, 0o500); // r-x, no write
-      const restrictedLock = join(restrictedDir, "lock");
-      expect(() => acquireFileLock(restrictedLock)).toThrow();
-    } finally {
-      try {
-        chmodSync(restrictedDir, 0o700);
-      } catch {}
-    }
+    // openSync('a') on a path whose parent is not a directory hits ENOTDIR
+    // deterministically — no chmod trick that a root process (CI container)
+    // would ignore. The wrapper must throw rather than return null; otherwise
+    // sync would report "already running" for what is actually a disk problem.
+    const restrictedLock = join("/dev/null", "lock");
+    expect(() => acquireFileLock(restrictedLock)).toThrow();
   });
 });
 
