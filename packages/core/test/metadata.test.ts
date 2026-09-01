@@ -641,7 +641,10 @@ describe("runtime paths", () => {
 
 describe("hooks", () => {
   const hooks = JSON.parse(readFileSync(join(PKG, "hooks/hooks.json"), "utf8")) as {
-    hooks: Record<string, Array<{ hooks: Array<{ command: string; shell?: string }> }>>;
+    hooks: Record<
+      string,
+      Array<{ matcher?: string; hooks: Array<{ command: string; shell?: string }> }>
+    >;
   };
 
   it("registers the SessionStart and Stop hooks, and nothing else", () => {
