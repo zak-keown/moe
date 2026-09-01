@@ -105,8 +105,8 @@ When the sandbox blocks branch/push operations (detached HEAD in an
 externally managed worktree), the agent commits all work and informs
 the user to use the App's native controls:
 
-- **"Create branch"** — names the branch, then commit/push/PR via App UI
+- **"Create branch"** — names the branch, then commit/push/MR via App UI
 - **"Hand off to local"** — transfers work to the user's local checkout
 
 The agent can still run tests, stage files, and output suggested branch
-names, commit messages, and PR descriptions for the user to copy.
+names, commit messages, and MR descriptions for the user to copy.

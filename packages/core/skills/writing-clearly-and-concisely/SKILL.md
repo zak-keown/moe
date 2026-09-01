@@ -31,7 +31,7 @@ the bottom do not count.
 Use this skill whenever you write prose for humans:
 
 - Documentation, README files, technical explanations
-- Commit messages, pull request descriptions
+- Commit messages, merge request descriptions
 - Error messages, UI copy, help text, comments
 - Reports, summaries, or any explanation
 - Editing to improve clarity
