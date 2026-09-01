@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, cpSync, writeFileSync, readFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, cpSync, writeFileSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -206,5 +206,66 @@ describe('CLI end-to-end', () => {
     const validateResult = runCli(['validate'], dir)
     expect(validateResult.status).toBe(0)
     expect(validateResult.stdout).toContain('validate: clean')
+  })
+})
+
+// The "Using it" transcript in docs/BROCHURE.md is a recording of a real
+// session, and nothing was checking that it stayed one. It rotted exactly the
+// way an unrecorded number does: it claimed "Generated 32 files" long after the
+// gemini adapter was deleted took the count to 29, and a previous pass papered
+// over the drift with a "one refresh away from the live tool" caveat instead of
+// re-running the CLI.
+//
+// A prose count with no gate is a claim, not a transcript. This block re-runs
+// the two commands the brochure records and asserts the brochure's own numbers
+// and harness list came from that run — so the next adapter added or removed
+// turns this red instead of silently making the brochure a lie.
+describe('docs/BROCHURE.md "Using it" transcript is a real recording', () => {
+  const BROCHURE = readFileSync(join(REPO_ROOT, 'docs', 'BROCHURE.md'), 'utf8')
+
+  // The brochure hard-wraps its transcript, so a recorded line can span two
+  // source lines. Collapse all whitespace before substring-matching.
+  const flat = BROCHURE.replace(/\s+/g, ' ')
+
+  // init names the plugin after its directory, and the brochure says
+  // `demo-plugin` — so the recording only reproduces from that name.
+  function demoPluginDir(): string {
+    const dir = join(mkdtempSync(join(tmpdir(), 'mint-brochure-')), 'demo-plugin')
+    mkdirSync(dir)
+    return dir
+  }
+
+  it('records the file count `init` actually emits', () => {
+    const dir = demoPluginDir()
+    const init = runCli(['init'], dir)
+    expect(init.status, init.stderr).toBe(0)
+
+    const live = /^Generated (\d+) files for initialization$/m.exec(init.stdout)
+    expect(live, `cli init stdout changed shape:\n${init.stdout}`).not.toBeNull()
+
+    expect(
+      flat,
+      `BROCHURE.md records a different init file count than the live CLI emits ` +
+        `(live: ${live?.[1]}). Re-run \`node packages/mint/dist/cli.js init\` in a ` +
+        `clean directory named demo-plugin and paste the real output — do not ` +
+        `hand-edit the number, and do not add a caveat.`,
+    ).toContain(`Generated ${live?.[1]} files for initialization`)
+  })
+
+  it('records the harness count and adapter list `generate` actually emits', () => {
+    const dir = demoPluginDir()
+    expect(runCli(['init'], dir).status).toBe(0)
+    const gen = runCli(['generate'], dir)
+    expect(gen.status, gen.stderr).toBe(0)
+
+    const live = /^Generated (\d+) files for (\d+) harness\(es\): (.+)$/m.exec(gen.stdout)
+    expect(live, `cli generate stdout changed shape:\n${gen.stdout}`).not.toBeNull()
+    const [, files, harnesses, adapters] = live as RegExpExecArray
+
+    expect(
+      flat,
+      `BROCHURE.md's generate line disagrees with the live CLI, which emitted ` +
+        `${files} files for ${harnesses} harness(es): ${adapters}`,
+    ).toContain(`Generated ${files} files for ${harnesses} harness(es): ${adapters}`)
   })
 })
