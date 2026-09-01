@@ -176,7 +176,7 @@ ungrouping would not change any verdict.
 | Namespace routers (6) — `ns-context` `ns-ideate` `ns-manage` `ns-project` `ns-review` `ns-workflow` | Six stubs existing only to compress 60+ descriptions into 6 context lines | **SKIP as content** — the same problem `skill-tiers.yaml` solves by curation instead. Worth naming in the lean/full rationale |
 | Install/config (6) — `config` `settings` `surface` `update` `help` `workspace` | Interactive config, skill surfacing, self-update, isolated workspaces | **SKIP** — `installer-hq-dx` owns installer DX. `surface` (toggle clusters without reinstall) is the one idea worth stealing there |
 | Ideation (5) — `capture` `explore` `spike` `review-backlog` `profile-user` | Socratic ideation, spikes, backlog promotion, developer profiling | **ALREADY-COVERED-BY** `brainstorming` (250 lines) and `scoping-the-simplest-core` |
-| Git/ship (4) — `pr-branch` `ship` `undo` `inbox` | PR branch filtering, ship gate, git revert by manifest, issue triage | **ALREADY-COVERED-BY** `finishing-a-development-branch` (225 lines). `tc-standards-conformance` owns MR + `sc-{card}/{slug}` conventions |
+| Git/ship (4) — `pr-branch` `ship` `undo` `inbox` | PR branch filtering, ship gate, git revert by manifest, issue triage | **ALREADY-COVERED-BY** `finishing-a-development-branch` (225 lines) |
 | Remaining (4) — `workstreams` `extract-learnings` `mvp-phase` `ultraplan-phase` | Parallel workstreams; learning extraction; SPIDR MVP slicing; cloud planning | **SKIP** — `workstreams` overlaps `parallel-execution-option`; `mvp-phase` overlaps `scoping-the-simplest-core`; `ultraplan-phase` is beta cloud tooling |
 
 **70 of 71: skip or already covered.** The reason is structural, not taste — a GSD
@@ -262,8 +262,8 @@ evaluated-and-declined upstream.
 `.planning/` state machine and phase DAG — `deterministic-task-dag`. Wave-based
 parallel execution and `workstreams` — `parallel-execution-option`. Installer,
 `config`/`settings`/`surface`/`update` — `installer-hq-dx`. Graph and codebase-map
-context — `codegraph-context-layer`. MR and branch conventions —
-`tc-standards-conformance`. The `@bubstack` scope collision — `moe-tone-and-branding`.
+context — `codegraph-context-layer`. The `@bubstack` scope collision —
+`moe-tone-and-branding`.
 **Also out: deleting or modifying anything under `~/.claude/`.** Nothing in this item
 touches the install; it only reads it.
 

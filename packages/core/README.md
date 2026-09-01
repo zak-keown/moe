@@ -15,27 +15,20 @@ collaboration, writing, and plugin authoring.
 Skills are assigned to exactly one tier in `skill-tiers.yaml`. Add or remove a
 skill there whenever its directory changes.
 
-## AI governance mapping
+## Governance hook
 
-TC's AI Governance policy is mandatory and is intentionally not vendored as a
-skill. Install it at the user-instruction layer as directed by
-`ai/aigovernance`; `hooks/tc-governance-check` provides a non-blocking
-SessionStart reminder when it is absent. Set
-`MOE_TC_GOVERNANCE_DISABLED=1` on non-TC checkouts.
+`hooks/governance-marker-check` is an optional SessionStart hook that checks
+whether a caller-configured governance policy is loaded on this machine, and
+emits an installation hint when it is not. It is off by default and does
+nothing until a fork opts in:
 
-| § | Requirement | Moe surface |
-|---|---|---|
-| §1 | Credential and secret protection | The policy text; Moe stores no credentials. |
-| §2 | Data protection and PII | The policy text; completion evidence stays under `$HOME`. |
-| §3 | Destructive actions | The policy text and the worktree/branch-finishing skills. |
-| §4 | Least privilege | Retrieval agents declare explicit tool allowlists. |
-| §5 | SQL safety | The policy text; core has no database. |
-| §6 | Dependency safety | `PARITY.md` records imported licenses and risk decisions. |
-| §7 | Escalation | Verification and systematic-debugging skills. |
-| §8 | Auditability | Branch-finishing guidance requires agent-authored MR labels. |
-| §9 | Transparency | Verification-before-completion requires evidence-backed claims. |
-| §10 | `.ai-privacy.yml` | The root policy declaration; enforcement remains separate work. |
-| §11 | Enforcement | The policy remains above skills in the instruction hierarchy. |
+- `MOE_GOVERNANCE_MARKER` — the exact marker line (usually a policy
+  document's H1) to look for in `~/.claude/CLAUDE.md` or
+  `~/.codex/AGENTS.md`. Unset means the hook exits silently.
+- `MOE_GOVERNANCE_POLICY_HINT` — optional text appended to the SessionStart
+  context when the marker is missing, e.g. where to install it from.
+- `MOE_GOVERNANCE_MARKER_CHECK_DISABLED` — any non-empty value disables the
+  hook outright, regardless of the other two variables.
 
 ## Generated plugin
 

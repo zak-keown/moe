@@ -4,11 +4,11 @@
   "description": "Launch, control and monitor worker Claude sessions over tmux.",
   "author": {
     "name": "Zak Keown",
-    "email": "zak@turncommerce.com"
+    "email": "zak.keown@outlook.com"
   },
   "license": "MIT",
-  "repository": "https://gitlab.tcdevops.com/Zak/moe",
-  "homepage": "https://gitlab.tcdevops.com/Zak/moe",
+  "repository": "https://gitlab.com/moe-ai/moe",
+  "homepage": "https://gitlab.com/moe-ai/moe",
   "type": "module",
   "main": "./.opencode/plugins/moe-crew.js",
   "pi": {

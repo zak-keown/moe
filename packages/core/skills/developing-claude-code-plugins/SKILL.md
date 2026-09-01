@@ -165,10 +165,9 @@ Common issues are usually:
    package's own notes — never in an upstream `CHANGELOG.md` or
    `RELEASE-NOTES.md`, which are inherited record and are not ours to edit.
 
-3. **Commit to a branch and open a merge request** on
-   `gitlab.tcdevops.com`. Do not push to the default branch and do not tag a
-   release: CI runs from one root `.gitlab-ci.yml`, and there is no release
-   workflow to trigger.
+3. **Commit to a branch and open a merge request.** Do not push to the
+   default branch and do not tag a release: CI runs from one root
+   `.gitlab-ci.yml`, and there is no release workflow to trigger.
 
 4. **Distribution — one path only.**
 

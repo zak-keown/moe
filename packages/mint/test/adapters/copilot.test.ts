@@ -37,12 +37,12 @@ describe('copilot adapter', () => {
       'name: demo',
       'version: 1.0.0',
       'description: Copilot fixture',
-      'repository: https://gitlab.tcdevops.com/Zak/moe',
+      'repository: https://gitlab.com/moe-ai/moe',
       'marketplace:',
       '  name: moe',
     ].join('\n'))
     const doc = copilot.installDoc!(configured)
-    expect(doc).toContain('copilot plugin marketplace add https://gitlab.tcdevops.com/Zak/moe')
+    expect(doc).toContain('copilot plugin marketplace add https://gitlab.com/moe-ai/moe')
     expect(doc).toContain('copilot plugin install demo@moe')
   })
 

@@ -145,8 +145,6 @@ Read `packages/core/**` from the package's tree. Read `PARITY.md` and
 
 ## Not this file's job
 
-- MR templates, branch naming, `CODEOWNERS`, `.gitlab/merge_request_templates/`
-  — see `tc-standards-conformance` in the backlog.
 - Consumer-side install and HQ DX — see `installer-hq-dx`.
 - Voice and tone — see `moe-tone-and-branding`.
 - Building the `/plugins/` mint step — `DO-NOW-3` (merged); this file documents
