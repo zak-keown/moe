@@ -193,7 +193,7 @@ moe/
 | `@bubstack/moe-core` | superpowers, superpowers-lab, iterative-development, the-elements-of-style, superpowers-developing-for-claude-code, double-shot-latte, mattpocock-skills | The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring, codebase design, and the stop-hook. 31 skills. |
 | `@bubstack/moe-backstory` | greenfield | Recover a behavioral spec from a codebase that never had one. 22 skills, 2 agents. |
 | `@bubstack/moe-memory` | episodic-memory, private-journal-mcp | One embedding layer, one store, two record types (conversation turn, journal entry), one MCP server. **Both halves are kept and genuinely reconciled** — decided 2026-08-31. |
-| `@bubstack/moe-flight` | gauntlet, superpowers-evals (quorum) | Drive a target — web, CLI, or TUI — through acceptance criteria and grade it. Also drives nine agent CLIs side by side. |
+| `@bubstack/moe-flight` | gauntlet, selected superpowers-evals surfaces | Drive a web, CLI, or TUI target through acceptance criteria and grade it. The quorum dashboard and tab bridgehead are present; comparative lab and appliance orchestration are deliberately absent. |
 | `@bubstack/moe-mint` | everyharness, everyharness-container | Generate native plugin manifests for every harness from one config. The monorepo's plugin build step. |
 | `@bubstack/moe-crew` | claude-session-driver | Launch, control and monitor worker Claude sessions over tmux. |
 | `@bubstack/moe-glass` | superpowers-chrome | Zero-dependency Chrome DevTools Protocol client. |
@@ -242,7 +242,9 @@ L2         flight ─────────────┘
   `workspace:*`.
 - `flight` internal — quorum → gauntlet.
 
-**Census results, 2026-08-31.** All nine packages are now imported and censused.
+**Census results, 2026-08-31.** All nine package boundaries are populated and
+censused. This does not mean every upstream surface was imported: flight
+deliberately refuses the quorum lab and appliance commands described above.
 Wave A covered five — `crew`, `mint`, `backstory`, `tab`, `proof` — with **zero
 internal edges among them.** Every one is a leaf. Specifically:
 

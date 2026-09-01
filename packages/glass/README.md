@@ -94,4 +94,4 @@ follow: provenance is preserved, self-reference is rewritten.
   lacking describe-scope hooks. vitest's `beforeEach` would do it; converting is
   a behavior change, not a rename.
 - `test/scenarios/` are acceptance-criteria cards in all but name. They should
-  become `@bubstack/moe-flight` story cards once flight lands.
+  become `@bubstack/moe-flight` story cards.

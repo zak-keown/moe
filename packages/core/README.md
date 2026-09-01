@@ -803,43 +803,17 @@ mechanics.
 
 ## Root changes needed
 
-Confined to this package otherwise; these four need a root file.
+Confined to this package otherwise; these two outstanding items need a root file.
 
-1. **`biome.json`** — add two globs to the **existing** first override (the one
-   already covering `**/packages/glass/**` and `**/packages/mint/**`):
-   `**/packages/core/skills/**` and `**/packages/core/test/{brainstorm-server,iterative-development,latte}/**`.
-   Same reason as glass: upstream ran no formatter, and reformatting 18 near-verbatim
-   files would bury the rebrand diff under whitespace. The override's retained rules
-   pass as-is — the 24 unused `catch (e)` bindings were fixed to `catch (_e)` rather
-   than exempted, so `noUnusedVariables: "error"` still holds. Verified: with the
-   formatter and assist disabled and only those rules active, `biome check
-   packages/core` reports 0 diagnostics. My own authored files
-   (`test/metadata.test.ts`, `vitest.config.ts`) are outside those globs, follow the
-   root config, and are clean (3 `noTemplateCurlyInString` warnings for literal
-   `${CLAUDE_PLUGIN_ROOT}` strings; warnings exit 0).
-2. **`.gitignore`** — add `packages/core/skills/working-with-claude-code/references/`.
+1. **`.gitignore`** — add `packages/core/skills/working-with-claude-code/references/`.
    That is the on-demand Claude Code docs cache `update_docs.cjs` writes. Until it
    lands, running the populate script leaves 42 untracked files.
-3. ~~**`ARCHITECTURE.md` §4 and `.claude-plugin/marketplace.json`**~~ — **DONE
-   2026-08-31.** Both fixed, along with two more `28` claims in ARCHITECTURE.md
-   §2 and §3 that this note had not spotted. Kept here for the reasoning: both said
-   `moe-core` has **28 skills**. It has **27**. Counting frontmatter `name:`
-   across the six pinned sources: superpowers 14, iterative-development 6,
-   superpowers-lab 4, sp-dev-for-cc 2, the-elements-of-style 1,
-   double-shot-latte 0. The 28th was almost certainly `example-workflow`, a
-   pseudo-skill inside an example plugin that is not a skill. Asserted in
-   `test/metadata.test.ts`.
-4. **`NOTICE`** — two corrections. `double-shot-latte` is listed under Jesse
+2. **`NOTICE`** — two corrections. `double-shot-latte` is listed under Jesse
    Vincent / MIT, but its retained `LICENSE` reads "Copyright (c) 2024
    Anthropic"; and `superpowers-developing-for-claude-code` is listed under MIT
    with no LICENSE file anywhere to retain, so the promise that copies "are
    retained alongside the code derived from them" cannot be met for it from this
    snapshot.
-
-`pnpm-lock.yaml` also changed — three `devDependencies` (`vitest`, `ws`, `yaml`)
-were added to this package and an install was required to verify. It will
-conflict with every other concurrent import and should be regenerated at
-integration.
 
 Also worth correcting in `PARITY.md` when someone is in there: its rebrand
 footprint says `iterative-development` has 22 files to touch (the real figure is
@@ -848,10 +822,6 @@ misses two brand-token *filenames* with token-free bodies).
 
 ## Follow-ups
 
-- ~~**The lean/full split cannot be built.**~~ **DONE 2026-08-31**, by the
-  staging step alone — `--dir` still conflates config-in with files-out and it
-  turned out not to matter. See "The mechanism, and where the filtering actually
-  happens" above.
 - **`moe-mint` does not detect duplicate skill `name:`.** `readSkills()` maps
   directory → `{name, dir}` and sorts; two directories declaring the same
   frontmatter `name` emit two manifest entries with the same name, silently. Here
@@ -864,7 +834,7 @@ misses two brand-token *filenames* with token-free bodies).
 - **The bootstrap-wrapper swap wants an eval,** not a code review. See above.
 - **`test/latte/scenarios/` are acceptance-criteria cards in all but name** — 65
   fixtures, uniform schema, a boolean expectation each. They should become
-  `@bubstack/moe-flight` story cards once flight lands. Same follow-up
+  `@bubstack/moe-flight` story cards. Same follow-up
   `packages/glass` carries for `test/scenarios/`.
 - **The 13 `claude`-CLI-driven suites belong in `@bubstack/moe-flight` too.** They
   were deleted here rather than carried unrun; the snapshot is the record.

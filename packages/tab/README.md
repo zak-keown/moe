@@ -168,25 +168,8 @@ did.
 - **Bun support.** `src/ffi-bun.ts` and the Bun branch of `pricing-env.ts` are imported verbatim
   and are not exercised by the vitest suites, which run under Node. They do pass the equivalence
   gate when `bun` happens to be on PATH, which it was on the import machine.
-- **Twelve unreferenced transcript fixtures** (`claude-mini`, `codex-mini`, `copilot-mini`,
-  `gemini-mini`, `kimi-mini`, `opencode-mini`, `pi-mini`, `pi-session-mini`, and the FFI crate's
-  own `claude-mini`). They are the corpus for the dialects 0.6.0 deleted. A few KB, and deleting
-  inherited test data on the assumption it is dead is how a fork loses the ability to bring a
-  feature back.
-
 ## Follow-ups
 
-- **`pnpm-workspace.yaml` needs `koffi: true` under `allowBuilds`.** Until it lands, `pnpm install`
-  exits 1 with `ERR_PNPM_IGNORED_BUILDS`. koffi ships every prebuilt binary in its tarball so it
-  loads fine unbuilt, but pnpm 11 will not proceed without the approval by name.
-- **`biome.json` needs a formatter/assist exclusion for this package's data files.** Eight JSON
-  files — the 890 KB generated price sheet, captured LiteLLM/OpenRouter API samples, and
-  transcript fixtures — are the only biome failures in the package. The exact override is in the
-  import report; verified sufficient before this was committed.
-- **Root `.gitignore` needs six entries** this package produces and root does not cover:
-  `bindings/typescript/native/`, `wheelhouse/`, `.pricing/`, `bindings/python/moe_tab/libmoe_tab_ffi.*`,
-  the `bindings/go` `total` binaries, and `.pytest_cache/`. None are produced by any verification command, so
-  nothing is at risk today.
 - **The Python and Go result types still omit `pricing_source`**, as the TypeScript one did. Adding
   it means touching a dataclass and a struct plus their `from_json`; worth doing, but it is a
   binding-surface change rather than a rename and did not belong in this import.

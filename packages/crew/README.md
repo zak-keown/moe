@@ -150,7 +150,8 @@ Kept, because the types being *real* is the point — if Pi changes `ToolCallEve
 `pnpm typecheck` says so, where a hand-written shim would drift silently. It is
 not free: it drags in `koffi` (native FFI), `@google/genai` and `protobufjs`,
 all three of which run postinstall scripts and therefore need naming in the root
-`pnpm-workspace.yaml` `allowBuilds`. See the root-changes note below.
+`pnpm-workspace.yaml` `allowBuilds`. They are declared there: `koffi` may build,
+while the type-only `@google/genai` and `protobufjs` scripts are disabled.
 
 `smol-toml` is also still used — `test/codex-driver.test.ts` parses the
 `config.toml` the codex driver writes, to prove it is valid TOML.
@@ -264,15 +265,6 @@ these 12 too.
 - **CI needs tmux for the integration suites.** Either add it to the `test` job's
   image or give the three suites a job of their own. Until then 12 tests are
   permanently skipped rather than passing.
-- **The root biome config wants one override for this package.** 34
-  `lint/style/noNonNullAssertion` warnings, all in `test/`, matching upstream's
-  own `tests/**` relaxation. They are warnings, so `biome check` exits 0 — this is
-  noise reduction, not a gate. Biome's offered autofix is *unsafe* and would
-  weaken the assertions (`expect(meta!.cwd)` → `expect(meta?.cwd)` passes on
-  null), so the override is the right answer, not the fix.
-- **`@earendil-works/pi-coding-agent` needs three `allowBuilds` entries** in the
-  root `pnpm-workspace.yaml` before `pnpm install --frozen-lockfile` succeeds.
-  See root-changes below.
 - **The pi extension's ESM bundle carries dead imports.** tsup warns that
   `readFileSync`, `chmodSync`, `readdirSync`, `rmSync`, `dirname` and `join` are
   imported from `fs`/`path` into `dist/pi-extension.mjs` but never used —
