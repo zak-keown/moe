@@ -22,6 +22,10 @@ instruction says to invoke a skill, use Pi's native skill system instead: load
 the relevant `SKILL.md` with `read` when the skill applies, or let a human invoke
 `/skill:name` explicitly.
 
+## Native rendering ladder
+
+The shared native-rendering ladder lives at `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md`. On Pi, rung 1 (the Claude Code Artifact tool) is not exposed — skills that render should start at rung 2 (brainstorm browser companion) and drop to rung 3 (local HTML file) or rung 4 (markdown file) when a browser is unavailable.
+
 ## Built-in tools are lowercase
 
 Pi's built-in coding tools are `read`, `write`, `edit`, `bash`, plus optional
