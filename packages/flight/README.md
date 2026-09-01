@@ -6,17 +6,17 @@ grade it. One bin, `moe-flight`, with the QA engine under `moe-flight qa`.
 Not a plugin, and deliberately not publishable: see
 [License, and why this package is `private`](#license-and-why-this-package-is-private).
 
-**Status:** half imported. `gauntlet` is in and green — **1432 tests passing
-across 158 suites**, 20 skipped for a missing `tmux`. `superpowers-evals`
-(quorum) is **not** imported except for one deliberate bridgehead; see
-[What is not imported yet](#what-is-not-imported-yet).
+**Status:** the QA engine, React UI, server-rendered dashboard, and moe-tab
+bridgehead are imported and green. Quorum's comparative lab and appliance
+orchestration are deliberately absent; see
+[What is not imported](#what-is-not-imported).
 
 ## Forked from
 
 | Upstream repo | Pinned | License | State |
 |---|---|---|---|
 | `gauntlet` | `91b6f7e` | Apache-2.0 | imported |
-| `superpowers-evals` | `114f725` | **none — all rights reserved** | 5 files, deliberately (see below) |
+| `superpowers-evals` | `114f725` | **none — all rights reserved** | dashboard plus tab bridgehead; lab/appliance absent |
 
 Snapshots are in `../../../.moe-references/` (gitignored). They are the spec — not
 upstream `main`. See [PARITY.md](../../PARITY.md).
@@ -36,9 +36,9 @@ src/qa/                The QA engine — upstream gauntlet's src/.
   agent/               The tester-agent loop, its tools, and the seven prompt files.
   api/                 Hono app: 9 routers, a WS channel, an SPA catch-all.
   models/              Two providers (Anthropic, OpenAI) behind one interface.
-src/lab/               BRIDGEHEAD ONLY — 3 files from quorum, for the moe-tab edge.
+src/lab/               TAB BRIDGEHEAD ONLY — quorum-derived types and pricing edge.
                        `moe-flight lab` still refuses to run.
-test/qa/               129 vitest suites for src/qa (plus 15 Chrome/tmux-gated).
+test/qa/               Vitest coverage for src/qa, plus Chrome/tmux-gated projects.
 test/lab/              The moe-tab boundary, including its FFI half.
 ui/                    React + Vite SPA. Two builds: dist/ (served) and
                        dist-static/ (the single-file run report). 4 suites.
@@ -77,7 +77,7 @@ to itself with no way to say which half it meant.
 `lab` and `appliance` exist and fail with a pointer to this file, rather than
 reading as an unknown command.
 
-## What is not imported yet
+## What is not imported
 
 `superpowers-evals` is 1127 files and 131k lines, arriving with no abstraction
 over `Bun.*` at all (246 occurrences, 55 in `src/`), 213 `bun:test` suites, 1201
@@ -87,17 +87,22 @@ resolutions that have to be redesigned rather than edited — including
 `bun run <file>.ts` and which all 170 scenario scripts depend on.
 
 Its own survey's recommendation was to split flight and land gauntlet first.
-That is what happened. Nothing of quorum is here except the bridgehead below.
+That is what happened. Quorum's dashboard and the tab boundary are here; its
+comparative-run lab and appliance orchestration are not.
 
-**The one exception: 5 quorum-derived files.** Three under `src/lab/`
-(`tab/index.ts`, `contracts/economics.ts`, `atif/types.ts`) and one test, split
-into `test/lab/tab.test.ts` and `test/lab/tab-ffi.test.ts`. `flight → tab` is ARCHITECTURE.md
+**The tab bridgehead.** The source under `src/lab/` and its contract tests under
+`test/lab/` preserve the pricing boundary without pretending to import quorum's
+runner. `flight → tab` is ARCHITECTURE.md
 §5's only confirmed edge and the stated reason this monorepo exists — upstream it
 was `@primeradianthq/obol@^0.9.0` off npm, so changing a cost model meant
 publish-then-test. Converting it needs `src/obol/index.ts` and its two type
 imports, nothing else, so it is here and wired as `workspace:*`. See
 [The moe-tab edge](#the-moe-tab-edge). It is a bridgehead, not a partial quorum:
 `moe-flight lab` still refuses to run.
+
+**The dashboard.** Quorum's server-rendered results grid lives under
+`dashboard/` as a nested workspace. It consumes completed run data and does not
+bring in the missing lab/appliance execution engine.
 
 ## What changed on import
 
@@ -147,11 +152,10 @@ Bun tolerated it; Node and vitest throw `require is not defined`. Same fix
 straight from `src/`. One of them was worse than wrong: `api/server.ts` guards
 the UI dir with `existsSync`, so a bad path just stops serving the SPA.
 
-**358 → 158 suites is not a loss.** 145 gauntlet suites converted (import source,
-`import.meta.dir` → `import.meta.dirname` in 108 places, `jest.*` → `vi.*` in one
-file, `Bun.serve`/`spawnSync`/`sleep` out of 13 files); 8 dashboard suites
-converted; 4 SPA suites moved from `gauntlet/test/ui/` into `ui/test/` where they
-belong. The 213 quorum suites are not here.
+**The smaller suite is a scope boundary, not dropped coverage.** Gauntlet's QA
+suites, the dashboard suites, and the SPA suites were converted. Quorum's lab
+and appliance suites are not here because their production surfaces are not
+here either.
 
 **Two test-only helpers replaced `Bun.serve`.** `test/qa/helpers/mock-http.ts`
 stands up fetch-style and WebSocket servers on `node:http` + `ws` — the same
@@ -464,23 +468,12 @@ Also checked by hand:
 - `diff -r docs/history/{plans,specs,notes}` and `LICENSE` against the pinned
   snapshot: identical. `shasum -c` over 130 Zone B files: all OK.
 
-**20 tests are unverified on this machine.** 18 need a `tmux` that is not
-installed here (the whole TUI adapter suite plus the two colour/nano integration
-tests); 2 are `describe.skipIf` on `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`. The
-root `.gitlab-ci.yml` runs on `node:24`, which has neither tmux nor a Chrome, so
-CI will skip the `tmux` project and cannot run `chrome` or `ffi` at all yet.
+Credential-, Chrome-, tmux-, and FFI-gated suites remain outside the default
+Node gate. The root `AGENTS.md` lists the exact opt-in commands and which of them
+CI can provide.
 
 ## Follow-ups
 
-- **`test/qa/**` is not typechecked.** Upstream excluded `test/` from `tsc`
-  entirely, and under the workspace strict base its 129 suites produce **592
-  errors** — 398 of them even with `noUncheckedIndexedAccess` off. The bulk is
-  `expect(grid[0][1].fg)`-shaped index noise in assertions, but the triage found
-  real things, and those are fixed: 18 call sites passed a 5th argument to a
-  4-parameter `buildSystemPrompt`; `process-tree.test.ts` passed a signal to a
-  `kill()` that takes none; a `@ts-expect-error` suppressed nothing; and the
-  OpenAI SDK now requires `cache_write_tokens` in `InputTokensDetails`. `src`,
-  `examples` and `test/lab` **are** typechecked and clean.
 - **The `flight ↔ glass` reconciliation.** Two honest options, both real work:
   port glass's three months of lib changes into this fork, or port this fork's
   ten divergences into glass and have flight consume it. The second needs glass
@@ -491,8 +484,7 @@ CI will skip the `tmux` project and cannot run `chrome` or `ffi` at all yet.
   bundles. `MOE_TAB_PRICING_DIR` plus a committed reduced snapshot is what the
   upstream design docs describe and nobody implemented.
 - **CI needs tmux, a Chrome, and cargo** before `test:tmux`, `test:chrome` and
-  `test:ffi` are more than opt-in. Until then 20 tests are permanently skipped
-  rather than passing, and 85 are unreachable in CI.
+  `test:ffi` become CI-backed rather than opt-in.
 - **`.dockerignore` is inert as placed.** Docker reads it from the build-context
   root, and `docker/Dockerfile`'s context is the monorepo root now. Kept as the
   record of what upstream excluded, with a header saying so; a root-level

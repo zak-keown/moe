@@ -304,6 +304,12 @@ Current structural, safety, generated-output, and behavior contracts remain test
 the brochure now documents commands and durable outputs without a transcript that
 rots whenever the adapter registry changes.
 
+**Live import reports were refreshed on 2026-09-01.** Resolved root-change and
+follow-up bullets were removed, and Flight's docs now distinguish its imported
+QA/UI/dashboard/tab surfaces from the quorum lab and appliance orchestration it
+still refuses. These are documentation corrections only; no additional upstream
+surface crossed the distribution boundary.
+
 **`vet` was not a brand token and was renamed anyway.** It is a *pre-`gauntlet`*
 name for the project — upstream's `bun.lock` still recorded the workspace as
 `"vet"` — so it is brand residue that the token list simply never caught, and
