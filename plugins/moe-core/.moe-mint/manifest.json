@@ -29,11 +29,17 @@
     ".kimi-plugin/plugin.json": {
       "sha256": "d45c719a882be3d081205343d260c706c73879749ea64f9b9d9712d650139dde"
     },
+    ".opencode/agent/review-shard.md": {
+      "sha256": "1dff04aec1f41c985df36c02b5b6dfa261ce97305ad29a0db651d807811d2188"
+    },
     ".opencode/agent/search-codegraph.md": {
       "sha256": "95151b68711767f323f8ebc56c65f060c89aa250fd533de962334bb2724edfae"
     },
     ".opencode/agent/search-moedex.md": {
       "sha256": "24c325bc55a04c39b746bcec67ae35fda2ff082f71a79277cc1fe2355be1a714"
+    },
+    ".opencode/agent/verify-finding.md": {
+      "sha256": "cdd11cd4356887cffb9504549a8905e887653b205b97c7e436cd963e8f655a4f"
     },
     ".opencode/plugins/moe-core.js": {
       "sha256": "96d1c0da952c9ea8fe2cd7888d5caeab50a9a3e28a40d3c616e044e5c361974f"
@@ -66,7 +72,7 @@
       "sha256": "74c3b37ea516a84cc939bc3dc5f38f3bbcc69f7776fd2c48a8d115da45bce9a6"
     },
     "docs/install/opencode.md": {
-      "sha256": "7f0f4130bd4400d2b7168ab5b55c5d18e15ccb7a32f1716e4fce9711bddaeb62"
+      "sha256": "d443dc8d26cf186266ab7e79543b1f03c7855ad42ab27aa9420a30c01d216ce2"
     },
     "docs/install/pi.md": {
       "sha256": "a0d784c49db657271456734d1d1408d4caa51f8dd604d020612d7ed88676640f"
