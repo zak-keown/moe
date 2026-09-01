@@ -59,9 +59,13 @@ bootstrap:
   skill: using-moe
 
 # components: are all defaults (skills/, commands/, agents/, hooks/hooks.json,
-# .mcp.json) and therefore omitted. This package has no commands/, no agents/
-# and no .mcp.json; hooks/hooks.json carries the Stop hook only, and mint merges
-# its own SessionStart entry into hooks/moe-mint/hooks.json.
+# .mcp.json) and therefore omitted. This package has no commands/ and no
+# .mcp.json. It does have agents/ — retrieving-context's two haiku search
+# agents, this package's first, picked up with no config change because agents/
+# is already a default component. hooks/hooks.json carries a Stop hook and a
+# SessionStart hook (this comment said "the Stop hook only" until 2026-09-01,
+# which stopped being true when plan-set-notice landed), and mint merges its own
+# SessionStart entry into hooks/moe-mint/hooks.json.
 
 # harnesses: no exclusions. All 10 adapters emit. opencode and pi used to be
 # excluded here (see the header) and the staging root removed the reason.
