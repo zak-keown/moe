@@ -10,7 +10,7 @@ import { MANIFEST_PATH } from './manifest.js'
 // validate.ts locates schemas/.
 const CHECKS_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'checks')
 
-export const DEFAULT_IMAGE = 'registry.gitlab.tcdevops.com/Zak/moe/moe-container:latest'
+export const DEFAULT_IMAGE = 'registry.gitlab.com/moe-ai/moe/moe-container:latest'
 
 export interface TestOptions {
   image?: string

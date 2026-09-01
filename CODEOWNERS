@@ -1,4 +1,4 @@
-# GitLab CODEOWNERS for gitlab.tcdevops.com/Zak/moe.
+# GitLab CODEOWNERS for gitlab.com/moe-ai/moe.
 #
 # The audit filter that surfaces every AI-authored MR needs at least one
 # required reviewer per touched area; otherwise the `AI` label alone is a

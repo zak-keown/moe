@@ -1079,7 +1079,7 @@ describe("fork invariants", () => {
   it("uses the canonical GitLab project URL in plugin configs", () => {
     for (const rel of ["mint/moe-core.yaml", "mint/moe-everything.yaml"]) {
       const config = readFileSync(join(PKG, rel), "utf8");
-      expect(config, rel).toContain("https://gitlab.tcdevops.com/Zak/moe");
+      expect(config, rel).toContain("https://gitlab.com/moe-ai/moe");
     }
   });
 });

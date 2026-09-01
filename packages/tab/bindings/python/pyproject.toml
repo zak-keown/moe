@@ -19,8 +19,8 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://gitlab.tcdevops.com/Zak/moe"
-Repository = "https://gitlab.tcdevops.com/Zak/moe"
+Homepage = "https://gitlab.com/moe-ai/moe"
+Repository = "https://gitlab.com/moe-ai/moe"
 
 [dependency-groups]
 dev = ["pytest>=8"]

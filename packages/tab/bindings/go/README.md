@@ -7,7 +7,7 @@ consumers need no C compiler. The Rust core stays the single source of truth for
 this package only marshals C strings and unmarshals JSON.
 
 ```go
-import "gitlab.tcdevops.com/Zak/moe/packages/tab/bindings/go/tab"
+import "gitlab.com/moe-ai/moe/packages/tab/bindings/go/tab"
 ```
 
 ## Not a published module
