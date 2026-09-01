@@ -160,7 +160,12 @@ describe("TC release clean-job CI policy", () => {
     assert.match(job.before_script[0], /npm_config_\*auth\*/);
     assert.match(job.before_script.join("\n"), /gcc-aarch64-linux-gnu/);
     assert.match(job.before_script.join("\n"), /libc6-dev-arm64-cross/);
+    assert.match(job.before_script.join("\n"), /\bnodejs\b/);
     assert.match(job.before_script.join("\n"), /qemu-user/);
+    assert.deepEqual(job.script.slice(0, 2), [
+      "cargo fetch --locked --manifest-path packages/tab/Cargo.toml",
+      "CARGO_NET_OFFLINE=true node scripts/tab-third-party-licenses.mjs --check",
+    ]);
     assert.match(job.script.join("\n"), /build-tab-native-linux\.sh/);
     assert.deepEqual(job.artifacts.paths, [".tc-tab-native/linux-*/*.so"]);
     assert.equal(JSON.stringify(job).includes("apple-darwin"), false);

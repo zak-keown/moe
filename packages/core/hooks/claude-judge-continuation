@@ -10,6 +10,12 @@
 # DEFAULT STANCE: stop unless the assistant explicitly stated what it would do
 # next.
 
+# Drain the hook protocol event before any early exit. On Linux, exiting while
+# the parent is still writing stdin can make Node's spawnSync/execFileSync throw
+# EPIPE even though this opt-out path correctly exits 0. Capture once here and
+# reuse it below when the judge is armed.
+EVENT=$(cat)
+
 # ---------------------------------------------------------------- opt-in gate
 case "${MOE_LATTE_ENABLED:-}" in
     ""|0|false|FALSE|no|NO|off|OFF)
@@ -43,9 +49,6 @@ fi
 
 command -v jq >/dev/null 2>&1 || allow_stop "jq not found on PATH"
 command -v claude >/dev/null 2>&1 || allow_stop "claude CLI not found on PATH"
-
-# Read the hook event data
-EVENT=$(cat)
 
 # Extract key information
 STOP_HOOK_ACTIVE=$(echo "$EVENT" | jq -r '.stop_hook_active // false')

@@ -10,6 +10,7 @@ const {
   getXdgCacheHome,
   getChromeProfileDir,
   findPidOnPort,
+  findPidOnPortLinuxProc,
   findOrphanChromeForProfile,
   isPortFree,
   portFreeFromProbes,
@@ -137,6 +138,18 @@ describe('chrome-launcher-helpers', () => {
       const pid = await findPidOnPort(port);
       assert.equal(typeof pid, 'number');
       assert.equal(pid, process.pid);
+    } finally {
+      server.close();
+    }
+  });
+
+  it.runIf(process.platform === 'linux')('resolves a bound port through /proc without lsof', async () => {
+    const net = await import('node:net');
+    const server = net.default.createServer();
+    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+    const { port } = server.address();
+    try {
+      assert.equal(findPidOnPortLinuxProc(port), process.pid);
     } finally {
       server.close();
     }

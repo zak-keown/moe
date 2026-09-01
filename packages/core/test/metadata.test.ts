@@ -809,6 +809,24 @@ describe("hooks", () => {
     expect(out).toBe("");
   });
 
+  it("the disarmed Stop hook drains a large protocol event before exiting", () => {
+    // A child that exits before reading stdin can make Node throw EPIPE on
+    // Linux while execFileSync is still writing. This payload is deliberately
+    // larger than a pipe buffer so the regression exercises the protocol,
+    // rather than merely asserting exit 0 for a tiny event.
+    const out = execFileSync("bash", [join(PKG, "hooks/claude-judge-continuation")], {
+      input: JSON.stringify({
+        stop_hook_active: false,
+        session_id: "large-disarmed-event",
+        transcript_path: "",
+        ignored: "x".repeat(1024 * 1024),
+      }),
+      env: { ...process.env, MOE_LATTE_ENABLED: "" },
+      encoding: "utf8",
+    });
+    expect(out).toBe("");
+  });
+
   it("the evidence hook is default-ON and exits 0 empty when MOE_EVIDENCE_DISABLED is set", () => {
     // Inverted from the latte gate above: this hook only OBSERVES (writes
     // an audit JSON, never blocks a stop), so it ships default-on and the

@@ -712,6 +712,10 @@ describe('chrome-process: spawn failure surfaces as an error, not a crash', () =
     };
     delete require.cache[CHROME_PROCESS_PATH];
     const { attachChromeProcess: fresh } = require(CHROME_PROCESS_PATH);
+    const originalBrowser = process.env.CHROME_WS_BROWSER;
+    // Linux CI has no Chrome binary. Point detection at a real executable so
+    // this test reaches the deliberately stubbed spawn failure on every OS.
+    process.env.CHROME_WS_BROWSER = process.execPath;
 
     try {
       const state = {
@@ -736,6 +740,8 @@ describe('chrome-process: spawn failure surfaces as an error, not a crash', () =
       );
       assert.equal(state.chromeProcess, null, 'dead handle must be cleared');
     } finally {
+      if (originalBrowser === undefined) delete process.env.CHROME_WS_BROWSER;
+      else process.env.CHROME_WS_BROWSER = originalBrowser;
       if (origHelpers) { require.cache[HELPERS_PATH] = origHelpers; }
       else { delete require.cache[HELPERS_PATH]; }
       if (origCp) { require.cache['child_process'] = origCp; }

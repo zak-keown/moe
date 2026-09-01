@@ -237,26 +237,49 @@ describe("TC release GitLab policy", () => {
   }
 
   it("keeps merge requests and feature pushes as next-tag pack-only dry runs", () => {
-    const pack = config()["tc-release-pack"];
+    const ci = config();
+    const pack = ci["tc-release-pack"];
+    const native = ci["tab-native-linux"];
 
     assert.deepEqual(pack.needs, [
       ...prerequisiteNeeds,
       { job: "tab-native-linux", artifacts: true },
     ]);
-    assert.match(pack.rules[0].if, /merge_request_event/);
-    assert.equal(pack.rules[0].variables.NPM_DIST_TAG, "next");
-    assert.match(pack.rules[2].if, /CI_PIPELINE_SOURCE == "push"/);
-    assert.match(pack.rules[2].if, /CI_COMMIT_BRANCH/);
-    assert.equal(pack.rules[2].variables.NPM_DIST_TAG, "next");
+    const mergeRequestRule = pack.rules.find((rule) => rule.if?.includes("merge_request_event"));
+    const featurePushRule = pack.rules.find(
+      (rule) =>
+        rule.variables?.NPM_DIST_TAG === "next" && rule.if?.includes("!= $CI_DEFAULT_BRANCH"),
+    );
+    assert.equal(mergeRequestRule.variables.NPM_DIST_TAG, "next");
+    assert.match(featurePushRule.if, /CI_PIPELINE_SOURCE == "push"/);
+    assert.match(featurePushRule.if, /CI_COMMIT_BRANCH/);
+    assert.match(featurePushRule.if, /CI_COMMIT_BRANCH != \$CI_DEFAULT_BRANCH/);
     assert.deepEqual(pack.rules.at(-1), { when: "never" });
     assert.equal(JSON.stringify(pack.variables ?? {}).includes("PROGET_NPM_AUTH"), false);
+
+    assert.ok(native.rules.some((rule) => rule.if?.includes("!= $CI_DEFAULT_BRANCH")));
+    assert.deepEqual(native.rules.at(-1), { when: "never" });
+  });
+
+  it("skips release work on ordinary default-branch pushes", () => {
+    const ci = config();
+    for (const name of ["tab-native-linux", "tc-release-pack"]) {
+      const job = ci[name];
+      const releaseRule = job.rules.find((rule) => rule.changes?.includes("tc-release.json"));
+      assert.match(releaseRule.if, /CI_COMMIT_BRANCH == \$CI_DEFAULT_BRANCH/);
+      assert.deepEqual(releaseRule.changes, ["tc-release.json"]);
+      assert.ok(job.rules.some((rule) => rule.if?.includes("!= $CI_DEFAULT_BRANCH")));
+      assert.deepEqual(job.rules.at(-1), { when: "never" });
+    }
   });
 
   it("permits latest publication only for protected default-branch release changes", () => {
     const ci = config();
-    const packReleaseRule = ci["tc-release-pack"].rules[1];
+    const packReleaseRule = ci["tc-release-pack"].rules.find(
+      (rule) => rule.variables?.NPM_DIST_TAG === "latest",
+    );
     const publish = ci["tc-release-publish"];
-    const publishRule = publish.rules[0];
+    const publishRule = publish.rules.find((rule) => rule.variables?.NPM_DIST_TAG === "latest");
 
     for (const rule of [packReleaseRule, publishRule]) {
       assert.match(rule.if, /CI_PIPELINE_SOURCE == "push"/);
@@ -271,7 +294,7 @@ describe("TC release GitLab policy", () => {
     assert.equal(publish.interruptible, false);
     assert.deepEqual(publish.needs, [...prerequisiteNeeds, "tc-release-pack"]);
     assert.deepEqual(publish.rules.at(-1), { when: "never" });
-    assert.equal(publish.rules.length, 2);
+    assert.equal(publish.rules.length, 3);
     assert.equal(JSON.stringify(publish).includes("next"), false);
   });
 });

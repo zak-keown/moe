@@ -76,4 +76,48 @@ describe(".gitlab-ci.yml is a valid pipeline definition", () => {
       expect(names, `.gitlab-ci.yml lost its ${required} job`).toContain(required);
     }
   });
+
+  it("scopes proof's pytest discovery to the proof package", () => {
+    const proof = jobs().find(([name]) => name === "proof")?.[1];
+    expect(proof, "missing proof job").toBeDefined();
+    expect(proof?.script).toEqual(["uv run --project py/proof pytest py/proof/tests"]);
+  });
+
+  it("runs only the TC convention drift job in scheduled pipelines", () => {
+    const byName = new Map(jobs());
+    const inheritedExclusions = [
+      "install",
+      "lint",
+      "typecheck",
+      "test",
+      "build",
+      "plugins",
+      "provenance",
+      "tc-drift-manifest",
+    ];
+    for (const name of inheritedExclusions) {
+      expect(byName.get(name)?.extends, `${name} must inherit the schedule exclusion`).toBe(
+        ".not-scheduled",
+      );
+    }
+
+    const explicitExclusions = [
+      "bin",
+      "tab",
+      "proof",
+      "tab-native-linux",
+      "tc-release-pack",
+      "tc-release-publish",
+    ];
+    for (const name of explicitExclusions) {
+      const firstRule = (byName.get(name)?.rules as Job[] | undefined)?.[0];
+      expect(firstRule?.if, `${name} must check schedule before any other rule`).toBe(
+        '$CI_PIPELINE_SOURCE == "schedule"',
+      );
+      expect(firstRule?.when, `${name} must skip schedules`).toBe("never");
+    }
+
+    const driftRules = byName.get("tc-conventions-drift")?.rules as Job[] | undefined;
+    expect(driftRules).toEqual([{ if: '$CI_PIPELINE_SOURCE == "schedule"' }]);
+  });
 });

@@ -155,9 +155,66 @@ async function findAvailablePort(start = PORT_RANGE_START, end = PORT_RANGE_END)
   throw new Error(`No available port in range ${start}-${end}`);
 }
 
+// Find a Linux listener's socket inode in /proc/net/{tcp,tcp6}, then resolve
+// that inode through /proc/<pid>/fd. Minimal Node/Docker images do not ship
+// lsof, but /proc is the native kernel interface and needs no extra package.
+// Permission errors are expected when another user's fd table is hidden; the
+// caller can still fall back to lsof when it is available.
+function findPidOnPortLinuxProc(portNum) {
+  const portHex = portNum.toString(16).toUpperCase().padStart(4, '0');
+  const socketInodes = new Set();
+
+  for (const table of ['/proc/net/tcp', '/proc/net/tcp6']) {
+    let source;
+    try {
+      source = fs.readFileSync(table, 'utf8');
+    } catch (_e) {
+      continue;
+    }
+    for (const line of source.split(/\r?\n/).slice(1)) {
+      const fields = line.trim().split(/\s+/);
+      if (fields.length < 10 || fields[3] !== '0A') continue; // TCP_LISTEN
+      const localAddress = fields[1];
+      const separator = localAddress.lastIndexOf(':');
+      if (separator < 0 || localAddress.slice(separator + 1).toUpperCase() !== portHex) continue;
+      if (/^\d+$/.test(fields[9])) socketInodes.add(fields[9]);
+    }
+  }
+
+  if (socketInodes.size === 0) return null;
+
+  let processes;
+  try {
+    processes = fs.readdirSync('/proc', { withFileTypes: true });
+  } catch (_e) {
+    return null;
+  }
+  for (const processEntry of processes) {
+    if (!processEntry.isDirectory() || !/^\d+$/.test(processEntry.name)) continue;
+    const fdDir = `/proc/${processEntry.name}/fd`;
+    let descriptors;
+    try {
+      descriptors = fs.readdirSync(fdDir);
+    } catch (_e) {
+      continue;
+    }
+    for (const descriptor of descriptors) {
+      let target;
+      try {
+        target = fs.readlinkSync(path.join(fdDir, descriptor));
+      } catch (_e) {
+        continue;
+      }
+      const inode = /^socket:\[(\d+)\]$/.exec(target)?.[1];
+      if (inode && socketInodes.has(inode)) return Number(processEntry.name);
+    }
+  }
+  return null;
+}
+
 // Find the PID of the process holding `port`, or null if none.
-// Uses platform-native tools — lsof on macOS/Linux, netstat on Windows.
-// Returns null on any failure (parsing, missing tool, no listener).
+// Uses /proc on Linux, lsof on macOS (and as a Linux fallback), and netstat on
+// Windows. Returns null on any failure (parsing, missing tool, no listener).
 function findPidOnPort(port) {
   const { execFileSync } = require('child_process');
   // Guard against a non-numeric or out-of-range port before using it.
@@ -166,7 +223,20 @@ function findPidOnPort(port) {
     return null;
   }
   try {
-    if (process.platform === 'darwin' || process.platform === 'linux') {
+    if (process.platform === 'linux') {
+      const procPid = findPidOnPortLinuxProc(portNum);
+      if (procPid !== null) return procPid;
+      // Some hardened hosts hide other processes' fd tables. Retain lsof as a
+      // best-effort fallback when the host happens to provide it.
+      const out = execFileSync('lsof', [`-ti:${portNum}`, '-sTCP:LISTEN'], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore']
+      }).trim();
+      if (!out) return null;
+      const pid = parseInt(out.split('\n')[0], 10);
+      return Number.isFinite(pid) ? pid : null;
+    }
+    if (process.platform === 'darwin') {
       // argv form, no shell: the port can never be shell-interpreted.
       const out = execFileSync('lsof', [`-ti:${portNum}`, '-sTCP:LISTEN'], {
         encoding: 'utf8',
@@ -368,6 +438,7 @@ module.exports = {
   portFreeFromProbes,
   findAvailablePort,
   findPidOnPort,
+  findPidOnPortLinuxProc,
   findOrphanChromeForProfile,
   buildChromeArgs,
   sandboxDisableNeeded,

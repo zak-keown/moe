@@ -37,29 +37,43 @@ variables:
     - pnpm config set store-dir .pnpm-store
     - pnpm install --frozen-lockfile
 
+.not-scheduled:
+  # The daily schedule exists only to compare TC convention pins. Ordinary
+  # pushes and merge requests still run these jobs through the unconditional
+  # fallback; scheduled pipelines inherit the fail-closed first rule.
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+    - when: on_success
+
 install:
   stage: install
   <<: *pnpm
+  extends: .not-scheduled
   script: [pnpm --version]
 
 lint:
   stage: check
   <<: *pnpm
+  extends: .not-scheduled
   script: [pnpm lint]
 
 typecheck:
   stage: check
   <<: *pnpm
+  extends: .not-scheduled
   script: [pnpm typecheck]
 
 test:
   stage: check
   <<: *pnpm
+  extends: .not-scheduled
   script: [pnpm test]
 
 build:
   stage: build
   <<: *pnpm
+  extends: .not-scheduled
   script: [pnpm build]
 
 # Linux native release payloads are built from source on the Docker runners.
@@ -82,14 +96,18 @@ tab-native-linux:
         esac
       done
     - apt-get update
-    - apt-get install --yes --no-install-recommends gcc-aarch64-linux-gnu jq libc6-dev-arm64-cross qemu-user
+    - apt-get install --yes --no-install-recommends gcc-aarch64-linux-gnu jq libc6-dev-arm64-cross nodejs qemu-user
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'
       changes: [tc-release.json]
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
     - when: never
   script:
+    - cargo fetch --locked --manifest-path packages/tab/Cargo.toml
+    - CARGO_NET_OFFLINE=true node scripts/tab-third-party-licenses.mjs --check
     - export TAB_RELEASE_VERSION=$(jq -r '.upstreamVersion + "-tc." + (.tcRelease | tostring)' tc-release.json)
     - TAB_NATIVE_OUTPUT_DIR="$CI_PROJECT_DIR/.tc-tab-native" scripts/build-tab-native-linux.sh
   artifacts:
@@ -114,6 +132,7 @@ tab-native-linux:
 plugins:
   stage: check
   <<: *pnpm
+  extends: .not-scheduled
   script: [pnpm mint:check]
 
 # ARCHITECTURE.md §8: provenance is preserved, self-reference is rewritten. The
@@ -130,6 +149,7 @@ plugins:
 provenance:
   stage: check
   image: node:24
+  extends: .not-scheduled
   script:
     - node scripts/check-provenance.mjs
     # QUOTED DELIBERATELY. This entry contains a colon-space inside the echo
@@ -145,6 +165,7 @@ provenance:
 tc-drift-manifest:
   stage: check
   image: node:24
+  extends: .not-scheduled
   script:
     - node scripts/check-tc-drift-manifest.mjs
     - node --test scripts/test/check-tc-drift-manifest.test.mjs
@@ -157,6 +178,8 @@ bin:
   <<: *pnpm
   script: [pnpm bin:test]
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
     - changes: [bin/**/*]
 
 # Path-scoped so a docs edit does not rebuild the Rust crate.
@@ -165,14 +188,21 @@ tab:
   image: rust:latest
   script: [cargo test --manifest-path packages/tab/Cargo.toml]
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
     - changes: [packages/tab/**/*]
 
 proof:
   stage: check
   image: python:3.12
   before_script: [pip install uv]
-  script: [uv run --project py/proof pytest]
+  # `--project` selects proof's environment, not pytest's discovery root.
+  # Name the suite explicitly so a repo-root invocation cannot collect the
+  # core and tab Python tests with proof's unrelated virtualenv.
+  script: [uv run --project py/proof pytest py/proof/tests]
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
     - changes: [py/proof/**/*]
 
 # Build every registry artifact and inspect the package.json inside each tarball.
@@ -196,6 +226,8 @@ tc-release-pack:
     - job: tab-native-linux
       artifacts: true
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       variables:
         NPM_DIST_TAG: next
@@ -203,7 +235,7 @@ tc-release-pack:
       changes: [tc-release.json]
       variables:
         NPM_DIST_TAG: latest
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
       variables:
         NPM_DIST_TAG: next
     - when: never
@@ -225,6 +257,8 @@ tc-release-publish:
   interruptible: false
   needs: [install, lint, typecheck, test, build, plugins, provenance, tc-drift-manifest, tc-release-pack]
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'
       changes: [tc-release.json]
       variables:
