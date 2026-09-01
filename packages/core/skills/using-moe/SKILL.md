@@ -36,6 +36,14 @@ When multiple skills apply, process skills come first — they set the approach,
 - "Let's build X" → `brainstorming` first, then implementation skills.
 - "Fix this bug" → `systematic-debugging` first, then domain skills.
 
+**Workflow depth vocabulary.** `brainstorming` classifies every
+request by DEPTH — **patch** (smallest: one-line fix, config, probe),
+**change** (well-scoped modification to a flow that already exists in
+this repo), **feature** (new subsystem or interface). Skills that fire
+only at the `feature` depth (`writing-plans`,
+`subagent-driven-development`, `executing-plans`) say so under an "At
+this depth" note at their top.
+
 ## Red Flags
 
 These thoughts mean STOP—you're rationalizing:
