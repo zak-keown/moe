@@ -1431,13 +1431,18 @@ describe("workflow depth vocabulary", () => {
 
 describe("licensing", () => {
   it("retains one LICENSE per inbound license, as NOTICE promises", () => {
-    // Five of the seven sources ship a LICENSE, with three distinct notices, so
+    // Six of the eight sources ship a LICENSE, with four distinct notices, so
     // the glass precedent (one upstream, one LICENSE at the package root) does
     // not generalise. Root NOTICE says copies "are retained alongside the code
     // derived from them, under each package".
+    //
+    // gsd-core is here for ten reference documents and no skills. The obligation
+    // does not scale with the size of the import — MIT requires the notice for
+    // any derived material at all.
     const dir = join(PKG, "licenses");
     expect(readdirSync(dir).sort()).toEqual([
       "double-shot-latte.MIT.LICENSE",
+      "gsd-core.MIT.LICENSE",
       "iterative-development.Apache-2.0.LICENSE",
       "mattpocock-skills.MIT.LICENSE",
       "superpowers-lab.MIT.LICENSE",

@@ -30,6 +30,7 @@ done
 | `the-elements-of-style` | `05fc4f0` | 2026-08-12 | Public domain | `@bubstack/moe-core` |
 | `double-shot-latte` | `dfe7567` | 2026-02-25 | MIT | `@bubstack/moe-core` (hooks) |
 | `mattpocock-skills` | `6654f6b` | 2026-08-24 | MIT | `@bubstack/moe-core` |
+| `open-gsd/gsd-core` | `05092ff3` | 2026-09-01 | MIT | `@bubstack/moe-core` (10 references only — see below) |
 | `greenfield` | `6e6d4b4` | 2026-08-06 | Apache-2.0 | `@bubstack/moe-backstory` |
 | `episodic-memory` | `1075769` | 2026-05-21 | MIT | `@bubstack/moe-memory` |
 | `private-journal-mcp` | `016953f` | 2026-08-11 | MIT | `@bubstack/moe-memory` |
@@ -43,6 +44,45 @@ done
 | `smevals` | `0c28dc6` | 2026-08-11 | MIT | `py/proof` |
 | `superpowers-marketplace` | `1ab7b8e` | 2026-08-12 | MIT | `.claude-plugin/marketplace.json` |
 | `prime-radiant-marketplace` | `49a45ef` | 2026-06-06 | Apache-2.0 | `.claude-plugin/marketplace.json` |
+
+### `open-gsd/gsd-core`, evaluated in full and mostly declined
+
+A census read all **71** of its `gsd-*` skills. Nine `debugger-*.md` references and
+`security-asvs-levels.md` came in; nothing else did, and the ratio is the point —
+this is what "provenance exists to be spent" looks like when the answer is mostly
+*no*.
+
+**What came in** (all MIT, pinned at `05092ff3`, `gsd-core/references/`): the nine
+debugger references now in `packages/core/skills/systematic-debugging/`, and
+`security-asvs-levels.md` in `packages/core/skills/requesting-code-review/references/`.
+They were imported **from upstream, not from a local install** — an install has no
+revision to pin and no repo to pin it against. Only their loader wiring was
+rewritten: upstream's line 3 named which agent `@-include`d each file from which
+phase of a state machine this fork does not have, so each now names the phase of
+`systematic-debugging` that reaches it instead. The technique content is upstream's.
+
+One further substitution, recorded so the sentence above stays true: three files
+said `npm-tier` where they meant an npm-sized test suite. This repo enforces a
+`tier` vocabulary rule by test — `tier` is not the name of a workflow depth here —
+so they now say `npm-scale`, which is what upstream meant.
+
+**No new skill directory**, which is why this import cost no fidelity assertion.
+`skill-tiers.yaml`'s `imported:` map and its pinned key set are untouched, and
+`from:` gains no sixth value. Reference files inside an existing skill are not
+skills.
+
+**What was declined, and why.** Roughly 70 of the 71 skills duplicate what this
+fork already ships. The phase runtime — 10 MB, 206 CJS modules into a
+TypeScript-only pnpm workspace, 39 agents, a second planning methodology competing
+with `writing-plans` / `executing-plans`, and a `.planning/` state machine
+`sequencing-plans` already covers — was rejected outright.
+
+**One honest caveat, recorded rather than hidden.** `debugger-sbfl.md` needs
+per-test coverage — which test executed which line. Checked 2026-09-01: this repo
+configures no coverage at all, and TC's shared Angular jest config sets a single
+global `coverageThreshold`, which is aggregate by construction. So that technique
+will usually skip itself, which upstream designed it to do. It is the reference
+that fires least; the other nine are unconditional.
 
 ### Excluded
 

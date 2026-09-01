@@ -281,3 +281,19 @@ These techniques are part of systematic debugging and available in this director
 - **`root-cause-tracing.md`** - Trace bugs backward through call stack to find original trigger
 - **`defense-in-depth.md`** - Add validation at multiple layers after finding root cause
 - **`condition-based-waiting.md`** - Replace arbitrary timeouts with condition polling
+
+### The debugger cluster, imported from `open-gsd/gsd-core` (MIT)
+
+Nine references this fork had no counterpart for. Each names the phase above that
+reaches it; each is upstream's content with only its loader wiring rewritten. Read
+`debugger-philosophy.md` first — the rest assume it.
+
+- **`debugger-philosophy.md`** - Evergreen disciplines that hold across every bug, language and system
+- **`debugger-techniques.md`** - The full technique bodies. A menu, not a sequence; Phase 1 and Phase 3 both reach for it
+- **`debugger-sbfl.md`** - Rank suspects from test pass/fail coverage before reasoning. Skips itself unless per-test coverage exists, which is rare here
+- **`debugger-bug-taxonomy.md`** - Classify the failure (Phase 2), so the class narrows the technique
+- **`debugger-rca-branching.md`** - What to do when more than one root cause survives the evidence (Phase 3)
+- **`debugger-repro-hardening.md`** - Turn a reproduction into a regression test that fails for the right reason (Phase 3)
+- **`debugger-fix-acceptance.md`** - Multi-signal "is it actually fixed" gate (Phase 4). Collect every signal before any one decides
+- **`debugger-prevention.md`** - After the fix: what to change so the class cannot recur
+- **`debugger-semantic-recall.md`** - Search prior sessions before re-deriving a known cause
