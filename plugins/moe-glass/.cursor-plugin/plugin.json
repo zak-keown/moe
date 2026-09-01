@@ -7,8 +7,8 @@
     "name": "Zak Keown",
     "email": "zak@turncommerce.com"
   },
-  "homepage": "https://gitlab.tcdevops.com/Zak/moe",
-  "repository": "https://gitlab.tcdevops.com/Zak/moe",
+  "homepage": "https://gitlab.com/moe-ai/moe",
+  "repository": "https://gitlab.com/moe-ai/moe",
   "license": "MIT",
   "keywords": [
     "chrome",

@@ -118,26 +118,8 @@ git push -u origin <feature-branch>
 # git push origin HEAD:refs/heads/<new-branch>
 ```
 
-Then open the merge request against <base-branch>. **Read
-`${CLAUDE_PLUGIN_ROOT}/skills/_shared/tc-conventions.md` first** — it fixes
-the labels every agent-authored MR must carry (`AI` and `agent::claude`), the
-tool preference order, and the body shape TC expects. In short:
-
-1. **Prefer `gitlab_create_mr`** MCP tool if it is available; labels land
-   atomically. Pass `remove_source_branch: true`.
-2. **Fall back to `glab mr create`**:
-   ```bash
-   glab mr create \
-     --target-branch <base-branch> \
-     --label AI --label agent::claude \
-     --remove-source-branch \
-     --squash-before-merge  # only where the project sets a squash policy
-   ```
-3. **Web UI** as a last resort — add both labels before submitting.
-
-For a forge that is not GitLab (e.g. a private fork on GitHub), use the forge's
-own CLI or the creation URL it prints on push, and follow that repo's own
-template. The TC conventions above apply on `gitlab.tcdevops.com` only.
+Then open the merge request against <base-branch>, using the forge's own CLI
+or the creation URL it prints on push, and follow that repo's own template.
 
 Report the MR URL to your human partner and keep the worktree — feedback gets
 addressed there.
