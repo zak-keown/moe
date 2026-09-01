@@ -40,13 +40,13 @@ describe('loadConfig', () => {
       'bootstrap:',
       '  skill: using-kitchen-sink',
       'harnesses:',
-      '  exclude: [devin]',
+      '  exclude: [cursor]',
       '  claude-code:',
       '    manifest:',
       '      homepage: https://example.com/kitchen-sink',
     ].join('\n')))
     expect(cfg.bootstrap).toEqual({ kind: 'skill', skill: 'using-kitchen-sink' })
-    expect(cfg.harnesses.exclude).toEqual(['devin'])
+    expect(cfg.harnesses.exclude).toEqual(['cursor'])
     expect(cfg.harnesses.settings['claude-code']?.manifest).toEqual({
       homepage: 'https://example.com/kitchen-sink',
     })
@@ -172,8 +172,8 @@ describe('loadConfig', () => {
         'version: 1.0.0',
         'description: x',
         'harnesses:',
-        '  exclude: [devine]',
-      ].join('\n')))).toThrow(/harnesses\.exclude.*devine.*claude-code/s)
+        '  exclude: [cursur]',
+      ].join('\n')))).toThrow(/harnesses\.exclude.*cursur.*claude-code/s)
     })
 
     it('rejects a stray key inside the bootstrap skill object', () => {

@@ -72,6 +72,8 @@ artifact, never the approval.
 | "The `patch` probe worked, so I'll keep the code" | A `patch` probe's deliverable is an answer, not code. Keeping the code is a new request — reclassify. |
 | "It grew, but I'm almost done — no need to reclassify" | Hidden complexity upgrades the depth mid-task. Stop and say so. |
 | "They approved the `patch`, so the follow-up work is approved too" | Each task gets its own depth and its own approval. |
+| "The shape is agreed, so I can just start" | An agreed shape is not a set of resolved decisions. Round the frontier, present, then get the yes. |
+| "One question per message, so these six take six turns" | If they do not depend on each other, that is six round-trips doing one round's work. Ask the frontier together. |
 | "This `patch` deserves a helper class and a full test suite" (gold-plating) | A `patch` is the minimum change that solves the task, plus the test for what actually changed. Extra structure is scope creep at the smallest depth. |
 | "The `feature`'s interfaces exist; I'll wire them up later" (stub-and-declare) | A `feature` is complete when the flow runs end-to-end, not when the skeleton compiles. Sketching structure and declaring done is the `feature`-depth failure mode. |
 
@@ -149,6 +151,10 @@ digraph brainstorming {
 }
 ```
 
+The graph routes by depth only. **Sharpening an agreed shape** is orthogonal to
+it — a way of running the question steps, not another branch out of the
+classifier — so it does not appear as a node.
+
 **Terminal states are depth-bound.** `feature`: the ONLY skill you
 invoke after brainstorming is writing-plans — never frontend-design,
 mcp-builder, or any other implementation skill. `change`: after
@@ -172,8 +178,52 @@ questions plus a short in-chat design is the whole process.
 - If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then brainstorm the first sub-project through the normal design flow. Each sub-project gets its own spec → plan → implementation cycle.
 - For appropriately-scoped projects, ask questions one at a time to refine the idea
 - Prefer multiple choice questions when possible, but open-ended is fine too
-- Only one question per message - if a topic needs more exploration, break it into multiple questions
+- Only one question per message *while the shape is still moving* - if a topic needs more exploration, break it into multiple questions. Once the shape is agreed and only decisions remain, switch to rounds (see **Sharpening an agreed shape** below)
 - Focus on understanding: purpose, constraints, success criteria
+
+**Sharpening an agreed shape:**
+
+Sometimes the shape is not what is in question. Your human partner arrives with
+the design already settled, or you have just been given approval on it, and what
+is left is a set of decisions to nail down. Asking those one at a time is the
+wrong instrument: it serialises questions that do not depend on each other, and
+burns a round-trip on each.
+
+Switch to **rounds**. Map what remains as a **design tree** — every decision
+branches into the decisions that hang off it. The **frontier** is every decision
+whose prerequisites are already settled: the questions you can ask *now* without
+guessing at answers you have not heard yet.
+
+Ask the whole frontier in one round. Number each question and give your
+recommended answer:
+
+> **Q1 — <short title>:** <the question, with the options if there are any>
+>
+> **Recommendation:** <your answer, and why>
+>
+> **Q2 — <short title>:** …
+>
+> **Recommendation:** …
+
+Then stop and wait. Each round of answers reshapes the tree: settled decisions
+push the frontier outward and unblock the questions that depended on them.
+Recompute the frontier and ask the next round. A question whose answer depends
+on another question still open *in this round* belongs to a later round, not
+this one.
+
+**Facts are yours to find; decisions are your human partner's.** When a frontier
+question turns on a fact from the environment — what is in the file, what the
+tool returns — go and get it. Never ask for something you could look up. Do not
+block the round on it either: an exploration still running is an unsettled
+prerequisite, so only the questions downstream of it wait. Ask the rest now.
+
+The round loop is done when the frontier is empty — every branch of the tree
+visited, nothing left silently assumed. Then present the design as usual. This
+mode changes how you ask, never whether you get approval: the `<HARD-GATE>`
+holds exactly as it does everywhere else.
+
+Applies at `change` and `feature`. A `patch` has no frontier worth mapping —
+present the intent, get a nod, do the smallest thing.
 
 **Exploring approaches:**
 

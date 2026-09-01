@@ -15,13 +15,11 @@ const DISPLAY_NAMES: Record<string, string> = {
   'claude-code': 'Claude Code',
   cursor: 'Cursor',
   codex: 'Codex',
-  devin: 'Devin CLI',
   kimi: 'Kimi Code',
   opencode: 'OpenCode',
   pi: 'Pi',
-  hermes: 'Hermes Agent',
   'agent-plugins-1.0': 'Agent Plugins 1.0 clients',
-  'agents-marketplace': 'Factory Droid / Copilot (marketplace descriptor)',
+  copilot: 'GitHub Copilot CLI',
 }
 
 // Exported so README injection (below) can reuse the same names as the
@@ -45,13 +43,12 @@ function installDocFile(model: PluginModel, adapter: HarnessAdapter): GeneratedF
 }
 
 // support-matrix.md's Notes section calls out three things that a plain
-// support-level table can't: the agents-marketplace row is honest but
-// misleading on its own (Design decision 2), codex vs. devin both show a
-// non-'full' bootstrap for different reasons, and the CRLF/.gitattributes
-// caveat for anyone consuming the emitted shell hooks (Design decision 2).
+// support-level table can't: Copilot consumes the Claude Code layout rather
+// than its own files, and the CRLF/.gitattributes caveat applies to anyone
+// consuming the emitted shell hooks (Design decision 2).
 const NOTES = [
-  "- `agents-marketplace`'s row is all `none`: droid and copilot ride the claude-code layout via the marketplace descriptor it emits; the row reflects only agents-marketplace's own emission, not what those clients receive through that descriptor.",
-  "- codex's `bootstrap: partial` means native skill discovery only, with no active injection hook; devin's `bootstrap: none` means no injection mechanism is documented at all.",
+  '- Copilot consumes the Claude Code layout through `.claude-plugin/marketplace.json`; keep the `claude-code` adapter enabled when targeting Copilot.',
+  "- codex's `bootstrap: partial` means native skill discovery only, with no active injection hook.",
   '- Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.',
 ]
 

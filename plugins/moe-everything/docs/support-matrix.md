@@ -7,16 +7,14 @@
 | claude-code | full | full | full | full | full | full |
 | cursor | full | none | none | partial | none | full |
 | codex | full | none | none | none | none | partial |
-| devin | full | none | none | none | none | none |
 | kimi | full | none | none | none | none | partial |
 | opencode | full | full | partial | none | none | full |
 | pi | full | none | none | none | none | full |
-| hermes | full | none | none | none | none | full |
 | agent-plugins-1.0 | full | none | none | none | full | none |
-| agents-marketplace | none | none | none | none | none | none |
+| copilot | full | full | full | full | full | full |
 
 ## Notes
 
-- `agents-marketplace`'s row is all `none`: droid and copilot ride the claude-code layout via the marketplace descriptor it emits; the row reflects only agents-marketplace's own emission, not what those clients receive through that descriptor.
-- codex's `bootstrap: partial` means native skill discovery only, with no active injection hook; devin's `bootstrap: none` means no injection mechanism is documented at all.
+- Copilot consumes the Claude Code layout through `.claude-plugin/marketplace.json`; keep the `claude-code` adapter enabled when targeting Copilot.
+- codex's `bootstrap: partial` means native skill discovery only, with no active injection hook.
 - Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.
