@@ -119,7 +119,7 @@ cd "$path"
 
 **Sandbox fallback:** If `git worktree add` fails with a permission error (sandbox denial), tell the user the sandbox blocked worktree creation and you're working in the current directory instead. Then run setup and baseline tests in place.
 
-### 1c. One Worktree Per Parallel Worker
+### 1d. One Worktree Per Parallel Worker
 
 When dispatching parallel implementer subagents per the worktree gate
 (`dispatching-parallel-agents`, "The gate"), each concurrent worker gets its
@@ -129,7 +129,7 @@ hazard the parallel-implementation ban was rooted in.
 
 For each worker, follow Step 1a first — use the harness's native worktree tool
 when one is available, per the "never fight the harness" rule. Only fall back
-to `git worktree add` (Step 1b) when no native tool is offered. Whichever path
+to `git worktree add` (Step 1c) when no native tool is offered. Whichever path
 you take, create the worktree BEFORE dispatch: the worker's brief hands it a
 concrete path to `cd` into, not an instruction to make one for itself.
 
@@ -189,6 +189,7 @@ Ready to implement <feature-name>
 | Native worktree tool available | Use it (Step 1a) |
 | Branch name needed (any path) | Derive per Step 1b (TC card → strip `feature/`) |
 | No native tool | Git worktree fallback (Step 1c) |
+| Parallel worker dispatch | One worktree per worker (Step 1d) |
 | `.worktrees/` exists | Use it (verify ignored) |
 | `worktrees/` exists | Use it (verify ignored) |
 | Both exist | Use `.worktrees/` |
