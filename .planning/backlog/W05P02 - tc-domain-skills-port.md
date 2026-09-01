@@ -1,10 +1,10 @@
 ---
 slug: tc-domain-skills-port
-title: The Four TC-Domain Skills Moe Actually Lacks
+title: The 17 Deferred tc-* Skills — A Census And Its Three Outcomes
 idea: |
   - Port the tc-* skills `tc-standards-conformance` deferred — but only the four
     that are not duplicates of skills this fork already ships
-status: backlog
+status: resolved
 size: S
 estimate: 4-6 h
 depends_on: []
@@ -14,12 +14,34 @@ touches:
   - packages/core/skills/
   - packages/core/skill-tiers.yaml
   - packages/core/test/metadata.test.ts
-decision_needed: yes
+decision_needed: no
 ---
 
-# The Four TC-Domain Skills Moe Actually Lacks
+# The 17 Deferred `tc-*` Skills — A Census And Its Three Outcomes
 
-## Why this item exists
+## Resolved 2026-09-01
+
+**Nothing from these 17 skills lands in this repo.** Kept because the census is
+the durable part: the next person to count 17 skills in
+`ai/claude-code-platform-plugin` should read this instead of re-running it.
+
+| Group | Outcome |
+|---|---|
+| 13 near-duplicates of skills this fork ships | **Declined.** Porting them would undo the premise of `tc-standards-conformance`, which exists because Moe *replaces* that fork. |
+| 3 dispatch wrappers over 7 tools that do not exist here | **Declined as ports.** The capability they reached for became `cross-stack-tracing`, built against CodeGraph instead. |
+| 1 piece of real content — the C#→Angular concept mapping | **Sent to `ai/kb`**, MR `ai/kb!17`. That corpus is what `rag_search` indexes, so a doc there reaches every TC engineer; a Moe skill reaches only Moe installs. |
+
+The title was wrong for most of this item's life, and so was its framing. It
+called all four "TC domain knowledge" and asked where knowledge should live. Three
+of the four turned out not to be knowledge at all — they were four-step
+instructions to call `traceSelector` and explain the output. **Reading the
+artifacts changed the question**, which is the reason to read them before
+recommending a placement.
+
+One loose end: `ai/skills/tc-test-environments` was never read. Carried into
+`cross-stack-tracing` as a five-minute precondition.
+
+## Why this item existed
 
 `tc-standards-conformance` shipped narrower than its backlog contract. The plan
 called for porting **17 `tc-*` skills** into `packages/core/skills/`, adding 17
@@ -76,21 +98,85 @@ skill** — `tc-git-worktrees`, read in full on 2026-09-01, prescribes the
 thirteen is **a diff against Moe's counterpart, folding in what is TC-specific
 and dropping what is duplicate** — not a port.
 
-**Four have no Moe counterpart at all.** These are the item:
+**Four have no Moe counterpart** — and having now read all four in full, they are
+not what this section first claimed.
 
-- `tc-angular-for-be-devs` — Angular orientation for backend engineers
-- `tc-csharp-for-fe-devs` — C# orientation for frontend engineers
-- `tc-cross-stack-trace` — tracing a request across the frontend/BFF boundary
-- `tc-trace-data` — tracing data through TC's stack
+- `tc-cross-stack-trace` — Angular selector → NgRx → BFF controller → gateway
+- `tc-trace-data` — "where does this data come from?"
+- `tc-angular-for-be-devs` — C#→Angular concept mapping
+- `tc-csharp-for-fe-devs` — the reverse orientation
 
-Plus one from the other upstream: `ai/skills/tc-test-environments`.
+Plus `ai/skills/tc-test-environments`, which has not been read.
 
-All five are **TC domain knowledge**, which is a different kind of content from
-anything in `packages/core` today. Core holds methodology —
-`test-driven-development`, `systematic-debugging`, `verification-before-completion`.
-"How Angular works if you write C#" is orientation, not method.
+**Three of the four are dispatch wrappers over tools this fork does not have.**
+`tc-trace-data` in its entirety is: ask which selector they mean → call
+`traceSelector` → explain the chain → call `getFileContext` for trust ratings.
+`tc-cross-stack-trace` is the same shape around `traceUIToAPI` / `traceAPIToUI`.
+Even `tc-angular-for-be-devs` ends by telling the agent to run `traceSelector`.
+Between them they call **seven** tools that belong to the platform plugin:
+`traceSelector`, `traceAction`, `traceEffect`, `traceUIToAPI`, `traceAPIToUI`,
+`traceApiContract`, `getFileContext`. Ported as-is, they instruct an agent to
+call tools that do not resolve.
 
-## The decision this needs
+**Rewriting them against our tools is authoring, not porting.** moedex has
+`trace_calls`, `trace_consumers`, `trace_renders`, `trace_queries` and
+`impact_analysis` — comparable as general graph tools, but `traceSelector` is not
+a generic call-graph walk. It encodes the NgRx pipeline shape (Selector → Reducer
+→ Effect → Service → `@ApiContract` → endpoint). Reconstructing that means
+teaching the agent the pipeline. And `getFileContext`'s trust ratings come from a
+scoring subsystem (`ai/kb/angular-trust-scoring.md`) this repo has no access to.
+
+**A harder blocker for the core placement specifically:** moedex is the *optional
+addon*, not the baseline — that is the routing decision `retrieving-context`
+shipped (`1a03438`). A skill whose every step calls a tool that exists only behind
+the optional backend cannot be a core skill; it would be inert for anyone without
+the daemon running.
+
+**The one piece of substantive unique content** is `tc-angular-for-be-devs`'s
+concept-mapping table: Controller ≈ Component + Effect, Repository ≈ NgRx Store,
+DTO ≈ `@ApiContract`, `Response<T>` ≈ `DataState<T>`, Autofac DI ≈ `@Injectable()`.
+That is genuinely additive and genuinely good.
+
+## The reach asymmetry, measured
+
+`ai/kb` **is** the corpus CodeGraph's `rag_search` indexes (Zak, 2026-09-01) — 31
+documents including eight Angular and six .NET.
+
+Checked the other direction on 2026-09-01: **this repo is not in the corpus.** A
+`rag_search` for Moe's own vocabulary returns `ai/moe`'s README (the superseded
+2026-05 attempt, indexed as a `repository_readme`) and nothing from `Zak/moe`.
+
+So the two placements have different audiences, not just different filing:
+
+| | `ai/kb` | a Moe skill |
+|---|---|---|
+| Reachable by | any TC engineer, any agent with CodeGraph | the ~20 people who installed the Moe plugin |
+| Retrievable | yes, `rag_search` | no — not indexed |
+| Offline | no (needs VPN + PAT) | yes, on disk |
+| Resident cost | zero until searched | description resident every session |
+| Maintained by | whoever owns the eight Angular docs | this fork |
+
+The offline column is not hypothetical: CodeGraph was `ENOTFOUND` at the start of
+the 2026-09-01 session and `origin` was unreachable for 45 commits.
+
+**That reframes the criterion.** Not "is this knowledge or method" — the original
+framing in this doc, which was wrong — but **does it need to work offline, and is
+its audience TC engineers or Moe users?** An orientation doc read once when
+switching stacks is a no on the first and "TC engineers" on the second.
+
+## The decision this needed — answered
+
+Zak, 2026-09-01. **The mapping table goes to `ai/kb`** (option 1 below, shipped as
+MR `ai/kb!17`). **The trace capability gets built** against CodeGraph rather than
+ported — his question "is it possible to write it against just the CodeGraph
+tools?" is what produced the baseline-first design now recorded in
+`cross-stack-tracing`. The answer was mostly yes: `HTTP_CALLS` carries
+`source_repo`/`target_repo`, so the endpoint→UI direction is complete on the
+baseline; the NgRx chain is not addressable by symbol and falls back to
+convention-matching.
+
+The options as they stood are kept below, because the reasoning against 2 and 3
+still applies to any future proposal to vendor TC content into `packages/core`.
 
 **Where does TC domain knowledge live, if anywhere?** Three options, and the
 answer is not obvious:
