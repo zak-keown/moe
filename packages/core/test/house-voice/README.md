@@ -192,24 +192,6 @@ remaining failure is unrelated and expected — see below.
   It is the weakest column in the table. The strong result is the two columns that
   went 0/3 to 3/3.
 
-## A note on the one failing assertion
-
-`packages/core/test/metadata.test.ts` sweeps every file under `skills/` for
-upstream brand tokens, and `house-voice.md` names the upstream project once, in
-its provenance section, because a file whose rule is "provenance names survive a
-rebrand" cannot credibly dodge the one name that proves it. That file's
-per-file exemption map is owned by `skill-set-fidelity-refactor`, which adds the
-entry pre-emptively. Until those branches meet, this package's suite shows exactly
-one failure:
-
-```
-FAIL test/metadata.test.ts > the rebrand > carries no upstream brand token
-  offenders: ["skills/writing-clearly-and-concisely/house-voice.md: superpowers"]
-```
-
-Not worked around here. Weakening that assertion to make a suite green would cost
-more than the red line does.
-
 ## Re-running
 
 `score.mjs` is standalone:

@@ -90,20 +90,10 @@ type ComparedFile = (typeof COMPARED_FILES)[number]
 // tree (skills/, hooks/hooks.json, docs/, tests/, README.md, ...) is left in
 // place: skills/ and hooks/hooks.json are component sources moe-mint
 // reads, and the rest doesn't collide with anything generate() writes.
-// Gemini's hand-authored gemini-extension.json / GEMINI.md are also stripped
-// so a fresh checkout of a superpowers snapshot that still carries them can't
-// trip generate()'s refuse-to-clobber path against an adapter that no longer
-// exists to reclaim them.
-//
-// These two live in their own named constant so the repo-wide `gemini|grok`
-// leak gate has something to point at. The gate excludes this file outright
-// (`grep -v 'packages/mint/test/dogfood.test.ts'`) — that exclusion, not the
-// constant, is what makes the gate pass. The constant's job is to record WHY
-// the exclusion is legitimate: these strings name artifacts in a pinned
-// upstream snapshot we do not own and cannot edit, not a live adapter. If the
-// snapshot is ever re-pinned to a commit without them, delete this constant
-// and the gate's exclusion together.
-const SNAPSHOT_HAND_AUTHORED_GEMINI_ARTIFACTS = ['gemini-extension.json', 'GEMINI.md']
+// The pinned snapshot also has two hand-authored Gemini files. Strip them so
+// generate() does not mistake snapshot-only inputs for unrelated user files it
+// must refuse to overwrite.
+const SNAPSHOT_ONLY_PATHS = ['gemini-extension.json', 'GEMINI.md']
 
 const HAND_MAINTAINED_PATHS = [
   '.claude-plugin',
@@ -113,7 +103,7 @@ const HAND_MAINTAINED_PATHS = [
   '.kimi-plugin',
   '.hermes-plugin',
   '.agents',
-  ...SNAPSHOT_HAND_AUTHORED_GEMINI_ARTIFACTS,
+  ...SNAPSHOT_ONLY_PATHS,
   'package.json',
   '.opencode',
   '.pi',

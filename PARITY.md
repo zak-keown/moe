@@ -297,6 +297,13 @@ private popup helper and narrowed `models.available` source attribution to its t
 reachable states. The underlying popup target primitive and its regression coverage
 remain live.
 
+**One-shot import gates were retired on 2026-09-01.** Core no longer sweeps the
+live tree for names and paths that the rebrand already removed, and mint no longer
+replays brochure output counts or pins the CLI smoke test to the full adapter list.
+Current structural, safety, generated-output, and behavior contracts remain tested;
+the brochure now documents commands and durable outputs without a transcript that
+rots whenever the adapter registry changes.
+
 **`vet` was not a brand token and was renamed anyway.** It is a *pre-`gauntlet`*
 name for the project — upstream's `bun.lock` still recorded the workspace as
 `"vet"` — so it is brand residue that the token list simply never caught, and
