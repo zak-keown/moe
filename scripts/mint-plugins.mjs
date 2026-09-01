@@ -81,10 +81,14 @@ const COMPONENTS = ["skills", "commands", "agents", "hooks", ".mcp.json"];
  *     the checkout (contributor path) or a sparse marketplace clone (main
  *     end-user path for content plugins).
  *   - { npm: "<package-name>" }: marketplace listing is the npm-source
- *     shape `{"source":"npm","package":"…"}`, installed by `claude plugin`
- *     from the internal `@tc` scope. Used for the two MCP-server plugins
- *     (memory, glass) so consumers install the published runtime rather than
- *     treating generated plugin content as a workspace package.
+ *     shape `{"source":"npm","package":"…","version":"…"}`, installed by
+ *     `claude plugin` from the internal `@tc` scope. The exact lockstep version
+ *     is required on the source itself; the sibling plugin-entry version does
+ *     not constrain `npm install`. Registry and authentication stay in the
+ *     consumer's existing `@tc` scope configuration. Used for the two
+ *     MCP-server plugins (memory, glass) so consumers install the published
+ *     runtime rather than treating generated plugin content as a workspace
+ *     package.
  *
  * checkMarketplace() below asserts the marketplace listing agrees with each
  * plugin's declared distribution, and rejects any surprise combinations.
@@ -353,17 +357,21 @@ function generate(plugin, dest) {
 function describeSource(source) {
   if (typeof source === "string") return JSON.stringify(source);
   if (source && typeof source === "object" && source.source === "npm") {
-    return `{ source: "npm", package: ${JSON.stringify(source.package)} }`;
+    return `{ source: "npm", package: ${JSON.stringify(source.package)}, version: ${JSON.stringify(source.version)} }`;
   }
   return JSON.stringify(source);
 }
 
 /** The `source` value the marketplace listing must carry for the given
  *  plugin registry entry, derived from `distribution` above. */
-function expectedSource(plugin) {
+function expectedSource(plugin, canonicalVersion) {
   if (plugin.distribution === "local") return `./plugins/${plugin.name}`;
   if (plugin.distribution?.npm) {
-    return { source: "npm", package: plugin.distribution.npm };
+    return {
+      source: "npm",
+      package: plugin.distribution.npm,
+      version: canonicalVersion,
+    };
   }
   fail(`unknown distribution for ${plugin.name}: ${JSON.stringify(plugin.distribution)}`);
 }
@@ -372,14 +380,33 @@ function expectedSource(plugin) {
 function sourcesMatch(actual, expected) {
   if (typeof expected === "string") return actual === expected;
   if (!actual || typeof actual !== "object") return false;
-  return actual.source === expected.source && actual.package === expected.package;
+  const actualKeys = Object.keys(actual).sort();
+  const expectedKeys = Object.keys(expected).sort();
+  return (
+    actualKeys.length === expectedKeys.length &&
+    actualKeys.every((key, index) => key === expectedKeys[index]) &&
+    actual.source === expected.source &&
+    actual.package === expected.package &&
+    actual.version === expected.version
+  );
 }
 
-function checkMarketplace() {
-  const file = path.join(ROOT, ".claude-plugin/marketplace.json");
-  const listed = JSON.parse(fs.readFileSync(file, "utf8")).plugins ?? [];
+/**
+ * Return every registry/marketplace disagreement without mutating the tree.
+ * Tests can supply an in-memory marketplace while production reads the root
+ * descriptor. The root package version is the downstream release version;
+ * the release validator separately proves every publishable package matches it.
+ */
+export function marketplaceProblems({ root = ROOT, marketplace } = {}) {
+  const descriptor =
+    marketplace ??
+    JSON.parse(fs.readFileSync(path.join(root, ".claude-plugin/marketplace.json"), "utf8"));
+  const listed = descriptor.plugins ?? [];
   const listedNames = new Set(listed.map((p) => p.name));
   const built = new Map(PLUGINS.map((p) => [p.name, p]));
+  const canonicalVersion = JSON.parse(
+    fs.readFileSync(path.join(root, "package.json"), "utf8"),
+  ).version;
 
   const problems = [];
   for (const name of built.keys()) {
@@ -392,13 +419,23 @@ function checkMarketplace() {
       problems.push(`${entry.name} is in marketplace.json but nothing generates it`);
       continue;
     }
-    const expected = expectedSource(plugin);
+    const expected = expectedSource(plugin, canonicalVersion);
     if (!sourcesMatch(entry.source, expected)) {
       problems.push(
         `${entry.name}: marketplace source is ${describeSource(entry.source)}, expected ${describeSource(expected)}`,
       );
     }
+    if (plugin.distribution?.npm && entry.version !== canonicalVersion) {
+      problems.push(
+        `${entry.name}: marketplace version is ${JSON.stringify(entry.version)}, expected canonical downstream version ${JSON.stringify(canonicalVersion)}`,
+      );
+    }
   }
+  return problems;
+}
+
+function checkMarketplace() {
+  const problems = marketplaceProblems();
   if (problems.length > 0)
     fail(`marketplace.json disagrees with the plugin registry:\n  - ${problems.join("\n  - ")}`);
 }
@@ -423,4 +460,6 @@ function main() {
   console.log(`\n${PLUGINS.length} plugins generated into ${path.relative(ROOT, OUT)}/`);
 }
 
-main();
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main();
+}

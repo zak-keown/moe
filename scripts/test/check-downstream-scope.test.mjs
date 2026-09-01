@@ -10,12 +10,24 @@ import {
   MANIFEST_IDENTITIES,
   PRIVATE_FLIGHT_MANIFESTS,
 } from "../check-downstream-scope.mjs";
+import { marketplaceProblems } from "../mint-plugins.mjs";
 
 const REPOSITORY_ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const SCRIPT = fileURLToPath(new URL("../check-downstream-scope.mjs", import.meta.url));
 const fixtureRoots = [];
 const UPSTREAM_SCOPE = "@bubstack";
 const UPSTREAM_MOE = `${UPSTREAM_SCOPE}/moe`;
+
+function rootMarketplace() {
+  return JSON.parse(readFileSync(join(REPOSITORY_ROOT, ".claude-plugin/marketplace.json"), "utf8"));
+}
+
+function npmMarketplaceEntry(marketplace, name) {
+  const entry = marketplace.plugins.find((plugin) => plugin.name === name);
+  assert.ok(entry, `missing ${name} marketplace entry`);
+  assert.equal(entry.source?.source, "npm", `${name} must use an npm source`);
+  return entry;
+}
 
 afterEach(() => {
   for (const root of fixtureRoots.splice(0)) {
@@ -228,5 +240,46 @@ describe("TC downstream identity guard", () => {
 
     assert.deepEqual(result.problems, []);
     assert.equal(result.manifests.length, 11);
+  });
+});
+
+describe("mint marketplace registry guard", () => {
+  it("pins npm sources to the exact canonical downstream version", () => {
+    const marketplace = rootMarketplace();
+
+    assert.deepEqual(marketplaceProblems({ marketplace }), []);
+    for (const name of ["moe-memory", "moe-glass"]) {
+      const entry = npmMarketplaceEntry(marketplace, name);
+      assert.equal(entry.source.version, entry.version);
+      assert.equal(Object.hasOwn(entry.source, "registry"), false);
+    }
+  });
+
+  it("rejects an npm source whose own version is missing", () => {
+    const marketplace = rootMarketplace();
+    delete npmMarketplaceEntry(marketplace, "moe-memory").source.version;
+
+    assert.ok(
+      marketplaceProblems({ marketplace }).some(
+        (problem) => problem.includes("moe-memory") && problem.includes("version: undefined"),
+      ),
+    );
+  });
+
+  it("rejects an npm source whose own version is not the canonical version", () => {
+    const marketplace = rootMarketplace();
+    const canonicalVersion = JSON.parse(
+      readFileSync(join(REPOSITORY_ROOT, "package.json"), "utf8"),
+    ).version;
+    npmMarketplaceEntry(marketplace, "moe-glass").source.version = "0.0.0-tc.999";
+
+    assert.ok(
+      marketplaceProblems({ marketplace }).some(
+        (problem) =>
+          problem.includes("moe-glass") &&
+          problem.includes('version: "0.0.0-tc.999"') &&
+          problem.includes(`version: ${JSON.stringify(canonicalVersion)}`),
+      ),
+    );
   });
 });

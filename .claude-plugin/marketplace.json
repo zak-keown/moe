@@ -34,7 +34,8 @@
       "name": "moe-memory",
       "source": {
         "source": "npm",
-        "package": "@tc/moe-memory"
+        "package": "@tc/moe-memory",
+        "version": "0.0.0-tc.1"
       },
       "version": "0.0.0-tc.1",
       "description": "Semantic recall over past sessions and journal entries.",
@@ -44,7 +45,8 @@
       "name": "moe-glass",
       "source": {
         "source": "npm",
-        "package": "@tc/moe-glass"
+        "package": "@tc/moe-glass",
+        "version": "0.0.0-tc.1"
       },
       "version": "0.0.0-tc.1",
       "description": "Direct Chrome DevTools Protocol access. Skill mode plus MCP mode, zero dependencies.",
