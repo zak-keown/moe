@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, it } from "node:test";
@@ -320,6 +320,72 @@ describe("Tab third-party license payload", () => {
 
     assert.equal(run.status, 0, run.stderr);
     assert.match(run.stdout, /inputs verified/);
+  });
+
+  it("runs --check through locked Cargo metadata and compares the complete rendered payload", () => {
+    const fixture = registryFixture();
+    for (const [path, content] of [
+      ["packages/tab/Cargo.lock", fixture.lockText],
+      ["packages/tab/Cargo.toml", "[workspace]\nmembers = []\n"],
+      ["packages/tab/crates/fixture/Cargo.toml", '[package]\nname = "fixture"\n'],
+    ]) {
+      const absolute = join(fixture.root, path);
+      mkdirSync(join(absolute, ".."), { recursive: true });
+      writeFileSync(absolute, content);
+    }
+
+    const metadataPath = join(fixture.root, "metadata.json");
+    const cargoLogPath = join(fixture.root, "cargo-targets.log");
+    const fakeCargo = join(fixture.root, "cargo");
+    const output = join(fixture.root, "THIRD_PARTY_LICENSES.txt");
+    writeFileSync(metadataPath, JSON.stringify(fixture.metadataByTarget.values().next().value));
+    writeFileSync(
+      fakeCargo,
+      `#!/usr/bin/env node
+const fs = require("node:fs");
+const targetFlag = process.argv.indexOf("--filter-platform");
+if (targetFlag < 0 || !process.argv[targetFlag + 1]) process.exit(2);
+fs.appendFileSync(${JSON.stringify(cargoLogPath)}, process.argv[targetFlag + 1] + "\\n");
+process.stdout.write(fs.readFileSync(${JSON.stringify(metadataPath)}));
+`,
+    );
+    chmodSync(fakeCargo, 0o755);
+    writeFileSync(output, "stale but input-digest-shaped payload\n");
+
+    const args = [
+      SCRIPT,
+      "--check",
+      "--root",
+      fixture.root,
+      "--output",
+      output,
+      "--cargo",
+      fakeCargo,
+    ];
+    const stale = spawnSync(process.execPath, args, { encoding: "utf8" });
+    assert.equal(stale.status, 1);
+    assert.match(stale.stderr, /is stale; regenerate and commit it/);
+
+    const rendered = renderThirdPartyLicenses({
+      metadataByTarget: fixture.metadataByTarget,
+      lockText: fixture.lockText,
+      inputDigest: licenseInputsDigest(fixture.root),
+    });
+    writeFileSync(output, rendered);
+    const current = spawnSync(process.execPath, args, { encoding: "utf8" });
+    assert.equal(current.status, 0, current.stderr);
+    assert.match(current.stdout, /1 package instances verified/);
+    assert.deepEqual(readFileSync(cargoLogPath, "utf8").trim().split("\n"), [
+      ...RELEASE_TARGETS,
+      ...RELEASE_TARGETS,
+    ]);
+  });
+
+  it("keeps the generator parseable on the Node 12.22 CI runtime", () => {
+    const source = readFileSync(SCRIPT, "utf8");
+    for (const unsupported of [/\?\?/, /\?\./, /\.at\(/, /\.replaceAll\(/]) {
+      assert.doesNotMatch(source, unsupported);
+    }
   });
 
   it("keeps the committed audited closure and exceptional bundled notices visible", () => {

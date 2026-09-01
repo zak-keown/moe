@@ -63,11 +63,16 @@ export function licenseInputsDigest(root = DEFAULT_ROOT) {
 }
 
 function packageKey(pkg) {
-  return `${pkg.name}\0${pkg.version}\0${pkg.source ?? ""}`;
+  return `${pkg.name}\0${pkg.version}\0${pkg.source == null ? "" : pkg.source}`;
 }
 
 function displayPackage(pkg) {
   return `${pkg.name}@${pkg.version}`;
+}
+
+function pathSegment(path, offsetFromEnd) {
+  const segments = path.split(/[\\/]/);
+  return segments[segments.length - offsetFromEnd];
 }
 
 function parseTomlString(value, context) {
@@ -188,12 +193,12 @@ export function linkedRegistryClosure(metadata) {
 function archiveForPackage(pkg) {
   const sourceRoot = realpathSync(dirname(pkg.manifest_path));
   const crateDirectory = `${pkg.name}-${pkg.version}`;
-  if (sourceRoot.split(/[\\/]/).at(-1) !== crateDirectory) {
+  if (pathSegment(sourceRoot, 1) !== crateDirectory) {
     throw new Error(`${displayPackage(pkg)} has unexpected registry source ${sourceRoot}`);
   }
-  const registryHash = sourceRoot.split(/[\\/]/).at(-2);
+  const registryHash = pathSegment(sourceRoot, 2);
   const registrySrc = dirname(dirname(sourceRoot));
-  if (registrySrc.split(/[\\/]/).at(-1) !== "src") {
+  if (pathSegment(registrySrc, 1) !== "src") {
     throw new Error(`${displayPackage(pkg)} is not in a Cargo registry source tree`);
   }
   const archive = join(dirname(registrySrc), "cache", registryHash, `${crateDirectory}.crate`);
@@ -298,14 +303,14 @@ function selectedSupplementalLicenses(files, selected) {
   if (selected.includes("Unicode-3.0")) names.push(/^LICENSE-UNICODE(?:$|[-_.])/i);
   return [...files.keys()]
     .filter(
-      (path) => path.includes("/") && names.some((pattern) => pattern.test(path.split("/").at(-1))),
+      (path) => path.includes("/") && names.some((pattern) => pattern.test(pathSegment(path, 1))),
     )
     .sort(compare);
 }
 
 function noticeFiles(files) {
   return [...files.keys()]
-    .filter((path) => /^(?:NOTICE|COPYRIGHT|COPYING)(?:$|[-_.])/i.test(path.split("/").at(-1)))
+    .filter((path) => /^(?:NOTICE|COPYRIGHT|COPYING)(?:$|[-_.])/i.test(pathSegment(path, 1)))
     .sort(compare);
 }
 
@@ -316,7 +321,7 @@ function normalizedText(buffer, context) {
   } catch (error) {
     throw new Error(`${context} is not UTF-8 (${error.message})`);
   }
-  return `${value.replaceAll("\r\n", "\n").replace(/\n*$/, "")}\n`;
+  return `${value.replace(/\r\n/g, "\n").replace(/\n*$/, "")}\n`;
 }
 
 function collectPackages(metadataByTarget) {
@@ -346,7 +351,7 @@ function collectPackages(metadataByTarget) {
 
 /** Render a payload from already locked, offline Cargo metadata for the four release targets. */
 export function renderThirdPartyLicenses({ metadataByTarget, lockText, inputDigest }) {
-  if (!/^[a-f0-9]{64}$/.test(inputDigest ?? "")) {
+  if (!/^[a-f0-9]{64}$/.test(inputDigest == null ? "" : inputDigest)) {
     throw new Error("license input digest must be a lowercase SHA-256");
   }
   const lockPackages = parseCargoLock(lockText);
@@ -376,7 +381,7 @@ export function renderThirdPartyLicenses({ metadataByTarget, lockText, inputDige
       const content = normalizedText(files.get(path), `${displayPackage(pkg)}:${path}`);
       const digest = sha256(content);
       const id = `TEXT-${digest.slice(0, 16)}`;
-      const existing = texts.get(digest) ?? { id, content, uses: [] };
+      const existing = texts.has(digest) ? texts.get(digest) : { id, content, uses: [] };
       existing.uses.push(`${displayPackage(pkg)}:${path}`);
       texts.set(digest, existing);
       payload.push({ id, path, digest });
