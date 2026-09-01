@@ -78,7 +78,7 @@
       "sha256": "7653af3eca8918a0fa45c4d67c321723d3906b8d3d6966959461be208f67d8a5"
     },
     "hooks/moe-mint/hooks.json": {
-      "sha256": "ee3b4a35452b8ce313b5b8e30fb7294bd9431cd74c486ed19e0f0cb5176e3a7e"
+      "sha256": "e4d21c7f65bd3c88140ed25f15a6f77457d82d97cb3c720001985c80d8790d28"
     },
     "hooks/moe-mint/run-hook.cmd": {
       "sha256": "1091dc12af883e19c6f322221281ad7e1a9816d0e266ca60088dfbc278a50db8",
