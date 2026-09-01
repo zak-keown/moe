@@ -81,8 +81,10 @@ plans:
 ## The CLI
 
 `plan-set` is one extensionless Node script under
-`${CLAUDE_PLUGIN_ROOT}/hooks/plan-set`. It ships in the `moe` plugin alongside
-this skill.
+`${CLAUDE_PLUGIN_ROOT}/hooks/plan-set`. It is a plugin-owned script, not a
+global executable: invoke it as
+`node "${CLAUDE_PLUGIN_ROOT}/hooks/plan-set"`, never as a bare `plan-set`
+command. It ships in the `moe` plugin alongside this skill.
 
 Verbs:
 
@@ -116,15 +118,18 @@ loop.
 
 ## The loop
 
-1. **Confirm the manifest.** Run `plan-set check --manifest docs/moe/plans/<project>-MANIFEST.md`
+1. **Confirm the manifest.** Run
+   `node "${CLAUDE_PLUGIN_ROOT}/hooks/plan-set" check --manifest docs/moe/plans/<project>-MANIFEST.md`
    before anything else. A cycle, a missing plan file, or a duplicate id is a
    dead end before the first plan runs, and `check` says which one at once.
 
-2. **Pick the next plan.** Run `plan-set next --manifest …`. `next` returns a
-   set; v1 takes the first line of it.
+2. **Pick the next plan.** Run
+   `node "${CLAUDE_PLUGIN_ROOT}/hooks/plan-set" next --manifest …`. `next`
+   returns a set; v1 takes the first line of it.
 
    ```bash
-   NEXT=$(plan-set next --manifest docs/moe/plans/foo-MANIFEST.md | head -n 1)
+   NEXT=$(node "${CLAUDE_PLUGIN_ROOT}/hooks/plan-set" next \
+     --manifest docs/moe/plans/foo-MANIFEST.md | head -n 1)
    ```
 
    If the output is empty, either everything is `done` (the project is
@@ -140,7 +145,9 @@ loop.
    base and head SHAs and mark it done:
 
    ```bash
-   plan-set done "$NEXT" "$(git merge-base main HEAD | cut -c1-7)..$(git rev-parse --short HEAD)"
+   node "${CLAUDE_PLUGIN_ROOT}/hooks/plan-set" done "$NEXT" \
+     "$(git merge-base main HEAD | cut -c1-7)..$(git rev-parse --short HEAD)" \
+     --manifest docs/moe/plans/foo-MANIFEST.md
    ```
 
    `done` refuses to run if `$NEXT`'s dependencies are not all `done` — a

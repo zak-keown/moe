@@ -73,6 +73,12 @@ Work backward from what the user asked for:
    are necessary and insufficient: they catch regressions in the pieces,
    but a green suite over the wrong pieces is silent.
 
+Verification is not permission to manufacture a clean slate. Inspect the
+target before acting. If an existing file, process, or remote object could make
+the observation ambiguous, use an isolated destination or ask before changing
+it; never delete or overwrite user-owned state merely to make the verification
+command easier to interpret.
+
 The failure to catch: every step of the plan passed its own tests, no
 step's evidence was the goal, and the finished stack does not do the
 thing. Fixture: [tests/goal-backward-scenario.md](tests/goal-backward-scenario.md).
@@ -163,9 +169,10 @@ failure mode a green suite cannot see.
 ## How this is watched
 
 The `moe-completion-evidence` Stop hook (default-on) reads the transcript
-window **for this turn only** — bounded by the last `type:"user"` entry —
-and writes an audit record to `$HOME/.claude/moe/audit/<repo>/`. If it
-sees a completion-claim phrase in this turn's assistant text with no
-verification command in this turn's tool_uses, the record carries a
-warning and stderr says so. The hook never blocks a stop; it makes the
-silence falsifiable. Set `MOE_EVIDENCE_DISABLED=1` to opt out.
+window **for this turn only** — bounded by the last human-user entry, not a
+`type:"user"` tool-result row — and writes an audit record to the current Git
+worktree's `.audit/`. If it sees a completion-claim phrase in this turn's
+assistant text with no verification command in this turn's tool_uses, the
+record carries a warning and stderr says so. The hook never blocks a stop; it
+makes the silence falsifiable. Set `MOE_EVIDENCE_DISABLED=1` to opt out, or
+`MOE_EVIDENCE_HOME=1` to use `$HOME/.claude/moe/audit/<repo>/` instead.
