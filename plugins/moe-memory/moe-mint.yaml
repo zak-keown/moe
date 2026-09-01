@@ -11,8 +11,8 @@ author:
   name: Zak Keown
   email: zak@turncommerce.com
 license: MIT
-repository: https://gitlab.tcdevops.com/Zak/moe
-homepage: https://gitlab.tcdevops.com/Zak/moe
+repository: https://gitlab.com/moe-ai/moe
+homepage: https://gitlab.com/moe-ai/moe
 keywords:
   - memory
   - search

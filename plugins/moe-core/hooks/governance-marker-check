@@ -1,0 +1,69 @@
+#!/bin/bash
+# governance-marker-check: SessionStart hook that verifies a caller-configured
+# governance policy is loaded on this machine, and optionally emits an
+# installation hint when it is not.
+#
+# WHY A PRESENCE CHECK AND NOT A SKILL. Moe's using-moe skill states that
+# user instructions (CLAUDE.md, AGENTS.md, direct requests) take precedence
+# over skills. A governance policy that must NOT be overridable by user
+# framing is only enforceable while it lives in CLAUDE.md, where using-moe
+# already ranks it above every skill. This hook checks it arrived.
+#
+# It is a NUDGE, not a gate. Enforcing policy requires a PreToolUse hook that
+# can refuse a read; that is a separate, larger piece of work.
+#
+# Every failure path exits 0 with no context. A non-zero SessionStart hook
+# can block every session on the machine, which is far worse than a missing
+# notice.
+
+set -u
+
+# The hook is off by default. Downstream forks set MOE_GOVERNANCE_MARKER to
+# the exact H1 (or other line) that identifies their policy file.
+if [ -z "${MOE_GOVERNANCE_MARKER:-}" ]; then
+    exit 0
+fi
+
+# Kill switch. Any non-empty value disables the hook regardless of the marker.
+if [ -n "${MOE_GOVERNANCE_MARKER_CHECK_DISABLED:-}" ]; then
+    exit 0
+fi
+
+MARKER="$MOE_GOVERNANCE_MARKER"
+HINT="${MOE_GOVERNANCE_POLICY_HINT:-}"
+
+HOME_DIR="${HOME:-${USERPROFILE:-}}"
+if [ -z "$HOME_DIR" ]; then
+    exit 0
+fi
+
+# No jq. jq is missing on some Windows and WSL installs, and a hook that dies
+# on a missing jq fails silently — which for a governance check is the worst
+# possible failure mode, because absence of a warning reads as compliance.
+governance_loaded=no
+for f in "$HOME_DIR/.claude/CLAUDE.md" "$HOME_DIR/.codex/AGENTS.md"; do
+    if [ -f "$f" ] && grep -qF "$MARKER" "$f" 2>/dev/null; then
+        governance_loaded=yes
+        break
+    fi
+done
+
+if [ "$governance_loaded" = yes ]; then
+    exit 0
+fi
+
+if [ -n "$HINT" ]; then
+    CONTEXT="Governance policy marker \"$MARKER\" was not found in ~/.claude/CLAUDE.md or ~/.codex/AGENTS.md. $HINT"
+else
+    CONTEXT="Governance policy marker \"$MARKER\" was not found in ~/.claude/CLAUDE.md or ~/.codex/AGENTS.md."
+fi
+
+# Hand-built JSON with one field. The payload is a fixed string with no
+# interpolated user data beyond MARKER and HINT; escape only what those
+# strings can carry.
+escape() {
+    printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+CONTEXT_JSON=$(escape "$CONTEXT")
+printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s"}}\n' "$CONTEXT_JSON"
+exit 0

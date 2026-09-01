@@ -6,14 +6,14 @@
 
 - `package.json` (shared with the pi adapter when both are active)
 - `.opencode/plugins/moe-everything.js`, the OpenCode plugin module that registers the plugin's skills directory and injects bootstrap context
-- a `.opencode/agent/<name>.md` file for each agent (`review-shard`, `search-codegraph`, `search-moedex`, `verify-finding`)
+- a `.opencode/agent/<name>.md` file for each agent (`review-shard`, `search-moedex`, `verify-finding`)
 
 ## Installing
 
 Add the plugin to your project's `opencode.json`:
 
 ```json
-{ "plugin": ["moe-everything@git+https://gitlab.tcdevops.com/Zak/moe.git"] }
+{ "plugin": ["moe-everything@git+https://gitlab.com/moe-ai/moe.git"] }
 ```
 
 OpenCode loads the plugin module on startup: it registers the skills directory through a config hook (no symlinks needed) and reads commands/agents translated under `.opencode/`. Consult the OpenCode plugin docs if this doesn't match your installed version.

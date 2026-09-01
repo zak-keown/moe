@@ -9,7 +9,7 @@
 ## Installing
 
 ```
-copilot plugin marketplace add https://gitlab.tcdevops.com/Zak/moe
+copilot plugin marketplace add https://gitlab.com/moe-ai/moe
 copilot plugin install moe-backstory@moe
 ```
 
