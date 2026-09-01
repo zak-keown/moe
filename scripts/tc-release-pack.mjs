@@ -353,7 +353,14 @@ function readPackedBytes(tarball, path, runCommand, env) {
     runCommand,
     "tar",
     ["-xOf", tarball, `package/${path}`],
-    { encoding: null, env: createReleaseSubprocessEnvironment(env) },
+    {
+      encoding: null,
+      // Node's 1 MiB spawnSync default is smaller than the tracked 3 MiB
+      // Darwin libraries. The integrity check needs the complete payload for
+      // its SHA-256, embedded-path, and ABI-export validation.
+      maxBuffer: 64 * 1024 * 1024,
+      env: createReleaseSubprocessEnvironment(env),
+    },
     `inspect ${basename(tarball)} ${path}`,
   ).stdout;
 }

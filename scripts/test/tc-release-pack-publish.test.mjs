@@ -741,6 +741,19 @@ describe("TC release packing", () => {
       result.artifacts.map((artifact) => artifact.manifest.name),
       EXPECTED_RELEASE_PACKAGES.map((pkg) => pkg.name),
     );
+    const nativeReads = fake.calls.filter(
+      (call) =>
+        call.command === "tar" &&
+        call.args[0] === "-xOf" &&
+        call.args[2]?.startsWith("package/native/"),
+    );
+    assert.equal(nativeReads.length, TAB_NATIVE_TARGETS.length);
+    assert.ok(
+      nativeReads.every(
+        (call) => call.options.encoding === null && call.options.maxBuffer >= 4 * 1024 * 1024,
+      ),
+      "native tar extraction must accommodate the complete tracked Darwin libraries",
+    );
     for (const kind of ["glass", "memory"]) {
       const artifact = result.artifacts.find(
         (candidate) => candidate.manifest.name === `@tc/moe-${kind}`,
