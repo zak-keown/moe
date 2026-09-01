@@ -46,7 +46,8 @@ into `/plugins/` by `@bubstack/moe-mint`. Plugin boundaries — a lean `moe-core
 `moe-everything` — are a build-time choice, made once, changeable without moving
 a file.
 
-This is what makes a 31-skill `@bubstack/moe-core` acceptable. (**31 as of the
+This is what makes a large `@bubstack/moe-core` acceptable — 31 imported skills
+plus, as of 2026-09-01, two the fork authored. (**31 as of the
 mattpocock-skills import; was 27, and 28 before that in this document.** Counted
 by frontmatter `name:` across the seven pinned sources: superpowers 14,
 iterative-development 6, superpowers-lab 4, mattpocock-skills 4, sp-dev-for-cc 2,
@@ -54,6 +55,23 @@ the-elements-of-style 1, double-shot-latte 0. The original 28th was almost
 certainly `example-workflow`, a pseudo-skill inside an example plugin that is not
 a skill. `packages/core/test/metadata.test.ts` asserts 31, and
 `packages/core/README.md` raised the 27 correction as a root change.)
+
+**One upstream was evaluated in full and almost entirely declined, and the ratio
+belongs here.** `open-gsd/gsd-core` (MIT) ships **71** `gsd-*` skills. A census
+read all of them; **ten reference documents** came in and no skill did — nine
+`debugger-*.md` files into `systematic-debugging/` and `security-asvs-levels.md`
+into `requesting-code-review/references/`. Roughly seventy of the seventy-one
+duplicated what this fork already has, and its phase runtime (10 MB, 206 CJS
+modules, 39 agents, a second planning methodology competing with `writing-plans`
+and `executing-plans`) was rejected outright.
+
+Two things that makes concrete. First, importing *references into an existing
+skill* costs no fidelity assertion — `skill-tiers.yaml`'s pinned `imported:` key
+set is untouched and `from:` gains no sixth value, because a reference file inside
+a skill is not a skill. That is a cheap shape worth reaching for again. Second,
+the counts above are the reason the collapse holds: a fork that accepted every
+evaluated upstream would be back to nineteen repositories' worth of surface. See
+PARITY.md for what was declined and why.
 
 The usual objection to a large plugin is context cost — every skill description
 loads every session — and it binds only if source layout dictates install
