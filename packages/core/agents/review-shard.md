@@ -25,16 +25,34 @@ defect. **Never a heading covering a range** — the merge assigns each block a
 `CR-###` id and the fix workflow addresses findings by that id, so a heading
 covering four findings makes all four unaddressable.
 
+Begin the report with this REQUIRED machine-readable comment. Resolve the full
+SHA from the worktree you actually read, and make `files_opened` equal the
+number of assigned paths you opened:
+
+```markdown
+<!-- moe-review-shard
+base_sha: <40-character SHA>
+files_opened: <count>
+-->
+```
+
+The merge rejects a missing/mismatched header. Do not write YAML frontmatter;
+the final merge owns that.
+
 ```markdown
 ### <short title, the defect not the file>
-**File:** `path/to/file.ext:LINE`
+**File:** `path/to/file.ext`
+**Anchor:** `symbol`, test name, or a short quoted sentence
 **Severity:** critical|high|medium|low
 
 What is wrong, why it is wrong under conditions a reader would not expect to be
 excluded, and the fix.
 ```
 
-Do not number your headings. Do not write frontmatter. The merge owns both.
+Do not number your headings. The merge owns final IDs and frontmatter.
+Never cite a line number: workers may read adjacent commits, and line offsets
+survive neither merge nor repair. The anchor must identify the cited code by
+symbol, test name, or quoted sentence.
 
 ## Severity
 
