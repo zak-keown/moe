@@ -1,95 +1,43 @@
-# The lean/full curation, as data.
+# The skill registry, as data.
 #
-# ARCHITECTURE.md section 2: core ships as TWO generated plugins from ONE source
-# tree — `moe-core` (the everyday set) and `moe-everything` (all of them). This
-# file is the boundary between them.
+# This file is the record of every skill this package ships. It has two jobs:
 #
-# REVIEWED AND SETTLED 2026-08-31, Zak Keown. The split stands. One of the two
-# tiebreak rules did not: see ERR SMALL below.
+#   FIDELITY. `imported:` is a frozen ledger of the 27 upstream skills Moe
+#   inherited. A diff inside that map is a fidelity decision, not an edit:
+#   renaming, adding or dropping a key here fails test/metadata.test.ts against
+#   the pinned name literal — that assertion is the drop-and-rename detector
+#   for the whole import, and it is aimed at THIS map rather than at the
+#   skills/ directory so that a fork-authored skill can arrive without
+#   weakening it.
 #
-# The selection principle, quoted from ARCHITECTURE.md section 2:
+#   ACCOUNTING. `imported:` and `authored:` together must account for every
+#   `SKILL.md` under packages/core/skills/, in exactly one map. test/metadata.test.ts
+#   enforces this both ways: a skill on disk not in either map, or an entry in
+#   either map with no skill on disk, is a fatal drift. `_shared/` has no
+#   SKILL.md and is not counted (see scripts/mint-plugins.mjs → NON_SKILL_ENTRIES).
 #
-#   A skill earns a place in `moe-core` if it fires on ordinary work without
-#   being asked for. A skill you invoke deliberately, by name, when you already
-#   know you want it, belongs in `moe-everything`.
+# It USED TO have a third job — a lean/full tier split that produced two
+# generated plugins from the one source tree. That split was retired 2026-09-01:
+# every skill now ships in the single `moe` plugin. The `tier:` field on each
+# entry was dropped with the split. If a curation shape ever comes back, it
+# goes on top of this ledger rather than inside it.
 #
-# Two rules were applied on top of it, and they pull in opposite directions:
-#
-#   CLOSURE. If a skill in the lean tier carries a `**REQUIRED SUB-SKILL:**` or
-#   `**REQUIRED BACKGROUND:**` marker naming another skill, that skill is in the
-#   lean tier too. A REQUIRED marker pointing at a skill the reader does not
-#   have installed is a dead end mid-workflow. test/metadata.test.ts enforces
-#   this: it fails if any core-tier skill REQUIREs an everything-tier skill.
-#
-#   ~~ERR SMALL~~ — DELETED 2026-08-31. It said: where closure does not force
-#   the answer, the tie goes to `everything`, because every description in an
-#   installed plugin costs context in every session. The premise was measured
-#   and does not hold. All 27 name+description pairs are 5,914 characters,
-#   about 1,480 tokens, and that is the whole resident cost — the bodies are
-#   230,342 characters, ~57,600 tokens, and they load ON DEMAND. Shipping every
-#   skill in the lean plugin would cost roughly 1.5k tokens a session. That is
-#   not a budget worth curating against, and a rule that cites a cost it does
-#   not have will keep producing demotions nobody can defend. Exactly one skill
-#   was demoted on this rule alone; see dispatching-parallel-agents.
-#
-#   TRIGGER COLLISION. The replacement tiebreak, and it is about dispatch
-#   quality rather than token count. Where closure does not force the answer,
-#   the tie goes to `everything` only if the skill's description claims a
-#   trigger a core-tier skill already claims. Two skills asserting the same
-#   "use when …" is what actually degrades selection: the model picks one, and
-#   which one is not something the author controls. Absent a collision the tie
-#   goes to `core` — an unasked-for skill that fires correctly is the entire
-#   point of the lean plugin, and 1.5k tokens buys a lot of them.
-#
-# `tier: core`       ships in BOTH moe-core and moe-everything.
-# `tier: everything` ships in moe-everything ONLY.
-#
-# moe-everything is a strict superset: 13 + 14 = 27.
-
-# NOT THE SHIPPED DESCRIPTIONS. Nothing parses this block: scripts/mint-plugins.mjs
-# reads only the skill maps below, and test/metadata.test.ts only the same. The
-# descriptions marketplace.json actually ships are in mint/moe-core.yaml and
-# mint/moe-everything.yaml, which scripts/mint-plugins.mjs byte-copies into
-# plugins/<name>/moe-mint.yaml — editing either regenerates committed output, so
-# they are deliberately left alone here.
-#
-# Kept because it documents the intent of each tier in the file that defines the
-# tiers. Deleting it outright is a separate decision.
-plugins:
-  moe-core:
-    description: >-
-      The house skills: brainstorming, planning, TDD, systematic debugging, code
-      review and finishing a branch — the everyday set, lean enough to leave on.
-    tiers: [core]
-  moe-everything:
-    description: >-
-      The full Moe skill library: every skill in the tree, including the ones you
-      invoke deliberately by name.
-    tiers: [core, everything]
-
 # ---------------------------------------------------------------------------
 # imported: the fixed imported skill set. FROZEN.
 #
-# A diff inside this map is a FIDELITY decision, not an edit. These entries are
-# the record of what Moe inherited, so renaming, adding or
-# dropping a key here fails test/metadata.test.ts against the pinned 27-name
-# literal — that assertion is the drop-and-rename detector for the whole
-# import, and it is aimed at THIS map rather than at the skills/ directory so
-# that a fork-authored skill can arrive without weakening it.
+# The `why:` on each entry is why the skill earns a place in the tree — it
+# survived the 2026-08-31 split review with a rationale for shipping at all,
+# and that rationale is retained even though the tier machinery it argued
+# against is gone. Deleting a `why:` is a legitimate edit, but not silently.
 # ---------------------------------------------------------------------------
 imported:
-  # ---------------------------------------------------------------- core (13)
-
   using-moe:
-    tier: core
     from: imported
     why: >-
       The bootstrap. It is moe-mint's `bootstrap: { skill: }` target and the
-      thing that makes every other skill fire at all. Not optional in either
-      plugin.
+      thing that makes every other skill fire at all.
 
   brainstorming:
-    tier: core
     from: imported
     why: >-
       Its own description opens "You MUST use this before any creative work".
@@ -97,14 +45,12 @@ imported:
       bootstrap names by name.
 
   systematic-debugging:
-    tier: core
     from: imported
     why: >-
       "Use when encountering any bug, test failure, or unexpected behavior."
       Fires on every bug, unasked. The other skill the bootstrap names.
 
   test-driven-development:
-    tier: core
     from: imported
     why: >-
       "Use when implementing any feature or bugfix, before writing
@@ -112,351 +58,234 @@ imported:
       BACKGROUND for systematic-debugging's failing-test step.
 
   verification-before-completion:
-    tier: core
     from: imported
     why: >-
       "Use when about to claim work is complete." Fires at the end of every
       task, and systematic-debugging routes to it before any success claim.
 
   writing-plans:
-    tier: core
     from: imported
     why: >-
       "Use when you have a spec or requirements for a multi-step task, before
-      touching code." The step brainstorming hands off to; nobody asks for it by
-      name.
+      touching code." The step brainstorming hands off to; nobody asks for it
+      by name.
 
   subagent-driven-development:
-    tier: core
     from: imported
     why: >-
-      CLOSURE. writing-plans marks it "**REQUIRED SUB-SKILL**" as the
-      recommended execution path, and it is the path every harness Moe targets
-      can actually take.
+      writing-plans marks it "**REQUIRED SUB-SKILL**" as the recommended
+      execution path, and it is the path every harness Moe targets can
+      actually take.
 
   executing-plans:
-    tier: core
     from: imported
     why: >-
-      CLOSURE. writing-plans marks it "**REQUIRED SUB-SKILL**" as the second of
-      exactly two execution options — the one to take when subagents are
-      unavailable. 344 words, the smallest skill in the set.
+      writing-plans marks it "**REQUIRED SUB-SKILL**" as the second of exactly
+      two execution options — the one to take when subagents are unavailable.
 
   using-git-worktrees:
-    tier: core
     from: imported
     why: >-
-      CLOSURE. Step 0 of both execution paths ("ensure an isolated workspace")
-      and named by the bootstrap.
+      Step 0 of both execution paths ("ensure an isolated workspace") and
+      named by the bootstrap.
 
   finishing-a-development-branch:
-    tier: core
     from: imported
     why: >-
-      CLOSURE. "**REQUIRED SUB-SKILL**" at the terminal step of both execution
-      paths. Without it the everyday flow ends with the branch unmerged and no
+      "**REQUIRED SUB-SKILL**" at the terminal step of both execution paths.
+      Without it the everyday flow ends with the branch unmerged and no
       guidance.
 
   requesting-code-review:
-    tier: core
     from: imported
     why: >-
-      CLOSURE. subagent-driven-development's review phase dispatches this
-      skill's `code-reviewer.md` template. Also fires unasked on "before
-      merging".
+      subagent-driven-development's review phase dispatches this skill's
+      `code-reviewer.md` template. Also fires unasked on "before merging".
 
   receiving-code-review:
-    tier: core
     from: imported
     why: >-
-      Fires when review feedback arrives, which is ordinary work, and it is the
-      counterpart to requesting-code-review. Shipping the request half without
-      the receive half teaches half the loop.
+      Fires when review feedback arrives, which is ordinary work, and it is
+      the counterpart to requesting-code-review. Shipping the request half
+      without the receive half teaches half the loop.
 
   writing-clearly-and-concisely:
-    tier: core
     from: imported
     why: >-
-      THE MOST ARGUABLE CALL IN THIS PROPOSAL — flagged deliberately for review.
-      Its trigger is literally "ANY prose humans will read", which includes the
-      commit messages, MR descriptions and error text of every session, so it
-      fires unasked more often than anything else here. Its lean-tier cost is
-      one description line: the ~12,000-token 1918 text is a separate file the
-      agent opens only while editing prose. If the reviewer disagrees, this is
-      the one to move, and moving it breaks no closure edge.
-
-  # ----------------------------------------------------------- everything (14)
+      Its trigger is literally "ANY prose humans will read", which includes
+      the commit messages, MR descriptions and error text of every session.
+      Fires unasked more often than anything else in the tree.
 
   dispatching-parallel-agents:
-    tier: everything
     from: imported
     why: >-
-      "Use when facing 2+ independent tasks" is a recognition trigger and
-      nothing REQUIREs it, so closure does not force the answer. Held at
-      everything: parallel-execution-option landed and declined the promotion
-      (PARITY.md's `dispatching-parallel-agents` row; ARCHITECTURE.md §2). The silent-failure argument is what
-      settles it — a missed parallel dispatch yields serial execution, which is
-      correct, merely slower. The old ERR SMALL rationale was deleted and its
-      companion claim was false: subagent-driven-development used to forbid
-      parallel implementation outright ("Never dispatch multiple implementation
-      subagents in parallel"), and parallel-execution-option rewrote that ban
-      into a worktree-gated allow, restating enough of this skill's rule inline
-      in both SDD and implementing-tasks to keep the everyday execution paths
-      correct without dispatching-parallel-agents installed. This skill remains
-      the canonical source for the full gate, the degradation ladder, and the
-      divergent-tree rule. Cited by slug throughout, because the wave-prefix on
-      the backlog filename is a schedule and moves whenever the backlog is
-      re-waved — this rationale broke once that way, when the entry read W01P01
-      as its cross-reference and a re-wave later gave that number to a
-      different item.
+      "Use when facing 2+ independent tasks" is a recognition trigger.
+      subagent-driven-development and implementing-tasks restate the parallel
+      gate inline for the everyday paths; this skill remains the canonical
+      source for the full gate, the degradation ladder, and the divergent-tree
+      rule.
 
   writing-skills:
-    tier: everything
     from: imported
     why: >-
       You invoke it deliberately, when authoring or editing a skill. Also the
       largest skill in the set at 3,781 words.
 
   working-with-claude-code:
-    tier: everything
     from: imported
     why: >-
       A documentation router. You reach for it when you are already working on
       Claude Code configuration.
 
   developing-claude-code-plugins:
-    tier: everything
     from: imported
     why: >-
-      You invoke it when you know you are building a plugin. Ships the
-      example plugins and the polyglot-hook reference.
+      You invoke it when you know you are building a plugin. Ships the example
+      plugins and the polyglot-hook reference.
 
   finding-duplicate-functions:
-    tier: everything
     from: imported
     why: >-
       Experimental (upstream's own word). A codebase audit you run on purpose;
       it also wants `rg` and `jq` and dispatches two subagent tiers.
 
   mcp-cli:
-    tier: everything
     from: imported
     why: >-
       Experimental. Deliberate reach, and it instructs the agent to clone and
       `go build` a third-party binary onto the user's PATH — see README.md.
 
   using-tmux-for-interactive-commands:
-    tier: everything
     from: imported
     why: >-
-      Experimental, and the one genuinely arguable case in this group: it can
-      fire unprompted on "run vim". It also trigger-overlaps moe-crew's
-      driving-claude-code-sessions on the word tmux, which is the tiebreak.
+      Experimental. Can fire unprompted on "run vim"; also trigger-overlaps
+      moe-crew's driving-claude-code-sessions on the word tmux.
 
   windows-vm:
-    tier: everything
     from: imported
     why: >-
       Experimental, and it cannot run on this fork's dev machines or in CI —
       needs /dev/kvm, sshpass and Debian. See README.md.
 
   iterative-development:
-    tier: everything
     from: imported
     why: >-
-      An alternative whole methodology, invoked by name when a spec is too large
-      for the writing-plans flow. Six skills' descriptions is a permanent
-      context cost for a workflow nobody stumbles into.
+      An alternative whole methodology, invoked by name when a spec is too
+      large for the writing-plans flow.
 
   extracting-requirements:
-    tier: everything
     from: imported
     why: >-
-      Part of the iterative-development cluster. Dispatched by the orchestrator,
-      never reached on its own.
+      Part of the iterative-development cluster. Dispatched by the
+      orchestrator, never reached on its own.
 
   scoping-the-simplest-core:
-    tier: everything
     from: imported
     why: >-
       Part of the cluster, and it reads a prompt template out of
       running-an-iteration's directory — the two cannot be split.
 
   running-an-iteration:
-    tier: everything
     from: imported
     why: >-
       Part of the cluster. Dispatches implementing-tasks.
 
   implementing-tasks:
-    tier: everything
     from: imported
     why: >-
-      Part of the cluster. A fork of subagent-driven-development for in-memory
-      task batches; only running-an-iteration invokes it.
+      Part of the cluster. A fork of subagent-driven-development for
+      in-memory task batches; only running-an-iteration invokes it.
 
   auditing-progress:
-    tier: everything
     from: imported
     why: >-
       Part of the cluster. The orchestrator's post-iteration gate.
 
-  # ----------------------------------------------- mattpocock-skills (4)
-
   codebase-design:
-    tier: core
     from: imported
     why: >-
-      Core by CLOSURE, not by trigger — the first entry admitted on that ground,
-      so it is written down here rather than inferred. It is still not a trigger
-      skill: nothing in a user's request fires it, it is invoked by name, and on
-      that criterion alone it would sit in everything. What moves it is
-      test-driven-development, which IS core and fires on every implementation,
-      and whose "Seams — Where Tests Go" section reaches here for the shared
-      design vocabulary (module/interface/depth/seam/adapter/leverage/locality).
-      A lean-plugin reader who follows that pointer to a skill that is not
-      installed hits exactly the dead end the "no core-tier skill REQUIREs an
-      everything-tier skill" assertion exists to prevent — and that assertion
-      matches only REQUIRED markers, so it would not have caught this one.
-      Ships with DEEPENING.md and DESIGN-IT-TWICE.md. improve-codebase-architecture
-      (everything) still reaches down to it, which is the allowed direction.
+      The shared design vocabulary
+      (module/interface/depth/seam/adapter/leverage/locality) that
+      test-driven-development's "Seams — Where Tests Go" section reaches for.
+      Ships with DEEPENING.md and DESIGN-IT-TWICE.md.
 
   improve-codebase-architecture:
-    tier: everything
     from: imported
     why: >-
       Deliberately invoked, by name. Router-shaped: it scans, renders an HTML
-      report of deepening candidates, then hands off — to brainstorming for the
-      decision walk, to domain-modeling for CONTEXT.md/ADR updates. A
-      once-per-refactor call, not something that fires on ordinary work.
+      report of deepening candidates, then hands off — to brainstorming for
+      the decision walk, to domain-modeling for CONTEXT.md/ADR updates.
 
   domain-modeling:
-    tier: everything
     from: imported
     why: >-
       Deliberately invoked when the domain model is being actively sharpened —
-      writing or editing CONTEXT.md, recording an ADR. Merely READING CONTEXT.md
-      is not this skill; this one edits.
+      writing or editing CONTEXT.md, recording an ADR. Merely READING
+      CONTEXT.md is not this skill; this one edits.
 
   prototype:
-    tier: everything
     from: imported
     why: >-
-      Deliberately invoked when the user wants a throwaway artifact to answer a
-      design question: a single-file HTML logic demo, or a set of UI variants
-      switchable via `?variant=`. Named on purpose; does not fire on ordinary
-      work.
+      Deliberately invoked when the user wants a throwaway artifact to answer
+      a design question: a single-file HTML logic demo, or a set of UI
+      variants switchable via `?variant=`.
 
 
 # ---------------------------------------------------------------------------
-# authored: skills this fork wrote. OPEN, and empty until something is.
+# authored: skills this fork wrote. OPEN.
 #
-# Same three keys as an imported entry. Its `from:` is always the value `moe`,
-# because there is no upstream to name, and its `why:` earns the skill's place
-# the same way an imported one does.
-#
-# CURRENT POLICY, 2026-08-31 (Zak Keown, decision D2): a fork-authored skill is
-# `tier: everything` only, and test/metadata.test.ts asserts it. This is
-# REVERSIBLE and deliberately so: it exists to make the first core-tier
-# authored skill a conversation someone has on purpose rather than a default
-# nobody chose. Flip the assertion when that conversation happens.
-#
-# The `{}` on the next line is load-bearing. A bare `authored:` with nothing
-# under it parses as NULL rather than as an empty map.
-#
-# It does not throw, and that is the point. metadata.test.ts coalesces with
-# `tiers.authored ?? {}` so every downstream read keeps working, which means a
-# null here has no symptom at all. What catches it is an explicit assertion on
-# the raw parse in "accounts for every skill on disk in exactly one of the two
-# maps". That assertion was itself vacuous until 2026-08-31 — it tested the
-# coalesced value — so for a while both this comment and that test claimed a
-# guarantee neither provided.
+# Same two keys as an imported entry: `from:` is always the value `moe`, and
+# `why:` earns the skill's place the same way an imported one does.
 # ---------------------------------------------------------------------------
 authored:
   retrieving-context:
-    tier: everything
     from: moe
     why: >-
-      Everything-tier under D2 (2026-08-31), which makes fork-authored skills
-      everything-only. The backlog item argued for core and the argument is on
-      the record: a retrieval-discipline skill's value is firing unprompted, so
-      "search before you answer" that waits to be invoked has already failed —
-      which is exactly ARCHITECTURE.md §2's criterion for core, and it is a
-      methodology skill like `verification-before-completion` rather than a
-      memory feature. D2 is the standing policy and the assertion that guards it
-      says so in as many words: reversible by deliberate decision, not by
-      editing this manifest. So it ships everything-tier, and flipping it is one
-      word here plus LEAN_TIER_COUNT 13 to 14 in metadata.test.ts.
-      Carries no **REQUIRED SUB-SKILL:** marker naming `remembering-conversations`
-      — that skill lives in packages/memory and metadata.test.ts's strict marker
-      rule resolves every backticked token against packages/core/skills/ only, so
-      the marker would fail outright. It costs nothing: the routing rule reaches
-      memory through its MCP *tools*, and tools are not skills. See the
-      codegraph-context-layer item in .planning/backlog/ (cited by slug — the
-      W##P## prefix drifts).
+      A retrieval-discipline skill: "search before you answer" applied to the
+      shared corpora that a coding agent's memory does not cover. Routes
+      through the search-moedex agent when a corpus is configured, and to
+      grep otherwise. Does not carry a **REQUIRED SUB-SKILL:** marker naming
+      `remembering-conversations` — that skill lives in packages/memory and
+      metadata.test.ts's strict marker rule resolves every backticked token
+      against packages/core/skills/ only, so the marker would fail outright.
+      Costs nothing: the routing rule reaches memory through its MCP *tools*,
+      and tools are not skills.
+
   sequencing-plans:
-    tier: everything
     from: moe
     why: >-
-      The first fork-authored skill, and the one D2 was written for: a
-      deterministic scheduler for the multi-plan case that neither
+      A deterministic scheduler for the multi-plan case that neither
       `writing-plans` nor `subagent-driven-development` covers. The description
       fires warm ("use when a project has more than one plan and you need to
       know which is runnable"); the cold case — a fresh session on a
-      partly-finished project — is caught by the `plan-set-notice` SessionStart
-      hook in `packages/core/hooks/`, which prints the ready set with no model
-      in the loop. `plan-set` (the CLI) lives under `hooks/` rather than inside
-      this skill's directory, because `scripts/mint-plugins.mjs` filters skills
-      by tier but stages hooks unfiltered — a lean-tier user gets a working
-      command from the hook even though this skill is not installed in their
-      plugin. See the deterministic-task-dag item in .planning/backlog/ for
-      the argument (cited by slug, not by W##P## filename prefix — the same
-      prefix-drift trap the writing-plans comment above already documents),
-      and D2 (`skill-tiers.yaml` policy block above) for the tier choice,
-      which is reversible.
+      partly-finished project — is caught by the `plan-set-notice`
+      SessionStart hook in `packages/core/hooks/`, which prints the ready
+      set with no model in the loop. `plan-set` (the CLI) lives under
+      `hooks/` rather than inside this skill's directory.
 
   reviewing-a-codebase:
-    tier: everything
     from: moe
     why: >-
-      Everything-only under D2. A whole-repository review you invoke on purpose —
-      an inherited codebase, a pre-release sweep — not something that fires on
-      ordinary work, which is the criterion in ARCHITECTURE.md section 2. Its
-      description deliberately claims "a whole repository rather than a diff",
-      because `requesting-code-review` already owns the diff trigger and two
-      skills asserting one "use when" is the TRIGGER COLLISION the tiebreak
-      above exists to prevent. Written after eleven RED baseline runs
-      (`.planning/backlog/`, codebase-review-skills, cited by slug because the
-      W##P## prefix is a schedule and moves): agents already produce severity
-      labels, per-finding locations and honest coverage unprompted, so the skill
-      authors none of that. What no baseline run produced was a stable finding
-      id, frontmatter, or a coverage line inside the report rather than beside
-      it — and `fixing-a-code-review` cannot resume without all three. Ships two
-      node scripts that carry no execute bit, invoked as `node <path>` like
-      brainstorming's, so neither needs an X_BIT_ALLOWLIST entry.
+      A whole-repository review you invoke on purpose — an inherited codebase,
+      a pre-release sweep. Its description deliberately claims "a whole
+      repository rather than a diff" because `requesting-code-review` already
+      owns the diff trigger. Ships two node scripts invoked as `node <path>`,
+      so neither needs an X_BIT_ALLOWLIST entry.
+
   fixing-a-code-review:
-    tier: everything
     from: moe
     why: >-
-      Everything-only under D2, and the consumer half of the pair — it reads the
-      report `reviewing-a-codebase` writes. Deliberately invoked once a report
-      exists, so it cannot fire unasked. The same baseline runs settled its
-      shape: six runs under combined time, authority and exhaustion pressure all
-      wrote the test first, verified each finding against current code before
-      touching it, and refused to bundle commits, so the skill carries no
-      rationalization table and no TDD lecture — `writing-skills` "Match the
-      Form to the Failure" warns that prohibitions backfire on what these runs
-      actually got wrong, which was the record. Three of them wrote the
-      disposition three different ways and none recorded which commit fixed
-      which finding, so the skill is a REQUIRED four-field slot plus the script
-      that fills it. Not in metadata.test.ts's `parallelDispatchers`: fixes
-      commit to one tree in sequence, so it dispatches nothing in parallel and
-      owes no sequential fallback.
+      The consumer half of the pair — it reads the report
+      `reviewing-a-codebase` writes. Deliberately invoked once a report
+      exists, so it cannot fire unasked. A REQUIRED four-field disposition
+      slot plus the script that fills it, so a fix run cannot forget to
+      record which commit fixed which finding.
+
 
 # Not a skill: skills/_shared/ holds the three PAR reference documents the
 # iterative-development cluster reads at runtime. It carries no SKILL.md, so
-# moe-mint's readSkills() skips it, and it ships with the skills directory in
-# both plugins. It is in NEITHER map above — not `imported:`, not `authored:` —
-# which is what scripts/mint-plugins.mjs's ALWAYS_STAGE set exists to handle.
+# moe-mint's readSkills() skips it, and it ships with the skills directory.
+# It is in NEITHER map above — not `imported:`, not `authored:` — which is
+# what scripts/mint-plugins.mjs's NON_SKILL_ENTRIES set exists to handle.
 # Was skills/shared/ upstream; renamed to sort first and to signal that it is
 # not a skill in a directory that now holds 27 of them.

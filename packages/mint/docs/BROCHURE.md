@@ -110,7 +110,7 @@ maintainers who want manifest drift caught by CI instead of by bug reports.
 
 A plugin that targets one harness and will stay there is better served by its
 single hand-written manifest; this tool earns its keep at two harnesses and
-up. In Moe that threshold is met by construction: `moe-core` and `moe-backstory`
+up. In Moe that threshold is met by construction: `moe` and `moe-backstory`
 ship to every harness the fork supports.
 
 ## Limitations

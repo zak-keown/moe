@@ -19,7 +19,7 @@ When the agent is ready for input, tell it to execute the plan with SDD. Use
 phrasing like:
 
 "I have a small plan at docs/plans/report-plan.md — two report
-formatting functions. Use the moe-core:subagent-driven-development skill
+formatting functions. Use the subagent-driven-development skill
 to execute it end-to-end — dispatch fresh subagents per task and run the
 two-stage review after each."
 
@@ -39,7 +39,7 @@ you are done.
 
 ## Acceptance Criteria
 
-- A `Skill` invocation naming `moe-core:subagent-driven-development`
+- A `Skill` invocation naming `subagent-driven-development`
   and at least one `Agent` (subagent dispatch) tool call appear in the
   session log.
 - The duplicated report-formatting logic was flagged openly by the

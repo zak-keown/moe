@@ -56,7 +56,7 @@ moe/
 
 | Package | Responsibility | Distribution |
 |---|---|---|
-| `@bubstack/moe-core` | Planning, context retrieval, TDD, debugging, review, collaboration, writing, plugin authoring, and architecture skills | generated `moe-core` and `moe-everything` plugins |
+| `@bubstack/moe-core` | Planning, context retrieval, TDD, debugging, review, collaboration, writing, plugin authoring, and architecture skills | generated `moe` plugin |
 | `@bubstack/moe-backstory` | Recover a behavioral specification from code and observable evidence | generated `moe-backstory` plugin |
 | `@bubstack/moe-memory` | Index and search conversations and journals through one store and MCP server | npm-backed `moe-memory` plugin |
 | `@bubstack/moe-flight` | Drive web, CLI, or TUI targets through acceptance criteria and render results | internal only; never distributed |
@@ -66,10 +66,13 @@ moe/
 | `@bubstack/moe-tab` | Parse usage records and estimate transcript cost in Rust | workspace library and CLI |
 | `moe-proof` | Run and grade model evals | internal Python tool |
 
-`core` deliberately emits two plugins from one source tree. `moe-core` is the
-everyday set that can remain enabled; `moe-everything` is the full library.
-Membership and rationale live in `packages/core/skill-tiers.yaml`, and metadata
-tests pin both completeness and tier closure.
+`core` emits a single `moe` plugin from its source tree. Membership and
+rationale live in `packages/core/skill-tiers.yaml` as a fidelity ledger, and
+metadata tests pin completeness of the imported set. `core` used to emit two
+plugins (a lean `moe-core` and a full `moe-everything`); the split was retired
+2026-09-01 because the resident cost of shipping every description (~1.5k
+tokens) was not a budget worth curating against, and one plugin is a simpler
+install story.
 
 ## 4. Dependency topology
 

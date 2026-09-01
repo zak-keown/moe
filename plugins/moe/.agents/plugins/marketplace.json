@@ -1,0 +1,20 @@
+{
+  "name": "moe-dev",
+  "interface": {
+    "displayName": "moe"
+  },
+  "plugins": [
+    {
+      "name": "moe",
+      "source": {
+        "source": "url",
+        "url": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "development"
+    }
+  ]
+}
