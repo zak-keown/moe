@@ -162,9 +162,9 @@ be recorded in both `PARITY.md` and `NOTICE`.
    circular graph`.
 3. **The snapshots in `../.moe-references/` are fixed audit references, not a
    supported sync target.** Pinned revisions live in `PARITY.md`.
-4. **Lineage stays centralized.** `NOTICE` and `PARITY.md` are the canonical
-   attribution surfaces; generated distributions carry applicable license
-   terms. `pnpm provenance` enforces this boundary.
+4. **Legal metadata stays centralized.** `NOTICE` and `PARITY.md` are the
+   canonical attribution surfaces; generated distributions carry applicable
+   license terms. `pnpm provenance` checks their completeness.
 
 ### Citation discipline
 
