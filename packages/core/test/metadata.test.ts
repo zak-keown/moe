@@ -1128,6 +1128,8 @@ describe("workflow depth vocabulary", () => {
       "skills/subagent-driven-development/SKILL.md",
       "skills/subagent-driven-development/re-review-prompt.md",
       "skills/sequencing-plans/SKILL.md", // discusses plugin tiers (skill-tiers.yaml packaging), not workflow depth
+      "skills/codebase-design/SKILL.md", // imported mattpocock skill: "tier-spanning slice" = architectural tier (presentation/business/data), not workflow depth
+      "skills/writing-skills/references/skill-typography.md", // imported mattpocock reference: "primary tier" = hierarchical level in authoring guidance, not workflow depth
       "skills/using-moe/references/codex-tools.md",
     ];
     const offenders: string[] = [];
