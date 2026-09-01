@@ -54,3 +54,7 @@ If `delegate_task` is unavailable, do the work inline rather than inventing tool
 ## Task tracking
 
 Use the `todo` tool for task tracking within a session. For multi-agent task boards, use `hermes kanban` CLI if available. Treat older `TodoWrite` references as the task-tracking action.
+
+## Native rendering ladder
+
+The shared native-rendering ladder lives at `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md`. On Hermes Agent, rung 1 (the Claude Code Artifact tool) is not exposed — skills that render should start at rung 2 (brainstorm browser companion) and drop to rung 3 (local HTML file) or rung 4 (markdown file) when the sandbox blocks a browser or a port bind.

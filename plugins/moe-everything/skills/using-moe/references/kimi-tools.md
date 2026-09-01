@@ -40,6 +40,10 @@ living inside a generated file is lost on the next `generate`, so it lives here.
   `run_in_background: true` only when the work is independent and background
   agents are available.
 
+## Native rendering ladder
+
+The shared native-rendering ladder lives at `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md`. On Kimi Code, rung 1 (the Claude Code Artifact tool) is not exposed — skills that render should start at rung 2 (brainstorm browser companion) and drop to rung 3 (local HTML file) or rung 4 (markdown file) when a browser is unavailable.
+
 ## Everything else
 
 - Where a skill refers to the `Skill` tool, use Kimi Code's native `Skill` tool.

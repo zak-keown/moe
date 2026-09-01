@@ -7,6 +7,10 @@ Skills speak in actions ("dispatch a subagent", "create a todo", "read a file").
 | Dispatch a subagent (`Subagent (general-purpose):` template) | `invoke_subagent` with a built-in `TypeName` — `self` for full-capability work, `research` for read-only |
 | Task tracking ("create a todo", "mark complete") | a **task artifact** — `write_to_file` with `IsArtifact: true` and `ArtifactType: "task"` (see [Task tracking](#task-tracking)). **Not** `manage_task`, which manages background processes. |
 
+## Native rendering ladder
+
+The shared native-rendering ladder lives at `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md`. On Antigravity, rung 1 (the Claude Code Artifact tool) is not exposed — skills that render should start at rung 2 (the brainstorm browser companion) or fall to rung 4 (markdown file). Antigravity's `write_to_file` with `IsArtifact: true` is a task-artifact concept and is not a substitute for rung 1.
+
 ## Task tracking
 
 Antigravity has **no todo tool** (`manage_task` manages background

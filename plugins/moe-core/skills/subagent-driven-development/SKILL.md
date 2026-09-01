@@ -5,6 +5,12 @@ description: Use when executing implementation plans with independent tasks in t
 
 # Subagent-Driven Development
 
+**At this depth:** `subagent-driven-development` runs a plan produced
+by `writing-plans`, which fires only at the `feature` depth defined in
+`brainstorming` (patch / change / feature). A `patch` or a `change`
+never reaches this skill. (Where "tier" appears below, it is always
+the MODEL tier under Model Selection, not the workflow depth axis.)
+
 Execute plan by dispatching a fresh implementer subagent per task, a task review (spec compliance + code quality) after each, and a broad whole-branch review at the end.
 
 **Why subagents:** You delegate tasks to specialized agents with isolated context. By precisely crafting their instructions and context, you ensure they stay focused and succeed at their task. They should never inherit your session's context or history — you construct exactly what they need. This also preserves your own context for coordination work.
