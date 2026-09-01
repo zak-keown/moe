@@ -304,14 +304,22 @@ imported:
   # ----------------------------------------------- mattpocock-skills (4)
 
   codebase-design:
-    tier: everything
+    tier: core
     from: imported
     why: >-
-      Deliberately invoked, by name. The shared design vocabulary
-      (module/interface/depth/seam/adapter/leverage/locality) that
-      improve-codebase-architecture reaches for on every card, plus DEEPENING.md
-      and DESIGN-IT-TWICE.md as its going-deeper references. Not a trigger
-      skill on its own.
+      Core by CLOSURE, not by trigger — the first entry admitted on that ground,
+      so it is written down here rather than inferred. It is still not a trigger
+      skill: nothing in a user's request fires it, it is invoked by name, and on
+      that criterion alone it would sit in everything. What moves it is
+      test-driven-development, which IS core and fires on every implementation,
+      and whose "Seams — Where Tests Go" section reaches here for the shared
+      design vocabulary (module/interface/depth/seam/adapter/leverage/locality).
+      A lean-plugin reader who follows that pointer to a skill that is not
+      installed hits exactly the dead end the "no core-tier skill REQUIREs an
+      everything-tier skill" assertion exists to prevent — and that assertion
+      matches only REQUIRED markers, so it would not have caught this one.
+      Ships with DEEPENING.md and DESIGN-IT-TWICE.md. improve-codebase-architecture
+      (everything) still reaches down to it, which is the allowed direction.
 
   improve-codebase-architecture:
     tier: everything
