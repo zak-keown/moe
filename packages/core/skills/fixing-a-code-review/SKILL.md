@@ -46,7 +46,17 @@ produces.
 4. **Green.** The smallest change that passes it.
 5. **Commit**, source and test together, one finding per commit:
    `fix(review): CR-### — <title>`
-6. **Stamp the disposition** into the report before starting the next finding.
+6. **Stamp the disposition** into the report, as its own commit, before
+   starting the next finding.
+
+**The stamp is always a separate commit, and it is always per finding.** It
+records the sha of the commit that fixed the finding, and no commit can contain
+its own sha — one GREEN run tried folding it in with `--amend` and produced a
+stamp citing a sha that no longer existed. Batching every stamp into one record
+commit at the end is the other tempting answer and it is worse: a run
+interrupted mid-batch leaves fixes committed with nothing mapping them to
+findings, which is the unresumable state this skill exists to prevent. One
+stamp per finding means a crash loses at most one record.
 
 If the tree is dirty when you finish a finding, you are not finished: commit it
 or `git checkout --` it.
