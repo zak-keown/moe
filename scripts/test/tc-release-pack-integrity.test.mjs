@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
@@ -184,11 +192,14 @@ describe("TC release clean-job CI policy", () => {
 
   it("reconstructs exact runtime environments for all four CI modes", () => {
     const projectDirectory = mkdtempSync(join(tmpdir(), "moe-ci-safe-env-"));
+    const jobId = `${Date.now()}${process.pid}`;
+    const safeRoot = join("/tmp", `moe-ci-safe-env-${jobId}`);
     try {
       const ambient = {
         PATH: process.env.PATH,
         CI: "true",
         GITLAB_CI: "true",
+        CI_JOB_ID: jobId,
         CI_PROJECT_DIR: projectDirectory,
         CI_COMMIT_BRANCH: "feature/security",
         CI_DEFAULT_BRANCH: "main",
@@ -291,8 +302,42 @@ describe("TC release clean-job CI policy", () => {
           new Set([...baseKeys, ...Object.keys(additions)]),
         );
         for (const [name, value] of Object.entries(additions)) assert.equal(visible[name], value);
-        assert.equal(visible.HOME, join(projectDirectory, ".ci-home"));
-        assert.equal(visible.COREPACK_HOME, join(projectDirectory, ".ci-corepack"));
+        assert.equal(visible.HOME, join(safeRoot, "home"));
+        assert.equal(visible.COREPACK_HOME, join(safeRoot, "corepack"));
+        assert.equal(visible.XDG_CACHE_HOME, join(safeRoot, "xdg-cache"));
+        assert.equal(visible.XDG_CONFIG_HOME, join(safeRoot, "xdg-config"));
+        assert.equal(visible.XDG_DATA_HOME, join(safeRoot, "xdg-data"));
+        assert.equal(visible.NPM_CONFIG_CACHE, join(safeRoot, "npm-cache"));
+        assert.equal(visible.PIP_CACHE_DIR, join(safeRoot, "pip-cache"));
+        assert.equal(visible.UV_CACHE_DIR, join(safeRoot, "uv-cache"));
+        for (const generatedPath of [
+          visible.HOME,
+          visible.COREPACK_HOME,
+          visible.XDG_CACHE_HOME,
+          visible.XDG_CONFIG_HOME,
+          visible.XDG_DATA_HOME,
+          visible.NPM_CONFIG_CACHE,
+          visible.PIP_CACHE_DIR,
+          visible.UV_CACHE_DIR,
+        ]) {
+          assert.equal(
+            generatedPath.startsWith(`${projectDirectory}/`),
+            false,
+            `${mode} generated a safe directory inside CI_PROJECT_DIR: ${generatedPath}`,
+          );
+        }
+        for (const secretName of [
+          "FUTURE_SERVICE_SESSION",
+          "DATABASE_PASSWORD",
+          "SIGNING_PRIVATE_KEY",
+          "AWS_SECRET_ACCESS_KEY",
+        ]) {
+          assert.equal(
+            visible[secretName],
+            undefined,
+            `${mode} exposed novel secret ${secretName}`,
+          );
+        }
         assert.equal(visible.TEMP, "/tmp");
         assert.equal(visible.TMP, "/tmp");
         assert.equal(visible.TMPDIR, "/tmp");
@@ -325,8 +370,17 @@ describe("TC release clean-job CI policy", () => {
       assert.match(trusted.stdout, /^SSL_CERT_FILE=\/etc\/tc\/ca\.pem$/m);
       assert.match(trusted.stdout, /^NODE_EXTRA_CA_CERTS=\/etc\/tc\/node-ca\.pem$/m);
       assert.doesNotMatch(trusted.stdout, /CI_JOB_TOKEN|SAFE_MARKER|FUTURE_SERVICE_SESSION/);
+      assert.deepEqual(readdirSync(projectDirectory), []);
+
+      const rejectedJobId = spawnSync("sh", [CI_SAFE_ENV, "safe", "/usr/bin/env"], {
+        encoding: "utf8",
+        env: { ...ambient, CI_JOB_ID: "123/../../checkout" },
+      });
+      assert.equal(rejectedJobId.status, 64);
+      assert.match(rejectedJobId.stderr, /CI_JOB_ID must contain only decimal digits/);
     } finally {
       rmSync(projectDirectory, { recursive: true, force: true });
+      rmSync(safeRoot, { recursive: true, force: true });
     }
   });
 

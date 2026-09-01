@@ -26,14 +26,38 @@ if [ -z "${CI_PROJECT_DIR:-}" ]; then
   exit 64
 fi
 
-ci_home="$CI_PROJECT_DIR/.ci-home"
-corepack_home="$CI_PROJECT_DIR/.ci-corepack"
-xdg_cache_home="$CI_PROJECT_DIR/.ci-cache"
-xdg_config_home="$CI_PROJECT_DIR/.ci-config"
-xdg_data_home="$CI_PROJECT_DIR/.ci-data"
-npm_cache="$CI_PROJECT_DIR/.ci-npm-cache"
-pip_cache="$CI_PROJECT_DIR/.ci-pip-cache"
-uv_cache="$CI_PROJECT_DIR/.ci-uv-cache"
+# Keep tool-managed trees outside the checkout. Apart from polluting release
+# inputs, homes under CI_PROJECT_DIR are visible to repository-wide tools such
+# as Biome. GitLab job IDs are numeric; rejecting any other value keeps the
+# environment-provided component from becoming a path. The process-scoped
+# fallback is only for local invocations, where GitLab does not supply a job ID.
+if [ -n "${CI_JOB_ID:-}" ]; then
+  case "$CI_JOB_ID" in
+    *[!0-9]*)
+      echo "ci-safe-env: CI_JOB_ID must contain only decimal digits" >&2
+      exit 64
+      ;;
+  esac
+  safe_component="$CI_JOB_ID"
+else
+  case "${PPID:-}" in
+    ""|*[!0-9]*)
+      echo "ci-safe-env: PPID must contain only decimal digits" >&2
+      exit 64
+      ;;
+  esac
+  safe_component="local-$PPID"
+fi
+
+safe_root="/tmp/moe-ci-safe-env-$safe_component"
+ci_home="$safe_root/home"
+corepack_home="$safe_root/corepack"
+xdg_cache_home="$safe_root/xdg-cache"
+xdg_config_home="$safe_root/xdg-config"
+xdg_data_home="$safe_root/xdg-data"
+npm_cache="$safe_root/npm-cache"
+pip_cache="$safe_root/pip-cache"
+uv_cache="$safe_root/uv-cache"
 
 # Optional trust-store paths stay optional. Exporting an absent one as an empty
 # string can disable a tool's built-in CA discovery, so prepend only values the
@@ -60,7 +84,10 @@ if [ -n "${SSL_CERT_DIR:-}" ]; then
   set -- SSL_CERT_DIR="$SSL_CERT_DIR" "$@"
 fi
 
-# Directory creation itself receives no ambient GitLab variables.
+# Directory creation itself receives no ambient GitLab variables. Restrictive
+# permissions matter for the local fallback on a shared host; Docker CI jobs
+# also get a distinct numeric path rather than reusing another job's home.
+umask 077
 env -i PATH="${PATH:-/usr/local/bin:/usr/bin:/bin}" \
   mkdir -p "$ci_home" "$corepack_home" "$xdg_cache_home" \
     "$xdg_config_home" "$xdg_data_home" "$npm_cache" "$pip_cache" "$uv_cache"
