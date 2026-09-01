@@ -44,14 +44,18 @@ typecheck:
 test:
   stage: check
   <<: *pnpm
-  # jq is required by packages/mint/checks/run-checks.sh, which its test-command
-  # suite exercises directly. node:24 does not ship it, and without jq the
-  # script's jq calls fail silently (2>/dev/null), which makes the tests read
-  # correct fixtures as broken.
+  # System deps this suite reaches for that node:24 does not ship:
+  #   jq   — packages/mint/checks/run-checks.sh parses/rewrites manifests
+  #          with jq; without it the calls fail silently (2>/dev/null) and
+  #          the run-checks.sh tests read correct fixtures as broken.
+  #   lsof — packages/glass's chrome-launcher-helpers.findPidOnPort() shells
+  #          out to `lsof -ti:<port> -sTCP:LISTEN`; without it findPidOnPort
+  #          returns null and every test that relies on port→pid resolution
+  #          (chrome-launcher-helpers, chrome-process getBrowserMode) fails.
   before_script:
     - corepack enable
     - pnpm config set store-dir .pnpm-store
-    - apt-get update -qq && apt-get install -y -qq --no-install-recommends jq
+    - apt-get update -qq && apt-get install -y -qq --no-install-recommends jq lsof
     - pnpm install --frozen-lockfile
   script: [pnpm test]
 
