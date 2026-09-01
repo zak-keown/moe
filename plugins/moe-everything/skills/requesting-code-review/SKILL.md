@@ -93,3 +93,15 @@ You: [Fix progress indicators]
 - Request clarification
 
 See template at: [code-reviewer.md](code-reviewer.md)
+
+## References
+
+Neither is required reading. Reach for one when the review needs a vocabulary or a
+depth setting rather than a fresh judgement call.
+
+- [references/fowler-smells.md](references/fowler-smells.md) — named code smells, so
+  a reviewer can say which one rather than "this feels wrong"
+- [references/security-asvs-levels.md](references/security-asvs-levels.md) — maps
+  OWASP ASVS L1/L2/L3 to how hard to look: what a reviewer must mitigate versus may
+  accept with rationale, and how deeply to verify a claimed mitigation. Imported
+  from `open-gsd/gsd-core` (MIT)
