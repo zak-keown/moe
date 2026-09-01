@@ -200,6 +200,29 @@ You understand 1,2,3,6. Unclear on 4,5.
 ✅ "Understand 1,2,3,6. Need clarification on 4 and 5 before implementing."
 ```
 
-## GitHub Thread Replies
+## MR Discussion Replies
 
-When replying to inline review comments on GitHub, reply in the comment thread (`gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies`), not as a top-level PR comment.
+When replying to inline review comments on `gitlab.tcdevops.com`, reply into
+the discussion thread — not as a top-level MR comment. Top-level comments lose
+the file/line anchor and split the review across two places.
+
+**Preferred:** the `gitlab_reply_to_mr_discussion` MCP tool if it is available
+in the current session.
+
+**Fallback:** `glab api` against the discussions endpoint:
+
+```bash
+glab api projects/:id/merge_requests/:iid/discussions/:did/notes \
+  --method POST --field body="..."
+```
+
+Where `:did` is the discussion id, visible on the discussion in the MR web UI
+and returned by `glab api projects/:id/merge_requests/:iid/discussions`.
+
+See `${CLAUDE_PLUGIN_ROOT}/skills/_shared/tc-conventions.md` for the wider
+TC MR conventions (branch format, labels, tool preference) — the discussion
+reply endpoint is the review-time slice of the same set.
+
+For a repo on a different forge, use that forge's inline-comment reply API in
+the same spirit: a review comment gets a threaded reply, never a top-level
+one.
