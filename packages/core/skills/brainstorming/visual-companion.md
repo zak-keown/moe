@@ -69,9 +69,9 @@ On Windows, the script auto-detects and switches to foreground mode (which block
 
 **Codex:**
 ```bash
-# Codex reaps background processes. The script auto-detects CODEX_CI and
-# switches to foreground mode. Run it normally — no extra flags needed.
-"${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/scripts/start-server.sh" --project-dir /path/to/project --open
+# Keep the server in the command runner's persistent session. Do not rely on
+# CODEX_CI reaching an escalated command: some sandbox bridges strip it.
+"${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/scripts/start-server.sh" --project-dir /path/to/project --open --foreground
 ```
 
 **Gemini CLI:**
@@ -87,7 +87,7 @@ On Windows, the script auto-detects and switches to foreground mode (which block
 # server survives across turns. Keep --foreground so the harness, not the
 # script, owns backgrounding. The launcher is a .sh, so invoke it via bash
 # (on Windows, call Git Bash's bash.exe from the PowerShell tool).
-bash "${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/"${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/scripts/start-server.sh"" --project-dir /path/to/project --open --foreground
+bash "${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/scripts/start-server.sh" --project-dir /path/to/project --open --foreground
 ```
 
 **Other environments:** The server must keep running in the background across conversation turns. If your environment reaps detached processes, use `--foreground` and launch the command with your platform's background execution mechanism.

@@ -19,10 +19,15 @@ decision_needed: no
 
 The complete companion suite passes 130 checks across WebSocket framing,
 reconnection, browser launch routing, authentication, file serving, event
-persistence, lifecycle, and Windows-like shell start/stop behavior. The manual
-three-skill visual inspection and disabled-Artifact fallback remain human
-acceptance, recorded in `.planning/backlog-acceptance-2026-09-01.md`; automated
-server coverage is not presented as a substitute for judging rendered output.
+persistence, lifecycle, and Windows-like shell start/stop behavior. Zak then
+reviewed live companion output for `brainstorming`, `writing-plans`, and
+`finding-duplicate-functions`; all three recorded an explicit pass click. A
+Claude Code probe with `CLAUDE_CODE_DISABLE_ARTIFACT=1` chose rung 2 instead of
+stalling and kept artifact sharing private. The run exposed two instruction
+defects—a Codex launch that relied on `CODEX_CI` surviving escalation and a
+malformed Copilot command—both repaired and guarded by the "keeps persistent
+harness launch recipes executable" test. The full record is in
+`.planning/backlog-acceptance-2026-09-01.md`.
 
 ## The idea
 

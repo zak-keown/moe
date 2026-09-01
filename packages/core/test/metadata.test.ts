@@ -1201,6 +1201,38 @@ describe("native rendering", () => {
       /MOE_ARTIFACT_SHARING[\s\S]{0,240}(default(?:s|ed)? (?:is )?off|off by default|default off)/i,
     );
   });
+
+  it("keeps persistent harness launch recipes executable", () => {
+    const guide = readFileSync(join(SKILLS, "brainstorming/visual-companion.md"), "utf8");
+    const codexReference = readFileSync(
+      join(SKILLS, "using-moe/references/codex-tools.md"),
+      "utf8",
+    );
+    const codexSection = guide.match(/\*\*Codex:\*\*([\s\S]*?)\*\*Gemini CLI:\*\*/)?.[1] ?? "";
+    expect(codexSection, "Codex must explicitly keep the companion in foreground mode").toContain(
+      "--foreground",
+    );
+    expect(
+      codexReference,
+      "Codex platform routing must preserve the foreground launcher invariant",
+    ).toContain("start-server.sh --project-dir <path> --open --foreground");
+
+    const launchLines = guide
+      .split("\n")
+      .filter(
+        (line) =>
+          line.includes("start-server.sh") &&
+          /\$\{CLAUDE_PLUGIN_ROOT\}/.test(line) &&
+          !line.trimStart().startsWith("#"),
+      );
+    const malformed = launchLines.filter(
+      (line) => (line.match(/\$\{CLAUDE_PLUGIN_ROOT\}/g) ?? []).length !== 1,
+    );
+    expect(
+      malformed,
+      "each documented launcher command must resolve exactly one plugin-root path",
+    ).toEqual([]);
+  });
 });
 
 describe("workflow depth vocabulary", () => {
