@@ -39,7 +39,9 @@ export async function runResolver(
   let child: ChildProcessByStdio<null, Readable, Readable>;
   try {
     child = spawn(config.path, [entity, key], {
-      detached: false,
+      // On POSIX this gives the resolver its own process group so timeout and
+      // overflow cleanup can terminate descendants as well as the launcher.
+      detached: process.platform !== "win32",
       stdio: ["ignore", "pipe", "pipe"],
     });
   } catch (err) {
@@ -56,6 +58,22 @@ export async function runResolver(
     let timedOut = false;
     let settled = false;
 
+    const signalResolver = (signal: NodeJS.Signals): void => {
+      // A resolver may be a shell script whose child inherits stdout/stderr.
+      // Killing only the shell leaves that child alive and keeps the pipes
+      // open, so `close` never arrives. POSIX detached children lead their own
+      // process group; signalling the negative pid reaps the complete tree.
+      if (process.platform !== "win32" && child.pid !== undefined) {
+        try {
+          process.kill(-child.pid, signal);
+          return;
+        } catch {}
+      }
+      try {
+        child.kill(signal);
+      } catch {}
+    };
+
     const settle = (result: ResolverResult): void => {
       if (settled) return;
       settled = true;
@@ -66,16 +84,20 @@ export async function runResolver(
 
     const timeoutHandle = setTimeout(() => {
       timedOut = true;
-      try {
-        child.kill("SIGTERM");
-      } catch {}
+      signalResolver("SIGTERM");
     }, config.timeoutMs);
 
     const killHandle = setTimeout(() => {
       if (!settled) {
-        try {
-          child.kill("SIGKILL");
-        } catch {}
+        signalResolver("SIGKILL");
+        // Bound the timeout even on platforms where a descendant can retain
+        // an inherited pipe after the direct child dies.
+        settle({
+          kind: "timeout",
+          stderr: Buffer.concat(stderrChunks).toString("utf-8"),
+          timeoutMs: config.timeoutMs,
+          elapsedMs: Date.now() - start,
+        });
       }
     }, config.timeoutMs + KILL_GRACE_MS);
 
@@ -84,9 +106,7 @@ export async function runResolver(
       stdoutBytes += chunk.length;
       if (stdoutBytes > STDOUT_CAP_BYTES) {
         stdoutOverflow = true;
-        try {
-          child.kill("SIGKILL");
-        } catch {}
+        signalResolver("SIGKILL");
         settle({ kind: "stdout_overflow", elapsedMs: Date.now() - start });
         return;
       }
@@ -98,9 +118,7 @@ export async function runResolver(
       stderrBytes += chunk.length;
       if (stderrBytes > STDERR_CAP_BYTES) {
         stderrOverflow = true;
-        try {
-          child.kill("SIGKILL");
-        } catch {}
+        signalResolver("SIGKILL");
         settle({ kind: "stderr_overflow", elapsedMs: Date.now() - start });
         return;
       }
@@ -111,7 +129,11 @@ export async function runResolver(
       settle({ kind: "spawn_failed", error: err.message, elapsedMs: Date.now() - start });
     });
 
-    child.on("exit", (code) => {
+    // `exit` may fire before stdout/stderr have drained. Under a busy Linux
+    // runner that produced false empty-success and blank-stderr results even
+    // though the resolver wrote both. `close` is emitted only after the child
+    // has exited and all stdio streams have closed.
+    child.on("close", (code) => {
       if (settled) return;
       const elapsedMs = Date.now() - start;
       const stdout = Buffer.concat(stdoutChunks).toString("utf-8");

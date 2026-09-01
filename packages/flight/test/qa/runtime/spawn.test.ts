@@ -56,7 +56,10 @@ describe("runtime/spawn", () => {
   });
 
   test("spawn kill stops a long-running process", async () => {
-    const proc = spawn(["sh", "-c", "sleep 30"]);
+    // Kill the process represented by the SpawnedProcess. A shell wrapper can
+    // leave its own child holding the inherited stdout pipe; process-tree
+    // cleanup is the separate detached/process-group contract below.
+    const proc = spawn(["sleep", "30"]);
     proc.kill();
     // If kill works, stdout closes promptly.
     const out = await readAll(proc.stdout);
