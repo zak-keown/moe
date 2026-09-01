@@ -1,5 +1,10 @@
 # Wave 1 Execution Status
 
+> **Superseded:** `wave1/native-renderers` merged as `65be5f7` (2026-08-31);
+> the four `wave1/*` iterate branches were re-evaluated by the wave-iterate
+> round — see `.planning/iterate-round-status.md` for the current state of
+> wave1 branch work.
+
 ## Base
 Base: main@6b0e28c7 — 6 items attempted, 1 ship, 4 iterate, 0 block, 1 skipped.
 Report source: /Users/zakkeown/Code/tools/moe/.planning/wave1-execution-report.md (report base 6b0e28c7). Worktrees under: /Users/zakkeown/Code/tools/moe/.claude/worktrees/wave1
