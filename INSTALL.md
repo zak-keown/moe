@@ -1,36 +1,36 @@
 # Installing Moe
 
-One command with a real diagnostic. If it fails, you get a report that names
-the gap, names the capability the gap disables, and gives one concrete fix.
+## First install
 
-> **Scope.** These instructions install Moe into Claude Code as an end-user.
-> For a contributor checkout (clone, `pnpm install`, `pnpm build`), read
-> `ARCHITECTURE.md §6` instead — that is a different workflow, and the two
-> should not be conflated.
-
-## TL;DR
+With the TC ProGet `@tc` scope and authentication already configured, run:
 
 ```sh
-# 1. Check prerequisites. Reports what's missing and how to fix each gap.
-node bin/moe-doctor
-
-# 2. See what install will do (dry-run — nothing changes).
-node bin/moe-install
-
-# 3. Actually install.
-node bin/moe-install --apply
+npx @tc/moe install
 ```
 
-Both scripts are dependency-free Node — they work on a fresh checkout with
-nothing installed but Node itself. The default is dry-run: `moe-install`
-without `--apply` prints the plan and refuses to change anything.
+That is the supported end-user bootstrap. It does not require a repository
+checkout or pnpm. `npx` runs the published package's `moe` dispatcher, and
+`moe install` supplies `--apply` to the underlying installer. The command
+therefore performs the install; no extra `-- --apply` is needed.
+
+The installer checks prerequisites first. If it fails, the report names the
+gap, the capability it disables, and one concrete fix. To run only that
+diagnostic before installing:
+
+```sh
+npx @tc/moe doctor
+```
+
+> **Contributor checkout.** Clone, build, and source-tree installer commands
+> are a separate workflow. See [Contributor checkout](#contributor-checkout)
+> below and `ARCHITECTURE.md §6`.
 
 ## Supported platforms
 
 | Platform | Status | Notes |
 |---|---|---|
 | macOS | supported | probed live on developer machines |
-| Linux | supported | any distro with Node 24, pnpm 11, git |
+| Linux | supported | any distro with Node 24, npm, and git |
 | WSL 2 | **supported and recommended on Windows** | see below |
 | Windows (native) | **not first-class yet** | see the three gaps below |
 
@@ -55,7 +55,8 @@ audience is on Windows, so WSL 2 is a first-class path, not a fallback.
 | Prereq | Tier | Gates | Fix |
 |---|---|---|---|
 | `node` ≥ 24 | hard | everything | nodejs.org, nvm, or your distro |
-| `pnpm` 11 | hard | everything | `corepack enable` |
+| `npm` / `npx` | hard | first install and CLI persistence | installed with Node 24 |
+| `pnpm` 11 | soft | contributor builds, tests, and plugin minting | `corepack enable` |
 | `git` | hard | clone, sparse marketplace add | git-scm.com; on Windows Git for Windows also gives you `bash` |
 | `bash` (win32) | hard on win32 | bootstrap `SessionStart` hook | Git for Windows OR `CLAUDE_CODE_GIT_BASH_PATH` |
 | `claude` CLI | hard | every install/uninstall/upgrade step | https://code.claude.com/docs/en/setup |
@@ -70,15 +71,22 @@ audience is on Windows, so WSL 2 is a first-class path, not a fallback.
 **Soft** prereqs warn but never fail. `moe-doctor --json` emits machine-
 readable output for automation.
 
-## What `moe-install` does
+## What the install command does
 
-`moe-install --apply` runs `moe-doctor` first (skip with `--skip-doctor` if
-you know what you're doing), then:
+`npx @tc/moe install` dispatches to `moe-install --apply`. It runs the doctor
+first, then:
 
-1. `claude plugin marketplace add https://gitlab.tcdevops.com/Zak/moe.git`
-2. `claude plugin install <name>@moe` for each of the six plugins:
+1. Persists the exact running release of `@tc/moe` and the four distributed
+   namespace CLI packages with `npm install --global`.
+2. Runs `claude plugin marketplace add
+   https://gitlab.tcdevops.com/Zak/moe.git --sparse .claude-plugin plugins`.
+3. Runs `claude plugin install <name>@moe` for each of the six plugins:
    `moe-core`, `moe-everything`, `moe-backstory`, `moe-crew`, `moe-memory`,
    `moe-glass`.
+
+The direct `moe-install` binary remains dry-run by default: without `--apply`
+it prints the plan and changes nothing. The normal `moe install` lifecycle
+command deliberately supplies that flag.
 
 Four plugins install from a sparse clone of `.claude-plugin/` + `plugins/`
 (content only — no toolchain needed). `moe-memory` and `moe-glass` install
@@ -89,20 +97,22 @@ build tools required.
 ## Upgrading
 
 ```sh
-node bin/moe-install --upgrade --apply
+moe upgrade
 ```
 
-Under the hood: `claude plugin marketplace update moe` then
-`claude plugin update <name>@moe` for each plugin.
+Under the hood: `claude plugin marketplace update moe`, then `claude plugin
+update <name>@moe` for each plugin, then the TC CLI packages are upgraded to
+`latest` together.
 
 ## Uninstalling
 
 ```sh
-node bin/moe-install --uninstall --apply
+moe uninstall
 ```
 
 Under the hood: `claude plugin uninstall <name>@moe` for each plugin, then
-`claude plugin marketplace remove moe`.
+`claude plugin marketplace remove moe`, then the global TC CLI packages are
+removed with the umbrella package last.
 
 > **Caveat.** Removing the marketplace from its last scope uninstalls every
 > plugin from it. `moe-install --uninstall` does that intentionally — if you
@@ -111,19 +121,35 @@ Under the hood: `claude plugin uninstall <name>@moe` for each plugin, then
 
 ## Scoping
 
-Every `bin/moe-install` action forwards `--scope user|project|local` to
-`claude plugin`:
+Lifecycle commands forward `--scope user|project|local` to the Claude plugin
+operations that accept it. Marketplace update is the exception because the
+Claude CLI does not accept a scope for that operation.
 
 ```sh
-node bin/moe-install --apply --scope user     # available in every session
-node bin/moe-install --apply --scope project  # this project only
-node bin/moe-install --apply --scope local    # this checkout, this user
+moe install --scope user     # available in every session
+moe install --scope project  # this project only
+moe install --scope local    # this checkout, this user
 ```
 
 ## When install goes wrong
 
-`bin/moe-doctor` is the diagnostic; run it first. If the doctor is happy
-but `moe-install` fails, the failing line is a `claude plugin …` command —
-run it by hand to see the underlying error. Both `bin/moe-doctor` and
-`bin/moe-install` are dependency-free ESM Node scripts; feel free to read
-them.
+Run `moe doctor` after installation, or `npx @tc/moe doctor` before it. If the
+doctor is happy but installation fails, the failing line is an `npm install
+--global …` or `claude plugin …` command; run that line by hand to see the
+underlying error.
+
+## Contributor checkout
+
+These commands are for developing Moe from a clone, not for the end-user
+install above:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm build
+node bin/moe-doctor
+node bin/moe-install          # inspect the source-tree install plan (dry-run)
+```
+
+`node bin/moe-install --apply` executes that checkout's package version and is
+only for deliberate installer development or testing. See `ARCHITECTURE.md §6`
+and [CONTRIBUTING.md](./CONTRIBUTING.md) for the complete contributor workflow.

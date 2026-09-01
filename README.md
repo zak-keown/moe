@@ -14,6 +14,20 @@ software QA, transcript pricing, and model evals in one workspace.
 | **Contribute** | [CONTRIBUTING.md](./CONTRIBUTING.md) · [AGENTS.md](./AGENTS.md) |
 | **Attribution** | [NOTICE](./NOTICE) |
 
+## Install
+
+With the TC ProGet `@tc` scope and authentication already configured:
+
+```sh
+npx @tc/moe install
+```
+
+This is the end-user bootstrap: it runs the prerequisite check, persists the
+exact TC release, and installs the Moe plugins. It is an applying command, not
+a dry-run, and does not require a repository checkout or pnpm. See
+[INSTALL.md](./INSTALL.md) for platform details, scoping, upgrades, and
+uninstalling.
+
 ## Packages
 
 | Package | Job |
@@ -42,10 +56,10 @@ moe crew list
 Namespaces are `crew`, `flight`, `glass`, `memory`, `mint`, `proof`, and `tab`.
 The direct `moe-<namespace>` binaries remain valid.
 
-## Development
+## Contributor development
 
-Requirements: Node 24+, pnpm 11.23.0, and the package-specific runtimes for
-Rust or Python work.
+This is the separate workflow for a repository checkout. Requirements: Node
+24+, pnpm 11.23.0, and the package-specific runtimes for Rust or Python work.
 
 ```sh
 pnpm install --frozen-lockfile
