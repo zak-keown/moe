@@ -244,17 +244,19 @@ describe("tab native matrix", () => {
       runCommand: runner.runCommand,
       env: { ...process.env, ...SECRET_ENVIRONMENT },
     });
+    const current = TAB_NATIVE_TARGETS.find(
+      (target) => target.family === process.platform && target.arch === process.arch,
+    );
 
+    assert.ok(current, `test host ${process.platform}-${process.arch} has no native target`);
     assert.equal(matrix.files.size, 4);
+    assert.equal(matrix.executed.target, current.id);
     assert.equal(matrix.executed.version, VERSION);
     assert.equal(runner.calls[0].command, "git");
     assert.match(runner.calls[0].args.join(" "), /darwin-arm64\/libmoe_tab_ffi\.dylib/);
     assert.equal(runner.calls.at(-1).command, process.execPath);
     assert.equal(runner.calls.at(-1).options.env.PROGET_NPM_AUTH, undefined);
-    assert.equal(
-      runner.calls.at(-1).options.env.MOE_TAB_LIB.endsWith("libmoe_tab_ffi.dylib"),
-      true,
-    );
+    assert.equal(runner.calls.at(-1).options.env.MOE_TAB_LIB.endsWith(current.filename), true);
   });
 
   it("stages an exact four-platform package with current legal payloads", () => {
