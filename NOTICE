@@ -40,6 +40,11 @@ Prime Radiant, Inc. (github.com/prime-radiant-inc)
   which are carried forward into packages/tab.
 
 --------------------------------------------------------------------------------
+Open GSD (github.com/open-gsd)
+  Licensed under the MIT License:
+    gsd-core  (ten reference documents only; see PARITY.md)
+
+--------------------------------------------------------------------------------
 UNRESOLVED
 
   superpowers-evals (Prime Radiant, Inc.) ships no LICENSE file and no
