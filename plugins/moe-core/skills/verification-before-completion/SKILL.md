@@ -159,3 +159,13 @@ failure mode a green suite cannot see.
 - Paraphrases and synonyms
 - Implications of success
 - ANY communication suggesting completion/correctness
+
+## How this is watched
+
+The `moe-completion-evidence` Stop hook (default-on) reads the transcript
+window **for this turn only** — bounded by the last `type:"user"` entry —
+and writes an audit record to `$HOME/.claude/moe/audit/<repo>/`. If it
+sees a completion-claim phrase in this turn's assistant text with no
+verification command in this turn's tool_uses, the record carries a
+warning and stderr says so. The hook never blocks a stop; it makes the
+silence falsifiable. Set `MOE_EVIDENCE_DISABLED=1` to opt out.
