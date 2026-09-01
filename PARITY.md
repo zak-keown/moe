@@ -290,6 +290,13 @@ the live tree now carries only fixtures and scripts exercised by Moe. The same p
 declared pytest as the Python binding's development dependency; without it the
 documented `pnpm tab:test:bindings` gate could not run in a fresh checkout.
 
+**Dead Flight sync scaffolding was removed on 2026-09-01.** The per-session Chrome
+override factory is the sole live API, so the unused module-global singleton and
+load-time compatibility snapshots are gone. The same cleanup removed an uncalled
+private popup helper and narrowed `models.available` source attribution to its two
+reachable states. The underlying popup target primitive and its regression coverage
+remain live.
+
 **`vet` was not a brand token and was renamed anyway.** It is a *pre-`gauntlet`*
 name for the project — upstream's `bun.lock` still recorded the workspace as
 `"vet"` — so it is brand residue that the token list simply never caught, and

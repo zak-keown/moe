@@ -15,11 +15,6 @@ const require = createRequire(import.meta.url);
 // `createOverride()` must hand back independent state-bags whose host,
 // port, override-enabled, base URL, and rewriteWsUrl outputs are mutually
 // independent.
-//
-// The legacy module-level singleton API is left intact for upstream-compat
-// (unmodified upstream code that destructures `CHROME_DEBUG_HOST` etc.
-// keeps working). New Flight callers go through `createOverride()`.
-
 describe("host-override createOverride() isolation (PRI-1436)", () => {
   test("returns independent instances", () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires

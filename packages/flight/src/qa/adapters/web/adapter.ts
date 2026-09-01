@@ -255,9 +255,8 @@ export class WebAdapter implements Adapter {
     } else {
       this.chrome = createSession();
     }
-    // If no chrome passed, chrome-ws-lib uses its startup defaults
-    // (which come from host-override.js's mutable state — set by setDefaults
-    // or seeded from CHROME_WS_HOST/CHROME_WS_PORT at module load).
+    // If no chrome is passed, this session seeds its override from
+    // CHROME_WS_HOST/CHROME_WS_PORT or the library defaults.
     this.logger = options?.logger ?? null;
     this.chromeProfileName = options?.chromeProfileName ?? null;
     this.viewport = options?.viewport ?? null;
@@ -302,69 +301,6 @@ export class WebAdapter implements Adapter {
    */
   private activeTab(): string | number {
     return this.tabStack.at(-1)?.wsUrl ?? 0;
-  }
-
-  /**
-   * PRI-1535 (closes PRI-1439's structural blind spot): addressable wait
-   * for a page-spawned popup. Register before the action that triggers
-   * `window.open`; resolves on `Target.targetCreated` (event fires in
-   * a few ms in headless Chromium 137).
-   *
-   * Currently a private helper — there's no public call-site that needs
-   * it yet (the agent-initiated `new_tab` path uses `chrome.newTab`).
-   * The side-trip-popup regression test drives the underlying
-   * session.targets.waitForNew capability directly. This helper exists so
-   * a future "click that may spawn a popup" path can adopt it without
-   * re-deriving the listener-registration shape.
-   */
-  private async waitForPopupAfter<T>(
-    parentTargetId: string,
-    action: () => Promise<T>,
-    { timeoutMs = 5000 }: { timeoutMs?: number | undefined } = {},
-  ): Promise<{
-    result: T;
-    popup: { targetId: string; openerId?: string | undefined; type: string; url: string } | null;
-  }> {
-    const popupP = (
-      this.chrome as unknown as {
-        targets: {
-          waitForNew(
-            predicate: (t: {
-              targetId: string;
-              openerId?: string | undefined;
-              type: string;
-              url: string;
-            }) => boolean,
-            opts?: { timeoutMs?: number | undefined },
-          ): Promise<{
-            targetId: string;
-            openerId?: string | undefined;
-            type: string;
-            url: string;
-          }>;
-        };
-      }
-    ).targets.waitForNew((t) => t.openerId === parentTargetId && t.type === "page", { timeoutMs });
-    let result: T;
-    try {
-      result = await action();
-    } catch (e) {
-      // even if the action threw, drain the wait so we don't leak a listener
-      popupP.catch(() => {});
-      throw e;
-    }
-    let popup: {
-      targetId: string;
-      openerId?: string | undefined;
-      type: string;
-      url: string;
-    } | null = null;
-    try {
-      popup = await popupP;
-    } catch {
-      /* no popup is fine */
-    }
-    return { result, popup };
   }
 
   async start(url: string): Promise<void> {
