@@ -44,6 +44,15 @@ typecheck:
 test:
   stage: check
   <<: *pnpm
+  # jq is required by packages/mint/checks/run-checks.sh, which its test-command
+  # suite exercises directly. node:24 does not ship it, and without jq the
+  # script's jq calls fail silently (2>/dev/null), which makes the tests read
+  # correct fixtures as broken.
+  before_script:
+    - corepack enable
+    - pnpm config set store-dir .pnpm-store
+    - apt-get update -qq && apt-get install -y -qq --no-install-recommends jq
+    - pnpm install --frozen-lockfile
   script: [pnpm test]
 
 build:
