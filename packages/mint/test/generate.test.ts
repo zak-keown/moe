@@ -28,7 +28,7 @@ describe('generate', () => {
   it('writes adapter files and a clean manifest', () => {
     const dir = freshFixture()
     const result = generate(dir)
-    expect(result.adaptersRun).toEqual(['claude-code', 'cursor', 'codex', 'devin', 'kimi', 'gemini', 'opencode', 'pi', 'hermes', 'agent-plugins-1.0', 'agents-marketplace'])
+    expect(result.adaptersRun).toEqual(['claude-code', 'cursor', 'codex', 'devin', 'kimi', 'opencode', 'pi', 'hermes', 'agent-plugins-1.0', 'agents-marketplace'])
     expect(existsSync(join(dir, '.claude-plugin/plugin.json'))).toBe(true)
     expect(existsSync(join(dir, MANIFEST_PATH))).toBe(true)
     expect(checkDrift(dir).clean).toBe(true)
@@ -102,7 +102,7 @@ describe('generate', () => {
     const patched = yaml.replace('harnesses:\n', 'harnesses:\n  exclude: [claude-code]\n')
     writeFileSync(join(dir, 'moe-mint.yaml'), patched)
     const result = generate(dir)
-    expect(result.adaptersRun).toEqual(['cursor', 'codex', 'devin', 'kimi', 'gemini', 'opencode', 'pi', 'hermes', 'agent-plugins-1.0', 'agents-marketplace'])
+    expect(result.adaptersRun).toEqual(['cursor', 'codex', 'devin', 'kimi', 'opencode', 'pi', 'hermes', 'agent-plugins-1.0', 'agents-marketplace'])
     expect(existsSync(join(dir, '.claude-plugin/plugin.json'))).toBe(false)
   })
 
@@ -278,9 +278,9 @@ describe('generate', () => {
 
   it('refuses to overwrite a pre-existing hand-written file not created by moe-mint', () => {
     const dir = freshFixture()
-    writeFileSync(join(dir, 'GEMINI.md'), 'hand-written content, not generated\n')
-    expect(() => generate(dir)).toThrowError(/refusing to overwrite existing file\(s\).*GEMINI\.md/)
-    expect(readFileSync(join(dir, 'GEMINI.md'), 'utf8')).toBe('hand-written content, not generated\n')
+    writeFileSync(join(dir, 'plugin.json'), 'hand-written content, not generated\n')
+    expect(() => generate(dir)).toThrowError(/refusing to overwrite existing file\(s\).*plugin\.json/)
+    expect(readFileSync(join(dir, 'plugin.json'), 'utf8')).toBe('hand-written content, not generated\n')
     expect(existsSync(join(dir, MANIFEST_PATH))).toBe(false)
   })
 
@@ -299,11 +299,11 @@ describe('generate', () => {
 
   it('overwrites a pre-existing hand-written file when force is set', () => {
     const dir = freshFixture()
-    writeFileSync(join(dir, 'GEMINI.md'), 'hand-written content, not generated\n')
+    writeFileSync(join(dir, 'plugin.json'), 'hand-written content, not generated\n')
     const result = generate(dir, undefined, { force: true })
-    const generatedGemini = result.files.find((f) => f.path === 'GEMINI.md')!
-    expect(readFileSync(join(dir, 'GEMINI.md'), 'utf8')).toBe(generatedGemini.content)
-    expect(readFileSync(join(dir, 'GEMINI.md'), 'utf8')).not.toBe('hand-written content, not generated\n')
+    const generatedPluginJson = result.files.find((f) => f.path === 'plugin.json')!
+    expect(readFileSync(join(dir, 'plugin.json'), 'utf8')).toBe(generatedPluginJson.content)
+    expect(readFileSync(join(dir, 'plugin.json'), 'utf8')).not.toBe('hand-written content, not generated\n')
     expect(existsSync(join(dir, MANIFEST_PATH))).toBe(true)
   })
 
@@ -372,10 +372,10 @@ describe('generate', () => {
   it('does not refuse a pre-existing file whose content is byte-identical to what would be generated', () => {
     const referenceDir = freshFixture()
     const referenceResult = generate(referenceDir)
-    const generatedGeminiContent = referenceResult.files.find((f) => f.path === 'GEMINI.md')!.content
+    const generatedPluginJsonContent = referenceResult.files.find((f) => f.path === 'plugin.json')!.content
 
     const dir = freshFixture()
-    writeFileSync(join(dir, 'GEMINI.md'), generatedGeminiContent)
+    writeFileSync(join(dir, 'plugin.json'), generatedPluginJsonContent)
     expect(() => generate(dir)).not.toThrow()
     expect(existsSync(join(dir, MANIFEST_PATH))).toBe(true)
   })

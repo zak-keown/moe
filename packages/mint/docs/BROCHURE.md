@@ -5,37 +5,39 @@ Generate a coding-agent plugin for every harness from one config file.
 > **Status: imported, `0.0.0`.** Inherited from upstream `everyharness` @
 > `4f7c5e2`, whose feature set was complete at its v1.0.0: eleven harness
 > adapters, init/import, generated install docs, container-backed install
-> checks. The `moe-mint.yaml` schema and generation-manifest format were
-> declared stable there and are unchanged here. `@bubstack/moe-mint` is not
-> published to any registry and is not intended to be — it is a workspace bin
-> and the monorepo's plugin build step. Every "unpublished on npm" note below
-> is inherited framing; the fork's answer is that npm was never the plan.
+> checks. This fork's inbound adapter count is ten — Gemini CLI and Grok Build
+> CLI were retired in this repo (see PARITY.md's "Not ported" table). The
+> `moe-mint.yaml` schema and generation-manifest format were declared stable
+> upstream and are unchanged here. `@bubstack/moe-mint` is not published to any
+> registry and is not intended to be — it is a workspace bin and the
+> monorepo's plugin build step. Every "unpublished on npm" note below is
+> inherited framing; the fork's answer is that npm was never the plan.
 
 ## What you get
 
 You wrote a plugin and people liked it. Then they asked for it in their own
 coding agent. Claude Code reads `.claude-plugin/plugin.json`. Codex reads
-`.codex-plugin/plugin.json`. Gemini CLI wants `gemini-extension.json`, OpenCode
-wants a JavaScript plugin file, Pi wants a TypeScript extension, and Hermes
-wants YAML plus a Python init file (real generated tree, "Using it" below).
-Each format drifts on its own schedule, and every release means editing all of
-them by hand. Superpowers, the plugin this tool was extracted from — and which
-lands in this fork as `@bubstack/moe-core` — carried nine hand-maintained
-manifest files and four distinct bootstrap mechanisms
-(`docs/history/2026-08-10-everyharness-design.md`). A missed edit
-ships as a user's broken install.
+`.codex-plugin/plugin.json`. OpenCode wants a JavaScript plugin file, Pi wants
+a TypeScript extension, and Hermes wants YAML plus a Python init file (real
+generated tree, "Using it" below). Each format drifts on its own schedule, and
+every release means editing all of them by hand. Superpowers, the plugin this
+tool was extracted from — and which lands in this fork as
+`@bubstack/moe-core` — carried nine hand-maintained manifest files and four
+distinct bootstrap mechanisms
+(`docs/history/2026-08-10-everyharness-design.md`). A missed edit ships as a
+user's broken install.
 
 moe-mint gives you one file, `moe-mint.yaml`, as the source of truth,
 and generates the rest:
 
-- **Native files for 12 harnesses through 11 adapters.** Claude Code, Codex,
-  Gemini CLI, Cursor, Copilot CLI, OpenCode, Pi, Kimi Code, Hermes, Devin CLI,
-  Factory Droid, and Grok Build CLI. Droid and Grok install through the
-  generated agents-marketplace descriptor, and Copilot installs through the
-  generated Claude-format marketplace descriptor (`src/adapters/index.ts`,
-  `adapters`; `src/adapters/agents-marketplace.ts`, header notes; the
-  install-check loop in `checks/run-checks.sh`). Antigravity is on the
-  roadmap (docs/CONFIG.md, goal paragraph).
+- **Native files for 10 harnesses through 10 adapters.** Claude Code, Codex,
+  Cursor, Copilot CLI, OpenCode, Pi, Kimi Code, Hermes, Devin CLI, and Factory
+  Droid. Droid installs through the generated agents-marketplace descriptor,
+  and Copilot installs through the generated Claude-format marketplace
+  descriptor (`src/adapters/index.ts`, `adapters`;
+  `src/adapters/agents-marketplace.ts`, header notes; the install-check loop
+  in `checks/run-checks.sh`). Antigravity is on the roadmap (docs/CONFIG.md,
+  goal paragraph).
 - **Install docs and a support matrix with every generation.** A
   `docs/install/<harness>.md` per adapter and `docs/support-matrix.md`, so your
   users get accurate install steps for their agent without you writing them
@@ -55,13 +57,14 @@ and generates the rest:
   codes for config errors, schema violations, and drift (`src/validate.ts`,
   `validate`; `src/manifest.ts`, `checkDrift`; exit codes assigned in
   `src/cli.ts`, `validate` action).
-- **Proof it round-trips a real plugin.** The dogfood test regenerates eight
-  of superpowers' hand-maintained manifests from one config and compares them
-  semantically. On import it was re-pointed from a live upstream checkout at the
-  author's own path to the pinned `superpowers` @ `b36e082` reference snapshot,
-  and it passes there — all eight. It skips when the snapshot is absent, which
-  is the case in CI (`test/dogfood.test.ts`, `COMPARED_FILES`, `dogfood`
-  describe block).
+- **Proof it round-trips a real plugin.** The dogfood test regenerates the
+  remaining seven of superpowers' hand-maintained manifests from one config
+  and compares them semantically (the eighth, `gemini-extension.json`, was
+  dropped alongside the gemini adapter). On import it was re-pointed from a
+  live upstream checkout at the author's own path to the pinned `superpowers`
+  @ `b36e082` reference snapshot, and it passes there. It skips when the
+  snapshot is absent, which is the case in CI (`test/dogfood.test.ts`,
+  `COMPARED_FILES`, `dogfood` describe block).
 
 ## Using it
 
@@ -74,24 +77,23 @@ package, so the transcript uses its `dist/cli.js` directly:
 $ node packages/mint/dist/cli.js init
 created: moe-mint.yaml
 created: skills/getting-started/SKILL.md
-Generated 32 files for initialization
+Generated 29 files for initialization
 Next: edit moe-mint.yaml, then re-run moe-mint generate
 
 $ node packages/mint/dist/cli.js generate
 warning: [kimi] kimi sessionStart requires a named bootstrap skill; generate mode is not supported on kimi
-Generated 32 files for 11 harness(es): claude-code, cursor, codex, devin,
-kimi, gemini, opencode, pi, hermes, agent-plugins-1.0, agents-marketplace
+Generated 29 files for 10 harness(es): claude-code, cursor, codex, devin,
+kimi, opencode, pi, hermes, agent-plugins-1.0, agents-marketplace
 
 $ node packages/mint/dist/cli.js validate
 validate: clean
 ```
 
-Those 32 files include `.claude-plugin/plugin.json`,
-`.codex-plugin/plugin.json`, `gemini-extension.json`,
-`.opencode/plugins/demo-plugin.js`, `.pi/extensions/demo-plugin.ts`,
-`.hermes-plugin/plugin.yaml`, eleven install docs, the support matrix, and the
-bootstrap hook wiring. You commit them; `validate` keeps them honest from then
-on.
+Those files include `.claude-plugin/plugin.json`,
+`.codex-plugin/plugin.json`, `.opencode/plugins/demo-plugin.js`,
+`.pi/extensions/demo-plugin.ts`, `.hermes-plugin/plugin.yaml`, ten install
+docs, the support matrix, and the bootstrap hook wiring. You commit them;
+`validate` keeps them honest from then on.
 
 ## Running it
 
@@ -182,6 +184,14 @@ built yet. -->
 <!-- doc-audit:last-reviewed -->
 _Last reviewed upstream: 2026-08-15 · upstream commit `34526db` · verified
 against code there (2 claims deferred). Re-verified on import against
-`everyharness` @ `4f7c5e2`: the "Using it" transcript, the 32-file count, the
-kimi warning text and the eleven adapter names were re-run and match; the
-status, registry, Node-version and install-doc-slug claims were corrected._
+`everyharness` @ `4f7c5e2`: the "Using it" transcript, the kimi warning text
+and the inbound adapter names were re-run and match; the status, registry,
+Node-version and install-doc-slug claims were corrected.
+
+Re-recorded 2026-09-01 on the runtime-pruning wave, which removed the Gemini
+CLI and Grok Build CLI adapters (see PARITY.md's "Not ported" table). The
+whole "Using it" transcript above was re-run against `dist/cli.js` in a clean
+`demo-plugin` directory, not edited by hand: `init` and `generate` each emit
+29 files, down from the 32 the eleven-adapter tool emitted, and `generate`
+names ten harnesses. The ten install docs and the file list below were
+re-counted against that run._

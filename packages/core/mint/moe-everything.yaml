@@ -50,7 +50,7 @@ bootstrap:
 # package; hooks/hooks.json carries the Stop hook and mint merges its own
 # SessionStart entry into hooks/moe-mint/hooks.json.
 
-# harnesses: no exclusions. All 11 adapters emit.
+# harnesses: no exclusions. All 10 adapters emit.
 
 marketplace:
   source: local

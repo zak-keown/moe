@@ -17,12 +17,11 @@ const DISPLAY_NAMES: Record<string, string> = {
   codex: 'Codex',
   devin: 'Devin CLI',
   kimi: 'Kimi Code',
-  gemini: 'Gemini CLI',
   opencode: 'OpenCode',
   pi: 'Pi',
   hermes: 'Hermes Agent',
   'agent-plugins-1.0': 'Agent Plugins 1.0 clients',
-  'agents-marketplace': 'Factory Droid / Grok / Copilot (marketplace descriptor)',
+  'agents-marketplace': 'Factory Droid / Copilot (marketplace descriptor)',
 }
 
 // Exported so README injection (below) can reuse the same names as the
@@ -51,7 +50,7 @@ function installDocFile(model: PluginModel, adapter: HarnessAdapter): GeneratedF
 // non-'full' bootstrap for different reasons, and the CRLF/.gitattributes
 // caveat for anyone consuming the emitted shell hooks (Design decision 2).
 const NOTES = [
-  "- `agents-marketplace`'s row is all `none`: droid, grok, and copilot ride the claude-code layout via the marketplace descriptor it emits; the row reflects only agents-marketplace's own emission, not what those clients receive through that descriptor.",
+  "- `agents-marketplace`'s row is all `none`: droid and copilot ride the claude-code layout via the marketplace descriptor it emits; the row reflects only agents-marketplace's own emission, not what those clients receive through that descriptor.",
   "- codex's `bootstrap: partial` means native skill discovery only, with no active injection hook; devin's `bootstrap: none` means no injection mechanism is documented at all.",
   '- Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.',
 ]

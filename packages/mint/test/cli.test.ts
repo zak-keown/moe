@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, cpSync, writeFileSync, readFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, cpSync, writeFileSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -24,18 +24,17 @@ function runCli(args: string[], cwd: string) {
 describe('CLI end-to-end', () => {
   // dist/cli.js is built once via test/global-setup.ts (vitest globalSetup),
   // before any test file runs.
-  it('generate exits 0 and reports 11 harnesses with all adapter names', () => {
+  it('generate exits 0 and reports 10 harnesses with all adapter names', () => {
     const dir = tmpPluginDir()
     const result = runCli(['generate'], dir)
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('Generated')
-    expect(result.stdout).toContain('11 harness')
+    expect(result.stdout).toContain('10 harness')
     expect(result.stdout).toContain('claude-code')
     expect(result.stdout).toContain('cursor')
     expect(result.stdout).toContain('codex')
     expect(result.stdout).toContain('devin')
     expect(result.stdout).toContain('kimi')
-    expect(result.stdout).toContain('gemini')
     expect(result.stdout).toContain('opencode')
     expect(result.stdout).toContain('pi')
     expect(result.stdout).toContain('hermes')
@@ -84,24 +83,27 @@ describe('CLI end-to-end', () => {
     runCli(['generate'], dir)
     const yamlPath = join(dir, 'moe-mint.yaml')
     const yaml = readFileSync(yamlPath, 'utf8')
-    writeFileSync(yamlPath, yaml.replace('harnesses:\n', 'harnesses:\n  exclude: [gemini]\n'))
+    // Excluding opencode drops its four uniquely-owned files (the plugin JS,
+    // the translated command/agent .md files, and the install doc); the shared
+    // package.json stays because pi still emits it byte-identically.
+    writeFileSync(yamlPath, yaml.replace('harnesses:\n', 'harnesses:\n  exclude: [opencode]\n'))
 
     const result = runCli(['generate'], dir)
 
     expect(result.status).toBe(0)
-    const geminiExtIndex = result.stdout.indexOf('pruned: gemini-extension.json')
-    const geminiMdIndex = result.stdout.indexOf('pruned: GEMINI.md')
-    const geminiCommandIndex = result.stdout.indexOf('pruned: commands/ks-hello.toml')
-    const geminiInstallDocIndex = result.stdout.indexOf('pruned: docs/install/gemini.md')
+    const pluginJsIndex = result.stdout.indexOf('pruned: .opencode/plugins/kitchen-sink.js')
+    const commandIndex = result.stdout.indexOf('pruned: .opencode/command/ks-hello.md')
+    const agentIndex = result.stdout.indexOf('pruned: .opencode/agent/ks-reviewer.md')
+    const installDocIndex = result.stdout.indexOf('pruned: docs/install/opencode.md')
     const countIndex = result.stdout.indexOf('Pruned 4 stale file(s)')
-    expect(geminiExtIndex).toBeGreaterThanOrEqual(0)
-    expect(geminiMdIndex).toBeGreaterThanOrEqual(0)
-    expect(geminiCommandIndex).toBeGreaterThanOrEqual(0)
-    expect(geminiInstallDocIndex).toBeGreaterThanOrEqual(0)
-    expect(countIndex).toBeGreaterThan(geminiExtIndex)
-    expect(countIndex).toBeGreaterThan(geminiMdIndex)
-    expect(countIndex).toBeGreaterThan(geminiCommandIndex)
-    expect(countIndex).toBeGreaterThan(geminiInstallDocIndex)
+    expect(pluginJsIndex).toBeGreaterThanOrEqual(0)
+    expect(commandIndex).toBeGreaterThanOrEqual(0)
+    expect(agentIndex).toBeGreaterThanOrEqual(0)
+    expect(installDocIndex).toBeGreaterThanOrEqual(0)
+    expect(countIndex).toBeGreaterThan(pluginJsIndex)
+    expect(countIndex).toBeGreaterThan(commandIndex)
+    expect(countIndex).toBeGreaterThan(agentIndex)
+    expect(countIndex).toBeGreaterThan(installDocIndex)
   })
 
   it('second generate run prunes nothing and validate exits 0', () => {
@@ -132,7 +134,7 @@ describe('CLI end-to-end', () => {
 
   it('generate refuses a pre-existing hand-written file, and --force overwrites it', () => {
     const dir = tmpPluginDir()
-    writeFileSync(join(dir, 'GEMINI.md'), 'hand-written content, not generated\n')
+    writeFileSync(join(dir, 'plugin.json'), 'hand-written content, not generated\n')
 
     const refused = runCli(['generate'], dir)
     expect(refused.status).toBe(1)
@@ -204,5 +206,66 @@ describe('CLI end-to-end', () => {
     const validateResult = runCli(['validate'], dir)
     expect(validateResult.status).toBe(0)
     expect(validateResult.stdout).toContain('validate: clean')
+  })
+})
+
+// The "Using it" transcript in docs/BROCHURE.md is a recording of a real
+// session, and nothing was checking that it stayed one. It rotted exactly the
+// way an unrecorded number does: it claimed "Generated 32 files" long after the
+// gemini adapter was deleted took the count to 29, and a previous pass papered
+// over the drift with a "one refresh away from the live tool" caveat instead of
+// re-running the CLI.
+//
+// A prose count with no gate is a claim, not a transcript. This block re-runs
+// the two commands the brochure records and asserts the brochure's own numbers
+// and harness list came from that run — so the next adapter added or removed
+// turns this red instead of silently making the brochure a lie.
+describe('docs/BROCHURE.md "Using it" transcript is a real recording', () => {
+  const BROCHURE = readFileSync(join(REPO_ROOT, 'docs', 'BROCHURE.md'), 'utf8')
+
+  // The brochure hard-wraps its transcript, so a recorded line can span two
+  // source lines. Collapse all whitespace before substring-matching.
+  const flat = BROCHURE.replace(/\s+/g, ' ')
+
+  // init names the plugin after its directory, and the brochure says
+  // `demo-plugin` — so the recording only reproduces from that name.
+  function demoPluginDir(): string {
+    const dir = join(mkdtempSync(join(tmpdir(), 'mint-brochure-')), 'demo-plugin')
+    mkdirSync(dir)
+    return dir
+  }
+
+  it('records the file count `init` actually emits', () => {
+    const dir = demoPluginDir()
+    const init = runCli(['init'], dir)
+    expect(init.status, init.stderr).toBe(0)
+
+    const live = /^Generated (\d+) files for initialization$/m.exec(init.stdout)
+    expect(live, `cli init stdout changed shape:\n${init.stdout}`).not.toBeNull()
+
+    expect(
+      flat,
+      `BROCHURE.md records a different init file count than the live CLI emits ` +
+        `(live: ${live?.[1]}). Re-run \`node packages/mint/dist/cli.js init\` in a ` +
+        `clean directory named demo-plugin and paste the real output — do not ` +
+        `hand-edit the number, and do not add a caveat.`,
+    ).toContain(`Generated ${live?.[1]} files for initialization`)
+  })
+
+  it('records the harness count and adapter list `generate` actually emits', () => {
+    const dir = demoPluginDir()
+    expect(runCli(['init'], dir).status).toBe(0)
+    const gen = runCli(['generate'], dir)
+    expect(gen.status, gen.stderr).toBe(0)
+
+    const live = /^Generated (\d+) files for (\d+) harness\(es\): (.+)$/m.exec(gen.stdout)
+    expect(live, `cli generate stdout changed shape:\n${gen.stdout}`).not.toBeNull()
+    const [, files, harnesses, adapters] = live as RegExpExecArray
+
+    expect(
+      flat,
+      `BROCHURE.md's generate line disagrees with the live CLI, which emitted ` +
+        `${files} files for ${harnesses} harness(es): ${adapters}`,
+    ).toContain(`Generated ${files} files for ${harnesses} harness(es): ${adapters}`)
   })
 })

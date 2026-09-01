@@ -31,7 +31,6 @@ export const ADAPTER_NAMES = [
   'codex',
   'devin',
   'kimi',
-  'gemini',
   'opencode',
   'pi',
   'hermes',
