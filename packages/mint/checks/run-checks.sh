@@ -176,24 +176,8 @@ check_pi() {
   fi
 }
 
-# --- hermes: python3 ast.parse of the emitted plugin module ----------------
-check_hermes() {
-  local harness=hermes
-  local file="$PLUGIN_ROOT/.hermes-plugin/__init__.py"
-  if [ ! -f "$file" ]; then
-    skip "$harness" "not generated"
-    return
-  fi
-  local out
-  if out=$(python3 -c "import ast, sys; ast.parse(open(sys.argv[1]).read())" "$file" 2>&1); then
-    ok "$harness" "python3 ast.parse of .hermes-plugin/__init__.py succeeded"
-  else
-    not_ok "$harness" "python3 ast.parse of .hermes-plugin/__init__.py failed: $(oneline "$out")"
-  fi
-}
-
 # --- manifest harnesses: jq-parse + referenced-path existence --------------
-# Shared by codex/cursor/devin/kimi/agent-plugins-1.0/agents-marketplace
+# Shared by codex/cursor/kimi/agent-plugins-1.0 and Codex's marketplace
 # (each own a fixed-path manifest with no per-plugin-name substitution).
 # A referenced path is any string value in the manifest (at any depth) that
 # starts with "./" — moe-mint's own convention for every path-shaped field it
@@ -243,7 +227,7 @@ check_manifest_harness() {
 #
 # These installs mutate only $HOME (marketplaces, caches, settings), never the
 # mounted plugin dir: each installer runs against a writable COPY of the
-# plugin, and several of them (codex, droid, hermes) install by CLONING it, so
+# plugin, and codex installs by CLONING it, so
 # the copy is made a throwaway git repo. `moe-mint test` always runs this
 # inside the container, whose $HOME is discarded per run. A check whose CLI is
 # absent from PATH emits `skip`, never `not ok`, so the script stays runnable
@@ -256,9 +240,8 @@ check_manifest_harness() {
 # of needing a network clone. deep_claude_code/deep_copilot skip (never fail)
 # only when that rewrite itself failed — MARKET_REWRITE_OK is 0 only for a
 # malformed marketplace.json, which still deserves a report rather than a
-# silent pass. Other harnesses install through their own descriptors (codex:
-# .agents/plugins/marketplace.json, always local) or a direct path, so
-# they're unaffected.
+# silent pass. Codex installs through its own `.agents/plugins/marketplace.json`
+# descriptor (always local), while OpenCode and Pi use direct paths.
 
 # --- install-claude-code: install from the emitted dev marketplace, then read
 # the component inventory the CLI itself reports.
@@ -344,101 +327,6 @@ deep_opencode() {
     not_ok "$harness" "skills also appear with --pure; discovery is not coming from the plugin"
   else
     not_ok "$harness" "opencode debug skill did not list every skill: $(oneline "$withp")"
-  fi
-}
-
-# --- install-droid: registers the marketplace under the copy's DIRECTORY
-# name, not the marketplace's declared name, so the install id is
-# <name>@<copy-basename>. droid has no skill-list verb, so assert every skill's
-# SKILL.md landed in its on-disk cache.
-deep_droid() {
-  local harness=install-droid
-  if ! command -v droid >/dev/null 2>&1; then
-    skip "$harness" "droid not on PATH"
-    return
-  fi
-  local base out
-  base=$(basename "$WORK")
-  out=$(cd "$WORK" && droid plugin marketplace add "$WORK" >/dev/null 2>&1 &&
-        droid plugin install "${PLUGIN_NAME}@${base}" >/dev/null 2>&1 &&
-        droid plugin list 2>&1)
-  if ! grep -qF -- "$PLUGIN_NAME" <<<"$out"; then
-    not_ok "$harness" "droid plugin list did not show the plugin: $(oneline "$out")"
-    return
-  fi
-  local name
-  local missing=()
-  for name in "${SKILL_NAMES[@]}"; do
-    find "$HOME/.factory/plugins/cache" -path "*/$name/SKILL.md" 2>/dev/null | grep -q . ||
-      missing+=("$name")
-  done
-  if [ "${#missing[@]}" -eq 0 ]; then
-    ok "$harness" "plugin active and every skill's SKILL.md present in droid's cache"
-  else
-    not_ok "$harness" "plugin installed but skill(s) missing from droid's cache: ${missing[*]}"
-  fi
-}
-
-# --- install-hermes: installs and enables from the emitted .hermes-plugin/,
-# but `hermes skills list` covers only builtin/hub/local skills, never
-# plugin-registered ones. So assert the install, then execute the emitted
-# register() against a stub ctx to prove it registers each skill with a real
-# SKILL.md path.
-deep_hermes() {
-  local harness=install-hermes
-  if [ ! -f "$WORK/.hermes-plugin/__init__.py" ]; then
-    skip "$harness" "plugin emits no .hermes-plugin/"
-    return
-  fi
-  if ! command -v hermes >/dev/null 2>&1; then
-    skip "$harness" "hermes not on PATH"
-    return
-  fi
-  local inst
-  inst=$(hermes plugins install "file://$WORK" --enable >/dev/null 2>&1
-         hermes plugins list --plain --no-bundled 2>&1)
-  if ! grep -qF -- "$PLUGIN_NAME" <<<"$inst"; then
-    not_ok "$harness" "hermes plugins list did not show the plugin after install: $(oneline "$inst")"
-    return
-  fi
-  local reg
-  reg=$(python3 - "$HOME" "$WORK" <<'PY'
-import glob, importlib.util, os, sys
-
-home, work = sys.argv[1], sys.argv[2]
-candidates = glob.glob(os.path.join(home, ".hermes/plugins/*/.hermes-plugin/__init__.py"))
-candidates.append(os.path.join(work, ".hermes-plugin/__init__.py"))
-candidates = [c for c in candidates if os.path.isfile(c)]
-if not candidates:
-    sys.exit("no installed .hermes-plugin/__init__.py found")
-
-spec = importlib.util.spec_from_file_location("ehp", candidates[0])
-module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(module)
-
-
-class StubCtx:
-    def __init__(self):
-        self.registered = []
-
-    def register_skill(self, name, path):
-        self.registered.append((name, bool(path.exists())))
-
-    def register_hook(self, *args, **kwargs):
-        pass
-
-
-ctx = StubCtx()
-module.register(ctx)
-for name, exists in ctx.registered:
-    if exists:
-        print(name)
-PY
-)
-  if all_skills_present "$reg"; then
-    ok "$harness" "plugin enabled; register() registers every skill with a real SKILL.md (skills list cannot show plugin skills)"
-  else
-    not_ok "$harness" "register() did not register every skill with a real SKILL.md: $(oneline "$reg")"
   fi
 }
 
@@ -553,8 +441,6 @@ deep_exec_bits() {
   exec_bits_harness claude-code claude "$HOME/.claude/plugins" "$first"
   exec_bits_harness codex codex "$HOME/.codex/plugins" "$first"
   exec_bits_harness copilot copilot "$HOME/.copilot/installed-plugins" "$first"
-  exec_bits_harness droid droid "$HOME/.factory/plugins" "$first"
-  exec_bits_harness hermes hermes "$HOME/.hermes/plugins" "$first"
 
   # kimi installs only through its TUI (see install-kimi note above), so no
   # on-disk copy is produced by this offline run.
@@ -593,7 +479,7 @@ deep_checks() {
   # No skills -> the whole tier is a documented no-op.
   if [ "${#SKILL_NAMES[@]}" -eq 0 ]; then
     local h
-    for h in claude-code codex copilot opencode droid hermes pi kimi cursor devin; do
+    for h in claude-code codex copilot opencode pi kimi cursor; do
       skip "install-$h" "plugin has no skills to verify"
     done
     return
@@ -601,7 +487,7 @@ deep_checks() {
 
   # Writable copy the installers clone/copy out of, plus a neutral dir opencode
   # runs from. DEEP_TMP is global so the EXIT trap can still see it. The copy
-  # is a git repo because codex/droid/hermes install by cloning; it is removed
+  # is a git repo because codex installs by cloning; it is removed
   # on exit and never touches the mounted plugin dir.
   DEEP_TMP=$(mktemp -d)
   trap 'rm -rf "$DEEP_TMP"' EXIT
@@ -610,7 +496,7 @@ deep_checks() {
   cp -r "$PLUGIN_ROOT" "$WORK"
   # See rewrite_market_source_local() above: makes the copy installable
   # offline regardless of the configured marketplace.source. Must run before
-  # the git snapshot below — codex/droid/hermes install by cloning it.
+  # the git snapshot below — codex installs by cloning it.
   MARKET_REWRITE_OK=1
   rewrite_market_source_local
   mkdir -p "$NEUTRAL"
@@ -623,8 +509,6 @@ deep_checks() {
   deep_codex
   deep_copilot
   deep_opencode
-  deep_droid
-  deep_hermes
   deep_pi
 
   # --- harnesses with no offline path to skill enumeration.
@@ -637,7 +521,6 @@ deep_checks() {
   #   # manifest, Skills (N), and state ok.
   skip install-kimi "install is TUI-only; verified by hand via tmux (see comment above)"
   skip install-cursor "cursor-agent requires login before it will load a plugin"
-  skip install-devin "no devin CLI exists in the image"
 
   # Runs last: reuses the installs the per-harness deep checks above performed
   # to assert executable skill scripts kept their mode bit end to end (#9).
@@ -647,14 +530,12 @@ deep_checks() {
 check_claude_code
 check_opencode
 check_pi
-check_hermes
 check_manifest_harness codex .codex-plugin/plugin.json
 check_manifest_harness cursor .cursor-plugin/plugin.json
-check_manifest_harness devin .devin-plugin/plugin.json
 check_manifest_harness kimi .kimi-plugin/plugin.json
 check_manifest_harness agent-plugins-1.0 plugin.json
 check_manifest_harness agent-plugins-1.0 mcp.json
-check_manifest_harness agents-marketplace .agents/plugins/marketplace.json
+check_manifest_harness codex-marketplace .agents/plugins/marketplace.json
 
 deep_checks
 

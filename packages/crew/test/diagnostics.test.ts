@@ -164,7 +164,36 @@ describe("dumpConverseDiag", () => {
     expect(out).toContain("=== end moe-crew diagnostic ===");
   });
 
-  it("captures a real host ps tree (real runner) — catches host-rejected ps flags", async () => {
+  it("writes stderr into the ps section when ps exits nonzero", async () => {
+    const dest = join(dir, "diag.txt");
+    const tmux = makeTmux(async () => ({ stdout: "", stderr: "", code: 0 }));
+    const failingRun = vi.fn().mockResolvedValue({
+      stdout: "",
+      stderr: "ps: illegal option -- H\n",
+      code: 1,
+    });
+
+    const ok = await dumpConverseDiag({
+      sid: "sid-5",
+      worker: "w",
+      tmuxName: "t",
+      logFile: join(dir, "log"),
+      eventFile: join(dir, "ev"),
+      timeout: 10,
+      dest,
+      reason: "converse_timeout",
+      tmux,
+      now: () => NOW,
+      run: failingRun,
+    });
+
+    expect(ok).toBe(true);
+    const out = readFileSync(dest, "utf8");
+    expect(out).toContain("(ps failed: ps: illegal option -- H)");
+    expect(out).toContain("=== end moe-crew diagnostic ===");
+  });
+
+  it("captures a real host ps tree (real runner) — catches host-rejected ps flags", async (context) => {
     // Omit `run` so psTree shells out to the REAL host ps. A GNU-only flag the
     // BSD/macOS ps rejects would make this section empty or a "(ps failed: ...)"
     // note — which a stubbed runner can never reveal. hasSession -> false keeps
@@ -189,6 +218,10 @@ describe("dumpConverseDiag", () => {
     const out = readFileSync(dest, "utf8");
     const header = "--- ps -eo pid,ppid,stat,etime,comm (last 100 lines) ---";
     const psSection = out.split(header)[1]?.split("\n\n")[0]?.trim() ?? "";
+    if (psSection.startsWith("(ps failed") && /\b(?:EPERM|EACCES)\b/.test(psSection)) {
+      context.skip();
+      return;
+    }
     expect(psSection.length).toBeGreaterThan(0);
     expect(psSection.startsWith("(ps failed")).toBe(false);
     // Real ps output is multiple rows (header + processes).

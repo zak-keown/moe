@@ -32,7 +32,7 @@ bootstrap: none
 # components: skills/, commands/ and agents/ are defaults and all present. No
 # hooks/hooks.json and no .mcp.json in this package.
 
-# harnesses: no exclusions. All 10 adapters emit. Note that not every harness has
+# harnesses: no exclusions. All 8 adapters run. Note that not every harness has
 # a commands/ concept; the adapters that do not simply omit them, which is why
 # the two commands are not duplicated as skills.
 

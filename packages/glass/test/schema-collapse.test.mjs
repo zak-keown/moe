@@ -187,6 +187,7 @@ describe('Fix D: restartInMode probes liveness before returning alreadyMessage',
     const fakeHelpers = {
       ...origExports,
       isPortAlive: async () => portAliveResult,
+      findAvailablePort: async () => 9333,
       findPidOnPort: () => null,
       readProfileMeta: () => null,
       writeProfileMeta: () => {},

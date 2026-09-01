@@ -7,7 +7,6 @@ import { MANIFEST_PATH, checkDrift } from '../src/manifest.js'
 import type { HarnessAdapter } from '../src/adapters/index.js'
 import { opencode } from '../src/adapters/opencode.js'
 import { pi } from '../src/adapters/pi.js'
-import { hermes } from '../src/adapters/hermes.js'
 
 const fullSupport = {
   skills: 'full',
@@ -28,7 +27,7 @@ describe('generate', () => {
   it('writes adapter files and a clean manifest', () => {
     const dir = freshFixture()
     const result = generate(dir)
-    expect(result.adaptersRun).toEqual(['claude-code', 'cursor', 'codex', 'devin', 'kimi', 'opencode', 'pi', 'hermes', 'agent-plugins-1.0', 'agents-marketplace'])
+    expect(result.adaptersRun).toEqual(['claude-code', 'cursor', 'codex', 'kimi', 'opencode', 'pi', 'agent-plugins-1.0', 'copilot'])
     expect(existsSync(join(dir, '.claude-plugin/plugin.json'))).toBe(true)
     expect(existsSync(join(dir, MANIFEST_PATH))).toBe(true)
     expect(checkDrift(dir).clean).toBe(true)
@@ -102,7 +101,7 @@ describe('generate', () => {
     const patched = yaml.replace('harnesses:\n', 'harnesses:\n  exclude: [claude-code]\n')
     writeFileSync(join(dir, 'moe-mint.yaml'), patched)
     const result = generate(dir)
-    expect(result.adaptersRun).toEqual(['cursor', 'codex', 'devin', 'kimi', 'opencode', 'pi', 'hermes', 'agent-plugins-1.0', 'agents-marketplace'])
+    expect(result.adaptersRun).toEqual(['cursor', 'codex', 'kimi', 'opencode', 'pi', 'agent-plugins-1.0', 'copilot'])
     expect(existsSync(join(dir, '.claude-plugin/plugin.json'))).toBe(false)
   })
 
@@ -357,14 +356,14 @@ describe('generate', () => {
     expect(existsSync(join(dir, 'plugin.json'))).toBe(true)
   })
 
-  it('emits hooks/moe-mint/bootstrap.md when only the in-process adapters (opencode, pi, hermes) are active in bootstrap.generate mode', () => {
+  it('emits hooks/moe-mint/bootstrap.md when only the in-process adapters (opencode and pi) are active in bootstrap.generate mode', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-gen-inprocess-bootstrap-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
       'name: inprocess-demo\nversion: 1.0.0\ndescription: in-process adapters generate-mode fixture\nbootstrap: generate\n',
     )
-    const result = generate(dir, [opencode, pi, hermes])
-    expect(result.adaptersRun).toEqual(['opencode', 'pi', 'hermes'])
+    const result = generate(dir, [opencode, pi])
+    expect(result.adaptersRun).toEqual(['opencode', 'pi'])
     expect(existsSync(join(dir, 'hooks/moe-mint/bootstrap.md'))).toBe(true)
     expect(readFileSync(join(dir, 'hooks/moe-mint/bootstrap.md'), 'utf8')).toContain('# inprocess-demo plugin')
   })
