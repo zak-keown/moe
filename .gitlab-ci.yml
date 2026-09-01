@@ -88,6 +88,7 @@ tab-native-linux:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true" && $TC_RELEASE_FORCE == "1"'
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'
       changes: [tc-release.json]
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
@@ -222,6 +223,12 @@ tc-release-pack:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       variables:
         NPM_DIST_TAG: next
+    # One-shot retry for a release whose broad CI fan-out failed before pack.
+    # Supply this only as a protected-main git push option:
+    #   git push -o ci.variable=TC_RELEASE_FORCE=1 origin HEAD:main
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true" && $TC_RELEASE_FORCE == "1"'
+      variables:
+        NPM_DIST_TAG: latest
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'
       changes: [tc-release.json]
       variables:
@@ -250,6 +257,9 @@ tc-release-publish:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: never
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true" && $TC_RELEASE_FORCE == "1"'
+      variables:
+        NPM_DIST_TAG: latest
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'
       changes: [tc-release.json]
       variables:

@@ -45,7 +45,10 @@ describe('page-scripts/markdown', () => {
   });
 
   it('caps output at 50000 chars', () => {
-    const giantHtml = '<html><body>' + '<p>x</p>'.repeat(100000) + '</body></html>';
+    // Exercise the same cap with one large text node. Building 100,000 DOM
+    // elements made this an accidental runner-load benchmark and could exceed
+    // Vitest's five-second timeout without testing any different behavior.
+    const giantHtml = `<html><body><p>${'x'.repeat(60000)}</p></body></html>`;
     const md = evalScript(giantHtml);
     assert.ok(md.length <= 50000);
   });
