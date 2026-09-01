@@ -252,9 +252,9 @@ tc-release-publish:
     - sh scripts/ci-safe-env publish node scripts/tc-release-publish.mjs --artifacts-dir .tc-release
 
 # Scheduled drift check for the TC merge-request conventions vendored into
-# packages/core/skills/_shared/tc-conventions.md. Two content pins protect the
-# conventions TC incorporates; two watch-only pins protect governance and guide
-# dependencies whose movement also requires review.
+# packages/core/skills/_shared/tc-conventions.md. One content pin protects the
+# merge-request convention TC incorporates; two watch-only pins protect
+# governance and guide dependencies whose movement also requires review.
 #
 # Schedule-only. The manifest itself only moves when a human bumps it, so a
 # per-pipeline run would burn time reading four remote refs to conclude
@@ -262,7 +262,7 @@ tc-release-publish:
 # ample); pipelines from any other source skip the job.
 #
 # TC_GITLAB_TOKEN is a masked, protected variable holding a token with `read_api`
-# scope on all four projects. The job soft-passes only when that variable is
+# scope on all three projects. The job soft-passes only when that variable is
 # absent. A configured mismatch, malformed upstream response or explicit
 # `<TC-BOOTSTRAP-PENDING>` row fails the remote equality check.
 tc-conventions-drift:

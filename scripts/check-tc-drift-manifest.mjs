@@ -14,11 +14,6 @@ export const EXPECTED_ROWS = Object.freeze([
     project: "ai/skills",
     path: "skills/creating-merge-requests/SKILL.md",
   }),
-  Object.freeze({
-    kind: "content",
-    project: "ai/claude-code-platform-plugin",
-    path: "skills/tc-git-worktrees/SKILL.md",
-  }),
   Object.freeze({ kind: "watch-only", project: "ai/aigovernance", path: null }),
   Object.freeze({ kind: "watch-only", project: "ai/tc-guide", path: null }),
 ]);

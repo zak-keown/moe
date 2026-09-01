@@ -66,9 +66,9 @@ Every row is answerable from the baseline alone. moedex only ever upgrades a row
 
 `rag_search(sourceKinds: ["structured_doc"])` reaches TC's `ai/kb` documents and
 project **wikis** — verified: a convention query returned `kb:git.md`,
-`kb:dotnet-project-docs.md` and the `ai/claude-code-platform-plugin` wiki, each
-with a re-fetchable `source_key`, `revision` and `source_url`. Check there before
-authoring a convention document; it may already exist.
+`kb:dotnet-project-docs.md` and project-wiki results, each with a re-fetchable
+`source_key`, `revision` and `source_url`. Check there before authoring a
+convention document; it may already exist.
 
 ## Budgets
 

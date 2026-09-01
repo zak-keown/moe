@@ -30,22 +30,20 @@ function manifest(lines) {
 function validLines(sha = SHA) {
   return [
     `- \`content|ai/skills@${sha}:skills/creating-merge-requests/SKILL.md\``,
-    `- \`content|ai/claude-code-platform-plugin@${sha}:skills/tc-git-worktrees/SKILL.md\``,
     `- \`watch-only|ai/aigovernance@${sha}\``,
     `- \`watch-only|ai/tc-guide@${sha}\``,
   ];
 }
 
 describe("TC drift manifest parser", () => {
-  it("parses the repository's two content and two watch-only rows", () => {
+  it("parses the repository's one content and two watch-only rows", () => {
     const rows = parseDriftManifest(readFileSync(MANIFEST, "utf8"));
 
-    assert.equal(rows.length, 4);
+    assert.equal(rows.length, 3);
     assert.deepEqual(
       rows.map(({ kind, project }) => ({ kind, project })),
       [
         { kind: "content", project: "ai/skills" },
-        { kind: "content", project: "ai/claude-code-platform-plugin" },
         { kind: "watch-only", project: "ai/aigovernance" },
         { kind: "watch-only", project: "ai/tc-guide" },
       ],
@@ -58,9 +56,9 @@ describe("TC drift manifest parser", () => {
 
   it("rejects missing, duplicate, unexpected, and malformed rows", () => {
     const lines = validLines();
-    assert.throws(() => parseDriftManifest(manifest(lines.slice(0, 3))), /missing manifest row/);
+    assert.throws(() => parseDriftManifest(manifest(lines.slice(0, 2))), /missing manifest row/);
     assert.throws(
-      () => parseDriftManifest(manifest([...lines, lines[3]])),
+      () => parseDriftManifest(manifest([...lines, lines[2]])),
       /duplicate manifest row/,
     );
     assert.throws(
@@ -68,7 +66,7 @@ describe("TC drift manifest parser", () => {
       /unexpected manifest row/,
     );
     assert.throws(
-      () => parseDriftManifest(manifest(lines.with(2, "- not-a-machine-row"))),
+      () => parseDriftManifest(manifest(lines.with(1, "- not-a-machine-row"))),
       /malformed manifest row/,
     );
   });
@@ -78,7 +76,7 @@ describe("TC drift manifest parser", () => {
     assert.throws(
       () =>
         parseDriftManifest(
-          manifest(lines.with(2, `- \`content|ai/aigovernance@${SHA}:Governance.md\``)),
+          manifest(lines.with(1, `- \`content|ai/aigovernance@${SHA}:Governance.md\``)),
         ),
       /wrong manifest kind/,
     );
@@ -89,12 +87,12 @@ describe("TC drift manifest parser", () => {
     assert.throws(
       () =>
         parseDriftManifest(
-          manifest(lines.with(2, `- \`watch-only|ai/aigovernance@${SHA}:Governance.md\``)),
+          manifest(lines.with(1, `- \`watch-only|ai/aigovernance@${SHA}:Governance.md\``)),
         ),
       /watch-only row must not name a source path/,
     );
     assert.throws(
-      () => parseDriftManifest(manifest(lines.with(3, "- `watch-only|ai/tc-guide@ABC`"))),
+      () => parseDriftManifest(manifest(lines.with(2, "- `watch-only|ai/tc-guide@ABC`"))),
       /malformed manifest row/,
     );
   });
@@ -109,7 +107,7 @@ describe("TC drift manifest parser", () => {
     assert.equal(comparison.ok, false);
     assert.deepEqual(
       comparison.results.map((result) => result.status),
-      ["pending", "pending", "pending", "pending"],
+      ["pending", "pending", "pending"],
     );
   });
 });
@@ -150,7 +148,7 @@ describe("TC drift comparison", () => {
     assert.equal(run.status, 0, run.stderr);
     const result = JSON.parse(run.stdout);
     assert.equal(result.ok, true);
-    assert.equal(result.rows.length, 4);
+    assert.equal(result.rows.length, 3);
     assert.deepEqual(result.pending, []);
   });
 });

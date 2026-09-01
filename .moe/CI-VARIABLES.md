@@ -10,7 +10,7 @@ Configure these under **GitLab → Zak/moe → Settings → CI/CD → Variables*
 | Variable | Purpose | GitLab protection | Environment scope |
 | --- | --- | --- | --- |
 | `PROGET_NPM_AUTH` | Read, publish, verify, and update dist-tags in the internal `tcnpm` feed | Masked, hidden if available, protected, variable expansion disabled | `proget-publish` |
-| `TC_GITLAB_TOKEN` | Daily read-only drift comparison against four TC source repositories | Masked, hidden if available, protected, variable expansion disabled | `*` |
+| `TC_GITLAB_TOKEN` | Daily read-only drift comparison against three TC source repositories | Masked, hidden if available, protected, variable expansion disabled | `*` |
 
 ### `PROGET_NPM_AUTH`
 
@@ -53,7 +53,6 @@ Use a least-privilege service, group, project-bot, or personal token with
 `read_api` and enough membership to read the `main` commit endpoint for:
 
 - `ai/skills`
-- `ai/claude-code-platform-plugin`
 - `ai/aigovernance`
 - `ai/tc-guide`
 
