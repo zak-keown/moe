@@ -22,6 +22,13 @@ pnpm --filter @tc/moe-tab test        # unit project: no cdylib needed
 pnpm --filter @tc/moe-tab test:ffi    # ffi project: needs the cdylib
 ```
 
+The published package includes native payloads for Darwin and Linux on x64 and
+arm64. Release packing accepts Linux libraries only from the current CI build
+artifact and Darwin libraries only from the hashed, tracked Apple-hardware
+inputs in `../../native-release`; it refuses a partial or wrong-architecture
+matrix. The tarball also carries the repository's canonical `LICENSE` and
+`NOTICE`.
+
 The library is resolved in order: `$MOE_TAB_LIB` (explicit path) → the package's bundled
 `native/<platform>-<arch>/` (only present in a published tarball) → `target/{release,debug}`
 (in-repo dev).

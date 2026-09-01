@@ -22,7 +22,10 @@
   "files": [
     "dist",
     "native",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_LICENSES.txt"
   ],
   "engines": {
     "node": ">=24"

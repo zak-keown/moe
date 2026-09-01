@@ -14,6 +14,7 @@ import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { afterEach, describe, it } from "node:test";
 import { MANIFEST_IDENTITIES, PRIVATE_FLIGHT_MANIFESTS } from "../check-downstream-scope.mjs";
+import { TAB_NATIVE_TARGETS } from "../tab-native.mjs";
 import { REQUIRED_EXECUTABLE_PLUGIN_FILES, REQUIRED_PLUGIN_FILES } from "../tc-release-compose.mjs";
 import { EXPECTED_RELEASE_PACKAGES, packRelease } from "../tc-release-pack.mjs";
 import { main as publishMain, publishRelease } from "../tc-release-publish.mjs";
@@ -44,6 +45,45 @@ function writeJson(path, value) {
 function write(path, content = "fixture\n") {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, content);
+}
+
+function nativeBytes(target) {
+  const bytes = Buffer.alloc(32);
+  if (target.family === "darwin") {
+    bytes.writeUInt32LE(0xfeedfacf, 0);
+    bytes.writeUInt32LE(target.machine, 4);
+    bytes.writeUInt32LE(6, 12);
+  } else {
+    bytes.set([0x7f, 0x45, 0x4c, 0x46, 2, 1], 0);
+    bytes.writeUInt16LE(3, 16);
+    bytes.writeUInt16LE(target.machine, 18);
+  }
+  return bytes;
+}
+
+function writeNativeMatrix(root) {
+  const appleArtifacts = {};
+  for (const target of TAB_NATIVE_TARGETS) {
+    const bytes = nativeBytes(target);
+    const base =
+      target.family === "darwin"
+        ? join(root, "packages/tab/native-release")
+        : join(root, ".tc-tab-native");
+    write(join(base, target.id, target.filename), bytes);
+    if (target.family === "darwin") {
+      appleArtifacts[target.id] = {
+        path: `${target.id}/${target.filename}`,
+        rustTarget: target.rustTarget,
+        version: VERSION,
+        sha256: createHash("sha256").update(bytes).digest("hex"),
+      };
+    }
+  }
+  writeJson(join(root, "packages/tab/native-release/manifest.json"), {
+    schema: 1,
+    provenance: "apple-hardware",
+    artifacts: appleArtifacts,
+  });
 }
 
 function packageManifest(name, extras = {}) {
@@ -143,6 +183,9 @@ function writeGeneratedPlugin(root, kind) {
 function releaseFixture() {
   const root = mkdtempSync(join(tmpdir(), "moe-release-pipeline-"));
   roots.push(root);
+  write(join(root, "LICENSE"), "license\n");
+  write(join(root, "NOTICE"), "notice\n");
+  write(join(root, "packages/tab/native-release/THIRD_PARTY_LICENSES.txt"), "third party\n");
   writeFileSync(
     join(root, "pnpm-workspace.yaml"),
     "packages:\n  - 'packages/*'\n  - 'packages/tab/bindings/typescript'\n",
@@ -163,6 +206,10 @@ function releaseFixture() {
     );
     if (kind) writeRuntimePayload(root, kind);
   }
+  write(join(root, "packages/tab/bindings/typescript/dist/index.js"), "export {};\n");
+  write(join(root, "packages/tab/bindings/typescript/dist/index.d.ts"), "export {};\n");
+  write(join(root, "packages/tab/bindings/typescript/README.md"), "tab fixture\n");
+  writeNativeMatrix(root);
   writeGeneratedPlugin(root, "memory");
   writeGeneratedPlugin(root, "glass");
   return root;
@@ -193,6 +240,8 @@ function fakePackRunner({ mutatePacked } = {}) {
   };
   const runCommand = (command, args, options) => {
     calls.push({ command, args, options });
+    if (command === "git") return { status: 0, stdout: `${args.at(-1)}\n`, stderr: "" };
+    if (command === process.execPath) return { status: 0, stdout: `${VERSION}\n`, stderr: "" };
     if (command === "pnpm") {
       assert.equal(options.env.PROGET_NPM_AUTH, undefined);
       const archive = snapshot(options.cwd);
@@ -223,7 +272,11 @@ function fakePackRunner({ mutatePacked } = {}) {
       const path = args[2]?.replace(/^package\//u, "");
       const content = archive.contents.get(path);
       return content
-        ? { status: 0, stdout: content.toString("utf8"), stderr: "" }
+        ? {
+            status: 0,
+            stdout: options.encoding === null ? content : content.toString("utf8"),
+            stderr: "",
+          }
         : { status: 1, stdout: "", stderr: `missing ${path}` };
     }
     throw new Error(`unexpected command ${command}`);
@@ -261,6 +314,17 @@ function makePackedArtifacts(root, mutatePacked) {
 
 function publishedArchive(expected, manifest) {
   const contents = new Map([["package.json", JSON.stringify(manifest)]]);
+  if (expected.tabNative) {
+    contents.set("LICENSE", "license\n");
+    contents.set("NOTICE", "notice\n");
+    contents.set("THIRD_PARTY_LICENSES.txt", "third party\n");
+    contents.set("dist/index.js", "export {};\n");
+    contents.set("dist/index.d.ts", "export {};\n");
+    for (const target of TAB_NATIVE_TARGETS) {
+      contents.set(`native/${target.id}/${target.filename}`, nativeBytes(target));
+    }
+    return contents;
+  }
   if (!expected.pluginKind) return contents;
   for (const path of REQUIRED_PLUGIN_FILES[expected.pluginKind]) contents.set(path, "fixture\n");
   for (const path of REQUIRED_EXECUTABLE_PLUGIN_FILES[expected.pluginKind]) {
@@ -375,7 +439,18 @@ function registryRunner({
       const content = contents.get(path);
       return content === undefined
         ? { status: 1, stdout: "", stderr: `missing ${path}` }
-        : { status: 0, stdout: content, stderr: "" };
+        : {
+            status: 0,
+            stdout:
+              options.encoding === null
+                ? Buffer.isBuffer(content)
+                  ? content
+                  : Buffer.from(content)
+                : Buffer.isBuffer(content)
+                  ? content.toString("utf8")
+                  : content,
+            stderr: "",
+          };
     }
     assert.equal(command, "npm");
     assert.equal(inspectedTarballs.size, EXPECTED_RELEASE_PACKAGES.length);
@@ -562,6 +637,38 @@ describe("TC release packing", () => {
       /downstream scope check failed.*scope\.upstream-leak/s,
     );
     assert.equal(fake.calls.length, 0);
+  });
+
+  it("refuses a missing or wrong-architecture tab native matrix before packing", () => {
+    const missingRoot = releaseFixture();
+    const missingFake = fakePackRunner();
+    rmSync(join(missingRoot, ".tc-tab-native/linux-arm64/libmoe_tab_ffi.so"));
+    assert.throws(
+      () =>
+        packRelease({
+          ...releaseInput(missingRoot),
+          outputDir: join(missingRoot, "artifacts"),
+          runCommand: missingFake.runCommand,
+        }),
+      /linux-arm64 native payload is missing/,
+    );
+    assert.equal(missingFake.calls.length, 0);
+
+    const wrongRoot = releaseFixture();
+    const wrongFake = fakePackRunner();
+    const linuxX64 = TAB_NATIVE_TARGETS.find((target) => target.id === "linux-x64");
+    const linuxArm64 = TAB_NATIVE_TARGETS.find((target) => target.id === "linux-arm64");
+    write(join(wrongRoot, ".tc-tab-native/linux-x64/libmoe_tab_ffi.so"), nativeBytes(linuxArm64));
+    assert.throws(
+      () =>
+        packRelease({
+          ...releaseInput(wrongRoot),
+          outputDir: join(wrongRoot, "artifacts"),
+          runCommand: wrongFake.runCommand,
+        }),
+      new RegExp(`${linuxX64.id} ELF machine does not match x64`),
+    );
+    assert.equal(wrongFake.calls.length, 0);
   });
 
   it("cleans source seed artifacts when composed payload validation fails", () => {

@@ -15,6 +15,12 @@ import { basename, dirname, isAbsolute, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { checkDownstreamScope } from "./check-downstream-scope.mjs";
 import {
+  inspectTabNativeBytes,
+  stageTabNpmPackage,
+  TAB_NATIVE_TARGETS,
+  validateTabNativeMatrix,
+} from "./tab-native.mjs";
+import {
   assertRequiredPluginPayload,
   composePluginTarball,
   inspectPluginTarball,
@@ -38,7 +44,11 @@ export const EXPECTED_RELEASE_PACKAGES = Object.freeze([
     pluginKind: "memory",
   },
   { path: "packages/mint/package.json", name: "@tc/moe-mint" },
-  { path: "packages/tab/bindings/typescript/package.json", name: "@tc/moe-tab" },
+  {
+    path: "packages/tab/bindings/typescript/package.json",
+    name: "@tc/moe-tab",
+    tabNative: true,
+  },
   { path: "package.json", name: "@tc/moe" },
 ]);
 
@@ -49,6 +59,7 @@ Options:
   --root <path>             Repository root (default: current directory)
   --output-dir <path>       Empty destination for the eight tarballs
   --release-file <path>     Canonical release input (default: tc-release.json)
+  --tab-native-dir <path>   Linux native artifacts (default: .tc-tab-native)
   --branch <name>           Source branch (default: CI_COMMIT_BRANCH)
   --default-branch <name>   Default branch (default: CI_DEFAULT_BRANCH)
   --merge-request           Force merge-request context
@@ -69,6 +80,7 @@ function parseArgs(argv) {
     ["--root", "root"],
     ["--output-dir", "outputDir"],
     ["--release-file", "releaseFile"],
+    ["--tab-native-dir", "tabNativeDir"],
     ["--branch", "branch"],
     ["--default-branch", "defaultBranch"],
     ["--dist-tag", "distTag"],
@@ -335,6 +347,39 @@ export function listPackedFiles(tarball, runCommand = commandRunner, env = proce
   return [...files].sort();
 }
 
+function readPackedBytes(tarball, path, runCommand, env) {
+  return runChecked(
+    runCommand,
+    "tar",
+    ["-xOf", tarball, `package/${path}`],
+    { encoding: null, env: secretFreeEnvironment(env) },
+    `inspect ${basename(tarball)} ${path}`,
+  ).stdout;
+}
+
+export function assertPackedTabPayload(
+  tarball,
+  files,
+  runCommand = commandRunner,
+  env = process.env,
+) {
+  const fileSet = new Set(files);
+  for (const path of ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.txt"]) {
+    if (!fileSet.has(path)) throw new TcReleaseError(`@tc/moe-tab tarball is missing ${path}`);
+  }
+  for (const target of TAB_NATIVE_TARGETS) {
+    const path = `native/${target.id}/${target.filename}`;
+    if (!fileSet.has(path)) {
+      throw new TcReleaseError(`@tc/moe-tab tarball is missing ${path}`);
+    }
+    try {
+      inspectTabNativeBytes(readPackedBytes(tarball, path, runCommand, env), target);
+    } catch (error) {
+      throw new TcReleaseError(`@tc/moe-tab tarball ${path} is invalid: ${error.message}`);
+    }
+  }
+}
+
 function assertExactReleaseTrain(validation) {
   const actual = new Map(validation.packages.map((pkg) => [pkg.path, pkg.name]));
   const expectedPaths = new Set(EXPECTED_RELEASE_PACKAGES.map((pkg) => pkg.path));
@@ -397,6 +442,7 @@ export function inspectReleaseTarballs({
     }
     assertPackedManifest(manifest, expected, validation.release.version, validation.release);
     assertPackedEntrypoints(manifest, files, `${expected.name} packed package.json`);
+    if (expected.tabNative) assertPackedTabPayload(tarball, files, runCommand, env);
     inspected.set(expected.name, { tarball, manifest, files, pluginPayload });
   }
   for (const expected of EXPECTED_RELEASE_PACKAGES) {
@@ -445,13 +491,24 @@ export function packRelease(input) {
 
   const runCommand = input.runCommand ?? commandRunner;
   const env = secretFreeEnvironment(input.env ?? process.env);
+  const tabNativeMatrix = validateTabNativeMatrix({
+    root,
+    linuxDir: input.tabNativeDir,
+    releaseVersion: validation.release.version,
+    runCommand,
+    env,
+  });
   mkdirSync(artifactsDir, { recursive: true });
   const temporaryRoot = mkdtempSync(join(tmpdir(), "moe-release-pack-"));
   const seedsDirectory = join(temporaryRoot, "seeds");
+  const tabPackageDirectory = join(temporaryRoot, "tab-package");
   mkdirSync(seedsDirectory);
   try {
+    stageTabNpmPackage({ root, destination: tabPackageDirectory, matrix: tabNativeMatrix });
     for (const expected of EXPECTED_RELEASE_PACKAGES) {
-      const packageDirectory = dirname(join(root, expected.path));
+      const packageDirectory = expected.tabNative
+        ? tabPackageDirectory
+        : dirname(join(root, expected.path));
       const packDestination = expected.pluginRoot ? seedsDirectory : artifactsDir;
       const before = new Set(readdirSync(packDestination));
       runChecked(
@@ -490,6 +547,7 @@ export function packRelease(input) {
     root,
     artifactsDir,
     validation,
+    tabNativeMatrix,
     artifacts: EXPECTED_RELEASE_PACKAGES.map((expected) => inspected.get(expected.name)),
   };
 }

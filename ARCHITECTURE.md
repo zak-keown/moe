@@ -232,6 +232,23 @@ dry runs with `next`. Only a protected default-branch push that changes the
 canonical release file can publish and move `latest`, after build, lint,
 typecheck, test, plugin-reproducibility, and provenance gates pass.
 
+`@tc/moe-tab` is one four-platform npm artifact. Linux x64 and arm64 cdylibs
+are built from source and executed (arm64 under qemu-user) by the
+`tab-native-linux` Docker job. Darwin x64 and arm64 cdylibs are built and
+smoke-tested on Apple hardware, then committed under
+`packages/tab/native-release` with version and SHA-256 pins. Linux CI never
+downloads an Apple SDK or produces a Darwin binary. The pack job combines the
+two CI artifacts with the two tracked Apple artifacts, validates all four
+binary headers, executes the host library, and adds the canonical root
+`LICENSE` and `NOTICE` to the tab tarball.
+
+Linux release libraries target the Debian bullseye glibc baseline. The build
+job rejects either payload if its maximum referenced GLIBC symbol exceeds
+`GLIBC_2.31`, which remains compatible with the supported Ubuntu 22.04 WSL2
+baseline (`GLIBC_2.35`). Its native and qemu-user smoke probes resolve and call
+all four C ABI exports, including a successful transcript estimate and the
+non-network invalid-date path through pricing refresh.
+
 Non-npm metadata uses the closest valid spelling without pretending the package
 standards are interchangeable. Cargo accepts the npm spelling `X.Y.Z-tc.N`.
 PEP 440 does not, so the Python tab binding records the same train as

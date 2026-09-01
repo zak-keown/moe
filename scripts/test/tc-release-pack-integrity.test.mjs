@@ -145,9 +145,23 @@ describe("TC release clean-job CI policy", () => {
     const pack = config()["tc-release-pack"];
     assert.deepEqual(pack.script, [
       "pnpm build",
-      "node scripts/tc-release-pack.mjs --output-dir .tc-release",
+      "node scripts/tc-release-pack.mjs --output-dir .tc-release --tab-native-dir .tc-tab-native",
     ]);
     assert.ok(pack.needs.includes("build"));
+    assert.deepEqual(pack.needs.at(-1), { job: "tab-native-linux", artifacts: true });
     assert.equal(JSON.stringify(pack.variables ?? {}).includes("PROGET_NPM_AUTH"), false);
+  });
+
+  it("builds and executes both Linux architectures without exposing registry credentials", () => {
+    const job = config()["tab-native-linux"];
+    assert.equal(job.image, "rust:1.98.0-bullseye");
+    assert.match(job.before_script[0], /unset PROGET_NPM_AUTH NPM_TOKEN NODE_AUTH_TOKEN/);
+    assert.match(job.before_script[0], /npm_config_\*auth\*/);
+    assert.match(job.before_script.join("\n"), /gcc-aarch64-linux-gnu/);
+    assert.match(job.before_script.join("\n"), /libc6-dev-arm64-cross/);
+    assert.match(job.before_script.join("\n"), /qemu-user/);
+    assert.match(job.script.join("\n"), /build-tab-native-linux\.sh/);
+    assert.deepEqual(job.artifacts.paths, [".tc-tab-native/linux-*/*.so"]);
+    assert.equal(JSON.stringify(job).includes("apple-darwin"), false);
   });
 });

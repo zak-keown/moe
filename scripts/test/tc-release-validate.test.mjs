@@ -239,7 +239,10 @@ describe("TC release GitLab policy", () => {
   it("keeps merge requests and feature pushes as next-tag pack-only dry runs", () => {
     const pack = config()["tc-release-pack"];
 
-    assert.deepEqual(pack.needs, prerequisiteNeeds);
+    assert.deepEqual(pack.needs, [
+      ...prerequisiteNeeds,
+      { job: "tab-native-linux", artifacts: true },
+    ]);
     assert.match(pack.rules[0].if, /merge_request_event/);
     assert.equal(pack.rules[0].variables.NPM_DIST_TAG, "next");
     assert.match(pack.rules[2].if, /CI_PIPELINE_SOURCE == "push"/);

@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "provenance": "apple-hardware",
+  "artifacts": {
+    "darwin-arm64": {
+      "path": "darwin-arm64/libmoe_tab_ffi.dylib",
+      "rustTarget": "aarch64-apple-darwin",
+      "version": "0.0.0-tc.1",
+      "sha256": "c711071df127879e8a33b836ac5caa435152f01c974a707741875624a33e643a"
+    },
+    "darwin-x64": {
+      "path": "darwin-x64/libmoe_tab_ffi.dylib",
+      "rustTarget": "x86_64-apple-darwin",
+      "version": "0.0.0-tc.1",
+      "sha256": "4e414c2e1cafd6ad79bfc9579b94fa1d0fb37e10872883506c4c9c77ed3682cd"
+    }
+  }
+}
