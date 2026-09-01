@@ -10,7 +10,7 @@ size: M
 estimate: 7-9 h
 depends_on: [DO-NOW-1, skill-set-fidelity-refactor]
 blocks: []
-conflicts_with: [parallel-execution-option, gsd-core-skill-import, tiered-workflow-naming, moe-tone-and-branding, native-renderers, tc-governance-integration]
+conflicts_with: [parallel-execution-option, gsd-core-skill-import, tiered-workflow-naming, moe-tone-and-branding, native-renderers]
 touches: [packages/core/skills/, packages/core/skill-tiers.yaml, packages/core/test/metadata.test.ts, packages/core/hooks/, packages/core/hooks/hooks.json]
 decision_needed: no
 ---
@@ -46,14 +46,10 @@ this item now owns:
   for the warm case — "use when a project has more than one plan and you need to know
   which is runnable" — and let the hook own the cold one.
 - **New file: `packages/core/hooks/hooks.json` + a `plan-set-notice` hook**, added to
-  this item's `touches`. That creates one new conflict edge,
-  `tc-governance-integration`, now declared in `conflicts_with`. The schedule was
-  recomputed: max clique is **still 7**, wall clock still 47 h, and the committed
-  7-wave schedule is still valid — `deterministic-task-dag` is W02 and
-  `tc-governance-integration` is W07. **W02 therefore defines `hooks.json`'s shape,**
-  and `verification-split-and-firing-rate` (W03) and `tc-governance-integration` (W07)
-  both extend whatever this item writes. Neither of those edges was declared in the
-  frontmatter the author wrote; see `WAVES.md`.
+  this item's `touches`. **W02 therefore defines `hooks.json`'s shape,**
+  and `verification-split-and-firing-rate` (W03) extends whatever this item
+  writes. That edge was not declared in the frontmatter the author wrote; see
+  `WAVES.md`.
 - The hook script is **extensionless**, per the Windows lesson: Claude Code's Windows
   auto-detection prepends `bash` to any command containing `.sh`. It also must not be
   the thing that carries the loop — announce only, exit 0 on every failure path, and
@@ -334,7 +330,7 @@ hook that announces an incomplete plan set.**
 - Redesigning the fidelity assertions, and enforcing D2's `tier`/`from` rules in
   code — `skill-set-fidelity-refactor`.
 - Extending `hooks.json` beyond the one entry this item adds —
-  `verification-split-and-firing-rate` (W03) and `tc-governance-integration` (W07).
+  `verification-split-and-firing-rate` (W03).
 - Final naming and tier vocabulary — `tiered-workflow-naming`.
 - Lifting code or templates out of `~/.claude/moe-core` — `gsd-core-skill-import`.
 - Everything the `iterative-development` cluster owns: requirements extraction,

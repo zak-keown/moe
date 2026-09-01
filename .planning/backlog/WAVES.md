@@ -1,20 +1,19 @@
 # Wave schedule
 
 Recomputed 2026-08-31 after Zak challenged the previous schedule as
-under-parallelised. He was right. **16 items, 4 waves, ~32 h wall clock.**
+under-parallelised. He was right. **14 items, 4 waves, ~31 h wall clock.**
 
-**CLOSED 2026-09-01. All sixteen shipped.** What follows is kept as the record of
+**CLOSED 2026-09-01. All fourteen shipped.** What follows is kept as the record of
 how it was scheduled and what the schedule got wrong, because both were argued
 for on this page and the arguments are the reusable part. The tables are updated
 to what happened; the analysis below them is as written.
 
-Effort is now **106.5 h**, up from 89.2 h — the Wave 1 Q&A tripled
-`tc-standards-conformance` (Moe replaces the sibling fork `ai/claude-code-platform-plugin`:
-4-5 h becomes 12-17 h) and grew `gsd-core-skill-import` (census plus an upstream-MIT
-import: 3-5 h becomes 5-7 h), and a second-upstream census — `mattpocock-skills-import`
-— added a new W02 item at 5 h. Wall clock is unchanged at 31.8 h: the new item sits
-in W02, whose wall (8 h) is bound by `codegraph-context-layer` and
-`deterministic-task-dag`, so 5 h of new work cost 0 h of calendar.
+Effort is **88.25 h**. The Wave 1 Q&A grew `gsd-core-skill-import` (census plus
+an upstream-MIT import: 3-5 h becomes 5-7 h), and a second-upstream census —
+`mattpocock-skills-import` — added a new W02 item at 5 h. Wall clock stayed at
+30.8 h: the new item sits in W02, whose wall (8 h) is bound by
+`codegraph-context-layer` and `deterministic-task-dag`, so 5 h of new work cost
+0 h of calendar.
 
 The `W##` prefix on each filename is this schedule's wave assignment, and it is
 kept accurate. **`P##` is not.** It was originally "orders within a wave by effort,
@@ -34,30 +33,28 @@ schedule, and schedules move. Where `P` disagrees with the table, the table wins
 
 ## The schedule
 
-**All sixteen shipped**, across four sessions (2026-08-31 → 2026-09-01). Eleven
-landed in the wave runs; the last five were closed one at a time afterwards —
-the two aging iterate branches, both deferred items, and the one skipped on a
+**All fourteen shipped**, across four sessions (2026-08-31 → 2026-09-01). Ten
+landed in the wave runs; the last four were closed one at a time afterwards —
+the two aging iterate branches, the deferred item, and the one skipped on a
 precondition.
 
 | Wave | Items | Effort | Wall |
 |---|---|---|---|
-| **W01** | ~~`tc-standards-conformance`~~ (14.5 h) `df4c14b` · ~~`installer-hq-dx`~~ (13.5 h) `d288ae7` · ~~`native-renderers`~~ (8.5 h) `65be5f7` · ~~`verification-split-and-firing-rate`~~ (8.5 h) `6e2f44d` · ~~`gsd-core-skill-import`~~ (6 h) `aad2aee` · ~~`runtime-pruning`~~ (5 h) `1e40523` · ~~`moe-tone-and-branding`~~ (4 h) `de74bd0` · ~~`skill-set-fidelity-refactor`~~ `cf37b80` | 65.5 h | 14.5 h |
+| **W01** | ~~`installer-hq-dx`~~ (13.5 h) `d288ae7` · ~~`native-renderers`~~ (8.5 h) `65be5f7` · ~~`verification-split-and-firing-rate`~~ (8.5 h) `6e2f44d` · ~~`gsd-core-skill-import`~~ (6 h) `aad2aee` · ~~`runtime-pruning`~~ (5 h) `1e40523` · ~~`moe-tone-and-branding`~~ (4 h) `de74bd0` · ~~`skill-set-fidelity-refactor`~~ `cf37b80` | 51 h | 13.5 h |
 | **W02** | ~~`codegraph-context-layer`~~ (8 h) `1a03438` · ~~`deterministic-task-dag`~~ (8 h) `f2bdc60` · ~~`mattpocock-skills-import`~~ (5 h) `3285c68` · ~~`moe-bare-binary-dispatcher`~~ (4.5 h) `a1c5f21` · ~~`parallel-execution-option`~~ (2.5 h) `b02c469` | 28 h | 8 h |
-| **W03** | ~~`tiered-workflow-naming`~~ (5 h) `894f5c7` · ~~`tc-governance-integration`~~ (3.75 h) `1da7320` | 8.75 h | 5 h |
+| **W03** | ~~`tiered-workflow-naming`~~ (5 h) `894f5c7` | 5 h | 5 h |
 | **W04** | ~~`contributing-flow-docs`~~ (4.25 h) `1d38d97` | 4.25 h | 4.25 h |
 
-W01's original critical path was **co-held** by `tc-standards-conformance` and
-`installer-hq-dx`, within an hour of each other. Both ended up in the iterate
+W01's critical path was `installer-hq-dx` (13.5 h). It ended up in the iterate
 bucket rather than closing on schedule, so W01 was the last wave to finish — the
-co-held path predicted which items would slip, but not that they would slip for
-reasons the schedule never modelled (a close-plan needing a design decision, and
-prose citations needing rewriting).
+critical path predicted which item would slip, but not that it would slip for a
+reason the schedule never modelled (a close-plan needing a design decision).
 
 ### Final status
 
-**Shipped: 16 of 16.** No live branches, no deferred items, no open decisions.
+**Shipped: 14 of 14.** No live branches, no deferred items, no open decisions.
 
-The eleven that landed in the wave runs are in the table above. The five that
+The ten that landed in the wave runs are in the table above. The four that
 needed individual closes, and what each actually turned on:
 
 | Item | Was | What closed it |
@@ -65,16 +62,14 @@ needed individual closes, and what each actually turned on:
 | `runtime-pruning` | iterate | Prose only — line-number citations rewritten as quoted phrases. Rebased with **zero** conflicts against a close-plan predicting four. |
 | `installer-hq-dx` | iterate | A real design decision: two test runners over one directory. Zak chose vitest; the node:test suite was ported. |
 | `codegraph-context-layer` | deferred | Gate ordering — `pnpm mint` had to run **before** core's tests. Its other blocker was network, and CodeGraph reconnected. |
-| `tc-governance-integration` | deferred | Its blocking assertion had already dissolved: `plan-set-notice` added the `SessionStart` key first, so the assertion it would have reddened already read `["SessionStart", "Stop"]`. |
 | `gsd-core-skill-import` | skipped | Precondition met — `open-gsd/gsd-core` is public MIT and was cloned. |
 
-**Two of those five closed for reasons the deferral was wrong about**, which is
-the most useful thing on this page. `tc-governance-integration` was deferred on
-an assertion that another item fixed in passing; nobody re-checked. And
-`gsd-core-skill-import`'s plan said one reference's precondition (SBFL needs
-per-test coverage) should gate the whole item — but that reference degrades by
-design, so the precondition never gated the other nine. **A deferral is a claim
-with a shelf life.** Re-read the blocker before re-planning the work.
+**One of those four closed for a reason the deferral was wrong about**, which is
+the most useful thing on this page. `gsd-core-skill-import`'s plan said one
+reference's precondition (SBFL needs per-test coverage) should gate the whole
+item — but that reference degrades by design, so the precondition never gated
+the other nine. **A deferral is a claim with a shelf life.** Re-read the blocker
+before re-planning the work.
 
 ### Merge highlights
 Two rollbacks fired during wave-merge, both from the tier-vocabulary guard
@@ -92,7 +87,7 @@ whitelist is still at three — but six false positives against zero true ones i
 the signal this note asked for. The rule bans the word; what it means to ban is
 the word *as a workflow-depth name*.
 
-The two close-execute merges on 2026-09-01 were driven by a new workflow
+The close-execute merge on 2026-09-01 was driven by a new workflow
 (`wave-close-execute`) that rebases the aging branch onto current main,
 resolves conflicts per a pre-authored close-plan, regenerates `/plugins/`,
 and re-runs gates. `verification-split-and-firing-rate` landed with a
@@ -100,12 +95,10 @@ collateral fix for two pre-existing reds on main introduced by `f2bdc60`
 (TS2339 on `metadata.test.ts` at the SessionStart matcher test, and a biome
 one-liner formatter on `hasFallback`) — the fix agent added `matcher?: string`
 to the hooks.json type union and reformatted `hasFallback`, unblocking full-
-repo `pnpm typecheck` and `pnpm lint`. `tc-standards-conformance` then
-merged clean; git's 3-way merge resolved the shared
-`verification-before-completion/SKILL.md` and its two plugin mirrors on both
-sides. Neither branch needed a wave-merge rollback.
+repo `pnpm typecheck` and `pnpm lint`. That merge needed no wave-merge
+rollback.
 
-The five individual closes needed no rollback either, but three of them landed
+The four individual closes needed no rollback either, but three of them landed
 a fix for something the *previous* merge had broken or missed:
 `runtime-pruning`'s own 11→10 adapter recount had missed four of six mint yamls;
 `installer-hq-dx`'s chaining of `bin:test` into root `test` turned a latent
@@ -278,26 +271,20 @@ is worse than one that crashes.
 
 ## What carries forward
 
-This schedule's sixteen items are all shipped. Two things sit in the backlog
+This schedule's fourteen items are all shipped. Two things sit in the backlog
 directory that this schedule never contained, and they are **not** waves 5 and 6
 of it — the wave numbering in their filenames is filename convention only, per the
 `P##` note at the top of this file:
 
 - **`codebase-review-skills`** — two fork-authored skills for repo-wide review and
   TDD repair. In flight elsewhere as of 2026-09-01.
-- **`tc-domain-skills-port`** — **resolved 2026-09-01, nothing landed here.** Its
-  census is kept as the record: 13 of the 17 deferred `tc-*` skills are
-  near-duplicates of skills this fork ships, 3 were dispatch wrappers over tools
-  that do not exist here, and the 1 piece of real content went to `ai/kb` as MR
-  `ai/kb!17` — that corpus is what `rag_search` indexes, so a doc there reaches
-  every TC engineer while a Moe skill reaches only Moe installs.
-- **`cross-stack-tracing`** — what replaced the port. Zak asked whether the trace
-  capability could be built against CodeGraph alone rather than moedex, and it
-  mostly can: `HTTP_CALLS` carries `source_repo`/`target_repo`, so
-  "what breaks if I change this endpoint?" is complete on the baseline. Everything-
-  tier, 5-7 h, no open decisions.
+- **`cross-stack-tracing`** — Zak asked whether cross-repo trace capability could
+  be built against CodeGraph alone rather than moedex, and it mostly can:
+  `HTTP_CALLS` carries `source_repo`/`target_repo`, so "what breaks if I change
+  this endpoint?" is complete on the baseline. Everything-tier, 5-7 h, no open
+  decisions.
 
-None of these depend on each other or on anything above. If a fourth arrives,
+None of these depend on each other or on anything above. If a third arrives,
 re-run the solver rather than appending to this table — it is a record now, not a
 plan.
 
@@ -314,13 +301,12 @@ made it 4 was correctly identified.
 **Wrong, in one specific way:** it modelled *scheduling* risk and not *closing*
 risk. Every item that slipped slipped after its wave, in the close — a design
 decision nobody had made (`installer-hq-dx`), citations to rewrite
-(`runtime-pruning`), a gate ordering (`codegraph-context-layer`), an assertion
-that had already changed (`tc-governance-integration`), a precondition that was
-never really binding (`gsd-core-skill-import`). Five of sixteen, and the schedule
-had nothing to say about any of them, because it treated "planned" and "merged"
-as the same event.
+(`runtime-pruning`), a gate ordering (`codegraph-context-layer`), a precondition
+that was never really binding (`gsd-core-skill-import`). Four of fourteen, and
+the schedule had nothing to say about any of them, because it treated "planned"
+and "merged" as the same event.
 
 **The cheap fix for next time:** a wave is not done when its branches build. It
 is done when they are merged. Budget the close, and re-read a deferral's stated
-blocker before re-planning against it — two of the five had blockers that were
+blocker before re-planning against it — one of the four had a blocker that was
 already false.

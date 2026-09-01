@@ -42,10 +42,10 @@ from the files alone.
 ## Debate-review decisions (2026-08-31)
 
 - **The `imported:` `from:` value set stays at five names.** PARITY.md is frozen
-  at its current upstreams, so the sixth and seventh values this doc anticipates
-  — from `gsd-core-skill-import` and `tc-governance-integration` — are not
-  arriving as drift-tracked upstreams. Attribution rows may still be added under
-  the freeze's carve-out; they do not become `from:` values without a decision.
+  at its current upstreams, so the sixth value this doc anticipates — from
+  `gsd-core-skill-import` — is not arriving as a drift-tracked upstream.
+  Attribution rows may still be added under the freeze's carve-out; they do not
+  become `from:` values without a decision.
 - **A3's recommendation is unaffected and gets easier**, since the asserted value
   set is now stable rather than a moving target.
 - **`authored:` stays `{}` for the moment.** The one new item this review created

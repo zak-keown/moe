@@ -8,7 +8,7 @@ size: M
 estimate: 4 h
 depends_on: []
 blocks: []
-conflicts_with: [installer-hq-dx, tc-standards-conformance, moe-bare-binary-dispatcher]
+conflicts_with: [installer-hq-dx, moe-bare-binary-dispatcher]
 touches:
   - packages/core/skills/writing-clearly-and-concisely/
   - packages/core/skills/writing-skills/SKILL.md
@@ -183,8 +183,8 @@ marketing description should not carry a number a test has to keep true.
   gaining a dependency.
 - **Not `moe-bare-binary-dispatcher`**, but a file conflict on `.gitlab-ci.yml`,
   where this item adds the `provenance` job and that one edits CI for the new bin.
-  `tc-standards-conformance` and `installer-hq-dx` collide the same way —
-  `.gitlab-ci.yml` and `.claude-plugin/marketplace.json` respectively. Verified
+  `installer-hq-dx` collides the same way — over
+  `.claude-plugin/marketplace.json`. Verified
   against their `touches`, not assumed: `native-renderers` and
   `contributing-flow-docs` were previously listed here on the strength of
   README.md and `writing-skills/SKILL.md`, and neither overlap survives —
@@ -344,8 +344,6 @@ the provenance check + CI job; `marketplace.json` `:8` and `:23`.
   not restyle, re-crop or propagate the image.
 - **Output format** — tables vs prose, renderers, artifacts. `native-renderers`.
 - **What to run when and why** — `contributing-flow-docs`.
-- **MR-description and branch-name conventions** — `tc-standards-conformance`
-  owns those; it should *cite* `house-voice.md`, not restate it.
 - **Skill renaming and the lean/full split** — `tiered-workflow-naming` and
   DO-NOW-2.
 - **The bare-`moe` dispatcher and the ARCHITECTURE.md §7 amendment it needs** —

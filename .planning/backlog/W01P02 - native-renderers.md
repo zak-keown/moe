@@ -8,7 +8,7 @@ size: L
 estimate: 7-10 h
 depends_on: [DO-NOW-1, DO-NOW-2, DO-NOW-3]
 blocks: []
-conflicts_with: [moe-tone-and-branding, runtime-pruning, tiered-workflow-naming, gsd-core-skill-import, tc-standards-conformance]
+conflicts_with: [moe-tone-and-branding, runtime-pruning, tiered-workflow-naming, gsd-core-skill-import]
 touches: [packages/core/skills/brainstorming/, packages/core/skills/writing-plans/SKILL.md, packages/core/skills/finding-duplicate-functions/SKILL.md, packages/core/skills/using-moe/SKILL.md, packages/core/skills/using-moe/references/, packages/core/skills/_shared/, packages/core/test/metadata.test.ts]
 decision_needed: no
 ---
