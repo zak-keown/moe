@@ -175,9 +175,26 @@ gives each worker its own checkout of the repo, so two implementers editing disj
 files in separate worktrees cannot conflict. This section defines when concurrent
 implementers are safe, and how to fall back when they are not.
 
-### The gate — three conditions, all required
+### Validate the plan before applying the gate
 
-A wave of tasks may run its implementers concurrently only when ALL THREE hold:
+Parallel scheduling is only safe when the plan exposes the data the scheduler
+reads. Before grouping any implementation tasks, validate every task. Each task
+MUST contain all four of these non-empty fields:
+
+- `Files:` — the exact paths the task may create, modify, or test;
+- `Interfaces:` — the container for the dependency declaration;
+- `Consumes:` — exact interfaces consumed, or the explicit value `None`; and
+- `Produces:` — exact interfaces produced, or the explicit value `None`.
+
+Missing a field is a plan-validation failure, not evidence that tasks are
+independent. Stop before dispatch and return the plan for repair. Do not silently
+substitute an empty list, infer paths from task prose, or downgrade a malformed
+plan to sequential execution: sequential execution prevents write collisions but
+cannot repair an underspecified worker brief.
+
+### The gate — four conditions, all required
+
+A wave of tasks may run its implementers concurrently only when ALL FOUR hold:
 
 1. **Files disjoint.** No two tasks in the wave list the same path in their `Files:`
    block (either `Create:` or `Modify:`). A file appearing in two tasks is a merge
@@ -187,33 +204,38 @@ A wave of tasks may run its implementers concurrently only when ALL THREE hold:
    cannot be in the same wave. `writing-plans` already requires those blocks
    (`writing-plans/SKILL.md`, "Interfaces:") — this is what reads them.
 3. **One worktree per worker.** Each concurrent implementer gets its own linked
-   worktree, created before dispatch (`using-git-worktrees` Step 1c). Two workers
+   worktree, created before dispatch (`using-git-worktrees` Step 1d). Two workers
    sharing one checkout defeats the isolation and reintroduces the ban's original
    hazard.
+4. **Pairwise-unique linked Git directories.** Validate every worker cwd before
+   dispatch. In each cwd, resolve both paths with
+   `git rev-parse --path-format=absolute --git-dir` and
+   `git rev-parse --path-format=absolute --git-common-dir`. The two paths must
+   differ (it is a linked worktree), and every worker's resolved `--git-dir` must
+   differ from every other worker's. Comparing cwd strings is insufficient:
+   symlinks and aliases can name the same checkout.
 
-Fail any condition and the wave is serial. The gate is a git question, not a
-harness question — `git rev-parse --git-common-dir` differs from
-`git rev-parse --git-dir` inside a linked worktree, so any harness that shells
-out to git can check its own isolation with one command.
+Fail a disjointness or dependency condition and the wave is serial. If creating
+or validating even one worktree fails, do not dispatch a partial parallel wave:
+run the entire wave sequentially from the controller's current, validated tree.
+Malformed task metadata fails plan validation as described above.
+
+The isolation gate is a git question, not a harness question. Any harness that
+shells out to git can make the check deterministically before it dispatches.
 
 ### Degradation ladder
 
-State the ladder wherever a skill hands the reader a parallel-dispatch
-instruction — the same shape PAR uses in `_shared/parallel-adversarial-review.md`:
+State this exact two-rung ladder wherever a skill hands the reader a parallel
+implementation instruction:
 
 1. **Worktree-isolated parallel dispatch** — the gate holds and each worker
    has its own linked worktree. Preferred.
-2. **Parallel dispatch on disjoint files with no isolation** — the harness
-   cannot create worktrees but the wave's Files blocks are disjoint. Weaker,
-   because a bug in the disjointness check is a silent write collision; use
-   only when isolation is genuinely unavailable.
-3. **Sequential** — run the wave one task at a time. Correct in every harness,
+2. **Sequential dispatch** — run the wave one task at a time. Correct in every harness,
    merely slower. Always a valid fallback and never a defect.
 
 A missed parallel dispatch produces serial execution, which is correct. A missed
 isolation check produces a silent write collision, which is not. That asymmetry
-is why the ladder degrades toward serial rather than toward "parallel without
-isolation".
+is why there is no unisolated-parallel rung.
 
 ### The divergent-tree rule
 
