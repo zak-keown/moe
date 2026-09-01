@@ -100,7 +100,7 @@ function marketplaceManifest(model: PluginModel): Record<string, unknown> {
 // Ground truth per Design decision 4: `claude /plugin marketplace add REPO`
 // then `/plugin install <name>@<marketplace-name>`, with REPO substituted
 // from config.repository — `owner/repo` shorthand for github.com URLs and
-// the full URL for any other supported host (`gitlab.tcdevops.com`, etc.);
+// the full URL for any other supported host (`gitlab.example.com`, etc.);
 // falls back to `<your-repo>` only for ssh/file inputs or when no repository
 // is set. Marketplace-name resolved by marketplaceName() —
 // config.marketplace.name when set, otherwise the local-dev default

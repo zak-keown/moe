@@ -169,19 +169,19 @@ describe('claude-code adapter installDoc', () => {
     expect(body).not.toContain('<your-repo>')
   })
 
-  it('emits the full self-hosted GitLab URL for Moe\'s own gitlab.com repository', () => {
-    // Regression: the previous helper only matched github.com, so this repo's
-    // own `repository: https://gitlab.com/moe-ai/moe` fell back to a
-    // <your-repo> placeholder and the emitted install doc was unusable. This
-    // asserts the generalised parseRepo does the right thing.
-    const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-installdoc-gitlab-'))
+  it('emits the full URL for an arbitrary self-hosted Git host', () => {
+    // Regression: the previous helper only matched github.com, so any
+    // arbitrary self-hosted git host (e.g. a self-hosted GitLab instance)
+    // fell back to a <your-repo> placeholder and the emitted install doc was
+    // unusable. This asserts the generalised parseRepo does the right thing.
+    const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-installdoc-selfhosted-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: moe-fixture\nversion: 1.0.0\ndescription: self-hosted gitlab fixture\nrepository: https://gitlab.com/moe-ai/moe\nbootstrap: none\n',
+      'name: custom-host\nversion: 1.0.0\ndescription: self-hosted git fixture\nrepository: https://gitlab.example.com/owner/repo\nbootstrap: none\n',
     )
-    const tcModel = buildModel(dir)
-    const body = claudeCode.installDoc!(tcModel)
-    expect(body).toContain('claude /plugin marketplace add https://gitlab.com/moe-ai/moe')
+    const arbitraryHostModel = buildModel(dir)
+    const body = claudeCode.installDoc!(arbitraryHostModel)
+    expect(body).toContain('claude /plugin marketplace add https://gitlab.example.com/owner/repo')
     expect(body).not.toContain('<your-repo>')
   })
 
