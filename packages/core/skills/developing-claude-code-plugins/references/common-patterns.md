@@ -18,11 +18,11 @@ my-plugin/
 └── README.md
 ```
 
-**Real example:** `moe-core`
-- Single skill with comprehensive documentation
+**Real example:** `moe`
+- Every skill in the Moe library
 - Scripts for self-updating
 - 40+ reference files
-- No MCP servers, commands, or hooks
+- No MCP servers or commands; the Stop hook is opt-in
 
 **When to use:**
 - Teaching Claude about a specific topic/domain
@@ -216,7 +216,7 @@ skills/my-skill/
 
 Patterns are composable:
 
-**Example: "moe-core" plugin**
+**Example: "moe" plugin**
 - Multiple skills (brainstorming, TDD, debugging) ← Skill collection
 - Each skill has references/ ← Bundled resources
 - Could add hooks for enforcement ← Add hooks pattern

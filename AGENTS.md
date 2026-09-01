@@ -39,9 +39,10 @@ and the reasoning; this file is the checklist.
 Cite by test name / symbol / quoted sentence, never by line number.
 
 - `packages/core/test/metadata.test.ts` — "accounts for every skill on disk in
-  exactly one of the two maps", plus `LEAN_TIER_COUNT`.
+  exactly one of the two maps", plus the pinned imported-set literal in
+  "pins the IMPORTED skill set at exactly 31".
 - `packages/core/skill-tiers.yaml` — every skill directory needs an entry in
-  exactly one map; lean membership is pinned.
+  exactly one of `imported:` or `authored:`; the `imported:` set is frozen.
 - `.claude-plugin/marketplace.json` — `checkMarketplace()` asserts registry and
   marketplace agree in both directions.
 - `packages/core/skills/_shared/` — every relative markdown link inside an

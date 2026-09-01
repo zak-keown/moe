@@ -12,8 +12,8 @@ collaboration, writing, and plugin authoring.
 - `mint/` — plugin generation configuration.
 - `test/` — metadata, content, hook, and behavior tests.
 
-Skills are assigned to exactly one tier in `skill-tiers.yaml`. Add or remove a
-skill there whenever its directory changes.
+Every skill is registered in `skill-tiers.yaml` under either `imported:` or
+`authored:`. Add or remove a skill there whenever its directory changes.
 
 ## Governance hook
 

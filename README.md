@@ -18,7 +18,7 @@ software QA, transcript pricing, and model evals in one workspace.
 
 | Package | Job |
 |---|---|
-| `@bubstack/moe-core` | Everyday and full coding-workflow skill libraries |
+| `@bubstack/moe-core` | Coding-workflow skill library — brainstorming, planning, TDD, debugging, review, worktrees, plugin authoring |
 | `@bubstack/moe-backstory` | Recover a behavioral specification from an existing system |
 | `@bubstack/moe-memory` | Semantic recall over sessions and journals |
 | `@bubstack/moe-flight` | Drive and grade web, CLI, or TUI acceptance criteria |

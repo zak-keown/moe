@@ -5,8 +5,8 @@
  * with each other were merged into one flat skills/ directory, so the failure
  * modes are metadata failures: a name that collides, a cross-reference that no
  * longer resolves, an anchored path that points at nothing, an executable that
- * lost its bit, a tier assignment nobody recorded. Nothing in `pnpm check`
- * caught any of those before this file existed.
+ * lost its bit, an entry with no rationale. Nothing in `pnpm check` caught any
+ * of those before this file existed.
  */
 
 import { execFileSync } from "node:child_process";
@@ -102,9 +102,9 @@ const skills: Skill[] = skillDirs
 
 const skillNames = new Set(skills.map((s) => s.name));
 
-// skill-tiers.yaml, hoisted to module scope because two describes now read it:
-// the pinned 27-name literal in "skill inventory" asserts against `imported:`,
-// and "the lean/full curation" reads tiers off the merged registry.
+// skill-tiers.yaml, hoisted to module scope because two describes read it:
+// the pinned 31-name literal in "skill inventory" asserts against `imported:`,
+// and "the skill registry" reads rationale off the merged registry.
 //
 // Two maps, not one map with an `origin:` discriminator (decision D1,
 // 2026-08-31): `imported:` is the frozen record of what the six upstream sources
@@ -112,47 +112,19 @@ const skillNames = new Set(skills.map((s) => s.name));
 // upstream drop or rename is aimed at `imported:` alone, which is what lets a
 // fork-authored skill exist at all without loosening it.
 const tiers = parseYaml(readFileSync(join(PKG, "skill-tiers.yaml"), "utf8")) as {
-  imported: Record<string, { tier: string; from: string; why: string }> | null;
-  authored: Record<string, { tier: string; from: string; why: string }> | null;
+  imported: Record<string, { from: string; why: string }> | null;
+  authored: Record<string, { from: string; why: string }> | null;
 };
 const imported = tiers.imported ?? {};
 const authored = tiers.authored ?? {};
 
 // Built in exactly ONE place, on purpose. `{...undefined}` evaluates to `{}`
-// silently, so a single mistyped spread key here would make every tier lookup
-// return undefined and quietly empty the closure rule's loop below rather than
-// throwing. The "resolves a tier for every skill" assertion inside that test is
-// what catches it; this comment is why there is only one place to mistype.
-const registry: Record<string, { tier: string; from: string; why: string }> = {
+// silently, so a single mistyped spread key here would make every lookup return
+// undefined and quietly empty later loops rather than throwing.
+const registry: Record<string, { from: string; why: string }> = {
   ...imported,
   ...authored,
 };
-
-// How many skills the lean plugin ships. A BUDGET, not a fidelity check, and
-// not a token budget either.
-//
-// The number is stated here rather than derived from the manifest on purpose:
-// its whole job is to make any tier reassignment a two-file diff, so that moving
-// a skill between tiers shows up in review as a deliberate act instead of a
-// silently recomputed total. Nothing breaks if it changes — change it, in the
-// same commit as the `tier:` line that made it wrong.
-//
-// The live tiebreak behind the split is TRIGGER COLLISION
-// (skill-tiers.yaml:35-42): where the closure rule does not force the answer,
-// the tie goes to `everything` only if the skill's description claims a trigger
-// a core-tier skill already claims, and absent a collision it goes to `core`.
-// It is NOT "ERR SMALL", which said the tie goes to `everything` because
-// descriptions cost resident context — that rule was deleted 2026-08-31 in
-// 0b1571d after its premise was measured and did not hold (all 27
-// name+description pairs are ~1,480 tokens; the bodies load on demand).
-//
-// Named COUNT, not BUDGET, deliberately. "Budget" is the ERR SMALL framing —
-// that the lean tier is small because descriptions cost resident context — and
-// that premise is the one that was measured false. What this constant actually
-// guards is membership: the lean tier is an INSTALLED INTERFACE for ~20 people
-// who leave it on permanently, so which skills are in it must not change
-// silently. A deliberate change here is one edit; an accidental one is a red test.
-const LEAN_TIER_COUNT = 14;
 
 // Every markdown file we are allowed to make assertions about: the skill bodies
 // and companion documents this fork authored or rebranded. Excludes third-party
@@ -303,9 +275,8 @@ describe("skill inventory", () => {
 describe("cross-references", () => {
   it("no plugin-qualified skill reference survives", () => {
     // `superpowers:<skill>` was the upstream Skill-tool namespace, 32 occurrences
-    // across 15 files. One source tree emits two plugins with different names,
-    // so no single prefix is correct in both, and 14 of the 27 skills are absent
-    // from moe-core entirely. Cross-references are bare backticked names.
+    // across 15 files. No prefix is correct across every harness Moe targets, so
+    // cross-references are bare backticked names.
     const offenders: string[] = [];
     for (const p of ownedMarkdown) {
       const text = readFileSync(p, "utf8");
@@ -880,17 +851,16 @@ describe("agents", () => {
     ).toEqual([]);
   });
 
-  it("emits every agent into the full plugin", () => {
-    const emitted = readdirSync(join(PKG, "../../plugins/moe-everything/agents")).sort();
+  it("emits every agent into the moe plugin", () => {
+    const emitted = readdirSync(join(PKG, "../../plugins/moe/agents")).sort();
     expect(emitted).toEqual(agentFiles);
   });
 });
 
-describe("the lean/full curation", () => {
-  it("assigns every skill exactly one recorded tier, with a rationale", () => {
+describe("the skill registry", () => {
+  it("assigns every skill a non-trivial rationale", () => {
     expect(Object.keys(registry).sort()).toEqual([...skillNames].sort());
     for (const [name, entry] of Object.entries(registry)) {
-      expect(["core", "everything"], `${name}.tier`).toContain(entry.tier);
       expect(entry.from, `${name}.from`).toBeTruthy();
       expect(
         (entry.why ?? "").length,
@@ -908,36 +878,13 @@ describe("the lean/full curation", () => {
     }
   });
 
-  it("keeps every fork-authored skill in the everything tier", () => {
-    // DECISION D2, Zak Keown, 2026-08-31. A fork-authored skill is
-    // `tier: everything` only, FOR NOW.
-    //
-    // This is CURRENT POLICY and it is REVERSIBLE — it is not a law, and it is
-    // not a claim that a Moe-original skill could never earn the lean tier. It
-    // exists so that the FIRST core-tier authored skill is a conversation
-    // somebody has on purpose, rather than a default nobody chose. When that
-    // conversation happens, flip this assertion; do not work around it.
-    //
-    // Vacuous while `authored:` is empty, which is why it was driven RED once
-    // against a throwaway entry rather than trusted because the suite was green.
-    for (const [name, entry] of Object.entries(authored)) {
-      expect(
-        entry.tier,
-        `authored.${name}.tier is "${entry.tier}". Fork-authored skills are everything-tier only — CURRENT POLICY (D2, 2026-08-31), reversible by deliberate decision, not by editing this manifest.`,
-      ).toBe("everything");
-    }
-  });
-
   it("no shipped plugin description hardcodes a skill count", () => {
     // The count rots on the first authored skill, and it rots in TWELVE places at
     // once, because mint byte-copies each `description` into every harness
-    // manifest plus both marketplace files. Both `mint/*.yaml` descriptions
-    // carried "all 27 skills" until 2026-08-31 while nothing asserted any of
-    // them; the de-rotting pass corrected the one copy nothing parses and left
-    // the shipped ones. Assert the sources, since /plugins/ is generated from
-    // them and mint:check proves the copy.
+    // manifest plus both marketplace files. Assert the sources, since
+    // /plugins/ is generated from them and mint:check proves the copy.
     const offenders: string[] = [];
-    for (const rel of ["mint/moe-core.yaml", "mint/moe-everything.yaml"]) {
+    for (const rel of ["mint/moe.yaml"]) {
       const text = readFileSync(join(PKG, rel), "utf8");
       text.split("\n").forEach((line, i) => {
         if (/\b\d+\s+skills\b/.test(line)) offenders.push(`${rel}:${i + 1}  ${line.trim()}`);
@@ -946,85 +893,16 @@ describe("the lean/full curation", () => {
     expect(
       offenders,
       "a skill count in a mint config reaches every generated manifest. Say " +
-        '"every skill" or "the core tier"; the numbers live in skill-tiers.yaml.\n  ' +
+        '"every skill"; the numbers live in skill-tiers.yaml.\n  ' +
         offenders.join("\n  "),
     ).toEqual([]);
   });
 
-  it("keeps the lean tier lean", () => {
-    const core = Object.entries(registry).filter(([, e]) => e.tier === "core");
-    expect(core.length, "lean tier membership changed — update LEAN_TIER_COUNT deliberately").toBe(
-      LEAN_TIER_COUNT,
-    );
-  });
-
-  it("no core-tier skill REQUIREs an everything-tier skill", () => {
-    // The closure rule. A `**REQUIRED SUB-SKILL:**` pointing at a skill the
-    // reader does not have installed is a dead end mid-workflow, and the lean
-    // plugin is the one most people will be running.
-    const tierOf = (n: string) => registry[n]?.tier;
-
-    // Anti-vacuity guard, and it is load-bearing rather than defensive.
-    //
-    // The loop below SKIPS any skill whose tier does not resolve. Before the two
-    // maps existed, a broken lookup threw — indexing an undefined map is a
-    // TypeError — so the failure was loud by accident. The merged
-    // registry removed that accident: `{...undefined}` evaluates to `{}` in
-    // silence, so one mistyped spread key would leave every tier undefined, skip
-    // all 27 iterations, and let this test pass with an empty body and the
-    // closure rule gone. An empty list here is what earns the loop below.
-    const unresolved = skills.filter((s) => tierOf(s.name) === undefined).map((s) => s.name);
-    expect(unresolved, "no tier resolved for these — the loop below would skip them").toEqual([]);
-
-    const offenders: string[] = [];
-    for (const s of skills) {
-      if (tierOf(s.name) !== "core") continue;
-      for (const p of s.files) {
-        if (!p.endsWith(".md")) continue;
-        if (THIRD_PARTY.has(p.split("/").pop() as string)) continue;
-        if (p.split("/").includes(EXAMPLES_SEGMENT)) continue;
-        for (const line of readFileSync(p, "utf8").split(/\r?\n/)) {
-          if (!/REQUIRED (SUB-SKILL|BACKGROUND)/.test(line)) continue;
-          if (line.trimStart().startsWith("- ✅") || line.trimStart().startsWith("- ❌")) continue;
-          for (const m of line.matchAll(/`([a-z0-9][a-z0-9-]*)`/g)) {
-            const target = m[1] as string;
-            if (skillNames.has(target) && tierOf(target) === "everything") {
-              offenders.push(`${s.name} REQUIREs everything-tier ${target}`);
-            }
-          }
-        }
-      }
-    }
-    expect(offenders).toEqual([]);
-  });
-
-  // The tiering used to be data with no mechanism: skill-tiers.yaml recorded a
-  // split that nothing acted on, because moe-mint's readSkills() has no
-  // skill-level filter and would emit all 27 either way. The filter now happens
-  // at STAGE time in scripts/mint-plugins.mjs, which copies only the skills for
-  // a tier into plugins/<name>/ before generating. These two assertions are what
-  // make that claim falsifiable.
-  it("emits exactly the core tier into the lean plugin, plus _shared", () => {
-    const emitted = readdirSync(join(PKG, "../../plugins/moe-core/skills")).sort();
-    const expected = [
-      "_shared",
-      ...Object.entries(registry)
-        .filter(([, e]) => e.tier === "core")
-        .map(([n]) => n),
-    ].sort();
-    expect(emitted).toEqual(expected);
-  });
-
-  it("emits every skill into the full plugin, so it is a strict superset", () => {
-    const lean = readdirSync(join(PKG, "../../plugins/moe-core/skills"));
-    const full = readdirSync(join(PKG, "../../plugins/moe-everything/skills"));
-    expect([...full].sort()).toEqual(["_shared", ...skillNames].sort());
-    for (const name of lean) {
-      expect(
-        full.includes(name),
-        `moe-everything is missing ${name}, so it is not a superset`,
-      ).toBe(true);
-    }
+  // scripts/mint-plugins.mjs stages every skill on disk into the single `moe`
+  // plugin. This assertion is what makes that claim falsifiable.
+  it("emits every skill into the moe plugin, plus _shared", () => {
+    const emitted = readdirSync(join(PKG, "../../plugins/moe/skills")).sort();
+    expect(emitted).toEqual(["_shared", ...skillNames].sort());
   });
 });
 
@@ -1040,7 +918,7 @@ describe("fork invariants", () => {
   });
 
   it("uses the canonical GitLab project URL in plugin configs", () => {
-    for (const rel of ["mint/moe-core.yaml", "mint/moe-everything.yaml"]) {
+    for (const rel of ["mint/moe.yaml"]) {
       const config = readFileSync(join(PKG, rel), "utf8");
       expect(config, rel).toContain("https://gitlab.com/moe-ai/moe");
     }
