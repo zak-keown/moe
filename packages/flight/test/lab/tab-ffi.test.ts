@@ -17,7 +17,7 @@
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { CostEstimate, ModelCost } from "@bubstack/moe-tab";
+import type { CostEstimate, ModelCost } from "@tc/moe-tab";
 import { expect, test } from "vitest";
 import type { AtifTrajectory } from "../../src/lab/atif/types.js";
 import { estimateTrajectory } from "../../src/lab/tab/index.js";

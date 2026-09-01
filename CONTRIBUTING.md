@@ -95,7 +95,7 @@ pnpm mint:check     # asserts /plugins/ is byte-identical from source
 | `pnpm tab:test` | cargo; not in CI's node:24 image | any change under `packages/tab/**` |
 | `pnpm tab:test:bindings` | needs the cdylib built first, and it is the only check that the C ABI rename landed identically in the Rust FFI, the committed header and all three bindings (`PARITY.md` "The C ABI rename is the load-bearing one") | any change to the FFI or a binding |
 | `pnpm proof:test` | Python; needs `uv` | any change under `py/proof/**` |
-| `pnpm mint:check` | it regenerates and diffs `/plugins/`; not a test | any change that could alter generated plugin output — mint config, skill frontmatter, `skill-tiers.yaml`, the marketplace, `@bubstack/moe-mint`'s own source, or the generator script |
+| `pnpm mint:check` | it regenerates and diffs `/plugins/`; not a test | any change that could alter generated plugin output — mint config, skill frontmatter, `skill-tiers.yaml`, the marketplace, `@tc/moe-mint`'s own source, or the generator script |
 
 Warnings do not fail `pnpm lint`. `biome check .` exits 0 on warnings, so they
 are noise, not a gate. Real failures fail.
@@ -103,8 +103,8 @@ are noise, not a gate. Real failures fail.
 ### Scoping
 
 ```sh
-pnpm --filter @bubstack/moe-crew test
-turbo run typecheck test --filter=@bubstack/moe-crew
+pnpm --filter @tc/moe-crew test
+turbo run typecheck test --filter=@tc/moe-crew
 ```
 
 Both work. Prefer `pnpm --filter` for a single package; prefer

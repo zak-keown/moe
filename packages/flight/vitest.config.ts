@@ -44,7 +44,7 @@ const CHROME_SUITES = [
 ];
 
 /**
- * Suites that dlopen `@bubstack/moe-tab`'s cdylib. Its own project for the same
+ * Suites that dlopen `@tc/moe-tab`'s cdylib. Its own project for the same
  * reason packages/tab/bindings/typescript splits: the library only exists after
  * `pnpm tab:build`, and CI's node:24 image has no cargo.
  */

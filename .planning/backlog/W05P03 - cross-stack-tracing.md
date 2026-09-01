@@ -5,7 +5,7 @@ idea: |
   - A skill that answers "what breaks if I change this endpoint?" and "where does
     this component's data come from?" across TC's Angular→BFF boundary, using the
     graph tools this fork actually has
-status: backlog
+status: done
 size: S
 estimate: 5-7 h
 depends_on: []
@@ -20,6 +20,21 @@ decision_needed: no
 
 # Cross-Stack Tracing, Baseline-First
 
+## Built and accepted (2026-09-01)
+
+Zak explicitly chose to build this capability. The skill, authored
+everything-tier row, generated plugin output and contract coverage now exist.
+`.planning/tracing-acceptance-2026-09-01.md` records the literal known-good
+`DELETE DeleteSearch` trace, the empty `consumers` trap, an offline Grep fallback
+against a pinned local checkout, and optional Moedex evidence with repository
+SHAs and honest unresolved boundaries.
+
+The required ladder is CodeGraph first, convention-led Grep when CodeGraph is
+absent or insufficient, and Moedex as an optional enhancement only. Moedex is
+not a prerequisite. The test named "tracing-across-the-stack contract" guards
+the ladder, evidence labels and `impact`-not-`consumers` rule; the downstream
+identity guard and mint generation prove the shipped artifact carries it.
+
 ## Where this came from
 
 Supersedes `tc-domain-skills-port`, which asked whether to port 17 `tc-*` skills
@@ -32,7 +47,7 @@ and a doc there reaches every TC engineer rather than only Moe installs.
 
 What remains is the *capability* those wrappers were reaching for, and Zak's call
 on 2026-09-01 was to build it — with a question that changed the design: **can it
-be written against CodeGraph alone, without moedex?**
+use CodeGraph as its baseline while keeping Moedex optional?**
 
 **Mostly yes**, and that is what makes this item small. Everything below was
 measured on 2026-09-01, not assumed.

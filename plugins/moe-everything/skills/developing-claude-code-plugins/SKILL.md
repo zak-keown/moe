@@ -65,7 +65,7 @@ Before writing code:
 
 2. **Declare the plugin in `moe-mint.yaml`** — do NOT hand-write a manifest.
 
-   In this repo, `@bubstack/moe-mint` generates `.claude-plugin/plugin.json`,
+   In this repo, `@tc/moe-mint` generates `.claude-plugin/plugin.json`,
    `.claude-plugin/marketplace.json` and every other harness manifest from one
    config file. A hand-edited manifest is overwritten by the next `generate`
    and reported as drift by `moe-mint validate`.
@@ -198,7 +198,7 @@ Common issues are usually:
    ```
 
    Anything that genuinely must be consumable outside the repo goes to the
-   GitLab instance registry under the `@bubstack` scope. Nothing else leaves
+   internal ProGet registry under the `@tc` scope. Nothing else leaves
    the company.
 
 5. **Test the install** from a clean checkout:

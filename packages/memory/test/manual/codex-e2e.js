@@ -15,7 +15,7 @@ const PACKAGE_ROOT = path.resolve(__dirname, '..', '..');
 const WORKSPACE_ROOT = path.resolve(PACKAGE_ROOT, '..', '..');
 
 // PREMISE CHANGED ON IMPORT — see test/manual/claude-e2e.js. The installable
-// plugin is GENERATED into /plugins/moe-memory by @bubstack/moe-mint; the
+// plugin is GENERATED into /plugins/moe-memory by @tc/moe-mint; the
 // package root is no longer one, so the tree this harness copies into
 // $CODEX_HOME/plugins/cache has to be pointed at explicitly.
 const PLUGIN_DIR =
@@ -285,7 +285,7 @@ async function main() {
   }
 
   if (!fs.existsSync(path.join(PACKAGE_ROOT, 'dist', 'cli.js'))) {
-    die('dist/cli.js is missing. Run `pnpm --filter @bubstack/moe-memory build` first.');
+    die('dist/cli.js is missing. Run `pnpm --filter @tc/moe-memory build` first.');
   }
   if (!fs.existsSync(path.join(PLUGIN_DIR, '.mcp.json'))) {
     die(

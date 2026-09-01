@@ -1,0 +1,8 @@
+global_privacy_level: 3
+privacy_levels:
+  - path: /confidential/
+    privacy_level: 2
+  - path: /restricted/
+    privacy_level: 1
+  - path: /one-secret.txt
+    privacy_level: 1

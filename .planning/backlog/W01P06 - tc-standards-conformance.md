@@ -29,6 +29,21 @@ decision_needed: no
 > Repo read for this doc: `~/Code/moe` — the Superpowers hard fork. Not
 > `~/Code/tools/moe`, not `~/.claude/moe-core`.
 
+## Supersession note (2026-09-01)
+
+The narrow standards work described here—shared conventions, GitLab/branch
+guidance, CODEOWNERS, the MR template and drift plumbing—merged. The later
+expansion to port or reconcile all 17 `tc-*` skills did not happen and is now
+**canceled, not completed**. The census in `tc-domain-skills-port` records the
+replacement decision: thirteen duplicates are declined, three tool-wrapper
+capabilities are superseded by the now-built `tracing-across-the-stack` skill,
+and the one knowledge artifact belongs in `ai/kb`.
+
+Accordingly, the `done` frontmatter applies only to the narrow implementation
+that merged. It must not be cited as evidence that the accepted 12–17 hour,
+17-skill expansion shipped. The historical analysis below is preserved to show
+how that expansion arose.
+
 ## The idea
 
 > Mutate skills to conform to TC standards - start with MRs and branch formatting
@@ -227,19 +242,17 @@ the branch-name derivation step in `using-git-worktrees`; root `CODEOWNERS` and
 
 ## Decisions (2026-08-31, Zak)
 
-**Q1 — the sibling fork: MOE REPLACES IT.** `ai/claude-code-platform-plugin` is
-retired in favour of Moe; its deltas are ported wholesale rather than reimplemented
-as a fragment, and `tc-using-platform`'s session-start bootstrap is retired so
-`using-moe` is the only one. This is the option that resolves the bootstrap
-collision by elimination — the other two leave a real user able to install both and
-get two competing "you MUST invoke skills" directives with nondeterministic
-dispatch.
+**Q1 — superseded 2026-09-01.** Moe still replaces the sibling fork, but its
+17 `tc-*` skills are not ported wholesale. Thirteen duplicates are explicitly
+declined, three wrapper capabilities are replaced by the cross-stack-tracing
+design, and one knowledge artifact belongs in `ai/kb`. This cancellation is the
+resolved outcome; it is not a claim that the 17-skill work completed.
 
-**This roughly triples the item, and that is accepted, not overlooked.** 4-5 h
+**Historical estimate for the now-canceled expansion:** 4-5 h
 becomes **12-17 h**: 17 `tc-*` skills to reconcile rather than one fragment to
 write. The doc's own earlier warning — "that turns a fragment into a 17-skill
-reconciliation and is a different, larger item" — is now the plan. Two consequences
-to carry:
+reconciliation and is a different, larger item" — was accepted at the time but
+was never implemented. Its scheduling consequences were:
 
 - It becomes W01's co-critical path alongside `installer-hq-dx`, so the wave's wall
   clock is set by whichever of the two runs longer, not by installer alone.
@@ -247,11 +260,10 @@ to carry:
   item. Tripling it delays them; neither moves wave, because both were already
   downstream.
 
-**Q2 — trust-map gate: still open, and deliberately deferred.** Whether
+**Q2 — retired with the canceled port.** Whether
 `tc-finishing-branch`'s `getTrustRating`/`analyzeTrust` block and `ui-approvers`
-auto-assignment come across is a live question, but it is a *port* decision inside
-the 17 skills rather than a precondition for starting. Decide it while porting that
-skill, with the evidence in front of you.
+auto-assignment should come across was a port decision inside the 17 skills. That
+port is canceled; reopen this only as a separate concrete capability request.
 
 **Q3 — canonical branch format: still open.** Three sources disagree and the
 replace decision does not settle it. See the original question below; it now has to
@@ -288,7 +300,7 @@ as written.
    `tc-governance-integration` adding two rows to the same manifest. Set
    `blocks: [tc-governance-integration]` on that basis. Confirm, or flip it.
 
-## Effort
+## Historical effort for the narrow standards work
 
 | Step | Time |
 |---|---|
@@ -301,8 +313,8 @@ as written.
 | Drift-check CI job + verifying it fails on a bumped SHA | 1-1.5 h |
 | Regenerate `/plugins/`, run the suite | 30 min |
 
-**~4-5 h.** Slower if Q1 comes back "absorb the sibling fork" — that turns a
-fragment into a 17-skill reconciliation and is a different, larger item. Slower
+**~4-5 h.** The old Q1 answer temporarily expanded this into a 17-skill
+reconciliation; that expansion is canceled as described above. The narrow work is slower
 if the drift job needs a GitLab token with `ai/skills` read plus MR-create on
 `Zak/moe`; if that provisioning stalls, land steps 1-6 and leave step 7
 behind a follow-up.

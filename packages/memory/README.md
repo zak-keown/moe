@@ -37,10 +37,10 @@ overridden with `MOE_MEMORY_JOURNAL_PATH`.
 ## Development
 
 ```sh
-pnpm --filter @bubstack/moe-memory build
-pnpm --filter @bubstack/moe-memory typecheck
-pnpm --filter @bubstack/moe-memory test
-pnpm --filter @bubstack/moe-memory test:model
+pnpm --filter @tc/moe-memory build
+pnpm --filter @tc/moe-memory typecheck
+pnpm --filter @tc/moe-memory test
+pnpm --filter @tc/moe-memory test:model
 ```
 
 `test:model` downloads and runs an embedding model and is intentionally outside

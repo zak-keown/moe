@@ -17,7 +17,7 @@ and the reasoning; this file is the checklist.
 ## Repo law
 
 1. **A repository is not an installable plugin.** Source lives in `packages/`.
-   Installable plugins are GENERATED into `/plugins/` by `@bubstack/moe-mint`.
+   Installable plugins are GENERATED into `/plugins/` by `@tc/moe-mint`.
    Never hand-edit anything under `/plugins/`. Edit
    `packages/<pkg>/mint/<plugin>.yaml` and run `pnpm mint`.
 2. **The snapshots in `../.moe-references/` are the spec, not upstream HEAD.**
@@ -97,8 +97,8 @@ Root scripts (`package.json`), the only ones this doc names:
 - `pnpm provenance` — validates the attribution register and generated license
   payloads.
 
-Scoping a package: `pnpm --filter @bubstack/moe-crew test` or
-`turbo run typecheck test --filter=@bubstack/moe-crew`.
+Scoping a package: `pnpm --filter @tc/moe-crew test` or
+`turbo run typecheck test --filter=@tc/moe-crew`.
 
 **Before opening an MR, run `pnpm check` and `pnpm mint:check`.** `pnpm check`
 is the Node-only gate; the Rust and Python paths are CI-scoped and land after

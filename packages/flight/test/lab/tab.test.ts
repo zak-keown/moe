@@ -1,5 +1,5 @@
 /**
- * The pure half of the `@bubstack/moe-flight` -> `@bubstack/moe-tab` boundary:
+ * The pure half of the `@tc/moe-flight` -> `@tc/moe-tab` boundary:
  * `mergeEstimates`, which is arithmetic over `CostEstimate` values and touches
  * no native code.
  *
@@ -10,7 +10,7 @@
  * The suites that dlopen the cdylib live in tab-ffi.test.ts.
  */
 
-import type { CostEstimate, ModelCost } from "@bubstack/moe-tab";
+import type { CostEstimate, ModelCost } from "@tc/moe-tab";
 import { expect, test } from "vitest";
 import { mergeEstimates } from "../../src/lab/tab/index.js";
 

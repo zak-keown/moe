@@ -14,7 +14,7 @@
 # not that the two configs agree.
 
 name: moe-everything
-version: 0.0.0
+version: 0.0.0-tc.1
 # No skill count here, deliberately. A number in a SHIPPED description rots on
 # the first authored skill, and it rots in twelve places at once because mint
 # byte-copies this string into every harness manifest. The count lives in
@@ -49,8 +49,9 @@ bootstrap:
 # components: all defaults. No commands/ and no .mcp.json in this package.
 # agents/ is present — retrieving-context's two haiku search agents, staged from
 # packages/core/agents/ like every other component here. hooks/hooks.json
-# carries a Stop hook and a SessionStart hook, and mint merges its own
-# SessionStart entry into hooks/moe-mint/hooks.json.
+# carries Stop and SessionStart hooks plus the same opt-in, fail-open PreToolUse
+# governance guard as moe-core. Mint also merges its own SessionStart entry into
+# hooks/moe-mint/hooks.json.
 
 # harnesses: no exclusions. All 8 adapters run.
 

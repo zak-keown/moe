@@ -53,7 +53,7 @@ async function main(): Promise<void> {
       // a clean tree; the specifier resolves through the workspace link, which
       // is what tsconfig.json's `references` entry and turbo's
       // `typecheck dependsOn ^build` are both already expressing.
-      const { runDashboardCli } = await import("@bubstack/moe-flight-dashboard");
+      const { runDashboardCli } = await import("@tc/moe-flight-dashboard");
       await runDashboardCli(rest);
       return;
     }

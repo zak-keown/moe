@@ -1,10 +1,14 @@
 {
-  "name": "@bubstack/moe-flight-dashboard",
-  "version": "0.0.0",
+  "name": "@tc/moe-flight-dashboard",
+  "version": "0.0.0-tc.1",
   "private": true,
   "type": "module",
   "description": "Read-only scenario x agent x credential x OS results grid for moe-flight, server-rendered and live-updated over SSE.",
   "license": "Apache-2.0",
+  "moeRelease": {
+    "upstreamVersion": "0.0.0",
+    "upstreamCommit": "54b4ec6c54540d472835c1e074e7e7c8e6469329"
+  },
   "engines": {
     "node": ">=24"
   },

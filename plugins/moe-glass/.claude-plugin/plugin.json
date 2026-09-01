@@ -1,6 +1,6 @@
 {
   "name": "moe-glass",
-  "version": "0.0.0",
+  "version": "0.0.0-tc.1",
   "description": "Direct Chrome DevTools Protocol access. Skill mode plus MCP mode, zero dependencies.",
   "author": {
     "name": "Zak Keown",

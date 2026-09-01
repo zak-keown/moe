@@ -12,7 +12,7 @@ function readJson(relPath: string): unknown {
  * REWRITTEN ON IMPORT. Upstream this suite asserted the contents of four hand-
  * maintained plugin manifests — `.claude-plugin/plugin.json`,
  * `.codex-plugin/plugin.json`, `.agents/plugins/marketplace.json` and
- * `.version-bump.json`. All four are gone: `@bubstack/moe-mint` generates plugin
+ * `.version-bump.json`. All four are gone: `@tc/moe-mint` generates plugin
  * manifests into `/plugins/moe-memory`, the two marketplace stubs collapse into
  * the single root `.claude-plugin/marketplace.json`, and the version-bump
  * lockstep tooling is void under the no-public-publishing decision.

@@ -10,7 +10,7 @@ import { BUNDLED_PROMPT_NAMES, loadPromptFile } from "../../../src/qa/agent/prom
  * that with codegen (scripts/gen-prompts.mjs), and codegen can go stale — so
  * the guarantee becomes this test.
  *
- * If it fails: run `pnpm --filter @bubstack/moe-flight gen:prompts`.
+ * If it fails: run `pnpm --filter @tc/moe-flight gen:prompts`.
  */
 const PROMPT_DIR = join(import.meta.dirname, "..", "..", "..", "src", "qa", "agent", "prompts");
 

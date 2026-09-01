@@ -29,9 +29,9 @@ generated manifest.
 ## Development
 
 ```sh
-pnpm --filter @bubstack/moe-crew build
-pnpm --filter @bubstack/moe-crew typecheck
-pnpm --filter @bubstack/moe-crew test
+pnpm --filter @tc/moe-crew build
+pnpm --filter @tc/moe-crew typecheck
+pnpm --filter @tc/moe-crew test
 ```
 
 The integration suites self-skip when tmux is unavailable.

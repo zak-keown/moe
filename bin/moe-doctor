@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// moe-doctor — probe every prerequisite Moe cares about across macOS, Linux,
-// WSL 2 and native Windows, name the capability each miss disables, and give
-// one concrete fix per gap.
+// moe-doctor — probe every prerequisite Moe cares about across macOS, Linux
+// and WSL2, name the capability each miss disables, and give one concrete fix
+// per gap. The platform probe hard-rejects native Windows for now.
 //
 // Dependency-free ESM: `node bin/moe-doctor` works on a fresh checkout with
 // nothing installed but Node. That is the correct shape for a diagnostic
@@ -26,8 +26,9 @@ if (args.includes('--help') || args.includes('-h')) {
       '  moe-doctor --json     Emit the probe results as JSON on stdout.',
       '  moe-doctor --help     Show this message.',
       '',
+      'Supported platforms: macOS, Linux, and WSL2. Native Windows is deferred.',
       'Exit code: 0 if every HARD probe passes; 1 if a hard probe fails.',
-      'Soft misses (cargo, tmux, uv, chrome, docker, python3) print a',
+      'Soft misses (pnpm, cargo, tmux, uv, chrome, docker, python3) print a',
       'capability warning but never fail the exit.',
       '',
     ].join('\n'),

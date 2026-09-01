@@ -45,10 +45,10 @@ Never hand-edit the generated manifest.
 ## Development
 
 ```sh
-pnpm --filter @bubstack/moe-core typecheck
-pnpm --filter @bubstack/moe-core test
-pnpm --filter @bubstack/moe-core test:python
-pnpm --filter @bubstack/moe-core test:shell
+pnpm --filter @tc/moe-core typecheck
+pnpm --filter @tc/moe-core test
+pnpm --filter @tc/moe-core test:python
+pnpm --filter @tc/moe-core test:shell
 pnpm mint
 ```
 

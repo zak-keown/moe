@@ -121,7 +121,7 @@ const INLINE_TEXT_LIMIT = 32 * 1024;
 
 /**
  * The `type` value of a `usage.jsonl` row, and one half of a cross-package
- * contract: `@bubstack/moe-tab`'s `tab` dialect declares
+ * contract: `@tc/moe-tab`'s `tab` dialect declares
  * `ROW_TYPE = "moe.tab.usage"` (packages/tab/crates/moe-tab-core/src/transcript/tab.rs)
  * and SKIPS rows whose
  * type it does not claim — it does not error. Get this string wrong and every

@@ -14,10 +14,19 @@ touches:
   - packages/core/agents/
   - packages/core/skill-tiers.yaml
   - packages/core/mint/moe-core.yaml
-decision_needed: yes
+decision_needed: no
 ---
 
 # Context Routing For CodeGraph, Moedex And Memory
+
+## Completion repair (2026-09-01)
+
+`retrieving-context` now belongs in the core/lean plugin so it can fire
+unprompted. It is the sole explicit exception to the authored-skills-
+everything-only rule; `skill-tiers.yaml` records the rationale, the test named
+"keeps retrieving-context as the sole authored core-tier exception" guards it,
+and `LEAN_TIER_COUNT` is 15. Fresh mint output contains the skill in
+`moe-core`, so the gap found by the completion audit is closed.
 
 ## The idea
 
@@ -337,15 +346,15 @@ proxy MCP server, a 10th package, or any new always-on process; any change to
 CodeGraph's data-handling posture, now explicitly out of scope; and sending
 anything external — both backends are `*.tcdevops.com` or loopback.
 
-## Open questions for Zak
+## Tier decision — resolved 2026-09-01
 
-**One.** Should `retrieving-context` be `tier: core` (lean, ships to everyone) or
-`tier: everything`? I recommend `core`: the skill's value is firing unprompted, so
+`retrieving-context` is `tier: core` (lean, ships to everyone), not
+`tier: everything`. The skill's value is firing unprompted, so
 `everything` withholds it from the people who run the lean plugin permanently —
 the ones with the problem. Concrete cost either way: `core` means changing
 `metadata.test.ts:613` from 13 to 14 and nothing else; `everything` needs no test
-change. The tiering is DO-NOW-2's decision, so this item is an input to it rather
-than a separate fork.
+change. The later rule placing authored skills only in everything has one named
+exception for this routing policy; the exception must be documented and tested.
 
 Everything else previously open here is now answered by the settled decisions
 above: moedex's role, what it indexes, and the data-handling question.
@@ -370,9 +379,11 @@ baseline work.
    frontmatter; `packages/core/agents/search-{codegraph,moedex}.md` exist with
    `model: haiku` and explicit `tools:` allowlists, matching the shape at
    `packages/memory/agents/search-conversations.md:1-6`.
-2. `packages/core/skill-tiers.yaml` gains a `retrieving-context` entry **under
-   `authored:`** (line 316, currently `{}`) — never under `imported:`, which is
+2. `packages/core/skill-tiers.yaml` has a `retrieving-context` entry **under
+   `authored:` with `tier: core`** — never under `imported:`, which is
    the frozen upstream record that `metadata.test.ts:148,228` assert at 27 names.
+   The lean-count assertion is updated deliberately, and a guard documents this
+   skill as the explicit exception to authored-skills-everything-only.
    `metadata.test.ts:240`'s registered-vs-directory check and `:617`'s
    tier-closure test both pass: nothing this skill REQUIREs may sit in a higher
    tier than it does.

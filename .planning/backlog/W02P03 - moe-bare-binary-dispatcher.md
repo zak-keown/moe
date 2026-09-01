@@ -16,7 +16,7 @@ depends_on: [DO-NOW-1, installer-hq-dx]
 blocks: []
 conflicts_with: [installer-hq-dx, runtime-pruning, moe-tone-and-branding]
 touches: [bin/, ARCHITECTURE.md, README.md, .gitlab-ci.yml, package.json]
-decision_needed: yes
+decision_needed: no
 ---
 
 # Claim The Bare `moe` Binary
@@ -24,6 +24,18 @@ decision_needed: yes
 *(About `~/Code/moe`, the Superpowers hard fork. It also specifies changes required in
 `~/Code/tools/moedex` — a different, unrelated Go repo — and mentions `~/.claude/moe-core`
 and `~/Code/tools/moe`. Four projects carry Moe branding; every reference names which one.)*
+
+## Completion repair (2026-09-01)
+
+The downstream umbrella now owns the bare dispatcher and installs it with
+`moe-install` and `moe-doctor`. Bare/status output classifies all seven namespaces
+once; present commands preserve argument and exit-code forwarding, while private,
+Python-only and bindings-only namespaces report their actual distribution model.
+The clean-home suite covers resolution and lifecycle behavior, and an actual
+packed `@tc/moe` install produced all three executable shims. The prior open
+questions are resolved: the dispatcher is the documented entry point, WSL2 is
+the Windows route, native Windows is deferred, and no compatibility window for
+the abandoned binary broadens this repository's work.
 
 ## The idea
 

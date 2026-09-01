@@ -10,7 +10,7 @@ import { defineConfig } from "vitest/config";
 // four CLI-spawning suites don't each build it themselves (they raced when
 // vitest ran them in parallel workers). Redundant under `turbo run test`,
 // which already has `dependsOn: ["build"]`, but it keeps a bare
-// `pnpm --filter @bubstack/moe-mint test` working.
+// `pnpm --filter @tc/moe-mint test` working.
 export default defineConfig({
   test: {
     globalSetup: ["./test/global-setup.ts"],

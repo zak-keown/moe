@@ -17,7 +17,7 @@
 // websocket-client-no-compression.test.ts` caught it on the first Node run.
 //
 // `ws` honours `perMessageDeflate: false` for real, and it is already a
-// declared runtime dependency of @bubstack/moe-flight (src/qa/runtime/serve.ts
+// declared runtime dependency of @tc/moe-flight (src/qa/runtime/serve.ts
 // uses it for upgrades). It also keeps the browser-shaped
 // `addEventListener` API this class was written against.
 //

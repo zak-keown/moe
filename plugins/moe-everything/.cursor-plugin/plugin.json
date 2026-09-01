@@ -2,7 +2,7 @@
   "name": "moe-everything",
   "displayName": "moe-everything",
   "description": "The full Moe skill library, including the ones you invoke deliberately by name.",
-  "version": "0.0.0",
+  "version": "0.0.0-tc.1",
   "author": {
     "name": "Zak Keown",
     "email": "zak@turncommerce.com"

@@ -6,7 +6,7 @@
 > because it documents live behavior, not a past decision — the package
 > `README.md` records the import instead. Upstream's v1.0.0 release framing has
 > been dropped: the schema and generation-manifest format were declared stable
-> at upstream 1.0 and are unchanged here, but `@bubstack/moe-mint` is version
+> at upstream 1.0 and are unchanged here, but `@tc/moe-mint` is version
 > `0.0.0`, is not published anywhere, and is invoked through the workspace.
 
 Generate a coding-agent plugin for every harness from one config file.

@@ -1,6 +1,6 @@
 import { defineConfig } from "vitest/config";
 
-// `@bubstack/moe-core` is a content package: 27 skills, three shared reference
+// `@tc/moe-core` is a content package: 27 skills, three shared reference
 // documents, a Stop hook and a polyglot wrapper. There is nothing to compile, so
 // verification is about the CORRECTNESS OF METADATA, not a passing build — every
 // skill has valid frontmatter, no name collides, no cross-reference is stale,

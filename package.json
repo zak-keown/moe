@@ -1,15 +1,34 @@
 {
-  "name": "moe",
-  "private": true,
+  "name": "@tc/moe",
+  "version": "0.0.0-tc.1",
   "type": "module",
   "description": "Moe — one workspace for coding-agent tools and skills.",
   "license": "Apache-2.0",
+  "moeRelease": {
+    "upstreamVersion": "0.0.0",
+    "upstreamCommit": "54b4ec6c54540d472835c1e074e7e7c8e6469329"
+  },
+  "publishConfig": {
+    "registry": "https://proget.tcdevops.com/npm/tcnpm/"
+  },
+  "files": [
+    "bin/moe.js",
+    "bin/moe-install",
+    "bin/moe-doctor",
+    "bin/lib/probes.mjs",
+    "config/distribution.mjs",
+    "INSTALL.md",
+    "LICENSE",
+    "NOTICE"
+  ],
   "engines": {
     "node": ">=24"
   },
   "packageManager": "pnpm@11.23.0",
   "bin": {
-    "moe": "./bin/moe.js"
+    "moe": "./bin/moe.js",
+    "moe-install": "./bin/moe-install",
+    "moe-doctor": "./bin/moe-doctor"
   },
   "scripts": {
     "bin:test": "vitest run --dir bin/test",

@@ -1,196 +1,224 @@
 #!/usr/bin/env node
-// moe-install — install, upgrade, or uninstall Moe over the
-// `claude plugin` CLI. Dependency-free ESM, cross-platform.
-//
-// Follows the recommendation in `.planning/backlog/W01P01 - installer-hq-dx.md`
-// (Option C): the marketplace lives at `gitlab.tcdevops.com/Zak/moe`, four of
-// six plugins install from a sparse clone of `.claude-plugin/` and `plugins/`,
-// two (memory, glass) install from the `@bubstack` npm scope. Neither shape
-// requires the user to have cloned the repo or run pnpm.
-//
-// Every real action is `claude plugin …` under the hood — this script does not
-// touch registries directly, just orchestrates the CLI and reports what it
-// intends to do first. That means `--dry-run` is the default for readers: with
-// no flags the script prints the plan and refuses to change anything.
+// moe-install — persist the TC umbrella CLI and manage its Claude plugins.
+// Dependency-free ESM for macOS, Linux and WSL2. Native Windows is deferred.
 
-import { spawnSync } from 'node:child_process'
-import { allProbes, overallExit } from './lib/probes.mjs'
+import { spawnSync } from "node:child_process";
+import { readFileSync, realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import {
+  MARKETPLACE,
+  NPM_CLI_PACKAGES,
+  UMBRELLA_PACKAGE,
+} from "../config/distribution.mjs";
+import { allProbes, overallExit } from "./lib/probes.mjs";
 
-const MARKETPLACE = 'moe'
-const MARKETPLACE_URL = 'https://gitlab.tcdevops.com/Zak/moe.git'
-const PLUGINS = ['moe-core', 'moe-everything', 'moe-backstory', 'moe-crew', 'moe-memory', 'moe-glass']
-
-function usage() {
+export function usage() {
   return [
-    'moe-install — install, upgrade, or uninstall Moe.',
-    '',
-    'Usage:',
-    '  moe-install                    Print the install plan and exit (dry-run).',
-    '  moe-install --apply            Run moe-doctor, then install every plugin.',
-    '  moe-install --upgrade          Update the marketplace and every installed plugin.',
-    '  moe-install --uninstall        Uninstall every Moe plugin and remove the marketplace.',
-    '  moe-install --skip-doctor      Skip the doctor probe on --apply (not recommended).',
-    '  moe-install --scope <s>        Pass --scope user|project|local to `claude plugin`.',
-    '  moe-install --help             Show this message.',
-    '',
-    'The default is intentionally read-only. Nothing changes without --apply.',
-    '',
-  ].join('\n')
+    "moe-install — install, upgrade, or uninstall Moe.",
+    "",
+    "Usage:",
+    "  moe-install                    Print the install plan and exit (dry-run).",
+    "  moe-install --apply            Persist this exact TC release and install every plugin.",
+    "  moe-install --upgrade          Print the upgrade plan; add --apply to execute it.",
+    "  moe-install --uninstall        Print the uninstall plan; add --apply to execute it.",
+    "  moe-install --skip-doctor      Skip the doctor probe on install (not recommended).",
+    "  moe-install --scope <s>        Pass --scope user|project|local to plugin operations.",
+    "  moe-install --help             Show this message.",
+    "",
+    "The default is intentionally read-only. Nothing changes without --apply.",
+    "`moe install|upgrade|uninstall` injects --apply for the normal lifecycle.",
+    "",
+  ].join("\n");
 }
 
-function parseArgs(argv) {
-  const flags = new Set()
-  let scope
+export function parseArgs(argv) {
+  const flags = new Set();
+  let scope;
   for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i]
-    if (arg === '--scope') {
-      scope = argv[++i]
-      continue
+    const arg = argv[i];
+    if (arg === "--scope") {
+      scope = argv[++i];
+      continue;
     }
-    if (arg.startsWith('--')) flags.add(arg)
+    if (arg.startsWith("--") || arg === "-h") flags.add(arg);
   }
-  return { flags, scope }
+  return { flags, scope };
 }
 
-function run(cmd, args, { dryRun }) {
-  const printable = [cmd, ...args].join(' ')
+function packageVersion() {
+  const packageJson = JSON.parse(
+    readFileSync(fileURLToPath(new URL("../package.json", import.meta.url)), "utf8"),
+  );
+  if (typeof packageJson.version !== "string" || packageJson.version.length === 0) {
+    throw new Error("the @tc/moe package has no version");
+  }
+  return packageJson.version;
+}
+
+function run(cmd, args, { dryRun, stdout, stderr, spawn = spawnSync, env = process.env }) {
+  const printable = [cmd, ...args].join(" ");
   if (dryRun) {
-    process.stdout.write(`  [dry-run] ${printable}\n`)
-    return 0
+    stdout.write(`  [dry-run] ${printable}\n`);
+    return 0;
   }
-  process.stdout.write(`  $ ${printable}\n`)
-  const result = spawnSync(cmd, args, { stdio: 'inherit' })
+  stdout.write(`  $ ${printable}\n`);
+  const result = spawn(cmd, args, { stdio: "inherit", env });
   if (result.error) {
-    process.stderr.write(`moe-install: failed to spawn ${cmd}: ${result.error.message}\n`)
-    return 127
+    stderr.write(`moe-install: failed to spawn ${cmd}: ${result.error.message}\n`);
+    return 127;
   }
-  return result.status ?? 1
+  return result.status ?? 1;
 }
 
 function scopeArgs(scope) {
-  return scope ? ['--scope', scope] : []
+  return scope ? ["--scope", scope] : [];
 }
 
-function runDoctor() {
-  process.stdout.write('Running moe-doctor first...\n\n')
-  const results = allProbes()
+function runDoctor(stdout) {
+  stdout.write("Running moe-doctor first...\n\n");
+  const results = allProbes();
   for (const r of results) {
-    const tag = r.ok ? 'ok' : r.tier === 'hard' ? 'MISS' : 'warn'
-    const version = r.version ? ` (${r.version})` : ''
-    process.stdout.write(`  [${tag}] ${r.name}${version}\n`)
-    if (!r.ok && r.fixHint) process.stdout.write(`         fix: ${r.fixHint}\n`)
+    const tag = r.ok ? "ok" : r.tier === "hard" ? "MISS" : "warn";
+    const version = r.version ? ` (${r.version})` : "";
+    stdout.write(`  [${tag}] ${r.name}${version}\n`);
+    if (!r.ok && r.fixHint) stdout.write(`         fix: ${r.fixHint}\n`);
   }
-  const exit = overallExit(results)
-  process.stdout.write(exit === 0 ? '\nDoctor passed. Proceeding with install.\n\n' : '\nDoctor found HARD gaps. Fix them and re-run.\n')
-  return exit
+  const exit = overallExit(results);
+  stdout.write(
+    exit === 0
+      ? "\nDoctor passed. Proceeding with install.\n\n"
+      : "\nDoctor found HARD gaps. Fix them and re-run.\n",
+  );
+  return exit;
 }
 
-function planInstall(scope) {
-  const s = scopeArgs(scope)
-  const lines = []
-  lines.push(`claude plugin marketplace add ${MARKETPLACE_URL}${s.length ? ' ' + s.join(' ') : ''}`)
-  for (const p of PLUGINS) lines.push(`claude plugin install ${p}@${MARKETPLACE}${s.length ? ' ' + s.join(' ') : ''}`)
-  return lines
+/** Build the exact ordered command sequence for a lifecycle operation. */
+export function lifecycleActions(mode, scope, version) {
+  const scoped = scopeArgs(scope);
+  const exactPackages = [UMBRELLA_PACKAGE, ...NPM_CLI_PACKAGES].map(
+    (name) => `${name}@${version}`,
+  );
+  const latestPackages = [UMBRELLA_PACKAGE, ...NPM_CLI_PACKAGES].map(
+    (name) => `${name}@latest`,
+  );
+  const actions = [];
+
+  if (mode === "install") {
+    // Persist the npx-delivered umbrella before its temporary cache disappears.
+    actions.push(["npm", "install", "--global", ...exactPackages]);
+    actions.push([
+      "claude",
+      "plugin",
+      "marketplace",
+      "add",
+      MARKETPLACE.repository,
+      "--sparse",
+      ...MARKETPLACE.sparsePaths,
+      ...scoped,
+    ]);
+    for (const plugin of MARKETPLACE.plugins) {
+      actions.push(["claude", "plugin", "install", `${plugin}@${MARKETPLACE.name}`, ...scoped]);
+    }
+    return actions;
+  }
+
+  if (mode === "upgrade") {
+    // Claude's marketplace update command does not accept --scope.
+    actions.push(["claude", "plugin", "marketplace", "update", MARKETPLACE.name]);
+    for (const plugin of MARKETPLACE.plugins) {
+      actions.push(["claude", "plugin", "update", `${plugin}@${MARKETPLACE.name}`, ...scoped]);
+    }
+    // Replace the running global package last; the current installer stays stable.
+    actions.push(["npm", "install", "--global", ...latestPackages]);
+    return actions;
+  }
+
+  for (const plugin of MARKETPLACE.plugins) {
+    actions.push(["claude", "plugin", "uninstall", `${plugin}@${MARKETPLACE.name}`, ...scoped]);
+  }
+  actions.push(["claude", "plugin", "marketplace", "remove", MARKETPLACE.name, ...scoped]);
+  actions.push(["npm", "uninstall", "--global", ...NPM_CLI_PACKAGES]);
+  // The command currently executing lives in this package. Remove it last.
+  actions.push(["npm", "uninstall", "--global", UMBRELLA_PACKAGE]);
+  return actions;
 }
 
-function planUpgrade(scope) {
-  const s = scopeArgs(scope)
-  const lines = []
-  lines.push(`claude plugin marketplace update ${MARKETPLACE}${s.length ? ' ' + s.join(' ') : ''}`)
-  for (const p of PLUGINS) lines.push(`claude plugin update ${p}@${MARKETPLACE}${s.length ? ' ' + s.join(' ') : ''}`)
-  return lines
-}
-
-function planUninstall(scope) {
-  const s = scopeArgs(scope)
-  const lines = []
-  for (const p of PLUGINS) lines.push(`claude plugin uninstall ${p}@${MARKETPLACE}${s.length ? ' ' + s.join(' ') : ''}`)
-  lines.push(`claude plugin marketplace remove ${MARKETPLACE}${s.length ? ' ' + s.join(' ') : ''}`)
-  return lines
-}
-
-// Takes the already-resolved action list, not a producer plus a scope. The
-// earlier signature was `doAction(planFn, actionArgs, scope, dryRun)`, and
-// planFn and scope were both dead: planFn existed only to be `void`ed, and
-// scope was re-derived into an `s` that was also only `void`ed, then handed to
-// an actionArgs that the single call site passes as `() => actions` — an arrow
-// that ignores its argument. Scope is applied where the actions are built
-// (installActions / upgradeActions / uninstallActions), which is the only
-// place it was ever read.
-function doAction(actions, dryRun) {
+function doAction(actions, options) {
   for (const [cmd, ...args] of actions) {
-    const status = run(cmd, args, { dryRun })
-    if (status !== 0 && !dryRun) {
-      process.stderr.write(`moe-install: ${cmd} ${args.join(' ')} exited ${status}\n`)
-      return status
+    const status = run(cmd, args, options);
+    if (status !== 0 && !options.dryRun) {
+      options.stderr.write(`moe-install: ${cmd} ${args.join(" ")} exited ${status}\n`);
+      return status;
     }
   }
-  return 0
+  return 0;
 }
 
-function installActions(scope) {
-  const s = scopeArgs(scope)
-  const actions = [['claude', 'plugin', 'marketplace', 'add', MARKETPLACE_URL, ...s]]
-  for (const p of PLUGINS) actions.push(['claude', 'plugin', 'install', `${p}@${MARKETPLACE}`, ...s])
-  return actions
+export function main(argv = process.argv.slice(2), opts = {}) {
+  const stdout = opts.stdout ?? process.stdout;
+  const stderr = opts.stderr ?? process.stderr;
+  const { flags, scope } = parseArgs(argv);
+
+  if (flags.has("--help") || flags.has("-h")) {
+    stdout.write(usage());
+    return 0;
+  }
+  if (scope !== undefined && !["user", "project", "local"].includes(scope)) {
+    stderr.write("moe-install: --scope must be user, project, or local\n");
+    return 2;
+  }
+
+  const apply = flags.has("--apply");
+  const skipDoctor = flags.has("--skip-doctor");
+  let mode = "install";
+  if (flags.has("--upgrade")) mode = "upgrade";
+  else if (flags.has("--uninstall")) mode = "uninstall";
+
+  let version;
+  try {
+    version = opts.version ?? packageVersion();
+  } catch (error) {
+    stderr.write(`moe-install: ${error.message}\n`);
+    return 1;
+  }
+  const actions = lifecycleActions(mode, scope, version);
+  stdout.write(`moe-install: mode=${mode}${scope ? ` scope=${scope}` : ""}\n\n`);
+
+  if (!apply) {
+    stdout.write("Plan (dry-run — re-run with --apply to execute):\n");
+    const status = doAction(actions, {
+      dryRun: true,
+      stdout,
+      stderr,
+      spawn: opts.spawn,
+      env: opts.env,
+    });
+    stdout.write(
+      "\nCaveat: removing the marketplace from its last scope uninstalls every plugin from it.\n",
+    );
+    return status;
+  }
+
+  if (mode === "install" && !skipDoctor) {
+    const doctorExit = runDoctor(stdout);
+    if (doctorExit !== 0) return doctorExit;
+  }
+
+  return doAction(actions, {
+    dryRun: false,
+    stdout,
+    stderr,
+    spawn: opts.spawn,
+    env: opts.env,
+  });
 }
 
-function upgradeActions(scope) {
-  const s = scopeArgs(scope)
-  const actions = [['claude', 'plugin', 'marketplace', 'update', MARKETPLACE, ...s]]
-  for (const p of PLUGINS) actions.push(['claude', 'plugin', 'update', `${p}@${MARKETPLACE}`, ...s])
-  return actions
-}
+const invokedDirectly = (() => {
+  try {
+    return realpathSync(process.argv[1]) === fileURLToPath(import.meta.url);
+  } catch {
+    return false;
+  }
+})();
 
-function uninstallActions(scope) {
-  const s = scopeArgs(scope)
-  const actions = []
-  for (const p of PLUGINS) actions.push(['claude', 'plugin', 'uninstall', `${p}@${MARKETPLACE}`, ...s])
-  actions.push(['claude', 'plugin', 'marketplace', 'remove', MARKETPLACE, ...s])
-  return actions
-}
-
-// -------- entry --------
-
-const { flags, scope } = parseArgs(process.argv.slice(2))
-
-if (flags.has('--help') || flags.has('-h')) {
-  process.stdout.write(usage())
-  process.exit(0)
-}
-
-const apply = flags.has('--apply')
-const skipDoctor = flags.has('--skip-doctor')
-
-let mode = 'install'
-if (flags.has('--upgrade')) mode = 'upgrade'
-else if (flags.has('--uninstall')) mode = 'uninstall'
-
-let plan
-let actions
-if (mode === 'install') {
-  plan = planInstall(scope)
-  actions = installActions(scope)
-} else if (mode === 'upgrade') {
-  plan = planUpgrade(scope)
-  actions = upgradeActions(scope)
-} else {
-  plan = planUninstall(scope)
-  actions = uninstallActions(scope)
-}
-
-process.stdout.write(`moe-install: mode=${mode}${scope ? ` scope=${scope}` : ''}\n\n`)
-if (!apply) {
-  process.stdout.write('Plan (dry-run — re-run with --apply to execute):\n')
-  for (const line of plan) process.stdout.write(`  ${line}\n`)
-  process.stdout.write('\nCaveat: removing the marketplace from its last scope uninstalls every plugin from it.\n')
-  process.exit(0)
-}
-
-if (mode === 'install' && !skipDoctor) {
-  const doctorExit = runDoctor()
-  if (doctorExit !== 0) process.exit(doctorExit)
-}
-
-const exit = doAction(actions, false)
-process.exit(exit)
+if (invokedDirectly) process.exit(main());

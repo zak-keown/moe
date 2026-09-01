@@ -1,24 +1,24 @@
 {
   "schema": 1,
-  "tool": "moe-mint@0.0.0",
+  "tool": "moe-mint@0.0.0-tc.1",
   "files": {
     ".agents/plugins/marketplace.json": {
       "sha256": "62aba2c2e869558795c37c0862f5ba5e1ae65d6ddb08efa99f8fc41c28ef1841"
     },
     ".claude-plugin/marketplace.json": {
-      "sha256": "a237cc0ca6f232b5cce5d1ef27876153e6faad50cd4ce776cca091c184a85d5e"
+      "sha256": "31d711f6d058c2c783902618950f4116f1ac1595f8bc04bac0803898a97f7192"
     },
     ".claude-plugin/plugin.json": {
-      "sha256": "30c2d6740f1a8237bbbba7b59f7e773df83cccb6bd7459a620d5eb5949cc2e5b"
+      "sha256": "0cb0fd024f440490fb0b0f6ad5d628a8e7d05d2ba99ae1814b61feca9185ba1f"
     },
     ".codex-plugin/plugin.json": {
-      "sha256": "13cdcfe3da48605a833a2e412c4b37a5361d083e36b194d2c1ab7de700a7adee"
+      "sha256": "506f5c1e1aeded56465ea369f2c9cad3eca96218590c32894d072b566b5a274f"
     },
     ".cursor-plugin/plugin.json": {
-      "sha256": "3ec770cba7d4c0eea60c57c0b7921a544e75d43159d43cd73a818df2eb75e480"
+      "sha256": "9fe8b547f55da4ddade7a09b3b2b70002727bd15df49b1b3529a05b3f8ad483d"
     },
     ".kimi-plugin/plugin.json": {
-      "sha256": "f0cc0f78f9bd00abf52a9ea4e41d2e16a792a48f18a87188eb5af029fb71e0f6"
+      "sha256": "ef2a7c075f0b652f04220078f5ce9d95fa3aa8bca0b89997f5bcdcd943bc3889"
     },
     ".opencode/plugins/moe-crew.js": {
       "sha256": "d354dd24922257722fd65cbc6e725ebe62344490d8bf30cfc7ff40dc48c9fb31"
@@ -54,10 +54,10 @@
       "sha256": "02e1ee2981862e2eb3d4518996fb4186bff5a9b5049c2e24fb9765a73a9b1e2c"
     },
     "package.json": {
-      "sha256": "0fc5b9ee4f0bf1175910ef463983a6af09daa0e55d34417840d858f974b493b6"
+      "sha256": "0fd04bf5943d241de4e214a80b6cbab9fbd28512523172b0d93b32091da14d25"
     },
     "plugin.json": {
-      "sha256": "ce16d1b42dd3a40bf7db8601e3ee5ebc6eac4edeae411eef8e4c28f48773af09"
+      "sha256": "3e3c7dc3812d4db8fbf9ab8427ef0dabd4109bcf102b1c349aca62bd25be13c2"
     }
   }
 }

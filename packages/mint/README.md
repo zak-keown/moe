@@ -31,8 +31,8 @@ At the repository root, `pnpm mint` generates `/plugins` from
 ## Development
 
 ```sh
-pnpm --filter @bubstack/moe-mint build
-pnpm --filter @bubstack/moe-mint typecheck
-pnpm --filter @bubstack/moe-mint test
+pnpm --filter @tc/moe-mint build
+pnpm --filter @tc/moe-mint typecheck
+pnpm --filter @tc/moe-mint test
 pnpm mint:check
 ```

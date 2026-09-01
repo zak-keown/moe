@@ -15,7 +15,7 @@
       "outputs": [],
       "cache": true
     },
-    "@bubstack/moe-mint#test": {
+    "@tc/moe-mint#test": {
       "dependsOn": ["build"],
       "outputs": [],
       "cache": false
@@ -24,7 +24,7 @@
       "outputs": []
     },
     "//#mint:generate": {
-      "dependsOn": ["@bubstack/moe-mint#build"],
+      "dependsOn": ["@tc/moe-mint#build"],
       "inputs": [
         "scripts/mint-plugins.mjs",
         ".claude-plugin/marketplace.json",

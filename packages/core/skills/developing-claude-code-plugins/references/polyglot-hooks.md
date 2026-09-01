@@ -75,7 +75,7 @@ after it.
 
 Do not copy an implementation from this document. Read
 `packages/core/hooks/run-hook.cmd` directly when changing the dispatcher, and
-run `pnpm --filter @bubstack/moe-core test` afterward — `test/metadata.test.ts`
+run `pnpm --filter @tc/moe-core test` afterward — `test/metadata.test.ts`
 asserts the wrapper is dash-safe (`$0`, never `${BASH_SOURCE[0]}`), keeps its
 execute bit, and dispatches a hook script that exists.
 

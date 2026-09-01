@@ -69,7 +69,7 @@ export async function renderRun(runDir: string, outputName?: string): Promise<st
   } catch {
     throw new Error(
       `renderRun: static template not found at ${templatePath}. ` +
-        `Did you run 'pnpm --filter @bubstack/moe-flight-ui build'?`,
+        `Did you run 'pnpm --filter @tc/moe-flight-ui build'?`,
     );
   }
   return renderRunFromTemplate({ runDir, templatePath, outputName });

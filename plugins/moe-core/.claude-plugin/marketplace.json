@@ -5,7 +5,7 @@
     {
       "name": "moe-core",
       "description": "The house skills: brainstorming, planning, TDD, systematic debugging, code review and finishing a branch — the everyday set, lean enough to leave on.",
-      "version": "0.0.0",
+      "version": "0.0.0-tc.1",
       "source": "./",
       "author": {
         "name": "Zak Keown",

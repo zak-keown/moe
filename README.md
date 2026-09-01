@@ -18,14 +18,14 @@ software QA, transcript pricing, and model evals in one workspace.
 
 | Package | Job |
 |---|---|
-| `@bubstack/moe-core` | Everyday and full coding-workflow skill libraries |
-| `@bubstack/moe-backstory` | Recover a behavioral specification from an existing system |
-| `@bubstack/moe-memory` | Semantic recall over sessions and journals |
-| `@bubstack/moe-flight` | Drive and grade web, CLI, or TUI acceptance criteria |
-| `@bubstack/moe-mint` | Generate native plugin manifests for supported harnesses |
-| `@bubstack/moe-crew` | Launch and supervise coding-agent workers through tmux |
-| `@bubstack/moe-glass` | Direct Chrome DevTools Protocol access |
-| `@bubstack/moe-tab` | Parse usage records and estimate transcript cost |
+| `@tc/moe-core` | Everyday and full coding-workflow skill libraries |
+| `@tc/moe-backstory` | Recover a behavioral specification from an existing system |
+| `@tc/moe-memory` | Semantic recall over sessions and journals |
+| `@tc/moe-flight` | Drive and grade web, CLI, or TUI acceptance criteria |
+| `@tc/moe-mint` | Generate native plugin manifests for supported harnesses |
+| `@tc/moe-crew` | Launch and supervise coding-agent workers through tmux |
+| `@tc/moe-glass` | Direct Chrome DevTools Protocol access |
+| `@tc/moe-tab` | Parse usage records and estimate transcript cost |
 | `moe-proof` | Run and grade model evals |
 
 ## Command line

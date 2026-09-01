@@ -18,6 +18,25 @@ decision_needed: no
 *(This document is about `~/Code/moe`, the Superpowers hard fork. Not `~/Code/tools/moe`
 and not `~/.claude/moe-core`.)*
 
+## Supersession note (2026-09-01)
+
+The research below is preserved, but two parts of its original ask are no longer
+requirements:
+
+- **WSL2 is the supported Windows path.** macOS, Linux and WSL2 are supported;
+  native Windows is explicitly deferred. Native-Windows findings below are useful
+  diagnostics and future research, not release acceptance criteria.
+- **There is no retired MCP-key migration.** `--migrate` and compatibility for
+  `episodic-memory` or `chrome` are canceled, not missing implementation.
+
+The historical branch did not fulfill the end-to-end ask. The downstream repair
+now does: `@tc/moe` owns all three executable entries, `moe install`, `upgrade`
+and `uninstall` operate on the committed TC package set, and the clean-home CLI
+suite exercises their command plans. Packed-artifact acceptance also installs
+the umbrella tarball into an empty prefix, resolves all three shims, runs the
+bare dispatcher and removes it cleanly. WSL2 remains the supported Windows path;
+native Windows and retired-key migration remain deliberately out of scope.
+
 ## The idea
 
 > Installer with HQ DX
@@ -210,8 +229,9 @@ Folded in rather than re-asked:
    rather than a follow-on. This is what makes memory installable at all without a
    workspace checkout.
 3. **Hard vs. soft prerequisites** as tabled above.
-4. **The MCP-key `--migrate` path stays in scope** (`episodic-memory`→`moe-memory`,
-   `chrome`→`moe-glass`).
+4. **Superseded 2026-09-01:** the earlier MCP-key `--migrate` requirement is
+   canceled. Do not implement migration or ongoing compatibility for
+   `episodic-memory` or `chrome`.
 
 ## Proposed approach
 
@@ -266,13 +286,9 @@ Concretely:
    from its last scope uninstalls every plugin from it. Every step is a real CLI
    subcommand taking `--scope user|project|local`, so nothing needs a slash command
    typed inside a session.
-4. **`--migrate`** detects `episodic-memory` and `chrome` across the three scopes and
-   offers `claude mcp remove <name> --scope <scope>`. User-scope servers live under
-   `mcpServers` in `~/.claude.json` on POSIX and
-   `%USERPROFILE%\.claude.json` on Windows; `enabledPlugins` and
-   `extraKnownMarketplaces` live in the sibling `.claude/settings.json`
-   (both paths per Claude Code's own uninstall instructions). Resolve from `os.homedir()`,
-   never a hardcoded `~`. Report by default; act only on an explicit flag.
+4. **No migration surface.** Do not inspect, remove or preserve the retired
+   `episodic-memory` and `chrome` MCP keys. The earlier `--migrate` design is
+   superseded by the 2026-09-01 decision above.
 5. **`.gitattributes`**, ported from upstream's and extended to
    `hooks/moe-mint/session-start` and `plugins/**`: `eol=lf` for `*.cmd`, `*.sh` and
    the extensionless hook scripts. Without it, decision 1 ships a broken polyglot to
@@ -293,15 +309,15 @@ Concretely:
 
 That slug owns `bin/moe` itself — the dispatcher, its subcommand table, and the
 `moedex` binary revert. This slug owns the **install/doctor half**: the probe logic,
-the marketplace and plugin calls, the migration, and their tests. If the dispatcher
+the marketplace and plugin calls, and their tests. If the dispatcher
 lands first, these register as `moe doctor` and `moe install` and `bin/moe-doctor` /
 `bin/moe-install` are their implementations; if it lands after, they stand alone and
 the dispatcher adopts them. Both slugs write `bin/`, so they cannot share a wave.
 
 ## Scope boundary
 
-**In:** `bin/moe-doctor` and `bin/moe-install` (install / upgrade / uninstall /
-`--migrate`), Node and cross-platform; the `/plugins/` un-ignore and the
+**In:** `bin/moe-doctor` and `bin/moe-install` (install / upgrade / uninstall),
+Node and cross-platform; the `/plugins/` un-ignore and the
 `.gitattributes` that makes it safe on Windows; dropping `private: true` on memory
 and glass and the npm-source marketplace entries; ARCHITECTURE.md §6's per-platform
 table; one `INSTALL.md` or README section covering all three platforms; the
@@ -315,7 +331,8 @@ job is DO-NOW-3-adjacent release work; the contributor checkout flow, owned by
 building and pushing the `moe-container` image and anything under `moe-mint test`
 (`packages/mint/docs/CONFIG.md:36`); making `moe-crew` work on native Windows —
 that is a tmux-substrate rewrite, not an install task, and belongs in its own item
-if anyone wants it; harnesses beyond Claude Code, since `runtime-pruning` is
+if anyone wants it; retired MCP-key migration or compatibility; harnesses beyond
+Claude Code, since `runtime-pruning` is
 actively removing Grok and swapping Gemini for Antigravity; install prose tone,
 owned by `moe-tone-and-branding`. And per settled decision: no curl-to-bash, no
 public URL, no publish outside the GitLab instance registry.
@@ -353,9 +370,9 @@ of the twenty people this fork exists for. Consequences:
   Windows side and reached through `/mnt/c` under `core.autocrlf=true` breaks the
   cmd/bash polyglot in *both* interpreters, with no half-working state to notice.
   That file is the only thing preventing it.
-- **The clean-`HOME` smoke test now needs a real Windows box as a release gate**,
-  not a nice-to-have — and it needs to run in both modes, because native and WSL 2
-  prove different things.
+- **The clean-`HOME` smoke test needs a real WSL2 environment as a release gate**,
+  not a nice-to-have. Native Windows remains diagnostic-only until first-class
+  support is separately approved.
 
 **One stated blocker is FALSE and should be struck: `better-sqlite3` does NOT need
 MSVC on native Windows.** Verified against the upstream release rather than
@@ -396,9 +413,9 @@ one.
    bootstrap-hook gap as a real defect. My recommendation: **support both, but name
    WSL 2 as recommended**, and have the doctor state the native-Windows limitations
    explicitly rather than letting people find them.
-2. **How many of the twenty are on Windows, and native or WSL?** Not a design
-   question — a test-matrix question. The clean-`HOME` smoke test needs at least one
-   real Windows box to run on, and I cannot provide one from here.
+2. **How many of the twenty are on Windows, and native or WSL?** Historical
+   test-matrix research only. The supported release matrix now requires WSL2,
+   not native Windows.
 
 ## Effort
 
@@ -408,15 +425,14 @@ one.
 | `bin/moe-doctor` — 10 probes, three platforms, capability-named warnings | 3 h |
 | The win32 bash probe + bootstrap-hook-skip detection | 1 h |
 | `bin/moe-install` — install / upgrade / uninstall over the `claude plugin` CLI | 1.5 h |
-| `--migrate` across three scopes, `os.homedir()`-resolved | 1.5 h |
 | Drop `private: true` ×2, npm-source marketplace entries | 0.5 h |
 | `githubOwnerRepo` → host-general, pi template, 4 adapter test updates | 1.5 h |
 | ARCHITECTURE.md §6 per-platform table + `INSTALL.md` | 1.5 h |
 | Clean-`HOME` smoke test (macOS) | 1.5 h |
-| Same smoke test on a Windows box | 1 h |
+| Same smoke test under WSL2 | 1 h |
 
-**~15 h; call it 1.5-2 days**, up from the single-platform estimate. What makes it
-slower: the Windows smoke test needs a Windows machine and a person on it, and the
+**~13.5 h; call it 1.5-2 days**, up from the single-platform estimate. What makes it
+slower: the WSL2 smoke test needs an appropriate environment, and the
 clean-`HOME` test may need Claude Code credentials to get past `claude plugin list`,
 which would push it toward asserting on `settings.json` contents instead of CLI
 output.
@@ -433,7 +449,7 @@ output.
 - On Windows with Git for Windows removed from PATH, `moe-doctor` reports that the
   bootstrap hook will silently skip and prints the `CLAUDE_CODE_GIT_BASH_PATH` fix.
   This is the check that justifies the item.
-- On macOS and on Windows:
+- On macOS, Linux and WSL2:
   `claude plugin marketplace add <repo> --sparse .claude-plugin plugins` then
   `claude plugin install moe-core@moe` succeeds and `claude plugin list` shows
   `moe-core`. `claude plugin validate .` already exits 0 today with every source
@@ -441,10 +457,8 @@ output.
 - `claude mcp get moe-glass` reports a connected server after installing
   `moe-glass@moe`; the same for `moe-memory` through its npm-source entry, on a box
   with no cargo and no MSVC toolchain.
-- `moe-doctor --migrate` on a `.claude.json` seeded with an `episodic-memory` server
-  names that key, that file's resolved path, and the
-  `claude mcp remove episodic-memory --scope user` command — and changes nothing
-  without an explicit flag. Verified once per platform, since the path differs.
+- `moe-install --help` exposes no MCP migration or retired-key compatibility
+  surface.
 - A new case in `packages/mint/test/adapters/claude-code.test.ts` asserts that
   `repository: https://gitlab.tcdevops.com/Zak/moe` yields
   `claude /plugin marketplace add Zak/moe`, not `<your-repo>`.

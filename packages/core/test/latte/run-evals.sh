@@ -5,7 +5,7 @@
 # scenario's expected_decision.
 #
 # OPT-IN AND EXPENSIVE. 65 x 5 = 325 authenticated model calls, serially. Never
-# in `pnpm test` and never in CI: `pnpm --filter @bubstack/moe-core latte:evals`.
+# in `pnpm test` and never in CI: `pnpm --filter @tc/moe-core latte:evals`.
 #
 # BROKEN UPSTREAM. At double-shot-latte dfe7567 this pointed at
 # ../../scripts/claude-judge-continuation.sh — a directory that does not exist in

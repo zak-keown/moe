@@ -1,13 +1,12 @@
 #!/usr/bin/env node
-// bin/moe.js — the dispatcher in front of the seven `moe-<ns>` bins.
+// bin/moe.js — TC umbrella lifecycle, status, and namespace dispatcher.
 //
 // Node stdlib only. The grammar is copied from packages/flight/src/cli.ts:
 // switch on argv[2], one usage block, and namespaces declared-and-refused
-// rather than silently absent (see the "@bubstack/moe-<ns>" message below).
+// rather than silently absent.
 //
-// This dispatcher never links itself onto PATH — that is bin/moe-install's
-// job (see installer-hq-dx). ARCHITECTURE.md §7.1 records the three claimants
-// of the bare `moe` name; do not add a fourth without a decision.
+// This dispatcher never links itself onto PATH — bin/moe-install persists the
+// exact running umbrella release and lets npm own all three durable shims.
 //
 // MCP hosts and generated plugin manifests keep pointing at moe-glass /
 // moe-memory directly (packages/mint/src/adapters/claude-code.ts emits the
@@ -19,23 +18,36 @@ import { existsSync, realpathSync } from "node:fs";
 import { platform as osPlatform, release as osRelease } from "node:os";
 import { delimiter, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { NAMESPACE_DISTRIBUTIONS } from "../config/distribution.mjs";
 
-/** @typedef {{ bin: string, workspace?: string, runner?: "uv" }} NamespaceEntry */
+/**
+ * @typedef {{
+ *   bin: string,
+ *   workspace: string,
+ *   runner?: "uv",
+ *   packageName: string | null,
+ *   npmCli: boolean,
+ *   availability?: string,
+ *   description: string,
+ * }} NamespaceEntry
+ */
 
 /** @type {Record<string, NamespaceEntry>} */
-export const NAMESPACES = {
-  crew: { bin: "moe-crew", workspace: "packages/crew/dist/moe-crew.cjs" },
-  flight: { bin: "moe-flight", workspace: "packages/flight/dist/cli.js" },
-  glass: { bin: "moe-glass", workspace: "packages/glass/dist/index.js" },
-  memory: { bin: "moe-memory", workspace: "packages/memory/dist/cli.js" },
-  mint: { bin: "moe-mint", workspace: "packages/mint/dist/cli.js" },
-  proof: { bin: "moe-proof", runner: "uv" },
-  tab: { bin: "moe-tab", workspace: "packages/tab/target/release/moe-tab" },
-};
+export const NAMESPACES = NAMESPACE_DISTRIBUTIONS;
 
-export const USAGE = `moe — one dispatcher in front of seven namespace bins.
+export const USAGE = `moe — TC's umbrella CLI for Moe.
 
-usage: moe <namespace> [args...]
+usage: moe [status]
+       moe install|upgrade|uninstall [--scope user|project|local]
+       moe doctor [args...]
+       moe <namespace> [args...]
+
+lifecycle:
+  status     Report each namespace exactly once (also the bare-command default).
+  install    Persist the exact running @tc/moe release and install all plugins.
+  upgrade    Upgrade the TC CLI packages and plugins to latest.
+  uninstall  Remove plugins and marketplace, then remove the global TC packages.
+  doctor     Check macOS/Linux/WSL2 prerequisites. Native Windows is deferred.
 
 namespaces:
   crew     Launch and monitor worker sessions over tmux.
@@ -46,10 +58,8 @@ namespaces:
   proof    Evals against small models (Python).
   tab      Price an agent transcript — what the run cost you.
 
-The \`moe-<ns>\` names are permanent: MCP hosts, generated plugin manifests
-and scripts reference them directly. \`moe <ns>\` is a human convenience —
-either form works. Run \`moe <ns> --help\` for a namespace's own usage.
-See ARCHITECTURE.md §7 and §7.1.
+The \`moe-<ns>\` names remain valid direct entry points. Run \`moe status\`
+to see which ones are present and how absent commands are distributed.
 `;
 
 // Detect WSL by (linux + microsoft-in-release) — the idiom
@@ -139,11 +149,15 @@ export function resolve(ns, args, opts = {}) {
 
   if (root) {
     if (entry.runner === "uv") {
-      return {
-        command: "uv",
-        args: ["run", "--project", join(root, "py/proof"), entry.bin, ...args],
-        source: "workspace-uv",
-      };
+      const uv = findOnPath("uv", plat, env);
+      const project = join(root, entry.workspace);
+      if (uv && existsSync(project)) {
+        return {
+          command: uv,
+          args: ["run", "--project", project, entry.bin, ...args],
+          source: "workspace-uv",
+        };
+      }
     }
     if (entry.workspace) {
       const wsBase = join(root, entry.workspace);
@@ -163,13 +177,15 @@ export function resolve(ns, args, opts = {}) {
 }
 
 function missingMessage(ns, entry, root) {
-  const pkg = `@bubstack/moe-${ns}`;
-  const lines = [
-    `moe ${ns}: not installed.`,
-    ``,
-    `It ships in ${pkg} as \`${entry.bin}\`. Run \`moe-install\` to put it on PATH`,
-    `(see bin/moe-install, installer-hq-dx).`,
-  ];
+  const lines = [`moe ${ns}: not installed.`, ``];
+  if (entry.npmCli) {
+    lines.push(
+      `The \`${entry.bin}\` command ships in ${entry.packageName}. Run \`moe install\``,
+      `to install the lockstep TC CLI packages and plugins.`,
+    );
+  } else {
+    lines.push(`Distribution: ${entry.availability}.`);
+  }
   if (root) {
     lines.push(``);
     if (ns === "proof") {
@@ -178,8 +194,8 @@ function missingMessage(ns, entry, root) {
       lines.push(
         `From this checkout: \`pnpm tab:build\` writes packages/tab/target/release/${entry.bin}.`,
       );
-    } else {
-      lines.push(`From this checkout: \`pnpm --filter ${pkg} build\`.`);
+    } else if (entry.packageName) {
+      lines.push(`From this checkout: \`pnpm --filter ${entry.packageName} build\`.`);
     }
   }
   return `${lines.join("\n")}\n`;
@@ -187,11 +203,61 @@ function missingMessage(ns, entry, root) {
 
 function crewOnWindowsMessage() {
   return (
-    `moe crew: tmux is not available on native Windows, so \`crew\` cannot run there.\n` +
+    `moe crew: native Windows is not supported, and tmux is unavailable there.\n` +
     `\n` +
-    `Use WSL2. Every other namespace runs on native Windows via cmd-shim;\n` +
-    `only \`crew\` needs a POSIX tmux. See ARCHITECTURE.md §6.\n`
+    `Use WSL2. Native Windows support is deferred for this release.\n`
   );
+}
+
+function resolveSupportBin(base, args, opts) {
+  const self = opts.self ?? selfDir();
+  const env = opts.env ?? process.env;
+  const plat = opts.platform ?? osPlatform();
+  const root = opts.root === undefined ? workspaceRootFrom(self) : opts.root;
+  const sibling = findInDir(self, base, plat);
+  if (sibling) return { command: sibling, args, source: "sibling" };
+  const onPath = findOnPath(base, plat, env);
+  if (onPath) return { command: onPath, args, source: "path" };
+  if (root) {
+    const workspace = join(root, "bin", base);
+    if (existsSync(workspace)) {
+      return { command: process.execPath, args: [workspace, ...args], source: "workspace" };
+    }
+  }
+  return null;
+}
+
+/** Classify every permanent namespace once. */
+export function namespaceStatuses(opts = {}) {
+  const self = opts.self ?? selfDir();
+  const root = opts.root === undefined ? workspaceRootFrom(self) : opts.root;
+  const shared = { ...opts, self, root };
+  return Object.keys(NAMESPACES).map((namespace) => {
+    const resolved = resolve(namespace, [], shared);
+    return {
+      namespace,
+      present: !resolved.missing,
+      source: resolved.source,
+      entry: NAMESPACES[namespace],
+    };
+  });
+}
+
+function writeStatus(stdout, opts) {
+  stdout.write("Moe namespace status:\n");
+  for (const status of namespaceStatuses(opts)) {
+    const { namespace, present, source, entry } = status;
+    const label = namespace.padEnd(7);
+    if (present) {
+      const identity = entry.packageName ? `; ${entry.packageName}` : "";
+      stdout.write(`  [present] ${label} ${entry.bin} (${source}${identity})\n`);
+    } else if (entry.npmCli) {
+      stdout.write(`  [absent]  ${label} ${entry.packageName} provides ${entry.bin}\n`);
+    } else {
+      stdout.write(`  [absent]  ${label} ${entry.availability}\n`);
+    }
+  }
+  return 0;
 }
 
 const SIGNAL_NUMBERS = { SIGHUP: 1, SIGINT: 2, SIGQUIT: 3, SIGKILL: 9, SIGTERM: 15 };
@@ -258,14 +324,33 @@ export async function main(argv = process.argv.slice(2), opts = {}) {
 
   const [ns, ...rest] = argv;
 
-  if (ns === undefined || ns === "-h" || ns === "--help" || ns === "help") {
+  if (ns === "-h" || ns === "--help" || ns === "help") {
     stdout.write(USAGE);
     return 0;
   }
 
-  // crew needs tmux, and native Windows has none. WSL2 is the route — that
-  // is settled in ARCHITECTURE.md §6 ("Windows: WSL2, and that is the answer
-  // for now"). Every other namespace resolves normally on native Windows.
+  if (ns === undefined || ns === "status") {
+    return writeStatus(stdout, opts);
+  }
+
+  if (["install", "upgrade", "uninstall", "doctor"].includes(ns)) {
+    const lifecycleFlags = {
+      install: ["--apply"],
+      upgrade: ["--upgrade", "--apply"],
+      uninstall: ["--uninstall", "--apply"],
+      doctor: [],
+    };
+    const forwarded = rest.filter((arg) => !["--apply", "--upgrade", "--uninstall"].includes(arg));
+    const base = ns === "doctor" ? "moe-doctor" : "moe-install";
+    const resolved = resolveSupportBin(base, [...lifecycleFlags[ns], ...forwarded], opts);
+    if (!resolved) {
+      stderr.write(`moe ${ns}: could not find ${base} beside moe or on PATH.\n`);
+      return 127;
+    }
+    return await runner(resolved.command, resolved.args);
+  }
+
+  // Crew needs tmux, and native Windows has none. WSL2 is the supported route.
   if (ns === "crew" && plat === "win32" && !isWSL(plat, rel)) {
     stderr.write(crewOnWindowsMessage());
     return 2;

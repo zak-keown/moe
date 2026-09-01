@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * Absolute path to the `@bubstack/moe-flight` package root — the directory
+ * Absolute path to the `@tc/moe-flight` package root — the directory
  * holding `package.json`, `ui/`, `dashboard/`, `examples/` and `docker/`.
  *
  * Resolved by walking up from this module to the nearest `package.json`, not by

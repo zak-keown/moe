@@ -1,0 +1,372 @@
+#!/usr/bin/env node
+// Optional PreToolUse enforcement for TC AI Governance privacy level 1.
+//
+// This hook is deliberately inert unless MOE_TC_GOVERNANCE_ENFORCE is set to
+// an explicit true value (1, true, yes, or on). The existing SessionStart
+// tc-governance-check remains the default, non-blocking behavior.
+//
+// When enabled, the hook reads Claude Code's PreToolUse event from stdin and
+// denies only file access that a nearby .ai-privacy.yml confirms is level 1.
+// It prints nothing for allowed, unsupported, or malformed requests so it
+// never grants permissions that Claude Code would otherwise ask the user for.
+//
+// This file uses dynamic import() rather than a static import or require().
+// Source lives below a "type": "module" package.json, while installed plugin
+// trees have no package.json and treat extensionless Node scripts as CommonJS.
+// Dynamic import works in both places.
+
+const enabled = /^(?:1|true|yes|on)$/i.test(String(process.env.MOE_TC_GOVERNANCE_ENFORCE || '').trim());
+if (!enabled) process.exit(0);
+
+(async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+
+  let event;
+  try {
+    event = JSON.parse(fs.readFileSync(0, 'utf8') || '{}');
+  } catch (_error) {
+    return;
+  }
+
+  if (!event || typeof event !== 'object' || Array.isArray(event)) return;
+
+  const cwd = absolutePath(path, typeof event.cwd === 'string' ? event.cwd : process.cwd(), process.cwd());
+  const toolName = typeof event.tool_name === 'string' ? event.tool_name : '';
+  const toolInput =
+    event.tool_input && typeof event.tool_input === 'object' && !Array.isArray(event.tool_input)
+      ? event.tool_input
+      : {};
+
+  let denied;
+  if (toolName === 'Read') {
+    const target = stringField(toolInput, 'file_path');
+    if (target) denied = inspectConcretePath(fs, path, target, cwd, cwd);
+  } else if (toolName === 'Grep' || toolName === 'Glob') {
+    const configuredScope = stringField(toolInput, 'path');
+    const scope = configuredScope ? absolutePath(path, configuredScope, cwd) : cwd;
+    denied = inspectSearchScope(fs, path, scope, cwd);
+  } else if (toolName === 'Bash') {
+    const command = stringField(toolInput, 'command');
+    if (command) denied = inspectBashCommand(fs, path, command, cwd);
+  }
+
+  if (!denied) return;
+
+  const displayPath = denied.displayPath || 'the requested path';
+  const reason =
+    `TC AI Governance blocks AI access to ${displayPath}: ` +
+    `${denied.policyPath} classifies it as privacy level 1 (Restricted). ` +
+    'Narrow the tool call to a non-restricted path or handle the restricted data outside an AI system.';
+
+  process.stdout.write(
+    `${JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: 'PreToolUse',
+        permissionDecision: 'deny',
+        permissionDecisionReason: reason,
+      },
+    })}\n`,
+  );
+})().catch(() => {
+  // Fail open. A malformed policy, an unreadable path, or an unexpected Node
+  // runtime must not turn an opt-in privacy guard into a machine-wide outage.
+});
+
+function stringField(object, key) {
+  const value = object[key];
+  return typeof value === 'string' && value.trim() ? value.trim() : '';
+}
+
+function absolutePath(path, candidate, cwd) {
+  return path.isAbsolute(candidate) ? path.normalize(candidate) : path.resolve(cwd, candidate);
+}
+
+function inspectConcretePath(fs, path, candidate, cwd, policyFallback) {
+  const target = absolutePath(path, candidate, cwd);
+  const policyPath = findPolicy(fs, path, path.dirname(target)) || findPolicy(fs, path, policyFallback);
+  if (!policyPath) return undefined;
+
+  const policy = readPolicy(fs, path, policyPath);
+  if (!policy || effectiveLevel(path, policy, target) !== 1) return undefined;
+
+  return {
+    displayPath: displayPath(path, policy.root, target),
+    policyPath: displayPath(path, cwd, policyPath),
+  };
+}
+
+function inspectSearchScope(fs, path, candidate, policyFallback) {
+  const scope = path.normalize(candidate);
+  const policyPath = findPolicy(fs, path, scope) || findPolicy(fs, path, policyFallback);
+  if (!policyPath) return undefined;
+
+  const policy = readPolicy(fs, path, policyPath);
+  if (!policy || !scopeTouchesLevelOne(path, policy, scope)) return undefined;
+
+  return {
+    displayPath: displayPath(path, policy.root, scope),
+    policyPath: displayPath(path, policyFallback, policyPath),
+  };
+}
+
+function inspectBashCommand(fs, path, command, cwd) {
+  const policyPath = findPolicy(fs, path, cwd);
+  if (!policyPath) return undefined;
+
+  const policy = readPolicy(fs, path, policyPath);
+  if (!policy) return undefined;
+
+  // Shell is intentionally treated as a best-effort surface. A dependency-free
+  // hook cannot safely evaluate variables, substitutions, aliases, or scripts.
+  // It does block literal references to restricted paths, which covers common
+  // cat/rg/grep/find and interpreter invocations without pretending to be a
+  // shell parser. Native Read/Grep/Glob calls receive the exact checks above.
+  const normalizedCommand = normalizeCommand(command);
+  const restricted = restrictedRoots(path, policy);
+
+  for (const entry of restricted) {
+    const relative = normalizeCommand(path.relative(cwd, entry.absolute));
+    const fromPolicy = normalizeCommand(path.relative(policy.root, entry.absolute));
+    const absolute = normalizeCommand(entry.absolute);
+    const candidates = [absolute, relative, `./${relative}`, fromPolicy, `./${fromPolicy}`].filter(
+      (value) => value && value !== '.' && !value.startsWith('../'),
+    );
+
+    if (candidates.some((value) => containsShellPath(normalizedCommand, value))) {
+      return {
+        displayPath: entry.display,
+        policyPath: displayPath(path, cwd, policyPath),
+      };
+    }
+  }
+
+  // A global level-1 policy has no narrower path to match. Block commands that
+  // are recognizably file readers, but leave unrelated commands (for example,
+  // `git status`) to Claude Code's normal permission system.
+  if (policy.globalLevel === 1 && looksLikeFileReader(normalizedCommand)) {
+    return {
+      displayPath: '.',
+      policyPath: displayPath(path, cwd, policyPath),
+    };
+  }
+
+  return undefined;
+}
+
+function normalizeCommand(value) {
+  return String(value).replace(/\\/g, '/');
+}
+
+function containsShellPath(command, candidate) {
+  const escaped = candidate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const boundary = "(?:^|[\\s;|&()<>\"'])";
+  const ending = "(?=$|[\\s;|&()<>\"'/])";
+  return new RegExp(`${boundary}${escaped}${ending}`).test(command);
+}
+
+function looksLikeFileReader(command) {
+  return /(?:^|[;&|]\s*|\s)(?:cat|head|tail|grep|rg|ripgrep|find|sed|awk|less|more|strings|xxd|od|jq|yq|sort|uniq|wc|diff|cmp|cut|file|stat)(?:\s|$)/.test(
+    command,
+  );
+}
+
+function findPolicy(fs, path, candidate) {
+  let current = path.resolve(candidate);
+  try {
+    if (fs.existsSync(current) && !fs.statSync(current).isDirectory()) current = path.dirname(current);
+  } catch (_error) {
+    return undefined;
+  }
+
+  while (true) {
+    const policy = path.join(current, '.ai-privacy.yml');
+    try {
+      if (fs.statSync(policy).isFile()) return policy;
+    } catch (_error) {
+      // Keep walking. Missing and unreadable policy files both fail open.
+    }
+
+    const parent = path.dirname(current);
+    if (parent === current) return undefined;
+    current = parent;
+  }
+}
+
+function readPolicy(fs, path, policyPath) {
+  let source;
+  try {
+    source = fs.readFileSync(policyPath, 'utf8');
+  } catch (_error) {
+    return undefined;
+  }
+
+  const parsed = parsePrivacyYaml(source);
+  if (!parsed) return undefined;
+
+  const root = path.dirname(policyPath);
+  const entries = [];
+  for (const entry of parsed.entries) {
+    const resolved = resolvePolicyEntry(path, root, entry.path);
+    if (!resolved) continue;
+    entries.push({ ...entry, ...resolved });
+  }
+
+  return { root, globalLevel: parsed.globalLevel, entries };
+}
+
+function parsePrivacyYaml(source) {
+  let globalLevel = 3;
+  const entries = [];
+  let inEntries = false;
+  let current;
+
+  const finish = () => {
+    if (current && current.path && validLevel(current.level)) entries.push(current);
+    current = undefined;
+  };
+
+  for (const rawLine of String(source).replace(/\r\n?/g, '\n').split('\n')) {
+    const line = stripYamlComment(rawLine);
+    if (!line.trim()) continue;
+
+    const indent = line.match(/^\s*/)[0].length;
+    const trimmed = line.trim();
+
+    if (indent === 0) {
+      if (trimmed.startsWith('global_privacy_level:')) {
+        const level = privacyLevel(trimmed.slice('global_privacy_level:'.length));
+        if (!validLevel(level)) return undefined;
+        globalLevel = level;
+        inEntries = false;
+        finish();
+        continue;
+      }
+      if (trimmed === 'privacy_levels:' || trimmed === 'privacy_levels: []') {
+        finish();
+        inEntries = trimmed === 'privacy_levels:';
+        continue;
+      }
+      inEntries = false;
+      finish();
+      continue;
+    }
+
+    if (!inEntries) continue;
+
+    const item = trimmed.startsWith('- ') ? trimmed.slice(2).trim() : trimmed;
+    if (trimmed.startsWith('- ')) finish();
+
+    if (item.startsWith('path:')) {
+      current ||= {};
+      current.path = yamlScalar(item.slice('path:'.length));
+    } else if (item.startsWith('privacy_level:')) {
+      current ||= {};
+      current.level = privacyLevel(item.slice('privacy_level:'.length));
+    }
+  }
+
+  finish();
+  return { globalLevel, entries };
+}
+
+function stripYamlComment(line) {
+  let quote = '';
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    if (quote) {
+      if (char === quote && line[index - 1] !== '\\') quote = '';
+    } else if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === '#' && (index === 0 || /\s/.test(line[index - 1]))) {
+      return line.slice(0, index);
+    }
+  }
+  return line;
+}
+
+function yamlScalar(value) {
+  const trimmed = value.trim();
+  if (trimmed.length >= 2 && trimmed[0] === '"' && trimmed.at(-1) === '"') {
+    try {
+      return JSON.parse(trimmed);
+    } catch (_error) {
+      return '';
+    }
+  }
+  if (trimmed.length >= 2 && trimmed[0] === "'" && trimmed.at(-1) === "'") {
+    return trimmed.slice(1, -1).replace(/''/g, "'");
+  }
+  return trimmed;
+}
+
+function validLevel(value) {
+  return Number.isInteger(value) && value >= 1 && value <= 4;
+}
+
+function privacyLevel(value) {
+  const scalar = yamlScalar(value);
+  return /^[1-4]$/.test(scalar) ? Number(scalar) : Number.NaN;
+}
+
+function resolvePolicyEntry(path, root, configuredPath) {
+  if (typeof configuredPath !== 'string' || !configuredPath.trim()) return undefined;
+
+  const folder = /[\\/]$/.test(configuredPath.trim());
+  const relative = configuredPath.trim().replace(/^[\\/]+/, '').replace(/[\\/]+/g, path.sep);
+  const absolute = path.resolve(root, relative);
+  if (!inside(path, root, absolute)) return undefined;
+
+  return {
+    absolute,
+    folder,
+    display: `/${normalizeCommand(path.relative(root, absolute))}${folder ? '/' : ''}`,
+  };
+}
+
+function effectiveLevel(path, policy, target) {
+  if (!inside(path, policy.root, target)) return undefined;
+  let level = policy.globalLevel;
+  for (const entry of policy.entries) {
+    if (entryMatches(path, entry, target)) level = Math.min(level, entry.level);
+  }
+  return level;
+}
+
+function scopeTouchesLevelOne(path, policy, scope) {
+  if (!inside(path, policy.root, scope)) return false;
+  if (effectiveLevel(path, policy, scope) === 1) return true;
+
+  return restrictedRoots(path, policy).some((entry) => inside(path, scope, entry.absolute));
+}
+
+function restrictedRoots(path, policy) {
+  if (policy.globalLevel === 1) {
+    return [{ absolute: policy.root, folder: true, display: '.' }];
+  }
+
+  return policy.entries.filter((entry) => entry.level === 1);
+}
+
+function entryMatches(path, entry, target) {
+  return entry.folder ? inside(path, entry.absolute, target) : samePath(path, entry.absolute, target);
+}
+
+function inside(path, parent, candidate) {
+  const relative = path.relative(parent, candidate);
+  return relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative));
+}
+
+function samePath(path, left, right) {
+  if (process.platform === 'win32') return path.normalize(left).toLowerCase() === path.normalize(right).toLowerCase();
+  return path.normalize(left) === path.normalize(right);
+}
+
+function displayPath(path, root, candidate) {
+  const relative = path.relative(root, candidate);
+  if (!relative) return '.';
+  if (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative)) {
+    return normalizeCommand(relative);
+  }
+  return normalizeCommand(candidate);
+}

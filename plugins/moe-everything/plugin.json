@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "moe-everything",
-  "version": "0.0.0",
+  "version": "0.0.0-tc.1",
   "description": "The full Moe skill library, including the ones you invoke deliberately by name.",
   "author": {
     "name": "Zak Keown",

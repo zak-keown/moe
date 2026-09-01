@@ -28,11 +28,11 @@ surface.
 ## Development
 
 ```sh
-pnpm --filter @bubstack/moe-flight build
-pnpm --filter @bubstack/moe-flight typecheck
-pnpm --filter @bubstack/moe-flight test
-pnpm --filter @bubstack/moe-flight test:chrome
-pnpm --filter @bubstack/moe-flight test:tmux
+pnpm --filter @tc/moe-flight build
+pnpm --filter @tc/moe-flight typecheck
+pnpm --filter @tc/moe-flight test
+pnpm --filter @tc/moe-flight test:chrome
+pnpm --filter @tc/moe-flight test:tmux
 ```
 
 Chrome, tmux, and FFI suites are environment-scoped and sit outside the normal

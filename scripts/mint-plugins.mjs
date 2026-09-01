@@ -82,9 +82,9 @@ const COMPONENTS = ["skills", "commands", "agents", "hooks", ".mcp.json"];
  *     end-user path for content plugins).
  *   - { npm: "<package-name>" }: marketplace listing is the npm-source
  *     shape `{"source":"npm","package":"…"}`, installed by `claude plugin`
- *     from the `@bubstack` scope. Used for the two MCP-server plugins
- *     (memory, glass) so a native-Windows user gets prebuilt `better-sqlite3`
- *     without an MSVC toolchain — see the installer-hq-dx backlog item.
+ *     from the internal `@tc` scope. Used for the two MCP-server plugins
+ *     (memory, glass) so consumers install the published runtime rather than
+ *     treating generated plugin content as a workspace package.
  *
  * checkMarketplace() below asserts the marketplace listing agrees with each
  * plugin's declared distribution, and rejects any surprise combinations.
@@ -114,13 +114,13 @@ const PLUGINS = [
     name: "moe-memory",
     pkg: "memory",
     config: "mint/moe-memory.yaml",
-    distribution: { npm: "@bubstack/moe-memory" },
+    distribution: { npm: "@tc/moe-memory" },
   },
   {
     name: "moe-glass",
     pkg: "glass",
     config: "mint/moe-glass.yaml",
-    distribution: { npm: "@bubstack/moe-glass" },
+    distribution: { npm: "@tc/moe-glass" },
   },
   {
     name: "moe-crew",
@@ -406,7 +406,7 @@ function checkMarketplace() {
 function main() {
   if (!fs.existsSync(MINT_CLI)) {
     fail(
-      `${path.relative(ROOT, MINT_CLI)} not found — run \`pnpm --filter @bubstack/moe-mint build\` first`,
+      `${path.relative(ROOT, MINT_CLI)} not found — run \`pnpm --filter @tc/moe-mint build\` first`,
     );
   }
   checkMarketplace();

@@ -15,7 +15,7 @@ const QA = "qa";
 const HAVE_DIST = existsSync(ENTRY);
 if (!HAVE_DIST) {
   console.error(
-    `[skip] ${ENTRY} is missing — build first (\`pnpm --filter @bubstack/moe-flight build\`). ` +
+    `[skip] ${ENTRY} is missing — build first (\`pnpm --filter @tc/moe-flight build\`). ` +
       "These suites drive the shipped CLI, not the source tree.",
   );
 }

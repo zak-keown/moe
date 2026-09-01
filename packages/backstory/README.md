@@ -17,6 +17,6 @@ generated manifest.
 ## Development
 
 ```sh
-pnpm --filter @bubstack/moe-backstory lint
+pnpm --filter @tc/moe-backstory lint
 pnpm mint
 ```

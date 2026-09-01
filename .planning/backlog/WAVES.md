@@ -3,10 +3,12 @@
 Recomputed 2026-08-31 after Zak challenged the previous schedule as
 under-parallelised. He was right. **16 items, 4 waves, ~32 h wall clock.**
 
-**CLOSED 2026-09-01. All sixteen shipped.** What follows is kept as the record of
-how it was scheduled and what the schedule got wrong, because both were argued
-for on this page and the arguments are the reusable part. The tables are updated
-to what happened; the analysis below them is as written.
+**Historical merge schedule, reconciled 2026-09-01.** All sixteen scheduled
+branches merged, but "merged" was incorrectly reported here as "shipped" and as
+proof that every ask was fulfilled. A later implementation audit found material
+gaps in the installer, completion-evidence behavior, retrieval tier and governance
+modes; the 17-skill expansion was never implemented and is now canceled. This
+page remains useful scheduling research, not a completion ledger.
 
 Effort is now **106.5 h**, up from 89.2 h — the Wave 1 Q&A tripled
 `tc-standards-conformance` (Moe replaces the sibling fork `ai/claude-code-platform-plugin`:
@@ -34,8 +36,9 @@ schedule, and schedules move. Where `P` disagrees with the table, the table wins
 
 ## The schedule
 
-**All sixteen shipped**, across four sessions (2026-08-31 → 2026-09-01). Eleven
-landed in the wave runs; the last five were closed one at a time afterwards —
+**All sixteen scheduled branches merged**, across four sessions
+(2026-08-31 → 2026-09-01). Eleven landed in the wave runs; the last five had
+their branches closed one at a time afterwards —
 the two aging iterate branches, both deferred items, and the one skipped on a
 precondition.
 
@@ -53,14 +56,16 @@ co-held path predicted which items would slip, but not that they would slip for
 reasons the schedule never modelled (a close-plan needing a design decision, and
 prose citations needing rewriting).
 
-### Final status
+### Historical merge status
 
-**Shipped: 16 of 16.** No live branches, no deferred items, no open decisions.
+**Merged: 16 of 16 scheduled branches. Fulfilled: not established by this
+schedule.** No live wave branch remained, but later audit findings and superseding
+user decisions created implementation work outside this schedule.
 
 The eleven that landed in the wave runs are in the table above. The five that
-needed individual closes, and what each actually turned on:
+needed individual branch closes, and what each merge turned on:
 
-| Item | Was | What closed it |
+| Item | Was | What merged it |
 |---|---|---|
 | `runtime-pruning` | iterate | Prose only — line-number citations rewritten as quoted phrases. Rebased with **zero** conflicts against a close-plan predicting four. |
 | `installer-hq-dx` | iterate | A real design decision: two test runners over one directory. Zak chose vitest; the node:test suite was ported. |
@@ -278,24 +283,26 @@ is worse than one that crashes.
 
 ## What carries forward
 
-This schedule's sixteen items are all shipped. Two things sit in the backlog
+This schedule's sixteen branches all merged; the completion audit documented
+above means that is not equivalent to every ask shipping. Two things sit in the backlog
 directory that this schedule never contained, and they are **not** waves 5 and 6
 of it — the wave numbering in their filenames is filename convention only, per the
 `P##` note at the top of this file:
 
 - **`codebase-review-skills`** — two fork-authored skills for repo-wide review and
   TDD repair. In flight elsewhere as of 2026-09-01.
-- **`tc-domain-skills-port`** — **resolved 2026-09-01, nothing landed here.** Its
+- **`tc-domain-skills-port`** — **canceled 2026-09-01, nothing landed here.** Its
   census is kept as the record: 13 of the 17 deferred `tc-*` skills are
   near-duplicates of skills this fork ships, 3 were dispatch wrappers over tools
   that do not exist here, and the 1 piece of real content went to `ai/kb` as MR
   `ai/kb!17` — that corpus is what `rag_search` indexes, so a doc there reaches
   every TC engineer while a Moe skill reaches only Moe installs.
-- **`cross-stack-tracing`** — what replaced the port. Zak asked whether the trace
-  capability could be built against CodeGraph alone rather than moedex, and it
-  mostly can: `HTTP_CALLS` carries `source_repo`/`target_repo`, so
-  "what breaks if I change this endpoint?" is complete on the baseline. Everything-
-  tier, 5-7 h, no open decisions.
+- **`cross-stack-tracing`** — the capability that replaces three wrapper ports is
+  now built as `tracing-across-the-stack`. CodeGraph is the baseline,
+  convention-led Grep is the degraded fallback, and Moedex is an optional
+  enhancement. The `DELETE DeleteSearch` trace, empty `consumers` trap, local
+  fallback and optional enhancement are recorded in
+  `.planning/tracing-acceptance-2026-09-01.md` with their source SHAs.
 
 None of these depend on each other or on anything above. If a fourth arrives,
 re-run the solver rather than appending to this table — it is a record now, not a

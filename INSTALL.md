@@ -59,10 +59,10 @@ audience is on Windows, so WSL 2 is a first-class path, not a fallback.
 | `git` | hard | clone, sparse marketplace add | git-scm.com; on Windows Git for Windows also gives you `bash` |
 | `bash` (win32) | hard on win32 | bootstrap `SessionStart` hook | Git for Windows OR `CLAUDE_CODE_GIT_BASH_PATH` |
 | `claude` CLI | hard | every install/uninstall/upgrade step | https://code.claude.com/docs/en/setup |
-| `cargo` ≥ 1.98 | soft | `@bubstack/moe-tab` (contributor-only) | rustup |
-| `tmux` | soft | `@bubstack/moe-crew` and `using-tmux-for-interactive-commands` | your package manager; WSL only on Windows |
+| `cargo` ≥ 1.98 | soft | `@tc/moe-tab` (contributor-only) | rustup |
+| `tmux` | soft | `@tc/moe-crew` and `using-tmux-for-interactive-commands` | your package manager; WSL only on Windows |
 | `uv` ≥ 0.12 | soft | `moe-proof` (small-model evals; Python) | astral.sh/uv or `brew install uv` |
-| Chrome | soft | `@bubstack/moe-glass` (CDP browser access) | google.com/chrome |
+| Chrome | soft | `@tc/moe-glass` (CDP browser access) | google.com/chrome |
 | `docker` | soft | `moe-mint test` container tier (contributor-only) | Docker Desktop / engine |
 | `python3` ≥ 3.11 | soft | mint TOML check and `moe-proof` | python.org or your distro |
 
@@ -82,7 +82,7 @@ you know what you're doing), then:
 
 Four plugins install from a sparse clone of `.claude-plugin/` + `plugins/`
 (content only — no toolchain needed). `moe-memory` and `moe-glass` install
-from the `@bubstack` npm scope via the GitLab instance registry: prebuilt
+from the `@tc` npm scope via the internal ProGet registry: prebuilt
 `better-sqlite3` on every platform including native Windows, no MSVC
 build tools required.
 

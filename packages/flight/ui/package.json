@@ -1,10 +1,14 @@
 {
-  "name": "@bubstack/moe-flight-ui",
-  "version": "0.0.0",
+  "name": "@tc/moe-flight-ui",
+  "version": "0.0.0-tc.1",
   "private": true,
   "type": "module",
   "description": "React + Vite SPA for moe-flight: run list, card editor, live transcript, and the single-file run report template.",
   "license": "Apache-2.0",
+  "moeRelease": {
+    "upstreamVersion": "0.0.0",
+    "upstreamCommit": "54b4ec6c54540d472835c1e074e7e7c8e6469329"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build && vite build --config vite.static.config.ts",

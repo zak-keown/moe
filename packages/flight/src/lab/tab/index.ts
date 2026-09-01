@@ -1,5 +1,5 @@
 /**
- * The `@bubstack/moe-flight` -> `@bubstack/moe-tab` boundary: turn a priced
+ * The `@tc/moe-flight` -> `@tc/moe-tab` boundary: turn a priced
  * transcript into the run's `TokenUsage` block.
  *
  * This is ARCHITECTURE.md §5's one confirmed edge, and the reason the monorepo
@@ -17,7 +17,7 @@
  *     test/lab/tab.test.ts's fully-typed fixtures exist to catch.
  */
 import { existsSync, readFileSync } from "node:fs";
-import { type CostEstimate, estimatePath, TabError } from "@bubstack/moe-tab";
+import { type CostEstimate, estimatePath, TabError } from "@tc/moe-tab";
 import type { TokenUsage } from "../contracts/economics.js";
 
 const BUCKET_KEYS = [

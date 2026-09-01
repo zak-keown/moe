@@ -5,7 +5,7 @@
     {
       "name": "moe-crew",
       "description": "Launch, control and monitor worker Claude sessions over tmux.",
-      "version": "0.0.0",
+      "version": "0.0.0-tc.1",
       "source": "./",
       "author": {
         "name": "Zak Keown",

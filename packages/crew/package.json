@@ -1,10 +1,16 @@
 {
-  "name": "@bubstack/moe-crew",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@tc/moe-crew",
+  "version": "0.0.0-tc.1",
   "type": "module",
   "description": "Launch, control and monitor worker coding-agent sessions (Claude Code, Codex, Pi) over tmux.",
   "license": "MIT",
+  "moeRelease": {
+    "upstreamVersion": "0.0.0",
+    "upstreamCommit": "54b4ec6c54540d472835c1e074e7e7c8e6469329"
+  },
+  "publishConfig": {
+    "registry": "https://proget.tcdevops.com/npm/tcnpm/"
+  },
   "engines": {
     "node": ">=24"
   },

@@ -355,11 +355,12 @@ imported:
 # because there is no upstream to name, and its `why:` earns the skill's place
 # the same way an imported one does.
 #
-# CURRENT POLICY, 2026-08-31 (Zak Keown, decision D2): a fork-authored skill is
-# `tier: everything` only, and test/metadata.test.ts asserts it. This is
-# REVERSIBLE and deliberately so: it exists to make the first core-tier
-# authored skill a conversation someone has on purpose rather than a default
-# nobody chose. Flip the assertion when that conversation happens.
+# DEFAULT POLICY, 2026-08-31 (Zak Keown, decision D2): a fork-authored skill is
+# `tier: everything`. The policy is reversible by an explicit decision, and
+# test/metadata.test.ts pins every approved exception by name so a second one
+# cannot arrive as an incidental manifest edit. `retrieving-context` is the
+# first exception, approved for the TC downstream on 2026-09-01; D2 remains the
+# default for every other authored skill.
 #
 # The `{}` on the next line is load-bearing. A bare `authored:` with nothing
 # under it parses as NULL rather than as an empty map.
@@ -374,19 +375,16 @@ imported:
 # ---------------------------------------------------------------------------
 authored:
   retrieving-context:
-    tier: everything
+    tier: core
     from: moe
     why: >-
-      Everything-tier under D2 (2026-08-31), which makes fork-authored skills
-      everything-only. The backlog item argued for core and the argument is on
-      the record: a retrieval-discipline skill's value is firing unprompted, so
+      TC downstream exception to D2, explicitly approved by Zak Keown on
+      2026-09-01. A retrieval-discipline skill's value is firing unprompted, so
       "search before you answer" that waits to be invoked has already failed —
-      which is exactly ARCHITECTURE.md §2's criterion for core, and it is a
-      methodology skill like `verification-before-completion` rather than a
-      memory feature. D2 is the standing policy and the assertion that guards it
-      says so in as many words: reversible by deliberate decision, not by
-      editing this manifest. So it ships everything-tier, and flipping it is one
-      word here plus LEAN_TIER_COUNT 13 to 14 in metadata.test.ts.
+      exactly ARCHITECTURE.md's criterion for core. It is a methodology skill
+      like `verification-before-completion`, not a memory feature. The named
+      exception is pinned in metadata.test.ts; D2 remains the everything-tier
+      default for every other fork-authored skill.
       Carries no **REQUIRED SUB-SKILL:** marker naming `remembering-conversations`
       — that skill lives in packages/memory and metadata.test.ts's strict marker
       rule resolves every backticked token against packages/core/skills/ only, so
@@ -452,6 +450,17 @@ authored:
       that fills it. Not in metadata.test.ts's `parallelDispatchers`: fixes
       commit to one tree in sequence, so it dispatches nothing in parallel and
       owes no sequential fallback.
+  tracing-across-the-stack:
+    tier: everything
+    from: moe
+    why: >-
+      Everything-only under D2. This is a deliberate TC cross-repository
+      investigation workflow rather than a trigger claimed by ordinary core
+      work: the user reaches for it when tracing Angular-to-BFF impact or data
+      provenance. Its CodeGraph-first capability ladder, honest source-search
+      fallback, optional Moedex challenge, and per-hop evidence labels are one
+      contract, so the skill ships intact in moe-everything rather than
+      partially duplicating that policy in a lean-tier skill.
 
 # Not a skill: skills/_shared/ holds the three PAR reference documents the
 # iterative-development cluster reads at runtime. It carries no SKILL.md, so

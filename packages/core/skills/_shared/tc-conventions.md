@@ -12,34 +12,46 @@ Vendored from two TC repositories. The pattern is the one PARITY.md's
 revision it was derived from, and a scheduled CI job in `.gitlab-ci.yml`
 (`tc-conventions-drift`) fails when upstream has moved past the pinned SHA.
 
-Machine-readable manifest — the `tc-conventions-drift` CI job greps for these
-two lines and compares each SHA against the upstream `main`:
+Machine-readable manifest — `scripts/check-tc-drift-manifest.mjs` validates
+these four rows and, in remote-check mode, compares every SHA against the
+project's upstream `main`. A `content` row names text deliberately incorporated
+into this file. A `watch-only` row records an operational dependency without
+vendoring its body or making it imported work for `PARITY.md` or `NOTICE`.
 
-- `ai/skills@9228cc6c880df3a51c7b7f7782afc5826089c44f:skills/creating-merge-requests/SKILL.md`
-- `ai/claude-code-platform-plugin@35096293343fe0493ba732fa3ea4d831612a996d:skills/tc-git-worktrees/SKILL.md`
+<!-- tc-drift-manifest:start -->
+- `content|ai/skills@9228cc6c880df3a51c7b7f7782afc5826089c44f:skills/creating-merge-requests/SKILL.md`
+- `content|ai/claude-code-platform-plugin@35096293343fe0493ba732fa3ea4d831612a996d:skills/tc-git-worktrees/SKILL.md`
+- `watch-only|ai/aigovernance@d6a5387789ab5818acc6eb3d205914d7e844f501`
+- `watch-only|ai/tc-guide@e900235d1de8afb969b0698653dceb500eeb9701`
+<!-- tc-drift-manifest:end -->
 
-**Bootstrapped 2026-09-01.** Both SHAs above are real, and each was verified by
-fetching the named path at that exact revision — not merely by resolving `main`.
-They replaced `<TC-BOOTSTRAP-PENDING>` sentinels that existed because the branch
-was authored without read access to `gitlab.tcdevops.com`; the drift job
-soft-passed on the sentinel by design until then.
+**Bootstrapped 2026-09-01.** All four SHAs above are real. Each `content` row was
+verified by fetching the named path at that exact revision — not merely by
+resolving `main`. The two `watch-only` rows were resolved directly from their
+current `main` refs through TC's CodeGraph GitLab read surface. A
+`<TC-BOOTSTRAP-PENDING>` sentinel is structurally valid for an unauthenticated
+bootstrap, but remote comparison reports it as pending and fails rather than
+claiming equality.
 
 To re-bootstrap or re-pin after a deliberate update:
 
 ```bash
 glab -R gitlab.tcdevops.com/ai/skills api projects/:id/repository/commits/main --jq .id
 glab -R gitlab.tcdevops.com/ai/claude-code-platform-plugin api projects/:id/repository/commits/main --jq .id
+glab -R gitlab.tcdevops.com/ai/aigovernance api projects/:id/repository/commits/main --jq .id
+glab -R gitlab.tcdevops.com/ai/tc-guide api projects/:id/repository/commits/main --jq .id
 ```
 
-Note the two upstreams move at very different rates, and the pins record that:
+Note the content upstreams move at very different rates, and the pins record that:
 `ai/skills` was last touched 2026-08-31 (MR !10, harness-specific skill
 variants), while `ai/claude-code-platform-plugin` has not changed since
 2026-04-23. The second is the sibling fork Moe replaces, so a moving SHA there
 is more interesting than a still one.
 
 Do not remove the drift-check job. Do not weaken the SHA format (`[0-9a-f]{40}`).
-A stale convention that silently mislabels every agent-authored MR is the failure
-mode this manifest exists to prevent.
+A stale convention that silently mislabels every agent-authored MR, or an
+unnoticed policy/context change in a watch-only source, is the failure mode this
+manifest exists to prevent.
 
 ## Branch name
 

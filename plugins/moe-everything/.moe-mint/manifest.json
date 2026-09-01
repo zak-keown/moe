@@ -1,24 +1,24 @@
 {
   "schema": 1,
-  "tool": "moe-mint@0.0.0",
+  "tool": "moe-mint@0.0.0-tc.1",
   "files": {
     ".agents/plugins/marketplace.json": {
       "sha256": "955161a680f8034d649d5e893246b1a9ebb39c53065f9ca3a361a05677b25d44"
     },
     ".claude-plugin/marketplace.json": {
-      "sha256": "1df47bae5f4b9dbf82f48b9a7976bfbc4f67a56b819b9cd09c61a7ac6f6bf5ca"
+      "sha256": "c7f68514bbd704f6529160fe1d29c338759ccdbe2039dfd3807c397824322c71"
     },
     ".claude-plugin/plugin.json": {
-      "sha256": "6e895badaa5b492c69875e03d4999490f77b269c3e8f274bff9fb6d946fa2494"
+      "sha256": "139a5c4cc3fe040c06e1dcab7dc9493ff7559fa695ac9cffaf3aa1630109355e"
     },
     ".codex-plugin/plugin.json": {
-      "sha256": "99633bd5c93227e665b5f5a97647bae13b39e6bdb1e2e07a5b205ac3e51b9ea5"
+      "sha256": "b4077230e088688b1ea99ec379cb7839448740cde33f10ad49231dcbd0d11073"
     },
     ".cursor-plugin/plugin.json": {
-      "sha256": "6378948d04d66f7770d3132ccf9e480e8be10cf14411729d32a6e76f4de48ff8"
+      "sha256": "6277ed74b5f75e4995d89e3a3e53652167f8db3408768730eae226ab66ae4bb5"
     },
     ".kimi-plugin/plugin.json": {
-      "sha256": "8d68356e4e90cc233f995ca64594c9acaf1b0bee6571bd524ff48ec4f0301e93"
+      "sha256": "6e906be74f20a2fedb5b314e200f9d648e34c87adfdd99ed52673e392ccfb2b5"
     },
     ".opencode/agent/review-shard.md": {
       "sha256": "b6b834d2a4065e12a9e295bb44740af4c791800a6d2b9beadb42dbb7d73261cf"
@@ -69,7 +69,7 @@
       "sha256": "7653af3eca8918a0fa45c4d67c321723d3906b8d3d6966959461be208f67d8a5"
     },
     "hooks/moe-mint/hooks.json": {
-      "sha256": "e4d21c7f65bd3c88140ed25f15a6f77457d82d97cb3c720001985c80d8790d28"
+      "sha256": "ed14f9e5a934a8f10e775829a2ba9121dd69e502d49a6038b779b27d6e383fe8"
     },
     "hooks/moe-mint/run-hook.cmd": {
       "sha256": "1091dc12af883e19c6f322221281ad7e1a9816d0e266ca60088dfbc278a50db8",
@@ -80,10 +80,10 @@
       "executable": true
     },
     "package.json": {
-      "sha256": "5943713faaf66cf11a0d5fab6cb09f2391ff20788bd05ed07e54d18eae236d17"
+      "sha256": "1d0f89016074411b6609977ef2611aa1efb19f1c0cdf4a0aa728e80b2abbb5a0"
     },
     "plugin.json": {
-      "sha256": "bdfa9039ceeb59b0b665ae961a09544188b0139075eda70444cb5b4bcaaabb2f"
+      "sha256": "0ba7e7e07a1dea1e400cadc9cfe85aa4700d5ffc73b14e397f819d3ab5f25e5a"
     }
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Metadata correctness for @bubstack/moe-core.
+ * Metadata correctness for @tc/moe-core.
  *
  * This package has no build. Six upstream repositories that never had to agree
  * with each other were merged into one flat skills/ directory, so the failure
@@ -152,7 +152,7 @@ const registry: Record<string, { tier: string; from: string; why: string }> = {
 // guards is membership: the lean tier is an INSTALLED INTERFACE for ~20 people
 // who leave it on permanently, so which skills are in it must not change
 // silently. A deliberate change here is one edit; an accidental one is a red test.
-const LEAN_TIER_COUNT = 14;
+const LEAN_TIER_COUNT = 15;
 
 // Every markdown file we are allowed to make assertions about: the skill bodies
 // and companion documents this fork authored or rebranded. Excludes third-party
@@ -433,6 +433,7 @@ const X_BIT_ALLOWLIST = [
   "hooks/plan-set-notice",
   "hooks/run-hook.cmd",
   "hooks/tc-governance-check",
+  "hooks/tc-governance-enforce",
   "skills/brainstorming/scripts/start-server.sh",
   "skills/brainstorming/scripts/stop-server.sh",
   "skills/extracting-requirements/scripts/aggregate_stories.py",
@@ -583,11 +584,12 @@ describe("runtime paths", () => {
 
     // Floors. A walk that stopped finding anything — a moved directory, a
     // tightened filter — would otherwise satisfy every assertion below by
-    // iterating zero times. Node floor is 6 now, not 5: the four .cjs/.mjs
-    // scripts plus the two extensionless Node hooks (`hooks/plan-set` and
-    // `hooks/moe-completion-evidence`) with node shebangs.
+    // iterating zero times. Node floor is 7 now: the four .cjs/.mjs scripts
+    // plus the three extensionless Node hooks (`hooks/plan-set`,
+    // `hooks/moe-completion-evidence`, and `hooks/tc-governance-enforce`) with
+    // node shebangs.
     expect(bash.length, "bash targets discovered").toBeGreaterThanOrEqual(11);
-    expect(node.length, "node targets discovered").toBeGreaterThanOrEqual(6);
+    expect(node.length, "node targets discovered").toBeGreaterThanOrEqual(7);
     for (const rel of [
       "hooks/claude-judge-continuation",
       "hooks/plan-set-notice",
@@ -603,9 +605,14 @@ describe("runtime paths", () => {
     // Extensionless node script(s). Same regression concern in the mirror
     // direction: if the node-shebang branch above is removed, these fall
     // through and node's floor could still be met by the .cjs/.mjs four.
-    // Both plan-set (deterministic-task-dag) and moe-completion-evidence
-    // (verification-split-and-firing-rate) are extensionless Node hooks.
-    for (const rel of ["hooks/plan-set", "hooks/moe-completion-evidence"]) {
+    // Plan-set (deterministic-task-dag), moe-completion-evidence
+    // (verification-split-and-firing-rate), and tc-governance-enforce
+    // (tc-governance-integration) are extensionless Node hooks.
+    for (const rel of [
+      "hooks/plan-set",
+      "hooks/moe-completion-evidence",
+      "hooks/tc-governance-enforce",
+    ]) {
       expect(node, `extensionless script ${rel} not routed to node --check`).toContain(rel);
     }
     expect(bash).not.toContain("hooks/run-hook.cmd");
@@ -634,7 +641,7 @@ describe("hooks", () => {
     >;
   };
 
-  it("registers the SessionStart and Stop hooks, and nothing else", () => {
+  it("registers SessionStart, optional governance enforcement, and Stop hooks", () => {
     // Stop is the claude-judge-continuation hook. SessionStart carries TWO
     // hooks under one matcher: plan-set-notice (deterministic-task-dag), which
     // announces an incomplete plan set when the session starts in a project
@@ -651,11 +658,10 @@ describe("hooks", () => {
     // so declaring SessionStart here does NOT collide with the bootstrap:
     // the two entries have different commands and both fire.
     //
-    // Insertion order matters here: `Object.keys` returns keys in the order
-    // they appear in the JSON, and the assertion is a `toEqual` for both
-    // length and order, so a new event appearing between these two would
-    // fail here regardless of alphabetical position.
-    expect(Object.keys(hooks.hooks)).toEqual(["SessionStart", "Stop"]);
+    // Insertion order matters here: `Object.keys` returns keys in document
+    // order. PreToolUse sits after the nonblocking SessionStart checks and
+    // before completion-time Stop hooks.
+    expect(Object.keys(hooks.hooks)).toEqual(["SessionStart", "PreToolUse", "Stop"]);
   });
 
   it("dispatches the SessionStart plan-set-notice through run-hook.cmd", () => {
@@ -945,23 +951,64 @@ describe("the lean/full curation", () => {
     }
   });
 
-  it("keeps every fork-authored skill in the everything tier", () => {
-    // DECISION D2, Zak Keown, 2026-08-31. A fork-authored skill is
-    // `tier: everything` only, FOR NOW.
-    //
-    // This is CURRENT POLICY and it is REVERSIBLE — it is not a law, and it is
-    // not a claim that a Moe-original skill could never earn the lean tier. It
-    // exists so that the FIRST core-tier authored skill is a conversation
-    // somebody has on purpose, rather than a default nobody chose. When that
-    // conversation happens, flip this assertion; do not work around it.
-    //
-    // Vacuous while `authored:` is empty, which is why it was driven RED once
-    // against a throwaway entry rather than trusted because the suite was green.
+  it("allows only the approved fork-authored core-tier exception", () => {
+    // D2 (Zak Keown, 2026-08-31) remains the everything-tier default for
+    // authored skills. `retrieving-context` is the first named exception,
+    // approved for the TC downstream on 2026-09-01. Pinning the exception list
+    // makes a second promotion a deliberate test-and-manifest change.
+    const approvedCoreExceptions = ["retrieving-context"];
+    const actualCoreExceptions = Object.entries(authored)
+      .filter(([, entry]) => entry.tier === "core")
+      .map(([name]) => name)
+      .sort();
+
+    expect(actualCoreExceptions, "authored core-tier exceptions changed").toEqual(
+      approvedCoreExceptions,
+    );
+
     for (const [name, entry] of Object.entries(authored)) {
+      if (approvedCoreExceptions.includes(name)) continue;
       expect(
         entry.tier,
-        `authored.${name}.tier is "${entry.tier}". Fork-authored skills are everything-tier only — CURRENT POLICY (D2, 2026-08-31), reversible by deliberate decision, not by editing this manifest.`,
+        `authored.${name}.tier is "${entry.tier}". D2 keeps authored skills everything-tier unless metadata.test.ts names an approved core exception.`,
       ).toBe("everything");
+    }
+  });
+
+  it("registers retrieving-context once as the TC core-tier exception", () => {
+    const name = "retrieving-context";
+    const registrations = [name in imported, name in authored].filter(Boolean);
+
+    expect(registrations, `${name} must appear in exactly one provenance map`).toHaveLength(1);
+    expect(imported[name], `${name} is Moe-authored, not imported`).toBeUndefined();
+    expect(authored[name]).toMatchObject({ tier: "core", from: "moe" });
+    expect(authored[name]?.why).toContain("TC downstream exception");
+  });
+
+  it("registers tracing-across-the-stack once as an everything-tier authored skill", () => {
+    const name = "tracing-across-the-stack";
+    const registrations = [name in imported, name in authored].filter(Boolean);
+
+    expect(registrations, `${name} must appear in exactly one provenance map`).toHaveLength(1);
+    expect(imported[name], `${name} is Moe-authored, not imported`).toBeUndefined();
+    expect(authored[name]).toMatchObject({ tier: "everything", from: "moe" });
+  });
+
+  it("keeps the tracing-across-the-stack capability and evidence contract", () => {
+    const skill = readFileSync(join(SKILLS, "tracing-across-the-stack/SKILL.md"), "utf8");
+    const codeGraph = skill.indexOf("**CodeGraph baseline.**");
+    const sourceFallback = skill.indexOf("**Source-search fallback.**");
+    const optionalMoedex = skill.indexOf("**Optional Moedex enhancement.**");
+
+    expect(codeGraph, "CodeGraph remains the baseline").toBeGreaterThanOrEqual(0);
+    expect(sourceFallback, "Grep/source search remains the fallback").toBeGreaterThan(codeGraph);
+    expect(optionalMoedex, "Moedex remains an optional enhancement").toBeGreaterThan(
+      sourceFallback,
+    );
+    expect(skill).toMatch(/Source-search fallback[\s\S]*`Grep`\/`rg`/);
+    expect(skill).toContain("Use `impact`, not `consumers`, for Route traversal");
+    for (const state of ["graph-proven", "source-proven", "convention-matched", "unresolved"]) {
+      expect(skill, `missing evidence state ${state}`).toContain(`\`${state}\``);
     }
   });
 

@@ -10,7 +10,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { main, NAMESPACES, resolve, USAGE } from "../moe.js";
+import { main, NAMESPACES, namespaceStatuses, resolve, USAGE } from "../moe.js";
 
 const HERE = fileURLToPath(new URL(".", import.meta.url));
 const REPO_ROOT = fileURLToPath(new URL("../..", import.meta.url));
@@ -87,15 +87,18 @@ describe("resolve", () => {
   it("proof workspace fallback goes through `uv run --project py/proof`", () => {
     const self = mktree();
     const root = mktree();
+    const pathDir = mktree();
+    const uv = makeExec(pathDir, "uv");
+    mkdirSync(join(root, "py/proof"), { recursive: true });
     writeFileSync(join(root, "pnpm-workspace.yaml"), "");
     const r = resolve("proof", ["--foo"], {
       self,
       root,
-      env: { PATH: "" },
+      env: { PATH: pathDir },
       platform: "linux",
     });
     expect(r.source).toBe("workspace-uv");
-    expect(r.command).toBe("uv");
+    expect(r.command).toBe(uv);
     expect(r.args).toEqual(["run", "--project", join(root, "py/proof"), "moe-proof", "--foo"]);
   });
 
@@ -151,7 +154,7 @@ describe("resolve", () => {
 });
 
 describe("main", () => {
-  it("bare invocation prints USAGE naming every namespace, exit 0", async () => {
+  it("bare invocation reports every namespace exactly once, exit 0", async () => {
     const stdout = makeStream();
     const stderr = makeStream();
     const code = await main([], {
@@ -164,9 +167,14 @@ describe("main", () => {
       release: "",
     });
     expect(code).toBe(0);
-    for (const ns of Object.keys(NAMESPACES)) {
-      expect(stdout.text()).toContain(ns);
-    }
+    const rows = stdout
+      .text()
+      .split("\n")
+      .filter((line) => /\[(present|absent)\]/.test(line));
+    expect(rows).toHaveLength(7);
+    expect(rows.map((line) => line.trim().split(/\s+/)[1]).sort()).toEqual(
+      Object.keys(NAMESPACES).sort(),
+    );
   });
 
   it("--help prints the full USAGE block, exit 0", async () => {
@@ -212,8 +220,8 @@ describe("main", () => {
       release: "",
     });
     expect(code).toBe(127);
-    expect(stderr.text()).toContain("@bubstack/moe-mint");
-    expect(stderr.text()).toContain("moe-install");
+    expect(stderr.text()).toContain("@tc/moe-mint");
+    expect(stderr.text()).toContain("moe install");
   });
 
   it("refuses `moe crew` on bare Windows with the WSL2 message", async () => {
@@ -292,6 +300,72 @@ describe("main", () => {
     });
     expect(code).toBe(42);
   });
+
+  it("status reports source-only namespaces without inventing installable packages", async () => {
+    const stdout = makeStream();
+    const code = await main(["status"], {
+      stdout,
+      stderr: makeStream(),
+      self: mktree(),
+      root: null,
+      env: { PATH: "" },
+      platform: "linux",
+      release: "",
+    });
+    expect(code).toBe(0);
+    expect(stdout.text()).toContain("flight  private source-only tool; not distributed");
+    expect(stdout.text()).toContain("proof   Python source-only eval tool; no npm package");
+    expect(stdout.text()).toContain(
+      "tab     native source-built CLI; @tc/moe-tab publishes bindings only",
+    );
+    expect(stdout.text()).not.toContain("@tc/moe-proof");
+  });
+
+  it.each([
+    ["install", ["--apply", "--scope", "user"]],
+    ["upgrade", ["--upgrade", "--apply", "--scope", "user"]],
+    ["uninstall", ["--uninstall", "--apply", "--scope", "user"]],
+  ])("moe %s delegates to moe-install with apply injected", async (command, expectedArgs) => {
+    const self = mktree();
+    const installer = makeExec(self, "moe-install");
+    let captured;
+    const code = await main([command, "--scope", "user"], {
+      stdout: makeStream(),
+      stderr: makeStream(),
+      self,
+      root: null,
+      env: { PATH: "" },
+      platform: "linux",
+      release: "",
+      spawn: async (bin, args) => {
+        captured = { bin, args };
+        return 0;
+      },
+    });
+    expect(code).toBe(0);
+    expect(captured).toEqual({ bin: installer, args: expectedArgs });
+  });
+
+  it("moe doctor delegates to the durable doctor bin", async () => {
+    const self = mktree();
+    const doctor = makeExec(self, "moe-doctor");
+    let captured;
+    const code = await main(["doctor", "--json"], {
+      stdout: makeStream(),
+      stderr: makeStream(),
+      self,
+      root: null,
+      env: { PATH: "" },
+      platform: "linux",
+      release: "",
+      spawn: async (bin, args) => {
+        captured = { bin, args };
+        return 0;
+      },
+    });
+    expect(code).toBe(0);
+    expect(captured).toEqual({ bin: doctor, args: ["--json"] });
+  });
 });
 
 describe("packaging invariants", () => {
@@ -300,9 +374,13 @@ describe("packaging invariants", () => {
     expect(src.split("\n")[0]).toBe("#!/usr/bin/env node");
   });
 
-  it("root package.json declares bin.moe → ./bin/moe.js", () => {
+  it("root package.json publishes all three durable CLI bins", () => {
     const pkg = JSON.parse(readFileSync(join(REPO_ROOT, "package.json"), "utf8"));
-    expect(pkg.bin?.moe).toBe("./bin/moe.js");
+    expect(pkg.bin).toMatchObject({
+      moe: "./bin/moe.js",
+      "moe-doctor": "./bin/moe-doctor",
+      "moe-install": "./bin/moe-install",
+    });
   });
 
   it("namespace table has exactly the seven expected keys", () => {
@@ -322,5 +400,16 @@ describe("packaging invariants", () => {
       expect(entry.bin).toBe(`moe-${ns}`);
       expect(entry.workspace || entry.runner).toBeTruthy();
     }
+  });
+
+  it("namespace classification has one row per explicit distribution entry", () => {
+    const statuses = namespaceStatuses({
+      self: mktree(),
+      root: null,
+      env: { PATH: "" },
+      platform: "linux",
+    });
+    expect(statuses.map((status) => status.namespace)).toEqual(Object.keys(NAMESPACES));
+    expect(statuses).toHaveLength(7);
   });
 });

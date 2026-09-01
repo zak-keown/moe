@@ -37,7 +37,8 @@ function openingLine(text) {
 }
 
 // Openers that announce a noun phrase rather than a verdict. Closed list.
-const NOUN_PHRASE_OPENERS = /^(This|That|These|Those|A|An|The|It|There|Moe|`?@bubstack|`?moe-)\b/;
+const NOUN_PHRASE_OPENERS =
+  /^(This|That|These|Those|A|An|The|It|There|Moe|`?@(bubstack|tc)|`?moe-)\b/;
 
 // Copular and permission-granting constructions: the sentence describes the
 // package's category instead of saying what it does to what.

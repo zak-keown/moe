@@ -11,7 +11,7 @@ only; every library and binding requires the dialect explicitly.
 
 A single JSON document with a `schema_version` beginning `"ATIF-"`. This is the canonical shape a
 harness normalizes an agent's session log into, so moe-tab prices one stable input instead of
-learning every agent's transcript format. `@bubstack/moe-flight` is the producer in this
+learning every agent's transcript format. `@tc/moe-flight` is the producer in this
 workspace.
 
 Per-step `usage` is read verbatim into disjoint token buckets. Two things override list-price

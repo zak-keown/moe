@@ -19,16 +19,21 @@ decision_needed: no
 
 # The 17 Deferred `tc-*` Skills — A Census And Its Three Outcomes
 
-## Resolved 2026-09-01
+## Canceled 2026-09-01
 
 **Nothing from these 17 skills lands in this repo.** Kept because the census is
 the durable part: the next person to count 17 skills in
 `ai/claude-code-platform-plugin` should read this instead of re-running it.
 
+Canceled is deliberately not "completed": the original 17-skill port did not
+happen. Its successor capability is now built as `tracing-across-the-stack`;
+that does not retroactively turn any of the 17 declined ports into delivered
+work.
+
 | Group | Outcome |
 |---|---|
 | 13 near-duplicates of skills this fork ships | **Declined.** Porting them would undo the premise of `tc-standards-conformance`, which exists because Moe *replaces* that fork. |
-| 3 dispatch wrappers over 7 tools that do not exist here | **Declined as ports.** The capability they reached for became `cross-stack-tracing`, built against CodeGraph instead. |
+| 3 dispatch wrappers over 7 tools that do not exist here | **Declined as ports.** Their capability is superseded by the built `tracing-across-the-stack` skill: CodeGraph baseline, convention-led Grep fallback and optional Moedex enhancement. |
 | 1 piece of real content — the C#→Angular concept mapping | **Sent to `ai/kb`**, MR `ai/kb!17`. That corpus is what `rag_search` indexes, so a doc there reaches every TC engineer; a Moe skill reaches only Moe installs. |
 
 The title was wrong for most of this item's life, and so was its framing. It
@@ -166,11 +171,13 @@ switching stacks is a no on the first and "TC engineers" on the second.
 
 ## The decision this needed — answered
 
-Zak, 2026-09-01. **The mapping table goes to `ai/kb`** (option 1 below, shipped as
-MR `ai/kb!17`). **The trace capability gets built** against CodeGraph rather than
+Zak, 2026-09-01. **The mapping table goes to `ai/kb`** (option 1 below, recorded as
+MR `ai/kb!17`; that external merge is not repository-local implementation evidence).
+**The trace capability is to be built** against CodeGraph rather than
 ported — his question "is it possible to write it against just the CodeGraph
 tools?" is what produced the baseline-first design now recorded in
-`cross-stack-tracing`. The answer was mostly yes: `HTTP_CALLS` carries
+`cross-stack-tracing`, with Moedex retained as an optional enhancement. The answer
+was mostly yes: `HTTP_CALLS` carries
 `source_repo`/`target_repo`, so the endpoint→UI direction is complete on the
 baseline; the NgRx chain is not addressable by symbol and falls back to
 convention-matching.
@@ -198,7 +205,7 @@ answer is not obvious:
    same grounds: it buys nothing the upstream's own install does not, and adds a
    package to a nine-package architecture whose §4 reasoning is explicit.
 
-## Scope boundary
+## Historical scope options
 
 **In:** the decision above; if option 2, the five skills plus their
 `skill-tiers.yaml` rows and the `from:` value question; if option 1, an `ai/kb` MR
@@ -210,7 +217,20 @@ conventions, already shipped by `tc-standards-conformance`. Retrieval routing,
 already shipped as `retrieving-context`. Any change to `ai/skills` or
 `ai/claude-code-platform-plugin` beyond a content MR.
 
-## Verification
+## Cancellation verification
+
+Current resolution evidence:
+
+1. The thirteen duplicate skills remain explicitly declined; no duplicate port
+   is treated as a deliverable.
+2. The three wrapper ports remain declined. Their replacement is verified by
+   the "tracing-across-the-stack contract" test and the recorded live/degraded
+   runs in `.planning/tracing-acceptance-2026-09-01.md`.
+3. The C#→Angular content is assigned to `ai/kb`; any external MR result must be
+   verified in that repository and is not evidence of local Moe implementation.
+
+The conditional branches below are preserved as the historical choices this
+census evaluated; they are superseded by the cancellation above.
 
 1. If option 1: the content is reachable via `rag_search` and nothing lands in
    this repo. Record the decision in `ARCHITECTURE.md` §2 alongside the

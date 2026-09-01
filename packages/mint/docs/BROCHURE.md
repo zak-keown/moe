@@ -8,7 +8,7 @@ Generate a coding-agent plugin for every harness from one config file.
 > checks. This fork's inbound adapter count is eight after pruning runtime
 > targets that Moe does not support. The
 > `moe-mint.yaml` schema and generation-manifest format were declared stable
-> upstream and are unchanged here. `@bubstack/moe-mint` is not published to any
+> upstream and are unchanged here. `@tc/moe-mint` is not published to any
 > registry and is not intended to be — it is a workspace bin and the
 > monorepo's plugin build step. Every "unpublished on npm" note below is
 > inherited framing; the fork's answer is that npm was never the plan.
@@ -67,7 +67,7 @@ directory: `src/init.ts`, `init`), build the workspace package and run the
 three-command lifecycle:
 
 ```
-pnpm --filter @bubstack/moe-mint build
+pnpm --filter @tc/moe-mint build
 node /path/to/moe/packages/mint/dist/cli.js init
 node /path/to/moe/packages/mint/dist/cli.js generate
 node /path/to/moe/packages/mint/dist/cli.js validate
@@ -134,13 +134,13 @@ tool, or the maintainer running its guardrails.
 
 ## Getting started
 
-`@bubstack/moe-mint` is MIT-licensed (`LICENSE`) and needs Node 24 or newer
+`@tc/moe-mint` is MIT-licensed (`LICENSE`) and needs Node 24 or newer
 (`package.json`, `engines` — raised from upstream's Node 20 to match the
 workspace root).
 
 ```bash
 git clone git@gitlab.tcdevops.com:Zak/moe.git
-cd moe && pnpm install && pnpm --filter @bubstack/moe-mint build
+cd moe && pnpm install && pnpm --filter @tc/moe-mint build
 cd ~/your-plugin && node /path/to/moe/packages/mint/dist/cli.js import   # existing Claude-format plugin
 node /path/to/moe/packages/mint/dist/cli.js generate
 ```

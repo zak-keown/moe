@@ -14,7 +14,7 @@ import ledger; `NOTICE` is the public attribution register.
 ### A repository is not an installable plugin
 
 Source lives in `packages/`. Installable plugin trees are generated into
-`plugins/` by `@bubstack/moe-mint`. This separation allows one source package to
+`plugins/` by `@tc/moe-mint`. This separation allows one source package to
 emit multiple curated plugins and prevents harness-specific manifests from
 becoming source-of-truth files.
 
@@ -56,14 +56,14 @@ moe/
 
 | Package | Responsibility | Distribution |
 |---|---|---|
-| `@bubstack/moe-core` | Planning, context retrieval, TDD, debugging, review, collaboration, writing, plugin authoring, and architecture skills | generated `moe-core` and `moe-everything` plugins |
-| `@bubstack/moe-backstory` | Recover a behavioral specification from code and observable evidence | generated `moe-backstory` plugin |
-| `@bubstack/moe-memory` | Index and search conversations and journals through one store and MCP server | npm-backed `moe-memory` plugin |
-| `@bubstack/moe-flight` | Drive web, CLI, or TUI targets through acceptance criteria and render results | internal only; never distributed |
-| `@bubstack/moe-mint` | Generate native plugin manifests and installation metadata | workspace tool |
-| `@bubstack/moe-crew` | Launch and supervise coding-agent workers through tmux | generated `moe-crew` plugin |
-| `@bubstack/moe-glass` | Direct Chrome DevTools Protocol access through a skill and MCP server | npm-backed `moe-glass` plugin |
-| `@bubstack/moe-tab` | Parse usage records and estimate transcript cost in Rust | workspace library and CLI |
+| `@tc/moe-core` | Planning, context retrieval, TDD, debugging, review, collaboration, writing, plugin authoring, and architecture skills | ProGet package; generates `moe-core` and `moe-everything` plugins |
+| `@tc/moe-backstory` | Recover a behavioral specification from code and observable evidence | ProGet package; generates `moe-backstory` plugin |
+| `@tc/moe-memory` | Index and search conversations and journals through one store and MCP server | ProGet-backed `moe-memory` plugin and CLI |
+| `@tc/moe-flight` | Drive web, CLI, or TUI targets through acceptance criteria and render results | internal only; never packed or published |
+| `@tc/moe-mint` | Generate native plugin manifests and installation metadata | ProGet CLI package |
+| `@tc/moe-crew` | Launch and supervise coding-agent workers through tmux | ProGet CLI package; generates `moe-crew` plugin |
+| `@tc/moe-glass` | Direct Chrome DevTools Protocol access through a skill and MCP server | ProGet-backed `moe-glass` plugin and CLI |
+| `@tc/moe-tab` | Parse usage records and estimate transcript cost in Rust | ProGet bindings package; native CLI is source-built |
 | `moe-proof` | Run and grade model evals | internal Python tool |
 
 `core` deliberately emits two plugins from one source tree. `moe-core` is the
@@ -184,16 +184,18 @@ model-download, and tmux suites require runtimes unavailable in the base CI
 image and are intentionally separate.
 
 The single GitLab pipeline runs install, lint, typecheck, test, build, plugin
-reproducibility, and provenance gates. Nothing publishes publicly. Flight is
-also explicitly private because it contains an internal-only legal exception;
-the exact controls are recorded in `PARITY.md`.
+reproducibility, and provenance gates. The TC downstream's publication target is
+the internal ProGet npm feed; it never publishes publicly. Branch and merge-request
+releases use the `next` dist-tag, and only the default branch may move `latest`.
+Flight is also explicitly private because it contains an internal-only legal
+exception; the exact controls are recorded in `PARITY.md`.
 
 ## 10. Hosting, provenance, and legal payloads
 
-The canonical project is `gitlab.tcdevops.com/Zak/moe`. Package scope and
-project group are intentionally decoupled; any future registry publication must
-use a compatible project-level endpoint or move the project under a matching
-group.
+This checkout is the TC downstream at `gitlab.tcdevops.com/Zak/moe` (`origin`).
+Its neutral upstream is `gitlab.com/moe-ai/moe` (`mirror`). The source host and
+package registry are intentionally decoupled: downstream packages publish to
+ProGet under `@tc/*`; upstream packages publish separately under `@bubstack/*`.
 
 Current documentation and metadata point only at Moe. Original project names,
 frozen revisions, and legal status live in `PARITY.md` and root `NOTICE`.
@@ -203,3 +205,43 @@ records, none of which is staged into installable plugins.
 Root legal files are canonical. Physical copies inside generated plugin
 artifacts exist because each plugin is independently distributed; they are
 generated and never maintained by hand.
+
+## 11. Upstream and TC-downstream distribution
+
+**Decision — Zak Keown, 2026-09-01.** `mirror` is the neutral upstream and
+`origin` is the TC downstream. Generic work is upstream-first: branch from
+`mirror/main`, land it there, then merge the upstream result into `origin/main`.
+TC-only work branches from `origin/main` and never flows back. Downstream syncs
+use merge commits; rebasing the published downstream or duplicating upstream
+changes with cherry-picks would destroy the ancestry that makes later syncs
+auditable.
+
+Every artifact installed from this downstream is committed under the `@tc/*`
+scope. Scope is source identity, not a release-time text transformation: package
+manifests, runtime dependencies, generated plugin metadata, tests, docs, and the
+umbrella CLI must all exercise the same names that ProGet receives. The neutral
+upstream keeps the corresponding `@bubstack/*` identities.
+
+The downstream release train is lockstep. If the neutral upstream release is
+`X.Y.Z`, TC releases are `X.Y.Z-tc.1`, `X.Y.Z-tc.2`, and so on, and record the
+exact `mirror` commit they derive from. Every installed `@tc/*` package in one
+release carries that version. Branch and merge-request packages use `next`; only
+the default branch can publish `latest`, after build, lint, typecheck, test,
+plugin-reproducibility, and provenance gates pass.
+
+Non-npm metadata uses the closest valid spelling without pretending the package
+standards are interchangeable. Cargo accepts the npm spelling `X.Y.Z-tc.N`.
+PEP 440 does not, so the Python tab binding records the same train as
+`X.Y.Z+tc.N`; the bundled native library and its runtime `version()` result
+remain `X.Y.Z-tc.N`.
+
+The umbrella package is `@tc/moe`. With the TC ProGet scope and authentication
+already configured, `npx @tc/moe install` is the bootstrap path and installs the
+bare `moe` dispatcher plus `moe-install` and `moe-doctor`. The upstream analogue
+is `@bubstack/moe`. Neither distribution provides a compatibility or migration
+layer for retired MCP keys.
+
+This section is the enforced boundary. `check-downstream-scope` validates the
+exact downstream package map and private Flight set, then scans committed
+install surfaces for upstream-scope leaks. The release validator repeats the
+identity, dependency and version checks at the packed-tarball boundary.

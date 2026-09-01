@@ -15,11 +15,11 @@ That version is the support floor because this plugin depends on all of these Co
 Install the plugin through the normal Codex plugin workflow or a marketplace entry.
 
 The installable plugin is **generated** into `<workspace>/plugins/moe-memory` by
-`@bubstack/moe-mint`; this package directory is source, not a plugin. For local
+`@tc/moe-mint`; this package directory is source, not a plugin. For local
 development, build the package and add the generated tree as a local marketplace:
 
 ```bash
-pnpm --filter @bubstack/moe-memory build
+pnpm --filter @tc/moe-memory build
 codex plugin marketplace add /path/to/moe/plugins/moe-memory
 ```
 
@@ -81,9 +81,9 @@ or, by default:
 The real Codex E2E test is opt-in because it starts live Codex sessions and uses the configured model/account.
 
 ```bash
-pnpm --filter @bubstack/moe-memory build
+pnpm --filter @tc/moe-memory build
 MOE_MEMORY_RUN_CODEX_E2E=1 MOE_MEMORY_E2E_PLUGIN_DIR=/path/to/moe/plugins/moe-memory \
-  pnpm --filter @bubstack/moe-memory test:codex-e2e
+  pnpm --filter @tc/moe-memory test:codex-e2e
 ```
 
 The test creates an isolated temporary `CODEX_HOME`, copies your existing Codex auth file into it, copies the plugin into Codex's plugin cache shape, enables and trusts the plugin hook, starts Codex sessions inside `tmux`, and verifies:

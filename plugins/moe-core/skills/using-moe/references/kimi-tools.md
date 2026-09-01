@@ -5,7 +5,7 @@ On Kimi Code these resolve to the tools below.
 
 **Extracted from a manifest on import.** Upstream this mapping existed only as a
 1,400-character `skillInstructions` string inside `.kimi-plugin/plugin.json`, a
-hand-maintained manifest that `@bubstack/moe-mint` now generates. A mapping
+hand-maintained manifest that `@tc/moe-mint` now generates. A mapping
 living inside a generated file is lost on the next `generate`, so it lives here.
 
 ## Asking the user

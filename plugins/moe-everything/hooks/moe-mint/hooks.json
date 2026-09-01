@@ -30,6 +30,19 @@
         ]
       }
     ],
+    "PreToolUse": [
+      {
+        "matcher": "Read|Grep|Glob|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/tc-governance-enforce\"",
+            "shell": "bash",
+            "async": false
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [

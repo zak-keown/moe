@@ -8,7 +8,7 @@ idea: |
       - Explore how to keep these up-to-date
 status: done
 size: M
-estimate: "3.5-4 h (add 3-4 h if the PreToolUse privacy gate is in scope)"
+estimate: "6.5-8 h (includes opt-in PreToolUse privacy enforcement)"
 depends_on: [DO-NOW-1, DO-NOW-3, tc-standards-conformance, codegraph-context-layer]
 blocks: []
 conflicts_with: [native-renderers]
@@ -18,10 +18,26 @@ touches:
   - packages/core/hooks/hooks.json
   - packages/core/hooks/
   - packages/core/README.md
-decision_needed: yes
+decision_needed: no
 ---
 
 # TC Governance And Guide Integration
+
+## Completion repair (2026-09-01)
+
+The required operating modes are now explicit. Governance presence remains a
+non-blocking SessionStart warning by default. Blocking `PreToolUse` enforcement
+is also required, but only behind an explicit opt-in setting. The shared drift
+manifest must include watch-only entries for `ai/aigovernance` and `ai/tc-guide`
+without vendoring their text.
+
+The historical branch delivered only the nudge and mapping. The downstream
+repair adds the opt-in `PreToolUse` guard and the two watch-only rows. The suite
+named "tc-governance-enforce behavior" proves fail-open default behavior,
+level-1 denial only when explicitly enabled, and restoration of non-blocking
+behavior when disabled. `check-tc-drift-manifest` enforces exactly two content
+and two watch-only rows, and CI performs both ordinary structural validation and
+scheduled remote comparison.
 
 ## The idea
 
@@ -39,10 +55,10 @@ plumbing plus two conformance findings.
 
 ## Debate-review decisions (2026-08-31)
 
-- **The watch-only row kind is withdrawn.** PARITY.md is frozen at its current
-  upstreams, and this item's own finding is that governance should *not* be
-  vendored — so there is no copy to diff and nothing for a watch-only row to buy.
-  Drop the design requirement handed to `tc-standards-conformance`.
+- **Superseded 2026-09-01: the watch-only row kind is required.** PARITY.md
+  remains frozen and governance text remains unvendored, but the TC drift
+  manifest must watch `ai/aigovernance` and `ai/tc-guide`. This is operational
+  drift metadata, not imported-work attribution in PARITY.md.
 - **Recommendation B is unaffected.** A SessionStart presence check needs no
   ledger row; it greps the installed policy and emits `additionalContext`.
 - **Recommendation C is unaffected**, and gains a sibling: a second `Stop` hook
@@ -292,12 +308,12 @@ pointer; the two conformance findings above; two rows for the TC watch list.
 - Reopening the `superpowers-evals` license decision or the publish-nothing decision.
 - Governance for Moe's *own* contribution flow → **`contributing-flow-docs`**.
 
-## Open questions for Zak
+## Historical questions and later resolutions
 
-1. **Enforcement appetite.** Is B (a SessionStart nudge) the right ceiling, or do you want
-   C — a `PreToolUse` gate that can actually refuse a read? C is the only real enforcement
-   and the only thing that satisfies §10's "read first … before reading or transmitting",
-   but it fires on every file read and a false positive blocks work.
+1. **Enforcement appetite — resolved 2026-09-01.** B, the SessionStart nudge, is
+   non-blocking and default-on. C, a `PreToolUse` gate that can refuse a read, is
+   available only behind an explicit opt-in setting. A user who has not opted in
+   must never be blocked by the governance hook.
 2. **`add_privacy.yml` include.** Do we `include:` TC's `.pre` job (needs an
    `AI_PRIVACY_KEY` variable, and it commits and pushes to your branch), or hand-commit
    `.ai-privacy.yml` once and skip the include? Hand-committing is quieter; including keeps
@@ -326,11 +342,12 @@ pointer; the two conformance findings above; two rows for the TC watch list.
 | Test asserting the entry survives mint into `plugins/moe-core/hooks/moe-mint/hooks.json` | 45 min |
 | `ai/kb` retrieval pointer in the hook's `additionalContext` | 15 min |
 | Two rows contributed to the TC watch list | 30 min |
-| **Total** | **3.5-4 h** |
+| Opt-in `PreToolUse` privacy resolver and behavioral tests | 3-4 h |
+| **Total** | **6.5-8 h** |
 
-Slower if option C is pulled in: the §10 resolver (inheritance, most-restrictive-wins,
-repo-relative paths) plus its tests is another 3-4 h, and it needs a real TC repo with
-level-1 paths to test against. Slower again if question 4 turns into an upstream MR.
+The §10 resolver must cover inheritance, most-restrictive-wins and repo-relative
+paths, and it needs a real TC repo with level-1 paths for acceptance. It remains
+opt-in despite being in scope. Slower again if question 4 turns into an upstream MR.
 
 ## Verification
 
@@ -344,5 +361,10 @@ level-1 paths to test against. Slower again if question 4 turns into an upstream
   covered. This is the case that catches mint silently dropping a user hook.
 - Manual, once: with the governance marker removed from `~/.claude/CLAUDE.md`, a fresh
   session shows the fetch instruction; with it present, the hook is silent.
+- Behavioral coverage proves the default mode never blocks a tool call, the
+  opt-in mode blocks a level-1 read, and disabling the opt-in restores the
+  non-blocking behavior.
+- The TC drift manifest contains watch-only rows for `ai/aigovernance` and
+  `ai/tc-guide`, with a test that detects movement without vendoring either body.
 - The mapping table in `packages/core/README.md` names all 11 governance sections, each
   either mapped to a Moe surface or marked "no Moe surface" with a reason.

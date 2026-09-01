@@ -1,4 +1,4 @@
-# @bubstack/moe-tab — TypeScript binding (Bun + Node)
+# @tc/moe-tab — TypeScript binding (Bun + Node)
 
 A thin TypeScript binding over moe-tab's C ABI (`moe-tab-ffi`). It runs under **both Bun and
 Node**: Bun uses the built-in `bun:ffi` (zero runtime deps), Node uses
@@ -17,9 +17,9 @@ pnpm tab:build                 # cargo build --release, from the repo root
 # or, for a debug build:
 cargo build -p moe-tab-ffi     # -> target/{debug,release}/libmoe_tab_ffi.{dylib,so}
 
-pnpm --filter @bubstack/moe-tab build       # tsc -b  -> dist/
-pnpm --filter @bubstack/moe-tab test        # unit project: no cdylib needed
-pnpm --filter @bubstack/moe-tab test:ffi    # ffi project: needs the cdylib
+pnpm --filter @tc/moe-tab build       # tsc -b  -> dist/
+pnpm --filter @tc/moe-tab test        # unit project: no cdylib needed
+pnpm --filter @tc/moe-tab test:ffi    # ffi project: needs the cdylib
 ```
 
 The library is resolved in order: `$MOE_TAB_LIB` (explicit path) → the package's bundled
@@ -29,7 +29,7 @@ The library is resolved in order: `$MOE_TAB_LIB` (explicit path) → the package
 ## Usage
 
 ```ts
-import { estimatePath, refresh, version, TabError } from "@bubstack/moe-tab";
+import { estimatePath, refresh, version, TabError } from "@tc/moe-tab";
 
 const est = await estimatePath("trajectory.json", "atif");
 console.log(est.total_usd, est.pricing_as_of, est.pricing_source);
@@ -58,7 +58,7 @@ The helpers call libc `setenv`/`unsetenv` under Bun (and set `process.env` for N
 work on both runtimes:
 
 ```ts
-import { setPricingDir, clearPricingDir } from "@bubstack/moe-tab";
+import { setPricingDir, clearPricingDir } from "@tc/moe-tab";
 
 await setPricingDir("/path/to/pricing-dir"); // a dir containing current.json
 // … estimatePath(...) …

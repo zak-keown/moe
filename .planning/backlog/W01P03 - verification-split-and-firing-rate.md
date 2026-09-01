@@ -28,6 +28,20 @@ decision_needed: no
 older, deleted Moe repo and a different project. `~/Code/tools/moe` was not read
 for this doc.)*
 
+## Completion audit note (2026-09-01)
+
+The branch for this item merged, but the ask is not complete. The required
+default remains a gitignored, repository-local `.audit/`, keyed so parallel
+worktrees are distinguishable. A user may explicitly route evidence to the
+home-directory store for a sensitive repository; home-directory storage is not
+the default. Behavioral tests must cover transcript parsing, command/exit/output
+capture, the evidence-free completion warning and the per-session firing counter.
+Static hook-registration coverage is insufficient.
+
+The current implementation's home-directory default and missing behavioral
+coverage are gaps tracked by `tc-downstream-realignment-and-repair`; the `done`
+frontmatter is historical merge state, not evidence of fulfillment.
+
 ## The idea
 
 > Verification, split in two: let the harness capture the evidence and keep the
@@ -207,10 +221,11 @@ error that framing warns against. It ships off by default and stays that way.
 **Q1, Q2, Q3, Q5 — taken on the doc's own recommendations, by the orchestrator,
 and all cheap to reverse:**
 
-- **Q1 `.audit/` is repo-local and gitignored.** The evidence should travel with the
-  work; a completion claim is about *this* branch. `$HOME` would make the record
-  ambiguous across worktrees, and this repo runs every wave in a worktree — the
-  same property that broke `dogfood.test.ts`.
+- **Q1 `.audit/` is repo-local and gitignored by default.** The evidence should
+  travel with the work; a completion claim is about *this* branch. `$HOME` would
+  make the default record ambiguous across worktrees, and this repo runs every
+  wave in a worktree — the same property that broke `dogfood.test.ts`. A named,
+  explicit escape may route sensitive-repository evidence to the home store.
 - **Q2 warn, do not block.** A false block on legitimate work is the failure mode
   that gets a hook disabled permanently, and a disabled hook catches nothing.
 - **Q3 default on.** The latte hook is off because it spends a model call and
@@ -245,7 +260,7 @@ and all cheap to reverse:**
 
 Total **7-10 h**. Part B is independently shippable and does not need A.
 
-## Verification
+## Verification required before this ask is complete
 
 - The hook fires on `Stop`, and a session that ran `pnpm test` leaves a
   `.audit/` record naming the command, the real exit code, and an output tail.

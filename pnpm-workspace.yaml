@@ -16,7 +16,7 @@ linkWorkspacePackages: true
 # ERR_PNPM_IGNORED_BUILDS.
 allowBuilds:
   esbuild: true
-  # koffi is @bubstack/moe-tab's Node FFI backend and must compile. packages/crew
+  # koffi is @tc/moe-tab's Node FFI backend and must compile. packages/crew
   # pulls it transitively too and does not need it (its pi-coding-agent dependency
   # is type-only) — but `true` is the resolution, because a skipped build breaks tab
   # and costs crew only a compile it never calls.
@@ -25,7 +25,7 @@ allowBuilds:
   # in this repo executes pi, so neither needs to build.
   '@google/genai': false
   protobufjs: false
-  # The three below arrive with @bubstack/moe-memory and all three MUST build.
+  # The three below arrive with @tc/moe-memory and all three MUST build.
   # pnpm 11 wrote these three keys into this file itself during `pnpm install`,
   # as `set this to true or false` placeholders, and the install cannot complete
   # while they are unresolved — see packages/memory/README.md.

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "moe-tab"
-version = "0.0.0"
+version = "0.0.0+tc.1"
 description = "Estimate the USD cost of an AI-agent transcript (ATIF trajectory or moe-tab usage sidecar)."
 readme = "README.md"
 requires-python = ">=3.9"

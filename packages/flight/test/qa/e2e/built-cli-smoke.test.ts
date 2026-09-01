@@ -31,7 +31,7 @@ const HAVE_DIST = existsSync(ENTRY);
 if (!HAVE_DIST) {
   console.error(
     `[skip] ${ENTRY} is missing — build first ` +
-      "(`pnpm --filter @bubstack/moe-flight build`). This suite is the only " +
+      "(`pnpm --filter @tc/moe-flight build`). This suite is the only " +
       "black-box check that the prompt bodies survive the build.",
   );
 }

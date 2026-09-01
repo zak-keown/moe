@@ -4,13 +4,13 @@ members = ["crates/moe-tab-core", "crates/moe-tab-cli", "crates/moe-tab-ffi"]
 
 [workspace.package]
 edition = "2021"
-version = "0.0.0"
+version = "0.0.0-tc.1"
 license = "Apache-2.0"
 repository = "https://gitlab.tcdevops.com/Zak/moe"
 homepage = "https://gitlab.tcdevops.com/Zak/moe"
 
 [workspace.dependencies]
-moe-tab-core = { path = "crates/moe-tab-core", version = "0.0.0" }
+moe-tab-core = { path = "crates/moe-tab-core", version = "0.0.0-tc.1" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "1"

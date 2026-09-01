@@ -1,10 +1,16 @@
 {
-  "name": "@bubstack/moe-mint",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@tc/moe-mint",
+  "version": "0.0.0-tc.1",
   "type": "module",
   "description": "Generate native plugin manifests for every harness from one config. The monorepo's plugin build step.",
   "license": "MIT",
+  "moeRelease": {
+    "upstreamVersion": "0.0.0",
+    "upstreamCommit": "54b4ec6c54540d472835c1e074e7e7c8e6469329"
+  },
+  "publishConfig": {
+    "registry": "https://proget.tcdevops.com/npm/tcnpm/"
+  },
   "bin": {
     "moe-mint": "./dist/cli.js"
   },

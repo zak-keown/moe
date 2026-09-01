@@ -67,6 +67,13 @@ describe("the house-voice scorer", () => {
     ]);
     expect(generic.house.every((d: { pass: boolean }) => d.pass === false)).toBe(true);
   });
+
+  it("treats the downstream @tc scope as a noun-phrase opener", () => {
+    const downstream = score("# @tc/moe-example\n\n@tc/moe-example ships a plugin.\n");
+    expect(downstream.house.find((d: { id: string }) => d.id === "verdict-opening")?.pass).toBe(
+      false,
+    );
+  });
 });
 
 describe("the baseline arm, written WITHOUT the house-voice pointer", () => {

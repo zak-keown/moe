@@ -1,4 +1,4 @@
-// Public API for the @bubstack/moe-memory package.
+// Public API for the @tc/moe-memory package.
 //
 // This file is a pure re-export barrel with no side effects. private-journal-mcp
 // also had a `src/index.ts` — but theirs was the executable entry point, with a

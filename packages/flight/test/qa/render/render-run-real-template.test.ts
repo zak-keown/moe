@@ -21,7 +21,7 @@ import { renderRun } from "../../../src/qa/render/render-run.js";
  * regex plus its error message in `src/qa/render/render-run.ts` — and a partial
  * rename fails at render time, not at build time.
  *
- * Needs `ui/dist-static/`. flight depends on `@bubstack/moe-flight-ui`, so
+ * Needs `ui/dist-static/`. flight depends on `@tc/moe-flight-ui`, so
  * turbo builds it first; a bare `vitest run` may not, hence the guard.
  */
 const TEMPLATE = staticReportTemplate();
@@ -29,7 +29,7 @@ const HAVE_TEMPLATE = existsSync(TEMPLATE);
 if (!HAVE_TEMPLATE) {
   console.error(
     `[skip] ${TEMPLATE} is missing — build the SPA first ` +
-      "(`pnpm --filter @bubstack/moe-flight-ui build`).",
+      "(`pnpm --filter @tc/moe-flight-ui build`).",
   );
 }
 

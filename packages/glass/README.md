@@ -19,10 +19,10 @@ generated manifest.
 ## Development
 
 ```sh
-pnpm --filter @bubstack/moe-glass build
-pnpm --filter @bubstack/moe-glass typecheck
-pnpm --filter @bubstack/moe-glass test
-pnpm --filter @bubstack/moe-glass test:chrome
+pnpm --filter @tc/moe-glass build
+pnpm --filter @tc/moe-glass typecheck
+pnpm --filter @tc/moe-glass test
+pnpm --filter @tc/moe-glass test:chrome
 ```
 
 `test:chrome` requires a local Chrome installation and is not part of the

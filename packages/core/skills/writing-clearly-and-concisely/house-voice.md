@@ -47,7 +47,7 @@ fifth half-metaphor costs that and buys a synonym.
 
 ## The name policy
 
-This repo is `@bubstack/moe` and owns the bare `moe` binary. `moe <thing>` is the
+This repo is `@tc/moe` and owns the bare `moe` binary. `moe <thing>` is the
 dispatcher; `moe-<thing>` binaries stay as aliases. The collision with askmoe and
 `~/.claude/moe-core` was an accident rather than a policy, both are abandoned,
 and moedex's main bin returns to `moedex`. That is the policy and all of it —

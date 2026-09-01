@@ -483,7 +483,7 @@ dependencies = [
 
 [[package]]
 name = "moe-tab-cli"
-version = "0.0.0"
+version = "0.0.0-tc.1"
 dependencies = [
  "assert_cmd",
  "clap",
@@ -495,7 +495,7 @@ dependencies = [
 
 [[package]]
 name = "moe-tab-core"
-version = "0.0.0"
+version = "0.0.0-tc.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -505,7 +505,7 @@ dependencies = [
 
 [[package]]
 name = "moe-tab-ffi"
-version = "0.0.0"
+version = "0.0.0-tc.1"
 dependencies = [
  "cbindgen",
  "moe-tab-core",

@@ -26,7 +26,7 @@
 # Which skills land here is decided by `../skill-tiers.yaml`, not by this file.
 
 name: moe-core
-version: 0.0.0
+version: 0.0.0-tc.1
 description: >-
   The house skills: brainstorming, planning, TDD, systematic debugging, code
   review and finishing a branch — the everyday set, lean enough to leave on.
@@ -56,10 +56,10 @@ bootstrap:
 # .mcp.json) and therefore omitted. This package has no commands/ and no
 # .mcp.json. It does have agents/ — retrieving-context's two haiku search
 # agents, this package's first, picked up with no config change because agents/
-# is already a default component. hooks/hooks.json carries a Stop hook and a
-# SessionStart hook (this comment said "the Stop hook only" until 2026-09-01,
-# which stopped being true when plan-set-notice landed), and mint merges its own
-# SessionStart entry into hooks/moe-mint/hooks.json.
+# is already a default component. hooks/hooks.json carries Stop and SessionStart
+# hooks plus an opt-in PreToolUse governance guard. The guard is registered in
+# every install but remains fail-open unless MOE_TC_GOVERNANCE_ENFORCE is set.
+# Mint also merges its own SessionStart entry into hooks/moe-mint/hooks.json.
 
 # harnesses: no exclusions. All 8 adapters run. opencode and pi used to be
 # excluded here (see the header) and the staging root removed the reason.

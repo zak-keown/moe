@@ -1,4 +1,4 @@
-# @bubstack/moe-flight — `moe-flight qa serve` with a Chromium for the web adapter.
+# @tc/moe-flight — `moe-flight qa serve` with a Chromium for the web adapter.
 #
 # Build context is the MONOREPO ROOT, not this package. That is the change bun
 # forced: `bun install --frozen-lockfile` from packages/flight/ worked because
@@ -56,8 +56,8 @@ COPY packages/memory/package.json                    packages/memory/
 COPY packages/mint/package.json                      packages/mint/
 COPY packages/core/package.json                      packages/core/
 COPY packages/backstory/package.json                 packages/backstory/
-RUN pnpm install --frozen-lockfile --filter @bubstack/moe-flight... \
-    --filter @bubstack/moe-flight-ui --filter @bubstack/moe-flight-dashboard
+RUN pnpm install --frozen-lockfile --filter @tc/moe-flight... \
+    --filter @tc/moe-flight-ui --filter @tc/moe-flight-dashboard
 
 # ---------------------------------------------------------------------- build
 COPY tsconfig.base.json tsconfig.json ./
@@ -67,9 +67,9 @@ COPY packages/flight packages/flight
 # The SPA first: `moe-flight qa serve` statically serves ui/dist and
 # `moe-flight qa render` reads ui/dist-static/static.html, both by file path
 # from the package root (src/package-root.ts).
-RUN pnpm --filter @bubstack/moe-flight-dashboard build \
-    && pnpm --filter @bubstack/moe-flight-ui build \
-    && pnpm --filter @bubstack/moe-flight build
+RUN pnpm --filter @tc/moe-flight-dashboard build \
+    && pnpm --filter @tc/moe-flight-ui build \
+    && pnpm --filter @tc/moe-flight build
 
 # No CHROME env var to set: the vendored launcher already probes
 # /usr/bin/chromium and /usr/bin/chromium-browser

@@ -4,7 +4,7 @@
 # The four upstream release workflows (obol crates.io + PyPI, smevals PyPI) are
 # deliberately absent. They need a publish-publicly-or-not decision first.
 
-stages: [install, check, build]
+stages: [install, check, build, release, publish]
 
 default:
   image: node:24
@@ -92,6 +92,16 @@ provenance:
     # — taking every other job down with it, not just this one.
     - "if node scripts/check-provenance.mjs scripts/fixtures/provenance-red --min-readmes 1; then echo 'self-test failed: the red fixture passed'; exit 1; fi"
 
+# Structural drift-manifest validation is an ordinary offline gate. Remote SHA
+# equality stays schedule-only below, but malformed, missing or extra rows must
+# never wait for a scheduled pipeline to be discovered.
+tc-drift-manifest:
+  stage: check
+  image: node:24
+  script:
+    - node scripts/check-tc-drift-manifest.mjs
+    - node --test scripts/test/check-tc-drift-manifest.test.mjs
+
 # Path-scoped: the dispatcher is Node stdlib only and every namespace is
 # stubbed out in the vitest — a docs edit does not need to re-run it.
 # See bin/moe.js and ARCHITECTURE.md §7.1 for what this covers.
@@ -118,68 +128,83 @@ proof:
   rules:
     - changes: [py/proof/**/*]
 
+# Build every registry artifact and inspect the package.json inside each tarball.
+# This job is deliberately separate from publishing: no registry write is
+# possible until all eight artifacts have packed successfully and passed the
+# downstream identity checks as a set.
+tc-release-pack:
+  stage: release
+  <<: *pnpm
+  needs: [install, lint, typecheck, test, build, plugins, provenance, tc-drift-manifest]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH'
+  script:
+    - |
+      set -eu
+      if [ "${CI_PIPELINE_SOURCE:-}" = "merge_request_event" ]; then
+        release_tag=next
+      elif [ -n "${CI_COMMIT_BRANCH:-}" ] && [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH:-}" ]; then
+        release_tag=latest
+      elif [ -n "${CI_COMMIT_BRANCH:-}" ]; then
+        release_tag=next
+      else
+        echo "Unable to establish branch release context; refusing to pack."
+        exit 1
+      fi
+      NPM_DIST_TAG="$release_tag" node scripts/tc-release-pack.mjs --output-dir .tc-release
+  artifacts:
+    expire_in: 8 days
+    paths: [.tc-release/*.tgz]
+
+# Directly name every required gate in addition to the pack job. That makes the
+# publication barrier visible in GitLab's needs graph and keeps later edits to
+# tc-release-pack from accidentally weakening it.
+tc-release-publish:
+  stage: publish
+  needs: [install, lint, typecheck, test, build, plugins, provenance, tc-drift-manifest, tc-release-pack]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH'
+  script:
+    - |
+      set -eu
+      if [ "${CI_PIPELINE_SOURCE:-}" = "merge_request_event" ]; then
+        release_tag=next
+      elif [ -n "${CI_COMMIT_BRANCH:-}" ] && [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH:-}" ]; then
+        release_tag=latest
+      elif [ -n "${CI_COMMIT_BRANCH:-}" ]; then
+        release_tag=next
+      else
+        echo "Unable to establish branch release context; refusing to publish."
+        exit 1
+      fi
+      NPM_DIST_TAG="$release_tag" node scripts/tc-release-publish.mjs --artifacts-dir .tc-release
+
 # Scheduled drift check for the TC merge-request conventions vendored into
-# packages/core/skills/_shared/tc-conventions.md. That file pins two upstream
-# SHAs and TC's `AI`-label audit filter depends on the conventions matching
-# what TC's own repos declare — a stale copy silently mislabels every
-# agent-authored MR.
+# packages/core/skills/_shared/tc-conventions.md. Two content pins protect the
+# conventions TC incorporates; two watch-only pins protect governance and guide
+# dependencies whose movement also requires review.
 #
 # Schedule-only. The manifest itself only moves when a human bumps it, so a
-# per-pipeline run would burn minutes reading two remote refs to conclude
+# per-pipeline run would burn time reading four remote refs to conclude
 # nothing changed. Set the schedule at Project -> CI/CD -> Schedules (daily is
 # ample); pipelines from any other source skip the job.
 #
 # TC_GITLAB_TOKEN is a masked, protected variable holding a token with `read_api`
-# scope on both `ai/skills` and `ai/claude-code-platform-plugin`. The job soft-
-# fails and reports if it is missing, so setting up the schedule before the token
-# lands does not turn the pipeline red on an environmental gap.
-#
-# `<TC-BOOTSTRAP-PENDING>` in the manifest is the deliberate marker for "SHA not
-# yet filled in against a TC-authenticated machine" — the job treats that value
-# as a pending bootstrap rather than a mismatch.
+# scope on all four projects. The job soft-passes only when that variable is
+# absent. A configured mismatch, malformed upstream response or explicit
+# `<TC-BOOTSTRAP-PENDING>` row fails the remote equality check.
 tc-conventions-drift:
   stage: check
-  image: alpine:3.20
+  image: node:24
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
-  before_script:
-    - apk add --no-cache curl jq grep
   script:
     - |
       set -eu
-      MANIFEST=packages/core/skills/_shared/tc-conventions.md
       if [ -z "${TC_GITLAB_TOKEN:-}" ]; then
         echo "TC_GITLAB_TOKEN not set; skipping drift check (soft pass)."
         exit 0
       fi
-      status=0
-      # One row per pinned source: <path in manifest table> <project path>
-      # If either project path changes upstream, edit this list and the manifest.
-      check() {
-        project="$1"; pinned="$2"
-        if [ "$pinned" = "<TC-BOOTSTRAP-PENDING>" ]; then
-          echo "$project: SHA is <TC-BOOTSTRAP-PENDING>; skipping until bootstrap."
-          return 0
-        fi
-        encoded=$(printf '%s' "$project" | jq -sRr @uri)
-        head=$(curl -sSf \
-          --header "PRIVATE-TOKEN: ${TC_GITLAB_TOKEN}" \
-          "https://gitlab.tcdevops.com/api/v4/projects/${encoded}/repository/commits/main" \
-          | jq -r .id)
-        if [ "$head" != "$pinned" ]; then
-          echo "DRIFT: $project pinned=$pinned upstream=$head"
-          status=1
-        else
-          echo "OK: $project @ $pinned"
-        fi
-      }
-      # Manifest lines are of the form
-      #   `ai/<project>@<SHA>:<path>`
-      # where <SHA> is either 40 hex chars or the literal <TC-BOOTSTRAP-PENDING>.
-      # `ai/skills@` and `ai/claude-code-platform-plugin@` are disjoint substrings
-      # (neither appears inside the other), so plain greps do not collide.
-      pinned_skills=$(grep -oE 'ai/skills@[0-9a-fA-Z<>-]+' "$MANIFEST" | head -1 | cut -d@ -f2)
-      pinned_plugin=$(grep -oE 'ai/claude-code-platform-plugin@[0-9a-fA-Z<>-]+' "$MANIFEST" | head -1 | cut -d@ -f2)
-      check "ai/skills" "${pinned_skills:-<TC-BOOTSTRAP-PENDING>}"
-      check "ai/claude-code-platform-plugin" "${pinned_plugin:-<TC-BOOTSTRAP-PENDING>}"
-      exit $status
+      node scripts/check-tc-drift-manifest.mjs --check-remote
