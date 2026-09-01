@@ -209,6 +209,27 @@ When writing or changing any test, read [writing-good-tests.md](writing-good-tes
 - Keep test-only code in test utilities, out of production classes
 - Understand a dependency's side effects before mocking it
 
+## Seams — Where Tests Go
+
+A **seam** is the place a module's interface lives: the surface you can observe
+behaviour through without reaching inside. Tests live at seams, never against
+internals.
+
+Careful — this is the *architectural* seam, the location of the interface. It is
+not the test-placement sense of the word (which proof level a test belongs at:
+unit, integration, end-to-end). Same word, two axes; say which one you mean.
+
+**Agree the seams before you write the test.** Ask: "what is the public
+interface, and which seams are we testing at?" You cannot test everything, and
+agreeing the seams up front is how the effort lands on the critical paths and
+the complex logic instead of on every edge case. A test at a seam nobody agreed
+to is how suites fill with tests that break on every refactor.
+
+When the shape of that interface is itself the question — how much behaviour
+sits behind it, where the seam belongs, what it should expose — call the Skill
+tool with "codebase-design" for the vocabulary: module, interface, depth, seam,
+adapter, leverage, locality. It is a reference to consult, not a session to run.
+
 ## Common Rationalizations
 
 | Excuse | Reality |
@@ -303,6 +324,7 @@ Can't check all boxes? You skipped TDD. Start over.
 | Test too complicated | Design too complicated. Simplify interface. |
 | Must mock everything | Code too coupled. Use dependency injection. |
 | Test setup huge | Extract helpers. Still complex? Simplify design. |
+| Don't know where this test goes | Agree the seam first, then write it. See Seams — Where Tests Go. |
 
 ## Debugging Integration
 

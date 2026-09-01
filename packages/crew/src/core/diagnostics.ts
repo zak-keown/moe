@@ -53,6 +53,10 @@ function errText(e: unknown): string {
 async function psTree(run: Runner): Promise<string> {
   try {
     const r = await run("ps", ["-eo", "pid,ppid,stat,etime,comm"]);
+    if (r.code !== 0) {
+      const reason = r.stderr.trim() || `exit ${r.code}`;
+      return `(ps failed: ${reason})`;
+    }
     return tailLines(r.stdout, 100);
   } catch (e) {
     return `(ps failed: ${errText(e)})`;

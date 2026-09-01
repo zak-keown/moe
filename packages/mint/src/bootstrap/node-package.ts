@@ -33,7 +33,7 @@ export function piExtensionPath(name: string): string {
 // than without it, and both adapters already emit an otherwise-empty
 // package.json into the plugin root. baseManifestFields itself orders these
 // fields differently (author, homepage, repository, license, keywords) for
-// its other callers (claude-code/cursor/codex/devin/kimi manifests), so the
+// its other callers (claude-code/cursor/codex/kimi manifests), so the
 // fields are picked off individually here rather than spread in bulk.
 export function nodePackageManifest(model: PluginModel): Record<string, unknown> {
   const { config } = model

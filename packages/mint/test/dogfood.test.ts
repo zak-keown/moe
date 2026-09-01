@@ -75,10 +75,8 @@ const COMPARED_FILES = [
   '.claude-plugin/plugin.json',
   '.claude-plugin/marketplace.json',
   '.codex-plugin/plugin.json',
-  '.devin-plugin/plugin.json',
   '.kimi-plugin/plugin.json',
   '.cursor-plugin/plugin.json',
-  '.agents/plugins/marketplace.json',
 ] as const
 type ComparedFile = (typeof COMPARED_FILES)[number]
 
@@ -90,19 +88,22 @@ type ComparedFile = (typeof COMPARED_FILES)[number]
 // tree (skills/, hooks/hooks.json, docs/, tests/, README.md, ...) is left in
 // place: skills/ and hooks/hooks.json are component sources moe-mint
 // reads, and the rest doesn't collide with anything generate() writes.
-// The pinned snapshot also has two hand-authored Gemini files. Strip them so
-// generate() does not mistake snapshot-only inputs for unrelated user files it
-// must refuse to overwrite.
-const SNAPSHOT_ONLY_PATHS = ['gemini-extension.json', 'GEMINI.md']
+// The pinned snapshot also has hand-authored files for retired runtime targets.
+// Strip them so the frozen input stays usable without treating those historical
+// files as live moe-mint outputs.
+const SNAPSHOT_ONLY_PATHS = [
+  'gemini-extension.json',
+  'GEMINI.md',
+  '.devin-plugin',
+  '.hermes-plugin',
+  '.agents',
+]
 
 const HAND_MAINTAINED_PATHS = [
   '.claude-plugin',
   '.codex-plugin',
   '.cursor-plugin',
-  '.devin-plugin',
   '.kimi-plugin',
-  '.hermes-plugin',
-  '.agents',
   ...SNAPSHOT_ONLY_PATHS,
   'package.json',
   '.opencode',
@@ -167,13 +168,8 @@ function buildConfig(originals: Record<ComparedFile, Record<string, unknown>>): 
   const claude = originals['.claude-plugin/plugin.json']
   const marketplace = originals['.claude-plugin/marketplace.json']
   const codex = originals['.codex-plugin/plugin.json']
-  const devin = originals['.devin-plugin/plugin.json']
   const kimi = originals['.kimi-plugin/plugin.json']
   const cursor = originals['.cursor-plugin/plugin.json']
-  const agentsMarketplace = originals['.agents/plugins/marketplace.json'] as {
-    interface: { displayName: string }
-    plugins: unknown[]
-  }
   const codexAuthor = codex.author as { url: string }
 
   return {
@@ -223,14 +219,6 @@ function buildConfig(originals: Record<ComparedFile, Record<string, unknown>>): 
           interface: codex.interface,
         },
       },
-      // devin: shares codex's description and keyword set but keeps the
-      // shared plain {name,email} author (no url).
-      devin: {
-        manifest: {
-          description: devin.description,
-          keywords: devin.keywords,
-        },
-      },
       // kimi: its own (shorter) description, codex's keyword set, its
       // tool-mapping skillInstructions, and its own (smaller) interface
       // block. Uses repository: null to delete the inherited field.
@@ -241,15 +229,6 @@ function buildConfig(originals: Record<ComparedFile, Record<string, unknown>>): 
           skillInstructions: kimi.skillInstructions,
           interface: kimi.interface,
           repository: null,
-        },
-      },
-      // agents-marketplace: displayName patch plus a full replacement of the
-      // plugins array (deepMerge replaces arrays wholesale) to add the
-      // category field the default descriptor never sets.
-      'agents-marketplace': {
-        manifest: {
-          interface: { displayName: agentsMarketplace.interface.displayName },
-          plugins: agentsMarketplace.plugins,
         },
       },
     },

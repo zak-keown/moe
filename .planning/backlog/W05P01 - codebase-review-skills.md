@@ -5,10 +5,10 @@ idea: |
   - A codebase-wide adversarial review that writes CODEBASE-REVIEW.md, and a
     second skill that works the report off under TDD with atomic commits
 status: backlog
-base_sha: aad2aee
+base_sha: fcc87c5
 base_branch: main
 size: L
-estimate: 16-19 h
+estimate: 10-13 h
 depends_on: []
 blocks: []
 conflicts_with: []
@@ -212,16 +212,84 @@ template out of `running-an-iteration`'s directory) and `skill-tiers.yaml`
 records what that precedent cost, in as many words: "the two cannot be split."
 A duplicated parser is the cheaper failure.
 
+## What the RED baselines actually showed
+
+11 runs at `47f0733`-`fcc87c5`, four scenarios, recorded in
+`red-baselines/NOTES.md`. **9 of 9 discipline runs chose the disciplined
+option.** That is not a soft result — it replicated across two scenarios for the
+fix skill and three runs for the review skill, and the method is explicit about
+what it means: *if the control does not exhibit the failure, do not author the
+guidance.*
+
+### Do not write these
+
+- **The TDD-discipline half of `fixing-a-code-review`.** B3 3/3 chose
+  test-first under time, authority, sunk-cost and exhaustion pressure combined.
+  All three read "don't gold-plate" as a limit on scope, not on verification.
+  Two independently rejected `startsWith(TEMPLATE_ROOT)` for the sibling-
+  directory hole neither the review nor the scenario mentioned.
+- **The bundling and stale-finding prohibitions.** B4 3/3 verified each finding
+  against current code before touching it, committed one finding per commit, and
+  recorded the stale one rather than dropping it. Their arguments were better
+  than the scenario's: *"a directory is a unit of filesystem layout, not a unit
+  of change"*; option C *"reaches the right verdict by luck — a refactor can
+  carry a bug to a new line just as easily as delete it."*
+- **A coverage-honesty prohibition for `reviewing-a-codebase`.** B2 3/3 refused
+  to write up findings the scenario stipulated but they had not made, on their
+  own initiative. *"Honest about the denominator, fabricated in the numerator"*
+  is the failure they named and declined.
+
+A rationalization table against any of these would be inventing a failure to
+counter. `writing-skills` warns that prohibitions actively backfire on
+shaping problems, and every failure that DID reproduce is a shaping problem.
+
+### Do write these — the format contract, and only it
+
+Both B1 controls produced, unprompted and without guidance: severity labels, a
+summary table, per-finding file and line, a suggested order of work, retracted
+findings kept with their reasons, and a "checked and found sound" section
+naming what was examined and clean. **None of that needs specifying.**
+
+What neither control produced, 2 for 2:
+
+| Element | Both controls | Consequence |
+|---|---|---|
+| Stable prefixed finding IDs | absent — `### 1.`, `## 2.` positional integers | the fix skill addresses findings by ID; renumbering breaks every reference. Run 2 also collapsed four findings into one `## 12-15. Smaller items` heading, making them unaddressable |
+| Frontmatter | absent | nothing to parse counts, status or disposition from |
+| Coverage statement inside the report | absent — both put it in a separate file | the report travels alone |
+| A fixed severity ladder | invented per run — run 1 grouped under `## High`, run 2 suffixed `- High` per heading, neither had a Critical bucket while filing credential capture as High | two runs, two shapes |
+| A defined denominator | invented per run — 874, 935, 943 source files across three runs, against the 903 in my own prompt | a coverage ratio with an undefined denominator is decorative |
+
+And from B4, the same class of failure on the other side: three disciplined
+agents wrote the disposition three different ways (`**Status:**`,
+`**Resolution:**`, `**Status: STALE**`), one touched frontmatter and two did
+not, and none emitted a per-finding `commit:` field. A second fix run over any
+of those reports could not mechanically tell what had been done.
+
+`writing-skills` "Match the Form to the Failure" names the instrument for all of
+it: **"omits a required element from something they already produce ->
+structural: REQUIRED field or slot in the template they fill in"**, and warns
+that prose reminders near the template are the wrong form. So both skills are
+now mostly a filled-in template plus a script, not a discipline document.
+
+### Still untested
+
+`--verify` was not exercised by any baseline. Its value is an open question, not
+a settled one, and the GREEN phase should cover it.
+
 ## Work breakdown
 
-| Step | Effort |
-|---|---|
-| RED baselines — pressure scenarios for both skills, without the skills | 2-3 h |
-| `reviewing-a-codebase` SKILL.md plus enumerate/shard/merge script | 5-6 h |
-| `fixing-a-code-review` SKILL.md plus parse/bucket/stamp script | 4-5 h |
-| `review-shard` and `verify-finding` agents | 1-1.5 h |
-| `skill-tiers.yaml` entries, `metadata.test.ts` edits, `pnpm mint` | 1.5 h |
-| GREEN and REFACTOR rounds until both hold under pressure | 2-3 h |
+Revised after the RED baselines. The prose halves came down; the mechanical
+halves did not move.
+
+| Step | Effort | Change |
+|---|---|---|
+| ~~RED baselines~~ | ~~2-3 h~~ **done** | 11 runs, results in the section above |
+| `reviewing-a-codebase` SKILL.md plus enumerate/shard/merge script | 4-5 h | was 5-6 h; the body is a short format contract now, not a discipline document |
+| `fixing-a-code-review` SKILL.md plus parse/bucket/stamp script | 3-4 h | was 4-5 h; same reason |
+| `review-shard` and `verify-finding` agents | 1-1.5 h | unchanged |
+| `skill-tiers.yaml` entries, `metadata.test.ts` edits, `pnpm mint` | 1.5 h | unchanged |
+| GREEN verification against the same 4 scenarios | 1 h | was 2-3 h; only the format assertions need re-running, and they are checkable by script |
 
 ## Root changes needed
 
@@ -246,3 +314,8 @@ A duplicated parser is the cheaper failure.
 - If `--verify` proves valuable enough to be always-on, that is a PAR
   conversation, not a flag deletion.
 - If a third sense of `depth` ever appears in skill prose, add the guard then.
+- The baseline fixture's CR-001 names a payload that does not demonstrate the
+  traversal (`../../secrets.env` throws ENOENT; `../secrets.env` is the one that
+  leaks). Fix the text before any GREEN re-run, and keep the trap on purpose —
+  three of three runs caught it only by running the test before the fix existed,
+  which is the single best demonstration of RED-for-the-right-reason in the set.

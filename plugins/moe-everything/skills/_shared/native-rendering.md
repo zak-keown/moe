@@ -34,7 +34,7 @@ without carrying two branches of prose per skill.
 If installed and configured, use the higher rung. Otherwise, drop.
 
 - Rung 1 fails when the harness exposes no Artifact tool (Codex,
-  Gemini CLI, Hermes, Kimi Code, OpenCode, Pi, most non-Claude Code
+  Gemini CLI, Kimi Code, OpenCode, Pi, most non-Claude Code
   runtimes). If the tool is present but the publish itself errors,
   fall to rung 2 — do not surface the raw error at the user.
 - Rung 2 fails when `node` isn't on PATH, when the sandbox blocks port

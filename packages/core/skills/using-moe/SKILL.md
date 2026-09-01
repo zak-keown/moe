@@ -70,7 +70,6 @@ If your harness appears here, read its reference file for special instructions:
 - Antigravity: `references/antigravity-tools.md`
 - Codex: `references/codex-tools.md`
 - Gemini CLI: `references/gemini-tools.md`
-- Hermes Agent: `references/hermes-tools.md`
 - Kimi Code: `references/kimi-tools.md`
 - OpenCode: `references/opencode-tools.md`
 - Pi: `references/pi-tools.md`

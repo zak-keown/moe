@@ -16,8 +16,7 @@ What it is and who it's for: [BROCHURE.md](BROCHURE.md).
 The goal: one `moe-mint.yaml` as the source of truth, with
 `moe-mint generate` emitting native plugin manifests, bootstrap wiring,
 docs, and tests for every supported coding-agent harness (Claude Code, Codex,
-Cursor, Copilot CLI, OpenCode, Pi, Kimi Code, Hermes, Devin CLI, Factory
-Droid, Antigravity). Generated files are committed; `moe-mint validate`
+Cursor, Copilot CLI, OpenCode, Pi, and Kimi Code). Generated files are committed; `moe-mint validate`
 catches drift in CI.
 
 ## Usage
@@ -32,9 +31,9 @@ moe-mint test       # container-backed offline install checks (needs docker; exi
 moe-mint bump 1.2.3 # set the version everywhere + regenerate (also --check / --audit; reads release:)
 ```
 
-`moe-mint test` runs two offline tiers inside the container: first it parses every generated harness manifest and confirms referenced paths exist, then it performs a **real install** of the plugin into each harness CLI (claude, codex, opencode, droid, hermes, copilot, pi) and asserts the CLI actually enumerates the plugin's skills — the check that catches a manifest that parses but is wired to the wrong place. Harnesses with no offline enumeration path (kimi, cursor, devin) are reported as `skip`. It pulls registry.gitlab.tcdevops.com/Zak/moe/moe-container on first use (large image, ~15GB, linux/amd64) — prefetch with `docker pull` if you want progress control. **That image has not been built or pushed yet** — the Dockerfile is in `infra/container/`, its CI rule is a follow-up, and while the project path `Zak/moe` is confirmed as of 2026-08-31, the registry hostname for a self-hosted GitLab is a per-instance setting, so the ref as a whole is still a default to correct. Pass `--image <ref>` until it exists.
+`moe-mint test` runs two offline tiers inside the container: first it parses every generated harness manifest and confirms referenced paths exist, then it performs a **real install** of the plugin into each harness CLI (claude, codex, opencode, copilot, pi) and asserts the CLI actually enumerates the plugin's skills — the check that catches a manifest that parses but is wired to the wrong place. Harnesses with no offline enumeration path (kimi and cursor) are reported as `skip`. It pulls registry.gitlab.tcdevops.com/Zak/moe/moe-container on first use (large image, ~15GB, linux/amd64) — prefetch with `docker pull` if you want progress control. **That image has not been built or pushed yet** — the Dockerfile is in `infra/container/`, its CI rule is a follow-up, and while the project path `Zak/moe` is confirmed as of 2026-08-31, the registry hostname for a self-hosted GitLab is a per-instance setting, so the ref as a whole is still a default to correct. Pass `--image <ref>` until it exists.
 
-**Current status: generation works via 10 adapters covering 10 harnesses (Antigravity, on the goal list, is still roadmap); `init` scaffolds, `import` converts Claude-format plugins, every generation emits install docs + a support matrix, and `moe-mint test` runs offline manifest checks plus real per-harness install + skill-enumeration checks for all harnesses inside the shared container image (registry.gitlab.tcdevops.com/Zak/moe/moe-container). The dogfood test regenerates seven representative manifests and compares them semantically (JSON key order and formatting are explicitly not compared).**
+**Current status: generation works via eight adapters covering seven named harnesses plus the generic Agent Plugins 1.0 format (Antigravity, on the goal list, is still roadmap); `init` scaffolds, `import` converts Claude-format plugins, every generation emits install docs + a support matrix, and `moe-mint test` runs offline manifest checks plus the available per-harness install and skill-enumeration checks inside the shared container image (registry.gitlab.tcdevops.com/Zak/moe/moe-container). The dogfood test regenerates five representative manifests and compares them semantically (JSON key order and formatting are explicitly not compared).**
 
 ## Configuration
 
@@ -76,7 +75,7 @@ and per-harness patches to that harness's generated manifest.
 
 ```yaml
 harnesses:
-  exclude: [devin]              # skip these harnesses entirely
+  exclude: [cursor]             # skip these harnesses entirely
   claude-code:
     hooks: own                  # 'generated' (default) | 'own'
     manifest:

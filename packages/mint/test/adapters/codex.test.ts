@@ -35,6 +35,22 @@ describe('codex adapter', () => {
     })
   })
 
+  it('emits the Agent Plugins marketplace descriptor used by Codex installation', () => {
+    const manifest = JSON.parse(mustGet(byPath, '.agents/plugins/marketplace.json'))
+    expect(manifest).toEqual({
+      name: 'kitchen-sink-dev',
+      interface: { displayName: 'kitchen-sink' },
+      plugins: [
+        {
+          name: 'kitchen-sink',
+          source: { source: 'url', url: './' },
+          policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' },
+          category: 'Developer Tools',
+        },
+      ],
+    })
+  })
+
   it('warns about hooks, commands, agents, and mcp not being emitted for codex', () => {
     expect(result.warnings).toEqual([
       'hooks are not supported on codex; bootstrap relies on native skill discovery',

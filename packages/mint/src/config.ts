@@ -29,13 +29,11 @@ export const ADAPTER_NAMES = [
   'claude-code',
   'cursor',
   'codex',
-  'devin',
   'kimi',
   'opencode',
   'pi',
-  'hermes',
   'agent-plugins-1.0',
-  'agents-marketplace',
+  'copilot',
 ] as const
 
 export type BootstrapMode =

@@ -42,9 +42,9 @@ export function bootstrapEmitsHooks(config: MintConfig, harness: string): boolea
 // `<name>-dev`. Shared so every place that must agree on this name stays in
 // lockstep: the claude-code adapter writes it into
 // `.claude-plugin/marketplace.json` and its install doc, and the
-// agents-marketplace adapter's copilot install line reuses it — because
+// copilot adapter's install line reuses it — because
 // Copilot resolves plugins through that same `.claude-plugin/marketplace.json`
-// (see agents-marketplace.ts), so a copilot install id keyed on anything else
+// (see copilot.ts), so a copilot install id keyed on anything else
 // would not resolve.
 export function marketplaceName(config: MintConfig): string {
   return config.marketplace?.name ?? `${config.name}-dev`

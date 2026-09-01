@@ -24,7 +24,6 @@ agent_tools=(
   opencode
   pi
   copilot
-  droid
   qwen
   kilo
   openclaw
@@ -37,7 +36,6 @@ agent_tools=(
   mini-swe-agent
   sweagent
   trae-cli
-  hermes
   mimo
 )
 
