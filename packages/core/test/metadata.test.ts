@@ -168,20 +168,23 @@ describe("skill inventory", () => {
     expect(nonSkill).toEqual(["_shared"]);
   });
 
-  it("pins the IMPORTED skill set at exactly 27", () => {
-    // ARCHITECTURE.md section 4 and the root marketplace both say 28. The real
-    // count across the six sources is 27: superpowers 14, iterative-development
-    // 6, superpowers-lab 4, superpowers-developing-for-claude-code 2,
-    // the-elements-of-style 1, double-shot-latte 0 (hooks only). The 28th was
-    // `example-workflow`, a pseudo-skill inside an example plugin.
+  it("pins the IMPORTED skill set at exactly 31", () => {
+    // ARCHITECTURE.md section 4 and the root marketplace both said 28 originally.
+    // The real count across the six original sources was 27: superpowers 14,
+    // iterative-development 6, superpowers-lab 4,
+    // superpowers-developing-for-claude-code 2, the-elements-of-style 1,
+    // double-shot-latte 0 (hooks only). The 28th was `example-workflow`, a
+    // pseudo-skill inside an example plugin. mattpocock-skills adds a seventh
+    // source, 4 skills (codebase-design, improve-codebase-architecture,
+    // domain-modeling, prototype), bringing imported to 31.
     //
     // Counts `imported:`, not the directory. The GRAND total is deliberately no
     // longer asserted anywhere: it follows from the completeness equality below,
     // and asserting it as well is what used to make a fork-authored skill
-    // impossible — a 28th directory failed this line and the pinned literal at
-    // once, on two assertions whose real job is detecting an upstream DROP.
+    // impossible — a 32nd directory would fail this line and the pinned literal
+    // at once, on two assertions whose real job is detecting an upstream DROP.
     // Adding a Moe-original skill is now a two-line manifest diff, not a wall.
-    expect(Object.keys(imported).length).toBe(27);
+    expect(Object.keys(imported).length).toBe(31);
   });
 
   it("every skill has a non-empty name and description", () => {
@@ -255,6 +258,11 @@ describe("skill inventory", () => {
       // superpowers-developing-for-claude-code @ 74afe93 (2)
       "developing-claude-code-plugins",
       "working-with-claude-code",
+      // mattpocock-skills @ 6654f6b (4)
+      "codebase-design",
+      "domain-modeling",
+      "improve-codebase-architecture",
+      "prototype",
     ].sort();
     // Asserted against `imported:` rather than against the directory, and it
     // must stay `toEqual`. This is the drop-and-rename detector for the whole
@@ -744,7 +752,7 @@ describe("the lean/full curation", () => {
   });
 
   it("records a known provenance for every skill, per map", () => {
-    // The five upstream sources, distributed 14/6/4/2/1 = 27. A sixth value
+    // The six upstream sources, distributed 14/6/4/4/2/1 = 31. A seventh value
     // appearing under `imported:` means a skill arrived from somewhere nobody
     // recorded, which is the thing PARITY.md exists to prevent; a value here
     // that is not in that ledger is drift between the two.
@@ -754,6 +762,7 @@ describe("the lean/full curation", () => {
       "superpowers-developing-for-claude-code",
       "iterative-development",
       "the-elements-of-style",
+      "mattpocock-skills",
     ];
     for (const [name, entry] of Object.entries(imported)) {
       expect(UPSTREAM, `imported.${name}.from is not a known upstream source`).toContain(
@@ -1205,7 +1214,7 @@ describe("workflow depth vocabulary", () => {
 
 describe("licensing", () => {
   it("retains one LICENSE per inbound license, as NOTICE promises", () => {
-    // Four of the six sources ship a LICENSE, with three distinct notices, so
+    // Five of the seven sources ship a LICENSE, with three distinct notices, so
     // the glass precedent (one upstream, one LICENSE at the package root) does
     // not generalise. Root NOTICE says copies "are retained alongside the code
     // derived from them, under each package".
@@ -1213,6 +1222,7 @@ describe("licensing", () => {
     expect(readdirSync(dir).sort()).toEqual([
       "double-shot-latte.MIT.LICENSE",
       "iterative-development.Apache-2.0.LICENSE",
+      "mattpocock-skills.MIT.LICENSE",
       "superpowers-lab.MIT.LICENSE",
       "superpowers.MIT.LICENSE",
     ]);
@@ -1225,6 +1235,9 @@ describe("licensing", () => {
     );
     expect(readFileSync(join(dir, "iterative-development.Apache-2.0.LICENSE"), "utf8")).toContain(
       "Copyright 2026 Prime Radiant, Inc.",
+    );
+    expect(readFileSync(join(dir, "mattpocock-skills.MIT.LICENSE"), "utf8")).toContain(
+      "Copyright (c) 2026 Matt Pocock",
     );
   });
 
