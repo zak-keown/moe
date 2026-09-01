@@ -14,14 +14,22 @@ import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { afterEach, describe, it } from "node:test";
 import { MANIFEST_IDENTITIES, PRIVATE_FLIGHT_MANIFESTS } from "../check-downstream-scope.mjs";
-import { REQUIRED_PLUGIN_FILES } from "../tc-release-compose.mjs";
+import { REQUIRED_EXECUTABLE_PLUGIN_FILES, REQUIRED_PLUGIN_FILES } from "../tc-release-compose.mjs";
 import { EXPECTED_RELEASE_PACKAGES, packRelease } from "../tc-release-pack.mjs";
-import { publishRelease } from "../tc-release-publish.mjs";
+import { main as publishMain, publishRelease } from "../tc-release-publish.mjs";
 import { PROGET_REGISTRY } from "../tc-release-validate.mjs";
 
 const SHA = "0123456789abcdef0123456789abcdef01234567";
 const VERSION = "1.2.3-tc.4";
 const PRIOR_VERSION = "1.2.3-tc.3";
+const CREDENTIAL_ENV_KEYS = [
+  "PROGET_NPM_AUTH",
+  "NODE_AUTH_TOKEN",
+  "NPM_TOKEN",
+  "npm_config__auth",
+  "npm_config_authToken",
+  "npm_config_userconfig",
+];
 const roots = [];
 
 afterEach(() => {
@@ -84,6 +92,7 @@ function writeRuntimePayload(root, kind) {
 function writeGeneratedPlugin(root, kind) {
   const pluginRoot = join(root, "plugins", `moe-${kind}`);
   for (const path of REQUIRED_PLUGIN_FILES[kind]) write(join(pluginRoot, path));
+  for (const path of REQUIRED_EXECUTABLE_PLUGIN_FILES[kind]) write(join(pluginRoot, path));
   writeJson(join(pluginRoot, "package.json"), {
     name: `moe-${kind}`,
     version: "9.9.9",
@@ -254,6 +263,9 @@ function publishedArchive(expected, manifest) {
   const contents = new Map([["package.json", JSON.stringify(manifest)]]);
   if (!expected.pluginKind) return contents;
   for (const path of REQUIRED_PLUGIN_FILES[expected.pluginKind]) contents.set(path, "fixture\n");
+  for (const path of REQUIRED_EXECUTABLE_PLUGIN_FILES[expected.pluginKind]) {
+    contents.set(path, "fixture\n");
+  }
   contents.set("dist/index.js", "export {};\n");
   contents.set("dist/cli.js", "#!/usr/bin/env node\n");
   if (expected.pluginKind === "memory") contents.set("dist/index.d.ts", "export {};\n");
@@ -292,6 +304,10 @@ function packageFromSpec(spec, suffix) {
   return spec.slice(0, -suffix.length);
 }
 
+function assertCredentialFree(environment) {
+  for (const key of CREDENTIAL_ENV_KEYS) assert.equal(environment[key], undefined, key);
+}
+
 function registryRunner({
   artifactsDir,
   manifests,
@@ -324,19 +340,25 @@ function registryRunner({
   }
 
   const calls = [];
+  const inspectedTarballs = new Set();
   const npmrcPaths = new Set();
   const operationCounts = new Map();
+  const stats = { notFound: 0 };
   const json = (value) => ({ status: 0, stdout: JSON.stringify(value), stderr: "" });
-  const notFound = () => ({
-    status: 1,
-    stdout: JSON.stringify({ error: { code: "E404", summary: "not found" } }),
-    stderr: "",
-  });
+  const notFound = () => {
+    stats.notFound++;
+    return {
+      status: 1,
+      stdout: JSON.stringify({ error: { code: "E404", summary: "not found" } }),
+      stderr: "",
+    };
+  };
 
   const runCommand = (command, args, options) => {
     calls.push({ command, args, options });
     if (command === "tar") {
-      assert.equal(options.env.PROGET_NPM_AUTH, undefined);
+      assertCredentialFree(options.env);
+      inspectedTarballs.add(basename(args[1]));
       const manifest = manifests.get(basename(args[1]));
       const expected = EXPECTED_RELEASE_PACKAGES.find(
         (candidate) => candidate.name === manifest.name,
@@ -356,9 +378,8 @@ function registryRunner({
         : { status: 0, stdout: content, stderr: "" };
     }
     assert.equal(command, "npm");
-    assert.equal(calls.filter((call) => call.command === "tar").length, 16);
-    assert.equal(options.env.PROGET_NPM_AUTH, undefined);
-    assert.equal(options.env.NODE_AUTH_TOKEN, undefined);
+    assert.equal(inspectedTarballs.size, EXPECTED_RELEASE_PACKAGES.length);
+    assertCredentialFree(options.env);
     const npmrc = args[args.indexOf("--userconfig") + 1];
     npmrcPaths.add(npmrc);
     assert.equal(statSync(npmrc).mode & 0o777, 0o600);
@@ -369,9 +390,9 @@ function registryRunner({
     if (args[0] === "view" && args[2] === "dist.integrity") {
       operation = "view-exact";
       name = packageFromSpec(args[1], `@${VERSION}`);
-    } else if (args[0] === "view" && args[2] === "version") {
+    } else if (args[0] === "dist-tag" && args[1] === "ls") {
       operation = "view-latest";
-      name = packageFromSpec(args[1], "@latest");
+      name = args[2];
     } else if (args[0] === "publish") {
       operation = "publish";
       name = manifests.get(basename(args.at(-1))).name;
@@ -400,7 +421,9 @@ function registryRunner({
       return exact.get(name) === null ? notFound() : json(exact.get(name));
     }
     if (operation === "view-latest") {
-      return latest.get(name) == null ? notFound() : json(latest.get(name));
+      if (latest.get(name) != null) return json({ latest: latest.get(name) });
+      if (exact.get(name) === null) return notFound();
+      return json({ "tc-candidate-1-2-3-tc-4": VERSION });
     }
     if (operation === "publish") {
       exact.set(name, integrity(tarballByName.get(name)));
@@ -414,7 +437,7 @@ function registryRunner({
     return { status: 0, stdout: "", stderr: "" };
   };
 
-  return { calls, exact, latest, npmrcPaths, operationCounts, runCommand };
+  return { calls, exact, latest, npmrcPaths, operationCounts, runCommand, stats };
 }
 
 function publishInput(root, artifactsDir, runCommand, extras = {}) {
@@ -432,16 +455,26 @@ function publishInput(root, artifactsDir, runCommand, extras = {}) {
       ...process.env,
       PROGET_NPM_AUTH: "super-secret",
       NODE_AUTH_TOKEN: "also-secret",
+      NPM_TOKEN: "npm-secret",
+      npm_config__auth: "config-auth-secret",
+      npm_config_authToken: "config-token-secret",
+      npm_config_userconfig: "/tmp/attacker-npmrc",
     },
     runCommand,
     ...extras,
   };
 }
 
-function mutations(calls) {
-  return calls.filter(
-    (call) => call.command === "npm" && ["publish", "dist-tag"].includes(call.args[0]),
+function isRegistryMutation(call) {
+  return (
+    call.command === "npm" &&
+    (call.args[0] === "publish" ||
+      (call.args[0] === "dist-tag" && ["add", "rm"].includes(call.args[1])))
   );
+}
+
+function mutations(calls) {
+  return calls.filter(isRegistryMutation);
 }
 
 describe("TC release packing", () => {
@@ -605,9 +638,7 @@ describe("TC release publishing", () => {
     const tagAdds = registry.calls.filter(
       (call) => call.command === "npm" && call.args[0] === "dist-tag" && call.args[1] === "add",
     );
-    const firstMutationIndex = registry.calls.findIndex(
-      (call) => call.command === "npm" && ["publish", "dist-tag"].includes(call.args[0]),
-    );
+    const firstMutationIndex = registry.calls.findIndex(isRegistryMutation);
     const preflightCalls = registry.calls.slice(0, firstMutationIndex);
     assert.equal(
       preflightCalls.filter((call) => call.command === "npm" && call.args[2] === "dist.integrity")
@@ -615,7 +646,9 @@ describe("TC release publishing", () => {
       8,
     );
     assert.equal(
-      preflightCalls.filter((call) => call.command === "npm" && call.args[2] === "version").length,
+      preflightCalls.filter(
+        (call) => call.command === "npm" && call.args[0] === "dist-tag" && call.args[1] === "ls",
+      ).length,
       8,
     );
     assert.equal(publishes.length, 8);
@@ -630,6 +663,25 @@ describe("TC release publishing", () => {
     assert.equal(result.uploaded.length, 8);
     assert.equal(result.noOp, false);
     for (const npmrc of registry.npmrcPaths) assert.equal(existsSync(npmrc), false);
+  });
+
+  it("recognizes candidate-only packages with no latest on a first release", () => {
+    const root = releaseFixture();
+    const { artifactsDir, manifests } = makePackedArtifacts(root);
+    const registry = registryRunner({
+      artifactsDir,
+      manifests,
+      exactState: "matching",
+      latestState: null,
+    });
+
+    const result = publishRelease(publishInput(root, artifactsDir, registry.runCommand));
+
+    assert.equal(registry.stats.notFound, 0);
+    assert.equal(registry.operationCounts.get("publish") ?? 0, 0);
+    assert.equal(registry.operationCounts.get("tag-add"), 8);
+    assert.equal(result.uploaded.length, 0);
+    assert.deepEqual([...registry.latest.values()], Array(8).fill(VERSION));
   });
 
   it("skips uploads on a matching retry and performs no registry writes when already complete", () => {
@@ -658,6 +710,82 @@ describe("TC release publishing", () => {
     const completeResult = publishRelease(publishInput(root, artifactsDir, complete.runCommand));
     assert.equal(mutations(complete.calls).length, 0);
     assert.equal(completeResult.noOp, true);
+  });
+
+  it("resumes a hard-interrupted promotion without rewriting existing target tags", () => {
+    const root = releaseFixture();
+    const { artifactsDir, manifests } = makePackedArtifacts(root);
+    const prepromoted = EXPECTED_RELEASE_PACKAGES.slice(0, 3).map((expected) => expected.name);
+    const interruptedLatest = new Map(
+      EXPECTED_RELEASE_PACKAGES.map((expected) => [
+        expected.name,
+        prepromoted.includes(expected.name) ? VERSION : PRIOR_VERSION,
+      ]),
+    );
+    const registry = registryRunner({
+      artifactsDir,
+      manifests,
+      exactState: "matching",
+      latestState: interruptedLatest,
+    });
+
+    publishRelease(publishInput(root, artifactsDir, registry.runCommand));
+
+    const tagAdds = registry.calls
+      .filter(
+        (call) => call.command === "npm" && call.args[0] === "dist-tag" && call.args[1] === "add",
+      )
+      .map((call) => call.args[2]);
+    assert.equal(tagAdds.length, 5);
+    for (const name of prepromoted) assert.equal(tagAdds.includes(`${name}@${VERSION}`), false);
+    assert.equal(tagAdds.at(-1), `@tc/moe@${VERSION}`);
+    assert.deepEqual([...registry.latest.values()], Array(8).fill(VERSION));
+  });
+
+  it("rolls back only this attempt when an interrupted-promotion retry fails", () => {
+    const root = releaseFixture();
+    const { artifactsDir, manifests } = makePackedArtifacts(root);
+    const prepromoted = EXPECTED_RELEASE_PACKAGES.slice(0, 2).map((expected) => expected.name);
+    const interruptedLatest = new Map(
+      EXPECTED_RELEASE_PACKAGES.map((expected) => [
+        expected.name,
+        prepromoted.includes(expected.name) ? VERSION : PRIOR_VERSION,
+      ]),
+    );
+    const registry = registryRunner({
+      artifactsDir,
+      manifests,
+      exactState: "matching",
+      latestState: interruptedLatest,
+      onOperation({ operation, occurrence }) {
+        if (operation === "tag-add" && occurrence === 3) {
+          return { status: 1, stdout: "", stderr: "tag failed" };
+        }
+      },
+    });
+
+    assert.throws(
+      () => publishRelease(publishInput(root, artifactsDir, registry.runCommand)),
+      /latest rollback verified/,
+    );
+
+    for (const name of prepromoted) assert.equal(registry.latest.get(name), VERSION);
+    for (const expected of EXPECTED_RELEASE_PACKAGES.slice(2)) {
+      assert.equal(registry.latest.get(expected.name), PRIOR_VERSION);
+    }
+    const rollbackAdds = registry.calls
+      .filter(
+        (call) =>
+          call.command === "npm" &&
+          call.args[0] === "dist-tag" &&
+          call.args[1] === "add" &&
+          call.args[2].endsWith(`@${PRIOR_VERSION}`),
+      )
+      .map((call) => call.args[2]);
+    assert.deepEqual(rollbackAdds, [
+      `@tc/moe-glass@${PRIOR_VERSION}`,
+      `@tc/moe-crew@${PRIOR_VERSION}`,
+    ]);
   });
 
   it("fails closed with zero mutation for mismatched or unverifiable exact versions", () => {
@@ -705,9 +833,26 @@ describe("TC release publishing", () => {
     const mixed = registryRunner({ artifactsDir, manifests, latestState: mixedLatest });
     assert.throws(
       () => publishRelease(publishInput(root, artifactsDir, mixed.runCommand)),
-      /latest tags are mixed/,
+      /neither coherent nor a recoverable interrupted promotion/,
     );
     assert.equal(mutations(mixed.calls).length, 0);
+
+    const interruptedWithTwoPriors = new Map(
+      EXPECTED_RELEASE_PACKAGES.map((expected) => [expected.name, PRIOR_VERSION]),
+    );
+    interruptedWithTwoPriors.set("@tc/moe-backstory", VERSION);
+    interruptedWithTwoPriors.set("@tc/moe-core", "1.2.3-tc.2");
+    const ambiguous = registryRunner({
+      artifactsDir,
+      manifests,
+      exactState: "matching",
+      latestState: interruptedWithTwoPriors,
+    });
+    assert.throws(
+      () => publishRelease(publishInput(root, artifactsDir, ambiguous.runCommand)),
+      /neither coherent nor a recoverable interrupted promotion/,
+    );
+    assert.equal(mutations(ambiguous.calls).length, 0);
 
     const newer = registryRunner({
       artifactsDir,
@@ -750,6 +895,44 @@ describe("TC release publishing", () => {
           ),
         /unsafe publish context/,
       );
+      assert.equal(commands, 0);
+    }
+  });
+
+  it("does not let CLI arguments spoof GitLab publish context", () => {
+    const root = releaseFixture();
+    const { artifactsDir } = makePackedArtifacts(root);
+    const spoofArguments = [
+      ["--branch", "main"],
+      ["--default-branch", "feature/release"],
+      ["--dist-tag", "latest"],
+      ["--merge-request"],
+    ];
+    for (const spoof of spoofArguments) {
+      let commands = 0;
+      let stderr = "";
+      const status = publishMain(["--artifacts-dir", artifactsDir, ...spoof], {
+        env: {
+          CI_COMMIT_BRANCH: "feature/release",
+          CI_DEFAULT_BRANCH: "main",
+          CI_COMMIT_REF_PROTECTED: "false",
+          CI_PIPELINE_SOURCE: "schedule",
+          NPM_DIST_TAG: "next",
+          PROGET_NPM_AUTH: "super-secret",
+        },
+        stdout: { write() {} },
+        stderr: {
+          write(value) {
+            stderr += value;
+          },
+        },
+        runCommand() {
+          commands++;
+          return { status: 0, stdout: "", stderr: "" };
+        },
+      });
+      assert.equal(status, 2);
+      assert.match(stderr, /unknown option/);
       assert.equal(commands, 0);
     }
   });

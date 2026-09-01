@@ -22,31 +22,20 @@ Options:
   --root <path>             Repository root (default: current directory)
   --artifacts-dir <path>    Directory containing all eight inspected tarballs
   --release-file <path>     Canonical release input (default: tc-release.json)
-  --branch <name>           Source branch (default: CI_COMMIT_BRANCH)
-  --default-branch <name>   Default branch (default: CI_DEFAULT_BRANCH)
-  --merge-request           Force merge-request context (always rejected for publish)
-  --dist-tag <tag>          Proposed npm tag (must be latest)
   --help                    Show this help
 `;
 
 function parseArgs(argv) {
-  const options = { mergeRequest: false };
+  const options = {};
   const valueOptions = new Map([
     ["--root", "root"],
     ["--artifacts-dir", "artifactsDir"],
     ["--release-file", "releaseFile"],
-    ["--branch", "branch"],
-    ["--default-branch", "defaultBranch"],
-    ["--dist-tag", "distTag"],
   ]);
   for (let index = 0; index < argv.length; index++) {
     const arg = argv[index];
     if (arg === "--help" || arg === "-h") {
       options.help = true;
-      continue;
-    }
-    if (arg === "--merge-request") {
-      options.mergeRequest = true;
       continue;
     }
     const key = valueOptions.get(arg);
@@ -202,7 +191,44 @@ function queryExactIntegrity(context, name, version) {
 }
 
 function queryLatest(context, name) {
-  return queryRegistryField(context, `${name}@latest`, "version", `query latest ${name}`);
+  const result = context.runCommand(
+    "npm",
+    [
+      "dist-tag",
+      "ls",
+      name,
+      "--json",
+      "--loglevel",
+      "silent",
+      "--registry",
+      PROGET_REGISTRY,
+      "--userconfig",
+      context.npmrc,
+    ],
+    { cwd: context.root, env: context.env },
+  );
+  if (result?.error) {
+    throw new TcReleaseError(`query latest ${name} could not start: ${result.error.message}`);
+  }
+  if (result?.status !== 0) {
+    if (structuredErrorCode(result) === "E404") {
+      return { absent: true, packageMissing: true, value: null };
+    }
+    throw new TcReleaseError(
+      `query latest ${name} could not be verified (exit status ${result?.status ?? "unknown"})`,
+    );
+  }
+  const tags = parseJson(result.stdout);
+  if (!tags || typeof tags !== "object" || Array.isArray(tags)) {
+    throw new TcReleaseError(`query latest ${name} returned an unverifiable response`);
+  }
+  if (!Object.hasOwn(tags, "latest")) {
+    return { absent: true, packageMissing: false, value: null };
+  }
+  if (typeof tags.latest !== "string" || tags.latest.length === 0) {
+    throw new TcReleaseError(`query latest ${name} returned an invalid latest tag`);
+  }
+  return { absent: false, packageMissing: false, value: tags.latest };
 }
 
 function parseSemver(version) {
@@ -258,25 +284,34 @@ function assertExactIntegrity(name, remote, expectedIntegrity) {
   return "matching";
 }
 
-function coherentLatestSnapshot(latestByName, targetVersion) {
-  const states = new Set(
-    [...latestByName.values()].map((latest) => (latest.absent ? "<absent>" : latest.value)),
-  );
-  if (states.size !== 1) {
-    throw new TcReleaseError("registry latest tags are mixed across the release train");
+function latestPromotionPlan(latestByName, targetVersion) {
+  const alreadyTarget = new Set();
+  const priorStates = new Set();
+  for (const [name, latest] of latestByName) {
+    const state = latest.absent ? null : latest.value;
+    if (state === targetVersion) alreadyTarget.add(name);
+    else priorStates.add(state);
   }
-  const state = [...states][0];
-  if (state === "<absent>") return null;
-  const order = compareSemver(targetVersion, state);
+  if (alreadyTarget.size === EXPECTED_RELEASE_PACKAGES.length) {
+    return { alreadyTarget, complete: true, prior: null };
+  }
+  if (priorStates.size !== 1) {
+    throw new TcReleaseError(
+      "registry latest tags are neither coherent nor a recoverable interrupted promotion",
+    );
+  }
+  const prior = [...priorStates][0];
+  if (prior === null) return { alreadyTarget, complete: false, prior };
+  const order = compareSemver(targetVersion, prior);
   if (order === null) {
-    throw new TcReleaseError(`prior coherent latest ${state} is not a verifiable semantic version`);
+    throw new TcReleaseError(`prior coherent latest ${prior} is not a verifiable semantic version`);
   }
   if (order < 0) {
     throw new TcReleaseError(
-      `target ${targetVersion} is older than prior coherent latest ${state}`,
+      `target ${targetVersion} is older than prior coherent latest ${prior}`,
     );
   }
-  return state;
+  return { alreadyTarget, complete: false, prior };
 }
 
 function sameLatest(actual, expected) {
@@ -370,6 +405,7 @@ export function publishRelease(input) {
     : resolve(root, input.artifactsDir);
   const validation = releaseValidation(input, root);
   const runCommand = input.runCommand ?? commandRunner;
+  const childEnvironment = credentialFreeEnvironment(input.env ?? process.env, input.auth);
 
   // Inspect the complete train and hash every local artifact before contacting
   // the registry. A bad eighth tarball therefore cannot follow seven queries.
@@ -377,7 +413,7 @@ export function publishRelease(input) {
     artifactsDir,
     validation,
     runCommand,
-    env: input.env,
+    env: childEnvironment,
   });
   const localIntegrityByName = new Map();
   for (const expected of EXPECTED_RELEASE_PACKAGES) {
@@ -396,7 +432,7 @@ export function publishRelease(input) {
       root,
       npmrc,
       runCommand,
-      env: credentialFreeEnvironment(input.env ?? process.env, input.auth),
+      env: childEnvironment,
     };
     const version = validation.release.version;
     const uploadTag = candidateTag(version);
@@ -432,16 +468,16 @@ export function publishRelease(input) {
       );
     }
 
-    const latestSnapshot = coherentLatestSnapshot(latestByName, version);
+    const preflightPlan = latestPromotionPlan(latestByName, version);
     const missingNames = EXPECTED_RELEASE_PACKAGES.filter(
       (expected) => exactStateByName.get(expected.name) === "missing",
     ).map((expected) => expected.name);
-    if (latestSnapshot === version && missingNames.length > 0) {
+    if (preflightPlan.complete && missingNames.length > 0) {
       throw new TcReleaseError(
         "registry latest points at the target but one or more exact versions are absent",
       );
     }
-    if (latestSnapshot === version) {
+    if (preflightPlan.complete) {
       return {
         version,
         distTag: "latest",
@@ -484,6 +520,25 @@ export function publishRelease(input) {
       }
     }
 
+    // Re-read tags only after the exact-integrity barrier. A prior process may
+    // have stopped between tag writes; target plus one coherent prior state is
+    // recoverable, while every other mixture remains ambiguous and fails shut.
+    const latestAfterBarrier = new Map();
+    for (const expected of EXPECTED_RELEASE_PACKAGES) {
+      latestAfterBarrier.set(expected.name, queryLatest(context, expected.name));
+    }
+    const promotionPlan = latestPromotionPlan(latestAfterBarrier, version);
+    if (promotionPlan.complete) {
+      return {
+        version,
+        distTag: "latest",
+        uploadTag,
+        packages: EXPECTED_RELEASE_PACKAGES.map((pkg) => pkg.name),
+        uploaded,
+        noOp: uploaded.length === 0,
+      };
+    }
+
     const promotionOrder = [
       ...EXPECTED_RELEASE_PACKAGES.filter((expected) => expected.name !== "@tc/moe"),
       ...EXPECTED_RELEASE_PACKAGES.filter((expected) => expected.name === "@tc/moe"),
@@ -492,7 +547,15 @@ export function publishRelease(input) {
     try {
       for (const expected of promotionOrder) {
         const current = queryLatest(context, expected.name);
-        if (!sameLatest(current, latestSnapshot)) {
+        if (promotionPlan.alreadyTarget.has(expected.name)) {
+          if (current.absent || current.value !== version) {
+            throw new TcReleaseError(
+              `latest changed concurrently for already-promoted ${expected.name}`,
+            );
+          }
+          continue;
+        }
+        if (!sameLatest(current, promotionPlan.prior)) {
           throw new TcReleaseError(
             `latest changed concurrently before promoting ${expected.name}; refusing to overwrite it`,
           );
@@ -511,7 +574,7 @@ export function publishRelease(input) {
         }
       }
     } catch (promotionError) {
-      const unresolved = rollbackLatest(context, attempted, latestSnapshot, version);
+      const unresolved = rollbackLatest(context, attempted, promotionPlan.prior, version);
       const detail =
         unresolved.length === 0
           ? "latest rollback verified"
@@ -550,10 +613,10 @@ export function main(argv, runtime = {}) {
   try {
     const result = publishRelease({
       ...options,
-      branch: options.branch ?? env.CI_COMMIT_BRANCH,
-      defaultBranch: options.defaultBranch ?? env.CI_DEFAULT_BRANCH,
-      mergeRequest: options.mergeRequest || Boolean(env.CI_MERGE_REQUEST_IID),
-      distTag: options.distTag ?? env.NPM_DIST_TAG,
+      branch: env.CI_COMMIT_BRANCH,
+      defaultBranch: env.CI_DEFAULT_BRANCH,
+      mergeRequest: Boolean(env.CI_MERGE_REQUEST_IID),
+      distTag: env.NPM_DIST_TAG,
       protectedRef: env.CI_COMMIT_REF_PROTECTED,
       pipelineSource: env.CI_PIPELINE_SOURCE,
       auth: env.PROGET_NPM_AUTH,
