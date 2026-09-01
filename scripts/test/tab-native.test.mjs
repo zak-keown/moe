@@ -15,11 +15,15 @@ import { afterEach, describe, it } from "node:test";
 import {
   inspectTabNativeBytes,
   stageTabNpmPackage,
+  TAB_DARWIN_INSTALL_NAME,
+  TAB_NATIVE_ABI_EXPORTS,
   TAB_NATIVE_TARGETS,
   validateTabNativeMatrix,
 } from "../tab-native.mjs";
 
 const VERSION = "1.2.3-tc.4";
+const LICENSE_INPUT = "e".repeat(64);
+const LICENSE_PAYLOAD = `License inputs SHA-256: ${LICENSE_INPUT}\nthird party\n`;
 const roots = [];
 
 afterEach(() => {
@@ -32,11 +36,23 @@ function write(path, content) {
 }
 
 function nativeBytes(target) {
-  const bytes = Buffer.alloc(32);
+  const bytes = Buffer.alloc(target.family === "darwin" ? 512 : 32);
   if (target.family === "darwin") {
     bytes.writeUInt32LE(0xfeedfacf, 0);
     bytes.writeUInt32LE(target.machine, 4);
     bytes.writeUInt32LE(6, 12);
+    const name = Buffer.from(`${TAB_DARWIN_INSTALL_NAME}\0`);
+    const commandSize = Math.ceil((24 + name.length) / 8) * 8;
+    bytes.writeUInt32LE(1, 16);
+    bytes.writeUInt32LE(commandSize, 20);
+    bytes.writeUInt32LE(0x0d, 32);
+    bytes.writeUInt32LE(commandSize, 36);
+    bytes.writeUInt32LE(24, 40);
+    name.copy(bytes, 56);
+    let symbolOffset = 32 + commandSize;
+    for (const symbol of TAB_NATIVE_ABI_EXPORTS) {
+      symbolOffset += bytes.write(`_${symbol}\0`, symbolOffset);
+    }
   } else {
     bytes.set([0x7f, 0x45, 0x4c, 0x46, 2, 1], 0);
     bytes.writeUInt16LE(3, 16);
@@ -54,7 +70,9 @@ function fixture() {
   roots.push(root);
   write(join(root, "LICENSE"), "license\n");
   write(join(root, "NOTICE"), "notice\n");
-  write(join(root, "packages/tab/native-release/THIRD_PARTY_LICENSES.txt"), "third party\n");
+  write(join(root, "packages/tab/native-release/THIRD_PARTY_LICENSES.txt"), LICENSE_PAYLOAD);
+  write(join(root, "packages/tab/Cargo.toml"), "workspace\n");
+  write(join(root, "packages/tab/Cargo.lock"), "lock\n");
   write(
     join(root, "packages/tab/bindings/typescript/package.json"),
     `${JSON.stringify({ name: "@tc/moe-tab", version: VERSION })}\n`,
@@ -75,24 +93,85 @@ function fixture() {
         path: `${target.id}/${target.filename}`,
         rustTarget: target.rustTarget,
         version: VERSION,
+        bytes: bytes.length,
         sha256: sha256(bytes),
       };
     }
   }
   write(
     join(root, "packages/tab/native-release/manifest.json"),
-    `${JSON.stringify({ schema: 1, provenance: "apple-hardware", artifacts })}\n`,
+    `${JSON.stringify({
+      schema: 2,
+      provenance: "apple-hardware",
+      source: {
+        commit: "a".repeat(40),
+        cratesTree: "b".repeat(40),
+        cargoManifestSha256: sha256("workspace\n"),
+        cargoLockSha256: sha256("lock\n"),
+      },
+      builder: {
+        rustc: { version: "1.98.0", commit: "c".repeat(40) },
+        cargo: { version: "1.98.0", commit: "d".repeat(40) },
+        apple: { sdk: "macosx26.5", clang: "Apple clang 21", linker: "ld-1267" },
+      },
+      build: {
+        profile: "release",
+        locked: true,
+        cargoIncremental: false,
+        installName: TAB_DARWIN_INSTALL_NAME,
+        rustFlags: [
+          "--remap-path-prefix=<repository-root>=/source/moe",
+          "--remap-path-prefix=<cargo-home>=/cargo",
+          "--remap-path-prefix=<build-root>=/build",
+        ],
+        postLink: [
+          "install_name_tool -id @rpath/libmoe_tab_ffi.dylib <artifact>",
+          "strip -x <artifact>",
+        ],
+      },
+      licenses: {
+        path: "THIRD_PARTY_LICENSES.txt",
+        inputSha256: LICENSE_INPUT,
+        payloadSha256: sha256(LICENSE_PAYLOAD),
+      },
+      artifacts,
+    })}\n`,
   );
   return root;
 }
 
-function successfulRunner(version = VERSION) {
+function successfulRunner(version = VERSION, { workingHash = "f".repeat(40) } = {}) {
   const calls = [];
   return {
     calls,
     runCommand(command, args, options) {
       calls.push({ command, args, options });
-      if (command === "git") return { status: 0, stdout: `${args.at(-1)}\n`, stderr: "" };
+      if (command === "git") {
+        const operation = args[2];
+        if (operation === "ls-files") {
+          const paths = args.slice(args.indexOf("--") + 1);
+          return {
+            status: 0,
+            stdout: paths.map((path) => `100644 ${"f".repeat(40)} 0\t${path}`).join("\n"),
+            stderr: "",
+          };
+        }
+        if (operation === "hash-object") {
+          const paths = args.slice(args.indexOf("--") + 1);
+          return { status: 0, stdout: paths.map(() => workingHash).join("\n"), stderr: "" };
+        }
+        if (operation === "rev-parse") {
+          return { status: 0, stdout: `${"b".repeat(40)}\n`, stderr: "" };
+        }
+        if (operation === "show") {
+          const path = args.at(-1);
+          return {
+            status: 0,
+            stdout: Buffer.from(path.endsWith("Cargo.toml") ? "workspace\n" : "lock\n"),
+            stderr: Buffer.alloc(0),
+          };
+        }
+      }
       if (command === process.execPath) return { status: 0, stdout: `${version}\n`, stderr: "" };
       throw new Error(`unexpected command ${command}`);
     },
@@ -104,7 +183,8 @@ describe("tab native matrix", () => {
     for (const target of TAB_NATIVE_TARGETS) {
       const inspected = inspectTabNativeBytes(nativeBytes(target), target);
       assert.equal(inspected.target, target.id);
-      assert.equal(inspected.bytes, 32);
+      assert.equal(inspected.bytes, target.family === "darwin" ? 512 : 32);
+      if (target.family === "darwin") assert.equal(inspected.installName, TAB_DARWIN_INSTALL_NAME);
     }
 
     const linuxArm64 = TAB_NATIVE_TARGETS.find((target) => target.id === "linux-arm64");
@@ -118,6 +198,19 @@ describe("tab native matrix", () => {
       () => inspectTabNativeBytes(Buffer.from("not a binary"), linuxArm64),
       /not a little-endian ELF64/,
     );
+
+    const darwin = TAB_NATIVE_TARGETS.find((target) => target.id === "darwin-arm64");
+    const absoluteId = nativeBytes(darwin);
+    absoluteId[absoluteId.indexOf(Buffer.from(TAB_DARWIN_INSTALL_NAME))] = "X".charCodeAt(0);
+    assert.throws(() => inspectTabNativeBytes(absoluteId, darwin), /relocatable LC_ID_DYLIB/);
+
+    const pathLeak = nativeBytes(darwin);
+    pathLeak.write("/Users/build-agent/source", 400);
+    assert.throws(() => inspectTabNativeBytes(pathLeak, darwin), /embeds forbidden build path/);
+
+    const missingExport = nativeBytes(darwin);
+    missingExport[missingExport.indexOf(Buffer.from("_moe_tab_version\0"))] = "X".charCodeAt(0);
+    assert.throws(() => inspectTabNativeBytes(missingExport, darwin), /missing C ABI export/);
   });
 
   it("validates tracked Apple hashes, all four headers, and the executable host version", () => {
@@ -133,8 +226,8 @@ describe("tab native matrix", () => {
     assert.equal(matrix.executed.version, VERSION);
     assert.equal(runner.calls[0].command, "git");
     assert.match(runner.calls[0].args.join(" "), /darwin-arm64\/libmoe_tab_ffi\.dylib/);
-    assert.equal(runner.calls[1].command, process.execPath);
-    assert.equal(runner.calls[1].options.env.PROGET_NPM_AUTH, undefined);
+    assert.equal(runner.calls.at(-1).command, process.execPath);
+    assert.equal(runner.calls.at(-1).options.env.PROGET_NPM_AUTH, undefined);
   });
 
   it("stages an exact four-platform package with current legal payloads", () => {
@@ -187,7 +280,7 @@ describe("tab native matrix", () => {
           releaseVersion: VERSION,
           runCommand: () => ({ status: 1, stdout: "", stderr: "not tracked" }),
         }),
-      /verify tracked Apple native payloads failed/,
+      /read tracked Apple index entries failed/,
     );
     assert.throws(
       () =>
@@ -197,6 +290,32 @@ describe("tab native matrix", () => {
           runCommand: successfulRunner("wrong-version").runCommand,
         }),
       /reports "wrong-version"/,
+    );
+
+    const indexDrift = fixture();
+    assert.throws(
+      () =>
+        validateTabNativeMatrix({
+          root: indexDrift,
+          releaseVersion: VERSION,
+          runCommand: successfulRunner(VERSION, { workingHash: "0".repeat(40) }).runCommand,
+        }),
+      /working bytes do not equal their Git index blobs/,
+    );
+
+    const legalDrift = fixture();
+    writeFileSync(
+      join(legalDrift, "packages/tab/native-release/THIRD_PARTY_LICENSES.txt"),
+      `${LICENSE_PAYLOAD}tampered\n`,
+    );
+    assert.throws(
+      () =>
+        validateTabNativeMatrix({
+          root: legalDrift,
+          releaseVersion: VERSION,
+          runCommand: successfulRunner().runCommand,
+        }),
+      /license payload does not match its manifest/,
     );
   });
 });

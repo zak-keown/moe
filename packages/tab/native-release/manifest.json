@@ -1,18 +1,72 @@
 {
-  "schema": 1,
+  "schema": 2,
   "provenance": "apple-hardware",
+  "source": {
+    "commit": "3a81e1e4e18d7279e92f09a7b7ee22e87af9ac46",
+    "cratesTree": "5153cc1a4b9a7634621032b4bed7c91c5c1716f0",
+    "cargoManifestSha256": "d5c93b39ca2a1a326843cdd4968fba264b1eac0f06caedda94cc286abf94573a",
+    "cargoLockSha256": "e135765902492b5f6429134ed746ec7a7941af0abcf566abb28b9449e28a776c"
+  },
+  "builder": {
+    "machine": "arm64",
+    "os": {
+      "name": "macOS",
+      "version": "26.6.1",
+      "build": "25G76"
+    },
+    "rustc": {
+      "version": "1.98.0",
+      "commit": "88d9e12ae178fab0fb5cc050a94da85685d449ea",
+      "host": "aarch64-apple-darwin",
+      "llvm": "22.1.8"
+    },
+    "cargo": {
+      "version": "1.98.0",
+      "commit": "797e8a9bca276c1c9f9f738d2a20f484fa4eea9d",
+      "host": "aarch64-apple-darwin"
+    },
+    "apple": {
+      "sdk": "macosx26.5",
+      "clang": "Apple clang 21.0.0 (clang-2100.1.1.101)",
+      "linker": "ld-1267"
+    }
+  },
+  "build": {
+    "profile": "release",
+    "locked": true,
+    "cargoIncremental": false,
+    "sourceDateEpoch": "0",
+    "rustFlags": [
+      "--remap-path-prefix=<repository-root>=/source/moe",
+      "--remap-path-prefix=<cargo-home>=/cargo",
+      "--remap-path-prefix=<build-root>=/build",
+      "-C debuginfo=0"
+    ],
+    "postLink": [
+      "install_name_tool -id @rpath/libmoe_tab_ffi.dylib <artifact>",
+      "strip -x <artifact>"
+    ],
+    "installName": "@rpath/libmoe_tab_ffi.dylib"
+  },
+  "licenses": {
+    "path": "THIRD_PARTY_LICENSES.txt",
+    "inputSha256": "099655f9044ecd00dd92aa511776fd9763fc43543f28b5f11a7294d8c338957b",
+    "payloadSha256": "8f1a18d7c0744eb8db5b1492d1edfa0254809a406cf51f3231810190b2d18b5f"
+  },
   "artifacts": {
     "darwin-arm64": {
       "path": "darwin-arm64/libmoe_tab_ffi.dylib",
       "rustTarget": "aarch64-apple-darwin",
       "version": "0.0.0-tc.1",
-      "sha256": "c711071df127879e8a33b836ac5caa435152f01c974a707741875624a33e643a"
+      "bytes": 3168216,
+      "sha256": "b55abde3d77c5dddd2867eda2f6d2b0837e0e852cccbc8ea691f56a906b2bebf"
     },
     "darwin-x64": {
       "path": "darwin-x64/libmoe_tab_ffi.dylib",
       "rustTarget": "x86_64-apple-darwin",
       "version": "0.0.0-tc.1",
-      "sha256": "4e414c2e1cafd6ad79bfc9579b94fa1d0fb37e10872883506c4c9c77ed3682cd"
+      "bytes": 3322432,
+      "sha256": "32e36866b3cbad19d35822895e121cc7f0bb518a868134cb6784d81fb1bb0e9f"
     }
   }
 }

@@ -52,6 +52,20 @@ export const TAB_NATIVE_TARGETS = Object.freeze([
 
 export const TRACKED_APPLE_NATIVE_DIR = "packages/tab/native-release";
 export const TAB_PACKAGE_DIR = "packages/tab/bindings/typescript";
+export const TAB_DARWIN_INSTALL_NAME = "@rpath/libmoe_tab_ffi.dylib";
+export const TAB_NATIVE_ABI_EXPORTS = Object.freeze([
+  "moe_tab_version",
+  "moe_tab_string_free",
+  "moe_tab_estimate_path",
+  "moe_tab_refresh_pricing",
+]);
+const FORBIDDEN_DARWIN_PATHS = Object.freeze([
+  "/Users/",
+  "/private/tmp/",
+  "/tmp/",
+  "/var/folders/",
+  ".cargo/registry/",
+]);
 export const TAB_LEGAL_PAYLOAD_FILES = Object.freeze([
   Object.freeze({ source: "LICENSE", name: "LICENSE" }),
   Object.freeze({ source: "NOTICE", name: "NOTICE" }),
@@ -112,6 +126,7 @@ function asBuffer(bytes, label) {
 
 export function inspectTabNativeBytes(bytes, target) {
   const data = asBuffer(bytes, `${target.id} payload`);
+  let darwin;
   if (target.family === "darwin") {
     if (data.length < 16 || data.readUInt32LE(0) !== 0xfeedfacf) {
       throw new TabNativeError(`${target.id} is not a thin little-endian 64-bit Mach-O file`);
@@ -122,6 +137,7 @@ export function inspectTabNativeBytes(bytes, target) {
     if (data.readUInt32LE(12) !== 6) {
       throw new TabNativeError(`${target.id} Mach-O payload is not a dynamic library`);
     }
+    darwin = inspectDarwinReleaseBytes(data, target);
   } else {
     if (
       data.length < 20 ||
@@ -141,7 +157,67 @@ export function inspectTabNativeBytes(bytes, target) {
       throw new TabNativeError(`${target.id} ELF machine does not match ${target.arch}`);
     }
   }
-  return Object.freeze({ target: target.id, bytes: data.length, sha256: sha256(data) });
+  return Object.freeze({ target: target.id, bytes: data.length, sha256: sha256(data), ...darwin });
+}
+
+function readMachOCString(data, start, end, label) {
+  if (start < 0 || start >= end || end > data.length) {
+    throw new TabNativeError(`${label} has an invalid Mach-O string offset`);
+  }
+  const nul = data.indexOf(0, start);
+  if (nul === -1 || nul >= end) throw new TabNativeError(`${label} is not NUL-terminated`);
+  return data.subarray(start, nul).toString("utf8");
+}
+
+function inspectDarwinReleaseBytes(data, target) {
+  if (data.length < 32) throw new TabNativeError(`${target.id} has a truncated Mach-O header`);
+  const commandCount = data.readUInt32LE(16);
+  const commandBytes = data.readUInt32LE(20);
+  const commandEnd = 32 + commandBytes;
+  if (commandEnd > data.length) {
+    throw new TabNativeError(`${target.id} has truncated Mach-O load commands`);
+  }
+
+  const installNames = [];
+  let offset = 32;
+  for (let index = 0; index < commandCount; index += 1) {
+    if (offset + 8 > commandEnd) {
+      throw new TabNativeError(`${target.id} has a truncated Mach-O load command`);
+    }
+    const command = data.readUInt32LE(offset);
+    const size = data.readUInt32LE(offset + 4);
+    if (size < 8 || offset + size > commandEnd) {
+      throw new TabNativeError(`${target.id} has an invalid Mach-O load command size`);
+    }
+    if (command === 0x0d) {
+      if (size < 24) throw new TabNativeError(`${target.id} has a truncated LC_ID_DYLIB command`);
+      const nameOffset = data.readUInt32LE(offset + 8);
+      installNames.push(
+        readMachOCString(data, offset + nameOffset, offset + size, `${target.id} LC_ID_DYLIB`),
+      );
+    }
+    offset += size;
+  }
+  if (offset !== commandEnd) {
+    throw new TabNativeError(`${target.id} Mach-O load command table is inconsistent`);
+  }
+  if (installNames.length !== 1 || installNames[0] !== TAB_DARWIN_INSTALL_NAME) {
+    throw new TabNativeError(
+      `${target.id} must use exactly one relocatable LC_ID_DYLIB ${TAB_DARWIN_INSTALL_NAME}`,
+    );
+  }
+
+  for (const forbidden of FORBIDDEN_DARWIN_PATHS) {
+    if (data.includes(Buffer.from(forbidden))) {
+      throw new TabNativeError(`${target.id} embeds forbidden build path ${forbidden}`);
+    }
+  }
+  for (const symbol of TAB_NATIVE_ABI_EXPORTS) {
+    if (!data.includes(Buffer.from(`_${symbol}\0`))) {
+      throw new TabNativeError(`${target.id} is missing C ABI export ${symbol}`);
+    }
+  }
+  return Object.freeze({ installName: installNames[0], exports: TAB_NATIVE_ABI_EXPORTS });
 }
 
 export function inspectTabNativeFile(path, target) {
@@ -159,23 +235,138 @@ function readAppleManifest(root) {
   } catch (error) {
     throw new TabNativeError(`tracked Apple manifest is unreadable: ${error.message}`);
   }
-  if (manifest?.schema !== 1 || manifest?.provenance !== "apple-hardware") {
+  if (manifest?.schema !== 2 || manifest?.provenance !== "apple-hardware") {
     throw new TabNativeError(
-      "tracked Apple manifest must declare schema 1 and apple-hardware provenance",
+      "tracked Apple manifest must declare schema 2 and apple-hardware provenance",
     );
+  }
+  const sha1 = /^[a-f0-9]{40}$/;
+  const sha256Pattern = /^[a-f0-9]{64}$/;
+  if (
+    !sha1.test(manifest.source?.commit ?? "") ||
+    !sha1.test(manifest.source?.cratesTree ?? "") ||
+    !sha256Pattern.test(manifest.source?.cargoManifestSha256 ?? "") ||
+    !sha256Pattern.test(manifest.source?.cargoLockSha256 ?? "") ||
+    typeof manifest.builder?.rustc?.version !== "string" ||
+    !sha1.test(manifest.builder?.rustc?.commit ?? "") ||
+    typeof manifest.builder?.cargo?.version !== "string" ||
+    !sha1.test(manifest.builder?.cargo?.commit ?? "") ||
+    typeof manifest.builder?.apple?.sdk !== "string" ||
+    typeof manifest.builder?.apple?.clang !== "string" ||
+    typeof manifest.builder?.apple?.linker !== "string" ||
+    manifest.build?.profile !== "release" ||
+    manifest.build?.locked !== true ||
+    manifest.build?.cargoIncremental !== false ||
+    manifest.build?.installName !== TAB_DARWIN_INSTALL_NAME ||
+    !Array.isArray(manifest.build?.rustFlags) ||
+    !manifest.build.rustFlags.some((flag) =>
+      flag.includes("--remap-path-prefix=<repository-root>"),
+    ) ||
+    !manifest.build.rustFlags.some((flag) => flag.includes("--remap-path-prefix=<cargo-home>")) ||
+    !manifest.build.rustFlags.some((flag) => flag.includes("--remap-path-prefix=<build-root>")) ||
+    !Array.isArray(manifest.build?.postLink) ||
+    !manifest.build.postLink.includes(
+      "install_name_tool -id @rpath/libmoe_tab_ffi.dylib <artifact>",
+    ) ||
+    !manifest.build.postLink.includes("strip -x <artifact>")
+  ) {
+    throw new TabNativeError("tracked Apple manifest has incomplete source or build provenance");
   }
   return { manifest, path };
 }
 
+function gitOutput(runCommand, root, args, env, label) {
+  return String(
+    runChecked(runCommand, "git", ["-C", root, ...args], { env }, label).stdout ?? "",
+  ).trim();
+}
+
 function assertTrackedAppleFiles(root, paths, runCommand, env) {
   const relativePaths = paths.map((path) => relative(root, path));
-  runChecked(
+  const stageLines = gitOutput(
     runCommand,
-    "git",
-    ["-C", root, "ls-files", "--error-unmatch", "--", ...relativePaths],
-    { env },
-    "verify tracked Apple native payloads",
+    root,
+    ["ls-files", "--stage", "--", ...relativePaths],
+    env,
+    "read tracked Apple index entries",
   );
+  const indexed = new Map();
+  for (const line of stageLines.split("\n")) {
+    const match = /^(100644) ([a-f0-9]{40}|[a-f0-9]{64}) 0\t(.+)$/.exec(line);
+    if (!match || indexed.has(match[3])) {
+      throw new TabNativeError("tracked Apple inputs must be unique regular index blobs");
+    }
+    indexed.set(match[3], match[2]);
+  }
+  if (indexed.size !== relativePaths.length || relativePaths.some((path) => !indexed.has(path))) {
+    throw new TabNativeError("tracked Apple inputs are missing from the Git index");
+  }
+
+  const workingHashes = gitOutput(
+    runCommand,
+    root,
+    ["hash-object", "--no-filters", "--", ...relativePaths],
+    env,
+    "hash tracked Apple working bytes",
+  ).split("\n");
+  if (
+    workingHashes.length !== relativePaths.length ||
+    relativePaths.some((path, index) => workingHashes[index] !== indexed.get(path))
+  ) {
+    throw new TabNativeError("tracked Apple working bytes do not equal their Git index blobs");
+  }
+}
+
+function assertAppleSourceProvenance(root, manifest, runCommand, env) {
+  const cratesTree = gitOutput(
+    runCommand,
+    root,
+    ["rev-parse", `${manifest.source.commit}:packages/tab/crates`],
+    env,
+    "resolve tracked Apple source commit",
+  );
+  if (cratesTree !== manifest.source.cratesTree) {
+    throw new TabNativeError("tracked Apple source commit does not match its crates tree");
+  }
+  for (const [path, recorded] of [
+    ["packages/tab/Cargo.toml", manifest.source.cargoManifestSha256],
+    ["packages/tab/Cargo.lock", manifest.source.cargoLockSha256],
+  ]) {
+    const content = runChecked(
+      runCommand,
+      "git",
+      ["-C", root, "show", `${manifest.source.commit}:${path}`],
+      { env, encoding: null },
+      `read ${path} at tracked Apple source commit`,
+    ).stdout;
+    if (sha256(asBuffer(content, path)) !== recorded) {
+      throw new TabNativeError(`tracked Apple source commit does not match ${path}`);
+    }
+  }
+}
+
+function assertLicenseProvenance(root, manifest) {
+  const record = manifest.licenses;
+  if (
+    record?.path !== "THIRD_PARTY_LICENSES.txt" ||
+    !/^[a-f0-9]{64}$/.test(record?.inputSha256 ?? "") ||
+    !/^[a-f0-9]{64}$/.test(record?.payloadSha256 ?? "")
+  ) {
+    throw new TabNativeError("tracked Apple manifest has incomplete license provenance");
+  }
+  const path = join(root, TRACKED_APPLE_NATIVE_DIR, record.path);
+  const payload = readFileSync(path);
+  if (sha256(payload) !== record.payloadSha256) {
+    throw new TabNativeError("tracked tab third-party license payload does not match its manifest");
+  }
+  const inputMatches = [
+    ...payload.toString("utf8").matchAll(/^License inputs SHA-256: ([a-f0-9]{64})$/gm),
+  ];
+  if (inputMatches.length !== 1 || inputMatches[0][1] !== record.inputSha256) {
+    throw new TabNativeError(
+      "tracked tab third-party license input digest does not match its manifest",
+    );
+  }
 }
 
 function sourcePath(root, linuxDir, target) {
@@ -222,7 +413,11 @@ export function validateTabNativeMatrix({
   const env = secretFreeEnvironment(inputEnv);
   const { manifest: appleManifest, path: appleManifestPath } = readAppleManifest(root);
   const files = new Map();
-  const trackedApplePaths = [appleManifestPath];
+  assertLicenseProvenance(root, appleManifest);
+  const trackedApplePaths = [
+    appleManifestPath,
+    join(root, TRACKED_APPLE_NATIVE_DIR, appleManifest.licenses.path),
+  ];
 
   for (const target of TAB_NATIVE_TARGETS) {
     const path = sourcePath(root, linuxDir, target);
@@ -234,6 +429,8 @@ export function validateTabNativeMatrix({
         recorded?.path !== `${target.id}/${target.filename}` ||
         recorded?.rustTarget !== target.rustTarget ||
         recorded?.version !== releaseVersion ||
+        recorded?.bytes !== inspection.bytes ||
+        inspection.installName !== appleManifest.build.installName ||
         recorded?.sha256 !== inspection.sha256
       ) {
         throw new TabNativeError(
@@ -246,6 +443,7 @@ export function validateTabNativeMatrix({
 
   if (requireTrackedApple) {
     assertTrackedAppleFiles(root, trackedApplePaths, runCommand, env);
+    assertAppleSourceProvenance(root, appleManifest, runCommand, env);
   }
 
   let executed;
