@@ -1,40 +1,33 @@
 ## Base
-- Base: main@137e7da0 — 3 attempted, 2 landed, 1 rolled back, 0 skipped.
-- Preflight: working tree clean; baseline test green (58/58 @bubstack/moe-core in ~1.4s); baseline mint:check green.
-- Final HEAD: b02c469b. Test green. mint:check green.
+- Base: main@4fddb275 — 1 attempted, 1 landed, 0 rolled back, 0 skipped.
+- Preflight: tree clean, baseline test green, baseline mint:check green.
+- Final HEAD: 3285c686. Test green. mint:check green.
 
 ## Landed
 
-### 2/deterministic-task-dag
-Merge SHA: f2bdc60c
+### 2/mattpocock-skills-import
+Merge SHA: 3285c686
 Conflicts: none
 Tests: green
 Merge command that ran:
 ```bash
-git merge --no-ff wave2/deterministic-task-dag
+git merge --no-ff wave2/mattpocock-skills-import
 ```
 
-### 2/parallel-execution-option
-Merge SHA: b02c469b
-Conflicts: none
-Tests: green
-Merge command that ran:
-```bash
-git merge --no-ff wave2/parallel-execution-option
-```
+Clean 3-way merge via `ort` — auto-merged ARCHITECTURE.md, packages/core/skill-tiers.yaml, and packages/core/test/metadata.test.ts with no conflict markers. 34 files changed (+1910/-25) adding 5 mattpocock-skills (codebase-design, domain-modeling, improve-codebase-architecture, prototype) plus writing-skills/requesting-code-review references, the MIT license file, and skill-tiers entries. Ran pnpm mint after the merge — no plugins/ diff produced, so no regen commit was needed (the branch already contained the expected plugins/ output). `pnpm --filter @bubstack/moe-core test`: 72/72 passing. `pnpm mint:check`: clean, no drift.
 
 ## Rolled back
 
-### 2/mattpocock-skills-import
-Reason: test/metadata.test.ts failed — "workflow depth vocabulary > does not name the workflow depth 'tier' in any SKILL.md that lacks a legitimate tier meaning". Two imported files use "tier" in a workflow-depth sense: `skills/codebase-design/SKILL.md:14` ("**Module**: anything with an interface and an implementation. Deliberately scale-agnostic…") and `skills/writing-skills/references/skill-typography.md:30` ("**In-file step** is the primary tier: what the agent does, in order."). Merge itself was clean (no conflicts) and mint produced no plugins/ diff. To land, either reword those two occurrences or extend the metadata guard's allowlist. Pre-rollback merge SHA was 5522f5d6.
-Pre-merge SHA: b02c469b
+None.
 
 ## Skipped
 
-_(none)_
+None.
 
 ## Preflight
-Working tree is clean on main at 137e7da. All three wave-2 branches exist locally with tip SHAs recorded. Baseline `pnpm --filter @bubstack/moe-core test` is green (58/58 tests across 3 files in ~1.4s), and baseline `pnpm mint:check` is green (turbo mint:generate ran, git diff --exit-code on plugins/ passed, confirmed via explicit exit code check). Node engine warnings appear (repo wants Node >=24, host is v22.23.2) but do not fail either baseline. No hard blockers — the merge run can proceed.
+
+Preflight is green. Working tree at /Users/zakkeown/Code/tools/moe is clean on main @ 4fddb2754eef03c1730a88c9af82caf587be2d33. The requested branch wave2/mattpocock-skills-import exists locally at 94a1b65fe85c81e4dc1994d47fa43cf62c1e53c9. Baseline `pnpm --filter @bubstack/moe-core test` passed (72/72 across 3 files in ~1.6s). Baseline `pnpm mint:check` passed (turbo built @bubstack/moe-mint, mint:generate regenerated 6 plugins with no drift under plugins/, git diff --exit-code clean). Node engine warnings (want >=24, have v22.23.2) surfaced across workspaces but did not block; no other issues would block a merge run.
+
 (baseline test/mint:check were green)
 
 ## Integration reminders (verbatim from WAVES.md)
