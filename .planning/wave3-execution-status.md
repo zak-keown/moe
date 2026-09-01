@@ -1,3 +1,10 @@
+# Wave 3 Execution Status
+
+> **Superseded:** `wave3/tiered-workflow-naming` merged as `894f5c7` (2026-08-31).
+> Wave 3 has no remaining active work under this file; the blocked item
+> `tc-governance-integration` sits in the deferred bucket per the project
+> memory `project_wave2_codegraph_deferred.md`.
+
 ## Base
 
 Base: main@28b43228 — 1 items attempted, 1 ship, 0 iterate, 0 block, 0 skipped.
