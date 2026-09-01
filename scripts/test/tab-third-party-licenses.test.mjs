@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -7,6 +8,9 @@ import { afterEach, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
 import {
+  checkLicenseInputs,
+  licenseInputFiles,
+  licenseInputsDigest,
   linkedRegistryClosure,
   parseCargoLock,
   parseCrateArchive,
@@ -15,6 +19,8 @@ import {
   writeOrCheckPayload,
 } from "../tab-third-party-licenses.mjs";
 
+const SCRIPT = fileURLToPath(new URL("../tab-third-party-licenses.mjs", import.meta.url));
+const REPO_ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const COMMITTED_PAYLOAD = fileURLToPath(
   new URL("../../packages/tab/native-release/THIRD_PARTY_LICENSES.txt", import.meta.url),
 );
@@ -119,7 +125,34 @@ function registryFixture({
   };
   const metadataByTarget = new Map(RELEASE_TARGETS.map((target) => [target, metadata]));
   const lockText = `version = 4\n\n[[package]]\nname = "${name}"\nversion = "${version}"\nsource = "${source}"\nchecksum = "${sha256(archive)}"\n`;
-  return { archivePath, dependency, lockText, metadataByTarget, root };
+  return {
+    archivePath,
+    dependency,
+    inputDigest: "a".repeat(64),
+    lockText,
+    metadataByTarget,
+    root,
+  };
+}
+
+function inputFixture() {
+  const root = mkdtempSync(join(tmpdir(), "moe-tab-license-inputs-"));
+  roots.push(root);
+  const files = [
+    ["packages/tab/Cargo.lock", "lock\n"],
+    ["packages/tab/Cargo.toml", "workspace\n"],
+    ["packages/tab/crates/moe-tab-core/Cargo.toml", "core\n"],
+    ["packages/tab/crates/moe-tab-ffi/Cargo.toml", "ffi\n"],
+  ];
+  for (const [path, content] of files) {
+    const absolute = join(root, path);
+    mkdirSync(join(absolute, ".."), { recursive: true });
+    writeFileSync(absolute, content);
+  }
+  const digest = licenseInputsDigest(root);
+  const output = join(root, "THIRD_PARTY_LICENSES.txt");
+  writeFileSync(output, `License inputs SHA-256: ${digest}\n`);
+  return { digest, files, output, root };
 }
 
 describe("Tab linked dependency closure", () => {
@@ -247,8 +280,51 @@ describe("Tab third-party license payload", () => {
     assert.equal(readFileSync(outputPath, "utf8"), "expected\n");
   });
 
+  it("hashes Cargo inputs in canonical path order", () => {
+    const fixture = inputFixture();
+    assert.deepEqual(licenseInputFiles(fixture.root), fixture.files.map(([path]) => path).sort());
+    assert.equal(checkLicenseInputs(fixture).digest, fixture.digest);
+  });
+
+  it("fails the pure input check when Cargo.lock drifts", () => {
+    const fixture = inputFixture();
+    writeFileSync(join(fixture.root, "packages/tab/Cargo.lock"), "changed lock\n");
+    assert.throws(() => checkLicenseInputs(fixture), /input digest is stale/);
+  });
+
+  it("fails the pure input check when a workspace Cargo.toml drifts", () => {
+    const fixture = inputFixture();
+    writeFileSync(
+      join(fixture.root, "packages/tab/crates/moe-tab-ffi/Cargo.toml"),
+      "changed manifest\n",
+    );
+    assert.throws(() => checkLicenseInputs(fixture), /input digest is stale/);
+  });
+
+  it("runs --check-inputs successfully with no Cargo executable", () => {
+    const fixture = inputFixture();
+    const run = spawnSync(
+      process.execPath,
+      [
+        SCRIPT,
+        "--check-inputs",
+        "--root",
+        fixture.root,
+        "--output",
+        fixture.output,
+        "--cargo",
+        join(fixture.root, "cargo-does-not-exist"),
+      ],
+      { encoding: "utf8" },
+    );
+
+    assert.equal(run.status, 0, run.stderr);
+    assert.match(run.stdout, /inputs verified/);
+  });
+
   it("keeps the committed audited closure and exceptional bundled notices visible", () => {
     const payload = readFileSync(COMMITTED_PAYLOAD, "utf8");
+    assert.ok(payload.includes(`License inputs SHA-256: ${licenseInputsDigest(REPO_ROOT)}`));
     assert.match(payload, /Registry package instances: 52 \(51 unique names\)/);
     assert.equal(payload.match(/^ {2}Cargo checksum: /gm)?.length, 52);
     for (const expected of [

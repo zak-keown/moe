@@ -8,6 +8,7 @@ License bytes come directly from Cargo registry .crate archives whose SHA-256
 checksums are verified against packages/tab/Cargo.lock.
 
 Cargo.lock SHA-256: e135765902492b5f6429134ed746ec7a7941af0abcf566abb28b9449e28a776c
+License inputs SHA-256: 099655f9044ecd00dd92aa511776fd9763fc43543f28b5f11a7294d8c338957b
 Registry package instances: 52 (51 unique names)
 Release targets:
   - aarch64-apple-darwin

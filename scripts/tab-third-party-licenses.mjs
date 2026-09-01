@@ -3,7 +3,14 @@
 
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { gunzipSync } from "node:zlib";
@@ -28,6 +35,31 @@ function compare(left, right) {
 
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
+}
+
+export function licenseInputFiles(root = DEFAULT_ROOT) {
+  const cratesDirectory = join(root, "packages/tab/crates");
+  const files = ["packages/tab/Cargo.lock", "packages/tab/Cargo.toml"];
+  for (const entry of readdirSync(cratesDirectory, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const path = `packages/tab/crates/${entry.name}/Cargo.toml`;
+    if (existsSync(join(root, path))) files.push(path);
+  }
+  return files.sort(compare);
+}
+
+export function licenseInputsDigest(root = DEFAULT_ROOT) {
+  const hash = createHash("sha256");
+  hash.update("moe-tab-third-party-license-inputs-v1\0");
+  for (const path of licenseInputFiles(root)) {
+    const pathBytes = Buffer.from(path, "utf8");
+    const content = readFileSync(join(root, path));
+    hash.update(`${pathBytes.length}:`);
+    hash.update(pathBytes);
+    hash.update(`${content.length}:`);
+    hash.update(content);
+  }
+  return hash.digest("hex");
 }
 
 function packageKey(pkg) {
@@ -313,7 +345,10 @@ function collectPackages(metadataByTarget) {
 }
 
 /** Render a payload from already locked, offline Cargo metadata for the four release targets. */
-export function renderThirdPartyLicenses({ metadataByTarget, lockText }) {
+export function renderThirdPartyLicenses({ metadataByTarget, lockText, inputDigest }) {
+  if (!/^[a-f0-9]{64}$/.test(inputDigest ?? "")) {
+    throw new Error("license input digest must be a lowercase SHA-256");
+  }
   const lockPackages = parseCargoLock(lockText);
   const dependencies = collectPackages(metadataByTarget);
   const texts = new Map();
@@ -368,6 +403,7 @@ export function renderThirdPartyLicenses({ metadataByTarget, lockText }) {
     "checksums are verified against packages/tab/Cargo.lock.",
     "",
     `Cargo.lock SHA-256: ${sha256(lockText)}`,
+    `License inputs SHA-256: ${inputDigest}`,
     `Registry package instances: ${inventory.length} (${uniqueNames.size} unique names)`,
     "Release targets:",
     ...RELEASE_TARGETS.map((target) => `  - ${target}`),
@@ -452,9 +488,31 @@ export function generateThirdPartyLicenses({
   const rendered = renderThirdPartyLicenses({
     metadataByTarget,
     lockText: readFileSync(lockPath, "utf8"),
+    inputDigest: licenseInputsDigest(absoluteRoot),
   });
   writeOrCheckPayload({ outputPath, rendered, check, root: absoluteRoot });
   return { outputPath, packageCount: collectPackages(metadataByTarget).length };
+}
+
+export function checkLicenseInputs({ root = DEFAULT_ROOT, output = DEFAULT_OUTPUT } = {}) {
+  const absoluteRoot = resolve(root);
+  const outputPath = resolve(absoluteRoot, output);
+  if (!existsSync(outputPath)) throw new Error(`${relative(absoluteRoot, outputPath)} is missing`);
+  const payload = readFileSync(outputPath, "utf8");
+  const matches = [...payload.matchAll(/^License inputs SHA-256: ([a-f0-9]{64})$/gm)];
+  if (matches.length !== 1) {
+    throw new Error(
+      `${relative(absoluteRoot, outputPath)} must contain exactly one license input digest`,
+    );
+  }
+  const recorded = matches[0][1];
+  const expected = licenseInputsDigest(absoluteRoot);
+  if (recorded !== expected) {
+    throw new Error(
+      `${relative(absoluteRoot, outputPath)} input digest is stale; run the full generator and commit it`,
+    );
+  }
+  return { outputPath, digest: expected };
 }
 
 export function writeOrCheckPayload({ outputPath, rendered, check, root = DEFAULT_ROOT }) {
@@ -477,6 +535,10 @@ function parseArguments(argv) {
       options.check = true;
       continue;
     }
+    if (argument === "--check-inputs") {
+      options.checkInputs = true;
+      continue;
+    }
     const key = {
       "--root": "root",
       "--cargo": "cargo",
@@ -485,7 +547,7 @@ function parseArguments(argv) {
     }[argument];
     if (!key || index + 1 >= argv.length) {
       throw new Error(
-        "usage: tab-third-party-licenses.mjs [--check] [--root DIR] [--cargo PATH] [--manifest PATH] [--output PATH]",
+        "usage: tab-third-party-licenses.mjs [--check|--check-inputs] [--root DIR] [--cargo PATH] [--manifest PATH] [--output PATH]",
       );
     }
     options[key] = argv[++index];
@@ -495,7 +557,16 @@ function parseArguments(argv) {
 
 export function main(argv) {
   try {
-    const result = generateThirdPartyLicenses(parseArguments(argv));
+    const options = parseArguments(argv);
+    if (options.check && options.checkInputs) {
+      throw new Error("--check and --check-inputs are mutually exclusive");
+    }
+    if (options.checkInputs) {
+      const result = checkLicenseInputs(options);
+      console.log(`tab third-party licenses: inputs verified in ${result.outputPath}`);
+      return 0;
+    }
+    const result = generateThirdPartyLicenses(options);
     console.log(
       `tab third-party licenses: ${result.packageCount} package instances ${
         argv.includes("--check") ? "verified" : "written"
