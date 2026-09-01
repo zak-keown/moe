@@ -29,7 +29,7 @@
         "source": "npm",
         "package": "@bubstack/moe-memory"
       },
-      "version": "0.0.0",
+      "version": "0.1.0",
       "description": "Semantic recall over past sessions and journal entries.",
       "strict": true
     },
@@ -39,7 +39,7 @@
         "source": "npm",
         "package": "@bubstack/moe-glass"
       },
-      "version": "0.0.0",
+      "version": "0.1.0",
       "description": "Direct Chrome DevTools Protocol access. Skill mode plus MCP mode, zero dependencies.",
       "strict": true
     },

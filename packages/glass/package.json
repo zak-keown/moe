@@ -1,12 +1,35 @@
 {
   "name": "@bubstack/moe-glass",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "description": "Direct Chrome DevTools Protocol access. Skill mode (17 CLI commands) plus MCP mode (single use_browser tool). Auto-starts Chrome.",
   "license": "MIT",
+  "author": {
+    "name": "Zak Keown",
+    "email": "zak.keown@outlook.com"
+  },
+  "homepage": "https://gitlab.com/moe-ai/moe",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/moe-ai/moe.git"
+  },
+  "keywords": [
+    "claude-code",
+    "codex",
+    "chrome",
+    "devtools-protocol",
+    "browser",
+    "automation",
+    "screenshots",
+    "mcp"
+  ],
   "main": "dist/index.js",
   "bin": {
     "moe-glass": "./dist/index.js"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "files": [
     "dist",
