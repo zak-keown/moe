@@ -92,6 +92,16 @@ provenance:
     # — taking every other job down with it, not just this one.
     - "if node scripts/check-provenance.mjs scripts/fixtures/provenance-red --min-readmes 1; then echo 'self-test failed: the red fixture passed'; exit 1; fi"
 
+# Path-scoped: the dispatcher is Node stdlib only and every namespace is
+# stubbed out in the vitest — a docs edit does not need to re-run it.
+# See bin/moe.js and ARCHITECTURE.md §7.1 for what this covers.
+bin:
+  stage: check
+  <<: *pnpm
+  script: [pnpm bin:test]
+  rules:
+    - changes: [bin/**/*]
+
 # Path-scoped so a docs edit does not rebuild the Rust crate.
 tab:
   stage: check
