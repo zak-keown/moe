@@ -786,6 +786,58 @@ describe("hooks", () => {
   });
 });
 
+// packages/core/agents/ is this package's first, added with retrieving-context.
+// Nothing asserted anything about agents/ before, and the failure mode is silent:
+// an agent's `tools:` allowlist is a comma-separated list of identifiers, and an
+// MCP tool that is named in any form other than `mcp__<server>__<tool>` simply
+// does not resolve. The agent then runs with fewer tools than its author
+// intended — or none — and no error is raised anywhere. A `grep -q '^tools:'`
+// gate proves the key exists, which is not the thing that breaks.
+describe("agents", () => {
+  const AGENTS = join(PKG, "agents");
+  const agentFiles = existsSync(AGENTS)
+    ? readdirSync(AGENTS)
+        .filter((f) => f.endsWith(".md"))
+        .sort()
+    : [];
+
+  it("has at least one agent, so the checks below are not vacuous", () => {
+    expect(agentFiles.length).toBeGreaterThan(0);
+  });
+
+  it.each(agentFiles)("%s declares a model and a tools allowlist", (file) => {
+    const { data } = parseFrontmatter(readFileSync(join(AGENTS, file), "utf8"));
+    expect(data.model, `${file}: no model — the agent runs on the caller's model`).toBeDefined();
+    expect(data.tools, `${file}: no tools allowlist — the agent inherits everything`).toBeDefined();
+  });
+
+  it.each(agentFiles)("%s spells every MCP tool as mcp__<server>__<tool>", (file) => {
+    const { data } = parseFrontmatter(readFileSync(join(AGENTS, file), "utf8"));
+    const malformed = (data.tools ?? "")
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0)
+      // Built-in tools (Read, Grep, Bash, ...) are Capitalised and always fine.
+      // Anything else must be a full MCP identifier. The server segment is
+      // matched lazily so the first `__` splits it, which keeps the plugin-served
+      // form working too: mcp__plugin_<plugin>_<server>__<tool> has underscores
+      // inside its server segment.
+      .filter((t) => !/^[A-Z]/.test(t) && !/^mcp__(.+?)__(.+)$/.test(t));
+    expect(
+      malformed,
+      `${file}: these do not resolve. An MCP tool must be mcp__<server>__<tool> — ` +
+        `the server key is the one in ~/.claude.json mcpServers (or ` +
+        `mcp__plugin_<plugin>_<server>__<tool> when it is served by a plugin). ` +
+        `A bare name silently gives the agent nothing.`,
+    ).toEqual([]);
+  });
+
+  it("emits every agent into the full plugin", () => {
+    const emitted = readdirSync(join(PKG, "../../plugins/moe-everything/agents")).sort();
+    expect(emitted).toEqual(agentFiles);
+  });
+});
+
 describe("the lean/full curation", () => {
   it("assigns every skill exactly one recorded tier, with a rationale", () => {
     expect(Object.keys(registry).sort()).toEqual([...skillNames].sort());
