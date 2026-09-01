@@ -25,4 +25,4 @@ disk. The library has no clock — the caller supplies the `as_of` stamp. Output
 `CostEstimate` carrying `unpriced_models`, `approximations` and `pricing_source` — not a JSON
 blob, and never a silent $0.
 
-Maintained as part of [Moe](https://gitlab.tcdevops.com/Zak/moe). Apache-2.0.
+Maintained as part of [Moe](https://gitlab.com/moe-ai/moe). Apache-2.0.

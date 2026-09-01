@@ -226,14 +226,14 @@ describe('pi adapter installDoc', () => {
   it('substitutes the parsed host for a non-github repository (e.g. self-hosted GitLab)', () => {
     // Regression coverage: the previous helper only matched github.com,
     // hardcoding `git:github.com/` in the emitted command; a
-    // gitlab.tcdevops.com repository produced an unusable install line.
+    // gitlab.com repository produced an unusable install line.
     const dir = tmpFixture(
-      'name: gh\nversion: 1.0.0\ndescription: self-hosted gitlab fixture\nrepository: https://gitlab.tcdevops.com/Zak/moe\nbootstrap: none\n',
+      'name: gh\nversion: 1.0.0\ndescription: self-hosted gitlab fixture\nrepository: https://gitlab.com/moe-ai/moe\nbootstrap: none\n',
     )
     const ghModel = buildModel(dir)
     const body = pi.installDoc!(ghModel)
-    expect(body).toContain('pi install git:gitlab.tcdevops.com/Zak/moe')
-    expect(body).not.toContain('git:github.com/Zak/moe')
+    expect(body).toContain('pi install git:gitlab.com/moe-ai/moe')
+    expect(body).not.toContain('git:github.com/moe-ai/moe')
   })
 
   it('falls back to `git:github.com/<your-repo>` when repository is absent', () => {

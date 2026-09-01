@@ -169,19 +169,19 @@ describe('claude-code adapter installDoc', () => {
     expect(body).not.toContain('<your-repo>')
   })
 
-  it('emits the full self-hosted GitLab URL for Moe\'s own gitlab.tcdevops.com repository', () => {
+  it('emits the full self-hosted GitLab URL for Moe\'s own gitlab.com repository', () => {
     // Regression: the previous helper only matched github.com, so this repo's
-    // own `repository: https://gitlab.tcdevops.com/Zak/moe` fell back to a
+    // own `repository: https://gitlab.com/moe-ai/moe` fell back to a
     // <your-repo> placeholder and the emitted install doc was unusable. This
     // asserts the generalised parseRepo does the right thing.
-    const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-installdoc-tcdevops-'))
+    const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-installdoc-gitlab-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: moe-fixture\nversion: 1.0.0\ndescription: self-hosted gitlab fixture\nrepository: https://gitlab.tcdevops.com/Zak/moe\nbootstrap: none\n',
+      'name: moe-fixture\nversion: 1.0.0\ndescription: self-hosted gitlab fixture\nrepository: https://gitlab.com/moe-ai/moe\nbootstrap: none\n',
     )
     const tcModel = buildModel(dir)
     const body = claudeCode.installDoc!(tcModel)
-    expect(body).toContain('claude /plugin marketplace add https://gitlab.tcdevops.com/Zak/moe')
+    expect(body).toContain('claude /plugin marketplace add https://gitlab.com/moe-ai/moe')
     expect(body).not.toContain('<your-repo>')
   })
 

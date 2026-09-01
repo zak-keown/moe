@@ -17,4 +17,4 @@ moe-tab refresh --as-of 2026-06-09        # or 2026-06-09T18:30:00Z
 `$MOE_TAB_PRICING_DIR`, else `$XDG_DATA_HOME/moe/tab`, else `~/.local/share/moe/tab`.
 
 Built on [`moe-tab-core`](../moe-tab-core) and maintained as part of
-[Moe](https://gitlab.tcdevops.com/Zak/moe). Apache-2.0.
+[Moe](https://gitlab.com/moe-ai/moe). Apache-2.0.

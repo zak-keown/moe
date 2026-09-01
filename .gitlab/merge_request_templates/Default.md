@@ -1,5 +1,5 @@
 <!--
-Default MR template for gitlab.tcdevops.com/Zak/moe.
+Default MR template for gitlab.com/moe-ai/moe.
 
 Fills the PARITY.md "Not ported" routing for
 `*/.github/PULL_REQUEST_TEMPLATE.md`.

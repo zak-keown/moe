@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"gitlab.tcdevops.com/Zak/moe/packages/tab/bindings/go/tab"
+	"gitlab.com/moe-ai/moe/packages/tab/bindings/go/tab"
 )
 
 func main() {
