@@ -18,7 +18,7 @@ import { asCardId, asRunId } from "../../src/qa/util/brands.js";
  * silently:
  *
  *   - moe-tab's `tab::parse` SKIPS rows whose `type` it does not claim
- *     (`ROW_TYPES = ["moe.tab.usage", "obol.usage"]`) rather than erroring, so a
+ *     (`ROW_TYPES = ["moe.tab.usage"]`) rather than erroring, so a
  *     wrong producer string reads as "no usage" — cost zero, no warning.
  *   - `estimateUsageSidecar` catches `TabError` and returns null, so a rejected
  *     dialect ALSO reads as "no usage". The rebrand nearly shipped

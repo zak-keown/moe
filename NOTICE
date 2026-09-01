@@ -1,53 +1,72 @@
 Moe
 Copyright 2026 Zak Keown
 
-This product is a hard fork of, and contains code and documentation derived
-from, the following upstream projects. Exact forked revisions are recorded in
-PARITY.md.
+THIRD-PARTY ATTRIBUTION
 
---------------------------------------------------------------------------------
-Jesse Vincent <jesse@fsck.com> (github.com/obra)
-  Licensed under the MIT License:
-    superpowers
-    superpowers-lab
-    superpowers-developing-for-claude-code
-    superpowers-chrome
-    superpowers-marketplace
-    episodic-memory
-    private-journal-mcp
-    claude-session-driver
-    double-shot-latte
+Moe contains code and documentation derived from the frozen works below.
+PARITY.md records the complete internal provenance and risk decisions.
 
-  Public domain:
-    the-elements-of-style
-      (writing guidance after William Strunk Jr., "The Elements of Style", 1918)
+## Imported works
 
---------------------------------------------------------------------------------
-Prime Radiant, Inc. (github.com/prime-radiant-inc)
-  Licensed under the Apache License, Version 2.0:
-    gauntlet
-    greenfield
-    iterative-development
-    obol
-    prime-radiant-marketplace
+| Project | Revision | License | Copyright notice |
+|---|---:|---|---|
+| `superpowers` | `b36e082` | MIT | Copyright (c) 2025 Jesse Vincent |
+| `superpowers-lab` | `51111f7` | MIT | Copyright (c) 2025 Jesse Vincent |
+| `superpowers-developing-for-claude-code` | `74afe93` | MIT declared; upstream license file absent | Copyright (c) 2025 Jesse Vincent |
+| `iterative-development` | `c05889a` | Apache-2.0 | Prime Radiant, Inc. |
+| `the-elements-of-style` | `05fc4f0` | Public domain | William Strunk Jr., The Elements of Style (1918) |
+| `double-shot-latte` | `dfe7567` | MIT | Copyright (c) 2024 Anthropic |
+| `mattpocock-skills` | `6654f6b` | MIT | Copyright (c) 2026 Matt Pocock |
+| `greenfield` | `6e6d4b4` | Apache-2.0 | Prime Radiant, Inc. |
+| `episodic-memory` | `1075769` | MIT | Copyright (c) 2025 Jesse Vincent |
+| `private-journal-mcp` | `016953f` | MIT | Copyright (c) 2025 Jesse Vincent |
+| `gauntlet` | `91b6f7e` | Apache-2.0 | Prime Radiant, Inc. |
+| `superpowers-evals` | `114f725` | No license grant located | Prime Radiant, Inc. |
+| `everyharness` | `4f7c5e2` | MIT | Copyright (c) 2026 Prime Radiant, Inc. |
+| `everyharness-container` | `2467bd7` | MIT | Copyright (c) 2026 Prime Radiant, Inc. |
+| `claude-session-driver` | `d97d1eb` | MIT | Copyright (c) 2025 Jesse Vincent |
+| `superpowers-chrome` | `782358e` | MIT | Copyright (c) 2025 Jesse Vincent |
+| `obol` | `28e3dba` | Apache-2.0 | Copyright 2026 Prime Radiant, Inc. |
+| `smevals` | `0c28dc6` | MIT | Copyright (c) 2026 Prime Radiant, Inc.; authored by Simon Willison |
+| `superpowers-marketplace` | `1ab7b8e` | MIT | Copyright (c) 2025 Jesse Vincent |
+| `prime-radiant-marketplace` | `49a45ef` | Apache-2.0 | Prime Radiant, Inc. |
 
-  Licensed under the MIT License:
-    everyharness
-    everyharness-container
-    smevals  (authored by Simon Willison; copyright Prime Radiant, Inc.)
+## Statement of changes
 
-  See obol/NOTICE in the upstream snapshot for obol's own attributions,
-  which are carried forward into packages/tab.
+Moe contributors changed imported source and documentation while consolidating
+repositories, replacing product identifiers and paths, reconciling duplicated
+implementations, changing build systems, and integrating the resulting
+packages. Historical files explicitly retained as evidence may remain
+unchanged. Git history and PARITY.md identify the frozen comparison revisions.
 
---------------------------------------------------------------------------------
-UNRESOLVED
+## Required notice retained from obol
 
-  superpowers-evals (Prime Radiant, Inc.) ships no LICENSE file and no
-  package.json license field. No grant of rights has been located. It is the
-  largest single body of forked material (796 files). See PARITY.md
-  "License exposure" before this code is redistributed outside the team.
+obol
+Copyright 2026 Prime Radiant, Inc.
 
---------------------------------------------------------------------------------
+This product includes software developed at Prime Radiant, Inc.
 
-Copies of the MIT License and the Apache License 2.0 as received from upstream
-are retained alongside the code derived from them, under each package.
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License in the LICENSE file or at https://www.apache.org/licenses/LICENSE-2.0.
+
+Acknowledgement
+
+obol's transcript dialect parsers (Claude Code, Codex, Pi) were reconciled
+against AgentsView (https://github.com/kenn-io/agentsview), which is licensed
+under the MIT License, Copyright (c) 2026 Kenn Software LLC. No AgentsView
+source code is included in obol; its independent reverse-engineering of these
+transcript formats informed obol's implementations.
+
+## Legal texts
+
+The complete Apache License 2.0 is in root LICENSE. The complete MIT License and
+the retained MIT copyright notices are in root LICENSE-MIT. Generated
+installable artifacts carry the applicable terms with them.
+
+## Unresolved
+
+The `superpowers-evals` row has no located grant of rights. Five derived files
+are retained under the internal-only, no-distribution decision recorded in
+PARITY.md. `superpowers-developing-for-claude-code` declares MIT but omitted the
+license file it references. Neither condition is cured by this NOTICE.

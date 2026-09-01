@@ -21,14 +21,8 @@ use serde_json::Value;
 /// a silent mis-parse: a newer schema may mean fields moe-tab can't interpret.
 const SCHEMA_VERSIONS: &[&str] = &["2026-06-08"];
 
-/// Row `type` values this dialect claims. `moe.tab.usage` is canonical; the
-/// upstream `obol.usage` is still accepted, read-only, because the fork renamed
-/// the type but existing producers (an un-migrated harness, an already-written
-/// `usage.jsonl` on disk) still emit the old tag. Rejecting it would be silent:
-/// `parse` skips rows of an unclaimed type, so a whole file of `obol.usage`
-/// would price to $0 with no error. This crate's rule everywhere else is
-/// "surfaced, never a silent $0", and that rule applies to its own rename.
-pub const ROW_TYPES: &[&str] = &["moe.tab.usage", "obol.usage"];
+/// Row `type` values this dialect claims.
+pub const ROW_TYPES: &[&str] = &["moe.tab.usage"];
 
 pub fn claims_row(v: &Value) -> bool {
     v.get("type")
@@ -201,23 +195,6 @@ mod tests {
         let line = r#"{"type":"moe.tab.usage","v":"2026-06-08","provider":"anthropic","usage":{"input_tokens":1,"output_tokens":1}}"#;
         let usages = parse(line.as_bytes()).unwrap();
         assert_eq!(usages[0].model, "");
-    }
-
-    // The rename guarantee: a row still tagged with the upstream `obol.usage`
-    // type prices identically to the canonical `moe.tab.usage` one. Without this
-    // the fork's own rename would make an un-migrated producer's file price to
-    // $0 silently, since `parse` skips rows of an unclaimed type.
-    #[test]
-    fn legacy_obol_usage_type_is_still_priced() {
-        let legacy = anthropic_line().replace("moe.tab.usage", "obol.usage");
-        assert!(
-            legacy.contains("obol.usage"),
-            "fixture must carry the old tag"
-        );
-        let old = parse(legacy.as_bytes()).unwrap();
-        let new = parse(anthropic_line().as_bytes()).unwrap();
-        assert_eq!(old.len(), 1);
-        assert_eq!(old, new);
     }
 
     // The integrity guarantee: the SAME Anthropic usage object, once embedded in

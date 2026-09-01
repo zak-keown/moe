@@ -3,11 +3,8 @@
 Skills speak in actions ("dispatch a subagent", "create a todo", "read a file").
 On OpenCode these resolve to the tools below.
 
-**Extracted from an adapter on import.** Upstream this mapping existed only as an
-inline template literal inside `.opencode/plugins/superpowers.js`, the
-hand-maintained OpenCode loader. `@bubstack/moe-mint` regenerates that loader, so
-a mapping living inside it would be lost on the next `generate`. It belongs here,
-where every harness reads it and nothing overwrites it.
+This mapping belongs in the skill rather than the generated OpenCode loader, so
+it survives every `moe-mint generate` run.
 
 | Action skills request | OpenCode equivalent |
 | --- | --- |

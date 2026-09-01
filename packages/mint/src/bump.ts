@@ -5,8 +5,7 @@ import { readField, writeField } from './field-edit.js'
 import { generate, type GenerateResult } from './generate.js'
 import { checkDrift, loadManifest, MANIFEST_PATH } from './manifest.js'
 
-// `moe-mint bump` is the replacement for hand-rolled per-repo version-bump
-// scripts (e.g. superpowers' scripts/bump-version.sh + .version-bump.json).
+// `moe-mint bump` replaces hand-rolled per-repository version-bump scripts.
 // moe-mint.yaml is the version source of truth; `release.files` names the
 // extra, non-generated files that also carry the version, and the audit sweeps
 // for occurrences nobody declared. (The CLI verb stays `moe-mint bump`; the

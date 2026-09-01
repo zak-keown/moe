@@ -5,8 +5,7 @@ import { json, parseRepo } from './shared.js'
 import { nodePackageManifest, piExtensionPath, bootstrapContentPath } from '../bootstrap/node-package.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
 
-// Pi's extension loader (`.pi/extensions/<name>.ts`), modeled directly on
-// superpowers' own `.pi/extensions/superpowers.ts`: `resources_discover`
+// Pi's extension loader (`.pi/extensions/<name>.ts`) uses `resources_discover`
 // registers the plugin's skills directory; a lifecycle flag is armed on
 // `session_start`/`session_compact` and disarmed on `agent_end`; a `context`
 // handler injects bootstrap content into the conversation once per armed
@@ -15,8 +14,8 @@ import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/gener
 // `compactionSummary` messages (`firstNonCompactionSummaryIndex`) rather
 // than always at index 0.
 //
-// Deliberately NOT emitted: a Pi tool-mapping section (superpowers' own
-// extension documents how its Claude Code-flavored instructions map onto
+// Deliberately NOT emitted: a Pi tool-mapping section. Plugin-specific docs can
+// explain how Claude Code-flavored instructions map onto
 // Pi's native tools -- `read`/`write`/`edit`/`bash`, no `Skill` tool, no
 // `Task` tool). That content is inherently plugin-specific (it describes
 // what the plugin's *skills* ask the agent to do), and overrides can't

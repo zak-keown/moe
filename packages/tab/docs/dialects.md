@@ -2,8 +2,7 @@
 
 Live reference, derived from the code in `crates/moe-tab-core/src/transcript/`. The dated design
 specs in [`history/specs/`](./history/specs/) explain *why* these shapes were chosen; this file
-says what the code accepts today. Where the two disagree, this one is right — upstream removed
-the per-agent raw-log parsers in its 0.6.0 and the specs predate that.
+says what the code accepts today. Where the two disagree, this one is right.
 
 `--dialect` takes `atif` or `tab`. Auto-detection (`transcript::detect`) is a CLI convenience
 only; every library and binding requires the dialect explicitly.
@@ -39,7 +38,7 @@ interpretation that naive summers get wrong (cache buckets, dedup, tiers) lives 
 
 | Field | Required | Notes |
 |---|---|---|
-| `type` | yes | `moe.tab.usage`. The upstream `obol.usage` is also accepted — see below. |
+| `type` | yes | `moe.tab.usage`. |
 | `v` | yes | Schema version, an ISO date matched as an opaque string. Only `2026-06-08` is understood; anything else is a loud error, never a silent mis-parse. |
 | `provider` | yes | `anthropic` or `openai`. Selects the usage normalizer. Any other value is an error. |
 | `model` | no | Verbatim model id. Absent or empty means "unknown model", which surfaces as an unpriced model rather than a $0. |
@@ -49,22 +48,6 @@ interpretation that naive summers get wrong (cache buckets, dedup, tiers) lives 
 Blank lines and lines that are not valid JSON are skipped (a truncated trailing write is normal
 for an append-only sidecar). Lines whose `type` is something else are skipped too, so a sidecar
 may be interleaved with other event types.
-
-### The `obol.usage` type is still read
-
-`crates/moe-tab-core/src/transcript/tab.rs` accepts **both** `moe.tab.usage` and the upstream
-`obol.usage` in a row's `type`. `moe.tab.usage` is canonical and is what the fixtures and this
-document specify; `obol.usage` is read-only compatibility.
-
-The reason is the failure mode, not sentiment. `parse` *skips* rows whose `type` it does not
-claim, so a file written entirely by an un-migrated producer would price to exactly $0 with no
-error — the one outcome this crate refuses everywhere else ("surfaced, never a silent $0").
-An un-migrated producer is not hypothetical: upstream `gauntlet` and `superpowers-evals`, which
-land as `@bubstack/moe-flight`, both write `obol.usage` rows.
-
-Emitters should be migrated to `moe.tab.usage`; the alias can be dropped once every producer in
-the workspace has been, and `legacy_obol_usage_type_is_still_priced` is the test to delete with
-it.
 
 ## Pricing
 
