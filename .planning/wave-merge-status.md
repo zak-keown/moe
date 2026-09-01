@@ -1,40 +1,40 @@
 ## Base
-- Base: main@2eddf40e — 5 attempted, 2 landed, 1 rolled back, 2 skipped.
-- Preflight: working tree clean, baseline core tests 58/58 green, baseline `pnpm mint:check` regenerated 6 plugins across 11 harnesses with no diff.
-- Final HEAD: 1d38d974. Test green. mint:check green.
+- Base: main@137e7da0 — 3 attempted, 2 landed, 1 rolled back, 0 skipped.
+- Preflight: working tree clean; baseline test green (58/58 @bubstack/moe-core in ~1.4s); baseline mint:check green.
+- Final HEAD: b02c469b. Test green. mint:check green.
 
 ## Landed
 
-### 2/moe-bare-binary-dispatcher
-Merge SHA: a1c5f21e
+### 2/deterministic-task-dag
+Merge SHA: f2bdc60c
 Conflicts: none
 Tests: green
 Merge command that ran:
 ```bash
-git merge --no-ff wave2/moe-bare-binary-dispatcher -m "wave2: merge moe-bare-binary-dispatcher"
+git merge --no-ff wave2/deterministic-task-dag
 ```
 
-### 4/contributing-flow-docs
-Merge SHA: 1d38d974
+### 2/parallel-execution-option
+Merge SHA: b02c469b
 Conflicts: none
 Tests: green
 Merge command that ran:
 ```bash
-git merge --no-ff wave4/contributing-flow-docs -m "wave4: merge contributing-flow-docs"
+git merge --no-ff wave2/parallel-execution-option
 ```
 
 ## Rolled back
 
-### 2/deterministic-task-dag
-Reason: Merge itself was clean (ort auto-merge, no conflicts) and `pnpm mint` produced no plugin diff, but `pnpm --filter @bubstack/moe-core test` failed on `test/metadata.test.ts > workflow depth vocabulary > does not name the workflow depth 'tier' in any SKILL.md that lacks a legitimate tier meaning`. The new `packages/core/skills/sequencing-plans/SKILL.md` uses "tier" three times (lines 86, 174, 175) in contexts the metadata guard rejects — the workflow-depth axis is patch/change/feature, not "tier". 1 failed | 70 passed of 71. Branch author needs to reword those three occurrences (or extend the guard's tolerated contexts) so plugin-tier meaning is unambiguous; "lean-tier" and "everything tier" are legitimate plugin-tier terms in this repo. Rollback confirmed HEAD returned to pre-merge SHA with clean working tree; no regen commit needed undoing.
-Pre-merge SHA: 1d38d974
+### 2/mattpocock-skills-import
+Reason: test/metadata.test.ts failed — "workflow depth vocabulary > does not name the workflow depth 'tier' in any SKILL.md that lacks a legitimate tier meaning". Two imported files use "tier" in a workflow-depth sense: `skills/codebase-design/SKILL.md:14` ("**Module**: anything with an interface and an implementation. Deliberately scale-agnostic…") and `skills/writing-skills/references/skill-typography.md:30` ("**In-file step** is the primary tier: what the agent does, in order."). Merge itself was clean (no conflicts) and mint produced no plugins/ diff. To land, either reword those two occurrences or extend the metadata guard's allowlist. Pre-rollback merge SHA was 5522f5d6.
+Pre-merge SHA: b02c469b
 
 ## Skipped
-- 2/parallel-execution-option — Aborted after a prior failure (stop_on_fail=true) or preflight blocked.
-- 2/mattpocock-skills-import — Aborted after a prior failure (stop_on_fail=true) or preflight blocked.
+
+_(none)_
 
 ## Preflight
-Working tree clean on main @ 2eddf40. All five requested branches (four wave2, one wave4) resolved to local tip SHAs. Baseline `pnpm --filter @bubstack/moe-core test` passed 58/58 tests in 1.71s; baseline `pnpm mint:check` regenerated 6 plugins across 11 harnesses with no plugins/ diff. Node engine warnings (want >=24, have 22.23.2) appear throughout but do not fail either check. Nothing blocks a merge run.
+Working tree is clean on main at 137e7da. All three wave-2 branches exist locally with tip SHAs recorded. Baseline `pnpm --filter @bubstack/moe-core test` is green (58/58 tests across 3 files in ~1.4s), and baseline `pnpm mint:check` is green (turbo mint:generate ran, git diff --exit-code on plugins/ passed, confirmed via explicit exit code check). Node engine warnings appear (repo wants Node >=24, host is v22.23.2) but do not fail either baseline. No hard blockers — the merge run can proceed.
 (baseline test/mint:check were green)
 
 ## Integration reminders (verbatim from WAVES.md)
