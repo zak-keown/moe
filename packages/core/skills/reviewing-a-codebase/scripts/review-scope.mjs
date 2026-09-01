@@ -55,6 +55,10 @@ if (!Object.hasOwn(DEPTH_EXTS, depth)) {
 }
 const outDir = arg("out", ".review-shards");
 const shardSize = Number(arg("shard-size", "30"));
+if (!Number.isSafeInteger(shardSize) || shardSize <= 0) {
+  process.stderr.write("review-scope: --shard-size must be a positive integer\n");
+  process.exit(2);
+}
 const repo = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
 const sha = execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8" }).trim();
 
@@ -90,7 +94,9 @@ if (depth === "shallow") {
   for (const f of log) heat.set(f, (heat.get(f) ?? 0) + 1);
   const entry = /(^|\/)(index|main|cli|app|server|bin)\.[^/]+$/;
   selected = files
-    .filter((f) => entry.test(f) || (heat.get(f) ?? 0) > 1)
+    // Credential-bearing paths are the one part of the denominator depth may
+    // never narrow away. They are commonly neither entrypoints nor git-hot.
+    .filter((f) => ALWAYS.some((x) => x.test(f)) || entry.test(f) || (heat.get(f) ?? 0) > 1)
     .sort((a, b) => (heat.get(b) ?? 0) - (heat.get(a) ?? 0) || a.localeCompare(b));
   if (selected.length === 0) selected = files.slice(0, shardSize);
 }
