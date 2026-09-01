@@ -18,7 +18,7 @@ This is an alternative to the `writing-plans` → `subagent-driven-development` 
 - You want an autonomous audited loop rather than a single upfront plan
 - The writing-plans flow has lost the plot on this project before
 
-Do NOT use for small, bounded projects — the `writing-plans` → `subagent-driven-development` flow is simpler and more appropriate.
+Do NOT use for a `patch` or a `change` (see `brainstorming`) — the `writing-plans` → `subagent-driven-development` flow is simpler and more appropriate for those depths.
 
 ## The Autonomous Loop
 

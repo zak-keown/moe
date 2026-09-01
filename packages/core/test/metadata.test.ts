@@ -932,6 +932,120 @@ describe("the platform reference list", () => {
   });
 });
 
+describe("workflow depth vocabulary", () => {
+  // brainstorming names the workflow depth axis patch/change/feature and NOT
+  // "tier" — three unrelated meanings of "tier" already ship (skill-tiers, the
+  // auditing-progress three-tier audit, and the model tier under
+  // subagent-driven-development's Model Selection). Adding a fourth would
+  // silently overload a word carrying real load elsewhere. These assertions
+  // fence the vocabulary in.
+
+  const DEPTH_GUARDED_SKILLS = [
+    "skills/brainstorming/SKILL.md",
+    "skills/writing-plans/SKILL.md",
+    "skills/executing-plans/SKILL.md",
+    "skills/subagent-driven-development/SKILL.md",
+  ];
+
+  it("names all three depths in every depth-guarded skill", () => {
+    // brainstorming defines the vocabulary; the other three each carry an "At
+    // this depth" note saying they fire only at `feature`. A silent skill on
+    // the vocabulary is a half-rename waiting to become a stale reference.
+    for (const rel of DEPTH_GUARDED_SKILLS) {
+      const text = readFileSync(join(PKG, rel), "utf8");
+      for (const name of ["patch", "change", "feature"]) {
+        expect(new RegExp(`\\b${name}\\b`).test(text), `${rel}: missing depth name "${name}"`).toBe(
+          true,
+        );
+      }
+    }
+  });
+
+  it("does not name the workflow depth 'tier' in any SKILL.md that lacks a legitimate tier meaning", () => {
+    // Three legitimate meanings of tier already ship, each confined to its own
+    // area: the auditing-progress cluster (three-tier audit), iterative-development
+    // (references the same audit), subagent-driven-development (model tier under
+    // Model Selection), and one platform reference that names its model tier.
+    // Anywhere else, \btier\b would be the FOURTH meaning — the one this rename
+    // existed to avoid — and a half-rename takes exactly that shape on the way in.
+    const allowedPrefixes = [
+      "skills/auditing-progress/", // every prompt in the cluster names Tier 1/2/3 audits
+      "skills/iterative-development/SKILL.md",
+      "skills/subagent-driven-development/SKILL.md",
+      "skills/subagent-driven-development/re-review-prompt.md",
+      "skills/using-moe/references/codex-tools.md",
+    ];
+    const offenders: string[] = [];
+    for (const p of ownedMarkdown) {
+      const rel = p.slice(PKG.length + 1);
+      if (allowedPrefixes.some((pfx) => rel === pfx || rel.startsWith(pfx))) continue;
+      const text = readFileSync(p, "utf8");
+      text.split(/\r?\n/).forEach((line, i) => {
+        if (/\btiers?\b/i.test(line)) {
+          offenders.push(`${rel}:${i + 1}  ${line.trim().slice(0, 100)}`);
+        }
+      });
+    }
+    expect(
+      offenders,
+      'the workflow depth axis is patch/change/feature — never a fourth "tier".\n  ' +
+        offenders.join("\n  "),
+    ).toEqual([]);
+  });
+
+  it("carries no retired depth-classifier vocabulary in shipped skill prose", () => {
+    // The retired vocabulary was spike/bounded/architectural. Half-renaming — the
+    // trigraph in one place, a per-depth compound ("spike-path", "bounded task")
+    // in another — is worse than either whole version, because a reader sees
+    // both rules and cannot tell which is authoritative. These patterns match
+    // ONLY the classifier senses. The generic adjective uses of "bounded"
+    // (well-bounded units, bounded stretches) and "architectural" (architectural
+    // context / decisions / soundness) survive: those refer to well-defined
+    // boundaries and to software architecture as a discipline, and neither was
+    // ever part of the depth axis.
+    const patterns: Array<{ label: string; re: RegExp }> = [
+      // The canonical trigraph in any separator: spike / bounded / architectural
+      { label: "trigraph", re: /spike\s*[/,-]\s*bounded\s*[/,-]\s*architectural/i },
+      // Compound per-depth phrases only the classifier used
+      { label: "X-path", re: /\b(spike|bounded|architectural)[- ]path\b/i },
+      { label: "X-task", re: /\b(spike|bounded|architectural)[- ]task\b/i },
+      // The section heading the classifier lived under
+      { label: "Three Paths heading", re: /^#+\s*Three Paths\s*$/im },
+    ];
+    const offenders: string[] = [];
+    for (const p of ownedMarkdown) {
+      const text = readFileSync(p, "utf8");
+      for (const { label, re } of patterns) {
+        const m = re.exec(text);
+        if (m) offenders.push(`${p.slice(PKG.length + 1)}: ${label} → "${m[0]}"`);
+      }
+    }
+    expect(
+      offenders,
+      "retired depth-classifier vocabulary detected — the axis is patch/change/feature now.\n  " +
+        offenders.join("\n  "),
+    ).toEqual([]);
+  });
+
+  it("keeps the REQUIRED SUB-SKILL count across the depth-guarded pair at four", () => {
+    // Distribution: writing-plans (3), executing-plans (1),
+    // subagent-driven-development (0). The tiered-workflow-naming wave3 gate
+    // asserts the same sum with `grep -c` in CI; asserting it in vitest too
+    // means a drop is caught by `pnpm test` before CI ever runs.
+    let count = 0;
+    for (const rel of [
+      "skills/writing-plans/SKILL.md",
+      "skills/executing-plans/SKILL.md",
+      "skills/subagent-driven-development/SKILL.md",
+    ]) {
+      const text = readFileSync(join(PKG, rel), "utf8");
+      const matches = text.match(/REQUIRED SUB-SKILL/g);
+      if (matches) count += matches.length;
+    }
+    expect(count, "REQUIRED SUB-SKILL total across depth-guarded skills").toBe(4);
+  });
+});
+
 describe("licensing", () => {
   it("retains one LICENSE per inbound license, as NOTICE promises", () => {
     // Four of the six sources ship a LICENSE, with three distinct notices, so
