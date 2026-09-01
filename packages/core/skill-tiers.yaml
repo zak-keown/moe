@@ -365,6 +365,27 @@ imported:
 # guarantee neither provided.
 # ---------------------------------------------------------------------------
 authored:
+  retrieving-context:
+    tier: everything
+    from: moe
+    why: >-
+      Everything-tier under D2 (2026-08-31), which makes fork-authored skills
+      everything-only. The backlog item argued for core and the argument is on
+      the record: a retrieval-discipline skill's value is firing unprompted, so
+      "search before you answer" that waits to be invoked has already failed —
+      which is exactly ARCHITECTURE.md §2's criterion for core, and it is a
+      methodology skill like `verification-before-completion` rather than a
+      memory feature. D2 is the standing policy and the assertion that guards it
+      says so in as many words: reversible by deliberate decision, not by
+      editing this manifest. So it ships everything-tier, and flipping it is one
+      word here plus LEAN_TIER_COUNT 13 to 14 in metadata.test.ts.
+      Carries no **REQUIRED SUB-SKILL:** marker naming `remembering-conversations`
+      — that skill lives in packages/memory and metadata.test.ts's strict marker
+      rule resolves every backticked token against packages/core/skills/ only, so
+      the marker would fail outright. It costs nothing: the routing rule reaches
+      memory through its MCP *tools*, and tools are not skills. See the
+      codegraph-context-layer item in .planning/backlog/ (cited by slug — the
+      W##P## prefix drifts).
   sequencing-plans:
     tier: everything
     from: moe

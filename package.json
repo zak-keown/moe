@@ -12,7 +12,7 @@
     "moe": "./bin/moe.js"
   },
   "scripts": {
-    "bin:test": "vitest run bin/test",
+    "bin:test": "vitest run --dir bin/test",
     "build": "turbo run build",
     "check": "pnpm lint && turbo run typecheck test",
     "lint": "biome check .",

@@ -46,8 +46,10 @@ keywords:
 bootstrap:
   skill: using-moe
 
-# components: all defaults. No commands/, no agents/, no .mcp.json in this
-# package; hooks/hooks.json carries the Stop hook and mint merges its own
+# components: all defaults. No commands/ and no .mcp.json in this package.
+# agents/ is present — retrieving-context's two haiku search agents, staged from
+# packages/core/agents/ like every other component here. hooks/hooks.json
+# carries a Stop hook and a SessionStart hook, and mint merges its own
 # SessionStart entry into hooks/moe-mint/hooks.json.
 
 # harnesses: no exclusions. All 10 adapters emit.

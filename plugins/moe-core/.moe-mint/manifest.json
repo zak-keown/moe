@@ -29,6 +29,12 @@
     ".kimi-plugin/plugin.json": {
       "sha256": "d45c719a882be3d081205343d260c706c73879749ea64f9b9d9712d650139dde"
     },
+    ".opencode/agent/search-codegraph.md": {
+      "sha256": "95151b68711767f323f8ebc56c65f060c89aa250fd533de962334bb2724edfae"
+    },
+    ".opencode/agent/search-moedex.md": {
+      "sha256": "24c325bc55a04c39b746bcec67ae35fda2ff082f71a79277cc1fe2355be1a714"
+    },
     ".opencode/plugins/moe-core.js": {
       "sha256": "96d1c0da952c9ea8fe2cd7888d5caeab50a9a3e28a40d3c616e044e5c361974f"
     },
@@ -60,7 +66,7 @@
       "sha256": "74c3b37ea516a84cc939bc3dc5f38f3bbcc69f7776fd2c48a8d115da45bce9a6"
     },
     "docs/install/opencode.md": {
-      "sha256": "ad0f50a1833554b24f13c55e9906d8f55b8d212a2728cd831103c96fdeb55f92"
+      "sha256": "7f0f4130bd4400d2b7168ab5b55c5d18e15ccb7a32f1716e4fce9711bddaeb62"
     },
     "docs/install/pi.md": {
       "sha256": "a0d784c49db657271456734d1d1408d4caa51f8dd604d020612d7ed88676640f"

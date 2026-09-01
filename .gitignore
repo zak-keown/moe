@@ -51,3 +51,7 @@ py/proof/examples/*/runs/
 # MOE_EVIDENCE_HERE=1 opts a developer into a repo-local `.audit/`, this line
 # stops a stray commit from making that hook's session logs part of the tree.
 .audit/
+
+# pnpm content-addressable store — created locally when the store path is
+# resolved inside the repo (a pnpm 11 default on some setups). Never source.
+.pnpm-store/

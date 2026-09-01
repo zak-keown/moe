@@ -396,7 +396,14 @@ built dist bundles for the five Node bins). Grammar copied from
 every branch — including the platform ones — without a Windows runner.
 
 `bin/test/` is one runner, vitest, reached by `pnpm bin:test` (CI's `bin:` job)
-and chained into root `pnpm test`. `doctor.test.mjs` arrived written against
+and chained into root `pnpm test`. The script is `vitest run --dir bin/test`,
+and the `--dir` is load-bearing: a bare `vitest run bin/test` is a *filter
+pattern*, not a path, so it also matches `.claude/worktrees/<id>/bin/test/` and
+runs every live worktree's copy of the suite. Observed 2026-09-01 with two
+worktrees open — 8 files and 132 tests instead of 2 and 33, and a failure in
+someone's in-flight branch would have reddened main. Same shape as the two
+worktree defects in `.planning/backlog/WAVES.md`: a test reaching outside the
+tree it is scoped to. `doctor.test.mjs` arrived written against
 `node:test`, on the reasonable argument that the doctor must work before
 `pnpm install` does — but `bin:test` globs the whole directory, so vitest
 collected the node:test file and `node --test` collected the vitest one, each
