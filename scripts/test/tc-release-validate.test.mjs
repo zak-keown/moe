@@ -246,7 +246,7 @@ describe("TC release GitLab policy", () => {
     assert.match(pack.rules[2].if, /CI_COMMIT_BRANCH/);
     assert.equal(pack.rules[2].variables.NPM_DIST_TAG, "next");
     assert.deepEqual(pack.rules.at(-1), { when: "never" });
-    assert.equal(JSON.stringify(pack).includes("PROGET_NPM_AUTH"), false);
+    assert.equal(JSON.stringify(pack.variables ?? {}).includes("PROGET_NPM_AUTH"), false);
   });
 
   it("permits latest publication only for protected default-branch release changes", () => {

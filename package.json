@@ -45,7 +45,7 @@
     "tab:build": "cargo build --release --manifest-path packages/tab/Cargo.toml",
     "tab:test": "cargo test --manifest-path packages/tab/Cargo.toml",
     "tab:test:bindings": "pnpm tab:build && uv run --project packages/tab/bindings/python pytest packages/tab/bindings/python",
-    "tc-release:test": "node --test scripts/test/check-downstream-scope.test.mjs scripts/test/tc-release-validate.test.mjs scripts/test/tc-release-compose.test.mjs scripts/test/tc-release-pack-publish.test.mjs",
+    "tc-release:test": "node --test scripts/test/check-downstream-scope.test.mjs scripts/test/tc-release-validate.test.mjs scripts/test/tc-release-compose.test.mjs scripts/test/tc-release-pack-integrity.test.mjs scripts/test/tc-release-pack-publish.test.mjs",
     "test": "turbo run test && pnpm bin:test && pnpm tc-release:test",
     "typecheck": "turbo run typecheck"
   },

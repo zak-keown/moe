@@ -11,7 +11,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, dirname, isAbsolute, join, resolve } from "node:path";
+import { basename, dirname, isAbsolute, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { checkDownstreamScope } from "./check-downstream-scope.mjs";
 import {
@@ -99,7 +99,18 @@ function commandRunner(command, args, options) {
 }
 
 function secretFreeEnvironment(env) {
-  const { PROGET_NPM_AUTH: _credential, ...safe } = env;
+  const safe = {};
+  for (const [name, value] of Object.entries(env)) {
+    const normalized = name.toLowerCase();
+    if (["proget_npm_auth", "npm_token", "node_auth_token"].includes(normalized)) continue;
+    if (
+      normalized.startsWith("npm_config_") &&
+      ["auth", "token", "userconfig"].some((fragment) => normalized.includes(fragment))
+    ) {
+      continue;
+    }
+    safe[name] = value;
+  }
   return safe;
 }
 
@@ -182,6 +193,148 @@ export function readPackedManifest(tarball, runCommand = commandRunner, env = pr
   }
 }
 
+function invalidPackagePath(value, label, reason) {
+  throw new TcReleaseError(
+    `${label} is not a valid relative package file (${reason}): ${JSON.stringify(value)}`,
+  );
+}
+
+function packageFile(value, label, { requireDotSlash = false } = {}) {
+  if (typeof value !== "string" || value.length === 0) {
+    invalidPackagePath(value, label, "expected a non-empty string");
+  }
+  if (value.includes("\\") || value.includes("\0")) {
+    invalidPackagePath(value, label, "expected a POSIX path");
+  }
+  if (requireDotSlash && !value.startsWith("./")) {
+    invalidPackagePath(value, label, "exports targets must start with ./");
+  }
+  if (posix.isAbsolute(value) || /^[A-Za-z][A-Za-z\d+.-]*:/u.test(value)) {
+    invalidPackagePath(value, label, "absolute paths and URLs are forbidden");
+  }
+  const withoutPrefix = value.startsWith("./") ? value.slice(2) : value;
+  const segments = withoutPrefix.split("/");
+  if (
+    withoutPrefix.length === 0 ||
+    value.endsWith("/") ||
+    segments.some((segment) => segment === "" || segment === "." || segment === "..")
+  ) {
+    invalidPackagePath(value, label, "path traversal and empty segments are forbidden");
+  }
+  if (withoutPrefix.includes("*")) {
+    invalidPackagePath(value, label, "wildcard targets cannot be verified as files");
+  }
+  return withoutPrefix;
+}
+
+function collectExportTargets(value, label, found, seen) {
+  if (typeof value === "string") {
+    found.push([label, value, { requireDotSlash: true }]);
+    return;
+  }
+  if (value === null) return;
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index++) {
+      collectExportTargets(value[index], `${label}[${index}]`, found, seen);
+    }
+    return;
+  }
+  if (typeof value !== "object") {
+    throw new TcReleaseError(
+      `${label} must contain only relative file targets, objects, arrays, or null`,
+    );
+  }
+  if (seen.has(value)) throw new TcReleaseError(`${label} contains a cycle`);
+  seen.add(value);
+  for (const [key, child] of Object.entries(value)) {
+    collectExportTargets(child, `${label}.${key}`, found, seen);
+  }
+  seen.delete(value);
+}
+
+function manifestEntrypoints(manifest) {
+  const found = [];
+  for (const field of ["main", "types"]) {
+    if (manifest[field] !== undefined) found.push([`package.json.${field}`, manifest[field], {}]);
+  }
+  if (manifest.bin !== undefined) {
+    if (typeof manifest.bin === "string") {
+      found.push(["package.json.bin", manifest.bin, {}]);
+    } else if (
+      manifest.bin !== null &&
+      typeof manifest.bin === "object" &&
+      !Array.isArray(manifest.bin)
+    ) {
+      for (const [name, target] of Object.entries(manifest.bin)) {
+        found.push([`package.json.bin.${name}`, target, {}]);
+      }
+    } else {
+      throw new TcReleaseError(
+        "package.json.bin must be a relative file or an object of relative files",
+      );
+    }
+  }
+  if (manifest.exports !== undefined) {
+    collectExportTargets(manifest.exports, "package.json.exports", found, new Set());
+  }
+  return found;
+}
+
+export function assertPackedEntrypoints(manifest, files, label = "packed package.json") {
+  if (!manifest || typeof manifest !== "object" || Array.isArray(manifest)) {
+    throw new TcReleaseError(`${label} must contain a JSON object`);
+  }
+  const fileSet = new Set(files);
+  for (const [entryLabel, value, options] of manifestEntrypoints(manifest)) {
+    const path = packageFile(value, `${label} ${entryLabel}`, options);
+    if (!fileSet.has(path)) {
+      throw new TcReleaseError(
+        `${label} ${entryLabel} points to missing package file ${JSON.stringify(value)}`,
+      );
+    }
+  }
+  return manifest;
+}
+
+export function listPackedFiles(tarball, runCommand = commandRunner, env = process.env) {
+  const result = runChecked(
+    runCommand,
+    "tar",
+    ["-tzf", tarball],
+    { env: secretFreeEnvironment(env) },
+    `list ${basename(tarball)}`,
+  );
+  const files = new Set();
+  for (const entry of result.stdout.split(/\r?\n/u).filter(Boolean)) {
+    const directory = entry.endsWith("/");
+    const withoutSlash = directory ? entry.slice(0, -1) : entry;
+    if (withoutSlash === "package") continue;
+    if (!withoutSlash.startsWith("package/")) {
+      throw new TcReleaseError(
+        `${basename(tarball)} contains an entry outside the package root: ${JSON.stringify(entry)}`,
+      );
+    }
+    const relative = withoutSlash.slice("package/".length);
+    if (relative.startsWith("./")) {
+      invalidPackagePath(
+        relative,
+        `${basename(tarball)} archive entry`,
+        "dot segments are forbidden",
+      );
+    }
+    const path = packageFile(relative, `${basename(tarball)} archive entry`);
+    if (!directory) {
+      if (files.has(path)) {
+        throw new TcReleaseError(
+          `${basename(tarball)} contains duplicate package file ${JSON.stringify(path)}`,
+        );
+      }
+      files.add(path);
+    }
+  }
+  return [...files].sort();
+}
+
 function assertExactReleaseTrain(validation) {
   const actual = new Map(validation.packages.map((pkg) => [pkg.path, pkg.name]));
   const expectedPaths = new Set(EXPECTED_RELEASE_PACKAGES.map((pkg) => pkg.path));
@@ -224,6 +377,7 @@ export function inspectReleaseTarballs({
   const expectedByName = new Map(EXPECTED_RELEASE_PACKAGES.map((pkg) => [pkg.name, pkg]));
   const inspected = new Map();
   for (const tarball of tarballs) {
+    const files = listPackedFiles(tarball, runCommand, env);
     const initialManifest = readPackedManifest(tarball, runCommand, env);
     const initialExpected = expectedByName.get(initialManifest?.name);
     let pluginPayload;
@@ -242,7 +396,8 @@ export function inspectReleaseTarballs({
       throw new TcReleaseError(`duplicate packed artifact for ${expected.name}`);
     }
     assertPackedManifest(manifest, expected, validation.release.version, validation.release);
-    inspected.set(expected.name, { tarball, manifest, pluginPayload });
+    assertPackedEntrypoints(manifest, files, `${expected.name} packed package.json`);
+    inspected.set(expected.name, { tarball, manifest, files, pluginPayload });
   }
   for (const expected of EXPECTED_RELEASE_PACKAGES) {
     if (!inspected.has(expected.name)) {
