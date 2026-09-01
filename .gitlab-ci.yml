@@ -56,8 +56,15 @@ typecheck:
 
 test:
   stage: check
-  <<: *pnpm
   extends: .not-scheduled
+  # moe-mint's shipped offline verifier uses jq to validate and rewrite
+  # generated harness manifests. The stock node:24 image does not include it.
+  before_script:
+    - sh scripts/ci-safe-env safe apt-get update
+    - sh scripts/ci-safe-env safe apt-get install --yes --no-install-recommends jq
+    - sh scripts/ci-safe-env safe corepack enable
+    - sh scripts/ci-safe-env safe pnpm config set store-dir .pnpm-store
+    - sh scripts/ci-safe-env safe pnpm install --frozen-lockfile
   script: [sh scripts/ci-safe-env safe pnpm test]
 
 build:
