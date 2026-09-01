@@ -22,6 +22,9 @@ classifiers = [
 Homepage = "https://gitlab.tcdevops.com/Zak/moe"
 Repository = "https://gitlab.tcdevops.com/Zak/moe"
 
+[dependency-groups]
+dev = ["pytest>=8"]
+
 [tool.setuptools]
 packages = ["moe_tab"]
 

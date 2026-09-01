@@ -282,6 +282,14 @@ producer and now writes `moe.tab.usage`; tab therefore accepts only that canonic
 row type. The temporary compatibility branch and its test were removed rather than
 kept as a permanent tombstone for an artifact Moe never shipped.
 
+**Dead `obol` import artifacts were pruned on 2026-09-01.** Thirteen transcript
+fixtures for the seven dialects upstream had already deleted, plus the inert Go
+module and manylinux-wheel publication scripts, had no live consumer. Their source
+and intent remain recoverable from the pinned snapshot and `packages/tab/docs/history/`;
+the live tree now carries only fixtures and scripts exercised by Moe. The same pass
+declared pytest as the Python binding's development dependency; without it the
+documented `pnpm tab:test:bindings` gate could not run in a fresh checkout.
+
 **`vet` was not a brand token and was renamed anyway.** It is a *pre-`gauntlet`*
 name for the project — upstream's `bun.lock` still recorded the workspace as
 `"vet"` — so it is brand residue that the token list simply never caught, and

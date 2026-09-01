@@ -12,8 +12,7 @@ test("TabError carries the FFI envelope's code and kind", () => {
   expect(e).toBeInstanceOf(Error);
 });
 
-test("TabError's message names the fork, not the upstream project", () => {
+test("TabError formats the FFI envelope", () => {
   const e = new TabError(7, "InvalidArgument", "as_of is not a date");
   expect(e.message).toBe("moe-tab: InvalidArgument (code 7): as_of is not a date");
-  expect(e.message).not.toContain("obol");
 });
