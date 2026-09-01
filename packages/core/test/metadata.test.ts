@@ -841,12 +841,6 @@ describe("hooks", () => {
 // does not resolve. The agent then runs with fewer tools than its author
 // intended — or none — and no error is raised anywhere. A `grep -q '^tools:'`
 // gate proves the key exists, which is not the thing that breaks.
-// The governance mapping table in README.md is the artifact that says which Moe
-// surface answers each section of TC's AI Governance policy. Its failure mode is
-// a section quietly going unmapped — the policy has eleven and a reader cannot
-// tell a missing row from a section that needs no Moe surface. Asserting a row
-// COUNT would pass on eleven rows for the wrong eleven sections, so each § is
-// checked by name.
 describe("agents", () => {
   const AGENTS = join(PKG, "agents");
   const agentFiles = existsSync(AGENTS)
