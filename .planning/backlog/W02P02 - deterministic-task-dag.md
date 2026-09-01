@@ -5,7 +5,7 @@ idea: |
   Explore a deterministic task DAG for larger projects (anything more than 1
   phase?) -- some sort of lightweight state machine? Project mgmt for
   larger/greenfield initiatives.
-status: backlog
+status: done
 size: M
 estimate: 7-9 h
 depends_on: [DO-NOW-1, skill-set-fidelity-refactor]

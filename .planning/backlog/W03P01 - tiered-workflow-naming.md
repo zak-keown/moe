@@ -4,7 +4,7 @@ title: Workflow Depth Levels And Their Names
 idea: |
   - Examine GSD-core for skills to import
       - Explore tiered workflows with better naming, GSD uses fast, quick, and default. The idea is tier 1 is a fix that needs no more tracking or planning than the git commit. Tier 2 adds planning but does not verify/review. Tier 3 is the full monte.
-status: backlog
+status: done
 size: M
 estimate: 4-6 h
 depends_on: [DO-NOW-1, DO-NOW-2, DO-NOW-3, skill-set-fidelity-refactor, verification-split-and-firing-rate]

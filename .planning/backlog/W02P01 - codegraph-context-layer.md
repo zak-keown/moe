@@ -3,7 +3,7 @@ slug: codegraph-context-layer
 title: Context Routing For CodeGraph, Moedex And Memory
 idea: |
   - Context engineering layer between CodeGraph+Moedex and the LLM using Moe
-status: backlog
+status: done
 size: M
 estimate: 7-9 h
 depends_on: [DO-NOW-1, DO-NOW-2, DO-NOW-3, skill-set-fidelity-refactor]

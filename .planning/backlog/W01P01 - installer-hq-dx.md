@@ -3,7 +3,7 @@ slug: installer-hq-dx
 title: Cross-Platform Installer With HQ DX
 idea: |
   - Installer with HQ DX
-status: backlog
+status: done
 size: L
 estimate: "1.5-2 days (12-15 h)"
 depends_on: [DO-NOW-1, DO-NOW-3, DO-NOW-5]

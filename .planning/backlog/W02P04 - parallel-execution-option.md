@@ -3,7 +3,7 @@ slug: parallel-execution-option
 title: Parallelism As A First-Class Execution Option
 idea: |
   - Explore parallelization as an execution option
-status: backlog
+status: done
 size: S
 estimate: 2-3 h
 depends_on: [DO-NOW-1, DO-NOW-2, skill-set-fidelity-refactor]

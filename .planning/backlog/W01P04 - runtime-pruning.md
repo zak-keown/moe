@@ -3,7 +3,7 @@ slug: runtime-pruning
 title: Prune Dead Runtime Targets
 idea: |
   - Runtime pruning: Gemini is discontinued in favor of Antigravity, and Grok must be removed.
-status: backlog
+status: done
 size: M
 estimate: 4-6 h
 depends_on: [DO-NOW-1, DO-NOW-3]
