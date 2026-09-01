@@ -1,6 +1,6 @@
 {
   "name": "@bubstack/moe-memory",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "description": "Semantic recall over past sessions and journal entries. One MCP server.",
   "license": "MIT",
@@ -29,6 +29,10 @@
   "types": "dist/index.d.ts",
   "bin": {
     "moe-memory": "./dist/cli.js"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "files": [
     "dist",
