@@ -194,19 +194,41 @@ moe-crew grant-consent
 
 ### Fan-Out: Multiple Workers in Parallel
 
+Each worker gets its OWN linked git worktree — never a shared checkout. Two
+workers writing into the same tree collide on the axis the parallel-
+implementation worktree gate is built to prevent (see moe-core's
+`dispatching-parallel-agents`, "Safe Parallel Implementation: The Worktree
+Gate", and its degradation ladder). Create the worktrees first, branched from
+one recorded base SHA, then point each worker's `cwd` at its own:
+
 ```bash
-$SKILL/moe-crew launch worker-api ~/proj
-$SKILL/moe-crew launch worker-ui ~/proj
+# One recorded base for the whole wave — every worker branches from it.
+BASE=$(git -C ~/proj rev-parse HEAD)
+
+git -C ~/proj worktree add ~/proj-worktrees/worker-api -b feat/api "$BASE"
+git -C ~/proj worktree add ~/proj-worktrees/worker-ui  -b feat/ui  "$BASE"
+
+$SKILL/moe-crew launch worker-api ~/proj-worktrees/worker-api
+$SKILL/moe-crew launch worker-ui  ~/proj-worktrees/worker-ui
 
 /tmp/moe-crew-workers/bin/worker-api send "Add pagination to /users"
-/tmp/moe-crew-workers/bin/worker-ui send "Add a loading spinner to the user list"
+/tmp/moe-crew-workers/bin/worker-ui  send "Add a loading spinner to the user list"
 
 /tmp/moe-crew-workers/bin/worker-api wait-for-turn 600
-/tmp/moe-crew-workers/bin/worker-ui wait-for-turn 600
+/tmp/moe-crew-workers/bin/worker-ui  wait-for-turn 600
 
 /tmp/moe-crew-workers/bin/worker-api stop
-/tmp/moe-crew-workers/bin/worker-ui stop
+/tmp/moe-crew-workers/bin/worker-ui  stop
+
+# Integrate the wave: merge each branch into BASE, run the suite, THEN start
+# the next wave from the merged head.
 ```
+
+`moe-crew launch` accepts an arbitrary per-worker `cwd`; it does not create
+the worktree for you and does not know about worktrees at all. That step is
+git, done before dispatch. If two workers' declared work touches the same
+file — the wave gate's disjointness rule — do not fan them out; run them
+sequentially instead.
 
 ### Pipeline: Worker A produces, Worker B consumes
 

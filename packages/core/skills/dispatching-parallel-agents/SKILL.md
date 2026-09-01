@@ -165,3 +165,75 @@ After agents return:
 2. **Check for conflicts** - Did agents edit same code?
 3. **Run full suite** - Verify all fixes work together
 4. **Spot check** - Agents can make systematic errors
+
+## Safe Parallel Implementation: The Worktree Gate
+
+The pattern above is for read-only investigation. Parallel *implementation* — two
+or more workers writing code concurrently — was banned outright in the execution
+skills for years, on one word: `(conflicts)`. That reason has expired. `git worktree`
+gives each worker its own checkout of the repo, so two implementers editing disjoint
+files in separate worktrees cannot conflict. This section defines when concurrent
+implementers are safe, and how to fall back when they are not.
+
+### The gate — three conditions, all required
+
+A wave of tasks may run its implementers concurrently only when ALL THREE hold:
+
+1. **Files disjoint.** No two tasks in the wave list the same path in their `Files:`
+   block (either `Create:` or `Modify:`). A file appearing in two tasks is a merge
+   conflict waiting to happen, and the plan is what shows you before you dispatch.
+2. **No `Consumes` / `Produces` edge inside the wave.** If Task B's `Consumes:`
+   names an interface Task A's `Produces:` supplies, A must land before B; they
+   cannot be in the same wave. `writing-plans` already requires those blocks
+   (`writing-plans/SKILL.md`, "Interfaces:") — this is what reads them.
+3. **One worktree per worker.** Each concurrent implementer gets its own linked
+   worktree, created before dispatch (`using-git-worktrees` Step 1c). Two workers
+   sharing one checkout defeats the isolation and reintroduces the ban's original
+   hazard.
+
+Fail any condition and the wave is serial. The gate is a git question, not a
+harness question — `git rev-parse --git-common-dir` differs from
+`git rev-parse --git-dir` inside a linked worktree, so any harness that shells
+out to git can check its own isolation with one command.
+
+### Degradation ladder
+
+State the ladder wherever a skill hands the reader a parallel-dispatch
+instruction — the same shape PAR uses in `_shared/parallel-adversarial-review.md`:
+
+1. **Worktree-isolated parallel dispatch** — the gate holds and each worker
+   has its own linked worktree. Preferred.
+2. **Parallel dispatch on disjoint files with no isolation** — the harness
+   cannot create worktrees but the wave's Files blocks are disjoint. Weaker,
+   because a bug in the disjointness check is a silent write collision; use
+   only when isolation is genuinely unavailable.
+3. **Sequential** — run the wave one task at a time. Correct in every harness,
+   merely slower. Always a valid fallback and never a defect.
+
+A missed parallel dispatch produces serial execution, which is correct. A missed
+isolation check produces a silent write collision, which is not. That asymmetry
+is why the ladder degrades toward serial rather than toward "parallel without
+isolation".
+
+### The divergent-tree rule
+
+Concurrent workers read and edit different trees. Their reports refer to files
+by path and line, and the same path at the same line number can hold different
+content in two worktrees whose branch points differ. On 2026-08-31, three
+agents disputed one citation — the same `PARITY.md:90` — and reached three
+answers because the row had landed in a commit one worktree's base predated.
+Nobody ran a bad command. That is the standing failure mode of fan-out
+execution, and it is what these rules exist to prevent:
+
+- **Every wave branches from one recorded base SHA.** Record it before dispatch
+  and hand it to every worker. A worker branched from an older base is not
+  merely behind; it will read and cite different content at the same coordinates.
+- **A worker's findings are scoped to the tree it read.** Its report names the
+  SHA it read at, and a reviewer comparing two workers' claims compares SHAs
+  first.
+- **Cross-boundary citations use a test name, symbol, or quoted sentence — never
+  a line number.** Line numbers are only valid within one tree at one commit,
+  which is precisely what a wave does not have.
+- **Read files from the tree they live in.** For anything outside the worker's
+  package, read from main (or the recorded base), not from a sibling worker's
+  branch, which may have diverged.

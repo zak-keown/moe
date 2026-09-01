@@ -368,6 +368,51 @@ describe("cross-references", () => {
     }
     expect(offenders).toEqual([]);
   });
+
+  it("every skill that instructs a parallel dispatch names a sequential fallback", () => {
+    // PAR set the precedent in _shared/parallel-adversarial-review.md's
+    // "Single-Agent Fallback" section: when a harness cannot dispatch in
+    // parallel — session policy, runtime limits, missing tool — the reader
+    // runs the passes serially. Every skill that hands its reader a parallel-
+    // dispatch instruction must carry the same escape hatch, either in its
+    // own body or by pointing at PAR's copy. A parallel-dispatch instruction
+    // has no correct interpretation in a harness that lacks the capability,
+    // and a missed parallel dispatch that degrades to serial is correct; a
+    // parallel-dispatch instruction with nothing to fall back to strands the
+    // reader.
+    //
+    // Enumerated rather than inferred by keyword: "parallel" appears in prose
+    // that is not a dispatch instruction (e.g. "in parallel with the design
+    // review"), and a keyword-driven filter would either miss real
+    // dispatchers or flag decorative uses. The listed skills are the ones
+    // that actually route the reader into a parallel dispatch.
+    const parallelDispatchers = [
+      "dispatching-parallel-agents",
+      "subagent-driven-development",
+      "implementing-tasks",
+      "extracting-requirements",
+      "running-an-iteration",
+      "auditing-progress",
+      "scoping-the-simplest-core",
+      "iterative-development",
+    ];
+    const parRef = "_shared/parallel-adversarial-review.md";
+    const offenders: string[] = [];
+    for (const name of parallelDispatchers) {
+      const p = join(SKILLS, name, "SKILL.md");
+      expect(existsSync(p), `${name}/SKILL.md must exist to be checked`).toBe(true);
+      const text = readFileSync(p, "utf8");
+      // Either the skill carries the fallback vocabulary itself, or it
+      // references the PAR document that carries the fallback for it.
+      const hasFallback =
+        /\b(sequential|serial|fallback)\b/i.test(text) || text.includes(parRef);
+      if (!hasFallback) offenders.push(name);
+    }
+    expect(
+      offenders,
+      "parallel-dispatch skills missing a sequential fallback (or a reference to PAR's)",
+    ).toEqual([]);
+  });
 });
 
 // Paths a skill legitimately names that are not in git. The Claude Code docs

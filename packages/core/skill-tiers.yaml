@@ -192,21 +192,23 @@ imported:
     from: superpowers
     why: >-
       "Use when facing 2+ independent tasks" is a recognition trigger and
-      nothing REQUIREs it, so closure does not force the answer. HELD at
-      everything for now, but on a corrected and much weaker basis: this was
-      the one skill demoted on ERR SMALL alone, and ERR SMALL is deleted. Its
-      other stated reason was false — subagent-driven-development does NOT
-      "cover the parallel case", it forbids it outright
-      (subagent-driven-development/SKILL.md:282, "Never dispatch multiple
-      implementation subagents in parallel"). Promotion to core is part of the
-      parallel-execution-option work, which reopens exactly that prohibition;
-      moving it now would change the tier twice. See the
-      parallel-execution-option item in .planning/backlog/ -- cited by slug, not
-      by its W##P## filename prefix, because that prefix IS the wave schedule
-      and moves whenever the backlog is re-waved. This citation already broke
-      once that way: it read W01P01 when written, which was true then, and the
-      re-wave in ab19751 made W01P01 skill-set-fidelity-refactor and moved this
-      item to W07P03. The slug is stable; the prefix is not.
+      nothing REQUIREs it, so closure does not force the answer. Held at
+      everything: parallel-execution-option landed and declined the promotion
+      (PARITY.md's `dispatching-parallel-agents` row; ARCHITECTURE.md §2). The silent-failure argument is what
+      settles it — a missed parallel dispatch yields serial execution, which is
+      correct, merely slower. The old ERR SMALL rationale was deleted and its
+      companion claim was false: subagent-driven-development used to forbid
+      parallel implementation outright ("Never dispatch multiple implementation
+      subagents in parallel"), and parallel-execution-option rewrote that ban
+      into a worktree-gated allow, restating enough of this skill's rule inline
+      in both SDD and implementing-tasks to keep the everyday execution paths
+      correct without dispatching-parallel-agents installed. This skill remains
+      the canonical source for the full gate, the degradation ladder, and the
+      divergent-tree rule. Cited by slug throughout, because the wave-prefix on
+      the backlog filename is a schedule and moves whenever the backlog is
+      re-waved — this rationale broke once that way, when the entry read W01P01
+      as its cross-reference and a re-wave later gave that number to a
+      different item.
 
   writing-skills:
     tier: everything

@@ -98,7 +98,14 @@ Use the least powerful model that can handle each role:
 
 - **Never** start code-quality review before spec compliance is ✅
 - **Never** skip the re-review after fixes (reviewer found issues = implementer fixes = review again)
-- **Never** dispatch multiple implementers in parallel (conflicts)
+- **Do not** dispatch multiple implementers concurrently unless the batch's
+  tasks pass the worktree gate: disjoint `Files:` blocks, no `Consumes:` →
+  `Produces:` edge inside the concurrent group, and one linked worktree per
+  worker (see `dispatching-parallel-agents` for the full gate, and
+  `using-git-worktrees` Step 1c for the per-worker worktree). Fail any
+  condition and the batch is sequential — correct in every harness, merely
+  slower. The old blanket "never in parallel" ban was rooted in
+  `(conflicts)`, which worktree isolation now removes.
 - **Never** accept "close enough" on spec compliance
 - **Never** let implementer self-review replace the two-stage review
 
