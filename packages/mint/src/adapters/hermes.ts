@@ -6,8 +6,7 @@ import { parseRepo } from './shared.js'
 import { bootstrapContentPath } from '../bootstrap/node-package.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
 
-// Hermes' Python plugin module (`.hermes-plugin/__init__.py`), modeled
-// directly on superpowers' own `.hermes-plugin/__init__.py`: a two-layout
+// Hermes' Python plugin module (`.hermes-plugin/__init__.py`) uses a two-layout
 // `_skills_dir()` probe (git-clone install: `.hermes-plugin/` and
 // `<skillsdir>/` are siblings under the plugin root, so this module resolves
 // `../<skillsdir>`; flattened install: `<skillsdir>/` sits next to this
@@ -21,8 +20,8 @@ import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/gener
 // ignored and ctx.inject_message refuses from that hook), gated on
 // `is_first_turn` and registered through `ctx.register_hook`.
 //
-// Deliberately NOT emitted: a Hermes tool-mapping section (superpowers' own
-// module documents how its Claude Code-flavored instructions map onto
+// Deliberately NOT emitted: a Hermes tool-mapping section. Plugin-specific
+// docs can explain how Claude Code-flavored instructions map onto
 // Hermes' native tools, e.g. `skill_view(...)`). That content is plugin-
 // specific; plugins that want one should put it in their bootstrap skill's
 // body instead.

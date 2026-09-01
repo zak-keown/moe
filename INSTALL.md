@@ -109,31 +109,6 @@ Under the hood: `claude plugin uninstall <name>@moe` for each plugin, then
 > only want to uninstall one plugin, run the `claude plugin uninstall`
 > command yourself.
 
-## Migrating from pre-fork upstream
-
-Moe renamed two MCP server keys as a breaking cut (ARCHITECTURE.md §7):
-
-- `episodic-memory` → `moe-memory`
-- `chrome` → `moe-glass`
-
-If you used the pre-fork upstream, your local config likely holds the old
-keys. Scan every scope with:
-
-```sh
-node bin/moe-install --migrate
-```
-
-That prints a report — one line per renamed key found, with the file it
-lives in and the `claude mcp remove` command to run. It changes nothing by
-default. Add `--apply` to execute the removals:
-
-```sh
-node bin/moe-install --migrate --apply
-```
-
-Paths resolve against `os.homedir()`, so this works the same on macOS,
-Linux, WSL 2, and native Windows.
-
 ## Scoping
 
 Every `bin/moe-install` action forwards `--scope user|project|local` to

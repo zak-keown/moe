@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "TypeScript binding for the moe-tab transcript pricer, over its C ABI (Bun + Node). Replaces @primeradianthq/obol.",
+  "description": "TypeScript binding for the moe-tab transcript pricer over its C ABI (Bun + Node).",
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

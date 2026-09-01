@@ -2,8 +2,7 @@
 
 Live reference, derived from the code in `crates/moe-tab-core/src/transcript/`. The dated design
 specs in [`history/specs/`](./history/specs/) explain *why* these shapes were chosen; this file
-says what the code accepts today. Where the two disagree, this one is right — upstream removed
-the per-agent raw-log parsers in its 0.6.0 and the specs predate that.
+says what the code accepts today. Where the two disagree, this one is right.
 
 `--dialect` takes `atif` or `tab`. Auto-detection (`transcript::detect`) is a CLI convenience
 only; every library and binding requires the dialect explicitly.

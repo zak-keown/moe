@@ -5,9 +5,8 @@ Node**: Bun uses the built-in `bun:ffi` (zero runtime deps), Node uses
 [`koffi`](https://koffi.dev). The Rust core does all the accounting; this binding only
 `dlopen`s the cdylib and re-types the JSON.
 
-Replaces the upstream `@primeradianthq/obol`. Inside this workspace it resolves as
-`workspace:*`, which is the point: changing a cost model no longer means publishing to a
-registry before you can test it.
+Inside this workspace it resolves as `workspace:*`, so changing a cost model does not require
+publishing to a registry before it can be tested.
 
 ## Building it
 
@@ -83,8 +82,7 @@ one implementation.
 
 ## Bun is supported but not verified here
 
-`src/ffi-bun.ts` and the Bun branch of `src/pricing-env.ts` are imported verbatim from upstream
-and are untested in this fork: the workspace runs vitest under Node, and `bun:ffi` is described
-to the compiler by a local ambient declaration (`src/bun-ffi.d.ts`) rather than by `bun-types`.
-Upstream's CI ran both runtimes and asserted byte-identical totals; `scripts/validate-bindings.sh`
-still contains that gate if Bun is ever added back to the toolchain.
+`src/ffi-bun.ts` and the Bun branch of `src/pricing-env.ts` are not exercised by the workspace's
+Node-based vitest run. `bun:ffi` is described to the compiler by a local ambient declaration
+(`src/bun-ffi.d.ts`) rather than by `bun-types`. `scripts/validate-bindings.sh` contains the
+cross-runtime equivalence gate to run when Bun is added to the toolchain.

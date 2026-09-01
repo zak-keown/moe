@@ -1,8 +1,7 @@
 /**
  * Chrome WebSocket Library — Core CDP automation functions
  *
- * Forked from https://github.com/obra/superpowers-chrome and adapted for
- * Flight (Bun runtime, multiple concurrent sessions, custom extensions).
+ * Adapted for Flight's runtime, concurrent sessions, and extensions.
  *
  * This is the orchestrator: a thin wiring layer over `lib/*.js` modules.
  * Per `docs/upstream-sync.md`, the structural layout mirrors upstream HEAD

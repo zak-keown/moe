@@ -1,4 +1,3 @@
-// Forked from https://github.com/obra/superpowers-chrome
 // Original author: Jesse Vincent
 //
 // Each Chrome session owns one override instance. Keeping endpoint state here,

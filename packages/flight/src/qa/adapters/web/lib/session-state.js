@@ -42,8 +42,7 @@ function createState({ host, port } = {}) {
     chromeProcess: null,
     chromeHeadless: true,
     chromeUserDataDir: null,
-    // Flight divergence: profile name default is 'moe-flight', not
-    // 'superpowers-chrome'. We must not share the profile dir with upstream.
+    // Keep Flight browser state isolated from other Chrome automation tools.
     chromeProfileName: 'moe-flight',
   };
 }

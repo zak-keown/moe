@@ -12,8 +12,8 @@ const SCHEMA_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'schemas'
 // under which JSON Schema dialect. .codex-plugin/plugin.json is deliberately
 // NOT schema-validated: SchemaStore's codex schema (checked 2026-08-11) is
 // closed, omits the load-bearing hooks:{} field, and requires portal
-// interface metadata — it rejects known-good manifests (including
-// superpowers' own). Emission correctness is pinned by exact-content tests
+// interface metadata — it rejects known-good manifests. Emission correctness
+// is pinned by exact-content tests
 // in test/adapters/codex.test.ts.
 const SCHEMA_TARGETS: Array<{ file: string; schema: string; dialect: 'draft7' | '2020' }> = [
   { file: '.claude-plugin/plugin.json', schema: 'claude-code-plugin-manifest.json', dialect: 'draft7' },

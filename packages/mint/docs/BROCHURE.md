@@ -20,9 +20,8 @@ coding agent. Claude Code reads `.claude-plugin/plugin.json`. Codex reads
 `.codex-plugin/plugin.json`. OpenCode wants a JavaScript plugin file, Pi wants
 a TypeScript extension, and Hermes wants YAML plus a Python init file (real
 generated tree, "Using it" below). Each format drifts on its own schedule, and
-every release means editing all of them by hand. Superpowers, the plugin this
-tool was extracted from — and which lands in this fork as
-`@bubstack/moe-core` — carried nine hand-maintained manifest files and four
+every release means editing all of them by hand. A large plugin can carry many
+hand-maintained manifest files and several
 distinct bootstrap mechanisms
 (`docs/history/2026-08-10-everyharness-design.md`). A missed edit ships as a
 user's broken install.
@@ -57,13 +56,10 @@ and generates the rest:
   codes for config errors, schema violations, and drift (`src/validate.ts`,
   `validate`; `src/manifest.ts`, `checkDrift`; exit codes assigned in
   `src/cli.ts`, `validate` action).
-- **Proof it round-trips a real plugin.** The dogfood test regenerates the
-  remaining seven of superpowers' hand-maintained manifests from one config
-  and compares them semantically (the eighth, `gemini-extension.json`, was
-  dropped alongside the gemini adapter). On import it was re-pointed from a
-  live upstream checkout at the author's own path to the pinned `superpowers`
-  @ `b36e082` reference snapshot, and it passes there. It skips when the
-  snapshot is absent, which is the case in CI (`test/dogfood.test.ts`,
+- **Proof it round-trips a representative plugin.** The dogfood test regenerates
+  seven hand-maintained manifests from one config and compares them
+  semantically. It skips when its local reference fixture is absent
+  (`test/dogfood.test.ts`,
   `COMPARED_FILES`, `dogfood` describe block).
 
 ## Using it

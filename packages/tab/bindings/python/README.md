@@ -5,10 +5,8 @@ prebuilt shared library with `ctypes` and re-types the JSON the Rust core return
 stays the single source of truth for all accounting; this package only marshals C strings and
 parses JSON into dataclasses.
 
-Distribution name `moe-tab`, import name `moe_tab`. **Nothing is published yet** — upstream's
-`pypi-release.yml` is not ported and the publish-or-not decision is open (see
-[PARITY.md](../../../../PARITY.md)), so today this is an in-repo package used from a source
-checkout.
+Distribution name `moe-tab`, import name `moe_tab`. **Nothing is published yet**; today this is
+an in-repo package used from a source checkout.
 
 ## Point it at the library
 

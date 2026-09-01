@@ -385,6 +385,10 @@ describe("cross-references", () => {
       "auditing-progress",
       "scoping-the-simplest-core",
       "iterative-development",
+      // Dispatches one review-shard agent per shard, in bounded waves.
+      // `fixing-a-code-review` is deliberately absent: its fixes commit to a
+      // single tree in sequence, so it dispatches nothing in parallel.
+      "reviewing-a-codebase",
     ];
     const parRef = "_shared/parallel-adversarial-review.md";
     const offenders: string[] = [];
@@ -932,34 +936,12 @@ describe("the lean/full curation", () => {
     }
   });
 
-  it("records a known provenance for every skill, per map", () => {
-    // The six upstream sources, distributed 14/6/4/4/2/1 = 31. A seventh value
-    // appearing under `imported:` means a skill arrived from somewhere nobody
-    // recorded, which is the thing PARITY.md exists to prevent; a value here
-    // that is not in that ledger is drift between the two.
-    const UPSTREAM = [
-      "superpowers",
-      "superpowers-lab",
-      "superpowers-developing-for-claude-code",
-      "iterative-development",
-      "the-elements-of-style",
-      "mattpocock-skills",
-    ];
+  it("keeps legal provenance centralized instead of repeating it per skill", () => {
     for (const [name, entry] of Object.entries(imported)) {
-      expect(UPSTREAM, `imported.${name}.from is not a known upstream source`).toContain(
-        entry.from,
-      );
+      expect(entry.from, `imported.${name}.from`).toBe("imported");
     }
-    // An authored skill has no upstream to name. Asserted in both directions so
-    // neither map can borrow the other's vocabulary: an authored entry claiming
-    // `from: superpowers` would launder a fork-original as inherited, and an
-    // imported entry claiming the authored value would erase a real provenance.
     for (const [name, entry] of Object.entries(authored)) {
-      expect(entry.from, `authored.${name}.from must be the fork's own value`).toBe("moe");
-      expect(UPSTREAM, `authored.${name}.from names an upstream source`).not.toContain(entry.from);
-    }
-    for (const [name, entry] of Object.entries(imported)) {
-      expect(entry.from, `imported.${name}.from is the fork's own value`).not.toBe("moe");
+      expect(entry.from, `authored.${name}.from`).toBe("moe");
     }
   });
 
@@ -1291,37 +1273,17 @@ describe("workflow depth vocabulary", () => {
 });
 
 describe("licensing", () => {
-  it("retains one LICENSE per inbound license, as NOTICE promises", () => {
-    // Six of the eight sources ship a LICENSE, with four distinct notices, so
-    // the glass precedent (one upstream, one LICENSE at the package root) does
-    // not generalise. Root NOTICE says copies "are retained alongside the code
-    // derived from them, under each package".
-    //
-    // gsd-core is here for ten reference documents and no skills. The obligation
-    // does not scale with the size of the import — MIT requires the notice for
-    // any derived material at all.
-    const dir = join(PKG, "licenses");
-    expect(readdirSync(dir).sort()).toEqual([
-      "double-shot-latte.MIT.LICENSE",
-      "gsd-core.MIT.LICENSE",
-      "iterative-development.Apache-2.0.LICENSE",
-      "mattpocock-skills.MIT.LICENSE",
-      "superpowers-lab.MIT.LICENSE",
-      "superpowers.MIT.LICENSE",
-    ]);
-    // Verbatim: the copyright lines are what the notices require.
-    expect(readFileSync(join(dir, "superpowers.MIT.LICENSE"), "utf8")).toContain(
-      "Copyright (c) 2025 Jesse Vincent",
-    );
-    expect(readFileSync(join(dir, "double-shot-latte.MIT.LICENSE"), "utf8")).toContain(
-      "Copyright (c) 2024 Anthropic",
-    );
-    expect(readFileSync(join(dir, "iterative-development.Apache-2.0.LICENSE"), "utf8")).toContain(
-      "Copyright 2026 Prime Radiant, Inc.",
-    );
-    expect(readFileSync(join(dir, "mattpocock-skills.MIT.LICENSE"), "utf8")).toContain(
-      "Copyright (c) 2026 Matt Pocock",
-    );
+  it("uses the canonical root legal files instead of package copies", () => {
+    const packageLicenses = join(PKG, "licenses");
+    expect(existsSync(packageLicenses) ? readdirSync(packageLicenses) : []).toEqual([]);
+    const root = resolve(PKG, "../..");
+    expect(readFileSync(join(root, "LICENSE"), "utf8")).toContain("Apache License");
+    const mit = readFileSync(join(root, "LICENSE-MIT"), "utf8");
+    expect(mit).toContain("Permission is hereby granted");
+    expect(mit).toContain("Copyright (c) 2025 Jesse Vincent");
+    expect(mit).toContain("Copyright (c) 2024 Anthropic");
+    expect(mit).toContain("Copyright (c) 2026 Matt Pocock");
+    expect(mit).toContain("Copyright (c) 2026 Open GSD");
   });
 
   it("declares the mixed inbound license, not the scaffold's guess", () => {

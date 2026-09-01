@@ -34,7 +34,7 @@ moe-mint bump 1.2.3 # set the version everywhere + regenerate (also --check / --
 
 `moe-mint test` runs two offline tiers inside the container: first it parses every generated harness manifest and confirms referenced paths exist, then it performs a **real install** of the plugin into each harness CLI (claude, codex, opencode, droid, hermes, copilot, pi) and asserts the CLI actually enumerates the plugin's skills — the check that catches a manifest that parses but is wired to the wrong place. Harnesses with no offline enumeration path (kimi, cursor, devin) are reported as `skip`. It pulls registry.gitlab.tcdevops.com/Zak/moe/moe-container on first use (large image, ~15GB, linux/amd64) — prefetch with `docker pull` if you want progress control. **That image has not been built or pushed yet** — the Dockerfile is in `infra/container/`, its CI rule is a follow-up, and while the project path `Zak/moe` is confirmed as of 2026-08-31, the registry hostname for a self-hosted GitLab is a per-instance setting, so the ref as a whole is still a default to correct. Pass `--image <ref>` until it exists.
 
-**Current status: generation works via 10 adapters covering 10 harnesses (Antigravity, on the goal list, is still roadmap); `init` scaffolds, `import` converts Claude-format plugins, every generation emits install docs + a support matrix, and `moe-mint test` runs offline manifest checks plus real per-harness install + skill-enumeration checks for all harnesses inside the shared container image (registry.gitlab.tcdevops.com/Zak/moe/moe-container). The superpowers dogfood test regenerates the remaining seven of superpowers' hand-maintained manifests, semantically identical (JSON key order and formatting are explicitly not compared).**
+**Current status: generation works via 10 adapters covering 10 harnesses (Antigravity, on the goal list, is still roadmap); `init` scaffolds, `import` converts Claude-format plugins, every generation emits install docs + a support matrix, and `moe-mint test` runs offline manifest checks plus real per-harness install + skill-enumeration checks for all harnesses inside the shared container image (registry.gitlab.tcdevops.com/Zak/moe/moe-container). The dogfood test regenerates seven representative manifests and compares them semantically (JSON key order and formatting are explicitly not compared).**
 
 ## Configuration
 
@@ -145,8 +145,7 @@ Design: `docs/history/2026-08-10-everyharness-design.md`.
 
 The CLI command is still `moe-mint bump`; it reads the `release:` block.
 `bump` sets the plugin version in one place and propagates it — the
-replacement for per-repo bump scripts like superpowers'
-`scripts/bump-version.sh`. Because `moe-mint.yaml` is the version source of
+replacement for per-repository bump scripts. Because `moe-mint.yaml` is the version source of
 truth and `generate` rebuilds every harness manifest from it, you never list
 those generated files here: bump rewrites `moe-mint.yaml`, then regenerates.
 The `release` block only names the extra, *non-generated* files that also carry

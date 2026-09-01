@@ -1,90 +1,64 @@
 # Moe
 
-<img src="./assets/moe.png" alt="Moe: a green, many-armed alien in a headset, working eight control surfaces at once, thoroughly unimpressed" width="220" align="right">
+<img src="./assets/moe.png" alt="Moe: a green, many-armed alien in a headset, working eight control surfaces at once" width="220" align="right">
 
 > Just ask Moe.
 
-A hard fork of the Superpowers ecosystem — 19 repositories, one workspace,
-9 packages, rebranded stem to stern.
-
-Eight arms, eight control surfaces, one bored expression. That is the whole
-premise: one operator driving every harness at once, from one place.
+Moe puts coding-agent skills, memory, browser control, worker orchestration,
+software QA, transcript pricing, and model evals in one workspace.
 
 | | |
 |---|---|
-| **How to install Moe** | [INSTALL.md](./INSTALL.md) |
-| **What the shape is and why** | [ARCHITECTURE.md](./ARCHITECTURE.md) |
-| **What was forked, from where, under what license** | [PARITY.md](./PARITY.md) |
-| **How to contribute, and the rules agents run under** | [CONTRIBUTING.md](./CONTRIBUTING.md) · [AGENTS.md](./AGENTS.md) |
-| **Who to credit** | [NOTICE](./NOTICE) |
+| **Install** | [INSTALL.md](./INSTALL.md) |
+| **Architecture** | [ARCHITECTURE.md](./ARCHITECTURE.md) |
+| **Contribute** | [CONTRIBUTING.md](./CONTRIBUTING.md) · [AGENTS.md](./AGENTS.md) |
+| **Attribution** | [NOTICE](./NOTICE) |
 
-## Status
-
-**All 19 upstream repositories are imported and integrated** into nine packages,
-each censused, each carrying its own counted status in its own README. ~3,400
-tests pass, and `pnpm mint` generates six plugins for all eleven harnesses into
-`/plugins/`, with CI asserting they regenerate byte-identically.
-`ARCHITECTURE.md` is the spec and now also the record — read it before writing
-anything, because it holds *why* the shape is what it is, which the tree cannot
-tell you.
-
-What is not done: nothing is published to any registry, the eval container image
-has not been built, and 15 items sit in `.planning/backlog/` on a seven-wave
-schedule (`.planning/backlog/WAVES.md`).
-
-Origin is GitLab, self-hosted at `gitlab.tcdevops.com/Zak/moe`. A private mirror
-exists at `gitlab.com/moe-ai/moe`; the self-hosted one is canonical, and every
-self-referential URL in the tree points there. Upstream stays on GitHub — those
-URLs are provenance, not links to us.
-
-> **Note on the `@bubstack` scope.** It no longer matches the project's
-> top-level group, which is `Zak`. GitLab's *instance-level* npm registry
-> requires scope to equal group, so publishing would need the *project-level*
-> endpoint instead. This blocks nothing today because nothing publishes; see
-> ARCHITECTURE §8.
-
-## The 9 packages
+## Packages
 
 | Package | Job |
 |---|---|
-| `@bubstack/moe-core` | The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring |
-| `@bubstack/moe-backstory` | Recover a behavioral spec from a codebase that never had one |
-| `@bubstack/moe-memory` | Semantic recall over past sessions and journal entries |
-| `@bubstack/moe-flight` | Drive web, CLI or TUI targets through acceptance criteria and grade them |
-| `@bubstack/moe-mint` | Generate native plugin manifests for every harness from one config |
-| `@bubstack/moe-crew` | Launch, control and monitor worker sessions over tmux |
-| `@bubstack/moe-glass` | Zero-dependency Chrome DevTools Protocol client |
-| `@bubstack/moe-tab` | Price an agent transcript — what the run cost you |
-| `moe-proof` | Evals against small models (Python) |
+| `@bubstack/moe-core` | Everyday and full coding-workflow skill libraries |
+| `@bubstack/moe-backstory` | Recover a behavioral specification from an existing system |
+| `@bubstack/moe-memory` | Semantic recall over sessions and journals |
+| `@bubstack/moe-flight` | Drive and grade web, CLI, or TUI acceptance criteria |
+| `@bubstack/moe-mint` | Generate native plugin manifests for supported harnesses |
+| `@bubstack/moe-crew` | Launch and supervise coding-agent workers through tmux |
+| `@bubstack/moe-glass` | Direct Chrome DevTools Protocol access |
+| `@bubstack/moe-tab` | Parse usage records and estimate transcript cost |
+| `moe-proof` | Run and grade model evals |
 
-## On the command line
+## Command line
 
-One dispatcher, `moe`, in front of seven namespace bins:
+One dispatcher fronts the tool namespaces:
 
 ```sh
-moe                                 # print the namespace inventory
-moe flight qa run story.md          # same as: moe-flight qa run story.md
-moe tab price session.jsonl         # same as: moe-tab price session.jsonl
-moe crew list                       # same as: moe-crew list
+moe
+moe flight qa run story.md
+moe tab price session.jsonl
+moe crew list
 ```
 
-Namespaces: `crew`, `flight`, `glass`, `memory`, `mint`, `proof`, `tab`. The
-`moe-<ns>` names are permanent — MCP hosts, generated plugin manifests and
-scripts reference them directly. `moe <ns>` is a human convenience; either
-form works. `bin/moe.js` is the resolver (Node stdlib only, no dependencies);
-`bin/moe-install` puts things on PATH. See ARCHITECTURE.md §7 and §7.1.
+Namespaces are `crew`, `flight`, `glass`, `memory`, `mint`, `proof`, and `tab`.
+The direct `moe-<namespace>` binaries remain valid.
 
-## Two rules
+## Development
 
-1. **A repository is not an installable plugin.** Source lives in `packages/`;
-   plugin manifests are generated into `/plugins/` by `@bubstack/moe-mint`. Never
-   hand-edit a generated manifest.
-2. **The snapshots in `../.moe-references/` are the spec, not upstream HEAD.** Pinned
-   revisions are in [PARITY.md](./PARITY.md). Parity against a moving target is
-   unfalsifiable.
+Requirements: Node 24+, pnpm 11.23.0, and the package-specific runtimes for
+Rust or Python work.
+
+```sh
+pnpm install --frozen-lockfile
+pnpm check
+pnpm mint:check
+pnpm provenance
+```
+
+Source lives in `packages/`; installable plugins are generated into `plugins/`.
+Never hand-edit generated plugin output.
 
 ## License
 
-Apache-2.0 — the umbrella the inbound licenses permit. Upstream MIT, Apache-2.0
-and public-domain notices travel with the code they cover. One unresolved
-exposure is documented in [PARITY.md](./PARITY.md#license-exposure).
+Moe's umbrella license is Apache-2.0. Imported MIT, Apache-2.0, and
+public-domain material is identified in [NOTICE](./NOTICE); complete legal texts
+are in [LICENSE](./LICENSE) and [LICENSE-MIT](./LICENSE-MIT).

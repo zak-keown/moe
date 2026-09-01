@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   JOURNAL_DIR_NAME,
   journalRoots,
-  resetJournalEnvWarning,
   resolveJournalPath,
   resolveProjectJournalPath,
   resolveUserJournalPath,
@@ -33,7 +32,6 @@ import {
 describe("journal path resolution", () => {
   const SAVED = [
     "MOE_MEMORY_JOURNAL_PATH",
-    "PRIVATE_JOURNAL_PATH",
     "MOE_MEMORY_CONFIG_DIR",
     "MOE_DATA_DIR",
     "XDG_CONFIG_HOME",
@@ -52,7 +50,6 @@ describe("journal path resolution", () => {
       saved.set(key, process.env[key]);
       delete process.env[key];
     }
-    resetJournalEnvWarning();
     dataDir = mkdtempSync(path.join(tmpdir(), "moe-memory-paths-"));
   });
 
@@ -145,10 +142,6 @@ describe("journal path resolution", () => {
     });
 
     it("de-duplicates the roots when it collapses them", () => {
-      // Upstream asserted only that the two paths were identical. It then loaded
-      // that one directory TWICE — once labelled project, once user — so every
-      // entry appeared twice with contradictory labels and `limit: 10` yielded 5
-      // unique entries. This is the documented containerised configuration.
       process.env.MOE_MEMORY_JOURNAL_PATH = "/container/journal-data";
       vi.spyOn(process, "cwd").mockReturnValue("/Users/test/projects/my-app");
 
@@ -159,34 +152,6 @@ describe("journal path resolution", () => {
       process.env.MOE_MEMORY_JOURNAL_PATH = "/data/journals";
 
       expect(resolveJournalPath(".some-other-name", true)).toBe("/data/journals");
-    });
-  });
-
-  describe("PRIVATE_JOURNAL_PATH, the upstream name", () => {
-    it("is still honoured, because an unset override degrades silently rather than erroring", () => {
-      process.env.PRIVATE_JOURNAL_PATH = "/legacy/journals";
-      const warn = vi.spyOn(console, "error").mockImplementation(() => {});
-
-      expect(resolveJournalPath(JOURNAL_DIR_NAME, true)).toBe("/legacy/journals");
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("PRIVATE_JOURNAL_PATH"));
-    });
-
-    it("loses to MOE_MEMORY_JOURNAL_PATH when both are set", () => {
-      process.env.PRIVATE_JOURNAL_PATH = "/legacy/journals";
-      process.env.MOE_MEMORY_JOURNAL_PATH = "/new/journals";
-
-      expect(resolveJournalPath(JOURNAL_DIR_NAME, true)).toBe("/new/journals");
-    });
-
-    it("warns once, not on every resolution", () => {
-      process.env.PRIVATE_JOURNAL_PATH = "/legacy/journals";
-      const warn = vi.spyOn(console, "error").mockImplementation(() => {});
-
-      resolveJournalPath();
-      resolveJournalPath();
-      resolveJournalPath();
-
-      expect(warn).toHaveBeenCalledTimes(1);
     });
   });
 

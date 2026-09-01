@@ -12,10 +12,6 @@
  * of what they share. Both vector tables are `FLOAT[384]` and both carry an
  * `embedding_version`, so the migration in embedding-migration.ts covers either.
  *
- * private-journal-mcp's storage — one `.embedding` JSON sidecar per entry, read
- * in full on every query and cosine-scored in JS — is gone. See
- * `importLegacyJournalSidecars` in journal/legacy-sidecars.ts for the one-way
- * importer that reads what it left on disk.
  */
 
 import fs from "node:fs";

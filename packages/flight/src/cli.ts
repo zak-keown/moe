@@ -2,28 +2,10 @@
 /**
  * `moe-flight` — the single bin.
  *
- * Three upstream binaries collapse into subcommand namespaces here
- * (PARITY.md, "Identifiers that change"):
+ * Namespaces keep commands with overlapping names unambiguous and leave room
+ * for the lab and appliance surfaces without colliding with QA commands.
  *
- * | upstream bin       | here                       |
- * |--------------------|----------------------------|
- * | `gauntlet`         | `moe-flight qa <command>`   |
- * | `quorum`           | `moe-flight lab <command>`  |
- * | `evals-appliance`  | `moe-flight appliance <…>`  |
- *
- * They are namespaced rather than flattened because `gauntlet run` and
- * `quorum run` are different commands with the same name — as are `show`,
- * `config` and `render`. Flattening would have made the collision silent.
- *
- * It also matters for a live contract: quorum spawns the gauntlet bin as a
- * real subprocess (`gauntlet run <story> --adapter tui …`) and probes it for
- * a version. Once both halves are one package that becomes
- * `moe-flight qa run …`, which is unambiguous — a flattened `moe-flight run`
- * would have had `moe-flight` shelling out to itself with no way to say which
- * half it meant.
- *
- * `lab` and `appliance` are declared and refused, not silently absent: see
- * README.md, "What is not imported yet".
+ * `lab` and `appliance` are declared and refused, not silently absent.
  */
 import { formatCliError, isVerboseRequest } from "./qa/cli/error-output.js";
 
@@ -32,23 +14,16 @@ const USAGE = `moe-flight — drive web, CLI or TUI targets through acceptance c
 usage: moe-flight <namespace> [command] [options]
 
 namespaces:
-  qa         Run a story card against a target and grade it (upstream: gauntlet).
+  qa         Run a story card against a target and grade it.
              Commands: run, batch, validate, fanout, serve, config, ask, render
   dashboard  Serve the scenario x agent x credential x OS results grid.
-  lab        NOT IMPORTED YET (upstream: quorum). See README.md.
-  appliance  NOT IMPORTED YET (upstream: evals-appliance). See README.md.
+  lab        Reserved; not available in this build.
+  appliance  Reserved; not available in this build.
 
 Run \`moe-flight qa\` for the QA command list.
 `;
 
-const NOT_IMPORTED = (ns: string, upstream: string) =>
-  new Error(
-    `moe-flight ${ns} is not imported yet.\n` +
-      `\n` +
-      `It is upstream \`${upstream}\` from superpowers-evals, which is deferred —\n` +
-      `see packages/flight/README.md, "What is not imported yet", for what is\n` +
-      `blocking it and what already works.`,
-  );
+const NOT_AVAILABLE = (ns: string) => new Error(`moe-flight ${ns} is not available.`);
 
 async function main(): Promise<void> {
   const [, , namespace, ...rest] = process.argv;
@@ -84,10 +59,10 @@ async function main(): Promise<void> {
     }
 
     case "lab":
-      throw NOT_IMPORTED("lab", "quorum");
+      throw NOT_AVAILABLE("lab");
 
     case "appliance":
-      throw NOT_IMPORTED("appliance", "evals-appliance");
+      throw NOT_AVAILABLE("appliance");
 
     default:
       throw new Error(`Unknown namespace "${namespace}".\n\n${USAGE}`);

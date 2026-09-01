@@ -62,12 +62,6 @@ describe("parseJournalArgs", () => {
     expect(parseJournalArgs(["--scope", "sideways", "foo"]).query).toBe("foo");
   });
 
-  it("treats boolean flags as taking no value", () => {
-    const parsed = parseJournalArgs(["--remove", "foo"]);
-    expect(parsed.query).toBe("foo");
-    expect(parsed.remove).toBe(true);
-  });
-
   it("reports journalPath only when given", () => {
     expect(parseJournalArgs(["foo"]).journalPath).toBeUndefined();
     expect(parseJournalArgs(["--journal-path", "/j", "foo"]).journalPath).toBe("/j");

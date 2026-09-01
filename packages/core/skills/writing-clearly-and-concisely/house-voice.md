@@ -32,7 +32,7 @@ not guessed: `packages/core/test/house-voice/README.md`.
 5. **Attribution reconciled out loud**, not resolved silently — see
    `py/proof/README.md:24`: two true attribution facts, stated as two facts.
 
-`## Forked from` and "Status: imported" are the FORK LEDGER's moves, aimed at one
+Lineage sections and "Status: imported" are import-ledger moves, aimed at one
 reader auditing one import, and they become historical furniture once it is done.
 Transcribe the register; do not mistake it for a persona.
 
@@ -54,20 +54,11 @@ and moedex's main bin returns to `moedex`. That is the policy and all of it —
 building the dispatcher and amending `ARCHITECTURE.md` §7's Binaries paragraph
 belong to `moe-bare-binary-dispatcher`.
 
-## Provenance survives a rebrand; self-reference does not
+## Keep legal provenance out of product voice
 
-`ARCHITECTURE.md` §8 states the rule. A `## Forked from` table, a `NOTICE` entry
-and a "derived from" URL name who wrote the code first, and rewriting them
-destroys the attribution the licences require. Homepages, clone instructions,
-issue links and badges are self-reference and get rewritten. Broken once already:
-`packages/flight/README.md:336-338` records a sweep rewriting `gauntlet` in prose
-that named the upstream repo, and the restoration. The token that lands as this
-package is `superpowers`, and it survives in `PARITY.md` for the same reason.
-
-**The trap:** `packages/flight/README.md:293-313` is a rebrand MAPPING table
-whose third column is a Moe token by design. A mapping row is not an attribution
-row; do not "fix" one. `scripts/check-provenance.mjs` now asserts this per README,
-so the rule no longer depends on someone watching the diff.
+`NOTICE` and `PARITY.md` are the repository's canonical attribution surfaces.
+Product documentation should describe Moe as it exists today; do not duplicate
+lineage tables or source-repository narratives in package prose.
 
 ## No 28th tone skill. A decision, not a constraint
 

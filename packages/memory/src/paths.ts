@@ -1,32 +1,10 @@
-/**
- * Path resolution for both record types.
- *
- * Reconciled from two upstream `paths.ts` files with zero name overlap:
- *
- *   episodic-memory  10 functions locating READ-ONLY transcript sources
- *                    (Claude Code / Codex) plus this package's own writable
- *                    archive, index and db locations.
- *   private-journal  3 functions resolving a WRITABLE journal directory from
- *                    a cwd → HOME → USERPROFILE → temp fallback chain.
- *
- * Both are kept. What changed is that the four upstream environment
- * namespaces (`EPISODIC_MEMORY_CONFIG_DIR`, `EPISODIC_MEMORY_DB_PATH`,
- * `PERSONAL_SUPERPOWERS_DIR`, `PRIVATE_JOURNAL_PATH`) collapse into one
- * `MOE_MEMORY_*` namespace plus the shared `MOE_DATA_DIR`, and the user-global
- * journal moves under the same data root as the conversation index — that is
- * what "one store" means here.
- *
- * `PRIVATE_JOURNAL_PATH` is still honoured, with a deprecation warning: an
- * unset override does not error, it silently changes where entries land, so
- * dropping the old name outright would move a containerised deployment's
- * journal without saying anything.
- */
+/** Path resolution for transcript archives, indexes, and journals. */
 
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-/** Project-local journal directory name. Was `.private-journal` upstream. */
+/** Project-local journal directory name. */
 export const JOURNAL_DIR_NAME = ".moe-journal";
 
 /**
@@ -115,10 +93,6 @@ export function findJsonlFiles(dir: string, excludedDirNames?: ReadonlySet<strin
  * 2. MOE_DATA_DIR/memory   — the shared cross-package Moe data root
  * 3. XDG_CONFIG_HOME/moe/memory
  * 4. ~/.config/moe/memory  (default)
- *
- * Upstream this was `~/.config/superpowers` (`getSuperpowersDir`). The rename
- * is a deliberate, announced reset: there is no migration, so an existing
- * upstream index is simply not found. See `findLegacyDataDir` and the README.
  */
 export function getMemoryDataDir(): string {
   let dir: string;
@@ -137,29 +111,6 @@ export function getMemoryDataDir(): string {
   }
 
   return ensureDir(dir);
-}
-
-/**
- * Return the upstream `~/.config/superpowers` data directory if it still exists
- * and this install has not been used yet, or null.
- *
- * The rename orphans an existing upstream index with no error message — the
- * tool would just report an empty index and re-sync from scratch, which means
- * re-downloading the model, re-embedding everything, and re-running paid
- * summarisation. Callers surface this so the reset is announced rather than
- * silent. Deliberately read-only: moving a multi-gigabyte archive behind the
- * user's back is worse than telling them where it is.
- */
-export function findLegacyDataDir(): string | null {
-  if (process.env.MOE_MEMORY_CONFIG_DIR || process.env.MOE_DATA_DIR) return null;
-  const base = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config");
-  const legacy = path.join(base, "superpowers");
-  try {
-    if (!fs.existsSync(path.join(legacy, "conversation-index"))) return null;
-  } catch {
-    return null;
-  }
-  return legacy;
 }
 
 /**
@@ -244,39 +195,16 @@ export function getExcludedProjects(): string[] {
 // Journal paths
 // ---------------------------------------------------------------------------
 
-let warnedAboutLegacyJournalEnv = false;
-
-/**
- * Read the journal-path override, honouring the upstream name with a warning.
- * `MOE_MEMORY_JOURNAL_PATH` wins if both are set.
- */
+/** Read the journal-path override. */
 function journalPathOverride(): string | undefined {
-  if (process.env.MOE_MEMORY_JOURNAL_PATH) return process.env.MOE_MEMORY_JOURNAL_PATH;
-  const legacy = process.env.PRIVATE_JOURNAL_PATH;
-  if (legacy) {
-    if (!warnedAboutLegacyJournalEnv) {
-      warnedAboutLegacyJournalEnv = true;
-      console.error(
-        "moe-memory: PRIVATE_JOURNAL_PATH is the upstream name and is deprecated; use MOE_MEMORY_JOURNAL_PATH.",
-      );
-    }
-    return legacy;
-  }
-  return undefined;
-}
-
-/** Test seam: forget that the deprecation warning was already printed. */
-export function resetJournalEnvWarning(): void {
-  warnedAboutLegacyJournalEnv = false;
+  return process.env.MOE_MEMORY_JOURNAL_PATH;
 }
 
 /**
  * Resolve a writable directory for journal storage.
  *
- * Carried over from private-journal-mcp unchanged in substance: the override
- * wins outright, then cwd (unless cwd is a system root), then HOME, then
- * USERPROFILE, then the temp directories. `/tmp` is hardcoded rather than
- * `os.tmpdir()` deliberately — see docs/history/private-journal-mcp/.
+ * The override wins outright, then cwd (unless cwd is a system root), then
+ * HOME, USERPROFILE, and the temp directories.
  *
  * @param subdirectory subdirectory name (e.g. `.moe-journal`)
  * @param includeCurrentDirectory whether to consider the current working directory
@@ -335,10 +263,8 @@ export function resolveProjectJournalPath(): string {
 /**
  * User-global journal directory.
  *
- * CHANGED FROM UPSTREAM: was `~/.private-journal`, resolved through the same
- * cwd/HOME/temp chain as the project journal. It is now `<data dir>/journal`,
- * alongside the conversation archive and index, so one data root holds both
- * record types. `MOE_MEMORY_JOURNAL_PATH` still overrides it.
+ * It lives at `<data dir>/journal`, alongside the conversation archive and
+ * index. `MOE_MEMORY_JOURNAL_PATH` overrides it.
  */
 export function resolveUserJournalPath(): string {
   const override = journalPathOverride();
@@ -347,68 +273,7 @@ export function resolveUserJournalPath(): string {
 }
 
 /**
- * Upstream's journal directory name, on both halves of the split.
- *
- * private-journal-mcp used `<project>/.private-journal` and
- * `~/.private-journal`. Here they are `<project>/.moe-journal` and
- * `<data dir>/journal`.
- */
-export const LEGACY_JOURNAL_DIR_NAME = ".private-journal";
-
-/**
- * Upstream journal directories that still exist and are NOT already being
- * walked, project first.
- *
- * This exists because `journal import-legacy` looked only at the current roots.
- * The command's entire purpose is to reconcile private-journal-mcp's
- * `.embedding` sidecars — and the paths moved, so on any install that had not
- * already hand-copied its journal across, the importer searched exactly the two
- * directories the sidecars provably are not in. It reported
- * "Legacy .embedding sidecars found: 0", which reads as "nothing to import"
- * rather than "I did not look where your data is".
- *
- * Deliberately read-only and deliberately not a migration, matching
- * `findLegacyDataDir`: the caller announces what it found and prints the copy
- * command. Moving someone's journal behind their back is worse than telling
- * them where it is — and unlike the conversation archive, journal entries carry
- * private reflections, so quietly relocating them is a worse trade again.
- *
- * A legacy path that is already a current root is omitted: that is the
- * `PRIVATE_JOURNAL_PATH` case, where the override points at the upstream
- * directory and the normal walk already covers it. Reporting it would tell the
- * user to copy a directory onto itself.
- */
-export function findLegacyJournalRoots(): string[] {
-  const current = new Set(journalRoots());
-  const home = process.env.HOME || process.env.USERPROFILE || os.homedir();
-
-  const candidates = [
-    path.join(process.cwd(), LEGACY_JOURNAL_DIR_NAME),
-    path.join(home, LEGACY_JOURNAL_DIR_NAME),
-  ];
-
-  const found: string[] = [];
-  for (const candidate of candidates) {
-    const resolved = path.resolve(candidate);
-    if (current.has(resolved) || found.includes(resolved)) continue;
-    try {
-      if (!fs.statSync(resolved).isDirectory()) continue;
-    } catch {
-      continue; // Does not exist, or is unreadable — either way, nothing to announce.
-    }
-    found.push(resolved);
-  }
-  return found;
-}
-
-/**
  * The journal roots to read, resolved and de-duplicated.
- *
- * De-duplication is the fix for an upstream defect: when the path override is
- * set, the project and user roots are the SAME directory, and upstream loaded
- * it twice — once labelled `project`, once labelled `user` — so every entry
- * appeared twice with contradictory labels and `limit: 10` yielded 5 unique
- * entries. That is the documented containerised configuration.
  */
 export function journalRoots(): string[] {
   const roots = [path.resolve(resolveProjectJournalPath()), path.resolve(resolveUserJournalPath())];
