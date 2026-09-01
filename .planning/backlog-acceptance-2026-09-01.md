@@ -38,6 +38,14 @@ returned that exact commit.
   and repaired the Codex foreground recipe and a malformed Copilot launcher;
   the "keeps persistent harness launch recipes executable" test now guards both
   platform instructions.
+- **Verification and firing-rate acceptance.** A genuine Claude session invoked
+  `verification-before-completion`, observed a green unit test, worked backward
+  to the missing user-visible file, and reported the goal not met. A subsequent
+  fresh Stop event wrote one real skill firing and the exact `pnpm test` output
+  with exit code 0. The exercise found and repaired an ESM crash, Claude
+  2.1.252's metadata boundary, missing successful exit-code representation, and
+  destructive clean-slate guidance. See
+  `.planning/verification-firing-acceptance-2026-09-01.md`.
 - **Fresh-clone contributor flow.** A new local clone at this SHA passed
   `pnpm install --frozen-lockfile`, all 26 `pnpm check` tasks,
   `pnpm mint:check`, 88 `pnpm proof:test` cases, 86 `pnpm tab:test` cases and
@@ -71,7 +79,6 @@ contracts exist, but the named acceptance event has not occurred.
 | Backlog ask | Remaining acceptance event | Why it is still open |
 |---|---|---|
 | `installer-hq-dx` | Install from the configured `@tc` ProGet scope on a real WSL2 host; run install, upgrade and uninstall | This host is macOS, and the packages have not been published |
-| `verification-split-and-firing-rate` | Inspect one firing counter from a genuine work session and run the goal-backward pressure scenario with an agent | Synthetic behavioral coverage is green, but it is not that stated empirical check |
 | `parallel-execution-option` | Execute one real three-task plan with three isolated workers and inspect the merged ledger | The contract is pressure-tested; this pass ran under a single-agent execution constraint |
 | `codebase-review-skills` | Run a complete reviewer-shard/merge/`--verify` agent flow on a real repository | The scripts have 21 behavioral cases; the agent orchestration itself has not been exercised end to end |
 | `tc-governance-integration` | Observe the scheduled drift job with the protected GitLab token | A live CodeGraph comparison and repin are complete; the scheduled CI credential path itself has not run here |

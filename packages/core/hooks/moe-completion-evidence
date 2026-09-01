@@ -24,19 +24,16 @@
 // repository name from sharing a record. Set MOE_EVIDENCE_HOME=1 for the
 // explicit machine-local escape at $HOME/.claude/moe/audit/<repo-basename>/.
 //
-// -- Extensionless-file / module-type gotcha, worked around deliberately --
-// packages/core/package.json declares "type": "module". Installed as a
-// plugin, plugins/*/ has no package.json, so Node treats extensionless
-// files as CommonJS. This file uses only:
-//   (a) syntax legal in BOTH ESM and CJS (function calls including
-//       `require`, plain if / const / process.exit), and
-//   (b) an early exit that touches only globals (process.env, process.exit)
-//       before the first require.
-// So `node --check` under packages/core (ESM) passes on syntax alone, the
-// gate `MOE_EVIDENCE_DISABLED=1 node .../moe-completion-evidence` returns
-// 0 via the early exit under ESM, and the real work runs under CJS in the
-// installed plugin. Same pitfall packages/core/README's "Module format"
-// section records for render-graphs and update_docs.
+// -- Extensionless-file / module-type invariant --
+// Both packages/core/package.json and every generated plugin package.json
+// declare "type": "module". Keep this extensionless executable as ESM in both
+// trees; using require() works in neither real location even though it can look
+// green when a test copies the file outside its package boundary.
+
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 // ---------------------------------------------------------- disabled gate
 {
@@ -45,12 +42,6 @@
     process.exit(0);
   }
 }
-
-// ---------------------------------------------------------- CJS from here
-const fs = require('node:fs');
-const path = require('node:path');
-const os = require('node:os');
-const { execFileSync } = require('node:child_process');
 
 // stdin is the hook event. Empty/malformed input is not an error — nothing
 // this hook writes affects the stop, so just exit clean.
@@ -150,6 +141,15 @@ let lastHumanUserIndex = -1;
 
 function isHumanUserEntry(entry) {
   if (!entry || entry.type !== 'user') return false;
+  // Claude 2.1.252 serializes the body returned by the Skill tool as a user
+  // text row. It is tool-generated metadata, not a new human turn boundary.
+  if (
+    entry.isMeta === true ||
+    entry.turnCompanion === true ||
+    typeof entry.sourceToolUseID === 'string'
+  ) {
+    return false;
+  }
   const content = entry.message && entry.message.content;
   if (typeof content === 'string') return true;
   if (!Array.isArray(content)) return false;
@@ -191,12 +191,16 @@ for (let i = 0; i < transcriptLines.length; i++) {
       const external = resultItems.length === 1 ? entry.toolUseResult : null;
       const output = textContent(item.content);
       const isError = typeof item.is_error === 'boolean' ? item.is_error : null;
-      const exitCode = integerOrNull(
+      const explicitExitCode = integerOrNull(
         item.exit_code,
         item.exitCode,
         external && external.exit_code,
         external && external.exitCode,
       );
+      // Current Claude Bash results omit the numeric exit code on success but
+      // do carry is_error:false. Preserve explicit codes when present; infer
+      // only the unambiguous successful case and leave failures unknown.
+      const exitCode = explicitExitCode === null && isError === false ? 0 : explicitExitCode;
       toolResults.set(item.tool_use_id, { output, isError, exitCode });
     }
   }

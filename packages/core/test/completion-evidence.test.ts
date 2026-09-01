@@ -50,6 +50,7 @@ function fixture(): Fixture {
   mkdirSync(nested, { recursive: true });
   mkdirSync(bin, { recursive: true });
   mkdirSync(home, { recursive: true });
+  writeFileSync(join(root, "package.json"), '{"type":"module"}\n');
   const hook = join(bin, "moe-completion-evidence");
   copyFileSync(SOURCE_HOOK, hook);
   return { root, nested, hook, transcript: join(root, "transcript.jsonl"), home };
@@ -214,6 +215,51 @@ describe("moe-completion-evidence", () => {
     expect(firing.skill_tool_uses).toBe(2);
     expect(firing.skills).toEqual(["testing", "verification"]);
     expect(firing.skill_tool_use_ids).toEqual(["skill-1", "skill-2"]);
+  });
+
+  it("keeps current Claude skill expansions inside the active human turn", () => {
+    const f = fixture();
+    writeTranscript(f.transcript, [
+      human("Use verification-before-completion and run the test."),
+      assistant([
+        {
+          type: "tool_use",
+          id: "skill-live",
+          name: "Skill",
+          input: { skill: "moe-core:verification-before-completion" },
+        },
+      ]),
+      {
+        type: "user",
+        isMeta: true,
+        turnCompanion: true,
+        sourceToolUseID: "skill-live",
+        message: {
+          role: "user",
+          content: [
+            { type: "text", text: "Base directory for this skill: /plugin/skills/verification" },
+          ],
+        },
+      },
+      assistant([
+        { type: "tool_use", id: "bash-live", name: "Bash", input: { command: "pnpm test" } },
+      ]),
+      toolResult("bash-live", "one test passed", { isError: false }),
+      assistant([{ type: "text", text: "Tests pass, but the user goal is not met." }]),
+    ]);
+
+    expect(runHook(f, { sessionId: "live-schema" }).status).toBe(0);
+    const [payload] = auditPayloads(join(f.root, ".audit"));
+    expect(payload?.verification_commands).toEqual([
+      { command: "pnpm test", output: "one test passed", is_error: false, exit_code: 0 },
+    ]);
+    const firing = JSON.parse(
+      readFileSync(join(f.root, ".audit/live-schema-firing.json"), "utf8"),
+    ) as { skill_tool_uses: number; skills: string[] };
+    expect(firing).toMatchObject({
+      skill_tool_uses: 1,
+      skills: ["moe-core:verification-before-completion"],
+    });
   });
 
   it("uses the home escape only when MOE_EVIDENCE_HOME is truthy", () => {

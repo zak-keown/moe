@@ -73,6 +73,12 @@ Work backward from what the user asked for:
    are necessary and insufficient: they catch regressions in the pieces,
    but a green suite over the wrong pieces is silent.
 
+Verification is not permission to manufacture a clean slate. Inspect the
+target before acting. If an existing file, process, or remote object could make
+the observation ambiguous, use an isolated destination or ask before changing
+it; never delete or overwrite user-owned state merely to make the verification
+command easier to interpret.
+
 The failure to catch: every step of the plan passed its own tests, no
 step's evidence was the goal, and the finished stack does not do the
 thing. Fixture: [tests/goal-backward-scenario.md](tests/goal-backward-scenario.md).
