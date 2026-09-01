@@ -67,6 +67,12 @@ bootstrap:
 # excluded here (see the header) and the staging root removed the reason.
 
 marketplace:
+  # The marketplace users actually install from is the hand-maintained root
+  # .claude-plugin/marketplace.json, whose name is `moe`. Without this, every
+  # generated install doc emits `<plugin>@<plugin>-dev` (the local-dev default
+  # in src/adapters/shared.ts, marketplaceName) — a marketplace that does not
+  # exist, in the one command a new user copies verbatim.
+  name: moe
   # Local-dev descriptor only. The marketplace people actually install from is
   # the hand-maintained root .claude-plugin/marketplace.json, which lists every
   # Moe plugin and points at /plugins/<name>.

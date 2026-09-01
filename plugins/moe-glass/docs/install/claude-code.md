@@ -15,7 +15,7 @@ claude /plugin marketplace add https://gitlab.tcdevops.com/Zak/moe
 ```
 
 ```
-/plugin install moe-glass@moe-glass-dev
+/plugin install moe-glass@moe
 ```
 
 If the marketplace is already registered, only the install command is needed. Consult Claude Code's plugin docs if these commands don't match your installed version.

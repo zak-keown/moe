@@ -112,16 +112,21 @@ function planUninstall(scope) {
   return lines
 }
 
-function doAction(planFn, actionArgs, scope, dryRun) {
-  const s = scopeArgs(scope)
-  for (const [cmd, ...args] of actionArgs(scope)) {
+// Takes the already-resolved action list, not a producer plus a scope. The
+// earlier signature was `doAction(planFn, actionArgs, scope, dryRun)`, and
+// planFn and scope were both dead: planFn existed only to be `void`ed, and
+// scope was re-derived into an `s` that was also only `void`ed, then handed to
+// an actionArgs that the single call site passes as `() => actions` — an arrow
+// that ignores its argument. Scope is applied where the actions are built
+// (installActions / upgradeActions / uninstallActions), which is the only
+// place it was ever read.
+function doAction(actions, dryRun) {
+  for (const [cmd, ...args] of actions) {
     const status = run(cmd, args, { dryRun })
     if (status !== 0 && !dryRun) {
       process.stderr.write(`moe-install: ${cmd} ${args.join(' ')} exited ${status}\n`)
       return status
     }
-    void s
-    void planFn
   }
   return 0
 }
@@ -210,5 +215,5 @@ if (mode === 'install' && !skipDoctor) {
   if (doctorExit !== 0) process.exit(doctorExit)
 }
 
-const exit = doAction(planInstall, () => actions, scope, false)
+const exit = doAction(actions, false)
 process.exit(exit)

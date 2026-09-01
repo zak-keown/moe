@@ -6,7 +6,7 @@
       "sha256": "5bbf713adae87d6cdc2d989a413905b97384f5bbc04843179e53d89891bcda19"
     },
     ".claude-plugin/marketplace.json": {
-      "sha256": "2eebd1516b8c79bfcd1f531072c418332f852ed9668bd13e6f2e213004fe2fff"
+      "sha256": "658b4975a3ce7db084b43322cedcce5e394a4ecf3e024ec70ea9bbffef314f2e"
     },
     ".claude-plugin/plugin.json": {
       "sha256": "e375bb0eb33e708578f221c9ee33ab7dbd9937d25fc2adf975d7672ef59241ad"
@@ -51,10 +51,10 @@
       "sha256": "58e2d23574934d6074a980aaa894059d925a4a33ce71cd9fe440f60f293a44c8"
     },
     "docs/install/agents-marketplace.md": {
-      "sha256": "8cf92e4107aa0bee404cb7f28043b5ccd62b81336125f4e967c56ecfb31d4391"
+      "sha256": "c9b94d5ffbbea0b81d6490fe05136e3c65e97fb1365ca84dd83dbf9f81be2b1a"
     },
     "docs/install/claude-code.md": {
-      "sha256": "317a0023e5c3c26418b198d83f60c9931f279e50d05ec545c9185c611d0c87cc"
+      "sha256": "62cb8e4d31bc9cc7ccdbb0465a93b093c6622f5efb381dac2948d2ec355a1efc"
     },
     "docs/install/codex.md": {
       "sha256": "6afac6f4e7a74e3005e5fd5e8dc1d54f947356e823785e037136aece34116ba4"

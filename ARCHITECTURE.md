@@ -395,6 +395,16 @@ built dist bundles for the five Node bins). Grammar copied from
 `packages/flight/src/cli.ts`, and vitest at `bin/test/moe.test.mjs` covers
 every branch — including the platform ones — without a Windows runner.
 
+`bin/test/` is one runner, vitest, reached by `pnpm bin:test` (CI's `bin:` job)
+and chained into root `pnpm test`. `doctor.test.mjs` arrived written against
+`node:test`, on the reasonable argument that the doctor must work before
+`pnpm install` does — but `bin:test` globs the whole directory, so vitest
+collected the node:test file and `node --test` collected the vitest one, each
+runner failing on the other's declarations. The pre-install guarantee is kept
+where it belongs: those tests spawn `bin/moe-doctor` and `bin/moe-install` as
+a bare interpreter would. See the "vitest 3" row in §5 — one runner was
+already the recorded decision.
+
 The bare name is contested on a developer machine — three projects have
 claimed it. See §7.1.
 
