@@ -27,8 +27,8 @@ keywords:
 # `browsing` is a deliberate, invoked-by-name skill — you reach for a browser
 # when you want a browser — so there is nothing to inject at session start. It is
 # also the only skill here, so a bootstrap would load the entire plugin into
-# every session for a capability most sessions never touch. That is the exact
-# cost moe-core's tiering exists to avoid; see ARCHITECTURE.md section 2.
+# every session for a capability most sessions never touch — a resident-context
+# cost worth avoiding for a rarely-used skill.
 bootstrap: none
 
 # components: skills/ and agents/ are defaults. There is no hooks/hooks.json and
