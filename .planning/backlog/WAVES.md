@@ -29,13 +29,13 @@ schedule, and schedules move. Where `P` disagrees with the table, the table wins
 
 ## The schedule
 
-**Nine of sixteen items have shipped** across two sessions on 2026-08-31.
-Four wave-1 iterate branches remain live, and two items sit deferred to
-2026-09-01 after plan-verify blocked them.
+**Eleven of sixteen items have shipped** across three sessions (2026-08-31 →
+2026-09-01). Two wave-1 iterate branches remain live, and two items sit
+deferred after plan-verify blocked them.
 
 | Wave | Items | Effort | Wall |
 |---|---|---|---|
-| **W01** | ~~`tc-standards-conformance`~~ (14.5 h) **iterate `wave1/tc-standards-conformance`** · ~~`installer-hq-dx`~~ (13.5 h) **iterate `wave1/installer-hq-dx`** · ~~`native-renderers`~~ (8.5 h) **merged `65be5f7`** · ~~`verification-split-and-firing-rate`~~ (8.5 h) **iterate `wave1/verification-split-and-firing-rate`** · ~~`gsd-core-skill-import`~~ (6 h) **skipped — precondition unmet** · ~~`runtime-pruning`~~ (5 h) **iterate `wave1/runtime-pruning`** · ~~`moe-tone-and-branding`~~ (4 h) **merged `de74bd0`** · ~~`skill-set-fidelity-refactor`~~ **merged** | 65.5 h | 14.5 h |
+| **W01** | ~~`tc-standards-conformance`~~ (14.5 h) **merged `df4c14b`** · ~~`installer-hq-dx`~~ (13.5 h) **iterate `wave1/installer-hq-dx`** · ~~`native-renderers`~~ (8.5 h) **merged `65be5f7`** · ~~`verification-split-and-firing-rate`~~ (8.5 h) **merged `6e2f44d`** · ~~`gsd-core-skill-import`~~ (6 h) **skipped — precondition unmet** · ~~`runtime-pruning`~~ (5 h) **iterate `wave1/runtime-pruning`** · ~~`moe-tone-and-branding`~~ (4 h) **merged `de74bd0`** · ~~`skill-set-fidelity-refactor`~~ **merged** | 65.5 h | 14.5 h |
 | **W02** | ~~`codegraph-context-layer`~~ (8 h) **blocked at plan-verify, deferred 2026-09-01** · ~~`deterministic-task-dag`~~ (8 h) **merged `f2bdc60`** · ~~`mattpocock-skills-import`~~ (5 h) **merged `3285c68`** · ~~`moe-bare-binary-dispatcher`~~ (4.5 h) **merged `a1c5f21`** · ~~`parallel-execution-option`~~ (2.5 h) **merged `b02c469`** | 28 h | 8 h |
 | **W03** | ~~`tiered-workflow-naming`~~ (5 h) **merged `894f5c7`** · ~~`tc-governance-integration`~~ (3.75 h) **blocked at plan-verify, deferred 2026-09-01** | 8.75 h | 5 h |
 | **W04** | ~~`contributing-flow-docs`~~ (4.25 h) **merged `1d38d97`** | 4.25 h | 4.25 h |
@@ -45,15 +45,18 @@ W01's original critical path was **co-held** by `tc-standards-conformance` and
 close date depends on when those two land.
 
 ### Current status
-- **Shipped (9):** `skill-set-fidelity-refactor`, `moe-tone-and-branding`,
+- **Shipped (11):** `skill-set-fidelity-refactor`, `moe-tone-and-branding`,
   `native-renderers`, `moe-bare-binary-dispatcher`, `contributing-flow-docs`,
   `deterministic-task-dag`, `parallel-execution-option`,
-  `mattpocock-skills-import`, `tiered-workflow-naming`.
-- **Live iterate branches (4):** `wave1/installer-hq-dx`,
-  `wave1/runtime-pruning`, `wave1/tc-standards-conformance`,
-  `wave1/verification-split-and-firing-rate`. Each has a "Suggested next step"
-  block in `.planning/wave1-execution-status.md` that names its remaining work.
-- **Deferred to 2026-09-01 (2):** `codegraph-context-layer` (W02),
+  `mattpocock-skills-import`, `tiered-workflow-naming`,
+  `verification-split-and-firing-rate` (`6e2f44d`),
+  `tc-standards-conformance` (`df4c14b`).
+- **Live iterate branches (2):** `wave1/installer-hq-dx`,
+  `wave1/runtime-pruning`. Both carry close-plans in
+  `.planning/close-plan-status.md` marked `needs-revision` — installer-hq-dx
+  has a real bin/test dual-runner collision to disambiguate, runtime-pruning
+  needs prose citations rewritten.
+- **Deferred (2):** `codegraph-context-layer` (W02),
   `tc-governance-integration` (W03). Both hit the same plan-verify pattern
   (test-assertion-not-updated for a new hook or manifest addition). Punch
   lists in their reports' `## Blocked` sections.
@@ -68,6 +71,19 @@ Two rollbacks fired during wave-merge, both from the tier-vocabulary guard
 each use "tier" in senses that predate the workflow-depth rename (plugin
 tiers, architectural tiers, hierarchical levels). Each was whitelisted rather
 than reworded; a fourth addition should trigger reconsidering the rule's shape.
+
+The two close-execute merges on 2026-09-01 were driven by a new workflow
+(`wave-close-execute`) that rebases the aging branch onto current main,
+resolves conflicts per a pre-authored close-plan, regenerates `/plugins/`,
+and re-runs gates. `verification-split-and-firing-rate` landed with a
+collateral fix for two pre-existing reds on main introduced by `f2bdc60`
+(TS2339 on `metadata.test.ts` at the SessionStart matcher test, and a biome
+one-liner formatter on `hasFallback`) — the fix agent added `matcher?: string`
+to the hooks.json type union and reformatted `hasFallback`, unblocking full-
+repo `pnpm typecheck` and `pnpm lint`. `tc-standards-conformance` then
+merged clean; git's 3-way merge resolved the shared
+`verification-before-completion/SKILL.md` and its two plugin mirrors on both
+sides. Neither branch needed a wave-merge rollback.
 
 ## Why the previous schedule was wrong
 
