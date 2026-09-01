@@ -99,6 +99,27 @@ cd "$path"
 
 **Sandbox fallback:** If `git worktree add` fails with a permission error (sandbox denial), tell the user the sandbox blocked worktree creation and you're working in the current directory instead. Then run setup and baseline tests in place.
 
+### 1c. One Worktree Per Parallel Worker
+
+When dispatching parallel implementer subagents per the worktree gate
+(`dispatching-parallel-agents`, "The gate"), each concurrent worker gets its
+OWN linked worktree. Two workers writing into one checkout defeats the
+isolation the gate is built on and reintroduces the exact `(conflicts)`
+hazard the parallel-implementation ban was rooted in.
+
+For each worker, follow Step 1a first — use the harness's native worktree tool
+when one is available, per the "never fight the harness" rule. Only fall back
+to `git worktree add` (Step 1b) when no native tool is offered. Whichever path
+you take, create the worktree BEFORE dispatch: the worker's brief hands it a
+concrete path to `cd` into, not an instruction to make one for itself.
+
+Each parallel worker's worktree branches from ONE recorded base SHA shared
+across the wave (see `subagent-driven-development` "Wave grouping" and
+`dispatching-parallel-agents` "The divergent-tree rule"). A worker branched
+from a stale base will cite the same file coordinates as its siblings but
+read different content there. Recording the base once, before the wave
+dispatches, is the safeguard.
+
 ## Step 2: Project Setup
 
 Auto-detect and run appropriate setup:
