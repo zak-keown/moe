@@ -10,3 +10,8 @@ builds and smokes only the Linux x64 and arm64 libraries, then hands those two
 artifacts to the release pack job. `scripts/tab-native.mjs` combines those
 ephemeral Linux artifacts with these tracked Apple inputs and rejects missing,
 untracked, hash-mismatched, wrong-architecture, or wrong-version payloads.
+
+Run `node scripts/tab-third-party-licenses.mjs --check` with Cargo 1.98 on PATH
+for the full offline linked-license verification. CI's Node-only pack boundary
+runs `--check-inputs`, which fails immediately if `Cargo.lock` or any workspace
+crate manifest moved without regenerating the committed payload.

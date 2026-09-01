@@ -208,6 +208,7 @@ tc-release-pack:
         NPM_DIST_TAG: next
     - when: never
   script:
+    - node scripts/tab-third-party-licenses.mjs --check-inputs
     - pnpm build
     - node scripts/tc-release-pack.mjs --output-dir .tc-release --tab-native-dir .tc-tab-native
   artifacts:

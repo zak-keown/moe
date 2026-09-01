@@ -144,6 +144,7 @@ describe("TC release clean-job CI policy", () => {
   it("builds runtime outputs in the pack job filesystem immediately before packing", () => {
     const pack = config()["tc-release-pack"];
     assert.deepEqual(pack.script, [
+      "node scripts/tab-third-party-licenses.mjs --check-inputs",
       "pnpm build",
       "node scripts/tc-release-pack.mjs --output-dir .tc-release --tab-native-dir .tc-tab-native",
     ]);
