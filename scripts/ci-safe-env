@@ -1,0 +1,132 @@
+#!/bin/sh
+
+# Execute one CI command with a deliberately small environment. GitLab injects
+# every project/group/instance variable into every job by default; an exact
+# reconstruction is the only fail-closed way to keep a newly added secret away
+# from package-manager lifecycle scripts, builds and tests.
+set -eu
+
+mode=${1:-}
+if [ "$#" -lt 2 ]; then
+  echo "usage: ci-safe-env <safe|rust|publish|drift> <command> [args ...]" >&2
+  exit 64
+fi
+shift
+
+case "$mode" in
+  safe|rust|publish|drift) ;;
+  *)
+    echo "ci-safe-env: unknown mode: $mode" >&2
+    exit 64
+    ;;
+esac
+
+if [ -z "${CI_PROJECT_DIR:-}" ]; then
+  echo "ci-safe-env: CI_PROJECT_DIR is required" >&2
+  exit 64
+fi
+
+ci_home="$CI_PROJECT_DIR/.ci-home"
+corepack_home="$CI_PROJECT_DIR/.ci-corepack"
+xdg_cache_home="$CI_PROJECT_DIR/.ci-cache"
+xdg_config_home="$CI_PROJECT_DIR/.ci-config"
+xdg_data_home="$CI_PROJECT_DIR/.ci-data"
+npm_cache="$CI_PROJECT_DIR/.ci-npm-cache"
+pip_cache="$CI_PROJECT_DIR/.ci-pip-cache"
+uv_cache="$CI_PROJECT_DIR/.ci-uv-cache"
+
+# Optional trust-store paths stay optional. Exporting an absent one as an empty
+# string can disable a tool's built-in CA discovery, so prepend only values the
+# runner explicitly supplied to the controlled `env -i` invocation.
+if [ -n "${NPM_CONFIG_CAFILE:-}" ]; then
+  set -- NPM_CONFIG_CAFILE="$NPM_CONFIG_CAFILE" "$@"
+fi
+if [ -n "${GIT_SSL_CAINFO:-}" ]; then
+  set -- GIT_SSL_CAINFO="$GIT_SSL_CAINFO" "$@"
+fi
+if [ -n "${CURL_CA_BUNDLE:-}" ]; then
+  set -- CURL_CA_BUNDLE="$CURL_CA_BUNDLE" "$@"
+fi
+if [ -n "${REQUESTS_CA_BUNDLE:-}" ]; then
+  set -- REQUESTS_CA_BUNDLE="$REQUESTS_CA_BUNDLE" "$@"
+fi
+if [ -n "${NODE_EXTRA_CA_CERTS:-}" ]; then
+  set -- NODE_EXTRA_CA_CERTS="$NODE_EXTRA_CA_CERTS" "$@"
+fi
+if [ -n "${SSL_CERT_FILE:-}" ]; then
+  set -- SSL_CERT_FILE="$SSL_CERT_FILE" "$@"
+fi
+if [ -n "${SSL_CERT_DIR:-}" ]; then
+  set -- SSL_CERT_DIR="$SSL_CERT_DIR" "$@"
+fi
+
+# Directory creation itself receives no ambient GitLab variables.
+env -i PATH="${PATH:-/usr/local/bin:/usr/bin:/bin}" \
+  mkdir -p "$ci_home" "$corepack_home" "$xdg_cache_home" \
+    "$xdg_config_home" "$xdg_data_home" "$npm_cache" "$pip_cache" "$uv_cache"
+
+run_safe() {
+  exec env -i \
+    PATH="${PATH:-/usr/local/bin:/usr/bin:/bin}" \
+    HOME="$ci_home" \
+    COREPACK_HOME="$corepack_home" \
+    XDG_CACHE_HOME="$xdg_cache_home" \
+    XDG_CONFIG_HOME="$xdg_config_home" \
+    XDG_DATA_HOME="$xdg_data_home" \
+    NPM_CONFIG_CACHE="$npm_cache" \
+    PIP_CACHE_DIR="$pip_cache" \
+    UV_CACHE_DIR="$uv_cache" \
+    PNPM_HOME="${PNPM_HOME:-/usr/local/bin}" \
+    TURBO_TELEMETRY_DISABLED="${TURBO_TELEMETRY_DISABLED:-1}" \
+    CI="${CI:-true}" \
+    GITLAB_CI="${GITLAB_CI:-true}" \
+    CI_PROJECT_DIR="$CI_PROJECT_DIR" \
+    CI_COMMIT_BRANCH="${CI_COMMIT_BRANCH:-}" \
+    CI_DEFAULT_BRANCH="${CI_DEFAULT_BRANCH:-}" \
+    CI_MERGE_REQUEST_IID="${CI_MERGE_REQUEST_IID:-}" \
+    CI_COMMIT_REF_PROTECTED="${CI_COMMIT_REF_PROTECTED:-}" \
+    CI_PIPELINE_SOURCE="${CI_PIPELINE_SOURCE:-}" \
+    CI_COMMIT_SHA="${CI_COMMIT_SHA:-}" \
+    CI_COMMIT_SHORT_SHA="${CI_COMMIT_SHORT_SHA:-}" \
+    CI_COMMIT_TAG="${CI_COMMIT_TAG:-}" \
+    NPM_DIST_TAG="${NPM_DIST_TAG:-}" \
+    LANG="${LANG:-C.UTF-8}" \
+    LANGUAGE="${LANGUAGE:-}" \
+    LC_ADDRESS="${LC_ADDRESS:-}" \
+    LC_ALL="${LC_ALL:-}" \
+    LC_COLLATE="${LC_COLLATE:-}" \
+    LC_CTYPE="${LC_CTYPE:-}" \
+    LC_IDENTIFICATION="${LC_IDENTIFICATION:-}" \
+    LC_MEASUREMENT="${LC_MEASUREMENT:-}" \
+    LC_MESSAGES="${LC_MESSAGES:-}" \
+    LC_MONETARY="${LC_MONETARY:-}" \
+    LC_NAME="${LC_NAME:-}" \
+    LC_NUMERIC="${LC_NUMERIC:-}" \
+    LC_PAPER="${LC_PAPER:-}" \
+    LC_TELEPHONE="${LC_TELEPHONE:-}" \
+    LC_TIME="${LC_TIME:-}" \
+    TZ="${TZ:-}" \
+    TEMP="${TEMP:-/tmp}" \
+    TMP="${TMP:-/tmp}" \
+    TMPDIR="${TMPDIR:-/tmp}" \
+    "$@"
+}
+
+case "$mode" in
+  safe)
+    run_safe "$@"
+    ;;
+  rust)
+    # These are image-owned, literal toolchain roots, not inherited routing.
+    run_safe CARGO_HOME=/usr/local/cargo RUSTUP_HOME=/usr/local/rustup "$@"
+    ;;
+  publish)
+    # The publisher alone receives registry auth. Its Node implementation
+    # creates a private npmrc and reconstructs every child environment again.
+    run_safe PROGET_NPM_AUTH="${PROGET_NPM_AUTH:-}" "$@"
+    ;;
+  drift)
+    # The scheduled drift process intentionally needs this single read token.
+    run_safe TC_GITLAB_TOKEN="${TC_GITLAB_TOKEN:-}" "$@"
+    ;;
+esac

@@ -80,7 +80,60 @@ describe(".gitlab-ci.yml is a valid pipeline definition", () => {
   it("scopes proof's pytest discovery to the proof package", () => {
     const proof = jobs().find(([name]) => name === "proof")?.[1];
     expect(proof, "missing proof job").toBeDefined();
-    expect(proof?.script).toEqual(["uv run --project py/proof pytest py/proof/tests"]);
+    expect(proof?.script).toEqual([
+      "sh scripts/ci-safe-env safe uv run --project py/proof pytest py/proof/tests",
+    ]);
+  });
+
+  it("executes every job command through the exact CI environment boundary", () => {
+    const byName = new Map(jobs());
+    const expectedMode = new Map<string, string>([
+      ["tab-native-linux", "rust"],
+      ["tab", "rust"],
+      ["tc-release-publish", "publish"],
+      ["tc-conventions-drift", "drift"],
+    ]);
+    const jobNames = [
+      "install",
+      "lint",
+      "typecheck",
+      "test",
+      "build",
+      "tab-native-linux",
+      "plugins",
+      "provenance",
+      "tc-drift-manifest",
+      "bin",
+      "tab",
+      "proof",
+      "tc-release-pack",
+      "tc-release-publish",
+      "tc-conventions-drift",
+    ];
+
+    const assertCommands = (name: string, job: Job, mode: string) => {
+      for (const key of SCRIPT_KEYS) {
+        const value = job[key];
+        if (value === undefined) continue;
+        const entries = Array.isArray(value) ? value : [value];
+        for (const entry of entries) {
+          expect(
+            String(entry).trimStart(),
+            `${name}.${key} bypasses the fail-closed ${mode} environment`,
+          ).toMatch(new RegExp(`^sh scripts/ci-safe-env ${mode}(?:\\s|$)`));
+        }
+      }
+    };
+
+    const pnpm = byName.get(".pnpm");
+    expect(pnpm, "missing .pnpm command template").toBeDefined();
+    if (pnpm) assertCommands(".pnpm", pnpm, "safe");
+
+    for (const name of jobNames) {
+      const job = byName.get(name);
+      expect(job, `missing ${name} job`).toBeDefined();
+      if (job) assertCommands(name, job, expectedMode.get(name) ?? "safe");
+    }
   });
 
   it("runs only the TC convention drift job in scheduled pipelines", () => {

@@ -23,19 +23,9 @@ variables:
 
 .pnpm: &pnpm
   before_script:
-    - |
-      unset PROGET_NPM_AUTH NPM_TOKEN NODE_AUTH_TOKEN
-      for variable in $(env | cut -d= -f1); do
-        normalized=$(printf '%s' "$variable" | tr '[:upper:]' '[:lower:]')
-        case "$normalized" in
-          npm_config_*auth*|npm_config_*token*|npm_config_*userconfig*)
-            unset "$variable"
-            ;;
-        esac
-      done
-    - corepack enable
-    - pnpm config set store-dir .pnpm-store
-    - pnpm install --frozen-lockfile
+    - sh scripts/ci-safe-env safe corepack enable
+    - sh scripts/ci-safe-env safe pnpm config set store-dir .pnpm-store
+    - sh scripts/ci-safe-env safe pnpm install --frozen-lockfile
 
 .not-scheduled:
   # The daily schedule exists only to compare TC convention pins. Ordinary
@@ -50,31 +40,31 @@ install:
   stage: install
   <<: *pnpm
   extends: .not-scheduled
-  script: [pnpm --version]
+  script: [sh scripts/ci-safe-env safe pnpm --version]
 
 lint:
   stage: check
   <<: *pnpm
   extends: .not-scheduled
-  script: [pnpm lint]
+  script: [sh scripts/ci-safe-env safe pnpm lint]
 
 typecheck:
   stage: check
   <<: *pnpm
   extends: .not-scheduled
-  script: [pnpm typecheck]
+  script: [sh scripts/ci-safe-env safe pnpm typecheck]
 
 test:
   stage: check
   <<: *pnpm
   extends: .not-scheduled
-  script: [pnpm test]
+  script: [sh scripts/ci-safe-env safe pnpm test]
 
 build:
   stage: build
   <<: *pnpm
   extends: .not-scheduled
-  script: [pnpm build]
+  script: [sh scripts/ci-safe-env safe pnpm build]
 
 # Linux native release payloads are built from source on the Docker runners.
 # The arm64 smoke runs its arm64 test process under qemu-user; it does not treat
@@ -85,18 +75,8 @@ tab-native-linux:
   stage: build
   image: rust:1.98.0-bullseye
   before_script:
-    - |
-      unset PROGET_NPM_AUTH NPM_TOKEN NODE_AUTH_TOKEN
-      for variable in $(env | cut -d= -f1); do
-        normalized=$(printf '%s' "$variable" | tr '[:upper:]' '[:lower:]')
-        case "$normalized" in
-          npm_config_*auth*|npm_config_*token*|npm_config_*userconfig*)
-            unset "$variable"
-            ;;
-        esac
-      done
-    - apt-get update
-    - apt-get install --yes --no-install-recommends gcc-aarch64-linux-gnu jq libc6-dev-arm64-cross nodejs qemu-user
+    - sh scripts/ci-safe-env rust apt-get update
+    - sh scripts/ci-safe-env rust apt-get install --yes --no-install-recommends gcc-aarch64-linux-gnu jq libc6-dev-arm64-cross nodejs qemu-user
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: never
@@ -106,10 +86,14 @@ tab-native-linux:
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
     - when: never
   script:
-    - cargo fetch --locked --manifest-path packages/tab/Cargo.toml
-    - CARGO_NET_OFFLINE=true node scripts/tab-third-party-licenses.mjs --check
-    - export TAB_RELEASE_VERSION=$(jq -r '.upstreamVersion + "-tc." + (.tcRelease | tostring)' tc-release.json)
-    - TAB_NATIVE_OUTPUT_DIR="$CI_PROJECT_DIR/.tc-tab-native" scripts/build-tab-native-linux.sh
+    - sh scripts/ci-safe-env rust cargo fetch --locked --manifest-path packages/tab/Cargo.toml
+    - sh scripts/ci-safe-env rust env CARGO_NET_OFFLINE=true node scripts/tab-third-party-licenses.mjs --check
+    - |
+      sh scripts/ci-safe-env rust sh -c '
+        TAB_RELEASE_VERSION=$(jq -r ".upstreamVersion + \"-tc.\" + (.tcRelease | tostring)" tc-release.json)
+        export TAB_RELEASE_VERSION
+        TAB_NATIVE_OUTPUT_DIR="$CI_PROJECT_DIR/.tc-tab-native" scripts/build-tab-native-linux.sh
+      '
   artifacts:
     expire_in: 8 days
     paths: [.tc-tab-native/linux-*/*.so]
@@ -133,7 +117,7 @@ plugins:
   stage: check
   <<: *pnpm
   extends: .not-scheduled
-  script: [pnpm mint:check]
+  script: [sh scripts/ci-safe-env safe pnpm mint:check]
 
 # ARCHITECTURE.md §8: provenance is preserved, self-reference is rewritten. The
 # flight import broke that rule and a human caught it, not a check —
@@ -151,13 +135,13 @@ provenance:
   image: node:24
   extends: .not-scheduled
   script:
-    - node scripts/check-provenance.mjs
+    - sh scripts/ci-safe-env safe node scripts/check-provenance.mjs
     # QUOTED DELIBERATELY. This entry contains a colon-space inside the echo
     # message, and an unquoted YAML plain scalar containing ": " parses as a
     # single-key MAP, not a string. GitLab requires every `script` entry to be a
     # string, and a map there is a job-config error that fails pipeline CREATION
     # — taking every other job down with it, not just this one.
-    - "if node scripts/check-provenance.mjs scripts/fixtures/provenance-red --min-readmes 1; then echo 'self-test failed: the red fixture passed'; exit 1; fi"
+    - "sh scripts/ci-safe-env safe sh -c \"if node scripts/check-provenance.mjs scripts/fixtures/provenance-red --min-readmes 1; then echo 'self-test failed: the red fixture passed'; exit 1; fi\""
 
 # Structural drift-manifest validation is an ordinary offline gate. Remote SHA
 # equality stays schedule-only below, but malformed, missing or extra rows must
@@ -167,8 +151,8 @@ tc-drift-manifest:
   image: node:24
   extends: .not-scheduled
   script:
-    - node scripts/check-tc-drift-manifest.mjs
-    - node --test scripts/test/check-tc-drift-manifest.test.mjs
+    - sh scripts/ci-safe-env safe node scripts/check-tc-drift-manifest.mjs
+    - sh scripts/ci-safe-env safe node --test scripts/test/check-tc-drift-manifest.test.mjs
 
 # Path-scoped: the dispatcher is Node stdlib only and every namespace is
 # stubbed out in the vitest — a docs edit does not need to re-run it.
@@ -176,7 +160,7 @@ tc-drift-manifest:
 bin:
   stage: check
   <<: *pnpm
-  script: [pnpm bin:test]
+  script: [sh scripts/ci-safe-env safe pnpm bin:test]
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: never
@@ -186,7 +170,7 @@ bin:
 tab:
   stage: check
   image: rust:latest
-  script: [cargo test --manifest-path packages/tab/Cargo.toml]
+  script: [sh scripts/ci-safe-env rust cargo test --manifest-path packages/tab/Cargo.toml]
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: never
@@ -195,11 +179,11 @@ tab:
 proof:
   stage: check
   image: python:3.12
-  before_script: [pip install uv]
+  before_script: [sh scripts/ci-safe-env safe pip install uv]
   # `--project` selects proof's environment, not pytest's discovery root.
   # Name the suite explicitly so a repo-root invocation cannot collect the
   # core and tab Python tests with proof's unrelated virtualenv.
-  script: [uv run --project py/proof pytest py/proof/tests]
+  script: [sh scripts/ci-safe-env safe uv run --project py/proof pytest py/proof/tests]
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: never
@@ -240,9 +224,9 @@ tc-release-pack:
         NPM_DIST_TAG: next
     - when: never
   script:
-    - node scripts/tab-third-party-licenses.mjs --check-inputs
-    - pnpm build
-    - node scripts/tc-release-pack.mjs --output-dir .tc-release --tab-native-dir .tc-tab-native
+    - sh scripts/ci-safe-env safe node scripts/tab-third-party-licenses.mjs --check-inputs
+    - sh scripts/ci-safe-env safe pnpm build
+    - sh scripts/ci-safe-env safe node scripts/tc-release-pack.mjs --output-dir .tc-release --tab-native-dir .tc-tab-native
   artifacts:
     expire_in: 8 days
     paths: [.tc-release/*.tgz]
@@ -265,7 +249,7 @@ tc-release-publish:
         NPM_DIST_TAG: latest
     - when: never
   script:
-    - node scripts/tc-release-publish.mjs --artifacts-dir .tc-release
+    - sh scripts/ci-safe-env publish node scripts/tc-release-publish.mjs --artifacts-dir .tc-release
 
 # Scheduled drift check for the TC merge-request conventions vendored into
 # packages/core/skills/_shared/tc-conventions.md. Two content pins protect the
@@ -288,9 +272,11 @@ tc-conventions-drift:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
   script:
     - |
-      set -eu
-      if [ -z "${TC_GITLAB_TOKEN:-}" ]; then
-        echo "TC_GITLAB_TOKEN not set; skipping drift check (soft pass)."
-        exit 0
-      fi
-      node scripts/check-tc-drift-manifest.mjs --check-remote
+      sh scripts/ci-safe-env drift sh -c '
+        set -eu
+        if [ -z "${TC_GITLAB_TOKEN:-}" ]; then
+          echo "TC_GITLAB_TOKEN not set; skipping drift check (soft pass)."
+          exit 0
+        fi
+        node scripts/check-tc-drift-manifest.mjs --check-remote
+      '
