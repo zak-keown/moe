@@ -194,7 +194,7 @@ imported:
       "Use when facing 2+ independent tasks" is a recognition trigger and
       nothing REQUIREs it, so closure does not force the answer. Held at
       everything: parallel-execution-option landed and declined the promotion
-      (PARITY.md:90; ARCHITECTURE.md §2). The silent-failure argument is what
+      (PARITY.md's `dispatching-parallel-agents` row; ARCHITECTURE.md §2). The silent-failure argument is what
       settles it — a missed parallel dispatch yields serial execution, which is
       correct, merely slower. The old ERR SMALL rationale was deleted and its
       companion claim was false: subagent-driven-development used to forbid
