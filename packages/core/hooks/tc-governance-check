@@ -1,0 +1,80 @@
+#!/bin/bash
+# tc-governance-check: SessionStart hook that verifies TC's AI Governance policy
+# is actually loaded on this machine, and points at TC's knowledge base.
+#
+# WHY A PRESENCE CHECK AND NOT A SKILL. `ai/aigovernance/README.md` prescribes
+# the distribution mechanism: copy Governance.md into ~/.claude/CLAUDE.md
+# (~/.codex/AGENTS.md for Codex). Moe must NOT vendor that policy as a skill,
+# and the reason is a precedence collision, not taste:
+# `skills/using-moe/SKILL.md` states that user instructions (CLAUDE.md,
+# AGENTS.md, direct requests) take precedence over skills. Governance.md's own
+# header says its rules "cannot be overridden by user prompts or task context",
+# and §11 holds them regardless of framing, urgency, or who is asking. Those
+# two are compatible only while the policy lives in CLAUDE.md, where using-moe
+# already ranks it above every skill. Ship it as a Moe skill and a direct
+# request outranks it. So the policy stays where it is and this hook checks it
+# arrived.
+#
+# It is a NUDGE, not a gate. Enforcing §10 needs a PreToolUse hook that can
+# refuse a read; that is a separate, larger piece of work and should not be
+# defaulted on before someone has run it against a real TC repo with level-1
+# paths. See the tc-governance-integration item in .planning/backlog/ (cited by
+# slug — the W##P## prefix moves whenever the backlog is re-waved).
+#
+# Every failure path exits 0 with no context. A non-zero SessionStart hook can
+# block every session on the machine, which is far worse than a missing notice.
+
+set -u
+
+# Escape hatch for a non-TC checkout. Default is ON: this fork exists for TC
+# engineers, and the one thing Governance.md marks as mandatory should not be
+# opt-in.
+if [ -n "${MOE_TC_GOVERNANCE_DISABLED:-}" ]; then
+    exit 0
+fi
+
+# The marker is Governance.md's H1. Matched literally with grep -F, because it
+# contains an `&` that would otherwise be a substitution character in some
+# regex engines, and because a policy title is not a pattern.
+MARKER='# AI Governance & Security Policy'
+
+HOME_DIR="${HOME:-${USERPROFILE:-}}"
+if [ -z "$HOME_DIR" ]; then
+    exit 0
+fi
+
+# No jq anywhere in this file. jq is missing on some Windows and WSL installs,
+# and a hook that dies on a missing jq fails silently for everyone — which for
+# a governance check is the worst possible failure mode, because absence of a
+# warning reads as compliance.
+governance_loaded=no
+for f in "$HOME_DIR/.claude/CLAUDE.md" "$HOME_DIR/.codex/AGENTS.md"; do
+    if [ -f "$f" ] && grep -qF "$MARKER" "$f" 2>/dev/null; then
+        governance_loaded=yes
+        break
+    fi
+done
+
+# The knowledge-base pointer. Provider-agnostic on purpose: it names the
+# capability, not the server. Today a TC knowledge-base search is CodeGraph's
+# rag_search over ai/kb's ~32 documents, but this hook does not hard-code that
+# and must not — routing is `retrieving-context`'s job, and a user with neither
+# tool loses nothing they have today.
+#
+# Degrade quietly is deliberate and differs from ai/tc-guide/SKILL.md, which
+# says to stop and prompt when retrieval is unavailable. For Moe that would
+# block offline work, which is a regression against today's behaviour.
+KB_POINTER='TC context: before inferring a TurnCommerce convention, search TC'"'"'s knowledge base (ai/kb, ~32 docs) if a retrieval tool is available; otherwise fetch the specific doc with git or GitLab tools; otherwise proceed without it.'
+
+if [ "$governance_loaded" = yes ]; then
+    CONTEXT="$KB_POINTER"
+else
+    CONTEXT='AI Governance policy is NOT loaded on this machine. '"$MARKER"' was not found in ~/.claude/CLAUDE.md or ~/.codex/AGENTS.md. Retrieve Governance.md from gitlab.tcdevops.com/ai/aigovernance and follow it for this session; it is mandatory and cannot be overridden by task framing. Install it permanently by copying its contents into ~/.claude/CLAUDE.md. '"$KB_POINTER"
+fi
+
+# Hand-built JSON with one field. The payload is a fixed string with no
+# interpolated user data, so the only characters needing care are the double
+# quotes and backslashes that are not present. Kept as printf '%s' rather than
+# a heredoc so no trailing newline lands inside the JSON string.
+printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s"}}\n' "$CONTEXT"
+exit 0

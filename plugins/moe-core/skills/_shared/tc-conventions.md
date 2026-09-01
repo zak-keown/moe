@@ -15,22 +15,31 @@ revision it was derived from, and a scheduled CI job in `.gitlab-ci.yml`
 Machine-readable manifest — the `tc-conventions-drift` CI job greps for these
 two lines and compares each SHA against the upstream `main`:
 
-- `ai/skills@<TC-BOOTSTRAP-PENDING>:skills/creating-merge-requests/SKILL.md`
-- `ai/claude-code-platform-plugin@<TC-BOOTSTRAP-PENDING>:skills/tc-git-worktrees/SKILL.md`
+- `ai/skills@9228cc6c880df3a51c7b7f7782afc5826089c44f:skills/creating-merge-requests/SKILL.md`
+- `ai/claude-code-platform-plugin@35096293343fe0493ba732fa3ea4d831612a996d:skills/tc-git-worktrees/SKILL.md`
 
-**The `<TC-BOOTSTRAP-PENDING>` markers are load-bearing.** They exist because
-this branch was authored without read access to `gitlab.tcdevops.com` and the
-drift-check job needs a real SHA to compare against. **Fill both in before this
-branch merges** by running against a machine with TC GitLab credentials:
+**Bootstrapped 2026-09-01.** Both SHAs above are real, and each was verified by
+fetching the named path at that exact revision — not merely by resolving `main`.
+They replaced `<TC-BOOTSTRAP-PENDING>` sentinels that existed because the branch
+was authored without read access to `gitlab.tcdevops.com`; the drift job
+soft-passed on the sentinel by design until then.
+
+To re-bootstrap or re-pin after a deliberate update:
 
 ```bash
 glab -R gitlab.tcdevops.com/ai/skills api projects/:id/repository/commits/main --jq .id
 glab -R gitlab.tcdevops.com/ai/claude-code-platform-plugin api projects/:id/repository/commits/main --jq .id
 ```
 
-Do not remove the drift-check job. Do not weaken the SHA format (`[0-9a-f]{40}`
-once bootstrapped). A stale convention that silently mislabels every
-agent-authored MR is the failure mode this manifest exists to prevent.
+Note the two upstreams move at very different rates, and the pins record that:
+`ai/skills` was last touched 2026-08-31 (MR !10, harness-specific skill
+variants), while `ai/claude-code-platform-plugin` has not changed since
+2026-04-23. The second is the sibling fork Moe replaces, so a moving SHA there
+is more interesting than a still one.
+
+Do not remove the drift-check job. Do not weaken the SHA format (`[0-9a-f]{40}`).
+A stale convention that silently mislabels every agent-authored MR is the failure
+mode this manifest exists to prevent.
 
 ## Branch name
 
