@@ -110,11 +110,19 @@ provenance:
 # Path-scoped: the dispatcher is Node stdlib only and every namespace is
 # stubbed out in the vitest — a docs edit does not need to re-run it.
 # See bin/moe.js and ARCHITECTURE.md §7.1 for what this covers.
+#
+# `if: $CI_COMMIT_TAG` → `when: never` is load-bearing: GitLab's `changes:`
+# rule cannot compute a diff on a tag pipeline (there is no baseline commit),
+# so it matches unconditionally and the path-scoped job would run on every
+# tag. Tag pipelines only need install/lint/typecheck/test/build/plugins/
+# provenance and the publish job — never a `changes:`-gated worker.
 bin:
   stage: check
   <<: *pnpm
   script: [pnpm bin:test]
   rules:
+    - if: $CI_COMMIT_TAG
+      when: never
     - changes: [bin/**/*]
 
 # Path-scoped so a docs edit does not rebuild the Rust crate.
@@ -123,14 +131,22 @@ tab:
   image: rust:latest
   script: [cargo test --manifest-path packages/tab/Cargo.toml]
   rules:
+    - if: $CI_COMMIT_TAG
+      when: never
     - changes: [packages/tab/**/*]
 
+# The `proof` job tests packages/tab/bindings/python, which needs the native
+# moe_tab module built from the Rust cdylib — machinery deferred with Wave 2
+# of the MR-!1 carry-over. Runs only on non-tag pipelines when py/proof/**
+# changed, until that machinery lands.
 proof:
   stage: check
   image: python:3.12
   before_script: [pip install uv]
   script: [uv run --project py/proof pytest]
   rules:
+    - if: $CI_COMMIT_TAG
+      when: never
     - changes: [py/proof/**/*]
 
 # Publishes @bubstack/moe-memory and @bubstack/moe-glass to npm when a tag
