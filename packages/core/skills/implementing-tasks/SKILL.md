@@ -13,6 +13,26 @@ Takes an in-memory batch of TDD-sized tasks and executes each through: implement
 
 Invoked by `running-an-iteration` with a list of tasks. Tasks are passed in memory, not via a file.
 
+## Validate the batch
+
+Before dispatching anything, validate every in-memory task has a non-empty
+`Files:` field, an `Interfaces:` field, and explicit `Consumes:` and `Produces:`
+entries. `None` is the explicit value when no interface edge exists. Missing
+any field fails batch validation and returns the batch to the caller; do not
+infer metadata from prose or execute the malformed task sequentially.
+
+For a valid batch, use exactly two execution rungs:
+
+1. worktree-isolated parallel dispatch when files are pairwise disjoint, there
+   is no in-wave `Consumes:` → `Produces:` edge, and every worker has a
+   pairwise-unique linked Git directory;
+2. sequential dispatch of the whole group when the gate does not hold or any
+   worktree cannot be created or validated.
+
+There is no unisolated-parallel rung. Create and validate every worktree before
+dispatching any worker so a failed setup cannot produce a partially parallel
+group.
+
 ## Per-Task Cycle
 
 For each task in the provided list:
@@ -99,13 +119,13 @@ Use the least powerful model that can handle each role:
 - **Never** start code-quality review before spec compliance is ✅
 - **Never** skip the re-review after fixes (reviewer found issues = implementer fixes = review again)
 - **Do not** dispatch multiple implementers concurrently unless the batch's
-  tasks pass the worktree gate: disjoint `Files:` blocks, no `Consumes:` →
-  `Produces:` edge inside the concurrent group, and one linked worktree per
-  worker (see `dispatching-parallel-agents` for the full gate, and
-  `using-git-worktrees` Step 1c for the per-worker worktree). Fail any
-  condition and the batch is sequential — correct in every harness, merely
-  slower. The old blanket "never in parallel" ban was rooted in
-  `(conflicts)`, which worktree isolation now removes.
+  tasks pass rung one of the worktree gate: disjoint `Files:` blocks, no
+  `Consumes:` → `Produces:` edge inside the concurrent group, and a validated,
+  pairwise-unique linked Git directory per worker (see
+  `dispatching-parallel-agents` for the full gate and `using-git-worktrees`
+  Step 1d). File/dependency conflicts or any worktree setup failure select rung
+  two for the whole group: sequential dispatch. Never dispatch in parallel
+  without isolation.
 - **Never** accept "close enough" on spec compliance
 - **Never** let implementer self-review replace the two-stage review
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Stop hook: capture verification EVIDENCE (test/build tool_uses) for
-// THIS TURN — bounded by the last `type:"user"` boundary in the transcript
+// THIS TURN — bounded by the last human-user boundary in the transcript
 // — and a session-cumulative Skill-firing counter, into
-// $HOME/.claude/moe/audit/<repo>/. Never blocks a stop; only observes.
+// <git-toplevel>/.audit/. Never blocks a stop; only observes.
 //
 // The two windows are deliberately different: evidence and the completion
 // claim it is paired against are BOTH per-turn (a stop event is per-turn,
@@ -19,24 +19,21 @@
 //
 // DEFAULT-ON. Set MOE_EVIDENCE_DISABLED to a truthy value to disable.
 //
-// Storage. Default is $HOME/.claude/moe/audit/<repo-basename>/. Repo-local
-// .audit/ is what the plan first drafted — it looks tidy in this monorepo
-// and pollutes the tree of every downstream user of the plugin, so it is
-// off by default. Set MOE_EVIDENCE_HERE=1 to opt into repo-local writes.
+// Storage. Default is the current worktree's git-toplevel .audit/. That keeps
+// evidence paired with the branch and prevents sibling worktrees with the same
+// repository name from sharing a record. Set MOE_EVIDENCE_HOME=1 for the
+// explicit machine-local escape at $HOME/.claude/moe/audit/<repo-basename>/.
 //
-// -- Extensionless-file / module-type gotcha, worked around deliberately --
-// packages/core/package.json declares "type": "module". Installed as a
-// plugin, plugins/*/ has no package.json, so Node treats extensionless
-// files as CommonJS. This file uses only:
-//   (a) syntax legal in BOTH ESM and CJS (function calls including
-//       `require`, plain if / const / process.exit), and
-//   (b) an early exit that touches only globals (process.env, process.exit)
-//       before the first require.
-// So `node --check` under packages/core (ESM) passes on syntax alone, the
-// gate `MOE_EVIDENCE_DISABLED=1 node .../moe-completion-evidence` returns
-// 0 via the early exit under ESM, and the real work runs under CJS in the
-// installed plugin. Same pitfall packages/core/README's "Module format"
-// section records for render-graphs and update_docs.
+// -- Extensionless-file / module-type invariant --
+// Both packages/core/package.json and every generated plugin package.json
+// declare "type": "module". Keep this extensionless executable as ESM in both
+// trees; using require() works in neither real location even though it can look
+// green when a test copies the file outside its package boundary.
+
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 // ---------------------------------------------------------- disabled gate
 {
@@ -45,12 +42,6 @@
     process.exit(0);
   }
 }
-
-// ---------------------------------------------------------- CJS from here
-const fs = require('node:fs');
-const path = require('node:path');
-const os = require('node:os');
-const { execFileSync } = require('node:child_process');
 
 // stdin is the hook event. Empty/malformed input is not an error — nothing
 // this hook writes affects the stop, so just exit clean.
@@ -66,23 +57,32 @@ const transcriptPath = typeof event.transcript_path === 'string' ? event.transcr
 
 // ---------------------------------------------------------- output dir
 function repoBasename() {
+  const top = gitTopLevel();
+  return top ? path.basename(top) : 'no-repo';
+}
+
+function gitTopLevel() {
   try {
     const top = execFileSync('git', ['rev-parse', '--show-toplevel'], {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
     }).trim();
-    if (top) return path.basename(top);
+    if (top) return top;
   } catch (_e) {
     // Not a git repo — fall through.
   }
-  return 'no-repo';
+  return null;
 }
 
-const hereRaw = String(process.env.MOE_EVIDENCE_HERE || '').toLowerCase();
-const writeHere = hereRaw && hereRaw !== '0' && hereRaw !== 'false' && hereRaw !== 'no' && hereRaw !== 'off';
-const outDir = writeHere
-  ? path.join(process.cwd(), '.audit')
-  : path.join(os.homedir(), '.claude', 'moe', 'audit', repoBasename());
+function isTruthy(raw) {
+  const value = String(raw || '').toLowerCase();
+  return !!value && value !== '0' && value !== 'false' && value !== 'no' && value !== 'off';
+}
+
+const topLevel = gitTopLevel();
+const outDir = isTruthy(process.env.MOE_EVIDENCE_HOME)
+  ? path.join(os.homedir(), '.claude', 'moe', 'audit', repoBasename())
+  : path.join(topLevel || process.cwd(), '.audit');
 
 try {
   fs.mkdirSync(outDir, { recursive: true });
@@ -129,13 +129,48 @@ if (transcriptPath && fs.existsSync(transcriptPath)) {
 
 // Two passes: first index tool_results by id (they may follow or precede
 // their tool_use in JSONL depending on the client) AND remember where the
-// last user boundary sits, then walk assistant entries only AFTER that
-// boundary. Without the per-turn cut, evidence and skillsFired would
+// last HUMAN user boundary sits, then walk assistant entries only AFTER that
+// boundary. Claude serializes tool results as `type:"user"` rows too; treating
+// those as prompts cuts the matching assistant tool_use out of the window.
+// Without the per-turn cut, evidence and skillsFired would
 // accumulate across every stop event since transcript start, and a single
 // verifying command near the top of the session would look like proof for
 // every later claim — the opposite of what this hook is for.
 const toolResults = new Map();
-let lastUserIndex = -1;
+let lastHumanUserIndex = -1;
+
+function isHumanUserEntry(entry) {
+  if (!entry || entry.type !== 'user') return false;
+  // Claude 2.1.252 serializes the body returned by the Skill tool as a user
+  // text row. It is tool-generated metadata, not a new human turn boundary.
+  if (
+    entry.isMeta === true ||
+    entry.turnCompanion === true ||
+    typeof entry.sourceToolUseID === 'string'
+  ) {
+    return false;
+  }
+  const content = entry.message && entry.message.content;
+  if (typeof content === 'string') return true;
+  if (!Array.isArray(content)) return false;
+  return content.length > 0 && !content.some((item) => item && item.type === 'tool_result');
+}
+
+function textContent(content) {
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return null;
+  return content
+    .map((item) => (item && typeof item.text === 'string' ? item.text : ''))
+    .join('');
+}
+
+function integerOrNull(...values) {
+  for (const value of values) {
+    if (Number.isInteger(value)) return value;
+  }
+  return null;
+}
+
 for (let i = 0; i < transcriptLines.length; i++) {
   const line = transcriptLines[i];
   if (!line) continue;
@@ -145,19 +180,28 @@ for (let i = 0; i < transcriptLines.length; i++) {
   } catch (_e) {
     continue;
   }
-  if (entry && entry.type === 'user') lastUserIndex = i;
+  if (isHumanUserEntry(entry)) lastHumanUserIndex = i;
   const content = entry && entry.message && entry.message.content;
   if (!Array.isArray(content)) continue;
+  const resultItems = content.filter((item) => item && item.type === 'tool_result');
   for (const item of content) {
     if (item && item.type === 'tool_result' && typeof item.tool_use_id === 'string') {
-      let text = '';
-      if (typeof item.content === 'string') text = item.content;
-      else if (Array.isArray(item.content)) {
-        text = item.content
-          .map((c) => (c && typeof c.text === 'string' ? c.text : ''))
-          .join('');
-      }
-      toolResults.set(item.tool_use_id, { output: text, isError: !!item.is_error });
+      // `toolUseResult` is a row-level Claude transcript field. It maps
+      // unambiguously only when the row carries one tool_result block.
+      const external = resultItems.length === 1 ? entry.toolUseResult : null;
+      const output = textContent(item.content);
+      const isError = typeof item.is_error === 'boolean' ? item.is_error : null;
+      const explicitExitCode = integerOrNull(
+        item.exit_code,
+        item.exitCode,
+        external && external.exit_code,
+        external && external.exitCode,
+      );
+      // Current Claude Bash results omit the numeric exit code on success but
+      // do carry is_error:false. Preserve explicit codes when present; infer
+      // only the unambiguous successful case and leave failures unknown.
+      const exitCode = explicitExitCode === null && isError === false ? 0 : explicitExitCode;
+      toolResults.set(item.tool_use_id, { output, isError, exitCode });
     }
   }
 }
@@ -166,11 +210,11 @@ const evidence = [];
 const skillsFired = [];
 let lastAssistantText = '';
 
-// Per-turn window: only assistant entries after the last user boundary
+// Per-turn window: only assistant entries after the last human-user boundary
 // count toward evidence, skill-firings, and the completion-claim text
 // scanned for CLAIM_PATTERNS. First-turn (no prior user entry) still
-// works because lastUserIndex = -1 and the loop starts at 0.
-for (let i = lastUserIndex + 1; i < transcriptLines.length; i++) {
+// works because lastHumanUserIndex = -1 and the loop starts at 0.
+for (let i = lastHumanUserIndex + 1; i < transcriptLines.length; i++) {
   const line = transcriptLines[i];
   if (!line) continue;
   let entry;
@@ -189,16 +233,17 @@ for (let i = lastUserIndex + 1; i < transcriptLines.length; i++) {
     } else if (item.type === 'tool_use') {
       if (item.name === 'Skill') {
         const name = item.input && typeof item.input.skill === 'string' ? item.input.skill : '';
-        skillsFired.push(name);
+        if (typeof item.id === 'string') skillsFired.push({ id: item.id, name });
       } else if (item.name === 'Bash') {
         const cmd = item.input && typeof item.input.command === 'string' ? item.input.command : '';
         if (cmd && isVerify(cmd)) {
           const result = toolResults.get(item.id);
-          const output = result ? result.output : '';
+          const output = result ? result.output : null;
           evidence.push({
             command: cmd,
-            is_error: !!(result && result.isError),
-            output_tail: output.length > 4000 ? output.slice(-4000) : output,
+            output: typeof output === 'string' && output.length > 4000 ? output.slice(-4000) : output,
+            is_error: result ? result.isError : null,
+            exit_code: result ? result.exitCode : null,
           });
         }
       }
@@ -242,17 +287,23 @@ try {
 // counter has to accumulate to answer the session question, so it appends
 // this turn's skillsFired to whatever the file already carried.
 const firingFile = path.join(outDir, `${sessionId}-firing.json`);
-let firing = { session_id: sessionId, skill_tool_uses: 0, skills: [] };
+let firing = { session_id: sessionId, skill_tool_uses: 0, skills: [], skill_tool_use_ids: [] };
 try {
   if (fs.existsSync(firingFile)) {
-    firing = JSON.parse(fs.readFileSync(firingFile, 'utf8'));
+    const parsed = JSON.parse(fs.readFileSync(firingFile, 'utf8'));
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) firing = parsed;
   }
 } catch (_e) {
   // Reset silently if the prior file was corrupted.
 }
 const priorSkills = Array.isArray(firing.skills) ? firing.skills : [];
-firing.skills = priorSkills.concat(skillsFired);
-firing.skill_tool_uses = firing.skills.length;
+const priorIds = Array.isArray(firing.skill_tool_use_ids) ? firing.skill_tool_use_ids : [];
+const seenIds = new Set(priorIds);
+const newUses = skillsFired.filter((use) => !seenIds.has(use.id));
+for (const use of newUses) seenIds.add(use.id);
+firing.skills = priorSkills.concat(newUses.map((use) => use.name));
+firing.skill_tool_use_ids = priorIds.concat(newUses.map((use) => use.id));
+firing.skill_tool_uses = firing.skill_tool_use_ids.length;
 firing.last_updated = new Date().toISOString();
 try {
   fs.writeFileSync(firingFile, `${JSON.stringify(firing, null, 2)}\n`);
