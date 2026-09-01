@@ -2,7 +2,7 @@ import type { PluginModel } from '../model.js'
 
 // Repo-relative path of the bootstrap markdown file emitted in
 // bootstrap.generate mode. Shared by every adapter that consumes it
-// (claude-code/cursor cat it via sessionStartScript; opencode/pi/hermes
+// (claude-code/cursor cat it via sessionStartScript; opencode/pi
 // read it at runtime) so the path lives in exactly one place.
 export const GENERATED_BOOTSTRAP_PATH = 'hooks/moe-mint/bootstrap.md'
 

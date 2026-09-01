@@ -17,15 +17,6 @@
     ".cursor-plugin/plugin.json": {
       "sha256": "6378948d04d66f7770d3132ccf9e480e8be10cf14411729d32a6e76f4de48ff8"
     },
-    ".devin-plugin/plugin.json": {
-      "sha256": "373f180b08544e13d94d9682a1398fcd4022e752aa8194464553b5af9474ff33"
-    },
-    ".hermes-plugin/__init__.py": {
-      "sha256": "9e68d23b73a09a44447f6587bcb7ffa42650134132ac53e2f717598241e129c1"
-    },
-    ".hermes-plugin/plugin.yaml": {
-      "sha256": "83fff85a9cd7c9f4267a1a9bd955b987c88161d1017b630da76c235bd94a99a5"
-    },
     ".kimi-plugin/plugin.json": {
       "sha256": "8d68356e4e90cc233f995ca64594c9acaf1b0bee6571bd524ff48ec4f0301e93"
     },
@@ -50,23 +41,17 @@
     "docs/install/agent-plugins-1.0.md": {
       "sha256": "f43216d880f46987cf9c133e45e4d2c0bf479ee792f69134da837a41f3d233c6"
     },
-    "docs/install/agents-marketplace.md": {
-      "sha256": "655eb4739724d3f891dba0aa2ca9b2a2a9e3504defe8a330ce31627bd76dee68"
-    },
     "docs/install/claude-code.md": {
       "sha256": "6fbfc4aee95708e0975c10f0217101b06dd997c2a23a427ac811055475977a76"
     },
     "docs/install/codex.md": {
-      "sha256": "f296b1591035979c93fbc0a8a2917b501bb8d5a85bfbd5d3fd7ca0340c5bb53e"
+      "sha256": "872c1529336a7326181fac9c7c6429376fc09f9def1304ff3f0933bf9e1d06ac"
+    },
+    "docs/install/copilot.md": {
+      "sha256": "be8fa17c91f41e221008781d43047562ff3128731cbdb1f5989719ada381a422"
     },
     "docs/install/cursor.md": {
       "sha256": "71ec4a7a5be94703a4c288a1ecdc3ead4dd2835b37a485fdf858cb1b76655def"
-    },
-    "docs/install/devin.md": {
-      "sha256": "3bb7c47f0f1f916df86954de86548fc0c5b3608ff13304c7cb680236392bb812"
-    },
-    "docs/install/hermes.md": {
-      "sha256": "162bd2df24cccf317cfeebe86be851c467fdf798dc91ba8fcc42031227c0450c"
     },
     "docs/install/kimi.md": {
       "sha256": "e571512d9270ecd5b809d29dc26ce0009585cb55aeb726b681d754fe20864acd"
@@ -78,7 +63,7 @@
       "sha256": "6ca0e480d14b3b325f4151f9567f3f6c45ddc99b62a974eb2f71f689fcbc27a7"
     },
     "docs/support-matrix.md": {
-      "sha256": "19d8935eed2ba80e8ef359b560a1b39ef4a400070272da649ee4a744eff583b8"
+      "sha256": "f5187c3ac9128a1f57e9c9289a1ce664e5ad521ec9cbe9b41b4eec09f3207d1d"
     },
     "hooks/moe-mint/hooks-cursor.json": {
       "sha256": "7653af3eca8918a0fa45c4d67c321723d3906b8d3d6966959461be208f67d8a5"

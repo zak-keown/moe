@@ -37,7 +37,7 @@ bootstrap:
 # its bootstrap entry alongside rather than replacing it, so both run. That is
 # per-package behaviour, not mint-exclusive ownership of SessionStart.
 
-# harnesses: no exclusions. All 10 adapters emit.
+# harnesses: no exclusions. All 8 adapters run.
 
 marketplace:
   # The marketplace users actually install from is the hand-maintained root

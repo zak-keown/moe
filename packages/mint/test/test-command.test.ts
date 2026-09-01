@@ -58,12 +58,9 @@ const DEEP_HARNESSES = [
   'codex',
   'copilot',
   'opencode',
-  'droid',
-  'hermes',
   'pi',
   'kimi',
   'cursor',
-  'devin',
 ]
 
 // A bin directory holding symlinks to ONLY the generic tools the checks
@@ -496,7 +493,7 @@ describe('checks/run-checks.sh', () => {
       },
     })
     expect(result.stdout).toMatch(/^ok exec-bits-source: /m)
-    for (const harness of ['claude-code', 'codex', 'copilot', 'droid', 'hermes']) {
+    for (const harness of ['claude-code', 'codex', 'copilot']) {
       expect(result.stdout).toMatch(new RegExp(`^skip exec-bits-${harness}: `, 'm'))
     }
     expect(result.stdout).toMatch(/^skip exec-bits-kimi: install is TUI-only/m)

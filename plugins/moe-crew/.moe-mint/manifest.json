@@ -17,15 +17,6 @@
     ".cursor-plugin/plugin.json": {
       "sha256": "3ec770cba7d4c0eea60c57c0b7921a544e75d43159d43cd73a818df2eb75e480"
     },
-    ".devin-plugin/plugin.json": {
-      "sha256": "c527d26a397b515591e2eb240fe61df2bc079666e855515630f51f434cf18bc8"
-    },
-    ".hermes-plugin/__init__.py": {
-      "sha256": "be640008978de44a0b10b4904b4e54325457ade0f7aada97e9ed693d9cf69550"
-    },
-    ".hermes-plugin/plugin.yaml": {
-      "sha256": "e900736736f5e21fec417b85f284d89fa12e5ad7c29daae5fbeb91f56f989a74"
-    },
     ".kimi-plugin/plugin.json": {
       "sha256": "f0cc0f78f9bd00abf52a9ea4e41d2e16a792a48f18a87188eb5af029fb71e0f6"
     },
@@ -38,23 +29,17 @@
     "docs/install/agent-plugins-1.0.md": {
       "sha256": "982089a59356f529f7809154b5f79243015d8b911bdf5b27bea8635c810ec0f3"
     },
-    "docs/install/agents-marketplace.md": {
-      "sha256": "af46896abeec379be1ec12feb72e430cd7e1ddff22a08f4adc904e152e3dda2b"
-    },
     "docs/install/claude-code.md": {
       "sha256": "10ac49d7b3c141c5d9600e7fe86da2e92dceb19bb95e4c678aef07ffd5756fb0"
     },
     "docs/install/codex.md": {
-      "sha256": "0313af1d1f4c21e28d0f916177e11710abf92c6f9cf7f8ffeec650e6ba1f65f4"
+      "sha256": "95ef4be47a16f03a023fe6ae8496427bd0807a82147b19f5772e862c5e59de36"
+    },
+    "docs/install/copilot.md": {
+      "sha256": "65e7a1425f889ddb9352dbde891a194ab233213e3e2896a467c6e5d15865cfd5"
     },
     "docs/install/cursor.md": {
       "sha256": "173d1cea0339f4dab36508df2c438dc17033f1b629c71d2e92375a3763c11387"
-    },
-    "docs/install/devin.md": {
-      "sha256": "7eb74cf38e27c263abb47547c091e04e2724d38e27186c357eaecaf980962ed2"
-    },
-    "docs/install/hermes.md": {
-      "sha256": "1bbb61966ea477a28e70b38c229e700356243460d0141d8f74abdceeb569c72c"
     },
     "docs/install/kimi.md": {
       "sha256": "af85dfa57586cb1f521cd8a4c6a95f124c7ef1e31dba3cd79564ca4caef54108"
@@ -66,7 +51,7 @@
       "sha256": "d49f4c159880bd7bdd9799a6a2aa7ab68664681cfbedc4add59a10c43cbd0590"
     },
     "docs/support-matrix.md": {
-      "sha256": "09c594e9544aeecc1a0d13abb2e42091c99b70cff623d3d7fb34dffce4cf5668"
+      "sha256": "02e1ee2981862e2eb3d4518996fb4186bff5a9b5049c2e24fb9765a73a9b1e2c"
     },
     "package.json": {
       "sha256": "0fc5b9ee4f0bf1175910ef463983a6af09daa0e55d34417840d858f974b493b6"

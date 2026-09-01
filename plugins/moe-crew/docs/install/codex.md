@@ -5,6 +5,7 @@
 ## What gets emitted
 
 - `.codex-plugin/plugin.json` (with an empty `hooks` object, which suppresses Codex's automatic `hooks/hooks.json` registration)
+- `.agents/plugins/marketplace.json`, used by Codex marketplace installation
 
 ## Installing
 

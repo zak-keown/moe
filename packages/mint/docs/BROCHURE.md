@@ -5,8 +5,8 @@ Generate a coding-agent plugin for every harness from one config file.
 > **Status: imported, `0.0.0`.** Inherited from upstream `everyharness` @
 > `4f7c5e2`, whose feature set was complete at its v1.0.0: eleven harness
 > adapters, init/import, generated install docs, container-backed install
-> checks. This fork's inbound adapter count is ten — Gemini CLI and Grok Build
-> CLI were retired in this repo (see PARITY.md's "Not ported" table). The
+> checks. This fork's inbound adapter count is eight after pruning runtime
+> targets that Moe does not support. The
 > `moe-mint.yaml` schema and generation-manifest format were declared stable
 > upstream and are unchanged here. `@bubstack/moe-mint` is not published to any
 > registry and is not intended to be — it is a workspace bin and the
@@ -17,9 +17,8 @@ Generate a coding-agent plugin for every harness from one config file.
 
 You wrote a plugin and people liked it. Then they asked for it in their own
 coding agent. Claude Code reads `.claude-plugin/plugin.json`. Codex reads
-`.codex-plugin/plugin.json`. OpenCode wants a JavaScript plugin file, Pi wants
-a TypeScript extension, and Hermes wants YAML plus a Python init file (real
-generated tree, "Using it" below). Each format drifts on its own schedule, and
+`.codex-plugin/plugin.json`. OpenCode wants a JavaScript plugin file, and Pi
+wants a TypeScript extension (real generated tree, "Using it" below). Each format drifts on its own schedule, and
 every release means editing all of them by hand. A large plugin can carry many
 hand-maintained manifest files and several
 distinct bootstrap mechanisms
@@ -29,13 +28,12 @@ user's broken install.
 moe-mint gives you one file, `moe-mint.yaml`, as the source of truth,
 and generates the rest:
 
-- **Native files for 10 harnesses through 10 adapters.** Claude Code, Codex,
-  Cursor, Copilot CLI, OpenCode, Pi, Kimi Code, Hermes, Devin CLI, and Factory
-  Droid. Droid installs through the generated agents-marketplace descriptor,
-  and Copilot installs through the generated Claude-format marketplace
-  descriptor (`src/adapters/index.ts`, `adapters`;
-  `src/adapters/agents-marketplace.ts`, header notes; the install-check loop
-  in `checks/run-checks.sh`). Antigravity is on the roadmap (docs/CONFIG.md,
+- **Native files for seven named harnesses through eight adapters.** Claude
+  Code, Codex, Cursor, Copilot CLI, OpenCode, Pi, and Kimi Code, plus the
+  generic Agent Plugins 1.0 format. Copilot installs through the generated
+  Claude-format marketplace descriptor (`src/adapters/index.ts`, `adapters`;
+  `src/adapters/copilot.ts`, header notes; the install-check loop in
+  `checks/run-checks.sh`). Antigravity is on the roadmap (docs/CONFIG.md,
   goal paragraph).
 - **Install docs and a support matrix with every generation.** A
   `docs/install/<harness>.md` per adapter and `docs/support-matrix.md`, so your
@@ -57,7 +55,7 @@ and generates the rest:
   `validate`; `src/manifest.ts`, `checkDrift`; exit codes assigned in
   `src/cli.ts`, `validate` action).
 - **Proof it round-trips a representative plugin.** The dogfood test regenerates
-  seven hand-maintained manifests from one config and compares them
+  five hand-maintained manifests from one config and compares them
   semantically. It skips when its local reference fixture is absent
   (`test/dogfood.test.ts`,
   `COMPARED_FILES`, `dogfood` describe block).
@@ -78,7 +76,7 @@ node /path/to/moe/packages/mint/dist/cli.js validate
 `init` creates `moe-mint.yaml` and a starter skill; edit them before
 `generate`. The generated files include `.claude-plugin/plugin.json`,
 `.codex-plugin/plugin.json`, `.opencode/plugins/demo-plugin.js`,
-`.pi/extensions/demo-plugin.ts`, `.hermes-plugin/plugin.yaml`, ten install
+`.pi/extensions/demo-plugin.ts`, eight install
 docs, the support matrix, and the bootstrap hook wiring. You commit them;
 `validate` keeps them honest from then on.
 
@@ -127,15 +125,9 @@ tool, or the maintainer running its guardrails.
   image, on first use (`docs/CONFIG.md`, `moe-mint test` section). **That image
   has not been built or pushed yet** — its Dockerfile is in `infra/container/`
   and the registry path is still an assumption; see that directory's README.
-- **(maintainer)** Kimi Code, Cursor, and Devin CLI have no offline install
+- **(maintainer)** Kimi Code and Cursor have no offline install
   check; `test` reports them as `skip` (`docs/CONFIG.md`, `moe-mint test`
   section).
-- **(maintainer)** Install docs shorten a repository URL to an `owner/repo`
-  slug only for `github.com` hosts (`src/adapters/shared.ts`,
-  `githubOwnerRepo`). Moe is on GitLab, so the claude-code, devin, hermes and
-  pi install docs will emit a `<your-repo>` placeholder rather than a working
-  command. Deliberate upstream — it never fabricates a listing — but it needs
-  fixing before those docs ship.
 - **(author)** Kimi requires a named bootstrap skill; under
   `bootstrap: generate` the kimi adapter warns and skips its bootstrap wiring
   (observed in the session above; `src/adapters/kimi.ts`).

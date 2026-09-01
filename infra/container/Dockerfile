@@ -88,7 +88,6 @@ RUN npm install -g \
     @openai/codex@0.146.0 \
     opencode-ai@1.18.1 \
     @github/copilot@1.0.78 \
-    @factory/cli@0.171.0 \
     @qwen-code/qwen-code@0.19.10 \
     @moonshot-ai/kimi-code@0.24.1 \
     @kilocode/cli@7.4.7 \
@@ -98,7 +97,6 @@ RUN npm install -g \
     @earendil-works/pi-coding-agent@0.80.7 \
     pi-subagents@0.34.0 \
   && if command -v kilocode >/dev/null 2>&1 && ! command -v kilo >/dev/null 2>&1; then ln -s "$(command -v kilocode)" /usr/local/bin/kilo; fi \
-  && if command -v factory >/dev/null 2>&1 && ! command -v droid >/dev/null 2>&1; then ln -s "$(command -v factory)" /usr/local/bin/droid; fi \
   && if command -v kimi >/dev/null 2>&1 && [ "$(command -v kimi)" != /usr/local/bin/kimi ]; then ln -s "$(command -v kimi)" /usr/local/bin/kimi; fi
 
 RUN mkdir -p /opt/cursor-agent \
@@ -141,15 +139,6 @@ RUN case "$TARGETARCH" in \
   && install -m 0755 /tmp/goose /usr/local/bin/goose \
   && rm -f /tmp/goose /tmp/goose.tar.gz \
   && goose --version
-
-# Run as root, the hermes installer uses the FHS layout: code at
-# /usr/local/lib/hermes-agent, command at /usr/local/bin/hermes (already on PATH).
-# HERMES_COMMIT pins the installed revision: the installer defaults to main
-# HEAD, which BuildKit's layer cache would otherwise freeze invisibly — a bare
-# rebuild is a cache no-op. Bump the default to move hermes.
-ARG HERMES_COMMIT=9ea01979dc00d3ed0b08977c28325e6c3ed592d0
-RUN curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash -s -- --skip-setup --commit "$HERMES_COMMIT" \
-  && hermes version
 
 RUN curl -fsSL https://mimo.xiaomi.com/install | bash \
   && ln -sf /root/.mimocode/bin/mimo /usr/local/bin/mimo \

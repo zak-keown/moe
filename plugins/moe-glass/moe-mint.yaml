@@ -36,7 +36,7 @@ bootstrap: none
 # not shipped as a plugin-level .mcp.json, because the server key (`moe-glass`)
 # has to match what the user's own config names.
 
-# harnesses: no exclusions. All 10 adapters emit.
+# harnesses: no exclusions. All 8 adapters run.
 
 marketplace:
   # The marketplace users actually install from is the hand-maintained root
