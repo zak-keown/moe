@@ -196,7 +196,7 @@ moe-crew grant-consent
 
 Each worker gets its OWN linked git worktree — never a shared checkout. Two
 workers writing into the same tree collide on the axis the parallel-
-implementation worktree gate is built to prevent (see moe-core's
+implementation worktree gate is built to prevent (see the `moe` plugin's
 `dispatching-parallel-agents`, "Safe Parallel Implementation: The Worktree
 Gate", and its degradation ladder). Create the worktrees first, branched from
 one recorded base SHA, then point each worker's `cwd` at its own:

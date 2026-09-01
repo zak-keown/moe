@@ -11,21 +11,22 @@
  *
  * moe-mint reads exactly `<root>/moe-mint.yaml` and uses ONE root for both
  * config-in and files-out. Pointed at a source package that would mean writing
- * generated manifests into `packages/<pkg>/`, and it made two things impossible:
- *
- *   1. **Two plugins from one source tree.** `moe-core` and `moe-everything` are
- *      the same 27 skills split by tier. One root cannot hold two `moe-mint.yaml`
- *      files or two outputs.
- *   2. **The opencode and pi adapters.** Both emit a FULL-REPLACEMENT
- *      `package.json` into the plugin root — which for core would have been
- *      `packages/core/package.json`, the pnpm workspace manifest. They were
- *      excluded in config with a comment saying "until the plugin root is a
- *      staging directory rather than the source tree".
+ * generated manifests into `packages/<pkg>/`, and the opencode and pi adapters
+ * both emit a FULL-REPLACEMENT `package.json` into the plugin root — which for
+ * core would have been `packages/core/package.json`, the pnpm workspace
+ * manifest. Historically they were excluded in config with a comment saying
+ * "until the plugin root is a staging directory rather than the source tree".
  *
  * So this script stages. For each plugin it wipes `plugins/<name>/`, copies in
- * the config plus exactly the content that plugin ships, and runs
+ * the config plus the content that plugin ships, and runs
  * `moe-mint generate --dir plugins/<name>`. The plugin root IS the staging
- * directory, both problems dissolve, and moe-mint needed no changes at all.
+ * directory, the problem dissolves, and moe-mint needed no changes at all.
+ *
+ * The staging root also used to solve a second problem — two plugins
+ * (`moe-core` and `moe-everything`) from one source tree, filtered by tier.
+ * That split was retired 2026-09-01 in favour of a single `moe` plugin.
+ * `skill-tiers.yaml` is still the fidelity ledger for the imported skill set;
+ * it no longer partitions them.
  *
  * `plugins/*` is deliberately not a pnpm workspace glob (`pnpm-workspace.yaml`),
  * so a generated `package.json` under a staging root is inert.
@@ -47,7 +48,6 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { parse as parseYaml } from "yaml";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(ROOT, "plugins");
@@ -61,17 +61,14 @@ const MINT_CLI = path.join(ROOT, "packages/mint/dist/cli.js");
 const COMPONENTS = ["skills", "commands", "agents", "hooks", ".mcp.json"];
 
 /**
- * The plugin registry. `tier` is set only where one source tree emits more than
- * one plugin: it names the `skill-tiers.yaml` tiers whose skills to stage, read
- * from that file's merged `imported:` + `authored:` maps.
+ * The plugin registry.
  *
  * `checkMarketplace()` below asserts this list agrees with
  * `.claude-plugin/marketplace.json`, in both directions: a plugin generated but
  * not listed is uninstallable, and one listed but not generated is a broken
  * link. Both fail silently otherwise, which is why it is checked here rather
  * than left to discovery.
- */
-/**
+ *
  * `distribution` is how installers get the plugin, not how it's staged for
  * generation. Every plugin is generated the same way ("./plugins/<name>/"),
  * but the marketplace listing points elsewhere depending on how a user
@@ -91,17 +88,9 @@ const COMPONENTS = ["skills", "commands", "agents", "hooks", ".mcp.json"];
  */
 const PLUGINS = [
   {
-    name: "moe-core",
+    name: "moe",
     pkg: "core",
-    config: "mint/moe-core.yaml",
-    tiers: ["core"],
-    distribution: "local",
-  },
-  {
-    name: "moe-everything",
-    pkg: "core",
-    config: "mint/moe-everything.yaml",
-    tiers: ["core", "everything"],
+    config: "mint/moe.yaml",
     distribution: "local",
   },
   {
@@ -133,13 +122,13 @@ const PLUGINS = [
 /**
  * Skill directories that are not skills.
  *
- * `_shared/` holds fragments that skills include; it has no SKILL.md, is in
- * NEITHER of `skill-tiers.yaml`'s maps (not `imported:`, not `authored:`), and is
- * why `packages/core/skills/` has 28 entries for 27 skills. It is staged for EVERY tier — a lean-tier skill including a shared
- * fragment that was filtered out is a dead link mid-workflow, which is the same
- * failure the tier closure rule exists to prevent.
+ * `_shared/` holds fragments that skills include; it has no SKILL.md and is in
+ * NEITHER of `skill-tiers.yaml`'s maps (not `imported:`, not `authored:`),
+ * which is why `packages/core/skills/` has 28 entries for 27 skills. It is
+ * excluded from the skill count only; it is still staged with the rest of
+ * `skills/`.
  */
-const ALWAYS_STAGE = new Set(["_shared"]);
+const NON_SKILL_ENTRIES = new Set(["_shared"]);
 
 function fail(message) {
   console.error(`mint-plugins: ${message}`);
@@ -260,30 +249,6 @@ function writePluginLicense(plugin, dest) {
   fs.writeFileSync(path.join(dest, "LICENSE"), `${sections.join("\n\n---\n\n")}\n`);
 }
 
-/** The skill names to stage for a plugin, or null to stage all of them. */
-function skillsForTiers(pkgDir, tiers) {
-  if (!tiers) return null;
-  const tiersPath = path.join(pkgDir, "skill-tiers.yaml");
-  if (!fs.existsSync(tiersPath)) {
-    fail(
-      `${path.relative(ROOT, tiersPath)} is missing, but a plugin asks for tiers ${tiers.join(", ")}`,
-    );
-  }
-  const parsed = parseYaml(fs.readFileSync(tiersPath, "utf8"));
-  const wanted = new Set(tiers);
-  const names = new Set();
-  // Both maps, merged. `imported:` is the frozen record of the 27 upstream
-  // skills; `authored:` is what this fork wrote. A skill's tier is read the same
-  // way whichever map it came from, because a lean-plugin reader hits the same
-  // dead end at a missing skill no matter who authored it.
-  const registry = { ...(parsed.imported ?? {}), ...(parsed.authored ?? {}) };
-  for (const [name, entry] of Object.entries(registry)) {
-    if (wanted.has(entry.tier)) names.add(name);
-  }
-  if (names.size === 0) fail(`no skills matched tiers ${tiers.join(", ")} in skill-tiers.yaml`);
-  return names;
-}
-
 function stage(plugin) {
   const pkgDir = path.join(ROOT, "packages", plugin.pkg);
   const dest = path.join(OUT, plugin.name);
@@ -299,24 +264,15 @@ function stage(plugin) {
   // moe-mint requires the config at this exact name in the plugin root.
   fs.copyFileSync(configSrc, path.join(dest, "moe-mint.yaml"));
 
-  const keep = skillsForTiers(pkgDir, plugin.tiers);
   let staged = 0;
 
   for (const component of COMPONENTS) {
     const src = path.join(pkgDir, component);
     if (!fs.existsSync(src)) continue;
-
-    if (component === "skills" && keep) {
-      fs.mkdirSync(path.join(dest, "skills"), { recursive: true });
-      for (const entry of fs.readdirSync(src).sort()) {
-        if (!keep.has(entry) && !ALWAYS_STAGE.has(entry)) continue;
-        copyInto(path.join(src, entry), path.join(dest, "skills", entry));
-        staged++;
-      }
-      continue;
-    }
     copyInto(src, path.join(dest, component));
-    if (component === "skills") staged += fs.readdirSync(src).length;
+    if (component === "skills") {
+      staged += fs.readdirSync(src).filter((entry) => !NON_SKILL_ENTRIES.has(entry)).length;
+    }
   }
 
   writePluginLicense(plugin, dest);

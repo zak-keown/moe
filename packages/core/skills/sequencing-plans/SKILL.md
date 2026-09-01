@@ -81,9 +81,8 @@ plans:
 ## The CLI
 
 `plan-set` is one extensionless Node script under
-`${CLAUDE_PLUGIN_ROOT}/hooks/plan-set`. It ships in both `moe-core` and
-`moe-everything` because `hooks/` stages unfiltered, and this skill sits in the
-`everything` tier — a lean-tier user still gets the CLI without the skill.
+`${CLAUDE_PLUGIN_ROOT}/hooks/plan-set`. It ships in the `moe` plugin alongside
+this skill.
 
 Verbs:
 
