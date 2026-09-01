@@ -17,14 +17,39 @@ const arg = (name, fallback) => {
 };
 
 const repo = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
-const shardsDir = arg("shards", ".review-shards");
+const shardsDir = arg("shards", ".moe/review-shards");
 const out = arg("out", "CODEBASE-REVIEW.md");
-const verified = process.argv.includes("--verified");
+if (process.argv.includes("--verified")) {
+  process.stderr.write(
+    "review-merge: --verified cannot prove anything; pass a complete --verification-results ledger\n",
+  );
+  process.exit(2);
+}
+const verificationResultsPath = arg("verification-results", "");
 const manifest = JSON.parse(readFileSync(join(repo, shardsDir, "manifest.json"), "utf8"));
+const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: repo, encoding: "utf8" }).trim();
+if (head !== manifest.base_sha) {
+  process.stderr.write(
+    `review-merge: HEAD ${head} does not match shard manifest base_sha ${manifest.base_sha}\n`,
+  );
+  process.exit(1);
+}
+const dirty = execFileSync("git", ["status", "--porcelain", "--untracked-files=no"], {
+  cwd: repo,
+  encoding: "utf8",
+}).trim();
+if (dirty) {
+  process.stderr.write(
+    "review-merge: tracked working tree is dirty; shard provenance no longer identifies one tree\n",
+  );
+  process.exit(1);
+}
 
 const RANK = { critical: 0, high: 1, medium: 2, low: 3 };
 const found = [];
 const missing = [];
+const malformed = [];
+const provenanceFailures = [];
 // Shard sections that are not findings but must survive the merge. Dropping
 // them was a real defect: review-shard.md tells reviewers to write
 // "Checked and found sound" with no **Severity:** line, and this merge used to
@@ -38,27 +63,75 @@ for (const shard of manifest.shards) {
     missing.push(shard);
     continue;
   }
-  const body = readFileSync(p, "utf8").replace(/\r\n/g, "\n").replace(/^---\n[\s\S]*?\n---\n?/, "");
+  const raw = readFileSync(p, "utf8").replace(/\r\n/g, "\n");
+  const provenance = raw.match(
+    /^<!-- moe-review-shard\nbase_sha: ([0-9a-f]{40})\nfiles_opened: (\d+)\n-->\n?/,
+  );
+  if (!provenance) {
+    provenanceFailures.push(`${shard.report_path}: missing shard provenance header`);
+    continue;
+  }
+  if (provenance[1] !== manifest.base_sha) {
+    provenanceFailures.push(
+      `${shard.report_path}: base_sha ${provenance[1]} does not match ${manifest.base_sha}`,
+    );
+    continue;
+  }
+  if (Number(provenance[2]) !== shard.files.length) {
+    provenanceFailures.push(
+      `${shard.report_path}: files_opened ${provenance[2]} does not match assigned ${shard.files.length}`,
+    );
+    continue;
+  }
+  const body = raw
+    .slice(provenance[0].length)
+    .replace(/^---\n[\s\S]*?\n---\n?/, "");
   const heads = [...body.matchAll(/^###\s+(.+)$/gm)];
   for (let i = 0; i < heads.length; i++) {
     const start = heads[i].index;
     const end = i + 1 < heads.length ? heads[i + 1].index : body.length;
     const block = body.slice(start, end).trim();
-    const sev = (block.match(/^\*\*Severity:\*\*\s*(critical|high|medium|low)/im) || [])[1];
+    const severityField = (block.match(/^\*\*Severity:\*\*\s*([^\n]+)/im) || [])[1]?.trim();
+    const fileField = (block.match(/^\*\*File:\*\*\s*`?([^`\n]+)`?/im) || [])[1]?.trim();
+    const anchorField = (block.match(/^\*\*Anchor:\*\*\s*`?([^`\n]+)`?/im) || [])[1]?.trim();
     if (/^checked and found sound/i.test(heads[i][1])) {
       sound.push(block.replace(/^###\s+.+$/m, "").trim());
       continue;
     }
-    if (!sev) continue; // not a finding block
-    const file = (block.match(/^\*\*File:\*\*\s*`?([^`\n]+)`?/im) || [])[1] || "(unknown)";
+    // The checked-sound heading above is the only allowed non-finding. Any
+    // other fieldless heading could be a real finding the merge would silently
+    // erase, turning a shard with issues into a clean report.
+    const sev = severityField?.toLowerCase();
+    if (!fileField || /:\d+$/.test(fileField) || !anchorField || !Object.hasOwn(RANK, sev)) {
+      malformed.push({ report_path: shard.report_path, title: heads[i][1] });
+      continue;
+    }
     found.push({
       sev,
-      file: file.trim(),
+      file: fileField,
       group: shard.group,
       title: heads[i][1].replace(/^(?:CR-\d+|\d+)[.:]\s*/, "").trim(),
       block,
     });
   }
+}
+
+if (provenanceFailures.length) {
+  process.stderr.write(
+    `review-merge: ${provenanceFailures.length} shard provenance failure(s):\n` +
+      provenanceFailures.map((failure) => `  ${failure}`).join("\n") +
+      "\n",
+  );
+  process.exit(1);
+}
+
+if (malformed.length) {
+  process.stderr.write(
+    `review-merge: ${malformed.length} malformed finding record(s) — refusing to omit them:\n` +
+      malformed.map((f) => `  ${f.report_path}: ${f.title}`).join("\n") +
+      "\nEach finding needs a path-only **File:** field, a stable **Anchor:** field, and a critical|high|medium|low **Severity:** field.\n",
+  );
+  process.exit(1);
 }
 
 // A missing shard is a smaller tree reported as a whole one. Refuse.
@@ -77,9 +150,97 @@ found.forEach((f, i) => {
   f.id = `CR-${String(i + 1).padStart(3, "0")}`;
 });
 
-const count = (s) => found.filter((f) => f.sev === s).length;
+const VERDICTS = ["confirmed", "confirmed-lower", "refuted", "unproven"];
+let verificationCounts = null;
+if (verificationResultsPath) {
+  let ledger;
+  try {
+    ledger = JSON.parse(readFileSync(join(repo, verificationResultsPath), "utf8"));
+  } catch (error) {
+    process.stderr.write(`review-merge: cannot read verification results: ${error.message}\n`);
+    process.exit(1);
+  }
+  if (ledger.base_sha !== manifest.base_sha) {
+    process.stderr.write(
+      `review-merge: verification base_sha ${JSON.stringify(ledger.base_sha)} does not match manifest ${manifest.base_sha}\n`,
+    );
+    process.exit(1);
+  }
+  if (!Array.isArray(ledger.results)) {
+    process.stderr.write("review-merge: verification results must be an array\n");
+    process.exit(1);
+  }
+
+  const serious = found.filter((f) => f.sev === "critical" || f.sev === "high");
+  const expected = new Map(serious.map((f) => [f.id, f]));
+  const results = new Map();
+  for (const result of ledger.results) {
+    if (!result || typeof result !== "object" || typeof result.id !== "string") {
+      process.stderr.write("review-merge: every verification result needs an id\n");
+      process.exit(1);
+    }
+    if (results.has(result.id)) {
+      process.stderr.write(`review-merge: duplicate verification result for ${result.id}\n`);
+      process.exit(1);
+    }
+    if (!expected.has(result.id)) {
+      process.stderr.write(`review-merge: unexpected verification result for ${result.id}\n`);
+      process.exit(1);
+    }
+    if (!VERDICTS.includes(result.verdict)) {
+      process.stderr.write(`review-merge: invalid verdict for ${result.id}\n`);
+      process.exit(1);
+    }
+    if (typeof result.evidence !== "string" || !result.evidence.trim()) {
+      process.stderr.write(`review-merge: ${result.id} needs non-empty verification evidence\n`);
+      process.exit(1);
+    }
+    results.set(result.id, result);
+  }
+  for (const id of expected.keys()) {
+    if (!results.has(id)) {
+      process.stderr.write(`review-merge: missing verdict for ${id}\n`);
+      process.exit(1);
+    }
+  }
+
+  verificationCounts = Object.fromEntries(VERDICTS.map((verdict) => [verdict, 0]));
+  for (const finding of serious) {
+    const result = results.get(finding.id);
+    if (result.verdict === "confirmed-lower") {
+      if (!Object.hasOwn(RANK, result.severity) || RANK[result.severity] <= RANK[finding.sev]) {
+        process.stderr.write(
+          `review-merge: ${finding.id} confirmed-lower needs a severity below ${finding.sev}\n`,
+        );
+        process.exit(1);
+      }
+      finding.sev = result.severity;
+      finding.block = finding.block.replace(
+        /^\*\*Severity:\*\*\s*[^\n]+/im,
+        `**Severity:** ${result.severity}`,
+      );
+    } else if (result.severity !== undefined) {
+      process.stderr.write(
+        `review-merge: ${finding.id} may set severity only for confirmed-lower\n`,
+      );
+      process.exit(1);
+    }
+    finding.refuted = result.verdict === "refuted";
+    const evidence = result.evidence.replace(/\s+/g, " ").trim();
+    finding.block =
+      `${finding.block.replace(/\n*$/, "")}\n\n` +
+      `**Verification:** ${result.verdict}\n` +
+      `**Verification evidence:** ${evidence}`;
+    verificationCounts[result.verdict] += 1;
+  }
+}
+
+const active = found.filter((f) => !f.refuted);
+const refuted = found.filter((f) => f.refuted);
+const count = (s) => active.filter((f) => f.sev === s).length;
 const counts = { critical: count("critical"), high: count("high"), medium: count("medium"), low: count("low") };
 const opened = manifest.shards.reduce((n, s) => n + s.files.length, 0);
+const verified = Boolean(verificationResultsPath);
 
 const lines = [
   "---",
@@ -95,9 +256,15 @@ const lines = [
   `  high: ${counts.high}`,
   `  medium: ${counts.medium}`,
   `  low: ${counts.low}`,
-  `  total: ${found.length}`,
+  `  total: ${active.length}`,
   `verified: ${verified}`,
-  `status: ${found.length ? "issues_found" : "clean"}`,
+  ...(verificationCounts
+    ? [
+        "verification:",
+        ...VERDICTS.map((verdict) => `  ${verdict.replace("-", "_")}: ${verificationCounts[verdict]}`),
+      ]
+    : []),
+  `status: ${active.length ? "issues_found" : "clean"}`,
   "---",
   "",
   `# Codebase Review — ${repo.split("/").pop()}`,
@@ -126,11 +293,18 @@ const lines = [
 ];
 
 for (const sev of ["critical", "high", "medium", "low"]) {
-  const rows = found.filter((f) => f.sev === sev);
+  const rows = active.filter((f) => f.sev === sev);
   if (!rows.length) continue;
   lines.push(`## ${sev[0].toUpperCase()}${sev.slice(1)}`, "");
   for (const f of rows) {
     lines.push(f.block.replace(/^###\s+.+$/m, `### ${f.id}: ${f.title}`), "");
+  }
+}
+
+if (refuted.length) {
+  lines.push("## Refuted by verification", "");
+  for (const finding of refuted) {
+    lines.push(finding.block.replace(/^###\s+.+$/m, `### ${finding.id}: ${finding.title}`), "");
   }
 }
 
@@ -140,6 +314,6 @@ if (sound.length) {
 
 writeFileSync(join(repo, out), lines.join("\n"));
 process.stdout.write(
-  `${out}: ${found.length} finding(s) — ${counts.critical}C/${counts.high}H/${counts.medium}M/${counts.low}L, ` +
+  `${out}: ${active.length} finding(s) — ${counts.critical}C/${counts.high}H/${counts.medium}M/${counts.low}L, ` +
     `${opened}/${manifest.denominator} files opened.\n`,
 );

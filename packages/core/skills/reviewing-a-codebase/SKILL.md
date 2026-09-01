@@ -48,7 +48,8 @@ status: clean|issues_found       # REQUIRED
 
 ## Critical
 ### CR-001: <title>              <!-- one heading per finding, never a range -->
-**File:** `path:line`
+**File:** `path`
+**Anchor:** `symbol`, test name, or a short quoted sentence
 **Severity:** critical
 <what is wrong, why it is wrong, and the fix>
 
@@ -66,6 +67,13 @@ positional integer.** `fixing-a-code-review` addresses findings by ID and stamps
 dispositions back against them, so an ID that shifts when a finding is added
 silently repoints every record. A heading covering more than one finding is the
 same defect in a worse form: it cannot be addressed at all.
+
+### Finding anchors
+
+Use the repository path plus a stable symbol, test name, or short quoted
+sentence. Never use a line number. Parallel workers can read adjacent commits,
+and the repair itself moves lines; a line offset becomes false evidence while
+the named symbol or behavior still identifies the defect.
 
 ### Severity
 
@@ -132,14 +140,16 @@ never appear in the same decision.
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/skills/reviewing-a-codebase/scripts/review-scope.mjs" \
-  --depth medium --out .review-shards
+  --depth medium --out .moe/review-shards
 ```
 
 It enumerates via `git ls-files`, applies the exclusions, groups by top-level
 directory, splits any group over 30 files, and writes a shard manifest plus one
-file list per shard. Do this with the script rather than by hand: it is the part
-that must be identical across runs, and reproducing it in prose costs tokens on
-every invocation to get a different answer each time.
+file list per shard. The default `.moe/review-shards/` workspace is
+repository-local and self-ignoring: shard reports survive session boundaries
+without leaking into a broad `git add`. Do this with the script rather than by
+hand: it is the part that must be identical across runs, and reproducing it in
+prose costs tokens on every invocation to get a different answer each time.
 
 Then dispatch one `review-shard` agent per shard, in waves of at most 8
 concurrent. Each writes its own shard report; none of them commit.
@@ -153,11 +163,15 @@ Finally:
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/skills/reviewing-a-codebase/scripts/review-merge.mjs" \
-  --shards .review-shards --out CODEBASE-REVIEW.md
+  --shards .moe/review-shards --out CODEBASE-REVIEW.md
 ```
 
 The merge assigns the `CR-###` sequence, builds the frontmatter, and fails loudly
-if a shard report is missing rather than silently reporting a smaller tree.
+if a shard report is missing rather than silently reporting a smaller tree. It
+also requires every shard's machine-readable base SHA and opened-file count to
+match the manifest, requires `HEAD` still to be that base, and refuses a dirty
+tracked tree. Do not change source between scope and merge; restart the review
+from a new clean commit if the tree moves.
 
 ## `--verify`
 
@@ -165,6 +179,44 @@ With `--verify`, every critical and high finding goes to a `verify-finding`
 agent whose job is to **refute it** — reproduce the defect or show it cannot
 happen. Findings that survive are marked `verified: confirmed`; those that fall
 are demoted or dropped, with the refutation kept.
+
+Run the ordinary merge first so the serious findings have their stable
+`CR-###` IDs. Record the challengers' returned verdicts in
+`.moe/review-shards/verifications.json`:
+
+```json
+{
+  "base_sha": "abc1234",
+  "results": [
+    {
+      "id": "CR-001",
+      "verdict": "confirmed",
+      "evidence": "Reproduced from the public route."
+    },
+    {
+      "id": "CR-002",
+      "verdict": "confirmed-lower",
+      "severity": "medium",
+      "evidence": "The path is local-only and needs an unusual precondition."
+    }
+  ]
+}
+```
+
+Valid verdicts are `confirmed`, `confirmed-lower`, `refuted`, and `unproven`.
+Only `confirmed-lower` carries a replacement severity, and it must be lower
+than the original. Evidence is REQUIRED for every result. Then finalize:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/skills/reviewing-a-codebase/scripts/review-merge.mjs" \
+  --shards .moe/review-shards \
+  --verification-results .moe/review-shards/verifications.json \
+  --out CODEBASE-REVIEW.md
+```
+
+The merge refuses a mismatched base, duplicate/extra results, or a missing
+verdict for any critical/high ID. A bare `--verified` flag is rejected: the
+report can say `verified: true` only after consuming a complete ledger.
 
 This follows `_shared/parallel-adversarial-review.md`, adapted: PAR pairs two
 reviewers over the same code, this pairs a challenger against one finding.
