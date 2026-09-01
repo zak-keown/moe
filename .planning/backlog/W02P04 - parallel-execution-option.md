@@ -35,9 +35,12 @@ of `Files`, `Interfaces`, `Consumes` or `Produces` fail validation; linked Git
 directories must be pairwise unique; and any worktree setup failure serializes
 the whole wave. The "parallel execution contract" pressure suite guards these
 conditions across the five core execution skills and crew's driver guidance.
-The specified real three-worker isolated-plan run has not yet occurred; it is
-listed as an acceptance event in `.planning/backlog-acceptance-2026-09-01.md`,
-not treated as proven by the prose contract.
+The specified real three-worker isolated-plan run completed on 2026-09-01 from
+recorded base `642f05fc7576855868088414a3f952025f80c1e1`. Three concurrent workers
+used pairwise-unique linked Git directories, each committed only its disjoint
+owned file, and all three branches merged without conflict. The integrated
+tree passed all 26 `pnpm check` tasks. The worker and merge ledger is recorded
+in `.planning/parallel-execution-acceptance-2026-09-01.md`.
 
 ## The idea
 

@@ -43,11 +43,11 @@ None.
 - Consumes: None
 - Produces: None
 
-- [ ] **Step 1:** Confirm `git rev-parse HEAD` equals the controller-supplied base SHA.
-- [ ] **Step 2:** Resolve `git rev-parse --path-format=absolute --git-dir` and `git rev-parse --path-format=absolute --git-common-dir`; fail if equal.
-- [ ] **Step 3:** Create `alpha.md` containing worker name, base SHA, resolved worktree path, Git directory, common directory, and validation result `linked-worktree: pass`.
-- [ ] **Step 4:** Run `git diff --check` and verify the evidence file contains the exact base and both resolved Git paths.
-- [ ] **Step 5:** Commit only `alpha.md` with message `test(parallel): record alpha worktree evidence`.
+- [x] **Step 1:** Confirm `git rev-parse HEAD` equals the controller-supplied base SHA.
+- [x] **Step 2:** Resolve `git rev-parse --path-format=absolute --git-dir` and `git rev-parse --path-format=absolute --git-common-dir`; fail if equal.
+- [x] **Step 3:** Create `alpha.md` containing worker name, base SHA, resolved worktree path, Git directory, common directory, and validation result `linked-worktree: pass`.
+- [x] **Step 4:** Run `git diff --check` and verify the evidence file contains the exact base and both resolved Git paths.
+- [x] **Step 5:** Commit only `alpha.md` with message `test(parallel): record alpha worktree evidence`.
 
 ### Task 2: Beta Worker Evidence
 
@@ -58,11 +58,11 @@ None.
 - Consumes: None
 - Produces: None
 
-- [ ] **Step 1:** Confirm `git rev-parse HEAD` equals the controller-supplied base SHA.
-- [ ] **Step 2:** Resolve `git rev-parse --path-format=absolute --git-dir` and `git rev-parse --path-format=absolute --git-common-dir`; fail if equal.
-- [ ] **Step 3:** Create `beta.md` containing worker name, base SHA, resolved worktree path, Git directory, common directory, and validation result `linked-worktree: pass`.
-- [ ] **Step 4:** Run `git diff --check` and verify the evidence file contains the exact base and both resolved Git paths.
-- [ ] **Step 5:** Commit only `beta.md` with message `test(parallel): record beta worktree evidence`.
+- [x] **Step 1:** Confirm `git rev-parse HEAD` equals the controller-supplied base SHA.
+- [x] **Step 2:** Resolve `git rev-parse --path-format=absolute --git-dir` and `git rev-parse --path-format=absolute --git-common-dir`; fail if equal.
+- [x] **Step 3:** Create `beta.md` containing worker name, base SHA, resolved worktree path, Git directory, common directory, and validation result `linked-worktree: pass`.
+- [x] **Step 4:** Run `git diff --check` and verify the evidence file contains the exact base and both resolved Git paths.
+- [x] **Step 5:** Commit only `beta.md` with message `test(parallel): record beta worktree evidence`.
 
 ### Task 3: Gamma Worker Evidence
 
@@ -73,11 +73,11 @@ None.
 - Consumes: None
 - Produces: None
 
-- [ ] **Step 1:** Confirm `git rev-parse HEAD` equals the controller-supplied base SHA.
-- [ ] **Step 2:** Resolve `git rev-parse --path-format=absolute --git-dir` and `git rev-parse --path-format=absolute --git-common-dir`; fail if equal.
-- [ ] **Step 3:** Create `gamma.md` containing worker name, base SHA, resolved worktree path, Git directory, common directory, and validation result `linked-worktree: pass`.
-- [ ] **Step 4:** Run `git diff --check` and verify the evidence file contains the exact base and both resolved Git paths.
-- [ ] **Step 5:** Commit only `gamma.md` with message `test(parallel): record gamma worktree evidence`.
+- [x] **Step 1:** Confirm `git rev-parse HEAD` equals the controller-supplied base SHA.
+- [x] **Step 2:** Resolve `git rev-parse --path-format=absolute --git-dir` and `git rev-parse --path-format=absolute --git-common-dir`; fail if equal.
+- [x] **Step 3:** Create `gamma.md` containing worker name, base SHA, resolved worktree path, Git directory, common directory, and validation result `linked-worktree: pass`.
+- [x] **Step 4:** Run `git diff --check` and verify the evidence file contains the exact base and both resolved Git paths.
+- [x] **Step 5:** Commit only `gamma.md` with message `test(parallel): record gamma worktree evidence`.
 
 ## Integration
 

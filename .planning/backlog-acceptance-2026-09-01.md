@@ -46,6 +46,12 @@ returned that exact commit.
   2.1.252's metadata boundary, missing successful exit-code representation, and
   destructive clean-slate guidance. See
   `.planning/verification-firing-acceptance-2026-09-01.md`.
+- **Parallel execution acceptance.** A committed three-task plan dispatched
+  three concurrent workers from the same recorded base into pairwise-unique
+  linked worktrees. Alpha, Beta, and Gamma each changed and committed only their
+  assigned evidence file; their three branches merged without conflict, and the
+  integrated tree passed all 26 `pnpm check` tasks. See
+  `.planning/parallel-execution-acceptance-2026-09-01.md`.
 - **Fresh-clone contributor flow.** A new local clone at this SHA passed
   `pnpm install --frozen-lockfile`, all 26 `pnpm check` tasks,
   `pnpm mint:check`, 88 `pnpm proof:test` cases, 86 `pnpm tab:test` cases and
@@ -79,7 +85,6 @@ contracts exist, but the named acceptance event has not occurred.
 | Backlog ask | Remaining acceptance event | Why it is still open |
 |---|---|---|
 | `installer-hq-dx` | Install from the configured `@tc` ProGet scope on a real WSL2 host; run install, upgrade and uninstall | This host is macOS, and the packages have not been published |
-| `parallel-execution-option` | Execute one real three-task plan with three isolated workers and inspect the merged ledger | The contract is pressure-tested; this pass ran under a single-agent execution constraint |
 | `codebase-review-skills` | Run a complete reviewer-shard/merge/`--verify` agent flow on a real repository | The scripts have 21 behavioral cases; the agent orchestration itself has not been exercised end to end |
 | `tc-governance-integration` | Observe the scheduled drift job with the protected GitLab token | A live CodeGraph comparison and repin are complete; the scheduled CI credential path itself has not run here |
 | `tc-downstream-realignment-and-repair` | Push, observe a real GitLab pipeline, and publish/promote the eight-artifact train to internal ProGet | Those are external mutations and were not authorized by “commit all you need” |
