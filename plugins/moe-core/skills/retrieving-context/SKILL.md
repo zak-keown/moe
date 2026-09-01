@@ -40,11 +40,14 @@ will change, and when it does this paragraph is a dated observation rather than
 a rule. The rule above it does not change: the corpus will still lag your
 working tree by at least a sync.
 
-**Gate on score, not on rank.** Both backends always return their best match,
-and their best match for a question they cannot answer is noise at the top of the
-list. moedex reports a `score` per block and CodeGraph's `rag_search` reports one
-per result; a top hit around 0.03 is a miss, not an answer. Say you did not find
-it rather than reporting rank 1.
+**Treat score as a warning signal, not a universal cutoff.** Both backends always
+return their best match, including for questions they cannot answer, so rank 1
+alone proves nothing. But absolute scores are not calibrated across corpora or
+queries: a live structured-doc query returned the exact `ai/kb` Git branch
+convention at roughly 0.03. Inspect repository, title, section and snippet; use
+`rag_context` to verify a low-scoring but clearly relevant candidate. Say you did
+not find it only when the content is irrelevant, not merely because a numeric
+threshold was crossed.
 
 ## Routing
 
@@ -149,7 +152,7 @@ phrasing is fine; the search is embedding-based. Feed the returned ids into
 
 - Answering a question about a file that is open in front of you from a
   retrieval call.
-- Reporting a top hit without looking at its score.
+- Reporting a top hit without checking both its score and its actual relevance.
 - Passing no `token_budget` or `maxTokens`, then pasting the result wholesale.
 - Citing a moedex `abs_path` in an MR description.
 - `memory_store` for something that will be false next week.

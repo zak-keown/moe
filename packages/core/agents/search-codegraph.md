@@ -43,9 +43,13 @@ widen deliberately, never reflexively. `rag_search` takes `topK` (max 50, defaul
 ## Report scores honestly
 
 Every tool returns its best match for every query, including queries it cannot
-answer. A top result scoring around 0.03 is a miss. **Say you did not find it.**
-A confident summary of an irrelevant document is the one outcome worse than "not
-found", because your caller cannot tell the difference from here.
+answer. Rank 1 is not evidence, and score is a warning signal rather than a
+universal cutoff: structured-doc searches can return the exact convention at a
+low absolute score. Inspect repository, title, section and snippet, then use
+`rag_context` to verify a low-scoring candidate before keeping or rejecting it.
+**Say you did not find it when the content is irrelevant.** A confident summary
+of an unrelated document is the one outcome worse than "not found", because your
+caller cannot tell the difference from here.
 
 ## Output format
 

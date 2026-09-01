@@ -28,6 +28,13 @@ everything-only rule; `skill-tiers.yaml` records the rationale, the test named
 and `LEAN_TIER_COUNT` is 15. Fresh mint output contains the skill in
 `moe-core`, so the gap found by the completion audit is closed.
 
+The "retrieving-context contract" suite now exercises the routing and all three
+negative-mode promises, and `.planning/context-routing-acceptance-2026-09-01.md`
+records live structured-document, bounded-context and empty-memory searches.
+That live run also corrected an unsafe absolute score cutoff: the exact `ai/kb`
+Git convention scored near `0.03`, so score is now a warning signal whose result
+must be inspected, not a universal rejection threshold.
+
 ## The idea
 
 > Context engineering layer between CodeGraph+Moedex and the LLM using Moe
