@@ -52,6 +52,15 @@ returned that exact commit.
   assigned evidence file; their three branches merged without conflict, and the
   integrated tree passed all 26 `pnpm check` tasks. See
   `.planning/parallel-execution-acceptance-2026-09-01.md`.
+- **Adequate deployment review.** Nineteen live shard reviewers opened all 407
+  selected files at one recorded base. The deterministic merge emitted 100
+  findings, and eight independent challengers attempted to refute the first
+  eight critical/high claims; all eight were confirmed. The run also exposed
+  and repaired review-workspace, symlink, provenance, citation, omission, and
+  verification-ledger defects. Zak explicitly accepted this wave as adequate
+  for the current deployment march and deferred the other 28 serious
+  challengers. See
+  `.planning/codebase-review-adequate-verification-2026-09-01.md`.
 - **Fresh-clone contributor flow.** A new local clone at this SHA passed
   `pnpm install --frozen-lockfile`, all 26 `pnpm check` tasks,
   `pnpm mint:check`, 88 `pnpm proof:test` cases, 86 `pnpm tab:test` cases and
@@ -85,7 +94,7 @@ contracts exist, but the named acceptance event has not occurred.
 | Backlog ask | Remaining acceptance event | Why it is still open |
 |---|---|---|
 | `installer-hq-dx` | Install from the configured `@tc` ProGet scope on a real WSL2 host; run install, upgrade and uninstall | This host is macOS, and the packages have not been published |
-| `codebase-review-skills` | Run a complete reviewer-shard/merge/`--verify` agent flow on a real repository | The scripts have 21 behavioral cases; the agent orchestration itself has not been exercised end to end |
+| `codebase-review-skills` | Rerun from the repaired clean base and finish challengers for every critical/high finding | The real 19-shard flow and an 8-finding adequate-verification wave ran; Zak explicitly deferred the remaining 28 serious challengers until after the deployment march |
 | `tc-governance-integration` | Observe the scheduled drift job with the protected GitLab token | A live CodeGraph comparison and repin are complete; the scheduled CI credential path itself has not run here |
 | `tc-downstream-realignment-and-repair` | Push, observe a real GitLab pipeline, and publish/promote the eight-artifact train to internal ProGet | Those are external mutations and were not authorized by “commit all you need” |
 

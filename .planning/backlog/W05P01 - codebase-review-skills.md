@@ -33,9 +33,16 @@ integer, merge fails on malformed findings while preserving deterministic
 severity/IDs/nonfinding sections, and disposition stamping validates and
 recomputes the report without duplicate mutation. Twenty-one cases pass against
 temporary repositories and reports.
-The complete live reviewer-shard/merge/`--verify` agent orchestration remains an
-acceptance event; `.planning/backlog-acceptance-2026-09-01.md` keeps it distinct
-from the now-strong script coverage.
+A live shallow review subsequently dispatched 19 shard agents against one
+recorded base and opened all 407 selected files. The raw merge produced 100
+findings. An explicit adequate-verification wave challenged the first eight
+critical/high IDs and confirmed all eight; Zak deferred the remaining 28 until
+after the current deployment march. That run exposed and repaired unsafe
+symlink handling, generated-plugin duplication, missing shard provenance,
+line-number citations, fieldless-heading omission, and a bare flag that could
+claim `verified: true` without verdict evidence. The complete live challenger
+set remains an acceptance event. See
+`.planning/codebase-review-adequate-verification-2026-09-01.md`.
 
 ## The idea
 

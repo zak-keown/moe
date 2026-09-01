@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -73,6 +73,20 @@ function scopeManifest(repo: string, out: string): ScopeManifest {
 }
 
 describe("review-scope behavior", () => {
+  it("defaults restartable shard artifacts into the self-ignoring .moe workspace", () => {
+    const repo = initRepo({ "src/code.ts": "export {};\n" });
+
+    const result = run(REVIEW_SCOPE, ["--depth", "medium"], repo);
+
+    expect(result.status, result.stderr).toBe(0);
+    const workspace = ".moe/review-shards";
+    const manifest = scopeManifest(repo, workspace);
+    expect(manifest.shards).toHaveLength(1);
+    expect(manifest.shards[0]?.files_path).toBe(`${workspace}/shard-001-src-files.txt`);
+    expect(readFileSync(join(repo, workspace, ".gitignore"), "utf8")).toBe("*\n");
+    expect(git(repo, "status", "--porcelain")).toBe("");
+  });
+
   it("keeps every credential-bearing path in a shallow review alongside entrypoints and hot files", () => {
     const sensitive = [
       ".env.production",
@@ -190,9 +204,52 @@ describe("review-scope behavior", () => {
     expect(run(REVIEW_SCOPE, args, repo).status).toBe(0);
     expect(readFileSync(join(repo, ".review/manifest.json"), "utf8")).toBe(firstText);
   });
+
+  it("excludes generated plugin mirrors and tracked source symlinks from the review denominator", () => {
+    const outside = sandbox("review-outside");
+    writeFileSync(join(outside, "secret.ts"), "export const secret = true;\n");
+    const repo = initRepo({
+      "packages/core/src/index.ts": "export {};\n",
+      "plugins/moe-core/index.ts": "export const generated = true;\n",
+    });
+    symlinkSync(join(outside, "secret.ts"), join(repo, "packages/core/src/main.ts"));
+    git(repo, "add", "packages/core/src/main.ts");
+    git(repo, "commit", "--quiet", "-m", "tracked symlink");
+
+    const result = run(REVIEW_SCOPE, ["--depth", "medium", "--out", ".review"], repo);
+
+    expect(result.status, result.stderr).toBe(0);
+    const selected = scopeManifest(repo, ".review").shards.flatMap((shard) => shard.files);
+    expect(selected).toEqual(["packages/core/src/index.ts"]);
+  });
+
+  it("refuses a dirty tracked tree because HEAD would not identify what reviewers read", () => {
+    const repo = initRepo({ "src/code.ts": "export const value = 1;\n" });
+    writeFileSync(join(repo, "src/code.ts"), "export const value = 2;\n");
+
+    const result = run(REVIEW_SCOPE, ["--depth", "medium"], repo);
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("tracked working tree is dirty");
+  });
+
+  it("refuses a symlinked review workspace without writing through it", () => {
+    const repo = initRepo({ "src/code.ts": "export {};\n" });
+    const outside = sandbox("review-output");
+    mkdirSync(join(repo, ".moe"));
+    symlinkSync(outside, join(repo, ".moe/review-shards"));
+
+    const result = run(REVIEW_SCOPE, ["--depth", "medium"], repo);
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("symlink");
+    expect(git(repo, "status", "--porcelain", "--untracked-files=no")).toBe("");
+    expect(() => readFileSync(join(outside, "manifest.json"))).toThrow();
+  });
 });
 
 interface MergeFixture {
+  baseSha: string;
   repo: string;
   reportsDir: string;
 }
@@ -200,12 +257,23 @@ interface MergeFixture {
 function mergeFixture(reports: Array<string | null>): MergeFixture {
   const repo = sandbox("merge-repo");
   git(repo, "init", "--quiet");
+  git(repo, "config", "user.name", "Moe Test");
+  git(repo, "config", "user.email", "moe-test@example.invalid");
+  writeFiles(repo, { "src/base.ts": "export {};\n" });
+  git(repo, "add", "src/base.ts");
+  git(repo, "commit", "--quiet", "-m", "fixture");
+  const baseSha = git(repo, "rev-parse", "HEAD").trim();
   const reportsDir = join(repo, ".review-shards");
   mkdirSync(reportsDir);
   const shards = reports.map((body, index) => {
     const id = index + 1;
     const reportPath = `.review-shards/shard-${id}-REVIEW.md`;
-    if (body !== null) writeFileSync(join(repo, reportPath), body);
+    if (body !== null) {
+      writeFileSync(
+        join(repo, reportPath),
+        `<!-- moe-review-shard\nbase_sha: ${baseSha}\nfiles_opened: 1\n-->\n${body}`,
+      );
+    }
     return {
       id,
       group: `group-${id}`,
@@ -218,7 +286,7 @@ function mergeFixture(reports: Array<string | null>): MergeFixture {
     join(reportsDir, "manifest.json"),
     `${JSON.stringify(
       {
-        base_sha: "abc1234",
+        base_sha: baseSha,
         depth: "medium",
         shard_size: 30,
         denominator: shards.length,
@@ -233,7 +301,7 @@ function mergeFixture(reports: Array<string | null>): MergeFixture {
       2,
     )}\n`,
   );
-  return { repo, reportsDir };
+  return { baseSha, repo, reportsDir };
 }
 
 describe("review-merge behavior", () => {
@@ -244,7 +312,8 @@ describe("review-merge behavior", () => {
         "shard: one",
         "---",
         "### Medium issue",
-        "**File:** `src/z.ts:3`",
+        "**File:** `src/z.ts`",
+        "**Anchor:** `zSymbol`",
         "**Severity:** medium",
         "medium body",
         "",
@@ -254,23 +323,26 @@ describe("review-merge behavior", () => {
       ].join("\n"),
       [
         "### Low issue",
-        "**File:** `src/l.ts:4`",
+        "**File:** `src/l.ts`",
+        "**Anchor:** `lSymbol`",
         "**Severity:** low",
         "low body",
         "",
         "### Critical issue",
-        "**File:** `src/c.ts:1`",
+        "**File:** `src/c.ts`",
+        "**Anchor:** `cSymbol`",
         "**Severity:** CRITICAL",
         "critical body",
         "",
         "### High issue",
-        "**File:** `src/h.ts:2`",
+        "**File:** `src/h.ts`",
+        "**Anchor:** `hSymbol`",
         "**Severity:** high",
         "high body",
         "",
       ].join("\n"),
     ]);
-    const args = ["--shards", ".review-shards", "--out", "CODEBASE-REVIEW.md", "--verified"];
+    const args = ["--shards", ".review-shards", "--out", "CODEBASE-REVIEW.md"];
 
     const firstRun = run(REVIEW_MERGE, args, repo);
     expect(firstRun.status, firstRun.stderr).toBe(0);
@@ -288,7 +360,7 @@ describe("review-merge behavior", () => {
     expect(first).toContain("medium: 1");
     expect(first).toContain("low: 1");
     expect(first).toContain("total: 4");
-    expect(first).toContain("verified: true");
+    expect(first).toContain("verified: false");
     expect(first).toContain("status: issues_found");
     expect(first).toContain("**Opened:** 2 of 2 counted files.");
     expect(first).toContain("**In scope but not selected at this depth:** 1.");
@@ -302,7 +374,7 @@ describe("review-merge behavior", () => {
 
   it("refuses to emit a report when any shard report is missing", () => {
     const { repo } = mergeFixture([
-      "### Valid\n**File:** `src/a.ts:1`\n**Severity:** low\nbody\n",
+      "### Valid\n**File:** `src/a.ts`\n**Anchor:** `aSymbol`\n**Severity:** low\nbody\n",
       null,
     ]);
     const result = run(REVIEW_MERGE, ["--shards", ".review-shards", "--out", "out.md"], repo);
@@ -311,10 +383,222 @@ describe("review-merge behavior", () => {
     expect(() => readFileSync(join(repo, "out.md"))).toThrow();
   });
 
+  it("refuses to claim verification without a complete challenger-results ledger", () => {
+    const { repo } = mergeFixture([
+      "### Serious\n**File:** `src/a.ts`\n**Anchor:** `aSymbol`\n**Severity:** high\nbody\n",
+    ]);
+
+    const result = run(
+      REVIEW_MERGE,
+      ["--shards", ".review-shards", "--out", "out.md", "--verified"],
+      repo,
+    );
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("--verification-results");
+    expect(() => readFileSync(join(repo, "out.md"))).toThrow();
+  });
+
+  it("applies one base-matched challenger verdict per serious finding before marking verified", () => {
+    const { baseSha, repo } = mergeFixture([
+      [
+        "### Critical survives",
+        "**File:** `src/c.ts`",
+        "**Anchor:** `cSymbol`",
+        "**Severity:** critical",
+        "critical body",
+        "",
+        "### High falls",
+        "**File:** `src/h.ts`",
+        "**Anchor:** `hSymbol`",
+        "**Severity:** high",
+        "high body",
+        "",
+        "### Medium untouched",
+        "**File:** `src/m.ts`",
+        "**Anchor:** `mSymbol`",
+        "**Severity:** medium",
+        "medium body",
+        "",
+      ].join("\n"),
+    ]);
+    writeFileSync(
+      join(repo, "verifications.json"),
+      `${JSON.stringify({
+        base_sha: baseSha,
+        results: [
+          {
+            id: "CR-001",
+            verdict: "confirmed",
+            evidence: "Reproduced from the public route.",
+          },
+          {
+            id: "CR-002",
+            verdict: "refuted",
+            evidence: "An upstream guard rejects the payload.",
+          },
+        ],
+      })}\n`,
+    );
+
+    const result = run(
+      REVIEW_MERGE,
+      [
+        "--shards",
+        ".review-shards",
+        "--out",
+        "CODEBASE-REVIEW.md",
+        "--verification-results",
+        "verifications.json",
+      ],
+      repo,
+    );
+
+    expect(result.status, result.stderr).toBe(0);
+    const report = readFileSync(join(repo, "CODEBASE-REVIEW.md"), "utf8");
+    expect(report).toContain("verified: true");
+    expect(report).toContain("critical: 1");
+    expect(report).toContain("high: 0");
+    expect(report).toContain("medium: 1");
+    expect(report).toContain("total: 2");
+    expect(report).toContain("confirmed: 1");
+    expect(report).toContain("refuted: 1");
+    expect(report).toContain("**Verification:** confirmed");
+    expect(report).toContain("## Refuted by verification");
+    expect(report).toContain("### CR-002: High falls");
+    expect(report).toContain("**Verification:** refuted");
+  });
+
+  it("keeps stable IDs while moving confirmed-lower findings to their corrected severity", () => {
+    const { baseSha, repo } = mergeFixture([
+      [
+        "### Overstated",
+        "**File:** `src/a.ts`",
+        "**Anchor:** `aSymbol`",
+        "**Severity:** critical",
+        "body",
+        "",
+      ].join("\n"),
+    ]);
+    writeFileSync(
+      join(repo, "verifications.json"),
+      `${JSON.stringify({
+        base_sha: baseSha,
+        results: [
+          {
+            id: "CR-001",
+            verdict: "confirmed-lower",
+            severity: "medium",
+            evidence: "The path is local-only and requires an unusual precondition.",
+          },
+        ],
+      })}\n`,
+    );
+
+    const result = run(
+      REVIEW_MERGE,
+      ["--shards", ".review-shards", "--verification-results", "verifications.json"],
+      repo,
+    );
+
+    expect(result.status, result.stderr).toBe(0);
+    const report = readFileSync(join(repo, "CODEBASE-REVIEW.md"), "utf8");
+    expect(report).not.toContain("## Critical");
+    expect(report).toContain("## Medium");
+    expect(report).toContain("### CR-001: Overstated");
+    expect(report).toContain("**Severity:** medium");
+    expect(report).toContain("**Verification:** confirmed-lower");
+  });
+
+  it("refuses a shard report without machine-readable base and coverage provenance", () => {
+    const { repo } = mergeFixture([
+      "### Valid\n**File:** `src/a.ts`\n**Anchor:** `aSymbol`\n**Severity:** low\nbody\n",
+    ]);
+    writeFileSync(
+      join(repo, ".review-shards/shard-1-REVIEW.md"),
+      "### Valid\n**File:** `src/a.ts`\n**Anchor:** `aSymbol`\n**Severity:** low\nbody\n",
+    );
+
+    const result = run(REVIEW_MERGE, ["--shards", ".review-shards", "--out", "out.md"], repo);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("shard provenance failure");
+    expect(result.stderr).toContain("missing shard provenance header");
+  });
+
+  it("refuses to merge after HEAD advances beyond the manifest base", () => {
+    const { repo } = mergeFixture([
+      "### Valid\n**File:** `src/a.ts`\n**Anchor:** `aSymbol`\n**Severity:** low\nbody\n",
+    ]);
+    writeFileSync(join(repo, "src/base.ts"), "export const changed = true;\n");
+    git(repo, "add", "src/base.ts");
+    git(repo, "commit", "--quiet", "-m", "advance");
+
+    const result = run(REVIEW_MERGE, ["--shards", ".review-shards", "--out", "out.md"], repo);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("does not match shard manifest base_sha");
+  });
+
   it.each([
-    ["a file without severity", "### Broken\n**File:** `src/a.ts:1`\nbody\n"],
-    ["a severity without file", "### Broken\n**Severity:** high\nbody\n"],
-    ["an invented severity", "### Broken\n**File:** `src/a.ts:1`\n**Severity:** policy\nbody\n"],
+    ["a missing serious finding", { base_sha: "__BASE__", results: [] }, "missing verdict"],
+    [
+      "a mismatched base",
+      {
+        base_sha: "wrong",
+        results: [{ id: "CR-001", verdict: "confirmed", evidence: "evidence" }],
+      },
+      "base_sha",
+    ],
+    [
+      "a duplicate result",
+      {
+        base_sha: "__BASE__",
+        results: [
+          { id: "CR-001", verdict: "confirmed", evidence: "one" },
+          { id: "CR-001", verdict: "refuted", evidence: "two" },
+        ],
+      },
+      "duplicate",
+    ],
+  ])("rejects verification results with %s", (_label, ledger, expected) => {
+    const { baseSha, repo } = mergeFixture([
+      "### Serious\n**File:** `src/a.ts`\n**Anchor:** `aSymbol`\n**Severity:** high\nbody\n",
+    ]);
+    const resolvedLedger = JSON.parse(JSON.stringify(ledger).replaceAll("__BASE__", baseSha));
+    writeFileSync(join(repo, "verifications.json"), `${JSON.stringify(resolvedLedger)}\n`);
+
+    const result = run(
+      REVIEW_MERGE,
+      [
+        "--shards",
+        ".review-shards",
+        "--out",
+        "out.md",
+        "--verification-results",
+        "verifications.json",
+      ],
+      repo,
+    );
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(expected);
+    expect(() => readFileSync(join(repo, "out.md"))).toThrow();
+  });
+
+  it.each([
+    ["a fieldless heading", "### Broken\nbody\n"],
+    ["a file without severity", "### Broken\n**File:** `src/a.ts`\n**Anchor:** `aSymbol`\nbody\n"],
+    ["a severity without file", "### Broken\n**Anchor:** `aSymbol`\n**Severity:** high\nbody\n"],
+    [
+      "an invented severity",
+      "### Broken\n**File:** `src/a.ts`\n**Anchor:** `aSymbol`\n**Severity:** policy\nbody\n",
+    ],
+    ["a missing anchor", "### Broken\n**File:** `src/a.ts`\n**Severity:** high\nbody\n"],
+    [
+      "a line-number citation",
+      "### Broken\n**File:** `src/a.ts:12`\n**Anchor:** `aSymbol`\n**Severity:** high\nbody\n",
+    ],
   ])("refuses malformed finding records: %s", (_label, report) => {
     const { repo } = mergeFixture([report]);
     const result = run(REVIEW_MERGE, ["--shards", ".review-shards", "--out", "out.md"], repo);
@@ -341,14 +625,16 @@ function reviewReport(): string {
     "## Critical",
     "",
     "### CR-001: First finding",
-    "**File:** `src/first.ts:1`",
+    "**File:** `src/first.ts`",
+    "**Anchor:** `firstFinding`",
     "**Severity:** critical",
     "First finding body.",
     "",
     "## High",
     "",
     "### CR-002: Already stale",
-    "**File:** `src/second.ts:2`",
+    "**File:** `src/second.ts`",
+    "**Anchor:** `already stale`",
     "**Severity:** high",
     "Second finding body must survive byte-for-byte.",
     "",
@@ -360,7 +646,8 @@ function reviewReport(): string {
     "## Medium",
     "",
     "### CR-003: Third finding",
-    "**File:** `src/third.ts:3`",
+    "**File:** `src/third.ts`",
+    "**Anchor:** `thirdFinding`",
     "**Severity:** medium",
     "Third finding body.",
     "",

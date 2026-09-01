@@ -5,8 +5,16 @@
 // in one tree returned 874, 935 and 943, so the denominator a review reports is
 // only meaningful if one program computes it the same way every time.
 import { execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync, existsSync, statSync } from "node:fs";
-import { join } from "node:path";
+import {
+  closeSync,
+  constants,
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  openSync,
+  writeFileSync,
+} from "node:fs";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
 
 const CODE = ["ts", "tsx", "js", "mjs", "cjs", "py", "rs", "go", "rb", "java", "cs"];
 const DEPTH_EXTS = {
@@ -39,6 +47,7 @@ const EXCLUDE = [
   /\.min\.(js|css)$/,
   /\.(bundle|generated)\./,
   /(^|\/)(package-lock\.json|pnpm-lock\.yaml|yarn\.lock|poetry\.lock|Cargo\.lock|Gemfile\.lock)$/,
+  /^plugins\//,
 ];
 
 const arg = (name, fallback) => {
@@ -53,14 +62,83 @@ if (!Object.hasOwn(DEPTH_EXTS, depth)) {
   process.stderr.write(`review-scope: unknown depth "${depth}" (shallow|medium|deep)\n`);
   process.exit(2);
 }
-const outDir = arg("out", ".review-shards");
+const outDir = arg("out", ".moe/review-shards");
 const shardSize = Number(arg("shard-size", "30"));
 if (!Number.isSafeInteger(shardSize) || shardSize <= 0) {
   process.stderr.write("review-scope: --shard-size must be a positive integer\n");
   process.exit(2);
 }
 const repo = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
-const sha = execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8" }).trim();
+const dirty = execFileSync("git", ["status", "--porcelain", "--untracked-files=no"], {
+  cwd: repo,
+  encoding: "utf8",
+}).trim();
+if (dirty) {
+  process.stderr.write(
+    "review-scope: tracked working tree is dirty; commit it so HEAD identifies what reviewers read\n",
+  );
+  process.exit(2);
+}
+const sha = execFileSync("git", ["rev-parse", "HEAD"], { cwd: repo, encoding: "utf8" }).trim();
+
+if (isAbsolute(outDir)) {
+  process.stderr.write("review-scope: --out must be a repository-relative directory\n");
+  process.exit(2);
+}
+const outputRoot = resolve(repo, outDir);
+const outputRelative = relative(repo, outputRoot);
+if (!outputRelative || outputRelative === ".." || outputRelative.startsWith(`..${sep}`)) {
+  process.stderr.write("review-scope: --out must stay below the repository root\n");
+  process.exit(2);
+}
+
+let cursor = repo;
+for (const part of outputRelative.split(sep)) {
+  cursor = join(cursor, part);
+  if (existsSync(cursor)) {
+    const stat = lstatSync(cursor);
+    if (stat.isSymbolicLink()) {
+      process.stderr.write(`review-scope: output path contains a symlink: ${relative(repo, cursor)}\n`);
+      process.exit(2);
+    }
+    if (!stat.isDirectory()) {
+      process.stderr.write(`review-scope: output path component is not a directory: ${relative(repo, cursor)}\n`);
+      process.exit(2);
+    }
+  } else {
+    mkdirSync(cursor);
+  }
+}
+
+const writeWorkspaceFile = (name, contents) => {
+  const target = resolve(outputRoot, name);
+  const targetRelative = relative(outputRoot, target);
+  if (!targetRelative || targetRelative === ".." || targetRelative.startsWith(`..${sep}`)) {
+    process.stderr.write(`review-scope: refusing output outside workspace: ${name}\n`);
+    process.exit(2);
+  }
+  if (existsSync(target)) {
+    const stat = lstatSync(target);
+    if (stat.isSymbolicLink() || !stat.isFile()) {
+      process.stderr.write(`review-scope: output file is not a regular file: ${relative(repo, target)}\n`);
+      process.exit(2);
+    }
+  }
+  let fd;
+  try {
+    fd = openSync(
+      target,
+      constants.O_WRONLY | constants.O_CREAT | constants.O_TRUNC | constants.O_NOFOLLOW,
+      0o600,
+    );
+    writeFileSync(fd, contents);
+  } catch (error) {
+    process.stderr.write(`review-scope: cannot safely write ${relative(repo, target)}: ${error.message}\n`);
+    process.exit(2);
+  } finally {
+    if (fd !== undefined) closeSync(fd);
+  }
+};
 
 const tracked = execFileSync("git", ["ls-files"], { cwd: repo, encoding: "utf8", maxBuffer: 64e6 })
   .split("\n")
@@ -72,7 +150,9 @@ const files = tracked
   .filter((f) => re.test(f) || ALWAYS.some((x) => x.test(f)))
   .filter((f) => !EXCLUDE.some((x) => x.test(f)))
   // git ls-files lists deleted-but-staged paths mid-rebase.
-  .filter((f) => existsSync(join(repo, f)) && statSync(join(repo, f)).isFile())
+  // lstat is load-bearing: stat would follow a tracked source symlink and send
+  // an outside file to a reviewer as though it were repository content.
+  .filter((f) => existsSync(join(repo, f)) && lstatSync(join(repo, f)).isFile())
   .sort();
 
 if (files.length === 0) {
@@ -109,7 +189,10 @@ for (const f of selected) {
   groups.get(g).push(f);
 }
 
-mkdirSync(join(repo, outDir), { recursive: true });
+// Review shards are restartable working material, not repository source. Keep
+// the workspace in-tree so agents can write to it, while preventing a broad
+// `git add` from accidentally committing hundreds of intermediate reports.
+writeWorkspaceFile(".gitignore", "*\n");
 const shards = [];
 for (const [group, list] of [...groups.entries()].sort()) {
   for (let i = 0; i < list.length; i += shardSize) {
@@ -117,7 +200,7 @@ for (const [group, list] of [...groups.entries()].sort()) {
     const part = list.length > shardSize ? `-part${Math.floor(i / shardSize) + 1}` : "";
     const stem = `shard-${String(id).padStart(3, "0")}-${group}${part}`;
     const chunk = list.slice(i, i + shardSize);
-    writeFileSync(join(repo, outDir, `${stem}-files.txt`), chunk.join("\n") + "\n");
+    writeWorkspaceFile(`${stem}-files.txt`, chunk.join("\n") + "\n");
     shards.push({
       id,
       group,
@@ -152,7 +235,7 @@ const manifest = {
   not_selected: files.length - selected.length,
   shards,
 };
-writeFileSync(join(repo, outDir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
+writeWorkspaceFile("manifest.json", JSON.stringify(manifest, null, 2) + "\n");
 process.stdout.write(
   `${shards.length} shard(s) across ${groups.size} group(s); ` +
     `denominator ${selected.length} at depth ${depth}, base ${sha}.\n`,
