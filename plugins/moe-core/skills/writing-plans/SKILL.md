@@ -86,6 +86,33 @@ naming and copy rules, platform requirements — one line each, with exact
 values copied verbatim from the spec. Every task's requirements implicitly
 include this section.]
 
+## Open Decisions
+
+[Questions this plan does NOT answer. A decision is not a work item: what it
+produces is an answer, not a slice of the build. Delete this section only when
+it is genuinely empty — an empty section and a missing one read differently to
+an executor.]
+
+- **D1 — [short name]** · `research` | `prototype` | `conversation` | `task` · HITL | AFK
+  - **Question:** [the decision, stated precisely]
+  - **Options:** [a] / [b]
+  - **Recommendation:** [a], because [reason]
+  - **Blocked by:** [other decision ids, or —]
+  - **Blocks:** Task 3, Task 7
+  - **Resolution:** [one line, filled in when answered]
+
+## Not Yet Specified
+
+[In-scope questions you can see coming but cannot yet phrase sharply. Write
+them as loosely as the view allows; this doubles as a signpost for whoever
+reads where the work is headed. Each patch graduates into one or more
+decisions — or none — once an earlier answer makes it specifiable.]
+
+## Out of Scope
+
+[Work consciously ruled beyond the Goal. One line each, with why. Nothing here
+graduates: if the Goal is redrawn, that is a fresh plan, not a resumption.]
+
 ---
 ```
 
@@ -93,6 +120,8 @@ include this section.]
 
 ````markdown
 ### Task N: [Component Name]
+
+**Blocked by:** D1  *(omit this line entirely when no decision blocks the task)*
 
 **Files:**
 - Create: `exact/path/to/file.py`
@@ -138,6 +167,57 @@ git commit -m "feat: add specific feature"
 ```
 ````
 
+## Decisions Are Not Tasks
+
+A task delivers a slice of the Goal. A decision resolves a question, and what
+it produces is an answer. The two need separate ledgers because a plan that
+buries an unmade decision inside a step hands the executor an invented answer
+with no record that anyone chose it.
+
+**The four kinds of decision.** Each is either **HITL** — worked live with your
+human partner, who speaks for themselves — or **AFK**, which you drive alone.
+You never stand in for the human side of a HITL decision.
+
+- **research** (AFK) — a fact from outside this working tree decides it.
+  Dispatch a subagent to go and find it.
+- **prototype** (HITL) — "how should it look?" or "how should it behave?" is
+  the real question. Raise the fidelity of the discussion: build the cheapest
+  rough artifact that makes the choice concrete, link it from the decision, and
+  get a reaction to it.
+- **conversation** (HITL) — the default. A judgement only your human partner can
+  make. Put it to them with your recommendation, and wait.
+- **task** (HITL or AFK) — manual work that must happen before a decision can be
+  made at all: provisioning access, moving data so its shape is visible, signing
+  up for a service so its API can be judged. This is the one kind that *does*
+  rather than decides, and it earns its place by unblocking a decision, not by
+  delivering the Goal. Its resolution records what was done plus any facts later
+  decisions depend on.
+
+**Decision or fog?** The test is whether you can state the question precisely
+now — *not* whether you can answer it now.
+
+- **A decision** when the question is already sharp, even if it is blocked and
+  you cannot act on it yet.
+- **Not Yet Specified** when you cannot yet phrase it that sharply. Do not
+  pre-slice fog into decision-sized pieces: it is coarser than a decision, and
+  one patch may graduate into several, or none.
+
+**The rules:**
+
+- **A gap you can state precisely is a decision, not a missing task.** Inventing
+  an answer and writing it into a step is a placeholder wearing a code block —
+  the same failure the next section names, and harder to spot.
+- **A plan with unresolved decisions is not runnable.** Resolve them with your
+  human partner before dispatching any executor. Filling in **Resolution** is
+  what makes the plan dispatchable; until then, say so when you hand it over.
+- **Work the frontier, not the list.** The frontier is the open decisions whose
+  own **Blocked by** entries are all resolved — the ones answerable now.
+  Resolving one pushes the frontier outward: it unblocks what depended on it,
+  and may graduate a patch of **Not Yet Specified** into a fresh decision.
+- **A decision that turns out to sit past the Goal is not resolved — it is ruled
+  out.** Move it to **Out of Scope** with one line on why, and unblock the tasks
+  that were waiting on it or delete them.
+
 ## No Placeholders
 
 Every step must contain the actual content an engineer needs. These are **plan failures** — never write them:
@@ -158,7 +238,13 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 
 **3. Type consistency:** Do the types, method signatures, and property names you used in later tasks match what you defined in earlier tasks? A function called `clearLayers()` in Task 3 but `clearFullLayers()` in Task 7 is a bug.
 
-If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
+**4. Decision vs task:** Take every gap you listed in check 1 and sort it — is
+it a missing task, or an unmade decision? A decision belongs in **Open
+Decisions** with the tasks it blocks, never in a step as an invented answer.
+Then check the edges resolve: every `**Blocked by:**` id names a decision that
+exists, and every decision's **Blocks** list names tasks that exist.
+
+If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task — unless the task cannot be written until something is decided, in which case add the decision.
 
 ## Presenting the plan
 
