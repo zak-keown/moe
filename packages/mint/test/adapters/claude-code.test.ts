@@ -157,14 +157,42 @@ describe('claude-code adapter installDoc', () => {
     expect(body).toContain('/plugin install no-repo@no-repo-dev')
   })
 
-  it('falls back to <your-repo> when config.repository is not a github.com URL', () => {
+  it('emits the full URL (not owner/repo shorthand) for a non-github host', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-installdoc-nongithub-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
       'name: non-github\nversion: 1.0.0\ndescription: non-github repository fixture\nrepository: https://gitlab.com/owner/repo\nbootstrap: none\n',
     )
     const nonGithubModel = buildModel(dir)
-    expect(claudeCode.installDoc!(nonGithubModel)).toContain('claude /plugin marketplace add <your-repo>')
+    const body = claudeCode.installDoc!(nonGithubModel)
+    expect(body).toContain('claude /plugin marketplace add https://gitlab.com/owner/repo')
+    expect(body).not.toContain('<your-repo>')
+  })
+
+  it('emits the full self-hosted GitLab URL for Moe\'s own gitlab.tcdevops.com repository', () => {
+    // Regression: the previous helper only matched github.com, so this repo's
+    // own `repository: https://gitlab.tcdevops.com/Zak/moe` fell back to a
+    // <your-repo> placeholder and the emitted install doc was unusable. This
+    // asserts the generalised parseRepo does the right thing.
+    const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-installdoc-tcdevops-'))
+    writeFileSync(
+      join(dir, 'moe-mint.yaml'),
+      'name: moe-fixture\nversion: 1.0.0\ndescription: self-hosted gitlab fixture\nrepository: https://gitlab.tcdevops.com/Zak/moe\nbootstrap: none\n',
+    )
+    const tcModel = buildModel(dir)
+    const body = claudeCode.installDoc!(tcModel)
+    expect(body).toContain('claude /plugin marketplace add https://gitlab.tcdevops.com/Zak/moe')
+    expect(body).not.toContain('<your-repo>')
+  })
+
+  it('still falls back to <your-repo> when config.repository is absent or not http(s)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-installdoc-ssh-'))
+    writeFileSync(
+      join(dir, 'moe-mint.yaml'),
+      'name: ssh-repo\nversion: 1.0.0\ndescription: ssh repository fixture\nrepository: git@github.com:owner/repo.git\nbootstrap: none\n',
+    )
+    const sshModel = buildModel(dir)
+    expect(claudeCode.installDoc!(sshModel)).toContain('claude /plugin marketplace add <your-repo>')
   })
 
   it('omits the bootstrap hook line and the Caveats section when bootstrap is not active', () => {

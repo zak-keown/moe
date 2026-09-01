@@ -1,7 +1,7 @@
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
 import type { HarnessAdapter, EmitResult } from './types.js'
-import { json, githubOwnerRepo } from './shared.js'
+import { json, parseRepo } from './shared.js'
 import { nodePackageManifest, piExtensionPath, bootstrapContentPath } from '../bootstrap/node-package.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
 
@@ -172,12 +172,15 @@ function extensionFile(model: PluginModel): GeneratedFile {
   return { path: piExtensionPath(model.config.name), content: extensionModule(model) }
 }
 
-// Ground truth per Design decision 4: `pi install git:github.com/REPO`, with
-// REPO substituted from config.repository when it's a github.com URL and a
-// `<your-repo>` placeholder otherwise (never a fabricated listing).
+// Ground truth per Design decision 4: `pi install git:HOST/OWNER/REPO`,
+// with HOST/OWNER/REPO substituted from config.repository when it parses as
+// an http(s) repository URL — github.com, gitlab.com, self-hosted GitLab all
+// take the same shape — and a `<your-repo>` placeholder otherwise (never a
+// fabricated listing).
 function installDoc(model: PluginModel): string {
   const { config } = model
-  const repo = githubOwnerRepo(config.repository) ?? '<your-repo>'
+  const ref = parseRepo(config.repository)
+  const installTarget = ref ? `git:${ref.host}/${ref.ownerRepo}` : 'git:github.com/<your-repo>'
   const extensionPath = piExtensionPath(config.name)
 
   const emitted = [
@@ -199,7 +202,7 @@ function installDoc(model: PluginModel): string {
     '## Installing',
     '',
     '```',
-    `pi install git:github.com/${repo}`,
+    `pi install ${installTarget}`,
     '```',
     '',
     "Pi discovers the extension and skills directory through the `pi` field in `package.json`. Consult Pi's extension docs if this command doesn't match your installed version.",

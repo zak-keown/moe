@@ -9,7 +9,7 @@
 ## Installing
 
 ```
-devin plugins install <your-repo>
+devin plugins install https://gitlab.tcdevops.com/Zak/moe
 ```
 
 Consult Devin's plugin docs if this command doesn't match your installed version.

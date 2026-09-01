@@ -325,6 +325,15 @@ Both are empty today. Populate them from an import census, not from names.
 | `cargo` ≥ 1.98 | `pnpm tab:build`, `pnpm tab:test` | installed, **needs a PATH entry** |
 | `uv` ≥ 0.12 | `pnpm proof:test` | installed; resolves Python 3.14 |
 
+**The end-user install path has its own diagnostic.** `bin/moe-doctor`
+probes every prerequisite Moe cares about (Node, pnpm, git, bash on win32,
+`claude` CLI, plus five soft capabilities), names the capability each miss
+disables, and gives one concrete fix per gap. `bin/moe-install` orchestrates
+`claude plugin marketplace add` and `claude plugin install` calls (dry-run
+by default; `--apply` executes; `--migrate` handles the renamed MCP keys
+from §7). Both are dependency-free ESM Node so they work on a fresh checkout
+with nothing installed but Node itself. See `INSTALL.md`.
+
 **cargo is installed but not on PATH.** rustup owns the toolchain, brew's `rust`
 formula could not link over rustup's shims, and `brew cleanup` then pruned
 `/opt/homebrew/bin/{cargo,rustc}`. There is no `~/.cargo/bin`. The working binary
@@ -385,6 +394,16 @@ py/proof` for `proof`; `packages/tab/target/release/moe-tab` for `tab`; the
 built dist bundles for the five Node bins). Grammar copied from
 `packages/flight/src/cli.ts`, and vitest at `bin/test/moe.test.mjs` covers
 every branch — including the platform ones — without a Windows runner.
+
+`bin/test/` is one runner, vitest, reached by `pnpm bin:test` (CI's `bin:` job)
+and chained into root `pnpm test`. `doctor.test.mjs` arrived written against
+`node:test`, on the reasonable argument that the doctor must work before
+`pnpm install` does — but `bin:test` globs the whole directory, so vitest
+collected the node:test file and `node --test` collected the vitest one, each
+runner failing on the other's declarations. The pre-install guarantee is kept
+where it belongs: those tests spawn `bin/moe-doctor` and `bin/moe-install` as
+a bare interpreter would. See the "vitest 3" row in §5 — one runner was
+already the recorded decision.
 
 The bare name is contested on a developer machine — three projects have
 claimed it. See §7.1.

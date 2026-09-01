@@ -12,6 +12,7 @@ premise: one operator driving every harness at once, from one place.
 
 | | |
 |---|---|
+| **How to install Moe** | [INSTALL.md](./INSTALL.md) |
 | **What the shape is and why** | [ARCHITECTURE.md](./ARCHITECTURE.md) |
 | **What was forked, from where, under what license** | [PARITY.md](./PARITY.md) |
 | **How to contribute, and the rules agents run under** | [CONTRIBUTING.md](./CONTRIBUTING.md) · [AGENTS.md](./AGENTS.md) |
