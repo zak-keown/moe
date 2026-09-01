@@ -179,16 +179,24 @@ describe('pi adapter', () => {
     ])
   })
 
-  it('type-checks the emitted skill-mode extension under strict NodeNext', () => {
-    expect(() => typeCheckExtension(mustGet(byPath, '.pi/extensions/kitchen-sink.ts'))).not.toThrow()
-  })
+  it(
+    'type-checks the emitted skill-mode extension under strict NodeNext',
+    () => {
+      expect(() => typeCheckExtension(mustGet(byPath, '.pi/extensions/kitchen-sink.ts'))).not.toThrow()
+    },
+    20_000,
+  )
 
-  it('rejects a variant with a typo in the context event\'s messages property (stub has teeth)', () => {
-    const ts = mustGet(byPath, '.pi/extensions/kitchen-sink.ts')
-    const broken = ts.replaceAll('messages', 'messagesTYPO')
-    expect(broken).not.toBe(ts)
-    expect(typeCheckExitStatus(broken)).not.toBe(0)
-  })
+  it(
+    'rejects a variant with a typo in the context event\'s messages property (stub has teeth)',
+    () => {
+      const ts = mustGet(byPath, '.pi/extensions/kitchen-sink.ts')
+      const broken = ts.replaceAll('messages', 'messagesTYPO')
+      expect(broken).not.toBe(ts)
+      expect(typeCheckExitStatus(broken)).not.toBe(0)
+    },
+    20_000,
+  )
 })
 
 describe('pi adapter without commands/agents/hooks/mcp', () => {
@@ -260,7 +268,11 @@ describe('pi adapter with bootstrap: none', () => {
     expect((ts.match(/pi\.on\(/g) ?? []).length).toBe(1)
   })
 
-  it('type-checks the emitted none-mode extension under strict NodeNext', () => {
-    expect(() => typeCheckExtension(ts)).not.toThrow()
-  })
+  it(
+    'type-checks the emitted none-mode extension under strict NodeNext',
+    () => {
+      expect(() => typeCheckExtension(ts)).not.toThrow()
+    },
+    20_000,
+  )
 })

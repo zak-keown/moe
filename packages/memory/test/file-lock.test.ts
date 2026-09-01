@@ -1,12 +1,4 @@
-import {
-  chmodSync,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -77,20 +69,16 @@ describe("file-lock — proper-lockfile wrapper (#97)", () => {
   });
 
   it('propagates unexpected I/O errors instead of masking them as "lock contention"', () => {
-    // chmod the directory read-only so openSync('a') hits EACCES on the lock
-    // target. The wrapper must throw rather than return null — otherwise sync
-    // would report "already running" for what's actually a disk problem.
-    const restrictedDir = join(testDir, "no-write");
-    mkdirSync(restrictedDir);
-    try {
-      chmodSync(restrictedDir, 0o500); // r-x, no write
-      const restrictedLock = join(restrictedDir, "lock");
-      expect(() => acquireFileLock(restrictedLock)).toThrow();
-    } finally {
-      try {
-        chmodSync(restrictedDir, 0o700);
-      } catch {}
-    }
+    // Put a regular file in the would-be parent path so mkdirSync fails while
+    // preparing the lock directory. Unlike directory permissions, this also
+    // fails for root (as used by container runners) and on every platform.
+    // The wrapper must throw rather than return null — otherwise sync would
+    // report "already running" for what's actually a filesystem problem.
+    const nonDirectory = join(testDir, "not-a-directory");
+    writeFileSync(nonDirectory, "regular file", "utf-8");
+    const invalidLock = join(nonDirectory, "nested", "lock");
+
+    expect(() => acquireFileLock(invalidLock)).toThrow();
   });
 });
 
