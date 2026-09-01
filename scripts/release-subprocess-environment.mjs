@@ -9,12 +9,7 @@ import { isAbsolute } from "node:path";
  * secret. Additions to this list are therefore security-sensitive.
  */
 export const RELEASE_SUBPROCESS_AMBIENT_KEYS = Object.freeze([
-  "CARGO_BUILD_TARGET",
-  "CARGO_HOME",
-  "CARGO_NET_OFFLINE",
-  "CARGO_TARGET_DIR",
   "DEVELOPER_DIR",
-  "HOME",
   "LANG",
   "LANGUAGE",
   "LC_ADDRESS",
@@ -30,21 +25,16 @@ export const RELEASE_SUBPROCESS_AMBIENT_KEYS = Object.freeze([
   "LC_PAPER",
   "LC_TELEPHONE",
   "LC_TIME",
-  "LOGNAME",
   "MACOSX_DEPLOYMENT_TARGET",
   "NODE_EXTRA_CA_CERTS",
   "PATH",
-  "RUSTUP_HOME",
-  "RUSTUP_TOOLCHAIN",
   "SDKROOT",
-  "SOURCE_DATE_EPOCH",
   "SSL_CERT_DIR",
   "SSL_CERT_FILE",
   "TEMP",
   "TMP",
   "TMPDIR",
   "TZ",
-  "USER",
 ]);
 
 /**
@@ -54,11 +44,18 @@ export const RELEASE_SUBPROCESS_AMBIENT_KEYS = Object.freeze([
  */
 export const RELEASE_SUBPROCESS_ADDITION_KEYS = Object.freeze([
   ...RELEASE_SUBPROCESS_AMBIENT_KEYS,
+  "CARGO_BUILD_TARGET",
+  "CARGO_HOME",
+  "CARGO_NET_OFFLINE",
+  "CARGO_TARGET_DIR",
   "MOE_TAB_LIB",
   "NPM_CONFIG_CACHE",
   "NPM_CONFIG_IGNORE_SCRIPTS",
   "NPM_CONFIG_OFFLINE",
   "NPM_CONFIG_USERCONFIG",
+  "RUSTUP_HOME",
+  "RUSTUP_TOOLCHAIN",
+  "SOURCE_DATE_EPOCH",
 ]);
 
 const additionKeys = new Set(RELEASE_SUBPROCESS_ADDITION_KEYS);

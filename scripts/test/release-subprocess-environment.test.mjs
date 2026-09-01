@@ -25,37 +25,49 @@ describe("createReleaseSubprocessEnvironment", () => {
   it("preserves the small cross-platform runtime surface release commands need", () => {
     const safe = createReleaseSubprocessEnvironment({
       PATH: "/usr/local/bin:/usr/bin:/bin",
-      HOME: "/home/release",
       TMPDIR: "/tmp/release/",
       LANG: "en_US.UTF-8",
       LC_ALL: "C.UTF-8",
       TZ: "UTC",
       SSL_CERT_FILE: "/etc/ssl/certs/ca-certificates.crt",
       NODE_EXTRA_CA_CERTS: "/etc/ssl/certs/tc.pem",
-      CARGO_HOME: "/home/release/.cargo",
-      RUSTUP_HOME: "/home/release/.rustup",
-      RUSTUP_TOOLCHAIN: "1.98.0",
       SDKROOT: "/Applications/Xcode.app/SDKs/MacOSX.sdk",
       MACOSX_DEPLOYMENT_TARGET: "13.0",
-      SOURCE_DATE_EPOCH: "0",
     });
 
     assert.deepEqual(safe, {
-      CARGO_HOME: "/home/release/.cargo",
-      HOME: "/home/release",
       LANG: "en_US.UTF-8",
       LC_ALL: "C.UTF-8",
       MACOSX_DEPLOYMENT_TARGET: "13.0",
       NODE_EXTRA_CA_CERTS: "/etc/ssl/certs/tc.pem",
       PATH: "/usr/local/bin:/usr/bin:/bin",
-      RUSTUP_HOME: "/home/release/.rustup",
-      RUSTUP_TOOLCHAIN: "1.98.0",
       SDKROOT: "/Applications/Xcode.app/SDKs/MacOSX.sdk",
-      SOURCE_DATE_EPOCH: "0",
       SSL_CERT_FILE: "/etc/ssl/certs/ca-certificates.crt",
       TMPDIR: "/tmp/release/",
       TZ: "UTC",
     });
+  });
+
+  it("does not inherit home, identity, or build-routing variables", () => {
+    const unsafeAmbient = {
+      HOME: "/home/release",
+      USER: "release",
+      LOGNAME: "release",
+      CARGO_HOME: "/home/release/.cargo",
+      CARGO_BUILD_TARGET: "malicious-target",
+      CARGO_TARGET_DIR: "/tmp/untrusted-target",
+      CARGO_NET_OFFLINE: "false",
+      RUSTUP_HOME: "/home/release/.rustup",
+      RUSTUP_TOOLCHAIN: "untrusted-toolchain",
+      SOURCE_DATE_EPOCH: "999",
+    };
+
+    const safe = createReleaseSubprocessEnvironment({ PATH: "/usr/bin", ...unsafeAmbient });
+
+    assert.deepEqual(safe, { PATH: "/usr/bin" });
+    for (const name of Object.keys(unsafeAmbient)) {
+      assert.equal(Object.hasOwn(safe, name), false, `${name} was inherited`);
+    }
   });
 
   it("drops known and novel credential-shaped ambient variables by construction", () => {
@@ -97,17 +109,23 @@ describe("createReleaseSubprocessEnvironment", () => {
     const safe = createReleaseSubprocessEnvironment(
       { PATH: "/usr/bin", CI_JOB_TOKEN: "secret" },
       {
+        CARGO_HOME: "/tmp/isolated-cargo",
         CARGO_NET_OFFLINE: "true",
         MOE_TAB_LIB: "/tmp/libmoe_tab_ffi.so",
         NPM_CONFIG_IGNORE_SCRIPTS: "true",
+        RUSTUP_HOME: "/tmp/isolated-rustup",
+        SOURCE_DATE_EPOCH: "0",
       },
     );
 
     assert.deepEqual(safe, {
+      CARGO_HOME: "/tmp/isolated-cargo",
       CARGO_NET_OFFLINE: "true",
       PATH: "/usr/bin",
       MOE_TAB_LIB: "/tmp/libmoe_tab_ffi.so",
       NPM_CONFIG_IGNORE_SCRIPTS: "true",
+      RUSTUP_HOME: "/tmp/isolated-rustup",
+      SOURCE_DATE_EPOCH: "0",
     });
     assert.throws(
       () => createReleaseSubprocessEnvironment({}, { CI_JOB_TOKEN: "secret" }),
@@ -116,6 +134,10 @@ describe("createReleaseSubprocessEnvironment", () => {
     assert.throws(
       () => createReleaseSubprocessEnvironment({}, { FUTURE_SERVICE_SESSION: "secret" }),
       /addition is not allowlisted: FUTURE_SERVICE_SESSION/u,
+    );
+    assert.throws(
+      () => createReleaseSubprocessEnvironment({}, { HOME: "/home/release" }),
+      /addition is not allowlisted: HOME/u,
     );
   });
 
