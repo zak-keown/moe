@@ -27,6 +27,11 @@ the code follows directly.
 
 If the spec covers multiple independent subsystems, it should have been broken into sub-project specs during brainstorming. If it wasn't, suggest breaking this into separate plans — one per subsystem. Each plan should produce working, testable software on its own.
 
+When you do split into more than one plan, record the ordering in a committed
+`docs/moe/plans/<project>-MANIFEST.md` so a fresh session on a partly-finished
+project can read which plan is runnable next instead of guessing. The
+`sequencing-plans` skill covers the manifest format and the `plan-set` CLI.
+
 ## File Structure
 
 Before defining tasks, map out which files will be created or modified and what each one is responsible for. This is where decomposition decisions get locked in.
