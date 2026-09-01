@@ -23,11 +23,13 @@ Subagent (general-purpose):
     | Spec Alignment | Plan covers spec requirements, no major scope creep |
     | Task Decomposition | Tasks have clear boundaries, steps are actionable |
     | Buildability | Could an engineer follow this plan without getting stuck? |
+    | Decisions | Open Decisions all resolved, or the plan says plainly it is not yet runnable; no `Blocked by:` naming a decision that does not exist; no step that quietly answers an open decision |
 
     ## Calibration
 
     **Only flag issues that would cause real problems during implementation.**
     An implementer building the wrong thing or getting stuck is an issue.
+    An implementer acting on a decision nobody made is an issue.
     Minor wording, stylistic preferences, and "nice to have" suggestions are not.
 
     Approve unless there are serious gaps — missing requirements from the spec,
