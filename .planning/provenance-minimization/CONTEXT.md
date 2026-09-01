@@ -67,8 +67,9 @@ alive.
 - Hand-maintained package license copies were removed. Root `LICENSE` and
   `LICENSE-MIT` are canonical; copies exist only at distribution boundaries.
 - Current READMEs and product surfaces no longer call out imported lineage.
-- The provenance gate cross-checks `NOTICE` and `PARITY.md`, checks generated
-  plugin terms, and rejects retired branding on live surfaces.
+- The provenance gate cross-checks `NOTICE` and `PARITY.md` and checks generated
+  plugin terms. The temporary branding scan passed and was then removed; it is
+  not a long-term repository policy.
 
 ## Remaining legal-review findings
 

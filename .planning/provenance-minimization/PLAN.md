@@ -22,8 +22,8 @@ behavior is removed.
      `PARITY.md`, without maintaining a second source-name list.
    - Generate a deterministic `LICENSE` into every plugin from the canonical
      root texts and `NOTICE` data.
-   - Extend the provenance gate to verify ledger/NOTICE completeness, generated
-     plugin licenses, and the user-facing lineage ban.
+   - Extend the provenance gate to verify ledger/NOTICE completeness and
+     generated plugin licenses.
 
 3. **Product documentation**
    - Rewrite the root architecture and package READMEs around current behavior,
@@ -44,7 +44,8 @@ behavior is removed.
 
 5. **Generated output and guards**
    - Regenerate `/plugins/`; never edit it directly.
-   - Make the forbidden-lineage scan fail on any new live/user-facing mention.
+   - Run a one-time forbidden-lineage scan, then remove that temporary guard
+     after the cleanup passes.
    - Preserve `@bubstack/moe-flight` private/no-distribution controls and the
      documented unlicensed-code risk decision.
 

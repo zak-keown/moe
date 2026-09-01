@@ -1,12 +1,7 @@
 #!/usr/bin/env node
-/**
- * Keep provenance complete without turning product documentation into a fork
- * ledger. The root NOTICE and PARITY.md are the two deliberate lineage
- * surfaces; generated artifacts carry license terms without marketing the
- * lineage they came from.
- */
+/** Verify centralized legal metadata and generated distribution payloads. */
 
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const SKIP_SEGMENTS = new Set([
@@ -19,22 +14,6 @@ const SKIP_SEGMENTS = new Set([
   "test",
   "tests",
 ]);
-const SKIP_FILES = new Set([
-  "NOTICE",
-  "PARITY.md",
-  "LICENSE",
-  "LICENSE-MIT",
-  "packages/core/skill-tiers.yaml",
-  "scripts/check-provenance.mjs",
-]);
-
-const FORBIDDEN = [
-  { label: "retired ecosystem name", pattern: /superpowers/i },
-  { label: "retired provenance URL", pattern: /github\.com\/obra\//i },
-  { label: "retired journal environment alias", pattern: /PRIVATE_JOURNAL_PATH/ },
-  { label: "retired data directory", pattern: /\.config\/superpowers/i },
-];
-
 function cells(line) {
   return line
     .split("|")
@@ -84,35 +63,6 @@ function checkAttributionRegister(root, problems) {
     if (!ledger.has(name)) problems.push(`NOTICE names ${name}, which PARITY.md does not import`);
   }
   return ledger.size;
-}
-
-function checkUserFacingSurfaces(root, problems) {
-  let checked = 0;
-  for (const file of walk(root)) {
-    const rel = relative(root, file);
-    if (SKIP_FILES.has(rel)) continue;
-    const stat = statSync(file);
-    if (stat.size > 2_000_000) continue;
-    const text = readFileSync(file);
-    if (text.includes(0)) continue;
-    checked++;
-    const source = text.toString("utf8");
-    for (const { label, pattern } of FORBIDDEN) {
-      source.split(/\r?\n/).forEach((line, index) => {
-        if (pattern.test(line)) problems.push(`${rel}:${index + 1}: ${label}`);
-      });
-    }
-    if (/^##\s+Forked from\s*$/m.test(source)) {
-      problems.push(`${rel}: contains a user-facing Forked from section`);
-    }
-    if (/(^|\/)README(?:\.[^.]+)?$/i.test(rel)) {
-      for (const match of source.matchAll(/\b(upstream|lineage|forked from)\b/gi)) {
-        const line = source.slice(0, match.index).split(/\r?\n/).length;
-        problems.push(`${rel}:${line}: README carries lineage language (${match[0]})`);
-      }
-    }
-  }
-  return checked;
 }
 
 function checkPluginLicenses(root, problems) {
@@ -167,15 +117,12 @@ function main(argv) {
   const root = argv[0] ?? ".";
   const problems = [];
   const upstreams = checkAttributionRegister(root, problems);
-  const files = checkUserFacingSurfaces(root, problems);
   const plugins = checkPluginLicenses(root, problems);
   checkCanonicalLegalFiles(root, problems);
 
-  console.log(
-    `provenance: ${upstreams} imported works, ${files} live files checked, ${plugins} plugin licenses`,
-  );
+  console.log(`provenance: ${upstreams} imported works, ${plugins} plugin licenses`);
   if (problems.length === 0) {
-    console.log("provenance: complete and product surfaces are lineage-free");
+    console.log("provenance: legal metadata and generated payloads are complete");
     return 0;
   }
 

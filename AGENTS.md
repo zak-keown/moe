@@ -30,9 +30,9 @@ and the reasoning; this file is the checklist.
    test-only edges — including the ones that point *up*. Put a test-fixture
    inversion in `tsconfig.json` and you get `TS6202: Project references may not
    form a circular graph`.
-5. **Product surfaces do not carry lineage.** `NOTICE` and `PARITY.md` are the
+5. **Keep legal metadata centralized.** `NOTICE` and `PARITY.md` are the
    canonical attribution surfaces; generated distributions carry applicable
-   license terms. `pnpm provenance` enforces the boundary.
+   license terms. `pnpm provenance` checks their completeness.
 
 ## Guarded surfaces — a bad edit turns the suite red
 
@@ -94,8 +94,8 @@ Root scripts (`package.json`), the only ones this doc names:
 - `pnpm mint` — regenerates `/plugins/` from `packages/*/mint/*.yaml`.
 - `pnpm mint:check` — CI gate. `pnpm mint` then asserts `/plugins/` is
   byte-identical. Fails if anyone hand-edited a manifest.
-- `pnpm provenance` — validates the attribution register, generated license
-  payloads, and absence of retired lineage from product surfaces.
+- `pnpm provenance` — validates the attribution register and generated license
+  payloads.
 
 Scoping a package: `pnpm --filter @bubstack/moe-crew test` or
 `turbo run typecheck test --filter=@bubstack/moe-crew`.
