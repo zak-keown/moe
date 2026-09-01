@@ -165,6 +165,14 @@ authority the plan argues from, and conflicts inside the plan resolve
 against it. A plan with no reachable spec gets a ledger note saying so —
 rulings made without one are provisional.
 
+Before the conflict scan or any dispatch, validate the execution metadata for
+every task. Each task must have a non-empty `Files:` block, an `Interfaces:`
+block, and explicit `Consumes:` and `Produces:` entries (`None` is the explicit
+value for no interface edge). Missing any one fails plan validation.
+Record the invalid task and missing field in the ledger, stop execution, and
+return the plan for repair. Never infer a missing value or treat missing
+metadata as independence.
+
 Before dispatching Task 1, scan the plan once for conflicts, writing down
 what you checked as you check it:
 
@@ -192,10 +200,13 @@ implementation.
 The preflight scan above already lists every pair of tasks that share a file or
 an interface. Use that same table to group the plan's tasks into WAVES: within a
 wave, dispatch implementers concurrently; between waves, integrate then advance.
+The implementation ladder has exactly two rungs: worktree-isolated parallel
+dispatch, then sequential dispatch of the whole wave.
 A wave is a set of tasks that all satisfy the worktree gate
 (`dispatching-parallel-agents`, "The gate"): pairwise-disjoint `Files:` blocks,
-no `Consumes:` → `Produces:` edge inside the wave, and one worktree per worker.
-Fail any one and the tasks belong to different waves.
+no `Consumes:` → `Produces:` edge inside the wave, and one worktree per worker
+whose resolved linked Git directory is pairwise unique. File overlap or an
+interface edge puts the tasks in different, sequential waves.
 
 Produce the wave list from the scan table, not from the plan's task order — the
 plan is a linear read but its dependency shape is a DAG. A task with no in-wave
@@ -208,6 +219,13 @@ Before dispatching a wave, record its BASE SHA once — every worker in the wave
 branches from that same commit, per the divergent-tree rule in
 `dispatching-parallel-agents`. A worker branched from a stale base will cite the
 same file coordinates as its siblings but read different content there.
+
+Create and validate every worktree before dispatching any worker. For each
+worker cwd, resolve absolute `--git-dir` and `--git-common-dir`; they must differ,
+and the resolved `--git-dir` values must be pairwise unique. If creation or
+validation fails for even one worker, use the second rung for the whole wave:
+sequential dispatch from the controller's current validated tree. Never run an
+unisolated or partially isolated parallel wave.
 
 A plan of exactly one task is a wave of one, and the loop below still applies.
 Nothing about single-task plans changes — the wave step adds a shape, it does
@@ -311,14 +329,12 @@ and fix-round diffs need it.
   a pointer to that ledger entry in the dispatch.
 - Record the implementer's agent identity from the dispatch result —
   fix-loop rounds 1-3 resume this agent.
-- Dispatch multiple implementers concurrently ONLY when the wave they belong to
-  satisfies the worktree gate (see the Wave grouping step above and
-  `dispatching-parallel-agents`): the wave's tasks have disjoint `Files:`
-  blocks, no task in the wave `Consumes:` an interface another in the wave
-  `Produces:`, and each concurrent worker gets its own linked worktree via
-  `using-git-worktrees` Step 1c. Fail any condition and the wave is serial —
-  correct in every harness, merely slower. The old blanket ban was rooted in
-  `(conflicts)`, which worktree isolation now removes.
+- Dispatch multiple implementers concurrently ONLY on rung one: the wave's
+  tasks have disjoint `Files:` blocks, no task in the wave `Consumes:` an
+  interface another in the wave `Produces:`, and every worker has a validated,
+  pairwise-unique linked Git directory via `using-git-worktrees` Step 1d. Rung
+  two is sequential dispatch of the whole wave. Use it whenever worktree
+  creation or validation fails. There is no unisolated-parallel rung.
 
 Template: [implementer-prompt.md](implementer-prompt.md)
 
