@@ -12,7 +12,8 @@
 # invoke the skill by name, so a lean-tier user (who does not have
 # `sequencing-plans` installed) still gets the answer plus a working command
 # — the CLI ships in `hooks/` unfiltered, per D2 and the tier collision noted
-# in .planning/backlog/W02P02-deterministic-task-dag.md.
+# in the deterministic-task-dag item in .planning/backlog/ (cited by slug —
+# the W##P## filename prefix moves whenever the backlog is re-waved).
 #
 # Every failure path exits 0 with no context. A broken notice must never fail a
 # session start: a non-zero SessionStart hook can block every session on the
@@ -52,8 +53,15 @@ fi
 # Only fire when the project actually has a plan set. A project with no
 # manifest gets no notice — the point is to catch the multi-plan case, not to
 # announce this hook's existence to every session on the machine.
+#
+# Under the default (`nullglob` off), an unmatched glob expands to the literal
+# pattern and the `-f` guard below rejects it. But a user with
+# `shopt -s nullglob` inherited into the hook shell would get an EMPTY array,
+# and indexing `${MANIFESTS[0]}` under `set -u` would then error with
+# "unbound variable" BEFORE the guard fires. Explicit length check first, so
+# both modes route to a silent exit 0.
 MANIFESTS=("$CWD"/docs/moe/plans/*-MANIFEST.md)
-if [ ! -f "${MANIFESTS[0]}" ]; then
+if [ "${#MANIFESTS[@]}" -eq 0 ] || [ ! -f "${MANIFESTS[0]}" ]; then
     exit 0
 fi
 if [ "${#MANIFESTS[@]}" -gt 1 ]; then

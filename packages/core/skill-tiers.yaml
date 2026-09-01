@@ -340,9 +340,11 @@ authored:
       this skill's directory, because `scripts/mint-plugins.mjs` filters skills
       by tier but stages hooks unfiltered — a lean-tier user gets a working
       command from the hook even though this skill is not installed in their
-      plugin. See .planning/backlog/W02P02-deterministic-task-dag.md for the
-      argument, and D2 (`skill-tiers.yaml` policy block above) for the tier
-      choice, which is reversible.
+      plugin. See the deterministic-task-dag item in .planning/backlog/ for
+      the argument (cited by slug, not by W##P## filename prefix — the same
+      prefix-drift trap the writing-plans comment above already documents),
+      and D2 (`skill-tiers.yaml` policy block above) for the tier choice,
+      which is reversible.
 
 # Not a skill: skills/_shared/ holds the three PAR reference documents the
 # iterative-development cluster reads at runtime. It carries no SKILL.md, so

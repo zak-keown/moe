@@ -34,8 +34,9 @@
 // per decision D2, so it does not ship in `moe-core`; scripts under a skill
 // directory are filtered out with the skill by scripts/mint-plugins.mjs, while
 // `hooks/` is staged unfiltered. Keeping the CLI under `hooks/` lets a lean
-// user run `plan-set next` even without the skill installed. See
-// .planning/backlog/W02P02-deterministic-task-dag.md.
+// user run `plan-set next` even without the skill installed. See the
+// deterministic-task-dag item in .planning/backlog/ (cited by slug — the
+// W##P## filename prefix moves whenever the backlog is re-waved).
 //
 // Only Node built-ins. The CLI ships as a plugin hook and cannot assume the
 // user has run `pnpm install` inside their project.

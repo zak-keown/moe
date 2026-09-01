@@ -510,8 +510,8 @@ describe("runtime paths", () => {
     // Extensionless files with a `#!/usr/bin/env node` shebang route to
     // `node --check`. Without that branch, `hooks/plan-set` would be picked
     // up by NEITHER route and gain zero syntax coverage in vitest — the plan
-    // for W02P02 (deterministic-task-dag) asserted the router already handled
-    // node shebangs; it didn't, and this branch is what makes that assertion
+    // for deterministic-task-dag asserted the router already handled node
+    // shebangs; it didn't, and this branch is what makes that assertion
     // true.
     //
     // hooks/run-hook.cmd is correctly in neither set: `.cmd` is not a routed
@@ -584,8 +584,8 @@ describe("hooks", () => {
 
   it("registers the SessionStart and Stop hooks, and nothing else", () => {
     // Stop is the claude-judge-continuation hook. SessionStart is the
-    // plan-set-notice hook (W02P02 deterministic-task-dag), which announces
-    // an incomplete plan set when the session starts in a project that has
+    // plan-set-notice hook (deterministic-task-dag), which announces an
+    // incomplete plan set when the session starts in a project that has
     // one. moe-mint ALSO writes a SessionStart entry — the bootstrap that
     // loads the `using-moe` skill — into the generated
     // `hooks/moe-mint/hooks.json` alongside a byte-clone of this document
