@@ -407,6 +407,44 @@ authored:
       and D2 (`skill-tiers.yaml` policy block above) for the tier choice,
       which is reversible.
 
+  reviewing-a-codebase:
+    tier: everything
+    from: moe
+    why: >-
+      Everything-only under D2. A whole-repository review you invoke on purpose —
+      an inherited codebase, a pre-release sweep — not something that fires on
+      ordinary work, which is the criterion in ARCHITECTURE.md section 2. Its
+      description deliberately claims "a whole repository rather than a diff",
+      because `requesting-code-review` already owns the diff trigger and two
+      skills asserting one "use when" is the TRIGGER COLLISION the tiebreak
+      above exists to prevent. Written after eleven RED baseline runs
+      (`.planning/backlog/`, codebase-review-skills, cited by slug because the
+      W##P## prefix is a schedule and moves): agents already produce severity
+      labels, per-finding locations and honest coverage unprompted, so the skill
+      authors none of that. What no baseline run produced was a stable finding
+      id, frontmatter, or a coverage line inside the report rather than beside
+      it — and `fixing-a-code-review` cannot resume without all three. Ships two
+      node scripts that carry no execute bit, invoked as `node <path>` like
+      brainstorming's, so neither needs an X_BIT_ALLOWLIST entry.
+  fixing-a-code-review:
+    tier: everything
+    from: moe
+    why: >-
+      Everything-only under D2, and the consumer half of the pair — it reads the
+      report `reviewing-a-codebase` writes. Deliberately invoked once a report
+      exists, so it cannot fire unasked. The same baseline runs settled its
+      shape: six runs under combined time, authority and exhaustion pressure all
+      wrote the test first, verified each finding against current code before
+      touching it, and refused to bundle commits, so the skill carries no
+      rationalization table and no TDD lecture — `writing-skills` "Match the
+      Form to the Failure" warns that prohibitions backfire on what these runs
+      actually got wrong, which was the record. Three of them wrote the
+      disposition three different ways and none recorded which commit fixed
+      which finding, so the skill is a REQUIRED four-field slot plus the script
+      that fills it. Not in metadata.test.ts's `parallelDispatchers`: fixes
+      commit to one tree in sequence, so it dispatches nothing in parallel and
+      owes no sequential fallback.
+
 # Not a skill: skills/_shared/ holds the three PAR reference documents the
 # iterative-development cluster reads at runtime. It carries no SKILL.md, so
 # moe-mint's readSkills() skips it, and it ships with the skills directory in

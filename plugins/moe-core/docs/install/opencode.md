@@ -6,7 +6,7 @@
 
 - `package.json` (shared with the pi adapter when both are active)
 - `.opencode/plugins/moe-core.js`, the OpenCode plugin module that registers the plugin's skills directory and injects bootstrap context
-- a `.opencode/agent/<name>.md` file for each agent (`search-codegraph`, `search-moedex`)
+- a `.opencode/agent/<name>.md` file for each agent (`review-shard`, `search-codegraph`, `search-moedex`, `verify-finding`)
 
 ## Installing
 
