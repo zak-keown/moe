@@ -128,6 +128,23 @@ function parseJson(text) {
   }
 }
 
+function parseDistTags(text) {
+  const json = parseJson(text);
+  if (json && typeof json === "object" && !Array.isArray(json)) return json;
+  if (typeof text !== "string" || text.trim() === "") return undefined;
+
+  // npm 11 accepts --json for `dist-tag ls` but still renders one
+  // `tag: version` pair per line. Parse that documented CLI shape strictly;
+  // any warning, malformed line, or duplicate tag remains unverifiable.
+  const tags = {};
+  for (const line of text.trim().split(/\r?\n/u)) {
+    const match = /^([^\s:]+):\s+(\S+)$/u.exec(line);
+    if (!match || Object.hasOwn(tags, match[1])) return undefined;
+    tags[match[1]] = match[2];
+  }
+  return tags;
+}
+
 function structuredErrorCode(result) {
   for (const output of [result?.stdout, result?.stderr]) {
     const value = parseJson(output);
@@ -207,7 +224,7 @@ function queryLatest(context, name) {
       `query latest ${name} could not be verified (exit status ${result?.status ?? "unknown"})`,
     );
   }
-  const tags = parseJson(result.stdout);
+  const tags = parseDistTags(result.stdout);
   if (!tags || typeof tags !== "object" || Array.isArray(tags)) {
     throw new TcReleaseError(`query latest ${name} returned an unverifiable response`);
   }

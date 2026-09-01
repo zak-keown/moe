@@ -957,6 +957,36 @@ describe("TC release publishing", () => {
     assert.deepEqual([...registry.latest.values()], Array(8).fill(VERSION));
   });
 
+  it("accepts npm 11 plaintext dist-tag output while preserving strict tag verification", () => {
+    const root = releaseFixture();
+    const { artifactsDir, manifests } = makePackedArtifacts(root);
+    const registry = registryRunner({
+      artifactsDir,
+      manifests,
+      exactState: "matching",
+      latestState: null,
+      onOperation({ operation, latest, name }) {
+        if (operation !== "view-latest") return undefined;
+        const current = latest.get(name);
+        return {
+          status: 0,
+          stdout:
+            current === null
+              ? `tc-candidate-1-2-3-tc-4: ${VERSION}\n`
+              : `latest: ${current}\ntc-candidate-1-2-3-tc-4: ${VERSION}\n`,
+          stderr: "",
+        };
+      },
+    });
+
+    const result = publishRelease(publishInput(root, artifactsDir, registry.runCommand));
+
+    assert.equal(result.noOp, false);
+    assert.equal(result.uploaded.length, 0);
+    assert.equal(registry.operationCounts.get("tag-add"), 8);
+    assert.deepEqual([...registry.latest.values()], Array(8).fill(VERSION));
+  });
+
   it("skips uploads on a matching retry and performs no registry writes when already complete", () => {
     const root = releaseFixture();
     const { artifactsDir, manifests } = makePackedArtifacts(root);
@@ -1142,6 +1172,21 @@ describe("TC release publishing", () => {
       /could not be verified/,
     );
     assert.equal(mutations(uncertain.calls).length, 0);
+
+    const malformedTags = registryRunner({
+      artifactsDir,
+      manifests,
+      onOperation({ operation, occurrence }) {
+        if (operation === "view-latest" && occurrence === 1) {
+          return { status: 0, stdout: "unexpected registry output\n", stderr: "" };
+        }
+      },
+    });
+    assert.throws(
+      () => publishRelease(publishInput(root, artifactsDir, malformedTags.runCommand)),
+      /query latest .* returned an unverifiable response/,
+    );
+    assert.equal(mutations(malformedTags.calls).length, 0);
   });
 
   it("rejects mixed prior latest tags and a target older than coherent latest", () => {
