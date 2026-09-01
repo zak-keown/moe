@@ -207,8 +207,6 @@ load-bearing repository conventions.
 
 **Out:**
 
-- MR templates and `sc-{card}/{slug}` branch naming — owned by
-  `tc-standards-conformance`.
 - Consumer-side install and HQ DX — owned by `installer-hq-dx`; this document
   is contributor setup only.
 - Voice and tone across the prose — owned by `moe-tone-and-branding`.

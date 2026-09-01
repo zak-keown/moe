@@ -316,21 +316,14 @@ says the directory grand total is deliberately no longer asserted) but left the
 DO-NOW-2's to make, not mine. `skill-tiers.yaml:22-24`'s ERR SMALL rule is the
 argument against.
 
-**On `blocks`.** Empty. `tc-governance-integration` can ship TC Guide and the AI
-Governance doc as skill content with no retrieval mechanism, so blocking would
-serialise two independent items for nothing. One handoff for it:
-`rag_search(sourceKinds:["structured_doc"])` may already index those documents,
-which would change what it needs to author.
-
 ## Scope boundary
 
 **In:** the routing rule; write-back discipline; one skill; two haiku agents;
 graceful behaviour when moedex is absent or warming and when CodeGraph is absent
 entirely; the cross-user reproducibility caveat.
 
-**Out:** TC Guide and AI Governance *content* (`tc-governance-integration`); MR
-and branch conventions (`tc-standards-conformance`); renaming or re-tiering
-existing core skills (`tiered-workflow-naming`); any change to moedex or
+**Out:** renaming or re-tiering existing core skills
+(`tiered-workflow-naming`); any change to moedex or
 CodeGraph themselves — `GRAPH-LAYER-PLAN.md` is not this backlog's to edit; a
 proxy MCP server, a 10th package, or any new always-on process; any change to
 `packages/memory`'s store, schema or encoder; deprecating either memory store;

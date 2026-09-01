@@ -22,17 +22,9 @@ decision_needed: no
 
 ## Where this came from
 
-Supersedes `tc-domain-skills-port`, which asked whether to port 17 `tc-*` skills
-from the dormant `ai/claude-code-platform-plugin`. That item's census answered it:
-13 were near-duplicates of skills this fork already ships, three of the remaining
-four were dispatch wrappers over seven tools that do not exist here, and the one
-piece of real content — a C#→Angular concept mapping — went to `ai/kb` instead
-(MR `ai/kb!17`, 2026-09-01), because `ai/kb` is the corpus `rag_search` indexes
-and a doc there reaches every TC engineer rather than only Moe installs.
-
-What remains is the *capability* those wrappers were reaching for, and Zak's call
-on 2026-09-01 was to build it — with a question that changed the design: **can it
-be written against CodeGraph alone, without moedex?**
+Zak's call on 2026-09-01 was to build cross-stack tracing directly, with a
+question that changed the design: **can it be written against CodeGraph alone,
+without moedex?**
 
 **Mostly yes**, and that is what makes this item small. Everything below was
 measured on 2026-09-01, not assumed.
