@@ -26,7 +26,7 @@ SessionStart reminder when it is absent. Set
 | § | Requirement | Moe surface |
 |---|---|---|
 | §1 | Credential and secret protection | The policy text; Moe stores no credentials. |
-| §2 | Data protection and PII | The policy text; completion evidence stays under `$HOME`. |
+| §2 | Data protection and PII | The policy text; completion evidence is local, gitignored, and opt-out. |
 | §3 | Destructive actions | The policy text and the worktree/branch-finishing skills. |
 | §4 | Least privilege | Retrieval agents declare explicit tool allowlists. |
 | §5 | SQL safety | The policy text; core has no database. |
@@ -36,6 +36,20 @@ SessionStart reminder when it is absent. Set
 | §9 | Transparency | Verification-before-completion requires evidence-backed claims. |
 | §10 | `.ai-privacy.yml` | The root policy declaration; enforcement remains separate work. |
 | §11 | Enforcement | The policy remains above skills in the instruction hierarchy. |
+
+## Completion evidence
+
+The default-on `moe-completion-evidence` Stop hook records verification commands
+from the current human turn in the current Git worktree's `.audit/` directory.
+Each record carries the command, output tail, error flag, and exit code; fields
+the transcript does not provide are `null`. Completion claims without matching
+verification produce a warning, never a blocked stop.
+
+Set `MOE_EVIDENCE_DISABLED=1` to disable capture. Set
+`MOE_EVIDENCE_HOME=1` to use the machine-local
+`$HOME/.claude/moe/audit/<repo>/` escape instead of repo-local storage. The
+repo-local default is ignored by the committed root `.gitignore`; the hook does
+not modify a consumer's `.git/info/exclude`.
 
 ## Generated plugin
 
