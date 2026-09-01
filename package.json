@@ -33,7 +33,7 @@
   "scripts": {
     "bin:test": "vitest run --dir bin/test",
     "build": "turbo run build",
-    "check": "pnpm lint && turbo run typecheck test",
+    "check": "pnpm lint && pnpm scope:check && pnpm typecheck && pnpm test",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "mint": "turbo run mint:generate",
@@ -41,6 +41,7 @@
     "mint:generate": "node scripts/mint-plugins.mjs",
     "proof:test": "uv run --project py/proof pytest py/proof",
     "provenance": "node scripts/check-provenance.mjs",
+    "scope:check": "node scripts/check-downstream-scope.mjs",
     "tab:build": "cargo build --release --manifest-path packages/tab/Cargo.toml",
     "tab:test": "cargo test --manifest-path packages/tab/Cargo.toml",
     "tab:test:bindings": "pnpm tab:build && uv run --project packages/tab/bindings/python pytest packages/tab/bindings/python",

@@ -80,13 +80,16 @@ records which entries are load-bearing (`better-sqlite3`, `onnxruntime-node`,
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm check          # lint + typecheck + test, across the whole workspace
+pnpm check          # lint + live scope + typecheck + every normal Node test
 pnpm mint:check     # asserts /plugins/ is byte-identical from source
 ```
 
-`pnpm check` is `pnpm lint && turbo run typecheck test`. `turbo.json` makes
-`test` depend on the package's own `build` and `typecheck` on dependencies'
-`build`, so the workspace compiles on its way through.
+`pnpm check` runs `pnpm lint`, the live downstream `pnpm scope:check`,
+`pnpm typecheck`, and the complete root `pnpm test`. That test command runs the
+package suites through Turbo exactly once, then the root bin and TC release
+policy suites. `turbo.json` makes each package test depend on its own `build`
+and typecheck on dependencies' `build`, so the workspace compiles on its way
+through.
 
 ### The four commands outside `pnpm check`, and why
 

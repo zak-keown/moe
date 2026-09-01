@@ -80,9 +80,13 @@ Root scripts (`package.json`), the only ones this doc names:
 
 - `pnpm lint` — biome across the whole tree. Warnings do not fail the gate.
 - `pnpm typecheck` — turbo, per package.
-- `pnpm test` — turbo, per package. Includes each package's `build` as a
-  dependency (`turbo.json`).
-- `pnpm check` — `pnpm lint && turbo run typecheck test`. The Node gate.
+- `pnpm test` — turbo once for every package, then the root bin and TC release
+  policy suites. Package tests include their own `build` dependency
+  (`turbo.json`).
+- `pnpm scope:check` — validates the exact TC package map and scans the live
+  committed install surface for neutral-upstream identity leaks.
+- `pnpm check` — lint, live scope, typecheck, then the complete root `pnpm test`.
+  This is the Node gate.
 - `pnpm build` — turbo. Runs as its own CI stage; also compiled transitively by
   `pnpm check`.
 - `pnpm tab:build`, `pnpm tab:test`, `pnpm tab:test:bindings` — cargo and the
@@ -100,11 +104,11 @@ Root scripts (`package.json`), the only ones this doc names:
 Scoping a package: `pnpm --filter @tc/moe-crew test` or
 `turbo run typecheck test --filter=@tc/moe-crew`.
 
-**Before opening an MR, run `pnpm check` and `pnpm mint:check`.** `pnpm check`
-is the Node-only gate; the Rust and Python paths are CI-scoped and land after
-push. If your change touches the FFI, the C ABI, or `packages/tab/**`, also run
-`pnpm tab:test:bindings` locally — CI is path-scoped and will not catch a
-consumer of the cdylib elsewhere.
+**Before opening an MR, run `pnpm check` and `pnpm mint:check`.** The former
+includes `pnpm scope:check` and every normal Node test surface; the Rust and
+Python paths are CI-scoped and land after push. If your change touches the FFI,
+the C ABI, or `packages/tab/**`, also run `pnpm tab:test:bindings` locally — CI
+is path-scoped and will not catch a consumer of the cdylib elsewhere.
 
 ## What CI runs, and what it does not
 
