@@ -57,10 +57,6 @@ typecheck:
 test:
   stage: check
   extends: .not-scheduled
-  # TEMPORARY deployment unblock: the release train excludes private Flight,
-  # whose isolated-runner subprocess fixtures are being repaired separately.
-  # Remove together with TC_RELEASE_FORCE immediately after the first publish.
-  allow_failure: true
   # moe-mint's shipped offline verifier uses jq to validate and rewrite
   # generated harness manifests. The stock node:24 image does not include it.
   before_script:
@@ -92,7 +88,6 @@ tab-native-linux:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true" && $TC_RELEASE_FORCE == "1"'
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'
       changes: [tc-release.json]
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
@@ -227,12 +222,6 @@ tc-release-pack:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       variables:
         NPM_DIST_TAG: next
-    # One-shot retry for a release whose broad CI fan-out failed before pack.
-    # Supply this only as a protected-main git push option:
-    #   git push -o ci.variable=TC_RELEASE_FORCE=1 origin HEAD:main
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true" && $TC_RELEASE_FORCE == "1"'
-      variables:
-        NPM_DIST_TAG: latest
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'
       changes: [tc-release.json]
       variables:
@@ -261,9 +250,6 @@ tc-release-publish:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: never
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true" && $TC_RELEASE_FORCE == "1"'
-      variables:
-        NPM_DIST_TAG: latest
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'
       changes: [tc-release.json]
       variables:
@@ -278,7 +264,7 @@ tc-release-publish:
 # governance and guide dependencies whose movement also requires review.
 #
 # Schedule-only. The manifest itself only moves when a human bumps it, so a
-# per-pipeline run would burn time reading four remote refs to conclude
+# per-pipeline run would burn time reading three remote refs to conclude
 # nothing changed. Set the schedule at Project -> CI/CD -> Schedules (daily is
 # ample); pipelines from any other source skip the job.
 #

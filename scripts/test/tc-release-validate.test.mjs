@@ -273,7 +273,7 @@ describe("TC release GitLab policy", () => {
     }
   });
 
-  it("permits latest publication only for protected default-branch release changes or forced retries", () => {
+  it("permits latest publication only for protected default-branch release changes", () => {
     const ci = config();
     const packReleaseRule = ci["tc-release-pack"].rules.find(
       (rule) => rule.variables?.NPM_DIST_TAG === "latest" && rule.changes,
@@ -291,24 +291,12 @@ describe("TC release GitLab policy", () => {
       assert.equal(rule.variables.NPM_DIST_TAG, "latest");
     }
 
-    for (const name of ["tab-native-linux", "tc-release-pack", "tc-release-publish"]) {
-      const forceRule = ci[name].rules.find((rule) => rule.if?.includes("TC_RELEASE_FORCE"));
-      assert.match(forceRule.if, /CI_PIPELINE_SOURCE == "push"/);
-      assert.match(forceRule.if, /CI_COMMIT_BRANCH == \$CI_DEFAULT_BRANCH/);
-      assert.match(forceRule.if, /CI_COMMIT_REF_PROTECTED == "true"/);
-      assert.match(forceRule.if, /TC_RELEASE_FORCE == "1"/);
-      assert.equal(forceRule.changes, undefined);
-      if (name !== "tab-native-linux") {
-        assert.equal(forceRule.variables.NPM_DIST_TAG, "latest");
-      }
-    }
-
     assert.equal(publish.environment, "proget-publish");
     assert.equal(publish.resource_group, "tc-npm-release");
     assert.equal(publish.interruptible, false);
     assert.deepEqual(publish.needs, [...prerequisiteNeeds, "tc-release-pack"]);
     assert.deepEqual(publish.rules.at(-1), { when: "never" });
-    assert.equal(publish.rules.length, 4);
+    assert.equal(publish.rules.length, 3);
     assert.equal(JSON.stringify(publish).includes("next"), false);
   });
 });
