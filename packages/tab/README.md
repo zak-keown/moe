@@ -30,7 +30,7 @@ the code verbatim.
 
 ```
 Cargo.toml                     cargo workspace; NOT a pnpm member. Driven by root `pnpm tab:build`.
-crates/moe-tab-core/           the library: dialects, price store, cost kernel. 69 tests.
+crates/moe-tab-core/           the library: dialects, price store, cost kernel. 68 tests.
   prices/bundled.json          890 KB price snapshot compiled into the library. Generated.
   tests/fixtures/              transcript + price-sheet fixtures.
 crates/moe-tab-cli/            the `moe-tab` binary. 5 tests.
@@ -42,8 +42,7 @@ bindings/typescript/           @bubstack/moe-tab — the one pnpm workspace memb
 bindings/python/               moe_tab (ctypes). setuptools + pytest, not a pnpm member.
 bindings/go/tab/               purego, no cgo. Not a pnpm member.
 bindings/testdata/             the shared corpus all three bindings price.
-scripts/                       header regen, price refresh, the equivalence gate, two inert
-                               release scripts.
+scripts/                       header regen, price refresh, and the equivalence gate.
 docs/dialects.md               live reference for the two transcript dialects.
 docs/history/                  upstream plans, specs, validation reports, release doc. Verbatim.
 ```
@@ -106,12 +105,11 @@ consecutive parallel runs are clean. Upstream's answer was a README note telling
 `--test-threads=1` — which the root `pnpm tab:test` script does not, so the note would not have
 survived contact with this workspace.
 
-**Four unported release scripts and workflows.** `.github/workflows/{ci,release,crates-release,pypi-release}.yml`
+**Four unported release workflows.** `.github/workflows/{ci,release,crates-release,pypi-release}.yml`
 are not ported; `ci.yml`'s content is now spread across `pnpm check`, `pnpm tab:test` and
-`scripts/validate-bindings.sh`. `scripts/assemble-go-module.sh` and
-`scripts/build-pypi-wheel-linux.sh` are kept but marked INERT in their headers — they are the only
-record of how a self-contained Go module and a platform-tagged manylinux wheel get built, and
-deleting them would destroy that for a decision that has not been made yet.
+`scripts/validate-bindings.sh`. The inert Go-module assembly and manylinux-wheel scripts were
+also dropped once the publication decision closed; their upstream copies remain in the pinned
+snapshot and their designs remain in `docs/history/`.
 
 **`scripts/validate-bindings.sh` rewritten and actually run.** It de-mise'd (bare `cargo`, per
 ARCHITECTURE.md), builds `dist/` with pnpm instead of `bun install || npm install`, runs

@@ -20,8 +20,8 @@ no equivalent repository exists on GitLab, so **`embed_stub.go` is the only embe
 `embeddedLib` is always empty**. The loader therefore always takes its `MOE_TAB_LIB` or dev
 `target/` path.
 
-`scripts/assemble-go-module.sh` still contains the assembly logic, inert, for whenever the
-publish-or-not decision is made.
+The removed assembly workflow remains documented in `docs/history/`; this source tree does not
+carry an inert publication script.
 
 ## How the library is located
 

@@ -58,5 +58,5 @@ def test_refresh_rejects_garbage_as_of(seeded):
 def test_unknown_dialect_raises(seeded):
     import moe_tab
     with pytest.raises(moe_tab.TabError) as ei:
-        moe_tab.estimate_path(TESTDATA / "claude-mini.jsonl", dialect="banana")
+        moe_tab.estimate_path(TESTDATA / "tab-usage-mini.jsonl", dialect="banana")
     assert ei.value.code == 7
