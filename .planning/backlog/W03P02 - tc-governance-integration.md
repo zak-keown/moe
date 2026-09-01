@@ -39,6 +39,12 @@ behavior when disabled. `check-tc-drift-manifest` enforces exactly two content
 and two watch-only rows, and CI performs both ordinary structural validation and
 scheduled remote comparison.
 
+The separate "tc-governance-check behavior" suite closes the SessionStart
+acceptance gap with clean temporary homes. It proves the missing-policy nudge,
+recognition from both Claude and Codex user-instruction files, the knowledge-base
+pointer in both states, the explicit disable escape and fail-open behavior when
+no home directory is available.
+
 ## The idea
 
 > Brainstorm on how to integrate AI Governance doc/TC Guide skill
