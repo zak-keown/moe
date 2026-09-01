@@ -5,9 +5,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
+import { parse } from "yaml";
 import { PROGET_REGISTRY, validateRelease } from "../tc-release-validate.mjs";
 
 const SCRIPT = fileURLToPath(new URL("../tc-release-validate.mjs", import.meta.url));
+const CI_CONFIG = fileURLToPath(new URL("../../.gitlab-ci.yml", import.meta.url));
 const roots = [];
 const SHA = "0123456789abcdef0123456789abcdef01234567";
 
@@ -56,7 +58,6 @@ function validate(root, overrides = {}) {
     branch: "main",
     defaultBranch: "main",
     distTag: "latest",
-    authPresent: true,
     ...overrides,
   });
 }
@@ -168,18 +169,28 @@ describe("TC release policy", () => {
     assert.ok(codes(validate(root)).includes("package.internal-version"));
   });
 
-  it("fails closed when CI context or protected ProGet auth is absent", () => {
+  it("performs structural validation without ProGet authentication", () => {
+    const root = fixture();
+
+    const result = validate(root, { authPresent: false });
+
+    assert.equal(result.ok, true);
+    assert.equal(Object.hasOwn(result, "authentication"), false);
+    assert.equal(codes(result).includes("ci.proget-auth"), false);
+  });
+
+  it("fails closed when required CI context is absent", () => {
     const root = fixture();
     const result = validateRelease({ root });
 
     const actualCodes = codes(result);
-    for (const code of ["ci.branch", "ci.default-branch", "ci.dist-tag", "ci.proget-auth"]) {
+    for (const code of ["ci.branch", "ci.default-branch", "ci.dist-tag"]) {
       assert.ok(actualCodes.includes(code), `missing ${code}`);
     }
-    assert.deepEqual(result.authentication, { variable: "PROGET_NPM_AUTH", present: false });
+    assert.equal(actualCodes.includes("ci.proget-auth"), false);
   });
 
-  it("CLI JSON mode is read-only and never exposes the credential", () => {
+  it("CLI JSON mode is read-only and succeeds without a credential", () => {
     const root = fixture();
     const before = readFileSync(join(root, "package.json"), "utf8");
 
@@ -199,13 +210,65 @@ describe("TC release policy", () => {
       ],
       {
         encoding: "utf8",
-        env: { ...process.env, PROGET_NPM_AUTH: "do-not-print-this" },
+        env: { ...process.env, PROGET_NPM_AUTH: "" },
       },
     );
 
     assert.equal(run.status, 0, run.stderr);
     assert.equal(JSON.parse(run.stdout).ok, true);
-    assert.equal(run.stdout.includes("do-not-print-this"), false);
     assert.equal(readFileSync(join(root, "package.json"), "utf8"), before);
+  });
+});
+
+describe("TC release GitLab policy", () => {
+  const prerequisiteNeeds = [
+    "install",
+    "lint",
+    "typecheck",
+    "test",
+    "build",
+    "plugins",
+    "provenance",
+    "tc-drift-manifest",
+  ];
+
+  function config() {
+    return parse(readFileSync(CI_CONFIG, "utf8"));
+  }
+
+  it("keeps merge requests and feature pushes as next-tag pack-only dry runs", () => {
+    const pack = config()["tc-release-pack"];
+
+    assert.deepEqual(pack.needs, prerequisiteNeeds);
+    assert.match(pack.rules[0].if, /merge_request_event/);
+    assert.equal(pack.rules[0].variables.NPM_DIST_TAG, "next");
+    assert.match(pack.rules[2].if, /CI_PIPELINE_SOURCE == "push"/);
+    assert.match(pack.rules[2].if, /CI_COMMIT_BRANCH/);
+    assert.equal(pack.rules[2].variables.NPM_DIST_TAG, "next");
+    assert.deepEqual(pack.rules.at(-1), { when: "never" });
+    assert.equal(JSON.stringify(pack).includes("PROGET_NPM_AUTH"), false);
+  });
+
+  it("permits latest publication only for protected default-branch release changes", () => {
+    const ci = config();
+    const packReleaseRule = ci["tc-release-pack"].rules[1];
+    const publish = ci["tc-release-publish"];
+    const publishRule = publish.rules[0];
+
+    for (const rule of [packReleaseRule, publishRule]) {
+      assert.match(rule.if, /CI_PIPELINE_SOURCE == "push"/);
+      assert.match(rule.if, /CI_COMMIT_BRANCH == \$CI_DEFAULT_BRANCH/);
+      assert.match(rule.if, /CI_COMMIT_REF_PROTECTED == "true"/);
+      assert.deepEqual(rule.changes, ["tc-release.json"]);
+      assert.equal(rule.variables.NPM_DIST_TAG, "latest");
+    }
+
+    assert.equal(publish.environment, "proget-publish");
+    assert.equal(publish.resource_group, "tc-npm-release");
+    assert.equal(publish.interruptible, false);
+    assert.deepEqual(publish.needs, [...prerequisiteNeeds, "tc-release-pack"]);
+    assert.deepEqual(publish.rules.at(-1), { when: "never" });
+    assert.equal(publish.rules.length, 2);
+    assert.equal(JSON.stringify(publish).includes("next"), false);
   });
 });

@@ -23,9 +23,11 @@ label or merge SHA is not evidence that a requirement below is satisfied.
   one version and release together.
 - **TC-DIST-07 — Upstream-derived version.** A downstream release derived from
   upstream `X.Y.Z` is `X.Y.Z-tc.N` and records the exact upstream commit.
-- **TC-DIST-08 — Dist-tag protection.** Branch and merge-request packages use
-  `next`. Only the default branch may move `latest`, and only after every normal
-  build, test, mint-reproducibility, and provenance gate succeeds.
+- **TC-DIST-08 — Dist-tag protection.** Branch and merge-request pipelines are
+  credential-free pack-only dry runs using `next`. Only a protected
+  default-branch push that changes `tc-release.json` may publish and move
+  `latest`, and only after every normal build, test, mint-reproducibility, and
+  provenance gate succeeds.
 
 ## Installation and platforms
 

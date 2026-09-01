@@ -186,7 +186,9 @@ image and are intentionally separate.
 The single GitLab pipeline runs install, lint, typecheck, test, build, plugin
 reproducibility, and provenance gates. The TC downstream's publication target is
 the internal ProGet npm feed; it never publishes publicly. Branch and merge-request
-releases use the `next` dist-tag, and only the default branch may move `latest`.
+pipelines pack and validate credential-free dry runs with the `next` dist-tag but
+do not publish. Only a protected default-branch push that changes
+`tc-release.json` receives the publishing environment and may move `latest`.
 Flight is also explicitly private because it contains an internal-only legal
 exception; the exact controls are recorded in `PARITY.md`.
 
@@ -225,9 +227,10 @@ upstream keeps the corresponding `@bubstack/*` identities.
 The downstream release train is lockstep. If the neutral upstream release is
 `X.Y.Z`, TC releases are `X.Y.Z-tc.1`, `X.Y.Z-tc.2`, and so on, and record the
 exact `mirror` commit they derive from. Every installed `@tc/*` package in one
-release carries that version. Branch and merge-request packages use `next`; only
-the default branch can publish `latest`, after build, lint, typecheck, test,
-plugin-reproducibility, and provenance gates pass.
+release carries that version. Branch and merge-request pipelines perform pack-only
+dry runs with `next`. Only a protected default-branch push that changes the
+canonical release file can publish and move `latest`, after build, lint,
+typecheck, test, plugin-reproducibility, and provenance gates pass.
 
 Non-npm metadata uses the closest valid spelling without pretending the package
 standards are interchangeable. Cargo accepts the npm spelling `X.Y.Z-tc.N`.

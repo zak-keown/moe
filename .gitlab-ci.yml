@@ -138,21 +138,18 @@ tc-release-pack:
   needs: [install, lint, typecheck, test, build, plugins, provenance, tc-drift-manifest]
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      variables:
+        NPM_DIST_TAG: next
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'
+      changes: [tc-release.json]
+      variables:
+        NPM_DIST_TAG: latest
     - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH'
+      variables:
+        NPM_DIST_TAG: next
+    - when: never
   script:
-    - |
-      set -eu
-      if [ "${CI_PIPELINE_SOURCE:-}" = "merge_request_event" ]; then
-        release_tag=next
-      elif [ -n "${CI_COMMIT_BRANCH:-}" ] && [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH:-}" ]; then
-        release_tag=latest
-      elif [ -n "${CI_COMMIT_BRANCH:-}" ]; then
-        release_tag=next
-      else
-        echo "Unable to establish branch release context; refusing to pack."
-        exit 1
-      fi
-      NPM_DIST_TAG="$release_tag" node scripts/tc-release-pack.mjs --output-dir .tc-release
+    - node scripts/tc-release-pack.mjs --output-dir .tc-release
   artifacts:
     expire_in: 8 days
     paths: [.tc-release/*.tgz]
@@ -162,24 +159,18 @@ tc-release-pack:
 # tc-release-pack from accidentally weakening it.
 tc-release-publish:
   stage: publish
+  environment: proget-publish
+  resource_group: tc-npm-release
+  interruptible: false
   needs: [install, lint, typecheck, test, build, plugins, provenance, tc-drift-manifest, tc-release-pack]
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_REF_PROTECTED == "true"'
+      changes: [tc-release.json]
+      variables:
+        NPM_DIST_TAG: latest
+    - when: never
   script:
-    - |
-      set -eu
-      if [ "${CI_PIPELINE_SOURCE:-}" = "merge_request_event" ]; then
-        release_tag=next
-      elif [ -n "${CI_COMMIT_BRANCH:-}" ] && [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH:-}" ]; then
-        release_tag=latest
-      elif [ -n "${CI_COMMIT_BRANCH:-}" ]; then
-        release_tag=next
-      else
-        echo "Unable to establish branch release context; refusing to publish."
-        exit 1
-      fi
-      NPM_DIST_TAG="$release_tag" node scripts/tc-release-publish.mjs --artifacts-dir .tc-release
+    - node scripts/tc-release-publish.mjs --artifacts-dir .tc-release
 
 # Scheduled drift check for the TC merge-request conventions vendored into
 # packages/core/skills/_shared/tc-conventions.md. Two content pins protect the

@@ -94,9 +94,10 @@ backlog document conflicts, those two win.
    and `moe-doctor` and exposes `npx @tc/moe install`.
 2. Derive `X.Y.Z-tc.N` from the recorded upstream release, publish all TC
    packages in one train, and embed the upstream SHA in inspectable metadata.
-3. Follow TC's established ProGet method: configure `@tc` through the protected
-   auth variable, pack before publish, use `next` for branch/MR builds, and let
-   only the default branch move `latest`.
+3. Follow TC's established ProGet method: keep packing and structural validation
+   credential-free, run branch/MR pipelines as pack-only `next` dry runs, and
+   expose the protected auth variable only to a protected default-branch publish
+   triggered by a `tc-release.json` change.
 4. Make publish depend on install, lint, typecheck, test, build,
    `pnpm mint:check`, and `pnpm provenance`. A partial package train must not
    become visible as `latest`.
@@ -194,7 +195,8 @@ train waits for both.
    `@bubstack/*` artifact.
 3. Packed artifacts all carry one `X.Y.Z-tc.N` version, the recorded upstream
    SHA, internal `@tc/*` dependency edges, and the expected ProGet registry.
-4. A branch dry run selects `next`; a default-branch dry run selects `latest`;
+4. Branch and merge-request dry runs select `next` and cannot publish; a
+   protected default-branch push changing `tc-release.json` selects `latest`;
    a failing prerequisite gate prevents the publish job.
 5. From a clean home with the TC scope configured,
    `npx @tc/moe install` makes `moe`, `moe-install`, and `moe-doctor` runnable;

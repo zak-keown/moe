@@ -255,7 +255,6 @@ export function packRelease(input) {
     defaultBranch: input.defaultBranch,
     mergeRequest: input.mergeRequest,
     distTag: input.distTag,
-    authPresent: input.authPresent,
   });
   if (!validation.ok) {
     throw new TcReleaseError(
@@ -320,7 +319,6 @@ export function main(argv, runtime = {}) {
       defaultBranch: options.defaultBranch ?? env.CI_DEFAULT_BRANCH,
       mergeRequest: options.mergeRequest || Boolean(env.CI_MERGE_REQUEST_IID),
       distTag: options.distTag ?? env.NPM_DIST_TAG,
-      authPresent: Boolean(env.PROGET_NPM_AUTH),
       env,
       runCommand: runtime.runCommand,
     });

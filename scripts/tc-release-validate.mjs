@@ -46,9 +46,9 @@ Options:
   --json                    Emit machine-readable JSON
   --help                    Show this help
 
-The ProGet credential is presence-checked through PROGET_NPM_AUTH. Its value is
-never printed. Merge requests and non-default branches require "next"; only the
-default branch may use "latest".
+This structural check never requires or reads ProGet credentials. Merge requests
+and non-default branches require "next"; only the default branch may use
+"latest".
 `;
 
 function issue(code, location, message) {
@@ -382,16 +382,6 @@ export function validateRelease(input) {
   const release = loadRelease(root, releaseFile, problems);
   const ci = resolveCiContext(input, problems);
 
-  if (!input.authPresent) {
-    problems.push(
-      issue(
-        "ci.proget-auth",
-        "PROGET_NPM_AUTH",
-        "protected ProGet npm credential is not present in the release environment",
-      ),
-    );
-  }
-
   const packages = [];
   for (const path of discoverPackageFiles(root, problems)) {
     const displayPath = packageDisplay(root, path);
@@ -456,7 +446,6 @@ export function validateRelease(input) {
       version: release.expectedVersion,
     },
     ci,
-    authentication: { variable: "PROGET_NPM_AUTH", present: Boolean(input.authPresent) },
     packages: publishable.map((pkg) => ({
       path: pkg.displayPath,
       name: pkg.manifest.name ?? null,
@@ -516,7 +505,6 @@ export function main(argv, runtime = {}) {
     defaultBranch: options.defaultBranch ?? env.CI_DEFAULT_BRANCH,
     mergeRequest: options.mergeRequest || Boolean(env.CI_MERGE_REQUEST_IID),
     distTag: options.distTag ?? env.NPM_DIST_TAG,
-    authPresent: Boolean(env.PROGET_NPM_AUTH),
   });
   if (options.json) stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   else renderHuman(result, stdout, stderr);
