@@ -77,12 +77,12 @@ package, so the transcript uses its `dist/cli.js` directly:
 $ node packages/mint/dist/cli.js init
 created: moe-mint.yaml
 created: skills/getting-started/SKILL.md
-Generated 32 files for initialization
+Generated 29 files for initialization
 Next: edit moe-mint.yaml, then re-run moe-mint generate
 
 $ node packages/mint/dist/cli.js generate
 warning: [kimi] kimi sessionStart requires a named bootstrap skill; generate mode is not supported on kimi
-Generated N files for 10 harness(es): claude-code, cursor, codex, devin,
+Generated 29 files for 10 harness(es): claude-code, cursor, codex, devin,
 kimi, opencode, pi, hermes, agent-plugins-1.0, agents-marketplace
 
 $ node packages/mint/dist/cli.js validate
@@ -184,9 +184,14 @@ built yet. -->
 <!-- doc-audit:last-reviewed -->
 _Last reviewed upstream: 2026-08-15 · upstream commit `34526db` · verified
 against code there (2 claims deferred). Re-verified on import against
-`everyharness` @ `4f7c5e2`: the "Using it" transcript, the 32-file count, the
-kimi warning text and the eleven adapter names were re-run and match; the
-status, registry, Node-version and install-doc-slug claims were corrected.
-On the runtime-pruning wave the Gemini CLI and Grok Build CLI adapters were
-removed (see PARITY.md's "Not ported" table), so the adapter list and 32-file
-count in this brochure are one refresh away from the live tool._
+`everyharness` @ `4f7c5e2`: the "Using it" transcript, the kimi warning text
+and the inbound adapter names were re-run and match; the status, registry,
+Node-version and install-doc-slug claims were corrected.
+
+Re-recorded 2026-09-01 on the runtime-pruning wave, which removed the Gemini
+CLI and Grok Build CLI adapters (see PARITY.md's "Not ported" table). The
+whole "Using it" transcript above was re-run against `dist/cli.js` in a clean
+`demo-plugin` directory, not edited by hand: `init` and `generate` each emit
+29 files, down from the 32 the eleven-adapter tool emitted, and `generate`
+names ten harnesses. The ten install docs and the file list below were
+re-counted against that run._

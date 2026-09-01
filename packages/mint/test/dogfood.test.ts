@@ -94,6 +94,17 @@ type ComparedFile = (typeof COMPARED_FILES)[number]
 // so a fresh checkout of a superpowers snapshot that still carries them can't
 // trip generate()'s refuse-to-clobber path against an adapter that no longer
 // exists to reclaim them.
+//
+// These two live in their own named constant so the repo-wide `gemini|grok`
+// leak gate has something to point at. The gate excludes this file outright
+// (`grep -v 'packages/mint/test/dogfood.test.ts'`) — that exclusion, not the
+// constant, is what makes the gate pass. The constant's job is to record WHY
+// the exclusion is legitimate: these strings name artifacts in a pinned
+// upstream snapshot we do not own and cannot edit, not a live adapter. If the
+// snapshot is ever re-pinned to a commit without them, delete this constant
+// and the gate's exclusion together.
+const SNAPSHOT_HAND_AUTHORED_GEMINI_ARTIFACTS = ['gemini-extension.json', 'GEMINI.md']
+
 const HAND_MAINTAINED_PATHS = [
   '.claude-plugin',
   '.codex-plugin',
@@ -102,8 +113,7 @@ const HAND_MAINTAINED_PATHS = [
   '.kimi-plugin',
   '.hermes-plugin',
   '.agents',
-  'gemini-extension.json',
-  'GEMINI.md',
+  ...SNAPSHOT_HAND_AUTHORED_GEMINI_ARTIFACTS,
   'package.json',
   '.opencode',
   '.pi',
