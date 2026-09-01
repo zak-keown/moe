@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   chmodSync,
   existsSync,
@@ -286,6 +287,34 @@ describe("TC npm plugin composition", () => {
       assert.ok(result.files.includes(path), `pnpm pack dropped ${path}`);
     }
     assert.equal(result.modes["skills/browsing/chrome-ws"], 0o755);
+  });
+
+  it("composes byte-identical real memory and glass tarballs across wall-clock time", () => {
+    const fixtures = ["memory", "glass"].map((kind) => composeFixture(kind));
+    const first = fixtures.map((fixture) => {
+      const input = { ...fixture.input, outputDirectory: join(fixture.root, "first") };
+      delete input.runCommand;
+      return composePluginTarball(input);
+    });
+
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1_500);
+
+    const second = fixtures.map((fixture) => {
+      const input = { ...fixture.input, outputDirectory: join(fixture.root, "second") };
+      delete input.runCommand;
+      return composePluginTarball(input);
+    });
+    for (let index = 0; index < fixtures.length; index++) {
+      const firstBytes = readFileSync(first[index].tarball);
+      const secondBytes = readFileSync(second[index].tarball);
+      const firstIntegrity = createHash("sha512").update(firstBytes).digest("base64");
+      const secondIntegrity = createHash("sha512").update(secondBytes).digest("base64");
+      assert.equal(secondIntegrity, firstIntegrity, `${first[index].kind} integrity changed`);
+      assert.deepEqual(secondBytes, firstBytes, `${first[index].kind} tar bytes changed`);
+      for (const path of REQUIRED_EXECUTABLE_PLUGIN_FILES[first[index].kind]) {
+        assert.equal(second[index].modes[path], 0o755, `${path} lost its executable mode`);
+      }
+    }
   });
 
   it("rejects a real tar header that lost a generated executable mode", () => {

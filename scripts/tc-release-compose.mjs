@@ -17,12 +17,13 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  readlinkSync,
   rmSync,
   statSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, dirname, isAbsolute, join, posix, resolve } from "node:path";
+import { basename, dirname, isAbsolute, join, posix, resolve, sep } from "node:path";
 
 const INTERNAL_MINT_MANIFEST = ".moe-mint/manifest.json";
 const GENERATED_PACKAGE_MANIFEST = "package.json";
@@ -227,34 +228,196 @@ function overlayGeneratedPlugin(pluginDirectory, stagingDirectory) {
   return modes;
 }
 
-function restoreGeneratedExecutableModes({
-  tarball,
-  temporaryRoot,
-  generatedModes,
-  runCommand,
-  env,
-}) {
-  const repairRoot = join(temporaryRoot, "mode-repair");
+function bytewiseCompare(left, right) {
+  return Buffer.compare(Buffer.from(left), Buffer.from(right));
+}
+
+function archivePathParts(path) {
+  if (
+    typeof path !== "string" ||
+    path.length === 0 ||
+    path.includes("\\") ||
+    path.includes("\0") ||
+    path.split("/").some((part) => part === "" || part === "." || part === "..")
+  ) {
+    throw new TcReleaseComposeError(`unsafe deterministic tar path: ${JSON.stringify(path)}`);
+  }
+  if (Buffer.byteLength(path) <= 100) return { name: path, prefix: "" };
+  for (let split = path.lastIndexOf("/"); split !== -1; split = path.lastIndexOf("/", split - 1)) {
+    const prefix = path.slice(0, split);
+    const name = path.slice(split + 1);
+    if (Buffer.byteLength(prefix) <= 155 && Buffer.byteLength(name) <= 100) {
+      return { name, prefix };
+    }
+  }
+  throw new TcReleaseComposeError(
+    `deterministic tar path exceeds the POSIX ustar limits: ${JSON.stringify(path)}`,
+  );
+}
+
+function writeHeaderText(header, offset, length, value, label) {
+  const bytes = Buffer.from(value);
+  if (bytes.length > length) {
+    throw new TcReleaseComposeError(`${label} exceeds the POSIX ustar field limit`);
+  }
+  bytes.copy(header, offset);
+}
+
+function writeHeaderOctal(header, offset, length, value, label) {
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new TcReleaseComposeError(`${label} is not a safe non-negative integer`);
+  }
+  const octal = value.toString(8);
+  if (octal.length > length - 1) {
+    throw new TcReleaseComposeError(`${label} exceeds the POSIX ustar numeric field limit`);
+  }
+  writeHeaderText(header, offset, length, `${octal.padStart(length - 1, "0")}\0`, label);
+}
+
+function tarHeader({ path, mode, size, type, linkTarget = "" }) {
+  const header = Buffer.alloc(512);
+  const { name, prefix } = archivePathParts(path);
+  writeHeaderText(header, 0, 100, name, `tar path ${path}`);
+  writeHeaderOctal(header, 100, 8, mode, `tar mode ${path}`);
+  writeHeaderOctal(header, 108, 8, 0, `tar uid ${path}`);
+  writeHeaderOctal(header, 116, 8, 0, `tar gid ${path}`);
+  writeHeaderOctal(header, 124, 12, size, `tar size ${path}`);
+  writeHeaderOctal(header, 136, 12, 0, `tar mtime ${path}`);
+  header.fill(0x20, 148, 156);
+  writeHeaderText(header, 156, 1, type, `tar type ${path}`);
+  writeHeaderText(header, 157, 100, linkTarget, `tar link target ${path}`);
+  writeHeaderText(header, 257, 6, "ustar\0", `tar magic ${path}`);
+  writeHeaderText(header, 263, 2, "00", `tar version ${path}`);
+  writeHeaderText(header, 265, 32, "root", `tar owner ${path}`);
+  writeHeaderText(header, 297, 32, "root", `tar group ${path}`);
+  writeHeaderText(header, 345, 155, prefix, `tar prefix ${path}`);
+  const checksum = header.reduce((sum, byte) => sum + byte, 0);
+  writeHeaderText(
+    header,
+    148,
+    8,
+    `${checksum.toString(8).padStart(6, "0")}\0 `,
+    `tar checksum ${path}`,
+  );
+  return header;
+}
+
+function crc32(bytes) {
+  let checksum = 0xffffffff;
+  for (const byte of bytes) {
+    checksum ^= byte;
+    for (let bit = 0; bit < 8; bit++) {
+      checksum = (checksum >>> 1) ^ (checksum & 1 ? 0xedb88320 : 0);
+    }
+  }
+  return (checksum ^ 0xffffffff) >>> 0;
+}
+
+function deterministicGzip(bytes) {
+  // A stored-block DEFLATE stream is slightly larger than a compressed one,
+  // but it is defined entirely here. Its bytes cannot change with the host's
+  // gzip, zlib, locale, clock, or platform.
+  const chunks = [Buffer.from([0x1f, 0x8b, 0x08, 0x00, 0, 0, 0, 0, 0x00, 0xff])];
+  if (bytes.length === 0) chunks.push(Buffer.from([0x01, 0x00, 0x00, 0xff, 0xff]));
+  for (let offset = 0; offset < bytes.length; offset += 0xffff) {
+    const length = Math.min(0xffff, bytes.length - offset);
+    const block = Buffer.alloc(5);
+    block[0] = offset + length === bytes.length ? 0x01 : 0x00;
+    block.writeUInt16LE(length, 1);
+    block.writeUInt16LE(0xffff ^ length, 3);
+    chunks.push(block, bytes.subarray(offset, offset + length));
+  }
+  const trailer = Buffer.alloc(8);
+  trailer.writeUInt32LE(crc32(bytes), 0);
+  trailer.writeUInt32LE(bytes.length >>> 0, 4);
+  chunks.push(trailer);
+  return Buffer.concat(chunks);
+}
+
+function deterministicPackageTarball(packageDirectory, destination) {
+  const packageRoot = resolve(packageDirectory);
+  const entries = [];
+  const visit = (relative = "") => {
+    const absolute = relative ? join(packageRoot, relative) : packageRoot;
+    const stat = lstatSync(absolute);
+    const path = relative ? `package/${relative.split(sep).join("/")}` : "package";
+    if (stat.isDirectory()) {
+      entries.push({ absolute, path, stat, type: "5" });
+      for (const entry of readdirSync(absolute, { withFileTypes: true }).sort((left, right) =>
+        bytewiseCompare(left.name, right.name),
+      )) {
+        visit(relative ? join(relative, entry.name) : entry.name);
+      }
+      return;
+    }
+    if (stat.isFile()) {
+      entries.push({ absolute, path, stat, type: "0" });
+      return;
+    }
+    if (stat.isSymbolicLink()) {
+      const linkTarget = readlinkSync(absolute);
+      const resolvedTarget = resolve(dirname(absolute), linkTarget);
+      if (
+        isAbsolute(linkTarget) ||
+        (resolvedTarget !== packageRoot && !resolvedTarget.startsWith(`${packageRoot}${sep}`))
+      ) {
+        throw new TcReleaseComposeError(
+          `deterministic tar symlink escapes the package root: ${path} -> ${linkTarget}`,
+        );
+      }
+      entries.push({ absolute, linkTarget, path, stat, type: "2" });
+      return;
+    }
+    throw new TcReleaseComposeError(`deterministic tar does not support special file ${path}`);
+  };
+  visit();
+
+  const chunks = [];
+  for (const entry of entries) {
+    const content = entry.type === "0" ? readFileSync(entry.absolute) : Buffer.alloc(0);
+    const mode =
+      entry.type === "5"
+        ? 0o755
+        : entry.type === "2"
+          ? 0o777
+          : entry.stat.mode & 0o111
+            ? 0o755
+            : 0o644;
+    chunks.push(
+      tarHeader({
+        path: entry.path,
+        mode,
+        size: content.length,
+        type: entry.type,
+        linkTarget: entry.linkTarget,
+      }),
+    );
+    if (content.length > 0) {
+      chunks.push(content);
+      const padding = (512 - (content.length % 512)) % 512;
+      if (padding > 0) chunks.push(Buffer.alloc(padding));
+    }
+  }
+  chunks.push(Buffer.alloc(1024));
+  writeFileSync(destination, deterministicGzip(Buffer.concat(chunks)), { mode: 0o644 });
+}
+
+function canonicalizePluginTarball({ tarball, temporaryRoot, generatedModes, runCommand, env }) {
+  const repairRoot = join(temporaryRoot, "canonical");
   mkdirSync(repairRoot);
   runChecked(
     runCommand,
     "tar",
     ["-xzf", tarball, "-C", repairRoot],
     { env },
-    `extract ${basename(tarball)} for mode repair`,
+    `extract ${basename(tarball)} for deterministic composition`,
   );
   for (const [path, mode] of Object.entries(generatedModes)) {
     if ((mode & 0o111) !== 0) chmodSync(join(repairRoot, "package", path), mode);
   }
-  const repairedTarball = join(temporaryRoot, "mode-repaired.tgz");
-  runChecked(
-    runCommand,
-    "tar",
-    ["-czf", repairedTarball, "-C", repairRoot, "package"],
-    { env },
-    `repack ${basename(tarball)} with generated executable modes`,
-  );
-  copyFileSync(repairedTarball, tarball);
+  const canonicalTarball = join(temporaryRoot, "canonical.tgz");
+  deterministicPackageTarball(join(repairRoot, "package"), canonicalTarball);
+  copyFileSync(canonicalTarball, tarball);
 }
 
 function pluginKind(name) {
@@ -537,17 +700,14 @@ export function composePluginTarball(input) {
       );
     }
     const tarball = isAbsolute(added[0]) ? added[0] : join(outputDirectory, added[0]);
-    let payload = inspectPluginTarball(tarball, { runCommand, env: safeEnv });
-    if (generatedExecutables.some((path) => ((payload.modes[path] ?? 0) & 0o111) === 0)) {
-      restoreGeneratedExecutableModes({
-        tarball,
-        temporaryRoot,
-        generatedModes,
-        runCommand,
-        env: safeEnv,
-      });
-      payload = inspectPluginTarball(tarball, { runCommand, env: safeEnv });
-    }
+    canonicalizePluginTarball({
+      tarball,
+      temporaryRoot,
+      generatedModes,
+      runCommand,
+      env: safeEnv,
+    });
+    const payload = inspectPluginTarball(tarball, { runCommand, env: safeEnv });
     assertRequiredPluginPayload(payload, kind);
     assertExecutableFiles(payload, generatedExecutables, `${kind} generated plugin payload`);
     return {
