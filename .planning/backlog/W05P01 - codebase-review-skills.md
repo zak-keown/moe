@@ -33,6 +33,9 @@ integer, merge fails on malformed findings while preserving deterministic
 severity/IDs/nonfinding sections, and disposition stamping validates and
 recomputes the report without duplicate mutation. Twenty-one cases pass against
 temporary repositories and reports.
+The complete live reviewer-shard/merge/`--verify` agent orchestration remains an
+acceptance event; `.planning/backlog-acceptance-2026-09-01.md` keeps it distinct
+from the now-strong script coverage.
 
 ## The idea
 

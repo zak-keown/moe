@@ -36,7 +36,9 @@ sensitive repository. The "completion evidence behavior" suite uses temporary
 Git repositories and transcripts to prove the human/tool-result boundary,
 command/exit/output capture, evidence-free warning, session counter, skill-ID
 deduplication and path behavior. The historical home-directory default and
-static-only test gap are closed.
+static-only test gap are closed. The one-real-session firing-counter inspection
+and goal-backward agent pressure scenario remain empirical acceptance, recorded
+without inflation in `.planning/backlog-acceptance-2026-09-01.md`.
 
 ## The idea
 

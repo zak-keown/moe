@@ -35,7 +35,10 @@ and `uninstall` operate on the committed TC package set, and the clean-home CLI
 suite exercises their command plans. Packed-artifact acceptance also installs
 the umbrella tarball into an empty prefix, resolves all three shims, runs the
 bare dispatcher and removes it cleanly. WSL2 remains the supported Windows path;
-native Windows and retired-key migration remain deliberately out of scope.
+native Windows and retired-key migration remain deliberately out of scope. A
+real WSL2/ProGet install is still an acceptance event, not something the macOS
+package and injected-platform suites can prove; it is recorded in
+`.planning/backlog-acceptance-2026-09-01.md`.
 
 ## The idea
 

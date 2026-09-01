@@ -35,6 +35,9 @@ of `Files`, `Interfaces`, `Consumes` or `Produces` fail validation; linked Git
 directories must be pairwise unique; and any worktree setup failure serializes
 the whole wave. The "parallel execution contract" pressure suite guards these
 conditions across the five core execution skills and crew's driver guidance.
+The specified real three-worker isolated-plan run has not yet occurred; it is
+listed as an acceptance event in `.planning/backlog-acceptance-2026-09-01.md`,
+not treated as proven by the prose contract.
 
 ## The idea
 

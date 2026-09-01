@@ -15,6 +15,15 @@ decision_needed: no
 
 # Native Renderers For Human-Facing Skill Output
 
+## Acceptance update (2026-09-01)
+
+The complete companion suite passes 130 checks across WebSocket framing,
+reconnection, browser launch routing, authentication, file serving, event
+persistence, lifecycle, and Windows-like shell start/stop behavior. The manual
+three-skill visual inspection and disabled-Artifact fallback remain human
+acceptance, recorded in `.planning/backlog-acceptance-2026-09-01.md`; automated
+server coverage is not presented as a substitute for judging rendered output.
+
 ## The idea
 
 > Native renderers - Have skills use the actual harness tooling where available, rather than pure text; include Claude's artifact-design skill if present

@@ -45,6 +45,13 @@ recognition from both Claude and Codex user-instruction files, the knowledge-bas
 pointer in both states, the explicit disable escape and fail-open behavior when
 no home directory is available.
 
+A live four-repository CodeGraph comparison later the same day found one real
+drift: `ai/skills` advanced through MR !11. The ref diff touched only its README
+and `shortcut-triage`, not the incorporated `creating-merge-requests` source, so
+the reviewed manifest pin advanced to
+`aa27d97d2551f7341ef606a8e427f060091ad627`. The other three pins still matched
+their current `main` refs.
+
 ## The idea
 
 > Brainstorm on how to integrate AI Governance doc/TC Guide skill

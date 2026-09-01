@@ -19,7 +19,7 @@ into this file. A `watch-only` row records an operational dependency without
 vendoring its body or making it imported work for `PARITY.md` or `NOTICE`.
 
 <!-- tc-drift-manifest:start -->
-- `content|ai/skills@9228cc6c880df3a51c7b7f7782afc5826089c44f:skills/creating-merge-requests/SKILL.md`
+- `content|ai/skills@aa27d97d2551f7341ef606a8e427f060091ad627:skills/creating-merge-requests/SKILL.md`
 - `content|ai/claude-code-platform-plugin@35096293343fe0493ba732fa3ea4d831612a996d:skills/tc-git-worktrees/SKILL.md`
 - `watch-only|ai/aigovernance@d6a5387789ab5818acc6eb3d205914d7e844f501`
 - `watch-only|ai/tc-guide@e900235d1de8afb969b0698653dceb500eeb9701`
@@ -33,6 +33,13 @@ current `main` refs through TC's CodeGraph GitLab read surface. A
 bootstrap, but remote comparison reports it as pending and fails rather than
 claiming equality.
 
+**Refreshed 2026-09-01.** A live four-repository comparison found that only
+`ai/skills` had moved. Its two intervening commits changed `shortcut-triage` and
+the README; `gitlab_compare_refs` showed no change to
+`skills/creating-merge-requests/SKILL.md`. The content pin therefore advanced to
+`aa27d97d2551f7341ef606a8e427f060091ad627` without changing the incorporated
+convention text.
+
 To re-bootstrap or re-pin after a deliberate update:
 
 ```bash
@@ -43,10 +50,11 @@ glab -R gitlab.tcdevops.com/ai/tc-guide api projects/:id/repository/commits/main
 ```
 
 Note the content upstreams move at very different rates, and the pins record that:
-`ai/skills` was last touched 2026-08-31 (MR !10, harness-specific skill
-variants), while `ai/claude-code-platform-plugin` has not changed since
-2026-04-23. The second is the sibling fork Moe replaces, so a moving SHA there
-is more interesting than a still one.
+`ai/skills` advanced again on 2026-09-01 (MR !11, `shortcut-triage` evidence and
+redaction rules), while the incorporated merge-request convention remained
+unchanged and `ai/claude-code-platform-plugin` has not changed since 2026-04-23.
+The second is the sibling fork Moe replaces, so a moving SHA there is more
+interesting than a still one.
 
 Do not remove the drift-check job. Do not weaken the SHA format (`[0-9a-f]{40}`).
 A stale convention that silently mislabels every agent-authored MR, or an

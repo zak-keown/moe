@@ -15,6 +15,16 @@ decision_needed: yes
 
 # The Moe Contributor Flow, Written Down
 
+## Acceptance update (2026-09-01)
+
+A fresh clone at `a0f66fb8217373b2fa0397ac8ded4f93d79710d1`
+completed the documented install, Node, generated-plugin, Rust, binding and
+Python proof commands. That cold run found and repaired the script-parser test's
+five-second contention timeout; the second cold run passed with all 26 workspace
+tasks green. A real Claude `/context` invocation also listed both `CLAUDE.md` and
+`AGENTS.md` under Memory files. The full command evidence is in
+`.planning/backlog-acceptance-2026-09-01.md`.
+
 > Scope note: this is `~/Code/moe`, the Superpowers hard fork. Two unrelated projects
 > share the name — `~/Code/tools/moe` and `~/.claude/moe-core`. Neither is in scope.
 

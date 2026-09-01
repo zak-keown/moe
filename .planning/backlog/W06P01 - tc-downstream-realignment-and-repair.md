@@ -36,13 +36,18 @@ from the recorded mirror base and were integrated through merge commits
 local and unpushed for Zak's separate upstream excision work.
 
 The complete eight-artifact `@tc/*` train packs successfully, and the umbrella
-package passes clean-home install, status, doctor, and uninstall acceptance.
+package passes empty-prefix install, status, doctor, namespace dispatch, MCP
+initialization, and uninstall acceptance.
 The ProGet publishing path is implemented and policy-tested; no package was
 actually published as part of this repair. The Node gate, generated-plugin
 check, provenance check, downstream-scope guard, drift manifest, Rust/Python
 bindings, proof suite, tracing acceptance, and focused behavioral contracts all
-pass. Native Windows and the neutral-upstream history work remain explicitly
-out of scope.
+pass. Follow-up repairs `f87e3c7`, `e7b7131`, `e9918d2`, and `a0f66fb` close the
+DAG invocation, governance-nudge, context-routing, and cold-clone timeout defects
+found by the second audit. Native Windows and the neutral-upstream history work
+remain explicitly out of scope. A real WSL2/ProGet install, push, GitLab pipeline
+and internal publish are still external acceptance events, itemized in
+`.planning/backlog-acceptance-2026-09-01.md`.
 
 ## Goal
 
