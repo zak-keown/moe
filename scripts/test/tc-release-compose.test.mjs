@@ -136,16 +136,8 @@ function generatedPluginFixture(root, kind, { bootstrap = true } = {}) {
     files: {},
   });
   if (kind === "memory") {
-    writeJson(join(pluginDirectory, "hooks/hooks.json"), memoryMergedHooks({ bootstrap }));
-    writeJson(
-      join(pluginDirectory, "hooks/moe-mint/hooks.json"),
-      memoryMergedHooks({ bootstrap }).hooks.SessionStart.at(-1),
-    );
-    if (bootstrap) {
-      writeJson(join(pluginDirectory, "hooks/moe-mint/hooks.json"), {
-        hooks: { SessionStart: [memoryMergedHooks().hooks.SessionStart.at(-1)] },
-      });
-    }
+    writeJson(join(pluginDirectory, "hooks/hooks.json"), memoryMergedHooks({ bootstrap: false }));
+    writeJson(join(pluginDirectory, "hooks/moe-mint/hooks.json"), memoryMergedHooks({ bootstrap }));
   }
   return pluginDirectory;
 }

@@ -4,15 +4,17 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   statSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { afterEach, describe, it } from "node:test";
 import { MANIFEST_IDENTITIES, PRIVATE_FLIGHT_MANIFESTS } from "../check-downstream-scope.mjs";
+import { REQUIRED_PLUGIN_FILES } from "../tc-release-compose.mjs";
 import { EXPECTED_RELEASE_PACKAGES, packRelease } from "../tc-release-pack.mjs";
 import { publishRelease } from "../tc-release-publish.mjs";
 import { PROGET_REGISTRY } from "../tc-release-validate.mjs";
@@ -31,6 +33,11 @@ function writeJson(path, value) {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+function write(path, content = "fixture\n") {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, content);
+}
+
 function packageManifest(name, extras = {}) {
   return {
     name,
@@ -40,6 +47,88 @@ function packageManifest(name, extras = {}) {
     publishConfig: { registry: PROGET_REGISTRY },
     ...extras,
   };
+}
+
+function runtimeExtras(kind) {
+  return {
+    main: "dist/index.js",
+    ...(kind === "memory" ? { types: "dist/index.d.ts" } : {}),
+    bin: { [`moe-${kind}`]: "./dist/cli.js" },
+    dependencies: { "runtime-only": "1.0.0" },
+    keywords: ["runtime", "shared"],
+  };
+}
+
+function writeRuntimePayload(root, kind) {
+  const packageRoot = join(root, "packages", kind);
+  write(join(packageRoot, "dist/index.js"), "export {};\n");
+  write(join(packageRoot, "dist/cli.js"), "#!/usr/bin/env node\n");
+  if (kind === "memory") {
+    write(join(packageRoot, "dist/index.d.ts"), "export {};\n");
+    writeJson(join(packageRoot, "hooks/hooks.json"), {
+      hooks: {
+        SessionStart: [
+          {
+            hooks: [
+              {
+                command: `node "\${PLUGIN_ROOT:-\${CLAUDE_PLUGIN_ROOT}}/dist/cli.js" sync --background`,
+              },
+            ],
+          },
+        ],
+      },
+    });
+  }
+}
+
+function writeGeneratedPlugin(root, kind) {
+  const pluginRoot = join(root, "plugins", `moe-${kind}`);
+  for (const path of REQUIRED_PLUGIN_FILES[kind]) write(join(pluginRoot, path));
+  writeJson(join(pluginRoot, "package.json"), {
+    name: `moe-${kind}`,
+    version: "9.9.9",
+    main: `./.opencode/plugins/moe-${kind}.js`,
+    dependencies: { "generated-only": "9.9.9" },
+    publishConfig: { registry: "https://registry.npmjs.org/" },
+    pi: {
+      extensions: [`./.pi/extensions/moe-${kind}.ts`],
+      skills: ["./skills"],
+    },
+    keywords: ["shared", "generated", "pi-package"],
+  });
+  writeJson(join(pluginRoot, ".claude-plugin/plugin.json"), {
+    name: `moe-${kind}`,
+    ...(kind === "memory" ? { hooks: "./hooks/moe-mint/hooks.json" } : {}),
+  });
+  writeJson(join(pluginRoot, ".moe-mint/manifest.json"), { schema: 1, files: {} });
+  if (kind === "memory") {
+    const runtime = {
+      matcher: "startup|resume|clear",
+      hooks: [
+        {
+          type: "command",
+          command: `node "\${PLUGIN_ROOT:-\${CLAUDE_PLUGIN_ROOT}}/dist/cli.js" sync --background`,
+        },
+      ],
+    };
+    const bootstrap = {
+      matcher: "startup|clear|compact",
+      hooks: [
+        {
+          type: "command",
+          command: `"\${CLAUDE_PLUGIN_ROOT}/hooks/moe-mint/run-hook.cmd" session-start`,
+          shell: "bash",
+          async: false,
+        },
+      ],
+    };
+    writeJson(join(pluginRoot, "hooks/hooks.json"), {
+      hooks: { SessionStart: [runtime] },
+    });
+    writeJson(join(pluginRoot, "hooks/moe-mint/hooks.json"), {
+      hooks: { SessionStart: [runtime, bootstrap] },
+    });
+  }
 }
 
 function releaseFixture() {
@@ -55,11 +144,18 @@ function releaseFixture() {
     tcRelease: 4,
   });
   for (const [path, name] of Object.entries(MANIFEST_IDENTITIES)) {
+    const kind = name === "@tc/moe-memory" ? "memory" : name === "@tc/moe-glass" ? "glass" : null;
     writeJson(
       join(root, path),
-      packageManifest(name, PRIVATE_FLIGHT_MANIFESTS.includes(path) ? { private: true } : {}),
+      packageManifest(name, {
+        ...(PRIVATE_FLIGHT_MANIFESTS.includes(path) ? { private: true } : {}),
+        ...(kind ? runtimeExtras(kind) : {}),
+      }),
     );
+    if (kind) writeRuntimePayload(root, kind);
   }
+  writeGeneratedPlugin(root, "memory");
+  writeGeneratedPlugin(root, "glass");
   return root;
 }
 
@@ -69,23 +165,57 @@ function artifactName(name) {
 
 function fakePackRunner({ mutatePacked } = {}) {
   const manifests = new Map();
+  const archives = new Map();
   const calls = [];
+  const snapshot = (directory) => {
+    const contents = new Map();
+    const visit = (relative = "") => {
+      for (const entry of readdirSync(join(directory, relative), { withFileTypes: true })) {
+        const path = relative ? `${relative}/${entry.name}` : entry.name;
+        if (entry.isDirectory()) visit(path);
+        else contents.set(path, readFileSync(join(directory, path)));
+      }
+    };
+    visit();
+    const packed = JSON.parse(contents.get("package.json").toString("utf8"));
+    mutatePacked?.(packed);
+    contents.set("package.json", Buffer.from(`${JSON.stringify(packed, null, 2)}\n`));
+    return { contents, manifest: packed };
+  };
   const runCommand = (command, args, options) => {
     calls.push({ command, args, options });
     if (command === "pnpm") {
       assert.equal(options.env.PROGET_NPM_AUTH, undefined);
-      const source = JSON.parse(readFileSync(join(options.cwd, "package.json"), "utf8"));
-      const packed = structuredClone(source);
-      mutatePacked?.(packed);
+      const archive = snapshot(options.cwd);
       const outputDirectory = args[args.indexOf("--pack-destination") + 1];
-      const filename = artifactName(source.name);
+      const filename = artifactName(archive.manifest.name);
       writeFileSync(join(outputDirectory, filename), "fake tarball");
-      manifests.set(filename, packed);
+      manifests.set(filename, archive.manifest);
+      archives.set(resolve(outputDirectory, filename), archive);
       return { status: 0, stdout: "", stderr: "" };
     }
     if (command === "tar") {
-      const manifest = manifests.get(basename(args[1]));
-      return { status: 0, stdout: JSON.stringify(manifest), stderr: "" };
+      const archive = archives.get(resolve(args[1]));
+      if (!archive) return { status: 1, stdout: "", stderr: "missing fake archive" };
+      if (args[0] === "-xzf") {
+        const destination = args[args.indexOf("-C") + 1];
+        for (const [path, content] of archive.contents) {
+          write(join(destination, "package", path), content);
+        }
+        return { status: 0, stdout: "", stderr: "" };
+      }
+      if (args[0] === "-tzf") {
+        return {
+          status: 0,
+          stdout: [...archive.contents.keys()].map((path) => `package/${path}`).join("\n"),
+          stderr: "",
+        };
+      }
+      const path = args[2]?.replace(/^package\//u, "");
+      const content = archive.contents.get(path);
+      return content
+        ? { status: 0, stdout: content.toString("utf8"), stderr: "" }
+        : { status: 1, stdout: "", stderr: `missing ${path}` };
     }
     throw new Error(`unexpected command ${command}`);
   };
@@ -110,12 +240,47 @@ function makePackedArtifacts(root, mutatePacked) {
   const manifests = new Map();
   for (const expected of EXPECTED_RELEASE_PACKAGES) {
     const filename = artifactName(expected.name);
-    const manifest = packageManifest(expected.name);
+    const manifest = packageManifest(expected.name, {
+      ...(expected.pluginKind ? runtimeExtras(expected.pluginKind) : {}),
+    });
     mutatePacked?.(manifest);
     writeFileSync(join(artifactsDir, filename), `fake tarball for ${expected.name}`);
     manifests.set(filename, manifest);
   }
   return { artifactsDir, manifests };
+}
+
+function publishedArchive(expected, manifest) {
+  const contents = new Map([["package.json", JSON.stringify(manifest)]]);
+  if (!expected.pluginKind) return contents;
+  for (const path of REQUIRED_PLUGIN_FILES[expected.pluginKind]) contents.set(path, "fixture\n");
+  contents.set("dist/index.js", "export {};\n");
+  contents.set("dist/cli.js", "#!/usr/bin/env node\n");
+  if (expected.pluginKind === "memory") contents.set("dist/index.d.ts", "export {};\n");
+  contents.set(
+    ".claude-plugin/plugin.json",
+    JSON.stringify({
+      name: `moe-${expected.pluginKind}`,
+      ...(expected.pluginKind === "memory" ? { hooks: "./hooks/moe-mint/hooks.json" } : {}),
+    }),
+  );
+  if (expected.pluginKind === "memory") {
+    const runtime = {
+      command: `node "\${PLUGIN_ROOT:-\${CLAUDE_PLUGIN_ROOT}}/dist/cli.js" sync --background`,
+    };
+    const bootstrap = {
+      command: `"\${CLAUDE_PLUGIN_ROOT}/hooks/moe-mint/run-hook.cmd" session-start`,
+    };
+    contents.set(
+      "hooks/hooks.json",
+      JSON.stringify({ hooks: { SessionStart: [{ hooks: [runtime] }] } }),
+    );
+    contents.set(
+      "hooks/moe-mint/hooks.json",
+      JSON.stringify({ hooks: { SessionStart: [{ hooks: [runtime, bootstrap] }] } }),
+    );
+  }
+  return contents;
 }
 
 function integrity(path) {
@@ -172,14 +337,26 @@ function registryRunner({
     calls.push({ command, args, options });
     if (command === "tar") {
       assert.equal(options.env.PROGET_NPM_AUTH, undefined);
-      return {
-        status: 0,
-        stdout: JSON.stringify(manifests.get(basename(args[1]))),
-        stderr: "",
-      };
+      const manifest = manifests.get(basename(args[1]));
+      const expected = EXPECTED_RELEASE_PACKAGES.find(
+        (candidate) => candidate.name === manifest.name,
+      );
+      const contents = publishedArchive(expected, manifest);
+      if (args[0] === "-tzf") {
+        return {
+          status: 0,
+          stdout: [...contents.keys()].map((path) => `package/${path}`).join("\n"),
+          stderr: "",
+        };
+      }
+      const path = args[2].replace(/^package\//u, "");
+      const content = contents.get(path);
+      return content === undefined
+        ? { status: 1, stdout: "", stderr: `missing ${path}` }
+        : { status: 0, stdout: content, stderr: "" };
     }
     assert.equal(command, "npm");
-    assert.equal(calls.filter((call) => call.command === "tar").length, 8);
+    assert.equal(calls.filter((call) => call.command === "tar").length, 16);
     assert.equal(options.env.PROGET_NPM_AUTH, undefined);
     assert.equal(options.env.NODE_AUTH_TOKEN, undefined);
     const npmrc = args[args.indexOf("--userconfig") + 1];
@@ -280,12 +457,43 @@ describe("TC release packing", () => {
     });
 
     assert.equal(result.artifacts.length, 8);
-    assert.equal(fake.calls.filter((call) => call.command === "pnpm").length, 8);
-    assert.equal(fake.calls.filter((call) => call.command === "tar").length, 8);
+    assert.equal(readdirSync(artifactsDir).filter((entry) => entry.endsWith(".tgz")).length, 8);
+    const packCalls = fake.calls.filter((call) => call.command === "pnpm");
+    assert.equal(packCalls.length, 10);
+    assert.equal(
+      packCalls.filter((call) => call.args[0] === "--config.ignore-scripts=true").length,
+      2,
+    );
+    const seedDirectories = new Set(
+      packCalls
+        .map((call) => call.args[call.args.indexOf("--pack-destination") + 1])
+        .filter((destination) => destination !== artifactsDir),
+    );
+    assert.equal(seedDirectories.size, 1);
+    for (const directory of seedDirectories) assert.equal(existsSync(directory), false);
+    for (const call of packCalls.filter(
+      (call) => call.args[0] === "--config.ignore-scripts=true",
+    )) {
+      assert.equal(existsSync(call.options.cwd), false);
+    }
     assert.deepEqual(
       result.artifacts.map((artifact) => artifact.manifest.name),
       EXPECTED_RELEASE_PACKAGES.map((pkg) => pkg.name),
     );
+    for (const kind of ["glass", "memory"]) {
+      const artifact = result.artifacts.find(
+        (candidate) => candidate.manifest.name === `@tc/moe-${kind}`,
+      );
+      assert.ok(artifact.pluginPayload);
+      assert.deepEqual(artifact.manifest.dependencies, { "runtime-only": "1.0.0" });
+      assert.equal(artifact.manifest.dependencies["generated-only"], undefined);
+      assert.deepEqual(artifact.manifest.keywords, [
+        "runtime",
+        "shared",
+        "generated",
+        "pi-package",
+      ]);
+    }
   });
 
   it("runs source validation before starting any pack command", () => {
@@ -323,6 +531,43 @@ describe("TC release packing", () => {
     assert.equal(fake.calls.length, 0);
   });
 
+  it("cleans source seed artifacts when composed payload validation fails", () => {
+    const root = releaseFixture();
+    const artifactsDir = join(root, "artifacts");
+    writeJson(join(root, "plugins/moe-memory/hooks/moe-mint/hooks.json"), {
+      hooks: {
+        SessionStart: [
+          {
+            hooks: [
+              {
+                command: `node "\${PLUGIN_ROOT:-\${CLAUDE_PLUGIN_ROOT}}/dist/cli.js" sync --background`,
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const fake = fakePackRunner();
+
+    assert.throws(
+      () =>
+        packRelease({
+          ...releaseInput(root),
+          outputDir: artifactsDir,
+          runCommand: fake.runCommand,
+        }),
+      /memory plugin payload has no bootstrap session-start command/,
+    );
+    const seedDirectories = new Set(
+      fake.calls
+        .filter((call) => call.command === "pnpm")
+        .map((call) => call.args[call.args.indexOf("--pack-destination") + 1])
+        .filter((destination) => destination !== artifactsDir),
+    );
+    assert.equal(seedDirectories.size, 1);
+    for (const directory of seedDirectories) assert.equal(existsSync(directory), false);
+  });
+
   it("rejects downstream identity and unresolved workspace ranges in packed manifests", () => {
     const root = releaseFixture();
     const fake = fakePackRunner({
@@ -342,7 +587,7 @@ describe("TC release packing", () => {
         }),
       /leaks an @bubstack identity|retains workspace:/,
     );
-    assert.equal(fake.calls.filter((call) => call.command === "pnpm").length, 8);
+    assert.equal(fake.calls.filter((call) => call.command === "pnpm").length, 10);
   });
 });
 

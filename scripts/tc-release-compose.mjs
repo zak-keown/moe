@@ -311,11 +311,14 @@ export function assertRequiredPluginPayload(payload, expectedKind) {
         `${label} Claude manifest must point hooks at ./hooks/moe-mint/hooks.json`,
       );
     }
-    const mergedHooks = payload.json?.["hooks/hooks.json"];
-    const bootstrapHooks = payload.json?.["hooks/moe-mint/hooks.json"];
+    const runtimeHooks = payload.json?.["hooks/hooks.json"];
+    const mergedHooks = payload.json?.["hooks/moe-mint/hooks.json"];
+    const runtimeCommands = findCommands(runtimeHooks);
     const mergedCommands = findCommands(mergedHooks);
-    const bootstrapCommands = findCommands(bootstrapHooks);
     if (
+      !runtimeCommands.some(
+        (command) => command.includes("dist/cli.js") && command.includes("sync --background"),
+      ) ||
       !mergedCommands.some(
         (command) => command.includes("dist/cli.js") && command.includes("sync --background"),
       )
@@ -324,10 +327,6 @@ export function assertRequiredPluginPayload(payload, expectedKind) {
     }
     if (
       !mergedCommands.some(
-        (command) =>
-          command.includes("hooks/moe-mint/run-hook.cmd") && command.includes("session-start"),
-      ) ||
-      !bootstrapCommands.some(
         (command) =>
           command.includes("hooks/moe-mint/run-hook.cmd") && command.includes("session-start"),
       )

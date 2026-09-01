@@ -9,18 +9,34 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { checkDownstreamScope } from "./check-downstream-scope.mjs";
+import {
+  assertRequiredPluginPayload,
+  composePluginTarball,
+  inspectPluginTarball,
+} from "./tc-release-compose.mjs";
 import { PROGET_REGISTRY, validateRelease } from "./tc-release-validate.mjs";
 
 export const EXPECTED_RELEASE_PACKAGES = Object.freeze([
   { path: "packages/backstory/package.json", name: "@tc/moe-backstory" },
   { path: "packages/core/package.json", name: "@tc/moe-core" },
   { path: "packages/crew/package.json", name: "@tc/moe-crew" },
-  { path: "packages/glass/package.json", name: "@tc/moe-glass" },
-  { path: "packages/memory/package.json", name: "@tc/moe-memory" },
+  {
+    path: "packages/glass/package.json",
+    name: "@tc/moe-glass",
+    pluginRoot: "plugins/moe-glass",
+    pluginKind: "glass",
+  },
+  {
+    path: "packages/memory/package.json",
+    name: "@tc/moe-memory",
+    pluginRoot: "plugins/moe-memory",
+    pluginKind: "memory",
+  },
   { path: "packages/mint/package.json", name: "@tc/moe-mint" },
   { path: "packages/tab/bindings/typescript/package.json", name: "@tc/moe-tab" },
   { path: "package.json", name: "@tc/moe" },
@@ -208,7 +224,14 @@ export function inspectReleaseTarballs({
   const expectedByName = new Map(EXPECTED_RELEASE_PACKAGES.map((pkg) => [pkg.name, pkg]));
   const inspected = new Map();
   for (const tarball of tarballs) {
-    const manifest = readPackedManifest(tarball, runCommand, env);
+    const initialManifest = readPackedManifest(tarball, runCommand, env);
+    const initialExpected = expectedByName.get(initialManifest?.name);
+    let pluginPayload;
+    if (initialExpected?.pluginKind) {
+      pluginPayload = inspectPluginTarball(tarball, { runCommand, env });
+      assertRequiredPluginPayload(pluginPayload, initialExpected.pluginKind);
+    }
+    const manifest = pluginPayload?.manifest ?? initialManifest;
     const expected = expectedByName.get(manifest?.name);
     if (!expected) {
       throw new TcReleaseError(
@@ -219,7 +242,7 @@ export function inspectReleaseTarballs({
       throw new TcReleaseError(`duplicate packed artifact for ${expected.name}`);
     }
     assertPackedManifest(manifest, expected, validation.release.version, validation.release);
-    inspected.set(expected.name, { tarball, manifest });
+    inspected.set(expected.name, { tarball, manifest, pluginPayload });
   }
   for (const expected of EXPECTED_RELEASE_PACKAGES) {
     if (!inspected.has(expected.name)) {
@@ -265,27 +288,46 @@ export function packRelease(input) {
   }
   assertExactReleaseTrain(validation);
 
-  mkdirSync(artifactsDir, { recursive: true });
   const runCommand = input.runCommand ?? commandRunner;
   const env = secretFreeEnvironment(input.env ?? process.env);
-  for (const expected of EXPECTED_RELEASE_PACKAGES) {
-    const packageDirectory = dirname(join(root, expected.path));
-    const before = new Set(readdirSync(artifactsDir));
-    runChecked(
-      runCommand,
-      "pnpm",
-      ["pack", "--pack-destination", artifactsDir],
-      { cwd: packageDirectory, env },
-      `pack ${expected.name}`,
-    );
-    const added = readdirSync(artifactsDir).filter(
-      (entry) => entry.endsWith(".tgz") && !before.has(entry),
-    );
-    if (added.length !== 1) {
-      throw new TcReleaseError(
-        `pack ${expected.name} produced ${added.length} new tarballs; expected exactly one`,
+  mkdirSync(artifactsDir, { recursive: true });
+  const temporaryRoot = mkdtempSync(join(tmpdir(), "moe-release-pack-"));
+  const seedsDirectory = join(temporaryRoot, "seeds");
+  mkdirSync(seedsDirectory);
+  try {
+    for (const expected of EXPECTED_RELEASE_PACKAGES) {
+      const packageDirectory = dirname(join(root, expected.path));
+      const packDestination = expected.pluginRoot ? seedsDirectory : artifactsDir;
+      const before = new Set(readdirSync(packDestination));
+      runChecked(
+        runCommand,
+        "pnpm",
+        ["pack", "--pack-destination", packDestination],
+        { cwd: packageDirectory, env },
+        `pack ${expected.name}`,
       );
+      const added = readdirSync(packDestination).filter(
+        (entry) => entry.endsWith(".tgz") && !before.has(entry),
+      );
+      if (added.length !== 1) {
+        throw new TcReleaseError(
+          `pack ${expected.name} produced ${added.length} new tarballs; expected exactly one`,
+        );
+      }
+      if (expected.pluginRoot) {
+        composePluginTarball({
+          seedTarball: join(packDestination, added[0]),
+          pluginDirectory: join(root, expected.pluginRoot),
+          outputDirectory: artifactsDir,
+          pluginKind: expected.pluginKind,
+          tempRoot: temporaryRoot,
+          runCommand,
+          env,
+        });
+      }
     }
+  } finally {
+    rmSync(temporaryRoot, { recursive: true, force: true });
   }
 
   const inspected = inspectReleaseTarballs({ artifactsDir, validation, runCommand, env });
