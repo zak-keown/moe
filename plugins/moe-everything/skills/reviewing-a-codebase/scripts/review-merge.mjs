@@ -25,6 +25,7 @@ const manifest = JSON.parse(readFileSync(join(repo, shardsDir, "manifest.json"),
 const RANK = { critical: 0, high: 1, medium: 2, low: 3 };
 const found = [];
 const missing = [];
+const malformed = [];
 // Shard sections that are not findings but must survive the merge. Dropping
 // them was a real defect: review-shard.md tells reviewers to write
 // "Checked and found sound" with no **Severity:** line, and this merge used to
@@ -44,21 +45,38 @@ for (const shard of manifest.shards) {
     const start = heads[i].index;
     const end = i + 1 < heads.length ? heads[i + 1].index : body.length;
     const block = body.slice(start, end).trim();
-    const sev = (block.match(/^\*\*Severity:\*\*\s*(critical|high|medium|low)/im) || [])[1];
+    const severityField = (block.match(/^\*\*Severity:\*\*\s*([^\n]+)/im) || [])[1]?.trim();
+    const fileField = (block.match(/^\*\*File:\*\*\s*`?([^`\n]+)`?/im) || [])[1]?.trim();
     if (/^checked and found sound/i.test(heads[i][1])) {
       sound.push(block.replace(/^###\s+.+$/m, "").trim());
       continue;
     }
-    if (!sev) continue; // not a finding block
-    const file = (block.match(/^\*\*File:\*\*\s*`?([^`\n]+)`?/im) || [])[1] || "(unknown)";
+    // A heading with neither field is supplemental shard prose. A heading
+    // with only one field (or an invented severity) is a malformed finding;
+    // silently dropping it would make the merged report claim false coverage.
+    if (!severityField && !fileField) continue;
+    const sev = severityField?.toLowerCase();
+    if (!fileField || !Object.hasOwn(RANK, sev)) {
+      malformed.push({ report_path: shard.report_path, title: heads[i][1] });
+      continue;
+    }
     found.push({
       sev,
-      file: file.trim(),
+      file: fileField,
       group: shard.group,
       title: heads[i][1].replace(/^(?:CR-\d+|\d+)[.:]\s*/, "").trim(),
       block,
     });
   }
+}
+
+if (malformed.length) {
+  process.stderr.write(
+    `review-merge: ${malformed.length} malformed finding record(s) — refusing to omit them:\n` +
+      malformed.map((f) => `  ${f.report_path}: ${f.title}`).join("\n") +
+      "\nEach finding needs one **File:** field and a critical|high|medium|low **Severity:** field.\n",
+  );
+  process.exit(1);
 }
 
 // A missing shard is a smaller tree reported as a whole one. Refuse.

@@ -5,7 +5,7 @@ idea: |
   - Make origin the committed @tc downstream of the neutral mirror, publish a
     coherent TC release train to ProGet, and finish the acceptance criteria the
     completion audit found missing
-status: backlog
+status: done
 size: XL
 estimate: 40-55 h
 depends_on: []
@@ -25,6 +25,24 @@ decision_needed: no
 ---
 
 # TC Downstream Realignment And Completion Repair
+
+## Completion result (2026-09-01)
+
+All implementation workstreams are built and committed in the TC downstream.
+The downstream release and capability work landed in `1c00797`; the separable
+generic repairs landed as `a5dd111`, `5e3b64f`, and `e49886c` on local branches
+from the recorded mirror base and were integrated through merge commits
+`6384a8e`, `9f72e23`, and `134a9a2`. Those neutral candidate branches remain
+local and unpushed for Zak's separate upstream excision work.
+
+The complete eight-artifact `@tc/*` train packs successfully, and the umbrella
+package passes clean-home install, status, doctor, and uninstall acceptance.
+The ProGet publishing path is implemented and policy-tested; no package was
+actually published as part of this repair. The Node gate, generated-plugin
+check, provenance check, downstream-scope guard, drift manifest, Rust/Python
+bindings, proof suite, tracing acceptance, and focused behavioral contracts all
+pass. Native Windows and the neutral-upstream history work remain explicitly
+out of scope.
 
 ## Goal
 

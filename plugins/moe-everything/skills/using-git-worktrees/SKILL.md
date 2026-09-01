@@ -140,6 +140,27 @@ from a stale base will cite the same file coordinates as its siblings but
 read different content there. Recording the base once, before the wave
 dispatches, is the safeguard.
 
+Create every worktree first, then validate the complete set before dispatching
+any worker:
+
+```bash
+git -C "$worker_cwd" rev-parse --path-format=absolute --git-dir
+git -C "$worker_cwd" rev-parse --path-format=absolute --git-common-dir
+```
+
+For every worker, the resolved Git directory must differ from the resolved
+common directory; that proves the cwd is a linked worktree rather than the main
+checkout. The resolved paths must also be pairwise-unique linked Git directories
+across the wave; comparing cwd strings is not enough because two aliases or
+symlinks can name the same checkout.
+
+Parallel implementation has exactly two rungs: (1) worktree-isolated parallel
+dispatch after the complete set passes validation, then (2) sequential dispatch
+of the entire wave. If native creation, `git worktree add`, or any validation
+command fails for even one worker, use rung two from the controller's current,
+validated tree. Do not dispatch the valid subset in parallel, and never fall
+back to parallel dispatch without isolation.
+
 ## Step 2: Project Setup
 
 Auto-detect and run appropriate setup:
@@ -189,7 +210,8 @@ Ready to implement <feature-name>
 | Native worktree tool available | Use it (Step 1a) |
 | Branch name needed (any path) | Derive per Step 1b (TC card → strip `feature/`) |
 | No native tool | Git worktree fallback (Step 1c) |
-| Parallel worker dispatch | One worktree per worker (Step 1d) |
+| Parallel worker dispatch | Validate pairwise-unique linked Git dirs for every worker (Step 1d) |
+| Any parallel worktree setup failure | Dispatch the entire wave sequentially (Step 1d) |
 | `.worktrees/` exists | Use it (verify ignored) |
 | `worktrees/` exists | Use it (verify ignored) |
 | Both exist | Use `.worktrees/` |

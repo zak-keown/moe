@@ -129,10 +129,11 @@ graduates: if the Goal is redrawn, that is a fresh plan, not a resumption.]
 - Test: `tests/exact/path/to/test.py`
 
 **Interfaces:**
-- Consumes: [what this task uses from earlier tasks — exact signatures]
+- Consumes: [what this task uses from earlier tasks — exact signatures, or `None`]
 - Produces: [what later tasks rely on — exact function names, parameter
   and return types. A task's implementer sees only their own task; this
-  block is how they learn the names and types neighboring tasks use.]
+  block is how they learn the names and types neighboring tasks use. Use
+  `None` when the task has no produced interface.]
 
 - [ ] **Step 1: Write the failing test**
 
@@ -244,6 +245,12 @@ Decisions** with the tasks it blocks, never in a step as an invented answer.
 Then check the edges resolve: every `**Blocked by:**` id names a decision that
 exists, and every decision's **Blocks** list names tasks that exist.
 
+**5. Execution metadata:** Validate every task has a non-empty `Files:` block,
+an `Interfaces:` block, and explicit `Consumes:` and `Produces:` entries. Use
+`None` when an interface edge does not exist. A missing block or entry fails
+plan validation; do not hand the plan to an executor or infer the missing value
+from prose.
+
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task — unless the task cannot be written until something is decided, in which case add the decision.
 
 ## Presenting the plan
@@ -281,11 +288,15 @@ After saving the plan, offer execution choice:
 - **REQUIRED SUB-SKILL:** Use `executing-plans`
 - Batch execution with checkpoints for review
 
-**Either option runs waves in parallel when the worktree gate holds.** Tasks
-whose `Files:` blocks are pairwise-disjoint and share no `Consumes:` →
-`Produces:` edge are one wave, and one wave's implementers can run
-concurrently — each in its own linked worktree, branched from one recorded
-base SHA. `subagent-driven-development` (Wave grouping, Integrate the wave)
-and `dispatching-parallel-agents` (The gate, The divergent-tree rule) define
-the mechanics; the `Files:` and `Interfaces:` blocks the plan already carries
-are what those mechanics read.
+**Either option uses the same two-rung execution ladder.** First use
+worktree-isolated parallel dispatch when the gate holds: tasks' `Files:` blocks
+are pairwise-disjoint, they share no `Consumes:` → `Produces:` edge, and every
+worker has a pairwise-unique linked Git directory branched from one recorded
+base SHA. If any worktree cannot be created or validated, dispatch the whole
+wave sequentially. There is no unisolated-parallel rung.
+
+`subagent-driven-development` (Wave grouping, Integrate the wave) and
+`dispatching-parallel-agents` (Validate the plan before applying the gate, The
+gate, The divergent-tree rule) define the mechanics. A plan missing `Files:`,
+`Interfaces:`, `Consumes:`, or `Produces:` fails validation before either
+execution option starts.

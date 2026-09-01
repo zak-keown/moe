@@ -28,19 +28,15 @@ decision_needed: no
 older, deleted Moe repo and a different project. `~/Code/tools/moe` was not read
 for this doc.)*
 
-## Completion audit note (2026-09-01)
+## Completion repair (2026-09-01)
 
-The branch for this item merged, but the ask is not complete. The required
-default remains a gitignored, repository-local `.audit/`, keyed so parallel
-worktrees are distinguishable. A user may explicitly route evidence to the
-home-directory store for a sensitive repository; home-directory storage is not
-the default. Behavioral tests must cover transcript parsing, command/exit/output
-capture, the evidence-free completion warning and the per-session firing counter.
-Static hook-registration coverage is insufficient.
-
-The current implementation's home-directory default and missing behavioral
-coverage are gaps tracked by `tc-downstream-realignment-and-repair`; the `done`
-frontmatter is historical merge state, not evidence of fulfillment.
+The hook now defaults to a gitignored repository-local `.audit/`, with a key that
+distinguishes linked worktrees. `MOE_EVIDENCE_HOME` is the explicit escape for a
+sensitive repository. The "completion evidence behavior" suite uses temporary
+Git repositories and transcripts to prove the human/tool-result boundary,
+command/exit/output capture, evidence-free warning, session counter, skill-ID
+deduplication and path behavior. The historical home-directory default and
+static-only test gap are closed.
 
 ## The idea
 

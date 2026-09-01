@@ -4,7 +4,7 @@ title: Two Fork-Authored Skills For Repo-Wide Review And TDD Repair
 idea: |
   - A codebase-wide adversarial review that writes CODEBASE-REVIEW.md, and a
     second skill that works the report off under TDD with atomic commits
-status: backlog
+status: done
 base_sha: fcc87c5
 base_branch: main
 size: L
@@ -22,6 +22,17 @@ decision_needed: no
 ---
 
 # Two Fork-Authored Skills For Repo-Wide Review And TDD Repair
+
+## Completion repair (2026-09-01)
+
+The two skills and their agents were already present, but the completion audit
+found that their scripts lacked direct behavioral regression coverage. The
+"codebase review scripts behavior" suite now exercises all three CLIs: shallow
+scope always retains credential-bearing paths, shard size is a positive safe
+integer, merge fails on malformed findings while preserving deterministic
+severity/IDs/nonfinding sections, and disposition stamping validates and
+recomputes the report without duplicate mutation. Twenty-one cases pass against
+temporary repositories and reports.
 
 ## The idea
 

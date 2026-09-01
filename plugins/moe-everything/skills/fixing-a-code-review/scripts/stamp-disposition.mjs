@@ -49,8 +49,9 @@ const nextRel = rest.search(/^#{2,3}\s+/m);
 const end = nextRel === -1 ? body.length : start + head[0].length + nextRel;
 
 let block = body.slice(start, end).replace(/\n*$/, "");
-// Replace any prior stamp rather than appending a second one.
-block = block.replace(/\n\*\*Disposition:\*\*[\s\S]*$/, "");
+if (/^\*\*Disposition:\*\*/m.test(block)) {
+  die(`${id} already has a disposition — refusing to stamp it twice`);
+}
 
 const stamp = [
   "",

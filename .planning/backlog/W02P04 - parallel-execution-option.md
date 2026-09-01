@@ -26,6 +26,16 @@ decision_needed: no
 *(All citations are to `~/Code/moe`, the Superpowers fork. The other two projects named
 Moe — `~/Code/tools/moe` and `~/.claude/moe-core` — were not read for this doc.)*
 
+## Completion repair (2026-09-01)
+
+The original three-rung recommendation included non-isolated parallel writes as
+a fallback, contradicting its own isolation gate. The executable contract is now
+exactly two rungs: worktree-isolated parallel, then sequential. Plans missing any
+of `Files`, `Interfaces`, `Consumes` or `Produces` fail validation; linked Git
+directories must be pairwise unique; and any worktree setup failure serializes
+the whole wave. The "parallel execution contract" pressure suite guards these
+conditions across the five core execution skills and crew's driver guidance.
+
 ## The idea
 
 > Explore parallelization as an execution option
