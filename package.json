@@ -8,7 +8,11 @@
     "node": ">=24"
   },
   "packageManager": "pnpm@11.23.0",
+  "bin": {
+    "moe": "./bin/moe.js"
+  },
   "scripts": {
+    "bin:test": "vitest run bin/test",
     "build": "turbo run build",
     "check": "pnpm lint && turbo run typecheck test",
     "lint": "biome check .",

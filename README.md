@@ -55,6 +55,23 @@ URLs are provenance, not links to us.
 | `@bubstack/moe-tab` | Price an agent transcript — what the run cost you |
 | `moe-proof` | Evals against small models (Python) |
 
+## On the command line
+
+One dispatcher, `moe`, in front of seven namespace bins:
+
+```sh
+moe                                 # print the namespace inventory
+moe flight qa run story.md          # same as: moe-flight qa run story.md
+moe tab price session.jsonl         # same as: moe-tab price session.jsonl
+moe crew list                       # same as: moe-crew list
+```
+
+Namespaces: `crew`, `flight`, `glass`, `memory`, `mint`, `proof`, `tab`. The
+`moe-<ns>` names are permanent — MCP hosts, generated plugin manifests and
+scripts reference them directly. `moe <ns>` is a human convenience; either
+form works. `bin/moe.js` is the resolver (Node stdlib only, no dependencies);
+`bin/moe-install` puts things on PATH. See ARCHITECTURE.md §7 and §7.1.
+
 ## Two rules
 
 1. **A repository is not an installable plugin.** Source lives in `packages/`;

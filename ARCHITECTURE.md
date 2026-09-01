@@ -139,6 +139,7 @@ moe/
 ├── .claude-plugin/
 │   └── marketplace.json        # the one marketplace (replaces two upstream stubs)
 ├── ../.moe-references/                # gitignored: 19 pinned snapshots, see PARITY.md
+├── bin/                        # `moe` dispatcher + installer (see §7, §7.1)
 ├── packages/
 │   ├── core/                   # 27 skills + hooks         [content]
 │   ├── backstory/              # 22 skills + 2 agents      [content]
@@ -368,13 +369,43 @@ Full rename. Nothing user-visible keeps an upstream name. The vocabulary is a
 tavern and its measures: you run a `tab`, you order a `flight`, you check the
 `proof`, you look through the `glass`.
 
-Binaries: `moe-flight`, `moe-tab`, `moe-mint`, `moe-crew`, `moe-glass`,
-`moe-memory`, `moe-proof`. MCP server keys: `moe-memory`, `moe-glass`.
+Binaries: one dispatcher, `moe`, in front of seven namespace bins — `moe-flight`,
+`moe-tab`, `moe-mint`, `moe-crew`, `moe-glass`, `moe-memory`, `moe-proof`.
+`moe <ns> …` is the human entry point; the `moe-<ns>` names are permanent, and
+are what MCP hosts, generated plugin manifests and scripts reference directly
+(`packages/mint/src/adapters/claude-code.ts` emits the `mcpServers` path
+against `moe-glass` / `moe-memory` — nothing between). MCP server keys:
+`moe-memory`, `moe-glass`.
+
+The dispatcher is Node stdlib only (`bin/moe.js`), never links itself onto
+PATH — that is `bin/moe-install`'s job — and resolves `moe <ns>` in order:
+sibling to the script, then PATH, then a checkout fallback (`uv run --project
+py/proof` for `proof`; `packages/tab/target/release/moe-tab` for `tab`; the
+built dist bundles for the five Node bins). Grammar copied from
+`packages/flight/src/cli.ts`, and vitest at `bin/test/moe.test.mjs` covers
+every branch — including the platform ones — without a Windows runner.
+
+The bare name is contested on a developer machine — three projects have
+claimed it. See §7.1.
 
 **This is a breaking cut, taken once.** Renaming MCP server keys
 (`episodic-memory` → `moe-memory`, `chrome` → `moe-glass`) invalidates existing
 user configs, and every binary name changes. Acceptable for an internal audience;
 not something to do twice. See PARITY.md for the full token inventory.
+
+### 7.1 The bare `moe` name has three claimants
+
+Recorded 2026-08-31 because the collision is not visible from the tree.
+
+| # | Project | Where | Status | Impact on this repo |
+|---|---|---|---|---|
+| 1 | **This repo — the dispatcher** | `bin/moe.js`, linked onto PATH by `bin/moe-install` | keeper; policy above | — |
+| 2 | `moedex` (Go, unrelated repo) | `~/Code/tools/moedex`, currently ships `~/.local/bin/moe` from an uncommitted rearchitecture | reverting to `moedex`; the on-disk `moe` is deleted, not symlinked | freeing the name is a prerequisite to `bin/moe-install`'s PATH claim landing |
+| 3 | `~/.claude/moe-core` | abandoned rebranded GSD-core install; `bin/lib/package-identity.cjs` declares `binName = "moe"` but the install dir carries no `moe` bin on disk | nominal only, no PATH entry | none — the origin is `gitlab.com/moe-ai/moe-cc`, a different GitLab instance from `gitlab.tcdevops.com/Zak/moe`, so no registry collision either |
+
+`~/Code/tools/moe` (the sibling `askmoe` workspace) is *not* a fourth claimant:
+its `package.json` declares no `bin`. Adding a fourth claimant is a decision,
+not a commit — the point of this table is to keep the count at three.
 
 ## 8. Hosting and CI
 
