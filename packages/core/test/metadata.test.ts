@@ -152,7 +152,7 @@ const registry: Record<string, { tier: string; from: string; why: string }> = {
 // guards is membership: the lean tier is an INSTALLED INTERFACE for ~20 people
 // who leave it on permanently, so which skills are in it must not change
 // silently. A deliberate change here is one edit; an accidental one is a red test.
-const LEAN_TIER_COUNT = 13;
+const LEAN_TIER_COUNT = 14;
 
 // Every markdown file we are allowed to make assertions about: the skill bodies
 // and companion documents this fork authored or rebranded. Excludes third-party
