@@ -215,22 +215,19 @@ things moved, and only the first is cosmetic:
   does not list it.
 - **The `usage.jsonl` row type: `"obol.usage"` → `"moe.tab.usage"`.** The rebrand
   first chose `"moe-tab.usage"`, matching the package name. That is wrong, and
-  wrong silently. moe-tab declares
-  `ROW_TYPES = ["moe.tab.usage", "obol.usage"]` and `tab::parse` **skips** rows
-  whose type it does not claim rather than erroring, so every sidecar would have
-  read as "no usage" and the QA-driver's cost would have reported zero. Measured:
+  wrong silently. moe-tab's `tab::parse` **skips** rows whose type it does not
+  claim rather than erroring, so every sidecar would have read as "no usage"
+  and the QA-driver's cost would have reported zero. Measured during import:
 
   ```
   type=moe.tab.usage  -> priced est_cost_usd=0.000285
   type=moe-tab.usage  -> null (SILENTLY UNPRICED)
-  type=obol.usage     -> priced est_cost_usd=0.000285
   ```
 
-  moe-tab still accepts `obol.usage` read-only, explicitly because the fork
-  renamed it. `test/lab/usage-row-contract.test.ts` now writes a sidecar through
-  `EvidenceLogger` and prices that exact file over the C ABI — an assertion
-  neither upstream had, because gauntlet emitted the row and never read it back
-  while quorum read a sidecar it never produced.
+  `test/lab/usage-row-contract.test.ts` writes a sidecar through `EvidenceLogger`
+  and prices that exact file over the C ABI — an assertion neither upstream had,
+  because gauntlet emitted the row and never read it back while quorum read a
+  sidecar it never produced.
 
 ### The two candidate edges, settled
 

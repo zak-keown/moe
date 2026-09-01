@@ -147,27 +147,11 @@ About 575 substitutions across 60 files. The ones that are interface changes, no
 | data dir | `$XDG_DATA_HOME/obol` | `$XDG_DATA_HOME/moe/tab` |
 | error type | `ObolError` / `TabError` in five languages | `TabError` everywhere |
 | dialect | `--dialect obol`, `Dialect::Obol` | `--dialect tab`, `Dialect::Tab` |
-| wire format | `{"type":"obol.usage"}` | `{"type":"moe.tab.usage"}`, **old tag still read** |
+| wire format | `{"type":"obol.usage"}` | `{"type":"moe.tab.usage"}` |
 
 The C-symbol rename is the load-bearing one: it has to land identically in the Rust FFI, the
 committed header, and all three bindings, or nothing loads. The equivalence gate is what proves it
 did.
-
-### The one place the old name survives in live code
-
-**`obol.usage` is still accepted as a row `type`.** Not sentiment — the failure mode. `parse` skips
-rows whose type it does not claim, so a `usage.jsonl` written entirely by an un-migrated producer
-would price to exactly **$0, with no error**. This crate refuses silent zeroes everywhere else
-("unpriced models surfaced, never a silent $0"), and that rule has to apply to its own rename.
-The un-migrated producers are real and named: upstream `gauntlet` and `superpowers-evals`, both
-landing as `@bubstack/moe-flight`, write `obol.usage` rows today.
-
-`moe.tab.usage` is canonical and is what the fixtures and `docs/dialects.md` specify. The alias is
-read-only, one entry in a two-element const, covered by `legacy_obol_usage_type_is_still_priced`,
-and that test is what you delete when the last producer has moved.
-
-The `--dialect` string got no such alias, deliberately: `--dialect obol` now fails loudly with
-clap listing the valid values, and a loud failure needs no compatibility shim.
 
 ### Left alone
 
@@ -194,9 +178,6 @@ clap listing the valid values, and a loud failure needs no compatibility shim.
 
 ## Follow-ups
 
-- **`moe-flight` must switch its emitter to `moe.tab.usage`.** `gauntlet/src/evidence/logger.ts`
-  writes `type: "obol.usage"`. Until it changes, the compatibility alias above is what keeps its
-  costs from reading $0.
 - **`pnpm-workspace.yaml` needs `koffi: true` under `allowBuilds`.** Until it lands, `pnpm install`
   exits 1 with `ERR_PNPM_IGNORED_BUILDS`. koffi ships every prebuilt binary in its tarball so it
   loads fine unbuilt, but pnpm 11 will not proceed without the approval by name.

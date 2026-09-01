@@ -12,9 +12,9 @@ pub enum Dialect {
     Tab,
 }
 
-/// Detect dialect from content: sidecar lines carry `{"type":"moe.tab.usage",...}`
-/// (or the legacy `obol.usage` — see `tab::ROW_TYPES`); ATIF trajectories are a
-/// single-document JSON with a `schema_version` starting with "ATIF-".
+/// Detect dialect from content: sidecar lines carry `{"type":"moe.tab.usage",...}`;
+/// ATIF trajectories are a single-document JSON with a `schema_version`
+/// starting with "ATIF-".
 pub fn detect(bytes: &[u8]) -> Result<Dialect, TabError> {
     let text = std::str::from_utf8(bytes).map_err(|_| TabError::UnknownDialect)?;
     for line in text.lines().take(20) {
