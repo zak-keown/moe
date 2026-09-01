@@ -37,6 +37,7 @@ packages/tab/bindings/typescript/native/
 packages/tab/wheelhouse/
 packages/tab/.pricing/
 packages/tab/bindings/python/moe_tab/libmoe_tab_ffi.*
+packages/tab/bindings/python/uv.lock
 packages/tab/bindings/go/tab/total
 packages/tab/bindings/go/cmd/total/total
 .pytest_cache/
