@@ -29,22 +29,45 @@ schedule, and schedules move. Where `P` disagrees with the table, the table wins
 
 ## The schedule
 
-Every DO-NOW is done, DO-NOW-5 included, so **nothing is gated any more.** The
-whole backlog is startable.
+**Nine of sixteen items have shipped** across two sessions on 2026-08-31.
+Four wave-1 iterate branches remain live, and two items sit deferred to
+2026-09-01 after plan-verify blocked them.
 
 | Wave | Items | Effort | Wall |
 |---|---|---|---|
-| **W01** | `tc-standards-conformance` (14.5 h) · `installer-hq-dx` (13.5 h) · `native-renderers` (8.5 h) · `verification-split-and-firing-rate` (8.5 h) · `gsd-core-skill-import` (6 h) · `runtime-pruning` (5 h) · `moe-tone-and-branding` (4 h) · ~~`skill-set-fidelity-refactor`~~ **merged** | 65.5 h | 14.5 h |
-| **W02** | `codegraph-context-layer` (8 h) · `deterministic-task-dag` (8 h) · `mattpocock-skills-import` (5 h) · `moe-bare-binary-dispatcher` (4.5 h) · `parallel-execution-option` (2.5 h) | 28 h | 8 h |
-| **W03** | `tiered-workflow-naming` (5 h) · `tc-governance-integration` (3.75 h) | 8.75 h | 5 h |
-| **W04** | `contributing-flow-docs` (4.25 h) | 4.25 h | 4.25 h |
+| **W01** | ~~`tc-standards-conformance`~~ (14.5 h) **iterate `wave1/tc-standards-conformance`** · ~~`installer-hq-dx`~~ (13.5 h) **iterate `wave1/installer-hq-dx`** · ~~`native-renderers`~~ (8.5 h) **merged `65be5f7`** · ~~`verification-split-and-firing-rate`~~ (8.5 h) **iterate `wave1/verification-split-and-firing-rate`** · ~~`gsd-core-skill-import`~~ (6 h) **skipped — precondition unmet** · ~~`runtime-pruning`~~ (5 h) **iterate `wave1/runtime-pruning`** · ~~`moe-tone-and-branding`~~ (4 h) **merged `de74bd0`** · ~~`skill-set-fidelity-refactor`~~ **merged** | 65.5 h | 14.5 h |
+| **W02** | ~~`codegraph-context-layer`~~ (8 h) **blocked at plan-verify, deferred 2026-09-01** · ~~`deterministic-task-dag`~~ (8 h) **merged `f2bdc60`** · ~~`mattpocock-skills-import`~~ (5 h) **merged `3285c68`** · ~~`moe-bare-binary-dispatcher`~~ (4.5 h) **merged `a1c5f21`** · ~~`parallel-execution-option`~~ (2.5 h) **merged `b02c469`** | 28 h | 8 h |
+| **W03** | ~~`tiered-workflow-naming`~~ (5 h) **merged `894f5c7`** · ~~`tc-governance-integration`~~ (3.75 h) **blocked at plan-verify, deferred 2026-09-01** | 8.75 h | 5 h |
+| **W04** | ~~`contributing-flow-docs`~~ (4.25 h) **merged `1d38d97`** | 4.25 h | 4.25 h |
 
-W01's critical path is **co-held** by `tc-standards-conformance` (14.5 h) and
-`installer-hq-dx` (13.5 h) — within an hour of each other, so slippage in either
-sets the wave.
+W01's original critical path was **co-held** by `tc-standards-conformance` and
+`installer-hq-dx` — both are now in the iterate bucket, so the wave's actual
+close date depends on when those two land.
 
-`skill-set-fidelity-refactor` merged to main on 2026-08-31.
-`moe-tone-and-branding` is complete on a branch and awaiting merge.
+### Current status
+- **Shipped (9):** `skill-set-fidelity-refactor`, `moe-tone-and-branding`,
+  `native-renderers`, `moe-bare-binary-dispatcher`, `contributing-flow-docs`,
+  `deterministic-task-dag`, `parallel-execution-option`,
+  `mattpocock-skills-import`, `tiered-workflow-naming`.
+- **Live iterate branches (4):** `wave1/installer-hq-dx`,
+  `wave1/runtime-pruning`, `wave1/tc-standards-conformance`,
+  `wave1/verification-split-and-firing-rate`. Each has a "Suggested next step"
+  block in `.planning/wave1-execution-status.md` that names its remaining work.
+- **Deferred to 2026-09-01 (2):** `codegraph-context-layer` (W02),
+  `tc-governance-integration` (W03). Both hit the same plan-verify pattern
+  (test-assertion-not-updated for a new hook or manifest addition). Punch
+  lists in their reports' `## Blocked` sections.
+- **Skipped correctly (1):** `gsd-core-skill-import` halted on the missing
+  `.moe-references/` precondition exactly as the plan-verify pass predicted.
+  Branch and worktree removed.
+
+### Merge highlights
+Two rollbacks fired during wave-merge, both from the tier-vocabulary guard
+`tiered-workflow-naming` added — `sequencing-plans/SKILL.md`,
+`codebase-design/SKILL.md`, and `writing-skills/references/skill-typography.md`
+each use "tier" in senses that predate the workflow-depth rename (plugin
+tiers, architectural tiers, hierarchical levels). Each was whitelisted rather
+than reworded; a fourth addition should trigger reconsidering the rule's shape.
 
 ## Why the previous schedule was wrong
 
