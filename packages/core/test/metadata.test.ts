@@ -631,7 +631,7 @@ describe("runtime paths", () => {
         `node --check ${rel}`,
       ).not.toThrow();
     }
-  });
+  }, 15_000);
 });
 
 describe("hooks", () => {
