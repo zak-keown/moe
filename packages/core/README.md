@@ -9,7 +9,7 @@ Ships as **two** generated plugins from this one source tree — `moe-core` (the
 everyday set) and `moe-everything` (all of them) — built into `/plugins/` by
 `@bubstack/moe-mint`. Never hand-edit a generated manifest.
 
-**Status:** imported and building. 27 skills. Both plugins now generate into
+**Status:** imported and building. Both plugins now generate into
 `/plugins/` for all 10 harnesses — see
 [Two plugins, one source tree](#two-plugins-one-source-tree). 211 tests passing,
 5 skipped, across five suites; see [Verification](#verification). The lean/full
@@ -87,11 +87,15 @@ Per-source totals, same method:
 ## Layout
 
 ```
-skills/                 27 skills, one flat namespace. Six upstreams merged here.
+skills/                 One flat namespace. Six upstreams merged here; the
+                        counts live in skill-tiers.yaml, which a test asserts.
   _shared/              3 PAR reference documents. NOT a skill — no SKILL.md, so
                         moe-mint's readSkills() skips it. Was skills/shared/.
 hooks/
-  hooks.json            Two Stop entries. moe-mint owns SessionStart.
+  hooks.json            Two Stop entries and two SessionStart entries, sharing
+                        one matcher. moe-mint ALSO writes a SessionStart entry,
+                        into hooks/moe-mint/hooks.json; Claude Code reads both
+                        files and dedupes identical entries.
   run-hook.cmd          The cmd/bash polyglot dispatcher. One of four upstream
                         copies; see below.
   claude-judge-continuation   Stop hook 1: judge model. Opt-in, default OFF.
@@ -126,11 +130,13 @@ skills. `tier: core` ships in both plugins; `tier: everything` ships in
 `moe-everything` is a strict superset.
 
 The file holds **two** maps, and the split is what lets the fork author its own
-skills without loosening the import record. `imported:` is the frozen record of
-the 27 skills the six upstream sources shipped — a diff inside it is a fidelity
-decision, and `test/metadata.test.ts` asserts its key set equal to a pinned
-literal, which is the drop-and-rename detector for the whole import.
-`authored:` is open and currently empty. Between them they must account for every
+skills without loosening the import record. `imported:` is the frozen record of what
+the six upstream sources shipped — a diff inside it is a fidelity decision, and
+`test/metadata.test.ts` asserts both its size and its key set against a pinned
+literal, which is the drop-and-rename detector for the whole import. That test is
+the number's home; this paragraph deliberately does not repeat it, because the
+count it used to state here (27) was wrong for some time and nothing caught it.
+`authored:` is open, and no longer empty. Between them they must account for every
 skill on disk exactly once: nothing may exist unregistered, nothing may be
 registered without existing, and no name may sit in both. The lean-tier count
 lives in that test as a named `LEAN_TIER_BUDGET`, so moving a skill between tiers
@@ -202,7 +208,7 @@ The problem was real. `moe-mint` reads exactly `<root>/moe-mint.yaml`, and
 contains a `SKILL.md` (`packages/mint/src/model.ts`). There is no skill-level
 filter, and `--dir` is one argument for both config-in and files-out. So a
 single root could hold neither two configs nor two outputs, and generating from
-this package would have emitted all 27 skills into `moe-core`.
+this package would have emitted every skill into `moe-core`.
 
 Both follow-ups proposed a mint feature — a skill-level include/exclude, or a
 `--config` flag. Neither was needed. `scripts/mint-plugins.mjs` **stages**: for
@@ -216,7 +222,8 @@ plugin root is the staging directory, so:
 - The skill filter is a copy filter. `readSkills()` still takes everything it
   finds — it just finds 13 for the lean plugin and 27 for the full one.
 - `_shared/` is staged for both tiers regardless. It has no `SKILL.md`, is in
-  neither of `skill-tiers.yaml`'s maps, and is the 28th directory for 27 skills;
+  neither of `skill-tiers.yaml`'s maps, and is the one directory under `skills/`
+  that is not a skill;
   a lean-tier skill including a fragment that got filtered out is the same dead
   end the tier closure rule exists to prevent.
 
@@ -318,7 +325,7 @@ a miss, so the tests cannot tell you either. It wants a session and, ideally, a
 
 **The plugin prefix is gone, not translated.** One source tree emits two plugins
 with different names, so no single prefix (`moe-core:` or `moe-everything:`) is
-correct in both — and 14 of the 27 skills are absent from `moe-core` entirely, so
+correct in both — and most skills are absent from `moe-core` entirely, so
 `moe-core:windows-vm` would be provably dangling. The bare frontmatter `name:` is
 the one form stable across both plugins and a personal or project install. It
 also loses nothing: three of upstream's sixteen qualified forms were **already
@@ -531,7 +538,7 @@ directory level.
   placeholder repo.
 - **`skills/shared/` → `skills/_shared/`.** It is not a skill, it has no
   `SKILL.md`, and `shared` is the most generic possible name in a directory that
-  now holds 27 skills from six upstreams. The underscore sorts it first and
+  now holds every skill from six upstreams. The underscore sorts it first and
   signals what it is. `moe-mint`'s `readSkills()` skips it either way.
 - **`update_docs.cjs` write path guarded.** The output filename came straight
   from remote content (`path.basename` of a URL matched out of a fetched
@@ -705,9 +712,14 @@ Three things that verifies which nothing else does:
 
 - The generated `plugin.json` carries no upstream token, both URLs are GitLab,
   and `license` is `MIT AND Apache-2.0`.
-- `hooks/moe-mint/hooks.json` contains **both** the `Stop` entry cloned from this
-  package's `hooks/hooks.json` and mint's own `SessionStart` bootstrap entry — so
-  the merge works and there is exactly one session-start implementation.
+- `hooks/moe-mint/hooks.json` contains **both** this package's own entries, cloned
+  from `hooks/hooks.json` (two `Stop`, two `SessionStart`), and mint's own
+  `SessionStart` bootstrap entry — so the merge works. It is no longer "exactly
+  one session-start implementation", which this line claimed until 2026-09-01:
+  `plan-set-notice` and `tc-governance-check` are ours, the bootstrap is mint's,
+  and all three fire. What matters is that mint *appends* rather than replacing —
+  `packages/mint/src/bootstrap/shell-hook.ts` `structuredClone`s the input
+  verbatim — so adding a hook here never needs a mint change.
 - Both bootstrap resolvers (`hooks/moe-mint/session-start` and
   `.hermes-plugin/__init__.py`) point at `skills/using-moe/SKILL.md`, which is
   also proof that `bootstrap: { skill: using-moe }` resolved — `buildModel()`
@@ -722,6 +734,55 @@ someone can take later.
 **What is still unverified.** The mint bootstrap-wrapper swap (above) — no test
 here can see it, and four of the five upstream resolvers failed silently on a
 miss. The `windows-vm` skill cannot be exercised on any machine in this fork.
+
+## AI Governance, and which surface answers each section
+
+TC's AI Governance policy (`gitlab.tcdevops.com/ai/aigovernance`, `Governance.md`
+v1.0, eleven numbered sections) is **mandatory and not vendored here.** That is a
+deliberate decision with a mechanical reason, not a gap.
+
+`skills/using-moe/SKILL.md` states that user instructions — CLAUDE.md, AGENTS.md,
+a direct request — take precedence over skills. `Governance.md`'s header says its
+rules "cannot be overridden by user prompts or task context", and §11 holds them
+regardless of framing, urgency, or who is asking. **Those two statements are
+compatible only while the policy lives in `~/.claude/CLAUDE.md`**, where
+`using-moe` already ranks it above every skill. Ship it as a Moe skill and a
+direct request outranks it — the fork would have demoted the one document that
+says it cannot be demoted.
+
+So `ai/aigovernance/README.md`'s own install stands (copy `Governance.md` into
+`~/.claude/CLAUDE.md`; `~/.codex/AGENTS.md` for Codex), and Moe's job is to check
+it arrived. That is `hooks/tc-governance-check`, a SessionStart **nudge**: it
+greps both files for the policy's H1 and, when absent, emits
+`additionalContext` telling the agent to retrieve and follow it for this session.
+Set `MOE_TC_GOVERNANCE_DISABLED=1` to silence it on a non-TC checkout.
+
+| § | Requirement | What answers it here |
+|---|---|---|
+| §1 | Credential and secret protection | Not Moe-specific — the policy text itself, loaded via CLAUDE.md. Nothing in this tree holds credentials. |
+| §2 | Data protection and PII | Policy text. `hooks/moe-completion-evidence` writes transcripts under `$HOME`, never to a remote. |
+| §3 | Destructive action prohibition | Policy text, plus `skills/using-git-worktrees` and `skills/finishing-a-development-branch`, which route branch work through non-destructive paths. |
+| §4 | Least privilege | Policy text. Retrieval agents in `agents/` carry explicit `tools:` allowlists rather than inheriting everything. |
+| §5 | SQL safety | Policy text. This tree has no database. |
+| §6 | Code and dependency safety | **Satisfied and verified.** §6 requires noting dependency licences and blocks GPL-into-proprietary without review. `PARITY.md` is exactly that note, and records every forked upstream as MIT, Apache-2.0 or public domain — no GPL in the tree. |
+| §7 | Escalation protocol | `skills/verification-before-completion` and its Stop hook; `skills/systematic-debugging`'s root-cause-before-fix rule is §7.2's "repeated failure" in skill form. |
+| §8 | Auditability | **Satisfied.** §8 asks for a commit trailer **or** an MR label. `skills/finishing-a-development-branch` and `_shared/tc-conventions.md` require `AI` plus a scoped `agent::<name>` label on every agent-authored MR. |
+| §9 | Transparency | `skills/verification-before-completion` — never claim an action that was not executed, and say so explicitly when a task is partial. |
+| §10 | `.ai-privacy.yml` | Root `.ai-privacy.yml`, `global_privacy_level: 3` (§10's own default). **Declared, not enforced:** enforcing §10 needs a `PreToolUse` hook that can refuse a read, which is separate work and must not be defaulted on before it has run against a real TC repo with level-1 paths. |
+| §11 | Enforcement notes | The precedence argument above. §11 is the reason the policy must not become a skill. |
+
+Two rows say "policy text" and mean it: for those sections Moe's correct
+contribution is to make sure the policy is loaded, not to paraphrase it into
+skill prose where `using-moe` would rank it below a direct request.
+
+The hook also carries a short, provider-agnostic pointer at TC's knowledge base
+(`ai/kb`, ~32 documents), which fires whether or not governance is loaded — a
+compliant machine is exactly the one that should get it. It names the capability,
+not the server: routing is `skills/retrieving-context`'s job. When no retrieval
+tool and no GitLab access are present the pointer is a no-op, which is today's
+behaviour, so nothing regresses. This is deliberately gentler than
+`ai/tc-guide/SKILL.md`, which says to stop and prompt when retrieval is
+unavailable — for Moe that would block offline work.
 
 ## Two skills that ship with caveats
 

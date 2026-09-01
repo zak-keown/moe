@@ -1,0 +1,22 @@
+# AI privacy declaration, per ai/aigovernance Governance.md §10.
+#
+# Hand-committed rather than generated. TC's fleet-wide `add_ai_privacy` job
+# (Development.Infrastructure/gitlab-ci-files:ai/add_privacy.yml) would create
+# this file automatically, but it is a `.pre`-stage job that curls a template
+# then COMMITS AND PUSHES to the branch, and it needs an `AI_PRIVACY_KEY` CI
+# variable this project does not have. Enabling a pipeline that pushes commits
+# to Moe is a decision with consequences past this file, so it stays out of
+# `.gitlab-ci.yml` until someone chooses it deliberately. §10 only requires the
+# file to exist and be honoured; it does not require that job.
+#
+# Level 3 (Internal) is §10's own default, and it is the right floor here:
+# everything in this repo is internal tooling — skill prose, generated plugin
+# manifests, planning documents. Nothing is public (level 4), and nothing has
+# been identified as level 2 or 1.
+#
+# Not audited for a level-2 override: packages/flight's eval corpus. It is
+# prompt/response fixture text rather than customer or strategic data, so level
+# 3 is the honest reading, but it has not been read line by line with §10's
+# level-2 examples in hand. If that audit finds anything strategic, add a
+# `privacy_levels` entry rather than lowering the global.
+global_privacy_level: 3
