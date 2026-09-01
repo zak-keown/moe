@@ -9,7 +9,7 @@ idea: |
   (2) This repo claims the bare `moe` binary as a dispatcher — `moe flight`, `moe tab`,
       `moe mint` — with the existing `moe-<thing>` bins kept as aliases.
   Amended same day: Moe has Windows users; the dispatcher must be portable.
-status: backlog
+status: done
 size: S
 estimate: "4-5 h here; +1-1.5 h in ~/Code/tools/moedex, which is not this slug's work"
 depends_on: [DO-NOW-1, installer-hq-dx]

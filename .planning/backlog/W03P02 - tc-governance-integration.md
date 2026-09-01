@@ -6,7 +6,7 @@ idea: |
       - https://gitlab.tcdevops.com/ai/aigovernance
       - https://gitlab.tcdevops.com/ai/tc-guide
       - Explore how to keep these up-to-date
-status: backlog
+status: done
 size: M
 estimate: "3.5-4 h (add 3-4 h if the PreToolUse privacy gate is in scope)"
 depends_on: [DO-NOW-1, DO-NOW-3, tc-standards-conformance, codegraph-context-layer]

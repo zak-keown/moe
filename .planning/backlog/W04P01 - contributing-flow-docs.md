@@ -3,7 +3,7 @@ slug: contributing-flow-docs
 title: The Moe Contributor Flow, Written Down
 idea: |
   - Documentation: ideal total flow for contributing to Moe--what to run when and why
-status: backlog
+status: done
 size: M
 estimate: 3.5-5 h, split across two passes (2.5-3.5 h now, ~1 h after DO-NOW-3)
 depends_on: [DO-NOW-1, DO-NOW-3, tc-standards-conformance]

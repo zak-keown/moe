@@ -3,7 +3,7 @@ slug: gsd-core-skill-import
 title: GSD-Core Census And Debugger Reference Import
 idea: |
   - Examine GSD-core for skills to import
-status: backlog
+status: done
 size: M
 estimate: 5-7 h
 depends_on: [DO-NOW-1, DO-NOW-2]

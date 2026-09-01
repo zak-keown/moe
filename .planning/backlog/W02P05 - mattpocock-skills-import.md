@@ -3,7 +3,7 @@ slug: mattpocock-skills-import
 title: mattpocock/skills Census And Deep-Module Vocabulary Import
 idea: |
   - Examine mattpocock/skills for skills to import
-status: backlog
+status: done
 size: M
 estimate: 4-6 h
 depends_on: []

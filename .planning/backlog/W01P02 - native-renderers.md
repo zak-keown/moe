@@ -3,7 +3,7 @@ slug: native-renderers
 title: Native Renderers For Human-Facing Skill Output
 idea: |
   - Native renderers - Have skills use the actual harness tooling where available, rather than pure text; include Claude's artifact-design skill if present
-status: backlog
+status: done
 size: L
 estimate: 7-10 h
 depends_on: [DO-NOW-1, DO-NOW-2, DO-NOW-3]

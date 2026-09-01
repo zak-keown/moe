@@ -4,7 +4,7 @@ title: Verification Split In Two, Plus A Firing-Rate Counter
 idea: |
   - Verification, split in two: let the harness capture the evidence and keep the
     judgment in prose. Count which skills actually fire while we are in there.
-status: backlog
+status: done
 size: L
 estimate: 7-10 h
 depends_on: [DO-NOW-1, DO-NOW-3]

@@ -6,7 +6,7 @@ idea: |
       - https://gitlab.tcdevops.com/ai/skills
       - Branch format is `sc-{cardNumber}/{slug}
       - Explore how to keep these up-to-date
-status: backlog
+status: done
 size: M
 estimate: 12-17 h
 depends_on: [DO-NOW-1, DO-NOW-2, DO-NOW-3, DO-NOW-5]

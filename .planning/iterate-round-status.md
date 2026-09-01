@@ -1,3 +1,8 @@
+> **Superseded 2026-09-01.** Every branch this document names has been merged and
+> deleted. It is kept as a point-in-time record of that run, so its "Ready to
+> merge" and "Iterate" sections describe branches that no longer exist — do not
+> try to check them out. For final state see `.planning/backlog/WAVES.md`.
+
 # Iterate Round Status
 
 ## Base
