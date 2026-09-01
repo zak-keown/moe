@@ -9,7 +9,7 @@
 ## Installing
 
 ```
-hermes plugins install <your-repo> --enable
+hermes plugins install https://gitlab.tcdevops.com/Zak/moe --enable
 ```
 
 Hermes registers every skill natively via `register_skill`; when bootstrap is configured, the plugin injects it on the first turn through the `pre_llm_call` hook. Consult Hermes' plugin docs if this command doesn't match your installed version.

@@ -6,7 +6,7 @@
       "sha256": "d1eebd48a6ae4ce1e0435e62a65a7a8b5e2a43dcb1636ed70e8d75801e3bb12e"
     },
     ".claude-plugin/marketplace.json": {
-      "sha256": "a77033d5e6e1d03d8f7c373fe6d81517944ba17c5f1308f0246dda0d340fd8df"
+      "sha256": "be057e8760910b462a72c4c586d403cc9ff23d1844bfe271239196d854aaf33b"
     },
     ".claude-plugin/plugin.json": {
       "sha256": "e6d95b92a5fa5a4f23f06a7d81b8e2045fb71ec667f866c8e148289fb9497e40"
@@ -42,10 +42,10 @@
       "sha256": "d378012d2d98993a88e2794b5736529b4e715f231fcfc13d595f73d013b89a4f"
     },
     "docs/install/agents-marketplace.md": {
-      "sha256": "49b397d85b70a212e3099a41cd43bd10b45e785e0acf31e9ad2a994699436d5b"
+      "sha256": "8557ddf0170d65eb3da35c62c683742bd9f059686abcf1a98167a602f48aadef"
     },
     "docs/install/claude-code.md": {
-      "sha256": "14a40986777ca625d2e449cdad4ec58e0b61f7e2f89a3746029df4d557213778"
+      "sha256": "e9b15c4127f2a4386b00b4297f9dd94da393088f4f9b0a69f8ed5c610d860795"
     },
     "docs/install/codex.md": {
       "sha256": "85cf7d08c704e3f925af71f23bc48a75792ad1101156119d65d3ec418a34124e"
@@ -54,10 +54,10 @@
       "sha256": "6206a9f862ec6de3295d543b900a811083f44147a6905d006c58efc4193d0aeb"
     },
     "docs/install/devin.md": {
-      "sha256": "a2250c85bf77960cef6664c7c432eb85a92a190bf4af7206573e6ed17af79d60"
+      "sha256": "683c86a1a59a1d3e20d0749077b578e55c3f5ed1ac0a091e3f47e5061014d1f3"
     },
     "docs/install/hermes.md": {
-      "sha256": "65ceb437658c70f0bf4fa72c647af0a28ad0a61440b23275074ebdbd9d9e5a26"
+      "sha256": "6cb7c214b4f47a84e4e6752a915d1f1e950b9b5270a2e52e424a881803ed11e5"
     },
     "docs/install/kimi.md": {
       "sha256": "3ed2ba67a08e08b91b95ca225d1738c670707e26269ff9d7034700bb033648d2"
@@ -66,7 +66,7 @@
       "sha256": "95eb10f3ec52e68d9da47ce76d8b702d714434eea138c1b2edd462f54fded67c"
     },
     "docs/install/pi.md": {
-      "sha256": "5e1cf71beddc1877c86fc39779303248b39ce328fe590e333b80d2f553d3a685"
+      "sha256": "12a0a53d584fb2686577b7096f55410bf24dd66c524214e76bb4380fef8824ef"
     },
     "docs/support-matrix.md": {
       "sha256": "98cf47fd29e4efd0d0d7bde3ed26948f96139e7b28a334e523184ea7b727d563"

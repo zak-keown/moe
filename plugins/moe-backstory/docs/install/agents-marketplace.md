@@ -21,7 +21,7 @@ On Copilot:
 
 ```
 copilot plugin marketplace add https://gitlab.tcdevops.com/Zak/moe
-copilot plugin install moe-backstory@moe-backstory-dev
+copilot plugin install moe-backstory@moe
 ```
 
 Both clients install the plugin's real claude-code-style layout (skills/, commands/, agents/, hooks/, .mcp.json) — their effective support matches claude-code's, not the all-`none` row this adapter reports in the support matrix (which reflects only the descriptor file itself, not what those clients receive through it). Droid reads the descriptor this adapter emits (`.agents/plugins/marketplace.json`); Copilot instead reads Claude Code's `.claude-plugin/marketplace.json`, so its install id above uses that marketplace's name and it needs the claude-code adapter enabled. Consult each client's docs if these commands don't match your installed version.

@@ -1,5 +1,5 @@
 {
-  "name": "moe-core-dev",
+  "name": "moe",
   "description": "Development marketplace for moe-core",
   "plugins": [
     {
