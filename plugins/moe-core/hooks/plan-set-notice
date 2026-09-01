@@ -26,7 +26,7 @@ set -u
 # tier filter that removed too much) or not executable (a broken chmod copy).
 PLAN_SET_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLAN_SET="${PLAN_SET_DIR}/plan-set"
-if [ ! -f "$PLAN_SET" ]; then
+if [ ! -x "$PLAN_SET" ]; then
     exit 0
 fi
 
@@ -104,8 +104,8 @@ compose_context() {
     # Manifest path relative to CWD if possible, absolute otherwise, so the
     # command works when pasted.
     local rel="${MANIFEST#$CWD/}"
-    printf 'A plan set exists at %s. Next runnable plan(s): %s. Run `plan-set next --manifest %s` to re-check, and `plan-set done <id> <base>..<head>` after each plan finishes.' \
-        "$rel" "$ids" "$rel"
+    printf 'A plan set exists at %s. Next runnable plan(s): %s. Run `node "%s" next --manifest "%s"` to re-check, and `node "%s" done <id> <base>..<head> --manifest "%s"` after each plan finishes.' \
+        "$rel" "$ids" "$PLAN_SET" "$rel" "$PLAN_SET" "$rel"
 }
 
 escape_for_json() {

@@ -17,6 +17,17 @@ decision_needed: no
 
 # Deterministic Plan-Set Sequencing For Multi-Plan Projects
 
+## Completion repair (2026-09-01)
+
+The graph engine was present, but its installed instructions named bare
+`plan-set` even though no package placed that executable on `PATH`. The skill
+and SessionStart notice now invoke the plugin-owned script by its resolved path.
+The "plan-set" suite directly exercises the mutating `done` transition,
+persisted commit range, fresh ready-set query, bad ranges, unknown ids and
+unfinished dependencies. The "plan-set-notice" suite also covers all-done,
+blocked-only, missing-script and non-executable-script paths. A separate diamond
+dry run advanced B and C before D and rejected D while C was pending.
+
 ## The idea
 
 > Explore a deterministic task DAG for larger projects (anything more than 1

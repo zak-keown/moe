@@ -12,6 +12,7 @@
 import { execFileSync } from "node:child_process";
 import {
   accessSync,
+  chmodSync,
   constants,
   existsSync,
   mkdirSync,
@@ -1376,6 +1377,50 @@ describe("plan-set", () => {
     expect(r.stdout.trim().split(/\n/)).toEqual(["B", "C"]);
   });
 
+  it("done persists the commit range and advances a fresh ready-set query", () => {
+    const tmp = mkdtempSync(join(tmpdir(), "plan-set-done-"));
+    try {
+      const plansDir = join(tmp, "plans");
+      mkdirSync(plansDir, { recursive: true });
+      for (const f of ["A-plan.md", "B-plan.md", "C-plan.md", "D-plan.md"]) {
+        writeFileSync(join(plansDir, f), readFileSync(join(FIXTURES, "plans", f), "utf8"));
+      }
+      const manifest = join(tmp, "done-MANIFEST.md");
+      writeFileSync(
+        manifest,
+        readFileSync(join(FIXTURES, "diamond-MANIFEST.md"), "utf8")
+          .replace("status: done", "status: pending")
+          .replace(/\n\s+commits: [^\n]+/, ""),
+      );
+
+      expect(run(["next", "--manifest", manifest]).stdout.trim()).toBe("A");
+      const done = run(["done", "A", "aaaaaaa..bbbbbbb", "--manifest", manifest]);
+      expect(done.status, done.stderr).toBe(0);
+      expect(done.stdout).toContain("marked A done (aaaaaaa..bbbbbbb)");
+      const persisted = readFileSync(manifest, "utf8");
+      expect(persisted).toMatch(/id: A[\s\S]*status: done[\s\S]*commits: aaaaaaa\.\.bbbbbbb/);
+
+      const fresh = run(["next", "--manifest", manifest]);
+      expect(fresh.status, fresh.stderr).toBe(0);
+      expect(fresh.stdout.trim().split(/\n/)).toEqual(["B", "C"]);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("done rejects an invalid range, unknown id, and unfinished dependency", () => {
+    const manifest = join(FIXTURES, "diamond-MANIFEST.md");
+    expect(run(["done", "B", "bad-range", "--manifest", manifest]).stderr).toMatch(
+      /not two 7\+-char hex SHAs/,
+    );
+    expect(run(["done", "unknown", "aaaaaaa..bbbbbbb", "--manifest", manifest]).stderr).toMatch(
+      /unknown id "unknown"/,
+    );
+    expect(run(["done", "D", "aaaaaaa..bbbbbbb", "--manifest", manifest]).stderr).toMatch(
+      /dep "B" is pending/,
+    );
+  });
+
   it("check fails on a cycle and names every node on stderr", () => {
     const r = run(["check", "--manifest", join(FIXTURES, "cycle-MANIFEST.md")]);
     expect(r.status).not.toBe(0);
@@ -1434,9 +1479,9 @@ describe("plan-set-notice", () => {
   // missing notice, and the assertion below is what keeps that promise
   // testable.
   const HOOK = join(PKG, "hooks/plan-set-notice");
-  const runHook = (input: string, env: Record<string, string> = {}) => {
+  const runHookAt = (hook: string, input: string, env: Record<string, string> = {}) => {
     try {
-      const stdout = execFileSync("bash", [HOOK], {
+      const stdout = execFileSync("bash", [hook], {
         input,
         env: { ...process.env, ...env },
         stdio: ["pipe", "pipe", "pipe"],
@@ -1447,6 +1492,24 @@ describe("plan-set-notice", () => {
       const e = err as { status: number; stdout: string; stderr: string };
       return { status: e.status ?? 1, stdout: e.stdout ?? "" };
     }
+  };
+  const runHook = (input: string, env: Record<string, string> = {}) => runHookAt(HOOK, input, env);
+
+  const stageProject = (fixture: string): { root: string; manifest: string } => {
+    const root = mkdtempSync(join(tmpdir(), "plan-set-notice-"));
+    const plansDir = join(root, "docs/moe/plans");
+    const planFiles = join(root, "plans");
+    mkdirSync(plansDir, { recursive: true });
+    mkdirSync(planFiles, { recursive: true });
+    for (const f of ["A-plan.md", "B-plan.md", "C-plan.md", "D-plan.md"]) {
+      writeFileSync(
+        join(planFiles, f),
+        readFileSync(join(PKG, "test/fixtures/plan-set/plans", f), "utf8"),
+      );
+    }
+    const manifest = join(plansDir, "test-MANIFEST.md");
+    writeFileSync(manifest, readFileSync(join(PKG, "test/fixtures/plan-set", fixture), "utf8"));
+    return { root, manifest };
   };
 
   it("exits 0 with no output on empty stdin", () => {
@@ -1465,20 +1528,8 @@ describe("plan-set-notice", () => {
     // Point cwd at a synthetic project layout the hook can walk. mkdtemp
     // outside the repo so no walk() elsewhere in this file trips over the
     // scratch dir, and rmSync in finally so a failure mid-test does not leak.
-    const tmp = mkdtempSync(join(tmpdir(), "plan-set-notice-"));
+    const { root: tmp } = stageProject("diamond-MANIFEST.md");
     try {
-      const plansDir = join(tmp, "docs/moe/plans");
-      const planFiles = join(tmp, "plans");
-      execFileSync("mkdir", ["-p", plansDir]);
-      execFileSync("mkdir", ["-p", planFiles]);
-      const plansSrc = join(PKG, "test/fixtures/plan-set/plans");
-      for (const f of ["A-plan.md", "B-plan.md", "C-plan.md", "D-plan.md"]) {
-        execFileSync("cp", [join(plansSrc, f), join(planFiles, f)]);
-      }
-      execFileSync("cp", [
-        join(PKG, "test/fixtures/plan-set/diamond-MANIFEST.md"),
-        join(plansDir, "test-MANIFEST.md"),
-      ]);
       const r = runHook(JSON.stringify({ cwd: tmp, hook_event_name: "SessionStart" }), {
         CLAUDE_PLUGIN_ROOT: "/fake",
       });
@@ -1486,6 +1537,50 @@ describe("plan-set-notice", () => {
       expect(r.stdout).toContain('"hookSpecificOutput"');
       expect(r.stdout).toContain("Next runnable plan(s): B,C");
       expect(r.stdout).toContain("docs/moe/plans/test-MANIFEST.md");
+      expect(r.stdout).toContain(`node \\"${join(PKG, "hooks/plan-set")}\\" next`);
+      expect(r.stdout).not.toContain("Run `plan-set next");
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it.each([
+    ["all plans are done", "diamond-MANIFEST.md", true],
+    ["the root is blocked", "blocked-MANIFEST.md", false],
+  ])("exits 0 with no output when %s", (_label, fixture, markDone) => {
+    const { root, manifest } = stageProject(fixture);
+    try {
+      if (markDone) {
+        writeFileSync(
+          manifest,
+          readFileSync(manifest, "utf8").replaceAll("status: pending", "status: done"),
+        );
+      }
+      const r = runHook(JSON.stringify({ cwd: root, hook_event_name: "SessionStart" }));
+      expect(r.status).toBe(0);
+      expect(r.stdout).toBe("");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it.each([
+    ["missing", false],
+    ["non-executable", true],
+  ])("exits 0 with no output when the sibling plan-set is %s", (_label, includeCli) => {
+    const tmp = mkdtempSync(join(tmpdir(), "plan-set-hook-copy-"));
+    try {
+      const hook = join(tmp, "plan-set-notice");
+      writeFileSync(hook, readFileSync(HOOK, "utf8"));
+      chmodSync(hook, 0o755);
+      if (includeCli) {
+        const cli = join(tmp, "plan-set");
+        writeFileSync(cli, readFileSync(join(PKG, "hooks/plan-set"), "utf8"));
+        chmodSync(cli, 0o644);
+      }
+      const r = runHookAt(hook, JSON.stringify({ cwd: PKG, hook_event_name: "SessionStart" }));
+      expect(r.status).toBe(0);
+      expect(r.stdout).toBe("");
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
