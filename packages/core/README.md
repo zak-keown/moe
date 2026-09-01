@@ -19,9 +19,8 @@ skill there whenever its directory changes.
 
 TC's AI Governance policy is mandatory and is intentionally not vendored as a
 skill. Install it at the user-instruction layer as directed by
-`ai/aigovernance`; `hooks/tc-governance-check` provides a non-blocking
-SessionStart reminder when it is absent. Set
-`MOE_TC_GOVERNANCE_DISABLED=1` on non-TC checkouts.
+`ai/aigovernance`; `hooks/governance-marker-check` provides a non-blocking
+SessionStart reminder when it is absent.
 
 | § | Requirement | Moe surface |
 |---|---|---|
