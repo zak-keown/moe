@@ -44,9 +44,13 @@ describe('page-scripts/markdown', () => {
     assert.match(md, /!\[Image: "Logo" - 200x100\]\(.*x\.png\)/);
   });
 
+  // 30s timeout: parsing a 100K-tag document through jsdom+turndown is CPU
+  // bound and pushes past vitest's 5000ms default on the CI runner (local
+  // finishes in ~2s). The test asserts on the output cap, not on speed —
+  // raising the ceiling stays honest about what is being verified.
   it('caps output at 50000 chars', () => {
     const giantHtml = '<html><body>' + '<p>x</p>'.repeat(100000) + '</body></html>';
     const md = evalScript(giantHtml);
     assert.ok(md.length <= 50000);
-  });
+  }, 30000);
 });
