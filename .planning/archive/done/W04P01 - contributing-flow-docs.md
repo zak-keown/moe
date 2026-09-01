@@ -6,9 +6,9 @@ idea: |
 status: done
 size: M
 estimate: 3.5-5 h, split across two passes (2.5-3.5 h now, ~1 h after DO-NOW-3)
-depends_on: [DO-NOW-1, DO-NOW-3, tc-standards-conformance]
+depends_on: [DO-NOW-1, DO-NOW-3]
 blocks: []
-conflicts_with: [moe-tone-and-branding, tc-standards-conformance, installer-hq-dx]
+conflicts_with: [moe-tone-and-branding, installer-hq-dx]
 touches: [CONTRIBUTING.md, AGENTS.md, CLAUDE.md, README.md, .gitignore]
 decision_needed: yes
 ---
@@ -123,8 +123,6 @@ memory's `test:model`, which pulls a ~35 MB model from huggingface.co.
   exist: `pnpm mint` is a deliberate `exit 1`, `/plugins/` is gitignored (`.gitignore:18`)
   and absent, and `.claude-plugin/marketplace.json` already points six plugins at paths
   that do not resolve. **The one part that cannot be written honestly yet.**
-- **`tc-standards-conformance`** owns MR templates and `sc-{card}/{slug}` branch naming.
-  Land it first and link to it; do not restate it.
 
 ## Proposed approach
 
@@ -212,7 +210,6 @@ in `README.md`. Running every command the doc lists and quoting its real output.
 import contract section.
 
 **Out:**
-- MR templates and `sc-{card}/{slug}` branch naming → `tc-standards-conformance`.
 - Consumer-side install and HQ DX → `installer-hq-dx`; this item is contributor setup only.
 - Voice and tone across the prose → `moe-tone-and-branding`.
 - Building the `/plugins/` mint step → DO-NOW-3. This item documents it, nothing more.

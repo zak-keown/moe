@@ -432,7 +432,7 @@ const X_BIT_ALLOWLIST = [
   "hooks/plan-set",
   "hooks/plan-set-notice",
   "hooks/run-hook.cmd",
-  "hooks/tc-governance-check",
+  "hooks/governance-marker-check",
   "skills/brainstorming/scripts/start-server.sh",
   "skills/brainstorming/scripts/stop-server.sh",
   "skills/extracting-requirements/scripts/aggregate_stories.py",
@@ -638,9 +638,10 @@ describe("hooks", () => {
     // Stop is the claude-judge-continuation hook. SessionStart carries TWO
     // hooks under one matcher: plan-set-notice (deterministic-task-dag), which
     // announces an incomplete plan set when the session starts in a project
-    // that has one, and tc-governance-check (tc-governance-integration), which
-    // verifies TC's AI Governance policy is loaded and points at TC's knowledge
-    // base. They share `SessionStart[0].hooks` rather than taking an entry each,
+    // that has one, and governance-marker-check, a configurable presence-check
+    // nudge that emits SessionStart context when a caller-configured governance
+    // marker is missing from ~/.claude/CLAUDE.md or ~/.codex/AGENTS.md. Off by
+    // default. They share `SessionStart[0].hooks` rather than taking an entry each,
     // so this key list stays two long and the assertion below still finds
     // plan-set-notice at index 0. moe-mint ALSO writes a SessionStart entry — the bootstrap that
     // loads the `using-moe` skill — into the generated
@@ -673,26 +674,26 @@ describe("hooks", () => {
     expect(matcher).toBe("startup|clear|compact");
   });
 
-  it("dispatches the SessionStart tc-governance-check through run-hook.cmd", () => {
+  it("dispatches the SessionStart governance-marker-check through run-hook.cmd", () => {
     // Index 1, deliberately: sharing SessionStart[0].hooks with plan-set-notice
     // keeps Object.keys(hooks.hooks) two long, which the assertion above pins
     // for both length AND order. A second SessionStart array element would also
     // have passed that, but two entries with the same matcher is a lie about the
     // shape — they fire together.
     const entry = hooks.hooks.SessionStart?.[0]?.hooks?.[1];
-    expect(entry, "SessionStart lost its tc-governance-check hook").toBeDefined();
+    expect(entry, "SessionStart lost its governance-marker-check hook").toBeDefined();
     const cmd = entry?.command as string;
     // biome-ignore lint/suspicious/noTemplateCurlyInString: literal from hooks.json
-    expect(cmd).toContain('"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd" tc-governance-check');
+    expect(cmd).toContain('"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd" governance-marker-check');
     expect(entry?.shell).toBe("bash");
   });
 
-  it("keeps tc-governance-check free of jq and of a non-zero exit", () => {
+  it("keeps governance-marker-check free of jq and of a non-zero exit", () => {
     // Two properties, one test, because they are the same failure: a governance
     // check that dies quietly reads as compliance. jq is absent on some Windows
     // and WSL installs, and a non-zero SessionStart hook can block every session
     // on the machine.
-    const src = readFileSync(join(PKG, "hooks/tc-governance-check"), "utf8");
+    const src = readFileSync(join(PKG, "hooks/governance-marker-check"), "utf8");
     // Strip comment lines before matching. The file's own header explains WHY it
     // avoids jq, so a naive /\bjq\b/ over the whole text fails on the
     // documentation rather than on a dependency — which is the difference
@@ -701,43 +702,47 @@ describe("hooks", () => {
       .split("\n")
       .filter((line) => !/^\s*#/.test(line))
       .join("\n");
-    expect(code, "tc-governance-check must not invoke jq").not.toMatch(/\bjq\b/);
-    expect(src, "tc-governance-check must end in an explicit exit 0").toMatch(/\nexit 0\n?$/);
+    expect(code, "governance-marker-check must not invoke jq").not.toMatch(/\bjq\b/);
+    expect(src, "governance-marker-check must end in an explicit exit 0").toMatch(/\nexit 0\n?$/);
   });
 
   it("emits valid JSON on the governance-absent and governance-present paths", () => {
     // The hook hand-builds its JSON with printf rather than jq, so "is it still
     // parseable" is a real question and not a formality. Run it against a HOME
-    // with no policy and a HOME with one.
-    const run = (home: string) =>
-      execFileSync("bash", [join(PKG, "hooks/tc-governance-check")], {
+    // with no marker and a HOME with one, using a synthetic marker (not any
+    // real policy text) so the test does not depend on TC's or anyone else's
+    // governance document.
+    const MARKER = "# Test Marker";
+    const run = (home: string, env: Record<string, string>) =>
+      execFileSync("bash", [join(PKG, "hooks/governance-marker-check")], {
         encoding: "utf8",
         input: "",
-        env: { ...process.env, HOME: home, USERPROFILE: home, MOE_TC_GOVERNANCE_DISABLED: "" },
+        env: { ...process.env, HOME: home, USERPROFILE: home, ...env },
       });
 
+    // Off by default: with no MOE_GOVERNANCE_MARKER configured, the hook exits
+    // 0 with no output regardless of what HOME contains. A fork that never
+    // opts in must see nothing, ever.
+    const unset = mkdtempSync(join(tmpdir(), "moe-gov-unset-"));
+    expect(run(unset, { MOE_GOVERNANCE_MARKER: "" })).toBe("");
+    rmSync(unset, { recursive: true, force: true });
+
     const absent = mkdtempSync(join(tmpdir(), "moe-gov-absent-"));
-    const parsedAbsent = JSON.parse(run(absent)) as {
+    const parsedAbsent = JSON.parse(
+      run(absent, { MOE_GOVERNANCE_MARKER: MARKER, MOE_GOVERNANCE_POLICY_HINT: "Test hint." }),
+    ) as {
       hookSpecificOutput: { hookEventName: string; additionalContext: string };
     };
     expect(parsedAbsent.hookSpecificOutput.hookEventName).toBe("SessionStart");
-    expect(parsedAbsent.hookSpecificOutput.additionalContext).toContain("NOT loaded");
+    expect(parsedAbsent.hookSpecificOutput.additionalContext).toContain(MARKER);
+    // The optional installation hint, when set, reaches additionalContext too.
+    expect(parsedAbsent.hookSpecificOutput.additionalContext).toContain("Test hint.");
     rmSync(absent, { recursive: true, force: true });
 
     const present = mkdtempSync(join(tmpdir(), "moe-gov-present-"));
     mkdirSync(join(present, ".claude"), { recursive: true });
-    writeFileSync(
-      join(present, ".claude", "CLAUDE.md"),
-      "# AI Governance & Security Policy\n\nv1.0\n",
-    );
-    const parsedPresent = JSON.parse(run(present)) as {
-      hookSpecificOutput: { additionalContext: string };
-    };
-    expect(parsedPresent.hookSpecificOutput.additionalContext).not.toContain("NOT loaded");
-    // The knowledge-base pointer fires either way — it is the reason a compliant
-    // machine gets any context at all, and dropping it when governance is
-    // present would mean the pointer never reaches the people who did the setup.
-    expect(parsedPresent.hookSpecificOutput.additionalContext).toContain("ai/kb");
+    writeFileSync(join(present, ".claude", "CLAUDE.md"), `${MARKER}\n\nBody.\n`);
+    expect(run(present, { MOE_GOVERNANCE_MARKER: MARKER })).toBe("");
     rmSync(present, { recursive: true, force: true });
   });
 
@@ -836,48 +841,6 @@ describe("hooks", () => {
 // does not resolve. The agent then runs with fewer tools than its author
 // intended — or none — and no error is raised anywhere. A `grep -q '^tools:'`
 // gate proves the key exists, which is not the thing that breaks.
-// The governance mapping table in README.md is the artifact that says which Moe
-// surface answers each section of TC's AI Governance policy. Its failure mode is
-// a section quietly going unmapped — the policy has eleven and a reader cannot
-// tell a missing row from a section that needs no Moe surface. Asserting a row
-// COUNT would pass on eleven rows for the wrong eleven sections, so each § is
-// checked by name.
-describe("the AI Governance mapping table", () => {
-  const readme = readFileSync(join(PKG, "README.md"), "utf8");
-
-  it("maps every one of Governance.md's eleven sections", () => {
-    const missing: string[] = [];
-    for (let n = 1; n <= 11; n++) {
-      if (!new RegExp(`^\\| §${n} \\|`, "m").test(readme)) missing.push(`§${n}`);
-    }
-    expect(
-      missing,
-      `README.md's governance table is missing a row per section: ${missing.join(", ")}. ` +
-        `Governance.md (ai/aigovernance) has eleven numbered sections; a section with no ` +
-        `Moe surface still needs a row saying so, because a reader cannot tell that ` +
-        `from an omission.`,
-    ).toEqual([]);
-  });
-
-  it("does not vendor the policy text it declines to vendor", () => {
-    // The precedence argument in that section is only true while the policy is
-    // NOT a skill here. If someone later pastes Governance.md into skills/, the
-    // README's reasoning silently becomes a lie — so check the thing the
-    // reasoning depends on. Matched on the policy's H1, the same marker the hook
-    // greps for.
-    const offenders = ownedMarkdown.filter((f) =>
-      readFileSync(f, "utf8").includes("# AI Governance & Security Policy"),
-    );
-    expect(
-      offenders,
-      `these skills carry Governance.md's H1: ${offenders.join(", ")}. The policy must ` +
-        `stay in ~/.claude/CLAUDE.md — using-moe ranks user instructions above skills, ` +
-        `so vendoring it as a skill demotes the one document that says it cannot be ` +
-        `demoted. See the AI Governance section of README.md.`,
-    ).toEqual([]);
-  });
-});
-
 describe("agents", () => {
   const AGENTS = join(PKG, "agents");
   const agentFiles = existsSync(AGENTS)
@@ -1079,7 +1042,7 @@ describe("fork invariants", () => {
   it("uses the canonical GitLab project URL in plugin configs", () => {
     for (const rel of ["mint/moe-core.yaml", "mint/moe-everything.yaml"]) {
       const config = readFileSync(join(PKG, rel), "utf8");
-      expect(config, rel).toContain("https://gitlab.tcdevops.com/Zak/moe");
+      expect(config, rel).toContain("https://gitlab.com/moe-ai/moe");
     }
   });
 });

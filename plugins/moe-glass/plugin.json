@@ -5,10 +5,10 @@
   "description": "Direct Chrome DevTools Protocol access. Skill mode plus MCP mode, zero dependencies.",
   "author": {
     "name": "Zak Keown",
-    "email": "zak@turncommerce.com"
+    "email": "zak.keown@outlook.com"
   },
-  "homepage": "https://gitlab.tcdevops.com/Zak/moe",
-  "repository": "https://gitlab.tcdevops.com/Zak/moe",
+  "homepage": "https://gitlab.com/moe-ai/moe",
+  "repository": "https://gitlab.com/moe-ai/moe",
   "license": "MIT",
   "keywords": [
     "chrome",

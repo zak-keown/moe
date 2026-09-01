@@ -669,7 +669,7 @@ Deploying untested skills = deploying untested code. It's a violation of quality
 
 **Deployment:**
 - [ ] Commit skill to git and push to your fork (if configured)
-- [ ] If broadly useful, open an MR on the repo it belongs in (see `finishing-a-development-branch` — TC repos follow `_shared/tc-conventions.md`)
+- [ ] If broadly useful, open an MR on the repo it belongs in (see `finishing-a-development-branch`)
 
 ## Discovery Workflow
 

@@ -9,7 +9,7 @@ size: M
 estimate: 4-6 h
 depends_on: [DO-NOW-1, DO-NOW-2, DO-NOW-3, skill-set-fidelity-refactor, verification-split-and-firing-rate]
 blocks: [contributing-flow-docs]
-conflicts_with: [verification-split-and-firing-rate, native-renderers, moe-tone-and-branding, parallel-execution-option, gsd-core-skill-import, tc-standards-conformance]
+conflicts_with: [verification-split-and-firing-rate, native-renderers, moe-tone-and-branding, parallel-execution-option, gsd-core-skill-import]
 touches:
   - packages/core/skills/brainstorming/SKILL.md
   - packages/core/skills/writing-plans/SKILL.md

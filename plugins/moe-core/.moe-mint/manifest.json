@@ -6,28 +6,25 @@
       "sha256": "35224a1a6b5bd6a4dc3dc8503275aabc10068edde443cc9309207840f6b16df0"
     },
     ".claude-plugin/marketplace.json": {
-      "sha256": "1ffee428ce02536e0c686107e4de10b52a9e9edf8e73ca0ad6654689e419acb6"
+      "sha256": "345ba2d8171d1971b7511fcf9c168b6fc46fea423c24c09eb1e2fc41fcc21cf1"
     },
     ".claude-plugin/plugin.json": {
-      "sha256": "4f1e1ae5d5313b51adb84ce9c30e2e331accc6ec5bbe7a0b8d39b53b3e0653cd"
+      "sha256": "97adbad106bca243626a54be9cedb00861f77383f3148d8a10bdf6d7f4fec669"
     },
     ".codex-plugin/plugin.json": {
-      "sha256": "5248a92b7674ce054ed02a2b9750beebc51c621f88fda78e7c8495cbb23c543b"
+      "sha256": "caefc8c25464c8eb8666aa8d715cdd2ded9157236b113f89138b8ef7fa7ed68a"
     },
     ".cursor-plugin/plugin.json": {
-      "sha256": "a942859b98f6b0016147a0532e6a9cbde444d7105e142361732604d1720b9d6c"
+      "sha256": "0cd86bbb23e38c10d4df02c7478a20c2f62cb5aeb8bfc2bd879b44f547702721"
     },
     ".kimi-plugin/plugin.json": {
-      "sha256": "d45c719a882be3d081205343d260c706c73879749ea64f9b9d9712d650139dde"
+      "sha256": "aaa3dd5a99dc1d3ee8412d5beea58bacf2091c37a591afa81a74d3e7286259c0"
     },
     ".opencode/agent/review-shard.md": {
       "sha256": "b6b834d2a4065e12a9e295bb44740af4c791800a6d2b9beadb42dbb7d73261cf"
     },
-    ".opencode/agent/search-codegraph.md": {
-      "sha256": "95151b68711767f323f8ebc56c65f060c89aa250fd533de962334bb2724edfae"
-    },
     ".opencode/agent/search-moedex.md": {
-      "sha256": "24c325bc55a04c39b746bcec67ae35fda2ff082f71a79277cc1fe2355be1a714"
+      "sha256": "6e8f892fa41820a8e5529917df9099a99e73140c9f550f0ad6cf6a79d59e5b4d"
     },
     ".opencode/agent/verify-finding.md": {
       "sha256": "cdd11cd4356887cffb9504549a8905e887653b205b97c7e436cd963e8f655a4f"
@@ -42,25 +39,25 @@
       "sha256": "2dd888b45ffd6674c3369a0ecc4409723fee45b8a9a735ae7c6d4e01fe59d960"
     },
     "docs/install/claude-code.md": {
-      "sha256": "ef09ad3f6dde4b54d37866208477d5b1d2dc32d85b5820c90ad61dc112e27c96"
+      "sha256": "8c589f42e51aa869ceb0d270291f09c5c8dbcd5ba9befa197593f8c9883320c1"
     },
     "docs/install/codex.md": {
       "sha256": "7615bb143ac5ad7f93abb66abf8a3495b5334d60e2e79ea8f366957fac9c9e67"
     },
     "docs/install/copilot.md": {
-      "sha256": "cbb4e5ca2944d53896b063c072861e542353e60900b5c4460a7b470be03505be"
+      "sha256": "b1dc23ed55de5372977da906ad39841d1623a4d2db679f9401704481cdee92c6"
     },
     "docs/install/cursor.md": {
       "sha256": "11b427273b16c409acf8c94fbf0c0f2bb145add6e43d9a6ace85b0743db46345"
     },
     "docs/install/kimi.md": {
-      "sha256": "74c3b37ea516a84cc939bc3dc5f38f3bbcc69f7776fd2c48a8d115da45bce9a6"
+      "sha256": "a7a8b12a08e4fb69db552413767f089c1d4cc9f96074a328a8dfbdfa53bc172e"
     },
     "docs/install/opencode.md": {
-      "sha256": "d443dc8d26cf186266ab7e79543b1f03c7855ad42ab27aa9420a30c01d216ce2"
+      "sha256": "2907f5d0250856f99f26c12f6fcac4b64a8eef0d634025411d0b660d20004a46"
     },
     "docs/install/pi.md": {
-      "sha256": "a0d784c49db657271456734d1d1408d4caa51f8dd604d020612d7ed88676640f"
+      "sha256": "a1a6714406389f5b1f14585f3bea904c1ee70e86c1bb704902fe8ca8f9ea2af4"
     },
     "docs/support-matrix.md": {
       "sha256": "cfe3adaf8f339197a819384f39aa7388f1af3693c993b7a09e695fe89785b0c6"
@@ -69,7 +66,7 @@
       "sha256": "7653af3eca8918a0fa45c4d67c321723d3906b8d3d6966959461be208f67d8a5"
     },
     "hooks/moe-mint/hooks.json": {
-      "sha256": "e4d21c7f65bd3c88140ed25f15a6f77457d82d97cb3c720001985c80d8790d28"
+      "sha256": "fc8bd0df72b9b9695a5adab194d407858067a9072810ba43083cc56189545118"
     },
     "hooks/moe-mint/run-hook.cmd": {
       "sha256": "1091dc12af883e19c6f322221281ad7e1a9816d0e266ca60088dfbc278a50db8",
@@ -80,10 +77,10 @@
       "executable": true
     },
     "package.json": {
-      "sha256": "bdf80113dac1b042ddf0eee8d80fab03eba5df88470bad51c67a978c4e8433f9"
+      "sha256": "dc9b0a0527814edf1b753ffa05a4be1bcead785fb624708a27ba5217809bd760"
     },
     "plugin.json": {
-      "sha256": "e4b446e15e6afa96ee82892f23b24d151a823be2cb705c80e54d8ea2374e0894"
+      "sha256": "9cd82c2b4b36f265eb03cdfd3b9503001090c1e30803bc49fb22f2fb02ca30d7"
     }
   }
 }

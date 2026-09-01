@@ -3,7 +3,7 @@
 // `claude plugin` CLI. Dependency-free ESM, cross-platform.
 //
 // Follows the recommendation in `.planning/backlog/W01P01 - installer-hq-dx.md`
-// (Option C): the marketplace lives at `gitlab.tcdevops.com/Zak/moe`, four of
+// (Option C): the marketplace lives at `gitlab.com/moe-ai/moe`, four of
 // six plugins install from a sparse clone of `.claude-plugin/` and `plugins/`,
 // two (memory, glass) install from the `@bubstack` npm scope. Neither shape
 // requires the user to have cloned the repo or run pnpm.
@@ -17,7 +17,7 @@ import { spawnSync } from 'node:child_process'
 import { allProbes, overallExit } from './lib/probes.mjs'
 
 const MARKETPLACE = 'moe'
-const MARKETPLACE_URL = 'https://gitlab.tcdevops.com/Zak/moe.git'
+const MARKETPLACE_URL = 'https://gitlab.com/moe-ai/moe.git'
 const PLUGINS = ['moe-core', 'moe-everything', 'moe-backstory', 'moe-crew', 'moe-memory', 'moe-glass']
 
 function usage() {

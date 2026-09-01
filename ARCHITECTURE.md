@@ -190,7 +190,7 @@ the exact controls are recorded in `PARITY.md`.
 
 ## 10. Hosting, provenance, and legal payloads
 
-The canonical project is `gitlab.tcdevops.com/Zak/moe`. Package scope and
+The canonical project is `gitlab.com/moe-ai/moe`. Package scope and
 project group are intentionally decoupled; any future registry publication must
 use a compatible project-level endpoint or move the project under a matching
 group.

@@ -121,7 +121,7 @@ tool, or the maintainer running its guardrails.
 - **(author)** Not on any registry, and not headed for one — it is a workspace
   bin, run through the repo (Getting started).
 - **(maintainer)** `moe-mint test` needs Docker and pulls
-  `registry.gitlab.tcdevops.com/Zak/moe/moe-container`, a ~15 GB linux/amd64
+  `registry.gitlab.com/moe-ai/moe/moe-container`, a ~15 GB linux/amd64
   image, on first use (`docs/CONFIG.md`, `moe-mint test` section). **That image
   has not been built or pushed yet** — its Dockerfile is in `infra/container/`
   and the registry path is still an assumption; see that directory's README.
@@ -139,7 +139,7 @@ tool, or the maintainer running its guardrails.
 workspace root).
 
 ```bash
-git clone git@gitlab.tcdevops.com:Zak/moe.git
+git clone https://gitlab.com/moe-ai/moe.git
 cd moe && pnpm install && pnpm --filter @bubstack/moe-mint build
 cd ~/your-plugin && node /path/to/moe/packages/mint/dist/cli.js import   # existing Claude-format plugin
 node /path/to/moe/packages/mint/dist/cli.js generate
@@ -156,7 +156,7 @@ That site is now docs/history/UPSTREAM-BROCHURE-PAGE.html, kept verbatim as a
 point-in-time record and no longer re-rendered — Moe has no landing page. -->
 
 <!-- Deferred claims (ground truth outside this repo): the ~15 GB size of
-registry.gitlab.tcdevops.com/Zak/moe/moe-container, which has not been
+registry.gitlab.com/moe-ai/moe/moe-container, which has not been
 built yet. -->
 
 ---

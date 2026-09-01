@@ -62,17 +62,6 @@ Only proceed to Step 1c if you have no native worktree tool available.
 still needs a branch name; the git fallback below takes one directly. Do this
 before either.
 
-For repos on `gitlab.tcdevops.com`, TC conventions require
-`sc-{CARD_NUMBER}/{slug}` — see
-`${CLAUDE_PLUGIN_ROOT}/skills/_shared/tc-conventions.md` for the full rule.
-In short:
-
-1. **Card number known** — call `shortcut_stories-get-branch-name` on the card.
-   It returns `feature/sc-{CARD_NUMBER}/{slug}`. **Strip the `feature/` prefix**;
-   the TC filter that surfaces AI-authored work matches on `sc-`, not on
-   `feature/`.
-2. **No card** — fall back to `feature/{slug}`. Never invent a card number.
-
 For repos on any other forge, use whatever convention that repo's `CONTRIBUTING`
 or `CODEOWNERS` documents; if there is none, `feature/{slug}` is a safe default.
 
@@ -187,7 +176,7 @@ Ready to implement <feature-name>
 | Already in linked worktree | Skip creation (Step 0) |
 | In a submodule | Treat as normal repo (Step 0 guard) |
 | Native worktree tool available | Use it (Step 1a) |
-| Branch name needed (any path) | Derive per Step 1b (TC card → strip `feature/`) |
+| Branch name needed (any path) | Derive per Step 1b |
 | No native tool | Git worktree fallback (Step 1c) |
 | Parallel worker dispatch | One worktree per worker (Step 1d) |
 | `.worktrees/` exists | Use it (verify ignored) |

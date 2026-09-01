@@ -223,17 +223,17 @@ describe('pi adapter installDoc', () => {
     expect(pi.installDoc!(model)).toContain('pi install git:github.com/example/kitchen-sink')
   })
 
-  it('substitutes the parsed host for a non-github repository (e.g. self-hosted GitLab)', () => {
+  it('substitutes the parsed host for a non-github repository (e.g. arbitrary self-hosted git)', () => {
     // Regression coverage: the previous helper only matched github.com,
-    // hardcoding `git:github.com/` in the emitted command; a
-    // gitlab.tcdevops.com repository produced an unusable install line.
+    // hardcoding `git:github.com/` in the emitted command; an arbitrary
+    // self-hosted git host produced an unusable install line.
     const dir = tmpFixture(
-      'name: gh\nversion: 1.0.0\ndescription: self-hosted gitlab fixture\nrepository: https://gitlab.tcdevops.com/Zak/moe\nbootstrap: none\n',
+      'name: custom\nversion: 1.0.0\ndescription: self-hosted git fixture\nrepository: https://gitlab.example.com/owner/repo\nbootstrap: none\n',
     )
-    const ghModel = buildModel(dir)
-    const body = pi.installDoc!(ghModel)
-    expect(body).toContain('pi install git:gitlab.tcdevops.com/Zak/moe')
-    expect(body).not.toContain('git:github.com/Zak/moe')
+    const selfHostedModel = buildModel(dir)
+    const body = pi.installDoc!(selfHostedModel)
+    expect(body).toContain('pi install git:gitlab.example.com/owner/repo')
+    expect(body).not.toContain('git:github.com/owner/repo')
   })
 
   it('falls back to `git:github.com/<your-repo>` when repository is absent', () => {
