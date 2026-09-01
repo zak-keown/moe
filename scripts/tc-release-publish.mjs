@@ -8,6 +8,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createReleaseSubprocessEnvironment } from "./release-subprocess-environment.mjs";
 import {
   EXPECTED_RELEASE_PACKAGES,
   inspectReleaseTarballs,
@@ -112,18 +113,6 @@ function releaseValidation(input, root) {
     );
   }
   return validation;
-}
-
-function credentialFreeEnvironment(environment, credential) {
-  const safe = {};
-  for (const [key, value] of Object.entries(environment)) {
-    if (value === credential) continue;
-    if (key === "PROGET_NPM_AUTH") continue;
-    if (/^(?:npm_config_.*(?:auth|token)|npm_token|node_auth_token)$/i.test(key)) continue;
-    if (/^npm_config_userconfig$/i.test(key)) continue;
-    safe[key] = value;
-  }
-  return safe;
 }
 
 function localIntegrity(tarball) {
@@ -405,7 +394,8 @@ export function publishRelease(input) {
     : resolve(root, input.artifactsDir);
   const validation = releaseValidation(input, root);
   const runCommand = input.runCommand ?? commandRunner;
-  const childEnvironment = credentialFreeEnvironment(input.env ?? process.env, input.auth);
+  const inputEnvironment = input.env ?? process.env;
+  const inspectionEnvironment = createReleaseSubprocessEnvironment(inputEnvironment);
 
   // Inspect the complete train and hash every local artifact before contacting
   // the registry. A bad eighth tarball therefore cannot follow seven queries.
@@ -413,7 +403,7 @@ export function publishRelease(input) {
     artifactsDir,
     validation,
     runCommand,
-    env: childEnvironment,
+    env: inspectionEnvironment,
   });
   const localIntegrityByName = new Map();
   for (const expected of EXPECTED_RELEASE_PACKAGES) {
@@ -428,11 +418,14 @@ export function publishRelease(input) {
       `@tc:registry=${PROGET_REGISTRY}\n//proget.tcdevops.com/npm/tcnpm/:_auth=${input.auth}\nalways-auth=true\n`,
       { encoding: "utf8", mode: 0o600, flag: "wx" },
     );
+    const registryEnvironment = createReleaseSubprocessEnvironment(inputEnvironment, {
+      NPM_CONFIG_USERCONFIG: npmrc,
+    });
     const context = {
       root,
       npmrc,
       runCommand,
-      env: childEnvironment,
+      env: registryEnvironment,
     };
     const version = validation.release.version;
     const uploadTag = candidateTag(version);

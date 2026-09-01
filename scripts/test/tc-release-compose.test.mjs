@@ -22,6 +22,20 @@ import {
 } from "../tc-release-compose.mjs";
 
 const VERSION = "1.2.3-tc.4";
+const SECRET_ENVIRONMENT = Object.freeze({
+  PROGET_NPM_AUTH: "proget-secret",
+  CI_JOB_TOKEN: "gitlab-job-secret",
+  TC_GITLAB_TOKEN: "gitlab-api-secret",
+  DATABASE_PASSWORD: "database-secret",
+  FUTURE_SERVICE_SECRET: "future-secret",
+  SIGNING_PRIVATE_KEY: "signing-key",
+  SSH_AUTH_SOCK: "/tmp/agent.sock",
+  AWS_ACCESS_KEY_ID: "aws-access-key",
+  AWS_SECRET_ACCESS_KEY: "aws-secret-key",
+  AWS_SESSION_TOKEN: "aws-session-token",
+  AZURE_CLIENT_SECRET: "azure-secret",
+  GOOGLE_APPLICATION_CREDENTIALS: "/tmp/google-credentials.json",
+});
 const roots = [];
 
 afterEach(() => {
@@ -41,6 +55,13 @@ function write(path, content = "fixture\n") {
 
 function writeJson(path, value) {
   write(path, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+function assertSecretFree(environment) {
+  for (const [name, value] of Object.entries(SECRET_ENVIRONMENT)) {
+    assert.equal(Object.hasOwn(environment, name), false, `${name} survived sanitization`);
+    assert.equal(Object.values(environment).includes(value), false, `${name} value leaked`);
+  }
 }
 
 function runtimeManifest(kind) {
@@ -162,11 +183,12 @@ function fakeCommandRunner({ failPack = false } = {}) {
   let packDirectory;
   const runCommand = (command, args, options = {}) => {
     calls.push({ command, args, options });
+    assertSecretFree(options.env);
     if (command === "tar") return spawnSync(command, args, { encoding: "utf8", ...options });
     assert.equal(command, "pnpm");
     packDirectory = options.cwd;
     assert.deepEqual(args.slice(0, 2), ["--config.ignore-scripts=true", "pack"]);
-    assert.equal(options.env.npm_config_ignore_scripts, "true");
+    assert.equal(options.env.npm_config_ignore_scripts, undefined);
     assert.equal(options.env.NPM_CONFIG_IGNORE_SCRIPTS, "true");
     assert.equal(options.env.PROGET_NPM_AUTH, undefined);
     if (failPack) return { status: 1, stdout: "", stderr: "deliberate failure" };
@@ -203,7 +225,7 @@ function composeFixture(kind, options = {}) {
       pluginDirectory,
       outputDirectory,
       tempRoot: root,
-      env: { ...process.env, PROGET_NPM_AUTH: "never-pass-this-to-a-child" },
+      env: { ...process.env, ...SECRET_ENVIRONMENT },
       runCommand: runner.runCommand,
     },
   };

@@ -24,6 +24,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, posix, resolve, sep } from "node:path";
+import { createReleaseSubprocessEnvironment } from "./release-subprocess-environment.mjs";
 
 const INTERNAL_MINT_MANIFEST = ".moe-mint/manifest.json";
 const GENERATED_PACKAGE_MANIFEST = "package.json";
@@ -102,11 +103,6 @@ export class TcReleaseComposeError extends Error {
 
 function commandRunner(command, args, options) {
   return spawnSync(command, args, { encoding: "utf8", ...options });
-}
-
-function secretFreeEnvironment(env) {
-  const { PROGET_NPM_AUTH: _credential, ...safe } = env;
-  return safe;
 }
 
 function runChecked(runCommand, command, args, options, label) {
@@ -447,7 +443,7 @@ export function inspectPluginTarball(
   tarball,
   { runCommand = commandRunner, env = process.env } = {},
 ) {
-  const safeEnv = secretFreeEnvironment(env);
+  const safeEnv = createReleaseSubprocessEnvironment(env);
   const listing = runChecked(
     runCommand,
     "tar",
@@ -617,7 +613,8 @@ export function composePluginTarball(input) {
   mkdirSync(outputDirectory, { recursive: true });
 
   const runCommand = input.runCommand ?? commandRunner;
-  const safeEnv = secretFreeEnvironment(input.env ?? process.env);
+  const inputEnvironment = input.env ?? process.env;
+  const safeEnv = createReleaseSubprocessEnvironment(inputEnvironment);
   const temporaryRoot = mkdtempSync(join(resolve(input.tempRoot ?? tmpdir()), "moe-compose-"));
   try {
     runChecked(
@@ -679,11 +676,9 @@ export function composePluginTarball(input) {
     assertExecutableFiles(stagedPayload, generatedExecutables, `${kind} generated plugin payload`);
 
     const before = new Set(readdirSync(outputDirectory).filter((entry) => entry.endsWith(".tgz")));
-    const packEnv = {
-      ...safeEnv,
+    const packEnv = createReleaseSubprocessEnvironment(inputEnvironment, {
       NPM_CONFIG_IGNORE_SCRIPTS: "true",
-      npm_config_ignore_scripts: "true",
-    };
+    });
     runChecked(
       runCommand,
       "pnpm",

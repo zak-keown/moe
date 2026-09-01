@@ -14,6 +14,7 @@ import {
 } from "node:fs";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { createReleaseSubprocessEnvironment } from "./release-subprocess-environment.mjs";
 
 export const TAB_NATIVE_TARGETS = Object.freeze([
   Object.freeze({
@@ -100,22 +101,6 @@ function runChecked(runCommand, command, args, options, label) {
     );
   }
   return result;
-}
-
-function secretFreeEnvironment(env) {
-  const safe = {};
-  for (const [name, value] of Object.entries(env)) {
-    const normalized = name.toLowerCase();
-    if (["proget_npm_auth", "npm_token", "node_auth_token"].includes(normalized)) continue;
-    if (
-      normalized.startsWith("npm_config_") &&
-      ["auth", "token", "userconfig"].some((fragment) => normalized.includes(fragment))
-    ) {
-      continue;
-    }
-    safe[name] = value;
-  }
-  return safe;
 }
 
 function asBuffer(bytes, label) {
@@ -390,7 +375,10 @@ function executableVersion({ root, path, target, runCommand, env }) {
     runCommand,
     process.execPath,
     ["--input-type=module", "--eval", program],
-    { cwd: join(root, TAB_PACKAGE_DIR), env: { ...env, MOE_TAB_LIB: path } },
+    {
+      cwd: join(root, TAB_PACKAGE_DIR),
+      env: createReleaseSubprocessEnvironment(env, { MOE_TAB_LIB: path }),
+    },
     `execute ${target.id} native payload`,
   );
   return String(result.stdout).trim();
@@ -410,7 +398,7 @@ export function validateTabNativeMatrix({
   }
   const root = resolve(rootInput);
   const linuxDir = isAbsolute(linuxDirInput) ? linuxDirInput : resolve(root, linuxDirInput);
-  const env = secretFreeEnvironment(inputEnv);
+  const env = createReleaseSubprocessEnvironment(inputEnv);
   const { manifest: appleManifest, path: appleManifestPath } = readAppleManifest(root);
   const files = new Map();
   assertLicenseProvenance(root, appleManifest);

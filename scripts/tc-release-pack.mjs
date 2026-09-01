@@ -14,6 +14,7 @@ import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { checkDownstreamScope } from "./check-downstream-scope.mjs";
+import { createReleaseSubprocessEnvironment } from "./release-subprocess-environment.mjs";
 import {
   inspectTabNativeBytes,
   stageTabNpmPackage,
@@ -120,22 +121,6 @@ function commandRunner(command, args, options) {
   return spawnSync(command, args, { encoding: "utf8", ...options });
 }
 
-function secretFreeEnvironment(env) {
-  const safe = {};
-  for (const [name, value] of Object.entries(env)) {
-    const normalized = name.toLowerCase();
-    if (["proget_npm_auth", "npm_token", "node_auth_token"].includes(normalized)) continue;
-    if (
-      normalized.startsWith("npm_config_") &&
-      ["auth", "token", "userconfig"].some((fragment) => normalized.includes(fragment))
-    ) {
-      continue;
-    }
-    safe[name] = value;
-  }
-  return safe;
-}
-
 function runChecked(runCommand, command, args, options, label) {
   const result = runCommand(command, args, options);
   if (result?.error) throw new TcReleaseError(`${label} could not start: ${result.error.message}`);
@@ -209,7 +194,7 @@ export function readPackedManifest(tarball, runCommand = commandRunner, env = pr
     runCommand,
     "tar",
     ["-xOf", tarball, "package/package.json"],
-    { env: secretFreeEnvironment(env) },
+    { env: createReleaseSubprocessEnvironment(env) },
     `inspect ${basename(tarball)}`,
   );
   try {
@@ -329,7 +314,7 @@ export function listPackedFiles(tarball, runCommand = commandRunner, env = proce
     runCommand,
     "tar",
     ["-tzf", tarball],
-    { env: secretFreeEnvironment(env) },
+    { env: createReleaseSubprocessEnvironment(env) },
     `list ${basename(tarball)}`,
   );
   const files = new Set();
@@ -368,7 +353,7 @@ function readPackedBytes(tarball, path, runCommand, env) {
     runCommand,
     "tar",
     ["-xOf", tarball, `package/${path}`],
-    { encoding: null, env: secretFreeEnvironment(env) },
+    { encoding: null, env: createReleaseSubprocessEnvironment(env) },
     `inspect ${basename(tarball)} ${path}`,
   ).stdout;
 }
@@ -548,7 +533,7 @@ export function packRelease(input) {
   assertExactReleaseTrain(validation);
 
   const runCommand = input.runCommand ?? commandRunner;
-  const env = secretFreeEnvironment(input.env ?? process.env);
+  const env = createReleaseSubprocessEnvironment(input.env ?? process.env);
   const tabNativeMatrix = validateTabNativeMatrix({
     root,
     linuxDir: input.tabNativeDir,

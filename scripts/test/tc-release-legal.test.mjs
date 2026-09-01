@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, describe, it } from "node:test";
@@ -8,6 +16,15 @@ import { assertDirectLegalPayload, stageDirectNpmTarball } from "../tc-release-l
 import { assertPackedTabLegalPayload } from "../tc-release-pack.mjs";
 
 const roots = [];
+const SECRET_ENVIRONMENT = Object.freeze({
+  CI_JOB_TOKEN: "gitlab-job-secret",
+  TC_GITLAB_TOKEN: "gitlab-api-secret",
+  DATABASE_PASSWORD: "database-secret",
+  FUTURE_SERVICE_SECRET: "future-secret",
+  SIGNING_PRIVATE_KEY: "signing-key",
+  SSH_AUTH_SOCK: "/tmp/agent.sock",
+  AWS_SECRET_ACCESS_KEY: "aws-secret-key",
+});
 
 afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
@@ -35,6 +52,13 @@ function run(command, args, options = {}) {
   const result = spawnSync(command, args, { encoding: "utf8", ...options });
   assert.equal(result.status, 0, result.stderr);
   return result;
+}
+
+function assertSecretFree(environment) {
+  for (const [name, value] of Object.entries(SECRET_ENVIRONMENT)) {
+    assert.equal(Object.hasOwn(environment, name), false, `${name} survived sanitization`);
+    assert.equal(Object.values(environment).includes(value), false, `${name} value leaked`);
+  }
 }
 
 function archiveFiles(tarball) {
@@ -148,6 +172,43 @@ describe("direct npm legal staging", () => {
             Buffer.from(path === "LICENSE" ? "wrong but present\n" : "canonical notice\n"),
         }),
       /LICENSE does not byte-match canonical source/,
+    );
+  });
+
+  it("defaults every staging subprocess to the fail-closed release environment", () => {
+    const root = fixtureRoot();
+    const outputDirectory = join(root, "sanitized-output");
+    const temporaryRoot = join(root, "sanitized-temporary");
+    mkdirSync(outputDirectory);
+    mkdirSync(temporaryRoot);
+    const calls = [];
+    const runCommand = (command, args, options) => {
+      calls.push({ command, args, options });
+      assertSecretFree(options.env);
+      if (command === "pnpm") {
+        assert.equal(options.env.NPM_CONFIG_IGNORE_SCRIPTS, "true");
+      } else {
+        assert.equal(options.env.NPM_CONFIG_IGNORE_SCRIPTS, undefined);
+      }
+      return spawnSync(command, args, { encoding: "utf8", ...options });
+    };
+
+    const tarball = stageDirectNpmTarball({
+      root,
+      seedTarball: makeSeed(root, "@tc/sanitized", "MIT"),
+      outputDirectory,
+      temporaryRoot,
+      expectedName: "@tc/sanitized",
+      expectedLicense: "MIT",
+      env: { ...process.env, ...SECRET_ENVIRONMENT },
+      runCommand,
+    });
+
+    assert.equal(calls.length, 2);
+    assert.equal(existsSync(tarball), true);
+    assert.deepEqual(
+      archiveFiles(tarball).filter((path) => /^(?:LICENSE|NOTICE)/u.test(path)),
+      ["LICENSE"],
     );
   });
 });

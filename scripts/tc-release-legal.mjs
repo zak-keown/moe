@@ -19,6 +19,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { basename, join, resolve } from "node:path";
+import { createReleaseSubprocessEnvironment } from "./release-subprocess-environment.mjs";
 
 const LEGAL_FILE_NAME = /^(?:licen[cs]e|notice)(?:$|[-_.])/iu;
 
@@ -118,6 +119,10 @@ export function stageDirectNpmTarball({
   runCommand = commandRunner,
   env = process.env,
 }) {
+  const safeEnvironment = createReleaseSubprocessEnvironment(env);
+  const packEnvironment = createReleaseSubprocessEnvironment(env, {
+    NPM_CONFIG_IGNORE_SCRIPTS: "true",
+  });
   const stagingRoot = mkdtempSync(join(temporaryRoot, "direct-legal-"));
   const packageDirectory = join(stagingRoot, "package");
   try {
@@ -125,7 +130,7 @@ export function stageDirectNpmTarball({
       runCommand,
       "tar",
       ["-xzf", seedTarball, "-C", stagingRoot],
-      { env },
+      { env: safeEnvironment },
       `extract ${basename(seedTarball)} for legal staging`,
     );
     if (!existsSync(packageDirectory)) {
@@ -151,7 +156,7 @@ export function stageDirectNpmTarball({
       runCommand,
       "pnpm",
       ["--config.ignore-scripts=true", "pack", "--pack-destination", outputDirectory],
-      { cwd: packageDirectory, env },
+      { cwd: packageDirectory, env: packEnvironment },
       `repack ${expectedName} with canonical legal payload`,
     );
     const added = readdirSync(outputDirectory).filter(

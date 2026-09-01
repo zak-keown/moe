@@ -24,6 +24,20 @@ import {
 const VERSION = "1.2.3-tc.4";
 const LICENSE_INPUT = "e".repeat(64);
 const LICENSE_PAYLOAD = `License inputs SHA-256: ${LICENSE_INPUT}\nthird party\n`;
+const SECRET_ENVIRONMENT = Object.freeze({
+  PROGET_NPM_AUTH: "proget-secret",
+  CI_JOB_TOKEN: "gitlab-job-secret",
+  TC_GITLAB_TOKEN: "gitlab-api-secret",
+  DATABASE_PASSWORD: "database-secret",
+  FUTURE_SERVICE_SECRET: "future-secret",
+  SIGNING_PRIVATE_KEY: "signing-key",
+  SSH_AUTH_SOCK: "/tmp/agent.sock",
+  AWS_ACCESS_KEY_ID: "aws-access-key",
+  AWS_SECRET_ACCESS_KEY: "aws-secret-key",
+  AWS_SESSION_TOKEN: "aws-session-token",
+  AZURE_CLIENT_SECRET: "azure-secret",
+  GOOGLE_APPLICATION_CREDENTIALS: "/tmp/google-credentials.json",
+});
 const roots = [];
 
 afterEach(() => {
@@ -63,6 +77,13 @@ function nativeBytes(target) {
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex");
+}
+
+function assertSecretFree(environment) {
+  for (const [name, value] of Object.entries(SECRET_ENVIRONMENT)) {
+    assert.equal(Object.hasOwn(environment, name), false, `${name} survived sanitization`);
+    assert.equal(Object.values(environment).includes(value), false, `${name} value leaked`);
+  }
 }
 
 function fixture() {
@@ -146,6 +167,7 @@ function successfulRunner(version = VERSION, { workingHash = "f".repeat(40) } = 
     calls,
     runCommand(command, args, options) {
       calls.push({ command, args, options });
+      assertSecretFree(options.env);
       if (command === "git") {
         const operation = args[2];
         if (operation === "ls-files") {
@@ -220,6 +242,7 @@ describe("tab native matrix", () => {
       root,
       releaseVersion: VERSION,
       runCommand: runner.runCommand,
+      env: { ...process.env, ...SECRET_ENVIRONMENT },
     });
 
     assert.equal(matrix.files.size, 4);
@@ -228,6 +251,10 @@ describe("tab native matrix", () => {
     assert.match(runner.calls[0].args.join(" "), /darwin-arm64\/libmoe_tab_ffi\.dylib/);
     assert.equal(runner.calls.at(-1).command, process.execPath);
     assert.equal(runner.calls.at(-1).options.env.PROGET_NPM_AUTH, undefined);
+    assert.equal(
+      runner.calls.at(-1).options.env.MOE_TAB_LIB.endsWith("libmoe_tab_ffi.dylib"),
+      true,
+    );
   });
 
   it("stages an exact four-platform package with current legal payloads", () => {
@@ -237,6 +264,7 @@ describe("tab native matrix", () => {
       root,
       releaseVersion: VERSION,
       runCommand: runner.runCommand,
+      env: { ...process.env, ...SECRET_ENVIRONMENT },
     });
     const output = join(root, "stage");
     stageTabNpmPackage({ root, destination: output, matrix });

@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
+  chmodSync,
+  copyFileSync,
+  cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -19,7 +23,12 @@ import {
   TAB_NATIVE_ABI_EXPORTS,
   TAB_NATIVE_TARGETS,
 } from "../tab-native.mjs";
-import { REQUIRED_EXECUTABLE_PLUGIN_FILES, REQUIRED_PLUGIN_FILES } from "../tc-release-compose.mjs";
+import {
+  composePluginTarball,
+  inspectPluginTarball,
+  REQUIRED_EXECUTABLE_PLUGIN_FILES,
+  REQUIRED_PLUGIN_FILES,
+} from "../tc-release-compose.mjs";
 import { EXPECTED_RELEASE_PACKAGES, packRelease } from "../tc-release-pack.mjs";
 import { main as publishMain, publishRelease } from "../tc-release-publish.mjs";
 import { PROGET_REGISTRY } from "../tc-release-validate.mjs";
@@ -29,14 +38,25 @@ const VERSION = "1.2.3-tc.4";
 const PRIOR_VERSION = "1.2.3-tc.3";
 const TAB_LICENSE_INPUT = "e".repeat(64);
 const TAB_LICENSE_PAYLOAD = `License inputs SHA-256: ${TAB_LICENSE_INPUT}\nthird party\n`;
-const CREDENTIAL_ENV_KEYS = [
-  "PROGET_NPM_AUTH",
-  "NODE_AUTH_TOKEN",
-  "NPM_TOKEN",
-  "npm_config__auth",
-  "npm_config_authToken",
-  "npm_config_userconfig",
-];
+const SECRET_ENVIRONMENT = Object.freeze({
+  PROGET_NPM_AUTH: "super-secret",
+  NODE_AUTH_TOKEN: "also-secret",
+  NPM_TOKEN: "npm-secret",
+  npm_config__auth: "config-auth-secret",
+  npm_config_authToken: "config-token-secret",
+  npm_config_userconfig: "/tmp/attacker-npmrc",
+  CI_JOB_TOKEN: "gitlab-job-secret",
+  TC_GITLAB_TOKEN: "gitlab-api-secret",
+  DATABASE_PASSWORD: "database-secret",
+  FUTURE_SERVICE_SECRET: "future-secret",
+  SIGNING_PRIVATE_KEY: "signing-key",
+  SSH_AUTH_SOCK: "/tmp/agent.sock",
+  AWS_ACCESS_KEY_ID: "aws-access-key",
+  AWS_SECRET_ACCESS_KEY: "aws-secret-key",
+  AWS_SESSION_TOKEN: "aws-session-token",
+  AZURE_CLIENT_SECRET: "azure-secret",
+  GOOGLE_APPLICATION_CREDENTIALS: "/tmp/google-credentials.json",
+});
 const roots = [];
 
 afterEach(() => {
@@ -182,7 +202,11 @@ function writeRuntimePayload(root, kind) {
 function writeGeneratedPlugin(root, kind) {
   const pluginRoot = join(root, "plugins", `moe-${kind}`);
   for (const path of REQUIRED_PLUGIN_FILES[kind]) write(join(pluginRoot, path));
-  for (const path of REQUIRED_EXECUTABLE_PLUGIN_FILES[kind]) write(join(pluginRoot, path));
+  for (const path of REQUIRED_EXECUTABLE_PLUGIN_FILES[kind]) {
+    const executable = join(pluginRoot, path);
+    write(executable, "#!/bin/sh\nexit 0\n");
+    chmodSync(executable, 0o755);
+  }
   writeJson(join(pluginRoot, "package.json"), {
     name: `moe-${kind}`,
     version: "9.9.9",
@@ -296,6 +320,7 @@ function fakePackRunner({ mutatePacked } = {}) {
   };
   const runCommand = (command, args, options) => {
     calls.push({ command, args, options });
+    assertCredentialFree(options.env);
     if (command === "git") {
       const operation = args[2];
       if (operation === "ls-files") {
@@ -375,7 +400,7 @@ function releaseInput(root, extras = {}) {
     defaultBranch: "main",
     distTag: "latest",
     authPresent: true,
-    env: { ...process.env, PROGET_NPM_AUTH: "must-not-reach-pack-processes" },
+    env: { ...process.env, ...SECRET_ENVIRONMENT },
     ...extras,
   };
 }
@@ -397,6 +422,30 @@ function makePackedArtifacts(root, mutatePacked) {
     manifests.set(filename, manifest);
   }
   return { artifactsDir, manifests };
+}
+
+function composeRealPluginArtifacts(root, outputDirectory) {
+  mkdirSync(outputDirectory);
+  const artifacts = new Map();
+  for (const kind of ["memory", "glass"]) {
+    const seedRoot = mkdtempSync(join(root, `.publisher-retry-${kind}-`));
+    const packageDirectory = join(seedRoot, "package");
+    cpSync(join(root, "packages", kind), packageDirectory, { recursive: true });
+    const seedTarball = join(seedRoot, `${kind}-seed.tgz`);
+    const packed = spawnSync("tar", ["-czf", seedTarball, "-C", seedRoot, "package"], {
+      encoding: "utf8",
+    });
+    assert.equal(packed.status, 0, packed.stderr);
+    const composed = composePluginTarball({
+      seedTarball,
+      pluginDirectory: join(root, "plugins", `moe-${kind}`),
+      outputDirectory,
+      tempRoot: root,
+      env: { ...process.env, ...SECRET_ENVIRONMENT },
+    });
+    artifacts.set(composed.manifest.name, composed);
+  }
+  return artifacts;
 }
 
 function publishedArchive(expected, manifest) {
@@ -467,8 +516,19 @@ function packageFromSpec(spec, suffix) {
   return spec.slice(0, -suffix.length);
 }
 
-function assertCredentialFree(environment) {
-  for (const key of CREDENTIAL_ENV_KEYS) assert.equal(environment[key], undefined, key);
+function assertCredentialFree(environment, { allowNpmUserconfig = false } = {}) {
+  for (const [key, value] of Object.entries(SECRET_ENVIRONMENT)) {
+    assert.equal(Object.hasOwn(environment, key), false, `${key} survived sanitization`);
+    assert.equal(Object.values(environment).includes(value), false, `${key} value leaked`);
+  }
+  for (const key of Object.keys(environment)) {
+    if (allowNpmUserconfig && key === "NPM_CONFIG_USERCONFIG") continue;
+    assert.doesNotMatch(
+      key,
+      /(?:AUTH|TOKEN|PASSWORD|SECRET|PRIVATE_KEY|SSH_AUTH_SOCK|APPLICATION_CREDENTIALS|ACCESS_KEY_ID)/iu,
+      `${key} is credential-shaped`,
+    );
+  }
 }
 
 function registryRunner({
@@ -521,6 +581,7 @@ function registryRunner({
     calls.push({ command, args, options });
     if (command === "tar") {
       assertCredentialFree(options.env);
+      assert.equal(options.env.NPM_CONFIG_USERCONFIG, undefined);
       inspectedTarballs.add(basename(args[1]));
       const manifest = manifests.get(basename(args[1]));
       const expected = EXPECTED_RELEASE_PACKAGES.find(
@@ -553,8 +614,9 @@ function registryRunner({
     }
     assert.equal(command, "npm");
     assert.equal(inspectedTarballs.size, EXPECTED_RELEASE_PACKAGES.length);
-    assertCredentialFree(options.env);
+    assertCredentialFree(options.env, { allowNpmUserconfig: true });
     const npmrc = args[args.indexOf("--userconfig") + 1];
+    assert.equal(options.env.NPM_CONFIG_USERCONFIG, npmrc);
     npmrcPaths.add(npmrc);
     assert.equal(statSync(npmrc).mode & 0o777, 0o600);
     assert.match(readFileSync(npmrc, "utf8"), /_auth=super-secret/);
@@ -625,15 +687,7 @@ function publishInput(root, artifactsDir, runCommand, extras = {}) {
     protectedRef: true,
     pipelineSource: "push",
     auth: "super-secret",
-    env: {
-      ...process.env,
-      PROGET_NPM_AUTH: "super-secret",
-      NODE_AUTH_TOKEN: "also-secret",
-      NPM_TOKEN: "npm-secret",
-      npm_config__auth: "config-auth-secret",
-      npm_config_authToken: "config-token-secret",
-      npm_config_userconfig: "/tmp/attacker-npmrc",
-    },
+    env: { ...process.env, ...SECRET_ENVIRONMENT },
     runCommand,
     ...extras,
   };
@@ -916,6 +970,54 @@ describe("TC release publishing", () => {
     const completeResult = publishRelease(publishInput(root, artifactsDir, complete.runCommand));
     assert.equal(mutations(complete.calls).length, 0);
     assert.equal(completeResult.noOp, true);
+  });
+
+  it("resumes from independently recomposed plugin bytes and uploads only the other six", () => {
+    const root = releaseFixture();
+    const first = composeRealPluginArtifacts(root, join(root, "first-composition"));
+
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1_500);
+
+    const second = composeRealPluginArtifacts(root, join(root, "second-composition"));
+    for (const expected of EXPECTED_RELEASE_PACKAGES.filter((pkg) => pkg.pluginKind)) {
+      const firstArtifact = first.get(expected.name);
+      const secondArtifact = second.get(expected.name);
+      assert.deepEqual(
+        readFileSync(secondArtifact.tarball),
+        readFileSync(firstArtifact.tarball),
+        `${expected.name} changed across independent composition`,
+      );
+      const payload = inspectPluginTarball(secondArtifact.tarball);
+      for (const path of REQUIRED_EXECUTABLE_PLUGIN_FILES[expected.pluginKind]) {
+        assert.equal(payload.modes[path], 0o755, `${expected.name} changed mode on ${path}`);
+      }
+    }
+
+    const { artifactsDir, manifests } = makePackedArtifacts(root);
+    const exactState = new Map(
+      EXPECTED_RELEASE_PACKAGES.map((expected) => [expected.name, "missing"]),
+    );
+    for (const expected of EXPECTED_RELEASE_PACKAGES.filter((pkg) => pkg.pluginKind)) {
+      const firstArtifact = first.get(expected.name);
+      const secondArtifact = second.get(expected.name);
+      copyFileSync(secondArtifact.tarball, join(artifactsDir, artifactName(expected.name)));
+      exactState.set(expected.name, integrity(firstArtifact.tarball));
+    }
+    const registry = registryRunner({ artifactsDir, manifests, exactState });
+
+    const result = publishRelease(publishInput(root, artifactsDir, registry.runCommand));
+
+    const pluginNames = new Set(["@tc/moe-memory", "@tc/moe-glass"]);
+    const publishedNames = registry.calls
+      .filter((call) => call.command === "npm" && call.args[0] === "publish")
+      .map((call) => manifests.get(basename(call.args.at(-1))).name);
+    assert.equal(publishedNames.length, 6);
+    assert.equal(
+      publishedNames.some((name) => pluginNames.has(name)),
+      false,
+    );
+    assert.deepEqual(result.uploaded, publishedNames);
+    assert.deepEqual([...registry.latest.values()], Array(8).fill(VERSION));
   });
 
   it("resumes a hard-interrupted promotion without rewriting existing target tags", () => {
