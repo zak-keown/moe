@@ -5,10 +5,9 @@ adapters covering ten harnesses, from a single `moe-mint.yaml`: Claude Code,
 Codex, Cursor, Copilot CLI, OpenCode, Pi, Kimi Code, Hermes, Devin CLI, and
 Factory Droid.
 
-Not a plugin. A CLI (`moe-mint`) and the monorepo's eventual plugin build step —
-it is the thing that will read `packages/core` and `packages/backstory` as data
-and write `/plugins/`. **That wiring is not done.** This import brings the tool
-in working; adopting it across the content packages is separate work.
+Not a plugin. A CLI (`moe-mint`) and the monorepo's plugin build step. Package
+configs under `packages/*/mint/` generate the installable artifacts in
+`/plugins/` through root `pnpm mint`; never hand-edit those generated manifests.
 
 Usage and the full `moe-mint.yaml` reference: [docs/CONFIG.md](docs/CONFIG.md).
 What it is and who it's for: [docs/BROCHURE.md](docs/BROCHURE.md).
@@ -258,12 +257,6 @@ upstream's single-quote, no-semicolon style.
   `pi install git:github.com/${repo}`, which would be wrong even with a slug.
   The upstream behavior is deliberate (never fabricate a listing); the fix is to
   generalize the host, not to loosen it.
-- **Nothing is wired to `/plugins/` yet.** No content package has a
-  `moe-mint.yaml`, `pnpm mint` at the root is a scaffold script that would run
-  `generate` with `packages/mint` as the working directory, and mint has no
-  concept of reading N content packages into one plugin. ARCHITECTURE.md §2's
-  "lean `moe-core` / full `moe-everything`" split is the design; this package
-  currently generates one plugin per config file.
 - **`checks/run-checks.sh` is 732 lines of untested-in-CI bash.** Seven suites
   exercise it locally against the fixture with no harness CLIs on `PATH`, where
   every deep check degrades to `skip`. The install checks that matter have only

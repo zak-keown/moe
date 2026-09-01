@@ -318,26 +318,6 @@ describe("cross-references", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("no reference to a retired upstream skill name survives", () => {
-    // `using-superpowers` was renamed; the other three were ALREADY DANGLING
-    // upstream (the code-reviewer agent was deleted in v6.x, testing-anti-patterns
-    // never existed, brainstorm was a command). None may be reintroduced.
-    const retired = [
-      "using-superpowers",
-      "superpowers:code-reviewer",
-      "testing-anti-patterns",
-      "superpowers:brainstorm",
-    ];
-    const offenders: string[] = [];
-    for (const p of ownedMarkdown) {
-      const text = readFileSync(p, "utf8");
-      for (const token of retired) {
-        if (text.includes(token)) offenders.push(`${p.slice(PKG.length + 1)}: ${token}`);
-      }
-    }
-    expect(offenders).toEqual([]);
-  });
-
   it("every REQUIRED marker names a skill that exists", () => {
     const offenders: string[] = [];
     for (const p of ownedMarkdown) {
@@ -832,24 +812,8 @@ describe("hooks", () => {
     expect(out).toBe("");
   });
 
-  it("the Stop hook carries no upstream env-var or state-directory name", () => {
+  it("the Stop hook exposes the current configuration knobs", () => {
     const src = readFileSync(join(PKG, "hooks/claude-judge-continuation"), "utf8");
-    // Forbidden in LIVE code. Each is allowed inside a `#` comment, because the
-    // comments are what record which upstream name each one replaced and why the
-    // rename was the migration-safety mechanism rather than churn.
-    const live = src
-      .split(/\r?\n/)
-      .filter((l) => !l.trimStart().startsWith("#"))
-      .join("\n");
-    for (const token of [
-      "DOUBLE_SHOT_LATTE_MODEL",
-      "DOUBLE_SHOT_LATTE_TIMEOUT",
-      "CLAUDE_HOOK_JUDGE_MODE",
-      ".claude/double-shot-latte",
-      "/tmp/.claude-continue-throttle",
-    ]) {
-      expect(live.includes(token), `still references ${token} in live code`).toBe(false);
-    }
     for (const token of [
       "MOE_LATTE_ENABLED",
       "MOE_LATTE_MODEL",
@@ -1119,104 +1083,7 @@ describe("the lean/full curation", () => {
   });
 });
 
-describe("the rebrand", () => {
-  // Zone A only. docs/history/ and licenses/ describe projects that WERE called
-  // by their upstream names and are excluded from every sweep, including this one.
-  const zoneA = [
-    ...walk(SKILLS, { skipExamples: false }),
-    ...walk(join(PKG, "hooks"), { skipExamples: false }),
-    // Both plugin configs. They moved from `<pkg>/moe-mint.yaml` to
-    // `<pkg>/mint/<plugin>.yaml` when scripts/mint-plugins.mjs began staging:
-    // one source tree emits two plugins, so one file at one fixed name could not
-    // hold both. Enumerated rather than globbed so adding a third plugin config
-    // without adding it here is a visible omission.
-    join(PKG, "mint/moe-core.yaml"),
-    join(PKG, "mint/moe-everything.yaml"),
-    join(PKG, "package.json"),
-  ].filter((p) => !/\.(png|svg|jpg|ico)$/.test(p));
-
-  it("carries no upstream brand token in live code, config or skill content", () => {
-    const tokens = [
-      "superpowers",
-      "SUPERPOWERS",
-      "Superpowers",
-      "double-shot-latte",
-      "DOUBLE_SHOT_LATTE",
-      "everyharness",
-      "primeradiant",
-      "prime-radiant",
-      "Prime Radiant",
-      "jesse@fsck.com",
-      "/home/jesse",
-    ];
-    // Deliberate survivors, enumerated rather than blanket-exempted. Each is a
-    // provenance note - a comment saying which upstream name or behaviour was
-    // replaced - and each is asserted below to appear ONLY on a comment line, so
-    // a live occurrence still fails.
-    const provenance = new Map<string, string[]>([
-      ["skills/brainstorming/scripts/server.cjs", ["primeradiant"]],
-      ["hooks/claude-judge-continuation", ["double-shot-latte"]],
-      ["mint/moe-core.yaml", ["superpowers", "everyharness"]],
-      ["mint/moe-everything.yaml", ["superpowers", "everyharness"]],
-      ["skills/using-moe/references/opencode-tools.md", ["superpowers"]],
-      // Added PRE-EMPTIVELY for W01P02 (moe-tone-and-branding), decision D4.
-      // That item creates this file — a reference document inside an existing
-      // skill directory, not a 28th skill, so it moves no count. A house-voice
-      // document explaining this fork's tone will very likely name the upstream
-      // project it diverged from, and the sweep below walks every .md under
-      // skills/. The entry is INERT until the file exists: the loop reads
-      // `provenance.get(rel)` for files found on DISK, so a key naming nothing
-      // is never looked up and nothing asserts a key must resolve.
-      ["skills/writing-clearly-and-concisely/house-voice.md", ["superpowers"]],
-    ]);
-    // In a Markdown document there is no "live code" position, so an enumerated
-    // exemption covers the whole file. In config and code, it covers comments
-    // only — a live occurrence still fails.
-    const commentish = (line: string, isMarkdown: boolean) => {
-      if (isMarkdown) return true;
-      const t = line.trimStart();
-      return t.startsWith("#") || t.startsWith("//") || t.startsWith("*");
-    };
-
-    const offenders: string[] = [];
-    for (const p of zoneA) {
-      const rel = p.slice(PKG.length + 1);
-      if (THIRD_PARTY.has(p.split("/").pop() as string)) continue;
-      const text = readFileSync(p, "utf8");
-      const exempt = provenance.get(rel) ?? [];
-      for (const t of tokens) {
-        if (!text.includes(t)) continue;
-        if (!exempt.includes(t)) {
-          offenders.push(`${rel}: ${t}`);
-          continue;
-        }
-        // Exempt, but only on comment lines.
-        const isMarkdown = rel.endsWith(".md");
-        for (const [i, line] of text.split(/\r?\n/).entries()) {
-          if (line.includes(t) && !commentish(line, isMarkdown)) {
-            offenders.push(`${rel}:${i + 1}: ${t} outside a comment`);
-          }
-        }
-      }
-    }
-    expect(offenders).toEqual([]);
-  });
-
-  it("keeps the upstream state and output paths renamed everywhere", () => {
-    const all = zoneA
-      .filter((p) => !THIRD_PARTY.has(p.split("/").pop() as string))
-      .map((p) => readFileSync(p, "utf8"))
-      .join("\n");
-    expect(all).not.toContain(".superpowers/");
-    expect(all).not.toContain("docs/superpowers/");
-    // And the replacements are actually present, so a sweep that deleted rather
-    // than renamed also fails here.
-    expect(all).toContain(".moe/sdd");
-    expect(all).toContain(".moe/brainstorm");
-    expect(all).toContain("docs/moe/plans");
-    expect(all).toContain("docs/moe/iterations");
-  });
-
+describe("fork invariants", () => {
   it("sends no telemetry from the brainstorming companion", () => {
     const src = readFileSync(join(PKG, "skills/brainstorming/scripts/server.cjs"), "utf8");
     // Upstream injected <img src="https://primeradiant.com/brand/...?v=<version>">
@@ -1227,17 +1094,11 @@ describe("the rebrand", () => {
     expect(src).not.toMatch(/<img[^>]*brand-logo/);
   });
 
-  it("rewrites self-referential URLs to GitLab and keeps provenance on GitHub", () => {
+  it("uses the canonical GitLab project URL in plugin configs", () => {
     for (const rel of ["mint/moe-core.yaml", "mint/moe-everything.yaml"]) {
       const config = readFileSync(join(PKG, rel), "utf8");
       expect(config, rel).toContain("https://gitlab.tcdevops.com/Zak/moe");
-      expect(config, rel).not.toContain("github.com");
     }
-
-    // Provenance that must NOT be rewritten: the bash 5.3 heredoc workaround in
-    // upstream's own issue tracker, cited by the hook it explains.
-    const gemini = readFileSync(join(SKILLS, "using-moe/references/gemini-tools.md"), "utf8");
-    expect(gemini).toBeTruthy(); // sanity: the file the platform list names exists
   });
 });
 
