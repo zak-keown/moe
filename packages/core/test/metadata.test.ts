@@ -1027,6 +1027,7 @@ describe("workflow depth vocabulary", () => {
       "skills/iterative-development/SKILL.md",
       "skills/subagent-driven-development/SKILL.md",
       "skills/subagent-driven-development/re-review-prompt.md",
+      "skills/sequencing-plans/SKILL.md", // discusses plugin tiers (skill-tiers.yaml packaging), not workflow depth
       "skills/using-moe/references/codex-tools.md",
     ];
     const offenders: string[] = [];
