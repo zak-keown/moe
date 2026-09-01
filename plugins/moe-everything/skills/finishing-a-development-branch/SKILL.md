@@ -58,7 +58,7 @@ Confirm before merging: merging into the wrong base is expensive to undo.
 Implementation complete. What would you like to do?
 
 1. Merge back to <base-branch> locally
-2. Push and create a Pull Request
+2. Push and open a Merge Request
 3. Keep the branch as-is (I'll handle it later)
 
 Which option?
@@ -69,7 +69,7 @@ Which option?
 ```
 Implementation complete. You're on a detached HEAD (externally managed workspace).
 
-1. Push as new branch and create a Pull Request
+1. Push as new branch and open a Merge Request
 2. Keep as-is (I'll handle it later)
 
 Which option?
@@ -110,7 +110,7 @@ delete the branch:
 git branch -d <feature-branch>
 ```
 
-### Option 2: Push and Create PR
+### Option 2: Push and Open Merge Request
 
 ```bash
 git push -u origin <feature-branch>
@@ -118,12 +118,29 @@ git push -u origin <feature-branch>
 # git push origin HEAD:refs/heads/<new-branch>
 ```
 
-Then create the pull/merge request against <base-branch> with the forge's
-tooling — its CLI if one is available, or the creation URL most forges
-print when you push — following the repo's PR template and conventions if
-present, and report the URL to your human partner.
+Then open the merge request against <base-branch>. **Read
+`${CLAUDE_PLUGIN_ROOT}/skills/_shared/tc-conventions.md` first** — it fixes
+the labels every agent-authored MR must carry (`AI` and `agent::claude`), the
+tool preference order, and the body shape TC expects. In short:
 
-Keep the worktree — your human partner iterates on PR feedback there.
+1. **Prefer `gitlab_create_mr`** MCP tool if it is available; labels land
+   atomically. Pass `remove_source_branch: true`.
+2. **Fall back to `glab mr create`**:
+   ```bash
+   glab mr create \
+     --target-branch <base-branch> \
+     --label AI --label agent::claude \
+     --remove-source-branch \
+     --squash-before-merge  # only where the project sets a squash policy
+   ```
+3. **Web UI** as a last resort — add both labels before submitting.
+
+For a forge that is not GitLab (e.g. a private fork on GitHub), use the forge's
+own CLI or the creation URL it prints on push, and follow that repo's own
+template. The TC conventions above apply on `gitlab.tcdevops.com` only.
+
+Report the MR URL to your human partner and keep the worktree — feedback gets
+addressed there.
 
 ### Option 3: Keep As-Is
 
@@ -205,7 +222,7 @@ place. If your platform provides a workspace-exit tool, use it.
 | Option | Merge | Push | Keep Worktree | Cleanup Branch |
 |--------|-------|------|---------------|----------------|
 | 1. Merge locally | yes | - | - | yes |
-| 2. Create PR | - | yes | yes | - |
+| 2. Open MR | - | yes | yes | - |
 | 3. Keep as-is | - | - | yes | - |
 | Discard (explicit request only) | - | - | - | yes (force) |
 
@@ -217,7 +234,7 @@ place. If your platform provides a workspace-exit tool, use it.
 | "They obviously want it merged" | Integration is your human partner's decision. Present the menu and wait. |
 | "They seem done with this feature — I'll offer to discard it" | The menu is complete as written. Discard happens only when your human partner asks for it in so many words. |
 | "'Yeah, get rid of it' counts as confirmation" | Only the typed word `discard` authorizes deletion. |
-| "The PR is up, so the worktree is clutter now" | PR feedback gets fixed in that worktree. It stays until the work lands. |
+| "The MR is up, so the worktree is clutter now" | MR feedback gets fixed in that worktree. It stays until the work lands. |
 | "This other worktree looks stale — I'll clean it too" | Clean up only worktrees under `.worktrees/` or `worktrees/`. Everything else belongs to the host. |
 | "Removal refused — `--force` is just finishing the cleanup" | The refusal means files exist only in that worktree. `--force` destroys them permanently. Show your human partner and ask. |
 | "The merged-result failure is probably flaky" | A failing merged result stops everything. Branch and worktree stay put while you investigate. |

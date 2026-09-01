@@ -1,0 +1,31 @@
+# GitLab CODEOWNERS for gitlab.tcdevops.com/Zak/moe.
+#
+# Ports the upstream `superpowers-evals/.github/CODEOWNERS` routing PARITY.md
+# named as "Not ported" — the audit filter that surfaces every AI-authored MR
+# needs at least one required reviewer per touched area, otherwise the `AI`
+# label alone is a filter with no enforcement behind it.
+#
+# GitLab enforces this only when the target branch is protected and
+# "Require code owner approval" is enabled in the project settings. Setting the
+# file without setting the branch rule is decorative.
+
+# Package-scoped areas. Each grouping stays local to its package so a fix in one
+# does not require review across the tree.
+/packages/core/            @zakkeown
+/packages/backstory/       @zakkeown
+/packages/crew/            @zakkeown
+/packages/glass/           @zakkeown
+/packages/memory/          @zakkeown
+/packages/tab/             @zakkeown
+
+# The generated /plugins/ tree is byte-checked in CI (`pnpm mint:check`); a
+# hand-edit here is a source-of-truth drift, not a review-able change.
+/plugins/                  @zakkeown
+
+# Repo-wide policy files. Any change to the CI, PARITY, ARCHITECTURE or this
+# file itself is a governance change and gets an owner review.
+/.gitlab-ci.yml            @zakkeown
+/.gitlab/                  @zakkeown
+/CODEOWNERS                @zakkeown
+/PARITY.md                 @zakkeown
+/ARCHITECTURE.md           @zakkeown
