@@ -78,6 +78,10 @@ default_subagent_model = "<a mid-tier model from your spawn allowlist>"
 default_subagent_reasoning_effort = "medium"
 ```
 
+## Native rendering ladder
+
+The shared native-rendering ladder lives at `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md`. On Codex, rung 1 (the Claude Code Artifact tool) is not exposed — skills that render should start at rung 2 (brainstorm browser companion) and fall through to rung 3 (local HTML) or rung 4 (markdown file) when the sandbox blocks a port bind.
+
 ## Environment Detection
 
 Skills that create worktrees or finish branches should detect their
