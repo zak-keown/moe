@@ -25,6 +25,12 @@ const manifest = JSON.parse(readFileSync(join(repo, shardsDir, "manifest.json"),
 const RANK = { critical: 0, high: 1, medium: 2, low: 3 };
 const found = [];
 const missing = [];
+// Shard sections that are not findings but must survive the merge. Dropping
+// them was a real defect: review-shard.md tells reviewers to write
+// "Checked and found sound" with no **Severity:** line, and this merge used to
+// discard exactly that, so the one section proving something was examined
+// rather than skipped never reached the report.
+const sound = [];
 
 for (const shard of manifest.shards) {
   const p = join(repo, shard.report_path);
@@ -39,6 +45,10 @@ for (const shard of manifest.shards) {
     const end = i + 1 < heads.length ? heads[i + 1].index : body.length;
     const block = body.slice(start, end).trim();
     const sev = (block.match(/^\*\*Severity:\*\*\s*(critical|high|medium|low)/im) || [])[1];
+    if (/^checked and found sound/i.test(heads[i][1])) {
+      sound.push(block.replace(/^###\s+.+$/m, "").trim());
+      continue;
+    }
     if (!sev) continue; // not a finding block
     const file = (block.match(/^\*\*File:\*\*\s*`?([^`\n]+)`?/im) || [])[1] || "(unknown)";
     found.push({
@@ -95,7 +105,19 @@ const lines = [
   "## Coverage",
   "",
   `**Denominator:** ${manifest.denominator} ${manifest.denominator_rule}.`,
-  `**Opened:** ${opened}. **Not opened:** ${Math.max(0, manifest.denominator - opened)}.`,
+  `**Opened:** ${opened} of ${manifest.denominator} counted files.`,
+  ...(manifest.not_selected
+    ? [`**In scope but not selected at this depth:** ${manifest.not_selected}.`]
+    : []),
+  ...(manifest.outside_denominator
+    ? [
+        `**Tracked but outside the denominator:** ${manifest.outside_denominator}` +
+          (manifest.outside_denominator_areas?.length
+            ? ` (under ${manifest.outside_denominator_areas.map((a) => `\`${a}\``).join(", ")})`
+            : "") +
+          ". These were not counted; say whether you read them.",
+      ]
+    : []),
   `**Base:** \`${manifest.base_sha}\`, depth \`${manifest.depth}\`.`,
   "",
   "Absence of findings in an unopened area is evidence nobody looked, not",
@@ -110,6 +132,10 @@ for (const sev of ["critical", "high", "medium", "low"]) {
   for (const f of rows) {
     lines.push(f.block.replace(/^###\s+.+$/m, `### ${f.id}: ${f.title}`), "");
   }
+}
+
+if (sound.length) {
+  lines.push("## Checked and found sound", "", ...sound.flatMap((s) => [s, ""]));
 }
 
 writeFileSync(join(repo, out), lines.join("\n"));

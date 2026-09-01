@@ -115,6 +115,11 @@ review lenses together.
 | `medium` | all tracked source after exclusions | plus tests, error handling, API contracts | Sonnet |
 | `deep` | plus tests, config, scripts, infrastructure | plus performance, coupling, dependency risk | **Opus** |
 
+Credential-bearing paths — `.env`, `*.pem`, `id_rsa`, `.npmrc` and the like —
+are in scope at **every** depth regardless of extension. A committed secret is
+the highest-severity thing a review can find and it never lives in a file with a
+code extension, so an extension filter is exactly the wrong instrument for it.
+
 Only `deep` escalates the model, by passing `model: opus` when dispatching
 `review-shard`. Shallow is cheaper by scope, not by capability.
 

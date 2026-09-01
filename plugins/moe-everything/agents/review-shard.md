@@ -58,8 +58,10 @@ that actually triggers it. A repro that fails for an unrelated reason reads as
 proof and is worse than none.
 
 If you examined something substantial and it was sound, say so at the end under
-`### Checked and found sound` with no `**Severity:**` line, so the merge skips it
-and the reader can tell it was examined rather than missed.
+`### Checked and found sound` with no `**Severity:**` line. The merge lifts that
+section out of every shard and reproduces it in the report, so it does not
+consume a `CR-###` id and the reader can tell the area was examined rather than
+missed.
 
 ## Note on where this ships
 

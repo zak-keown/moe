@@ -15,6 +15,21 @@ const DEPTH_EXTS = {
   deep: [...CODE, "sh", "bash", "yaml", "yml", "toml", "json"],
 };
 
+// Always in scope, at every depth, regardless of extension. Found by a GREEN
+// run: the highest-severity finding in that review was a committed credential
+// in `secrets.env`, a file the extension filter excluded entirely — so the tool
+// reported `files_opened: 13` while the critical finding came from outside its
+// own denominator. Secrets do not live in files with code extensions, which is
+// exactly why the filter missed them.
+const ALWAYS = [
+  /(^|\/)\.env(\.|$)/i,
+  /(^|\/)(secrets?|credentials?)(\.|$)/i,
+  /\.(pem|key|p12|pfx|keystore|jks)$/i,
+  /(^|\/)(id_rsa|id_dsa|id_ecdsa|id_ed25519)$/,
+  /(^|\/)\.(npmrc|pypirc|netrc|dockercfg)$/,
+  /(^|\/)\.git-credentials$/,
+];
+
 // Excluded at every depth. Generated output and vendored trees are not review
 // surface, and a lockfile finding is never actionable.
 const EXCLUDE = [
@@ -50,7 +65,7 @@ const tracked = execFileSync("git", ["ls-files"], { cwd: repo, encoding: "utf8",
 const exts = DEPTH_EXTS[depth];
 const re = new RegExp(`\\.(${exts.join("|")})$`);
 const files = tracked
-  .filter((f) => re.test(f))
+  .filter((f) => re.test(f) || ALWAYS.some((x) => x.test(f)))
   .filter((f) => !EXCLUDE.some((x) => x.test(f)))
   // git ls-files lists deleted-but-staged paths mid-rebase.
   .filter((f) => existsSync(join(repo, f)) && statSync(join(repo, f)).isFile())
@@ -107,6 +122,13 @@ for (const [group, list] of [...groups.entries()].sort()) {
   }
 }
 
+// Tracked files the denominator does not cover. Coverage has to name these:
+// "not opened" is otherwise always zero here, because every file in the
+// denominator gets sharded — which would let a report imply total coverage of a
+// tree it only partly counted.
+const outside = tracked.filter((f) => !selected.includes(f));
+const outsideGroups = [...new Set(outside.map((f) => (f.includes("/") ? f.slice(0, f.indexOf("/")) : "root")))].sort();
+
 const manifest = {
   base_sha: sha,
   depth,
@@ -114,10 +136,14 @@ const manifest = {
   // The denominator the report must quote, computed once so it cannot drift.
   denominator: selected.length,
   denominator_rule:
-    `tracked files with extension ${exts.map((e) => `.${e}`).join(", ")}, excluding ` +
-    `generated output, vendored trees and lockfiles` +
+    `tracked files with extension ${exts.map((e) => `.${e}`).join(", ")} plus every ` +
+    `credential-bearing path (.env, keys, .npmrc and similar) at any extension, ` +
+    `excluding generated output, vendored trees and lockfiles` +
     (depth === "shallow" ? ", narrowed to entrypoints and files changed more than once in the last 400 commits" : ""),
   in_scope_total: files.length,
+  outside_denominator: outside.length,
+  outside_denominator_areas: outsideGroups,
+  not_selected: files.length - selected.length,
   shards,
 };
 writeFileSync(join(repo, outDir, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
