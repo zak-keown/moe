@@ -1,5 +1,18 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" plan-set-notice",
+            "shell": "bash",
+            "async": false
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [

@@ -10,7 +10,17 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { accessSync, constants, existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import {
+  accessSync,
+  constants,
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -380,6 +390,8 @@ const NOT_COMMITTED = new Set(["/skills/working-with-claude-code/references/"]);
 // are `require`d rather than executed and correctly carry no bit.
 const X_BIT_ALLOWLIST = [
   "hooks/claude-judge-continuation",
+  "hooks/plan-set",
+  "hooks/plan-set-notice",
   "hooks/run-hook.cmd",
   "skills/brainstorming/scripts/start-server.sh",
   "skills/brainstorming/scripts/stop-server.sh",
@@ -495,6 +507,13 @@ describe("runtime paths", () => {
     // read for the extensionless scripts the subagent-driven-development and
     // hooks trees ship.
     //
+    // Extensionless files with a `#!/usr/bin/env node` shebang route to
+    // `node --check`. Without that branch, `hooks/plan-set` would be picked
+    // up by NEITHER route and gain zero syntax coverage in vitest — the plan
+    // for deterministic-task-dag asserted the router already handled node
+    // shebangs; it didn't, and this branch is what makes that assertion
+    // true.
+    //
     // hooks/run-hook.cmd is correctly in neither set: `.cmd` is not a routed
     // extension, it is not extensionless, and its first line is `: << 'CMDBLOCK'`
     // with no shebang. It is a polyglot batch/sh file that `bash -n` would
@@ -512,23 +531,33 @@ describe("runtime paths", () => {
         // Read only the first line: some of these are long.
         const first = readFileSync(abs, "utf8").split(/\r?\n/)[0] ?? "";
         if (/^#!.*\b(bash|sh)\b/.test(first)) bash.push(rel);
+        else if (/^#!.*\bnode\b/.test(first)) node.push(rel);
       }
     }
 
     // Floors. A walk that stopped finding anything — a moved directory, a
     // tightened filter — would otherwise satisfy every assertion below by
-    // iterating zero times.
+    // iterating zero times. Node floor is 5 now, not 4: the four .cjs/.mjs
+    // scripts plus the extensionless `hooks/plan-set` with a node shebang.
     expect(bash.length, "bash targets discovered").toBeGreaterThanOrEqual(11);
-    expect(node.length, "node targets discovered").toBeGreaterThanOrEqual(4);
+    expect(node.length, "node targets discovered").toBeGreaterThanOrEqual(5);
     for (const rel of [
       "hooks/claude-judge-continuation",
+      "hooks/plan-set-notice",
       "skills/subagent-driven-development/scripts/review-package",
       "skills/subagent-driven-development/scripts/sdd-workspace",
       "skills/subagent-driven-development/scripts/task-brief",
     ]) {
-      // The extensionless four. If the shebang read regresses, these vanish
-      // silently and the floor above could still be met by .sh files alone.
+      // The extensionless bash scripts. If the shebang read regresses, these
+      // vanish silently and the floor above could still be met by .sh files
+      // alone.
       expect(bash, `extensionless script ${rel} not routed to bash -n`).toContain(rel);
+    }
+    // Extensionless node script(s). Same regression concern in the mirror
+    // direction: if the node-shebang branch above is removed, plan-set falls
+    // through and node's floor could still be met by the .cjs/.mjs four.
+    for (const rel of ["hooks/plan-set"]) {
+      expect(node, `extensionless script ${rel} not routed to node --check`).toContain(rel);
     }
     expect(bash).not.toContain("hooks/run-hook.cmd");
     expect(node).not.toContain("hooks/run-hook.cmd");
@@ -553,12 +582,38 @@ describe("hooks", () => {
     hooks: Record<string, Array<{ hooks: Array<{ command: string; shell?: string }> }>>;
   };
 
-  it("registers exactly the Stop hook", () => {
-    // SessionStart is moe-mint's: with `bootstrap: { skill: using-moe }` it
-    // clones this document and appends its own SessionStart entry into
-    // hooks/moe-mint/hooks.json. Declaring SessionStart here too would give the
-    // plugin two competing bootstrap implementations.
-    expect(Object.keys(hooks.hooks)).toEqual(["Stop"]);
+  it("registers the SessionStart and Stop hooks, and nothing else", () => {
+    // Stop is the claude-judge-continuation hook. SessionStart is the
+    // plan-set-notice hook (deterministic-task-dag), which announces an
+    // incomplete plan set when the session starts in a project that has
+    // one. moe-mint ALSO writes a SessionStart entry — the bootstrap that
+    // loads the `using-moe` skill — into the generated
+    // `hooks/moe-mint/hooks.json` alongside a byte-clone of this document
+    // (`packages/mint/src/adapters/claude-code.ts`). Claude Code reads both
+    // files and dedupes exact-duplicate {matcher, command} entries at
+    // execution time (see docs/history/2026-08-11-hook-double-fire-findings.md),
+    // so declaring SessionStart here does NOT collide with the bootstrap:
+    // the two entries have different commands and both fire.
+    //
+    // Insertion order matters here: `Object.keys` returns keys in the order
+    // they appear in the JSON, and the assertion is a `toEqual` for both
+    // length and order, so a new event appearing between these two would
+    // fail here regardless of alphabetical position.
+    expect(Object.keys(hooks.hooks)).toEqual(["SessionStart", "Stop"]);
+  });
+
+  it("dispatches the SessionStart plan-set-notice through run-hook.cmd", () => {
+    const entry = hooks.hooks.SessionStart?.[0]?.hooks?.[0];
+    expect(entry).toBeDefined();
+    const cmd = entry?.command as string;
+    expect(cmd).toContain('"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd" plan-set-notice');
+    expect(entry?.shell).toBe("bash");
+    // The matcher covers the three lifecycle events that give the notice a
+    // chance to fire on a fresh context: `startup`, `clear`, `compact`. A
+    // narrower matcher would miss the case a manifest is in front of every
+    // time.
+    const matcher = hooks.hooks.SessionStart?.[0]?.matcher as string | undefined;
+    expect(matcher).toBe("startup|clear|compact");
   });
 
   it("dispatches through run-hook.cmd to a hook script that exists", () => {
@@ -1129,5 +1184,158 @@ describe("licensing", () => {
   it("declares the mixed inbound license, not the scaffold's guess", () => {
     const pkg = JSON.parse(readFileSync(join(PKG, "package.json"), "utf8")) as { license: string };
     expect(pkg.license).toBe("MIT AND Apache-2.0");
+  });
+});
+
+describe("plan-set", () => {
+  // The `plan-set` CLI is deterministic and its whole job is to be trustworthy
+  // when the model has no context. Exercise every branch as a shelled-out
+  // command: parsing behaviour, `check` refusals, `next`'s ready-set walk over
+  // a diamond, and `blocked` propagation. Fixtures live in
+  // test/fixtures/plan-set/; each covers exactly one failure mode so an
+  // assertion has one thing to say when it fires.
+  const CLI = join(PKG, "hooks/plan-set");
+  const FIXTURES = join(PKG, "test/fixtures/plan-set");
+  const run = (args: string[]): { status: number; stdout: string; stderr: string } => {
+    try {
+      const stdout = execFileSync(process.execPath, [CLI, ...args], {
+        stdio: ["ignore", "pipe", "pipe"],
+        encoding: "utf8",
+      });
+      return { status: 0, stdout, stderr: "" };
+    } catch (err) {
+      const e = err as { status: number; stdout: string; stderr: string };
+      return { status: e.status ?? 1, stdout: e.stdout ?? "", stderr: e.stderr ?? "" };
+    }
+  };
+
+  it("check passes on a diamond and reports the plan count", () => {
+    const r = run(["check", "--manifest", join(FIXTURES, "diamond-MANIFEST.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout).toContain("ok — 4 plans");
+  });
+
+  it("next returns both middle ids on a diamond after the root is done", () => {
+    // The fixture ships with A already `done`, so `next` should be exactly
+    // the two middle ids B and C in manifest order. One id per line, no
+    // trailing separator surprises.
+    const r = run(["next", "--manifest", join(FIXTURES, "diamond-MANIFEST.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout.trim().split(/\n/)).toEqual(["B", "C"]);
+  });
+
+  it("check fails on a cycle and names every node on stderr", () => {
+    const r = run(["check", "--manifest", join(FIXTURES, "cycle-MANIFEST.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/cycle detected among:.*A/);
+    expect(r.stderr).toMatch(/cycle detected among:.*B/);
+    expect(r.stderr).toMatch(/cycle detected among:.*C/);
+  });
+
+  it("next skips a blocked node's transitive dependents", () => {
+    // A is blocked; B depends on A; C depends on B. `next` must be empty:
+    // the blocked-closure walk covers B and C, so neither is ready.
+    // Verifies the moe-core #2830 lesson — an "artifact exists = done"
+    // reader would hand back B here, and this test exists to make sure it
+    // never does.
+    const r = run(["next", "--manifest", join(FIXTURES, "blocked-MANIFEST.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout).toBe("");
+  });
+
+  it("check fails on a duplicate id", () => {
+    const r = run(["check", "--manifest", join(FIXTURES, "duplicate-MANIFEST.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/duplicate id "A"/);
+  });
+
+  it("check fails on an unresolvable dep", () => {
+    const r = run(["check", "--manifest", join(FIXTURES, "missing-dep-MANIFEST.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/depends_on "nonexistent" — not a known id/);
+  });
+
+  it("check fails when a plan file does not exist", () => {
+    const r = run(["check", "--manifest", join(FIXTURES, "missing-plan-MANIFEST.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/plan file not found — plans\/does-not-exist\.md/);
+  });
+
+  it("--help prints usage and exits 0", () => {
+    const r = run(["--help"]);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toMatch(/plan-set: sequence a set of plans/);
+  });
+
+  it("names a manifest that does not exist and exits non-zero", () => {
+    const r = run(["check", "--manifest", join(FIXTURES, "does-not-exist.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/manifest not found/);
+  });
+});
+
+describe("plan-set-notice", () => {
+  // The SessionStart hook that fires plan-set on cold start. Every path it
+  // can hit — no manifest, empty stdin, all-done, blocked-only, a project
+  // with an actual ready plan — must exit 0. A non-zero SessionStart hook
+  // can break every session on the machine; that is a bigger failure than a
+  // missing notice, and the assertion below is what keeps that promise
+  // testable.
+  const HOOK = join(PKG, "hooks/plan-set-notice");
+  const runHook = (input: string, env: Record<string, string> = {}) => {
+    try {
+      const stdout = execFileSync("bash", [HOOK], {
+        input,
+        env: { ...process.env, ...env },
+        stdio: ["pipe", "pipe", "pipe"],
+        encoding: "utf8",
+      });
+      return { status: 0, stdout };
+    } catch (err) {
+      const e = err as { status: number; stdout: string; stderr: string };
+      return { status: e.status ?? 1, stdout: e.stdout ?? "" };
+    }
+  };
+
+  it("exits 0 with no output on empty stdin", () => {
+    const r = runHook("");
+    expect(r.status).toBe(0);
+    expect(r.stdout).toBe("");
+  });
+
+  it("exits 0 with no output when cwd has no manifest", () => {
+    const r = runHook(JSON.stringify({ cwd: PKG, hook_event_name: "SessionStart" }));
+    expect(r.status).toBe(0);
+    expect(r.stdout).toBe("");
+  });
+
+  it("prints additionalContext when the project has a runnable plan", () => {
+    // Point cwd at a synthetic project layout the hook can walk. mkdtemp
+    // outside the repo so no walk() elsewhere in this file trips over the
+    // scratch dir, and rmSync in finally so a failure mid-test does not leak.
+    const tmp = mkdtempSync(join(tmpdir(), "plan-set-notice-"));
+    try {
+      const plansDir = join(tmp, "docs/moe/plans");
+      const planFiles = join(tmp, "plans");
+      execFileSync("mkdir", ["-p", plansDir]);
+      execFileSync("mkdir", ["-p", planFiles]);
+      const plansSrc = join(PKG, "test/fixtures/plan-set/plans");
+      for (const f of ["A-plan.md", "B-plan.md", "C-plan.md", "D-plan.md"]) {
+        execFileSync("cp", [join(plansSrc, f), join(planFiles, f)]);
+      }
+      execFileSync("cp", [
+        join(PKG, "test/fixtures/plan-set/diamond-MANIFEST.md"),
+        join(plansDir, "test-MANIFEST.md"),
+      ]);
+      const r = runHook(JSON.stringify({ cwd: tmp, hook_event_name: "SessionStart" }), {
+        CLAUDE_PLUGIN_ROOT: "/fake",
+      });
+      expect(r.status).toBe(0);
+      expect(r.stdout).toContain('"hookSpecificOutput"');
+      expect(r.stdout).toContain("Next runnable plan(s): B,C");
+      expect(r.stdout).toContain("docs/moe/plans/test-MANIFEST.md");
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 });
