@@ -1,9 +1,8 @@
 ---
 description: >-
-  Use when a code-structure question about the TurnCommerce corpus would benefit
-  from one budgeted, graph-annotated call: where a symbol is, who calls it, or
-  the blast radius of changing it. Optional backend — if its tools are absent,
-  use search-codegraph instead and do not wait.
+  Use when a code-structure question about the code corpus indexed by moedex
+  would benefit from one budgeted, graph-annotated call: where a symbol is, who
+  calls it, or the blast radius of changing it.
 capabilities: ["code-search", "graph-annotation", "impact-analysis", "budgeted-retrieval"]
 model: haiku
 tools: Read, mcp__moedex__search_context, mcp__moedex__impact_analysis, mcp__moedex__trace_calls, mcp__moedex__trace_consumers, mcp__moedex__list_repos
@@ -22,8 +21,8 @@ blocks.**
 engineers get different results for the same query. So your findings are **not
 reproducible** for a reader who is not the caller. Say so in Sources whenever the
 answer is headed for a shared artifact — an MR description, a plan, a written
-decision. The caller has a rule for this: cite the CodeGraph baseline, use you to
-get there faster.
+decision. Ground shared-artifact citations in the working tree (a re-fetchable
+path in a public repo), not in this corpus.
 
 **Not every repo is in the corpus.** A repo can be absent by choice, mid-sync, or
 outside the user's access, and the tool will still return its best match — a
@@ -63,4 +62,5 @@ reproducible.
 
 What is unresolved, and the one next call for it. If the corpus does not appear
 to contain the subject at all, say that plainly — it is a useful answer, and it
-tells the caller to fall back to the CodeGraph baseline.
+tells the caller to look elsewhere — the working tree, memory, or a targeted
+`Read`/`Grep`.
