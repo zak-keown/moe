@@ -122,7 +122,12 @@ const PLUGINS = [
     config: "mint/moe-glass.yaml",
     distribution: { npm: "@bubstack/moe-glass" },
   },
-  { name: "moe-crew", pkg: "crew", config: "mint/moe-crew.yaml", distribution: "local" },
+  {
+    name: "moe-crew",
+    pkg: "crew",
+    config: "mint/moe-crew.yaml",
+    distribution: "local",
+  },
 ];
 
 /**
@@ -156,6 +161,103 @@ function copyInto(from, to) {
   for (const entry of fs.readdirSync(from).sort()) {
     copyInto(path.join(from, entry), path.join(to, entry));
   }
+}
+
+/** Cells of a Markdown table row, without the empty outer edges. */
+function tableCells(line) {
+  return line
+    .split("|")
+    .slice(1, -1)
+    .map((cell) => cell.trim());
+}
+
+/**
+ * Legal metadata comes from the root NOTICE—the one maintained attribution
+ * register.
+ */
+function readAttributions() {
+  const rows = new Map();
+  let inImportedWorks = false;
+  for (const line of fs.readFileSync(path.join(ROOT, "NOTICE"), "utf8").split(/\r?\n/)) {
+    if (line === "## Imported works") {
+      inImportedWorks = true;
+      continue;
+    }
+    if (inImportedWorks && line.startsWith("## ")) break;
+    if (!inImportedWorks || !line.startsWith("| `")) continue;
+    const [rawName, revision, license, copyright] = tableCells(line);
+    const name = /^`([^`]+)`$/.exec(rawName ?? "")?.[1];
+    if (!name || !revision || !license || !copyright) {
+      fail(`malformed imported-work row in NOTICE: ${line}`);
+    }
+    rows.set(name, { revision, license, copyright });
+  }
+  if (rows.size === 0) fail("NOTICE has no imported-work rows");
+  return rows;
+}
+
+/** Package destinations come from PARITY.md rather than a second source list. */
+function readDestinations() {
+  const rows = new Map();
+  let inMap = false;
+  for (const line of fs.readFileSync(path.join(ROOT, "PARITY.md"), "utf8").split(/\r?\n/)) {
+    if (line === "## Map") {
+      inMap = true;
+      continue;
+    }
+    if (inMap && /^#{2,3} /.test(line)) break;
+    if (!inMap || !line.startsWith("| `")) continue;
+    const [rawName, , , , destination] = tableCells(line);
+    const name = /^`([^`]+)`$/.exec(rawName ?? "")?.[1];
+    if (!name || !destination) fail(`malformed imported-work row in PARITY.md: ${line}`);
+    rows.set(name, destination);
+  }
+  if (rows.size === 0) fail("PARITY.md has no imported-work rows");
+  return rows;
+}
+
+/** Generate the legal payload an independently installed plugin receives. */
+function writePluginLicense(plugin, dest) {
+  const attributions = readAttributions();
+  const packagePath = `packages/${plugin.pkg}`;
+  const sources = [...readDestinations()]
+    .filter(([, destination]) => destination.includes(packagePath))
+    .map(([source]) => source);
+  if (sources.length === 0) fail(`${plugin.name} has no imported works recorded in PARITY.md`);
+
+  const rows = sources.map((source) => {
+    const row = attributions.get(source);
+    if (!row) fail(`${plugin.name} names ${source}, which NOTICE does not account for`);
+    return row;
+  });
+
+  const unlicensed = rows.filter((row) => row.license.startsWith("No license"));
+  if (unlicensed.length > 0) {
+    fail(`${plugin.name} includes material with no located license grant`);
+  }
+
+  const sections = [];
+  const mitRows = rows.filter((row) => row.license.startsWith("MIT"));
+  if (mitRows.length > 0) {
+    const template = fs.readFileSync(path.join(ROOT, "LICENSE-MIT"), "utf8");
+    const termsAt = template.indexOf("Permission is hereby granted");
+    if (termsAt === -1) fail("LICENSE-MIT is missing the MIT permission terms");
+    const copyrights = [...new Set(mitRows.map((row) => row.copyright.split(";")[0].trim()))];
+    sections.push(`MIT License\n\n${copyrights.join("\n")}\n\n${template.slice(termsAt).trim()}`);
+  }
+
+  if (rows.some((row) => row.license.startsWith("Apache-2.0"))) {
+    sections.push(fs.readFileSync(path.join(ROOT, "LICENSE"), "utf8").trim());
+  }
+
+  if (rows.some((row) => row.license === "Public domain")) {
+    sections.push(
+      "Public-domain material\n\nThis distribution includes material identified as public domain in the root NOTICE.",
+    );
+  }
+
+  if (sections.length === 0) fail(`${plugin.name} resolved no distributable license text`);
+  fs.writeFileSync(path.join(dest, "LICENSE"), `${sections.join("\n\n---\n\n")}\n`);
 }
 
 /** The skill names to stage for a plugin, or null to stage all of them. */
@@ -216,6 +318,8 @@ function stage(plugin) {
     copyInto(src, path.join(dest, component));
     if (component === "skills") staged += fs.readdirSync(src).length;
   }
+
+  writePluginLicense(plugin, dest);
 
   return { dest, staged };
 }

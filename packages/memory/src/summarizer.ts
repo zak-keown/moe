@@ -490,8 +490,6 @@ function getCodexSessionId(
  * (`~/.codex/config.toml#model`). Operators can override via
  * `MOE_MEMORY_CODEX_MODEL` if they need a specific model id (e.g. an
  * API-key user wanting `gpt-5.5-codex`).
- *
- * See https://github.com/obra/episodic-memory/issues/98.
  */
 export function getCodexModel(_exchanges: ConversationExchange[]): string | undefined {
   return process.env.MOE_MEMORY_CODEX_MODEL || undefined;

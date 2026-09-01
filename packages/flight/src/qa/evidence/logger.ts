@@ -122,23 +122,14 @@ const INLINE_TEXT_LIMIT = 32 * 1024;
 /**
  * The `type` value of a `usage.jsonl` row, and one half of a cross-package
  * contract: `@bubstack/moe-tab`'s `tab` dialect declares
- * `ROW_TYPES = ["moe.tab.usage", "obol.usage"]`
- * (packages/tab/crates/moe-tab-core/src/transcript/tab.rs) and SKIPS rows whose
+ * `ROW_TYPES = ["moe.tab.usage"]` and skips rows whose
  * type it does not claim — it does not error. Get this string wrong and every
  * sidecar reads as "no usage", so the QA-driver's cost silently reports zero.
- *
- * Upstream this was `"obol.usage"`. moe-tab still accepts that value read-only,
- * explicitly because the fork renamed it, so pre-fork files stay priceable.
- *
  * Pinned by test/lab/usage-row-contract.test.ts.
  */
 export const USAGE_ROW_TYPE = "moe.tab.usage" as const;
 
-/** moe-tab usage-sidecar schema version (ISO date, matched as an opaque string). PRI-2125.
- *
- * `v` deliberately does NOT move with the rebrand: moe-tab matches it as an
- * opaque string, and bumping it would orphan rows for no gain. The `type`
- * string DID move — see USAGE_ROW_TYPE. */
+/** moe-tab usage-sidecar schema version (ISO date, matched as an opaque string). */
 const USAGE_SCHEMA_VERSION = "2026-06-08";
 
 export class EvidenceLogger {

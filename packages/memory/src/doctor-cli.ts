@@ -6,7 +6,7 @@ import path from "node:path";
 import { detectCodexHookTrustState } from "./codex-hook-trust.js";
 import { buildCodexDoctorReport } from "./doctor.js";
 import { getSyncLogPath } from "./logging.js";
-import { findLegacyDataDir, getCodexDir, getDbPath, getMemoryDataDir } from "./paths.js";
+import { getCodexDir, getDbPath, getMemoryDataDir } from "./paths.js";
 
 function capture(command: string, args: string[]): string {
   const result = spawnSync(command, args, {
@@ -44,16 +44,6 @@ export async function runDoctor(args: string[]): Promise<number> {
 
   process.stdout.write(report.text);
   process.stdout.write(`Data directory: ${getMemoryDataDir()}\n`);
-
-  // The data directory moved on the fork and there is no migration. If the
-  // upstream one is still on disk, say where it is rather than reporting an
-  // empty index.
-  const legacy = findLegacyDataDir();
-  if (legacy) {
-    process.stdout.write(
-      `Legacy upstream index: ${legacy} (not read by Moe Memory; see packages/memory/README.md)\n`,
-    );
-  }
 
   return report.ok ? 0 : 1;
 }

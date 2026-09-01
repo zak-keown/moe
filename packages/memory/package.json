@@ -30,8 +30,17 @@
   "bin": {
     "moe-memory": "./dist/cli.js"
   },
+  "files": [
+    "dist",
+    "agents",
+    "hooks",
+    "prompts",
+    "skills",
+    ".mcp.json"
+  ],
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b && node ../../scripts/copy-license.mjs MIT dist/LICENSE",
+    "prepack": "pnpm run build",
     "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --pretty",
     "test": "vitest run --project unit",
     "test:model": "vitest run --project model",

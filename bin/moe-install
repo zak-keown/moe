@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// moe-install — install, upgrade, uninstall, or migrate Moe over the
+// moe-install — install, upgrade, or uninstall Moe over the
 // `claude plugin` CLI. Dependency-free ESM, cross-platform.
 //
 // Follows the recommendation in `.planning/backlog/W01P01 - installer-hq-dx.md`
@@ -15,7 +15,6 @@
 
 import { spawnSync } from 'node:child_process'
 import { allProbes, overallExit } from './lib/probes.mjs'
-import { findRenamedKeys, renderMigrationReport } from './lib/migrate.mjs'
 
 const MARKETPLACE = 'moe'
 const MARKETPLACE_URL = 'https://gitlab.tcdevops.com/Zak/moe.git'
@@ -23,15 +22,13 @@ const PLUGINS = ['moe-core', 'moe-everything', 'moe-backstory', 'moe-crew', 'moe
 
 function usage() {
   return [
-    'moe-install — install, upgrade, uninstall, or migrate Moe.',
+    'moe-install — install, upgrade, or uninstall Moe.',
     '',
     'Usage:',
     '  moe-install                    Print the install plan and exit (dry-run).',
     '  moe-install --apply            Run moe-doctor, then install every plugin.',
     '  moe-install --upgrade          Update the marketplace and every installed plugin.',
     '  moe-install --uninstall        Uninstall every Moe plugin and remove the marketplace.',
-    '  moe-install --migrate          Report renamed MCP keys across scopes. Reports only.',
-    '  moe-install --migrate --apply  Execute `claude mcp remove` for each renamed key found.',
     '  moe-install --skip-doctor      Skip the doctor probe on --apply (not recommended).',
     '  moe-install --scope <s>        Pass --scope user|project|local to `claude plugin`.',
     '  moe-install --help             Show this message.',
@@ -153,22 +150,6 @@ function uninstallActions(scope) {
   return actions
 }
 
-function runMigrate(apply) {
-  const findings = findRenamedKeys(process.cwd())
-  process.stdout.write(renderMigrationReport(findings) + '\n')
-  if (findings.length === 0) return 0
-  if (!apply) return 0
-  process.stdout.write('\n--apply set. Executing:\n')
-  for (const f of findings) {
-    const parts = f.command.split(/\s+/)
-    const status = run(parts[0], parts.slice(1), { dryRun: false })
-    if (status !== 0) {
-      process.stderr.write(`moe-install --migrate: ${f.command} exited ${status}. Continuing.\n`)
-    }
-  }
-  return 0
-}
-
 // -------- entry --------
 
 const { flags, scope } = parseArgs(process.argv.slice(2))
@@ -180,10 +161,6 @@ if (flags.has('--help') || flags.has('-h')) {
 
 const apply = flags.has('--apply')
 const skipDoctor = flags.has('--skip-doctor')
-
-if (flags.has('--migrate')) {
-  process.exit(runMigrate(apply))
-}
 
 let mode = 'install'
 if (flags.has('--upgrade')) mode = 'upgrade'

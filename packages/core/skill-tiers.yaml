@@ -68,10 +68,10 @@ plugins:
     tiers: [core, everything]
 
 # ---------------------------------------------------------------------------
-# imported: the 27 skills that came in from the six upstream sources. FROZEN.
+# imported: the fixed imported skill set. FROZEN.
 #
 # A diff inside this map is a FIDELITY decision, not an edit. These entries are
-# the fork's record of what it inherited and from where, so renaming, adding or
+# the record of what Moe inherited, so renaming, adding or
 # dropping a key here fails test/metadata.test.ts against the pinned 27-name
 # literal — that assertion is the drop-and-rename detector for the whole
 # import, and it is aimed at THIS map rather than at the skills/ directory so
@@ -82,7 +82,7 @@ imported:
 
   using-moe:
     tier: core
-    from: superpowers
+    from: imported
     why: >-
       The bootstrap. It is moe-mint's `bootstrap: { skill: }` target and the
       thing that makes every other skill fire at all. Not optional in either
@@ -90,7 +90,7 @@ imported:
 
   brainstorming:
     tier: core
-    from: superpowers
+    from: imported
     why: >-
       Its own description opens "You MUST use this before any creative work".
       Fires on every feature request, unasked. One of the two skills the
@@ -98,14 +98,14 @@ imported:
 
   systematic-debugging:
     tier: core
-    from: superpowers
+    from: imported
     why: >-
       "Use when encountering any bug, test failure, or unexpected behavior."
       Fires on every bug, unasked. The other skill the bootstrap names.
 
   test-driven-development:
     tier: core
-    from: superpowers
+    from: imported
     why: >-
       "Use when implementing any feature or bugfix, before writing
       implementation code." Fires on every implementation. Also the REQUIRED
@@ -113,14 +113,14 @@ imported:
 
   verification-before-completion:
     tier: core
-    from: superpowers
+    from: imported
     why: >-
       "Use when about to claim work is complete." Fires at the end of every
       task, and systematic-debugging routes to it before any success claim.
 
   writing-plans:
     tier: core
-    from: superpowers
+    from: imported
     why: >-
       "Use when you have a spec or requirements for a multi-step task, before
       touching code." The step brainstorming hands off to; nobody asks for it by
@@ -128,7 +128,7 @@ imported:
 
   subagent-driven-development:
     tier: core
-    from: superpowers
+    from: imported
     why: >-
       CLOSURE. writing-plans marks it "**REQUIRED SUB-SKILL**" as the
       recommended execution path, and it is the path every harness Moe targets
@@ -136,7 +136,7 @@ imported:
 
   executing-plans:
     tier: core
-    from: superpowers
+    from: imported
     why: >-
       CLOSURE. writing-plans marks it "**REQUIRED SUB-SKILL**" as the second of
       exactly two execution options — the one to take when subagents are
@@ -144,14 +144,14 @@ imported:
 
   using-git-worktrees:
     tier: core
-    from: superpowers
+    from: imported
     why: >-
       CLOSURE. Step 0 of both execution paths ("ensure an isolated workspace")
       and named by the bootstrap.
 
   finishing-a-development-branch:
     tier: core
-    from: superpowers
+    from: imported
     why: >-
       CLOSURE. "**REQUIRED SUB-SKILL**" at the terminal step of both execution
       paths. Without it the everyday flow ends with the branch unmerged and no
@@ -159,7 +159,7 @@ imported:
 
   requesting-code-review:
     tier: core
-    from: superpowers
+    from: imported
     why: >-
       CLOSURE. subagent-driven-development's review phase dispatches this
       skill's `code-reviewer.md` template. Also fires unasked on "before
@@ -167,7 +167,7 @@ imported:
 
   receiving-code-review:
     tier: core
-    from: superpowers
+    from: imported
     why: >-
       Fires when review feedback arrives, which is ordinary work, and it is the
       counterpart to requesting-code-review. Shipping the request half without
@@ -175,7 +175,7 @@ imported:
 
   writing-clearly-and-concisely:
     tier: core
-    from: the-elements-of-style
+    from: imported
     why: >-
       THE MOST ARGUABLE CALL IN THIS PROPOSAL — flagged deliberately for review.
       Its trigger is literally "ANY prose humans will read", which includes the
@@ -189,7 +189,7 @@ imported:
 
   dispatching-parallel-agents:
     tier: everything
-    from: superpowers
+    from: imported
     why: >-
       "Use when facing 2+ independent tasks" is a recognition trigger and
       nothing REQUIREs it, so closure does not force the answer. Held at
@@ -212,42 +212,42 @@ imported:
 
   writing-skills:
     tier: everything
-    from: superpowers
+    from: imported
     why: >-
       You invoke it deliberately, when authoring or editing a skill. Also the
       largest skill in the set at 3,781 words.
 
   working-with-claude-code:
     tier: everything
-    from: superpowers-developing-for-claude-code
+    from: imported
     why: >-
       A documentation router. You reach for it when you are already working on
       Claude Code configuration.
 
   developing-claude-code-plugins:
     tier: everything
-    from: superpowers-developing-for-claude-code
+    from: imported
     why: >-
       You invoke it when you know you are building a plugin. Ships the
       example plugins and the polyglot-hook reference.
 
   finding-duplicate-functions:
     tier: everything
-    from: superpowers-lab
+    from: imported
     why: >-
       Experimental (upstream's own word). A codebase audit you run on purpose;
       it also wants `rg` and `jq` and dispatches two subagent tiers.
 
   mcp-cli:
     tier: everything
-    from: superpowers-lab
+    from: imported
     why: >-
       Experimental. Deliberate reach, and it instructs the agent to clone and
       `go build` a third-party binary onto the user's PATH — see README.md.
 
   using-tmux-for-interactive-commands:
     tier: everything
-    from: superpowers-lab
+    from: imported
     why: >-
       Experimental, and the one genuinely arguable case in this group: it can
       fire unprompted on "run vim". It also trigger-overlaps moe-crew's
@@ -255,14 +255,14 @@ imported:
 
   windows-vm:
     tier: everything
-    from: superpowers-lab
+    from: imported
     why: >-
       Experimental, and it cannot run on this fork's dev machines or in CI —
       needs /dev/kvm, sshpass and Debian. See README.md.
 
   iterative-development:
     tier: everything
-    from: iterative-development
+    from: imported
     why: >-
       An alternative whole methodology, invoked by name when a spec is too large
       for the writing-plans flow. Six skills' descriptions is a permanent
@@ -270,34 +270,34 @@ imported:
 
   extracting-requirements:
     tier: everything
-    from: iterative-development
+    from: imported
     why: >-
       Part of the iterative-development cluster. Dispatched by the orchestrator,
       never reached on its own.
 
   scoping-the-simplest-core:
     tier: everything
-    from: iterative-development
+    from: imported
     why: >-
       Part of the cluster, and it reads a prompt template out of
       running-an-iteration's directory — the two cannot be split.
 
   running-an-iteration:
     tier: everything
-    from: iterative-development
+    from: imported
     why: >-
       Part of the cluster. Dispatches implementing-tasks.
 
   implementing-tasks:
     tier: everything
-    from: iterative-development
+    from: imported
     why: >-
       Part of the cluster. A fork of subagent-driven-development for in-memory
       task batches; only running-an-iteration invokes it.
 
   auditing-progress:
     tier: everything
-    from: iterative-development
+    from: imported
     why: >-
       Part of the cluster. The orchestrator's post-iteration gate.
 
@@ -305,7 +305,7 @@ imported:
 
   codebase-design:
     tier: everything
-    from: mattpocock-skills
+    from: imported
     why: >-
       Deliberately invoked, by name. The shared design vocabulary
       (module/interface/depth/seam/adapter/leverage/locality) that
@@ -315,7 +315,7 @@ imported:
 
   improve-codebase-architecture:
     tier: everything
-    from: mattpocock-skills
+    from: imported
     why: >-
       Deliberately invoked, by name. Router-shaped: it scans, renders an HTML
       report of deepening candidates, then hands off — to brainstorming for the
@@ -324,7 +324,7 @@ imported:
 
   domain-modeling:
     tier: everything
-    from: mattpocock-skills
+    from: imported
     why: >-
       Deliberately invoked when the domain model is being actively sharpened —
       writing or editing CONTEXT.md, recording an ADR. Merely READING CONTEXT.md
@@ -332,7 +332,7 @@ imported:
 
   prototype:
     tier: everything
-    from: mattpocock-skills
+    from: imported
     why: >-
       Deliberately invoked when the user wants a throwaway artifact to answer a
       design question: a single-file HTML logic demo, or a set of UI variants

@@ -1,7 +1,6 @@
 //! ATIF (Agent Trajectory Interchange Format) `trajectory.json` -> Vec<MessageUsage>.
 //!
-//! ATIF is the eval harness's canonical, agent-agnostic transcript — upstream
-//! superpowers-evals, `@bubstack/moe-flight` here. Every agent's raw session log is
+//! ATIF is the eval harness's canonical, agent-agnostic transcript. Every agent's raw session log is
 //! normalized to a single `Trajectory` JSON document, so moe-tab prices ONE stable
 //! input instead of re-parsing each agent's native log; the per-agent dialects that
 //! did the latter were removed upstream in 0.6.0 and are not in this fork. The

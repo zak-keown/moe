@@ -16,6 +16,5 @@ moe-tab refresh --as-of 2026-06-09        # or 2026-06-09T18:30:00Z
 `estimate` works out of the box; `refresh` pulls fresher LiteLLM + OpenRouter sheets into
 `$MOE_TAB_PRICING_DIR`, else `$XDG_DATA_HOME/moe/tab`, else `~/.local/share/moe/tab`.
 
-Built on [`moe-tab-core`](../moe-tab-core). Part of
-[Moe](https://gitlab.tcdevops.com/Zak/moe), forked from
-[obol](https://github.com/prime-radiant-inc/obol). Apache-2.0.
+Built on [`moe-tab-core`](../moe-tab-core) and maintained as part of
+[Moe](https://gitlab.tcdevops.com/Zak/moe). Apache-2.0.

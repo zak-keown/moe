@@ -138,13 +138,12 @@ Three files carry it:
 
 - `ARCHITECTURE.md` — target shape and the decisions that produced it. Read
   before writing anything; it holds the *why*, which the tree cannot tell you.
-- `PARITY.md` — the ledger. Every upstream repo, pinned rev, license, rebrand
-  token. Load-bearing for licence compliance.
+- `PARITY.md` — the compact imported-work ledger. Load-bearing for licence
+  compliance.
 - `NOTICE` — attribution. Apache-2.0 §4(b) requires it.
 
-**The rule that follows:** edit an imported file without touching `PARITY.md`
-and the ledger is broken. New rebrand tokens, new bins, new env vars, new
-upstream repos, changed pinned SHAs — all belong there.
+**The rule that follows:** new imported works and changed pinned revisions must
+be recorded in both `PARITY.md` and `NOTICE`.
 
 ### Four conventions that are invisible from the code
 
@@ -161,14 +160,11 @@ upstream repos, changed pinned SHAs — all belong there.
    including the ones that point up. A test-fixture inversion in
    `tsconfig.json` fails with `TS6202: Project references may not form a
    circular graph`.
-3. **The snapshots in `../.moe-references/` are the spec, not upstream HEAD**
-   (`PARITY.md` opening paragraph). Pinned SHAs live in `PARITY.md`. Do not
-   consult upstream `main`; parity against a moving target is unfalsifiable.
-4. **Provenance URLs stay GitHub. Self-referential URLs become GitLab**
-   (`PARITY.md` "GitHub → GitLab"). A blanket find-and-replace gets this
-   wrong. Rewriting a `github.com/obra/superpowers` provenance URL destroys
-   attribution the licenses require. `pnpm provenance` catches misattribution
-   in per-package README `## Forked from` tables.
+3. **The snapshots in `../.moe-references/` are fixed audit references, not a
+   supported sync target.** Pinned revisions live in `PARITY.md`.
+4. **Lineage stays centralized.** `NOTICE` and `PARITY.md` are the canonical
+   attribution surfaces; generated distributions carry applicable license
+   terms. `pnpm provenance` enforces this boundary.
 
 ### Citation discipline
 
@@ -179,61 +175,13 @@ reads as verified. Guarded files (see `AGENTS.md`) are self-checking; unguarded
 prose (`README.md`, `ARCHITECTURE.md`, `PARITY.md`, `packages/core/README.md`,
 `.gitignore`, `.gitlab-ci.yml`) is not.
 
-## 4. The import contract
+## 4. Imported-work maintenance
 
-The dominant contribution shape so far, and uniform across all seven imported
-package READMEs.
-
-**How the branch and worktree are shaped.** Branch `import/packages-<name>`
-(or `import/py-proof`), one package per git worktree under `.claude/worktrees/`
-— created by the agent harness, not a repo script. `.gitignore` excludes all
-of `.claude/` deliberately, so `git add -A` while a workflow is running cannot
-stage those worktrees as embedded repos.
-
-**How the merge is shaped.** Integrate as a **wave**, not one merge at a time.
-Every import wants root edits plus a lockfile regeneration, and they all
-conflict. Wave A's integration commit sat on five merge commits for a reason.
-
-### What every import must produce
-
-Distilled from `crew`, `mint`, `backstory`, `tab`, `glass`, `core` and
-`memory`:
-
-1. What the package does, its plugin destination, and "Never hand-edit the
-   generated manifest."
-2. A **Status:** line with a real test count.
-3. `## Forked from` — upstream repo, pinned short rev, license — plus which
-   license actually governs where the scaffold disagreed.
-4. For Apache-2.0 inbound, `### Statement of changes (Apache-2.0 §4(b))` with
-   **identical-vs-modified file counts verified by `diff -rq` against the
-   snapshot**. `packages/backstory/README.md` "Statement of changes" is the
-   model.
-5. `## Layout` — annotated tree, one line per directory.
-6. `## What changed on import` — every behaviour-affecting change with its
-   reason.
-7. `## Rebrand, and what was deliberately left alone` — a **counted** rename
-   table by kind, plus `### Where the upstream files went` and `### Not
-   imported`, each row carrying a Why.
-8. `## Verification` — the exact commands with the exact numbers they
-   produced, and an explicit statement of what was *not* verified and how the
-   gap was covered by hand. `packages/crew/README.md` "Verification" is the
-   model.
-9. `## Root changes needed` — root-file edits the import cannot make from its
-   worktree.
-10. `## Follow-ups` — known defects, recorded rather than silently carried.
-
-All 19 upstreams in `PARITY.md` are accounted for across the nine packages.
-The contract is written down not because more imports are coming, but because
-it is the discipline that keeps a fork with no reachable upstream author
-auditable, and any future re-parity pass will use it.
-
-### Rebrand footprint
-
-`PARITY.md` "Rebrand footprint" and "Identifiers that change" are the two
-inventories a re-parity pass consults. 55 % of the 2964 imported files carry
-at least one brand token, and each identifier rename is a breaking interface
-change — not a text substitution. If you find a new brand token that is not
-in either table, add it there before touching a rename.
+Moe does not support migration from old names or synchronization with source
+repositories. If code from another work is deliberately added, record its
+exact source, revision, license, destination, and required notices in
+`PARITY.md` and `NOTICE`. Keep that metadata out of package READMEs and other
+product-facing surfaces.
 
 ## 5. Parallel work — the integration protocol
 
@@ -254,8 +202,8 @@ Read `packages/core/**` from the package's tree. Read `PARITY.md` and
 
 ## 6. Scope of this document
 
-**In:** how to set up a machine, how to run the inner loop, what the four
-load-bearing conventions are, what an import PR must contain.
+**In:** how to set up a machine, how to run the inner loop, and the
+load-bearing repository conventions.
 
 **Out:**
 

@@ -7,8 +7,8 @@
 # default because it overrides the agent's own decision to stop and spends a
 # model call on every stop attempt; see packages/core/README.md.
 #
-# Forked from double-shot-latte @ dfe7567 (MIT). DEFAULT STANCE: stop unless the
-# assistant explicitly stated what it would do next.
+# DEFAULT STANCE: stop unless the assistant explicitly stated what it would do
+# next.
 
 # ---------------------------------------------------------------- opt-in gate
 case "${MOE_LATTE_ENABLED:-}" in
@@ -26,7 +26,7 @@ cleanup() {
 }
 trap cleanup EXIT TERM INT HUP
 
-# Every fall-through below allows the stop. Upstream they were silent, which
+# Every fall-through below allows the stop. Earlier versions were silent, which
 # made "the judge said stop", "the judge timed out" and "the judge binary is
 # missing" one indistinguishable outcome — the reason a missing `timeout`
 # turned the whole hook into a no-op without anyone noticing. Say which.
@@ -51,10 +51,8 @@ EVENT=$(cat)
 STOP_HOOK_ACTIVE=$(echo "$EVENT" | jq -r '.stop_hook_active // false')
 TRANSCRIPT_PATH=$(echo "$EVENT" | jq -r '.transcript_path // ""')
 
-# Working and state directory. Upstream used $HOME/.claude/double-shot-latte and
-# a world-writable /tmp/.claude-continue-throttle-<session> file; both move under
-# $HOME/.claude/moe/latte so a machine that still has the upstream plugin
-# installed does not share throttle counters with this one.
+# Keep working state under Moe's private directory and avoid shared temporary
+# files, so other tools cannot share throttle counters with this hook.
 MOE_LATTE_DIR="$HOME/.claude/moe/latte"
 THROTTLE_DIR="$MOE_LATTE_DIR/throttle"
 mkdir -p "$MOE_LATTE_DIR" "$THROTTLE_DIR"

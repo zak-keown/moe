@@ -1,4 +1,3 @@
-// Forked from https://github.com/obra/superpowers-chrome
 // Original author: Jesse Vincent
 //
 // MOE-FLIGHT DIVERGENCE: upstream exports module-load constants
