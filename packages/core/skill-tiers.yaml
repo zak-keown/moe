@@ -301,6 +301,44 @@ imported:
     why: >-
       Part of the cluster. The orchestrator's post-iteration gate.
 
+  # ----------------------------------------------- mattpocock-skills (4)
+
+  codebase-design:
+    tier: everything
+    from: mattpocock-skills
+    why: >-
+      Deliberately invoked, by name. The shared design vocabulary
+      (module/interface/depth/seam/adapter/leverage/locality) that
+      improve-codebase-architecture reaches for on every card, plus DEEPENING.md
+      and DESIGN-IT-TWICE.md as its going-deeper references. Not a trigger
+      skill on its own.
+
+  improve-codebase-architecture:
+    tier: everything
+    from: mattpocock-skills
+    why: >-
+      Deliberately invoked, by name. Router-shaped: it scans, renders an HTML
+      report of deepening candidates, then hands off — to brainstorming for the
+      decision walk, to domain-modeling for CONTEXT.md/ADR updates. A
+      once-per-refactor call, not something that fires on ordinary work.
+
+  domain-modeling:
+    tier: everything
+    from: mattpocock-skills
+    why: >-
+      Deliberately invoked when the domain model is being actively sharpened —
+      writing or editing CONTEXT.md, recording an ADR. Merely READING CONTEXT.md
+      is not this skill; this one edits.
+
+  prototype:
+    tier: everything
+    from: mattpocock-skills
+    why: >-
+      Deliberately invoked when the user wants a throwaway artifact to answer a
+      design question: a single-file HTML logic demo, or a set of UI variants
+      switchable via `?variant=`. Named on purpose; does not fire on ordinary
+      work.
+
 
 # ---------------------------------------------------------------------------
 # authored: skills this fork wrote. OPEN, and empty until something is.
