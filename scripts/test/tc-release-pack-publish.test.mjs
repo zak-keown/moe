@@ -14,7 +14,11 @@ import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { afterEach, describe, it } from "node:test";
 import { MANIFEST_IDENTITIES, PRIVATE_FLIGHT_MANIFESTS } from "../check-downstream-scope.mjs";
-import { TAB_NATIVE_TARGETS } from "../tab-native.mjs";
+import {
+  TAB_DARWIN_INSTALL_NAME,
+  TAB_NATIVE_ABI_EXPORTS,
+  TAB_NATIVE_TARGETS,
+} from "../tab-native.mjs";
 import { REQUIRED_EXECUTABLE_PLUGIN_FILES, REQUIRED_PLUGIN_FILES } from "../tc-release-compose.mjs";
 import { EXPECTED_RELEASE_PACKAGES, packRelease } from "../tc-release-pack.mjs";
 import { main as publishMain, publishRelease } from "../tc-release-publish.mjs";
@@ -23,6 +27,8 @@ import { PROGET_REGISTRY } from "../tc-release-validate.mjs";
 const SHA = "0123456789abcdef0123456789abcdef01234567";
 const VERSION = "1.2.3-tc.4";
 const PRIOR_VERSION = "1.2.3-tc.3";
+const TAB_LICENSE_INPUT = "e".repeat(64);
+const TAB_LICENSE_PAYLOAD = `License inputs SHA-256: ${TAB_LICENSE_INPUT}\nthird party\n`;
 const CREDENTIAL_ENV_KEYS = [
   "PROGET_NPM_AUTH",
   "NODE_AUTH_TOKEN",
@@ -48,11 +54,23 @@ function write(path, content = "fixture\n") {
 }
 
 function nativeBytes(target) {
-  const bytes = Buffer.alloc(32);
+  const bytes = Buffer.alloc(target.family === "darwin" ? 512 : 32);
   if (target.family === "darwin") {
     bytes.writeUInt32LE(0xfeedfacf, 0);
     bytes.writeUInt32LE(target.machine, 4);
     bytes.writeUInt32LE(6, 12);
+    const name = Buffer.from(`${TAB_DARWIN_INSTALL_NAME}\0`);
+    const commandSize = Math.ceil((24 + name.length) / 8) * 8;
+    bytes.writeUInt32LE(1, 16);
+    bytes.writeUInt32LE(commandSize, 20);
+    bytes.writeUInt32LE(0x0d, 32);
+    bytes.writeUInt32LE(commandSize, 36);
+    bytes.writeUInt32LE(24, 40);
+    name.copy(bytes, 56);
+    let symbolOffset = 32 + commandSize;
+    for (const symbol of TAB_NATIVE_ABI_EXPORTS) {
+      symbolOffset += bytes.write(`_${symbol}\0`, symbolOffset);
+    }
   } else {
     bytes.set([0x7f, 0x45, 0x4c, 0x46, 2, 1], 0);
     bytes.writeUInt16LE(3, 16);
@@ -75,13 +93,45 @@ function writeNativeMatrix(root) {
         path: `${target.id}/${target.filename}`,
         rustTarget: target.rustTarget,
         version: VERSION,
+        bytes: bytes.length,
         sha256: createHash("sha256").update(bytes).digest("hex"),
       };
     }
   }
   writeJson(join(root, "packages/tab/native-release/manifest.json"), {
-    schema: 1,
+    schema: 2,
     provenance: "apple-hardware",
+    source: {
+      commit: "a".repeat(40),
+      cratesTree: "b".repeat(40),
+      cargoManifestSha256: createHash("sha256").update("workspace\n").digest("hex"),
+      cargoLockSha256: createHash("sha256").update("lock\n").digest("hex"),
+    },
+    builder: {
+      rustc: { version: "1.98.0", commit: "c".repeat(40) },
+      cargo: { version: "1.98.0", commit: "d".repeat(40) },
+      apple: { sdk: "macosx26.5", clang: "Apple clang 21", linker: "ld-1267" },
+    },
+    build: {
+      profile: "release",
+      locked: true,
+      cargoIncremental: false,
+      installName: TAB_DARWIN_INSTALL_NAME,
+      rustFlags: [
+        "--remap-path-prefix=<repository-root>=/source/moe",
+        "--remap-path-prefix=<cargo-home>=/cargo",
+        "--remap-path-prefix=<build-root>=/build",
+      ],
+      postLink: [
+        "install_name_tool -id @rpath/libmoe_tab_ffi.dylib <artifact>",
+        "strip -x <artifact>",
+      ],
+    },
+    licenses: {
+      path: "THIRD_PARTY_LICENSES.txt",
+      inputSha256: TAB_LICENSE_INPUT,
+      payloadSha256: createHash("sha256").update(TAB_LICENSE_PAYLOAD).digest("hex"),
+    },
     artifacts: appleArtifacts,
   });
 }
@@ -184,8 +234,11 @@ function releaseFixture() {
   const root = mkdtempSync(join(tmpdir(), "moe-release-pipeline-"));
   roots.push(root);
   write(join(root, "LICENSE"), "license\n");
+  write(join(root, "LICENSE-MIT"), "mit license\n");
   write(join(root, "NOTICE"), "notice\n");
-  write(join(root, "packages/tab/native-release/THIRD_PARTY_LICENSES.txt"), "third party\n");
+  write(join(root, "packages/tab/native-release/THIRD_PARTY_LICENSES.txt"), TAB_LICENSE_PAYLOAD);
+  write(join(root, "packages/tab/Cargo.toml"), "workspace\n");
+  write(join(root, "packages/tab/Cargo.lock"), "lock\n");
   writeFileSync(
     join(root, "pnpm-workspace.yaml"),
     "packages:\n  - 'packages/*'\n  - 'packages/tab/bindings/typescript'\n",
@@ -197,10 +250,13 @@ function releaseFixture() {
   });
   for (const [path, name] of Object.entries(MANIFEST_IDENTITIES)) {
     const kind = name === "@tc/moe-memory" ? "memory" : name === "@tc/moe-glass" ? "glass" : null;
+    const expected = EXPECTED_RELEASE_PACKAGES.find((candidate) => candidate.name === name);
+    const license = expected?.directLicense ?? expected?.license;
     writeJson(
       join(root, path),
       packageManifest(name, {
         ...(PRIVATE_FLIGHT_MANIFESTS.includes(path) ? { private: true } : {}),
+        ...(license ? { license } : {}),
         ...(kind ? runtimeExtras(kind) : {}),
       }),
     );
@@ -240,7 +296,35 @@ function fakePackRunner({ mutatePacked } = {}) {
   };
   const runCommand = (command, args, options) => {
     calls.push({ command, args, options });
-    if (command === "git") return { status: 0, stdout: `${args.at(-1)}\n`, stderr: "" };
+    if (command === "git") {
+      const operation = args[2];
+      if (operation === "ls-files") {
+        const paths = args.slice(args.indexOf("--") + 1);
+        return {
+          status: 0,
+          stdout: paths.map((path) => `100644 ${"f".repeat(40)} 0\t${path}`).join("\n"),
+          stderr: "",
+        };
+      }
+      if (operation === "hash-object") {
+        const paths = args.slice(args.indexOf("--") + 1);
+        return {
+          status: 0,
+          stdout: paths.map(() => "f".repeat(40)).join("\n"),
+          stderr: "",
+        };
+      }
+      if (operation === "rev-parse") {
+        return { status: 0, stdout: `${"b".repeat(40)}\n`, stderr: "" };
+      }
+      if (operation === "show") {
+        return {
+          status: 0,
+          stdout: Buffer.from(args.at(-1).endsWith("Cargo.toml") ? "workspace\n" : "lock\n"),
+          stderr: Buffer.alloc(0),
+        };
+      }
+    }
     if (command === process.execPath) return { status: 0, stdout: `${VERSION}\n`, stderr: "" };
     if (command === "pnpm") {
       assert.equal(options.env.PROGET_NPM_AUTH, undefined);
@@ -303,6 +387,9 @@ function makePackedArtifacts(root, mutatePacked) {
   for (const expected of EXPECTED_RELEASE_PACKAGES) {
     const filename = artifactName(expected.name);
     const manifest = packageManifest(expected.name, {
+      ...((expected.directLicense ?? expected.license)
+        ? { license: expected.directLicense ?? expected.license }
+        : {}),
       ...(expected.pluginKind ? runtimeExtras(expected.pluginKind) : {}),
     });
     mutatePacked?.(manifest);
@@ -314,10 +401,22 @@ function makePackedArtifacts(root, mutatePacked) {
 
 function publishedArchive(expected, manifest) {
   const contents = new Map([["package.json", JSON.stringify(manifest)]]);
+  if (expected.directLicense) {
+    if (expected.directLicense === "MIT") {
+      contents.set("LICENSE", "mit license\n");
+    } else {
+      contents.set("LICENSE", "license\n");
+      contents.set("NOTICE", "notice\n");
+      if (expected.directLicense === "MIT AND Apache-2.0") {
+        contents.set("LICENSE-MIT", "mit license\n");
+      }
+    }
+    return contents;
+  }
   if (expected.tabNative) {
     contents.set("LICENSE", "license\n");
     contents.set("NOTICE", "notice\n");
-    contents.set("THIRD_PARTY_LICENSES.txt", "third party\n");
+    contents.set("THIRD_PARTY_LICENSES.txt", TAB_LICENSE_PAYLOAD);
     contents.set("dist/index.js", "export {};\n");
     contents.set("dist/index.d.ts", "export {};\n");
     for (const target of TAB_NATIVE_TARGETS) {
@@ -567,10 +666,10 @@ describe("TC release packing", () => {
     assert.equal(result.artifacts.length, 8);
     assert.equal(readdirSync(artifactsDir).filter((entry) => entry.endsWith(".tgz")).length, 8);
     const packCalls = fake.calls.filter((call) => call.command === "pnpm");
-    assert.equal(packCalls.length, 10);
+    assert.equal(packCalls.length, 15);
     assert.equal(
       packCalls.filter((call) => call.args[0] === "--config.ignore-scripts=true").length,
-      2,
+      7,
     );
     const seedDirectories = new Set(
       packCalls
@@ -727,7 +826,7 @@ describe("TC release packing", () => {
         }),
       /leaks an @bubstack identity|retains workspace:/,
     );
-    assert.equal(fake.calls.filter((call) => call.command === "pnpm").length, 10);
+    assert.equal(fake.calls.filter((call) => call.command === "pnpm").length, 15);
   });
 });
 

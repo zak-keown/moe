@@ -9,7 +9,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,12 +25,21 @@ import {
   composePluginTarball,
   inspectPluginTarball,
 } from "./tc-release-compose.mjs";
+import { assertDirectLegalPayload, stageDirectNpmTarball } from "./tc-release-legal.mjs";
 import { PROGET_REGISTRY, validateRelease } from "./tc-release-validate.mjs";
 
 export const EXPECTED_RELEASE_PACKAGES = Object.freeze([
-  { path: "packages/backstory/package.json", name: "@tc/moe-backstory" },
-  { path: "packages/core/package.json", name: "@tc/moe-core" },
-  { path: "packages/crew/package.json", name: "@tc/moe-crew" },
+  {
+    path: "packages/backstory/package.json",
+    name: "@tc/moe-backstory",
+    directLicense: "Apache-2.0",
+  },
+  {
+    path: "packages/core/package.json",
+    name: "@tc/moe-core",
+    directLicense: "MIT AND Apache-2.0",
+  },
+  { path: "packages/crew/package.json", name: "@tc/moe-crew", directLicense: "MIT" },
   {
     path: "packages/glass/package.json",
     name: "@tc/moe-glass",
@@ -43,13 +52,14 @@ export const EXPECTED_RELEASE_PACKAGES = Object.freeze([
     pluginRoot: "plugins/moe-memory",
     pluginKind: "memory",
   },
-  { path: "packages/mint/package.json", name: "@tc/moe-mint" },
+  { path: "packages/mint/package.json", name: "@tc/moe-mint", directLicense: "MIT" },
   {
     path: "packages/tab/bindings/typescript/package.json",
     name: "@tc/moe-tab",
     tabNative: true,
+    license: "Apache-2.0",
   },
-  { path: "package.json", name: "@tc/moe" },
+  { path: "package.json", name: "@tc/moe", directLicense: "Apache-2.0" },
 ]);
 
 const USAGE = `Usage:
@@ -166,6 +176,12 @@ export function assertPackedManifest(manifest, expected, releaseVersion, release
     );
   }
   if (manifest.private === true) throw new TcReleaseError(`${label} is marked private`);
+  const expectedLicense = expected.directLicense ?? expected.license;
+  if (expectedLicense && manifest.license !== expectedLicense) {
+    throw new TcReleaseError(
+      `${label} declares ${JSON.stringify(manifest.license)}; expected ${expectedLicense}`,
+    );
+  }
   if (manifest.publishConfig?.registry !== PROGET_REGISTRY) {
     throw new TcReleaseError(`${label} does not target ${PROGET_REGISTRY}`);
   }
@@ -357,16 +373,46 @@ function readPackedBytes(tarball, path, runCommand, env) {
   ).stdout;
 }
 
-export function assertPackedTabPayload(
+export function assertPackedTabLegalPayload(
   tarball,
   files,
+  root,
   runCommand = commandRunner,
   env = process.env,
 ) {
   const fileSet = new Set(files);
-  for (const path of ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.txt"]) {
+  const canonicalFiles = new Map([
+    ["LICENSE", join(root, "LICENSE")],
+    ["NOTICE", join(root, "NOTICE")],
+    [
+      "THIRD_PARTY_LICENSES.txt",
+      join(root, "packages/tab/native-release/THIRD_PARTY_LICENSES.txt"),
+    ],
+  ]);
+  for (const [path, source] of canonicalFiles) {
     if (!fileSet.has(path)) throw new TcReleaseError(`@tc/moe-tab tarball is missing ${path}`);
+    const packed = readPackedBytes(tarball, path, runCommand, env);
+    let canonical;
+    try {
+      canonical = readFileSync(source);
+    } catch (error) {
+      throw new TcReleaseError(`@tc/moe-tab canonical ${path} could not be read: ${error.message}`);
+    }
+    if (!Buffer.isBuffer(packed) || !packed.equals(canonical)) {
+      throw new TcReleaseError(`@tc/moe-tab tarball ${path} does not byte-match canonical source`);
+    }
   }
+}
+
+export function assertPackedTabPayload(
+  tarball,
+  files,
+  root,
+  runCommand = commandRunner,
+  env = process.env,
+) {
+  assertPackedTabLegalPayload(tarball, files, root, runCommand, env);
+  const fileSet = new Set(files);
   for (const target of TAB_NATIVE_TARGETS) {
     const path = `native/${target.id}/${target.filename}`;
     if (!fileSet.has(path)) {
@@ -442,7 +488,19 @@ export function inspectReleaseTarballs({
     }
     assertPackedManifest(manifest, expected, validation.release.version, validation.release);
     assertPackedEntrypoints(manifest, files, `${expected.name} packed package.json`);
-    if (expected.tabNative) assertPackedTabPayload(tarball, files, runCommand, env);
+    if (expected.directLicense) {
+      assertDirectLegalPayload({
+        tarball,
+        files,
+        root: validation.root,
+        expectedName: expected.name,
+        expectedLicense: expected.directLicense,
+        readBytes: (archive, path) => readPackedBytes(archive, path, runCommand, env),
+      });
+    }
+    if (expected.tabNative) {
+      assertPackedTabPayload(tarball, files, validation.root, runCommand, env);
+    }
     inspected.set(expected.name, { tarball, manifest, files, pluginPayload });
   }
   for (const expected of EXPECTED_RELEASE_PACKAGES) {
@@ -509,7 +567,8 @@ export function packRelease(input) {
       const packageDirectory = expected.tabNative
         ? tabPackageDirectory
         : dirname(join(root, expected.path));
-      const packDestination = expected.pluginRoot ? seedsDirectory : artifactsDir;
+      const packDestination =
+        expected.pluginRoot || expected.directLicense ? seedsDirectory : artifactsDir;
       const before = new Set(readdirSync(packDestination));
       runChecked(
         runCommand,
@@ -533,6 +592,17 @@ export function packRelease(input) {
           outputDirectory: artifactsDir,
           pluginKind: expected.pluginKind,
           tempRoot: temporaryRoot,
+          runCommand,
+          env,
+        });
+      } else if (expected.directLicense) {
+        stageDirectNpmTarball({
+          root,
+          seedTarball: join(packDestination, added[0]),
+          outputDirectory: artifactsDir,
+          temporaryRoot,
+          expectedName: expected.name,
+          expectedLicense: expected.directLicense,
           runCommand,
           env,
         });
