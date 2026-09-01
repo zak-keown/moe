@@ -11,6 +11,11 @@ Load plan, review critically, execute all tasks, report when complete.
 
 **Announce at start:** "I'm using the executing-plans skill to implement this plan."
 
+**At this depth:** `executing-plans` runs a plan produced by
+`writing-plans`, which fires only at the `feature` depth defined in
+`brainstorming` (patch / change / feature). A `patch` or a `change`
+never reaches this skill.
+
 **Note:** Tell your human partner that Moe works much better with access to subagents (Claude Code, Codex CLI, Codex App, Copilot CLI, and Gemini CLI all qualify; see the per-platform tool refs in `../using-moe/references/`). If subagents are available, use `subagent-driven-development` instead of this skill.
 
 ## The Process

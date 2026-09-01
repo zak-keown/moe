@@ -7,53 +7,54 @@ description: "You MUST use this before any creative work - creating features, bu
 
 Help turn ideas into fully formed designs and specs through natural collaborative dialogue.
 
-Start by classifying how much process the request needs, then work
-through your path: understand the context, refine the idea, present a
-design, and get your human partner's approval.
+Start by classifying the request by DEPTH, then work through the depth's
+process: understand the context, refine the idea, present a design, and
+get your human partner's approval.
 
 <HARD-GATE>
 Do NOT invoke any implementation skill, write any code, scaffold any
 project, or take any implementation action until you have told your
 human partner what you intend and they have approved it. This applies
-to EVERY task on EVERY path below — the ceremony scales with the task;
+to EVERY task at EVERY depth below — the ceremony scales with the task;
 the approval gate never does.
 </HARD-GATE>
 
-## Three Paths
+## Three Depths
 
-Before your first question, classify the request and say the
-classification out loud — "this looks bounded, so I'll present a short
-design here rather than write a spec" — so your human partner can
-override it:
+Before your first question, classify the request by DEPTH and say the
+classification out loud — "this looks like a `change`, so I'll present
+a short design here rather than write a spec" — so your human partner
+can override it. The three depths, in increasing size, are **patch**,
+**change**, and **feature**.
 
-- **Spike** — a feasibility question ("can we...", "is it possible...",
-  "quick and dirty is fine") whose output is an answer, not code you
-  keep. Present the question and what you'll try in 2-3 sentences, get
-  a nod, then find out as cheaply as correctness allows. No design
-  doc, no spec file. Report findings as a recommendation; anything you
-  built stays labeled throwaway.
-- **Bounded** — a well-scoped change to code that already exists in
-  this repo: a new flag, a small endpoint, a one-file fix.
-  Understanding the kind of app is not enough — bounded means the flow
-  you are changing is already here to read. If there is no existing
-  flow to change, the task is not bounded. Ask the clarifying
-  questions that matter, present a short design IN CHAT (a few
-  sentences to a few short paragraphs), and STOP. Implementation
+- **Patch** — the smallest depth: a one-line fix, a config tweak, a
+  targeted spot-tightening, or a quick feasibility probe whose output
+  is an answer, not code you keep. Present the intent in 1-2
+  sentences, get a nod, then keep it minimal. No design doc, no spec
+  file. If a probe yields code you now want to keep, that is a NEW
+  request — reclassify it and get its own approval.
+- **Change** — a well-scoped modification to code that already exists
+  in this repo: a new flag, a small endpoint, a small feature spanning
+  a few files. Familiarity with the KIND of app is not enough — the
+  flow you are changing must already be here to read. If there is no
+  existing flow to change, the depth is not `change`. Ask the
+  clarifying questions that matter, present a short design IN CHAT (a
+  few sentences to a few short paragraphs), and STOP. Implementation
   starts only after your human partner says yes to that design — a
-  bounded task's approval is as hard a gate as an architectural
-  one. No spec file, no implementation plan document.
-- **Architectural** — new projects, new subsystems, changes that
-  restructure how components fit together or alter interfaces others
-  depend on. Follow the full process: questions, approaches, sectioned
-  design, written spec, then the writing-plans skill.
+  `change`-depth approval is as hard a gate as a `feature`-depth one.
+  No spec file, no implementation plan document.
+- **Feature** — new projects, new subsystems, changes that restructure
+  how components fit together or alter interfaces others depend on.
+  Follow the full process: questions, approaches, sectioned design,
+  written spec, then the writing-plans skill.
 
-When in doubt between two paths, take the heavier one. The ratchet is
-one-way: hidden complexity discovered mid-task upgrades the path —
+When in doubt between two depths, take the heavier one. The ratchet is
+one-way: hidden complexity discovered mid-task upgrades the depth —
 stop, say so, and step up. Nothing downgrades mid-task.
 
 ## Anti-Pattern: "Too Simple To Need Approval"
 
-Every path ends with your human partner approving your intent before
+Every depth ends with your human partner approving your intent before
 implementation. A todo list, a single-function utility, a config
 change — the design may be two sentences in chat, but you MUST present
 it and get approval. "Simple" tasks are where unexamined assumptions
@@ -65,33 +66,35 @@ artifact, never the approval.
 | Thought | Reality |
 |---------|---------|
 | "This is too simple to need a design" | Simple means a short design, not no design. Two sentences in chat, then approval. |
-| "I'll call it bounded and skip the spec" | Reaching for a label to skip work IS the doubt — take the heavier path. |
-| "It's bounded and the design is obvious — I'll start while they read it" | The gate is the approval, not the design's length. Present, then stop until you hear yes. |
-| "I understand this kind of app, so it's bounded" | Bounded measures the repo, not your familiarity. A new project has no existing flow — it is architectural. |
-| "The spike works, so I'll keep the code" | A spike's output is an answer. Keeping the code is a new request — classify it. |
-| "It grew, but I'm almost done — no need to re-classify" | Hidden complexity upgrades the path mid-task. Stop and say so. |
-| "They approved the spike, so the follow-up change is approved too" | Each task gets its own classification and its own approval. |
+| "I'll call it a `change` and skip the spec" | Reaching for a label to skip work IS the doubt — take the heavier depth. |
+| "It's a `change` and the design is obvious — I'll start while they read it" | The gate is the approval, not the design's length. Present, then stop until you hear yes. |
+| "I understand this kind of app, so it's a `change`" | `change` measures the repo, not your familiarity. A new project has no existing flow — it is a `feature`. |
+| "The `patch` probe worked, so I'll keep the code" | A `patch` probe's deliverable is an answer, not code. Keeping the code is a new request — reclassify. |
+| "It grew, but I'm almost done — no need to reclassify" | Hidden complexity upgrades the depth mid-task. Stop and say so. |
+| "They approved the `patch`, so the follow-up work is approved too" | Each task gets its own depth and its own approval. |
+| "This `patch` deserves a helper class and a full test suite" (gold-plating) | A `patch` is the minimum change that solves the task, plus the test for what actually changed. Extra structure is scope creep at the smallest depth. |
+| "The `feature`'s interfaces exist; I'll wire them up later" (stub-and-declare) | A `feature` is complete when the flow runs end-to-end, not when the skeleton compiles. Sketching structure and declaring done is the `feature`-depth failure mode. |
 
 ## Checklist
 
-Classify first, announce the path, then create a task for each item on
-your path and complete them in order.
+Classify first, announce the depth, then create a task for each item
+on that depth's list and complete them in order.
 
-**Spike:**
-1. **Explore project context** — enough to frame the probe
-2. **Present question + probe plan** — 2-3 sentences
+**Patch:**
+1. **Explore project context** — enough to frame the change or probe
+2. **Present intent + minimal plan** — 1-2 sentences
 3. **Get approval** — a nod is enough
-4. **Investigate** — as cheaply as correctness allows
-5. **Report findings** — a recommendation; label anything built as throwaway
+4. **Do the smallest thing that solves it** — as cheaply as correctness allows; a probe's deliverable is an answer, a fix's deliverable is the fix plus the test for what actually changed
+5. **Report** — the outcome, or the recommendation if the deliverable was an answer; label any exploratory code as throwaway
 
-**Bounded:**
+**Change:**
 1. **Explore project context** — check files, docs, recent commits
 2. **Ask clarifying questions** — one at a time, the ones that matter
 3. **Present short design in chat** — approach, files touched, testing
 4. **Get approval** — STOP and wait for an explicit yes; presenting the design and starting in the same breath is skipping the gate
 5. **Implement** — proceed with the normal development workflow (TDD applies); no plan document
 
-**Architectural:**
+**Feature:**
 1. **Explore project context** — check files, docs, recent commits
 2. **Offer the visual companion just-in-time** — NOT upfront. The first time a question would genuinely be clearer shown than described, offer it then (its own message); on approval its browser tab opens for you. If no visual question ever arises, never offer it. See the Visual Companion section below.
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
@@ -106,12 +109,12 @@ your path and complete them in order.
 
 ```dot
 digraph brainstorming {
-    "Classify: spike / bounded / architectural" [shape=diamond];
-    "Present question + probe (2-3 sentences)" [shape=box];
-    "Ask clarifying questions (bounded)" [shape=box];
+    "Classify: patch / change / feature" [shape=diamond];
+    "Present intent + minimal plan (1-2 sentences)" [shape=box];
+    "Ask clarifying questions (change)" [shape=box];
     "Present short design in chat" [shape=box];
     "Human approves?" [shape=diamond];
-    "Investigate; report recommendation" [shape=doublecircle];
+    "Do smallest thing; report" [shape=doublecircle];
     "Implement via normal workflow (no plan doc)" [shape=doublecircle];
     "Explore project context" [shape=box];
     "Ask clarifying questions" [shape=box];
@@ -122,17 +125,17 @@ digraph brainstorming {
     "Spec self-review\n(fix inline)" [shape=box];
     "User reviews spec?" [shape=diamond];
     "Invoke writing-plans skill" [shape=doublecircle];
-    "Hidden complexity? Upgrade path" [shape=box];
+    "Hidden complexity? Upgrade depth" [shape=box];
 
-    "Classify: spike / bounded / architectural" -> "Present question + probe (2-3 sentences)" [label="spike"];
-    "Classify: spike / bounded / architectural" -> "Ask clarifying questions (bounded)" [label="bounded"];
-    "Classify: spike / bounded / architectural" -> "Explore project context" [label="architectural"];
-    "Present question + probe (2-3 sentences)" -> "Human approves?";
-    "Ask clarifying questions (bounded)" -> "Present short design in chat";
+    "Classify: patch / change / feature" -> "Present intent + minimal plan (1-2 sentences)" [label="patch"];
+    "Classify: patch / change / feature" -> "Ask clarifying questions (change)" [label="change"];
+    "Classify: patch / change / feature" -> "Explore project context" [label="feature"];
+    "Present intent + minimal plan (1-2 sentences)" -> "Human approves?";
+    "Ask clarifying questions (change)" -> "Present short design in chat";
     "Present short design in chat" -> "Human approves?";
-    "Human approves?" -> "Investigate; report recommendation" [label="spike: yes"];
-    "Human approves?" -> "Implement via normal workflow (no plan doc)" [label="bounded: yes"];
-    "Hidden complexity? Upgrade path" -> "Classify: spike / bounded / architectural";
+    "Human approves?" -> "Do smallest thing; report" [label="patch: yes"];
+    "Human approves?" -> "Implement via normal workflow (no plan doc)" [label="change: yes"];
+    "Hidden complexity? Upgrade depth" -> "Classify: patch / change / feature";
     "Explore project context" -> "Ask clarifying questions";
     "Ask clarifying questions" -> "Propose 2-3 approaches";
     "Propose 2-3 approaches" -> "Present design sections";
@@ -146,20 +149,21 @@ digraph brainstorming {
 }
 ```
 
-**Terminal states are path-bound.** Architectural: the ONLY skill you
+**Terminal states are depth-bound.** `feature`: the ONLY skill you
 invoke after brainstorming is writing-plans — never frontend-design,
-mcp-builder, or any other implementation skill. Bounded: after
+mcp-builder, or any other implementation skill. `change`: after
 approval, implementation proceeds directly through the normal
-development workflow; no plan document. Spike: the terminal state is a
-reported recommendation.
+development workflow; no plan document. `patch`: the terminal state is
+the smallest change that solves the task, or — for a `patch`-shaped
+probe — a reported recommendation.
 
 ## The Process
 
-The subsections below serve the bounded and architectural paths (a
-spike stops at "present the probe, get a nod"). Sections from
-**Exploring approaches** onward are architectural-path depth — for
-bounded work, context plus a few questions plus a short in-chat design
-is the whole process.
+The subsections below serve the `change` and `feature` depths (a
+`patch` stops at "present the intent, get a nod, do the smallest
+thing"). Sections from **Exploring approaches** onward are
+`feature`-depth material — for `change` work, context plus a few
+questions plus a short in-chat design is the whole process.
 
 **Understanding the idea:**
 
@@ -199,7 +203,7 @@ is the whole process.
 - Where existing code has problems that affect the work (e.g., a file that's grown too large, unclear boundaries, tangled responsibilities), include targeted improvements as part of the design - the way a good developer improves code they're working in.
 - Don't propose unrelated refactoring. Stay focused on what serves the current goal.
 
-## After the Design (architectural path)
+## After the Design (feature depth)
 
 **Documentation:**
 

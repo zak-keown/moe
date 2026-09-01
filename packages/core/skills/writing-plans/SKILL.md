@@ -13,6 +13,11 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Announce at start:** "I'm using the writing-plans skill to create the implementation plan."
 
+**At this depth:** `writing-plans` fires only at the `feature` depth
+defined in `brainstorming` (patch / change / feature). A `patch` or a
+`change` never produces a plan document — the design lives in chat and
+the code follows directly.
+
 **Context:** If working in an isolated worktree, it should have been created via the `using-git-worktrees` skill at execution time.
 
 **Save plans to:** `docs/moe/plans/YYYY-MM-DD-<feature-name>.md`
