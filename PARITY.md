@@ -277,6 +277,11 @@ and the one that appears here is marked.
 | flight | skill frontmatter `name:` | `writing-gauntlet-stories` | `writing-flight-stories` |
 | flight | **source-only**, not artifact-visible — see below | `VetResult`, `VetStatus`, `VET_STATUSES` | `VerdictResult`, `VerdictStatus`, `VERDICT_STATUSES` |
 
+**The `obol.usage` read alias expired on 2026-09-01.** Flight is the only in-tree
+producer and now writes `moe.tab.usage`; tab therefore accepts only that canonical
+row type. The temporary compatibility branch and its test were removed rather than
+kept as a permanent tombstone for an artifact Moe never shipped.
+
 **`vet` was not a brand token and was renamed anyway.** It is a *pre-`gauntlet`*
 name for the project — upstream's `bun.lock` still recorded the workspace as
 `"vet"` — so it is brand residue that the token list simply never caught, and

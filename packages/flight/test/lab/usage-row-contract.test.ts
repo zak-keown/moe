@@ -18,7 +18,7 @@ import { asCardId, asRunId } from "../../src/qa/util/brands.js";
  * silently:
  *
  *   - moe-tab's `tab::parse` SKIPS rows whose `type` it does not claim
- *     (`ROW_TYPES = ["moe.tab.usage", "obol.usage"]`) rather than erroring, so a
+ *     (`ROW_TYPE = "moe.tab.usage"`) rather than erroring, so a
  *     wrong producer string reads as "no usage" — cost zero, no warning.
  *   - `estimateUsageSidecar` catches `TabError` and returns null, so a rejected
  *     dialect ALSO reads as "no usage". The rebrand nearly shipped
@@ -29,7 +29,7 @@ import { asCardId, asRunId } from "../../src/qa/util/brands.js";
 describe("usage.jsonl producer/consumer contract", () => {
   test("the row type flight writes is one moe-tab's tab dialect claims", () => {
     // Not a tautology: this is the literal from
-    // packages/tab/crates/moe-tab-core/src/transcript/tab.rs ROW_TYPES.
+    // packages/tab/crates/moe-tab-core/src/transcript/tab.rs ROW_TYPE.
     expect(USAGE_ROW_TYPE).toBe("moe.tab.usage");
   });
 

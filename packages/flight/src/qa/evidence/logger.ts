@@ -122,13 +122,10 @@ const INLINE_TEXT_LIMIT = 32 * 1024;
 /**
  * The `type` value of a `usage.jsonl` row, and one half of a cross-package
  * contract: `@bubstack/moe-tab`'s `tab` dialect declares
- * `ROW_TYPES = ["moe.tab.usage", "obol.usage"]`
- * (packages/tab/crates/moe-tab-core/src/transcript/tab.rs) and SKIPS rows whose
+ * `ROW_TYPE = "moe.tab.usage"` (packages/tab/crates/moe-tab-core/src/transcript/tab.rs)
+ * and SKIPS rows whose
  * type it does not claim — it does not error. Get this string wrong and every
  * sidecar reads as "no usage", so the QA-driver's cost silently reports zero.
- *
- * Upstream this was `"obol.usage"`. moe-tab still accepts that value read-only,
- * explicitly because the fork renamed it, so pre-fork files stay priceable.
  *
  * Pinned by test/lab/usage-row-contract.test.ts.
  */
