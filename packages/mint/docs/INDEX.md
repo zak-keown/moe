@@ -7,19 +7,13 @@ classification of record. `Owns` is machine-readable: the path globs whose
 facts this doc owns; `—` for point-in-time docs. The fenced table is
 machine-maintained; edit rows, never the sentinels.
 
-Inherited from upstream `everyharness` and re-pointed at the fork's tree.
-Upstream's planning artifacts moved from `docs/superpowers/{plans,specs}/` to
-`docs/history/` and keep their original filenames — those names are part of the
-record. Upstream's `README.md` became `docs/CONFIG.md` (the config reference is
-live behavior, not history); the package `README.md` now records the import
-instead. Upstream's `docs/index.html` — a v1.0.0 landing page with GHCR pull
-commands and npm-publication claims — moved to
-`docs/history/UPSTREAM-BROCHURE-PAGE.html` verbatim; Moe has no landing page.
+This index covers the current product documentation. Point-in-time planning
+artifacts remain under `docs/history/` and do not define current behavior.
 
 <!-- doc-index:begin -->
 | Doc | What | Reader | Class | Owns |
 | --- | --- | --- | --- | --- |
-| `README.md` | the import record: what was forked, what changed, what was left alone | contributor | evergreen | — |
+| `README.md` | package overview, layout, and development commands | contributor | evergreen | — |
 | `docs/CONFIG.md` | usage, config reference (`moe-mint.yaml`), CLI commands | user+adopter | evergreen | src/cli.ts, src/config.ts, src/bump.ts, src/validate.ts, src/test-command.ts, checks/run-checks.sh, schemas/** |
 | `docs/BROCHURE.md` | what moe-mint is and who it's for | adopter | evergreen | src/adapters/**, src/cli.ts, src/generate.ts, src/manifest.ts, src/validate.ts, src/init.ts, src/import.ts, src/bump.ts, src/docs-emit.ts, src/bootstrap/generated.ts, checks/run-checks.sh, test/dogfood.test.ts |
 | `docs/history/UPSTREAM-BROCHURE-PAGE.html` | upstream's v1.0.0 landing page | — | point-in-time | — |

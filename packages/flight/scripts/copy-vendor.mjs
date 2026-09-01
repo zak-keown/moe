@@ -2,9 +2,8 @@
 /**
  * Copy the vendored CommonJS CDP library into `dist/`.
  *
- * `src/qa/adapters/web/lib/` is not TypeScript — it is a hand-maintained fork
- * of obra/superpowers-chrome's `skills/browsing/lib/` (see
- * docs/upstream-sync.md), CommonJS, reached through `createRequire`.
+ * `src/qa/adapters/web/lib/` is not TypeScript. It is vendored CommonJS reached
+ * through `createRequire`.
  * `tsc -b` compiles `.ts` and copies nothing, so without this step
  * `dist/qa/adapters/web/lib/` does not exist and the whole web adapter fails
  * to load from the shipped bin — while every test, which reaches the copy

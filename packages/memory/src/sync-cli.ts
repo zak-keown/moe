@@ -17,12 +17,7 @@ import { countStale, runMigrationBatch } from "./embedding-migration.js";
 import { generateExchangeEmbedding, initEmbeddings } from "./embeddings.js";
 import { acquireFileLock, readLockHolder, releaseFileLock } from "./file-lock.js";
 import { formatLogLine, getSyncLogPath } from "./logging.js";
-import {
-  findLegacyDataDir,
-  getArchiveDir,
-  getConversationSourceDirs,
-  getIndexDir,
-} from "./paths.js";
+import { getArchiveDir, getConversationSourceDirs, getIndexDir } from "./paths.js";
 import { shouldSkipReentrantSync } from "./summarizer.js";
 import { syncConversations } from "./sync.js";
 
@@ -178,15 +173,6 @@ export async function runSync(args: string[]): Promise<number> {
     releaseSyncLockOnce();
     process.exit(129);
   });
-
-  // The data directory moved on the fork: ~/.config/superpowers ->
-  // ~/.config/moe/memory. There is no migration, so say so rather than
-  // reporting an empty index and silently re-syncing from scratch.
-  const legacy = findLegacyDataDir();
-  if (legacy) {
-    console.log(`ℹ️  An upstream episodic-memory index is still at ${legacy}.`);
-    console.log("   Moe Memory does not read it. See packages/memory/README.md.\n");
-  }
 
   console.log("Syncing conversations...");
   console.log(`Sources: ${sourceDirs.join(", ")}`);

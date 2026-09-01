@@ -2,7 +2,7 @@
   "name": "moe",
   "private": true,
   "type": "module",
-  "description": "Moe — a hard fork of the Superpowers ecosystem, one workspace.",
+  "description": "Moe — one workspace for coding-agent tools and skills.",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=24"

@@ -131,11 +131,7 @@ const INLINE_TEXT_LIMIT = 32 * 1024;
  */
 export const USAGE_ROW_TYPE = "moe.tab.usage" as const;
 
-/** moe-tab usage-sidecar schema version (ISO date, matched as an opaque string). PRI-2125.
- *
- * `v` deliberately does NOT move with the rebrand: moe-tab matches it as an
- * opaque string, and bumping it would orphan rows for no gain. The `type`
- * string DID move — see USAGE_ROW_TYPE. */
+/** moe-tab usage-sidecar schema version (ISO date, matched as an opaque string). */
 const USAGE_SCHEMA_VERSION = "2026-06-08";
 
 export class EvidenceLogger {

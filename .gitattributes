@@ -1,11 +1,6 @@
 # Line endings, and why this file is load-bearing.
 #
-# RESTORED. Upstream `superpowers/.gitattributes` pinned `*.sh`, `*.cmd` and
-# `hooks/session-start` to `eol=lf`. It was dropped silently during the import
-# and is absent from PARITY.md — the only upstream file whose *absence* is a
-# functional regression rather than a deletion decision.
-#
-# It matters more here than it did upstream, for two reasons:
+# It matters here for two reasons:
 #
 #   1. `/plugins/` is GENERATED AND COMMITTED. moe-mint emits the hook wrappers
 #      into it, so those bytes go through a checkout on every machine that
@@ -41,19 +36,17 @@ hooks/**            text eol=lf
 packages/*/hooks/** text eol=lf
 plugins/**/hooks/** text eol=lf
 
-# Byte-frozen zones: inherited evidence, verified with `diff -r` and `shasum -c`
-# and asserted by tests. `-text` means git will not normalise these under any
+# Byte-frozen zones. `-text` means git will not normalise these under any
 # setting, so no future core.autocrlf or eol config can alter a recorded
-# artifact. Editing a recorded artifact is editing evidence.
+# artifact.
 packages/*/docs/history/**                  -text
 packages/flight/dashboard/src/static/**     -text
 packages/flight/ui/src/lib/__fixtures__/**  -text
 
-# Licenses travel verbatim; all three inherited licenses require retaining the
-# notice as-is.
-LICENSE       -text
-**/LICENSE    -text
-**/*.LICENSE  -text
+# Canonical license texts travel verbatim.
+LICENSE      -text
+LICENSE-MIT  -text
+NOTICE       -text
 
 # Binary.
 *.woff2 binary

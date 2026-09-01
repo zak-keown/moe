@@ -8,7 +8,6 @@
  */
 
 import { initDatabase } from "./db.js";
-import { importLegacyJournalSidecars } from "./journal/legacy-sidecars.js";
 import type { JournalScopeFilter } from "./journal/search.js";
 import { JournalSearchService } from "./journal/search.js";
 import { JournalStore } from "./journal/store.js";
@@ -22,8 +21,6 @@ COMMANDS:
   search <query>       Semantic search over journal entries
   recent               List the most recent entries
   paths                Print the resolved project and user journal directories
-  import-legacy        Reconcile private-journal-mcp's .embedding sidecars
-                       (--remove deletes them once the entry is indexed)
 
 OPTIONS:
   --journal-path DIR   Override the project journal directory
@@ -62,13 +59,11 @@ export interface JournalArgs {
   limit: number;
   scope: JournalScopeFilter;
   journalPath: string | undefined;
-  remove: boolean;
 }
 
 export function parseJournalArgs(args: string[]): JournalArgs {
   const positionals: string[] = [];
   const values = new Map<string, string>();
-  const booleans = new Set<string>();
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i] as string;
@@ -76,10 +71,7 @@ export function parseJournalArgs(args: string[]): JournalArgs {
       positionals.push(arg);
       continue;
     }
-    if (!VALUE_FLAGS.has(arg)) {
-      booleans.add(arg);
-      continue;
-    }
+    if (!VALUE_FLAGS.has(arg)) continue;
     const value = args[i + 1];
     // A value flag at the end of the line, or one followed by another flag,
     // consumes nothing — so a missing value can never eat the query.
@@ -101,7 +93,6 @@ export function parseJournalArgs(args: string[]): JournalArgs {
     limit,
     scope,
     journalPath: values.get("--journal-path"),
-    remove: booleans.has("--remove"),
   };
 }
 
@@ -134,44 +125,6 @@ export async function runJournal(args: string[]): Promise<number> {
         `✅ Journal index updated: ${result.indexed} indexed, ${result.pruned} pruned, ${result.failed} failed, ${result.total} entries on disk`,
       );
       return result.failed > 0 ? 1 : 0;
-    }
-
-    if (command === "import-legacy") {
-      const result = await importLegacyJournalSidecars(db, store, {
-        remove: parsed.remove,
-      });
-      console.log(`Legacy .embedding sidecars found:  ${result.found}`);
-      console.log(`  with an entry now in the index:  ${result.indexed}`);
-      console.log(`  removed:                         ${result.removed}`);
-      if (result.orphaned.length > 0) {
-        console.log(`  orphaned (no .md beside them):   ${result.orphaned.length}`);
-        for (const orphan of result.orphaned) console.log(`    ${orphan}`);
-      }
-      if (!parsed.remove && result.indexed > 0) {
-        console.log("\nRe-run with --remove to delete the sidecars that are now indexed.");
-      }
-      // An upstream journal that is still at its old path is the reason this
-      // command would otherwise report 0 and look finished. Say so, and say
-      // what to do about it.
-      if (result.legacy.length > 0) {
-        console.log("\n⚠️  Found an upstream journal that is NOT indexed:");
-        for (const legacy of result.legacy) {
-          console.log(
-            `    ${legacy.root}  (${legacy.entries} entries, ${legacy.sidecars} sidecars)`,
-          );
-        }
-        console.log(
-          "\n    The journal directories moved on import, and nothing is copied for you:\n" +
-            "      project  <project>/.private-journal  →  <project>/.moe-journal\n" +
-            "      user     ~/.private-journal          →  the Moe Memory data directory\n" +
-            "\n    Copy the entries across, then re-run this command:\n",
-        );
-        for (const legacy of result.legacy) {
-          console.log(`      cp -a ${legacy.root}/. <destination>/`);
-        }
-        console.log("\n    `moe-memory journal paths` prints the destinations.");
-      }
-      return 0;
     }
 
     const search = new JournalSearchService(

@@ -4,9 +4,7 @@ version = "0.0.0"
 description = "Evals against small (and large) models"
 readme = "README.md"
 license = "MIT"
-license-files = ["LICENSE"]
-# `authors` is the upstream author of smevals, which this is a fork of;
-# `maintainers` is who maintains the fork. See README.md and the root NOTICE.
+license-files = []
 authors = [{ name = "Simon Willison" }]
 maintainers = [{ name = "Zak Keown" }]
 requires-python = ">=3.10"

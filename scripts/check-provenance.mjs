@@ -1,193 +1,135 @@
 #!/usr/bin/env node
-// Asserts that every `## Forked from` table names an UPSTREAM repo, never a Moe
-// package.
-//
-// ARCHITECTURE.md §8 states the rule: provenance is preserved, self-reference is
-// rewritten. It has already been broken once. The flight import's rebrand sweep
-// rewrote `gauntlet` in prose that names the upstream repo, and a human caught
-// it, not a check — the correction is recorded at
-// packages/flight/README.md:336-338. That sweep touched 257 occurrences and
-// survived because someone was watching. The next one may not be, and a
-// misattributed fork is a licence problem, not a style problem.
-//
-// The check is deliberately narrow. It reads column 1 of exactly ONE table per
-// README — the first `|`-table under `## Forked from` — and requires every entry
-// to be a row of PARITY.md's own upstream ledger. Narrowness is the point:
-// packages/flight/README.md:293-313 is a rebrand MAPPING table whose third
-// column is a Moe token by design, and a checker that wandered into it would
-// fail on correct content and get switched off.
+/** Verify centralized legal metadata and generated distribution payloads. */
 
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { readdirSync, readFileSync } from "node:fs";
+import { join, relative } from "node:path";
 
-// PARITY.md's ledger, as two tables: `## Map` is what was imported, `###
-// Excluded` is what was consciously left out. Both are legitimate provenance —
-// a README may name a repo the fork declined to import.
-const LEDGER_HEADINGS = [/^##\s+Map\s*$/, /^###\s+Excluded\s*$/];
-
-// Where a package lives. Depth 1 only, which is what keeps
-// packages/core/docs/history/*/UPSTREAM-README.md (inherited evidence, byte
-// frozen) and packages/tab/bindings/*/README.md out of the sweep.
-const PACKAGE_ROOTS = ["packages", "infra", "py"];
-
-const BACKTICKED = /^`([^`]+)`$/;
-const HEADING = /^#{2,3}\s/;
-const FORKED_FROM = /^##\s+Forked from\s*$/;
-const MOE_TOKEN = /^(@bubstack\/)?moe(-|$)/;
-
-/** Cells of a `|`-delimited markdown row, without the empty outer edges. */
+const SKIP_SEGMENTS = new Set([
+  ".claude",
+  ".git",
+  ".planning",
+  ".venv",
+  "dist",
+  "node_modules",
+  "scripts",
+  "test",
+  "tests",
+]);
 function cells(line) {
   return line
     .split("|")
     .slice(1, -1)
-    .map((c) => c.trim());
+    .map((cell) => cell.trim());
 }
 
-/** The set of upstream repo names PARITY.md accounts for. */
-function readLedger(root) {
-  const lines = readFileSync(join(root, "PARITY.md"), "utf8").split("\n");
-  const repos = new Set();
-  let inTable = false;
-  for (const line of lines) {
-    if (HEADING.test(line)) {
-      inTable = LEDGER_HEADINGS.some((h) => h.test(line));
+function tableNames(file, heading) {
+  const names = new Set();
+  let active = false;
+  for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
+    if (line === heading) {
+      active = true;
       continue;
     }
-    if (!inTable || !line.startsWith("|")) continue;
-    const first = cells(line)[0] ?? "";
-    const m = BACKTICKED.exec(first);
-    if (m) repos.add(m[1]);
+    if (active && /^#{2,3}\s/.test(line)) break;
+    if (!active || !line.startsWith("| `")) continue;
+    const name = /^`([^`]+)`$/.exec(cells(line)[0] ?? "")?.[1];
+    if (name) names.add(name);
   }
-  return repos;
+  return names;
 }
 
-/** Depth-1 READMEs that carry a `## Forked from` section. */
-function findReadmes(root) {
-  const found = [];
-  for (const area of PACKAGE_ROOTS) {
-    let entries;
+function walk(root, current = root) {
+  const files = [];
+  for (const entry of readdirSync(current, { withFileTypes: true })) {
+    const path = join(current, entry.name);
+    const rel = relative(root, path);
+    if (entry.isDirectory()) {
+      if (SKIP_SEGMENTS.has(entry.name)) continue;
+      if (rel.split("/").includes("docs") && rel.split("/").includes("history")) continue;
+      files.push(...walk(root, path));
+      continue;
+    }
+    if (entry.isFile()) files.push(path);
+  }
+  return files;
+}
+
+function checkAttributionRegister(root, problems) {
+  const ledger = tableNames(join(root, "PARITY.md"), "## Map");
+  const notice = tableNames(join(root, "NOTICE"), "## Imported works");
+  for (const name of ledger) {
+    if (!notice.has(name)) problems.push(`NOTICE is missing imported work ${name}`);
+  }
+  for (const name of notice) {
+    if (!ledger.has(name)) problems.push(`NOTICE names ${name}, which PARITY.md does not import`);
+  }
+  return ledger.size;
+}
+
+function checkPluginLicenses(root, problems) {
+  const pluginsRoot = join(root, "plugins");
+  let count = 0;
+  for (const entry of readdirSync(pluginsRoot, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    count++;
+    const dir = join(pluginsRoot, entry.name);
+    const config = readFileSync(join(dir, "moe-mint.yaml"), "utf8");
+    let license;
     try {
-      entries = readdirSync(join(root, area), { withFileTypes: true });
+      license = readFileSync(join(dir, "LICENSE"), "utf8");
     } catch {
-      continue; // an area a given tree does not have
-    }
-    for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
-      const rel = join(area, entry.name, "README.md");
-      const abs = join(root, rel);
-      try {
-        if (!statSync(abs).isFile()) continue;
-      } catch {
-        continue;
-      }
-      const text = readFileSync(abs, "utf8");
-      if (text.split("\n").some((l) => FORKED_FROM.test(l))) {
-        found.push({ rel, lines: text.split("\n") });
-      }
-    }
-  }
-  return found.sort((a, b) => a.rel.localeCompare(b.rel));
-}
-
-/**
- * The rows of the ONE table under `## Forked from`, as {lineNo, cells}.
- *
- * Stops at the next heading, and at the first non-table line AFTER the table has
- * started. That second clause is load-bearing twice over: packages/core/README.md
- * has two prose lines between the heading and its table, so the walk cannot stop
- * on the first non-`|` line; and packages/flight/README.md has a second,
- * unrelated table 280 lines further down, so it must stop on the first blank
- * line after the rows end.
- */
-function forkedFromRows(lines) {
-  const start = lines.findIndex((l) => FORKED_FROM.test(l));
-  if (start === -1) return [];
-  const rows = [];
-  for (let i = start + 1; i < lines.length; i++) {
-    const line = lines[i];
-    if (HEADING.test(line)) break;
-    if (line.startsWith("|")) {
-      rows.push({ lineNo: i + 1, cells: cells(line) });
+      problems.push(`plugins/${entry.name}/LICENSE is missing`);
       continue;
     }
-    if (rows.length > 0) break;
+    const expression = /^license:\s*(.+)$/m.exec(config)?.[1]?.trim() ?? "";
+    if (expression.includes("MIT") && !license.includes("Permission is hereby granted")) {
+      problems.push(`plugins/${entry.name}/LICENSE is missing MIT terms`);
+    }
+    if (expression.includes("Apache-2.0") && !license.includes("Apache License")) {
+      problems.push(`plugins/${entry.name}/LICENSE is missing Apache-2.0 terms`);
+    }
   }
-  return rows.slice(2); // header row + `|---|` separator
+  return count;
+}
+
+function checkCanonicalLegalFiles(root, problems) {
+  const duplicates = [];
+  const notices = [];
+  for (const file of walk(root)) {
+    const rel = relative(root, file);
+    if (rel.startsWith("plugins/")) continue;
+    if (rel === "LICENSE" || rel === "LICENSE-MIT") continue;
+    if (rel.endsWith("/LICENSE")) duplicates.push(rel);
+    if (rel.endsWith("/NOTICE")) notices.push(rel);
+  }
+  if (duplicates.length > 0) {
+    problems.push(`hand-maintained package license copies remain: ${duplicates.join(", ")}`);
+  }
+  if (notices.length > 0) {
+    problems.push(`package NOTICE copies remain: ${notices.join(", ")}`);
+  }
 }
 
 function main(argv) {
-  let root = ".";
-  let minReadmes = 10; // the live count; a glob that matches nothing must fail loudly
-  const positional = [];
-  for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === "--min-readmes") {
-      minReadmes = Number.parseInt(argv[++i], 10);
-      if (!Number.isInteger(minReadmes) || minReadmes < 0) {
-        console.error("--min-readmes needs a non-negative integer");
-        return 2;
-      }
-      continue;
-    }
-    positional.push(argv[i]);
-  }
-  if (positional.length > 1) {
-    console.error("usage: check-provenance.mjs [root] [--min-readmes N]");
+  if (argv.length > 1) {
+    console.error("usage: check-provenance.mjs [root]");
     return 2;
   }
-  if (positional.length === 1) root = positional[0];
+  const root = argv[0] ?? ".";
+  const problems = [];
+  const upstreams = checkAttributionRegister(root, problems);
+  const plugins = checkPluginLicenses(root, problems);
+  checkCanonicalLegalFiles(root, problems);
 
-  const upstreams = readLedger(root);
-  const readmes = findReadmes(root);
-  const offenders = [];
-  let rowCount = 0;
-
-  for (const { rel, lines } of readmes) {
-    for (const { lineNo, cells: row } of forkedFromRows(lines)) {
-      rowCount++;
-      const raw = row[0] ?? "";
-      const m = BACKTICKED.exec(raw);
-      if (!m) {
-        offenders.push(
-          `${rel}:${lineNo} upstream column is not a backticked repo name: ${JSON.stringify(raw)}`,
-        );
-        continue;
-      }
-      const name = m[1];
-      if (MOE_TOKEN.test(name)) {
-        offenders.push(`${rel}:${lineNo} names a Moe package, not an upstream repo: ${name}`);
-        continue;
-      }
-      if (!upstreams.has(name)) {
-        offenders.push(`${rel}:${lineNo} names a repo PARITY.md does not account for: ${name}`);
-      }
-    }
+  console.log(`provenance: ${upstreams} imported works, ${plugins} plugin licenses`);
+  if (problems.length === 0) {
+    console.log("provenance: legal metadata and generated payloads are complete");
+    return 0;
   }
 
-  console.log(
-    `provenance: ${readmes.length} READMEs, ${rowCount} rows, ${upstreams.size} upstream repos in PARITY.md`,
-  );
-
-  if (readmes.length < minReadmes) {
-    console.error(
-      `provenance: found ${readmes.length} READMEs with a '## Forked from' section, expected at least ${minReadmes}.`,
-    );
-    console.error(
-      "Either a README lost its provenance section, or discovery is broken. Both are failures.",
-    );
-    return 1;
-  }
-
-  if (offenders.length > 0) {
-    console.error(`\nprovenance: ${offenders.length} offending row(s).`);
-    for (const o of offenders) console.error(`  ${o}`);
-    console.error(
-      "\nA `## Forked from` table records who wrote the code first. A Moe name there means a rebrand sweep overwrote an attribution — restore the upstream repo name. See ARCHITECTURE.md §8.",
-    );
-    return 1;
-  }
-
-  console.log("provenance: 0 offenders.");
-  return 0;
+  console.error(`provenance: ${problems.length} problem(s)`);
+  for (const problem of problems) console.error(`  - ${problem}`);
+  return 1;
 }
 
 process.exit(main(process.argv.slice(2)));

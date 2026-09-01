@@ -9,8 +9,8 @@ and the reasoning; this file is the checklist.
 
 - `ARCHITECTURE.md` — target shape and the decisions that produced it. Read
   before writing anything: it holds the *why*, which the tree cannot tell you.
-- `PARITY.md` — the ledger. Every upstream repo, pinned rev, license, and
-  rebrand token. Load-bearing for legal and license correctness.
+- `PARITY.md` — the compact imported-work ledger. Load-bearing for legal and
+  license correctness.
 - `NOTICE` — attribution. Apache-2.0 §4(b) requires it.
 - `README.md` — the two rules and the map. Not a spec.
 
@@ -23,18 +23,16 @@ and the reasoning; this file is the checklist.
 2. **The snapshots in `../.moe-references/` are the spec, not upstream HEAD.**
    Pinned SHAs live in `PARITY.md`. Do not consult upstream `main`. Parity
    against a moving target is unfalsifiable.
-3. **Edit an imported file without updating `PARITY.md` and the ledger is
-   broken.** New rebrand tokens, new bins, new env vars, new upstream repos,
-   changed pinned SHAs — all belong there.
+3. **Keep imported-work metadata centralized.** A new imported work or changed
+   pinned revision belongs in `PARITY.md` and `NOTICE`, not package prose.
 4. **Two tsconfigs, and they must agree.** `tsconfig.json` `references` mirrors
    runtime `dependencies` one for one. `tsconfig.tests.json` `references` holds
    test-only edges — including the ones that point *up*. Put a test-fixture
    inversion in `tsconfig.json` and you get `TS6202: Project references may not
    form a circular graph`.
-5. **Provenance URLs stay GitHub. Self-referential URLs become GitLab.** A
-   blanket find-and-replace gets this wrong — see `PARITY.md` "GitHub → GitLab".
-   Rewriting a `github.com/obra/superpowers` provenance link destroys attribution
-   the licenses require.
+5. **Keep legal metadata centralized.** `NOTICE` and `PARITY.md` are the
+   canonical attribution surfaces; generated distributions carry applicable
+   license terms. `pnpm provenance` checks their completeness.
 
 ## Guarded surfaces — a bad edit turns the suite red
 
@@ -96,8 +94,8 @@ Root scripts (`package.json`), the only ones this doc names:
 - `pnpm mint` — regenerates `/plugins/` from `packages/*/mint/*.yaml`.
 - `pnpm mint:check` — CI gate. `pnpm mint` then asserts `/plugins/` is
   byte-identical. Fails if anyone hand-edited a manifest.
-- `pnpm provenance` — asserts every `## Forked from` table names an upstream
-  repo `PARITY.md` accounts for.
+- `pnpm provenance` — validates the attribution register and generated license
+  payloads.
 
 Scoping a package: `pnpm --filter @bubstack/moe-crew test` or
 `turbo run typecheck test --filter=@bubstack/moe-crew`.
@@ -124,40 +122,12 @@ model); core's `test:python`, `test:brainstorm`, `test:shell` and `latte:evals`
 Nothing runs on commit. No lefthook config, `core.hooksPath` unset. See
 `ARCHITECTURE.md` §6 "one root-level mechanism"; the mechanism is still owed.
 
-## Import contract
+## Imported-work maintenance
 
-The dominant contribution shape. Branch `import/packages-<name>` (or
-`import/py-proof`), one package per git worktree under `.claude/worktrees/` —
-created by the agent harness, not a repo script. Integrate as a wave, not one
-merge at a time. Every import wants root edits plus a lockfile regeneration,
-and they all conflict.
-
-An import PR must produce:
-
-1. What the package does, its plugin destination, and "Never hand-edit the
-   generated manifest."
-2. A **Status:** line with a real test count.
-3. `## Forked from` — upstream repo, pinned short rev, license — plus which
-   license actually governs where the scaffold disagreed.
-4. For Apache-2.0 inbound, `### Statement of changes (Apache-2.0 §4(b))` with
-   identical-vs-modified file counts verified by `diff -rq` against the snapshot.
-5. `## Layout` — annotated tree, one line per directory.
-6. `## What changed on import` — every behaviour-affecting change with its
-   reason.
-7. `## Rebrand, and what was deliberately left alone` — a counted rename table,
-   plus `### Where the upstream files went` and `### Not imported`, each row
-   carrying a Why.
-8. `## Verification` — the exact commands with the exact numbers they produced,
-   plus an explicit statement of what was *not* verified and how the gap was
-   covered by hand.
-9. `## Root changes needed` — root-file edits the import cannot make from its
-   worktree.
-10. `## Follow-ups` — known defects, recorded rather than silently carried.
-
-All 19 upstreams in `PARITY.md` are accounted for across the nine packages.
-The contract is written down because it is the discipline that keeps a fork
-with no reachable upstream author auditable — not because more imports are
-coming.
+No migration or re-import workflow is supported. If code from another work is
+added deliberately, record its exact source, revision, license, destination,
+and required notices in `PARITY.md` and `NOTICE`. Keep that metadata out of
+package READMEs and other product-facing surfaces.
 
 ## Parallel work — the integration protocol
 

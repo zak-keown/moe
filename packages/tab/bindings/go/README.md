@@ -12,12 +12,8 @@ import "gitlab.tcdevops.com/Zak/moe/packages/tab/bindings/go/tab"
 
 ## Not a published module
 
-Upstream generated a **separate** repository, `github.com/prime-radiant-inc/obol-go`, from this
-directory: the release workflow flattened these files to a module root, embedded the four
-per-platform native libraries, and tagged a matching release so a plain `go get` resolved a
-self-contained module. That workflow is not ported (see [PARITY.md](../../../../PARITY.md)), and
-no equivalent repository exists on GitLab, so **`embed_stub.go` is the only embed file here and
-`embeddedLib` is always empty**. The loader therefore always takes its `MOE_TAB_LIB` or dev
+No generated distribution repository exists, so **`embed_stub.go` is the only embed file here
+and `embeddedLib` is always empty**. The loader therefore always takes its `MOE_TAB_LIB` or dev
 `target/` path.
 
 The removed assembly workflow remains documented in `docs/history/`; this source tree does not
@@ -83,5 +79,5 @@ cd bindings/go && CGO_ENABLED=0 go test ./...
 ```
 
 `go vet` reports two `possible misuse of unsafe.Pointer` findings in `cstr` (`tab/loader.go`).
-They are inherent to reading a NUL-terminated C string without cgo and are inherited unchanged;
-upstream did not run `go vet` in CI either.
+They are inherent to reading a NUL-terminated C string without cgo and are not part of the
+current verification gate.
