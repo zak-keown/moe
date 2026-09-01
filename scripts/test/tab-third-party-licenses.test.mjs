@@ -350,7 +350,10 @@ process.stdout.write(fs.readFileSync(${JSON.stringify(metadataPath)}));
 `,
     );
     chmodSync(fakeCargo, 0o755);
-    writeFileSync(output, "stale but input-digest-shaped payload\n");
+    writeFileSync(
+      output,
+      `License inputs SHA-256: ${licenseInputsDigest(fixture.root)}\ntruncated payload\n`,
+    );
 
     const args = [
       SCRIPT,
