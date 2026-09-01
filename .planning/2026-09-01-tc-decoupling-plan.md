@@ -719,10 +719,10 @@ Expected: pass. This design does not modify `PARITY.md` or `NOTICE`; the check s
 - [ ] **Step 7: Confirm no TC string leaks anywhere except allowed locations**
 
 ```bash
-git grep -nE "gitlab\.tcdevops\.com|tc-governance-check|tc-conventions|MOE_TC_GOVERNANCE_DISABLED|tc-standards-conformance|tc-governance-integration|tc-domain-skills-port|TurnCommerce" -- ':(exclude)packages/*/docs/history/**'
+git grep -nE "gitlab\.tcdevops\.com|tc-governance-check|tc-conventions|MOE_TC_GOVERNANCE_DISABLED|tc-standards-conformance|tc-governance-integration|tc-domain-skills-port|TurnCommerce|turncommerce\.com" -- ':(exclude)packages/*/docs/history/**' ':(exclude).planning/**'
 ```
 
-Expected: no output. `packages/*/docs/history/**` is excluded because it holds frozen historical specs by design (per `PARITY.md`'s "Historical evidence may retain original names and URLs" clause).
+Expected: no output. `packages/*/docs/history/**` is excluded because it holds frozen historical specs by design (per `PARITY.md`'s "Historical evidence may retain original names and URLs" clause). `.planning/**` is excluded on the same grounds — it holds historical planning artifacts, not shipped product surface.
 
 If any string survives, stop and fix at the appropriate task — do not delete it from the regeneration commit.
 
