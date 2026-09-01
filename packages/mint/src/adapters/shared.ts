@@ -52,7 +52,7 @@ export function marketplaceName(config: MintConfig): string {
 
 // Any http(s) URL of the shape `https://<host>/<owner>/<repo>[.git]`.
 // The three git-hosting shapes moe currently supports — github.com,
-// gitlab.com, gitlab.tcdevops.com — all match this. ssh syntax
+// gitlab.com, gitlab.example.com — all match this. ssh syntax
 // (`git@host:owner/repo.git`) and file paths are deliberately NOT matched;
 // callers fall back to a `<your-repo>` placeholder in those cases, because
 // no install command reliably accepts them across harnesses.
