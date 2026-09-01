@@ -198,8 +198,9 @@ Each worker gets its OWN linked git worktree — never a shared checkout. Two
 workers writing into the same tree collide on the axis the parallel-
 implementation worktree gate is built to prevent (see moe-core's
 `dispatching-parallel-agents`, "Safe Parallel Implementation: The Worktree
-Gate", and its degradation ladder). Create the worktrees first, branched from
-one recorded base SHA, then point each worker's `cwd` at its own:
+Gate", and its two-rung fallback ladder). Create all worktrees first, branched
+from one recorded base SHA. Before launching anything, validate every cwd has
+one of the wave's pairwise-unique linked Git directories:
 
 ```bash
 # One recorded base for the whole wave — every worker branches from it.
@@ -207,6 +208,13 @@ BASE=$(git -C ~/proj rev-parse HEAD)
 
 git -C ~/proj worktree add ~/proj-worktrees/worker-api -b feat/api "$BASE"
 git -C ~/proj worktree add ~/proj-worktrees/worker-ui  -b feat/ui  "$BASE"
+
+# For each cwd, --git-dir and --git-common-dir must differ. The two --git-dir
+# results must also differ from each other.
+git -C ~/proj-worktrees/worker-api rev-parse --path-format=absolute --git-dir
+git -C ~/proj-worktrees/worker-api rev-parse --path-format=absolute --git-common-dir
+git -C ~/proj-worktrees/worker-ui rev-parse --path-format=absolute --git-dir
+git -C ~/proj-worktrees/worker-ui rev-parse --path-format=absolute --git-common-dir
 
 $SKILL/moe-crew launch worker-api ~/proj-worktrees/worker-api
 $SKILL/moe-crew launch worker-ui  ~/proj-worktrees/worker-ui
@@ -227,8 +235,12 @@ $SKILL/moe-crew launch worker-ui  ~/proj-worktrees/worker-ui
 `moe-crew launch` accepts an arbitrary per-worker `cwd`; it does not create
 the worktree for you and does not know about worktrees at all. That step is
 git, done before dispatch. If two workers' declared work touches the same
-file — the wave gate's disjointness rule — do not fan them out; run them
-sequentially instead.
+file, a task is missing `Files:`, `Interfaces:`, `Consumes:`, or `Produces:`,
+or any worktree creation/validation command fails, do not fan them out. Missing
+task metadata fails validation. A file collision or worktree failure selects
+the second and only fallback rung: run the whole wave sequentially from the
+controller's validated tree. There is no unisolated-parallel rung and no
+partial parallel launch.
 
 ### Pipeline: Worker A produces, Worker B consumes
 
