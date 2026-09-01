@@ -412,8 +412,7 @@ describe("cross-references", () => {
       const text = readFileSync(p, "utf8");
       // Either the skill carries the fallback vocabulary itself, or it
       // references the PAR document that carries the fallback for it.
-      const hasFallback =
-        /\b(sequential|serial|fallback)\b/i.test(text) || text.includes(parRef);
+      const hasFallback = /\b(sequential|serial|fallback)\b/i.test(text) || text.includes(parRef);
       if (!hasFallback) offenders.push(name);
     }
     expect(
@@ -669,6 +668,7 @@ describe("hooks", () => {
     const entry = hooks.hooks.SessionStart?.[0]?.hooks?.[0];
     expect(entry).toBeDefined();
     const cmd = entry?.command as string;
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal from hooks.json
     expect(cmd).toContain('"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd" plan-set-notice');
     expect(entry?.shell).toBe("bash");
     // The matcher covers the three lifecycle events that give the notice a
@@ -683,10 +683,12 @@ describe("hooks", () => {
     const entry = hooks.hooks.Stop?.[0]?.hooks?.[0];
     expect(entry).toBeDefined();
     const cmd = entry?.command as string;
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal from hooks.json
     expect(cmd).toContain("${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd");
     // Quoted, because ${CLAUDE_PLUGIN_ROOT} may contain a space, and
     // `"shell": "bash"` so a Windows box does not hand the command to
     // PowerShell — the two are one fix, not two.
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal from hooks.json
     expect(cmd).toContain('"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd"');
     expect(entry?.shell).toBe("bash");
     const script = cmd.trim().split(/\s+/).pop() as string;
@@ -704,6 +706,7 @@ describe("hooks", () => {
     const cmd = entry?.command as string;
     // Quoted CLAUDE_PLUGIN_ROOT for the same reason run-hook.cmd is quoted:
     // a plugin root with a space breaks unquoted expansion, on any OS.
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: literal from hooks.json
     expect(cmd).toContain('node "${CLAUDE_PLUGIN_ROOT}/hooks/moe-completion-evidence"');
     expect(entry?.shell).toBe("bash");
     expect(
