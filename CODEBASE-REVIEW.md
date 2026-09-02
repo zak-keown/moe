@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 52
+  fixed: 53
   stale: 14
   skipped: 6
   deferred: 1
-  open: 520
+  open: 519
 ---
 
 # Codebase Review — moe
@@ -1404,6 +1404,10 @@ Fix: guard on `typeof window[BINDING] === 'function'` and fall back to the origi
 **Verification:** confirmed
 **Verification evidence:** ask() in permission-shim.js calls window.__dialogShim with no typeof guard, and that one helper backs all five wrapped APIs. A Node vm reproduction confirms it throws TypeError when the binding is absent, rejecting the wrapped promise instead of yielding a native NotAllowedError. dialogs.smoke.test.mjs documents that on Chrome 148 and later Runtime.addBinding does not reach page execution contexts, so the binding is absent in the ordinary case. The injector send order is not the cause.
 
+**Disposition:** fixed
+**Commit:** `06cabdd`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-064: A page can grant itself permissions and forge permission dialogs
 
 **File:** `packages/glass/skills/browsing/lib/page-scripts/permission-shim.js`
