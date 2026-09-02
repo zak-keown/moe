@@ -2,7 +2,7 @@
   "name": "moe-memory",
   "displayName": "moe-memory",
   "description": "Semantic recall over past sessions and journal entries.",
-  "version": "0.1.1",
+  "version": "0.1.2-rc.1",
   "author": {
     "name": "Zak Keown",
     "email": "zak.keown@outlook.com"

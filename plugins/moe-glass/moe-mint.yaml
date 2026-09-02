@@ -5,7 +5,7 @@
 # there. The plugin root is the staging directory, never `packages/glass`.
 
 name: moe-glass
-version: 0.1.1
+version: 0.1.2-rc.1
 description: >-
   Direct Chrome DevTools Protocol access. Skill mode plus MCP mode, zero
   dependencies.

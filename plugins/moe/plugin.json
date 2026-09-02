@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "moe",
-  "version": "0.1.1",
+  "version": "0.1.2-rc.1",
   "description": "The Moe skill library — brainstorming, planning, TDD, systematic debugging, code review, worktrees, parallel dispatch, plugin authoring, and more.",
   "author": {
     "name": "Zak Keown",
