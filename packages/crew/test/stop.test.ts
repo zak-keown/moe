@@ -5,9 +5,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { CommandContext } from "../src/commands/context.js";
 import { cmdStop } from "../src/commands/stop.js";
 import { appendEvent } from "../src/core/event-log.js";
-import { eventsPath, metaPath, shimPath, workerHomePath } from "../src/core/paths.js";
+import { eventsPath, harnessMarkerPath, metaPath, shimPath, workerHomePath } from "../src/core/paths.js";
 import type { Tmux } from "../src/core/tmux.js";
-import { writeMeta, writeShim } from "../src/core/worker-store.js";
+import { writeHarnessMarker, writeMeta, writeShim } from "../src/core/worker-store.js";
 import { getDriver } from "../src/harness/registry.js";
 
 function tmpDir(): string {
@@ -282,6 +282,36 @@ describe("cmdStop", () => {
     const result = await cmdStop(ctx, SID, { stopTimeout: 5, pollMs: 10 });
 
     expect(result.code).toBe(0);
+    expect(existsSync(home)).toBe(false);
+  });
+
+  it("stops an unregistered derive worker (harness marker + live session, no meta yet) (CR-018)", async () => {
+    // A codex/pi worker mid pre-registration window: launched, tmux is
+    // alive, list can see it via the .harness sidecar, but no meta exists
+    // yet (the harness self-registers it on the first prompt). Previously
+    // resolveWorker's "no worker known" blocked stop, prune, and adopt
+    // alike, leaving the pane running under bypassed sandboxing with staged
+    // credentials on disk, recoverable only via a manual tmux kill-session.
+    const unregisteredName = "codex-w-unregistered";
+    writeHarnessMarker(workerDir, unregisteredName, "codex");
+    const home = workerHomePath(workerDir, unregisteredName);
+    mkdirSync(home, { recursive: true });
+    writeFileSync(join(home, "auth.json"), '{"token":"operator-secret"}');
+    writeShim(workerDir, unregisteredName, "/path/to/moe-crew.js");
+
+    const calls: FakeTmuxCalls = { sendText: [], sendEnter: [], killSession: [] };
+    // hasSession(TMUX_NAME) from seedWorker's own worker is irrelevant here;
+    // this fake answers true for every name, modeling the unregistered
+    // worker's live tmux session.
+    const tmux = fakeTmux(() => true, calls);
+    const ctx = makeCtx(workerDir, tmux);
+
+    const result = await cmdStop(ctx, unregisteredName, { stopTimeout: 0.1, pollMs: 10 });
+
+    expect(result.code).toBe(0);
+    expect(calls.killSession).toEqual([unregisteredName]);
+    expect(existsSync(shimPath(workerDir, unregisteredName))).toBe(false);
+    expect(existsSync(harnessMarkerPath(workerDir, unregisteredName))).toBe(false);
     expect(existsSync(home)).toBe(false);
   });
 });
