@@ -15,7 +15,7 @@
 // spawn hop is acceptable, and forwarding SIGINT/SIGTERM keeps Ctrl-C sane.
 
 import { spawn } from "node:child_process";
-import { existsSync, realpathSync } from "node:fs";
+import { accessSync, constants, existsSync, realpathSync, statSync } from "node:fs";
 import { platform as osPlatform, release as osRelease } from "node:os";
 import { delimiter, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -67,10 +67,29 @@ function candidateNames(base, plat) {
   return [base];
 }
 
+function isRegularFile(path) {
+  try {
+    return statSync(path).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function isExecutableFile(path, plat) {
+  if (!isRegularFile(path)) return false;
+  if (plat === "win32") return true;
+  try {
+    accessSync(path, constants.X_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function findInDir(dir, base, plat) {
   for (const name of candidateNames(base, plat)) {
     const p = join(dir, name);
-    if (existsSync(p)) return p;
+    if (isExecutableFile(p, plat)) return p;
   }
   return null;
 }
@@ -149,7 +168,7 @@ export function resolve(ns, args, opts = {}) {
       const wsBase = join(root, entry.workspace);
       const wsCandidates = ns === "tab" && plat === "win32" ? [`${wsBase}.exe`, wsBase] : [wsBase];
       for (const cand of wsCandidates) {
-        if (existsSync(cand)) {
+        if (isRegularFile(cand)) {
           if (ns === "tab") return { command: cand, args, source: "workspace" };
           // Node bundles: invoke through the current Node so no shebang wiring
           // is required inside a checkout with nothing globally installed.

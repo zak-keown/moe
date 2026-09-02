@@ -67,6 +67,40 @@ describe("resolve", () => {
     expect(r.command).toBe(join(pathDir, "moe-mint"));
   });
 
+  it("ignores a directory-shaped sibling and resolves the executable on PATH", () => {
+    const self = mktree();
+    const pathDir = mktree();
+    mkdirSync(join(self, "moe-crew"));
+    makeExec(pathDir, "moe-crew");
+
+    const r = resolve("crew", [], {
+      self,
+      root: null,
+      env: { PATH: pathDir },
+      platform: "linux",
+    });
+
+    expect(r.source).toBe("path");
+    expect(r.command).toBe(join(pathDir, "moe-crew"));
+  });
+
+  it("ignores a non-executable sibling on POSIX", () => {
+    const self = mktree();
+    const pathDir = mktree();
+    writeFileSync(join(self, "moe-mint"), "not executable\n");
+    makeExec(pathDir, "moe-mint");
+
+    const r = resolve("mint", [], {
+      self,
+      root: null,
+      env: { PATH: pathDir },
+      platform: "linux",
+    });
+
+    expect(r.source).toBe("path");
+    expect(r.command).toBe(join(pathDir, "moe-mint"));
+  });
+
   it("falls through to the workspace bundle when sibling and PATH miss", () => {
     const self = mktree();
     const root = mktree();
@@ -82,6 +116,22 @@ describe("resolve", () => {
     expect(r.source).toBe("workspace");
     expect(r.command).toBe(process.execPath);
     expect(r.args).toEqual([join(root, "packages/crew/dist/moe-crew.cjs"), "list"]);
+  });
+
+  it("does not pass a directory-shaped workspace bundle to Node", () => {
+    const self = mktree();
+    const root = mktree();
+    mkdirSync(join(root, "packages/crew/dist/moe-crew.cjs"), { recursive: true });
+    writeFileSync(join(root, "pnpm-workspace.yaml"), "");
+
+    const r = resolve("crew", [], {
+      self,
+      root,
+      env: { PATH: "" },
+      platform: "linux",
+    });
+
+    expect(r.missing).toBe(true);
   });
 
   it("proof workspace fallback goes through `uv run --project py/proof`", () => {
