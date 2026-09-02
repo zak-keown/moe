@@ -220,6 +220,11 @@ function attachChromeProcess({ state, chromeHttp, getTabs, newTab }) {
     });
 
     // Poll until Chrome's debug port is accepting connections (or 15s timeout).
+    // Scoped to the pid we just spawned (expectedPid) — without it, a foreign
+    // process already listening on a caller-specified port (--port /
+    // CHROME_WS_PORT) satisfies the probe even though OUR spawn failed to
+    // bind, and we'd report success while driving someone else's browser
+    // (CR-057).
     const POLL_INTERVAL_MS = 200;
     const POLL_TIMEOUT_MS = 15000;
     const deadline = Date.now() + POLL_TIMEOUT_MS;
@@ -227,13 +232,13 @@ function attachChromeProcess({ state, chromeHttp, getTabs, newTab }) {
       if (spawnError) {
         throw new Error(`Failed to launch Chrome (${chromePath}): ${spawnError.message}`);
       }
-      if (await isPortAlive(CHROME_DEBUG_HOST, chosenPort)) break;
+      if (await isPortAlive(CHROME_DEBUG_HOST, chosenPort, proc.pid)) break;
       await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
     }
     if (spawnError) {
       throw new Error(`Failed to launch Chrome (${chromePath}): ${spawnError.message}`);
     }
-    if (!(await isPortAlive(CHROME_DEBUG_HOST, chosenPort))) {
+    if (!(await isPortAlive(CHROME_DEBUG_HOST, chosenPort, proc.pid))) {
       state.chromeProcess = null;
       throw new Error(`Chrome did not become ready on port ${chosenPort} within ${POLL_TIMEOUT_MS}ms`);
     }
