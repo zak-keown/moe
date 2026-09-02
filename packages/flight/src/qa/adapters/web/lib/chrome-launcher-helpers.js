@@ -59,7 +59,21 @@ function getChromeProfileDir(profileName) {
   // segment, creating a `./null/` directory next to the spawn cwd
   // populated with Chrome state. See PRI-1639.
   const name = profileName ?? 'moe-flight';
-  return path.join(getXdgCacheHome(), 'moe', 'browser-profiles', name);
+  // CR-030: `name` can be a traversing or slash-bearing string reaching all
+  // the way from an LLM-generated story-card id (fanout's generator
+  // validates only via parseStoryCard, which requires just a non-empty id)
+  // through makeRunId's `${cardId}_...` and into `moe-flight-run-${runId}`.
+  // `setProfileName`'s `/^[a-zA-Z0-9_-]+$/` guard lives on a path
+  // startChrome() never calls, so this is the one choke point every
+  // consumer of a profile dir goes through — startChrome's user-data-dir
+  // AND closeWebAdapter's `rm(dir, { recursive: true, force: true })`.
+  // Sanitize (mirrors src/qa/util/id.ts's sanitizeProfileSegment, which
+  // this vendored CommonJS file can't `require()` — it stays dependency-free
+  // by convention, see pick-free-port.js's divergence note) rather than
+  // throw, so a bad name still gets an isolated, harmless directory instead
+  // of escaping browser-profiles/ or colliding with another run's dir.
+  const safeName = /^[a-zA-Z0-9_-]+$/.test(name) ? name : name.replace(/[^a-zA-Z0-9_-]/g, '-');
+  return path.join(getXdgCacheHome(), 'moe', 'browser-profiles', safeName);
 }
 
 // --- Per-profile meta.json ---
