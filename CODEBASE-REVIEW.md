@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 55
+  fixed: 56
   stale: 14
   skipped: 7
   deferred: 1
-  open: 516
+  open: 515
 ---
 
 # Codebase Review — moe
@@ -1453,6 +1453,10 @@ Fix: resolve the candidate (`path.resolve`) and require it to stay under the ses
 **Verification:** confirmed
 **Verification evidence:** resolveScreenshotPath returns any absolute filename verbatim and otherwise does a plain path.join with no resolve or containment check, and screenshot() calls fs.writeFileSync with no existence check; the SCREENSHOT dispatch in index.ts only checks that payload.path is a non-empty string before forwarding it. Reproduced: joining the session dir with ../../escaped.png resolves above the session tree and absolute paths pass through unchanged.
 
+**Disposition:** fixed
+**Commit:** `07a8ec3`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-066: WebSocket connect() never settles when the handshake is answered with anything but 101
 
 **File:** `packages/glass/skills/browsing/lib/websocket-client.js`
