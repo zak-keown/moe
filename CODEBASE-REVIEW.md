@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 61
+  fixed: 62
   stale: 16
   skipped: 7
   deferred: 1
-  open: 508
+  open: 507
 ---
 
 # Codebase Review — moe
@@ -476,6 +476,10 @@ Fix: iterate to a fixed point (`do { ... } while (safe.includes(PASTE_START) || 
 **Verification:** confirmed
 **Verification evidence:** Reproduced with node -e copying the pasteText sanitiser and the finding payload: the wire bytes contain PASTE_START, a live synthesized PASTE_END, then /quit and a carriage return, then the real trailing PASTE_END. The END-then-START single-pass order lets deleting PASTE_START weld a fresh ESC[201~ that is never rescanned, defeating the docstring guarantee that a hostile prompt cannot inject its own paste boundaries.
 
+**Disposition:** fixed
+**Commit:** `ab61faf`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-018: Launched-but-unregistered derive worker cannot be stopped by any moe-crew command
 **File:** `packages/crew/src/commands/stop.ts`
 **Anchor:** `cmdStop`'s leading `resolveWorker(ctx, worker)`
