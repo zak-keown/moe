@@ -82,8 +82,10 @@ export class PrettyRenderer implements StreamRenderer {
         this.renderToolResult(event);
         return;
       case "event":
-        if (event.name === "run_error") this.renderRunError(event);
-        else this.renderEventMeta(event);
+        this.renderEventMeta(event);
+        return;
+      case "run_error":
+        this.renderRunError(event);
         return;
       case "run_end":
         this.renderRunEnd(event);
