@@ -112,10 +112,13 @@ export function resultRoutes(resultsDir: string, registry?: ActiveRunRegistry) {
   //
   // Gating rules:
   //   - If the run is currently active (ActiveRunRegistry), we skip the
-  //     manifest check and serve any file that exists under the run dir.
-  //     result.json hasn't been written yet, but screenshots + artifacts +
-  //     run.jsonl are being produced live — the transcript view (and
-  //     anything else watching a run) needs them.
+  //     manifest check but still only serve the transcript-asset subtrees
+  //     the live view actually needs (see LIVE_ALLOWED_PATH). result.json
+  //     hasn't been written yet, but screenshots + artifacts + run.jsonl
+  //     are being produced live. Everything else under the run dir —
+  //     including inputs/context/, which snapshotRunInputs populates with
+  //     the project's credential fixtures before the run starts — stays
+  //     hidden for the run's whole live window.
   //   - If the run is complete, the manifest is authoritative: the file
   //     must be listed in result.json. See docs/format.md.
   router.get("/:runId/file/:path{.+}", (c) => {
@@ -133,7 +136,11 @@ export function resultRoutes(resultsDir: string, registry?: ActiveRunRegistry) {
     }
 
     const live = registry?.has(runId) ?? false;
-    if (!live) {
+    if (live) {
+      if (!isLiveAllowedPath(relPath)) {
+        return c.json({ error: "not found" }, 404);
+      }
+    } else {
       const manifestPath = join(runDir, "result.json");
       if (!existsSync(manifestPath)) {
         return c.json({ error: "run not found" }, 404);
@@ -161,6 +168,18 @@ export function resultRoutes(resultsDir: string, registry?: ActiveRunRegistry) {
   });
 
   return router;
+}
+
+// Subtrees the live-run bypass may serve before result.json exists — exactly
+// what the transcript view needs while a run is in flight. Deliberately an
+// allow-list rather than a deny-list on inputs/: it also keeps out any other
+// agent-written scratch content under the run dir, not just credentials.
+const LIVE_ALLOWED_PREFIXES = ["screenshots/", "frames/", "captures/", "artifacts/"];
+const LIVE_ALLOWED_EXACT = new Set(["run.jsonl"]);
+
+function isLiveAllowedPath(relPath: string): boolean {
+  if (LIVE_ALLOWED_EXACT.has(relPath)) return true;
+  return LIVE_ALLOWED_PREFIXES.some((prefix) => relPath.startsWith(prefix));
 }
 
 // Extracts every path reference from a parsed result.json. The set returned

@@ -255,6 +255,43 @@ describe("Results API", () => {
     rmSync(liveDir, { recursive: true, force: true });
   });
 
+  test("GET /api/results/:runId/file/:path refuses inputs/context during a live run", async () => {
+    // snapshotRunInputs copies the whole project context tree (which can
+    // hold credential fixtures) into <runDir>/inputs/context/ before the
+    // run starts. The live-run bypass must not serve it, unlike the
+    // transcript assets (screenshots/, run.jsonl) it exists for.
+    const liveDir = mkdtempSync(join(tmpdir(), "moe-flight-live-creds-"));
+    mkdirSync(flightPath(liveDir, ".moe-flight", "stories"), { recursive: true });
+    const resultsDir = flightPath(liveDir, ".moe-flight", "results");
+    const runId = "live-002_20260422T000000Z_bbbb";
+    const runDir = join(resultsDir, runId);
+    mkdirSync(join(runDir, "inputs", "context", "alice"), { recursive: true });
+    writeFileSync(
+      join(runDir, "inputs", "context", "alice", "credentials.yaml"),
+      "password: hunter2\n",
+    );
+
+    const registry = new ActiveRunRegistry();
+    registry.register({
+      id: runId,
+      cardId: "live-002",
+      title: "live",
+      target: "http://localhost:3000",
+      model: "claude-sonnet-4-6",
+      startedAt: Date.now(),
+      status: "running",
+    });
+
+    const liveApp = makeAppWithRegistry(liveDir, registry);
+
+    const res = await liveApp.request(
+      `/api/results/${runId}/file/inputs/context/alice/credentials.yaml`,
+    );
+    expect(res.status).not.toBe(200);
+
+    rmSync(liveDir, { recursive: true, force: true });
+  });
+
   test("GET /api/results/:runId/file/:path still enforces manifest on completed runs", async () => {
     // Existing test-001 has result.json with evidence.screenshots=[] — no
     // screenshot files are listed. A request for a screenshot file should
