@@ -1,6 +1,6 @@
 import { readRawLines } from "../core/event-log.js";
 import { eventsPath } from "../core/paths.js";
-import { removeWorker } from "../core/worker-store.js";
+import { readHarnessMarker, removeOrphan, removeWorker } from "../core/worker-store.js";
 import { parseEvent } from "../events.js";
 import type { CommandContext, CommandResult } from "./context.js";
 import { resolveWorker } from "./context.js";
@@ -34,7 +34,27 @@ export async function cmdStop(
   opts: StopOpts = {},
 ): Promise<CommandResult> {
   const resolved = resolveWorker(ctx, worker);
-  if ("code" in resolved) return resolved;
+  if ("code" in resolved) {
+    // A derive worker (codex/pi) registers its meta only on its first
+    // prompt, so resolveWorker fails during that whole pre-registration
+    // window even though `list` shows the worker (via its .harness sidecar)
+    // and it has a live tmux session. `prune` deliberately leaves it alone
+    // too (it might just be starting up), so without this fallback there is
+    // no moe-crew command that can stop it — only a manual `tmux
+    // kill-session` plus manual cleanup of the staged credentials in its
+    // per-worker home. Treat "harness marker + live session, no meta" as
+    // enough to identify and tear down an unregistered worker by name.
+    const harness = readHarnessMarker(ctx.workerDir, worker);
+    if (harness !== null && (await ctx.tmux.hasSession(worker))) {
+      await ctx.tmux.killSession(worker);
+      removeOrphan(ctx.workerDir, worker);
+      return {
+        stdout: `Worker ${worker} (unregistered — no session id yet) stopped. Shim removed.`,
+        code: 0,
+      };
+    }
+    return resolved;
+  }
   const { sid, meta } = resolved;
   const tmuxName = meta.tmux_name;
 
