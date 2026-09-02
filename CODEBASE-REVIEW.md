@@ -22,9 +22,9 @@ status: issues_found
 dispositions:
   fixed: 5
   stale: 3
-  skipped: 0
+  skipped: 1
   deferred: 0
-  open: 585
+  open: 584
 ---
 
 # Codebase Review — moe
@@ -129,6 +129,10 @@ Fix: resolve the `global_cli` path in `check_prerequisites` and fail there, befo
 **Verification:** confirmed
 **Verification evidence:** check_prerequisites skips any REPOINTS entry whose kind is not copy_dist, so the global_cli check for moe-memory never runs before the loop; it first executes inside apply_repoint, called from main per-plugin after shutil.rmtree and copytree have already replaced prior plugins, and fail() exits immediately with no rollback and no except around the loop. Traced by reading; main() was not executed because it stages into the live ~/.moe.
 
+**Disposition:** skipped
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Cannot locate the cited code anywhere: .claude/skills/moe-dogfood/ does not exist on disk, and stage.py / check_prerequisites / apply_repoint / global_cli appear nowhere in git history on any local branch (checked git ls-files, find across the tree, and git log --all -S for each identifier — the only hit is this report's own text). No mint/*.yaml source generates a moe-dogfood output either. This appears to describe a file that was never part of this repository's tracked or generated content; code has drifted past recognition (or never existed here), so no fix is applicable.
 ### CR-005: The provenance self-test cannot fail, because the flag it passes makes the checker exit before reading the fixture
 **File:** `.gitlab-ci.yml`
 **Anchor:** job `provenance`, second script entry, the echo message "self-test failed: the red fixture passed"
