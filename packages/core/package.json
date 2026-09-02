@@ -1,6 +1,6 @@
 {
   "name": "@bubstack/moe-core",
-  "version": "0.1.2-rc.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring, and the stop-hook. Marketplace-published as the `moe` plugin.",
   "license": "MIT AND Apache-2.0",
