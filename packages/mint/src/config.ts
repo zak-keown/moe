@@ -291,6 +291,7 @@ export interface ImportedWorkRef {
 }
 
 export interface MintConfig {
+  source: string
   name: string
   version: string
   description: string
@@ -569,6 +570,7 @@ export function loadConfig(root: string, configFile = 'moe-mint.yaml', source = 
   validateImportedWorks(raw.imported_works, source)
 
   return {
+    source,
     name: raw.name,
     version: raw.version,
     description: raw.description,

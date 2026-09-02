@@ -7,8 +7,10 @@ export function renderMatrix(emissions?: Partial<Record<TargetId, AdapterEmissio
   const separator = '|---|---|'
   const rows = adapters.map((adapter) => {
     const emission = emissions?.[adapter.name as TargetId]
-    const capabilities = emission === undefined
+    const capabilities = emissions === undefined
       ? 'generate a plugin to inspect'
+      : emission === undefined
+        ? 'omitted'
       : emission.emittedCapabilities.join(', ') || 'none'
     return `| ${adapter.name} | ${capabilities} |`
   })
