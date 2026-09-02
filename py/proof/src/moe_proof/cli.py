@@ -43,7 +43,15 @@ def docs():
 
 
 def slugify(text):
-    return re.sub(r"[^a-zA-Z0-9._-]+", "-", text).strip("-")
+    slug = re.sub(r"[^a-zA-Z0-9._-]+", "-", text).strip("-")
+    # A name built only from characters outside [a-zA-Z0-9._-] (CJK, emoji,
+    # pure punctuation) reduces to "", and "." / ".." survive the filter
+    # unchanged. Any of those, joined onto a directory path, resolves to
+    # that directory itself or its parent instead of a new child — the
+    # caller's containment guarantees depend on slugify never doing that.
+    if slug in ("", ".", ".."):
+        slug = hashlib.sha256(text.encode()).hexdigest()[:12]
+    return slug
 
 
 def load_yaml(path):
