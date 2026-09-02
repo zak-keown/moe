@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Work from base SHA `8bd3d7432fdf57cc5f82a353fd33109ea81ae317`; record a new SHA in any delegated review because findings are tree-scoped.
+- Work from execution base SHA `9103fa504751937f2ee8f1cf1b67bc61d1b7e4ad`; record a new SHA in any delegated review because findings are tree-scoped.
 - Never hand-edit `plugins/`. Regenerate it with `pnpm mint` after source and Mint changes.
 - Keep `moe-platform.yaml` free of plugin versions, descriptions, authors, licenses, repositories, homepages, keywords, entry points, and dependency data.
 - Keep plugin ID (`moe-memory`) distinct from npm identity (`@bubstack/moe-memory`).
@@ -76,7 +76,7 @@ None. The approved design fixes the registry authority, canonical IDs, target pr
 **Interfaces:**
 
 - Consumes: repository root; raw `moe-platform.yaml`; the existing `ADAPTER_NAMES` tuple currently declared in `packages/mint/src/config.ts`.
-- Produces: `TargetId`, `CapabilityId`, `OperatingSystemId`, `TargetIntent`, `PlatformRegistryV1`, `ResolvedPlatform`, `MintDiagnostic`, `MintError`, `loadPlatformRegistry(repoRoot)`.
+- Produces: `TargetId`, `CapabilityId`, `OperatingSystemId`, `TargetIntent`, `PlatformRegistryV1`, `MintDiagnostic`, `MintError`, `loadPlatformRegistry(repoRoot): Promise<PlatformRegistryV1>`.
 
 - [ ] Write the failing schema tests, including valid loading and rejection of unknown target IDs, duplicate plugin IDs/paths, unknown profile members, absolute paths, `..` traversal, unsupported OS IDs, and forbidden plugin metadata at registry scope.
 
@@ -162,7 +162,7 @@ git commit -m "feat(mint): add platform registry schema"
 **Interfaces:**
 
 - Consumes: `PlatformRegistryV1`; package-local YAML; source package manifests; existing `harnesses.<id>` settings.
-- Produces: typed `DistributionConfig`, `ArtifactPayload`, `PluginTargetIntent`, `ImportedWorkRef`, `ResolvedPlugin`; migration validation between `targets` and `harnesses.exclude`.
+- Produces: typed `DistributionConfig`, `ArtifactPayload`, `PluginTargetIntent`, `ImportedWorkRef`, `ResolvedPlugin`, `ResolvedPlatform`; `resolvePlugin(...)`; `resolvePlatform(repoRoot): Promise<ResolvedPlatform>`; migration validation between `targets` and `harnesses.exclude`.
 
 - [ ] Add failing tests for the typed package-local fields and every negative policy: unscoped/invalid npm names, glob or traversal payloads, reserved destinations, missing required booleans, unknown targets/capabilities/OS IDs, duplicate imported work names, omitted targets with settings, Copilot without Claude, and source `os`/`cpu` contradictions.
 
@@ -351,6 +351,7 @@ git commit -m "feat(mint): validate emitted capabilities"
 - Modify: `packages/mint/test/docs-emit.test.ts`
 - Modify: `packages/mint/test/generate.test.ts`
 - Modify: `.github/workflows/publish.yml`
+- Regenerate directory: `plugins/`
 
 **Interfaces:**
 
@@ -360,7 +361,7 @@ git commit -m "feat(mint): validate emitted capabilities"
 ```ts
 export interface PluginProjectionRecord {
   plugin: ResolvedPlugin;
-  emissions: Readonly<Record<TargetId, AdapterEmission>>;
+  emissions: Readonly<Partial<Record<TargetId, AdapterEmission>>>;
 }
 
 export interface PublishMatrixEntry {
@@ -381,12 +382,27 @@ export function writeRegistryProjections(
   artifacts: readonly PluginProjectionRecord[],
   destinations: ProjectionDestinations,
 ): Promise<void>;
+
+export function renderMarketplace(
+  platform: ResolvedPlatform,
+  artifacts: readonly PluginProjectionRecord[],
+): string;
+
+export function renderPublicCatalog(
+  platform: ResolvedPlatform,
+  artifacts: readonly PluginProjectionRecord[],
+): string;
+
+export function resolvePublishMatrix(
+  platform: ResolvedPlatform,
+  artifacts: readonly PluginProjectionRecord[],
+): readonly PublishMatrixEntry[];
 ```
 
 - [ ] Add failing golden tests for deterministic ordering and one-to-one agreement among registry plugins, real Mint configs, marketplace entries, generated trees, public catalog rows, and the exact `PublishMatrixEntry` fields. Assert that no hard-coded six-plugin list remains in the renderer or `scripts/mint-plugins.mjs`, and reject a projection destination outside its exact repository path.
 
 ```ts
-const matrix = resolvePublishMatrix(platform);
+const matrix = resolvePublishMatrix(platform, artifacts);
 expect(matrix).toHaveLength(6);
 expect(new Set(matrix.map((entry) => entry.plugin))).toEqual(
   new Set(platform.plugins.map((plugin) => plugin.id)),
@@ -405,7 +421,7 @@ expect(new Set(matrix.map((entry) => entry.plugin))).toEqual(
 - [ ] Commit generated projections with their authorities:
 
 ```sh
-git add packages/mint/src/platform/projections.ts packages/mint/test/platform-projections.test.ts packages/mint/test/publish-matrix.test.ts packages/mint/src/cli.ts packages/mint/test/cli.test.ts packages/mint/src/docs-emit.ts packages/mint/test/docs-emit.test.ts packages/mint/test/generate.test.ts scripts/mint-plugins.mjs .github/workflows/publish.yml moe-platform.yaml packages/core/mint packages/backstory/mint packages/memory/mint packages/glass/mint packages/crew/mint packages/statusline/mint .claude-plugin/marketplace.json docs/moe/generated/plugin-catalog.md plugins
+git add packages/mint/src/platform/projections.ts packages/mint/test/platform-projections.test.ts packages/mint/test/publish-matrix.test.ts packages/mint/src/cli.ts packages/mint/test/cli.test.ts packages/mint/src/docs-emit.ts packages/mint/test/docs-emit.test.ts packages/mint/test/generate.test.ts scripts/mint-plugins.mjs .github/workflows/publish.yml .claude-plugin/marketplace.json docs/moe/generated/plugin-catalog.md plugins
 git commit -m "feat(mint): generate registry projections"
 ```
 
@@ -416,18 +432,21 @@ git commit -m "feat(mint): generate registry projections"
 - Modify: `turbo.json`
 - Modify: `package.json`
 - Modify: `packages/mint/package.json`
+- Modify: `packages/mint/test/platform-projections.test.ts`
 - Modify: `docs/moe/specs/2026-09-02-moe-artifact-registry-foundation-design.md`
+- Regenerate if changed: `.claude-plugin/marketplace.json`
+- Regenerate if changed: `docs/moe/generated/plugin-catalog.md`
 - Modify if generated: `plugins/**`
 
 **Interfaces:**
 
 - Consumes: all Plan 1 source, configuration, and generated-projection inputs.
-- Produces: correct Turbo invalidation for registry/config/adapter changes and an approved design status.
+- Produces: correct Turbo invalidation for registry/config/adapter changes and an implementation-progress design status.
 
 - [ ] Add a failing cache/input/gate assertion to `packages/mint/test/platform-projections.test.ts` that reads `turbo.json` and root `package.json`: require `moe-platform.yaml`, package Mint YAML, source package manifests, adapter source, and the generation script as Mint inputs, and require `mint:check` to diff `plugins/`, `.claude-plugin/marketplace.json`, and `docs/moe/generated/plugin-catalog.md`. Do not yet claim Plan 2 runtime output or Plan 3 legal/bundle inputs are complete.
 - [ ] Run the test; expect it to fail on the current narrow `//#mint:generate` inputs.
 - [ ] Expand the Mint task inputs and outputs minimally for Plan 1. Preserve build dependency on `@bubstack/moe-mint#build`; Plans 2 and 3 will add runtime/legal/bundle coverage.
-- [ ] Change the design status to `Approved for implementation planning; implementation has not started.` and remove no design content.
+- [ ] Change the design status to `Implementation in progress; platform-registry plan complete.` and remove no design content.
 - [ ] Run the complete Plan 1 gate:
 
 ```sh
