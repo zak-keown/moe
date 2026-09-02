@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 13
+  fixed: 14
   stale: 7
   skipped: 1
   deferred: 0
-  open: 572
+  open: 571
 ---
 
 # Codebase Review — moe
@@ -182,6 +182,10 @@ an arity-tolerant sibling and normalise `3.7c` to `3.7.0` before comparing. Sinc
 **Verification:** confirmed
 **Verification evidence:** Reproduced live: the host has tmux 3.7c, but importing bin/lib/probes.mjs shows extractVersion returns undefined for tmux 3.7c, 3.4, 3.3a, next-3.5 and 2.8 because the shared regex requires three numeric parts and no tmux release has one; probeTmux() therefore returns ok:false with the install hint despite tmux being present, and no fallback branch or pinning test guards this path.
 
+**Disposition:** fixed
+**Commit:** `3051a7e`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-007: Plugin roster is duplicated into a third list that no gate reconciles
 **File:** `config/distribution.mjs`
 **Anchor:** `MARKETPLACE.plugins`
