@@ -84,6 +84,98 @@ class TestAggregateStories(unittest.TestCase):
         finally:
             Path(tmp).unlink()
 
+    def test_dedup_does_not_merge_same_title_across_different_epics(self):
+        """Two distinct requirements that happen to share a short title must
+        NOT collapse into one just because dedup keys on title alone — the
+        losing epic's requirement (and its citation) must not vanish."""
+        stories = [
+            {
+                "title": "Validate input",
+                "epic_theme": "Auth",
+                "as_a": "user", "i_want": "my password checked for strength",
+                "so_that": "my account is secure",
+                "acceptance_criteria": ["AC-1: reject weak passwords"],
+                "sources": [{"file": "domain-users.md", "lines": "12-20"}],
+            },
+            {
+                "title": "Validate input",
+                "epic_theme": "Billing",
+                "as_a": "user", "i_want": "my card number Luhn-checked",
+                "so_that": "typos are caught before charging",
+                "acceptance_criteria": ["AC-1: reject invalid card numbers"],
+                "sources": [{"file": "domain-billing.md", "lines": "30-41"}],
+            },
+        ]
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+            json.dump(stories, f)
+            tmp = f.name
+        try:
+            result = self._run(tmp)
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            output = self._read_all()
+            # Both requirements must survive as distinct stories.
+            self.assertEqual(output.count("## STORY-"), 2)
+            self.assertIn("domain-users.md", output)
+            self.assertIn("domain-billing.md", output)
+            # The Billing story must not be misattributed to the Auth epic.
+            billing_section = output[output.index("domain-billing.md") - 2000:]
+            self.assertIn("card", billing_section.lower())
+        finally:
+            Path(tmp).unlink()
+
+    def test_dedup_does_not_merge_same_title_with_different_bodies(self):
+        """Same title AND same epic, but different i_want/AC, is still a
+        title collision between two different requirements, not a duplicate."""
+        stories = [
+            {
+                "title": "Validate input",
+                "epic_theme": "Auth",
+                "as_a": "user", "i_want": "password strength checked",
+                "so_that": "accounts are secure",
+                "acceptance_criteria": ["AC-1: reject weak passwords"],
+                "sources": [{"file": "a.md", "lines": "1-5"}],
+            },
+            {
+                "title": "Validate input",
+                "epic_theme": "Auth",
+                "as_a": "user", "i_want": "email format checked",
+                "so_that": "notifications are deliverable",
+                "acceptance_criteria": ["AC-1: reject malformed email"],
+                "sources": [{"file": "b.md", "lines": "10-15"}],
+            },
+        ]
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+            json.dump(stories, f)
+            tmp = f.name
+        try:
+            result = self._run(tmp)
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            output = self._read_all()
+            self.assertEqual(output.count("## STORY-"), 2)
+            self.assertIn("a.md", output)
+            self.assertIn("b.md", output)
+        finally:
+            Path(tmp).unlink()
+
+    def test_empty_titles_are_never_merged(self):
+        """format_epic_file defends against a missing title with 'Untitled',
+        but dedup must not treat that shared fallback as a match key."""
+        stories = [
+            {"title": "", "epic_theme": "Misc", "sources": [{"file": "a.md"}]},
+            {"title": "", "epic_theme": "Misc", "sources": [{"file": "b.md"}]},
+            {"title": "", "epic_theme": "Misc", "sources": [{"file": "c.md"}]},
+        ]
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+            json.dump(stories, f)
+            tmp = f.name
+        try:
+            result = self._run(tmp)
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            output = self._read_all()
+            self.assertEqual(output.count("## STORY-"), 3)
+        finally:
+            Path(tmp).unlink()
+
     def test_epics_grouped_into_separate_files(self):
         """Stories with different epic_themes get separate files."""
         result = self._run(str(FIXTURES / "extracted-stories-sample.json"))
