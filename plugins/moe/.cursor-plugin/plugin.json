@@ -2,7 +2,7 @@
   "name": "moe",
   "displayName": "moe",
   "description": "The Moe skill library — brainstorming, planning, TDD, systematic debugging, code review, worktrees, parallel dispatch, plugin authoring, and more.",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "author": {
     "name": "Zak Keown",
     "email": "zak.keown@outlook.com"
