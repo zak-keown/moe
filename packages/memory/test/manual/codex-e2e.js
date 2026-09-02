@@ -80,6 +80,30 @@ function sourceCodexHome(targetCodexHome) {
   return path.join(os.homedir(), '.codex');
 }
 
+/**
+ * Create a fresh temp root, run `fn(root)`, and guarantee `root` is removed
+ * afterward — on both the success and the failure path (CR-077).
+ *
+ * `main()` used to `mkdtempSync` this tree, `copyCodexAuth` into it, and
+ * never remove it: no try/finally, no cleanup on the throw path, and the
+ * success path printed the retained path as though keeping it were the
+ * point. Every run left a permanent second copy of the live Codex credential
+ * (auth.json) outside the credential store, in a location no revocation or
+ * rotation workflow knows about.
+ *
+ * Exported so a unit test can prove the cleanup runs — including on a
+ * thrown error — without needing the real Codex CLI, tmux, or a live
+ * auth.json.
+ */
+export async function withTempRoot(prefix, fn) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  try {
+    return await fn(root);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+}
+
 function copyCodexAuth(targetCodexHome) {
   const sourceHome = sourceCodexHome(targetCodexHome);
   const authPath = path.join(sourceHome, 'auth.json');
@@ -301,81 +325,92 @@ async function main() {
   }
   run('tmux', ['-V']);
 
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'moe-memory-codex-e2e-'));
-  const codexHome = path.join(root, 'codex-home');
-  const memoryDir = path.join(root, 'moe-memory');
-  const claudeDir = path.join(root, 'claude-empty');
-  const workspace = path.join(root, 'workspace');
-  const pluginRoot = path.join(codexHome, 'plugins', 'cache', 'test', 'moe-memory', 'local');
-  fs.mkdirSync(workspace, { recursive: true });
-  fs.mkdirSync(claudeDir, { recursive: true });
-  fs.mkdirSync(memoryDir, { recursive: true });
+  // CR-077: the whole tree that copyCodexAuth writes the live Codex
+  // credential into lives and dies with this call. It is removed on both
+  // the success and the failure path — see withTempRoot.
+  await withTempRoot('moe-memory-codex-e2e-', async root => {
+    const codexHome = path.join(root, 'codex-home');
+    const memoryDir = path.join(root, 'moe-memory');
+    const claudeDir = path.join(root, 'claude-empty');
+    const workspace = path.join(root, 'workspace');
+    const pluginRoot = path.join(codexHome, 'plugins', 'cache', 'test', 'moe-memory', 'local');
+    fs.mkdirSync(workspace, { recursive: true });
+    fs.mkdirSync(claudeDir, { recursive: true });
+    fs.mkdirSync(memoryDir, { recursive: true });
 
-  copyPlugin(pluginRoot);
-  copyCodexAuth(codexHome);
-  writeBaseConfig(codexHome);
+    copyPlugin(pluginRoot);
+    copyCodexAuth(codexHome);
+    writeBaseConfig(codexHome);
 
-  const env = {
-    ...process.env,
-    CODEX_HOME: codexHome,
-    MOE_MEMORY_CONFIG_DIR: memoryDir,
-    CLAUDE_CONFIG_DIR: claudeDir,
-  };
+    const env = {
+      ...process.env,
+      CODEX_HOME: codexHome,
+      MOE_MEMORY_CONFIG_DIR: memoryDir,
+      CLAUDE_CONFIG_DIR: claudeDir,
+    };
 
-  const hook = await discoverPluginHook(env, workspace);
-  appendHookTrust(codexHome, hook);
+    const hook = await discoverPluginHook(env, workspace);
+    appendHookTrust(codexHome, hook);
 
-  const mcpList = run('codex', ['mcp', 'list'], { env });
-  if (!mcpList.includes('moe-memory') || !mcpList.includes('enabled')) {
-    throw new Error(`moe-memory MCP server not enabled:\n${mcpList}`);
-  }
+    const mcpList = run('codex', ['mcp', 'list'], { env });
+    if (!mcpList.includes('moe-memory') || !mcpList.includes('enabled')) {
+      throw new Error(`moe-memory MCP server not enabled:\n${mcpList}`);
+    }
 
-  const seed = await runCodexInTmux(
-    env,
-    workspace,
-    `Reply exactly MEMORY_E2E_SEED ${MARKER} and nothing else.`,
-    path.join(root, 'seed.out')
-  );
-  if (!seed.output.includes(`MEMORY_E2E_SEED ${MARKER}`)) {
-    throw new Error(`seed session did not echo marker:\n${seed.output}`);
-  }
+    const seed = await runCodexInTmux(
+      env,
+      workspace,
+      `Reply exactly MEMORY_E2E_SEED ${MARKER} and nothing else.`,
+      path.join(root, 'seed.out')
+    );
+    if (!seed.output.includes(`MEMORY_E2E_SEED ${MARKER}`)) {
+      throw new Error(`seed session did not echo marker:\n${seed.output}`);
+    }
 
-  const trigger = await runCodexInTmux(
-    env,
-    workspace,
-    'Reply exactly MEMORY_E2E_TRIGGER and nothing else.',
-    path.join(root, 'trigger.out')
-  );
-  if (!trigger.output.includes('MEMORY_E2E_TRIGGER')) {
-    throw new Error(`trigger session did not complete:\n${trigger.output}`);
-  }
+    const trigger = await runCodexInTmux(
+      env,
+      workspace,
+      'Reply exactly MEMORY_E2E_TRIGGER and nothing else.',
+      path.join(root, 'trigger.out')
+    );
+    if (!trigger.output.includes('MEMORY_E2E_TRIGGER')) {
+      throw new Error(`trigger session did not complete:\n${trigger.output}`);
+    }
 
-  const archiveRoot = path.join(memoryDir, 'conversation-archive');
-  const dbPath = path.join(memoryDir, 'conversation-index', 'db.sqlite');
-  await waitFor('archived Codex JSONLs', () => countFiles(archiveRoot, '.jsonl') >= 2);
-  await waitFor('Codex summaries', () => countFiles(archiveRoot, '-summary.txt') >= 1);
-  await waitFor('conversation index database', () => fs.existsSync(dbPath));
+    const archiveRoot = path.join(memoryDir, 'conversation-archive');
+    const dbPath = path.join(memoryDir, 'conversation-index', 'db.sqlite');
+    await waitFor('archived Codex JSONLs', () => countFiles(archiveRoot, '.jsonl') >= 2);
+    await waitFor('Codex summaries', () => countFiles(archiveRoot, '-summary.txt') >= 1);
+    await waitFor('conversation index database', () => fs.existsSync(dbPath));
 
-  const recall = await runCodexInTmux(
-    env,
-    workspace,
-    `Use the moe-memory remembering-conversations skill and its MCP search tool to search for ${MARKER}. If the search result contains MEMORY_E2E_SEED, reply exactly FOUND_MEMORY_E2E. If it does not, reply exactly NOT_FOUND_MEMORY_E2E. Do not use shell commands.`,
-    path.join(root, 'recall.out')
-  );
-  if (!recall.output.includes('FOUND_MEMORY_E2E')) {
-    throw new Error(`recall session failed:\n${recall.output}`);
-  }
-  if (!hasMcpRecall(codexHome)) {
-    throw new Error('recall succeeded without evidence of an moe-memory MCP search call in the transcript');
-  }
+    const recall = await runCodexInTmux(
+      env,
+      workspace,
+      `Use the moe-memory remembering-conversations skill and its MCP search tool to search for ${MARKER}. If the search result contains MEMORY_E2E_SEED, reply exactly FOUND_MEMORY_E2E. If it does not, reply exactly NOT_FOUND_MEMORY_E2E. Do not use shell commands.`,
+      path.join(root, 'recall.out')
+    );
+    if (!recall.output.includes('FOUND_MEMORY_E2E')) {
+      throw new Error(`recall session failed:\n${recall.output}`);
+    }
+    if (!hasMcpRecall(codexHome)) {
+      throw new Error('recall succeeded without evidence of an moe-memory MCP search call in the transcript');
+    }
 
-  console.log(`Codex E2E passed in ${root}`);
-  console.log(`Archived JSONLs: ${countFiles(archiveRoot, '.jsonl')}`);
-  console.log(`Summaries: ${countFiles(archiveRoot, '-summary.txt')}`);
-  console.log(`Database: ${dbPath}`);
+    console.log('Codex E2E passed (temp Codex home — including the copied auth.json — has been removed)');
+    console.log(`Archived JSONLs: ${countFiles(archiveRoot, '.jsonl')}`);
+    console.log(`Summaries: ${countFiles(archiveRoot, '-summary.txt')}`);
+    console.log(`Database: ${dbPath}`);
+  });
 }
 
-main().catch(error => {
-  console.error(error instanceof Error ? error.stack || error.message : String(error));
-  process.exit(1);
-});
+// Only run the E2E flow when this file is executed directly (`node
+// test/manual/codex-e2e.js`), not when it is imported — a unit test imports
+// `withTempRoot` to exercise the CR-077 cleanup fix without triggering a real
+// Codex session.
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === __filename;
+if (isMain) {
+  main().catch(error => {
+    console.error(error instanceof Error ? error.stack || error.message : String(error));
+    process.exit(1);
+  });
+}
