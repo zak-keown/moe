@@ -21,6 +21,28 @@ const SCHEMA_TARGETS: Array<{ file: string; schema: string; dialect: 'draft7' | 
   { file: 'mcp.json', schema: 'agent-plugins-mcp.schema.json', dialect: '2020' },
 ]
 
+/**
+ * Checks an in-memory generated file against the same vendored schema that
+ * `validate()` applies to files on disk. Capability derivation uses this for
+ * claims that explicitly promise an on-disk format, so it cannot drift from
+ * the Mint validation gate's schema authority.
+ */
+export function conformsToGeneratedSchema(file: string, content: string): boolean {
+  const target = SCHEMA_TARGETS.find((candidate) => candidate.file === file)
+  if (target === undefined) return false
+  let data: unknown
+  try {
+    data = JSON.parse(content)
+  } catch {
+    return false
+  }
+  const schema = JSON.parse(readFileSync(join(SCHEMA_DIR, target.schema), 'utf8'))
+  const ajv = target.dialect === '2020'
+    ? new Ajv2020({ strict: false, allErrors: true, logger: false })
+    : new Ajv({ strict: false, allErrors: true, logger: false })
+  return ajv.compile(schema)(data) === true
+}
+
 export interface ValidateResult {
   drift: DriftReport
   schemaErrors: string[]

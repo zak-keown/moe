@@ -123,6 +123,16 @@ describe('agent-plugins-1.0 mcp server translation', () => {
     expect(mcp.mcpServers.demo).toBeUndefined()
     expect(result.limitations.map((limitation) => limitation.message)).toEqual(['mcp server "demo" could not be translated to Agent Plugins format; skipped'])
   })
+
+  it('does not claim MCP registration for emitted MCP data that violates the Agent Plugins schema', () => {
+    for (const server of [
+      { command: 'node', args: ['ok', 1] },
+      { command: 'node', env: { OK: 'yes', BAD: 1 } },
+      { url: 'https://example.com/mcp', headers: { Authorization: 1 } },
+    ]) {
+      expect(agentPlugins.emit(mcpFixtureModel({ demo: server })).emittedCapabilities).toEqual(['format-conformance'])
+    }
+  })
 })
 
 describe('agent-plugins-1.0 name gate', () => {
@@ -138,6 +148,17 @@ describe('agent-plugins-1.0 name gate', () => {
     expect(result.limitations.map((limitation) => limitation.message)).toEqual([
       'plugin name "bad--name" is not valid under the Agent Plugins 1.0 spec; skipping agent-plugins-1.0 output',
     ])
+  })
+
+  it('does not claim format conformance for a name longer than the schema maximum', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mint-ap-long-name-'))
+    const longName = `plugin-${'a'.repeat(60)}`
+    writeFileSync(
+      join(dir, 'moe-mint.yaml'),
+      withV1Policy(`name: ${longName}\nversion: 1.0.0\ndescription: long name fixture\nbootstrap: none\n`),
+    )
+    const result = agentPlugins.emit(buildModel(dir))
+    expect(result.emittedCapabilities).not.toContain('format-conformance')
   })
 })
 
