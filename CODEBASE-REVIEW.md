@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 43
+  fixed: 44
   stale: 14
   skipped: 6
   deferred: 1
-  open: 529
+  open: 528
 ---
 
 # Codebase Review — moe
@@ -1357,6 +1357,10 @@ Fix: have `resolveCenter` return `found: false` (or a distinct `zeroRect: true`)
 **Verification:** confirmed
 **Verification evidence:** Reproduced by stubbing Runtime.evaluate to return the zero-rect result a hidden element produces; resolveCenter never checks rect dimensions so it does not throw, the click() try block dispatches real mousePressed and mouseReleased at (0,0) and reports success, and the el.click() fallback in the catch branch is never reached. getElementSelector deliberately returns the first match even when every match has a zero rect.
 
+**Disposition:** fixed
+**Commit:** `3cdeeaa`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-063: The permission shim calls a binding it never checks for, breaking every API it wraps
 
 **File:** `packages/glass/skills/browsing/lib/page-scripts/permission-shim.js`
