@@ -1,12 +1,39 @@
+//go:build darwin || linux
+
+// This file exercises extractEmbedded/devTargets, which loader.go defines
+// only under darwin || linux (loader_unsupported.go covers everything else).
+// Without this tag, `go vet`/`go build` for any other GOOS fails with
+// "undefined: devTargets" — the exact failure a cross-platform CI matrix
+// would hit (CR-082).
 package tab
 
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
+	"unsafe"
 
 	"github.com/ebitengine/purego"
 )
+
+// CR-082: `go vet` flags cstr's pointer arithmetic ("possible misuse of
+// unsafe.Pointer") on the current implementation — one of the two checks the
+// review cited as evidence this binding is exercised by nothing. Pins the
+// actual C-string-reading behavior so the vet-motivated rewrite can't
+// silently change it.
+func TestCstr(t *testing.T) {
+	if got := cstr(0); got != "" {
+		t.Fatalf("cstr(0) = %q, want empty", got)
+	}
+	buf := append([]byte("hello, cstr"), 0)
+	p := uintptr(unsafe.Pointer(&buf[0]))
+	got := cstr(p)
+	runtime.KeepAlive(buf)
+	if got != "hello, cstr" {
+		t.Fatalf("cstr = %q, want %q", got, "hello, cstr")
+	}
+}
 
 // Feed the dev dylib's bytes through the embedded extract+dlopen path and confirm a
 // real symbol resolves — the same mechanics the published moe-tab-go module relies on.
