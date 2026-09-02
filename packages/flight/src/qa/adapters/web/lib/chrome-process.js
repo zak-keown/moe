@@ -89,6 +89,7 @@ function attachChromeProcess({ state, chromeHttp, getTabs, newTab, closeBridge }
       if (meta && meta.port) {
         if (await isPortAlive(CHROME_DEBUG_HOST, meta.port, meta.pid)) {
           state.activePort = meta.port;
+          state.activePortOwned = true;
           if (CHROME_VERBOSE) console.error(`Reconnected to existing Chrome (port: ${meta.port}, PID: ${meta.pid}, profile: ${state.chromeProfileName})`);
           return;
         }
@@ -177,6 +178,7 @@ function attachChromeProcess({ state, chromeHttp, getTabs, newTab, closeBridge }
 
     state.chromeProcess = proc;
     state.activePort = chosenPort;
+    state.activePortOwned = true;
 
     // --- Step 3: Persist port assignment in meta.json ---
     writeProfileMeta(state.chromeProfileName, {
@@ -204,7 +206,18 @@ function attachChromeProcess({ state, chromeHttp, getTabs, newTab, closeBridge }
 
     if (state.chromeProcess && state.chromeProcess.pid) {
       pidToKill = state.chromeProcess.pid;
-    } else if (state.activePort) {
+    } else if (state.activePort && state.activePortOwned) {
+      // CR-031: only take this branch when startChrome() CONFIRMED this
+      // session owns activePort (it launched Chrome, or reconnected to a
+      // live one via meta.json) — not merely because activePort holds its
+      // seeded default. Without this guard, a startChrome() that threw
+      // before ever confirming a Chrome (binary not found, or the
+      // configured port already occupied by someone else) still left
+      // activePort at that same default/configured value, and this
+      // "kill whoever holds the port" fallback would SIGTERM an unrelated
+      // process — exactly the co-tenant-on-9222 case the comment below
+      // warns about.
+      //
       // We didn't launch this Chrome (or already dropped the handle), but we
       // know the port. Kill whoever holds it so showBrowser/hideBrowser can
       // restart cleanly in the target mode.
@@ -218,6 +231,7 @@ function attachChromeProcess({ state, chromeHttp, getTabs, newTab, closeBridge }
       clearProfileMeta(state.chromeProfileName);
       state.chromeProcess = null;
       state.activePort = CHROME_DEBUG_PORT;
+      state.activePortOwned = false;
       state.chromeUserDataDir = null;
       return;
     }
@@ -244,6 +258,7 @@ function attachChromeProcess({ state, chromeHttp, getTabs, newTab, closeBridge }
     clearProfileMeta(state.chromeProfileName);
     state.chromeProcess = null;
     state.activePort = CHROME_DEBUG_PORT;
+    state.activePortOwned = false;
     // MOE-FLIGHT DIVERGENCE (PRI-1280): reset user-data-dir so the next
     // startChrome() with a fresh profile name recomputes it. Without this,
     // a long-lived process (e.g. `moe-flight qa serve`) reuses the first run's

@@ -29,6 +29,16 @@ function createState({ host, port } = {}) {
 
     // Dynamic port: updated by startChrome() when Chrome launches or reconnects.
     activePort: hostOverride.getPort(),
+    // CR-031: true only once startChrome() has CONFIRMED this session owns
+    // whatever is listening on activePort — either it launched Chrome itself,
+    // or it reconnected to a live Chrome recorded in this profile's
+    // meta.json. Seeded false because activePort above is just the
+    // configured default/fallback, not a confirmed live Chrome; killChrome()
+    // gates its "kill whoever holds the port" fallback on this flag so a
+    // startChrome() that never got past finding/spawning Chrome (wrong
+    // path, or the configured port already occupied by someone else) can't
+    // SIGTERM an unrelated process on close().
+    activePortOwned: false,
 
     // Console-message buffer for auto-capture. Keyed by `ps.sessionId`
     // (each page session has a stable sessionId from Target.attachToTarget).
