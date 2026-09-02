@@ -41,8 +41,8 @@ author:
   name: Zak Keown
   email: zak.keown@outlook.com
 license: MIT AND Apache-2.0
-repository: https://gitlab.com/moe-ai/moe
-homepage: https://gitlab.com/moe-ai/moe
+repository: https://github.com/zak-keown/moe
+homepage: https://github.com/zak-keown/moe
 keywords:
   - skills
   - brainstorming
@@ -53,6 +53,22 @@ keywords:
   - workflow
   - writing
   - plugin-authoring
+
+distribution:
+  npm: "@bubstack/moe-core"
+
+artifact:
+  payloads: []
+
+targets:
+  claude-code: {intent: certify, expected_capabilities: [skill-discovery, agent-discovery, hook-execution, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
+  cursor: {intent: preview, expected_capabilities: [skill-discovery, hook-execution, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
+  codex: {intent: preview, expected_capabilities: [skill-discovery], operating_systems: [macos, linux, wsl2, windows]}
+  kimi: {intent: preview, expected_capabilities: [skill-discovery, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
+  opencode: {intent: preview, expected_capabilities: [skill-discovery, agent-discovery, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
+  pi: {intent: preview, expected_capabilities: [skill-discovery, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
+  agent-plugins-1.0: {intent: preview, expected_capabilities: [skill-discovery, format-conformance]}
+  copilot: {intent: preview, expected_capabilities: [skill-discovery, agent-discovery, hook-execution, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
 
 # The bootstrap skill is what makes the rest fire without being asked for; every
 # harness reads it at session start. moe-mint wraps it in
@@ -87,14 +103,14 @@ marketplace:
     - workflow
 
 imported_works:
-  - superpowers
-  - superpowers-lab
-  - superpowers-developing-for-claude-code
-  - iterative-development
-  - the-elements-of-style
-  - double-shot-latte
-  - mattpocock-skills
-  - open-gsd/gsd-core
+  - name: superpowers
+  - name: superpowers-lab
+  - name: superpowers-developing-for-claude-code
+  - name: iterative-development
+  - name: the-elements-of-style
+  - name: double-shot-latte
+  - name: mattpocock-skills
+  - name: open-gsd/gsd-core
 
 release:
   audit:

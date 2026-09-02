@@ -45,32 +45,16 @@ describe('generate', () => {
     expect(manifest.files['docs/support-matrix.md']).toBeDefined()
   })
 
-  it('injects the install matrix into README.md between the markers, reports readmeInjected, and leaves validate clean since README.md is not manifest-tracked', () => {
+  it('leaves README.md wholly human-authored even when historical install markers are present', () => {
     const dir = freshFixture()
-    const result = generate(dir)
+    const before = readFileSync(join(dir, 'README.md'), 'utf8')
+    generate(dir)
 
-    expect(result.readmeInjected).toBe(true)
     const readme = readFileSync(join(dir, 'README.md'), 'utf8')
-    expect(readme).toContain('<!-- moe-mint:install:start -->')
-    expect(readme).toContain('<!-- moe-mint:install:end -->')
-    expect(readme).toContain('| Harness | Install |')
-    expect(readme).toContain('| Claude Code | see docs/install/claude-code.md |')
-    expect(readme).not.toContain('(install instructions go here)')
+    expect(readme).toBe(before)
 
     const manifest = JSON.parse(readFileSync(join(dir, MANIFEST_PATH), 'utf8'))
     expect(manifest.files['README.md']).toBeUndefined()
-    expect(checkDrift(dir).clean).toBe(true)
-  })
-
-  it('re-injecting the README on a second generate is idempotent (no change, readmeInjected false)', () => {
-    const dir = freshFixture()
-    generate(dir)
-    const afterFirst = readFileSync(join(dir, 'README.md'), 'utf8')
-
-    const second = generate(dir)
-
-    expect(second.readmeInjected).toBe(false)
-    expect(readFileSync(join(dir, 'README.md'), 'utf8')).toBe(afterFirst)
     expect(checkDrift(dir).clean).toBe(true)
   })
 

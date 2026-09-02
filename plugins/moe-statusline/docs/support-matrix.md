@@ -2,19 +2,18 @@
 
 # moe-statusline harness support matrix
 
-| Harness | skills | commands | agents | hooks | mcp | bootstrap |
-|---|---|---|---|---|---|---|
-| claude-code | full | full | full | full | full | full |
-| cursor | full | none | none | partial | none | full |
-| codex | full | none | none | none | none | partial |
-| kimi | full | none | none | none | none | partial |
-| opencode | full | full | partial | none | none | full |
-| pi | full | none | none | none | none | full |
-| agent-plugins-1.0 | full | none | none | none | full | none |
-| copilot | full | full | full | full | full | full |
+| Harness | Emitted capabilities |
+|---|---|
+| claude-code | hook-execution |
+| cursor | omitted |
+| codex | omitted |
+| kimi | omitted |
+| opencode | omitted |
+| pi | omitted |
+| agent-plugins-1.0 | omitted |
+| copilot | omitted |
 
 ## Notes
 
 - Copilot consumes the Claude Code layout through `.claude-plugin/marketplace.json`; keep the `claude-code` adapter enabled when targeting Copilot.
-- codex's `bootstrap: partial` means native skill discovery only, with no active injection hook.
 - Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.

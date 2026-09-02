@@ -10,7 +10,7 @@
 ## Installing
 
 ```
-/plugins install https://gitlab.com/moe-ai/moe
+/plugins install https://github.com/zak-keown/moe
 ```
 
 Or find it through the Kimi marketplace. Consult Kimi Code's plugin docs if this command doesn't match your installed version.

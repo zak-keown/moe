@@ -103,13 +103,26 @@ jobs:
       # OIDC works identically for both tools: the trusted-publisher config
       # lives on the package on npmjs.com, not in the client. `access` comes
       # from each package's own publishConfig.
-      - name: publish 6 packages
+      - name: publish registry packages
         env:
           NPM_DIST_TAG: ${{ steps.dt.outputs.tag }}
         run: |
           set -eu
-          for pkg in memory glass core crew backstory statusline; do
-            echo "::group::publish @bubstack/moe-$pkg"
-            (cd "packages/$pkg" && npm publish --tag "$NPM_DIST_TAG")
-            echo "::endgroup::"
-          done
+          MATRIX_PATH="$RUNNER_TEMP/moe-publish-matrix.json"
+          node packages/mint/dist/cli.js publish-matrix --repo . > "$MATRIX_PATH"
+          export MATRIX_PATH
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs'
+          import { spawnSync } from 'node:child_process'
+
+          const matrix = JSON.parse(readFileSync(process.env.MATRIX_PATH, 'utf8'))
+          for (const entry of matrix) {
+            console.log(`::group::publish ${entry.package}@${entry.version}`)
+            const result = spawnSync('npm', ['publish', '--tag', process.env.NPM_DIST_TAG], {
+              cwd: entry.sourcePackagePath,
+              stdio: 'inherit',
+            })
+            if (result.status !== 0) process.exit(result.status ?? 1)
+            console.log('::endgroup::')
+          }
+          NODE

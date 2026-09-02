@@ -5,7 +5,7 @@ import { writeFileSet, type FileSet, type GeneratedFile } from './fileset.js'
 import { saveManifest, loadManifest, sha256, type GenerationManifest } from './manifest.js'
 import { adapters, type HarnessAdapter } from './adapters/index.js'
 import type { AdapterEmission } from './adapters/types.js'
-import { emitDocs, injectReadme } from './docs-emit.js'
+import { emitDocs } from './docs-emit.js'
 import { ConfigError, type MintConfig } from './config.js'
 import { capabilityError, validateTargetEmission } from './platform/capabilities.js'
 import { TARGET_IDS, type TargetId } from './vocabulary.js'
@@ -18,7 +18,6 @@ export interface GenerateResult {
   emissions: Partial<Record<TargetId, AdapterEmission>>
   adaptersRun: string[]
   pruned: string[]
-  readmeInjected: boolean
 }
 
 function isSourcePath(path: string, config: MintConfig): boolean {
@@ -249,10 +248,5 @@ export function generate(
   writeFileSet(root, files)
   saveManifest(root, files, TOOL_VERSION)
 
-  // README.md is a user file (never a GeneratedFile, never manifest-tracked),
-  // so its injection runs after everything else is written and on its own path.
-  const readme = injectReadme(root, model, active)
-  if (readme.warning) warnings.push(readme.warning)
-
-  return { files, warnings, emissions, adaptersRun: active.map((a) => a.name), pruned, readmeInjected: readme.injected }
+  return { files, warnings, emissions, adaptersRun: active.map((a) => a.name), pruned }
 }
