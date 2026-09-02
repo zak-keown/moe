@@ -33,6 +33,7 @@ jobs:
     environment: release
     steps:
       - uses: actions/checkout@v4
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - run: corepack enable
       - uses: actions/cache@v4
         with:

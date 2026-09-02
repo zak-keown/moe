@@ -20,4 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: pip install uv
-      - run: uv run --project py/proof pytest
+      # Matches the root `proof:test` script's pytest scope — bare `pytest`
+      # discovers packages/tab/bindings/python/tests which needs the cdylib
+      # built first (excluded from CI per AGENTS.md "Not in CI").
+      - run: uv run --project py/proof pytest py/proof
