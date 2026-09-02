@@ -20,6 +20,12 @@ export interface GenerateResult {
   pruned: string[]
 }
 
+export interface GenerateOptions {
+  force?: boolean
+  /** Set by registry projection orchestration; package-local callers omit it. */
+  marketplaceName?: string
+}
+
 function isSourcePath(path: string, config: MintConfig): boolean {
   if (path === 'moe-mint.yaml') return true
   if (path === config.components.hooks || path === config.components.mcp) return true
@@ -65,9 +71,18 @@ function mergeFiles(
 export function generate(
   root: string,
   adapterList: HarnessAdapter[] = adapters,
-  opts: { force?: boolean } = {},
+  opts: GenerateOptions = {},
 ): GenerateResult {
-  const model = buildModel(root)
+  const sourceModel = buildModel(root)
+  const model: typeof sourceModel = opts.marketplaceName === undefined
+    ? sourceModel
+    : {
+      ...sourceModel,
+      config: {
+        ...sourceModel.config,
+        marketplace: { ...(sourceModel.config.marketplace ?? {}), name: opts.marketplaceName },
+      },
+    }
   const excluded = new Set(model.config.harnesses.exclude)
   const active = adapterList.filter((a) => !excluded.has(a.name))
 

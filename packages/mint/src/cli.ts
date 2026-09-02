@@ -90,7 +90,7 @@ program
     for (const item of result.found) console.log(`found: ${item}`)
     for (const warning of result.warnings) console.warn(`warning: ${warning}`)
     console.log(
-      'Wrote moe-mint.yaml — review it, then run moe-mint generate. Note: generate will report conflicts with your existing hand-maintained harness files (e.g. .claude-plugin/plugin.json); after reviewing, re-run with --force to let moe-mint own them. If your repo has a README.md, adding <!-- moe-mint:install:start --> and <!-- moe-mint:install:end --> markers lets `generate` inject the install matrix.',
+      'Wrote moe-mint.yaml — review it, then run moe-mint generate. Note: generate will report conflicts with your existing hand-maintained harness files (e.g. .claude-plugin/plugin.json); after reviewing, re-run with --force to let moe-mint own them.',
     )
   })
 
@@ -99,9 +99,13 @@ program
   .description('Generate per-harness plugin files from moe-mint.yaml')
   .option('--dir <path>', 'plugin root directory', '.')
   .option('--force', 'overwrite existing files not created by moe-mint', false)
+  .option('--marketplace-name <name>', 'projection-owned marketplace name override')
   .option('--projection-record', 'print current validated emissions as JSON', false)
-  .action((opts: { dir: string; force: boolean; projectionRecord: boolean }) => {
-    const result = generate(opts.dir, undefined, { force: opts.force })
+  .action((opts: { dir: string; force: boolean; marketplaceName?: string; projectionRecord: boolean }) => {
+    const generateOptions = opts.marketplaceName === undefined
+      ? { force: opts.force }
+      : { force: opts.force, marketplaceName: opts.marketplaceName }
+    const result = generate(opts.dir, undefined, generateOptions)
     if (opts.projectionRecord) {
       process.stdout.write(`${JSON.stringify({ emissions: result.emissions })}\n`)
       return

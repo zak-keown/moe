@@ -198,11 +198,11 @@ function stage(plugin) {
   return { dest, staged };
 }
 
-function generate(plugin, dest) {
+function generate(plugin, dest, marketplaceName) {
   try {
     const out = execFileSync(
       process.execPath,
-      [MINT_CLI, "generate", "--dir", path.relative(ROOT, dest), "--projection-record"],
+      [MINT_CLI, "generate", "--dir", path.relative(ROOT, dest), "--marketplace-name", marketplaceName, "--projection-record"],
       {
         cwd: ROOT,
         encoding: "utf8",
@@ -278,14 +278,21 @@ async function main() {
     );
   }
   const { resolvePlatform } = await import(pathToFileURL(path.join(ROOT, "packages/mint/dist/platform/load.js")).href);
-  const { writeRegistryProjections } = await import(pathToFileURL(path.join(ROOT, "packages/mint/dist/platform/projections.js")).href);
+  const { defaultProfileId, writeRegistryProjections } = await import(pathToFileURL(path.join(ROOT, "packages/mint/dist/platform/projections.js")).href);
   const platform = await resolvePlatform(ROOT);
+  const marketplaceName = defaultProfileId(platform);
 
   fs.mkdirSync(OUT, { recursive: true });
+  const expectedRoots = new Set(platform.plugins.map((plugin) => plugin.id));
+  for (const entry of fs.readdirSync(OUT, { withFileTypes: true })) {
+    if (entry.isDirectory() && !expectedRoots.has(entry.name)) {
+      fs.rmSync(path.join(OUT, entry.name), { recursive: true, force: true });
+    }
+  }
   const artifacts = [];
   for (const plugin of platform.plugins) {
     const { dest, staged } = stage(plugin);
-    const record = generate(plugin, dest);
+    const record = generate(plugin, dest, marketplaceName);
     artifacts.push({ plugin, emissions: record.emissions });
     console.log(
       `${plugin.id.padEnd(16)} ${String(staged).padStart(3)} skills staged`,

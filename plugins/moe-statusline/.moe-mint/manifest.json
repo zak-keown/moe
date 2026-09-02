@@ -3,13 +3,13 @@
   "tool": "moe-mint@0.0.0",
   "files": {
     ".claude-plugin/marketplace.json": {
-      "sha256": "3cf131ed1fc95705dd86deda98b755c9a7053c77714f45780b7782d537a26e4c"
+      "sha256": "486f6e339feed1f1613d9ab297032aca7ee47ee8cd6b34ca401dd835622f763b"
     },
     ".claude-plugin/plugin.json": {
       "sha256": "387a4f7f764ccf17c55f8d143a9c4c1665ba37c6bbe99276295810ca0ae790d0"
     },
     "docs/install/claude-code.md": {
-      "sha256": "c86d767e5bfdc4eebed8673e33d696ce69f57d020231f43ab8ed01407dc6796b"
+      "sha256": "ba094b368ba71b1e7807c861ef07502a87086a3bfcadc6c1bc0e003ebf457d2e"
     },
     "docs/support-matrix.md": {
       "sha256": "6f71b42a43391786bfdcbd63f2e3688f193e03bd60fc6999b45029ec63fe86d5"

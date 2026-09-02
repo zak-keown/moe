@@ -1,5 +1,5 @@
 {
-  "name": "moe",
+  "name": "core",
   "description": "Development marketplace for moe-statusline",
   "plugins": [
     {
