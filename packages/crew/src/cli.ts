@@ -50,17 +50,18 @@ const PER_WORKER_SUBS = [
 
 /**
  * The user contract. Ported from the bash `usage()` heredoc, updated for the
- * TypeScript multi-harness tool: the `--harness` launch flag, the
- * `/tmp/moe-crew-workers` default worker dir, and the per-harness env vars.
+ * TypeScript multi-harness tool: the `--harness` launch flag, the private
+ * per-user default worker dir, and the per-harness env vars.
  */
 const USAGE = `Usage: moe-crew <subcommand> [args...]
        moe-crew --worker <name> <subcommand> [args...]
 
 A worker is a coding-agent session (Claude Code, Codex, or Pi) in a tmux pane
 that emits lifecycle events the controller observes. \`moe-crew launch\` prints a
-*shim path* on stdout (deterministic at /tmp/moe-crew-workers/bin/<tmux-name>) — run
-that shim for all per-worker subcommands. \`moe-crew stop\` removes the shim along
-with the worker's state. The per-worker surface is identical across harnesses.
+*shim path* on stdout (deterministic at <worker-dir>/bin/<tmux-name> — see
+MOE_CREW_WORKER_DIR below) — run that shim for all per-worker subcommands.
+\`moe-crew stop\` removes the shim along with the worker's state. The per-worker
+surface is identical across harnesses.
 
 Top-level subcommands:
   launch [--harness <claude|codex|pi>] <tmux-name> <cwd> [-- harness-args...]
@@ -70,8 +71,8 @@ Top-level subcommands:
                        Re-adopt an existing Claude session as a driveable
                        worker via \`claude --resume <session-id>\` (claude-only;
                        codex/pi mint their own ids and offer no resume-by-id).
-                       Restores a worker after a reboot/crash wiped
-                       /tmp/moe-crew-workers while the conversation transcript
+                       Restores a worker after a reboot/crash wiped the
+                       worker directory while the conversation transcript
                        survived. If a tmux session named <tmux-name> already
                        exists (e.g. restored by tmux-resurrect), respawns its
                        pane in place; else opens a new one. Shim path on stdout,
@@ -121,7 +122,10 @@ Environment variables:
                        to this path on timeout, then emits "moe-crew-diagnostic: <path>" to
                        stderr. Overwritten on each timeout. Unset = no diagnostic file.
   MOE_CREW_WORKER_DIR  Directory for worker runtime state (meta/events/shim).
-                       Default: /tmp/moe-crew-workers.
+                       Default: \$XDG_RUNTIME_DIR/moe-crew-workers if set, else
+                       ~/.local/state/moe-crew/workers. Created privately
+                       (mode 0700); refuses an existing directory not owned
+                       by the current user.
   MOE_CREW_SUBMIT_TIMEOUT / MOE_CREW_SUBMIT_RETRY_INTERVAL
                        \`send\`: seconds to wait for the worker to confirm a pasted
                        prompt (default 10) and seconds between retry-Enter resends

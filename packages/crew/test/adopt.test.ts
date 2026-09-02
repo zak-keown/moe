@@ -1,4 +1,12 @@
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  realpathSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -121,6 +129,23 @@ describe("cmdAdopt", () => {
     );
     expect(result.code).toBe(1);
     expect(result.stderr).toContain("cwd '/no/such/dir' does not exist");
+  });
+
+  it("refuses to use a worker dir root that is a symlink rather than a real directory (CR-019)", async () => {
+    grantConsent(home);
+    seedTranscript();
+    const parent = tmpDir("moe-crew-adopt-parent-");
+    const elsewhere = tmpDir("moe-crew-adopt-elsewhere-");
+    const plantedWorkerDir = join(parent, "workers");
+    symlinkSync(elsewhere, plantedWorkerDir);
+    const ctx = makeCtx(plantedWorkerDir, home, fakeTmux(freshState()));
+
+    await expect(
+      cmdAdopt(ctx, { tmuxName: "w1", cwd, sessionId: SID, extraArgs: [] }, { ...baseOpts(), ...FAST }),
+    ).rejects.toThrow(/not a real directory/);
+
+    rmSync(parent, { recursive: true });
+    rmSync(elsewhere, { recursive: true });
   });
 
   it("errors when the session id does not look like a Claude session id", async () => {

@@ -5,7 +5,14 @@ import { hasConsent } from "../core/consent.js";
 import { eventsPath, workerHomePath } from "../core/paths.js";
 import { shellQuote } from "../core/shell.js";
 import { isoSecondsUtc } from "../core/time.js";
-import { removeWorker, resolveSession, writeHarnessMarker, writeMeta, writeShim } from "../core/worker-store.js";
+import {
+  ensureOwnedDir,
+  removeWorker,
+  resolveSession,
+  writeHarnessMarker,
+  writeMeta,
+  writeShim,
+} from "../core/worker-store.js";
 import type { HarnessDriver } from "../harness/driver.js";
 import { getDriver } from "../harness/registry.js";
 import { awaitSessionStart } from "./await-start.js";
@@ -146,9 +153,12 @@ export async function cmdLaunch(
     };
   }
 
-  // Worker dir + bin dir must exist before writing meta/shim.
-  mkdirSync(ctx.workerDir, { recursive: true });
-  mkdirSync(join(ctx.workerDir, "bin"), { recursive: true });
+  // Worker dir + bin dir must exist before writing meta/shim. The root is
+  // created privately (0700) and refuses an existing root not owned by the
+  // current user (CR-019) — a co-resident local account could otherwise
+  // pre-plant it at this predictable path ahead of us.
+  ensureOwnedDir(ctx.workerDir);
+  mkdirSync(join(ctx.workerDir, "bin"), { recursive: true, mode: 0o700 });
 
   const invocation = extraArgs.length > 0 ? [tmuxName, cwd, "--", ...extraArgs] : [tmuxName, cwd];
 

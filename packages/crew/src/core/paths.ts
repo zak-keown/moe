@@ -1,7 +1,29 @@
-const DEFAULT_WORKER_DIR = "/tmp/moe-crew-workers";
+import { homedir } from "node:os";
+import { join } from "node:path";
+
+/**
+ * Everything under the worker dir — meta/events (world-readable at 0644,
+ * embedding full tool_input), the executable shim, and each derive
+ * harness's staged operator credentials — used to default under the
+ * shared, world-traversable /tmp, keyed by the operator-chosen tmux name
+ * rather than a random id. On a host with another local account, that
+ * account could enumerate the low-entropy names and pre-plant a directory
+ * (or a symlink) at a predictable path ahead of us. Default to a private,
+ * per-user location instead: $XDG_RUNTIME_DIR (already 0700 and
+ * session-scoped on Linux) when set, else ~/.local/state/moe-crew/workers.
+ * ensureOwnedDir (worker-store.ts) additionally refuses to use an existing
+ * root that isn't a real directory owned by the current user, so even an
+ * explicit MOE_CREW_WORKER_DIR override pointed at a shared location is
+ * covered.
+ */
+function defaultWorkerDir(): string {
+  const xdgRuntimeDir = process.env.XDG_RUNTIME_DIR;
+  if (xdgRuntimeDir) return join(xdgRuntimeDir, "moe-crew-workers");
+  return join(homedir(), ".local", "state", "moe-crew", "workers");
+}
 
 export function workerDir(): string {
-  return process.env.MOE_CREW_WORKER_DIR ?? DEFAULT_WORKER_DIR;
+  return process.env.MOE_CREW_WORKER_DIR ?? defaultWorkerDir();
 }
 
 export function eventsPath(dir: string, sid: string): string {

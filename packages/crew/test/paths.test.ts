@@ -1,3 +1,5 @@
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   claudeTranscriptPath,
@@ -8,13 +10,34 @@ import {
 } from "../src/core/paths.js";
 
 describe("workerDir", () => {
-  it("returns /tmp/moe-crew-workers by default when env var is unset", () => {
-    const saved = process.env.MOE_CREW_WORKER_DIR;
+  // CR-019: the old fixed /tmp/moe-crew-workers default was predictable and
+  // shared across every local account on the host, letting a co-resident
+  // user pre-plant a directory (or a symlink) at that path ahead of the
+  // operator. Now private and per-user.
+  it("defaults under XDG_RUNTIME_DIR when it is set", () => {
+    const savedDir = process.env.MOE_CREW_WORKER_DIR;
+    const savedXdg = process.env.XDG_RUNTIME_DIR;
     delete process.env.MOE_CREW_WORKER_DIR;
+    process.env.XDG_RUNTIME_DIR = "/run/user/1000";
     try {
-      expect(workerDir()).toBe("/tmp/moe-crew-workers");
+      expect(workerDir()).toBe("/run/user/1000/moe-crew-workers");
     } finally {
-      if (saved !== undefined) process.env.MOE_CREW_WORKER_DIR = saved;
+      if (savedDir !== undefined) process.env.MOE_CREW_WORKER_DIR = savedDir;
+      if (savedXdg !== undefined) process.env.XDG_RUNTIME_DIR = savedXdg;
+      else delete process.env.XDG_RUNTIME_DIR;
+    }
+  });
+
+  it("falls back to ~/.local/state/moe-crew/workers when XDG_RUNTIME_DIR is unset", () => {
+    const savedDir = process.env.MOE_CREW_WORKER_DIR;
+    const savedXdg = process.env.XDG_RUNTIME_DIR;
+    delete process.env.MOE_CREW_WORKER_DIR;
+    delete process.env.XDG_RUNTIME_DIR;
+    try {
+      expect(workerDir()).toBe(join(homedir(), ".local", "state", "moe-crew", "workers"));
+    } finally {
+      if (savedDir !== undefined) process.env.MOE_CREW_WORKER_DIR = savedDir;
+      if (savedXdg !== undefined) process.env.XDG_RUNTIME_DIR = savedXdg;
     }
   });
 

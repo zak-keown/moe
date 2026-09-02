@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { hasConsent } from "../core/consent.js";
 import { eventsPath } from "../core/paths.js";
 import { isoSecondsUtc } from "../core/time.js";
-import { readHarnessMarker, writeMeta, writeShim } from "../core/worker-store.js";
+import { ensureOwnedDir, readHarnessMarker, writeMeta, writeShim } from "../core/worker-store.js";
 import { getDriver } from "../harness/registry.js";
 import { awaitSessionStart } from "./await-start.js";
 import type { CommandContext, CommandResult } from "./context.js";
@@ -79,8 +79,10 @@ export async function cmdAdopt(
     };
   }
 
-  mkdirSync(ctx.workerDir, { recursive: true });
-  mkdirSync(join(ctx.workerDir, "bin"), { recursive: true });
+  // Root created privately (0700), refusing an existing root not owned by
+  // the current user (CR-019) — see launch.ts's cmdLaunch for the same.
+  ensureOwnedDir(ctx.workerDir);
+  mkdirSync(join(ctx.workerDir, "bin"), { recursive: true, mode: 0o700 });
 
   const invocation =
     extraArgs.length > 0

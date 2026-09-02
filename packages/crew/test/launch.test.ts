@@ -1,4 +1,12 @@
-import { existsSync, mkdtempSync, readdirSync, realpathSync, rmSync, statSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  realpathSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -138,6 +146,22 @@ describe("cmdLaunch", () => {
     expect(result.code).toBe(1);
     expect(result.stderr).toContain("requires one-time consent");
     expect(result.stderr).toContain("/usr/local/bin/moe-crew grant-consent");
+  });
+
+  it("refuses to use a worker dir root that is a symlink rather than a real directory (CR-019)", async () => {
+    grantConsent(home);
+    const parent = tmpDir("moe-crew-launch-parent-");
+    const elsewhere = tmpDir("moe-crew-launch-elsewhere-");
+    const plantedWorkerDir = join(parent, "workers");
+    symlinkSync(elsewhere, plantedWorkerDir);
+    const ctx = makeCtx(plantedWorkerDir, home, fakeTmux(freshState()));
+
+    await expect(
+      cmdLaunch(ctx, { tmuxName: "w1", cwd, extraArgs: [], harness: "claude" }, { ...baseOpts(), ...FAST }),
+    ).rejects.toThrow(/not a real directory/);
+
+    rmSync(parent, { recursive: true });
+    rmSync(elsewhere, { recursive: true });
   });
 
   it("errors when a tmux session with that name already exists", async () => {
