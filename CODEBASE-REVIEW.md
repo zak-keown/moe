@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 56
+  fixed: 57
   stale: 15
   skipped: 7
   deferred: 1
-  open: 514
+  open: 513
 ---
 
 # Codebase Review — moe
@@ -1472,6 +1472,10 @@ Fix: add `req.on('response', res => reject(new Error(...status...)))` and a conn
 **Verification:** confirmed
 **Verification evidence:** Reproduced against loopback servers replying 403 and 200 to the upgrade request: connect() never settled within a 5 second outer timeout; only a close-without-response case rejects via socket hang up. The send() in browser-session.js starts its 10 second timer only after ensureConnected resolves, so no caller bounds connect() itself.
 
+**Disposition:** fixed
+**Commit:** `9e82e09`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-067: A unit test kills whatever process holds the CDP port and deletes the live profile record
 
 **File:** `packages/glass/test/cli-dispatch.test.mjs`
