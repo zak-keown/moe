@@ -1,11 +1,17 @@
 import {
   chmodSync,
+  closeSync,
+  constants,
   existsSync,
+  lstatSync,
   mkdirSync,
+  openSync,
   readdirSync,
   readFileSync,
   rmSync,
+  unlinkSync,
   writeFileSync,
+  writeSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { eventsPath, harnessMarkerPath, metaPath, shimPath, workerHomePath } from "./paths.js";
@@ -16,6 +22,59 @@ export interface WorkerMeta {
   cwd: string;
   harness: string;
   [k: string]: unknown;
+}
+
+/**
+ * Create `dir` privately (mode 0700) if nothing exists there, or verify an
+ * existing path is already a real directory owned by the current user.
+ * Refuses (throws) otherwise, closing the shared-host precondition that lets
+ * another local account pre-plant a directory — or a symlink, which fails
+ * the `isDirectory()` check regardless of what it points at — at a
+ * predictable worker-dir or per-worker-home path ahead of us. The ownership
+ * check no-ops where `process.getuid` is unavailable (native Windows;
+ * moe-crew is WSL2-only there per ARCHITECTURE.md, where getuid exists).
+ */
+export function ensureOwnedDir(dir: string): void {
+  let st: ReturnType<typeof lstatSync>;
+  try {
+    st = lstatSync(dir);
+  } catch {
+    mkdirSync(dir, { recursive: true, mode: 0o700 });
+    return;
+  }
+  if (!st.isDirectory()) {
+    throw new Error(`refusing to use ${dir}: not a real directory (possibly a planted symlink)`);
+  }
+  const uid = process.getuid?.();
+  if (uid !== undefined && st.uid !== uid) {
+    throw new Error(`refusing to use ${dir}: not owned by the current user`);
+  }
+}
+
+/**
+ * Stage a credential file (`src`, the operator's own) into a worker home at
+ * `dest`, refusing to ever follow a symlink planted at `dest`. Missing `src`
+ * is silently skipped (best effort, matches prior behaviour). `dest` is
+ * unlinked first — removing whatever directory entry is there (a symlink,
+ * or a stale copy from a prior run reusing the same tmux name) without
+ * following it, since unlink acts on the entry itself — then created fresh
+ * with O_EXCL|O_NOFOLLOW, which is always safe to open after the unlink and
+ * guarantees mode 0600 actually takes effect.
+ */
+export function stageCredentialFile(src: string, dest: string): void {
+  if (!existsSync(src)) return;
+  const data = readFileSync(src);
+  try {
+    unlinkSync(dest);
+  } catch {
+    // nothing there yet
+  }
+  const fd = openSync(dest, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
+  try {
+    writeSync(fd, data);
+  } finally {
+    closeSync(fd);
+  }
 }
 
 export function writeMeta(dir: string, meta: WorkerMeta): void {

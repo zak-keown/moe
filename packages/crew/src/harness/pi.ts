@@ -24,12 +24,11 @@
  * launch-time await, analogous to codex's trust-gate/composer dance.
  */
 
-import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { workerDir } from "../core/paths.js";
 import { type NormalizedTurn, parsePiTurn } from "../core/transcript.js";
-import { readMeta } from "../core/worker-store.js";
+import { ensureOwnedDir, readMeta, stageCredentialFile } from "../core/worker-store.js";
 import type { HarnessDriver, LaunchMode } from "./driver.js";
 
 /** Files copied from the operator's pi agent dir into a worker's home, if present. */
@@ -118,13 +117,15 @@ export const pi: HarnessDriver = {
   // exists and stage the operator's pi credentials so the worker authenticates
   // as them. Best-effort: a missing operator file is skipped, never fatal.
   async prepare(_tmuxName: string, _cwd: string, workerHome: string): Promise<void> {
-    mkdirSync(workerHome, { recursive: true });
+    // Private (0700), refuses an existing home not owned by the current
+    // user (CR-021/CR-019) — a co-resident local account could otherwise
+    // pre-plant this predictable <workerDir>/homes/<tmuxName> path.
+    ensureOwnedDir(workerHome);
     const agentDir = operatorAgentDir();
     for (const name of PI_AUTH_FILES) {
-      const src = join(agentDir, name);
-      if (existsSync(src)) {
-        copyFileSync(src, join(workerHome, name));
-      }
+      // stageCredentialFile skips a missing src and refuses to follow a
+      // symlink planted at the destination (CR-021).
+      stageCredentialFile(join(agentDir, name), join(workerHome, name));
     }
   },
 
