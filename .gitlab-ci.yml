@@ -172,6 +172,25 @@ publish:
     NPM_ID_TOKEN:
       aud: https://registry.npmjs.org
   script:
+    # DIAGNOSTIC: decode and print the OIDC JWT claims so a mismatch with
+    # each npm trusted-publisher config surfaces. JWT payloads are not
+    # secret — the signature is what npm verifies. Remove once OIDC lands
+    # green. `head -1` guards against an accidental multi-part token.
+    - |
+      python3 - <<'PY'
+      import base64, json, os
+      tok = os.environ.get('NPM_ID_TOKEN', '')
+      print(f'NPM_ID_TOKEN present: {bool(tok)}  length: {len(tok)}')
+      if tok:
+          parts = tok.split('.')
+          print(f'segments: {len(parts)}')
+          if len(parts) >= 2:
+              payload = parts[1] + '=' * (-len(parts[1]) % 4)
+              claims = json.loads(base64.urlsafe_b64decode(payload))
+              # Print in a fixed key order so a diff between runs is easy to spot.
+              for k in ['iss','sub','aud','namespace_path','project_path','ref','ref_type','ref_path','ref_protected','ci_config_ref_uri','ci_config_sha','environment','pipeline_source']:
+                  print(f'  {k}: {claims.get(k)}')
+      PY
     - >-
       pnpm publish
       --filter @bubstack/moe-memory
