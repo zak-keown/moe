@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "vitest";
@@ -340,6 +340,25 @@ test("scanResults: window ordering is (started_at, dir-name) ascending", () => {
   // 00aa < 00ff lexicographically, so 00aa is older (window[0]).
   expect(cell?.window[0]?.cost_usd).toBe(1);
   expect(cell?.window[1]?.cost_usd).toBe(2);
+});
+
+// CR-023: a dangling symlink in results/ (or any entry removed between the
+// readdir and the stat — a race with concurrent results-retention cleanup)
+// must not crash the scan. Before the fix, listRunDirNames ran a bare
+// statSync on every readdir entry, and statSync throws ENOENT for a dangling
+// symlink; that throw propagated out of scanResults uncaught.
+test("scanResults skips a dangling symlink in results/ instead of throwing ENOENT", () => {
+  const root = mkdtempSync(join(tmpdir(), "res-dangling-"));
+  symlinkSync(
+    join(root, "does-not-exist-target"),
+    join(root, "dangling-20260102T000000Z-bbbb"),
+  );
+  writeRun(root, runId("s", "claude", "none", "linux", "20260612T000000Z", "aaaa"), {
+    verdict: { final: "pass", ...identity() },
+  });
+  expect(() => scan(root)).not.toThrow();
+  const grid = scan(root);
+  expect(grid.cells.has(cellKey("s", "claude", "none", "linux"))).toBe(true);
 });
 
 test("scanResults omits a cell whose only run is non-displayable", () => {

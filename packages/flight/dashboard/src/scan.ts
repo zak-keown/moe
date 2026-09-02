@@ -105,16 +105,38 @@ function finalOf(verdict: DashboardVerdict): RunFinal {
 
 // The list of run-dir base names under results/ (excluding batches/ and
 // non-directories), or [] when results/ is absent.
+//
+// Reads dirents (withFileTypes) so an ordinary directory or file is
+// classified with no extra stat call. A dirent typed as a symlink is
+// stat-followed to see whether it points at a directory, but that stat
+// is wrapped in try/catch: a dangling symlink, or any entry removed
+// between the readdir and this point (a concurrent results-retention
+// cleanup, or a plain `rm -rf results/<old-run>` while the board is up),
+// throws ENOENT from a bare statSync. That race is inherent to scanning a
+// live directory, so a throw here must be swallowed (treat the entry as
+// "skip it"), not left to propagate into scanResults -> scan -> tick.
 function listRunDirNames(resultsDir: string): string[] {
   if (!existsSync(resultsDir)) {
     return [];
   }
   const names: string[] = [];
-  for (const name of readdirSync(resultsDir)) {
+  for (const entry of readdirSync(resultsDir, { withFileTypes: true })) {
+    const name = entry.name;
     if (name === "batches") {
       continue;
     }
-    if (!statSync(join(resultsDir, name)).isDirectory()) {
+    let isDir: boolean;
+    if (entry.isSymbolicLink()) {
+      try {
+        isDir = statSync(join(resultsDir, name)).isDirectory();
+      } catch {
+        // Dangling symlink, or the target vanished mid-scan. Skip it.
+        continue;
+      }
+    } else {
+      isDir = entry.isDirectory();
+    }
+    if (!isDir) {
       continue;
     }
     names.push(name);
