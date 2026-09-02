@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 64
+  fixed: 65
   stale: 17
   skipped: 7
   deferred: 1
-  open: 504
+  open: 503
 ---
 
 # Codebase Review — moe
@@ -1822,6 +1822,10 @@ Fix: re-hash the file at `target` and fall through to a rewrite when it does not
 **Verification:** confirmed
 **Verification evidence:** extractEmbedded checks only os.Stat on the target before dlopen and never re-hashes the bytes; cacheBases falls back to the shared os.TempDir, which is world-writable /tmp on Linux, whenever UserCacheDir errors (no HOME, containers, CI, systemd), and the hash-named path is derivable offline from the shipped bytes, so a local attacker can pre-plant the file that gets dlopened. The embedded bytes are a stub in this tree, so the branch is live only in the published moe-tab-go module; source trace, no build.
 
+**Disposition:** fixed
+**Commit:** `8e1919b`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-082: The documented cross-binding C ABI gate exercises only the Python binding
 **File:** `packages/tab/bindings/go/tab/tab_test.go`
 **Anchor:** `TestEstimatePath`
