@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 41
+  fixed: 42
   stale: 12
   skipped: 6
   deferred: 1
-  open: 533
+  open: 532
 ---
 
 # Codebase Review — moe
@@ -910,6 +910,10 @@ belt as well. Log the rejected id through `errorLog` the way the duplicate-id br
 **Verification:** confirmed
 **Verification evidence:** Reproduced in-process: mounting fanoutRoutes with a stubbed LLM client returning a card with id ../../../../pwned produced a 200 response and wrote the file four directories above the configured stories directory; no isSafePath or resolveInside guard exists on this write path, unlike the sibling POST /api/scenarios route which checks isSafePath before writing. CR-042 is the same defect in the same writeCards function.
 
+**Disposition:** fixed
+**Commit:** `73615f4`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-041: Fanout result lookup composes an unvalidated runId into a filesystem path
 **File:** `packages/flight/src/qa/api/routes/fanout.ts`
 **Anchor:** `router.post("/:id/:mode")`
