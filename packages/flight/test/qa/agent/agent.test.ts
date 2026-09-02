@@ -1125,6 +1125,81 @@ describe("runAgent", () => {
     expect((client as any)._chatCalls).toHaveLength(2);
   });
 
+  // CR-036: the report_result lookup ran before the stopReason check, so a
+  // turn truncated mid-report_result (PRI-2160, run b35d: "max_tokens
+  // mid-thinking on turn 36 while composing its verdict") was treated as an
+  // ordinary malformed report instead of taking the truncation-recovery
+  // path. That skipped `maxTokensNudged` (burning the one-per-run recovery
+  // turn on an ordinary retry instead) and replayed the raw, unsigned
+  // thinking block via `pushAssistantTurn(messages, response.rawAssistantMessage)`
+  // — exactly what `synthesizeTruncatedAssistantStub`'s docstring says must
+  // never happen, since a partial thinking block can't be round-tripped.
+  test("a max_tokens truncation carrying a partial report_result still takes the truncation-recovery path", async () => {
+    const truncatedWithPartialReport = {
+      text: "",
+      toolCalls: [
+        {
+          id: "c1",
+          name: "report_result",
+          // Cut off mid-argument: no summary/reasoning, and "pa" is not a
+          // valid status — parseReportResult will reject this.
+          arguments: { status: "pa" },
+        },
+      ],
+      stopReason: "max_tokens" as const,
+      rawAssistantMessage: {
+        role: "assistant",
+        content: [
+          // Unsigned — its signature never arrived because the turn was
+          // cut off. Replaying this verbatim in a later turn is the
+          // signature-less-thinking-block bug the docstring warns about.
+          { type: "thinking", thinking: "weighing the acceptance criteria in detail" },
+          { type: "tool_use", id: "c1", name: "report_result", input: { status: "pa" } },
+        ],
+      },
+      usage: { inputTokens: 100, outputTokens: 4096 },
+    };
+    const recovered = {
+      text: "reporting now",
+      toolCalls: [
+        {
+          id: "c2",
+          name: "report_result",
+          arguments: { status: "pass", summary: "All good", reasoning: "Verified", observations: [] },
+        },
+      ],
+      stopReason: "tool_use" as const,
+      rawAssistantMessage: { role: "assistant", content: "r2" },
+      usage: { inputTokens: 100, outputTokens: 50 },
+    };
+    const client = makeMockClient([truncatedWithPartialReport, recovered]);
+
+    const result = await runAgent(card, makeMockAdapter(), client, makeMockLogger(), undefined, {
+      runId: makeRunId(card.id),
+      budgetMs: 600_000,
+    });
+
+    expect(result.status).toBe("pass");
+    const chatCalls = (client as any)._chatCalls;
+    expect(chatCalls).toHaveLength(2);
+
+    const recoveryMessages = chatCalls[1];
+    // The raw unsigned thinking block must never be replayed verbatim.
+    expect(JSON.stringify(recoveryMessages)).not.toContain(
+      "weighing the acceptance criteria in detail",
+    );
+    // The truncation-recovery stub took its place instead.
+    expect(JSON.stringify(recoveryMessages)).toContain("truncated");
+    // And the recovery nudge (not a "report_result rejected" retry message)
+    // is the last thing the model sees.
+    const lastMessage = recoveryMessages[recoveryMessages.length - 1] as {
+      role: string;
+      content: unknown;
+    };
+    expect(lastMessage.role).toBe("user");
+    expect(String(lastMessage.content)).toContain("cut off");
+  });
+
   // Stall watchdog (PRI-2081): a frozen read-poll loop — the same
   // non-mutating tool call returning byte-identical results turn after
   // turn — gets a mechanical warning, then a forced final report,
