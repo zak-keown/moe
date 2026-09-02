@@ -929,10 +929,10 @@ describe("fork invariants", () => {
     expect(src).not.toMatch(/<img[^>]*brand-logo/);
   });
 
-  it("uses the canonical GitLab project URL in plugin configs", () => {
+  it("uses the canonical GitHub project URL in plugin configs", () => {
     for (const rel of ["mint/moe.yaml"]) {
       const config = readFileSync(join(PKG, rel), "utf8");
-      expect(config, rel).toContain("https://gitlab.com/moe-ai/moe");
+      expect(config, rel).toContain("https://github.com/zak-keown/moe");
     }
   });
 });

@@ -13,19 +13,37 @@ author:
   name: Zak Keown
   email: zak.keown@outlook.com
 license: MIT
-repository: https://gitlab.com/moe-ai/moe
-homepage: https://gitlab.com/moe-ai/moe
+repository: https://github.com/zak-keown/moe
+homepage: https://github.com/zak-keown/moe
 keywords:
   - statusline
   - claude-code
   - terminal
+
+distribution:
+  npm: "@bubstack/moe-statusline"
+
+artifact:
+  payloads:
+    - {from: dist, to: dist, required: true}
+    - {from: vendor, to: vendor, required: true}
+
+targets:
+  claude-code: {intent: certify, expected_capabilities: [hook-execution], operating_systems: [macos, linux, wsl2, windows]}
+  cursor: {intent: omit}
+  codex: {intent: omit}
+  kimi: {intent: omit}
+  opencode: {intent: omit}
+  pi: {intent: omit}
+  agent-plugins-1.0: {intent: omit}
+  copilot: {intent: omit}
 
 # bootstrap: none. There is no skill to invoke — the SessionStart hook does
 # the entire job with no user action.
 bootstrap: none
 
 imported_works:
-  - ccstatusline
+  - name: ccstatusline
 
 # components: hooks/hooks.json is a default and present. No skills/,
 # commands/, agents/ or .mcp.json in this package.
