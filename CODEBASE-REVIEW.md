@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 60
+  fixed: 61
   stale: 16
   skipped: 7
   deferred: 1
-  open: 509
+  open: 508
 ---
 
 # Codebase Review — moe
@@ -450,6 +450,10 @@ Fix: have `newSession`/`respawnPane` return the `RunResult` and fail `launchDeri
 **Verification:** confirmed
 **Verification evidence:** Reproduced against the compiled packages/crew/dist/commands/launch.js: cmdLaunch with harness pi and a stub tmux whose newSession never creates a session returns exit code 0 and prints Worker launched. The Tmux.newSession interface returns Promise<void>, so launchDerive has no result to check, unlike launchAssign which gates on awaitSessionStart returning proof.started.
 
+**Disposition:** fixed
+**Commit:** `7954f18`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-017: Bracketed-paste sanitiser can be spliced back into a live paste-end marker
 **File:** `packages/crew/src/commands/send.ts`
 **Anchor:** `pasteText`, and the test "strips paste markers embedded in the prompt"
