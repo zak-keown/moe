@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 59
+  fixed: 60
   stale: 15
   skipped: 7
   deferred: 1
-  open: 511
+  open: 510
 ---
 
 # Codebase Review — moe
@@ -1778,6 +1778,10 @@ Fix: resolve containment against the real filesystem, not the path string. In `w
 **Verification:** confirmed
 **Verification evidence:** Reproduced against the compiled packages/mint/dist/fileset.js: a symlink at .claude-plugin/plugin.json pointing outside the plugin root caused writeFileSet to silently overwrite the outside file, because mkdirSync and writeFileSync follow symlinks and the only containment check is a lexical resolve().startsWith(), never lstat or realpath. The generate.ts conflict check uses existsSync, which returns false for a dangling symlink, so that case raises no conflict at all. The import workflow makes a third-party plugin tree an ordinary input.
 
+**Disposition:** fixed
+**Commit:** `8da0502`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-081: Embedded cdylib is dlopened from a predictable shared-temp path without verifying its bytes
 **File:** `packages/tab/bindings/go/tab/loader.go`
 **Anchor:** `extractEmbedded`
