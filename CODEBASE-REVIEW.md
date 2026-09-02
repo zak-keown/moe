@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 22
+  fixed: 23
   stale: 11
   skipped: 6
   deferred: 0
-  open: 554
+  open: 553
 ---
 
 # Codebase Review — moe
@@ -630,6 +630,10 @@ Fix: add a `.dockerignore` at the repo root, or a BuildKit-scoped `packages/flig
 **Verification:** confirmed
 **Verification evidence:** The compose context resolves to the repo root, which has no .dockerignore; the packages/flight/.dockerignore states in its own first line that it is inert at this depth. The Dockerfile COPY packages/flight packages/flight pulls the whole directory from disk regardless of .gitignore, including the packages/flight/.env that the compose env_file mechanism tells operators to create. Traced from committed files; the image was not built.
 
+**Disposition:** fixed
+**Commit:** `9c68573`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-028: Todo web fixture serves index.html as text/plain, so the page is never rendered
 **File:** `packages/flight/examples/todo/web/server.ts`
 **Anchor:** `return new Response(body);` in the `serve({ ... fetch })` static branch, under the comment "Was `Bun.serve` + `Bun.file`"
