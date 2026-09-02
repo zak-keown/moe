@@ -34,7 +34,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Created file: src/utils/dateFormatter.ts]\n\nI've created the `formatDate` helper function in `src/utils/dateFormatter.ts`. It supports multiple formats (ISO, US, EU) and handles invalid dates gracefully. I've also added:\n\n- JSDoc documentation\n- Unit tests with 100% coverage\n- Export from the main utils index\n\nThe function is ready to use."
+            "text": "I've created the `formatDate` helper function in `src/utils/dateFormatter.ts`. It supports multiple formats (ISO, US, EU) and handles invalid dates gracefully. I've also added:\n\n- JSDoc documentation\n- Unit tests with 100% coverage\n- Export from the main utils index\n\nThe function is ready to use."
           }
         ]
       }

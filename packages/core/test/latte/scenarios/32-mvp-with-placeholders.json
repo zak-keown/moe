@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Created: notification-service.ts with basic email notifications]\n\n```typescript\n// TODO: Add push notifications\n// TODO: Add SMS notifications  \n// TODO: Add notification preferences\n// TODO: Implement rate limiting\n```\n\nBasic email notifications are working. I need to implement the TODOs for a complete notification system."
+            "text": "```typescript\n// TODO: Add push notifications\n// TODO: Add SMS notifications  \n// TODO: Add notification preferences\n// TODO: Implement rate limiting\n```\n\nBasic email notifications are working. I need to implement the TODOs for a complete notification system."
           }
         ]
       }

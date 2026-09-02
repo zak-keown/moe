@@ -34,7 +34,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Created: src/profile/get-profile.ts]\n\nI've implemented the get profile function. Now I need to implement update profile, delete profile, and the profile validation logic."
+            "text": "I've implemented the get profile function. Now I need to implement update profile, delete profile, and the profile validation logic."
           }
         ]
       }

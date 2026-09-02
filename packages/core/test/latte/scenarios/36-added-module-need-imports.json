@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Created: src/common/utils/ with string, array, and object helpers]\n\nI've extracted the utilities into the common module. Now I need to update all the import statements across the codebase to use the new locations."
+            "text": "I've extracted the utilities into the common module. Now I need to update all the import statements across the codebase to use the new locations."
           }
         ]
       }

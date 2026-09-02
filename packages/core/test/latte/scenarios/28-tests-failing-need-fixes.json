@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Ran tests: 45 passing, 12 failing]\n\nI found 12 failing tests across the auth and payment modules. Let me fix these test failures one by one."
+            "text": "Which failure is next? I'll fix these 12 auth and payment test failures one by one."
           }
         ]
       }

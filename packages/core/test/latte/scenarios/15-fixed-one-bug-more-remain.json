@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Fixed: test/auth/login.test.ts - corrected mock setup]\n\nFixed the login test. Still need to fix:\n- register.test.ts (3 failing)\n- logout.test.ts (1 failing)\n- token-refresh.test.ts (2 failing)"
+            "text": "Fixed the login test. Still need to fix:\n- register.test.ts (3 failing)\n- logout.test.ts (1 failing)\n- token-refresh.test.ts (2 failing)"
           }
         ]
       }

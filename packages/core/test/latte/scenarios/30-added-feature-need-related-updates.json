@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Implemented: i18n system with English and Spanish]\n\nMulti-language support is in place. Now I need to update all existing UI components to use the translation keys and add language switching UI."
+            "text": "Multi-language support is in place. Now I need to update all existing UI components to use the translation keys and add language switching UI."
           }
         ]
       }

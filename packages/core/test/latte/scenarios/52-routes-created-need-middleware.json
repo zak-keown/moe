@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Created: Route handlers for all endpoints]\n\nAll routes are defined. Now I need to add authentication middleware, rate limiting, request validation, and error handling to each route group."
+            "text": "All routes are defined. Now I need to add authentication middleware, rate limiting, request validation, and error handling to each route group."
           }
         ]
       }

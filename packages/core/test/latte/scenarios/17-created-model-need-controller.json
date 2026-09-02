@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Created: models/inventory.ts with Product, Stock, and Warehouse models]\n\nI've created the data models. Now I'll implement the controller with CRUD operations and the business logic for stock management."
+            "text": "I've created the data models. Now I'll implement the controller with CRUD operations and the business logic for stock management."
           }
         ]
       }

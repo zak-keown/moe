@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Implemented: OAuth2 flow with Google, GitHub, and Facebook providers]\n\nOAuth2 authentication is working. Now I need to add documentation for setup, configuration, and integration guides."
+            "text": "OAuth2 authentication is working. Now I need to add documentation for setup, configuration, and integration guides."
           }
         ]
       }

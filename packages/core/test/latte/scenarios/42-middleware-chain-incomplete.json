@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Added: CORS, body-parser, helmet]\n\nBasic middleware is in place. Still need to add:\n- Rate limiting middleware\n- Request logging\n- Error handling middleware\n- Authentication middleware"
+            "text": "Basic middleware is in place. Still need to add:\n- Rate limiting middleware\n- Request logging\n- Error handling middleware\n- Authentication middleware"
           }
         ]
       }

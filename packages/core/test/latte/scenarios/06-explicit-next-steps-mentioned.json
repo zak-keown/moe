@@ -34,7 +34,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Ran tests and found 5 files with broken imports]\n\nI've identified 5 test files with broken imports:\n- test/auth.test.ts\n- test/api.test.ts\n- test/utils.test.ts\n- test/hooks.test.ts\n- test/validation.test.ts\n\nNext I'll fix each of these files, starting with test/auth.test.ts."
+            "text": "I've identified 5 test files with broken imports:\n- test/auth.test.ts\n- test/api.test.ts\n- test/utils.test.ts\n- test/hooks.test.ts\n- test/validation.test.ts\n\nNext I'll fix each of these files, starting with test/auth.test.ts."
           }
         ]
       }

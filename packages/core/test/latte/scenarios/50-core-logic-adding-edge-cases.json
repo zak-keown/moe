@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Implemented: Basic price calculation with discounts]\n\nCore pricing logic works. Now I need to handle edge cases:\n- Multiple concurrent discounts\n- Tax calculations for different regions\n- Currency conversion\n- Promotional codes"
+            "text": "What remains? Now I need to handle these pricing edge cases:\n- Multiple concurrent discounts\n- Tax calculations for different regions\n- Currency conversion\n- Promotional codes"
           }
         ]
       }
