@@ -261,6 +261,24 @@ describe('claude-code adapter marketplace field handling', () => {
     )
     expect(marketplace.plugins[0]).not.toHaveProperty('strict')
   })
+
+  it('still emits a well-formed `owner` object when config.author is absent (CR-079)', () => {
+    // Claude Code's marketplace descriptor schema requires `owner` to be an
+    // object; author is optional in moe-mint.yaml and moe-mint init does not
+    // scaffold one, so an authorless config previously emitted no `owner` key
+    // at all — `claude plugin validate --strict` rejects that descriptor
+    // outright, including the plugin moe-mint init itself scaffolds.
+    const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-no-author-'))
+    writeFileSync(
+      join(dir, 'moe-mint.yaml'),
+      'name: no-author\nversion: 1.0.0\ndescription: no author fixture\nbootstrap: none\n',
+    )
+    const noAuthorModel = buildModel(dir)
+    const marketplace = JSON.parse(
+      claudeCode.emit(noAuthorModel).files.find((f) => f.path === '.claude-plugin/marketplace.json')!.content,
+    )
+    expect(marketplace.owner).toEqual({ name: 'no-author' })
+  })
 })
 
 describe('claude-code adapter with harnesses.claude-code.hooks: own', () => {
