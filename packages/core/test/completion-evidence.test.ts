@@ -6,17 +6,17 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, dirname, join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = resolve(HERE, "..");
-const REPO = resolve(PKG, "../..");
 const SOURCE_HOOK = join(PKG, "hooks/moe-completion-evidence");
 const temporaryRoots: string[] = [];
 
@@ -40,9 +40,19 @@ interface AuditPayload {
   warning: string | null;
 }
 
-function fixture(): Fixture {
-  const root = mkdtempSync(join(tmpdir(), "moe-completion-evidence-"));
+// realpathSync matters here: on macOS os.tmpdir() returns an unresolved
+// /var/... path while `git rev-parse --show-toplevel` (what the hook keys
+// on) reports the resolved /private/var/... path. Fixtures must be built
+// from the resolved path or the test's expected key won't match the hook's.
+function tempRoot(prefix: string): string {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), prefix)));
   temporaryRoots.push(root);
+  return root;
+}
+
+function fixtureAt(parent: string, name: string): Fixture {
+  const root = join(parent, name);
+  mkdirSync(root, { recursive: true });
   execFileSync("git", ["init", "--quiet"], { cwd: root });
   const nested = join(root, "packages/example");
   const bin = join(root, "test-bin");
@@ -54,6 +64,21 @@ function fixture(): Fixture {
   const hook = join(bin, "moe-completion-evidence");
   copyFileSync(SOURCE_HOOK, hook);
   return { root, nested, hook, transcript: join(root, "transcript.jsonl"), home };
+}
+
+function fixture(): Fixture {
+  return fixtureAt(tempRoot("moe-completion-evidence-"), "repo");
+}
+
+// Mirrors the hook's own sanitization: the git-toplevel absolute path with
+// every non [A-Za-z0-9_.-] run collapsed to a single "-", so tests can
+// compute the expected key without hardcoding the hook's internals.
+function projectKey(absPath: string): string {
+  return absPath.replace(/[^A-Za-z0-9_.-]+/g, "-").replace(/^-+|-+$/g, "") || "root";
+}
+
+function defaultAuditDir(f: Fixture): string {
+  return join(f.home, ".config", "moe", "core", "audit", projectKey(f.root));
 }
 
 function human(text: string) {
@@ -105,7 +130,9 @@ function runHook(
       HOME: f.home,
       USERPROFILE: f.home,
       MOE_EVIDENCE_DISABLED: "",
-      MOE_EVIDENCE_HOME: "",
+      MOE_EVIDENCE_CONFIG_DIR: "",
+      MOE_DATA_DIR: "",
+      XDG_CONFIG_HOME: "",
       ...options.env,
     },
   });
@@ -122,7 +149,7 @@ afterEach(() => {
 });
 
 describe("moe-completion-evidence", () => {
-  it("uses the human prompt boundary and writes complete evidence at the git top level", () => {
+  it("uses the human prompt boundary and writes complete evidence into the home audit store", () => {
     const f = fixture();
     writeTranscript(f.transcript, [
       human("Run the checks."),
@@ -139,7 +166,8 @@ describe("moe-completion-evidence", () => {
     expect(result.stdout).toBe("");
     expect(result.stderr).toBe("");
     expect(existsSync(join(f.nested, ".audit"))).toBe(false);
-    const [payload] = auditPayloads(join(f.root, ".audit"));
+    expect(existsSync(join(f.root, ".audit"))).toBe(false);
+    const [payload] = auditPayloads(defaultAuditDir(f));
     expect(payload?.verification_commands).toEqual([
       { command: "pnpm test", output: "all green", is_error: false, exit_code: 0 },
     ]);
@@ -161,7 +189,7 @@ describe("moe-completion-evidence", () => {
     ]);
 
     expect(runHook(f).status).toBe(0);
-    const [payload] = auditPayloads(join(f.root, ".audit"));
+    const [payload] = auditPayloads(defaultAuditDir(f));
     expect(payload?.verification_commands).toEqual([
       { command: "pnpm typecheck", output: null, is_error: null, exit_code: null },
     ]);
@@ -184,7 +212,7 @@ describe("moe-completion-evidence", () => {
     expect(result.status).toBe(0);
     expect(result.stdout).toBe("");
     expect(result.stderr).toContain("completion-claim without matching verification command");
-    const [payload] = auditPayloads(join(f.root, ".audit"));
+    const [payload] = auditPayloads(defaultAuditDir(f));
     expect(payload?.verification_commands).toEqual([]);
     expect(payload?.warning).toContain("completion-claim without matching verification command");
   });
@@ -207,7 +235,9 @@ describe("moe-completion-evidence", () => {
     ]);
     expect(runHook(f).status).toBe(0);
 
-    const firing = JSON.parse(readFileSync(join(f.root, ".audit/session-firing.json"), "utf8")) as {
+    const firing = JSON.parse(
+      readFileSync(join(defaultAuditDir(f), "session-firing.json"), "utf8"),
+    ) as {
       skill_tool_uses: number;
       skills: string[];
       skill_tool_use_ids: string[];
@@ -249,12 +279,12 @@ describe("moe-completion-evidence", () => {
     ]);
 
     expect(runHook(f, { sessionId: "live-schema" }).status).toBe(0);
-    const [payload] = auditPayloads(join(f.root, ".audit"));
+    const [payload] = auditPayloads(defaultAuditDir(f));
     expect(payload?.verification_commands).toEqual([
       { command: "pnpm test", output: "one test passed", is_error: false, exit_code: 0 },
     ]);
     const firing = JSON.parse(
-      readFileSync(join(f.root, ".audit/live-schema-firing.json"), "utf8"),
+      readFileSync(join(defaultAuditDir(f), "live-schema-firing.json"), "utf8"),
     ) as { skill_tool_uses: number; skills: string[] };
     expect(firing).toMatchObject({
       skill_tool_uses: 1,
@@ -262,24 +292,78 @@ describe("moe-completion-evidence", () => {
     });
   });
 
-  it("uses the home escape only when MOE_EVIDENCE_HOME is truthy", () => {
+  it("honors MOE_EVIDENCE_CONFIG_DIR as a direct override, skipping project keying", () => {
     const f = fixture();
+    const configDir = join(f.root, "explicit-audit-dir");
     writeTranscript(f.transcript, [
       human("Capture this."),
       assistant([{ type: "text", text: "Working." }]),
     ]);
 
-    expect(runHook(f, { env: { MOE_EVIDENCE_HOME: "1" } }).status).toBe(0);
+    expect(runHook(f, { env: { MOE_EVIDENCE_CONFIG_DIR: configDir } }).status).toBe(0);
 
-    expect(existsSync(join(f.root, ".audit"))).toBe(false);
-    const homeAudit = join(f.home, ".claude", "moe", "audit", basename(f.root));
-    expect(auditPayloads(homeAudit)).toHaveLength(1);
+    expect(existsSync(defaultAuditDir(f))).toBe(false);
+    expect(auditPayloads(configDir)).toHaveLength(1);
+  });
+
+  it("honors MOE_DATA_DIR, nesting under core/audit/<project-key>", () => {
+    const f = fixture();
+    const dataDir = join(f.root, "shared-data-root");
+    writeTranscript(f.transcript, [
+      human("Capture this."),
+      assistant([{ type: "text", text: "Working." }]),
+    ]);
+
+    expect(runHook(f, { env: { MOE_DATA_DIR: dataDir } }).status).toBe(0);
+
+    expect(existsSync(defaultAuditDir(f))).toBe(false);
+    const expected = join(dataDir, "core", "audit", projectKey(f.root));
+    expect(auditPayloads(expected)).toHaveLength(1);
+  });
+
+  it("honors XDG_CONFIG_HOME when MOE_DATA_DIR is unset", () => {
+    const f = fixture();
+    const xdgDir = join(f.root, "xdg-config");
+    writeTranscript(f.transcript, [
+      human("Capture this."),
+      assistant([{ type: "text", text: "Working." }]),
+    ]);
+
+    expect(runHook(f, { env: { XDG_CONFIG_HOME: xdgDir } }).status).toBe(0);
+
+    expect(existsSync(defaultAuditDir(f))).toBe(false);
+    const expected = join(xdgDir, "moe", "core", "audit", projectKey(f.root));
+    expect(auditPayloads(expected)).toHaveLength(1);
+  });
+
+  it("keys the audit dir by full repo path so same-named sibling repos do not collide", () => {
+    const parent = tempRoot("moe-completion-evidence-siblings-");
+    const a = fixtureAt(join(parent, "team-a"), "moe");
+    const b = fixtureAt(join(parent, "team-b"), "moe");
+
+    writeTranscript(a.transcript, [
+      human("Work in repo A."),
+      assistant([{ type: "text", text: "Working in A." }]),
+    ]);
+    writeTranscript(b.transcript, [
+      human("Work in repo B."),
+      assistant([{ type: "text", text: "Working in B." }]),
+    ]);
+
+    expect(runHook(a, { env: { HOME: a.home, USERPROFILE: a.home } }).status).toBe(0);
+    expect(runHook(b, { env: { HOME: b.home, USERPROFILE: b.home } }).status).toBe(0);
+
+    const dirA = defaultAuditDir(a);
+    const dirB = defaultAuditDir(b);
+    expect(dirA).not.toBe(dirB);
+    expect(auditPayloads(dirA)).toHaveLength(1);
+    expect(auditPayloads(dirB)).toHaveLength(1);
   });
 
   it("fails open for malformed events, transcript rows, and prior counters", () => {
     const f = fixture();
     expect(runHook(f, { input: "{" }).status).toBe(0);
-    expect(existsSync(join(f.root, ".audit"))).toBe(false);
+    expect(existsSync(defaultAuditDir(f))).toBe(false);
 
     writeTranscript(
       f.transcript,
@@ -289,20 +373,12 @@ describe("moe-completion-evidence", () => {
         ]),
       )}`,
     );
-    mkdirSync(join(f.root, ".audit"));
-    writeFileSync(join(f.root, ".audit/session-firing.json"), "null\n");
+    mkdirSync(defaultAuditDir(f), { recursive: true });
+    writeFileSync(join(defaultAuditDir(f), "session-firing.json"), "null\n");
 
     const result = runHook(f);
     expect(result.status).toBe(0);
     expect(result.stdout).toBe("");
     expect(result.stderr).toBe("");
-  });
-
-  it("keeps repository-local audit output ignored without mutating git internals", () => {
-    expect(() =>
-      execFileSync("git", ["check-ignore", "--quiet", "--no-index", ".audit/probe"], {
-        cwd: REPO,
-      }),
-    ).not.toThrow();
   });
 });

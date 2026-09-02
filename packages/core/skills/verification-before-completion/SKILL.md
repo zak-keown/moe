@@ -170,9 +170,10 @@ failure mode a green suite cannot see.
 
 The `moe-completion-evidence` Stop hook (default-on) reads the transcript
 window **for this turn only** — bounded by the last human-user entry, not a
-`type:"user"` tool-result row — and writes an audit record to the current Git
-worktree's `.audit/`. If it sees a completion-claim phrase in this turn's
-assistant text with no verification command in this turn's tool_uses, the
-record carries a warning and stderr says so. The hook never blocks a stop; it
-makes the silence falsifiable. Set `MOE_EVIDENCE_DISABLED=1` to opt out, or
-`MOE_EVIDENCE_HOME=1` to use `$HOME/.claude/moe/audit/<repo>/` instead.
+`type:"user"` tool-result row — and writes an audit record to
+`~/.config/moe/core/audit/<project-key>/` (never the worktree; a session's
+evidence can run into the tens of megabytes). If it sees a completion-claim
+phrase in this turn's assistant text with no verification command in this
+turn's tool_uses, the record carries a warning and stderr says so. The hook
+never blocks a stop; it makes the silence falsifiable. Set
+`MOE_EVIDENCE_DISABLED=1` to opt out.
