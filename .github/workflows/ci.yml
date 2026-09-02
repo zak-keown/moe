@@ -55,7 +55,15 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    container: node:24
+    container:
+      image: node:24
+      # `--init` runs tini as PID 1 inside the container so orphaned children
+      # are reaped instead of becoming zombies. Without it, flight's qa
+      # child-process tests (orphan reap, killProcessTree, timeout reaps
+      # background children, spawn kill stops a long-running process) and
+      # core's Stop-hook spawnSync test flake with EPIPE / "expected true to
+      # be false" on process-still-alive assertions.
+      options: --init
     steps:
       - uses: actions/checkout@v4
       # Container runs as root but checkout ran as the runner user, so
