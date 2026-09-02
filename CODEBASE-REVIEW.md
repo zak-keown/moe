@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 38
+  fixed: 39
   stale: 12
   skipped: 6
   deferred: 1
-  open: 536
+  open: 535
 ---
 
 # Codebase Review — moe
@@ -716,6 +716,10 @@ Fix: only take the port-based branch when this session recorded that it owns tha
 **Verification:** confirmed
 **Verification evidence:** Traced adapter.start() failure (Chrome not found, or port in use) through the orchestrator catch block to adapter.close(), closeWebAdapter and killChrome, where state.chromeProcess is null but state.activePort is always seeded to 9222 or CHROME_WS_PORT before any launch, so the findPidOnPort branch fires with no ownership check. Reproduced the unfiltered lsof -ti lookup against a self-started loopback listener; it returns any listener pid regardless of process identity.
 
+**Disposition:** fixed
+**Commit:** `96b0e58`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-032: file_upload hands arbitrary absolute host paths to the page, bypassing the context-root guard
 **File:** `packages/flight/src/qa/adapters/web/lib/file-upload.js`
 **Anchor:** `fileUpload`, the `ps.send('DOM.setFileInputFiles', { files: filePaths, nodeId })` call
