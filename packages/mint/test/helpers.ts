@@ -1,4 +1,5 @@
 import type { FileSet } from '../src/fileset.js'
+import { parse, stringify } from 'yaml'
 import { TARGET_IDS, type TargetId } from '../src/vocabulary.js'
 
 // Shared shape for the eleven adapter suites: an emitted FileSet indexed by
@@ -25,34 +26,42 @@ export function mustGet(map: Record<string, string>, path: string): string {
 // unit tests exercise a single Mint behavior and should not need to duplicate
 // the exhaustive target ledger just to build an otherwise-valid fixture.
 // This helper emits the real strict input shape; it does not relax production
-// parsing. Existing harness exclusions are mirrored into target intent so
+// parsing. Existing harness exclusions are structurally mirrored into target intent so
 // focused adapter tests keep exercising their requested active set.
 export function withV1Policy(yaml: string): string {
+  const config = parse(yaml)
+  if (!isRecord(config)) throw new Error('withV1Policy requires a YAML mapping')
+  const harnesses = config.harnesses
+  if (harnesses !== undefined && !isRecord(harnesses)) {
+    throw new Error('withV1Policy requires harnesses to be a YAML mapping')
+  }
   const excluded = new Set(
-    [...yaml.matchAll(/^\s*exclude:\s*\[([^\]]*)\]\s*$/gm)]
-      .flatMap((match) => match[1]?.split(',').map((name) => name.trim()) ?? [])
-      .filter(Boolean),
+    harnesses?.exclude === undefined
+      ? []
+      : readExcludedTargets(harnesses.exclude),
   )
-  const targets = TARGET_IDS.map((target) => targetPolicy(target, excluded)).join('\n')
-  const policy = [
-    'distribution:',
-    '  npm: "@example/test-fixture"',
-    'artifact:',
-    '  payloads: []',
-    'targets:',
-    targets,
-    'imported_works: []',
-  ].join('\n')
-  const harnesses = /^harnesses:\s*$/m
-  return harnesses.test(yaml)
-    ? yaml.replace(harnesses, `${policy}\nharnesses:`)
-    : `${yaml.trimEnd()}\n${policy}\n`
+  config.distribution = { npm: '@example/test-fixture' }
+  config.artifact = { payloads: [] }
+  config.targets = Object.fromEntries(TARGET_IDS.map((target) => [target, targetPolicy(target, excluded)]))
+  config.imported_works = []
+  return stringify(config)
 }
 
-function targetPolicy(target: TargetId, excluded: ReadonlySet<string>): string {
-  if (excluded.has(target)) return `  ${target}: { intent: omit }`
-  if (target === 'agent-plugins-1.0') {
-    return `  ${target}: { intent: preview, expected_capabilities: [] }`
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function readExcludedTargets(value: unknown): string[] {
+  if (!Array.isArray(value) || value.some((target) => typeof target !== 'string')) {
+    throw new Error('withV1Policy requires harnesses.exclude to be an array of target IDs')
   }
-  return `  ${target}: { intent: preview, expected_capabilities: [], operating_systems: [macos] }`
+  return value
+}
+
+function targetPolicy(target: TargetId, excluded: ReadonlySet<string>): Record<string, unknown> {
+  if (excluded.has(target)) return { intent: 'omit' }
+  if (target === 'agent-plugins-1.0') {
+    return { intent: 'preview', expected_capabilities: [] }
+  }
+  return { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] }
 }
