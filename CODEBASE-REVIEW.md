@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 47
+  fixed: 49
   stale: 14
   skipped: 6
   deferred: 1
-  open: 525
+  open: 523
 ---
 
 # Codebase Review — moe
@@ -345,6 +345,10 @@ asserts the surviving file set and the absence of duplicate story IDs.
 **Verification:** confirmed
 **Verification evidence:** Reproduced: aggregating three stories then re-aggregating a smaller revised set into the same output directory left EPIC-003.md stale and produced duplicate STORY-0003 in both EPIC-002.md and EPIC-003.md; validate_requirements_index.py returned OK because it checks each file independently and never tracks story ids across files. SKILL.md documents re-aggregation as a normal step with no instruction to clear the directory.
 
+**Disposition:** fixed
+**Commit:** `9412aa1`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-011: Eval harness cannot tell a dead judge from a correct STOP verdict
 **File:** `packages/core/test/latte/run-evals.sh`
 **Anchor:** `hook_output=$(echo "$hook_event" | bash "$HOOK_SCRIPT" 2>/dev/null || echo '{"decision": "error"}')`
@@ -1664,6 +1668,10 @@ Fix: register a cleanup that removes `root` on both success and failure, and pre
 **Verification:** confirmed
 **Verification evidence:** main() creates the root via mkdtempSync and copyCodexAuth copies auth.json, installation_id and models_cache.json into it, but no finally or exit handler ever removes the root on success or failure; the success path prints the retained path. The MODULE_NOT_FOUND premise from another shard does not apply: this file imports only Node builtins and passes node --check. mkdtempSync creates the directory at mode 0700, so exposure is same-user retention rather than cross-user.
 
+**Disposition:** fixed
+**Commit:** `f125441`
+**Resolved:** 2026-09-02
+**Note:** test/manual/codex-e2e.js is excluded from vitest's unit project (vitest.config.ts excludes test/manual/**) and only runs via the opt-in npm script test:codex-e2e (gated behind MOE_MEMORY_RUN_CODEX_E2E=1, a live Codex CLI, and tmux) -- it is not part of pnpm test or CI. Fixed anyway: extracted withTempRoot(prefix, fn), which removes the temp root (holding the copied auth.json) in a finally on both success and failure, and guarded the script's own main() invocation behind an entry-point check so the fix is unit-testable without triggering a real Codex session.
 ### CR-078: Deep-tier checks truncate the invoking user's global OpenCode config and install into their live CLIs
 **File:** `packages/mint/checks/run-checks.sh`
 **Anchor:** `deep_opencode`, the line `printf '{"plugin":["%s"]}' "$WORK" > "$HOME/.config/opencode/opencode.json"`
