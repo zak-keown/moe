@@ -1,9 +1,17 @@
 import { readFileSync, existsSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, posix } from 'node:path'
 import { parse } from 'yaml'
 import { z } from 'zod'
 import { MintError } from './diagnostics.js'
-import { TARGET_IDS } from './vocabulary.js'
+import {
+  CAPABILITY_IDS,
+  OPERATING_SYSTEM_IDS,
+  TARGET_IDS,
+  type CapabilityId,
+  type OperatingSystemId,
+  type TargetId,
+  type TargetIntent,
+} from './vocabulary.js'
 
 export type ConfigErrorDiagnostic = Omit<MintError['diagnostic'], 'severity' | 'message'>
 
@@ -145,6 +153,70 @@ const marketplaceSchema = z
   })
   .optional()
 
+const npmPackageSchema = z.string().regex(
+  /^@[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*$/,
+  'must be a valid scoped npm package name',
+)
+
+const GLOB_METACHARACTER_RE = /[*?\[\]{}!]/
+
+function normalizePayloadPath(value: string, ctx: z.RefinementCtx): string {
+  if (value.length === 0 || posix.isAbsolute(value) || value.includes('\\') || GLOB_METACHARACTER_RE.test(value)) {
+    ctx.addIssue({ code: 'custom', message: 'must be a non-absolute, non-glob slash-separated path' })
+    return z.NEVER
+  }
+  const segments = value.split('/')
+  if (segments.includes('.') || segments.includes('..')) {
+    ctx.addIssue({ code: 'custom', message: 'path segments may not be . or ..' })
+    return z.NEVER
+  }
+  const normalized = posix.normalize(value).replace(/\/+$/, '')
+  if (normalized.length === 0 || normalized === '.') {
+    ctx.addIssue({ code: 'custom', message: 'must name a payload root' })
+    return z.NEVER
+  }
+  return normalized
+}
+
+const payloadPathSchema = z.string().transform(normalizePayloadPath)
+const RESERVED_PAYLOAD_DESTINATIONS = new Set(['package.json', 'LICENSE'])
+const RESERVED_PAYLOAD_ROOTS = ['.moe', '.moe-mint']
+
+const artifactPayloadSchema = z.object({
+  from: payloadPathSchema,
+  to: payloadPathSchema,
+  required: z.boolean(),
+}).strict().superRefine((payload, ctx) => {
+  if (
+    RESERVED_PAYLOAD_DESTINATIONS.has(payload.to)
+    || RESERVED_PAYLOAD_ROOTS.some((root) => payload.to === root || payload.to.startsWith(`${root}/`))
+  ) {
+    ctx.addIssue({ code: 'custom', path: ['to'], message: 'destination is reserved for compositor output' })
+  }
+})
+
+const activeTargetSchema = z.object({
+  intent: z.enum(['certify', 'preview']),
+  expected_capabilities: z.array(z.enum(CAPABILITY_IDS)),
+  operating_systems: z.array(z.enum(OPERATING_SYSTEM_IDS)).min(1),
+}).strict()
+
+const activeFormatTargetSchema = z.object({
+  intent: z.enum(['certify', 'preview']),
+  expected_capabilities: z.array(z.enum(CAPABILITY_IDS)),
+}).strict()
+
+const omittedTargetSchema = z.object({ intent: z.literal('omit') }).strict()
+const targetEntrySchema = z.union([activeTargetSchema, omittedTargetSchema])
+const formatTargetEntrySchema = z.union([activeFormatTargetSchema, omittedTargetSchema])
+const targetShape = Object.fromEntries(TARGET_IDS.map((id) => [
+  id,
+  id === 'agent-plugins-1.0' ? formatTargetEntrySchema : targetEntrySchema,
+])) as unknown as Record<TargetId, z.ZodType>
+const targetsSchema = z.object(targetShape).strict()
+
+const importedWorkSchema = z.object({ name: z.string().min(1) }).strict()
+
 const rawSchema = z.object({
   name: z.string().regex(PLUGIN_NAME_RE, 'lowercase alphanumerics and hyphens'),
   version: z.string().regex(VERSION_RE, VERSION_MESSAGE),
@@ -175,7 +247,31 @@ const rawSchema = z.object({
     .optional(),
   marketplace: marketplaceSchema,
   release: releaseSchema,
+  distribution: z.object({ npm: npmPackageSchema }).strict(),
+  artifact: z.object({ payloads: z.array(artifactPayloadSchema) }).strict(),
+  targets: targetsSchema,
+  imported_works: z.array(importedWorkSchema),
 })
+
+export interface DistributionConfig {
+  npm: string
+}
+
+export interface ArtifactPayload {
+  from: string
+  to: string
+  required: boolean
+}
+
+export interface PluginTargetIntent {
+  intent: TargetIntent
+  expectedCapabilities: readonly CapabilityId[]
+  operatingSystems?: readonly OperatingSystemId[]
+}
+
+export interface ImportedWorkRef {
+  name: string
+}
 
 export interface MintConfig {
   name: string
@@ -192,6 +288,10 @@ export interface MintConfig {
   bootstrap: BootstrapMode
   components: { skills: string; commands: string; agents: string; hooks: string; mcp: string }
   harnesses: { exclude: string[]; settings: Record<string, HarnessSettings> }
+  distribution: DistributionConfig
+  artifact: { payloads: readonly ArtifactPayload[] }
+  targets: Readonly<Record<TargetId, PluginTargetIntent>>
+  importedWorks: readonly ImportedWorkRef[]
   // Inferred from the schemas rather than restated: a hand-written copy drifts,
   // and under exactOptionalPropertyTypes every nested optional would need an
   // explicit `| undefined` anyway. Same idiom as `author` above.
@@ -226,6 +326,20 @@ function rejectLegacySyntax(doc: unknown): void {
   }
   if ('bump' in doc) {
     throw configError('bump: was renamed: use release: (same fields)')
+  }
+  if (Array.isArray(doc.imported_works) && doc.imported_works.some((entry) => !isPlainObject(entry))) {
+    throw new ConfigError(
+      'imported_works entries must use object form',
+      [],
+      {
+        diagnostic: {
+          code: 'CONFIG_IMPORTED_WORK_MIGRATION_REQUIRED',
+          source: 'moe-mint.yaml',
+          field: 'imported_works',
+          action: 'Replace each scalar entry with {name: ...}.',
+        },
+      },
+    )
   }
 }
 
@@ -320,8 +434,50 @@ function checkMarketplace(marketplace: z.infer<typeof rawSchema>['marketplace'],
   }
 }
 
-export function loadConfig(root: string): MintConfig {
-  const path = join(root, 'moe-mint.yaml')
+function resolveTargets(raw: z.infer<typeof rawSchema>['targets']): Readonly<Record<TargetId, PluginTargetIntent>> {
+  const targets = {} as Record<TargetId, PluginTargetIntent>
+  for (const target of TARGET_IDS) {
+    const entry = raw[target] as { intent: TargetIntent; expected_capabilities?: CapabilityId[]; operating_systems?: OperatingSystemId[] }
+    targets[target] = {
+      intent: entry.intent,
+      expectedCapabilities: entry.expected_capabilities ?? [],
+      ...(entry.operating_systems === undefined ? {} : { operatingSystems: entry.operating_systems }),
+    }
+  }
+  return targets
+}
+
+function validateTargetMigration(
+  targets: Readonly<Record<TargetId, PluginTargetIntent>>,
+  harnesses: { exclude: string[]; settings: Record<string, HarnessSettings> },
+): void {
+  for (const target of TARGET_IDS) {
+    const omitted = targets[target].intent === 'omit'
+    const excluded = harnesses.exclude.includes(target)
+    if (omitted !== excluded) {
+      throw configError(
+        `targets.${target}.intent and harnesses.exclude disagree`,
+        [`intent ${omitted ? 'omit' : targets[target].intent} must ${omitted ? 'exclude' : 'activate'} ${target}`],
+      )
+    }
+    if (omitted && harnesses.settings[target] !== undefined) {
+      throw configError(`harnesses.${target}: settings are not allowed for an omitted target`)
+    }
+  }
+}
+
+function validateImportedWorks(importedWorks: readonly ImportedWorkRef[]): void {
+  const names = new Set<string>()
+  for (const importedWork of importedWorks) {
+    if (names.has(importedWork.name)) {
+      throw configError(`imported_works: duplicate work name "${importedWork.name}"`)
+    }
+    names.add(importedWork.name)
+  }
+}
+
+export function loadConfig(root: string, configFile = 'moe-mint.yaml'): MintConfig {
+  const path = join(root, configFile)
   if (!existsSync(path)) {
     throw configError(`moe-mint.yaml not found in ${root}`)
   }
@@ -345,6 +501,9 @@ export function loadConfig(root: string): MintConfig {
   const { exclude, settings } = resolveHarnessSettings(raw.harnesses)
   const bootstrap = resolveBootstrap(raw.bootstrap)
   validateHarnessHooks(settings, bootstrap)
+  const targets = resolveTargets(raw.targets)
+  validateTargetMigration(targets, { exclude, settings })
+  validateImportedWorks(raw.imported_works)
 
   return {
     name: raw.name,
@@ -364,6 +523,10 @@ export function loadConfig(root: string): MintConfig {
       mcp: raw.components?.mcp ?? '.mcp.json',
     },
     harnesses: { exclude, settings },
+    distribution: raw.distribution,
+    artifact: { payloads: raw.artifact.payloads },
+    targets,
+    importedWorks: raw.imported_works,
     marketplace: raw.marketplace,
     release: raw.release,
   }

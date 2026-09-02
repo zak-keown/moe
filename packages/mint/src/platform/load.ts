@@ -1,8 +1,9 @@
 import { readFile, realpath } from 'node:fs/promises'
-import { isAbsolute, relative, resolve, sep } from 'node:path'
+import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path'
 import { parse } from 'yaml'
+import { loadConfig, type MintConfig, type PluginTargetIntent } from '../config.js'
 import { MintError, type MintDiagnostic } from '../diagnostics.js'
-import { OPERATING_SYSTEM_IDS, TARGET_IDS } from '../vocabulary.js'
+import { OPERATING_SYSTEM_IDS, TARGET_IDS, type OperatingSystemId, type TargetId } from '../vocabulary.js'
 import { platformRegistrySchema, type PlatformPluginDeclarationV1, type PlatformRegistryV1 } from './schema.js'
 
 const REGISTRY_FILE = 'moe-platform.yaml'
@@ -26,6 +27,8 @@ const PINNED_CONTRACTS = {
 interface FailureOptions {
   source?: string
   cause?: unknown
+  plugin?: string
+  target?: string
 }
 
 function fail(code: string, message: string, action: string, field?: string, path?: string, options: FailureOptions = {}): never {
@@ -33,12 +36,30 @@ function fail(code: string, message: string, action: string, field?: string, pat
     severity: 'error',
     code,
     source: options.source ?? REGISTRY_FILE,
+    ...(options.plugin === undefined ? {} : { plugin: options.plugin }),
+    ...(options.target === undefined ? {} : { target: options.target }),
     ...(field === undefined ? {} : { field }),
     ...(path === undefined ? {} : { path }),
     message,
     action,
   }
   throw new MintError(diagnostic, { cause: options.cause })
+}
+
+export interface ResolvedPlugin {
+  id: string
+  npmPackage: string
+  version: string
+  sourcePath: string
+  configPath: string
+  packageJson: Readonly<Record<string, unknown>>
+  config: MintConfig
+  targets: Readonly<Record<TargetId, PluginTargetIntent>>
+}
+
+export interface ResolvedPlatform {
+  registry: PlatformRegistryV1
+  plugins: readonly ResolvedPlugin[]
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -205,6 +226,226 @@ async function resolvePluginPaths(repoRoot: string, plugins: readonly PlatformPl
     resolved.push({ ...plugin, sourcePath, configPath })
   }
   return resolved
+}
+
+function packageMismatch(
+  code: 'PACKAGE_NAME_MISMATCH' | 'PACKAGE_VERSION_MISMATCH' | 'PACKAGE_LICENSE_MISMATCH',
+  plugin: string,
+  field: string,
+  expected: string,
+  actual: unknown,
+  source = 'package.json',
+): never {
+  fail(
+    code,
+    `plugin "${plugin}" ${field} must match package.json (expected "${expected}", received "${String(actual)}")`,
+    'Make the package-local Mint policy and source package.json agree.',
+    field,
+    undefined,
+    { source, plugin },
+  )
+}
+
+function requireRegisteredPlugin(platform: PlatformRegistryV1, config: MintConfig): PlatformRegistryV1['plugins'][number] {
+  const plugin = platform.plugins.find((entry) => entry.id === config.name)
+  if (plugin === undefined) {
+    fail(
+      'PLATFORM_PLUGIN_NOT_REGISTERED',
+      `package-local Mint config names unregistered plugin "${config.name}"`,
+      'Add the plugin to moe-platform.yaml or correct the package-local name.',
+      'name',
+      undefined,
+      { source: 'moe-mint.yaml', plugin: config.name },
+    )
+  }
+  return plugin
+}
+
+function validateTargetPolicy(platform: PlatformRegistryV1, config: MintConfig): void {
+  for (const target of TARGET_IDS) {
+    const intent = config.targets[target]
+    if (intent.intent === 'omit') continue
+    const registryTarget = platform.targets[target]
+    if (registryTarget.kind === 'host') {
+      const operatingSystems = intent.operatingSystems ?? []
+      for (const operatingSystem of operatingSystems) {
+        if (!platform.platform.known_operating_systems.includes(operatingSystem)) {
+          fail(
+            'TARGET_UNSUPPORTED_OPERATING_SYSTEM',
+            `plugin "${config.name}" names operating system "${operatingSystem}" outside platform policy`,
+            'Use an operating system declared by moe-platform.yaml.',
+            `targets.${target}.operating_systems`,
+            undefined,
+            { source: 'moe-mint.yaml', plugin: config.name, target },
+          )
+        }
+      }
+    }
+    for (const prerequisite of registryTarget.requires ?? []) {
+      if (config.targets[prerequisite].intent === 'omit') {
+        fail(
+          'TARGET_PREREQUISITE_UNMET',
+          `plugin "${config.name}" activates "${target}" but omits prerequisite "${prerequisite}"`,
+          `Activate ${prerequisite} or omit ${target}.`,
+          `targets.${target}.intent`,
+          undefined,
+          { source: 'moe-mint.yaml', plugin: config.name, target },
+        )
+      }
+    }
+  }
+}
+
+const PRODUCT_TO_NODE_OS: Readonly<Record<OperatingSystemId, string>> = {
+  macos: 'darwin',
+  linux: 'linux',
+  wsl2: 'linux',
+  windows: 'win32',
+}
+const NODE_OS_IDS = new Set(['aix', 'android', 'darwin', 'freebsd', 'haiku', 'linux', 'openbsd', 'sunos', 'win32'])
+const NODE_CPU_IDS = new Set(['arm', 'arm64', 'ia32', 'loong64', 'mips', 'mipsel', 'ppc', 'ppc64', 'riscv64', 's390', 's390x', 'x64'])
+
+function constraintsAllow(values: readonly string[], candidate: string): boolean {
+  const allowed = values.filter((value) => !value.startsWith('!'))
+  const denied = new Set(values.filter((value) => value.startsWith('!')).map((value) => value.slice(1)))
+  return !denied.has(candidate) && (allowed.length === 0 || allowed.includes(candidate))
+}
+
+function validateSourceConstraints(config: MintConfig, sourceManifest: Readonly<Record<string, unknown>>, source: string): void {
+  const activeOperatingSystems = new Set<OperatingSystemId>()
+  for (const target of TARGET_IDS) {
+    if (config.targets[target].intent === 'omit') continue
+    for (const operatingSystem of config.targets[target].operatingSystems ?? []) activeOperatingSystems.add(operatingSystem)
+  }
+
+  const os = sourceManifest.os
+  if (os !== undefined) {
+    if (!Array.isArray(os) || os.some((value) => typeof value !== 'string' || !NODE_OS_IDS.has(value.replace(/^!/, '')))) {
+      fail(
+        'TARGET_OS_CONTRADICTION',
+        `plugin "${config.name}" package.json has an invalid os constraint`,
+        'Use Node operating-system IDs that do not exclude active target operating systems.',
+        'os',
+        undefined,
+        { source, plugin: config.name },
+      )
+    }
+    for (const operatingSystem of activeOperatingSystems) {
+      if (!constraintsAllow(os, PRODUCT_TO_NODE_OS[operatingSystem])) {
+        fail(
+          'TARGET_OS_CONTRADICTION',
+          `plugin "${config.name}" package.json os constraint excludes active operating system "${operatingSystem}"`,
+          'Broaden package.json os or remove the incompatible target operating system.',
+          'os',
+          undefined,
+          { source, plugin: config.name },
+        )
+      }
+    }
+  }
+
+  const cpu = sourceManifest.cpu
+  if (cpu !== undefined) {
+    if (!Array.isArray(cpu) || cpu.some((value) => typeof value !== 'string' || !NODE_CPU_IDS.has(value.replace(/^!/, '')))) {
+      fail(
+        'TARGET_OS_CONTRADICTION',
+        `plugin "${config.name}" package.json has an invalid cpu constraint`,
+        'Use canonical Node CPU IDs or omit cpu for an unrestricted target matrix.',
+        'cpu',
+        undefined,
+        { source, plugin: config.name },
+      )
+    }
+    if (activeOperatingSystems.size > 0 && cpu.length > 0) {
+      fail(
+        'TARGET_OS_CONTRADICTION',
+        `plugin "${config.name}" package.json cpu constraint narrows its unrestricted target matrix`,
+        'Remove package.json cpu or introduce an explicit CPU target policy in a future schema version.',
+        'cpu',
+        undefined,
+        { source, plugin: config.name },
+      )
+    }
+  }
+}
+
+export function resolvePlugin(
+  platform: PlatformRegistryV1,
+  config: MintConfig,
+  sourceManifest: Readonly<Record<string, unknown>>,
+  source = 'package.json',
+): ResolvedPlugin {
+  const declaration = requireRegisteredPlugin(platform, config)
+  validateTargetPolicy(platform, config)
+  if (sourceManifest.name !== config.distribution.npm) {
+    packageMismatch('PACKAGE_NAME_MISMATCH', config.name, 'name', config.distribution.npm, sourceManifest.name, source)
+  }
+  if (sourceManifest.version !== config.version) {
+    packageMismatch('PACKAGE_VERSION_MISMATCH', config.name, 'version', config.version, sourceManifest.version, source)
+  }
+  if (sourceManifest.license !== config.license) {
+    packageMismatch('PACKAGE_LICENSE_MISMATCH', config.name, 'license', config.license ?? '(missing)', sourceManifest.license, source)
+  }
+  validateSourceConstraints(config, sourceManifest, source)
+  return {
+    id: declaration.id,
+    npmPackage: config.distribution.npm,
+    version: config.version,
+    sourcePath: declaration.sourcePath,
+    configPath: declaration.configPath,
+    packageJson: sourceManifest,
+    config,
+    targets: config.targets,
+  }
+}
+
+async function readSourceManifest(plugin: PlatformRegistryV1['plugins'][number]): Promise<Readonly<Record<string, unknown>>> {
+  const path = resolve(plugin.sourcePath, 'package.json')
+  let contents: string
+  try {
+    contents = await readFile(path, 'utf8')
+  } catch (error) {
+    fail(
+      'PACKAGE_MANIFEST_READ_FAILED',
+      `package.json could not be read: ${(error as Error).message}`,
+      'Make the source package manifest readable.',
+      undefined,
+      path,
+      { source: path, plugin: plugin.id, cause: error },
+    )
+  }
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(contents)
+  } catch (error) {
+    fail(
+      'PACKAGE_MANIFEST_INVALID',
+      `package.json is not valid JSON: ${(error as Error).message}`,
+      'Correct the source package manifest JSON.',
+      undefined,
+      path,
+      { source: path, plugin: plugin.id, cause: error },
+    )
+  }
+  if (!isRecord(parsed)) {
+    fail('PACKAGE_MANIFEST_INVALID', 'package.json must contain an object', 'Correct the source package manifest JSON.', undefined, path, { source: path, plugin: plugin.id })
+  }
+  return parsed
+}
+
+export async function resolvePlatform(repoRoot: string): Promise<ResolvedPlatform> {
+  const registry = await loadPlatformRegistry(repoRoot)
+  const plugins: ResolvedPlugin[] = []
+  for (const declaration of registry.plugins) {
+    const config = loadConfig(dirname(declaration.configPath), basename(declaration.configPath))
+    const sourceManifest = await readSourceManifest(declaration)
+    const resolved = resolvePlugin(registry, config, sourceManifest, resolve(declaration.sourcePath, 'package.json'))
+    plugins.push({
+      ...resolved,
+      packageJson: sourceManifest,
+    })
+  }
+  return { registry, plugins }
 }
 
 export async function loadPlatformRegistry(repoRoot: string): Promise<PlatformRegistryV1> {
