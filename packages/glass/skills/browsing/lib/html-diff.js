@@ -13,6 +13,18 @@
 const MAX_LINES_PER_SIDE = 50;
 const MAX_LINE_LENGTH = 200;
 
+// myersDiff's `trace` stores a full snapshot of its O(N+M)-wide `v` array on
+// every edit-distance step, so its memory is O(D*(N+M)) with D bounded only
+// by N+M itself (two completely different documents make D = N+M). There is
+// no cap on N or M below this, so two ordinary-sized but dissimilar
+// documents can exhaust the process heap — a V8 OOM is a hard process abort,
+// not a catchable exception, so it takes the whole MCP server down (CR-059,
+// CR-060). Bail out to a cheap, O(N+M)-memory summary above this budget
+// instead of ever entering the Myers loop. 2000 lines/side is comfortably
+// below every measured-safe point in both findings' repro tables and far
+// below the sizes that measured multi-GB / OOM.
+const MAX_DIFFABLE_LINES_PER_SIDE = 2000;
+
 // Myers' O((N+M)D) shortest-edit-script. Returns an array of
 // { type: 'eq'|'del'|'add', value: string } operations in order.
 function myersDiff(a, b) {
@@ -82,9 +94,41 @@ function backtrack(trace, a, b, N, M, max) {
   return ops.reverse();
 }
 
+// Cheap (O(N+M) time, no quadratic allocation) stand-in for a full diff when
+// the input is too large to run Myers on safely. Reports sizes and, when
+// cheap to find, the first line where the two sides diverge.
+function cheapOversizeSummary(before, after, beforeLines, afterLines) {
+  if (before === after) return '(no changes detected)';
+
+  const minLen = Math.min(beforeLines.length, afterLines.length);
+  let firstDiffAt = -1;
+  for (let i = 0; i < minLen; i++) {
+    if (beforeLines[i] !== afterLines[i]) { firstDiffAt = i; break; }
+  }
+  if (firstDiffAt === -1 && beforeLines.length !== afterLines.length) {
+    firstDiffAt = minLen;
+  }
+
+  const trunc = (s) => (s === undefined ? '(none)' : s.slice(0, MAX_LINE_LENGTH));
+  let summary = `(diff skipped: before has ${beforeLines.length} line(s), after has ${afterLines.length} line(s) — ` +
+    `over the ${MAX_DIFFABLE_LINES_PER_SIDE}-line safety cap, too large to diff in full)`;
+  if (firstDiffAt !== -1) {
+    summary += `\nFirst difference at line ${firstDiffAt + 1}:\n` +
+      `- ${trunc(beforeLines[firstDiffAt])}\n` +
+      `+ ${trunc(afterLines[firstDiffAt])}`;
+  }
+  return summary;
+}
+
 function generateHtmlDiff(beforeHtml, afterHtml) {
-  const beforeLines = (beforeHtml || '').split('\n');
-  const afterLines = (afterHtml || '').split('\n');
+  const before = beforeHtml || '';
+  const after = afterHtml || '';
+  const beforeLines = before.split('\n');
+  const afterLines = after.split('\n');
+
+  if (beforeLines.length > MAX_DIFFABLE_LINES_PER_SIDE || afterLines.length > MAX_DIFFABLE_LINES_PER_SIDE) {
+    return cheapOversizeSummary(before, after, beforeLines, afterLines);
+  }
 
   const ops = myersDiff(beforeLines, afterLines);
 
