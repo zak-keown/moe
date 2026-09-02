@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 24
+  fixed: 25
   stale: 11
   skipped: 6
   deferred: 0
-  open: 552
+  open: 551
 ---
 
 # Codebase Review — moe
@@ -1199,6 +1199,10 @@ Fix: never build the expression by interpolation — send the id and decision as
 **Verification:** confirmed
 **Verification evidence:** Reproduced against the unmodified tryHandleDialogSelectorForSession with a recording pageSession.send: the agent dialog::dismiss (deny) produced the actual expression window.__dialogShim_resolve(1, grant); void(, deny) yet the router returned ok:true. dialogs.js copies data.id from the parsed binding payload verbatim into state.staged._shimId with no shape check, and __dialogShim is a Runtime.addBinding reachable from any page script in the main world.
 
+**Disposition:** fixed
+**Commit:** `13f5c33`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-059: generateHtmlDiff allocates O((N+M)^2) and aborts the process on an ordinary page
 **File:** `packages/glass/skills/browsing/lib/html-diff.js`
 **Anchor:** `myersDiff` — `trace.push(v.slice())`
