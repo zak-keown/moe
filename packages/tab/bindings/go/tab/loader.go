@@ -170,10 +170,13 @@ func cstr(p uintptr) string {
 	if p == 0 {
 		return ""
 	}
+	base := unsafe.Pointer(p)
 	var n int
-	for *(*byte)(unsafe.Pointer(p + uintptr(n))) != 0 {
+	// unsafe.Add (not uintptr arithmetic re-cast to Pointer) keeps this out
+	// of go vet's unsafeptr diagnostic — CR-082.
+	for *(*byte)(unsafe.Add(base, n)) != 0 {
 		n++
 	}
-	return string(unsafe.Slice((*byte)(unsafe.Pointer(p)), n))
+	return string(unsafe.Slice((*byte)(base), n))
 }
 

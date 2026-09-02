@@ -1,3 +1,8 @@
+//go:build darwin || linux
+
+// purego.Dlopen/RTLD_NOW/RTLD_GLOBAL are only defined for darwin/linux, matching
+// loader.go's own constraint (CR-082) — without this tag, `go vet`/`go build`
+// for any other GOOS fails with "undefined: purego.Dlopen".
 package tab
 
 import (

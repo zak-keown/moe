@@ -24,7 +24,7 @@
     "provenance": "node scripts/check-provenance.mjs",
     "tab:build": "cargo build --release --manifest-path packages/tab/Cargo.toml",
     "tab:test": "cargo test --manifest-path packages/tab/Cargo.toml",
-    "tab:test:bindings": "pnpm tab:build && uv run --project packages/tab/bindings/python pytest packages/tab/bindings/python",
+    "tab:test:bindings": "pnpm tab:build && uv run --project packages/tab/bindings/python pytest packages/tab/bindings/python && (cd packages/tab/bindings/go && CGO_ENABLED=0 go test ./...) && pnpm --filter @bubstack/moe-tab test:ffi",
     "test": "turbo run test && pnpm bin:test",
     "typecheck": "turbo run typecheck"
   },
