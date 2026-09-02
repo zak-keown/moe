@@ -9,7 +9,7 @@ import { runTest, DEFAULT_IMAGE } from './test-command.js'
 import { bumpVersion, bumpCheck, bumpAudit, type BumpResult, type CheckResult, type AuditResult } from './bump.js'
 import { ConfigError } from './config.js'
 import { resolvePlatform } from './platform/load.js'
-import { resolvePublishMatrix, type PluginProjectionRecord } from './platform/projections.js'
+import { currentProjectionRecords, resolvePublishMatrix } from './platform/projections.js'
 
 const LABEL_WIDTH = 45
 
@@ -151,11 +151,9 @@ program
   .option('--repo <path>', 'repository root containing moe-platform.yaml', process.cwd())
   .action(async (opts: { repo: string }) => {
     const platform = await resolvePlatform(opts.repo)
-    // Publish selection is metadata-only: it has no target/capability claim.
-    // These records deliberately contain no synthetic emissions; projection
-    // rendering receives validated current-generation records from the root
-    // mint orchestration below.
-    const artifacts: PluginProjectionRecord[] = platform.plugins.map((plugin) => ({ plugin, emissions: {} }))
+    // This validation/emission pass intentionally writes nothing. Its records
+    // still prove the publish selection reflects the current adapter contract.
+    const artifacts = currentProjectionRecords(platform)
     process.stdout.write(`${JSON.stringify(resolvePublishMatrix(platform, artifacts), null, 2)}\n`)
   })
 

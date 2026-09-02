@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { cpSync, mkdtempSync, mkdirSync, existsSync, readFileSync, writeFileSync, rmSync, symlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
-import { generate } from '../src/generate.js'
+import { generate, validateGeneration } from '../src/generate.js'
 import { MANIFEST_PATH, checkDrift } from '../src/manifest.js'
 import type { HarnessAdapter } from '../src/adapters/index.js'
 import { opencode } from '../src/adapters/opencode.js'
@@ -26,6 +26,16 @@ function withTargetCapabilities(yaml: string, capabilities: Partial<Record<Targe
 }
 
 describe('generate', () => {
+  it('validates current adapter emissions without writing generated files or a manifest', () => {
+    const dir = freshFixture()
+
+    const result = validateGeneration(dir)
+
+    expect(result.emissions['claude-code']?.emittedCapabilities).toContain('skill-discovery')
+    expect(existsSync(join(dir, '.claude-plugin', 'plugin.json'))).toBe(false)
+    expect(existsSync(join(dir, MANIFEST_PATH))).toBe(false)
+  })
+
   it('writes adapter files and a clean manifest', () => {
     const dir = freshFixture()
     const result = generate(dir)

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, cpSync, writeFileSync, readFileSync } from 'node:fs'
+import { mkdtempSync, cpSync, writeFileSync, readFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -45,6 +45,9 @@ describe('CLI end-to-end', () => {
       { plugin: 'moe-crew', package: '@bubstack/moe-crew', version: '0.1.4', sourcePackagePath: 'packages/crew', generatedArtifactPath: 'plugins/moe-crew' },
       { plugin: 'moe-statusline', package: '@bubstack/moe-statusline', version: '0.1.0', sourcePackagePath: 'packages/statusline', generatedArtifactPath: 'plugins/moe-statusline' },
     ])
+    for (const sourcePackage of ['core', 'backstory', 'memory', 'glass', 'crew', 'statusline']) {
+      expect(existsSync(join(REPO_ROOT, '..', sourcePackage, '.claude-plugin', 'plugin.json'))).toBe(false)
+    }
   })
 
   it('does not claim to rewrite a human-authored README when the fixture has historical markers', () => {

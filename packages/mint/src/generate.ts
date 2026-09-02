@@ -1,5 +1,5 @@
 import { rmSync, rmdirSync, readdirSync, readFileSync, existsSync, statSync, lstatSync } from 'node:fs'
-import { dirname, resolve, isAbsolute, sep } from 'node:path'
+import { dirname, relative, resolve, isAbsolute, sep } from 'node:path'
 import { buildModel } from './model.js'
 import { writeFileSet, type FileSet, type GeneratedFile } from './fileset.js'
 import { saveManifest, loadManifest, sha256, type GenerationManifest } from './manifest.js'
@@ -18,12 +18,31 @@ export interface GenerateResult {
   emissions: Partial<Record<TargetId, AdapterEmission>>
   adaptersRun: string[]
   pruned: string[]
+  validation: GenerationValidation
 }
+
+/**
+ * The complete adapter-emission and capability-validation result, before any
+ * generated file or manifest is touched. Projection consumers use this exact
+ * object as evidence that their emissions came from the real current pass.
+ */
+export interface GenerationValidation {
+  files: FileSet
+  warnings: string[]
+  emissions: Partial<Record<TargetId, AdapterEmission>>
+  adaptersRun: string[]
+  config: MintConfig
+}
+
+const currentValidations = new WeakSet<GenerationValidation>()
 
 export interface GenerateOptions {
   force?: boolean
   /** Set by registry projection orchestration; package-local callers omit it. */
   marketplaceName?: string
+  /** Registry validation reads a package-local config without staging it. */
+  configPath?: string
+  configSource?: string
 }
 
 function isSourcePath(path: string, config: MintConfig): boolean {
@@ -68,12 +87,13 @@ function mergeFiles(
   }
 }
 
-export function generate(
+export function validateGeneration(
   root: string,
   adapterList: HarnessAdapter[] = adapters,
   opts: GenerateOptions = {},
-): GenerateResult {
-  const sourceModel = buildModel(root)
+): GenerationValidation {
+  const configFile = opts.configPath === undefined ? 'moe-mint.yaml' : relative(root, opts.configPath)
+  const sourceModel = buildModel(root, configFile, opts.configSource ?? configFile)
   const model: typeof sourceModel = opts.marketplaceName === undefined
     ? sourceModel
     : {
@@ -146,6 +166,29 @@ export function generate(
   mergeFiles(byPath, 'docs', emitDocs(model, active, emissions), model.config)
   const files: FileSet = [...byPath.values()].map((v) => v.file)
 
+  const validation = {
+    files,
+    warnings,
+    emissions,
+    adaptersRun: active.map((adapter) => adapter.name),
+    config: model.config,
+  }
+  currentValidations.add(validation)
+  return validation
+}
+
+export function isCurrentGenerationValidation(value: unknown): value is GenerationValidation {
+  return typeof value === 'object' && value !== null && currentValidations.has(value as GenerationValidation)
+}
+
+export function generate(
+  root: string,
+  adapterList: HarnessAdapter[] = adapters,
+  opts: GenerateOptions = {},
+): GenerateResult {
+  const validation = validateGeneration(root, adapterList, opts)
+  const { files, warnings, emissions, adaptersRun, config } = validation
+
   // A corrupt manifest shouldn't dead-end generate the way it does validate:
   // recover by treating this run as if there were no prior manifest at all, and
   // skip pruning (we have no record of what to prune). validate() still fails
@@ -169,7 +212,7 @@ export function generate(
   // Only applies when the user hasn't customized components.mcp away from
   // that default; an explicit `components.mcp: mcp.json` means this path IS
   // the intended source, not a stray file.
-  if (model.config.components.mcp === '.mcp.json') {
+  if (config.components.mcp === '.mcp.json') {
     const strayAbs = resolve(root, 'mcp.json')
     const inNewFiles = files.some((f) => f.path === 'mcp.json')
     const inPriorManifest = prior !== undefined && Object.prototype.hasOwnProperty.call(prior.files, 'mcp.json')
@@ -263,5 +306,5 @@ export function generate(
   writeFileSet(root, files)
   saveManifest(root, files, TOOL_VERSION)
 
-  return { files, warnings, emissions, adaptersRun: active.map((a) => a.name), pruned }
+  return { files, warnings, emissions, adaptersRun, pruned, validation }
 }
