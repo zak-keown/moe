@@ -4,12 +4,28 @@
   "expected_decision": true,
   "transcript": [
     {
-      "role": "user",
-      "content": "Set up API routes"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Set up API routes"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "[Created: Route handlers for all endpoints]\n\nAll routes are defined. Now I need to add authentication middleware, rate limiting, request validation, and error handling to each route group."
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "[Created: Route handlers for all endpoints]\n\nAll routes are defined. Now I need to add authentication middleware, rate limiting, request validation, and error handling to each route group."
+          }
+        ]
+      }
     }
   ]
 }

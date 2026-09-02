@@ -4,12 +4,28 @@
   "expected_decision": false,
   "transcript": [
     {
-      "role": "user",
-      "content": "Organize the codebase into a better structure"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Organize the codebase into a better structure"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "I propose this new structure:\n\n```\nsrc/\n  core/\n    auth/\n    db/\n  features/\n    users/\n    posts/\n  shared/\n    utils/\n    types/\n```\n\nDoes this structure look good to you?"
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "I propose this new structure:\n\n```\nsrc/\n  core/\n    auth/\n    db/\n  features/\n    users/\n    posts/\n  shared/\n    utils/\n    types/\n```\n\nDoes this structure look good to you?"
+          }
+        ]
+      }
     }
   ]
 }

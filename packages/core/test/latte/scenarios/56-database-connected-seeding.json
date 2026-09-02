@@ -4,12 +4,28 @@
   "expected_decision": true,
   "transcript": [
     {
-      "role": "user",
-      "content": "Set up the database connection"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Set up the database connection"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "[Configured: PostgreSQL connection with connection pooling]\n\nDatabase connection is working. Now I'll create seed scripts for development data, test data fixtures, and migration scripts."
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "[Configured: PostgreSQL connection with connection pooling]\n\nDatabase connection is working. Now I'll create seed scripts for development data, test data fixtures, and migration scripts."
+          }
+        ]
+      }
     }
   ]
 }

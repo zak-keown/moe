@@ -4,12 +4,28 @@
   "expected_decision": false,
   "transcript": [
     {
-      "role": "user",
-      "content": "Set up environment configuration"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Set up environment configuration"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "How should I handle environment-specific config:\n- .env files with dotenv\n- Config service (AWS Parameter Store, etc.)\n- Environment variables directly\n- Config files per environment (config.dev.js, config.prod.js)\n\nWhat's your preferred approach?"
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "How should I handle environment-specific config:\n- .env files with dotenv\n- Config service (AWS Parameter Store, etc.)\n- Environment variables directly\n- Config files per environment (config.dev.js, config.prod.js)\n\nWhat's your preferred approach?"
+          }
+        ]
+      }
     }
   ]
 }

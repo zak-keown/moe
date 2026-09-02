@@ -4,12 +4,28 @@
   "expected_decision": false,
   "transcript": [
     {
-      "role": "user",
-      "content": "Set up deployment for the application"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Set up deployment for the application"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "For deployment, would you prefer:\n- Docker containers on AWS ECS\n- Kubernetes cluster\n- Serverless with AWS Lambda\n- Traditional VMs\n\nWhat infrastructure do you want to use?"
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "For deployment, would you prefer:\n- Docker containers on AWS ECS\n- Kubernetes cluster\n- Serverless with AWS Lambda\n- Traditional VMs\n\nWhat infrastructure do you want to use?"
+          }
+        ]
+      }
     }
   ]
 }

@@ -4,12 +4,28 @@
   "expected_decision": false,
   "transcript": [
     {
-      "role": "user",
-      "content": "Design the data model for the blog system"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Design the data model for the blog system"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "Here's the proposed data model:\n\nPost (id, title, content, authorId, publishedAt, status)\nComment (id, postId, userId, content, createdAt)\nTag (id, name)\nPostTag (postId, tagId)\n\nDoes this structure capture all the requirements?"
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Here's the proposed data model:\n\nPost (id, title, content, authorId, publishedAt, status)\nComment (id, postId, userId, content, createdAt)\nTag (id, name)\nPostTag (postId, tagId)\n\nDoes this structure capture all the requirements?"
+          }
+        ]
+      }
     }
   ]
 }

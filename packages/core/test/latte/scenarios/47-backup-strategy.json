@@ -4,12 +4,28 @@
   "expected_decision": false,
   "transcript": [
     {
-      "role": "user",
-      "content": "Set up database backups"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Set up database backups"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "For database backups, should I:\n- Daily full backups with 30-day retention\n- Hourly incremental + daily full\n- Continuous point-in-time recovery\n- What's your backup and retention policy?"
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "For database backups, should I:\n- Daily full backups with 30-day retention\n- Hourly incremental + daily full\n- Continuous point-in-time recovery\n- What's your backup and retention policy?"
+          }
+        ]
+      }
     }
   ]
 }

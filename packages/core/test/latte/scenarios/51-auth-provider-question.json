@@ -4,12 +4,28 @@
   "expected_decision": false,
   "transcript": [
     {
-      "role": "user",
-      "content": "Add social login"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Add social login"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "Which OAuth providers should I integrate:\n- Google (most common)\n- GitHub (developer-focused)\n- Facebook (broad reach)\n- Twitter/Apple\n- All of the above\n\nWhich providers are priorities for your user base?"
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Which OAuth providers should I integrate:\n- Google (most common)\n- GitHub (developer-focused)\n- Facebook (broad reach)\n- Twitter/Apple\n- All of the above\n\nWhich providers are priorities for your user base?"
+          }
+        ]
+      }
     }
   ]
 }

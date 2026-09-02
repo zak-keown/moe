@@ -4,12 +4,28 @@
   "expected_decision": true,
   "transcript": [
     {
-      "role": "user",
-      "content": "Add OAuth2 authentication"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Add OAuth2 authentication"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "[Implemented: OAuth2 flow with Google, GitHub, and Facebook providers]\n\nOAuth2 authentication is working. Now I need to add documentation for setup, configuration, and integration guides."
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "[Implemented: OAuth2 flow with Google, GitHub, and Facebook providers]\n\nOAuth2 authentication is working. Now I need to add documentation for setup, configuration, and integration guides."
+          }
+        ]
+      }
     }
   ]
 }

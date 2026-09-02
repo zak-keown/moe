@@ -4,12 +4,28 @@
   "expected_decision": true,
   "transcript": [
     {
-      "role": "user",
-      "content": "Build the inventory management system"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Build the inventory management system"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "[Created: models/inventory.ts with Product, Stock, and Warehouse models]\n\nI've created the data models. Now I'll implement the controller with CRUD operations and the business logic for stock management."
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "[Created: models/inventory.ts with Product, Stock, and Warehouse models]\n\nI've created the data models. Now I'll implement the controller with CRUD operations and the business logic for stock management."
+          }
+        ]
+      }
     }
   ]
 }

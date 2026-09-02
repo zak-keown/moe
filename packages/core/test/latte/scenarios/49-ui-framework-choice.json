@@ -4,12 +4,28 @@
   "expected_decision": false,
   "transcript": [
     {
-      "role": "user",
-      "content": "Build a component library"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Build a component library"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "For the component library, should I build on:\n- Material-UI (comprehensive, opinionated)\n- Chakra UI (accessible, customizable)\n- Tailwind + Headless UI (utility-first, flexible)\n- Custom components from scratch\n\nWhich approach aligns with your design system?"
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "For the component library, should I build on:\n- Material-UI (comprehensive, opinionated)\n- Chakra UI (accessible, customizable)\n- Tailwind + Headless UI (utility-first, flexible)\n- Custom components from scratch\n\nWhich approach aligns with your design system?"
+          }
+        ]
+      }
     }
   ]
 }

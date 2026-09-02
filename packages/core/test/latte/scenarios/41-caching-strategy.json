@@ -4,12 +4,28 @@
   "expected_decision": false,
   "transcript": [
     {
-      "role": "user",
-      "content": "Speed up the API responses"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Speed up the API responses"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "For caching, should I use:\n- Redis for distributed caching\n- In-memory cache for single-server setup\n- CDN caching for static content\n- Database query result caching\n\nWhat caching strategy fits your infrastructure?"
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "For caching, should I use:\n- Redis for distributed caching\n- In-memory cache for single-server setup\n- CDN caching for static content\n- Database query result caching\n\nWhat caching strategy fits your infrastructure?"
+          }
+        ]
+      }
     }
   ]
 }

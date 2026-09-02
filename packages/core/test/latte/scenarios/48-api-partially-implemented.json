@@ -4,12 +4,28 @@
   "expected_decision": true,
   "transcript": [
     {
-      "role": "user",
-      "content": "Build the REST API for the blogging platform"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Build the REST API for the blogging platform"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "[Implemented: POST /posts, GET /posts/:id]\n\nCreated the create and read endpoints. Still need to implement:\n- PUT /posts/:id (update)\n- DELETE /posts/:id (delete)\n- GET /posts (list with filtering)\n- POST /posts/:id/publish"
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "[Implemented: POST /posts, GET /posts/:id]\n\nCreated the create and read endpoints. Still need to implement:\n- PUT /posts/:id (update)\n- DELETE /posts/:id (delete)\n- GET /posts (list with filtering)\n- POST /posts/:id/publish"
+          }
+        ]
+      }
     }
   ]
 }

@@ -4,12 +4,28 @@
   "expected_decision": false,
   "transcript": [
     {
-      "role": "user",
-      "content": "Add rate limiting to the API"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Add rate limiting to the API"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "What rate limits should I enforce:\n- Requests per minute per IP?\n- Different limits for authenticated vs anonymous users?\n- Endpoint-specific limits (stricter on auth endpoints)?\n\nWhat rate limiting policy do you want?"
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "What rate limits should I enforce:\n- Requests per minute per IP?\n- Different limits for authenticated vs anonymous users?\n- Endpoint-specific limits (stricter on auth endpoints)?\n\nWhat rate limiting policy do you want?"
+          }
+        ]
+      }
     }
   ]
 }

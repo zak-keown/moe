@@ -4,12 +4,28 @@
   "expected_decision": false,
   "transcript": [
     {
-      "role": "user",
-      "content": "Implement real-time notifications"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Implement real-time notifications"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "For real-time notifications, should I use WebSockets or Server-Sent Events? WebSockets are bidirectional but more complex, SSE is simpler but one-way. What fits better with your architecture?"
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "For real-time notifications, should I use WebSockets or Server-Sent Events? WebSockets are bidirectional but more complex, SSE is simpler but one-way. What fits better with your architecture?"
+          }
+        ]
+      }
     }
   ]
 }

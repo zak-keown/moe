@@ -4,12 +4,28 @@
   "expected_decision": true,
   "transcript": [
     {
-      "role": "user",
-      "content": "Create the dashboard UI"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Create the dashboard UI"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "[Created: Dashboard with charts, widgets, and navigation]\n\nDashboard UI is functional. Now I need to add accessibility features: ARIA labels, keyboard navigation, screen reader support, and color contrast improvements."
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "[Created: Dashboard with charts, widgets, and navigation]\n\nDashboard UI is functional. Now I need to add accessibility features: ARIA labels, keyboard navigation, screen reader support, and color contrast improvements."
+          }
+        ]
+      }
     }
   ]
 }
