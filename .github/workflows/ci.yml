@@ -1,0 +1,118 @@
+# Ports the always-run half of .gitlab-ci.yml (install/lint/typecheck/test/build/
+# plugins/provenance). Path-scoped jobs live in their own workflow files so their
+# `on: push: paths:` filter applies to the whole workflow — GitHub Actions has no
+# job-level `paths:` filter the way GitLab has job-level `changes:`.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  # `interruptible: true` on GitLab → cancel superseded runs on the same ref.
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TURBO_TELEMETRY_DISABLED: "1"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container: node:24
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/cache@v4
+        with:
+          path: .pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm config set store-dir .pnpm-store
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+
+  typecheck:
+    runs-on: ubuntu-latest
+    container: node:24
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/cache@v4
+        with:
+          path: .pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm config set store-dir .pnpm-store
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+
+  test:
+    runs-on: ubuntu-latest
+    container: node:24
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      # System deps the suite reaches for that node:24 does not ship:
+      #   jq   — packages/mint/checks/run-checks.sh parses manifests with jq;
+      #          without it calls fail silently and run-checks tests read
+      #          correct fixtures as broken.
+      #   lsof — packages/glass chrome-launcher-helpers.findPidOnPort() shells
+      #          out to lsof; without it every port→pid test fails.
+      - run: apt-get update -qq && apt-get install -y -qq --no-install-recommends jq lsof
+      - uses: actions/cache@v4
+        with:
+          path: .pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm config set store-dir .pnpm-store
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+
+  build:
+    runs-on: ubuntu-latest
+    container: node:24
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/cache@v4
+        with:
+          path: .pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm config set store-dir .pnpm-store
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+  # /plugins/ is generated and committed; this job regenerates and asserts the
+  # tree is byte-identical. Not path-scoped: a skill's frontmatter, a mint
+  # config, skill-tiers.yaml, the marketplace, moe-mint's own source and the
+  # generator script all change the output, which is most of the repo.
+  plugins:
+    runs-on: ubuntu-latest
+    container: node:24
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/cache@v4
+        with:
+          path: .pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm config set store-dir .pnpm-store
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm mint:check
+
+  # No pnpm install: the checker uses only node stdlib, so a workspace install
+  # would cost a minute to change nothing. Second step is the self-test — asserts
+  # the red fixture still fails, so a checker nobody has seen fail is not a
+  # checker nobody knows works.
+  provenance:
+    runs-on: ubuntu-latest
+    container: node:24
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/check-provenance.mjs
+      - name: self-test — red fixture must fail
+        run: |
+          if node scripts/check-provenance.mjs scripts/fixtures/provenance-red --min-readmes 1; then
+            echo 'self-test failed: the red fixture passed'
+            exit 1
+          fi

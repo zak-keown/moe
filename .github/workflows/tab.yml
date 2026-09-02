@@ -1,0 +1,30 @@
+# Path-scoped so a docs edit does not rebuild the Rust crate.
+name: tab
+
+on:
+  push:
+    branches: [main]
+    paths: [packages/tab/**]
+  pull_request:
+    branches: [main]
+    paths: [packages/tab/**]
+
+concurrency:
+  group: tab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tab:
+    runs-on: ubuntu-latest
+    container: rust:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: cargo cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            packages/tab/target
+          key: cargo-${{ hashFiles('packages/tab/Cargo.lock') }}
+      - run: cargo test --manifest-path packages/tab/Cargo.toml

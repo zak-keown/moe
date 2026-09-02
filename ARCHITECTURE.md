@@ -186,17 +186,18 @@ workspace. Rust and Python have path-scoped CI jobs and local commands. Chrome,
 model-download, and tmux suites require runtimes unavailable in the base CI
 image and are intentionally separate.
 
-The single GitLab pipeline runs install, lint, typecheck, test, build, plugin
-reproducibility, and provenance gates. Nothing publishes publicly. Flight is
-also explicitly private because it contains an internal-only legal exception;
-the exact controls are recorded in `PARITY.md`.
+GitHub Actions runs one always-on workflow (`ci.yml`: lint, typecheck, test,
+build, plugin reproducibility, provenance) plus three path-scoped workflows
+(`bin.yml`, `tab.yml`, `proof.yml`) and a tag-triggered `publish.yml` that
+OIDC-publishes to npm via trusted publishing. Flight remains private because
+it contains an internal-only legal exception; controls are in `PARITY.md`.
 
 ## 10. Hosting, provenance, and legal payloads
 
-The canonical project is `gitlab.com/moe-ai/moe`. Package scope and
-project group are intentionally decoupled; any future registry publication must
-use a compatible project-level endpoint or move the project under a matching
-group.
+The canonical project is `github.com/zak-keown/moe`. Package scope (`@bubstack`)
+and repo owner (`zak-keown`) are intentionally decoupled; npm trusted publishing
+binds to the `owner/repo/workflow` triple, not the scope, so this decoupling
+costs nothing.
 
 Current documentation and metadata point only at Moe. Original project names,
 frozen revisions, and legal status live in `PARITY.md` and root `NOTICE`.
