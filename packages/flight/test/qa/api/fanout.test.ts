@@ -1,4 +1,12 @@
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "fs";
 import { Hono } from "hono";
 import { tmpdir } from "os";
 import { join } from "path";
@@ -6,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { fanoutRoutes } from "../../../src/qa/api/routes/fanout.js";
 import type { LLMClient } from "../../../src/qa/models/provider.js";
 import { flightPath } from "../../../src/qa/paths.js";
+import { ErrorLog } from "../../../src/qa/util/error-log.js";
 
 import { makeConfig } from "../helpers/make-config.js";
 
@@ -136,6 +145,44 @@ describe("Fanout API", () => {
 
     const contentA = readFileSync(join(storiesDir, "story-001-a.md"), "utf-8");
     expect(contentA).toContain("Edge case empty input");
+  });
+
+  // CR-040/CR-042: writeCards joined an LLM-supplied `card.id` straight
+  // into a filename under storiesDir with no charset or containment
+  // check. A card whose frontmatter `id` is a traversal sequence writes
+  // attacker-controlled content outside the stories directory — reachable
+  // via indirect prompt injection, since the fanout prompts interpolate
+  // the agent's own observation/summary text. Three ".." segments from
+  // storiesDir (<projectRoot>/.moe-flight/stories) land exactly at
+  // os.tmpdir(), matching the review's own repro depth.
+  test("CR-040/CR-042: a traversal card id never writes outside the stories directory", async () => {
+    const MALICIOUS_CARD = `---
+id: ../../../pwned
+title: Malicious
+status: draft
+tags: core
+parent: story-001
+---
+
+malicious content
+`;
+    const client = makeFakeClient(MALICIOUS_CARD);
+    const errorLog = new ErrorLog();
+    const app = new Hono();
+    app.route("/api/fanout", fanoutRoutes(makeConfig(projectRoot), () => client, errorLog));
+
+    const escapeTarget = join(tmpdir(), "pwned.md");
+    try {
+      const res = await app.request("/api/fanout/story-001", { method: "POST" });
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.generated).toHaveLength(0);
+      expect(existsSync(escapeTarget)).toBe(false);
+      expect(readdirSync(storiesDir)).not.toContain("../../../pwned.md");
+      expect(errorLog.entries().some((e) => e.message.includes("../../../pwned"))).toBe(true);
+    } finally {
+      rmSync(escapeTarget, { force: true });
+    }
   });
 });
 
