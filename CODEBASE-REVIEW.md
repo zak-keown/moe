@@ -22,9 +22,9 @@ status: issues_found
 dispositions:
   fixed: 21
   stale: 10
-  skipped: 2
+  skipped: 3
   deferred: 0
-  open: 560
+  open: 559
 ---
 
 # Codebase Review — moe
@@ -2034,6 +2034,10 @@ This is reachable through ordinary editing rather than an exotic input. Hook com
 
 Fix: mirror the MCP branch. When a candidate looks like a filesystem target and is not absolute, resolve it against `staged` instead of dropping it.
 
+**Disposition:** skipped
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** The cited .claude/skills/moe-dogfood/scripts/stage.py is absent from this branch and has no reachable file history, so the hooks-branch defect cannot be reproduced or patched here.
 ### CR-089: Hook target expansion substitutes the plugin root for every shell variable, so any other variable produces a phantom verification failure
 **File:** `.claude/skills/moe-dogfood/scripts/stage.py`
 **Anchor:** `hook_targets` — "Collapse `${...}` innermost-first"
