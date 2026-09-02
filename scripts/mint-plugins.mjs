@@ -191,34 +191,32 @@ function readAttributions() {
   return rows;
 }
 
-/** Package destinations come from PARITY.md rather than a second source list. */
-function readDestinations() {
-  const rows = new Map();
-  let inMap = false;
-  for (const line of fs.readFileSync(path.join(ROOT, "PARITY.md"), "utf8").split(/\r?\n/)) {
-    if (line === "## Map") {
-      inMap = true;
+/** Imported works declared in a plugin's mint config. */
+function readImportedWorks(yamlPath) {
+  const works = [];
+  let inSection = false;
+  for (const line of fs.readFileSync(yamlPath, "utf8").split(/\r?\n/)) {
+    if (/^imported_works:\s*$/.test(line)) {
+      inSection = true;
       continue;
     }
-    if (inMap && /^#{2,3} /.test(line)) break;
-    if (!inMap || !line.startsWith("| `")) continue;
-    const [rawName, , , , destination] = tableCells(line);
-    const name = /^`([^`]+)`$/.exec(rawName ?? "")?.[1];
-    if (!name || !destination) fail(`malformed imported-work row in PARITY.md: ${line}`);
-    rows.set(name, destination);
+    if (inSection) {
+      const match = /^\s+-\s+(.+)$/.exec(line);
+      if (match) {
+        works.push(match[1].trim());
+        continue;
+      }
+      break;
+    }
   }
-  if (rows.size === 0) fail("PARITY.md has no imported-work rows");
-  return rows;
+  return works;
 }
 
 /** Generate the legal payload an independently installed plugin receives. */
 function writePluginLicense(plugin, dest) {
   const attributions = readAttributions();
-  const packagePath = `packages/${plugin.pkg}`;
-  const sources = [...readDestinations()]
-    .filter(([, destination]) => destination.includes(packagePath))
-    .map(([source]) => source);
-  if (sources.length === 0) fail(`${plugin.name} has no imported works recorded in PARITY.md`);
+  const sources = readImportedWorks(path.join(dest, "moe-mint.yaml"));
+  if (sources.length === 0) fail(`${plugin.name} has no imported_works in its mint config`);
 
   const rows = sources.map((source) => {
     const row = attributions.get(source);

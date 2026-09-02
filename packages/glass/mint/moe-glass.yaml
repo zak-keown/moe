@@ -36,6 +36,9 @@ bootstrap: none
 # not shipped as a plugin-level .mcp.json, because the server key (`moe-glass`)
 # has to match what the user's own config names.
 
+imported_works:
+  - superpowers-chrome
+
 # harnesses: no exclusions. All 8 adapters run.
 
 marketplace:

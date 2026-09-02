@@ -1,0 +1,4 @@
+name: moe-regressed
+version: 0.0.0
+description: Fixture plugin with no LICENSE — provenance check must fail.
+license: Apache-2.0

@@ -1,11 +1,10 @@
 # Attribution (fixture)
 
-A deliberately misattributed NOTICE: it names a different upstream than the
-one PARITY.md's `## Map` records, so `checkAttributionRegister` must flag the
-disagreement in both directions.
+A valid NOTICE with one imported-work row. The failure this fixture
+demonstrates is a plugin directory with no LICENSE file.
 
 ## Imported works
 
 | Project | Revision | License | Copyright notice |
 |---|---:|---|---|
-| `moe-flight` | `91b6f7e` | Apache-2.0 | Prime Radiant, Inc. |
+| `gauntlet` | `91b6f7e` | Apache-2.0 | Prime Radiant, Inc. |

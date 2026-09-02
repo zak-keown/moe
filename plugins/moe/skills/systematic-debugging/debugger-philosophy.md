@@ -2,7 +2,7 @@
 
 Evergreen debugging disciplines — they apply across every bug, every language, every system. Read this one first; the rest of the cluster assumes it.
 
-*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-philosophy.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See PARITY.md.*
+*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-philosophy.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See NOTICE.*
 
 ## User = Reporter, Claude = Investigator
 

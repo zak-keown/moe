@@ -30,6 +30,9 @@ bootstrap: none
 # emitter; mint merges its SessionStart entry into hooks/moe-mint/hooks.json
 # rather than replacing this file.
 
+imported_works:
+  - claude-session-driver
+
 # harnesses: no exclusions. All 8 adapters run.
 
 marketplace:

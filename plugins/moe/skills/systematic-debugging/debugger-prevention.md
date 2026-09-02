@@ -2,7 +2,7 @@
 
 The after-action half: what to change so this class of bug cannot recur. Read after Phase 4 (Implementation), when the fix is verified.
 
-*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-prevention.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See PARITY.md.*
+*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-prevention.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See NOTICE.*
 
 forward-looking half of a resolved debug session — not just *what* was wrong and
 the fix, but **why it happened, why it wasn't caught, and the guard that

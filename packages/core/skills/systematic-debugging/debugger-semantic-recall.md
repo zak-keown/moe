@@ -2,7 +2,7 @@
 
 How to search prior debugging sessions before re-deriving a known cause. In this fork the retrieval routing it assumes lives in the `retrieving-context` skill, and the stores are moe-memory's `search_journal` / `search_conversations`.
 
-*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-semantic-recall.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See PARITY.md.*
+*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-semantic-recall.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See NOTICE.*
 
 Matching Logic. Replaces keyword-overlap matching with **semantic recall** so a
 prior session that resolved "requests hang under load" surfaces for a new "API

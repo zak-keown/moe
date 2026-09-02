@@ -13,7 +13,7 @@ servers), so this hook is the only automatic path available.
 
 - `src/hooks/ensure-statusline.ts` — the hook: reads/writes `settings.json`.
 - `vendor/ccstatusline/` — the vendored, pinned ccstatusline build. See
-  `PARITY.md` at the repo root for provenance.
+  `NOTICE` at the repo root for attribution.
 - `hooks/hooks.json` — registers the hook for `SessionStart`.
 
 This plugin is Claude Code only — see `harnesses.exclude` in

@@ -31,11 +31,15 @@ bootstrap:
 
 # components: skills/, agents/, hooks/hooks.json and .mcp.json are all defaults
 # and all present. `.mcp.json` registers the `moe-memory` MCP server — a renamed
-# identifier (upstream `episodic-memory`), recorded in PARITY.md.
+# identifier (upstream `episodic-memory`), recorded in NOTICE.
 #
 # hooks/hooks.json already registers memory's OWN SessionStart hook. mint merges
 # its bootstrap entry alongside rather than replacing it, so both run. That is
 # per-package behaviour, not mint-exclusive ownership of SessionStart.
+
+imported_works:
+  - episodic-memory
+  - private-journal-mcp
 
 # harnesses: no exclusions. All 8 adapters run.
 

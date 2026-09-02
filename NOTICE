@@ -4,7 +4,6 @@ Copyright 2026 Zak Keown
 THIRD-PARTY ATTRIBUTION
 
 Moe contains code and documentation derived from the frozen works below.
-PARITY.md records the complete internal provenance and risk decisions.
 
 ## Imported works
 
@@ -39,7 +38,7 @@ Moe contributors changed imported source and documentation while consolidating
 repositories, replacing product identifiers and paths, reconciling duplicated
 implementations, changing build systems, and integrating the resulting
 packages. Historical files explicitly retained as evidence may remain
-unchanged. Git history and PARITY.md identify the frozen comparison revisions.
+unchanged. Git history identifies the frozen comparison revisions.
 
 ## Required notice retained from obol
 
@@ -69,6 +68,5 @@ installable artifacts carry the applicable terms with them.
 ## Unresolved
 
 The `superpowers-evals` row has no located grant of rights. Five derived files
-are retained under the internal-only, no-distribution decision recorded in
-PARITY.md. `superpowers-developing-for-claude-code` declares MIT but omitted the
+are retained under the internal-only, no-distribution decision recorded in this NOTICE. `superpowers-developing-for-claude-code` declares MIT but omitted the
 license file it references. Neither condition is cured by this NOTICE.

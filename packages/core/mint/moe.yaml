@@ -86,6 +86,16 @@ marketplace:
     - skills
     - workflow
 
+imported_works:
+  - superpowers
+  - superpowers-lab
+  - superpowers-developing-for-claude-code
+  - iterative-development
+  - the-elements-of-style
+  - double-shot-latte
+  - mattpocock-skills
+  - open-gsd/gsd-core
+
 release:
   audit:
     # `moe-mint bump --audit` sweeps the plugin root for stray copies of the

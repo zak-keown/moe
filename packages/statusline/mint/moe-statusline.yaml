@@ -24,6 +24,9 @@ keywords:
 # the entire job with no user action.
 bootstrap: none
 
+imported_works:
+  - ccstatusline
+
 # components: hooks/hooks.json is a default and present. No skills/,
 # commands/, agents/ or .mcp.json in this package.
 

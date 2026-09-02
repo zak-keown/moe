@@ -2,7 +2,7 @@
 
 A multi-signal gate for "is this fix actually done" — read during Phase 4 (Implementation). Its DATA/DECISION separation is the part that generalises: collect every signal before letting any one of them decide.
 
-*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-fix-acceptance.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See PARITY.md.*
+*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-fix-acceptance.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See NOTICE.*
 
 accepting a fix that merely greens the test.
 
