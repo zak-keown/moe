@@ -8,6 +8,7 @@ import {
 } from "../agent/agent.js";
 import type { LLMClient, ToolCall, ToolDefinition, ToolResult } from "../models/provider.js";
 import { pushAssistantTurn, textResult } from "../models/provider.js";
+import { resolveInside } from "../paths.js";
 import { buildRevivalAddendum } from "./system-prompt-addendum.js";
 
 /**
@@ -214,15 +215,34 @@ function rebuildToolResult(tr: RawEvent, runDir: string, warnings: string[]): To
   //   - image set       → image variant   (web screenshot)
   //   - else            → text variant    (most paths)
   // textTruncated+artifact rehydrates `text` for any variant.
+  //
+  // All three path fields are attacker-influenceable (CR-047): the CLI
+  // adapter spawns an unsandboxed bash whose cwd is one level below
+  // run.jsonl, so an agent under test following injected instructions
+  // can append a crafted tool_result row with e.g. artifact: "../../.env".
+  // Route every field through resolveInside — the run directory's one
+  // and only containment guard (paths.ts) — and degrade to a warning
+  // plus placeholder text on rejection rather than reading outside it.
   let text = String(tr.text ?? "");
   const textTruncated = tr.textTruncated === true;
   const artifactRel = tr.artifact as string | undefined;
   if (textTruncated && artifactRel) {
-    text = readFileSync(join(runDir, artifactRel), "utf8");
+    const resolved = safeResolveInside(runDir, artifactRel, warnings, `${String(tr.name)} artifact`);
+    text = resolved
+      ? readFileSync(resolved, "utf8")
+      : "[revival: artifact path rejected — outside the run directory]";
   }
   const capturePathRel = tr.capturePath as string | undefined;
   if (capturePathRel) {
-    text = readFileSync(join(runDir, capturePathRel), "utf8");
+    const resolved = safeResolveInside(
+      runDir,
+      capturePathRel,
+      warnings,
+      `${String(tr.name)} capturePath`,
+    );
+    text = resolved
+      ? readFileSync(resolved, "utf8")
+      : "[revival: capture path rejected — outside the run directory]";
     return { kind: "capture", text, capturePath: capturePathRel };
   }
 
@@ -235,7 +255,13 @@ function rebuildToolResult(tr: RawEvent, runDir: string, warnings: string[]): To
         `tool_result for ${String(tr.name)} had no mediaType; defaulting to image/png (older run.jsonl format)`,
       );
     }
-    const data = readFileSync(join(runDir, imageRel)).toString("base64");
+    const resolved = safeResolveInside(runDir, imageRel, warnings, `${String(tr.name)} image`);
+    if (!resolved) {
+      // Can't produce an image block without image bytes — degrade to a
+      // text-only result rather than reading outside the run directory.
+      return textResult(text || "[revival: image path rejected — outside the run directory]");
+    }
+    const data = readFileSync(resolved).toString("base64");
     return {
       kind: "image",
       text,
@@ -245,4 +271,25 @@ function rebuildToolResult(tr: RawEvent, runDir: string, warnings: string[]): To
   }
 
   return textResult(text);
+}
+
+/**
+ * Resolve a run.jsonl-recorded relative path against `runDir`, rejecting
+ * anything that escapes it (absolute paths, `..` segments, symlink
+ * escapes — see paths.ts). Returns the resolved absolute path on
+ * success, or null after recording a warning on rejection.
+ */
+function safeResolveInside(
+  runDir: string,
+  rel: string,
+  warnings: string[],
+  context: string,
+): string | null {
+  try {
+    return resolveInside(runDir, rel);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    warnings.push(`tool_result for ${context} "${rel}" escapes the run directory: ${msg}`);
+    return null;
+  }
 }
