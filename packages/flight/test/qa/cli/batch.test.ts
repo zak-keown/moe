@@ -396,6 +396,49 @@ describe("runBatch — RunSet artifact", () => {
     expect(setJson.summary.overall.overallStatus).toBe("consistent_pass");
   });
 
+  test("CR-043: two scenario files with the same filename stem get distinct card ids", async () => {
+    const sink = {
+      out: "",
+      write(s: string) {
+        this.out += s;
+      },
+    };
+    const config = makeTmpConfig();
+    const calls: string[] = [];
+
+    const exitCode = await runBatch(
+      {
+        scenarioPaths: ["suiteA/login.md", "suiteB/login.md"],
+        target: "http://localhost",
+        adapterType: "cli",
+        config,
+        silent: false,
+        format: undefined,
+        noColor: true,
+        sink,
+        isTTY: false,
+        passes: 1,
+      },
+      makeStubRunOne(calls) as any,
+    );
+
+    expect(exitCode).toBe(0);
+    // Both distinct scenario files must actually run — a colliding card
+    // id would silently re-run the first path twice and drop the second.
+    expect(calls).toEqual(["suiteA/login.md", "suiteB/login.md"]);
+
+    const runSetsDir = join(config.projectRoot, ".moe-flight", "run-sets");
+    const entries = readdirSync(runSetsDir);
+    const setJson = JSON.parse(readFileSync(join(runSetsDir, entries[0], "set.json"), "utf8"));
+
+    const cardIds = setJson.runs.map((r: any) => r.cardId);
+    expect(new Set(cardIds).size).toBe(2);
+    expect(setJson.runs).toHaveLength(2);
+    // A colliding card id doubles the per-card summary, which double-
+    // counts the overall roll-up (4 instead of 2 for a 2-run batch).
+    expect(setJson.summary.overall.totalRuns).toBe(2);
+  });
+
   test("moe-flight qa batch a.md (passes=1) does NOT produce a RunSet artifact", async () => {
     const sink = {
       out: "",
