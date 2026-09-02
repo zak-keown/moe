@@ -33,6 +33,14 @@ and a versioned platform catalog. Native host installers and the future common
 CLI will consume or project files from that same logical artifact; they will
 not receive separately assembled variants.
 
+A registry-confirmed first publication has no predecessor against which to
+prove update. That absence never becomes synthetic update evidence: the
+release may promote the verified artifact, but its affected target/OS
+certification tuple remains `preview` with an explicit `NO_PREDECESSOR`
+disposition. For the first composed-artifact maintenance release this applies
+only to Statusline; the other five public plugins must pass real
+predecessor-to-candidate updates.
+
 This decision replaces the present split distribution:
 
 - source npm packages contain runtime code and dependency metadata but omit
@@ -757,7 +765,7 @@ published matrices say so.
 
 ### Certification evidence
 
-A certification result is a checksummed GitHub release asset named
+A maintenance evidence result is a checksummed GitHub release asset named
 `moe-evidence-<plugin>-<target>-<os>-<arch>.json`; format conformance omits OS
 and architecture. Its schema contains:
 
@@ -770,20 +778,25 @@ and architecture. Its schema contains:
   uninstall;
 - one result for every expected capability;
 - redacted command transcript or log digest;
-- producer kind, repository, workflow path, workflow SHA, run ID, job ID,
-  actor, and runner image for CI evidence;
-- operator, approval actor, checkpoint ID, and UTC timestamps for an
-  authenticated manual smoke;
+- protected-CI producer kind, repository, workflow path, workflow SHA, run ID,
+  job ID, trigger actor, and runner image;
+- protected environment, deployment ID, approval actor, and approval UTC
+  timestamp from the same workflow run;
 - overall outcome.
 
 Reports contain no tokens, home-directory paths, registry credentials, or user
-data. The stable catalog records each passing report's SHA-256 and GitHub asset
-name. Stable promotion rejects a missing report, a digest mismatch, a subject
-artifact mismatch, a missing expected-capability result, an unapproved manual
-checkpoint, or any non-pass required outcome. Candidate reports may be added to
-the candidate GitHub prerelease after the candidate packages publish; they do
-not change its plugin artifacts. The stable catalog is the immutable binding
-between those reports and the promoted artifact records.
+data. The stable catalog records each accepted report's SHA-256 and GitHub
+asset name. Stable promotion rejects a missing report, a digest mismatch, a
+subject artifact mismatch, a missing expected-capability result, an unapproved
+checkpoint, or any non-pass required outcome. The sole maintenance exception
+is `update: skipped` with reason `NO_PREDECESSOR` when the candidate lock proves
+that the package had no published predecessor at the locked snapshot; all
+other lifecycle and capability results must pass, and the affected tuple
+remains `preview`.
+Candidate reports may be added to the candidate GitHub prerelease after the
+candidate packages publish; they do not change its plugin artifacts. The
+stable catalog is the immutable binding between those reports and the promoted
+artifact records.
 
 Only the repository's protected release workflow may attach an accepted
 evidence report. An operator performs an authenticated smoke at the workflow's
@@ -845,9 +858,10 @@ composed artifacts as changed and requires new immutable npm versions, so it
 never attempts to equate legacy source tarballs with the new artifact format.
 
 Maintenance `0.1.x` tags do produce platform catalogs. Those catalogs coordinate
-the six artifacts and label only the verified Claude capabilities certified;
-they do not carry the formal all-target platform guarantee reserved for
-`0.2.0`.
+the six artifacts and label only predecessor-backed, verified Claude tuples
+certified. A first-publish tuple remains preview even when all applicable
+non-update checks pass. These catalogs do not carry the formal all-target
+platform guarantee reserved for `0.2.0`.
 
 The catalog is published only after all changed plugins have reached the npm
 origin and GitHub mirror. This prevents the future CLI from selecting a
@@ -893,7 +907,8 @@ SemVer core and the same source Git SHA. Its workflow:
 3. Confirms npm holds every plugin version at the recorded integrity under
    `next` or already under `latest`.
 4. Confirms the authenticated Claude maintenance evidence belongs to those
-   exact artifact digests.
+   exact artifact digests and that any `NO_PREDECESSOR` disposition remains
+   `preview`.
 5. Moves the recorded stable plugin versions to `latest` without publishing
    or repacking them.
 6. Produces a stable platform catalog with identical plugin artifact records
@@ -1055,11 +1070,13 @@ The artifact foundation lands before a formal platform release.
    npm's `next` dist-tag through a prerelease platform catalog.
 2. Install each candidate through the Claude marketplace path in an isolated
    environment.
-3. Verify install, discovery, update, and uninstall against the packed
-   candidate, plus every capability that plugin declares: bootstrap for Core
-   and Memory, hook execution for hook-bearing plugins, skill or command
-   invocation for content plugins, and runtime startup for MCP or executable
-   plugins.
+3. Verify install, discovery, predecessor-to-candidate update, and uninstall
+   against the packed candidate, plus every capability that plugin declares:
+   bootstrap for Core and Memory, hook execution for hook-bearing plugins,
+   skill or command invocation for content plugins, and runtime startup for MCP
+   or executable plugins. When the candidate lock proves a registry-confirmed
+   first publication, record update as `skipped: NO_PREDECESSOR` and keep that
+   tuple preview rather than manufacturing an update.
 4. Use an explicit authenticated checkpoint for any smoke test that cannot run
    safely with a local fixture.
 5. Move the exact passing plugin versions to `latest`, publish the stable
@@ -1070,12 +1087,15 @@ The artifact foundation lands before a formal platform release.
 7. Deprecate a previous distribution path only after its replacement passes
    the stable Claude install, update, and uninstall checks.
 
-The minimum `0.1.x` promotion gate is one passing Claude Code report for each
-plugin on macOS, using the exact candidate digest. Linux, WSL2, and native
-Windows tuples remain `preview` unless the same artifacts receive separate
-passing reports on those environments. Structural CI on Linux does not count
-as authenticated host evidence. A maintenance catalog must never copy the
-macOS result across OS rows.
+The minimum `0.1.x` promotion gate is one authenticated Claude Code report for
+each plugin on macOS, using the exact candidate digest. A predecessor-backed
+plugin must pass every required result to become certified. A
+registry-confirmed first-publication report may contain only the exact
+`NO_PREDECESSOR` update skip described above; its tuple remains preview. Linux,
+WSL2, and native Windows tuples remain `preview` unless the same artifacts
+receive separate passing reports on those environments. Structural CI on
+Linux does not count as authenticated host evidence. A maintenance catalog
+must never copy the macOS result across OS rows.
 
 A failed plugin does not force an unrelated plugin to take a gratuitous version
 bump. A changed artifact does require a new immutable npm version, even when
@@ -1160,13 +1180,15 @@ This foundation is complete when all of the following are true:
 - Release automation publishes exact pretested tarballs and verifies npm
   integrity before finalizing the platform catalog.
 - Stable promotion moves exact candidate versions from `next` to `latest` only
-  when checksummed certification reports bind the required plugin-target-OS
-  results to those artifact digests.
+  when checksummed maintenance reports bind the required plugin-target-OS
+  results to those artifact digests and any accepted first-publish exception
+  remains preview.
 - Partial npm publication is resumable without exposing an incomplete platform
   catalog.
-- The Claude maintenance path passes install, discovery, update, and uninstall
-  for every claimed plugin, plus each plugin's declared bootstrap, hook,
-  skill, command, MCP, or executable capabilities.
+- The Claude maintenance path passes install, discovery, uninstall, and every
+  declared capability for all six plugins; the five predecessor-backed plugins
+  also pass real update and become certified, while first-publish Statusline
+  records `NO_PREDECESSOR` and remains preview.
 - The maintenance release labels non-Claude target output `preview` rather than
   certified.
 - No common-CLI, full-certification, optional-plugin migration, or unrelated
