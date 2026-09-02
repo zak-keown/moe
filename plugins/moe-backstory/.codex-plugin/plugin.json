@@ -1,6 +1,6 @@
 {
   "name": "moe-backstory",
-  "version": "0.1.2-rc.1",
+  "version": "0.1.2",
   "description": "Recover a behavioral spec from a codebase that never had one.",
   "author": {
     "name": "Zak Keown",
