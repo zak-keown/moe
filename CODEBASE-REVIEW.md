@@ -21,10 +21,10 @@ verification:
 status: issues_found
 dispositions:
   fixed: 2
-  stale: 1
+  stale: 2
   skipped: 0
   deferred: 0
-  open: 590
+  open: 589
 ---
 
 # Codebase Review — moe
@@ -9419,6 +9419,10 @@ Fix: coerce and clamp in `navigation.js` before interpolating, e.g. `const ms = 
 **Verification:** refuted
 **Verification evidence:** executeTool in adapter.ts calls validateToolArgs(name, args, schema) against the wait_for schema, whose timeout is declared type number, before any dispatch, and it is the sole call site agent.ts uses for every tool call. Reproduced by importing the real validateToolArgs via tsx and feeding it the finding exact string payload, which returned ok:false with reason wait_for.timeout: expected number, got string. The unescaped interpolation exists but is unreachable from model input.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** The review's own verification pass already refuted this: validateToolArgs (packages/flight/src/qa/agent/validators.ts) type-checks every tool call's args against its schema in WebAdapter.executeTool before dispatch, and wait_for's timeout is declared type:number in tool-defs.ts, so a string payload is rejected before it ever reaches navigation.js's interpolation. Independently re-confirmed by reading adapter.ts:377-388 and tool-defs.ts:337-339; no code change needed.
 ## Checked and found sound
 
 I ran the script end to end against the real repository with `MARKETPLACE` redirected into the scratchpad, confirming afterwards that the working tree is still clean at `a01dcd5ffd06fefba341c2480fdae2c4777151f7` and that `~/.moe/local-marketplace` and its existing backup were untouched. The happy path staged all five registry plugins, applied five repoints, collected twenty-one hook and MCP targets, found every one of them on disk, and returned 0.
