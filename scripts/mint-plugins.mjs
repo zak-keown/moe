@@ -91,13 +91,13 @@ const PLUGINS = [
     name: "moe",
     pkg: "core",
     config: "mint/moe.yaml",
-    distribution: "local",
+    distribution: { npm: "@bubstack/moe-core" },
   },
   {
     name: "moe-backstory",
     pkg: "backstory",
     config: "mint/moe-backstory.yaml",
-    distribution: "local",
+    distribution: { npm: "@bubstack/moe-backstory" },
   },
   {
     name: "moe-memory",
@@ -115,7 +115,7 @@ const PLUGINS = [
     name: "moe-crew",
     pkg: "crew",
     config: "mint/moe-crew.yaml",
-    distribution: "local",
+    distribution: { npm: "@bubstack/moe-crew" },
   },
 ];
 

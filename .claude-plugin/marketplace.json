@@ -11,15 +11,21 @@
   "plugins": [
     {
       "name": "moe",
-      "source": "./plugins/moe",
-      "version": "0.0.0",
+      "source": {
+        "source": "npm",
+        "package": "@bubstack/moe-core"
+      },
+      "version": "0.1.0",
       "description": "The Moe skill library — brainstorming, planning, TDD, systematic debugging, code review, worktrees, parallel dispatch, plugin authoring, and more.",
       "strict": true
     },
     {
       "name": "moe-backstory",
-      "source": "./plugins/moe-backstory",
-      "version": "0.0.0",
+      "source": {
+        "source": "npm",
+        "package": "@bubstack/moe-backstory"
+      },
+      "version": "0.1.0",
       "description": "Recover a behavioral spec from a codebase that never had one.",
       "strict": true
     },
@@ -45,8 +51,11 @@
     },
     {
       "name": "moe-crew",
-      "source": "./plugins/moe-crew",
-      "version": "0.0.0",
+      "source": {
+        "source": "npm",
+        "package": "@bubstack/moe-crew"
+      },
+      "version": "0.1.0",
       "description": "Launch, control and monitor worker Claude sessions over tmux.",
       "strict": true
     }

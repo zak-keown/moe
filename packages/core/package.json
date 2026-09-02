@@ -1,10 +1,46 @@
 {
   "name": "@bubstack/moe-core",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
-  "description": "The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring, and the stop-hook.",
+  "description": "The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring, and the stop-hook. Marketplace-published as the `moe` plugin.",
   "license": "MIT AND Apache-2.0",
+  "author": {
+    "name": "Zak Keown",
+    "email": "zak.keown@outlook.com"
+  },
+  "homepage": "https://gitlab.com/moe-ai/moe",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/moe-ai/moe.git"
+  },
+  "keywords": [
+    "claude-code",
+    "codex",
+    "cursor",
+    "kimi",
+    "opencode",
+    "pi",
+    "copilot",
+    "skills",
+    "brainstorming",
+    "tdd",
+    "code-review",
+    "workflow"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "files": [
+    "agents",
+    "hooks",
+    "skills",
+    "docs",
+    "README.md"
+  ],
   "scripts": {
     "lint": "biome check .",
     "typecheck": "tsc -p tsconfig.tests.json --pretty",

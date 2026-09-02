@@ -1,10 +1,45 @@
 {
   "name": "@bubstack/moe-backstory",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "type": "module",
   "description": "Recover a behavioral spec from a codebase that never had one. 22 skills, 2 agents, 2 commands.",
   "license": "Apache-2.0",
+  "author": {
+    "name": "Zak Keown",
+    "email": "zak.keown@outlook.com"
+  },
+  "homepage": "https://gitlab.com/moe-ai/moe",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/moe-ai/moe.git"
+  },
+  "keywords": [
+    "claude-code",
+    "codex",
+    "cursor",
+    "kimi",
+    "opencode",
+    "pi",
+    "copilot",
+    "reverse-engineering",
+    "specification",
+    "documentation",
+    "archaeology"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "files": [
+    "agents",
+    "commands",
+    "skills",
+    "docs",
+    "README.md"
+  ],
   "scripts": {
     "lint": "biome check ."
   }

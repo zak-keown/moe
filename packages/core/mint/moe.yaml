@@ -29,7 +29,7 @@
 #     nothing picks it up.
 
 name: moe
-version: 0.0.0
+version: 0.1.0
 # No skill count in the description, deliberately. A number in a SHIPPED
 # description rots on the first authored skill, and it rots in twelve places at
 # once because mint byte-copies this string into every harness manifest. The
