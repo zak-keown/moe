@@ -134,4 +134,36 @@ describe('publish matrix', () => {
     expect(renderPublicCatalog(platform, records)).toBe(catalog)
     expect(resolvePublishMatrix(platform, records)).toEqual(matrix)
   })
+
+  it('renders the canonical evidence captured before its public validation result is mutated', async () => {
+    const platform = await resolvePlatform(REPO_ROOT)
+    const validations = platform.plugins.map((plugin) => validateCanonicalGeneration({
+      sourcePath: plugin.sourcePath,
+      configPath: plugin.configPath,
+      configSource: plugin.config.source,
+    }))
+    const [firstPlugin] = platform.plugins
+    const [firstValidation] = validations
+    const originalCapabilities = firstValidation?.emissions['claude-code']?.emittedCapabilities
+    if (firstPlugin === undefined || firstValidation === undefined || originalCapabilities === undefined) {
+      throw new Error('expected a canonical Claude emission')
+    }
+    const expectedCapabilities = [...originalCapabilities]
+    ;(firstValidation.emissions['claude-code']!.emittedCapabilities as string[]).push('mcp-registration')
+    delete (firstValidation.emissions as Record<string, unknown>)['claude-code']
+
+    const records = platform.plugins.map((plugin, index) => {
+      const validation = validations[index]
+      if (validation === undefined) throw new Error('expected a canonical validation for every plugin')
+      return projectionRecordForCurrentGeneration(plugin, validation)
+    })
+    const firstRecord = records[0]
+    if (firstRecord === undefined) throw new Error('expected a projection record')
+    const marketplace = JSON.parse(renderMarketplace(platform, records)) as { plugins: { name: string }[] }
+    const catalogRow = renderPublicCatalog(platform, records).split('\n').find((line) => line.startsWith('| `moe` |'))
+
+    expect(firstRecord.emissions['claude-code']?.emittedCapabilities).toEqual(expectedCapabilities)
+    expect(marketplace.plugins.map((entry) => entry.name)).toContain('moe')
+    expect(catalogRow).not.toContain('mcp-registration')
+  })
 })

@@ -46,6 +46,7 @@ interface CanonicalGenerationProvenance {
 }
 
 const canonicalValidations = new WeakMap<GenerationValidation, CanonicalGenerationProvenance>()
+const canonicalEmissionEvidence = new WeakMap<GenerationValidation, Readonly<Partial<Record<TargetId, AdapterEmission>>>>()
 const canonicalAdapters = Object.freeze([...adapters])
 
 export interface GenerateOptions {
@@ -188,6 +189,23 @@ export function validateGeneration(
   return validation
 }
 
+function immutableEmissions(
+  emissions: Readonly<Partial<Record<TargetId, AdapterEmission>>>,
+): Readonly<Partial<Record<TargetId, AdapterEmission>>> {
+  const snapshot: Partial<Record<TargetId, AdapterEmission>> = {}
+  for (const target of TARGET_IDS) {
+    const emission = emissions[target]
+    if (emission === undefined) continue
+    snapshot[target] = Object.freeze({
+      ...emission,
+      files: Object.freeze(emission.files.map((file) => Object.freeze({ ...file }))) as AdapterEmission['files'],
+      limitations: Object.freeze(emission.limitations.map((limitation) => Object.freeze({ ...limitation }))),
+      emittedCapabilities: Object.freeze([...emission.emittedCapabilities]),
+    })
+  }
+  return Object.freeze(snapshot)
+}
+
 /**
  * Validate one registry package with Mint's complete canonical adapter set,
  * without writing generated files. The provenance remains private so a caller
@@ -211,8 +229,9 @@ export function validateCanonicalGeneration(
       marketplaceName: opts.marketplaceName,
       configPath: identity.configPath,
       configSource: identity.configSource,
-    }
+  }
   const validation = validateGeneration(identity.sourcePath, canonicalAdapters, options)
+  canonicalEmissionEvidence.set(validation, immutableEmissions(validation.emissions))
   canonicalValidations.set(validation, {
     sourcePath: resolve(identity.sourcePath),
     configPath: resolve(identity.configPath),
@@ -227,9 +246,16 @@ export function isCanonicalGenerationFor(
 ): boolean {
   const provenance = canonicalValidations.get(validation)
   return provenance !== undefined
+    && canonicalEmissionEvidence.has(validation)
     && provenance.sourcePath === resolve(identity.sourcePath)
     && provenance.configPath === resolve(identity.configPath)
     && provenance.configSource === identity.configSource
+}
+
+export function canonicalProjectionEmissions(
+  validation: GenerationValidation,
+): Readonly<Partial<Record<TargetId, AdapterEmission>>> | undefined {
+  return canonicalEmissionEvidence.get(validation)
 }
 
 export function generate(
