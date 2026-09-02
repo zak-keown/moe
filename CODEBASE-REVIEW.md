@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 16
+  fixed: 17
   stale: 10
   skipped: 1
   deferred: 0
-  open: 566
+  open: 565
 ---
 
 # Codebase Review — moe
@@ -997,6 +997,10 @@ Fix: wrap the parse and degrade rather than throw. Either drop the unparseable c
 **Verification:** confirmed
 **Verification evidence:** Reproduced via tsx: convertResponse throws SyntaxError on a truncated function_call arguments string before deriveStopReason runs. No try/catch wraps client.chat in the agent loop; the executeRunCore catch logs run_error and then rethrows, contradicting its own documented invariant that runAgent returns rather than throws. The Anthropic adapter has no JSON.parse because the SDK pre-parses tool_use input, so this is OpenAI-only, and the existing incomplete-response test uses an empty output fixture that never exercises the path.
 
+**Disposition:** fixed
+**Commit:** `00c027d`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-047: Revival rehydration reads files outside the run directory
 
 **File:** `packages/flight/src/qa/revival/rebuild-messages.ts`
