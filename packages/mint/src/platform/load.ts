@@ -246,7 +246,11 @@ function packageMismatch(
   )
 }
 
-function requireRegisteredPlugin(platform: PlatformRegistryV1, config: MintConfig): PlatformRegistryV1['plugins'][number] {
+function requireRegisteredPlugin(
+  platform: PlatformRegistryV1,
+  config: MintConfig,
+  configSource: string,
+): PlatformRegistryV1['plugins'][number] {
   const plugin = platform.plugins.find((entry) => entry.id === config.name)
   if (plugin === undefined) {
     fail(
@@ -255,13 +259,13 @@ function requireRegisteredPlugin(platform: PlatformRegistryV1, config: MintConfi
       'Add the plugin to moe-platform.yaml or correct the package-local name.',
       'name',
       undefined,
-      { source: 'moe-mint.yaml', plugin: config.name },
+      { source: configSource, plugin: config.name },
     )
   }
   return plugin
 }
 
-function validateTargetPolicy(platform: PlatformRegistryV1, config: MintConfig): void {
+function validateTargetPolicy(platform: PlatformRegistryV1, config: MintConfig, configSource: string): void {
   for (const target of TARGET_IDS) {
     const intent = config.targets[target]
     if (intent.intent === 'omit') continue
@@ -276,7 +280,7 @@ function validateTargetPolicy(platform: PlatformRegistryV1, config: MintConfig):
             'Use an operating system declared by moe-platform.yaml.',
             `targets.${target}.operating_systems`,
             undefined,
-            { source: 'moe-mint.yaml', plugin: config.name, target },
+            { source: configSource, plugin: config.name, target },
           )
         }
       }
@@ -289,7 +293,7 @@ function validateTargetPolicy(platform: PlatformRegistryV1, config: MintConfig):
           `Activate ${prerequisite} or omit ${target}.`,
           `targets.${target}.intent`,
           undefined,
-          { source: 'moe-mint.yaml', plugin: config.name, target },
+          { source: configSource, plugin: config.name, target },
         )
       }
     }
@@ -374,9 +378,10 @@ export function resolvePlugin(
   config: MintConfig,
   sourceManifest: Readonly<Record<string, unknown>>,
   source = 'package.json',
+  configSource = 'moe-mint.yaml',
 ): ResolvedPlugin {
-  const declaration = requireRegisteredPlugin(platform, config)
-  validateTargetPolicy(platform, config)
+  const declaration = requireRegisteredPlugin(platform, config, configSource)
+  validateTargetPolicy(platform, config, configSource)
   if (sourceManifest.name !== config.distribution.npm) {
     packageMismatch('PACKAGE_NAME_MISMATCH', config.name, 'name', config.distribution.npm, sourceManifest.name, source)
   }
@@ -439,7 +444,13 @@ export async function resolvePlatform(repoRoot: string): Promise<ResolvedPlatfor
   for (const declaration of registry.plugins) {
     const config = loadConfig(dirname(declaration.configPath), basename(declaration.configPath), declaration.config)
     const sourceManifest = await readSourceManifest(declaration)
-    const resolved = resolvePlugin(registry, config, sourceManifest, resolve(declaration.sourcePath, 'package.json'))
+    const resolved = resolvePlugin(
+      registry,
+      config,
+      sourceManifest,
+      resolve(declaration.sourcePath, 'package.json'),
+      declaration.config,
+    )
     plugins.push({
       ...resolved,
       packageJson: sourceManifest,

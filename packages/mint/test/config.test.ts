@@ -183,6 +183,7 @@ describe('loadConfig', () => {
             code: 'CONFIG_IMPORTED_WORK_MIGRATION_REQUIRED',
             source: 'moe-mint.yaml',
             field: 'imported_works',
+            action: 'Replace each scalar entry with {name: ...}.',
           },
         })
       }
