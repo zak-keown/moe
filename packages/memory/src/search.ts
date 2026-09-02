@@ -85,7 +85,15 @@ const EXCHANGE_SELECT_COLUMNS = `
         e.thinking_disabled,
         e.thinking_triggers`;
 
-/** The shape `EXCHANGE_SELECT_COLUMNS` produces, plus vec0's distance. */
+/**
+ * The shape `EXCHANGE_SELECT_COLUMNS` produces, plus vec0's distance.
+ *
+ * `distance` is `null` for a row that came from the text (LIKE) query rather
+ * than vector KNN — CR-073. It used to be the literal `0`, which is
+ * indistinguishable from a genuine zero-distance (perfect) vector match:
+ * `l2DistanceToCosineSimilarity(0)` is exactly `1`, so every text-only hit in
+ * the default `mode: "both"` search rendered as a fabricated 100% match.
+ */
 interface ExchangeRow {
   id: string;
   project: string;
@@ -108,7 +116,7 @@ interface ExchangeRow {
   thinking_level: string | null;
   thinking_disabled: number | null;
   thinking_triggers: string | null;
-  distance: number;
+  distance: number | null;
 }
 
 function exchangeFromRow(row: ExchangeRow): ConversationExchange {
@@ -220,7 +228,7 @@ export async function searchConversations(
     const textStmt = db.prepare(`
       SELECT
         ${EXCHANGE_SELECT_COLUMNS},
-        0 as distance
+        NULL as distance
       FROM exchanges AS e
       WHERE (e.user_message LIKE ? OR e.assistant_message LIKE ?)
         AND e.is_sidechain = 0
@@ -271,7 +279,12 @@ export async function searchConversations(
 
     return {
       exchange,
-      similarity: mode === "text" ? undefined : l2DistanceToCosineSimilarity(row.distance),
+      // CR-073: gate on whether THIS ROW carries a real vector distance, not
+      // on the overall search mode. In `mode: "both"`, a hit that only the
+      // LIKE query found (never returned by vec0's KNN) has `distance: null`
+      // and must not be scored — the merge loop above pushes such rows into
+      // the very same `results` array vector hits live in.
+      similarity: row.distance === null ? undefined : l2DistanceToCosineSimilarity(row.distance),
       snippet,
       summary,
     };
