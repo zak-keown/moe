@@ -5,7 +5,7 @@ import { hasConsent } from "../core/consent.js";
 import { eventsPath, workerHomePath } from "../core/paths.js";
 import { shellQuote } from "../core/shell.js";
 import { isoSecondsUtc } from "../core/time.js";
-import { resolveSession, writeHarnessMarker, writeMeta, writeShim } from "../core/worker-store.js";
+import { removeWorker, resolveSession, writeHarnessMarker, writeMeta, writeShim } from "../core/worker-store.js";
 import type { HarnessDriver } from "../harness/driver.js";
 import { getDriver } from "../harness/registry.js";
 import { awaitSessionStart } from "./await-start.js";
@@ -269,6 +269,26 @@ async function launchDerive(
       timeoutMs: opts.piReadyTimeoutMs,
       pollMs: opts.pollMs,
     });
+  }
+
+  // newSession's result is void by contract (unlike launchAssign, which gates
+  // on awaitSessionStart's proof), and the trust-gate/ready waits above are
+  // documented best-effort — neither can fail. Without this check, a tmux
+  // that silently no-ops (absent, unreachable, rejects the session name)
+  // still gets a shim path and "Worker launched.", discovered only on the
+  // first `send`.
+  if (!(await ctx.tmux.hasSession(tmuxName))) {
+    // Mirror launchAssign's failure teardown: leave no orphaned harness
+    // marker or per-worker home behind for a worker that never started.
+    // There is no session id yet on the derive path (that's the id
+    // strategy's whole point), so removeWorker's sid-keyed cleanup
+    // (meta/events, which don't exist here) is a no-op; only the
+    // name-keyed cleanup (harness marker, home) does anything.
+    removeWorker(ctx.workerDir, "", tmuxName);
+    return {
+      stderr: `Error: tmux session '${tmuxName}' was not started (tmux missing, unreachable, or it rejected the session)`,
+      code: 1,
+    };
   }
 
   const shim = writeShim(ctx.workerDir, tmuxName, opts.moeCrewEntry);

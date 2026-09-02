@@ -323,11 +323,20 @@ interface CodexFakeTmuxCalls {
 /**
  * A fake tmux for the codex (derive) launch. `paneText` drives capturePane so a
  * test can show the trust gate / composer glyph and have the launch helpers act.
+ * `newSessionSucceeds` (default true) controls whether `newSession` actually
+ * makes `hasSession` true afterward — false simulates tmux silently no-oping
+ * (absent, unreachable, rejecting the session name).
  */
-function codexFakeTmux(calls: CodexFakeTmuxCalls, paneText: () => string): Tmux {
+function codexFakeTmux(
+  calls: CodexFakeTmuxCalls,
+  paneText: () => string,
+  opts: { newSessionSucceeds?: boolean } = {},
+): Tmux {
+  const newSessionSucceeds = opts.newSessionSucceeds ?? true;
+  let sessionExists = false;
   return {
     async hasSession() {
-      return false;
+      return sessionExists;
     },
     async killSession() {},
     async capturePane() {
@@ -345,6 +354,7 @@ function codexFakeTmux(calls: CodexFakeTmuxCalls, paneText: () => string): Tmux 
     async sendKey() {},
     async newSession(name, cwd, env, argv) {
       calls.newSession.push({ name, cwd, env, argv });
+      if (newSessionSucceeds) sessionExists = true;
     },
     async respawnPane() {},
   };
@@ -459,6 +469,33 @@ describe("cmdLaunch — codex (derive)", () => {
     // No keystrokes sent (the gate never matched).
     expect(calls.sendText).toEqual([]);
     expect(calls.sendEnter).toEqual([]);
+  });
+
+  it("fails instead of reporting success when tmux never actually started the session (CR-016)", async () => {
+    grantConsent(home);
+    const calls: CodexFakeTmuxCalls = { newSession: [], sendText: [], sendEnter: [] };
+    // newSession is called (moe-crew asked tmux to start a session) but tmux
+    // silently no-ops — the same observable shape as tmux being absent,
+    // unreachable, or rejecting the session name: hasSession never becomes
+    // true. neither the trust-gate dismissal nor awaitComposerReady can fail
+    // (both documented best-effort), so this is the only failure signal.
+    const ctx = codexCtx(codexFakeTmux(calls, () => "just booting", { newSessionSucceeds: false }));
+
+    const result = await cmdLaunch(
+      ctx,
+      { tmuxName: "cx3", cwd, extraArgs: [], harness: "codex" },
+      { ...baseOpts(), ...CODEX_FAST },
+    );
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toMatch(/tmux session 'cx3' was not started/);
+    // No shim for a worker that doesn't exist — the exact bug: the caller
+    // used to get a shim path and only discover the worker was never
+    // launched on the first `send`.
+    expect(existsSync(shimPath(workerDir, "cx3"))).toBe(false);
+    // The sidecar harness marker written before the newSession attempt is
+    // cleaned up too, so prune doesn't have to discover the orphan later.
+    expect(readHarnessMarker(workerDir, "cx3")).toBeNull();
   });
 });
 
