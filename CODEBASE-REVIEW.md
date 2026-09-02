@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 51
+  fixed: 52
   stale: 14
   skipped: 6
   deferred: 1
-  open: 521
+  open: 520
 ---
 
 # Codebase Review — moe
@@ -1203,6 +1203,10 @@ Fix: give `fileUrl` a static-mode branch that returns the manifest-relative path
 **Verification:** confirmed
 **Verification evidence:** fileUrl in ui/src/lib/api.ts always builds /api/results/<runId>/file/<path> with no static-mode branch, unlike useTranscript which checks window.__MOE_FLIGHT_RUN__; renderRunFromTemplate inlines only result.json and run.jsonl into index.html and never copies screenshots, artifacts or captures; RunSummaryCard, Screenshot and ArtifactDrawer all call fileUrl or fileText unconditionally, so every evidence asset 404s when the report is opened without the Flight server. Traced by reading.
 
+**Disposition:** fixed
+**Commit:** `cb673e8`
+**Resolved:** 2026-09-02
+**Note:** No .test.tsx/RTL harness exists in packages/flight/ui, so fixed at the shared fileUrl function with a plain .test.ts unit test (ui/test/api-file-url.test.ts), following static-run-page.test.ts's window-faking convention.
 ### CR-055: A root-WebSocket drop during the first bridge attach wedges the session permanently
 **File:** `packages/glass/skills/browsing/chrome-ws-lib.js`
 **Anchor:** `state.ensureBridge` — "Detect stale bridge: if the cached browserSession is no longer connected"
