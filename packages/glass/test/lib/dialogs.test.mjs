@@ -145,16 +145,58 @@ describe('dialogs.attachToPageSession', () => {
     const state = { dialogs: new Map() };
     const dialogs = attachDialogs({ state });
     await dialogs.attachToPageSession(ps);
+    // A legitimate request carries the per-session secret attachToPageSession
+    // minted (CR-064) — never observable by the page itself in production,
+    // but the test needs it to model the real shim's behaviour.
+    const secret = state._dialogShimSecrets.get('S1');
+    assert.ok(secret, 'a secret should have been minted for this session');
     handler({
       method: 'Runtime.bindingCalled',
       params: {
         name: '__dialogShim',
-        payload: JSON.stringify({ type: 'permission-request', name: 'notifications', origin: 'https://example.com', jsApi: 'Notification.requestPermission', id: 'shim-1' }),
+        payload: JSON.stringify({ type: 'permission-request', name: 'notifications', origin: 'https://example.com', jsApi: 'Notification.requestPermission', id: 'shim-1', secret }),
       },
     });
     assert.ok(state.dialogs.has('S1'));
     assert.equal(state.dialogs.get('S1').kind, 'permission');
     assert.equal(state.dialogs.get('S1').payload.name, 'notifications');
+  });
+
+  // CR-064: a page can call the __dialogShim binding directly (it's a plain
+  // global reachable from page script) with a hand-crafted payload to
+  // fabricate a permission-request and wedge every subsequent page-target
+  // tool call behind a phantom dialog. Without the correct per-session
+  // secret, the forged request must be ignored, not stored.
+  it('ignores a forged permission-request with no (or the wrong) secret', async () => {
+    let handler = null;
+    const ps = {
+      sessionId: 'S1',
+      send: async () => ({}),
+      onEvent: (fn) => { handler = fn; return () => {}; },
+    };
+    const state = { dialogs: new Map() };
+    const dialogs = attachDialogs({ state });
+    await dialogs.attachToPageSession(ps);
+
+    // No secret at all — the naive forgery shape.
+    handler({
+      method: 'Runtime.bindingCalled',
+      params: {
+        name: '__dialogShim',
+        payload: JSON.stringify({ type: 'permission-request', name: 'camera', origin: 'https://evil.example', jsApi: 'getUserMedia', id: 'forged-1' }),
+      },
+    });
+    assert.equal(state.dialogs.has('S1'), false, 'a permission-request with no secret must not open a dialog');
+
+    // Wrong secret — the forger guessing/reusing some other value.
+    handler({
+      method: 'Runtime.bindingCalled',
+      params: {
+        name: '__dialogShim',
+        payload: JSON.stringify({ type: 'permission-request', name: 'camera', origin: 'https://evil.example', jsApi: 'getUserMedia', id: 'forged-2', secret: 'not-the-real-secret' }),
+      },
+    });
+    assert.equal(state.dialogs.has('S1'), false, 'a permission-request with the wrong secret must not open a dialog');
   });
 
   it('clears dialog state on Page.javascriptDialogClosed', async () => {
