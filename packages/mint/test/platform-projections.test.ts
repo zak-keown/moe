@@ -52,6 +52,9 @@ describe('registry projections', () => {
         'docs/moe/generated/plugin-catalog.md',
       ]),
     )
+    for (const output of mint.outputs ?? []) {
+      expect(mint.inputs).not.toContain(output)
+    }
     expect(rootPackage.scripts['mint:check']).toContain(
       'git diff --exit-code -- plugins .claude-plugin/marketplace.json docs/moe/generated/plugin-catalog.md',
     )
