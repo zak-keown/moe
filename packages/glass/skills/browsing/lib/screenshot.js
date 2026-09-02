@@ -27,15 +27,22 @@ const MAX_IMAGE_DIMENSION_PX = 1800;
  * ImageMagick on Linux, no-op on Windows). Failures are silent — better
  * to have a big PNG than no PNG.
  *
- * Path resolution for user-supplied filenames:
- *   - Absolute path (starts with `/` or a Windows drive letter) → used as-is.
- *   - Relative path → resolved against the session directory. If no session
- *     directory exists yet, `initializeSession()` is called to create one.
- *   - No filename supplied → auto-generates a timestamped name in session dir.
+ * Path resolution for user-supplied filenames (CR-065 — a filename is a
+ * tool argument, so this is a containment boundary, not just a convenience):
+ *   - Every resolved path (absolute or relative) MUST land under the
+ *     containment root — the session directory, or CWD when no session
+ *     context is available. Anything that would resolve outside it (an
+ *     absolute path elsewhere, or enough `../` segments) is rejected with
+ *     an error rather than written. If no session directory exists yet,
+ *     `initializeSession()` is called to create one.
+ *   - No filename supplied → auto-generates a timestamped name in the root.
+ *   - A pre-existing file the current session did not itself write is
+ *     never overwritten; reusing a name this session already wrote to
+ *     (e.g. a repeatedly-refreshed "latest.png") is fine.
  *
  * `attachScreenshot({ getPageSession, state, initializeSession })` returns
  * the bound action. `state` and `initializeSession` are optional; when
- * absent, relative paths are resolved against CWD (legacy behaviour).
+ * absent, the containment root is CWD (legacy behaviour).
  */
 function attachScreenshot({ getPageSession, state, initializeSession }) {
   async function downscaleImageIfNeeded(filepath, maxDimension = MAX_IMAGE_DIMENSION_PX) {
@@ -77,40 +84,90 @@ function attachScreenshot({ getPageSession, state, initializeSession }) {
     }
   }
 
+  // Screenshot paths this session has itself written, keyed by resolved
+  // absolute path. A caller reusing the same filename across calls within a
+  // session (a common convenience pattern — "latest.png" overwritten each
+  // time) stays allowed; a pre-existing file this session never wrote to is
+  // protected from being silently clobbered by a filename collision or a
+  // caller-chosen name that happens to match something already there
+  // (CR-065).
+  const writtenBySession = new Set();
+
+  // Determine the containment root every screenshot path must resolve
+  // under: the session dir when one is available (the real MCP/CLI path
+  // always provides one), otherwise CWD.
+  function containmentRoot() {
+    if (initializeSession) return initializeSession();
+    if (state && state.sessionDir) return state.sessionDir;
+    return process.cwd();
+  }
+
+  // Canonicalize through the filesystem when possible (falls back to plain
+  // path.resolve for a path that doesn't exist, e.g. the file we're about
+  // to create) — used ONLY for the containment comparison inside
+  // resolveScreenshotPath below, never for the path actually
+  // returned/written. Needed because containment would otherwise compare
+  // two spellings of the SAME directory as plain strings: on macOS,
+  // os.tmpdir()/session dirs live under /var, a symlink to /private/var,
+  // and process.cwd() after a chdir into one returns the resolved
+  // /private/var form. Comparing those textually makes path.relative
+  // produce a spurious ".." and falsely reject a legitimate same-directory
+  // write.
+  function realpathOrResolve(p) {
+    try { return fs.realpathSync(p); } catch { return path.resolve(p); }
+  }
+
   /**
-   * Resolve a user-supplied filename to an absolute path.
+   * Resolve a user-supplied filename to an absolute path, contained within
+   * `containmentRoot()`.
    *
-   * - Absolute path → unchanged.
-   * - Relative path → joined with session dir (creating it if necessary).
-   * - Falsy (null / undefined / '') → auto-generated name in session dir.
+   * - Falsy (null / undefined / '') → auto-generated name in the root.
+   * - Absolute or relative → resolved, then REQUIRED to stay under the
+   *   root. `..` segments or an absolute path pointing elsewhere are
+   *   rejected outright rather than silently honoured — a filename is a
+   *   tool argument, so without this any file the MCP process can write is
+   *   destroyable by one screenshot call (e.g. `../../../.zshrc`, or an
+   *   absolute path to any file at all).
    */
   function resolveScreenshotPath(filename) {
+    const root = containmentRoot();
+    const resolvedRoot = path.resolve(root);
+
     if (!filename) {
-      // Auto-generate a timestamped filename in the session dir.
-      const dir = initializeSession ? initializeSession() : (state && state.sessionDir) || process.cwd();
-      return path.join(dir, `screenshot-${Date.now()}.png`);
+      // Auto-generated name — always inside the root by construction.
+      return path.join(resolvedRoot, `screenshot-${Date.now()}.png`);
     }
 
-    // Absolute: /foo/bar or C:\foo\bar (Windows).
-    if (path.isAbsolute(filename)) {
-      return filename;
-    }
+    const candidate = path.isAbsolute(filename)
+      ? path.resolve(filename)
+      : path.resolve(resolvedRoot, filename);
 
-    // Relative: join with session dir.
-    let dir;
-    if (initializeSession) {
-      dir = initializeSession();
-    } else if (state && state.sessionDir) {
-      dir = state.sessionDir;
-    } else {
-      // No session context — fall back to CWD (legacy behaviour).
-      return path.resolve(filename);
+    // Canonicalize both sides for the containment check only (see
+    // realpathOrResolve above) — canonicalize the candidate's (existing)
+    // directory, then reattach the basename, since the file itself may not
+    // exist yet.
+    const canonicalRoot = realpathOrResolve(resolvedRoot);
+    const canonicalCandidate = path.join(realpathOrResolve(path.dirname(candidate)), path.basename(candidate));
+
+    const relative = path.relative(canonicalRoot, canonicalCandidate);
+    const escapesRoot = relative !== '' && (relative.startsWith('..') || path.isAbsolute(relative));
+    if (escapesRoot) {
+      throw new Error(
+        `Refusing to write screenshot outside the session directory: "${filename}" resolves to ` +
+        `"${candidate}", which is not under "${resolvedRoot}".`
+      );
     }
-    return path.join(dir, filename);
+    return candidate;
   }
 
   async function screenshot(tabIndexOrWsUrl, filename, selector = null, fullPage = false) {
     const resolvedFilename = resolveScreenshotPath(filename);
+    if (fs.existsSync(resolvedFilename) && !writtenBySession.has(resolvedFilename)) {
+      throw new Error(
+        `Refusing to overwrite existing file this session did not create: "${resolvedFilename}". ` +
+        `Choose a different filename.`
+      );
+    }
     const pageSession = await getPageSession(tabIndexOrWsUrl);
 
     let clip;
@@ -159,6 +216,7 @@ function attachScreenshot({ getPageSession, state, initializeSession }) {
 
     const buffer = Buffer.from(result.data, 'base64');
     fs.writeFileSync(resolvedFilename, buffer);
+    writtenBySession.add(resolvedFilename);
 
     await downscaleImageIfNeeded(resolvedFilename, MAX_IMAGE_DIMENSION_PX);
 
