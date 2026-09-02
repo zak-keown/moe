@@ -19,10 +19,17 @@
 //
 // DEFAULT-ON. Set MOE_EVIDENCE_DISABLED to a truthy value to disable.
 //
-// Storage. Default is the current worktree's git-toplevel .audit/. That keeps
-// evidence paired with the branch and prevents sibling worktrees with the same
-// repository name from sharing a record. Set MOE_EVIDENCE_HOME=1 for the
-// explicit machine-local escape at $HOME/.claude/moe/audit/<repo-basename>/.
+// Storage. Always machine-local, never in the worktree — a session's evidence
+// can run into the tens of megabytes, too large to keep in a repo even
+// gitignored. Follows the precedence packages/memory/src/paths.ts already
+// documents as the shared cross-package convention:
+//   1. MOE_EVIDENCE_CONFIG_DIR — this hook's dir directly (test seam)
+//   2. MOE_DATA_DIR/core/audit/<project-key> — the shared cross-package root
+//   3. XDG_CONFIG_HOME/moe/core/audit/<project-key>
+//   4. ~/.config/moe/core/audit/<project-key>  (default)
+// <project-key> sanitizes the git-toplevel absolute path (falling back to
+// cwd outside a repo) rather than just its basename, so two differently
+// located repos that happen to share a name never share a record.
 //
 // -- Extensionless-file / module-type invariant --
 // Both packages/core/package.json and every generated plugin package.json
@@ -56,11 +63,6 @@ const sessionId = String(event.session_id || 'unknown').replace(/[^A-Za-z0-9_-]/
 const transcriptPath = typeof event.transcript_path === 'string' ? event.transcript_path : '';
 
 // ---------------------------------------------------------- output dir
-function repoBasename() {
-  const top = gitTopLevel();
-  return top ? path.basename(top) : 'no-repo';
-}
-
 function gitTopLevel() {
   try {
     const top = execFileSync('git', ['rev-parse', '--show-toplevel'], {
@@ -74,15 +76,23 @@ function gitTopLevel() {
   return null;
 }
 
-function isTruthy(raw) {
-  const value = String(raw || '').toLowerCase();
-  return !!value && value !== '0' && value !== 'false' && value !== 'no' && value !== 'off';
+function projectKey() {
+  const topLevel = gitTopLevel();
+  const raw = topLevel || process.cwd();
+  return raw.replace(/[^A-Za-z0-9_.-]+/g, '-').replace(/^-+|-+$/g, '') || 'root';
 }
 
-const topLevel = gitTopLevel();
-const outDir = isTruthy(process.env.MOE_EVIDENCE_HOME)
-  ? path.join(os.homedir(), '.claude', 'moe', 'audit', repoBasename())
-  : path.join(topLevel || process.cwd(), '.audit');
+function auditRoot() {
+  if (process.env.MOE_EVIDENCE_CONFIG_DIR) return process.env.MOE_EVIDENCE_CONFIG_DIR;
+  const key = projectKey();
+  if (process.env.MOE_DATA_DIR) return path.join(process.env.MOE_DATA_DIR, 'core', 'audit', key);
+  if (process.env.XDG_CONFIG_HOME) {
+    return path.join(process.env.XDG_CONFIG_HOME, 'moe', 'core', 'audit', key);
+  }
+  return path.join(os.homedir(), '.config', 'moe', 'core', 'audit', key);
+}
+
+const outDir = auditRoot();
 
 try {
   fs.mkdirSync(outDir, { recursive: true });
