@@ -122,6 +122,19 @@ function chmodOwnerOnly(file) {
   try { fs.chmodSync(file, 0o600); } catch (_e) { /* best effort */ }
 }
 
+// Write a secret-bearing file so a symlink planted at `file` can never
+// receive the payload. Plain writeFileSync opens with O_CREAT|O_TRUNC,
+// which follows an existing symlink to its target *and* silently drops the
+// `mode` option once the target already exists. Unlinking first removes
+// whatever is at that path (a symlink, or a stale file) without ever
+// following it — unlink acts on the directory entry itself — then the 'wx'
+// flag (O_CREAT|O_EXCL) is guaranteed to create a brand-new regular file,
+// so `mode` always takes effect.
+function writeSecretFile(file, data, mode) {
+  try { fs.unlinkSync(file); } catch (_e) { /* nothing there yet */ }
+  fs.writeFileSync(file, data, { mode, flag: 'wx' });
+}
+
 function initialToken() {
   if (process.env.BRAINSTORM_TOKEN) {
     return { value: process.env.BRAINSTORM_TOKEN, source: 'env' };
@@ -655,12 +668,9 @@ function startServer() {
     // *different* port because someone else holds the preferred one; persisting
     // would overwrite the shared files and strand that other session's open tab.
     if (PORT_FILE && !triedFallback) {
-      try { fs.writeFileSync(PORT_FILE, String(PORT)); } catch (_e) { /* best effort */ }
+      try { writeSecretFile(PORT_FILE, String(PORT), 0o600); } catch (_e) { /* best effort */ }
       if (TOKEN_FILE) {
-        try {
-          fs.writeFileSync(TOKEN_FILE, TOKEN, { mode: 0o600 });
-          chmodOwnerOnly(TOKEN_FILE);
-        } catch (_e) { /* best effort */ }
+        try { writeSecretFile(TOKEN_FILE, TOKEN, 0o600); } catch (_e) { /* best effort */ }
       }
     }
     const info = JSON.stringify({
@@ -670,7 +680,7 @@ function startServer() {
     });
     console.log(info);
     // server-info embeds the key — keep it owner-only.
-    fs.writeFileSync(path.join(STATE_DIR, 'server-info'), info + '\n', { mode: 0o600 });
+    writeSecretFile(path.join(STATE_DIR, 'server-info'), info + '\n', 0o600);
   }
 
   server.on('error', (err) => {
@@ -704,5 +714,6 @@ module.exports = {
   decodeFrame,
   browserLauncherForPlatform,
   OPCODES,
-  MAX_FRAME_PAYLOAD_BYTES
+  MAX_FRAME_PAYLOAD_BYTES,
+  writeSecretFile
 };
