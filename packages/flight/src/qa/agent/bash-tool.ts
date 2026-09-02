@@ -74,13 +74,18 @@ export function buildBashTool(opts: BashToolOptions): BashTool {
         ? Math.max(MIN_TIMEOUT_MS, Math.min(MAX_TIMEOUT_MS, Math.floor(args.timeout_ms)))
         : DEFAULT_TIMEOUT_MS;
 
+    // Built once and reused for both the child's env and the transcript
+    // redaction below (CR-038), so the set of secrets we scrub from the
+    // evidence log always matches exactly what was actually forwarded.
+    const scrubbedEnv = buildScrubbedEnv(process.env);
+
     // detached: true makes proc.pid serve as pgid (setsid).
     let proc: ReturnType<typeof spawn>;
     try {
       proc = spawn(["bash", "-c", command], {
         cwd,
         detached: true,
-        env: buildScrubbedEnv(process.env),
+        env: scrubbedEnv,
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -115,16 +120,20 @@ export function buildBashTool(opts: BashToolOptions): BashTool {
       elapsed_ms: elapsedMs,
     });
 
-    return textResult(
-      formatResult({
-        stdout: stdoutResult.text,
-        stderr: stderrResult.text,
-        exit_code: timedOut || code < 0 ? null : code,
-        truncated: { stdout: stdoutResult.truncated, stderr: stderrResult.truncated },
-        timed_out: timedOut,
-        elapsed_ms: elapsedMs,
-      }),
-    );
+    const resultText = formatResult({
+      stdout: stdoutResult.text,
+      stderr: stderrResult.text,
+      exit_code: timedOut || code < 0 ? null : code,
+      truncated: { stdout: stdoutResult.truncated, stderr: stderrResult.truncated },
+      timed_out: timedOut,
+      elapsed_ms: elapsedMs,
+    });
+    // CR-038: the agent still needs the real output in `text` (it may need
+    // to read or act on a forwarded credential's value), but nothing
+    // forwarded via SDK_PASSTHROUGH_KEYS may reach the persisted evidence
+    // log — see redactSecrets. Mirrors the transcriptText redaction
+    // credential-tool.ts already applies to resolver stdout (PRI-1605).
+    return textResult(resultText, { transcriptText: redactSecrets(resultText, scrubbedEnv) });
   };
 
   return { definition, execute };
@@ -166,6 +175,29 @@ function buildScrubbedEnv(parent: NodeJS.ProcessEnv): Record<string, string> {
   for (const key of [...BASE_ENV_KEYS, ...SDK_PASSTHROUGH_KEYS]) {
     const v = parent[key];
     if (typeof v === "string") out[key] = v;
+  }
+  return out;
+}
+
+/**
+ * Mask every occurrence of a forwarded SDK credential/config value out of
+ * bash output before it reaches the evidence log (CR-038). `buildScrubbedEnv`
+ * deliberately forwards ANTHROPIC_API_KEY/OPENAI_API_KEY (and the other
+ * SDK_PASSTHROUGH_KEYS) into the child process the LLM controls; any command
+ * that prints its environment (`env`, `printenv`, a failing `curl -v`, ...)
+ * would otherwise put a live credential on disk in run.jsonl or a spilled
+ * artifacts/N.txt. `text` (what the model sees) is left untouched — the
+ * agent may legitimately need the real value — only the transcriptText
+ * derived from this is affected. Plain substring replace, not a regex: a
+ * credential can contain characters that are regex metacharacters, and the
+ * values are compared literally either way.
+ */
+function redactSecrets(text: string, scrubbedEnv: Record<string, string>): string {
+  let out = text;
+  for (const key of SDK_PASSTHROUGH_KEYS) {
+    const value = scrubbedEnv[key];
+    if (!value) continue;
+    out = out.split(value).join(`<redacted:${key}>`);
   }
   return out;
 }
