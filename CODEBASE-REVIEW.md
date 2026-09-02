@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 8
-  stale: 5
+  fixed: 9
+  stale: 6
   skipped: 1
   deferred: 0
-  open: 579
+  open: 577
 ---
 
 # Codebase Review — moe
@@ -721,6 +721,10 @@ Fix: bail out to a cheap summary above a line or byte threshold (the output is c
 **Verification:** confirmed
 **Verification evidence:** Reproduced OOM directly: generateHtmlDiff on two 3000-line fully different documents exhausts a 512 MB heap, with roughly quadratic growth from 200 to 2000 lines. getHtml in extraction.js returns unbounded document outerHTML, captureActionWithDiff in capture.js passes it straight to generateHtmlDiff with no size check or try/catch, and MAX_LINES_PER_SIDE only truncates rendered output after the full trace is built. The flight and glass copies of html-diff.js are byte-identical, so one fix covers CR-033, CR-059 and CR-060.
 
+**Disposition:** fixed
+**Commit:** `01d4c3c`
+**Resolved:** 2026-09-02
+**Note:** Fix landed correctly but got swept into 01d4c3c (chore(review): stamp CR-049 disposition) by a concurrent agent's git commit -a race in this shared working tree -- verified via git show that the diff is byte-identical to what this session authored and tested. No separate fix commit exists for CR-033; citing the commit that actually carries the diff rather than fabricating one.
 ### CR-035: The `type` tool cannot type ordinary text when no selector is given
 **File:** `packages/flight/src/qa/adapters/web/tools/keyboard.ts`
 **Anchor:** `executeType`, and its doc claim "without a selector it walks the text character by character through keyboardPress"
@@ -2249,6 +2253,10 @@ for example `project: "py/proof"` with `workspace` omitted — and make
 Either change alone closes it; the field split also removes the trap for the
 next runner-based namespace.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Superseded by bc27892: the current proof namespace has runner uv and no workspace path, eliminating the only directory-valued workspace entry and the Node-directory fallback.
 ### CR-100: validate_skill.py rejects quoted and block-scalar YAML frontmatter
 **File:** `packages/core/scripts/validate_skill.py`
 **Anchor:** `parse_frontmatter`, `fm[key] = value` after `key, _, value = line.partition(":")`
