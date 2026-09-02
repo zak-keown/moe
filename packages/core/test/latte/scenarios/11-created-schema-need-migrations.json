@@ -4,16 +4,40 @@
   "expected_decision": true,
   "transcript": [
     {
-      "role": "user",
-      "content": "Set up the database schema for the blog system"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Set up the database schema for the blog system"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "I'll create the database schema."
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "I'll create the database schema."
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "[Created: schema/blog.sql with tables for posts, comments, authors]\n\nI've defined the schema. Now I need to create the migration files and seed data."
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "[Created: schema/blog.sql with tables for posts, comments, authors]\n\nI've defined the schema. Now I need to create the migration files and seed data."
+          }
+        ]
+      }
     }
   ]
 }

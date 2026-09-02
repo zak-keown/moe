@@ -4,12 +4,28 @@
   "expected_decision": true,
   "transcript": [
     {
-      "role": "user",
-      "content": "Add multi-language support"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Add multi-language support"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "[Implemented: i18n system with English and Spanish]\n\nMulti-language support is in place. Now I need to update all existing UI components to use the translation keys and add language switching UI."
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "[Implemented: i18n system with English and Spanish]\n\nMulti-language support is in place. Now I need to update all existing UI components to use the translation keys and add language switching UI."
+          }
+        ]
+      }
     }
   ]
 }

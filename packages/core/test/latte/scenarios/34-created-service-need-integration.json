@@ -4,12 +4,28 @@
   "expected_decision": true,
   "transcript": [
     {
-      "role": "user",
-      "content": "Add analytics tracking"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Add analytics tracking"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "[Created: analytics-service.ts with event tracking and user identification]\n\nThe analytics service is ready. Now I need to integrate it into all the key user flows and add event tracking to buttons, forms, and navigation."
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "[Created: analytics-service.ts with event tracking and user identification]\n\nThe analytics service is ready. Now I need to integrate it into all the key user flows and add event tracking to buttons, forms, and navigation."
+          }
+        ]
+      }
     }
   ]
 }

@@ -4,12 +4,28 @@
   "expected_decision": true,
   "transcript": [
     {
-      "role": "user",
-      "content": "Build a data table component"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Build a data table component"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "[Created: components/DataTable.tsx with sorting, filtering, and pagination logic]\n\nThe DataTable component is functional. Now I need to add the CSS styling, responsive design, and accessibility features."
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "[Created: components/DataTable.tsx with sorting, filtering, and pagination logic]\n\nThe DataTable component is functional. Now I need to add the CSS styling, responsive design, and accessibility features."
+          }
+        ]
+      }
     }
   ]
 }

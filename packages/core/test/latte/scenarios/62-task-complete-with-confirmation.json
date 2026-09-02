@@ -4,16 +4,40 @@
   "expected_decision": false,
   "transcript": [
     {
-      "role": "user",
-      "content": "Set up sosumi MCP server"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Set up sosumi MCP server"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "I'll configure the sosumi MCP server for you."
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "I'll configure the sosumi MCP server for you."
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "Done. Sosumi is now available globally across all projects."
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Done. Sosumi is now available globally across all projects."
+          }
+        ]
+      }
     }
   ]
 }

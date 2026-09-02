@@ -4,12 +4,28 @@
   "expected_decision": true,
   "transcript": [
     {
-      "role": "user",
-      "content": "Add real-time chat functionality"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Add real-time chat functionality"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "[Implemented: WebSocket-based chat with message persistence]\n\nChat is working but I notice performance issues with large message histories. I'll add message pagination, implement virtual scrolling, and optimize the WebSocket connection handling."
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "[Implemented: WebSocket-based chat with message persistence]\n\nChat is working but I notice performance issues with large message histories. I'll add message pagination, implement virtual scrolling, and optimize the WebSocket connection handling."
+          }
+        ]
+      }
     }
   ]
 }

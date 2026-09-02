@@ -4,12 +4,28 @@
   "expected_decision": true,
   "transcript": [
     {
-      "role": "user",
-      "content": "Set up Express middleware"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Set up Express middleware"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "[Added: CORS, body-parser, helmet]\n\nBasic middleware is in place. Still need to add:\n- Rate limiting middleware\n- Request logging\n- Error handling middleware\n- Authentication middleware"
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "[Added: CORS, body-parser, helmet]\n\nBasic middleware is in place. Still need to add:\n- Rate limiting middleware\n- Request logging\n- Error handling middleware\n- Authentication middleware"
+          }
+        ]
+      }
     }
   ]
 }

@@ -4,12 +4,28 @@
   "expected_decision": true,
   "transcript": [
     {
-      "role": "user",
-      "content": "Create database migration files"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Create database migration files"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "[Created: 3 migration files for users, posts, and comments tables]\n\nMigrations are written. Now I need to test them on a fresh database, verify rollback works, and add seed data for development."
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "[Created: 3 migration files for users, posts, and comments tables]\n\nMigrations are written. Now I need to test them on a fresh database, verify rollback works, and add seed data for development."
+          }
+        ]
+      }
     }
   ]
 }

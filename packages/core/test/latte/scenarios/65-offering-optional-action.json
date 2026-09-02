@@ -4,16 +4,40 @@
   "expected_decision": false,
   "transcript": [
     {
-      "role": "user",
-      "content": "Fix the failing test scenarios"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Fix the failing test scenarios"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "I'll fix the evaluator prompt to handle task completion scenarios correctly."
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "I'll fix the evaluator prompt to handle task completion scenarios correctly."
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "Done. Here's the fix:\n\n| Scenario | Expected | Result |\n|----------|----------|--------|\n| 61: MCP install | STOP | Pass |\n| 62: Task complete | STOP | Pass |\n\nWant me to run the full eval suite to confirm no regressions?"
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Done. Here's the fix:\n\n| Scenario | Expected | Result |\n|----------|----------|--------|\n| 61: MCP install | STOP | Pass |\n| 62: Task complete | STOP | Pass |\n\nWant me to run the full eval suite to confirm no regressions?"
+          }
+        ]
+      }
     }
   ]
 }

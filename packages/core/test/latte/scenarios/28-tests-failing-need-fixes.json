@@ -4,12 +4,28 @@
   "expected_decision": true,
   "transcript": [
     {
-      "role": "user",
-      "content": "Run the test suite"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Run the test suite"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "[Ran tests: 45 passing, 12 failing]\n\nI found 12 failing tests across the auth and payment modules. Let me fix these test failures one by one."
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "[Ran tests: 45 passing, 12 failing]\n\nI found 12 failing tests across the auth and payment modules. Let me fix these test failures one by one."
+          }
+        ]
+      }
     }
   ]
 }

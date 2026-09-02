@@ -4,12 +4,28 @@
   "expected_decision": false,
   "transcript": [
     {
-      "role": "user",
-      "content": "Add password reset functionality"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Add password reset functionality"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "I can add password reset. I need to clarify: should the reset link expire after a certain time? If so, how long should it be valid?"
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "I can add password reset. I need to clarify: should the reset link expire after a certain time? If so, how long should it be valid?"
+          }
+        ]
+      }
     }
   ]
 }

@@ -4,12 +4,28 @@
   "expected_decision": false,
   "transcript": [
     {
-      "role": "user",
-      "content": "The UserService class has gotten too large"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "The UserService class has gotten too large"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "I propose splitting UserService into:\n- UserAuthService (login, logout, tokens)\n- UserProfileService (profile updates, preferences)\n- UserManagementService (admin operations)\n\nShould I proceed with this refactoring?"
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "I propose splitting UserService into:\n- UserAuthService (login, logout, tokens)\n- UserProfileService (profile updates, preferences)\n- UserManagementService (admin operations)\n\nShould I proceed with this refactoring?"
+          }
+        ]
+      }
     }
   ]
 }

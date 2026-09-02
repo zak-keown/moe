@@ -4,12 +4,28 @@
   "expected_decision": true,
   "transcript": [
     {
-      "role": "user",
-      "content": "Add export functionality"
+      "type": "user",
+      "message": {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Add export functionality"
+          }
+        ]
+      }
     },
     {
-      "role": "assistant",
-      "content": "[Implemented: Data export to CSV, JSON, and XML formats]\n\nExport functionality is working correctly. I'll now write tests for each export format, edge cases like empty data, and large datasets."
+      "type": "assistant",
+      "message": {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "[Implemented: Data export to CSV, JSON, and XML formats]\n\nExport functionality is working correctly. I'll now write tests for each export format, edge cases like empty data, and large datasets."
+          }
+        ]
+      }
     }
   ]
 }
