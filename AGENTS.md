@@ -9,8 +9,6 @@ and the reasoning; this file is the checklist.
 
 - `ARCHITECTURE.md` — target shape and the decisions that produced it. Read
   before writing anything: it holds the *why*, which the tree cannot tell you.
-- `PARITY.md` — the compact imported-work ledger. Load-bearing for legal and
-  license correctness.
 - `NOTICE` — attribution. Apache-2.0 §4(b) requires it.
 - `README.md` — the two rules and the map. Not a spec.
 
@@ -21,18 +19,19 @@ and the reasoning; this file is the checklist.
    Never hand-edit anything under `/plugins/`. Edit
    `packages/<pkg>/mint/<plugin>.yaml` and run `pnpm mint`.
 2. **The snapshots in `../.moe-references/` are the spec, not upstream HEAD.**
-   Pinned SHAs live in `PARITY.md`. Do not consult upstream `main`. Parity
-   against a moving target is unfalsifiable.
-3. **Keep imported-work metadata centralized.** A new imported work or changed
-   pinned revision belongs in `PARITY.md` and `NOTICE`, not package prose.
+   Do not consult upstream `main`. Parity against a moving target is
+   unfalsifiable.
+3. **Keep imported-work metadata centralized.** A new imported work belongs in
+   `NOTICE` and the relevant mint yaml's `imported_works:` list, not package
+   prose.
 4. **Two tsconfigs, and they must agree.** `tsconfig.json` `references` mirrors
    runtime `dependencies` one for one. `tsconfig.tests.json` `references` holds
    test-only edges — including the ones that point *up*. Put a test-fixture
    inversion in `tsconfig.json` and you get `TS6202: Project references may not
    form a circular graph`.
-5. **Keep legal metadata centralized.** `NOTICE` and `PARITY.md` are the
-   canonical attribution surfaces; generated distributions carry applicable
-   license terms. `pnpm provenance` checks their completeness.
+5. **Keep legal metadata centralized.** `NOTICE` is the canonical attribution
+   surface; generated distributions carry applicable license terms.
+   `pnpm provenance` checks their completeness.
 
 ## Guarded surfaces — a bad edit turns the suite red
 
@@ -51,8 +50,8 @@ Cite by test name / symbol / quoted sentence, never by line number.
 
 ## Unguarded prose — read carefully
 
-`PARITY.md`, `ARCHITECTURE.md`, `packages/core/README.md`, `README.md`,
-`.gitignore`. No test asserts anything about their contents.
+`ARCHITECTURE.md`, `packages/core/README.md`, `README.md`, `.gitignore`. No
+test asserts anything about their contents.
 Silent failure mode: a stale line-numbered citation surviving a merge and
 reading as verified. Mitigation is the cite-by-name rule above, not
 serialisation.
@@ -89,8 +88,7 @@ Root scripts (`package.json`), the only ones this doc names:
 - `pnpm tab:build`, `pnpm tab:test`, `pnpm tab:test:bindings` — cargo and the
   Rust FFI. Outside `pnpm test` deliberately; bindings need the cdylib built
   first, and this is the only check that the C ABI rename landed identically in
-  the Rust FFI, the committed header and all three bindings (`PARITY.md`
-  "The C ABI rename is the load-bearing one").
+  the Rust FFI, the committed header and all three bindings.
 - `pnpm proof:test` — Python; runs `pytest` under `uv` for `py/proof`.
 - `pnpm mint` — regenerates `/plugins/` from `packages/*/mint/*.yaml`.
 - `pnpm mint:check` — CI gate. `pnpm mint` then asserts `/plugins/` is
@@ -129,9 +127,10 @@ Nothing runs on commit. No lefthook config, `core.hooksPath` unset. See
 ## Imported-work maintenance
 
 No migration or re-import workflow is supported. If code from another work is
-added deliberately, record its exact source, revision, license, destination,
-and required notices in `PARITY.md` and `NOTICE`. Keep that metadata out of
-package READMEs and other product-facing surfaces.
+added deliberately, record its exact source, revision, license, and required
+notices in `NOTICE`, and add the upstream name to the relevant mint yaml's
+`imported_works:` list. Keep that metadata out of package READMEs and other
+product-facing surfaces.
 
 ## Parallel work — the integration protocol
 
@@ -144,8 +143,8 @@ protocol":
   line number.
 - A wave's workers branch from one recorded base.
 
-Read `packages/core/**` from the package's tree. Read `PARITY.md` and
-`ARCHITECTURE.md` from main, because that is where they live.
+Read `packages/core/**` from the package's tree. Read `ARCHITECTURE.md` from
+main, because that is where it lives.
 
 ## Not this file's job
 

@@ -2,7 +2,7 @@
 
 Turning a reproduction into a regression test that stays failing for the right reason. Read during Phase 3 (Hypothesis and Testing); the Iron Law in SKILL.md is the short version of why.
 
-*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-repro-hardening.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See PARITY.md.*
+*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-repro-hardening.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See NOTICE.*
 
 from Minimal Reproduction). Extends the regression test from a symptom-check
 into a **root-cause check** — which is exactly what the Phase 1A fix-acceptance

@@ -56,7 +56,7 @@ belong to `moe-bare-binary-dispatcher`.
 
 ## Keep legal provenance out of product voice
 
-`NOTICE` and `PARITY.md` are the repository's canonical attribution surfaces.
+`NOTICE` is the repository's canonical attribution surface.
 Product documentation should describe Moe as it exists today; do not duplicate
 lineage tables or source-repository narratives in package prose.
 

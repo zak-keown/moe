@@ -242,8 +242,9 @@ is why there is no unisolated-parallel rung.
 Concurrent workers read and edit different trees. Their reports refer to files
 by path and line, and the same path at the same line number can hold different
 content in two worktrees whose branch points differ. On 2026-08-31, three
-agents disputed one citation — the same `PARITY.md:90` — and reached three
-answers because the row had landed in a commit one worktree's base predated.
+agents disputed one citation — the same file at the same line — and reached
+three answers because the row had landed in a commit one worktree's base
+predated.
 Nobody ran a bad command. That is the standing failure mode of fan-out
 execution, and it is what these rules exist to prevent:
 

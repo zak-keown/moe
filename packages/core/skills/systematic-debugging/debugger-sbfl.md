@@ -4,7 +4,7 @@ A deterministic ranked "where to look first" list, derived from existing test pa
 
 **Its preconditions rarely hold here today, and it says so itself.** SBFL needs PER-TEST coverage: which individual test executed which line. Aggregate coverage is not a spectrum. Checked 2026-09-01 — this repo configures no coverage at all, and TC's shared Angular jest config sets a single global `coverageThreshold`, which is aggregate by construction. So this technique will usually skip. It is imported anyway because it degrades correctly (see Degradation below) and because the day a suite does emit per-test spectra, the method is already written down.
 
-*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-sbfl.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See PARITY.md.*
+*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-sbfl.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See NOTICE.*
 
 first" list derived from existing test pass/fail coverage, computed before LLM
 reasoning over an unranked search space.

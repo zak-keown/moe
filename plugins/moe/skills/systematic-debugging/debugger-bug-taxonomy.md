@@ -2,7 +2,7 @@
 
 A failure classifier, read during Phase 2 (Pattern Analysis). Naming the class of bug narrows which techniques are worth trying.
 
-*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-bug-taxonomy.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See PARITY.md.*
+*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-bug-taxonomy.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See NOTICE.*
 
 and the Technique Selection table. Classifies the failure early and **routes**
 which investigation technique to use, **replacing** (not appending to) the flat

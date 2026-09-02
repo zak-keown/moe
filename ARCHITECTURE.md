@@ -6,8 +6,8 @@ Moe is one workspace for coding-agent skills, browser control, memory, session
 orchestration, QA, transcript pricing, and evals. Nine source packages produce
 six installable plugins and seven command namespaces.
 
-This file records why the current shape exists. `PARITY.md` is the internal
-import ledger; `NOTICE` is the public attribution register.
+This file records why the current shape exists. `NOTICE` is the attribution
+register.
 
 ## 1. The two structural rules
 
@@ -48,8 +48,7 @@ moe/
 ├── scripts/                     repository generators and checks
 ├── LICENSE                      canonical Apache-2.0 text
 ├── LICENSE-MIT                  canonical MIT text
-├── NOTICE                       attribution and change notice
-└── PARITY.md                    internal frozen-source ledger
+└── NOTICE                       attribution and change notice
 ```
 
 ## 3. Packages
@@ -190,7 +189,7 @@ GitHub Actions runs one always-on workflow (`ci.yml`: lint, typecheck, test,
 build, plugin reproducibility, provenance) plus three path-scoped workflows
 (`bin.yml`, `tab.yml`, `proof.yml`) and a tag-triggered `publish.yml` that
 OIDC-publishes to npm via trusted publishing. Flight remains private because
-it contains an internal-only legal exception; controls are in `PARITY.md`.
+it contains an internal-only legal exception; controls are in `NOTICE`.
 
 ## 10. Hosting, provenance, and legal payloads
 
@@ -200,7 +199,7 @@ binds to the `owner/repo/workflow` triple, not the scope, so this decoupling
 costs nothing.
 
 Current documentation and metadata point only at Moe. Original project names,
-frozen revisions, and legal status live in `PARITY.md` and root `NOTICE`.
+frozen revisions, and legal status live in root `NOTICE`.
 Historical evidence remains under `docs/history`, tests, fixtures, and planning
 records, none of which is staged into installable plugins.
 

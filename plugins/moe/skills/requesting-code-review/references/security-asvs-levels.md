@@ -2,7 +2,7 @@
 
 Threat-model rigor levels, mapping OWASP ASVS L1/L2/L3 to how hard a reviewer should look. It lands with the review skills rather than with the debugging cluster it was imported alongside, because its subject is reviewer depth, not fault finding.
 
-*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/security-asvs-levels.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See PARITY.md.*
+*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/security-asvs-levels.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See NOTICE.*
 
 ## L1 — Opportunistic (default)
 

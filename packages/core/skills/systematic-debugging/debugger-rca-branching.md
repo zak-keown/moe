@@ -2,7 +2,7 @@
 
 What to do when root-cause analysis forks — read during Phase 3 (Hypothesis and Testing), when more than one cause survives the evidence.
 
-*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-rca-branching.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See PARITY.md.*
+*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-rca-branching.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See NOTICE.*
 
 pre-fix Structured Reasoning Checkpoint. A lightweight discipline that guards
 against the best-known Root-Cause-Analysis failure mode: **5-Whys single-cause

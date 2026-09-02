@@ -36,6 +36,9 @@ bootstrap: none
 # a commands/ concept; the adapters that do not simply omit them, which is why
 # the two commands are not duplicated as skills.
 
+imported_works:
+  - greenfield
+
 marketplace:
   # The marketplace users actually install from is the hand-maintained root
   # .claude-plugin/marketplace.json, whose name is `moe`. Without this, every

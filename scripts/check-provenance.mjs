@@ -54,23 +54,16 @@ function walk(root, current = root) {
   return files;
 }
 
-function checkAttributionRegister(root, problems) {
-  let ledger;
+function countImportedWorks(root, problems) {
   let notice;
   try {
-    ledger = tableNames(join(root, "PARITY.md"), "## Map");
     notice = tableNames(join(root, "NOTICE"), "## Imported works");
   } catch (err) {
-    problems.push(`could not read attribution register: ${err.message}`);
+    problems.push(`could not read NOTICE: ${err.message}`);
     return 0;
   }
-  for (const name of ledger) {
-    if (!notice.has(name)) problems.push(`NOTICE is missing imported work ${name}`);
-  }
-  for (const name of notice) {
-    if (!ledger.has(name)) problems.push(`NOTICE names ${name}, which PARITY.md does not import`);
-  }
-  return ledger.size;
+  if (notice.size === 0) problems.push("NOTICE has no imported-work rows");
+  return notice.size;
 }
 
 function checkPluginLicenses(root, problems) {
@@ -124,7 +117,7 @@ function main(argv) {
   }
   const root = argv[0] ?? ".";
   const problems = [];
-  const upstreams = checkAttributionRegister(root, problems);
+  const upstreams = countImportedWorks(root, problems);
   const plugins = checkPluginLicenses(root, problems);
   checkCanonicalLegalFiles(root, problems);
 

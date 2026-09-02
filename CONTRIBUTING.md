@@ -93,7 +93,7 @@ pnpm mint:check     # asserts /plugins/ is byte-identical from source
 | Command | Why it is outside | When to run it |
 |---|---|---|
 | `pnpm tab:test` | cargo; `ci.yml` runs on `node:24`, `tab.yml` on `rust:latest` and is path-scoped | any change under `packages/tab/**` |
-| `pnpm tab:test:bindings` | needs the cdylib built first, and it is the only check that the C ABI rename landed identically in the Rust FFI, the committed header and all three bindings (`PARITY.md` "The C ABI rename is the load-bearing one") | any change to the FFI or a binding |
+| `pnpm tab:test:bindings` | needs the cdylib built first, and it is the only check that the C ABI rename landed identically in the Rust FFI, the committed header and all three bindings | any change to the FFI or a binding |
 | `pnpm proof:test` | Python; needs `uv` | any change under `py/proof/**` |
 | `pnpm mint:check` | it regenerates and diffs `/plugins/`; not a test | any change that could alter generated plugin output — mint config, skill frontmatter, `skill-tiers.yaml`, the marketplace, `@bubstack/moe-mint`'s own source, or the generator script |
 
@@ -140,12 +140,10 @@ Three files carry it:
 
 - `ARCHITECTURE.md` — target shape and the decisions that produced it. Read
   before writing anything; it holds the *why*, which the tree cannot tell you.
-- `PARITY.md` — the compact imported-work ledger. Load-bearing for licence
-  compliance.
 - `NOTICE` — attribution. Apache-2.0 §4(b) requires it.
 
-**The rule that follows:** new imported works and changed pinned revisions must
-be recorded in both `PARITY.md` and `NOTICE`.
+**The rule that follows:** new imported works must be recorded in `NOTICE` and
+in the relevant mint yaml's `imported_works:` list.
 
 ### Four conventions that are invisible from the code
 
@@ -163,10 +161,10 @@ be recorded in both `PARITY.md` and `NOTICE`.
    `tsconfig.json` fails with `TS6202: Project references may not form a
    circular graph`.
 3. **The snapshots in `../.moe-references/` are fixed audit references, not a
-   supported sync target.** Pinned revisions live in `PARITY.md`.
-4. **Legal metadata stays centralized.** `NOTICE` and `PARITY.md` are the
-   canonical attribution surfaces; generated distributions carry applicable
-   license terms. `pnpm provenance` checks their completeness.
+   supported sync target.**
+4. **Legal metadata stays centralized.** `NOTICE` is the canonical attribution
+   surface; generated distributions carry applicable license terms.
+   `pnpm provenance` checks their completeness.
 
 ### Citation discipline
 
@@ -174,16 +172,16 @@ Cite by test name, symbol, or quoted sentence — never by line number. The
 schedule in `.planning/backlog/WAVES.md` documents why: line numbers rot the
 moment prose is edited, and a stale `:230` citation lands on real prose and
 reads as verified. Guarded files (see `AGENTS.md`) are self-checking; unguarded
-prose (`README.md`, `ARCHITECTURE.md`, `PARITY.md`, `packages/core/README.md`,
-`.gitignore`) is not.
+prose (`README.md`, `ARCHITECTURE.md`, `packages/core/README.md`, `.gitignore`)
+is not.
 
 ## 4. Imported-work maintenance
 
 Moe does not support migration from old names or synchronization with source
 repositories. If code from another work is deliberately added, record its
-exact source, revision, license, destination, and required notices in
-`PARITY.md` and `NOTICE`. Keep that metadata out of package READMEs and other
-product-facing surfaces.
+exact source, revision, license, and required notices in `NOTICE`, and add the
+upstream name to the relevant mint yaml's `imported_works:` list. Keep that
+metadata out of package READMEs and other product-facing surfaces.
 
 ## 5. Parallel work — the integration protocol
 
@@ -199,8 +197,8 @@ different answers, each running a correct command against a different tree:
 - **A wave's workers branch from one recorded base.** That clause alone would
   have prevented the incident.
 
-Read `packages/core/**` from the package's tree. Read `PARITY.md` and
-`ARCHITECTURE.md` from main, because that is where they live.
+Read `packages/core/**` from the package's tree. Read `ARCHITECTURE.md` from
+main, because that is where it lives.
 
 ## 6. Scope of this document
 

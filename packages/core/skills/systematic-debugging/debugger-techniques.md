@@ -2,7 +2,7 @@
 
 The full technique bodies, extracted so the main skill can stay short. A menu rather than a sequence — Phase 1 and Phase 3 both reach for it.
 
-*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-techniques.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See PARITY.md.*
+*Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-techniques.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See NOTICE.*
 
 `DEFECT.AGENT-FILE-SIZE-CAP-BREACH` (issue #2995, epic #1671 Phase 6.4). The agent
 keeps each technique's name and routing entry; the step-by-step detail lives here.
