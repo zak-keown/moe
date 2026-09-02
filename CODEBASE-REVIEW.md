@@ -22,9 +22,9 @@ status: issues_found
 dispositions:
   fixed: 21
   stale: 10
-  skipped: 5
+  skipped: 6
   deferred: 0
-  open: 557
+  open: 556
 ---
 
 # Codebase Review — moe
@@ -2090,6 +2090,10 @@ I reproduced both against a scratchpad marketplace seeded with `moe-retired-thin
 
 Fix: when `retired` is non-empty and no explicit opt-in flag is given, print the uninstall commands and return without writing, so the documented order is achievable. Confine deletion to names the registry has previously owned, or require the flag to remove a directory the script did not stage.
 
+**Disposition:** skipped
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** The cited .claude/skills/moe-dogfood/scripts/stage.py is absent from this branch and has no reachable file history, so its retired-plugin deletion flow cannot be reproduced or patched here.
 ### CR-092: No CI job runs scope:check, so the live package-map and identity scan depends on a human
 **File:** `.gitlab-ci.yml`
 **Anchor:** no pipeline job runs `pnpm scope:check`; compare the check script in package.json
