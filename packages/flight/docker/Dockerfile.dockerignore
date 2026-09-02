@@ -1,0 +1,23 @@
+# CR-026: docker/compose.yaml's build context is the monorepo root
+# (`context: ../../..`), not this package — Docker only reads a plain
+# `.dockerignore` from the CONTEXT root, and there is none at the repo root.
+# `../.dockerignore` (packages/flight/.dockerignore) documents itself as
+# inert at that depth for the same reason. Without this file, `COPY
+# packages/flight packages/flight` in ./Dockerfile pulled in
+# packages/flight/.env verbatim — the file this same compose.yaml's env_file
+# directive tells operators to create for their provider keys — baking
+# secrets into an image layer, along with node_modules/dist/.turbo from the
+# host.
+#
+# BuildKit resolves a per-Dockerfile ignore file named `<Dockerfile>.dockerignore`
+# placed in the SAME DIRECTORY as the Dockerfile it applies to (this is a
+# documented Docker convention, independent of the context root), so this
+# file covers ./Dockerfile without needing anything outside packages/flight.
+# Patterns are matched against paths relative to the context root (the
+# monorepo root), hence the leading `**/`.
+**/.env
+**/.env.*
+**/node_modules
+**/dist
+**/.turbo
+.git
