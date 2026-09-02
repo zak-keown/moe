@@ -14,8 +14,8 @@ import type { LLMClient } from "../../models/provider.js";
 import { createClient } from "../../models/resolve.js";
 import { flightPath, isSafePath } from "../../paths.js";
 import type { VerdictResult } from "../../types.js";
-import { parseRunId } from "../../util/id.js";
 import type { ErrorLog } from "../../util/error-log.js";
+import { parseRunId } from "../../util/id.js";
 
 // CR-040/CR-042: the id a card carries is model output (from `parseStoryCard`
 // on generated text, or from the prompt-injectable observation/summary text

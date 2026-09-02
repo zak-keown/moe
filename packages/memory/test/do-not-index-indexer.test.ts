@@ -130,9 +130,9 @@ describe("CR-070: DO-NOT-INDEX marker is honored by indexer.ts entry points", ()
     await indexConversations(undefined, undefined, 1, true);
 
     const db = new Database(dbPath);
-    const rows = db
-      .prepare("SELECT session_id FROM exchanges")
-      .all() as Array<{ session_id: string }>;
+    const rows = db.prepare("SELECT session_id FROM exchanges").all() as Array<{
+      session_id: string;
+    }>;
     db.close();
 
     expect(rows.some((r) => r.session_id === "marked-session")).toBe(false);

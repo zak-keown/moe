@@ -42,7 +42,9 @@ export function metaPath(dir: string, sid: string): string {
  */
 function assertSafeSegment(name: string): void {
   if (!/^[A-Za-z0-9_-]+$/.test(name)) {
-    throw new Error(`unsafe worker name (must be a single [A-Za-z0-9_-]+ segment): ${JSON.stringify(name)}`);
+    throw new Error(
+      `unsafe worker name (must be a single [A-Za-z0-9_-]+ segment): ${JSON.stringify(name)}`,
+    );
   }
 }
 

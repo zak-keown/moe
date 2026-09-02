@@ -349,10 +349,7 @@ test("scanResults: window ordering is (started_at, dir-name) ascending", () => {
 // symlink; that throw propagated out of scanResults uncaught.
 test("scanResults skips a dangling symlink in results/ instead of throwing ENOENT", () => {
   const root = mkdtempSync(join(tmpdir(), "res-dangling-"));
-  symlinkSync(
-    join(root, "does-not-exist-target"),
-    join(root, "dangling-20260102T000000Z-bbbb"),
-  );
+  symlinkSync(join(root, "does-not-exist-target"), join(root, "dangling-20260102T000000Z-bbbb"));
   writeRun(root, runId("s", "claude", "none", "linux", "20260612T000000Z", "aaaa"), {
     verdict: { final: "pass", ...identity() },
   });

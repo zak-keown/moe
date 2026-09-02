@@ -141,7 +141,11 @@ describe("cmdAdopt", () => {
     const ctx = makeCtx(plantedWorkerDir, home, fakeTmux(freshState()));
 
     await expect(
-      cmdAdopt(ctx, { tmuxName: "w1", cwd, sessionId: SID, extraArgs: [] }, { ...baseOpts(), ...FAST }),
+      cmdAdopt(
+        ctx,
+        { tmuxName: "w1", cwd, sessionId: SID, extraArgs: [] },
+        { ...baseOpts(), ...FAST },
+      ),
     ).rejects.toThrow(/not a real directory/);
 
     rmSync(parent, { recursive: true });

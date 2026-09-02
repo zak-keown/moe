@@ -169,7 +169,10 @@ malicious content
     const client = makeFakeClient(MALICIOUS_CARD);
     const errorLog = new ErrorLog();
     const app = new Hono();
-    app.route("/api/fanout", fanoutRoutes(makeConfig(projectRoot), () => client, errorLog));
+    app.route(
+      "/api/fanout",
+      fanoutRoutes(makeConfig(projectRoot), () => client, errorLog),
+    );
 
     const escapeTarget = join(tmpdir(), "pwned.md");
     try {
