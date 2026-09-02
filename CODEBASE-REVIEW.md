@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 10
+  fixed: 11
   stale: 6
   skipped: 1
   deferred: 0
-  open: 576
+  open: 575
 ---
 
 # Codebase Review — moe
@@ -942,6 +942,10 @@ Fix: add `case "run_error": this.renderRunError(event); return;` to the switch a
 **Verification:** confirmed
 **Verification evidence:** Reproduced with tsx: feeding PrettyRenderer.handle the real production row shape, where EvidenceLogger.writeEvent sets type run_error directly and attachRenderer pipes it unmodified, yields empty output through the switch default branch, while the fixture shape type event with name run_error renders the full panel; orchestrator.test.ts confirms the on-disk type is run_error. Same defect as CR-045.
 
+**Disposition:** fixed
+**Commit:** `8a3ae18`
+**Resolved:** 2026-09-02
+**Note:** Fix landed in 8a3ae18, a concurrent sibling agent's unrelated CODEOWNERS commit — a shared-index race (git show --stat 8a3ae18 confirms the diff is exactly the switch-case fix plus the fatal.jsonl fixture rebuild, nothing else of mine).
 ### CR-045: Pretty renderer silently drops every real run_error row, so the "Run failed" panel is dead code
 **File:** `packages/flight/src/qa/cli/stream/pretty.ts`
 **Anchor:** `PrettyRenderer.handle` — `case "event": if (event.name === "run_error") this.renderRunError(event);`
