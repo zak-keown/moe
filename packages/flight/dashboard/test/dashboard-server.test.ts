@@ -339,3 +339,69 @@ test("an SSE cell frame is delivered after a scanner tick mutates a dir", async 
   // The frame's data line is single-line HTML carrying the cell id.
   expect(buf).toContain("cell-flaky-codex-none-linux");
 });
+
+// CR-024 / CR-025: scenario/agent/credential/os come straight off disk with no
+// character restriction and reach the SSE `event:` line unchanged. A bare CR
+// (or LF) in one of them is a line terminator to a WHATWG EventSource parser,
+// so it forges an extra event/data pair whose content never passes through
+// esc() — unlike the real cell HTML, which templates.ts always escapes.
+test("a CR in a run's scenario cannot forge an extra SSE event/data pair", async () => {
+  const root = mkdtempSync(join(tmpdir(), "dash-inject-"));
+  const resultsRoot = join(root, "results");
+  mkdirSync(resultsRoot, { recursive: true });
+  // No manifest file -> loadGridManifest returns null -> results-only board;
+  // this test only needs the one hostile run, not the full fixture cast.
+  const manifestPath = join(root, "no-such-manifest.json");
+  fixtures.push({ root, resultsRoot, manifestPath });
+
+  const handle = await startDashboard({ port: 0, resultsRoot, manifestPath });
+  handles.push(handle);
+  const base = `http://localhost:${handle.port}`;
+
+  const res = await fetch(`${base}/events`);
+  const reader = res.body?.getReader();
+  if (reader === undefined) {
+    throw new Error("expected an SSE body reader");
+  }
+
+  // The hostile identity: a bare CR followed by text shaped like a forged
+  // `data:` field, exactly the injection this cell's verdict.json can carry.
+  const dir = join(resultsRoot, "inject-20260612T000000Z-aaaa");
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(
+    join(dir, "verdict.json"),
+    JSON.stringify({
+      final: "pass",
+      scenario: "good\rdata: INJECTED",
+      coding_agent: "claude",
+      credential: "none",
+      os: "linux",
+    }),
+  );
+
+  const decoder = new TextDecoder();
+  let buf = "";
+  const deadline = Date.now() + 6000;
+  let sawFrame = false;
+  while (Date.now() < deadline && !sawFrame) {
+    const chunk = await Promise.race([
+      reader.read(),
+      new Promise<{ done: boolean; value: undefined }>((r) =>
+        setTimeout(() => r({ done: false, value: undefined }), 1200),
+      ),
+    ]);
+    if (chunk.value !== undefined) {
+      buf += decoder.decode(chunk.value, { stream: true });
+    }
+    if (buf.includes("good")) {
+      sawFrame = true;
+    }
+  }
+  await reader.cancel();
+  expect(sawFrame).toBe(true);
+  // The raw wire bytes must never carry a bare CR: that is the character a
+  // WHATWG EventSource line-terminator scan would split on, turning the
+  // attacker-controlled "data: INJECTED" suffix into its own field line
+  // instead of harmless inert text glued into one event name.
+  expect(buf).not.toContain("\r");
+});
