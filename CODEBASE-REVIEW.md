@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 53
+  fixed: 54
   stale: 14
   skipped: 6
   deferred: 1
-  open: 519
+  open: 518
 ---
 
 # Codebase Review — moe
@@ -1426,6 +1426,10 @@ Fix: run the shim in an isolated world (`Page.addScriptToEvaluateOnNewDocument` 
 **Verification:** confirmed
 **Verification evidence:** Page.addScriptToEvaluateOnNewDocument and Runtime.addBinding in dialogs.js pass no worldName or executionContextName, so the shim and the __dialogShim binding run in the main world reachable by page script; window.__dialogShim_resolve is a plain global with page-counted ids and no nonce, and handleCdpEventForSession trusts data.id, name and origin from the binding payload unchecked, confirming both the self-grant and forged-dialog paths. Chrome own OS prompt still gates getUserMedia, which keeps this below critical.
 
+**Disposition:** fixed
+**Commit:** `06cabdd`
+**Resolved:** 2026-09-02
+**Note:** Same file and same commit as CR-063 (compounding issues in permission-shim.js, fixed together): a per-page-session secret is minted server-side in dialogs.js, templated into the shim source, verified on every incoming permission-request before dialogs.js accepts one, and required by the shim's _resolve before honoring a decision -- closing both the self-grant (window.__dialogShim_resolve('1','grant')) and the forged-phantom-dialog paths without needing the isolated-world CDP mechanism the report's own fix suggestion named (which would need real Chrome to validate). See CR-063's commit for the fix+tests.
 ### CR-065: Screenshot filenames are written with no path containment
 
 **File:** `packages/glass/skills/browsing/lib/screenshot.js`
