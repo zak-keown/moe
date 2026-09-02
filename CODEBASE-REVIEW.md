@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 11
-  stale: 6
+  fixed: 12
+  stale: 7
   skipped: 1
   deferred: 0
-  open: 575
+  open: 573
 ---
 
 # Codebase Review — moe
@@ -964,6 +964,10 @@ Fix: add `case "run_error": this.renderRunError(event); return;` to the switch, 
 **Verification:** confirmed
 **Verification evidence:** Reproduced directly: the exact row shape logRunError produces fed into a live PrettyRenderer.handle yields zero output lines, because the switch matches only case event with a nested name of run_error and has no case for run_error; logRunError is the only producer in packages/flight/src and the orchestrator catch-all uses it, while the fatal.jsonl fixture hand-writes the nonexistent nested shape. The CLI outer catch still prints a console.error, so the user loses the panel formatting rather than all output. Same defect as CR-044.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Same root cause as CR-044 (both name the same missing case in PrettyRenderer.handle's switch). Fixed by commit 8a3ae18 (CR-044's fix): a top-level 'case "run_error"' now dispatches to renderRunError for the real {type:"run_error"} row EvidenceLogger.logRunError writes; the dead event/name==run_error branch this finding anchors on was removed. Re-verified: grep -n 'case "run_error"' src/qa/cli/stream/pretty.ts shows the new case; the fatal fixture and pretty.test.ts (16 tests) pass.
 ### CR-046: A truncated OpenAI tool call crashes the run instead of taking the max_tokens recovery path
 
 **File:** `packages/flight/src/qa/models/openai.ts`
@@ -1125,6 +1129,10 @@ Fix: parse `--user-data-dir=<value>` out of the line and compare it for path equ
 **Verification:** confirmed
 **Verification evidence:** getChromeProfileDir for moe-glass is a literal prefix of the directory for moe-glass-2, which acquireWithFallback in profile-lock.js assigns as the ordinary two-MCPs-on-one-host case; a reproduced ps-line check shows line.includes(profileDir) matches the sibling profile Chrome, and chrome-process.js adopts it unconditionally after isPortAlive with no path-equality check, overwriting meta.json.
 
+**Disposition:** fixed
+**Commit:** `0c8581c`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-057: startChrome reports success when a Chrome it did not launch answers on an explicitly requested port
 **File:** `packages/glass/skills/browsing/lib/chrome-process.js`
 **Anchor:** `startChrome` — "--- Step 2: Choose a port ---" and the `if (!port)` guard above it
