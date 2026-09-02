@@ -531,7 +531,21 @@ export async function runAgent(
     // and further tool calls (clicks, navigates) would be for a scenario
     // the model considers finished. We log the dropped names to the
     // evidence log so they're recoverable post-hoc.
-    const report = response.toolCalls.find((tc) => tc.name === "report_result");
+    //
+    // CR-036: gated on stopReason !== "max_tokens" — a turn cut off by the
+    // output-token limit *while emitting report_result* (PRI-2160, run
+    // b35d: "max_tokens mid-thinking on turn 36 while composing its
+    // verdict") is a truncation, not a malformed report. Looking at it
+    // here first meant the truncation-recovery block below never ran:
+    // `stopped_max_tokens` went unlogged, the one-per-run recovery turn
+    // was never spent, and the retry path replayed the raw truncated turn
+    // (including an unsigned thinking block whose signature never
+    // arrived) via `pushAssistantTurn`, which the truncation stub's own
+    // docstring says must never happen.
+    const report =
+      response.stopReason === "max_tokens"
+        ? undefined
+        : response.toolCalls.find((tc) => tc.name === "report_result");
     if (report) {
       const otherTools = response.toolCalls.filter((tc) => tc.name !== "report_result");
       if (otherTools.length > 0) {
