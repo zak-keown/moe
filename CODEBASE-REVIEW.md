@@ -21,10 +21,10 @@ verification:
 status: issues_found
 dispositions:
   fixed: 15
-  stale: 8
+  stale: 9
   skipped: 1
   deferred: 0
-  open: 569
+  open: 568
 ---
 
 # Codebase Review — moe
@@ -2218,6 +2218,10 @@ half and not the payload half is the gap most likely to ship a wholly broken tar
 Fix: extend that test to assert `pkg.files` is a superset of the transitive import set of
 the three bins — at minimum `bin/lib/probes.mjs` and `config/distribution.mjs`.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Superseded by the private-root package shape established in 6f9ab36: the root package has private:true and no files allowlist, so no root npm tarball can omit these runtime imports.
 ### CR-098: The WSL test passes with no "microsoft" in the release string, and the guard it covers is a tautology
 **File:** `bin/test/moe.test.mjs`
 **Anchor:** test "under WSL (linux + microsoft-in-release) crew resolves normally"
