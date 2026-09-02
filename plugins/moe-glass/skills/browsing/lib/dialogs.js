@@ -1,7 +1,8 @@
 'use strict';
 
+const { randomUUID } = require('crypto');
 const { renderSyntheticArtifacts } = require('./dialogs-render.js');
-const { SHIM_SOURCE } = require('./page-scripts/permission-shim.js');
+const { buildShimSource } = require('./page-scripts/permission-shim.js');
 
 /**
  * Thrown by the session-boundary dialog gate (wrapWithDialogGate in
@@ -37,6 +38,12 @@ function attachDialogs({ state }) {
   // Maps CDP targetId → sessionId for bridge-path sessions. Allows getOpen(wsUrl)
   // to find dialog state stored under sessionId by extracting targetId from the wsUrl.
   if (!state._targetIdToSessionId) state._targetIdToSessionId = new Map();
+  // Per-page-session secret for the permission shim's binding channel
+  // (CR-064) — minted in attachToPageSession, checked in
+  // handleCdpEventForSession against every incoming permission-request and
+  // handed back to the page (via dialogs-router.js) on resolve. Never
+  // exposed anywhere the page itself can read it.
+  if (!state._dialogShimSecrets) state._dialogShimSecrets = new Map();
 
   function getOpen(wsUrlOrSid) {
     // Direct lookup (works for sessionId keys).
@@ -83,7 +90,11 @@ function attachDialogs({ state }) {
       patterns: [{ urlPattern: '*' }],
     });
     await pageSession.send('Runtime.enable', {});
-    await pageSession.send('Page.addScriptToEvaluateOnNewDocument', { source: SHIM_SOURCE });
+    // Mint a fresh, unguessable secret for this page session's shim (CR-064)
+    // before injecting — never reused across sessions.
+    const shimSecret = randomUUID();
+    state._dialogShimSecrets.set(sid, shimSecret);
+    await pageSession.send('Page.addScriptToEvaluateOnNewDocument', { source: buildShimSource(shimSecret) });
     await pageSession.send('Runtime.addBinding', { name: '__dialogShim' });
     pageSession.onEvent((msg) => handleCdpEventForSession(sid, msg, pageSession.send));
   }
@@ -97,6 +108,18 @@ function attachDialogs({ state }) {
       let data;
       try { data = JSON.parse(msg.params.payload); } catch { return; }
       if (data.type === 'permission-request') {
+        // A page can call this binding directly with a hand-crafted payload
+        // (it is a plain global reachable from page script) to fabricate a
+        // permission-request and wedge every subsequent page-target tool
+        // call behind a phantom dialog (CR-064). Only the real shim knows
+        // this session's secret — it is never exposed anywhere the page can
+        // read it — so a mismatched or missing secret means the request was
+        // not actually minted by the shim's ask(); ignore it.
+        const expectedSecret = state._dialogShimSecrets.get(sid);
+        if (!expectedSecret || data.secret !== expectedSecret) {
+          console.error(`[dialogs] permission-request on ${sid} failed secret check; ignoring (forged or stale)`);
+          return;
+        }
         if (state.dialogs.has(sid)) {
           console.error(`[dialogs] permission request while dialog open on ${sid}; preserving original`);
           return;
@@ -105,7 +128,7 @@ function attachDialogs({ state }) {
           kind: 'permission',
           openedAt: Date.now(),
           payload: { name: data.name, origin: data.origin, jsApi: data.jsApi },
-          staged: { _shimId: data.id },
+          staged: { _shimId: data.id, _shimSecret: expectedSecret },
         });
       }
       return;

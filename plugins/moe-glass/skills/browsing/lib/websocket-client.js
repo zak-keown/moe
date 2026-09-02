@@ -1,6 +1,9 @@
 const http = require('http');
 const crypto = require('crypto');
 
+const WS_ACCEPT_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'; // RFC 6455 §1.3
+const DEFAULT_CONNECT_TIMEOUT_MS = 10000;
+
 /**
  * Minimal dependency-free WebSocket client used for CDP transport.
  *
@@ -32,9 +35,16 @@ class WebSocketClient {
     return this.connected && this.socket !== null;
   }
 
-  connect() {
+  // `timeoutMs` bounds the handshake: with neither an 'upgrade' nor a
+  // 'response' handler previously wired, an endpoint that answers with an
+  // ordinary HTTP response (a stale/wrong port now owned by another
+  // service, a proxy, a wedged Chrome) left this promise pending forever —
+  // only a close-without-any-response rejected, via the 'error' path
+  // (CR-066). Every caller now gets a bounded wait either way.
+  connect(timeoutMs = DEFAULT_CONNECT_TIMEOUT_MS) {
     return new Promise((resolve, reject) => {
       const key = crypto.randomBytes(16).toString('base64');
+      const expectedAccept = crypto.createHash('sha1').update(key + WS_ACCEPT_GUID).digest('base64');
 
       const options = {
         hostname: this.url.hostname,
@@ -50,7 +60,30 @@ class WebSocketClient {
 
       const req = http.request(options);
 
-      req.on('upgrade', (_res, socket) => {
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        req.destroy();
+        reject(new Error(`WebSocket handshake to ${this.url} timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
+
+      req.on('upgrade', (res, socket) => {
+        if (settled) { socket.destroy(); return; }
+        const actualAccept = res.headers['sec-websocket-accept'];
+        if (actualAccept !== expectedAccept) {
+          settled = true;
+          clearTimeout(timer);
+          socket.destroy();
+          reject(new Error(
+            `WebSocket handshake to ${this.url} failed: Sec-WebSocket-Accept mismatch ` +
+            `(expected ${expectedAccept}, got ${actualAccept})`
+          ));
+          return;
+        }
+        settled = true;
+        clearTimeout(timer);
+
         this.socket = socket;
         this.connected = true;
 
@@ -73,7 +106,25 @@ class WebSocketClient {
         resolve();
       });
 
-      req.on('error', reject);
+      // The endpoint answered with an ordinary HTTP response instead of
+      // upgrading — no 'upgrade' event will ever fire for this request.
+      req.on('response', (res) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        res.resume(); // drain so the underlying socket can be released
+        reject(new Error(
+          `WebSocket handshake to ${this.url} failed: server responded with HTTP ${res.statusCode} instead of upgrading`
+        ));
+      });
+
+      req.on('error', (err) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(err);
+      });
+
       req.end();
     });
   }

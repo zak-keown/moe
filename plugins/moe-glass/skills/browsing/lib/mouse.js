@@ -145,6 +145,18 @@ function attachMouse({ getPageSession, dialogs, _rng }) {
         if (!el) return { found: false };
         el.scrollIntoView({ block: 'center', inline: 'center' });
         const rect = el.getBoundingClientRect();
+        // A zero-size rect (display:none ancestor, closed modal, off-screen
+        // carousel slide) is not a resolution failure by CDP's standards —
+        // getBoundingClientRect() just returns all zeros — so without this
+        // check "found" stayed true and callers dispatched a real mouse
+        // event at viewport (0,0), silently clicking whatever else occupies
+        // that corner (CR-062). Report it as unresolved instead, the same
+        // as "element does not exist", so click() takes its el.click()
+        // fallback and hover/drag/doubleClick/rightClick (which have none)
+        // raise rather than aim at the origin.
+        if (rect.width === 0 || rect.height === 0) {
+          return { found: false, zeroRect: true };
+        }
         return {
           x: rect.left + rect.width / 2,
           y: rect.top + rect.height / 2,
@@ -158,7 +170,12 @@ function attachMouse({ getPageSession, dialogs, _rng }) {
     });
     throwIfExceptionDetails(result);
     if (!result.result.value || !result.result.value.found) {
-      throw new Error(`${label} not found: ${selector}`);
+      const zeroRect = result.result.value && result.result.value.zeroRect;
+      throw new Error(
+        zeroRect
+          ? `${label} has a zero-size bounding rect (hidden?): ${selector}`
+          : `${label} not found: ${selector}`
+      );
     }
     return { x: result.result.value.x, y: result.result.value.y };
   }

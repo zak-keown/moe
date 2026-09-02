@@ -28,19 +28,45 @@ def load_stories(paths: list[Path]) -> list[dict]:
     return all_stories
 
 
+def _story_body_key(story: dict):
+    """The fields that must agree for two same-titled stories to be the same
+    requirement rather than a title collision between different ones."""
+    return (
+        story.get("i_want", "").strip(),
+        story.get("so_that", "").strip(),
+        json.dumps(story.get("acceptance_criteria", []), sort_keys=True),
+    )
+
+
 def dedup_stories(stories: list[dict]) -> list[dict]:
-    """Deduplicate stories by exact title match. Merges sources from duplicates."""
-    seen: dict[str, dict] = OrderedDict()
+    """Deduplicate stories that agree on epic_theme, title, and body
+    (i_want/so_that/acceptance_criteria). Merges sources from duplicates.
+
+    Title alone is not a safe key: two different requirements can get the
+    same short title from an extraction subagent, and merging them would
+    silently drop one epic's requirement and misattribute its citations to
+    the survivor. An empty title is never treated as a match, even against
+    another empty title — format_epic_file's 'Untitled' fallback is a
+    display default, not a shared identity.
+    """
+    seen: "OrderedDict[tuple, dict]" = OrderedDict()
+    empty_title_count = 0
     for story in stories:
         title = story.get("title", "").strip()
-        if title in seen:
-            existing_sources = seen[title].get("sources", [])
+        if not title:
+            empty_title_count += 1
+            key = ("__no_title__", empty_title_count)
+        else:
+            theme = story.get("epic_theme", "Uncategorized").strip()
+            key = (theme, title, _story_body_key(story))
+        if key in seen:
+            existing_sources = seen[key].get("sources", [])
             for src in story.get("sources", []):
                 if src not in existing_sources:
                     existing_sources.append(src)
-            seen[title]["sources"] = existing_sources
+            seen[key]["sources"] = existing_sources
         else:
-            seen[title] = dict(story)  # copy to avoid mutating input
+            seen[key] = dict(story)  # copy to avoid mutating input
     return list(seen.values())
 
 
@@ -160,6 +186,15 @@ def main() -> int:
 
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Re-aggregation (SKILL.md step 5) replaces the whole epic set for this
+    # output directory. Without clearing it first, a shrunk or reshuffled
+    # input leaves a previous run's EPIC-*.md behind citing now-nonexistent
+    # stories, or lets a fresh epic reuse another epic's leftover filename —
+    # IDs are reassigned from 1 every run, so that collision produces
+    # duplicate story IDs across files.
+    for stale in out_dir.glob("EPIC-*.md"):
+        stale.unlink()
 
     for theme, epic_stories in epics.items():
         epic_id = epic_stories[0]["_epic_id"]
