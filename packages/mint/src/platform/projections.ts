@@ -2,6 +2,7 @@ import { lstat, mkdir, realpath, writeFile } from 'node:fs/promises'
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path'
 import type { AdapterEmission } from '../adapters/types.js'
 import {
+  canonicalProjectionEmissions,
   isCanonicalGenerationFor,
   validateCanonicalGeneration,
   type CanonicalGenerationIdentity,
@@ -70,23 +71,6 @@ function generationIdentity(plugin: ResolvedPlugin): CanonicalGenerationIdentity
   }
 }
 
-function immutableEmissions(
-  emissions: Readonly<Partial<Record<TargetId, AdapterEmission>>>,
-): Readonly<Partial<Record<TargetId, AdapterEmission>>> {
-  const snapshot: Partial<Record<TargetId, AdapterEmission>> = {}
-  for (const target of TARGET_IDS) {
-    const emission = emissions[target]
-    if (emission === undefined) continue
-    snapshot[target] = Object.freeze({
-      ...emission,
-      files: Object.freeze(emission.files.map((file) => Object.freeze({ ...file }))) as AdapterEmission['files'],
-      limitations: Object.freeze(emission.limitations.map((limitation) => Object.freeze({ ...limitation }))),
-      emittedCapabilities: Object.freeze([...emission.emittedCapabilities]),
-    })
-  }
-  return Object.freeze(snapshot)
-}
-
 /** Bind a plugin to the exact result of a real adapter validation/emission pass. */
 export function projectionRecordForCurrentGeneration(
   plugin: ResolvedPlugin,
@@ -95,7 +79,10 @@ export function projectionRecordForCurrentGeneration(
   if (!isCanonicalGenerationFor(validation, generationIdentity(plugin))) {
     throw new Error(`projection record for ${plugin.id} lacks a current canonical generation`)
   }
-  const emissions = immutableEmissions(validation.emissions)
+  const emissions = canonicalProjectionEmissions(validation)
+  if (emissions === undefined) {
+    throw new Error(`projection record for ${plugin.id} lacks canonical projection emissions`)
+  }
   const record = Object.freeze({ plugin, emissions })
   projectionProvenance.set(record, { plugin, validation, emissions })
   return record
