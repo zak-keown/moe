@@ -8,9 +8,10 @@ set -e
 SCRATCH="$(mktemp -d -t todo-web-XXXXXX)"
 export TODO_STATE_FILE="$SCRATCH/state.json"
 export TODO_WEB_PORT="${TODO_WEB_PORT:-7891}"
-REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-[[ -d "$REPO_ROOT/examples/todo" ]] || {
-  echo "launcher: REPO_ROOT wrong: $REPO_ROOT" >&2; exit 1;
+PACKAGE_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+[[ -d "$PACKAGE_ROOT/examples/todo" ]] || {
+  echo "launcher: PACKAGE_ROOT wrong: $PACKAGE_ROOT" >&2; exit 1;
 }
 echo "todo-web: $TODO_STATE_FILE on :$TODO_WEB_PORT"
-exec node --import tsx "$REPO_ROOT/examples/todo/web/server.ts"
+cd "$PACKAGE_ROOT"
+exec node --import tsx "$PACKAGE_ROOT/examples/todo/web/server.ts"
