@@ -100,11 +100,13 @@ describe("run — validation and dispatch", () => {
     expect(err()).toBe("");
   });
 
-  it("usage text references the /tmp/moe-crew-workers default and lists subcommands", async () => {
+  it("usage text references the private per-user default worker dir and lists subcommands", async () => {
     const { io, out } = makeIo();
     await run(["help"], io);
     const usage = out();
-    expect(usage).toContain("/tmp/moe-crew-workers");
+    expect(usage).toContain("MOE_CREW_WORKER_DIR");
+    expect(usage).toContain("XDG_RUNTIME_DIR/moe-crew-workers");
+    expect(usage).not.toContain("/tmp/moe-crew-workers");
     expect(usage).not.toContain("/tmp/claude-workers");
     for (const sub of [
       "launch",
