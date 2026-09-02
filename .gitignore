@@ -35,7 +35,12 @@ __pycache__/
 
 # Claude Code session state, including live workflow git worktrees. Never tracked:
 # `git add -A` while a workflow is running would otherwise stage them as embedded repos.
-.claude/
+# The one exception is .claude/skills/: repo-local skills about working ON this
+# repo, which every contributor wants and which must not ship in a plugin.
+# The pattern is `.claude/*`, not `.claude/`, because git does not descend into
+# an excluded DIRECTORY, so a negation nested under one never matches.
+.claude/*
+!.claude/skills/
 
 # Agent-created linked worktrees for isolated plan execution.
 .moe/worktrees/
