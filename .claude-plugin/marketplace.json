@@ -15,7 +15,7 @@
         "source": "npm",
         "package": "@bubstack/moe-core"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "The Moe skill library — brainstorming, planning, TDD, systematic debugging, code review, worktrees, parallel dispatch, plugin authoring, and more.",
       "strict": true
     },
@@ -25,7 +25,7 @@
         "source": "npm",
         "package": "@bubstack/moe-backstory"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Recover a behavioral spec from a codebase that never had one.",
       "strict": true
     },
@@ -35,7 +35,7 @@
         "source": "npm",
         "package": "@bubstack/moe-memory"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Semantic recall over past sessions and journal entries.",
       "strict": true
     },
@@ -45,7 +45,7 @@
         "source": "npm",
         "package": "@bubstack/moe-glass"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Direct Chrome DevTools Protocol access. Skill mode plus MCP mode, zero dependencies.",
       "strict": true
     },
@@ -55,7 +55,7 @@
         "source": "npm",
         "package": "@bubstack/moe-crew"
       },
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Launch, control and monitor worker Claude sessions over tmux.",
       "strict": true
     }

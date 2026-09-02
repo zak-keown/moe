@@ -149,23 +149,36 @@ proof:
       when: never
     - changes: [py/proof/**/*]
 
-# Publishes @bubstack/moe-memory and @bubstack/moe-glass to npm when a tag
-# matching /^v/ is pushed. Requires NPM_TOKEN as a masked + protected GitLab
-# CI/CD variable — the job runs only on protected tags, so `protected: true` on
-# the variable is what keeps the token off feature-branch pipelines.
+# Publishes the five @bubstack/moe-* packages to npm when a tag matching /^v/
+# is pushed. Authenticates via OIDC "trusted publishing" — the npm CLI accepts
+# a short-lived ID token minted by GitLab per job, verified against a trusted
+# publisher pre-registered on each package at npmjs.com. No long-lived NPM_TOKEN
+# is used or needed; see https://docs.npmjs.com/trusted-publishers.
 #
-# Each package's own `prepack: pnpm run build` script rebuilds `dist/` before
-# `pnpm publish` packs, so no separate build step is needed here.
+# id_tokens.NPM_ID_TOKEN.aud must be `https://registry.npmjs.org` verbatim —
+# npm's CLI reads that specific env var name to discover its OIDC token and
+# rejects any other audience.
 #
-# `--no-git-checks` skips pnpm's "not on default branch" refusal; publishing
-# from a tag puts CI on a detached HEAD, which pnpm otherwise rejects. `access`
-# is set on each package's own `publishConfig`, so it does not need to appear
-# here.
+# --no-git-checks skips pnpm's "not on default branch" refusal (a tag pipeline
+# is a detached HEAD, which pnpm otherwise rejects). `access` is on each
+# package's own publishConfig, so it does not need to appear here.
+#
+# Each package's own prepack: `pnpm run build` rebuilds dist/ before pack —
+# no separate build step needed here.
 publish:
   stage: publish
   <<: *pnpm
+  id_tokens:
+    NPM_ID_TOKEN:
+      aud: https://registry.npmjs.org
   script:
-    - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
-    - pnpm publish --filter @bubstack/moe-memory --filter @bubstack/moe-glass --no-git-checks
+    - >-
+      pnpm publish
+      --filter @bubstack/moe-memory
+      --filter @bubstack/moe-glass
+      --filter @bubstack/moe-core
+      --filter @bubstack/moe-crew
+      --filter @bubstack/moe-backstory
+      --no-git-checks
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v/'
