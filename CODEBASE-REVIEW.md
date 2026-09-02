@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 5
+  fixed: 7
   stale: 3
   skipped: 1
   deferred: 0
-  open: 584
+  open: 582
 ---
 
 # Codebase Review — moe
@@ -545,6 +545,10 @@ Fix: use `readdirSync(resultsDir, { withFileTypes: true })` and skip non-directo
 **Verification:** confirmed
 **Verification evidence:** Reproduced: a dangling symlink in results/ causes an uncaught ENOENT from statSync in listRunDirNames inside the bare setTimeout callback of tick(), terminating the Node process with exit code 1; no uncaughtException or unhandledRejection handler exists anywhere in the dashboard package, and the file comments acknowledge concurrent cleanup as an expected condition.
 
+**Disposition:** fixed
+**Commit:** `a64c3b1`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-024: SSE event-name field is never newline-sanitized, so a run's identity injects unescaped HTML
 **File:** `packages/flight/dashboard/src/server.ts`
 **Anchor:** `publishCell` / `oneLine`, "collapse any stray newline defensively"
@@ -1845,6 +1849,10 @@ predictive. The corpus already contains one such case (`04-work-complete.json`);
 **Verification:** confirmed-lower
 **Verification evidence:** Reproduced the two-rule classifier at 64 of 65 across all scenario files: 29 of 29 CONTINUE scenarios start with a bracket and 31 of 36 STOP scenarios contain a question mark. The affected script is opt-in, absent from pnpm test and CI, carries a header disclaiming its baseline, and the cue never appears in the real transcripts the production hook evaluates, so the harm is false confidence in a manual diagnostic rather than a break under ordinary use.
 
+**Disposition:** fixed
+**Commit:** `893868b`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-027: Launcher scripts resolve `tsx` against the caller's cwd and fail from the repo root
 **File:** `packages/flight/examples/todo/run-tui.sh`
 **Anchor:** `exec node --import tsx "$REPO_ROOT/examples/todo/tui.tsx"`
