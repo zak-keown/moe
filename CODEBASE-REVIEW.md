@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 66
+  fixed: 67
   stale: 17
   skipped: 7
   deferred: 1
-  open: 502
+  open: 501
 ---
 
 # Codebase Review — moe
@@ -527,6 +527,10 @@ Fix: default to a private path (`$XDG_RUNTIME_DIR`, or `~/.local/state/moe-crew`
 **Verification:** confirmed
 **Verification evidence:** Reproduced both mkdirSync with recursive silently accepting a pre-existing 0777 directory and copyFileSync following a destination symlink, the exact call shape used for auth.json staging in codex.ts and pi.ts, with no uid or mode check anywhere in worker-store.ts, launch.ts, adopt.ts, codex.ts or pi.ts, and paths keyed by operator-chosen tmux name rather than a random id. The crew README and ARCHITECTURE.md do not restrict crew to single-user hosts.
 
+**Disposition:** fixed
+**Commit:** `486766d`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-020: Unvalidated worker name lets the per-worker home escape the worker dir and be recursively deleted
 **File:** `packages/crew/src/core/worker-store.ts`
 **Anchor:** `removeOrphan` / `removeWorker`, both ending in `rmSync(workerHomePath(dir, name), { recursive: true, force: true })`
