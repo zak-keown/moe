@@ -21,10 +21,10 @@ verification:
 status: issues_found
 dispositions:
   fixed: 62
-  stale: 16
+  stale: 17
   skipped: 7
   deferred: 1
-  open: 507
+  open: 506
 ---
 
 # Codebase Review — moe
@@ -575,6 +575,10 @@ Fix: strip to a fixpoint, or better, drop every ESC (`\x1b`) from the prompt —
 **Verification:** confirmed
 **Verification evidence:** Reproduced the finding payload against pasteText in packages/crew/src/commands/send.ts and got the claimed output byte for byte, a genuine PASTE_END reconstructed from split fragments. The defect lives in send.ts, not the test file, and is the same two-pass split-and-join defect as CR-017 demonstrated with a different payload; treat the two as one defect.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Same two-pass split-and-join defect as CR-017, per this finding's own verification note ('treat the two as one defect'). Superseded by ab61faf (CR-017): pasteText now strips every ESC byte instead of the marker substrings. Independently verified with this finding's exact payload ('hello' + ESC + '[201' + ESC + '[200~' + '~rm -rf /\nyes\n'): the new sanitizer's output contains exactly one PASTE_END, at the very end, with no ESC byte anywhere in the middle — no reconstructed marker.
 ### CR-023: An unstattable entry in results/ crashes the dashboard out of the scanner tick
 **File:** `packages/flight/dashboard/src/scan.ts`
 **Anchor:** `listRunDirNames`
