@@ -2,10 +2,9 @@
 
 Run memory from the artifact every supported harness installs.
 
-**Status:** Architecture approved; this written specification awaits review.
-Implementation has not started. Local feasibility probes passed on Node
-22.13, Node 22.23, and Node 24.20 on macOS arm64. The release matrix in this
-document remains a required gate.
+**Status:** Approved for implementation; implementation has not started.
+Local feasibility probes passed on Node 22.13, Node 22.23, and Node 24.20 on
+macOS arm64. The release matrix in this document remains a required gate.
 
 **Plugin:** This changes the generated `moe-memory` plugin. Source changes
 belong under `packages/`; nobody hand-edits `plugins/moe-memory`.
@@ -132,11 +131,12 @@ CLI commands, and harness behavior remain compatible. The library entry point
 stays available through `exports["."]`, but its supported contract becomes
 package-owned DTOs, pure parsing/formatting utilities, and high-level memory
 operations. Raw database handles and helpers that accept
-`better-sqlite3.Database` become internal. A generated API diff against 0.1.4,
-a migration guide, and compile/runtime fixtures for every retained export make
-the break explicit. If release policy will not permit that pre-1 breaking
-minor, the backend replacement is blocked; the design must not disguise the
-raw database change as compatible.
+`better-sqlite3.Database` become internal. Because the prerequisite artifact
+foundation releases the composed predecessor first, a generated API diff
+against 0.1.5, a migration guide, and compile/runtime fixtures for every
+retained export make the break explicit. If release policy will not permit
+that pre-1 breaking minor, the backend replacement is blocked; the design must
+not disguise the raw database change as compatible.
 
 ### Artifact contract
 
@@ -151,7 +151,7 @@ The generated root must contain:
 | Model fetch | Pinned model manifest containing revision, file sizes, and hashes |
 | Claude and compatible hosts | `.claude-plugin/plugin.json`, `claude.mcp.json`, and `hooks/claude.json` |
 | Codex | `.codex-plugin/plugin.json`, `codex.mcp.json`, and `hooks/codex.json` |
-| OpenCode | `package.json#main` and the generated `.opencode` entry point |
+| OpenCode | `package.json#exports["./server"]` and the generated `.opencode` entry point |
 | Pi | `package.json#pi` and the generated `.pi` extension |
 | Other harnesses | Their generated manifests, skills, prompts, and agents |
 | Legal | Moe licenses plus the generated third-party license payload |
@@ -196,10 +196,12 @@ licenses, explicit native and WASM assets, and upstream notice hashes.
 
 The root artifact compositor invoked by `scripts/mint-plugins.mjs` receives
 distinct trusted source and temporary destination roots from
-`moe-platform.yaml`. It reads memory's payload and environment declaration from
-`packages/memory/runtime-contract.json`. Source paths are package-root-relative;
-destination paths are plugin-root-relative. Both schemas reject absolute paths,
-`..`, symlink escapes, devices, sockets, and duplicate destinations.
+`moe-platform.yaml`. Memory's Mint YAML owns physical payload mappings;
+`packages/memory/runtime-contract.json` owns forwarded environment variables
+and runtime asset-selection semantics. Neither repeats the other's paths.
+Source paths are package-root-relative; destination paths are
+plugin-root-relative. Both schemas reject absolute paths, `..`, symlink
+escapes, devices, sockets, and duplicate destinations.
 
 The compositor realpath-validates completed build output and static assets,
 then copies raw bytes into the temporary plugin root before adapters run. Mint
@@ -235,7 +237,8 @@ ownership is explicit:
 | Field | Owner |
 | --- | --- |
 | `name`, `version`, `engines`, `bin`, `types`, `exports`, `publishConfig` | source package |
-| `main` | OpenCode adapter |
+| `main` | source package library entry point |
+| `exports["./server"]` | OpenCode adapter |
 | `pi` | Pi adapter |
 | `description`, `author`, `license`, `repository`, `homepage`, `keywords` | mint metadata, reconciled with any source-package duplicate |
 | `files` | release staging inventory |
@@ -246,10 +249,11 @@ the same value or mint fails with both producers named. Adapter-owned fields
 remain disjoint and are covered by a complete golden `nodePackageManifest`
 test.
 
-`main` cannot serve both OpenCode and the library. OpenCode owns `main`; the
-library is available through `exports["."]`, whose import and types targets are
-`dist/index.js` and `dist/index.d.ts`. Release tests must load OpenCode through
-`main` and compile and run a clean consumer through package exports.
+The source package keeps `main` and `exports["."]` on the library entry point,
+whose import and types targets are `dist/index.js` and `dist/index.d.ts`.
+OpenCode owns only `exports["./server"]`, pointing at the generated `.opencode`
+server entry. Release tests must load OpenCode through that pinned subpath and
+compile and run a clean consumer through the package root.
 
 Generated runtime packages omit workspace `dependencies`, `devDependencies`,
 and lifecycle scripts. Mint generates an exhaustive `files` allowlist from the
@@ -264,8 +268,8 @@ forbidden.
 
 A clean consumer installs the extracted tarball, imports its public API, and
 typechecks against the shipped declarations. Separate tests load OpenCode via
-`main` and Pi via `pi`, proving those harness entries coexist with package
-exports.
+`exports["./server"]` and Pi via `pi`, proving those harness entries coexist
+with the package root export.
 
 ### Pack and publish
 
@@ -280,10 +284,11 @@ packed-package versions. It accepts an optional `--expected-version`; the
 publish job supplies the independently selected memory version from the
 platform release catalog, while pre-merge runs omit it. The platform tag need
 not equal an independently versioned plugin. The command records the verified
-tarball's SHA-256 for the publish job. The other packages retain their current
-publish path. Any package whose generated hook/MCP topology changes receives a
-new independent version; immutable npm versions are never overwritten merely
-because memory is the motivating fix.
+tarball's SHA-256 for the publish job. Every changed plugin publishes from its
+generated tree through the shared exact-artifact path. Any package whose
+generated hook/MCP topology changes receives a new independent version;
+immutable npm versions are never overwritten merely because memory is the
+motivating fix.
 
 `moe-platform.yaml#release` makes tag selection explicit. A platform tag names
 one generated release catalog; the workflow compares it with the preceding
@@ -301,7 +306,7 @@ Node 22.13 added the extension APIs required by this design, so the published
 engine range becomes `>=22.13.0 <23 || >=24 <25`; the repository toolchain
 remains Node 24. Future odd and even majors require qualification before the
 range expands.
-The implementation follows the [Node 22.13 SQLite API](https://nodejs.org/download/release/v22.13.1/docs/api/sqlite.html).
+The implementation follows the [Node 22.13 SQLite API](https://nodejs.org/download/release/v22.13.0/docs/api/sqlite.html).
 
 The plugin carries `sqlite-vec` 0.1.9 libraries for:
 
@@ -350,8 +355,10 @@ qualification matrix; WSL2 follows the glibc Linux contract.
 
 Database startup constructs `DatabaseSync` with extension loading enabled,
 loads only the asset matching `process.platform` and `process.arch`, then
-immediately disables extension loading. The path is resolved from the bundle's
-own `import.meta.url`; environment input cannot select an arbitrary library.
+immediately disables extension loading. Each public entrypoint resolves and
+injects the installed package root from its own `import.meta.url`; shared split
+chunks never infer the root from their chunk location. Environment input cannot
+select an arbitrary library.
 Unsupported platform pairs fail with a message that names the detected pair
 and the supported pairs.
 
@@ -454,7 +461,10 @@ conversation and journal text first with `embedding_version = 0`, then enriches
 pending rows with summaries and vectors when the model and summarizer are
 available. The existing schema already represents this pending state. A fresh
 offline install can therefore ingest and text-search raw sources without a
-model download.
+model download. Conversation fallback retains its bound `LIKE` query; journal
+fallback adds an equivalent bound `LIKE` query over `journal_entries.text`
+with the existing scope/time filters and excerpt formatting. No new FTS table
+is implied.
 
 The bundle adds about 13 MB for ONNX Runtime WASM and less than 200 KB for its
 JavaScript and tokenizer glue. The approximately 34.7 MB model remains outside
@@ -468,6 +478,12 @@ by SHA-256. The workspace removes stale build approvals for
 disappear. Any change to the model revision, tokenizer, ONNX runtime, dtype,
 pooling, normalization, prefix, or truncation requires an
 embedding-equivalence probe and an explicit `EMBEDDING_VERSION` decision.
+
+Those direct dependencies remain truthful in the source package. Memory's Mint
+policy alone marks them as `bundled` for generated-package composition, and the
+compositor may omit them from the generated `package.json` only after bundle,
+native, and WASM inventories prove the artifact contains their required runtime
+closure. Every other plugin defaults to preserving its source dependencies.
 
 ### Model cache and downloader
 
@@ -588,9 +604,11 @@ streams. They also prove the source session remains byte-identical.
 ### Configuration propagation
 
 `packages/memory/runtime-contract.json` is the memory-owned declarative
-contract for staged runtime payloads and environment variables a plugin host
-may forward. `packages/mint/schemas/runtime-contract.schema.json` defines its
-data-only schema. The memory build validates it; the root compositor and mint
+contract for runtime asset-selection semantics and environment variables a
+plugin host may forward. Physical `from`/`to` payload mappings remain in
+`packages/memory/mint/moe-memory.yaml`.
+`packages/mint/schemas/runtime-contract.schema.json` defines the data-only
+runtime schema. The memory build validates it; the root compositor and mint
 read it as data and generate harness-specific MCP files without importing
 memory code or adding a project reference. Its forwarded set is exact:
 
@@ -751,7 +769,7 @@ compatibility expression continues to accept `PLUGIN_ROOT` for Codex.
 ### OpenCode, Pi, and the remaining adapters
 
 OpenCode must still load the generated `.opencode/plugins/moe-memory.js` through
-`package.json#main`. Pi must still load its extension and skill list through
+`exports["./server"]`. Pi must still load its extension and skill list through
 `package.json#pi`. Cursor, Kimi, Copilot, and Agent Plugins retain their current
 behavior through their generated paths and manifests. Hook and MCP filenames
 may become harness-specific, but every adapter must point at its exact output.
@@ -773,8 +791,8 @@ Copilot support or restore defaults that Codex would also discover.
 separate cleanup within the implementation:
 
 - replace the retired GitLab URL with the canonical GitHub repository;
-- read the exact plugin list from the data-only `moe-platform.yaml` registry
-  instead of maintaining a private list;
+- read a dependency-free install-catalog projection generated from the data-only
+  `moe-platform.yaml` registry instead of maintaining a private list;
 - update its tests and help text.
 
 A bidirectional equality test covers the registry, marketplace, mint inputs,
@@ -835,7 +853,7 @@ The change may ship only if these behaviors remain true:
 | Existing database opens in place | Required | Required | Required |
 | Version-2 vectors migrate before vector search | Required | Required | Required |
 | Missing Claude CLI leaves raw recall usable | Host supplies CLI | Required degradation | Required degradation |
-| OpenCode `main` and Pi metadata survive | N/A | N/A | Required |
+| OpenCode `exports["./server"]` and Pi metadata survive | N/A | N/A | Required |
 
 No change is considered compatible merely because source-tree tests pass.
 Compatibility is measured from the packed release artifact.
@@ -961,16 +979,20 @@ data, and supported harness behavior remain compatible.
    Text search remains available during migration.
 
 Before the first version-3 vector write, the new runtime creates a consistent
-version-2 database snapshot with `VACUUM INTO` while holding the shared
-database lock. Creation is atomic and once-only. A durable sidecar records the
-database identity, schema version, from/to embedding versions, source artifact
-integrity, snapshot hash, and creation time. If creation or verification fails,
+version-2 database snapshot with `VACUUM INTO` while holding the exclusive
+maintenance lease. Creation is atomic and once-only. A durable sidecar records
+the database identity, schema version, from/to embedding versions, source artifact
+integrity, snapshot hash, creation time, and a sorted inventory of every mutable
+transcript/journal source by canonical identity, contained path, and content
+SHA-256. If creation or verification fails,
 migration does not begin and text recall remains available. A vector operation
 hard-fails on an embedding version newer than the running code; it never
 silently downgrades it.
 
 Before 0.2.0 ships, the release publishes a recovery capsule for each supported
-0.1.4 platform. Each capsule contains the exact old tarball plus its fully
+0.1.5 macOS/Linux target. The artifact-foundation prerequisite publishes 0.1.5,
+so that version—not the pre-foundation 0.1.4 package—is the exact rollback
+predecessor. Each capsule contains the exact old tarball plus its fully
 installed dependency, peer, optional-native, and lifecycle-script closure from
 the historical lockfile. A recovery manifest records every package version,
 registry integrity, platform asset, executed build policy, file hash, and legal
@@ -980,7 +1002,7 @@ manager caches and a disabled registry are part of the capsule test. If the
 capsule is unavailable, migration remains blocked while text recall continues.
 
 The v3 artifact owns rollback through `moe-memory rollback prepare --to
-0.1.4`, which runs before the host installs the old plugin. The command verifies
+0.1.5`, which runs before the host installs the old plugin. The command verifies
 the cached recovery capsule against the platform release catalog,
 acquires the same cross-process lock, obtains exclusive database quiescence,
 and works on a staged copy. The user must stop active host sessions first; the
@@ -991,9 +1013,11 @@ the old `copyIfNewer` shortcut. Changed rows are written as raw version-0 state,
 their stale vectors are removed, and journal index state is reset.
 
 The command unpacks the closed old runtime from the capsule into an isolated
-recovery directory, runs its sync/migration against the staged database and
-preserved legacy model cache without registry access, and requires integrity
-plus complete version-2 vector checks. Immediately before the swap it writes a durable
+recovery directory, runs its journal-index operation for every reconciled
+journal root, then runs its exchange sync/migration against the staged database
+and preserved legacy model cache without registry access. It requires every
+created or modified journal and exchange row to reach version 2, plus database
+integrity and complete vector checks. Immediately before the swap it writes a durable
 rollback fence that every v3 writer checks; once fenced, the v3 runtime refuses
 database writes until the old plugin is installed or `moe-memory rollback
 abort` safely clears the preparation. Only then does prepare atomically swap
@@ -1008,10 +1032,10 @@ Artifact tests exercise two processes racing the first v3 write, a crash at
 each prepare/swap boundary, created/modified/deleted sources, partial migration,
 future-version rejection, and rollback through the exact previous released
 tarball. The final old runtime must pass text recall and complete version-2
-vector search offline. Because published 0.1.4 requires Node 24, this downgrade
-path is supported only for users upgrading an existing 0.1.4 database on Node
+vector search offline. Because published 0.1.5 requires Node 24, this downgrade
+path is supported only for users upgrading an existing 0.1.5 database on Node
 24 and fails its preflight before touching state on Node 22. A fresh 0.2.0
-installation on Node 22 has no supported code downgrade to 0.1.4. The old
+installation on Node 22 has no supported code downgrade to 0.1.5. The old
 runtime is never expected to understand version-3 rows; its
 current stale-row predicate ignores them, which is why v3 must prepare rollback
 before downgrade.
@@ -1041,8 +1065,8 @@ Implementation will primarily touch:
   startup order, and diagnostics;
 - `packages/memory/test` for unit, model, artifact, Claude, and Codex coverage;
 - `packages/memory/package.json` and build configuration;
-- `packages/memory/runtime-contract.json` and its mint-owned schema for payload
-  and environment data;
+- `packages/memory/runtime-contract.json` and its mint-owned schema for runtime
+  asset-selection and environment data;
 - `packages/memory/mint/moe-memory.yaml` for runtime staging and Codex hook
   policy;
 - `packages/mint/src` and tests for payload staging, package-manifest
@@ -1065,7 +1089,8 @@ Implementation will primarily touch:
   harness hook/MCP topology changes each affected artifact;
 - memory's public API migration guide and native-asset build/inspection scripts;
 - recovery-capsule manifests, platform payloads, and offline rollback fixtures
-  for every supported 0.1.4 platform;
+  for the four supported 0.1.5 macOS/Linux targets; Windows remains native-asset
+  smoke only until a Windows quiescence/rollback contract exists;
 - `ARCHITECTURE.md` after the new distribution is true on disk.
 
 The implementation plan should divide these changes by dependency boundary,
