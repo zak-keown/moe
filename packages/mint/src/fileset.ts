@@ -1,5 +1,5 @@
-import { mkdirSync, writeFileSync, chmodSync } from 'node:fs'
-import { dirname, isAbsolute, resolve, sep } from 'node:path'
+import { mkdirSync, chmodSync, lstatSync, constants, openSync, writeSync, closeSync } from 'node:fs'
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { ConfigError } from './config.js'
 
 export interface GeneratedFile {
@@ -11,6 +11,30 @@ export interface GeneratedFile {
   executable?: boolean | undefined
 }
 export type FileSet = GeneratedFile[]
+
+// Refuse to write through a symlink planted anywhere between rootAbs and
+// targetDir — mkdirSync({recursive:true}) and writeFileSync both follow
+// symlinks, so a directory component substituted for a symlink would
+// silently redirect every file written under it outside the plugin root.
+// Checked lexically-within-root component by component; components that
+// don't exist yet are fine (mkdirSync will create real directories there).
+function assertNoSymlinkInPath(rootAbs: string, targetDir: string): void {
+  const rel = relative(rootAbs, targetDir)
+  if (rel === '') return
+  let current = rootAbs
+  for (const segment of rel.split(sep)) {
+    current = join(current, segment)
+    let st: ReturnType<typeof lstatSync>
+    try {
+      st = lstatSync(current)
+    } catch {
+      continue
+    }
+    if (st.isSymbolicLink()) {
+      throw new ConfigError(`refusing to write through a symlink at ${relative(rootAbs, current)}`)
+    }
+  }
+}
 
 export function writeFileSet(root: string, files: FileSet): void {
   const rootAbs = resolve(root)
@@ -25,8 +49,29 @@ export function writeFileSet(root: string, files: FileSet): void {
     return { file, abs }
   })
   for (const { file, abs } of resolved) {
+    assertNoSymlinkInPath(rootAbs, dirname(abs))
     mkdirSync(dirname(abs), { recursive: true })
-    writeFileSync(abs, file.content)
+    // O_NOFOLLOW: refuse if the leaf itself is a symlink — dangling or not,
+    // and regardless of --force, which only means "overwrite a file
+    // moe-mint doesn't recognize as its own", never "write through a link
+    // to wherever it points". This also closes the TOCTOU window between
+    // the containment checks above and this write. openSync/writeSync
+    // (rather than writeFileSync's options.flag, typed as string-only) is
+    // what lets a raw O_* bitmask reach the actual open() call.
+    let fd: number
+    try {
+      fd = openSync(abs, constants.O_WRONLY | constants.O_CREAT | constants.O_TRUNC | constants.O_NOFOLLOW, 0o666)
+    } catch (err) {
+      if (err instanceof Error && 'code' in err && err.code === 'ELOOP') {
+        throw new ConfigError(`refusing to write through a symlink at ${relative(rootAbs, abs)}`)
+      }
+      throw err
+    }
+    try {
+      writeSync(fd, file.content)
+    } finally {
+      closeSync(fd)
+    }
     if (file.executable) chmodSync(abs, 0o755)
   }
 }
