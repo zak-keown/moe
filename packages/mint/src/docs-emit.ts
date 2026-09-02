@@ -73,7 +73,7 @@ function supportMatrixFile(model: PluginModel, emissions?: Partial<Record<Target
 // adapter's output.
 export function emitDocs(
   model: PluginModel,
-  activeAdapters: HarnessAdapter[],
+  activeAdapters: readonly HarnessAdapter[],
   emissions?: Partial<Record<TargetId, AdapterEmission>>,
 ): FileSet {
   const files: FileSet = []

@@ -11,7 +11,16 @@ import { TARGET_IDS } from '../vocabulary.js'
 
 export type { SupportLevel, ComponentSupport, AdapterEmission, EmissionLimitation, HarnessAdapter } from './types.js'
 
-export const adapters: HarnessAdapter[] = [claudeCode, cursor, codex, kimi, opencode, pi, agentPlugins, copilot]
+export const adapters: readonly HarnessAdapter[] = Object.freeze([
+  claudeCode,
+  cursor,
+  codex,
+  kimi,
+  opencode,
+  pi,
+  agentPlugins,
+  copilot,
+])
 
 // The adapters retain a string `name` for compatibility, while TARGET_IDS is
 // the single source of truth for the public target vocabulary.

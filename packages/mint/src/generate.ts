@@ -46,6 +46,7 @@ interface CanonicalGenerationProvenance {
 }
 
 const canonicalValidations = new WeakMap<GenerationValidation, CanonicalGenerationProvenance>()
+const canonicalAdapters = Object.freeze([...adapters])
 
 export interface GenerateOptions {
   force?: boolean
@@ -100,7 +101,7 @@ function mergeFiles(
 
 export function validateGeneration(
   root: string,
-  adapterList: HarnessAdapter[] = adapters,
+  adapterList: readonly HarnessAdapter[] = adapters,
   opts: GenerateOptions = {},
 ): GenerationValidation {
   const configFile = opts.configPath === undefined ? 'moe-mint.yaml' : relative(root, opts.configPath)
@@ -196,6 +197,14 @@ export function validateCanonicalGeneration(
   identity: CanonicalGenerationIdentity,
   opts: Pick<GenerateOptions, 'marketplaceName'> = {},
 ): GenerationValidation {
+  const canonicalTargets = canonicalAdapters.map((adapter) => adapter.name)
+  if (
+    canonicalTargets.length !== TARGET_IDS.length
+    || new Set(canonicalTargets).size !== TARGET_IDS.length
+    || TARGET_IDS.some((target) => !canonicalTargets.includes(target))
+  ) {
+    throw new Error('canonical adapter registry must contain every target exactly once')
+  }
   const options: GenerateOptions = opts.marketplaceName === undefined
     ? { configPath: identity.configPath, configSource: identity.configSource }
     : {
@@ -203,7 +212,7 @@ export function validateCanonicalGeneration(
       configPath: identity.configPath,
       configSource: identity.configSource,
     }
-  const validation = validateGeneration(identity.sourcePath, adapters, options)
+  const validation = validateGeneration(identity.sourcePath, canonicalAdapters, options)
   canonicalValidations.set(validation, {
     sourcePath: resolve(identity.sourcePath),
     configPath: resolve(identity.configPath),
@@ -225,7 +234,7 @@ export function isCanonicalGenerationFor(
 
 export function generate(
   root: string,
-  adapterList: HarnessAdapter[] = adapters,
+  adapterList: readonly HarnessAdapter[] = adapters,
   opts: GenerateOptions = {},
 ): GenerateResult {
   const validation = validateGeneration(root, adapterList, opts)
