@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 65
+  fixed: 66
   stale: 17
   skipped: 7
   deferred: 1
-  open: 503
+  open: 502
 ---
 
 # Codebase Review — moe
@@ -563,6 +563,10 @@ Trigger: any local account that can write `/tmp` pre-creates `/tmp/moe-crew-work
 **Verification:** confirmed
 **Verification evidence:** Reproduced under the scratch dir: mkdirSync of the worker home silently succeeds against a pre-existing world-writable dir, and copyFileSync follows a pre-planted symlink at <workerHome>/auth.json, writing the operator secret bytes into an attacker-owned file. The pi-extension source confirms auth.json is real credential material normally kept at mode 0600, and harness/codex.ts has the identical unguarded pattern. The finding claim of a libuv 0600 chmod on the destination did not match observation; the destination stayed a 644 symlink.
 
+**Disposition:** fixed
+**Commit:** `9e90e8a`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-022: Bracketed-paste marker stripping can be defeated by a crafted prompt
 **File:** `packages/crew/test/send.test.ts`
 **Anchor:** test "strips paste markers embedded in the prompt"
