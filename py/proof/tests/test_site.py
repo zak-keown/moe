@@ -141,6 +141,25 @@ def test_build_refreshes_one_eval_without_touching_others(invoke, make_eval, tmp
     assert by_slug["beta"]["runs"] == 1
 
 
+def test_build_with_an_all_unsafe_name_does_not_wipe_other_evals(
+    invoke, make_eval, tmp_path
+):
+    # CR-085: slugify("!!!") used to be "", and site_dir/"evals"/"" resolves
+    # to site_dir/"evals" itself, so building this eval second deleted
+    # alpha's already-built artifacts via build_eval's rmtree guard.
+    eval_a = graded_eval(make_eval, tmp_path, name="alpha")
+    eval_bad = graded_eval(make_eval, tmp_path, name="!!!")
+    site_dir = tmp_path / "site"
+    invoke("build", eval_a, "-o", site_dir)
+    invoke("build", eval_bad, "-o", site_dir)
+
+    assert (site_dir / "evals" / "alpha" / "eval.json").exists()
+    index = json.loads((site_dir / "index.json").read_text())
+    slugs = {e["slug"] for e in index["evals"]}
+    assert "alpha" in slugs
+    assert len(slugs) == 2
+
+
 # --- live server ---------------------------------------------------------
 
 

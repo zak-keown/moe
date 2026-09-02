@@ -19,6 +19,26 @@ class TestSlugify:
     def test_strips_leading_and_trailing_dashes(self):
         assert slugify("  weird!  ") == "weird"
 
+    def test_never_returns_empty_for_all_unsafe_characters(self):
+        # CR-085: an empty slug makes site_dir / "evals" / slug resolve to
+        # site_dir / "evals" itself, so build_eval's rmtree guard deletes
+        # every previously built eval.
+        for name in ["!!!", "日本語", "🎉", "   "]:
+            slug = slugify(name)
+            assert slug != "", f"slugify({name!r}) must not be empty"
+
+    def test_never_returns_dot_or_dotdot(self):
+        # A slug of "." or ".." survives the character filter unchanged and
+        # resolves eval_dir to site_dir/evals or site_dir itself.
+        assert slugify(".") not in (".", "")
+        assert slugify("..") not in ("..", "")
+
+    def test_distinct_unsafe_names_still_get_distinct_slugs(self):
+        # The fallback must not collapse every unsafe name onto the same
+        # slug, or resolve_eval_slugs's duplicate-slug guard would wrongly
+        # reject two different evals that both happen to have unsafe names.
+        assert slugify("!!!") != slugify("???")
+
 
 class TestNormalizeTag:
     def test_lowercase_snake_case(self):
