@@ -21,10 +21,10 @@ verification:
 status: issues_found
 dispositions:
   fixed: 60
-  stale: 15
+  stale: 16
   skipped: 7
   deferred: 1
-  open: 510
+  open: 509
 ---
 
 # Codebase Review — moe
@@ -423,6 +423,10 @@ Fix: validate `tmuxName` in `cmdAdopt` (and in `cmdLaunch`) against a conservati
 **Verification:** confirmed
 **Verification evidence:** parseAdoptArgs and parseLaunchArgs pass tmuxName straight from argv with no regex or allowlist; writeShim interpolates it unescaped into a double-quoted --worker argument and shimPath concatenates it into the bin path. Reproduced by transcribing both functions: the name w$(touch ./PWNED) yields a shim containing live command substitution and ../../escaped-shim resolves outside the bin directory. The same value is shell-quoted elsewhere in harness/codex.ts, so writeShim is the one place that omits it. tmux acceptance of such names was not tested.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Superseded by 30dd1eb (CR-001): shimPath now calls assertSafeSegment(name) before any path is built, so writeShim throws on a name like 'w$(touch ./PWNED)' before ever reaching the vulnerable template-interpolated shim content — closing both the command-substitution injection and the shimPath traversal in one guard. Verified live against packages/crew/dist/core/worker-store.js: writeShim(dir, 'w$(touch ./PWNED-by-subst)', entry) throws 'unsafe worker name...' rather than writing a shim.
 ### CR-016: Derive-path launch reports success when tmux never started the session
 **File:** `packages/crew/src/commands/launch.ts`
 **Anchor:** `launchDerive`
