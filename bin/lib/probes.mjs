@@ -32,6 +32,8 @@ export function tryExec(cmd, args, opts = {}) {
     return execFileSync(cmd, args, {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
+      timeout: 2_000,
+      killSignal: "SIGKILL",
       ...opts,
     }).trim();
   } catch {

@@ -13,6 +13,7 @@ import {
 } from "../lib/probes.mjs";
 
 const BIN_DIR = fileURLToPath(new URL("..", import.meta.url));
+const PROBES_URL = new URL("../lib/probes.mjs", import.meta.url).href;
 
 function runBin(name, ...args) {
   return spawnSync(process.execPath, [join(BIN_DIR, name), ...args], { encoding: "utf8" });
@@ -72,6 +73,22 @@ describe("probes library", () => {
       ]),
     ).toBe(1);
     expect(overallExit([])).toBe(0);
+  });
+
+  it("tryExec bounds a tool that never exits", () => {
+    const source = `
+      import { tryExec } from ${JSON.stringify(PROBES_URL)};
+      const output = tryExec(process.execPath, ["-e", "setInterval(() => {}, 1000)"]);
+      if (output !== undefined) process.exit(2);
+    `;
+    const proc = spawnSync(process.execPath, ["--input-type=module", "-e", source], {
+      encoding: "utf8",
+      timeout: 4_000,
+      killSignal: "SIGKILL",
+    });
+
+    expect(proc.error?.code).not.toBe("ETIMEDOUT");
+    expect(proc.status, proc.stderr).toBe(0);
   });
 });
 
