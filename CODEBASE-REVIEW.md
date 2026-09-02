@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 42
+  fixed: 43
   stale: 14
   skipped: 6
   deferred: 1
-  open: 530
+  open: 529
 ---
 
 # Codebase Review — moe
@@ -946,6 +946,10 @@ upgrade uses) and reject on failure; wrap the parse.
 **Verification:** confirmed
 **Verification evidence:** Reproduced in-process against dist/qa/api/routes/fanout.js: a request to /api/fanout/..%2F..%2F..%2F<outside-dir>/failure returned 200 with a field sourced from a result.json outside the project root; raw unencoded ../ is blocked by the Hono router but percent-encoded slashes reach c.req.param intact. No isSafePath or parseRunId guard exists in fanout.ts, unlike results.ts, run-sets.ts and ws-handlers.ts, and server.ts has no auth middleware.
 
+**Disposition:** fixed
+**Commit:** `535dd7d`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-042: LLM-supplied story-card id becomes a filesystem path, allowing writes outside the stories directory
 **File:** `packages/flight/src/qa/api/routes/fanout.ts`
 **Anchor:** `writeCards`, the line `const filename = \`${card.id}.md\`;`
