@@ -18,7 +18,7 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "mint": "turbo run mint:generate",
-    "mint:check": "turbo run mint:generate --force && git diff --exit-code -- plugins && test -z \"$(git status --porcelain -- plugins)\" || (echo '\\nplugins/ is not reproducible from source. Regenerate with `pnpm mint` and commit, or move the hand edit into packages/<pkg>/mint/<plugin>.yaml.' && git status --short -- plugins && exit 1)",
+    "mint:check": "turbo run mint:generate --force && git diff --exit-code -- plugins .claude-plugin/marketplace.json docs/moe/generated/plugin-catalog.md && test -z \"$(git status --porcelain -- plugins .claude-plugin/marketplace.json docs/moe/generated/plugin-catalog.md)\" || (echo '\\nGenerated plugin projections are not reproducible from source. Regenerate with `pnpm mint` and commit.' && git status --short -- plugins .claude-plugin/marketplace.json docs/moe/generated/plugin-catalog.md && exit 1)",
     "mint:generate": "node scripts/mint-plugins.mjs",
     "proof:test": "uv run --project py/proof pytest py/proof",
     "provenance": "node scripts/check-provenance.mjs",
