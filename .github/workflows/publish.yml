@@ -71,6 +71,22 @@ jobs:
                   print(f'  {k}: {claims.get(k)}')
           PY
 
+      # `--tag` decision from the git tag: `vX.Y.Z-anything` → `next`;
+      # `vX.Y.Z` → `latest`. pnpm publish (unlike npm publish since v6) does
+      # NOT auto-detect SemVer pre-release identifiers and skip the `latest`
+      # dist-tag — without --tag it always promotes to latest, which on
+      # v0.1.2-rc.1 made `npm install @bubstack/moe-core` serve the canary
+      # instead of 0.1.1. GITHUB_REF_NAME is the tag name for a tag push.
+      - name: pick dist-tag
+        id: dt
+        run: |
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+            echo "tag=next" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+          echo "dist-tag chosen: $(cat "$GITHUB_OUTPUT" | tail -1)"
+
       # --no-git-checks skips pnpm's "not on default branch" refusal — a tag
       # pipeline is a detached HEAD, which pnpm otherwise rejects. `access` is
       # on each package's own publishConfig, so it does not need to appear here.
@@ -78,6 +94,7 @@ jobs:
       - name: publish 5 packages
         run: >-
           pnpm publish
+          --tag ${{ steps.dt.outputs.tag }}
           --filter @bubstack/moe-memory
           --filter @bubstack/moe-glass
           --filter @bubstack/moe-core
