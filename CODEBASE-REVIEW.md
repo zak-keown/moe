@@ -22,9 +22,9 @@ status: issues_found
 dispositions:
   fixed: 55
   stale: 14
-  skipped: 6
+  skipped: 7
   deferred: 1
-  open: 517
+  open: 516
 ---
 
 # Codebase Review — moe
@@ -401,6 +401,10 @@ The test suite has no symlink case at all, which is why the gap survives a green
 **Verification:** confirmed
 **Verification evidence:** Reproduced under MOE_TC_GOVERNANCE_ENFORCE=1: a literal restricted path is denied, but Read and Grep through a file symlink and a directory symlink pointing at the same restricted target were both allowed and cat through either returned the restricted content. absolutePath in the hook uses only path.normalize and path.resolve with no realpath call, so the deny checks never see the resolved target, defeating the hook comment that native Read, Grep and Glob receive the exact checks.
 
+**Disposition:** skipped
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** packages/core/hooks/tc-governance-enforce and its test/fixtures do not exist on main (or this branch, forked from main) — same root cause as CR-004/CR-007: they exist only on the unmerged origin/codex/backlog-completion-20260901 branch. Not applicable to this tree as checked out.
 ### CR-015: An unvalidated tmux-name is baked unescaped into a generated bash shim and into raw path concatenation
 **File:** `packages/crew/src/commands/adopt.ts`
 **Anchor:** `cmdAdopt` — it validates `sessionId` against `CLAUDE_SESSION_ID` and `cwd` through `resolveCwd`, then passes `tmuxName` to `writeShim` with no check of any kind
