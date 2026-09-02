@@ -6,19 +6,19 @@
       "sha256": "62aba2c2e869558795c37c0862f5ba5e1ae65d6ddb08efa99f8fc41c28ef1841"
     },
     ".claude-plugin/marketplace.json": {
-      "sha256": "218414a7c6ebf1579e7309acbf79b036059be1db89582696ca845a53370e44e3"
+      "sha256": "ad8f9cfa71a6bcff3673a7d277bba7511d678c9bb6a248d74c0aa93af6ca0598"
     },
     ".claude-plugin/plugin.json": {
-      "sha256": "6569654450b6d6602cb16a35db8cbc57d593704361f2fe55e5ee3071c526ca65"
+      "sha256": "68f7fc4c17ed6fe40345a4f667e3f560e77f7f601b75d8b55f1209e9d2b112f9"
     },
     ".codex-plugin/plugin.json": {
-      "sha256": "12c8e7b109e513e095991d5439d1536d4380686ed45fb4a3f896ac2fc74e1379"
+      "sha256": "a895b9647ba48699c3efd2c442c48031199312c80083b8192095c3ed2b7e0912"
     },
     ".cursor-plugin/plugin.json": {
-      "sha256": "e5957170ca54a94d6152456e786745a03a9e736b31b4243940d5293f52377cac"
+      "sha256": "ea639c526b6edd8fd931d55d40b7486b3ad8358a27b089285efd387f7d7e1d22"
     },
     ".kimi-plugin/plugin.json": {
-      "sha256": "3b211e846ec9a8e5a335d784e26792635192ce8a1368f4585e47d890c1aaad8c"
+      "sha256": "a4809f9d9982411eac504f06816c49af4b44bd4986393fd6f07fb15fa68162e3"
     },
     ".opencode/plugins/moe-crew.js": {
       "sha256": "d354dd24922257722fd65cbc6e725ebe62344490d8bf30cfc7ff40dc48c9fb31"
@@ -54,10 +54,10 @@
       "sha256": "02e1ee2981862e2eb3d4518996fb4186bff5a9b5049c2e24fb9765a73a9b1e2c"
     },
     "package.json": {
-      "sha256": "32523ac866fef413f91d93f64d78edaf757a89da21f157f24552035ceecdde58"
+      "sha256": "b60a64761613821ec618bf11ddd70f4b418877b45cd4fde8524850b5cf0f2950"
     },
     "plugin.json": {
-      "sha256": "a1795807bdff7508b560cd355479e410bb7a271701dbec5c693a1947c34f8b9e"
+      "sha256": "d417d702883015cb5607472956d1d3a44722ede3be5aedee52aa7b487c00d263"
     }
   }
 }

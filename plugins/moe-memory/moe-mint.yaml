@@ -5,7 +5,7 @@
 # `moe-mint generate` there.
 
 name: moe-memory
-version: 0.1.0
+version: 0.1.1
 description: Semantic recall over past sessions and journal entries.
 author:
   name: Zak Keown

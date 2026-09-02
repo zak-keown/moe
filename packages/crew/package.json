@@ -1,6 +1,6 @@
 {
   "name": "@bubstack/moe-crew",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Launch, control and monitor worker coding-agent sessions (Claude Code, Codex, Pi) over tmux.",
   "license": "MIT",
