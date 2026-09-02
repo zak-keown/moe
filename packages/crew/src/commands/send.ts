@@ -167,7 +167,14 @@ async function sendDeriveFirst(
  * stripped first so a hostile prompt cannot inject its own paste boundaries.
  */
 async function pasteText(ctx: CommandContext, tmuxName: string, prompt: string): Promise<void> {
-  const safe = prompt.split(PASTE_END).join("").split(PASTE_START).join("");
+  // Strip every ESC byte rather than the marker substrings themselves.
+  // Deleting PASTE_END then PASTE_START as two single passes can WELD a
+  // fresh marker from the surrounding bytes — e.g. "\x1b[20" + PASTE_START +
+  // "1~..." contains no PASTE_END up front, but removing the embedded
+  // PASTE_START leaves "\x1b[201~..." (a live PASTE_END the already-run END
+  // pass never rescans). A bracketed-paste payload has no legitimate use for
+  // ESC, so removing the byte itself closes the splice by construction.
+  const safe = prompt.replaceAll(ESC, "");
   await ctx.tmux.sendText(tmuxName, PASTE_START + safe + PASTE_END);
 }
 
