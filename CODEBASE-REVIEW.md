@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 46
+  fixed: 47
   stale: 14
   skipped: 6
   deferred: 1
-  open: 526
+  open: 525
 ---
 
 # Codebase Review — moe
@@ -308,6 +308,10 @@ a test with two same-title stories in different epics asserting that both surviv
 **Verification:** confirmed
 **Verification evidence:** Reproduced with two stories titled Validate input under epic themes Auth and Billing with distinct bodies and sources; dedup_stories keys solely on title.strip() before group_into_epics runs, so the run produced one EPIC-001.md holding only the Auth story while citing both source files, silently dropping the Billing requirement and misattributing its citation. SKILL.md says only deduplicated by title and the only dedup test uses fully identical stories.
 
+**Disposition:** fixed
+**Commit:** `b07b801`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-010: Re-aggregating into an existing requirements directory leaves stale epics and duplicate story IDs
 **File:** `packages/core/test/iterative-development/test_aggregate_stories.py`
 **Anchor:** `setUp` — `self.out_dir = Path(tempfile.mkdtemp())`
