@@ -117,4 +117,28 @@ describe("runtime/serve error paths", () => {
       ]);
     }
   });
+
+  test("CR-051: defaults to binding loopback only, not every interface", async () => {
+    const port = await pickFreePort();
+    const server = serve({
+      port,
+      fetch: () => new Response("ok"),
+    });
+    try {
+      // Confirm the server is actually listening before inspecting the
+      // bound address (address() can race ahead of the internal listen()
+      // completing).
+      const res = await fetch(`http://127.0.0.1:${port}/`);
+      expect(res.status).toBe(200);
+
+      const addr = server.address();
+      // A wildcard bind reports "0.0.0.0" (IPv4) or "::" (IPv6) — reachable
+      // from any interface. The daemon has no authentication on any HTTP
+      // route, so the default must be loopback-only.
+      expect(addr).not.toBeNull();
+      expect(typeof addr === "string" ? addr : addr?.address).toBe("127.0.0.1");
+    } finally {
+      await server.stop();
+    }
+  });
 });

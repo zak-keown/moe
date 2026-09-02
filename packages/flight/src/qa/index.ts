@@ -166,10 +166,11 @@ export async function qaMain(argv: string[]): Promise<void> {
         shutdownState,
       );
       const port = config.port;
-      console.error(`moe-flight server listening on port ${port}`);
+      console.error(`moe-flight server listening on ${config.host}:${port}`);
       type WsData = { runId?: string | undefined; runSetId?: string | undefined };
       const server = serve<WsData>({
         port,
+        hostname: config.host, // CR-051: loopback-only by default
         idleTimeout: 255, // seconds; LLM calls can take minutes
         wsIdleTimeoutSec: config.wsIdleTimeoutSec, // PRI-1483
         fetch: (req) => app.fetch(req),

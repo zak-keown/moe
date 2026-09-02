@@ -29,6 +29,10 @@ describe("loadConfig", () => {
     expect(c.projectRoot).toBe(".");
     expect(c.stateDirName).toBe(".moe-flight");
     expect(c.port).toBe(4400);
+    // CR-051: default bind address must be loopback-only — the server
+    // has no authentication on any HTTP route.
+    expect(c.host).toBe("127.0.0.1");
+    expect(c.sources.host).toBe("default");
     expect(c.defaultChrome).toEqual({ host: "127.0.0.1", port: 9222 });
     expect(c.models.agent).toBe("claude-sonnet-4-6");
     expect(c.models.fanout).toBeUndefined();
@@ -89,6 +93,18 @@ describe("loadConfig", () => {
     expect(c.apiKeys.openai).toBe(false);
     expect(c.sources.port).toBe("env");
     expect(c.sources["models.agent"]).toBe("env");
+  });
+
+  test("CR-051: MOE_FLIGHT_HOST env var overrides the loopback default", () => {
+    const c = loadConfig({}, { MOE_FLIGHT_HOST: "0.0.0.0" } as NodeJS.ProcessEnv);
+    expect(c.host).toBe("0.0.0.0");
+    expect(c.sources.host).toBe("env");
+  });
+
+  test("CR-051: --host flag overrides MOE_FLIGHT_HOST", () => {
+    const c = loadConfig({ host: "10.0.0.5" }, { MOE_FLIGHT_HOST: "0.0.0.0" } as NodeJS.ProcessEnv);
+    expect(c.host).toBe("10.0.0.5");
+    expect(c.sources.host).toBe("flag");
   });
 
   test("CLI args override env vars", () => {

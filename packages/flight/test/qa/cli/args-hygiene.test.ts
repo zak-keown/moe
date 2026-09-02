@@ -28,6 +28,14 @@ describe("CLI flag hygiene", () => {
     // Specific field assertions come in Task 4 after AppConfig shape is set.
   });
 
+  test("CR-051: parseServeArgs accepts --host and threads it to cli.host", () => {
+    const args = parseArgs(["bun", "moe-flight", "serve", "--host", "0.0.0.0"]);
+    expect(args.command).toBe("serve");
+    if (args.command === "serve") {
+      expect(args.cli.host).toBe("0.0.0.0");
+    }
+  });
+
   test("parseRunArgs rejects unknown flag", () => {
     expect(() =>
       parseArgs(["bun", "moe-flight", "run", "foo.md", "--target", "http://x", "--nope", "y"]),

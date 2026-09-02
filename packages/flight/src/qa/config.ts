@@ -30,6 +30,13 @@ export interface AppConfig {
    */
   stateDirName: string;
   port: number;
+  /**
+   * Bind address for `moe-flight qa serve`. Default `127.0.0.1`
+   * (loopback-only) — the daemon has no authentication on any HTTP
+   * route, so listening beyond loopback is an explicit opt-in via
+   * `--host` or `MOE_FLIGHT_HOST`, not a default. PRI-1483/CR-051.
+   */
+  host: string;
   defaultChrome: ChromeEndpoint;
   /**
    * Default target URL, surfaced to the UI as a prefill for the New Run
@@ -123,6 +130,7 @@ export interface AppConfig {
     projectRoot: "default" | "env" | "flag";
     stateDirName: "default" | "env" | "flag";
     port: "default" | "env" | "flag";
+    host: "default" | "env" | "flag";
     defaultChrome: "default" | "env" | "flag";
     defaultTarget: "default" | "env" | "flag" | "unset";
     defaultBudgetMs: "default" | "env" | "flag";
@@ -146,6 +154,7 @@ export interface CliArgsInput {
   projectRoot?: string | undefined;
   stateDirName?: string | undefined;
   port?: number | undefined;
+  host?: string | undefined;
   chrome?: string | undefined;
   target?: string | undefined;
   maxTime?: string | undefined;
@@ -326,6 +335,7 @@ export function mergeRunConfig(app: AppConfig, body: RunRequestBody): ResolvedRu
 const DEFAULT_PROJECT_ROOT = ".";
 const DEFAULT_STATE_DIR_NAME = ".moe-flight";
 const DEFAULT_PORT = 4400;
+const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_CHROME: ChromeEndpoint = { host: "127.0.0.1", port: 9222 };
 const DEFAULT_SHUTDOWN_GRACE_MS = 10000;
 const DEFAULT_MAX_REQUEST_BODY_SIZE = 1024 * 1024; // 1 MB
@@ -477,6 +487,20 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
   );
   const port = portR.value;
   const portSource = portR.source;
+
+  // host — bind address for `qa serve`. Default 127.0.0.1 (CR-051): the
+  // daemon has no authentication on any HTTP route, so binding beyond
+  // loopback must be an explicit choice, never the default.
+  const hostR = resolveSetting(
+    {
+      default: DEFAULT_HOST,
+      env: { name: "MOE_FLIGHT_HOST", parse: (s) => s },
+      arg: { value: args.host },
+    },
+    env,
+  );
+  const host = hostR.value;
+  const hostSource = hostR.source;
 
   // defaultChrome — parser is non-trivial (parseChromeEndpoint).
   // sources.defaultChrome === "default" is load-bearing: mergeRunConfig
@@ -784,6 +808,7 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
     projectRoot,
     stateDirName,
     port,
+    host,
     defaultChrome,
     defaultTarget,
     defaultBudgetMs,
@@ -807,6 +832,7 @@ export function loadConfig(args: CliArgsInput, env: NodeJS.ProcessEnv): AppConfi
       projectRoot: projectRootSource,
       stateDirName: stateDirNameSource,
       port: portSource,
+      host: hostSource,
       defaultChrome: chromeSource,
       defaultTarget: targetSource,
       defaultBudgetMs: budgetSource,
