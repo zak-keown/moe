@@ -14,6 +14,7 @@ import type { LLMClient } from "../../models/provider.js";
 import { createClient } from "../../models/resolve.js";
 import { flightPath, isSafePath } from "../../paths.js";
 import type { VerdictResult } from "../../types.js";
+import { parseRunId } from "../../util/id.js";
 import type { ErrorLog } from "../../util/error-log.js";
 
 // CR-040/CR-042: the id a card carries is model output (from `parseStoryCard`
@@ -138,11 +139,23 @@ export function fanoutRoutes(
     if (!isMode(mode)) return c.json({ error: "unknown mode" }, 404);
     const modeConfig = MODES[mode];
 
-    const runId = c.req.param("id");
+    // CR-041: c.req.param("id") is untrusted — percent-encoded slashes
+    // reach it intact even though the Hono router blocks raw "../" in the
+    // URL. parseRunId is the same strict format check the WebSocket
+    // upgrade already gates on; rejecting here means the composed path
+    // below can never leave the results directory, and — same as an
+    // unknown runId — the caller learns nothing about *why* it failed.
+    const runId = parseRunId(c.req.param("id"));
+    if (!runId) return c.json({ error: "not found" }, 404);
     const resultPath = flightPath(projectRoot, stateDirName, "results", runId, "result.json");
     if (!existsSync(resultPath)) return c.json({ error: "not found" }, 404);
 
-    const result: VerdictResult = JSON.parse(readFileSync(resultPath, "utf-8"));
+    let result: VerdictResult;
+    try {
+      result = JSON.parse(readFileSync(resultPath, "utf-8"));
+    } catch {
+      return c.json({ error: "malformed result file" }, 500);
+    }
     const cardId = result.scenario;
 
     const preflightError = modeConfig.preflight?.(result);
