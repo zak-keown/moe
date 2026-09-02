@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 7
+  fixed: 8
   stale: 4
   skipped: 1
   deferred: 0
-  open: 581
+  open: 580
 ---
 
 # Codebase Review — moe
@@ -914,6 +914,10 @@ Fix: make the card id unique per path (hash or slug the path relative to the pro
 **Verification:** confirmed
 **Verification evidence:** Reproduced via tsx by driving the real runRunSet with two cards both mapping to cardId login: the second scenario path was never executed because the runLoop dispatch finds runs by cardId value, so the first card ran twice under two run ids, and the manifest reported totalRuns 4 and errored 2 for a batch where both cards passed, matching the finding numbers. parseArgs passes positionals through with no dedupe and nested suite globs are an ordinary layout. The overwrite framing is imprecise; the dropped run is never written rather than clobbered.
 
+**Disposition:** fixed
+**Commit:** `caaab09`
+**Resolved:** 2026-09-02
+**Note:** Fix landed in caaab09 alongside a concurrent sibling agent's CODEBASE-REVIEW.md stamp commit for CR-023 — a shared-index race (this agent staged batch.ts/batch.test.ts, the sibling's plain git commit picked up the whole index before this agent's own commit ran). Verified via git show --stat caaab09 that the diff is exactly assignCardIds + the CR-043 test.
 ### CR-044: Streaming CLI silently drops every fatal-run panel because the logger and the renderer disagree on the row shape
 **File:** `packages/flight/src/qa/cli/stream/pretty.ts`
 **Anchor:** `PrettyRenderer.renderRunError`, reached only from `case "event": if (event.name === "run_error")`
