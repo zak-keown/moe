@@ -4,7 +4,7 @@ This manifest sequences the approved artifact-and-registry foundation design int
 
 The plans were written against repository SHA `8bd3d7432fdf57cc5f82a353fd33109ea81ae317` and the approved specification at `docs/moe/specs/2026-09-02-moe-artifact-registry-foundation-design.md`.
 
-Plans 1–3 are runnable in sequence. Plan 4 contains decision-independent machinery in Tasks 1–7, but the manifest deliberately holds the whole plan at `blocked`: the plan-set dispatcher operates at plan granularity and must not report a partially runnable plan. Resolve `OD-R1`, amend Plan 4 to the chosen maintenance contract, and change its manifest status to `pending` before dispatch. The blocker exists because `@bubstack/moe-statusline` has no npm predecessor from which to prove a real update, and any predecessor must exist before npm state is snapshotted and the candidate lock is sealed.
+All four plans are runnable in sequence. `OD-R1` is resolved in the design and Plan 4: Statusline's registry-confirmed first publication records `NO_PREDECESSOR` and remains preview, while the five predecessor-backed Claude/macOS tuples may certify. The plan-set dispatcher can therefore release Plan 4 after artifact verification completes.
 
 ```yaml
 plans:
@@ -23,9 +23,9 @@ plans:
   - id: release-catalog-and-promotion
     plan: docs/moe/plans/2026-09-02-moe-release-catalog-and-promotion.md
     depends_on: [artifact-verification]
-    status: blocked
+    status: pending
 ```
 
 ## Acceptance Boundary
 
-The plan set is complete only when all four plans' completion evidence is satisfied, the stable composed-artifact `0.1.x` catalog exists, only evidence-backed Claude/macOS tuples are certified, and `pnpm mint:check`, `pnpm artifact:check`, `pnpm provenance`, and `pnpm check` all pass from a clean checkout.
+The plan set is complete only when all four plans' completion evidence is satisfied, the stable composed-artifact `0.1.x` catalog exists, the five predecessor-backed Claude/macOS tuples are evidence-certified, first-publish Statusline is evidence-bound but remains preview, and `pnpm mint:check`, `pnpm artifact:check`, `pnpm provenance`, and `pnpm check` all pass from a clean checkout.

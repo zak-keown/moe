@@ -23,22 +23,13 @@
 - Keep `next` on the accepted version after stable promotion; do not remove it. Reject a promotion that would downgrade an existing newer `latest`.
 - Release commands default to plan/verify mode. Mutation requires `--execute` plus GitHub Actions/tag/repository/source-SHA/protected-environment/OIDC guards.
 - Tests inject fake ports and install a process-spawn tripwire. No test may call `npm publish`, `npm dist-tag`, GitHub mutation APIs, or live registries.
-- Maintenance certification requires a real predecessor update. Snapshot current `latest` versions in the candidate lock and run legacy-to-candidate update; if legacy install/update cannot pass, certification fails rather than substituting a synthetic check.
+- Maintenance certification requires a real predecessor update. Snapshot current `latest` versions in the candidate lock and run legacy-to-candidate update. When that immutable snapshot proves a registry-confirmed first publication, emit `update: skipped` with reason `NO_PREDECESSOR`, require every other lifecycle/capability result to pass, and keep that tuple at `preview`; never substitute install or a synthetic package for update evidence.
 - At `0.1.x`, only passing Claude Code/macOS tuples become certified. Every other emitted tuple remains preview unless it has its own accepted report.
 - Resolve Claude automation through the protected `claude-maintenance` GitHub environment: a GitHub-hosted macOS job receives only its environment-scoped `ANTHROPIC_API_KEY`, installs the pinned Claude Code version, and must pass `claude auth status` before touching a candidate. This follows Claude Code's documented [CI/API-key authentication](https://code.claude.com/docs/en/iam) and [authentication-status command](https://code.claude.com/docs/en/cli-usage); no subscription token or pre-authenticated personal runner is used.
 
 ## Open Decisions
 
-### OD-R1 — First Statusline update evidence (`product · HITL`)
-
-On 2026-09-02, `npm view @bubstack/moe-statusline versions --json` returns `E404`, while the other five public packages have `0.1.4` predecessors. The approved maintenance gate requires a real update pass for every plugin, so Statusline cannot currently produce that evidence. Resolve this before Task 8 by choosing one reviewed contract:
-
-1. publish and independently smoke an exact composed `@bubstack/moe-statusline@0.1.0` predecessor before preparing `0.1.1`, with its own immutable release record and recovery procedure; or
-2. amend the maintenance acceptance contract so a first-publish `NO_PREDECESSOR` result keeps Statusline at `preview` while the other five Claude/macOS tuples may certify.
-
-Do not manufacture a local predecessor or mark install-as-update. Tasks 1–7 are not blocked; Tasks 8–10 and phase completion are blocked by `OD-R1`, because option 1 must create the predecessor before Task 8 snapshots npm state and Task 9 seals the candidate lock.
-
-The exact first platform tag and independent candidate versions otherwise remain fixed below; genesis treats all six candidate artifacts as changed.
+None. `OD-R1` is resolved: a registry-confirmed first-publish `NO_PREDECESSOR` result keeps the affected tuple at `preview`, while predecessor-backed plugins may certify. For genesis this applies only to Statusline; all six candidate artifacts remain changed and the exact versions below remain fixed.
 
 ## Not Yet Specified
 
@@ -361,8 +352,8 @@ git commit -m "feat(mint): resume exact candidate publication"
 
 **Interfaces:**
 
-- Consumes: raw evidence JSON; candidate plugin record; expected capabilities/lifecycle; protected checkpoint identity.
-- Produces: `CertificationEvidenceV1`, `validateEvidenceSchema()`, `acceptCertificationEvidence()`, external asset SHA-256 binding.
+- Consumes: raw evidence JSON; candidate plugin record; expected capabilities/lifecycle; the plugin's immutable `ReleasePreflightV1` row; protected workflow/checkpoint identity.
+- Produces: `CertificationEvidenceV1`, `EvidenceExpectation`, `EvidenceDisposition`, `validateEvidenceSchema()`, `evaluateEvidence()`, external asset SHA-256 binding.
 
 - [ ] Add strict positive/negative schema fixtures with the complete subject, environment, lifecycle, capability, log, producer, and overall fields. Schema parsing may represent pass/fail/skipped; acceptance applies policy.
 
@@ -420,12 +411,41 @@ export interface EvidenceProducer {
     approved_at: string;
   };
 }
+
+export type EvidenceDisposition =
+  | { status: "certified"; evidence: CertificationEvidenceV1 }
+  | {
+      status: "preview";
+      reason: "NO_PREDECESSOR";
+      evidence: CertificationEvidenceV1;
+    };
+
+export interface EvidenceExpectation {
+  plugin: PluginCatalogRecordV1;
+  preflight: ReleasePreflightV1["plugins"][number];
+  target: TargetId;
+  os?: OperatingSystemId;
+  arch?: string;
+  expectedCapabilities: readonly CapabilityId[];
+  producer: {
+    repository: string;
+    workflow: string;
+    workflowSha: string;
+    environment: "claude-maintenance";
+  };
+}
+
+export function validateEvidenceSchema(raw: unknown): CertificationEvidenceV1;
+export function evaluateEvidence(
+  evidence: CertificationEvidenceV1,
+  expected: EvidenceExpectation,
+): EvidenceDisposition;
 ```
 
-- [ ] Add rejection tests for subject digest/integrity mismatch, target/OS/arch mismatch, missing/duplicate capability result, required fail/skipped lifecycle result, absent/wrong protected environment, missing deployment approval identity, trigger/approval identity substitution, wrong workflow SHA/run/job, invalid filename, unknown fields, token-like content, home-directory paths, and unredacted logs.
+- [ ] Add rejection tests for subject digest/integrity mismatch, target/OS/arch mismatch, missing/duplicate capability result, any required fail or non-exempt skipped lifecycle result, forged `NO_PREDECESSOR`, any other skipped result, absent/wrong protected environment, missing deployment approval identity, trigger/approval identity substitution, wrong workflow SHA/run/job, invalid filename, unknown fields, token-like content, home-directory paths, and unredacted logs.
 - [ ] Run `pnpm --filter @bubstack/moe-mint exec vitest run test/release-evidence.test.ts`; expect failure.
 - [ ] Implement the single protected-CI producer schema so each report binds both workflow run identity and its protected-environment deployment approval. Keep command transcript outside JSON as a redacted log asset and digest; the report asset's checksum remains external to avoid self-reference.
-- [ ] Require exact expected-capability coverage. `preview` rows do not become certified without an accepted report, and one macOS report never copies to Linux/WSL2/Windows.
+- [ ] Require exact expected-capability coverage. Return `preview/NO_PREDECESSOR` only when the lock's immutable npm snapshot records `predecessor.state === "absent"`, the report's overall outcome is `pass`, the update result is `skipped` for that exact reason, and every install/discovery/uninstall/capability result passes. It is accepted release evidence but not certification. All other skipped required results fail; one macOS report never copies to Linux/WSL2/Windows.
 - [ ] Run the focused test; expect pass.
 - [ ] Commit:
 
@@ -449,9 +469,9 @@ git commit -m "feat(mint): bind certification evidence to artifacts"
 **Interfaces:**
 
 - Consumes: candidate platform tag/catalog/tarballs; snapshot of predecessor `latest`; isolated Claude config/project; authenticated protected-environment approval identity.
-- Produces: six `moe-evidence-<plugin>-claude-code-macos-<arch>.json` reports plus redacted logs attached by the protected workflow.
+- Produces: six `moe-evidence-<plugin>-claude-code-macos-<arch>.json` reports plus redacted logs: five predecessor-backed `certified` dispositions and one Statusline `preview/NO_PREDECESSOR` disposition.
 
-- [ ] Define the target lifecycle driver and add fake-driver tests for exact call order, isolation, cleanup, update predecessor, declared capability coverage, fail/skip propagation, and one report per plugin.
+- [ ] Define the target lifecycle driver and add fake-driver tests for exact call order, isolation, cleanup, predecessor-backed update, declared capability coverage, fail/skip propagation, and one report per plugin. Assert the driver receives no update call when the locked predecessor is absent; the orchestrator writes the exact skipped update result itself.
 
 ```ts
 export interface PluginSmokeContext {
@@ -482,8 +502,8 @@ export interface TargetLifecycleDriver {
 - [ ] Run `pnpm --filter @bubstack/moe-mint exec vitest run test/release-claude-maintenance.test.ts test/cli.test.ts`; expect failure.
 - [ ] Document and implement the fixed authentication path: protected environment `claude-maintenance`, environment-scoped `ANTHROPIC_API_KEY`, GitHub-hosted macOS, pinned Claude Code version, `claude auth status` preflight, and one minimal `claude -p --output-format json` connectivity probe whose output is redacted/discarded. Never accept a token as workflow input or use a personal runner/keychain.
 - [ ] Implement isolated config/project roots per plugin and a temporary Claude marketplace projection that pins the exact candidate npm version under `next`. Never modify the operator's normal Claude home.
-- [ ] Exercise install, discovery, legacy-to-candidate update, every capability in the exact Plan 1 Claude `expected_capabilities` set, and uninstall. Do not add skill invocation, command invocation, MCP startup, or executable invocation unless that plugin's locked capability set actually declares it; a later capability change requires a reviewed config/test update first.
-- [ ] If the snapshot predecessor cannot install or genuinely update, emit failing evidence and stop. Do not downgrade the required update or manufacture a synthetic predecessor.
+- [ ] Exercise install, discovery, every capability in the exact Plan 1 Claude `expected_capabilities` set, and uninstall for all six plugins. Exercise legacy-to-candidate update only when the locked preflight names a predecessor. Do not add skill invocation, command invocation, MCP startup, or executable invocation unless that plugin's locked capability set actually declares it; a later capability change requires a reviewed config/test update first.
+- [ ] If a named predecessor cannot install or genuinely update, emit failing evidence and stop. If and only if the lock records no predecessor, emit `update: { outcome: "skipped", reason: "NO_PREDECESSOR" }`; require every other result to pass and preserve preview status. Do not downgrade a failed update, manufacture a predecessor, or count install as update.
 - [ ] Create a protected `workflow_dispatch` workflow whose only release input is candidate platform tag. It downloads/revalidates the catalog and six tarballs before invoking the driver. The workflow serializes and uploads evidence; operators cannot supply digests or verdicts.
 - [ ] Fetch protected-environment deployment/reviewer identity through the Actions/Deployments API; do not equate `github.actor` with approval actor. Use the workflow's run/job/SHA identity in every report.
 - [ ] Add log redaction/scanning before upload and always attempt isolated uninstall/cleanup after a probe failure while preserving the primary failure.
@@ -507,13 +527,13 @@ git commit -m "feat(mint): add protected Claude maintenance gate"
 
 **Interfaces:**
 
-- Consumes: stable tag; highest verified same-core/same-SHA candidate; all six candidate tarballs; npm observations; six accepted Claude/macOS reports.
+- Consumes: stable tag; highest verified same-core/same-SHA candidate; all six candidate tarballs; npm observations; five certified Claude/macOS dispositions plus Statusline's accepted `preview/NO_PREDECESSOR` disposition.
 - Produces: idempotent `latest` action plan and stable catalog/release with unchanged artifact records.
 
 - [ ] Add fake-port tests for exact promotion, already promoted, partially promoted, registry-integrity mismatch, missing `next`, newer existing `latest`, missing/mismatched evidence, source-SHA mismatch, changed candidate asset, and incomplete six-plugin set. Assert the stable release receives all six downloaded candidate tarballs, canonical bundle inventories, and both tarball-only checksum files with byte-identical digests before its catalog is finalized through `ReleaseStorePort.finalize(release, "stable")`.
 - [ ] Add call-trace assertions that stable promotion executes zero `packArtifactOnce`, zero `publishTarball`, and no public-plugin package build command. Compiling only the Mint release CLI before orchestration is permitted and is outside the promotion trace.
 - [ ] Run `pnpm --filter @bubstack/moe-mint exec vitest run test/release-promotion.test.ts test/release-catalog.test.ts`; expect failure.
-- [ ] Implement promotion preflight: download catalog/checksums/tarballs/evidence; verify all bytes offline; inspect each registry version/integrity and current tags; validate all six Claude/macOS reports against exact candidate subjects.
+- [ ] Implement promotion preflight: download catalog/checksums/tarballs/evidence; verify all bytes offline; inspect each registry version/integrity and current tags; validate all six Claude/macOS reports against exact candidate subjects. Require five `certified` dispositions and exactly one Statusline `preview/NO_PREDECESSOR` disposition backed by the candidate lock.
 - [ ] Move only exact versions to `latest` in registry order. Exact already-moved tags are complete. A newer current `latest` is a hard block, not a downgrade. Do not remove `next`.
 - [ ] Create/reuse the stable draft, upload the six already-downloaded candidate tarballs and canonical bundle inventories, plus regenerated tarball-only checksum files with byte-identical digests, and verify all mirror assets. Do not call pack or reconstruct archives.
 - [ ] Withhold stable catalog and `ReleaseStorePort.finalize(release, "stable")` until all six intended `latest` tags and every stable release asset verify. On retry, resume solely from candidate catalog/assets, the stable draft, and current registry state.
@@ -581,8 +601,6 @@ git commit -m "ci: publish verified artifact tarballs"
 
 ## Task 8: Commit the exact genesis versions and verify the candidate plan
 
-**Blocked by:** `OD-R1`
-
 **Files:**
 
 - Modify: `packages/core/package.json`
@@ -613,7 +631,7 @@ pnpm artifact:check
 pnpm --filter @bubstack/moe-mint exec moe-mint release preflight --tag v0.1.5-rc.1 --plugin-version moe=0.1.5 --plugin-version moe-backstory=0.1.5 --plugin-version moe-memory=0.1.5 --plugin-version moe-glass=0.1.5 --plugin-version moe-crew=0.1.5 --plugin-version moe-statusline=0.1.1 --repo .
 ```
 
-Expected: the command classifies genesis as six changed artifacts, proves the proposed versions are absent, snapshots `0.1.4` predecessors for five packages, and reports Statusline `NO_PREDECESSOR`/`OD-R1`. Any present target version blocks this exact plan and requires a reviewed version amendment; do not auto-increment inside the release command.
+Expected: the command classifies genesis as six changed artifacts, proves the proposed versions are absent, snapshots `0.1.4` predecessors for five packages, and records Statusline as first-publish `NO_PREDECESSOR`/preview. Any present target version blocks this exact plan and requires a reviewed version amendment; do not auto-increment inside the release command.
 
 - [ ] Change both authorities for Core/Backstory/Memory/Glass/Crew to `0.1.5` and both Statusline authorities to `0.1.1`. Regenerate all three committed outputs exclusively with `pnpm mint`.
 - [ ] Run the full immutable-input gate:
@@ -645,8 +663,6 @@ pnpm --filter @bubstack/moe-mint exec moe-mint release candidate --tag v0.1.5-rc
 Expected: plan mode names six changed artifacts, six unused final package versions, and source SHA equal to `git rev-parse HEAD`. Save that SHA in the protected workflow approval record. Do not commit external evidence assets into the repository.
 
 ## Task 9: Publish and independently verify the `v0.1.5-rc.1` candidate
-
-**Blocked by:** `OD-R1`
 
 **Files:**
 
@@ -688,8 +704,6 @@ Expected: six GitHub tarballs match checksum files and lock, six npm versions ma
 
 ## Task 10: Certify Claude/macOS and promote the exact candidate to `v0.1.5`
 
-**Blocked by:** `OD-R1`
-
 **Files:**
 
 - Repository files: None
@@ -698,7 +712,7 @@ Expected: six GitHub tarballs match checksum files and lock, six npm versions ma
 **Interfaces:**
 
 - Consumes: verified candidate `v0.1.5-rc.1`; protected `claude-maintenance` and `release-stable` environments; six exact candidate subjects.
-- Produces: six accepted Claude/macOS certifications and stable platform catalog `moe-platform-v0.1.5.json` with candidate-identical artifact records.
+- Produces: five accepted Claude/macOS certifications, one accepted Statusline `preview/NO_PREDECESSOR` disposition, and stable platform catalog `moe-platform-v0.1.5.json` with candidate-identical artifact records.
 
 - [ ] Trigger the protected evidence workflow with the candidate tag as its only input:
 
@@ -706,7 +720,7 @@ Expected: six GitHub tarballs match checksum files and lock, six npm versions ma
 gh workflow run certify-claude-macos.yml --ref v0.1.5-rc.1 -f candidate_tag=v0.1.5-rc.1
 ```
 
-- [ ] At the `claude-maintenance` environment prompt, verify the candidate tag/source SHA and approve the authenticated smoke. Require six pass reports covering install, discovery, real predecessor update, every declared Claude capability, and uninstall; any failed/skipped required result blocks promotion.
+- [ ] At the `claude-maintenance` environment prompt, verify the candidate tag/source SHA and approve the authenticated smoke. Require all six reports to pass install, discovery, every declared Claude capability, and uninstall; require real predecessor update passes for five packages and the exact locked `NO_PREDECESSOR` update skip for Statusline. Any other failed/skipped required result blocks promotion.
 - [ ] Verify evidence bindings without mutation:
 
 ```sh
@@ -714,7 +728,7 @@ pnpm --filter @bubstack/moe-mint exec moe-mint release verify --catalog-tag v0.1
 pnpm --filter @bubstack/moe-mint exec moe-mint release promote --tag v0.1.5 --repo .
 ```
 
-Expected: both commands plan zero pack/build/publish operations; promotion selects `v0.1.5-rc.1`, the same source SHA, six exact tarballs, and six accepted evidence checksums.
+Expected: both commands plan zero pack/build/publish operations; promotion selects `v0.1.5-rc.1`, the same source SHA, six exact tarballs, five certification evidence checksums, and one Statusline preview evidence checksum.
 
 - [ ] **HITL checkpoint — stable promotion:** obtain explicit operator approval to push stable tag `v0.1.5` and mutate npm `latest`. This is separate from candidate and evidence approval.
 - [ ] Prove the stable tag targets the candidate commit, then create and push only that tag:
@@ -732,13 +746,13 @@ git push origin v0.1.5
 pnpm --filter @bubstack/moe-mint exec moe-mint release verify --catalog-tag v0.1.5 --require-evidence claude-code:macos --repo .
 ```
 
-Expected: all six npm identities/versions/integrities match `latest`; candidate and stable tarball bytes/artifact records match; only Claude/macOS rows are certified; every other emitted tuple is preview; no incomplete platform catalog is visible.
+Expected: all six npm identities/versions/integrities match `latest`; candidate and stable tarball bytes/artifact records match; the five predecessor-backed Claude/macOS rows are certified; Statusline Claude/macOS and every non-Claude emitted tuple remain preview; no incomplete platform catalog is visible.
 
 ## Plan 4 Completion Evidence
 
 - Candidate preparation packs each changed artifact exactly once and every release mirrors all six verified tarballs.
 - Retries consume durable draft assets and exact npm integrity; no partial platform catalog becomes visible.
-- Six authenticated Claude Code/macOS reports bind lifecycle and declared capability passes to exact candidate digests.
+- Six authenticated Claude Code/macOS reports bind lifecycle and declared capability results to exact candidate digests; five certify and Statusline remains preview with locked `NO_PREDECESSOR` evidence.
 - Stable promotion performs no pack, build, or npm publish and moves only verified immutable versions to `latest`.
 - Candidate and stable plugin artifact records/bytes are identical; only platform version/channel and accepted evidence bindings differ.
 - The first stable composed-artifact `0.1.x` catalog is published, non-Claude output remains preview, and all repository gates pass.
