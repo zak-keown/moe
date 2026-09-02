@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 28
+  fixed: 29
   stale: 12
   skipped: 6
-  deferred: 0
-  open: 547
+  deferred: 1
+  open: 545
 ---
 
 # Codebase Review — moe
@@ -811,6 +811,10 @@ Fix (a decision, not a patch): wrap tool results carrying page-derived content i
 **Verification:** confirmed
 **Verification evidence:** The web adapter mounts bash unconditionally via buildSharedTools, whose canExecute for bash always returns true with no opt-in flag anywhere in config.ts; executeExtract returns the page generateMarkdown text as a plain textResult with no untrusted-content framing in agent.ts or any prompt file; bash-tool.ts has no allowlist, denylist or approval gate, only an env scrub and timeout, and bash-tool.test.ts pins ANTHROPIC_API_KEY passthrough as intended. Static trace; the tool was not executed.
 
+**Disposition:** deferred
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Reviewer's own fix framing is explicitly "a decision, not a patch": full remediation spans an untrusted-content envelope in agent.ts/prompt files, an opt-in config flag in config.ts, and an argv allowlist in bash-tool.ts -- three files well beyond this finding's own anchor, with system-wide behavior-default implications (bash is currently mounted unconditionally for every adapter and many existing tests assume that). A narrow slice attempted alone would either be trivially bypassable (a first-word allowlist is not a shell-syntax-aware sandbox; bash -c already permits pipes/subshells/command substitution per the tool's own documented contract) or restrict documented legitimate use, i.e. worse than the honest gap: a false sense of containment. CR-038, fixed in 9ca43ac, closes this finding's credential-forwarding sub-issue (transcriptText now masks every SDK_PASSTHROUGH_KEYS value out of the persisted evidence log) but not the core defect: untrusted page text and an unrestricted host shell still share one conversation with no separation. Deferred rather than skipped because no fix was attempted and reverted -- this is a product/architecture decision outside a bounded bug-fix pass.
 ### CR-038: Agent-driven bash writes the operator's Anthropic and OpenAI API keys into the run's evidence log
 **File:** `packages/flight/src/qa/agent/bash-tool.ts`
 **Anchor:** `SDK_PASSTHROUGH_KEYS` / `buildScrubbedEnv`
@@ -827,6 +831,10 @@ Fix: give the bash tool a `transcriptText` that masks any forwarded secret value
 **Verification:** confirmed
 **Verification evidence:** buildScrubbedEnv forwards ANTHROPIC_API_KEY and OPENAI_API_KEY into the child env, formatResult embeds raw stdout in ToolResult.text, and bash-tool never sets transcriptText, so logToolResult writes the raw text into run.jsonl; credential-tool.ts shows the same transcriptText redaction mechanism already exists and is simply never applied to bash. Any env or printenv call by the agent lands the key in the evidence log verbatim.
 
+**Disposition:** fixed
+**Commit:** `9ca43ac`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-039: Effective-config endpoint hands process environment values to unauthenticated clients
 **File:** `packages/flight/src/qa/api/routes/config-effective.ts`
 **Anchor:** `configEffectiveRoutes`
