@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 49
+  fixed: 50
   stale: 14
   skipped: 6
   deferred: 1
-  open: 523
+  open: 522
 ---
 
 # Codebase Review — moe
@@ -1163,6 +1163,10 @@ Fix: add a `hostname` to `ServeOptions`, thread a config setting through, and de
 **Verification:** confirmed
 **Verification evidence:** Ran the real serve() from serve.ts via tsx on an ephemeral port; lsof showed the socket listening on all interfaces. No --host flag, no MOE_FLIGHT_HOST env var and no host field on AppConfig exists to restrict it, the serve help text documents no binding restriction, and createApp has no auth, Origin check or CSRF guard on any HTTP route.
 
+**Disposition:** fixed
+**Commit:** `289a9f6`
+**Resolved:** 2026-09-02
+**Note:** Loopback-only default implemented and tested end-to-end (config/CLI/serve.ts); the auth/shared-secret direction for an explicit non-loopback opt-in is out of scope for this fix — see commit body.
 ### CR-052: An async CDP frame listener converts any frame failure into a process-killing rejection
 **File:** `packages/flight/src/qa/streaming/screencast.ts`
 **Anchor:** `ScreencastStreamer.start`'s `this.unsubFrame = ps.onEvent(async (event) => { ... })`
