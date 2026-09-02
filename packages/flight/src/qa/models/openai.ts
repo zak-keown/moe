@@ -135,11 +135,23 @@ export function convertResponse(response: OpenAI.Responses.Response): AgentRespo
         break;
       }
       case "function_call":
-        toolCalls.push({
-          id: item.call_id,
-          name: item.name,
-          arguments: JSON.parse(item.arguments),
-        });
+        try {
+          toolCalls.push({
+            id: item.call_id,
+            name: item.name,
+            arguments: JSON.parse(item.arguments),
+          });
+        } catch {
+          // The Responses API truncates a function_call's arguments
+          // mid-string when max_output_tokens cuts the response off
+          // (status: "incomplete", incomplete_details.reason:
+          // "max_output_tokens"). Drop the unparseable call instead of
+          // throwing out of convertResponse: with zero tool calls
+          // recorded, deriveStopReason falls through to its
+          // incomplete/max_output_tokens check below and correctly
+          // classifies max_tokens, which is what lets the agent loop's
+          // one-shot MAX_TOKENS_NUDGE recovery turn fire.
+        }
         break;
       case "reasoning":
         for (const s of item.summary) reasoning += s.text;
