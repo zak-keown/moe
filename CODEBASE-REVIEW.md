@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 20
+  fixed: 21
   stale: 10
   skipped: 2
   deferred: 0
-  open: 561
+  open: 560
 ---
 
 # Codebase Review — moe
@@ -2367,6 +2367,10 @@ should be dropped.
 Fix: move the prefix check into `warnings`, matching the treatment of the word-count
 target.
 
+**Disposition:** fixed
+**Commit:** `ca22406`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-102: The HTTP request handler has no error boundary, so a transient filesystem error kills the server
 **File:** `packages/core/skills/brainstorming/scripts/server.cjs`
 **Anchor:** `handleRequest`, and `getNewestScreen`'s `fs.readdirSync(CONTENT_DIR)`
