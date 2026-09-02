@@ -1,4 +1,4 @@
-import { rmSync, rmdirSync, readdirSync, readFileSync, existsSync, statSync } from 'node:fs'
+import { rmSync, rmdirSync, readdirSync, readFileSync, existsSync, statSync, lstatSync } from 'node:fs'
 import { dirname, resolve, isAbsolute, sep } from 'node:path'
 import { buildModel } from './model.js'
 import { writeFileSet, type FileSet, type GeneratedFile } from './fileset.js'
@@ -127,7 +127,21 @@ export function generate(
   const conflicts: string[] = []
   for (const file of files) {
     const abs = resolve(root, file.path)
-    if (!existsSync(abs)) continue
+    let lst: ReturnType<typeof lstatSync> | undefined
+    try {
+      lst = lstatSync(abs)
+    } catch {
+      continue // nothing there — existsSync would agree
+    }
+    if (lst.isSymbolicLink()) {
+      // existsSync follows symlinks and reports false for a dangling one,
+      // which would otherwise skip the file entirely here — silently
+      // treating "someone planted a link at this path" as "nothing to see".
+      // writeFileSet refuses to write through any symlink regardless of
+      // --force, so this is always a real conflict, never byte-identical.
+      conflicts.push(file.path)
+      continue
+    }
     if (prior && Object.prototype.hasOwnProperty.call(prior.files, file.path)) continue
     if (readFileSync(abs, 'utf8') === file.content) continue
     conflicts.push(file.path)

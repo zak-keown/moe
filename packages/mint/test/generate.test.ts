@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { cpSync, mkdtempSync, mkdirSync, existsSync, readFileSync, writeFileSync, rmSync } from 'node:fs'
+import { cpSync, mkdtempSync, mkdirSync, existsSync, readFileSync, writeFileSync, rmSync, symlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { generate } from '../src/generate.js'
@@ -294,6 +294,30 @@ describe('generate', () => {
       expect((err as Error).message).toContain('harnesses.exclude')
     }
     expect(existsSync(join(dir, MANIFEST_PATH))).toBe(false)
+  })
+
+  it('reports a dangling symlink at a generated path as a conflict, not silently absent (CR-080)', () => {
+    // existsSync (the old check) follows symlinks and reports false for a
+    // dangling one, so this used to look like "nothing there" and generate
+    // would write straight through it, creating the outside file.
+    const dir = freshFixture()
+    const outsideDir = mkdtempSync(join(tmpdir(), 'mint-outside-'))
+    const outsideTarget = join(outsideDir, 'plugin.json')
+    mkdirSync(join(dir, '.claude-plugin'), { recursive: true })
+    symlinkSync(outsideTarget, join(dir, '.claude-plugin', 'plugin.json'))
+    expect(() => generate(dir)).toThrow(/refusing to overwrite existing file\(s\).*\.claude-plugin\/plugin\.json/)
+    expect(existsSync(outsideTarget)).toBe(false)
+  })
+
+  it('refuses to overwrite an existing file outside the plugin root through a symlink, even with --force (CR-080)', () => {
+    const dir = freshFixture()
+    const outsideDir = mkdtempSync(join(tmpdir(), 'mint-victim-'))
+    const victim = join(outsideDir, 'plugin.json')
+    writeFileSync(victim, 'PRECIOUS USER DATA')
+    mkdirSync(join(dir, '.claude-plugin'), { recursive: true })
+    symlinkSync(victim, join(dir, '.claude-plugin', 'plugin.json'))
+    expect(() => generate(dir, undefined, { force: true })).toThrow(/symlink/)
+    expect(readFileSync(victim, 'utf8')).toBe('PRECIOUS USER DATA')
   })
 
   it('overwrites a pre-existing hand-written file when force is set', () => {
