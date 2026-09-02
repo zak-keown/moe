@@ -1,10 +1,35 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
 import { createRequire } from 'node:module';
+import { JSDOM } from 'jsdom';
 import { makePageSessionFake } from './_helpers.mjs';
 
 const require = createRequire(import.meta.url);
 const { attachMouse } = require('../../skills/browsing/lib/mouse.js');
+
+// A page session whose Runtime.evaluate actually RUNS the given expression
+// against a real jsdom document, instead of returning a canned fixture.
+// This is what makes the CR-062 test below exercise resolveCenter's real,
+// production-built expression string (including whatever getElementSelector
+// generates for the selector) rather than a re-implementation of it in the
+// test — the same technique element-selector.test.mjs uses for
+// getElementSelector directly.
+function makeJsdomPageSession(html) {
+  const dom = new JSDOM(html);
+  const { document } = dom.window;
+  // jsdom does not implement scrollIntoView; resolveCenter's expression
+  // calls it unconditionally.
+  dom.window.Element.prototype.scrollIntoView = function () {};
+  const mockConsole = { warn() {} };
+  const ps = makePageSessionFake({
+    'Runtime.evaluate': (params) => {
+      const fn = new Function('document', 'console', 'Array', `return (${params.expression})`);
+      return { result: { value: fn(document, mockConsole, Array) } };
+    },
+    'Input.dispatchMouseEvent': () => ({}),
+  });
+  return { ps, document };
+}
 
 // Deterministic RNG: always returns 0.5 (mid-range), which eliminates
 // jitter and produces a predictable Bezier offset.
@@ -308,6 +333,34 @@ describe('mouse click: dialog-aware fallback', () => {
 
     const result = await click(0, '#button');
     assert.equal(result.fallback, true, 'fallback should have run when no dialog is open');
+  });
+
+  // CR-062: getElementSelector deliberately returns the first DOM match even
+  // when every match has a zero bounding rect (hidden ancestor, closed
+  // modal, off-screen slide) — that is not itself the bug. The bug was that
+  // resolveCenter never inspected the rect, so it reported found:true with
+  // x=0/y=0 and click() dispatched a REAL mousePressed/mouseReleased at
+  // viewport (0,0) instead of ever reaching the el.click() fallback. This
+  // runs the actual production expression (via jsdom) rather than a faked
+  // Runtime.evaluate response, so it exercises the real rect check.
+  it('click() on a zero-rect (hidden) element uses the el.click() fallback, never dispatches a mouse event at (0,0) (CR-062)', async () => {
+    const { ps, document } = makeJsdomPageSession(`
+      <div style="display:none"><button id="btn">Click me</button></div>
+    `);
+    const btn = document.getElementById('btn');
+    let nativeClicked = false;
+    btn.addEventListener('click', () => { nativeClicked = true; });
+
+    const getPageSession = async () => ps;
+    const { click } = attachMouse({ getPageSession, _rng: deterministicRng });
+
+    const result = await click(0, '#btn');
+
+    const mouseEvents = ps.calls.filter(c => c.method === 'Input.dispatchMouseEvent');
+    assert.equal(mouseEvents.length, 0,
+      `zero-rect element must never receive a real mouse press/release at the origin, got ${JSON.stringify(mouseEvents)}`);
+    assert.equal(result.fallback, true, 'must go through the el.click() fallback, not report a coordinate click');
+    assert.equal(nativeClicked, true, 'the actual (hidden) button must receive the click via the fallback');
   });
 });
 
