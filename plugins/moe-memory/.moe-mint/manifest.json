@@ -6,7 +6,7 @@
       "sha256": "3a40f5c114e437170d305866599132f4d1efd33f101237f0a227e1cdf44ce5e1"
     },
     ".claude-plugin/marketplace.json": {
-      "sha256": "b6bfd331bd436f282803c8a5cc5a561f53b8be4e58304a029517e56bc9a36a7d"
+      "sha256": "095d673c586c176c792716445ea6946e14629f64c2c6d041f5c4a971ffd20cc9"
     },
     ".claude-plugin/plugin.json": {
       "sha256": "e078221946915088270429d9320fc40c56dd4a0bb05b3302dfa0ef3b910485d2"
@@ -33,13 +33,13 @@
       "sha256": "6fa8acc74c24eacf5328208d2def4a7dea966c8e14bedcb339288c5d7a37851b"
     },
     "docs/install/claude-code.md": {
-      "sha256": "cae79a2a1c2e3e99471bb6efe9d02115b9bb512fa0f4685b9281deb8e1aa7e0f"
+      "sha256": "dc2c7b15071008bfee2298742afb99c529ad18faa2002860ec272185b0c51e4d"
     },
     "docs/install/codex.md": {
       "sha256": "cb5112e7aba9fddb245fdf6d0c1bd6b9d82feec01ad8aaaa3bb85a47303272e0"
     },
     "docs/install/copilot.md": {
-      "sha256": "e54209a6361159c8ccb7f32b1eb49e21221a2489365b6bb4f36fa5bc965be124"
+      "sha256": "55915502c59bbbfaa01d031948bf70a82cb99bcfaf3a6782280096a238196c51"
     },
     "docs/install/cursor.md": {
       "sha256": "ec869e378b4271ff02f2e0e5e481a74a1db0e4bfaa95559a6dc66f66fc8ab366"

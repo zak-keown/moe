@@ -10,7 +10,7 @@
 
 ```
 copilot plugin marketplace add https://github.com/zak-keown/moe
-copilot plugin install moe-crew@moe
+copilot plugin install moe-crew@core
 ```
 
 Copilot installs the plugin's Claude Code layout (skills/, commands/, agents/, hooks/, .mcp.json), so the `claude-code` adapter must remain enabled. Consult Copilot's plugin docs if these commands don't match your installed version.

@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises'
+import { lstat, mkdir, realpath, writeFile } from 'node:fs/promises'
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path'
 import type { AdapterEmission } from '../adapters/types.js'
 import { TARGET_IDS, type TargetId } from '../vocabulary.js'
@@ -47,6 +47,10 @@ function defaultProfile(platform: ResolvedPlatform): [string, (typeof platform.r
   return profile
 }
 
+export function defaultProfileId(platform: ResolvedPlatform): string {
+  return defaultProfile(platform)[0]
+}
+
 function marketplaceSource(plugin: ResolvedPlugin): { source: 'npm'; package: string } {
   return { source: 'npm', package: plugin.npmPackage }
 }
@@ -79,15 +83,44 @@ function repositoryRoot(platform: ResolvedPlatform): string {
   return root
 }
 
-function assertDestination(root: string, actual: string, expected: string): void {
+function isContained(root: string, candidate: string): boolean {
+  const rel = relative(root, candidate)
+  return rel !== '..' && !rel.startsWith(`..${sep}`) && !isAbsolute(rel)
+}
+
+async function nearestExistingParent(path: string): Promise<string> {
+  let candidate = path
+  while (true) {
+    try {
+      await realpath(candidate)
+      return candidate
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+      const parent = dirname(candidate)
+      if (parent === candidate) throw error
+      candidate = parent
+    }
+  }
+}
+
+async function validateDestination(root: string, actual: string, expected: string): Promise<string> {
   const resolved = isAbsolute(actual) ? resolve(actual) : resolve(root, actual)
   if (resolved !== resolve(root, expected)) {
     throw new Error(`projection destination must be exactly ${expected}`)
   }
-  const rel = relative(root, resolved)
-  if (rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel)) {
+  const rootReal = await realpath(root)
+  const existingParent = await realpath(await nearestExistingParent(dirname(resolved)))
+  if (!isContained(rootReal, existingParent)) {
     throw new Error(`projection destination escapes the repository: ${actual}`)
   }
+  try {
+    if ((await lstat(resolved)).isSymbolicLink()) {
+      throw new Error(`projection destination may not be a symbolic link: ${actual}`)
+    }
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+  }
+  return resolved
 }
 
 export function renderMarketplace(
@@ -120,7 +153,7 @@ export function renderPublicCatalog(
   artifacts: readonly PluginProjectionRecord[],
 ): string {
   const records = projectionRecords(platform, artifacts)
-  const headers = ['Plugin', 'npm package', 'Summary', ...TARGET_IDS.map((target) => platform.registry.targets[target].display_name)]
+  const headers = ['Plugin', 'npm package', 'Summary', ...TARGET_IDS.map((target) => markdownCell(platform.registry.targets[target].display_name))]
   const rows = records.map((record) => [
     `\`${record.plugin.id}\``,
     `\`${record.plugin.npmPackage}\``,
@@ -164,16 +197,16 @@ export async function writeRegistryProjections(
   destinations: ProjectionDestinations,
 ): Promise<void> {
   const root = repositoryRoot(platform)
-  assertDestination(root, destinations.marketplacePath, '.claude-plugin/marketplace.json')
-  assertDestination(root, destinations.publicCatalogPath, 'docs/moe/generated/plugin-catalog.md')
+  const marketplacePath = await validateDestination(root, destinations.marketplacePath, '.claude-plugin/marketplace.json')
+  const publicCatalogPath = await validateDestination(root, destinations.publicCatalogPath, 'docs/moe/generated/plugin-catalog.md')
   const marketplace = renderMarketplace(platform, artifacts)
   const catalog = renderPublicCatalog(platform, artifacts)
   await Promise.all([
-    mkdir(dirname(destinations.marketplacePath), { recursive: true }),
-    mkdir(dirname(destinations.publicCatalogPath), { recursive: true }),
+    mkdir(dirname(marketplacePath), { recursive: true }),
+    mkdir(dirname(publicCatalogPath), { recursive: true }),
   ])
   await Promise.all([
-    writeFile(destinations.marketplacePath, marketplace),
-    writeFile(destinations.publicCatalogPath, catalog),
+    writeFile(marketplacePath, marketplace),
+    writeFile(publicCatalogPath, catalog),
   ])
 }

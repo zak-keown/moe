@@ -58,6 +58,15 @@ describe('generate', () => {
     expect(checkDrift(dir).clean).toBe(true)
   })
 
+  it('uses a projection-owned marketplace name consistently in the Claude descriptor and Claude/Copilot install docs', () => {
+    const dir = freshFixture()
+    generate(dir, undefined, { marketplaceName: 'core' })
+
+    expect(JSON.parse(readFileSync(join(dir, '.claude-plugin', 'marketplace.json'), 'utf8')).name).toBe('core')
+    expect(readFileSync(join(dir, 'docs', 'install', 'claude-code.md'), 'utf8')).toContain('/plugin install kitchen-sink@core')
+    expect(readFileSync(join(dir, 'docs', 'install', 'copilot.md'), 'utf8')).toContain('copilot plugin install kitchen-sink@core')
+  })
+
   it('prunes docs/install/<name>.md when its adapter is later excluded, like any other generated file', () => {
     const dir = freshFixture()
     generate(dir)

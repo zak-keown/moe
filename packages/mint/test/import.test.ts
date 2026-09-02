@@ -426,7 +426,7 @@ describe('CLI import command', () => {
     expect(first.stdout).toContain(
       'Wrote moe-mint.yaml — review it, then run moe-mint generate. Note: generate will report conflicts with your existing hand-maintained harness files (e.g. .claude-plugin/plugin.json); after reviewing, re-run with --force to let moe-mint own them.',
     )
-    expect(first.stdout).toContain('<!-- moe-mint:install:start -->')
+    expect(first.stdout).not.toContain('moe-mint:install')
     expect(existsSync(join(dir, 'moe-mint.yaml'))).toBe(true)
 
     const second = runCli(['import'], dir)

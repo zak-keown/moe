@@ -15,7 +15,7 @@ claude /plugin marketplace add zak-keown/moe
 ```
 
 ```
-/plugin install moe-glass@moe
+/plugin install moe-glass@core
 ```
 
 If the marketplace is already registered, only the install command is needed. Consult Claude Code's plugin docs if these commands don't match your installed version.
