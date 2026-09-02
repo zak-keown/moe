@@ -122,6 +122,28 @@ describe('registry projections', () => {
     expect(renderPublicCatalog(escaped, recordsFor(platform)).split('\n')[4]).toContain('Cursor \\| preview channel')
   })
 
+  it('rejects a post-load default-profile mutation with a structured projection diagnostic', async () => {
+    const platform = await resolvePlatform(REPO_ROOT)
+    const invalid: ResolvedPlatform = {
+      ...platform,
+      registry: {
+        ...platform.registry,
+        profiles: Object.fromEntries(Object.entries(platform.registry.profiles).map(([id, profile]) => [
+          id,
+          { ...profile, default: false },
+        ])),
+      },
+    }
+
+    expect(() => renderMarketplace(invalid, recordsFor(platform))).toThrowError(expect.objectContaining({
+      diagnostic: expect.objectContaining({
+        code: 'PROJECTION_PROFILE_INVALID',
+        source: 'moe-platform.yaml',
+        field: 'profiles',
+      }),
+    }))
+  })
+
   it('keeps resolved configs, generated roots, marketplace entries, and catalog rows one-to-one', async () => {
     const platform = await resolvePlatform(REPO_ROOT)
     const ids = platform.plugins.map((plugin) => plugin.id)
@@ -153,9 +175,14 @@ describe('registry projections', () => {
       publicCatalogPath: join(root, 'docs', 'moe', 'generated', 'plugin-catalog.md'),
     }
 
-    await expect(writeRegistryProjections(platform, recordsFor(platform), destinations)).rejects.toThrow(
-      'projection destination',
-    )
+    await expect(writeRegistryProjections(platform, recordsFor(platform), destinations)).rejects.toMatchObject({
+      diagnostic: {
+        code: 'PROJECTION_DESTINATION_INVALID',
+        source: 'registry projections',
+        field: 'marketplacePath',
+        path: destinations.marketplacePath,
+      },
+    })
     expect(() => readFileSync(destinations.marketplacePath, 'utf8')).toThrow()
   })
 
@@ -164,10 +191,8 @@ describe('registry projections', () => {
     const root = mkdtempSync(join(tmpdir(), 'mint-projection-root-'))
     const isolated = {
       ...platform,
-      registry: {
-        ...platform.registry,
-        plugins: platform.registry.plugins.map((plugin) => ({ ...plugin, sourcePath: join(root, plugin.source) })),
-      },
+      repositoryRoot: root,
+      plugins: platform.plugins.map((plugin) => ({ ...plugin, sourcePath: join(root, 'untrusted', plugin.id) })),
     }
     expect(process.cwd()).not.toBe(root)
     await writeRegistryProjections(isolated, recordsFor(platform), {
@@ -186,16 +211,20 @@ describe('registry projections', () => {
     symlinkSync(outside, join(root, 'docs'))
     const isolated = {
       ...platform,
-      registry: {
-        ...platform.registry,
-        plugins: platform.registry.plugins.map((plugin) => ({ ...plugin, sourcePath: join(root, plugin.source) })),
-      },
+      repositoryRoot: root,
     }
 
     await expect(writeRegistryProjections(isolated, recordsFor(platform), {
       marketplacePath: '.claude-plugin/marketplace.json',
       publicCatalogPath: 'docs/moe/generated/plugin-catalog.md',
-    })).rejects.toThrow('escapes the repository')
+    })).rejects.toMatchObject({
+      diagnostic: {
+        code: 'PROJECTION_DESTINATION_ESCAPE',
+        source: 'registry projections',
+        field: 'publicCatalogPath',
+        path: 'docs/moe/generated/plugin-catalog.md',
+      },
+    })
     expect(() => readFileSync(join(outside, 'moe', 'generated', 'plugin-catalog.md'), 'utf8')).toThrow()
   })
 })

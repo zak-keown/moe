@@ -50,6 +50,16 @@ describe('CLI end-to-end', () => {
     }
   })
 
+  it('formats registry MintError failures without exposing an object or stack', () => {
+    const missing = join(mkdtempSync(join(tmpdir(), 'mint-cli-missing-registry-')), 'missing')
+    const result = runCli(['publish-matrix', '--repo', missing], REPO_ROOT)
+
+    expect(result.status).toBe(1)
+    expect(result.stderr).toMatch(/^error: repository root /)
+    expect(result.stderr).not.toContain('MintError:')
+    expect(result.stderr).not.toContain('\n    at ')
+  })
+
   it('does not claim to rewrite a human-authored README when the fixture has historical markers', () => {
     const dir = tmpPluginDir()
     const first = runCli(['generate'], dir)

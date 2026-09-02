@@ -191,7 +191,7 @@ function installDoc(model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const agentPlugins: HarnessAdapter = {
+export const agentPlugins: HarnessAdapter = Object.freeze({
   name: 'agent-plugins-1.0',
   installDoc,
   emit(model: PluginModel) {
@@ -241,4 +241,4 @@ export const agentPlugins: HarnessAdapter = {
       emittedCapabilities: deriveEmittedCapabilities('agent-plugins-1.0', model, files),
     }
   },
-}
+})

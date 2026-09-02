@@ -214,7 +214,7 @@ function installDoc(model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const pi: HarnessAdapter = {
+export const pi: HarnessAdapter = Object.freeze({
   name: 'pi',
   installDoc,
   emit(model: PluginModel) {
@@ -238,4 +238,4 @@ export const pi: HarnessAdapter = {
 
     return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('pi', model, files) }
   },
-}
+})

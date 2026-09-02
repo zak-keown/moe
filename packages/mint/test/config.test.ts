@@ -188,6 +188,32 @@ describe('loadConfig', () => {
         })
       }
     })
+
+    it.each([
+      ['top level', 'description: demo', 'description: demo\nunknown_root: true'],
+      ['author', 'description: demo', 'description: demo\nauthor: { name: Demo, unknown: true }'],
+      ['components', 'description: demo', 'description: demo\ncomponents: { skills: skills, unknown: true }'],
+      ['release', 'description: demo', 'description: demo\nrelease: { unknown: true }'],
+      ['release file', 'description: demo', 'description: demo\nrelease: { files: [{ path: package.json, field: version, unknown: true }] }'],
+      ['release audit', 'description: demo', 'description: demo\nrelease: { audit: { exclude: [], unknown: true } }'],
+      ['marketplace', 'description: demo', 'description: demo\nmarketplace: { unknown: true }'],
+      ['distribution', 'distribution:\n  npm: "@scope/demo"', 'distribution:\n  npm: "@scope/demo"\n  unknown: true'],
+      ['artifact', 'artifact:\n  payloads: []', 'artifact:\n  payloads: []\n  unknown: true'],
+      ['artifact payload', 'payloads: []', 'payloads: [{ from: dist, to: dist, required: true, unknown: true }]'],
+      ['target', '  cursor: { intent: preview, expected_capabilities: [], operating_systems: [macos] }', '  cursor: { intent: preview, expected_capabilities: [], operating_systems: [macos], unknown: true }'],
+      ['imported work', 'imported_works: []', 'imported_works: [{ name: work, unknown: true }]'],
+    ])('rejects an unknown key at the closed %s schema level', (_name, from, to) => {
+      const yaml = `name: demo\nversion: 1.0.0\ndescription: demo\n${POLICY}`.replace(from, to)
+
+      try {
+        loadConfig(repoWith(yaml, false))
+        expect.unreachable('loadConfig should reject unknown closed-schema keys')
+      } catch (error) {
+        expect(error).toMatchObject({
+          diagnostic: { code: 'CONFIG_INVALID', source: 'moe-mint.yaml' },
+        })
+      }
+    })
   })
 
   it('rejects a missing required field, naming its YAML path', () => {

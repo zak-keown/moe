@@ -53,7 +53,7 @@ function pluginManifest(model: PluginModel): Record<string, unknown> {
   return override ? (deepMerge(manifest, override) as Record<string, unknown>) : manifest
 }
 
-export const kimi: HarnessAdapter = {
+export const kimi: HarnessAdapter = Object.freeze({
   name: 'kimi',
   installDoc,
   emit(model: PluginModel) {
@@ -72,4 +72,4 @@ export const kimi: HarnessAdapter = {
 
     return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('kimi', model, files) }
   },
-}
+})

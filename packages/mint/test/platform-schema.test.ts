@@ -143,7 +143,9 @@ describe('platform registry schema', () => {
   })
 
   it('rejects duplicate resolved plugin paths', async () => {
-    const root = fixtureRoot('duplicate-path', registry.replace('platform:\n', '  - id: other\n    source: packages/core/.\n    config: packages/core/mint/./moe.yaml\nplatform:\n'))
+    const root = fixtureRoot('duplicate-path', registry.replace('platform:\n', '  - id: other\n    source: packages/core\n    config: packages/other/mint/moe.yaml\nplatform:\n'))
+    mkdirSync(join(root, 'packages/other/mint'), { recursive: true })
+    writeFileSync(join(root, 'packages/other/mint/moe.yaml'), 'name: other\n')
 
     await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
       diagnostic: { code: 'PLATFORM_DUPLICATE_PLUGIN_PATH', source: 'moe-platform.yaml', field: 'plugins[1].source' },
@@ -151,7 +153,7 @@ describe('platform registry schema', () => {
   })
 
   it('rejects duplicate resolved plugin config paths', async () => {
-    const root = fixtureRoot('duplicate-config-path', registry.replace('platform:\n', '  - id: other\n    source: packages/other\n    config: packages/core/mint/./moe.yaml\nplatform:\n'))
+    const root = fixtureRoot('duplicate-config-path', registry.replace('platform:\n', '  - id: other\n    source: packages/other\n    config: packages/core/mint/moe.yaml\nplatform:\n'))
     mkdirSync(join(root, 'packages/other'), { recursive: true })
 
     await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
@@ -180,6 +182,18 @@ describe('platform registry schema', () => {
 
     await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
       diagnostic: { code: 'PLATFORM_PATH_ESCAPE', source: 'moe-platform.yaml', field: 'plugins[0].source' },
+    })
+  })
+
+  it.each([
+    ['dot', 'source: packages/core', 'source: packages/./core', 'plugins[0].source'],
+    ['contained parent', 'source: packages/core', 'source: packages/other/../core', 'plugins[0].source'],
+    ['config dot', 'config: packages/core/mint/moe.yaml', 'config: packages/core/./mint/moe.yaml', 'plugins[0].config'],
+  ])('rejects a registry path containing a %s segment', async (_name, from, to, field) => {
+    const root = fixtureRoot(`noncanonical-${_name}`, registry.replace(from, to))
+
+    await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
+      diagnostic: { code: 'PLATFORM_PATH_ESCAPE', source: 'moe-platform.yaml', field },
     })
   })
 
@@ -231,6 +245,30 @@ describe('platform registry schema', () => {
 
     await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
       diagnostic: { code: 'PLATFORM_FORBIDDEN_PLUGIN_METADATA', source: 'moe-platform.yaml', field: 'plugins[0].version' },
+    })
+  })
+
+  it.each([
+    ['a host target changed to a format', '  cursor: { display_name: Cursor, kind: host }', '  cursor: { display_name: Cursor, kind: format }', 'PLATFORM_TARGET_KIND', 'targets.cursor.kind'],
+    ['the format target changed to a host', '  agent-plugins-1.0: { display_name: Agent Plugins 1.0, kind: format }', '  agent-plugins-1.0: { display_name: Agent Plugins 1.0, kind: host }', 'PLATFORM_TARGET_KIND', 'targets.agent-plugins-1.0.kind'],
+    ['an invented prerequisite', '  cursor: { display_name: Cursor, kind: host }', '  cursor: { display_name: Cursor, kind: host, requires: [claude-code] }', 'PLATFORM_TARGET_PREREQUISITE', 'targets.cursor.requires'],
+  ])('rejects %s with a stable target diagnostic', async (_name, from, to, code, field) => {
+    const root = fixtureRoot(`target-semantics-${code}`, registry.replace(from, to))
+
+    await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
+      diagnostic: { code, source: 'moe-platform.yaml', field },
+    })
+  })
+
+  it.each([
+    ['no default profile', '    default: true', '    default: false', 'profiles'],
+    ['multiple default profiles', 'plugins:\n  - id: moe', '  extra:\n    default: true\n    plugins: [moe]\nplugins:\n  - id: moe', 'profiles'],
+    ['an empty default profile', '    plugins: [moe]', '    plugins: []', 'profiles.core.plugins'],
+  ])('rejects %s during registry loading', async (_name, from, to, field) => {
+    const root = fixtureRoot(`default-profile-${_name}`, registry.replace(from, to))
+
+    await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
+      diagnostic: { code: 'PLATFORM_DEFAULT_PROFILE', source: 'moe-platform.yaml', field },
     })
   })
 })

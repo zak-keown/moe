@@ -1,6 +1,7 @@
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { resolvePlatform } from '../src/platform/load.js'
+import { TARGET_IDS, type TargetId } from '../src/vocabulary.js'
 
 const REPO_ROOT = join(import.meta.dirname, '../../..')
 const CANONICAL_REPOSITORY = 'https://github.com/zak-keown/moe'
@@ -23,7 +24,7 @@ type PublicPluginExpectation = {
   description: string
   keywords: readonly string[]
   payloads: readonly { from: string; to: string; required: boolean }[]
-  targets: Record<string, ExpectedTarget>
+  targets: Record<TargetId, ExpectedTarget>
 }
 
 const OMIT: ExpectedTarget = { intent: 'omit' }
@@ -211,8 +212,9 @@ describe('public plugin registry', () => {
         keywords: expected.keywords,
       })
 
-      for (const [targetId, targetPolicy] of Object.entries(expected.targets)) {
-        const actual = resolved.targets[targetId as keyof typeof resolved.targets]
+      for (const targetId of TARGET_IDS) {
+        const targetPolicy = expected.targets[targetId]
+        const actual = resolved.targets[targetId]
         expect(actual.intent, `${expected.id}/${targetId} intent`).toBe(targetPolicy.intent)
         expect(actual.expectedCapabilities, `${expected.id}/${targetId} capabilities`).toEqual(targetPolicy.capabilities ?? [])
         expect(actual.operatingSystems, `${expected.id}/${targetId} operating systems`).toEqual(targetPolicy.operatingSystems)

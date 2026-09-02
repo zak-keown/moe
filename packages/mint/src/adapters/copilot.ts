@@ -27,7 +27,7 @@ function installDoc(model: PluginModel): string {
   ].join('\n')
 }
 
-export const copilot: HarnessAdapter = {
+export const copilot: HarnessAdapter = Object.freeze({
   name: 'copilot',
   installDoc,
   emit(_model: PluginModel) {
@@ -35,4 +35,4 @@ export const copilot: HarnessAdapter = {
     // replaces the empty local set with its projection owner's capabilities.
     return { files: [], limitations: [], emittedCapabilities: [], projectionOwner: 'claude-code' as const }
   },
-}
+})

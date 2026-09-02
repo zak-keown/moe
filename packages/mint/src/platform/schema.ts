@@ -1,7 +1,6 @@
 import { z } from 'zod'
-import { OPERATING_SYSTEM_IDS, TARGET_IDS, type OperatingSystemId, type TargetId } from '../vocabulary.js'
+import { OPERATING_SYSTEM_IDS, type OperatingSystemId, type TargetId } from '../vocabulary.js'
 
-const targetIdSchema = z.enum(TARGET_IDS)
 const operatingSystemIdSchema = z.enum(OPERATING_SYSTEM_IDS)
 
 const contractSchema = z.object({
@@ -10,11 +9,21 @@ const contractSchema = z.object({
   path: z.string().min(1),
 }).strict()
 
-const targetSchema = z.object({
+const hostTargetSchema = z.object({
   display_name: z.string().min(1),
-  kind: z.enum(['host', 'format']),
-  requires: z.array(targetIdSchema).min(1).optional(),
+  kind: z.literal('host'),
   contract: contractSchema.optional(),
+}).strict()
+
+const formatTargetSchema = z.object({
+  display_name: z.string().min(1),
+  kind: z.literal('format'),
+}).strict()
+
+const copilotTargetSchema = z.object({
+  display_name: z.string().min(1),
+  kind: z.literal('host'),
+  requires: z.tuple([z.literal('claude-code')]),
 }).strict()
 
 const profileSchema = z.object({
@@ -49,9 +58,16 @@ const releaseSchema = z.object({
   }).strict(),
 }).strict()
 
-const targetShape = Object.fromEntries(TARGET_IDS.map((id) => [id, targetSchema])) as {
-  [Id in TargetId]: typeof targetSchema
-}
+const targetShape = {
+  'claude-code': hostTargetSchema,
+  cursor: hostTargetSchema,
+  codex: hostTargetSchema,
+  kimi: hostTargetSchema,
+  opencode: hostTargetSchema,
+  pi: hostTargetSchema,
+  'agent-plugins-1.0': formatTargetSchema,
+  copilot: copilotTargetSchema,
+} satisfies Record<TargetId, z.ZodType>
 
 const targetsSchema = z.object(targetShape).strict()
 
@@ -64,7 +80,12 @@ export const platformRegistrySchema = z.object({
   release: releaseSchema,
 }).strict()
 
-export type PlatformTargetV1 = z.infer<typeof targetSchema>
+export interface PlatformTargetV1 {
+  display_name: string
+  kind: 'host' | 'format'
+  requires?: readonly TargetId[] | undefined
+  contract?: z.infer<typeof contractSchema> | undefined
+}
 export type PlatformProfileV1 = z.infer<typeof profileSchema>
 export type PlatformPluginDeclarationV1 = z.infer<typeof pluginSchema>
 export type PlatformPolicyV1 = z.infer<typeof platformSchema>

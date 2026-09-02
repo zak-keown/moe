@@ -8,6 +8,7 @@ import { importPlugin } from './import.js'
 import { runTest, DEFAULT_IMAGE } from './test-command.js'
 import { bumpVersion, bumpCheck, bumpAudit, type BumpResult, type CheckResult, type AuditResult } from './bump.js'
 import { ConfigError } from './config.js'
+import { MintError } from './diagnostics.js'
 import { resolvePlatform } from './platform/load.js'
 import { currentProjectionRecords, resolvePublishMatrix } from './platform/projections.js'
 
@@ -199,7 +200,7 @@ program
   })
 
 program.parseAsync().catch((error: unknown) => {
-  if (error instanceof ConfigError) {
+  if (error instanceof MintError) {
     console.error(`error: ${error.message}`)
     process.exit(1)
   }
