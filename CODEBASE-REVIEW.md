@@ -21,10 +21,10 @@ verification:
 status: issues_found
 dispositions:
   fixed: 8
-  stale: 4
+  stale: 5
   skipped: 1
   deferred: 0
-  open: 580
+  open: 579
 ---
 
 # Codebase Review — moe
@@ -2090,6 +2090,10 @@ Fix: after the uv branch fails, `return { missing: true, entry, root }` for a
 `runner`-bearing entry rather than falling through. Independently, the generic branch
 should require the workspace path to be a file (see the directory finding below).
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Superseded by bc27892: proof is runner-only in NAMESPACES and has no workspace directory, so resolve cannot fall through and hand py/proof to Node.
 ### CR-095: A directory on PATH or beside the dispatcher is accepted as the namespace executable
 **File:** `bin/moe.js`
 **Anchor:** `findInDir`, which decides with `if (existsSync(p)) return p`
