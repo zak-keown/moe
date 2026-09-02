@@ -21,10 +21,10 @@ verification:
 status: issues_found
 dispositions:
   fixed: 42
-  stale: 12
+  stale: 13
   skipped: 6
   deferred: 1
-  open: 532
+  open: 531
 ---
 
 # Codebase Review — moe
@@ -1620,6 +1620,10 @@ verify report stops describing a respected opt-out as an index defect.
 **Verification:** confirmed
 **Verification evidence:** verify.ts has no reference to shouldSkipConversation or the exclusion marker and the repairIndex reindex loop has no marker check. Reproduced steps one and two against the compiled dist with scratch paths: a marked transcript with no summary file, which is exactly what sync.ts produces for a marked file, is classified missing with reason No summary file by verifyIndex, feeding the unconditional summarize-and-index loop in repairIndex. Same defect as CR-075.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Same root cause and same code as CR-075 (both findings' own text say so: CR-075 cites 'Same root cause as CR-076' and CR-076 cites 'Same defect as CR-075'). CR-075's fix (verify.ts: verifyIndex no longer classifies a marked conversation as missing; repairIndex re-checks shouldSkipConversation before summarizing/inserting) already covers the exact chain this finding describes (index --verify then index --repair indexing and summarizing a marked conversation), landed in commit 6ec2329. Proved with the same two tests added for CR-075: test/verify.test.ts's new 'does not flag a DO-NOT-INDEX conversation as missing' and test/repair-do-not-index.test.ts's new repairIndex assertion, both passing on current code.
 ### CR-077: Codex E2E copies the user's live auth.json into a temp tree that is never cleaned up
 **File:** `packages/memory/test/manual/codex-e2e.js`
 **Anchor:** `copyCodexAuth`
