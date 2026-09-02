@@ -12,7 +12,20 @@ export function metaPath(dir: string, sid: string): string {
   return `${dir}/${sid}.meta`;
 }
 
+/**
+ * tmux_name (and any other worker name keyed into these paths) is untrusted:
+ * it round-trips through a `.meta` file on disk, which a co-resident local
+ * user can plant ahead of `prune`/`stop`. Require a single safe path segment
+ * so it can never carry `/`, `.` or `..` out of the worker dir.
+ */
+function assertSafeSegment(name: string): void {
+  if (!/^[A-Za-z0-9_-]+$/.test(name)) {
+    throw new Error(`unsafe worker name (must be a single [A-Za-z0-9_-]+ segment): ${JSON.stringify(name)}`);
+  }
+}
+
 export function shimPath(dir: string, name: string): string {
+  assertSafeSegment(name);
   return `${dir}/bin/${name}`;
 }
 
@@ -24,6 +37,7 @@ export function shimPath(dir: string, name: string): string {
  * staged credentials.
  */
 export function workerHomePath(dir: string, name: string): string {
+  assertSafeSegment(name);
   return `${dir}/homes/${name}`;
 }
 
@@ -35,6 +49,7 @@ export function workerHomePath(dir: string, name: string): string {
  * carry the harness in the meta from launch and do not need this.
  */
 export function harnessMarkerPath(dir: string, name: string): string {
+  assertSafeSegment(name);
   return `${dir}/${name}.harness`;
 }
 

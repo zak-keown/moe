@@ -182,6 +182,21 @@ describe("removeWorker", () => {
     writeMeta(dir, baseMeta);
     expect(() => removeWorker(dir, "sid-abc", "my-worker")).not.toThrow();
   });
+
+  it("refuses a tmux_name that path-traverses out of the worker dir", () => {
+    const parent = mkdtempSync(join(tmpdir(), "moe-crew-parent-"));
+    const dir = join(parent, "workers");
+    // homes/ must pre-exist for the traversal to reach outside dir at all —
+    // rmSync's force:true otherwise swallows the ENOENT on the missing component.
+    mkdirSync(join(dir, "homes"), { recursive: true });
+    const victim = join(parent, "victim");
+    mkdirSync(victim, { recursive: true });
+    writeFileSync(join(victim, "secret.txt"), "do not delete me");
+
+    expect(() => removeWorker(dir, "sid-abc", "../../victim")).toThrow();
+
+    expect(() => statSync(join(victim, "secret.txt"))).not.toThrow();
+  });
 });
 
 describe("writeHarnessMarker / readHarnessMarker", () => {
