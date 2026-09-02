@@ -1,6 +1,6 @@
 {
   "name": "@bubstack/moe-glass",
-  "version": "0.1.1",
+  "version": "0.1.2-rc.1",
   "type": "module",
   "description": "Direct Chrome DevTools Protocol access. Skill mode (17 CLI commands) plus MCP mode (single use_browser tool). Auto-starts Chrome.",
   "license": "MIT",
