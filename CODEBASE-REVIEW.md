@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 62
+  fixed: 63
   stale: 17
   skipped: 7
   deferred: 1
-  open: 506
+  open: 505
 ---
 
 # Codebase Review — moe
@@ -503,6 +503,10 @@ Fix: when `resolveSession` returns null but a `.harness` sidecar and a live tmux
 **Verification:** confirmed
 **Verification evidence:** resolveSession returns null for a derive worker in its pre-registration window, so cmdStop fails with no worker known; cmdPrune skips any name with a live tmux session by design (comment: derive worker mid-registration, keep it); cmdAdopt reads the pre-written .harness sidecar and refuses whenever it is not claude, telling the operator to stop it first. No CLI flag bypasses resolveWorker, so all three commands are independently blocked and only a manual tmux kill-session remains.
 
+**Disposition:** fixed
+**Commit:** `57813ff`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-019: Worker state, staged credentials and the executable shim default to a predictable world-writable /tmp path
 **File:** `packages/crew/src/core/paths.ts`
 **Anchor:** `DEFAULT_WORKER_DIR = "/tmp/moe-crew-workers"`
