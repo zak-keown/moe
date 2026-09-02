@@ -49,3 +49,4 @@ py/proof/examples/*/runs/
 # pnpm content-addressable store — created locally when the store path is
 # resolved inside the repo (a pnpm 11 default on some setups). Never source.
 .pnpm-store/
+.moe/concept-review/
