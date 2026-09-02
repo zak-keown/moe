@@ -1,4 +1,12 @@
-import { mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import {
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -10,11 +18,13 @@ import {
   workerHomePath,
 } from "../src/core/paths.js";
 import {
+  ensureOwnedDir,
   listWorkers,
   readHarnessMarker,
   readMeta,
   removeWorker,
   resolveSession,
+  stageCredentialFile,
   writeHarnessMarker,
   writeMeta,
   writeShim,
@@ -217,5 +227,88 @@ describe("writeHarnessMarker / readHarnessMarker", () => {
     const dir = tmpDir();
     writeFileSync(harnessMarkerPath(dir, "my-worker"), "   ");
     expect(readHarnessMarker(dir, "my-worker")).toBeNull();
+  });
+});
+
+describe("ensureOwnedDir (CR-019/CR-021)", () => {
+  it("creates a fresh directory privately (mode 0700)", () => {
+    const parent = tmpDir();
+    const dir = join(parent, "workers");
+    ensureOwnedDir(dir);
+    expect(statSync(dir).isDirectory()).toBe(true);
+    expect(statSync(dir).mode & 0o777).toBe(0o700);
+  });
+
+  it("accepts an existing directory already owned by the current user", () => {
+    const dir = tmpDir(); // mkdtempSync — already exists, owned by us
+    expect(() => ensureOwnedDir(dir)).not.toThrow();
+  });
+
+  it("refuses when a symlink is planted at the path instead of a real directory", () => {
+    const parent = tmpDir();
+    const elsewhere = tmpDir();
+    const dir = join(parent, "workers");
+    symlinkSync(elsewhere, dir);
+    expect(() => ensureOwnedDir(dir)).toThrow(/not a real directory/);
+  });
+
+  it("refuses when a plain file sits at the path instead of a directory", () => {
+    const parent = tmpDir();
+    const dir = join(parent, "workers");
+    writeFileSync(dir, "not a directory");
+    expect(() => ensureOwnedDir(dir)).toThrow(/not a real directory/);
+  });
+});
+
+describe("stageCredentialFile (CR-021)", () => {
+  it("copies the source content to a fresh destination", () => {
+    const dir = tmpDir();
+    const src = join(dir, "auth.json");
+    writeFileSync(src, '{"token":"operator-secret"}');
+    const dest = join(dir, "staged-auth.json");
+    stageCredentialFile(src, dest);
+    expect(readFileSync(dest, "utf8")).toBe('{"token":"operator-secret"}');
+    expect(statSync(dest).mode & 0o777).toBe(0o600);
+  });
+
+  it("does nothing when the source is absent (best effort)", () => {
+    const dir = tmpDir();
+    const dest = join(dir, "staged-auth.json");
+    expect(() => stageCredentialFile(join(dir, "no-such-src.json"), dest)).not.toThrow();
+    expect(() => statSync(dest)).toThrow();
+  });
+
+  it("does not follow a symlink planted at the destination, and the mode still takes effect", () => {
+    const dir = tmpDir();
+    const src = join(dir, "auth.json");
+    writeFileSync(src, '{"token":"operator-secret"}');
+    const victim = join(dir, "victim.txt");
+    writeFileSync(victim, "do not overwrite me", { mode: 0o644 });
+    const dest = join(dir, "staged-auth.json");
+    symlinkSync(victim, dest);
+
+    stageCredentialFile(src, dest);
+
+    // The victim is untouched...
+    expect(readFileSync(victim, "utf8")).toBe("do not overwrite me");
+    expect(statSync(victim).mode & 0o777).toBe(0o644);
+    // ...and dest is now a real file (the symlink was replaced) holding the
+    // staged content with the correct mode.
+    expect(lstatSync(dest).isSymbolicLink()).toBe(false);
+    expect(readFileSync(dest, "utf8")).toBe('{"token":"operator-secret"}');
+    expect(statSync(dest).mode & 0o777).toBe(0o600);
+  });
+
+  it("overwrites a stale plain file from a prior run reusing the same worker name", () => {
+    const dir = tmpDir();
+    const src = join(dir, "auth.json");
+    writeFileSync(src, "new-token");
+    const dest = join(dir, "staged-auth.json");
+    writeFileSync(dest, "old-token", { mode: 0o644 });
+
+    stageCredentialFile(src, dest);
+
+    expect(readFileSync(dest, "utf8")).toBe("new-token");
+    expect(statSync(dest).mode & 0o777).toBe(0o600);
   });
 });

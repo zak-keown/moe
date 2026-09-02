@@ -20,13 +20,13 @@
  * stubs here and the real tmux dance is wired into the launch command (B2/B4).
  */
 
-import { copyFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { workerDir } from "../core/paths.js";
 import { shellQuoteAlways } from "../core/shell.js";
 import { type NormalizedTurn, parseCodexTurn } from "../core/transcript.js";
-import { readMeta } from "../core/worker-store.js";
+import { ensureOwnedDir, readMeta, stageCredentialFile } from "../core/worker-store.js";
 import type { HarnessDriver, LaunchMode } from "./driver.js";
 
 /** The lifecycle events codex fires our hook on, in config-file order. */
@@ -177,13 +177,16 @@ export const codex: HarnessDriver = {
   },
 
   async prepare(tmuxName: string, cwd: string, workerHome: string): Promise<void> {
-    mkdirSync(workerHome, { recursive: true });
+    // Private (0700), refuses an existing home not owned by the current
+    // user (CR-021/CR-019) — a co-resident local account could otherwise
+    // pre-plant this predictable <workerDir>/homes/<tmuxName> path.
+    ensureOwnedDir(workerHome);
 
     // Stage the operator's codex auth so the worker authenticates as them.
+    // stageCredentialFile refuses to follow a symlink planted at the
+    // destination (CR-021).
     const auth = join(homedir(), ".codex", "auth.json");
-    if (existsSync(auth)) {
-      copyFileSync(auth, join(workerHome, "auth.json"));
-    }
+    stageCredentialFile(auth, join(workerHome, "auth.json"));
 
     const hookCommand = [
       "node",
