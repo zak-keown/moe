@@ -21,10 +21,10 @@ verification:
 status: issues_found
 dispositions:
   fixed: 42
-  stale: 13
+  stale: 14
   skipped: 6
   deferred: 1
-  open: 531
+  open: 530
 ---
 
 # Codebase Review — moe
@@ -962,6 +962,10 @@ Fix: validate the id against `/^[a-zA-Z0-9-]+$/` inside `parseStoryCard` (making
 **Verification:** confirmed
 **Verification evidence:** Reproduced via app.request against the real fanoutRoutes with a stubbed LLM client returning id ../../../../pwned; the write landed five levels above storiesDir with model-controlled content, because writeCards joins card.id into the path and never calls resolveInside from paths.ts, parseStoryCard checks only that id is a present string, and asCardId is a bare cast. Same root defect as CR-040 reached from a second route in the same file.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Same root defect as CR-040 in the same writeCards function, as the finding's own text says ("Same root defect as CR-040 reached from a second route in the same file"). CR-040's fix (73615f4) adds a [a-zA-Z0-9-]+ charset check plus an isSafePath belt directly inside writeCards, which every fanout route (POST /:id, /:id/observations, /:id/failure) funnels through -- confirmed by grep: writeCards(storiesDir, cardTexts, errorLog) is the only call site for all three. Re-ran the CR-040 regression test (a generated card with a traversal id) against the fixed code: rejected, no escape, no write. No separate reproduction needed since the exact code path CR-042 cites is the one CR-040 changed.
 ### CR-043: Two scenario files with the same filename stem share one run id, overwriting evidence and forcing a false batch failure
 **File:** `packages/flight/src/qa/cli/batch.ts`
 **Anchor:** `cardIdForPath` — "v1: filename stem is the row identifier"
