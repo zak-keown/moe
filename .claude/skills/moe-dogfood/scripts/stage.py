@@ -39,13 +39,24 @@ MARKETPLACE = Path.home() / ".moe" / "local-marketplace"
 REPOINTS = {
     "moe-crew": "copy_dist",  # hooks call ${CLAUDE_PLUGIN_ROOT}/dist/emit-event.cjs
     "moe-memory": "global_cli",  # hooks + mcp.json call ./dist/cli.js
+    # SessionStart calls ${CLAUDE_PLUGIN_ROOT}/dist/ensure-statusline.cjs, which
+    # then reads vendor/ccstatusline/ccstatusline.js relative to the same root.
+    # Both travel through the npm package, so neither is in plugins/.
+    "moe-statusline": "copy_dist",
 }
 
 # Where a repointed plugin's runtime actually lives on this machine.
 GLOBAL_PACKAGE = {"moe-memory": "@tc/moe-memory"}
 
-# Which workspace package's dist to copy, for copy_dist plugins.
-DIST_SOURCE = {"moe-crew": "packages/crew/dist"}
+# Which workspace directories to copy, for copy_dist plugins. Each entry maps a
+# source path in the repo to its destination name inside the staged plugin.
+DIST_SOURCE = {
+    "moe-crew": {"packages/crew/dist": "dist"},
+    "moe-statusline": {
+        "packages/statusline/dist": "dist",
+        "packages/statusline/vendor": "vendor",
+    },
+}
 
 
 def fail(msg: str) -> NoReturn:
@@ -83,9 +94,10 @@ def check_prerequisites(repo: Path, registry: dict) -> None:
     for name, kind in REPOINTS.items():
         if kind != "copy_dist":
             continue
-        src = repo / DIST_SOURCE[name]
-        if not src.is_dir():
-            fail(f"{src} not built — run `pnpm build` first ({name} needs it)")
+        for rel in DIST_SOURCE[name]:
+            src = repo / rel
+            if not src.is_dir():
+                fail(f"{src} not built — run `pnpm build` first ({name} needs it)")
 
 
 def backup(dest: Path) -> Path | None:
@@ -104,9 +116,11 @@ def apply_repoint(name: str, staged: Path, repo: Path) -> list[str]:
         return []
 
     if kind == "copy_dist":
-        src = repo / DIST_SOURCE[name]
-        shutil.copytree(src, staged / "dist")
-        return [f"copied {DIST_SOURCE[name]} -> {name}/dist"]
+        notes = []
+        for rel, dest in DIST_SOURCE[name].items():
+            shutil.copytree(repo / rel, staged / dest)
+            notes.append(f"copied {rel} -> {name}/{dest}")
+        return notes
 
     if kind == "global_cli":
         cli = npm_global_root() / GLOBAL_PACKAGE[name] / "dist" / "cli.js"
