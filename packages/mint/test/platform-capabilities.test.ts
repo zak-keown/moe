@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildModel } from '../src/model.js'
+import type { PluginModel } from '../src/model.js'
 import { claudeCode } from '../src/adapters/claude-code.js'
 import { codex } from '../src/adapters/codex.js'
 import { cursor } from '../src/adapters/cursor.js'
@@ -80,6 +81,36 @@ describe('platform emitted capabilities', () => {
       'harnesses:', '  kimi:', '    manifest:', '      skills: null', '      sessionStart: null',
     ].join('\n')))
     expect(kimi.emit(buildModel(dir)).emittedCapabilities).toEqual([])
+  })
+
+  it('derives Claude Code, Cursor, and Codex capabilities from their final manifest content', () => {
+    const withManifestOverride = (target: 'claude-code' | 'cursor' | 'codex', manifest: Record<string, unknown>): PluginModel => ({
+      ...model,
+      config: {
+        ...model.config,
+        components: {
+          ...model.config.components,
+          skills: 'custom-skills',
+          commands: 'custom-commands',
+          agents: 'custom-agents',
+          hooks: 'custom-hooks.json',
+          mcp: 'custom-mcp.json',
+        },
+        harnesses: {
+          ...model.config.harnesses,
+          settings: {
+            ...model.config.harnesses.settings,
+            [target]: { hooks: model.config.harnesses.settings[target]?.hooks ?? 'generated', manifest },
+          },
+        },
+      },
+    })
+
+    expect(claudeCode.emit(withManifestOverride('claude-code', {
+      skills: null, commands: null, agents: null, hooks: null, mcpServers: null,
+    })).emittedCapabilities).toEqual([])
+    expect(cursor.emit(withManifestOverride('cursor', { skills: null, hooks: null })).emittedCapabilities).toEqual([])
+    expect(codex.emit(withManifestOverride('codex', { skills: null })).emittedCapabilities).toEqual([])
   })
 
   it('reports emitted capabilities for an omitted target through a stable diagnostic', () => {

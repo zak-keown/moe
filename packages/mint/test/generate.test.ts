@@ -173,7 +173,57 @@ describe('generate', () => {
         warnings: ['thing not supported'],
       }),
     }
-    expect(() => generate(dir, [synthetic])).toThrow(/unrecognized free-form warnings/)
+    try {
+      generate(dir, [synthetic])
+      throw new Error('expected free-form warning rejection')
+    } catch (error) {
+      expect((error as { diagnostic?: unknown }).diagnostic).toMatchObject({
+        code: 'CAPABILITY_ADAPTER_WARNING_UNRECOGNIZED', plugin: 'kitchen-sink', target: 'synthetic', source: 'moe-mint.yaml', field: 'adapters.synthetic.warnings',
+      })
+    }
+  })
+
+  it('reports a contradictory typed limitation through a stable diagnostic', () => {
+    const dir = freshFixture()
+    const synthetic: HarnessAdapter = {
+      name: 'claude-code',
+      emit: () => ({
+        files: [],
+        limitations: [{ code: 'COMPONENT_OMITTED', component: 'skills', message: 'fixture contradiction' }],
+        emittedCapabilities: ['skill-discovery', 'command-discovery', 'agent-discovery', 'hook-execution', 'mcp-registration', 'bootstrap-routing'],
+      }),
+    }
+    try {
+      generate(dir, [synthetic])
+      throw new Error('expected limitation contradiction')
+    } catch (error) {
+      expect((error as { diagnostic?: unknown }).diagnostic).toMatchObject({
+        code: 'CAPABILITY_LIMITATION_CONTRADICTION', plugin: 'kitchen-sink', target: 'claude-code', source: 'moe-mint.yaml', field: 'targets.claude-code.expected_capabilities',
+      })
+    }
+  })
+
+  it('reports a projection emitting independent output through a stable diagnostic', () => {
+    const dir = freshFixture()
+    const owner: HarnessAdapter = {
+      name: 'claude-code',
+      emit: () => ({
+        files: [], limitations: [],
+        emittedCapabilities: ['skill-discovery', 'command-discovery', 'agent-discovery', 'hook-execution', 'mcp-registration', 'bootstrap-routing'],
+      }),
+    }
+    const projection: HarnessAdapter = {
+      name: 'copilot',
+      emit: () => ({ files: [{ path: 'gen/unexpected.txt', content: 'x' }], limitations: [], emittedCapabilities: [], projectionOwner: 'claude-code' }),
+    }
+    try {
+      generate(dir, [owner, projection])
+      throw new Error('expected projection owner conflict')
+    } catch (error) {
+      expect((error as { diagnostic?: unknown }).diagnostic).toMatchObject({
+        code: 'CAPABILITY_PROJECTION_OWNER_CONFLICT', plugin: 'kitchen-sink', target: 'copilot', source: 'moe-mint.yaml', field: 'targets.copilot.projection_owner',
+      })
+    }
   })
 
   it('dedupes identical-content collisions between adapters', () => {

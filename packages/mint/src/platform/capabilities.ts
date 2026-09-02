@@ -3,6 +3,7 @@ import type { FileSet } from '../fileset.js'
 import type { PluginModel } from '../model.js'
 import type { ComponentSupport, EmissionLimitation } from '../adapters/types.js'
 import { CAPABILITY_IDS, type CapabilityId, type TargetId, type TargetIntent } from '../vocabulary.js'
+import { conformsToGeneratedSchema } from '../validate.js'
 
 const componentCapability = {
   skills: 'skill-discovery',
@@ -57,6 +58,21 @@ function jsonObject(files: FileSet, path: string): Record<string, unknown> | und
   }
 }
 
+function manifestPathSupports(
+  manifest: Record<string, unknown>,
+  field: string,
+  sourcePath: string,
+  defaultPath?: string,
+): boolean {
+  // An absent field invokes only the documented default-discovery location.
+  // A present field must name the exact path actually emitted by this model.
+  return manifest[field] === `./${sourcePath}` || (sourcePath === defaultPath && !(field in manifest))
+}
+
+function generatedFile(files: FileSet, path: string): string | undefined {
+  return files.find((entry) => entry.path === path)?.content
+}
+
 /**
  * Temporary migration oracle for the retired component-support matrix. It is
  * intentionally not used by adapters: direct emissions below are the source
@@ -90,21 +106,37 @@ export function deriveEmittedCapabilities(target: TargetId, model: PluginModel, 
   switch (target) {
     case 'claude-code':
       if (!includes(emitted, '.claude-plugin/plugin.json') || !includes(emitted, '.claude-plugin/marketplace.json')) break
-      if (hasSkills) capabilities.add('skill-discovery')
-      if (hasCommands) capabilities.add('command-discovery')
-      if (hasAgents) capabilities.add('agent-discovery')
-      if (model.hooks !== undefined || hasPrefix(emitted, 'hooks/moe-mint/')) capabilities.add('hook-execution')
-      if (hasMcp) capabilities.add('mcp-registration')
-      if (bootstrapActive && includes(emitted, 'hooks/moe-mint/session-start')) capabilities.add('bootstrap-routing')
+      {
+        const manifest = jsonObject(files, '.claude-plugin/plugin.json')
+        if (manifest === undefined) break
+        if (hasSkills && manifestPathSupports(manifest, 'skills', model.config.components.skills, 'skills')) capabilities.add('skill-discovery')
+        if (hasCommands && manifestPathSupports(manifest, 'commands', model.config.components.commands, 'commands')) capabilities.add('command-discovery')
+        if (hasAgents && manifestPathSupports(manifest, 'agents', model.config.components.agents, 'agents')) capabilities.add('agent-discovery')
+        const bootstrapHooks = manifest.hooks === './hooks/moe-mint/hooks.json' && includes(emitted, 'hooks/moe-mint/session-start')
+        const sourceHooks = model.hooks !== undefined && manifestPathSupports(manifest, 'hooks', model.config.components.hooks, 'hooks/hooks.json')
+        if (bootstrapHooks || sourceHooks) capabilities.add('hook-execution')
+        if (hasMcp && manifestPathSupports(manifest, 'mcpServers', model.config.components.mcp, '.mcp.json')) capabilities.add('mcp-registration')
+        if (bootstrapActive && bootstrapHooks) capabilities.add('bootstrap-routing')
+      }
       break
     case 'cursor':
       if (!includes(emitted, '.cursor-plugin/plugin.json')) break
-      if (hasSkills) capabilities.add('skill-discovery')
-      if (hasPrefix(emitted, 'hooks/moe-mint/')) capabilities.add('hook-execution')
-      if (bootstrapActive && includes(emitted, 'hooks/moe-mint/session-start')) capabilities.add('bootstrap-routing')
+      {
+        const manifest = jsonObject(files, '.cursor-plugin/plugin.json')
+        if (manifest === undefined) break
+        if (hasSkills && manifest.skills === `./${model.config.components.skills}/`) capabilities.add('skill-discovery')
+        const bootstrapHooks = manifest.hooks === './hooks/moe-mint/hooks-cursor.json' && includes(emitted, 'hooks/moe-mint/session-start')
+        if (bootstrapHooks) capabilities.add('hook-execution')
+        if (bootstrapActive && bootstrapHooks) capabilities.add('bootstrap-routing')
+      }
       break
     case 'codex':
-      if (includes(emitted, '.codex-plugin/plugin.json') && includes(emitted, '.agents/plugins/marketplace.json') && hasSkills) {
+      if (
+        includes(emitted, '.codex-plugin/plugin.json')
+        && includes(emitted, '.agents/plugins/marketplace.json')
+        && hasSkills
+        && jsonObject(files, '.codex-plugin/plugin.json')?.skills === `./${model.config.components.skills}/`
+      ) {
         capabilities.add('skill-discovery')
       }
       break
@@ -133,12 +165,23 @@ export function deriveEmittedCapabilities(target: TargetId, model: PluginModel, 
       if (bootstrapActive) capabilities.add('bootstrap-routing')
       break
     case 'agent-plugins-1.0':
-      if (!includes(emitted, 'plugin.json')) break
+      const plugin = generatedFile(files, 'plugin.json')
+      if (plugin === undefined || !conformsToGeneratedSchema('plugin.json', plugin)) break
       capabilities.add('format-conformance')
       if (hasSkills && model.config.components.skills === 'skills') capabilities.add('skill-discovery')
-      if (hasMcp && includes(emitted, 'mcp.json')) {
-        const mcp = files.find((file) => file.path === 'mcp.json')
-        if (mcp !== undefined && /"mcpServers":\s*\{\s*"/.test(mcp.content)) capabilities.add('mcp-registration')
+      const mcp = generatedFile(files, 'mcp.json')
+      const mcpManifest = mcp === undefined ? undefined : jsonObject(files, 'mcp.json')
+      if (
+        hasMcp
+        && mcp !== undefined
+        && conformsToGeneratedSchema('mcp.json', mcp)
+        && mcpManifest !== undefined
+        && typeof mcpManifest.mcpServers === 'object'
+        && mcpManifest.mcpServers !== null
+        && !Array.isArray(mcpManifest.mcpServers)
+        && Object.keys(mcpManifest.mcpServers).length > 0
+      ) {
+        capabilities.add('mcp-registration')
       }
       break
     case 'copilot':
