@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 44
+  fixed: 45
   stale: 14
   skipped: 6
   deferred: 1
-  open: 528
+  open: 527
 ---
 
 # Codebase Review — moe
@@ -740,6 +740,10 @@ Fix: resolve each entry through `resolveInside(contextRoot, rel)` and reject abs
 **Verification:** confirmed
 **Verification evidence:** Reproduced offline: absolute paths outside any context root fed to fileUpload() with a stub page session reached the DOM.setFileInputFiles payload unmodified. Traced tool-defs.ts to adapter.ts to executeFileUpload to chrome.fileUpload with no resolveInside or contextRoot check anywhere, unlike install_cookies which routes its path through resolveInside, the guard paths.ts describes as the one and only path-safety guard for Flight.
 
+**Disposition:** fixed
+**Commit:** `b55b4ac`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-033: Myers trace allocates the full edit-graph frontier per depth, so ordinary page HTML exhausts the heap
 **File:** `packages/flight/src/qa/adapters/web/lib/html-diff.js`
 **Anchor:** `myersDiff`, the `trace.push(v.slice())` inside the `for (let d = 0; d <= max; d++)` loop
