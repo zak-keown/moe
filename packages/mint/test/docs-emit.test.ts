@@ -12,12 +12,13 @@ import { agentPlugins } from '../src/adapters/agent-plugins.js'
 import { kimi } from '../src/adapters/kimi.js'
 import { opencodePluginPath } from '../src/bootstrap/node-package.js'
 import type { HarnessAdapter } from '../src/adapters/types.js'
+import { withV1Policy } from './helpers.js'
 
 const model = buildModel('fixtures/kitchen-sink')
 
 function tmpFixture(yaml: string): string {
   const dir = mkdtempSync(join(tmpdir(), 'mint-docs-emit-'))
-  writeFileSync(join(dir, 'moe-mint.yaml'), yaml)
+  writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy(yaml))
   return dir
 }
 

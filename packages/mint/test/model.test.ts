@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { buildModel } from '../src/model.js'
 import { parseFrontmatter } from '../src/frontmatter.js'
 import { ConfigError } from '../src/config.js'
+import { withV1Policy } from './helpers.js'
 
 const FIXTURE = 'fixtures/kitchen-sink'
 
@@ -50,7 +51,7 @@ describe('buildModel', () => {
 
   it('returns empty arrays for absent component dirs', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-model-'))
-    writeFileSync(join(dir, 'moe-mint.yaml'), 'name: bare\nversion: 1.0.0\ndescription: bare\n')
+    writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy('name: bare\nversion: 1.0.0\ndescription: bare\n'))
     const model = buildModel(dir)
     expect(model.skills).toEqual([])
     expect(model.commands).toEqual([])
@@ -61,7 +62,7 @@ describe('buildModel', () => {
 
   it('sorts agents by their final (frontmatter-overridden) name, not the file-based pre-map name', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-model-'))
-    writeFileSync(join(dir, 'moe-mint.yaml'), 'name: agent-sort\nversion: 1.0.0\ndescription: agent sort fixture\n')
+    writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy('name: agent-sort\nversion: 1.0.0\ndescription: agent sort fixture\n'))
     mkdirSync(join(dir, 'agents'), { recursive: true })
     writeFileSync(join(dir, 'agents', 'zz.md'), '---\nname: aaa\n---\nBody\n')
     writeFileSync(join(dir, 'agents', 'bb.md'), 'Body only, no frontmatter name\n')
@@ -73,14 +74,14 @@ describe('buildModel', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-model-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: bad\nversion: 1.0.0\ndescription: bad\nbootstrap:\n  skill: nope\n',
+      withV1Policy('name: bad\nversion: 1.0.0\ndescription: bad\nbootstrap:\n  skill: nope\n'),
     )
     expect(() => buildModel(dir)).toThrowError(/bootstrap skill "nope" not found/)
   })
 
   it('reports malformed hooks JSON as a ConfigError', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-model-'))
-    writeFileSync(join(dir, 'moe-mint.yaml'), 'name: bad-hooks\nversion: 1.0.0\ndescription: bad hooks\n')
+    writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy('name: bad-hooks\nversion: 1.0.0\ndescription: bad hooks\n'))
     mkdirSync(join(dir, 'hooks'), { recursive: true })
     writeFileSync(join(dir, 'hooks', 'hooks.json'), '{oops')
     expect(() => buildModel(dir)).toThrowError(/not valid JSON/)
@@ -88,14 +89,14 @@ describe('buildModel', () => {
 
   it('reports malformed mcp JSON as a ConfigError', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-model-'))
-    writeFileSync(join(dir, 'moe-mint.yaml'), 'name: bad-mcp\nversion: 1.0.0\ndescription: bad mcp\n')
+    writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy('name: bad-mcp\nversion: 1.0.0\ndescription: bad mcp\n'))
     writeFileSync(join(dir, '.mcp.json'), '{oops')
     expect(() => buildModel(dir)).toThrowError(/not valid JSON/)
   })
 
   it('chains the original SyntaxError as .cause for malformed mcp JSON', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-model-'))
-    writeFileSync(join(dir, 'moe-mint.yaml'), 'name: bad-mcp-cause\nversion: 1.0.0\ndescription: bad mcp cause\n')
+    writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy('name: bad-mcp-cause\nversion: 1.0.0\ndescription: bad mcp cause\n'))
     writeFileSync(join(dir, '.mcp.json'), '{oops')
     try {
       buildModel(dir)
@@ -107,7 +108,7 @@ describe('buildModel', () => {
 
   it('rejects hooks.json containing a JSON null', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-model-'))
-    writeFileSync(join(dir, 'moe-mint.yaml'), 'name: null-hooks\nversion: 1.0.0\ndescription: null hooks\n')
+    writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy('name: null-hooks\nversion: 1.0.0\ndescription: null hooks\n'))
     mkdirSync(join(dir, 'hooks'), { recursive: true })
     writeFileSync(join(dir, 'hooks', 'hooks.json'), 'null')
     expect(() => buildModel(dir)).toThrowError(/hooks\/hooks\.json must contain a JSON object/)
@@ -115,7 +116,7 @@ describe('buildModel', () => {
 
   it('rejects hooks.json containing a JSON array', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-model-'))
-    writeFileSync(join(dir, 'moe-mint.yaml'), 'name: array-hooks\nversion: 1.0.0\ndescription: array hooks\n')
+    writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy('name: array-hooks\nversion: 1.0.0\ndescription: array hooks\n'))
     mkdirSync(join(dir, 'hooks'), { recursive: true })
     writeFileSync(join(dir, 'hooks', 'hooks.json'), '[]')
     expect(() => buildModel(dir)).toThrowError(/hooks\/hooks\.json must contain a JSON object/)
@@ -123,7 +124,7 @@ describe('buildModel', () => {
 
   it('rejects an mcp file containing a JSON string', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-model-'))
-    writeFileSync(join(dir, 'moe-mint.yaml'), 'name: str-mcp\nversion: 1.0.0\ndescription: str mcp\n')
+    writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy('name: str-mcp\nversion: 1.0.0\ndescription: str mcp\n'))
     writeFileSync(join(dir, '.mcp.json'), '"str"')
     expect(() => buildModel(dir)).toThrowError(/\.mcp\.json must contain a JSON object/)
   })

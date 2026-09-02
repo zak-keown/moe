@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { byPathMap, mustGet } from '../helpers.js'
+import { byPathMap, mustGet, withV1Policy } from '../helpers.js'
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -15,7 +15,7 @@ const model = buildModel('fixtures/kitchen-sink')
 
 function tmpFixture(yaml: string): string {
   const dir = mkdtempSync(join(tmpdir(), 'mint-pi-'))
-  writeFileSync(join(dir, 'moe-mint.yaml'), yaml)
+  writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy(yaml))
   return dir
 }
 

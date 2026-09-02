@@ -7,6 +7,7 @@ import { buildModel } from '../src/model.js'
 import { generatedBootstrap } from '../src/bootstrap/generated.js'
 import { writeFileSet } from '../src/fileset.js'
 import { claudeCode } from '../src/adapters/claude-code.js'
+import { withV1Policy } from './helpers.js'
 
 describe('generatedBootstrap', () => {
   it('produces the exact marker/heading/instruction/bullet-list content for kitchen-sink', () => {
@@ -35,7 +36,7 @@ describe('bootstrap.generate mode, executed end-to-end', () => {
     writeFileSync(join(dir, 'skills', 'beta', 'SKILL.md'), '---\nname: beta\ndescription: Handles beta tasks\n---\n\nBody.\n')
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: generate-e2e\nversion: 1.0.0\ndescription: generate-mode end-to-end fixture\nbootstrap: generate\n',
+      withV1Policy('name: generate-e2e\nversion: 1.0.0\ndescription: generate-mode end-to-end fixture\nbootstrap: generate\n'),
     )
 
     const model = buildModel(dir)
