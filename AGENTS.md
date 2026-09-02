@@ -52,7 +52,7 @@ Cite by test name / symbol / quoted sentence, never by line number.
 ## Unguarded prose — read carefully
 
 `PARITY.md`, `ARCHITECTURE.md`, `packages/core/README.md`, `README.md`,
-`.gitignore`, `.gitlab-ci.yml`. No test asserts anything about their contents.
+`.gitignore`. No test asserts anything about their contents.
 Silent failure mode: a stale line-numbered citation surviving a merge and
 reading as verified. Mitigation is the cite-by-name rule above, not
 serialisation.
@@ -109,10 +109,13 @@ consumer of the cdylib elsewhere.
 
 ## What CI runs, and what it does not
 
-CI is one root `.gitlab-ci.yml`: `install`, `lint`, `typecheck`, `test`,
-`build`, `plugins` (which is `pnpm mint:check`), and `provenance` on `node:24`.
-Two path-scoped jobs: `tab` on `rust:latest` for `packages/tab/**`, and `proof`
-on `python:3.12` for `py/proof/**`.
+CI is five workflows under `.github/workflows/`. `ci.yml` runs `lint`,
+`typecheck`, `test`, `build`, `plugins` (which is `pnpm mint:check`), and
+`provenance` on `node:24`. Three path-scoped workflows: `bin.yml` for
+`bin/**`, `tab.yml` on `rust:latest` for `packages/tab/**`, and `proof.yml`
+on `python:3.12` for `py/proof/**`. `publish.yml` runs on tags matching `v*`
+and OIDC-publishes the five `@bubstack/moe-*` packages to npm — no long-lived
+`NPM_TOKEN` (see https://docs.npmjs.com/trusted-publishers).
 
 Not in CI: `pnpm tab:test:bindings` (needs the cdylib built first);
 `glass test:chrome` (needs Chrome); `memory test:model` (needs a downloaded

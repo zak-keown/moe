@@ -1,0 +1,85 @@
+# Publishes the five @bubstack/moe-* packages to npm when a tag matching /^v/
+# is pushed. Authenticates via OIDC "trusted publishing" — pnpm/npm mint a
+# short-lived ID token per job via ACTIONS_ID_TOKEN_REQUEST_URL, verified
+# against a trusted publisher pre-registered on each package at npmjs.com.
+# No long-lived NPM_TOKEN is used. See https://docs.npmjs.com/trusted-publishers
+#
+# npm's OIDC client on GitHub Actions discovers the audience itself; unlike the
+# GitLab port, no `id_tokens.aud:` block is needed. `permissions: id-token: write`
+# is the only load-bearing thing beyond a normal build.
+#
+# The `environment: release` binds this workflow to a GitHub Environment of the
+# same name — add required reviewers or a wait timer there for extra safety.
+# Delete the line if you don't want an environment; the trusted-publisher config
+# on npm then must NOT specify one either (they have to match).
+name: publish
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    container: node:24
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/cache@v4
+        with:
+          path: .pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm config set store-dir .pnpm-store
+      - run: pnpm install --frozen-lockfile
+
+      # DIAGNOSTIC: mint an OIDC token with npm's audience and decode its claims
+      # so a mismatch with each npm trusted-publisher config surfaces on the
+      # first release. JWT payloads are not secret — the signature is what npm
+      # verifies. Remove once OIDC lands green.
+      - name: DIAG — OIDC claims
+        run: |
+          python3 - <<'PY'
+          import base64, json, os, urllib.request
+          url = os.environ.get('ACTIONS_ID_TOKEN_REQUEST_URL')
+          hdr = os.environ.get('ACTIONS_ID_TOKEN_REQUEST_TOKEN')
+          if not url or not hdr:
+              print('no ID token endpoint in env — permissions: id-token: write missing?')
+              raise SystemExit(1)
+          req = urllib.request.Request(
+              f"{url}&audience=npm:registry.npmjs.org",
+              headers={'Authorization': f'Bearer {hdr}'},
+          )
+          tok = json.loads(urllib.request.urlopen(req).read())['value']
+          print(f'token length: {len(tok)}')
+          parts = tok.split('.')
+          if len(parts) >= 2:
+              payload = parts[1] + '=' * (-len(parts[1]) % 4)
+              claims = json.loads(base64.urlsafe_b64decode(payload))
+              for k in ['iss','sub','aud','repository','repository_owner',
+                        'ref','ref_type','workflow','workflow_ref',
+                        'environment','event_name','job_workflow_ref']:
+                  print(f'  {k}: {claims.get(k)}')
+          PY
+
+      # --no-git-checks skips pnpm's "not on default branch" refusal — a tag
+      # pipeline is a detached HEAD, which pnpm otherwise rejects. `access` is
+      # on each package's own publishConfig, so it does not need to appear here.
+      # Each package's own prepack: `pnpm run build` rebuilds dist/ before pack.
+      - name: publish 5 packages
+        run: >-
+          pnpm publish
+          --filter @bubstack/moe-memory
+          --filter @bubstack/moe-glass
+          --filter @bubstack/moe-core
+          --filter @bubstack/moe-crew
+          --filter @bubstack/moe-backstory
+          --no-git-checks

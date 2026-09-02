@@ -1,8 +1,8 @@
 # Contributing to Moe
 
-> Twenty internal people, GitLab origin, no public contributors. That deletes
-> most of an open-source `CONTRIBUTING.md` and leaves the part that costs real
-> time: getting a clean checkout to build and stay built.
+> Twenty internal people, no public contributors. That deletes most of an
+> open-source `CONTRIBUTING.md` and leaves the part that costs real time:
+> getting a clean checkout to build and stay built.
 
 Machine-readable rules for agents live in [AGENTS.md](./AGENTS.md); the
 [CLAUDE.md](./CLAUDE.md) file imports it. This file is the narrative — the same
@@ -54,7 +54,7 @@ buys and what it defers:
 |---|---|---|
 | hooks | Linux shell scripts run directly; `run-hook.cmd`'s cmd half is never reached | needs a bash (Git for Windows); the wrapper now *says so* instead of exiting silently |
 | `moe crew` | tmux works | no story at all — tmux does not exist |
-| CI | none needed; `.gitlab-ci.yml` runs `node:24` | would need a Windows runner |
+| CI | none needed; `.github/workflows/ci.yml` runs `node:24` on `ubuntu-latest` | add `windows-latest` to the matrix when the story matures |
 | line endings | native LF | `core.autocrlf=true` breaks the cmd/bash polyglot — see `.gitattributes` |
 
 Two things are already done natively-correctly, because they were free: every
@@ -92,7 +92,7 @@ pnpm mint:check     # asserts /plugins/ is byte-identical from source
 
 | Command | Why it is outside | When to run it |
 |---|---|---|
-| `pnpm tab:test` | cargo; not in CI's node:24 image | any change under `packages/tab/**` |
+| `pnpm tab:test` | cargo; `ci.yml` runs on `node:24`, `tab.yml` on `rust:latest` and is path-scoped | any change under `packages/tab/**` |
 | `pnpm tab:test:bindings` | needs the cdylib built first, and it is the only check that the C ABI rename landed identically in the Rust FFI, the committed header and all three bindings (`PARITY.md` "The C ABI rename is the load-bearing one") | any change to the FFI or a binding |
 | `pnpm proof:test` | Python; needs `uv` | any change under `py/proof/**` |
 | `pnpm mint:check` | it regenerates and diffs `/plugins/`; not a test | any change that could alter generated plugin output — mint config, skill frontmatter, `skill-tiers.yaml`, the marketplace, `@bubstack/moe-mint`'s own source, or the generator script |
@@ -112,10 +112,12 @@ Both work. Prefer `pnpm --filter` for a single package; prefer
 
 ### What CI verifies, and what it does not
 
-One `.gitlab-ci.yml` at the root drives everything. Jobs: `install`, `lint`,
-`typecheck`, `test`, `build`, `plugins` (which is `pnpm mint:check`), and
-`provenance` on `node:24`. Two path-scoped jobs: `tab` on `rust:latest` for
-`packages/tab/**`, and `proof` on `python:3.12` for `py/proof/**`.
+Five workflow files under `.github/workflows/` drive everything. `ci.yml`:
+`lint`, `typecheck`, `test`, `build`, `plugins` (which is `pnpm mint:check`),
+and `provenance`, all on `node:24`. Three path-scoped workflows: `bin.yml`
+for `bin/**`, `tab.yml` on `rust:latest` for `packages/tab/**`, and
+`proof.yml` on `python:3.12` for `py/proof/**`. `publish.yml` runs on tags
+matching `v*` and OIDC-publishes to npm.
 
 Not in CI:
 
@@ -173,7 +175,7 @@ schedule in `.planning/backlog/WAVES.md` documents why: line numbers rot the
 moment prose is edited, and a stale `:230` citation lands on real prose and
 reads as verified. Guarded files (see `AGENTS.md`) are self-checking; unguarded
 prose (`README.md`, `ARCHITECTURE.md`, `PARITY.md`, `packages/core/README.md`,
-`.gitignore`, `.gitlab-ci.yml`) is not.
+`.gitignore`) is not.
 
 ## 4. Imported-work maintenance
 
@@ -212,13 +214,12 @@ load-bearing repository conventions.
 - Voice and tone across the prose — owned by `moe-tone-and-branding`.
 - Building the `/plugins/` mint step — owned by `DO-NOW-3` (merged). This
   document only records how to use it.
-- `CODEOWNERS`, GitLab issue templates, and a git-hooks mechanism.
+- `CODEOWNERS`, GitHub issue templates, and a git-hooks mechanism.
   `ARCHITECTURE.md` §6 records that the second is owed and the third exists
   only as intent. No backlog slug owns either yet. Recorded here rather than
   papered over.
 - CLA, code of conduct, issue-triage policy, "good first issue". Twenty
-  internal people on a self-hosted GitLab with no public contributors; none of
-  it applies.
+  internal people, no public contributors; none of it applies.
 
 ## 7. Gates that the docs themselves run
 

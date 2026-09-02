@@ -1,0 +1,35 @@
+# Path-scoped: the dispatcher is Node stdlib only and every namespace is stubbed
+# out in the vitest — a docs edit does not need to re-run it. See bin/moe.js and
+# ARCHITECTURE.md §7.1 for what this covers.
+#
+# GitHub Actions has no `on.push.paths` firing on tag pushes, so no equivalent of
+# GitLab's `if: $CI_COMMIT_TAG → when: never` guard is needed — path-scoped
+# workflows simply do not run on tag events.
+name: bin
+
+on:
+  push:
+    branches: [main]
+    paths: [bin/**]
+  pull_request:
+    branches: [main]
+    paths: [bin/**]
+
+concurrency:
+  group: bin-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bin:
+    runs-on: ubuntu-latest
+    container: node:24
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/cache@v4
+        with:
+          path: .pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm config set store-dir .pnpm-store
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm bin:test

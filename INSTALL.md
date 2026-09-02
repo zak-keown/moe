@@ -75,7 +75,7 @@ readable output for automation.
 `moe-install --apply` runs `moe-doctor` first (skip with `--skip-doctor` if
 you know what you're doing), then:
 
-1. `claude plugin marketplace add https://gitlab.com/moe-ai/moe.git`
+1. `claude plugin marketplace add https://github.com/zak-keown/moe.git`
 2. `claude plugin install <name>@moe` for each of the five plugins:
    `moe`, `moe-backstory`, `moe-crew`, `moe-memory`, `moe-glass`.
 
