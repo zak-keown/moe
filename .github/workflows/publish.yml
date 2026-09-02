@@ -72,11 +72,11 @@ jobs:
           PY
 
       # `--tag` decision from the git tag: `vX.Y.Z-anything` → `next`;
-      # `vX.Y.Z` → `latest`. pnpm publish (unlike npm publish since v6) does
-      # NOT auto-detect SemVer pre-release identifiers and skip the `latest`
-      # dist-tag — without --tag it always promotes to latest, which on
-      # v0.1.2-rc.1 made `npm install @bubstack/moe-core` serve the canary
-      # instead of 0.1.1. GITHUB_REF_NAME is the tag name for a tag push.
+      # `vX.Y.Z` → `latest`. Neither pnpm publish (in older releases) nor npm
+      # publish autodetects SemVer pre-release identifiers reliably enough to
+      # trust — without an explicit --tag, a canary like v0.1.2-rc.1 can end
+      # up promoted to `latest` and shadow the stable line. GITHUB_REF_NAME is
+      # the tag name for a tag push.
       - name: pick dist-tag
         id: dt
         run: |
@@ -87,17 +87,29 @@ jobs:
           fi
           echo "dist-tag chosen: $(cat "$GITHUB_OUTPUT" | tail -1)"
 
-      # --no-git-checks skips pnpm's "not on default branch" refusal — a tag
-      # pipeline is a detached HEAD, which pnpm otherwise rejects. `access` is
-      # on each package's own publishConfig, so it does not need to appear here.
-      # Each package's own prepack: `pnpm run build` rebuilds dist/ before pack.
+      # Build every package once up front so each `npm publish` can pack a
+      # ready dist/ without leaning on turbo's dep graph from inside a single
+      # package dir.
+      - run: pnpm build
+
+      # Why npm and not pnpm here: `pnpm publish` (and `pnpm pack`) strips the
+      # POSIX exec bit off every packed file — verified against v0.1.2's
+      # published tarball, where every hook script shipped as -rw-r--r-- even
+      # though git has them as 100755 and `npm pack` preserves them. That made
+      # `${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd` unexecutable, so Claude
+      # Code's SessionStart / Stop hooks failed on every install with
+      # "permission denied". `npm publish` per-package fixes it at the root.
+      #
+      # OIDC works identically for both tools: the trusted-publisher config
+      # lives on the package on npmjs.com, not in the client. `access` comes
+      # from each package's own publishConfig.
       - name: publish 5 packages
-        run: >-
-          pnpm publish
-          --tag ${{ steps.dt.outputs.tag }}
-          --filter @bubstack/moe-memory
-          --filter @bubstack/moe-glass
-          --filter @bubstack/moe-core
-          --filter @bubstack/moe-crew
-          --filter @bubstack/moe-backstory
-          --no-git-checks
+        env:
+          NPM_DIST_TAG: ${{ steps.dt.outputs.tag }}
+        run: |
+          set -eu
+          for pkg in memory glass core crew backstory; do
+            echo "::group::publish @bubstack/moe-$pkg"
+            (cd "packages/$pkg" && npm publish --tag "$NPM_DIST_TAG")
+            echo "::endgroup::"
+          done

@@ -1,6 +1,6 @@
 {
   "name": "moe-memory",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Semantic recall over past sessions and journal entries.",
   "author": {
     "name": "Zak Keown",
