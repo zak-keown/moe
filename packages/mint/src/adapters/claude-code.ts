@@ -93,7 +93,12 @@ function marketplaceManifest(model: PluginModel): Record<string, unknown> {
     description: config.marketplace?.description ?? `Development marketplace for ${config.name}`,
     plugins: [entry],
   }
-  if (config.author) marketplace.owner = config.author
+  // `owner` is required by Claude Code's marketplace descriptor schema, but
+  // `author` is optional in moe-mint.yaml (and `moe-mint init` does not
+  // scaffold one) — an authorless config previously omitted `owner`
+  // entirely, so `claude plugin validate --strict` rejected the descriptor.
+  // Fall back to a name-only object so it is always well-formed.
+  marketplace.owner = config.author ?? { name: config.name }
   return marketplace
 }
 
