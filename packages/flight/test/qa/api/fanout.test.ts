@@ -446,4 +446,47 @@ describe("Fanout failure API", () => {
     const body = await res.json();
     expect(body.error).toContain("not a failure");
   });
+
+  // CR-041: the /:id/:mode route composed the raw `id` param straight into
+  // a results/<runId>/result.json path with no containment check. Percent-
+  // encoded slashes reach c.req.param intact even though the Hono router
+  // blocks raw "../" in the URL, so this is reachable over HTTP. A
+  // result.json OUTSIDE the results tree, with status "pass" rather than
+  // "fail", makes a successful read distinguishable from "not found":
+  // pre-fix, the preflight check runs against the outside file's real
+  // content and returns 400 "result is not a failure"; post-fix, the
+  // traversal-shaped id must never resolve at all.
+  test("CR-041: a traversal-shaped id never reaches an outside result.json", async () => {
+    const outsideDir = mkdtempSync(join(tmpdir(), "moe-flight-fanout-outside-"));
+    writeFileSync(
+      join(outsideDir, "result.json"),
+      JSON.stringify({
+        runId: "outside",
+        scenario: "outside-card",
+        status: "pass",
+        summary: "should never be read",
+        reasoning: "should never be read",
+        observations: [],
+        evidence: { screenshots: [], log: "run.jsonl" },
+        duration_ms: 1,
+      }),
+    );
+
+    try {
+      const app = new Hono();
+      app.route(
+        "/api/fanout",
+        fanoutRoutes(makeConfig(projectRoot), () => makeFakeClient("")),
+      );
+
+      // Exactly 3 percent-encoded ".." segments — <projectRoot>/.moe-flight/
+      // results/<id> is 3 levels below projectRoot's parent, which is where
+      // outsideDir (a sibling temp dir) lives.
+      const traversal = `..%2f..%2f..%2f${outsideDir.split("/").pop()}`;
+      const res = await app.request(`/api/fanout/${traversal}/failure`, { method: "POST" });
+      expect(res.status).toBe(404);
+    } finally {
+      rmSync(outsideDir, { recursive: true, force: true });
+    }
+  });
 });
