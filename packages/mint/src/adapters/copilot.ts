@@ -1,5 +1,5 @@
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmitResult } from './types.js'
+import type { HarnessAdapter } from './types.js'
 import { marketplaceName } from './shared.js'
 
 // GitHub Copilot CLI reads Claude Code's marketplace descriptor and installs
@@ -29,19 +29,10 @@ function installDoc(model: PluginModel): string {
 
 export const copilot: HarnessAdapter = {
   name: 'copilot',
-  support: {
-    skills: 'full',
-    commands: 'full',
-    agents: 'full',
-    hooks: 'full',
-    mcp: 'full',
-    bootstrap: 'full',
-  },
   installDoc,
-  emit(model: PluginModel): EmitResult {
-    const warnings = model.config.harnesses.exclude.includes('claude-code')
-      ? ['copilot requires the claude-code adapter; no installable layout will be emitted']
-      : []
-    return { files: [], warnings }
+  emit(_model: PluginModel) {
+    // Copilot consumes Claude's validated marketplace layout. Generation
+    // replaces the empty local set with its projection owner's capabilities.
+    return { files: [], limitations: [], emittedCapabilities: [], projectionOwner: 'claude-code' as const }
   },
 }

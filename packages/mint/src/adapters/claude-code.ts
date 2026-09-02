@@ -2,7 +2,8 @@ import { deepMerge } from '../fileset.js'
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
 import type { MintConfig } from '../config.js'
-import type { HarnessAdapter, EmitResult } from './types.js'
+import type { HarnessAdapter } from './types.js'
+import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { sessionStartScript, runHookCmd, mergedClaudeHooks } from '../bootstrap/shell-hook.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
 import { baseManifestFields, json, claudeMarketplaceTarget, marketplaceName, bootstrapEmitsHooks } from './shared.js'
@@ -154,18 +155,9 @@ function installDoc(model: PluginModel): string {
 
 export const claudeCode: HarnessAdapter = {
   name: 'claude-code',
-  support: {
-    skills: 'full',
-    commands: 'full',
-    agents: 'full',
-    hooks: 'full',
-    mcp: 'full',
-    bootstrap: 'full',
-  },
   installDoc,
-  emit(model: PluginModel): EmitResult {
+  emit(model: PluginModel) {
     const { config } = model
-    const warnings: string[] = []
     const files: GeneratedFile[] = [
       { path: '.claude-plugin/plugin.json', content: json(pluginManifest(model)) },
       { path: '.claude-plugin/marketplace.json', content: json(marketplaceManifest(model)) },
@@ -207,6 +199,6 @@ export const claudeCode: HarnessAdapter = {
         )
       }
     }
-    return { files, warnings }
+    return { files, limitations: [], emittedCapabilities: deriveEmittedCapabilities('claude-code', model, files) }
   },
 }

@@ -36,7 +36,7 @@ describe('kimi adapter', () => {
   })
 
   it('warns about hooks, commands, agents, and mcp not being emitted for kimi', () => {
-    expect(result.warnings).toEqual([
+    expect(result.limitations.map((limitation) => limitation.message)).toEqual([
       'hooks are not emitted for kimi',
       'commands are not emitted for kimi',
       'agents are not emitted for kimi',
@@ -44,18 +44,8 @@ describe('kimi adapter', () => {
     ])
   })
 
-  it('declares expected support levels', () => {
-    // bootstrap is 'partial', not 'full': kimi's sessionStart only supports a
-    // named bootstrap skill -- bootstrap.generate mode is not supported (see
-    // the bootstrap.generate warning test below).
-    expect(kimi.support).toEqual({
-      skills: 'full',
-      commands: 'none',
-      agents: 'none',
-      hooks: 'none',
-      mcp: 'none',
-      bootstrap: 'partial',
-    })
+  it('derives skill discovery and named-skill bootstrap routing', () => {
+    expect(result.emittedCapabilities).toEqual(['skill-discovery', 'bootstrap-routing'])
   })
 })
 
@@ -92,7 +82,7 @@ describe('kimi adapter with bootstrap.none', () => {
     const result = kimi.emit(noneModel)
     const manifest = JSON.parse(result.files.find((f) => f.path === '.kimi-plugin/plugin.json')!.content)
     expect('sessionStart' in manifest).toBe(false)
-    expect(result.warnings).toEqual([])
+    expect(result.limitations).toEqual([])
   })
 })
 
@@ -105,7 +95,7 @@ describe('kimi adapter with bootstrap.generate', () => {
     )
     const generateModel = buildModel(dir)
     const result = kimi.emit(generateModel)
-    expect(result.warnings).toEqual([
+    expect(result.limitations.map((limitation) => limitation.message)).toEqual([
       'kimi sessionStart requires a named bootstrap skill; generate mode is not supported on kimi',
     ])
     const manifest = JSON.parse(result.files.find((f) => f.path === '.kimi-plugin/plugin.json')!.content)

@@ -8,20 +8,21 @@ import type { HarnessAdapter } from '../src/adapters/index.js'
 import { opencode } from '../src/adapters/opencode.js'
 import { pi } from '../src/adapters/pi.js'
 import { withV1Policy } from './helpers.js'
-
-const fullSupport = {
-  skills: 'full',
-  commands: 'full',
-  agents: 'full',
-  hooks: 'full',
-  mcp: 'full',
-  bootstrap: 'full',
-} as const
+import { parse, stringify } from 'yaml'
+import { TARGET_IDS, type CapabilityId, type TargetId } from '../src/vocabulary.js'
 
 function freshFixture(): string {
   const dir = mkdtempSync(join(tmpdir(), 'mint-gen-'))
   cpSync('fixtures/kitchen-sink', dir, { recursive: true })
   return dir
+}
+
+function withTargetCapabilities(yaml: string, capabilities: Partial<Record<TargetId, readonly CapabilityId[]>>): string {
+  const config = parse(withV1Policy(yaml)) as { targets: Record<TargetId, { intent: string; expected_capabilities?: readonly CapabilityId[] }> }
+  for (const target of TARGET_IDS) {
+    if (config.targets[target].intent !== 'omit') config.targets[target].expected_capabilities = capabilities[target] ?? []
+  }
+  return stringify(config)
 }
 
 describe('generate', () => {
@@ -80,9 +81,10 @@ describe('generate', () => {
 
     const yaml = readFileSync(join(dir, 'moe-mint.yaml'), 'utf8')
     writeFileSync(join(dir, 'moe-mint.yaml'), yaml
-      .replace('  claude-code: { intent: preview, expected_capabilities: [], operating_systems: [macos] }', '  claude-code: { intent: omit }')
+      .replace('  claude-code: { intent: preview, expected_capabilities: [skill-discovery, command-discovery, agent-discovery, hook-execution, mcp-registration, bootstrap-routing], operating_systems: [macos] }', '  claude-code: { intent: omit }')
+      .replace('  copilot: { intent: preview, expected_capabilities: [skill-discovery, command-discovery, agent-discovery, hook-execution, mcp-registration, bootstrap-routing], operating_systems: [macos] }', '  copilot: { intent: omit }')
       .replace('harnesses:\n  claude-code:\n    manifest:\n      homepage: https://example.com/kitchen-sink\n', 'harnesses:\n')
-      .replace('harnesses:\n', 'harnesses:\n  exclude: [claude-code]\n'))
+      .replace('harnesses:\n', 'harnesses:\n  exclude: [claude-code, copilot]\n'))
     const result = generate(dir)
 
     expect(result.pruned).toContain('docs/install/claude-code.md')
@@ -103,12 +105,13 @@ describe('generate', () => {
     const dir = freshFixture()
     const yaml = readFileSync(join(dir, 'moe-mint.yaml'), 'utf8')
     const patched = yaml
-      .replace('  claude-code: { intent: preview, expected_capabilities: [], operating_systems: [macos] }', '  claude-code: { intent: omit }')
+      .replace('  claude-code: { intent: preview, expected_capabilities: [skill-discovery, command-discovery, agent-discovery, hook-execution, mcp-registration, bootstrap-routing], operating_systems: [macos] }', '  claude-code: { intent: omit }')
+      .replace('  copilot: { intent: preview, expected_capabilities: [skill-discovery, command-discovery, agent-discovery, hook-execution, mcp-registration, bootstrap-routing], operating_systems: [macos] }', '  copilot: { intent: omit }')
       .replace('harnesses:\n  claude-code:\n    manifest:\n      homepage: https://example.com/kitchen-sink\n', 'harnesses:\n')
-      .replace('harnesses:\n', 'harnesses:\n  exclude: [claude-code]\n')
+      .replace('harnesses:\n', 'harnesses:\n  exclude: [claude-code, copilot]\n')
     writeFileSync(join(dir, 'moe-mint.yaml'), patched)
     const result = generate(dir)
-    expect(result.adaptersRun).toEqual(['cursor', 'codex', 'kimi', 'opencode', 'pi', 'agent-plugins-1.0', 'copilot'])
+    expect(result.adaptersRun).toEqual(['cursor', 'codex', 'kimi', 'opencode', 'pi', 'agent-plugins-1.0'])
     expect(existsSync(join(dir, '.claude-plugin/plugin.json'))).toBe(false)
   })
 
@@ -126,13 +129,11 @@ describe('generate', () => {
     const dir = freshFixture()
     const a: HarnessAdapter = {
       name: 'adapter-a',
-      support: fullSupport,
-      emit: () => ({ files: [{ path: 'gen/collide.txt', content: 'a' }], warnings: [] }),
+      emit: () => ({ files: [{ path: 'gen/collide.txt', content: 'a' }], limitations: [], emittedCapabilities: [] }),
     }
     const b: HarnessAdapter = {
       name: 'adapter-b',
-      support: fullSupport,
-      emit: () => ({ files: [{ path: 'gen/collide.txt', content: 'b' }], warnings: [] }),
+      emit: () => ({ files: [{ path: 'gen/collide.txt', content: 'b' }], limitations: [], emittedCapabilities: [] }),
     }
     expect(() => generate(dir, [a, b])).toThrowError(/both emit/)
     try {
@@ -144,25 +145,25 @@ describe('generate', () => {
     expect(existsSync(join(dir, MANIFEST_PATH))).toBe(false)
   })
 
-  it('prefixes warnings with the adapter name', () => {
+  it('rejects unrecognized free-form adapter warnings', () => {
     const dir = freshFixture()
     const synthetic: HarnessAdapter = {
       name: 'synthetic',
-      support: fullSupport,
       emit: () => ({
         files: [{ path: 'gen/x.txt', content: 'x' }],
+        limitations: [],
+        emittedCapabilities: [],
         warnings: ['thing not supported'],
       }),
     }
-    const result = generate(dir, [synthetic])
-    expect(result.warnings).toEqual(['[synthetic] thing not supported'])
+    expect(() => generate(dir, [synthetic])).toThrow(/unrecognized free-form warnings/)
   })
 
   it('dedupes identical-content collisions between adapters', () => {
     const dir = freshFixture()
     const file = { path: 'gen/shared.txt', content: 'same', executable: undefined }
-    const a = { name: 'adapter-a', support: fullSupport, emit: () => ({ files: [{ ...file }], warnings: [] }) }
-    const b = { name: 'adapter-b', support: fullSupport, emit: () => ({ files: [{ ...file }], warnings: [] }) }
+    const a = { name: 'adapter-a', emit: () => ({ files: [{ ...file }], limitations: [], emittedCapabilities: [] }) }
+    const b = { name: 'adapter-b', emit: () => ({ files: [{ ...file }], limitations: [], emittedCapabilities: [] }) }
     const result = generate(dir, [a, b])
     expect(result.files.filter((f) => f.path === 'gen/shared.txt')).toHaveLength(1)
     expect(result.warnings).toEqual([])
@@ -170,16 +171,16 @@ describe('generate', () => {
 
   it('still rejects differing-content collisions', () => {
     const dir = freshFixture()
-    const a = { name: 'adapter-a', support: fullSupport, emit: () => ({ files: [{ path: 'gen/x.txt', content: 'one' }], warnings: [] }) }
-    const b = { name: 'adapter-b', support: fullSupport, emit: () => ({ files: [{ path: 'gen/x.txt', content: 'two' }], warnings: [] }) }
+    const a = { name: 'adapter-a', emit: () => ({ files: [{ path: 'gen/x.txt', content: 'one' }], limitations: [], emittedCapabilities: [] }) }
+    const b = { name: 'adapter-b', emit: () => ({ files: [{ path: 'gen/x.txt', content: 'two' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [a, b])).toThrowError(/both emit/)
   })
 
   it('rejects an adapter emitting over a source component path', () => {
     const dir = freshFixture()
-    const evil = { name: 'evil', support: fullSupport, emit: () => ({ files: [{ path: 'moe-mint.yaml', content: 'gotcha' }], warnings: [] }) }
+    const evil = { name: 'evil', emit: () => ({ files: [{ path: 'moe-mint.yaml', content: 'gotcha' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [evil])).toThrowError(/would overwrite source/)
-    const evil2 = { name: 'evil2', support: fullSupport, emit: () => ({ files: [{ path: 'skills/greeting/SKILL.md', content: 'x' }], warnings: [] }) }
+    const evil2 = { name: 'evil2', emit: () => ({ files: [{ path: 'skills/greeting/SKILL.md', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [evil2])).toThrowError(/would overwrite source/)
   })
 
@@ -195,27 +196,27 @@ describe('generate', () => {
     ].join('\n')))
     mkdirSync(join(dir, 'skills'))
     writeFileSync(join(dir, 'skills', 'demo.md'), '# Demo Skill\n')
-    const evilAdapter = { name: 'evil', support: fullSupport, emit: () => ({ files: [{ path: 'skills/demo.md', content: 'overwritten' }], warnings: [] }) }
+    const evilAdapter = { name: 'evil', emit: () => ({ files: [{ path: 'skills/demo.md', content: 'overwritten' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [evilAdapter])).toThrowError(/would overwrite source/)
   })
 
   it('isSourcePath: allows non-.md siblings under commands/agents but still blocks .md and any skills path', () => {
     const dir = freshFixture()
-    const toml = { name: 'toml', support: fullSupport, emit: () => ({ files: [{ path: 'commands/x.toml', content: 'x' }], warnings: [] }) }
+    const toml = { name: 'toml', emit: () => ({ files: [{ path: 'commands/x.toml', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [toml])).not.toThrow()
 
-    const md = { name: 'md', support: fullSupport, emit: () => ({ files: [{ path: 'commands/x.md', content: 'x' }], warnings: [] }) }
+    const md = { name: 'md', emit: () => ({ files: [{ path: 'commands/x.md', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [md])).toThrowError(/would overwrite source/)
 
-    const skillFile = { name: 'skill-file', support: fullSupport, emit: () => ({ files: [{ path: 'skills/x/whatever.txt', content: 'x' }], warnings: [] }) }
+    const skillFile = { name: 'skill-file', emit: () => ({ files: [{ path: 'skills/x/whatever.txt', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [skillFile])).toThrowError(/would overwrite source/)
   })
 
   it('prunes files dropped from the new generation when unmodified', () => {
     const dir = freshFixture()
-    const a = { name: 'a', support: fullSupport, emit: () => ({ files: [{ path: 'gen/old.txt', content: 'v1' }], warnings: [] }) }
+    const a = { name: 'a', emit: () => ({ files: [{ path: 'gen/old.txt', content: 'v1' }], limitations: [], emittedCapabilities: [] }) }
     generate(dir, [a])
-    const b = { name: 'a', support: fullSupport, emit: () => ({ files: [{ path: 'gen2/new.txt', content: 'v2' }], warnings: [] }) }
+    const b = { name: 'a', emit: () => ({ files: [{ path: 'gen2/new.txt', content: 'v2' }], limitations: [], emittedCapabilities: [] }) }
     const result = generate(dir, [b])
     expect(result.pruned).toEqual(['gen/old.txt'])
     expect(existsSync(join(dir, 'gen/old.txt'))).toBe(false)
@@ -225,10 +226,10 @@ describe('generate', () => {
 
   it('leaves hand-modified stale files and warns', () => {
     const dir = freshFixture()
-    const a = { name: 'a', support: fullSupport, emit: () => ({ files: [{ path: 'gen/old.txt', content: 'v1' }], warnings: [] }) }
+    const a = { name: 'a', emit: () => ({ files: [{ path: 'gen/old.txt', content: 'v1' }], limitations: [], emittedCapabilities: [] }) }
     generate(dir, [a])
     writeFileSync(join(dir, 'gen/old.txt'), 'edited')
-    const result = generate(dir, [{ name: 'a', support: fullSupport, emit: () => ({ files: [], warnings: [] }) }])
+    const result = generate(dir, [{ name: 'a', emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }) }])
     expect(result.pruned).toEqual([])
     expect(result.warnings.join('\n')).toMatch(/stale generated file gen\/old\.txt/)
     expect(existsSync(join(dir, 'gen/old.txt'))).toBe(true)
@@ -238,8 +239,7 @@ describe('generate', () => {
     const dir = freshFixture()
     const synthetic: HarnessAdapter = {
       name: 'synthetic',
-      support: fullSupport,
-      emit: () => ({ files: [{ path: 'gen/file.txt', content: 'v1' }], warnings: [] }),
+      emit: () => ({ files: [{ path: 'gen/file.txt', content: 'v1' }], limitations: [], emittedCapabilities: [] }),
     }
     generate(dir, [synthetic])
 
@@ -258,7 +258,7 @@ describe('generate', () => {
 
     try {
       // Regenerate with empty adapter — should skip the unsafe entry and warn
-      const result = generate(dir, [{ name: 'empty', support: fullSupport, emit: () => ({ files: [], warnings: [] }) }])
+      const result = generate(dir, [{ name: 'empty', emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }) }])
 
       expect(existsSync(outsideFile)).toBe(true)
       expect(result.pruned).not.toContain('../escape.txt')
@@ -340,6 +340,8 @@ describe('generate', () => {
   it('warns about a stray root mcp.json when the MCP source default was not customized away from .mcp.json', () => {
     const dir = freshFixture()
     rmSync(join(dir, '.mcp.json'))
+    const yaml = readFileSync(join(dir, 'moe-mint.yaml'), 'utf8')
+    writeFileSync(join(dir, 'moe-mint.yaml'), yaml.replaceAll('mcp-registration, ', '').replaceAll(', mcp-registration', ''))
     writeFileSync(join(dir, 'mcp.json'), JSON.stringify({ mcpServers: {} }))
     const result = generate(dir)
     expect(result.warnings).toContain(
@@ -355,14 +357,14 @@ describe('generate', () => {
 
   it('does not warn about a stray root mcp.json when components.mcp is explicitly set to mcp.json', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-gen-mcp-explicit-'))
-    writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy([
+    writeFileSync(join(dir, 'moe-mint.yaml'), withTargetCapabilities([
       'name: explicit-mcp-json',
       'version: 1.0.0',
       'description: components.mcp explicitly set to mcp.json',
       'components:',
       '  mcp: mcp.json',
       'bootstrap: none',
-    ].join('\n')))
+    ].join('\n'), { 'claude-code': ['mcp-registration'], 'agent-plugins-1.0': ['format-conformance'], copilot: ['mcp-registration'] }))
     writeFileSync(join(dir, 'mcp.json'), JSON.stringify({ mcpServers: { demo: { command: 'node' } } }))
     const result = generate(dir)
     expect(result.warnings.some((w) => w.includes('found mcp.json at the plugin root'))).toBe(false)
@@ -370,19 +372,21 @@ describe('generate', () => {
 
   it('succeeds with agent-plugins-1.0 active when components.mcp collides with the spec on-disk mcp.json name, warning instead of throwing', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-gen-mcp-collision-'))
-    writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy([
+    writeFileSync(join(dir, 'moe-mint.yaml'), withTargetCapabilities([
       'name: explicit-mcp-json',
       'version: 1.0.0',
       'description: components.mcp explicitly set to mcp.json',
       'components:',
       '  mcp: mcp.json',
       'bootstrap: none',
-    ].join('\n')))
+    ].join('\n'), { 'claude-code': ['mcp-registration'], 'agent-plugins-1.0': ['format-conformance'], copilot: ['mcp-registration'] }))
     writeFileSync(join(dir, 'mcp.json'), JSON.stringify({ mcpServers: { demo: { command: 'node' } } }))
     const result = generate(dir)
-    expect(result.warnings).toContain(
-      '[agent-plugins-1.0] mcp.json is occupied by the source MCP config (components.mcp); agent-plugins-1.0 mcp output skipped — rename the source to .mcp.json',
-    )
+    expect(result.emissions['agent-plugins-1.0']?.limitations).toContainEqual({
+      code: 'COMPONENT_OMITTED',
+      component: 'mcp',
+      message: 'mcp.json is occupied by the source MCP config (components.mcp); agent-plugins-1.0 mcp output skipped — rename the source to .mcp.json',
+    })
     expect(result.files.some((f) => f.path === 'mcp.json')).toBe(false)
     expect(existsSync(join(dir, 'plugin.json'))).toBe(true)
   })
@@ -391,7 +395,9 @@ describe('generate', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-gen-inprocess-bootstrap-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      withV1Policy('name: inprocess-demo\nversion: 1.0.0\ndescription: in-process adapters generate-mode fixture\nbootstrap: generate\n'),
+      withTargetCapabilities('name: inprocess-demo\nversion: 1.0.0\ndescription: in-process adapters generate-mode fixture\nbootstrap: generate\n', {
+        opencode: ['bootstrap-routing'], pi: ['bootstrap-routing'],
+      }),
     )
     const result = generate(dir, [opencode, pi])
     expect(result.adaptersRun).toEqual(['opencode', 'pi'])

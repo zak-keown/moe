@@ -22,26 +22,16 @@ function tmpFixture(yaml: string): string {
   return dir
 }
 
-const fullSupport = {
-  skills: 'full',
-  commands: 'full',
-  agents: 'full',
-  hooks: 'full',
-  mcp: 'full',
-  bootstrap: 'full',
-} as const
-
 function adapterWithInstallDoc(name: string, body: string): HarnessAdapter {
   return {
     name,
-    support: fullSupport,
-    emit: () => ({ files: [], warnings: [] }),
+    emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }),
     installDoc: () => body,
   }
 }
 
 function adapterWithoutInstallDoc(name: string): HarnessAdapter {
-  return { name, support: fullSupport, emit: () => ({ files: [], warnings: [] }) }
+  return { name, emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }) }
 }
 
 describe('emitDocs install-doc files', () => {
@@ -103,21 +93,20 @@ describe('emitDocs support-matrix.md', () => {
         '',
         '# kitchen-sink harness support matrix',
         '',
-        '| Harness | skills | commands | agents | hooks | mcp | bootstrap |',
-        '|---|---|---|---|---|---|---|',
-        '| claude-code | full | full | full | full | full | full |',
-        '| cursor | full | none | none | partial | none | full |',
-        '| codex | full | none | none | none | none | partial |',
-        '| kimi | full | none | none | none | none | partial |',
-        '| opencode | full | full | partial | none | none | full |',
-        '| pi | full | none | none | none | none | full |',
-        '| agent-plugins-1.0 | full | none | none | none | full | none |',
-        '| copilot | full | full | full | full | full | full |',
+        '| Harness | Emitted capabilities |',
+        '|---|---|',
+        '| claude-code | generate a plugin to inspect |',
+        '| cursor | generate a plugin to inspect |',
+        '| codex | generate a plugin to inspect |',
+        '| kimi | generate a plugin to inspect |',
+        '| opencode | generate a plugin to inspect |',
+        '| pi | generate a plugin to inspect |',
+        '| agent-plugins-1.0 | generate a plugin to inspect |',
+        '| copilot | generate a plugin to inspect |',
         '',
         '## Notes',
         '',
         '- Copilot consumes the Claude Code layout through `.claude-plugin/marketplace.json`; keep the `claude-code` adapter enabled when targeting Copilot.',
-        "- codex's `bootstrap: partial` means native skill discovery only, with no active injection hook.",
         '- Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.',
         '',
       ].join('\n'),

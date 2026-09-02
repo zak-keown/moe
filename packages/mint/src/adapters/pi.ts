@@ -1,6 +1,7 @@
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmitResult } from './types.js'
+import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { json, parseRepo } from './shared.js'
 import { nodePackageManifest, piExtensionPath, bootstrapContentPath } from '../bootstrap/node-package.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
@@ -215,17 +216,9 @@ function installDoc(model: PluginModel): string {
 
 export const pi: HarnessAdapter = {
   name: 'pi',
-  support: {
-    skills: 'full',
-    commands: 'none',
-    agents: 'none',
-    hooks: 'none',
-    mcp: 'none',
-    bootstrap: 'full',
-  },
   installDoc,
-  emit(model: PluginModel): EmitResult {
-    const warnings: string[] = []
+  emit(model: PluginModel) {
+    const limitations: EmissionLimitation[] = []
     const files: GeneratedFile[] = [
       { path: 'package.json', content: json(nodePackageManifest(model)) },
       extensionFile(model),
@@ -238,11 +231,11 @@ export const pi: HarnessAdapter = {
       files.push({ path: GENERATED_BOOTSTRAP_PATH, content: generatedBootstrap(model) })
     }
 
-    if (model.commands.length) warnings.push('commands are not emitted for pi')
-    if (model.agents.length) warnings.push('agents are not emitted for pi')
-    if (model.hooks !== undefined) warnings.push('hooks are not emitted for pi')
-    if (model.mcp !== undefined) warnings.push('mcp servers are not emitted for pi')
+    if (model.commands.length) limitations.push({ code: 'COMPONENT_OMITTED', component: 'commands', message: 'commands are not emitted for pi' })
+    if (model.agents.length) limitations.push({ code: 'COMPONENT_OMITTED', component: 'agents', message: 'agents are not emitted for pi' })
+    if (model.hooks !== undefined) limitations.push({ code: 'COMPONENT_OMITTED', component: 'hooks', message: 'hooks are not emitted for pi' })
+    if (model.mcp !== undefined) limitations.push({ code: 'COMPONENT_OMITTED', component: 'mcp', message: 'mcp servers are not emitted for pi' })
 
-    return { files, warnings }
+    return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('pi', model, files) }
   },
 }

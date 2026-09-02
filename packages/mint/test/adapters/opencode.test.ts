@@ -32,15 +32,10 @@ describe('opencode adapter', () => {
   const result = opencode.emit(model)
   const byPath = byPathMap(result.files)
 
-  it('declares expected support levels', () => {
-    expect(opencode.support).toEqual({
-      skills: 'full',
-      commands: 'full',
-      agents: 'partial',
-      hooks: 'none',
-      mcp: 'none',
-      bootstrap: 'full',
-    })
+  it('derives capabilities from emitted OpenCode projection files', () => {
+    expect(result.emittedCapabilities).toEqual([
+      'skill-discovery', 'command-discovery', 'agent-discovery', 'bootstrap-routing',
+    ])
   })
 
   it('emits package.json with the exact ground-truth shape', () => {
@@ -98,7 +93,7 @@ describe('opencode adapter', () => {
   })
 
   it('warns about hooks, mcp, and dropped agent tool restrictions', () => {
-    expect(result.warnings).toEqual([
+    expect(result.limitations.map((limitation) => limitation.message)).toEqual([
       'hooks are not emitted for opencode',
       'mcp servers are not emitted for opencode in v1',
       'agent tool restrictions are not translated for opencode',
@@ -126,7 +121,7 @@ describe('opencode adapter without hooks/mcp/tools-bearing agents', () => {
     const dir = tmpFixture('name: plain\nversion: 1.0.0\ndescription: plain fixture\nbootstrap: none\n')
     const plainModel = buildModel(dir)
     const result = opencode.emit(plainModel)
-    expect(result.warnings).toEqual([])
+    expect(result.limitations).toEqual([])
   })
 })
 

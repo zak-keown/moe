@@ -4,14 +4,18 @@ import { buildModel } from './model.js'
 import { writeFileSet, type FileSet, type GeneratedFile } from './fileset.js'
 import { saveManifest, loadManifest, sha256, type GenerationManifest } from './manifest.js'
 import { adapters, type HarnessAdapter } from './adapters/index.js'
+import type { AdapterEmission } from './adapters/types.js'
 import { emitDocs, injectReadme } from './docs-emit.js'
 import { ConfigError, type MintConfig } from './config.js'
+import { validateTargetEmission } from './platform/capabilities.js'
+import { TARGET_IDS, type TargetId } from './vocabulary.js'
 
 export const TOOL_VERSION = '0.0.0'
 
 export interface GenerateResult {
   files: FileSet
   warnings: string[]
+  emissions: Partial<Record<TargetId, AdapterEmission>>
   adaptersRun: string[]
   pruned: string[]
   readmeInjected: boolean
@@ -69,13 +73,50 @@ export function generate(
   const active = adapterList.filter((a) => !excluded.has(a.name))
 
   const warnings: string[] = []
+  const emissions: Partial<Record<TargetId, AdapterEmission>> = {}
+  const emittedByAdapter = new Map<HarnessAdapter, AdapterEmission>()
   const byPath = new Map<string, { owner: string; file: GeneratedFile }>()
   for (const adapter of active) {
     const result = adapter.emit(model)
+    emittedByAdapter.set(adapter, result)
+    if ('warnings' in result) {
+      throw new ConfigError(`adapter "${adapter.name}" returned unrecognized free-form warnings`)
+    }
     mergeFiles(byPath, adapter.name, result.files, model.config)
-    warnings.push(...result.warnings.map((w) => `[${adapter.name}] ${w}`))
+    if ((TARGET_IDS as readonly string[]).includes(adapter.name)) {
+      const target = adapter.name as TargetId
+      if (result.projectionOwner !== undefined) continue
+      const policy = model.config.targets[target]
+      emissions[target] = {
+        ...result,
+        emittedCapabilities: validateTargetEmission(model.config.name, target, policy, result.emittedCapabilities, result.limitations),
+      }
+    }
   }
-  mergeFiles(byPath, 'docs', emitDocs(model, active), model.config)
+  for (const adapter of active) {
+    const result = emittedByAdapter.get(adapter)
+    if (result === undefined) throw new Error(`adapter "${adapter.name}" did not produce an emission`)
+    if (result.projectionOwner === undefined || !(TARGET_IDS as readonly string[]).includes(adapter.name)) continue
+    const target = adapter.name as TargetId
+    const owner = emissions[result.projectionOwner]
+    if (owner === undefined) {
+      throw new ConfigError(`adapter "${target}" requires projection owner "${result.projectionOwner}" to emit first`)
+    }
+    if (result.files.length !== 0 || result.emittedCapabilities.length !== 0) {
+      throw new ConfigError(`adapter "${target}" projection must not emit independent files or capabilities`)
+    }
+    emissions[target] = {
+      ...result,
+      emittedCapabilities: validateTargetEmission(
+        model.config.name,
+        target,
+        model.config.targets[target],
+        owner.emittedCapabilities,
+        result.limitations,
+      ),
+    }
+  }
+  mergeFiles(byPath, 'docs', emitDocs(model, active, emissions), model.config)
   const files: FileSet = [...byPath.values()].map((v) => v.file)
 
   // A corrupt manifest shouldn't dead-end generate the way it does validate:
@@ -200,5 +241,5 @@ export function generate(
   const readme = injectReadme(root, model, active)
   if (readme.warning) warnings.push(readme.warning)
 
-  return { files, warnings, adaptersRun: active.map((a) => a.name), pruned, readmeInjected: readme.injected }
+  return { files, warnings, emissions, adaptersRun: active.map((a) => a.name), pruned, readmeInjected: readme.injected }
 }

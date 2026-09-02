@@ -108,15 +108,8 @@ describe('pi adapter', () => {
   const result = pi.emit(model)
   const byPath = byPathMap(result.files)
 
-  it('declares expected support levels', () => {
-    expect(pi.support).toEqual({
-      skills: 'full',
-      commands: 'none',
-      agents: 'none',
-      hooks: 'none',
-      mcp: 'none',
-      bootstrap: 'full',
-    })
+  it('derives capabilities from emitted Pi projection files', () => {
+    expect(result.emittedCapabilities).toEqual(['skill-discovery', 'bootstrap-routing'])
   })
 
   it('emits package.json with the exact ground-truth shape', () => {
@@ -171,7 +164,7 @@ describe('pi adapter', () => {
   })
 
   it('warns about commands, agents, hooks, and mcp', () => {
-    expect(result.warnings).toEqual([
+    expect(result.limitations.map((limitation) => limitation.message)).toEqual([
       'commands are not emitted for pi',
       'agents are not emitted for pi',
       'hooks are not emitted for pi',
@@ -200,7 +193,7 @@ describe('pi adapter without commands/agents/hooks/mcp', () => {
     const dir = tmpFixture('name: plain\nversion: 1.0.0\ndescription: plain fixture\nbootstrap: none\n')
     const plainModel = buildModel(dir)
     const result = pi.emit(plainModel)
-    expect(result.warnings).toEqual([])
+    expect(result.limitations).toEqual([])
   })
 })
 

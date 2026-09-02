@@ -21,15 +21,12 @@ describe('copilot adapter', () => {
     expect(getAdapter('copilot')).toBe(copilot)
   })
 
-  it('emits no Copilot-specific files and reports effective Claude-layout support', () => {
-    expect(copilot.emit(model)).toEqual({ files: [], warnings: [] })
-    expect(copilot.support).toEqual({
-      skills: 'full',
-      commands: 'full',
-      agents: 'full',
-      hooks: 'full',
-      mcp: 'full',
-      bootstrap: 'full',
+  it('emits no Copilot-specific files and delegates the projection to Claude Code', () => {
+    expect(copilot.emit(model)).toMatchObject({
+      files: [],
+      emittedCapabilities: [],
+      limitations: [],
+      projectionOwner: 'claude-code',
     })
   })
 
@@ -47,7 +44,7 @@ describe('copilot adapter', () => {
     expect(doc).toContain('copilot plugin install demo@moe')
   })
 
-  it('warns when the required claude-code adapter is excluded', () => {
+  it('records the Claude projection owner even when called without Claude output', () => {
     const withoutClaude = modelFromYaml([
       'name: demo',
       'version: 1.0.0',
@@ -55,8 +52,6 @@ describe('copilot adapter', () => {
       'harnesses:',
       '  exclude: [claude-code]',
     ].join('\n'))
-    expect(copilot.emit(withoutClaude).warnings).toEqual([
-      'copilot requires the claude-code adapter; no installable layout will be emitted',
-    ])
+    expect(copilot.emit(withoutClaude).projectionOwner).toBe('claude-code')
   })
 })
