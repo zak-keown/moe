@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { initDatabase, insertExchange } from "../src/db.js";
+import { EXCLUSION_MARKER } from "../src/sync.js";
 import type { ConversationExchange } from "../src/types.js";
 import { verifyIndex } from "../src/verify.js";
 import { suppressConsole } from "./test-utils.js";
@@ -151,6 +152,38 @@ describe("verifyIndex", () => {
 
     const result = await verifyIndex();
     expect(result.missing.length).toBe(0);
+  });
+
+  it("does not flag a DO-NOT-INDEX conversation as missing (CR-075/CR-076)", async () => {
+    // This is exactly what sync.ts produces for a marked conversation: it is
+    // archived (copied) but deliberately never summarized, because its
+    // summarize gate is `shouldQueueForSummary(summaryPath) &&
+    // !shouldSkipConversation(destFile)`. No summary file exists — the same
+    // shape verifyIndex otherwise reports as "missing".
+    const projectArchive = path.join(archiveDir, "test-project");
+    fs.mkdirSync(projectArchive, { recursive: true });
+
+    const conversationPath = path.join(projectArchive, "marked-conversation.jsonl");
+    const messages = [
+      JSON.stringify({
+        type: "user",
+        message: { role: "user", content: `Please don't index this. ${EXCLUSION_MARKER}` },
+        timestamp: "2024-01-01T00:00:00Z",
+      }),
+      JSON.stringify({
+        type: "assistant",
+        message: { role: "assistant", content: "Understood." },
+        timestamp: "2024-01-01T00:00:01Z",
+      }),
+    ];
+    fs.writeFileSync(conversationPath, messages.join("\n"));
+    // Deliberately no summary file.
+
+    const result = await verifyIndex();
+
+    expect(result.missing.some((m) => m.path === conversationPath)).toBe(false);
+    // Still tracked as found, so it is never separately reported as orphaned.
+    expect(result.orphaned.some((o) => o.path === conversationPath)).toBe(false);
   });
 
   it("detects orphaned database entries", async () => {

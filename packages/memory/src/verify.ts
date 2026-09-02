@@ -4,6 +4,7 @@ import { getAllExchanges, getFileLastIndexed, initDatabase } from "./db.js";
 import { parseConversation } from "./parser.js";
 import { findJsonlFiles, getArchiveDir, getExcludedProjects } from "./paths.js";
 import { isErroredSentinel } from "./summary-sentinel.js";
+import { shouldSkipConversation } from "./sync.js";
 
 export interface VerificationResult {
   missing: Array<{ path: string; reason: string }>;
@@ -60,6 +61,18 @@ export async function verifyIndex(): Promise<VerificationResult> {
 
       const conversationPath = path.join(projectPath, file);
       foundFiles.add(conversationPath);
+
+      // A conversation the user marked DO-NOT-INDEX (CR-075/CR-076) has no
+      // summary by design — sync.ts's summarize gate is
+      // `shouldQueueForSummary(summaryPath) && !shouldSkipConversation(destFile)`,
+      // so it never gets one. Reporting that as "missing" turned a respected
+      // opt-out into an apparent index defect, and `index --repair` would then
+      // re-index and externally summarize exactly the conversation the user
+      // excluded. It is still tracked in `foundFiles` above so it is never
+      // reported as orphaned either.
+      if (shouldSkipConversation(conversationPath)) {
+        continue;
+      }
 
       const summaryPath = conversationPath.replace(".jsonl", "-summary.txt");
 
@@ -156,6 +169,15 @@ export async function repairIndex(
   const toReindex = [...issues.missing.map((m) => m.path), ...issues.outdated.map((o) => o.path)];
 
   for (const conversationPath of toReindex) {
+    // Defense in depth (CR-075/CR-076): verifyIndex no longer classifies a
+    // marked conversation as missing, but `issues` can be handed in from an
+    // older database state (a saved --verify report, a caller that built its
+    // own VerificationResult), so refuse to summarize or index one here too.
+    if (shouldSkipConversation(conversationPath)) {
+      console.log(`Skipping DO-NOT-INDEX conversation: ${conversationPath}`);
+      continue;
+    }
+
     console.log(`Re-indexing: ${conversationPath}`);
     try {
       // Extract project name from path
