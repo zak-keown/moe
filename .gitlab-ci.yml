@@ -172,40 +172,14 @@ publish:
     NPM_ID_TOKEN:
       aud: https://registry.npmjs.org
   script:
-    # DIAGNOSTIC: decode and print the OIDC JWT claims, then hit npm's
-    # OIDC exchange endpoint directly to see the verbatim error body
-    # (pnpm's own error strips it to "Unknown error"). Remove once OIDC
-    # lands green. JWT payloads are not secret — the signature is what
-    # npm verifies.
-    - |
-      python3 - <<'PY'
-      import base64, json, os
-      tok = os.environ.get('NPM_ID_TOKEN', '')
-      print(f'NPM_ID_TOKEN present: {bool(tok)}  length: {len(tok)}')
-      if tok:
-          parts = tok.split('.')
-          print(f'segments: {len(parts)}')
-          if len(parts) >= 2:
-              payload = parts[1] + '=' * (-len(parts[1]) % 4)
-              claims = json.loads(base64.urlsafe_b64decode(payload))
-              for k in ['iss','sub','aud','namespace_path','project_path','ref','ref_type','ref_path','ref_protected','ci_config_ref_uri','ci_config_sha','environment','pipeline_source']:
-                  print(f'  {k}: {claims.get(k)}')
-    - |
-      # Reproduce pnpm's OIDC exchange call verbatim (Bearer header, empty
-      # body, one endpoint per package) and print the response body so
-      # npm's rejection reason surfaces intact (pnpm strips it to "Unknown
-      # error"). One iteration per package because the endpoint's package
-      # segment matters — a mismatched trusted publisher on one package
-      # 401s only that one.
-      for PKG in memory glass core crew backstory; do
-        echo "=== POST oidc/token/exchange/package/@bubstack%2Fmoe-$PKG ==="
-        curl -s -o /tmp/npm-oidc-resp -w 'HTTP %{http_code}\n' \
-          -X POST "https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/@bubstack%2Fmoe-$PKG" \
-          -H "Accept: application/json" \
-          -H "Authorization: Bearer $NPM_ID_TOKEN" \
-          -H "Content-Length: 0"
-        echo "--- body ---"; head -c 2000 /tmp/npm-oidc-resp; echo
-      done
+    # DIAGNOSTIC (single bash block — a previous try used two `- |` entries
+    # and GitLab's YAML merge fused them, leaving the python heredoc
+    # unterminated when bash re-read the fused script). Prints the OIDC
+    # JWT claims (safe — payloads are public), then reproduces pnpm's
+    # own exchange call verbatim per package so npm's rejection body is
+    # visible (pnpm strips it to "Unknown error"). Remove once OIDC
+    # lands green.
+    - bash scripts/diagnose-oidc.sh
     - >-
       pnpm publish
       --filter @bubstack/moe-memory
