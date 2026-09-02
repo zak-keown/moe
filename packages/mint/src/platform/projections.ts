@@ -18,6 +18,7 @@ export interface PluginProjectionRecord {
 interface ProjectionProvenance {
   plugin: ResolvedPlugin
   validation: GenerationValidation
+  emissions: Readonly<Partial<Record<TargetId, AdapterEmission>>>
 }
 
 const projectionProvenance = new WeakMap<PluginProjectionRecord, ProjectionProvenance>()
@@ -52,7 +53,7 @@ function projectionRecords(
     if (
       provenance === undefined
       || provenance.plugin !== plugin
-      || record.emissions !== provenance.validation.emissions
+      || record.emissions !== provenance.emissions
       || !isCanonicalGenerationFor(provenance.validation, generationIdentity(plugin))
     ) {
       throw new Error(`projection record for ${plugin.id} lacks a current validated generation`)
@@ -69,6 +70,23 @@ function generationIdentity(plugin: ResolvedPlugin): CanonicalGenerationIdentity
   }
 }
 
+function immutableEmissions(
+  emissions: Readonly<Partial<Record<TargetId, AdapterEmission>>>,
+): Readonly<Partial<Record<TargetId, AdapterEmission>>> {
+  const snapshot: Partial<Record<TargetId, AdapterEmission>> = {}
+  for (const target of TARGET_IDS) {
+    const emission = emissions[target]
+    if (emission === undefined) continue
+    snapshot[target] = Object.freeze({
+      ...emission,
+      files: Object.freeze(emission.files.map((file) => Object.freeze({ ...file }))) as AdapterEmission['files'],
+      limitations: Object.freeze(emission.limitations.map((limitation) => Object.freeze({ ...limitation }))),
+      emittedCapabilities: Object.freeze([...emission.emittedCapabilities]),
+    })
+  }
+  return Object.freeze(snapshot)
+}
+
 /** Bind a plugin to the exact result of a real adapter validation/emission pass. */
 export function projectionRecordForCurrentGeneration(
   plugin: ResolvedPlugin,
@@ -77,8 +95,9 @@ export function projectionRecordForCurrentGeneration(
   if (!isCanonicalGenerationFor(validation, generationIdentity(plugin))) {
     throw new Error(`projection record for ${plugin.id} lacks a current canonical generation`)
   }
-  const record = Object.freeze({ plugin, emissions: validation.emissions })
-  projectionProvenance.set(record, { plugin, validation })
+  const emissions = immutableEmissions(validation.emissions)
+  const record = Object.freeze({ plugin, emissions })
+  projectionProvenance.set(record, { plugin, validation, emissions })
   return record
 }
 

@@ -1,14 +1,17 @@
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { adapters } from '../src/adapters/index.js'
-import { validateGeneration } from '../src/generate.js'
+import { adapters, type HarnessAdapter } from '../src/adapters/index.js'
+import { validateCanonicalGeneration, validateGeneration } from '../src/generate.js'
 import { resolvePlatform } from '../src/platform/load.js'
 import {
   currentProjectionRecords,
   projectionRecordForCurrentGeneration,
+  renderMarketplace,
+  renderPublicCatalog,
   resolvePublishMatrix,
   type PluginProjectionRecord,
 } from '../src/platform/projections.js'
+import { TARGET_IDS } from '../src/vocabulary.js'
 
 const REPO_ROOT = join(import.meta.dirname, '../../..')
 
@@ -79,5 +82,56 @@ describe('publish matrix', () => {
     expect(() => projectionRecordForCurrentGeneration(plugin, validation)).toThrow(
       'current canonical generation',
     )
+  })
+
+  it('keeps canonical validation complete when mutation of the exported adapter collection is attempted', async () => {
+    const platform = await resolvePlatform(REPO_ROOT)
+    const [plugin] = platform.plugins
+    if (plugin === undefined) throw new Error('expected a resolved plugin')
+    const mutableAdapters = adapters as unknown as HarnessAdapter[]
+    const originalAdapters = [...mutableAdapters]
+    let mutationError: unknown
+    let validation: ReturnType<typeof validateCanonicalGeneration>
+    try {
+      try {
+        mutableAdapters.splice(0)
+      } catch (error) {
+        mutationError = error
+      }
+      validation = validateCanonicalGeneration({
+        sourcePath: plugin.sourcePath,
+        configPath: plugin.configPath,
+        configSource: plugin.config.source,
+      })
+    } finally {
+      if (mutableAdapters.length !== originalAdapters.length) {
+        mutableAdapters.splice(0, mutableAdapters.length, ...originalAdapters)
+      }
+    }
+
+    expect(mutationError).toBeInstanceOf(TypeError)
+    expect(validation.adaptersRun).toEqual([...TARGET_IDS])
+    expect(Object.keys(validation.emissions).sort()).toEqual([...TARGET_IDS].sort())
+  })
+
+  it('keeps projection outputs and provenance unchanged after an emission-mutation attempt', async () => {
+    const platform = await resolvePlatform(REPO_ROOT)
+    const records = currentProjectionRecords(platform)
+    const marketplace = renderMarketplace(platform, records)
+    const catalog = renderPublicCatalog(platform, records)
+    const matrix = resolvePublishMatrix(platform, records)
+    const [record] = records
+    const claude = record?.emissions['claude-code']
+    if (record === undefined || claude === undefined || claude.files[0] === undefined) {
+      throw new Error('expected a Claude emission with generated files')
+    }
+    const mutableEmissions = record.emissions as Record<string, unknown>
+
+    expect(() => { delete mutableEmissions['claude-code'] }).toThrow(TypeError)
+    expect(() => { (claude.emittedCapabilities as string[]).push('tampered') }).toThrow(TypeError)
+    expect(() => { claude.files[0]!.content = 'tampered' }).toThrow(TypeError)
+    expect(renderMarketplace(platform, records)).toBe(marketplace)
+    expect(renderPublicCatalog(platform, records)).toBe(catalog)
+    expect(resolvePublishMatrix(platform, records)).toEqual(matrix)
   })
 })
