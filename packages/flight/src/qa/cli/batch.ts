@@ -30,10 +30,24 @@ export interface BatchOptions {
 
 type RunOneFn = (opts: RunOneOptions) => Promise<RunOneSummary>;
 
-function cardIdForPath(p: string): CardId {
-  // v1: filename stem is the row identifier. Stable for queued rows
-  // (no parse needed) and for parse-failure rows.
-  return asCardId(basename(p, extname(p)));
+/**
+ * Assign a card id per scenario path, disambiguating filename-stem
+ * collisions (CR-043): two scenario files with the same stem in
+ * different directories (`suiteA/login.md`, `suiteB/login.md`) must not
+ * collapse onto one card id — that causes `runRunSet` to execute one
+ * card twice and abandon the other, destroying its evidence and
+ * corrupting the batch summary. First occurrence of a stem keeps the
+ * bare stem; subsequent collisions get a `-2`, `-3`, ... suffix, which
+ * keeps the id within the `[a-zA-Z0-9-]+` charset `parseRunId` requires.
+ */
+function assignCardIds(paths: string[]): CardId[] {
+  const seen = new Map<string, number>();
+  return paths.map((p) => {
+    const stem = basename(p, extname(p));
+    const count = (seen.get(stem) ?? 0) + 1;
+    seen.set(stem, count);
+    return asCardId(count === 1 ? stem : `${stem}-${count}`);
+  });
 }
 
 function makeBatchObserver(
@@ -72,7 +86,8 @@ function makeBatchObserver(
 }
 
 export async function runBatch(opts: BatchOptions, runOneImpl: RunOneFn = runOne): Promise<number> {
-  const cards = opts.scenarioPaths.map((p) => ({ scenarioPath: p, id: cardIdForPath(p) }));
+  const cardIds = assignCardIds(opts.scenarioPaths);
+  const cards = opts.scenarioPaths.map((p, i) => ({ scenarioPath: p, id: cardIds[i]! }));
   const resultsRoot = flightPath(opts.config.projectRoot, opts.config.stateDirName, "results");
   const useTable = !opts.silent && opts.format !== "jsonl";
   const table = useTable
@@ -85,7 +100,6 @@ export async function runBatch(opts: BatchOptions, runOneImpl: RunOneFn = runOne
       })
     : null;
 
-  const cardIds = cards.map((c) => c.id);
   const useRunSet = opts.passes > 1 || cardIds.length > 1;
 
   if (useRunSet) {
