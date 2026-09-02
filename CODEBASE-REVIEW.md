@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 2
+  fixed: 3
   stale: 2
   skipped: 0
   deferred: 0
-  open: 589
+  open: 588
 ---
 
 # Codebase Review — moe
@@ -1852,6 +1852,10 @@ Fix: point the loader at an absolute path, `exec node --import "file://$REPO_ROO
 **Verification:** confirmed-lower
 **Verification evidence:** Reproduced ERR_MODULE_NOT_FOUND when running the launcher by a repo-root-relative path, and confirmed tsx resolves from any cwd inside packages/flight because Node walks up to packages/flight/node_modules. The README literal command (cd to the git toplevel, then ./examples/todo/run-web.sh) fails earlier with No such file or directory in the monorepo layout and never reaches the tsx error, so the failure is not on the documented path; it hits a caller invoking the script by full path from outside packages/flight.
 
+**Disposition:** fixed
+**Commit:** `a07ca6f`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-049: The run-input snapshot copies the credential context into a directory the API serves wholesale during a live run
 
 **File:** `packages/flight/src/qa/runs/snapshot.ts`
