@@ -142,6 +142,60 @@ describe('chrome-ws-lib: bridge state reset on Chrome restart', () => {
     assert.notEqual(bridge1, bridge2, 'fresh bridge instance after reset');
   });
 
+  it('ensureBridge recovers after the root WebSocket drops mid-attach, before any bridge ever attached (CR-055)', async () => {
+    // Simulates "Chrome exits, crashes, or is killed between the WebSocket handshake
+    // and the bridge's first Target.setDiscoverTargets reply" — i.e. a bridgePromise
+    // rejection where state.browserBridge was NEVER set. The stale-bridge check in
+    // ensureBridge must not depend on state.browserBridge being truthy, or every
+    // subsequent call re-attaches over the same dead browserSession forever.
+    function makeDropMidAttachWsClient() {
+      return function WebSocketClient() {
+        const listeners = { message: null, close: null, error: null };
+        let connected = false;
+        return {
+          on(event, fn) { listeners[event] = fn; },
+          send() {
+            // The socket dies before any reply to the first command arrives.
+            queueMicrotask(() => {
+              connected = false;
+              if (listeners.close) listeners.close();
+            });
+          },
+          close() { connected = false; if (listeners.close) listeners.close(); },
+          isConnected() { return connected; },
+          async connect() { connected = true; },
+        };
+      };
+    }
+
+    let wsInstances = 0;
+    const TrackingWsClient = function WebSocketClient(...args) {
+      wsInstances++;
+      // First Chrome dies mid-attach; a fresh Chrome on retry behaves normally.
+      const factory = wsInstances === 1 ? makeDropMidAttachWsClient() : makeFakeWebSocketClient();
+      return factory(...args);
+    };
+
+    const session = createSession({
+      host: '127.0.0.1', port: 9222,
+      _testFakes: {
+        chromeHttp: makeFakeChromeHttp(),
+        WebSocketClient: TrackingWsClient,
+      },
+    });
+
+    await assert.rejects(() => session.state.ensureBridge(), /closed|CLOSED/);
+    assert.equal(session.state.browserBridge, null, 'bridge never attached on the failed attempt');
+    assert.equal(session.state.browserSession.isConnected(), false, 'browserSession is dead after the drop');
+
+    // A normal retry (Chrome relaunched by ensureChromeRunning) must actually
+    // re-attach instead of reusing the same dead browserSession/bridgePromise.
+    const bridge = await session.state.ensureBridge();
+    assert.ok(bridge, 'ensureBridge recovered after the mid-attach drop');
+    assert.equal(typeof bridge.attachPageSession, 'function');
+    assert.ok(wsInstances >= 2, 'a fresh WebSocket was constructed on retry');
+  });
+
   it('ensureBridge auto-resets stale bridge when browserSession.isConnected() is false', async () => {
     // Track how many WebSocketClient instances are constructed
     let wsInstances = 0;
