@@ -1,6 +1,6 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
-import { join } from "path";
+import { basename, join } from "path";
 import { anthropicToolResultMessages } from "../../../src/qa/models/anthropic.js";
 
 export function makeRunDir(events: Array<Record<string, unknown>>): string {
@@ -44,6 +44,22 @@ export function writeCapture(runDir: string, name: string, content: string): str
 
 export function cleanup(dir: string): void {
   rmSync(dir, { recursive: true, force: true });
+}
+
+/**
+ * Write a file directly under the OS tmpdir — a sibling of any `runDir`
+ * `makeRunDir` produces (they're all `mkdtempSync(join(tmpdir(), ...))`),
+ * for path-traversal tests (CR-047). The filename carries a random
+ * suffix so parallel test workers never collide on the same path.
+ * Returns both the run-relative reference a crafted `tool_result` row
+ * would use (`../<name>`) and the absolute path, so the caller can
+ * register the absolute path with `cleanup`.
+ */
+export function writeOutsideRunDir(content: string): { rel: string; abs: string } {
+  const name = `outside-secret-${Date.now()}-${Math.random().toString(36).slice(2)}.txt`;
+  const abs = join(tmpdir(), name);
+  writeFileSync(abs, content);
+  return { rel: `../${name}`, abs };
 }
 
 /** Tiny 1x1 PNG (transparent) — for image-rehydration tests. */

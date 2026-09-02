@@ -7,6 +7,7 @@ import {
   ONE_PIXEL_PNG,
   writeArtifact,
   writeCapture,
+  writeOutsideRunDir,
   writeScreenshot,
 } from "./fixtures.js";
 
@@ -434,6 +435,61 @@ describe("rebuildMessages — text rehydration", () => {
       content: Array<{ content: string }>;
     };
     expect(userTurn.content[0].content).toBe("THE FULL TEXT THE AGENT SAW");
+  });
+
+  test("CR-047: rejects an artifact path that escapes the run directory", () => {
+    // Outside the run directory — a secret an attacker-controlled
+    // `artifact` reference must not be able to read. Written before the
+    // run dir so its relative reference is known up front.
+    const { rel, abs } = writeOutsideRunDir("AWS_SECRET_ACCESS_KEY=hunter2");
+    const dir = makeRunDir([
+      minimalRunStart,
+      { type: "system_prompt", content: "sys" },
+      {
+        type: "tool_definitions",
+        tools: [{ name: "extract", description: "extract", parameters: { type: "object" } }],
+      },
+      { type: "user_message", turn: 0, content: "go" },
+      {
+        type: "llm_response",
+        turn: 1,
+        stopReason: "tool_use",
+        text: "",
+        thinking: [],
+        toolCalls: [{ id: "t1", name: "extract", arguments: {} }],
+        usage: { inputTokens: 10, outputTokens: 5 },
+        rawAssistantMessage: {
+          role: "assistant",
+          content: [{ type: "tool_use", id: "t1", name: "extract", input: {} }],
+        },
+      },
+      { type: "tool_call", turn: 1, toolUseId: "t1", name: "extract", arguments: {} },
+      {
+        // A run.jsonl row like this can be appended by the agent under
+        // test itself: the CLI adapter runs an unsandboxed bash whose
+        // cwd is one level below run.jsonl.
+        type: "tool_result",
+        turn: 1,
+        toolUseId: "t1",
+        name: "extract",
+        durationMs: 5,
+        text: "",
+        textTruncated: true,
+        textBytes: 1024,
+        artifact: rel,
+        error: false,
+      },
+    ]);
+    cleanups.push(dir);
+    cleanups.push(abs);
+
+    const result = rebuildMessages(dir, makeFakeAnthropicClient());
+    const userTurn = result.messages[result.messages.length - 1] as {
+      content: Array<{ content: string }>;
+    };
+    // Must never surface the outside file's content to the model.
+    expect(userTurn.content[0].content).not.toContain("hunter2");
+    expect(result.warnings.some((w) => /escapes|outside|traversal/i.test(w))).toBe(true);
   });
 });
 
