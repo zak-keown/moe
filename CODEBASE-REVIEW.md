@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 29
+  fixed: 30
   stale: 12
   skipped: 6
   deferred: 1
-  open: 545
+  open: 544
 ---
 
 # Codebase Review — moe
@@ -669,6 +669,10 @@ Fix: rename both `.gauntlet/` directories to `.moe-flight/`. That single move al
 **Verification:** confirmed
 **Verification evidence:** git ls-files shows both example trees committed under .gauntlet/ while DEFAULT_STATE_DIR_NAME in packages/flight/src/qa/paths.ts is exclusively .moe-flight with no fallback anywhere in packages/flight/src; docs/tutorial.md, the tutorial README and the todo README all document .moe-flight paths that resolve to nothing, including six dead relative links, and git check-ignore confirms the .moe-flight negation rule for cookies.yaml never matches.
 
+**Disposition:** fixed
+**Commit:** `be871f0`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-030: Chrome profile name is joined into a cache path and later recursively deleted with no containment check
 **File:** `packages/flight/src/qa/adapters/web/lib/chrome-launcher-helpers.js`
 **Anchor:** `getChromeProfileDir`
