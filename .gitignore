@@ -31,6 +31,9 @@ __pycache__/
 # `git add -A` while a workflow is running would otherwise stage them as embedded repos.
 .claude/
 
+# Agent-created linked worktrees for isolated plan execution.
+.worktrees/
+
 # Build artifacts from packages/tab's release and binding scripts. Root covers
 # target/, dist/, __pycache__ and *.egg-info; these seven it does not.
 packages/tab/bindings/typescript/native/
