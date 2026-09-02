@@ -4,7 +4,13 @@ import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { allProbes, cmpVersion, extractVersion, overallExit } from "../lib/probes.mjs";
+import {
+  allProbes,
+  cmpVersion,
+  extractTmuxVersion,
+  extractVersion,
+  overallExit,
+} from "../lib/probes.mjs";
 
 const BIN_DIR = fileURLToPath(new URL("..", import.meta.url));
 
@@ -25,6 +31,17 @@ describe("probes library", () => {
     expect(extractVersion("cargo 1.98.0 (some hash 2024-01-01)")).toBe("1.98.0");
     expect(extractVersion(undefined)).toBeUndefined();
     expect(extractVersion("")).toBeUndefined();
+  });
+
+  it("extractTmuxVersion handles tmux's own version format, never a N.N.N triple", () => {
+    // Real tmux -V output across releases: no release has ever shipped a
+    // three-part version, so extractVersion's N.N.N-only regex always misses.
+    expect(extractTmuxVersion("tmux 3.7c")).toBe("3.7");
+    expect(extractTmuxVersion("tmux 3.4")).toBe("3.4");
+    expect(extractTmuxVersion("tmux 3.3a")).toBe("3.3");
+    expect(extractTmuxVersion("tmux 2.8")).toBe("2.8");
+    expect(extractTmuxVersion(undefined)).toBeUndefined();
+    expect(extractTmuxVersion("")).toBeUndefined();
   });
 
   it("allProbes returns typed results including node", () => {

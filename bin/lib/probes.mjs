@@ -63,6 +63,17 @@ export function extractVersion(output) {
   return match ? `${match[1]}.${match[2]}.${match[3]}` : undefined;
 }
 
+/** Parse `major.minor` out of tmux's own version output. No tmux release has
+ *  ever shipped a three-part version — `tmux -V` prints `tmux 3.7c`,
+ *  `tmux 3.4`, `tmux 3.3a`, `tmux 2.8` — so `extractVersion`'s N.N.N-only
+ *  regex always misses it. tmux presence has no minVersion to compare
+ *  against, so major.minor is all `probeTmux` needs. */
+export function extractTmuxVersion(output) {
+  if (!output) return undefined;
+  const match = /(\d+)\.(\d+)/.exec(output);
+  return match ? `${match[1]}.${match[2]}` : undefined;
+}
+
 /** Build a probe result. `ok=true` when present at or above `minVersion`
  *  (when provided). `capability` is what a soft miss disables — only set on
  *  soft probes. */
@@ -214,7 +225,7 @@ export function probeCargo() {
  *  On native Windows this is WSL-only: `packages/crew/src/core/tmux.ts`
  *  shells out to bare `tmux` with no platform branch. */
 export function probeTmux() {
-  const version = extractVersion(tryExec("tmux", ["-V"]));
+  const version = extractTmuxVersion(tryExec("tmux", ["-V"]));
   const capability = WIN32
     ? "@bubstack/moe-crew (native Windows: WSL-only; tmux does not exist on native Windows)"
     : "@bubstack/moe-crew and the using-tmux-for-interactive-commands skill";
