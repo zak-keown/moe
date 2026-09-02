@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 45
+  fixed: 46
   stale: 14
   skipped: 6
   deferred: 1
-  open: 527
+  open: 526
 ---
 
 # Codebase Review — moe
@@ -813,6 +813,10 @@ Fix: move the `stopReason === "max_tokens"` check above the `report_result` look
 **Verification:** confirmed
 **Verification evidence:** Reproduced against the compiled packages/flight/dist/qa/agent/agent.js: a max_tokens response with an unsigned thinking block plus a partial report_result hits the report-lookup branch first, skipping stopped_max_tokens logging and replaying the raw unsigned thinking block via pushAssistantTurn. anthropic.ts forwards messages to the API unmodified, so this reaches a live API rejection.
 
+**Disposition:** fixed
+**Commit:** `5eb4270`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-037: Untrusted page text and an unrestricted host shell share one conversation with no separation
 **File:** `packages/flight/src/qa/agent/bash-tool.ts`
 **Anchor:** `BASH_TOOL_DESCRIPTION` and `buildScrubbedEnv`
