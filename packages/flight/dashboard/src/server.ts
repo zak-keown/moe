@@ -56,11 +56,15 @@ export interface Dashboard {
 // grid renders with no CSS and no htmx.
 const STATIC_DIR = fileURLToPath(new URL("./static", import.meta.url));
 
-// SSE data MUST be a single line: each `data:` field is one line, and a newline
-// inside the HTML would split the frame. The cell/strip partials are already
-// single-element HTML, but collapse any stray newline defensively.
+// SSE data MUST be a single line: each `data:` field is one line, and a
+// newline OR a bare carriage return inside it would split the frame — a
+// WHATWG EventSource parser treats CR, LF, and CRLF all as line terminators.
+// The cell/strip partials are already single-element HTML, but collapse any
+// stray line terminator defensively. Also used to sanitize the SSE `event:`
+// name itself (see `publishCell`): both fields go on the wire unescaped, so
+// both must be free of CR/LF before they reach the frame writer.
 function oneLine(html: string): string {
-  return html.replaceAll("\n", "");
+  return html.replace(/[\r\n]/g, "");
 }
 
 // content-type for a static asset by extension. woff2 is binary; everything else
@@ -230,7 +234,14 @@ export function createDashboard(args: CreateDashboardArgs): Dashboard {
     const mc = manifestCellFor(cell.scenario, cell.agent, cell.credential, cell.os);
     const view = cellView(cell, cell.scenario, cell.agent, cell.credential, cell.os, mc);
     bus.publish({
-      event: cellId(cell.scenario, cell.agent, cell.credential, cell.os),
+      // CR-024/CR-025: scenario/agent/credential/os come straight off disk
+      // (verdict.json / phase.json), typed as bare strings with no character
+      // restriction, and reach cellId() unchanged. A CR or LF in any of them
+      // would otherwise land raw in the SSE `event:` line, letting an
+      // EventSource parser split it into a forged extra event/data pair —
+      // whose data is never run through esc() the way templates.ts's HTML
+      // is. Route the event name through the same oneLine() guard as data.
+      event: oneLine(cellId(cell.scenario, cell.agent, cell.credential, cell.os)),
       data: oneLine(cellHtml(view)),
     });
   };
