@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 69
+  fixed: 70
   stale: 18
   skipped: 7
   deferred: 1
-  open: 498
+  open: 497
 ---
 
 # Codebase Review — moe
@@ -1981,6 +1981,10 @@ Then assert in `build_eval` that the resolved `eval_dir` is a proper child of
 **Verification:** confirmed
 **Verification evidence:** Reproduced: slugify of punctuation-only and CJK names returns an empty string, making eval_dir in build_eval equal to site_dir/evals itself, so its rmtree guard deletes every prior eval artifact before writing; exit code stays 0. A name of two dots also survives slugify unchanged, resolving to site_dir. Eval names come from the eval.yaml name field or directory name, ordinary operator input, and neither resolve_eval_slugs nor build_eval guards an empty or dot-dot slug.
 
+**Disposition:** fixed
+**Commit:** `9526d5f`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-086: Provenance self-test is satisfied by a usage error, so the red fixture is never checked
 **File:** `scripts/check-provenance.mjs`
 **Anchor:** `main` argument guard, plus the CI line "if node scripts/check-provenance.mjs scripts/fixtures/provenance-red --min-readmes 1; then"
