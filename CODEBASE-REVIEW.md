@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 12
+  fixed: 13
   stale: 7
   skipped: 1
   deferred: 0
-  open: 573
+  open: 572
 ---
 
 # Codebase Review — moe
@@ -2138,6 +2138,10 @@ instead of falling through. Note this also fires for the workspace branch, where
 Fix: replace `existsSync` with a `statSync(p).isFile()` check, and on POSIX also require
 the executable bit via `accessSync(p, constants.X_OK)`, both inside try/catch.
 
+**Disposition:** fixed
+**Commit:** `7bd917a`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-096: Lifecycle tests recompute their expectations from the module under test
 **File:** `bin/test/doctor.test.mjs`
 **Anchor:** test "install invokes only fake npm/claude with sparse paths and exact versions"
