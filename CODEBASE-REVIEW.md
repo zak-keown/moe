@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 21
+  fixed: 22
   stale: 11
   skipped: 6
   deferred: 0
-  open: 555
+  open: 554
 ---
 
 # Codebase Review — moe
@@ -2134,6 +2134,10 @@ Fix: pass a bounded `timeout` (a few seconds) plus `killSignal: "SIGKILL"` in `t
 A timeout makes `execFileSync` throw, which the existing `catch` already maps to
 undefined — the taxonomy is unchanged.
 
+**Disposition:** fixed
+**Commit:** `fa77828`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-094: `moe proof` in a checkout without uv hands a Python project directory to node
 **File:** `bin/moe.js`
 **Anchor:** `resolve`, the `if (entry.runner === "uv")` block followed by `if (entry.workspace)`
