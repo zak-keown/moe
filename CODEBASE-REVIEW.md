@@ -21,10 +21,10 @@ verification:
 status: issues_found
 dispositions:
   fixed: 3
-  stale: 2
+  stale: 3
   skipped: 0
   deferred: 0
-  open: 588
+  open: 587
 ---
 
 # Codebase Review — moe
@@ -1754,6 +1754,10 @@ file, so adding the field does not trip `pnpm scope:check`.
 **Verification:** confirmed-lower
 **Verification evidence:** marketplace.json and mint-plugins.mjs confirm the npm sources carry no registry and the omission is deliberate, leaving @tc resolution to the consumer npm config; standard scope-fallback semantics make public-npm fallback possible. The intended audience is a ~20-person team that already depends on @tc-scoped ProGet packages across many repos, so a missing scope mapping is an edge condition rather than the ordinary state; the challenger could not observe Claude Code install-time resolution directly.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Superseded by 9e31d3f, which introduced the current public @bubstack/moe-memory and @bubstack/moe-glass marketplace sources; the reviewed @tc package names are absent from this branch.
 ### CR-012: Eval fixtures encode a transcript envelope the hook never receives in production
 
 **File:** `packages/core/test/latte/scenarios/24-created-component-need-styles.json`
