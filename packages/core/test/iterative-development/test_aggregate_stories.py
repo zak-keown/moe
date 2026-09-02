@@ -176,6 +176,42 @@ class TestAggregateStories(unittest.TestCase):
         finally:
             Path(tmp).unlink()
 
+    def test_reaggregation_removes_stale_epics_and_duplicate_ids(self):
+        """Re-aggregating a smaller/different input into the same output dir
+        (the documented SKILL.md workflow) must not leave a stale epic file
+        behind, and must not produce duplicate story IDs across files."""
+        first_pass = [
+            {"title": "A1", "epic_theme": "Epic A", "sources": []},
+            {"title": "B1", "epic_theme": "Epic B", "sources": []},
+            {"title": "C1", "epic_theme": "Epic C", "sources": []},
+        ]
+        second_pass = [
+            {"title": "A2", "epic_theme": "Epic A", "sources": []},
+            {"title": "B2", "epic_theme": "Epic A", "sources": []},
+            {"title": "B3", "epic_theme": "Epic A", "sources": []},
+        ]
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+            json.dump(first_pass, f)
+            tmp1 = f.name
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+            json.dump(second_pass, f)
+            tmp2 = f.name
+        try:
+            result1 = self._run(tmp1)
+            self.assertEqual(result1.returncode, 0, msg=result1.stderr)
+            result2 = self._run(tmp2)
+            self.assertEqual(result2.returncode, 0, msg=result2.stderr)
+
+            epic_files = sorted(f.name for f in self.out_dir.glob("EPIC-*.md"))
+            self.assertEqual(epic_files, ["EPIC-001.md"], msg=f"stale epic files left behind: {epic_files}")
+
+            output = self._read_all()
+            story_ids = re.findall(r"## (STORY-\d+)", output)
+            self.assertEqual(len(story_ids), len(set(story_ids)), msg=f"duplicate story IDs: {story_ids}")
+        finally:
+            Path(tmp1).unlink()
+            Path(tmp2).unlink()
+
     def test_epics_grouped_into_separate_files(self):
         """Stories with different epic_themes get separate files."""
         result = self._run(str(FIXTURES / "extracted-stories-sample.json"))

@@ -187,6 +187,15 @@ def main() -> int:
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # Re-aggregation (SKILL.md step 5) replaces the whole epic set for this
+    # output directory. Without clearing it first, a shrunk or reshuffled
+    # input leaves a previous run's EPIC-*.md behind citing now-nonexistent
+    # stories, or lets a fresh epic reuse another epic's leftover filename —
+    # IDs are reassigned from 1 every run, so that collision produces
+    # duplicate story IDs across files.
+    for stale in out_dir.glob("EPIC-*.md"):
+        stale.unlink()
+
     for theme, epic_stories in epics.items():
         epic_id = epic_stories[0]["_epic_id"]
         content = format_epic_file(epic_id, theme, epic_stories)
