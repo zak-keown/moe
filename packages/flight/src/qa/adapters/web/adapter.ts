@@ -196,6 +196,12 @@ export class WebAdapter implements Adapter {
   private observerSession: ObserverSession | null = null;
   private chromeProfileName: string | null;
   private viewport: Viewport | null;
+  /**
+   * CR-032: the run's context root, threaded into WebToolCtx so file_upload
+   * can resolve requested paths through resolveInside() instead of handing
+   * an LLM-chosen absolute path straight to DOM.setFileInputFiles.
+   */
+  private contextRoot: string | null;
   /** Lazy cache of tool name → parameter schema for O(1) validation. */
   private toolSchemas: Map<string, ToolDefinition["parameters"]> | null = null;
   /**
@@ -260,6 +266,7 @@ export class WebAdapter implements Adapter {
     this.logger = options?.logger ?? null;
     this.chromeProfileName = options?.chromeProfileName ?? null;
     this.viewport = options?.viewport ?? null;
+    this.contextRoot = options?.contextRoot ?? null;
     this.runDir = options?.runDir;
     this.shared = buildSharedTools({
       contextRoot: options?.contextRoot,
@@ -435,6 +442,7 @@ export class WebAdapter implements Adapter {
       tab,
       logger,
       takeReturnScreenshot,
+      contextRoot: this.contextRoot,
     };
 
     const tabsCtx: WebTabsCtx = {

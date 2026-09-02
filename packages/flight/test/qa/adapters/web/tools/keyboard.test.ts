@@ -33,6 +33,7 @@ function makeCtx(): WebToolCtx & {
     tab: 0,
     logger: {} as WebToolCtx["logger"],
     takeReturnScreenshot: async () => ({ screenshotSkipped: "no chrome in this test" }),
+    contextRoot: null,
   };
 }
 
