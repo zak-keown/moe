@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 31
+  fixed: 35
   stale: 12
   skipped: 6
   deferred: 1
-  open: 543
+  open: 539
 ---
 
 # Codebase Review — moe
@@ -691,6 +691,10 @@ Fix: validate in `getChromeProfileDir` (and in `startChrome`, not only `setProfi
 **Verification:** confirmed
 **Verification evidence:** Reproduced getChromeProfileDir with a traversal id resolving outside the cache root to an arbitrary absolute path; traced an unguarded path from an LLM-generated card.id (the fanout generator validates only via parseStoryCard, which requires only a non-empty id) through makeRunId and the no-op asCardId cast to chromeProfileName and closeWebAdapter rm recursive force. The setProfileName regex guard exists but startChrome never calls it.
 
+**Disposition:** fixed
+**Commit:** `997ca84`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-031: killChrome SIGTERMs whatever process holds the configured debug port when this session never launched Chrome
 **File:** `packages/flight/src/qa/adapters/web/lib/chrome-process.js`
 **Anchor:** `killChrome`, the `pidToKill = findPidOnPort(state.activePort)` branch
@@ -1250,6 +1254,10 @@ Fix: bail out to a cheap line-count/first-difference summary above a line budget
 **Verification:** confirmed
 **Verification evidence:** getHtml returns uncapped outerHTML; capture.js feeds it straight into generateHtmlDiff with no try/catch from the click, type, select and eval wrappers the MCP server exposes as tools. dist/index.js requires chrome-ws-lib.js in-process, so the OOM abort already reproduced under CR-033 on the byte-identical copy kills the MCP server itself. Same defect as CR-060.
 
+**Disposition:** fixed
+**Commit:** `7841071`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-060: Line-based HTML diff exhausts the heap and kills the MCP server process
 **File:** `packages/glass/skills/browsing/lib/html-diff.js`
 **Anchor:** `myersDiff`, and the comment "Myers (not set-based) so reordered identical lines are correctly detected"
@@ -1273,6 +1281,10 @@ Fix: bound the input before running Myers. Cap `beforeLines`/`afterLines` at a f
 **Verification:** confirmed
 **Verification evidence:** src/index.ts is itself the McpServer over StdioServerTransport in one process; it requires chrome-ws-lib.js in-process and capture.js calls generateHtmlDiff synchronously with no child_process or worker_thread boundary, so a V8 heap abort in myersDiff kills the MCP server and cannot be caught. Same root cause and call chain as CR-059; one defect, reproduced under CR-033.
 
+**Disposition:** fixed
+**Commit:** `7841071`
+**Resolved:** 2026-09-02
+**Note:** Same root cause and identical fix as CR-059 (myersDiff's unbounded O((N+M)^2) trace memory in this same html-diff.js) -- one commit covers both; see CR-059's entry for the fix+test detail.
 ### CR-061: fill() rewrites backslash sequences, so a value containing a backslash presses Tab and Enter
 **File:** `packages/glass/skills/browsing/lib/keyboard-input.js`
 **Anchor:** `fill`, at the comment "Normalise literal escape sequences from MCP payloads"
@@ -1484,6 +1496,10 @@ Reproduced: the SQL literal is confirmed by the query text and by a text-mode ru
 **Verification:** confirmed
 **Verification evidence:** The search.ts text branch selects a literal 0 as distance; the both-mode merge loop pushes text-only hits into the same results array; the final map checks mode equals text per call rather than per row, so l2DistanceToCosineSimilarity(0) equals exactly 1 and renders as 100% match. Confirmed both is the default in searchConversations, search-cli.ts and the MCP tool advertised schema.
 
+**Disposition:** fixed
+**Commit:** `88fe97c`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-074: Date-filtered vector search returns nothing when matching rows exist
 **File:** `packages/memory/src/search.ts`
 **Anchor:** `hasMetadataFilters`, and the comment "vec0 applies KNN before WHERE"
