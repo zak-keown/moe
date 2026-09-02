@@ -1,0 +1,13 @@
+{
+  "//": "Test-only typecheck, mirroring packages/crew's shape: non-composite, noEmit, run directly by `pnpm typecheck` rather than referenced from the root tsconfig.tests.json solution. No cross-package test edges to declare.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": ["src/**/*", "test/**/*", "tsup.config.ts", "vitest.config.ts"],
+  "references": []
+}

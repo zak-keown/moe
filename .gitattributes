@@ -42,6 +42,7 @@ plugins/**/hooks/** text eol=lf
 packages/*/docs/history/**                  -text
 packages/flight/dashboard/src/static/**     -text
 packages/flight/ui/src/lib/__fixtures__/**  -text
+packages/statusline/vendor/**               -text
 
 # Canonical license texts travel verbatim.
 LICENSE      -text

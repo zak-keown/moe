@@ -29,6 +29,7 @@ mechanism.
 | `everyharness` | `4f7c5e2` | 2026-08-15 | MIT | `packages/mint` |
 | `everyharness-container` | `2467bd7` | 2026-08-11 | MIT | `infra/container` |
 | `claude-session-driver` | `d97d1eb` | 2026-06-14 | MIT | `packages/crew` |
+| `ccstatusline` | `83c8ffd` | 2026-09-02 | MIT | `packages/statusline` |
 | `superpowers-chrome` | `782358e` | 2026-08-07 | MIT | `packages/glass` and a vendored subset in `packages/flight` |
 | `obol` | `28e3dba` | 2026-08-06 | Apache-2.0 with NOTICE | `packages/tab` |
 | `smevals` | `0c28dc6` | 2026-08-11 | MIT | `py/proof` |
@@ -60,6 +61,24 @@ debugger references under `packages/core/skills/systematic-debugging/` and
 `security-asvs-levels.md` under
 `packages/core/skills/requesting-code-review/references/`. No skill or runtime
 from that project was imported.
+
+## Vendored build artifacts
+
+### ccstatusline
+
+`packages/statusline/vendor/ccstatusline/ccstatusline.js` is the published npm
+build artifact (`dist/ccstatusline.js`), not a build from source — upstream's
+`dist/` is gitignored in their repo, so there is no buildable source snapshot
+to pin the way the other rows in the Map above do. It is pinned by both ends:
+the `83c8ffd` row above is the upstream git tag `v2.2.27` the artifact was
+built from, and the artifact itself is additionally identified by the npm
+registry's own integrity hash for that exact version —
+`sha512-8SqNdSuIaMsrefn4dCrSlBEZ7kE8UZMMa8iy4iv4OMl1INnEtmqzCYMwo7/hzmNrOVC+esFSiCj+T0pUS9HrLQ==`
+(`ccstatusline@2.2.27`, shasum `7735c0ec431b01804c691be9c1d80ba108deed13`). The
+bundle has zero production dependencies (verified against its `package.json`:
+everything it needs — React, Ink, zod, etc. — is bundled in at upstream's own
+build step), so vendoring the artifact carries no transitive dependency
+surface beyond what is already checked in.
 
 ## Known legal exceptions
 

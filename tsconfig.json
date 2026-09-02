@@ -6,6 +6,9 @@
       "path": "packages/crew"
     },
     {
+      "path": "packages/statusline"
+    },
+    {
       "path": "packages/glass"
     },
     {

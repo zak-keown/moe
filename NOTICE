@@ -26,6 +26,7 @@ PARITY.md records the complete internal provenance and risk decisions.
 | `everyharness` | `4f7c5e2` | MIT | Copyright (c) 2026 Prime Radiant, Inc. |
 | `everyharness-container` | `2467bd7` | MIT | Copyright (c) 2026 Prime Radiant, Inc. |
 | `claude-session-driver` | `d97d1eb` | MIT | Copyright (c) 2025 Jesse Vincent |
+| `ccstatusline` | `83c8ffd` | MIT | Copyright (c) 2025 Matthew Breedlove |
 | `superpowers-chrome` | `782358e` | MIT | Copyright (c) 2025 Jesse Vincent |
 | `obol` | `28e3dba` | Apache-2.0 | Copyright 2026 Prime Radiant, Inc. |
 | `smevals` | `0c28dc6` | MIT | Copyright (c) 2026 Prime Radiant, Inc.; authored by Simon Willison |

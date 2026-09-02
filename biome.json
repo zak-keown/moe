@@ -11,6 +11,7 @@
       "!**/dist",
       "!**/dist-static",
       "!plugins",
+      "!**/packages/statusline/vendor",
       "!**/packages/flight/src/qa/agent/prompts/generated.ts"
     ]
   },

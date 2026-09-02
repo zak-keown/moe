@@ -58,6 +58,16 @@
       "version": "0.1.4",
       "description": "Launch, control and monitor worker Claude sessions over tmux.",
       "strict": true
+    },
+    {
+      "name": "moe-statusline",
+      "source": {
+        "source": "npm",
+        "package": "@bubstack/moe-statusline"
+      },
+      "version": "0.1.0",
+      "description": "Configures a vendored, MIT-licensed Claude Code statusline (ccstatusline) automatically on session start.",
+      "strict": true
     }
   ]
 }

@@ -1,0 +1,10 @@
+{
+  "//": "Runtime DAG for this package: no workspace dependencies, so no references. The vendored ccstatusline.js bundle resolves by file path at runtime (${CLAUDE_PLUGIN_ROOT}/vendor/...), not as a module edge.",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*"],
+  "references": []
+}
