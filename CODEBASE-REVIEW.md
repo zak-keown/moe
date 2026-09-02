@@ -21,10 +21,10 @@ verification:
 status: issues_found
 dispositions:
   fixed: 56
-  stale: 14
+  stale: 15
   skipped: 7
   deferred: 1
-  open: 515
+  open: 514
 ---
 
 # Codebase Review — moe
@@ -1927,6 +1927,10 @@ The provenance job's second script line is the only thing that proves the checke
 **Verification:** confirmed
 **Verification evidence:** Reproduced: the three-argument CI invocation exits 2 on the usage guard before opening any file; the corrected one-argument invocation against the fixture crashes with an uncaught ENOENT on the missing NOTICE inside checkAttributionRegister and never reaches the problems array. The checker has no exit code distinguishing a detected problem from a crash before checking, so no caller can write a working self-test against this fixture, a script-side defect distinct from the CI wiring in CR-005.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Same root cause as CR-005 (this report's own verification note says so). The CR-005 fix (afc339c) already does everything this finding asks: checkAttributionRegister in check-provenance.mjs now catches a missing NOTICE/PARITY.md and reports it as a problems entry instead of crashing, and the fixture at scripts/fixtures/provenance-red/ now carries a NOTICE + empty plugins/ so the register comparison actually runs. Re-verified live: node scripts/check-provenance.mjs scripts/fixtures/provenance-red now exits 1 with two real, specific problem lines (does not crash, does not merely echo a usage error). The one unaddressed suggestion — asserting on the exact problem text in CI rather than just the exit code — is optional polish on an already-working self-test, not a live defect.
 ## Medium
 
 ### CR-003: npm plugin sources pin a package name but no registry, so `@tc` falls back to public npm
