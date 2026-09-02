@@ -146,6 +146,36 @@ describe("buildBashTool", () => {
     }
   });
 
+  // CR-038: buildScrubbedEnv deliberately forwards ANTHROPIC_API_KEY and
+  // OPENAI_API_KEY into the bash subprocess the LLM controls (the test
+  // above pins that passthrough as intended). Without a transcriptText
+  // override, EvidenceLogger.logToolResult records the tool's raw text —
+  // including any forwarded secret the command happened to print — into
+  // run.jsonl (or artifacts/N.txt past the inline cap) unchanged. Any
+  // command that prints the environment (`env`, `printenv`, a failing
+  // `curl -v`, ...) puts a live credential on disk in the run directory.
+  test("CR-038: transcriptText redacts a forwarded API key so it never reaches the evidence log", async () => {
+    process.env.ANTHROPIC_API_KEY = "sk-test-should-be-redacted";
+    try {
+      const tool = buildBashTool({ cwd: freshCwd() });
+      const result = await tool.execute({ command: "env | grep ANTHROPIC" }, noopLogger());
+      // The agent itself still needs the real value in its live context.
+      expect(result.text).toContain("sk-test-should-be-redacted");
+      // But what gets persisted to run.jsonl must not carry it.
+      expect(result.transcriptText).toBeDefined();
+      expect(result.transcriptText).not.toContain("sk-test-should-be-redacted");
+      expect(result.transcriptText).toContain("<redacted:ANTHROPIC_API_KEY>");
+    } finally {
+      delete process.env.ANTHROPIC_API_KEY;
+    }
+  });
+
+  test("CR-038: transcriptText is unchanged from text when no forwarded secret is present", async () => {
+    const tool = buildBashTool({ cwd: freshCwd() });
+    const result = await tool.execute({ command: "echo hello" }, noopLogger());
+    expect(result.transcriptText).toBe(result.text);
+  });
+
   test("env includes minimal base vars", async () => {
     const tool = buildBashTool({ cwd: freshCwd() });
     const result = await tool.execute(
