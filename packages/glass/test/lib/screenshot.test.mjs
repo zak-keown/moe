@@ -30,7 +30,12 @@ describe('screenshot', () => {
       ...handlers
     });
     const getPageSession = async () => ps;
-    return { ...attachScreenshot({ getPageSession }), ps };
+    // Screenshots must resolve within a known containment root (CR-065);
+    // os.tmpdir() is this suite's natural root since tmpFile() below already
+    // writes there.
+    const state = { sessionDir: os.tmpdir() };
+    const initializeSession = () => os.tmpdir();
+    return { ...attachScreenshot({ getPageSession, state, initializeSession }), ps };
   }
 
   function tmpFile() {
@@ -124,13 +129,59 @@ describe('screenshot path resolution', () => {
       'Runtime.evaluate': () => ({ result: { value: { width: 1024, height: 768 } } }),
     });
     const getPageSession = async () => ps;
-    // No state or initializeSession — legacy behaviour.
+    // No state or initializeSession — legacy behaviour: CWD is the
+    // containment root (CR-065). A relative filename still resolves against
+    // CWD exactly as before.
     const { screenshot } = attachScreenshot({ getPageSession });
-    const tmpDir = os.tmpdir();
-    const filename = path.join(tmpDir, `legacy-test-${Date.now()}.png`);
+    const filename = `legacy-rel-test-${Date.now()}.png`;
     const returned = await screenshot(0, filename);
-    // Absolute path passes through unchanged.
-    assert.equal(returned, filename);
-    fs.unlinkSync(filename);
+    assert.equal(returned, path.resolve(process.cwd(), filename));
+    fs.unlinkSync(returned);
+  });
+
+  // CR-065: a filename is a tool argument. Without containment, an absolute
+  // path anywhere on disk — or a relative path with enough `../` segments —
+  // let one screenshot call overwrite any file the MCP process can write.
+  it('CR-065: an absolute path outside the containment root is rejected, not written', async () => {
+    const ps = makePageSessionFake({
+      'Page.captureScreenshot': () => ({ data: FAKE_PNG_BASE64 }),
+      'Runtime.evaluate': () => ({ result: { value: { width: 1024, height: 768 } } }),
+    });
+    const getPageSession = async () => ps;
+    // Legacy mode: root is CWD. os.tmpdir() is a different directory.
+    const { screenshot } = attachScreenshot({ getPageSession });
+    const outside = path.join(os.tmpdir(), `should-not-be-written-${Date.now()}.png`);
+    await assert.rejects(() => screenshot(0, outside), /outside the session directory|not under/i);
+    assert.equal(fs.existsSync(outside), false, 'must never have been written');
+  });
+
+  it('CR-065: relative path traversal (../) that would escape the session dir is rejected', async () => {
+    await withTempDir(async (dir) => {
+      const { screenshot } = setupWithState(dir);
+      const escapee = `../../../escaped-by-traversal-${Date.now()}.png`;
+      const wouldLandAt = path.resolve(dir, escapee);
+      await assert.rejects(() => screenshot(0, escapee), /outside the session directory|not under/i);
+      assert.equal(fs.existsSync(wouldLandAt), false, 'traversal target must never have been written');
+    });
+  });
+
+  it('CR-065: refuses to overwrite a pre-existing file this session did not create', async () => {
+    await withTempDir(async (dir) => {
+      const preexisting = path.join(dir, 'not-mine.png');
+      fs.writeFileSync(preexisting, 'not a screenshot');
+      const { screenshot } = setupWithState(dir);
+      await assert.rejects(() => screenshot(0, 'not-mine.png'), /refusing to overwrite/i);
+      assert.equal(fs.readFileSync(preexisting, 'utf8'), 'not a screenshot', 'pre-existing content must be untouched');
+    });
+  });
+
+  it('CR-065: a session MAY overwrite a file it wrote itself (e.g. a reused "latest.png")', async () => {
+    await withTempDir(async (dir) => {
+      const { screenshot } = setupWithState(dir);
+      const first = await screenshot(0, 'latest.png');
+      const second = await screenshot(0, 'latest.png');
+      assert.equal(first, second);
+      assert.ok(fs.existsSync(second));
+    });
   });
 });
