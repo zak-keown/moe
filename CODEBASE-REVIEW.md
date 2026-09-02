@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 4
+  fixed: 5
   stale: 3
   skipped: 0
   deferred: 0
-  open: 586
+  open: 585
 ---
 
 # Codebase Review — moe
@@ -1081,6 +1081,10 @@ Fix: run the stale check on `state.browserSession.isConnected()` alone, independ
 **Verification:** confirmed
 **Verification evidence:** Reproduced with a fake WebSocketClient injected via createSession test fakes: the root socket closes mid-attach before Target.setDiscoverTargets replies, and four repeated ensureBridge calls then fail identically with zero new WebSocket instances constructed. Two layered causes: the ensureBridge stale check requires state.browserBridge to be truthy, which a mid-attach failure never sets, and browser-session.js ensureConnected never clears connectPromise after a post-connect disconnect. Only killChrome calls resetBridge; no normal retry path does.
 
+**Disposition:** fixed
+**Commit:** `7dade49`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-056: findOrphanChromeForProfile substring-matches the profile directory, so it adopts another profile's Chrome
 **File:** `packages/glass/skills/browsing/lib/chrome-launcher-helpers.js`
 **Anchor:** `findOrphanChromeForProfile` — `if (!line.includes(profileDir))`
