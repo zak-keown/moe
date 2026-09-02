@@ -12,9 +12,19 @@ import {
 import { parseStoryCard } from "../../format/story-card.js";
 import type { LLMClient } from "../../models/provider.js";
 import { createClient } from "../../models/resolve.js";
-import { flightPath } from "../../paths.js";
+import { flightPath, isSafePath } from "../../paths.js";
 import type { VerdictResult } from "../../types.js";
 import type { ErrorLog } from "../../util/error-log.js";
+
+// CR-040/CR-042: the id a card carries is model output (from `parseStoryCard`
+// on generated text, or from the prompt-injectable observation/summary text
+// that feeds the generator), and `asCardId` is a pure cast with no charset
+// check. A `writeCards` call site that trusts it as a filename segment lets
+// a traversal id (`../../../../pwned`) write attacker-chosen content outside
+// storiesDir. Mirrors the documented format (`[a-zA-Z0-9-]+`) that
+// src/qa/util/id.ts and results.ts already assume — incorrectly — is
+// enforced by story-card parsing.
+const CARD_ID_RE = /^[a-zA-Z0-9-]+$/;
 
 function resolveClient(config: AppConfig, clientFactory?: () => LLMClient): ParseResult<LLMClient> {
   if (clientFactory) return { ok: true, value: clientFactory() };
@@ -31,6 +41,16 @@ function writeCards(storiesDir: string, cardTexts: string[], errorLog?: ErrorLog
   const written: { id: string; title: string; filename: string }[] = [];
   for (const text of cardTexts) {
     const card = parseStoryCard(text);
+    if (!CARD_ID_RE.test(card.id)) {
+      // Not a bare [a-zA-Z0-9-]+ segment — reject outright rather than let
+      // it anywhere near a path join. Covers traversal (`../..`), absolute
+      // paths, and anything else outside the documented id charset.
+      errorLog?.add(
+        "fanout",
+        `card id "${card.id}" is not a valid [a-zA-Z0-9-]+ filename — skipping`,
+      );
+      continue;
+    }
     if (seen.has(card.id)) {
       // Duplicate id within the same batch — keep the first, skip this one
       // rather than silently overwrite. A correct LLM prompt should never
@@ -43,7 +63,14 @@ function writeCards(storiesDir: string, cardTexts: string[], errorLog?: ErrorLog
     }
     seen.add(card.id);
     const filename = `${card.id}.md`;
-    writeFileSync(join(storiesDir, filename), text);
+    const targetPath = join(storiesDir, filename);
+    if (!isSafePath(storiesDir, targetPath)) {
+      // Belt-and-suspenders alongside the charset check above — the same
+      // guard POST /api/scenarios already applies before its own write.
+      errorLog?.add("fanout", `card id "${card.id}" escapes the stories directory — skipping`);
+      continue;
+    }
+    writeFileSync(targetPath, text);
     written.push({ id: card.id, title: card.title, filename });
   }
   return written;
