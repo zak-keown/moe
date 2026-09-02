@@ -21,10 +21,10 @@ verification:
 status: issues_found
 dispositions:
   fixed: 28
-  stale: 11
+  stale: 12
   skipped: 6
   deferred: 0
-  open: 548
+  open: 547
 ---
 
 # Codebase Review — moe
@@ -1450,6 +1450,10 @@ enters the index rather than only on the sync path.
 **Verification:** confirmed
 **Verification evidence:** The three indexer.ts entry points indexConversations, indexSession and indexUnprocessed never import or call shouldSkipConversation; only getExcludedProjects and shouldQueueForSummary gate anything, and neither blocks insertExchange. index-cli.ts routes --cleanup and --rebuild to these functions. Same root cause as CR-070, scoped to the backfill and rebuild entry points. Static trace; a live run would have downloaded a model.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Same root cause and same three call sites as CR-070 (both findings' own text says so). CR-070's fix (indexer.ts: shouldSkipConversation checked at all three entry points, including indexUnprocessed — the backfill path this finding names) already covers it, landed in commit 4982b29 (see CR-070's Note for why that sha). Proved empirically with a throwaway test calling indexUnprocessed on a marked conversation (mocked transformers pipeline, real db) — 0 rows inserted; test deleted after confirming, not committed, since nothing further to fix.
 ### CR-073: Text-only hits are reported as a 100% semantic match in the default search mode
 **File:** `packages/memory/src/search.ts`
 **Anchor:** `similarity: mode === "text" ? undefined : l2DistanceToCosineSimilarity(row.distance)`
