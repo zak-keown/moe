@@ -21,10 +21,10 @@ verification:
 status: issues_found
 dispositions:
   fixed: 21
-  stale: 10
+  stale: 11
   skipped: 6
   deferred: 0
-  open: 556
+  open: 555
 ---
 
 # Codebase Review — moe
@@ -2107,6 +2107,10 @@ Coverage is partial elsewhere: `tc-release-pack` asserts the eight-artifact path
 
 Reproduced by grep and by reading the test. Fix: add a `check` stage job running `pnpm scope:check`, extending `.not-scheduled` like its siblings. It needs no install beyond the workspace the other jobs already build.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Superseded by the public/GitHub release baseline at a06e2cb: package.json no longer defines scope:check or check-downstream-scope, and current CI/docs agree on the Node gate.
 ### CR-093: `tryExec` sets no timeout, so a wedged tool on PATH hangs the doctor and the installer forever
 **File:** `bin/lib/probes.mjs`
 **Anchor:** `tryExec`, whose options are only `encoding`, `stdio` and the caller's spread
