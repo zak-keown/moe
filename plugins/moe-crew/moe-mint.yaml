@@ -4,7 +4,7 @@
 # skills/ and hooks/ into `plugins/moe-crew/` and runs `moe-mint generate` there.
 
 name: moe-crew
-version: 0.1.3
+version: 0.1.4
 description: Launch, control and monitor worker Claude sessions over tmux.
 author:
   name: Zak Keown
