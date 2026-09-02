@@ -38,13 +38,14 @@ class TestSkillValidator(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn("frontmatter", result.stderr.lower())
 
-    def test_bad_description_format_fails(self):
+    def test_description_without_use_when_warns(self):
         result = subprocess.run(
             [sys.executable, str(SCRIPT),
              str(FIXTURES / "skill.invalid-bad-description" / "SKILL-FIXTURE.md")],
             capture_output=True, text=True,
         )
-        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertIn("warning:", result.stderr.lower())
         self.assertIn("use when", result.stderr.lower())
 
     def test_quoted_frontmatter_scalars_pass(self):

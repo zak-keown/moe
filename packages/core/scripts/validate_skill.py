@@ -8,7 +8,7 @@ Checks:
 - Starts with YAML frontmatter (--- delimited)
 - Frontmatter contains 'name' and 'description' fields
 - 'name' field uses only letters, numbers, hyphens
-- 'description' field starts with "Use when"
+- 'description' field starts with "Use when" (warning if not)
 - Body word count is under 500 words (warning if over — not an error)
 """
 import re
@@ -83,7 +83,9 @@ def validate(path: Path) -> tuple[list[str], list[str]]:
     else:
         desc = fm["description"]
         if not desc.lower().startswith("use when"):
-            errors.append(f"frontmatter 'description' should start with 'Use when' but starts with: {desc[:30]!r}")
+            warnings.append(
+                f"frontmatter 'description' should start with 'Use when' but starts with: {desc[:30]!r}"
+            )
 
     # Word count is a target per writing-skills guidance, not a hard limit.
     word_count = len(body.split())
