@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 23
+  fixed: 24
   stale: 11
   skipped: 6
   deferred: 0
-  open: 553
+  open: 552
 ---
 
 # Codebase Review — moe
@@ -648,6 +648,10 @@ Fix: add an extension-to-MIME map like the dashboard's `contentTypeFor()` and pa
 **Verification:** confirmed
 **Verification evidence:** Ran the real packages/flight/examples/todo/web/server.ts via the tsx already in packages/flight/node_modules on a loopback port with the state file redirected to scratch; curl -sI on / and /index.html both returned Content-Type text/plain because the static branch returns new Response(body) with no headers. The todo README documents this server as the sole Web adapter tutorial target, so every web-adapter card run against it fails for a reason unrelated to the card.
 
+**Disposition:** fixed
+**Commit:** `4982b29`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-029: Example story and context trees still live under `.gauntlet/`, so every documented command and link is broken
 **File:** `packages/flight/examples/tutorial/.gauntlet/context/profiles/fred/cookies.yaml`
 **Anchor:** the tracked path segment `.gauntlet/context/profiles/fred/cookies.yaml` versus `DEFAULT_STATE_DIR_NAME = ".moe-flight"` in `packages/flight/src/qa/paths.ts`
