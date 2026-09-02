@@ -111,6 +111,17 @@ function sandboxBin(): string {
   return bin
 }
 
+// sandboxBin() plus a fake `opencode` that always succeeds — used to prove
+// the MOE_MINT_DEEP gate itself blocks the deep tier, rather than the tier
+// merely degrading to skip because no harness CLI happens to be present.
+function sandboxBinWithFakeOpencode(): string {
+  const bin = sandboxBin()
+  const opencodePath = join(bin, 'opencode')
+  writeFileSync(opencodePath, ['#!/bin/bash', 'echo "{}"', ''].join('\n'))
+  chmodSync(opencodePath, 0o755)
+  return bin
+}
+
 describe('runTest', () => {
   const savedPath = process.env.PATH
   const savedExitCode = process.env.DOCKER_SHIM_EXIT_CODE
@@ -148,6 +159,7 @@ describe('runTest', () => {
     expect(argv).toContain('--rm')
     expect(argv).toContain('-e')
     expect(argv).toContain('MOE_MINT_PLUGIN_NAME=kitchen-sink')
+    expect(argv).toContain('MOE_MINT_DEEP=1')
     expect(argv.some((a) => a.endsWith(':/plugin:ro'))).toBe(true)
     expect(argv.some((a) => a.endsWith(':/checks:ro'))).toBe(true)
     expect(argv).toContain(DEFAULT_IMAGE)
@@ -328,6 +340,7 @@ describe('checks/run-checks.sh', () => {
       env: {
         MOE_MINT_PLUGIN_NAME: 'kitchen-sink',
         MOE_MINT_PLUGIN_ROOT: dir,
+        MOE_MINT_DEEP: '1',
         PATH: sandboxBin(),
         HOME: mkdtempSync(join(tmpdir(), 'mint-home-')),
       },
@@ -351,6 +364,7 @@ describe('checks/run-checks.sh', () => {
       env: {
         MOE_MINT_PLUGIN_NAME: 'kitchen-sink',
         MOE_MINT_PLUGIN_ROOT: dir,
+        MOE_MINT_DEEP: '1',
         PATH: sandboxBin(),
         HOME: mkdtempSync(join(tmpdir(), 'mint-home-')),
       },
@@ -374,6 +388,7 @@ describe('checks/run-checks.sh', () => {
       env: {
         MOE_MINT_PLUGIN_NAME: 'kitchen-sink',
         MOE_MINT_PLUGIN_ROOT: dir,
+        MOE_MINT_DEEP: '1',
         PATH: sandboxBin(),
         HOME: mkdtempSync(join(tmpdir(), 'mint-home-')),
       },
@@ -390,6 +405,7 @@ describe('checks/run-checks.sh', () => {
       env: {
         MOE_MINT_PLUGIN_NAME: 'kitchen-sink',
         MOE_MINT_PLUGIN_ROOT: dir,
+        MOE_MINT_DEEP: '1',
         PATH: sandboxBin(),
         HOME: mkdtempSync(join(tmpdir(), 'mint-home-')),
       },
@@ -399,6 +415,33 @@ describe('checks/run-checks.sh', () => {
     }
     expect(result.stdout).not.toMatch(/^not ok install-/m)
     expect(result.status).toBe(0)
+  }, 30_000)
+
+  // CR-078: the deep tier performs REAL, HOME-mutating installs (e.g.
+  // deep_opencode unconditionally truncates $HOME/.config/opencode/
+  // opencode.json). Without MOE_MINT_DEEP=1, it must refuse entirely — not
+  // merely degrade to skip because no CLI is on PATH. A fake `opencode` that
+  // would always succeed is deliberately on PATH here so a regression (the
+  // gate silently vanishing) would show up as a real write to HOME, not as
+  // an accidental "no CLI" skip that proves nothing.
+  it('never touches HOME and skips the whole deep tier when MOE_MINT_DEEP is unset, even with a harness CLI present', () => {
+    const dir = generatedKitchenSink()
+    const home = mkdtempSync(join(tmpdir(), 'mint-home-'))
+    const result = spawnSync('bash', [CHECKS_SCRIPT], {
+      encoding: 'utf8',
+      env: {
+        MOE_MINT_PLUGIN_NAME: 'kitchen-sink',
+        MOE_MINT_PLUGIN_ROOT: dir,
+        PATH: sandboxBinWithFakeOpencode(),
+        HOME: home,
+      },
+    })
+    for (const harness of DEEP_HARNESSES) {
+      expect(result.stdout).toMatch(new RegExp(`^skip install-${harness}: deep tier not enabled`, 'm'))
+    }
+    expect(result.stdout).not.toMatch(/^not ok /m)
+    expect(result.status).toBe(0)
+    expect(existsSync(join(home, '.config', 'opencode'))).toBe(false)
   }, 30_000)
 
   // A plugin with no skills makes the whole deep tier a documented no-op:
@@ -414,6 +457,7 @@ describe('checks/run-checks.sh', () => {
       env: {
         MOE_MINT_PLUGIN_NAME: 'bare',
         MOE_MINT_PLUGIN_ROOT: dir,
+        MOE_MINT_DEEP: '1',
         PATH: sandboxBin(),
         HOME: mkdtempSync(join(tmpdir(), 'mint-home-')),
       },
@@ -467,6 +511,7 @@ describe('checks/run-checks.sh', () => {
       env: {
         MOE_MINT_PLUGIN_NAME: 'kitchen-sink',
         MOE_MINT_PLUGIN_ROOT: dir,
+        MOE_MINT_DEEP: '1',
         PATH: sandboxBin(),
         HOME: mkdtempSync(join(tmpdir(), 'mint-home-')),
       },
@@ -488,6 +533,7 @@ describe('checks/run-checks.sh', () => {
       env: {
         MOE_MINT_PLUGIN_NAME: 'kitchen-sink',
         MOE_MINT_PLUGIN_ROOT: dir,
+        MOE_MINT_DEEP: '1',
         PATH: sandboxBin(),
         HOME: mkdtempSync(join(tmpdir(), 'mint-home-')),
       },

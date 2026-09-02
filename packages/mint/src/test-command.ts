@@ -22,12 +22,14 @@ export interface TestResult {
 }
 
 // Runs the container-backed offline install checks (checks/run-checks.sh)
-// against a generated plugin: `docker run --rm -e MOE_MINT_PLUGIN_NAME=<name> -v
-// <plugin>:/plugin:ro -v <checks>:/checks:ro <image> bash
-// /checks/run-checks.sh`, streaming stdout/stderr through as it runs. The
+// against a generated plugin: `docker run --rm -e MOE_MINT_PLUGIN_NAME=<name>
+// -e MOE_MINT_DEEP=1 -v <plugin>:/plugin:ro -v <checks>:/checks:ro <image>
+// bash /checks/run-checks.sh`, streaming stdout/stderr through as it runs. The
 // script first parses every harness manifest, then performs a REAL install of
 // the plugin into each harness CLI in the image and asserts the CLI actually
 // enumerates the plugin's skills — all offline, no LLM, no API keys.
+// MOE_MINT_DEEP=1 opts into that install tier, which mutates whatever HOME it
+// runs against; only safe here because the container is disposable.
 //
 // Exit-code mapping: docker exit 0 (all checks passed) -> 0; docker exit 3
 // (the checks script found a failing check — a distinctive code chosen so
@@ -47,6 +49,8 @@ export function runTest(root: string, opts: TestOptions = {}): Promise<TestResul
     '--rm',
     '-e',
     `MOE_MINT_PLUGIN_NAME=${config.name}`,
+    '-e',
+    'MOE_MINT_DEEP=1',
     '-v',
     `${pluginRoot}:/plugin:ro`,
     '-v',
