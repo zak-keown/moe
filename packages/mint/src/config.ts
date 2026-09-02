@@ -104,7 +104,7 @@ const authorSchema = z.object({
   name: z.string(),
   email: z.string().optional(),
   url: z.string().optional(),
-})
+}).strict()
 
 // Component paths: [A-Za-z0-9._-]+ segments joined by /, normalized to strip
 // trailing slashes before validation. Regex rejects quotes, backslashes, spaces,
@@ -142,15 +142,17 @@ const releaseSchema = z
         z.object({
           path: requiredComponentPath,
           field: z.string(),
-        }),
+        }).strict(),
       )
       .optional(),
     audit: z
       .object({
         exclude: z.array(z.string()).optional(),
       })
+      .strict()
       .optional(),
   })
+  .strict()
   .optional()
 
 const marketplaceSchema = z
@@ -168,6 +170,7 @@ const marketplaceSchema = z
     tags: z.array(z.string()).optional(),
     strict: z.boolean().optional(),
   })
+  .strict()
   .optional()
 
 const npmPackageSchema = z.string().regex(
@@ -252,6 +255,7 @@ const rawSchema = z.object({
       hooks: componentPath,
       mcp: componentPath,
     })
+    .strict()
     .optional(),
   // exclude is validated here; the per-harness settings blocks (any adapter
   // name) pass through and are validated by resolveHarnessSettings so their
@@ -268,7 +272,7 @@ const rawSchema = z.object({
   artifact: z.object({ payloads: z.array(artifactPayloadSchema) }).strict(),
   targets: targetsSchema,
   imported_works: z.array(importedWorkSchema),
-})
+}).strict()
 
 export interface DistributionConfig {
   npm: string

@@ -112,11 +112,12 @@ Staging is wiped before every run, directory traversal is sorted, and generated
 manifests contain no timestamps. These properties make `pnpm mint:check` a byte
 reproducibility check rather than a best-effort comparison.
 
-The marketplace and plugin registry are checked in both directions. A generated
-plugin without a listing is unreachable; a listing without a generator is
-broken. Content plugins install from tracked local plugin directories. Memory
-and glass use npm-source marketplace entries because their runtime dependencies
-need normal package installation.
+The generated marketplace and plugin registry are checked in both directions.
+A generated plugin without a listing is unreachable; a listing without a
+generator is broken. All six public marketplace entries use their package-local
+npm identities, so the install coordinates and ephemeral publish matrix share
+one validated authority. Generated plugin trees remain the harness artifacts
+those packages ultimately compose and publish.
 
 ## 6. Toolchain and project references
 

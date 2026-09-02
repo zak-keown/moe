@@ -6,7 +6,7 @@ import { saveManifest, loadManifest, sha256, type GenerationManifest } from './m
 import { adapters, type HarnessAdapter } from './adapters/index.js'
 import type { AdapterEmission } from './adapters/types.js'
 import { emitDocs } from './docs-emit.js'
-import { ConfigError, type MintConfig } from './config.js'
+import { ConfigError, type MintConfig, type PluginTargetIntent } from './config.js'
 import { capabilityError, validateTargetEmission } from './platform/capabilities.js'
 import { TARGET_IDS, type TargetId } from './vocabulary.js'
 
@@ -35,18 +35,31 @@ export interface GenerationValidation {
 
 export interface CanonicalGenerationIdentity {
   sourcePath: string
+  sourcePackagePath: string
   configPath: string
   configSource: string
 }
 
-interface CanonicalGenerationProvenance {
-  sourcePath: string
-  configPath: string
-  configSource: string
+export interface CanonicalProjectionPlugin {
+  readonly id: string
+  readonly npmPackage: string
+  readonly version: string
+  readonly summary: string
+  readonly author: Readonly<NonNullable<MintConfig['author']>> | undefined
+  readonly sourcePackagePath: string
+  readonly configSource: string
+  readonly targets: Readonly<Record<TargetId, Readonly<PluginTargetIntent>>>
 }
+
+export interface CanonicalProjectionEvidence {
+  readonly plugin: CanonicalProjectionPlugin
+  readonly emissions: Readonly<Partial<Record<TargetId, AdapterEmission>>>
+}
+
+type CanonicalGenerationProvenance = Readonly<CanonicalGenerationIdentity>
 
 const canonicalValidations = new WeakMap<GenerationValidation, CanonicalGenerationProvenance>()
-const canonicalEmissionEvidence = new WeakMap<GenerationValidation, Readonly<Partial<Record<TargetId, AdapterEmission>>>>()
+const canonicalEvidence = new WeakMap<GenerationValidation, CanonicalProjectionEvidence>()
 const canonicalAdapters = Object.freeze([...adapters])
 
 export interface GenerateOptions {
@@ -206,6 +219,33 @@ function immutableEmissions(
   return Object.freeze(snapshot)
 }
 
+function immutablePluginAuthority(
+  identity: CanonicalGenerationIdentity,
+  config: MintConfig,
+): CanonicalProjectionPlugin {
+  const targets = {} as Record<TargetId, Readonly<PluginTargetIntent>>
+  for (const target of TARGET_IDS) {
+    const policy = config.targets[target]
+    targets[target] = Object.freeze({
+      intent: policy.intent,
+      expectedCapabilities: Object.freeze([...policy.expectedCapabilities]),
+      ...(policy.operatingSystems === undefined
+        ? {}
+        : { operatingSystems: Object.freeze([...policy.operatingSystems]) }),
+    })
+  }
+  return Object.freeze({
+    id: config.name,
+    npmPackage: config.distribution.npm,
+    version: config.version,
+    summary: config.description,
+    author: config.author === undefined ? undefined : Object.freeze({ ...config.author }),
+    sourcePackagePath: identity.sourcePackagePath,
+    configSource: identity.configSource,
+    targets: Object.freeze(targets),
+  })
+}
+
 /**
  * Validate one registry package with Mint's complete canonical adapter set,
  * without writing generated files. The provenance remains private so a caller
@@ -231,12 +271,16 @@ export function validateCanonicalGeneration(
       configSource: identity.configSource,
   }
   const validation = validateGeneration(identity.sourcePath, canonicalAdapters, options)
-  canonicalEmissionEvidence.set(validation, immutableEmissions(validation.emissions))
-  canonicalValidations.set(validation, {
+  canonicalEvidence.set(validation, Object.freeze({
+    plugin: immutablePluginAuthority(identity, validation.config),
+    emissions: immutableEmissions(validation.emissions),
+  }))
+  canonicalValidations.set(validation, Object.freeze({
     sourcePath: resolve(identity.sourcePath),
+    sourcePackagePath: identity.sourcePackagePath,
     configPath: resolve(identity.configPath),
     configSource: identity.configSource,
-  })
+  }))
   return validation
 }
 
@@ -246,8 +290,9 @@ export function isCanonicalGenerationFor(
 ): boolean {
   const provenance = canonicalValidations.get(validation)
   return provenance !== undefined
-    && canonicalEmissionEvidence.has(validation)
+    && canonicalEvidence.has(validation)
     && provenance.sourcePath === resolve(identity.sourcePath)
+    && provenance.sourcePackagePath === identity.sourcePackagePath
     && provenance.configPath === resolve(identity.configPath)
     && provenance.configSource === identity.configSource
 }
@@ -255,7 +300,13 @@ export function isCanonicalGenerationFor(
 export function canonicalProjectionEmissions(
   validation: GenerationValidation,
 ): Readonly<Partial<Record<TargetId, AdapterEmission>>> | undefined {
-  return canonicalEmissionEvidence.get(validation)
+  return canonicalEvidence.get(validation)?.emissions
+}
+
+export function canonicalProjectionEvidence(
+  validation: GenerationValidation,
+): CanonicalProjectionEvidence | undefined {
+  return canonicalEvidence.get(validation)
 }
 
 export function generate(

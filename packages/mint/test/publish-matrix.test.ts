@@ -1,6 +1,7 @@
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { adapters, type HarnessAdapter } from '../src/adapters/index.js'
+import { claudeCode } from '../src/adapters/claude-code.js'
 import { validateCanonicalGeneration, validateGeneration } from '../src/generate.js'
 import { resolvePlatform } from '../src/platform/load.js'
 import {
@@ -36,9 +37,27 @@ describe('publish matrix', () => {
     const platform = await resolvePlatform(REPO_ROOT)
     const fabricated = platform.plugins.map((plugin) => ({ plugin, emissions: {} })) as unknown as PluginProjectionRecord[]
 
-    expect(() => resolvePublishMatrix(platform, fabricated)).toThrow(
-      'current validated generation',
-    )
+    expect(() => resolvePublishMatrix(platform, fabricated)).toThrowError(expect.objectContaining({
+      diagnostic: expect.objectContaining({
+        code: 'PROJECTION_RECORD_PROVENANCE',
+        plugin: 'moe',
+        source: 'packages/core/mint/moe.yaml',
+        field: 'artifacts',
+      }),
+    }))
+  })
+
+  it('rejects projection record cardinality mismatches with structured context', async () => {
+    const platform = await resolvePlatform(REPO_ROOT)
+    const records = currentProjectionRecords(platform).slice(1)
+
+    expect(() => resolvePublishMatrix(platform, records)).toThrowError(expect.objectContaining({
+      diagnostic: expect.objectContaining({
+        code: 'PROJECTION_RECORD_CARDINALITY',
+        source: 'moe-platform.yaml',
+        field: 'plugins',
+      }),
+    }))
   })
 
   it('rejects a genuine validation rebound to another resolved plugin', async () => {
@@ -50,9 +69,14 @@ describe('publish matrix', () => {
       configSource: first.config.source,
     })
 
-    expect(() => projectionRecordForCurrentGeneration(second, validation)).toThrow(
-      'current canonical generation',
-    )
+    expect(() => projectionRecordForCurrentGeneration(second, validation)).toThrowError(expect.objectContaining({
+      diagnostic: expect.objectContaining({
+        code: 'PROJECTION_GENERATION_PROVENANCE',
+        plugin: second.id,
+        source: second.config.source,
+        field: 'generation',
+      }),
+    }))
   })
 
   it('rejects a zero-adapter validation pass', async () => {
@@ -64,9 +88,14 @@ describe('publish matrix', () => {
       configSource: plugin.config.source,
     })
 
-    expect(() => projectionRecordForCurrentGeneration(plugin, validation)).toThrow(
-      'current canonical generation',
-    )
+    expect(() => projectionRecordForCurrentGeneration(plugin, validation)).toThrowError(expect.objectContaining({
+      diagnostic: expect.objectContaining({
+        code: 'PROJECTION_GENERATION_PROVENANCE',
+        plugin: plugin.id,
+        source: plugin.config.source,
+        field: 'generation',
+      }),
+    }))
   })
 
   it('rejects an incomplete custom-adapter validation pass', async () => {
@@ -79,9 +108,41 @@ describe('publish matrix', () => {
       configSource: plugin.config.source,
     })
 
-    expect(() => projectionRecordForCurrentGeneration(plugin, validation)).toThrow(
-      'current canonical generation',
-    )
+    expect(() => projectionRecordForCurrentGeneration(plugin, validation)).toThrowError(expect.objectContaining({
+      diagnostic: expect.objectContaining({
+        code: 'PROJECTION_GENERATION_PROVENANCE',
+        plugin: plugin.id,
+        source: plugin.config.source,
+        field: 'generation',
+      }),
+    }))
+  })
+
+  it('prevents canonical adapter method mutation through direct and registry exports', () => {
+    const originalDirect = claudeCode.emit
+    const originalIndexed = adapters[0]?.emit
+    if (originalIndexed === undefined) throw new Error('expected the Claude adapter at adapters[0]')
+
+    let directError: unknown
+    try {
+      ;(claudeCode as HarnessAdapter).emit = () => ({ files: [], limitations: [], emittedCapabilities: [] })
+    } catch (error) {
+      directError = error
+    } finally {
+      if (claudeCode.emit !== originalDirect) (claudeCode as HarnessAdapter).emit = originalDirect
+    }
+
+    let indexedError: unknown
+    try {
+      ;(adapters[0] as HarnessAdapter).emit = () => ({ files: [], limitations: [], emittedCapabilities: [] })
+    } catch (error) {
+      indexedError = error
+    } finally {
+      if (adapters[0]?.emit !== originalIndexed) (adapters[0] as HarnessAdapter).emit = originalIndexed
+    }
+
+    expect(directError).toBeInstanceOf(TypeError)
+    expect(indexedError).toBeInstanceOf(TypeError)
   })
 
   it('keeps canonical validation complete when mutation of the exported adapter collection is attempted', async () => {
@@ -100,6 +161,7 @@ describe('publish matrix', () => {
       }
       validation = validateCanonicalGeneration({
         sourcePath: plugin.sourcePath,
+        sourcePackagePath: plugin.sourcePackagePath,
         configPath: plugin.configPath,
         configSource: plugin.config.source,
       })
@@ -139,6 +201,7 @@ describe('publish matrix', () => {
     const platform = await resolvePlatform(REPO_ROOT)
     const validations = platform.plugins.map((plugin) => validateCanonicalGeneration({
       sourcePath: plugin.sourcePath,
+      sourcePackagePath: plugin.sourcePackagePath,
       configPath: plugin.configPath,
       configSource: plugin.config.source,
     }))
@@ -165,5 +228,34 @@ describe('publish matrix', () => {
     expect(firstRecord.emissions['claude-code']?.emittedCapabilities).toEqual(expectedCapabilities)
     expect(marketplace.plugins.map((entry) => entry.name)).toContain('moe')
     expect(catalogRow).not.toContain('mcp-registration')
+  })
+
+  it('renders only validation-time plugin authority after the resolved plugin is mutated', async () => {
+    const platform = await resolvePlatform(REPO_ROOT)
+    const records = currentProjectionRecords(platform)
+    const expectedMarketplace = renderMarketplace(platform, records)
+    const expectedCatalog = renderPublicCatalog(platform, records)
+    const expectedMatrix = resolvePublishMatrix(platform, records)
+    const plugin = platform.plugins[0]
+    const record = records[0]
+    if (plugin === undefined || record === undefined) throw new Error('expected the core plugin record')
+
+    const mutablePlugin = plugin as unknown as {
+      npmPackage: string
+      version: string
+      config: { description: string; author?: { name: string }; targets: Record<string, unknown> }
+    }
+    mutablePlugin.npmPackage = '@attacker/subverted'
+    mutablePlugin.version = '9.9.9'
+    mutablePlugin.config.description = 'subverted summary'
+    if (mutablePlugin.config.author !== undefined) mutablePlugin.config.author.name = 'Subverted Owner'
+    mutablePlugin.config.targets['claude-code'] = { intent: 'omit' }
+
+    expect(Object.isFrozen(record.plugin)).toBe(true)
+    expect(Object.isFrozen(record.plugin.author)).toBe(true)
+    expect(Object.isFrozen(record.plugin.targets)).toBe(true)
+    expect(renderMarketplace(platform, records)).toBe(expectedMarketplace)
+    expect(renderPublicCatalog(platform, records)).toBe(expectedCatalog)
+    expect(resolvePublishMatrix(platform, records)).toEqual(expectedMatrix)
   })
 })

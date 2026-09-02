@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, realpathSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { describe, expect, it } from 'vitest'
@@ -88,6 +88,7 @@ describe('platform resolution', () => {
       },
     })
     await expect(resolvePlatform(root)).resolves.toMatchObject({
+      repositoryRoot: realpathSync(root),
       plugins: [{ id: 'moe-memory', npmPackage: '@bubstack/moe-memory' }],
     })
   })

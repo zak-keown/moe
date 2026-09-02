@@ -50,6 +50,7 @@ export interface ResolvedPlugin {
   id: string
   npmPackage: string
   version: string
+  sourcePackagePath: string
   sourcePath: string
   configPath: string
   packageJson: Readonly<Record<string, unknown>>
@@ -58,6 +59,7 @@ export interface ResolvedPlugin {
 }
 
 export interface ResolvedPlatform {
+  repositoryRoot: string
   registry: PlatformRegistryV1
   plugins: readonly ResolvedPlugin[]
 }
@@ -157,9 +159,78 @@ function validateTargetPrerequisites(registry: PlatformRegistryV1): void {
   }
 }
 
+const TARGET_KINDS: Readonly<Record<TargetId, 'host' | 'format'>> = Object.freeze({
+  'claude-code': 'host',
+  cursor: 'host',
+  codex: 'host',
+  kimi: 'host',
+  opencode: 'host',
+  pi: 'host',
+  'agent-plugins-1.0': 'format',
+  copilot: 'host',
+})
+
+function validateTargetSemantics(doc: unknown): void {
+  if (!isRecord(doc) || !isRecord(doc.targets)) return
+  for (const target of TARGET_IDS) {
+    const value = doc.targets[target]
+    if (!isRecord(value)) continue
+    const expectedKind = TARGET_KINDS[target]
+    if (value.kind !== undefined && value.kind !== expectedKind) {
+      fail(
+        'PLATFORM_TARGET_KIND',
+        `${target} must remain a ${expectedKind} target in platform schema version 1`,
+        `Set targets.${target}.kind to ${expectedKind}.`,
+        `targets.${target}.kind`,
+        undefined,
+        { target },
+      )
+    }
+    if (target === 'copilot') {
+      const requires = value.requires
+      if (!Array.isArray(requires) || requires.length !== 1 || requires[0] !== 'claude-code') {
+        fail(
+          'PLATFORM_TARGET_PREREQUISITE',
+          'copilot must require Claude Code as its sole prerequisite',
+          'Set targets.copilot.requires to [claude-code].',
+          'targets.copilot.requires',
+          undefined,
+          { target },
+        )
+      }
+    } else if (Object.hasOwn(value, 'requires')) {
+      fail(
+        'PLATFORM_TARGET_PREREQUISITE',
+        `${target} may not declare target prerequisites in platform schema version 1`,
+        `Remove targets.${target}.requires.`,
+        `targets.${target}.requires`,
+        undefined,
+        { target },
+      )
+    }
+  }
+}
+
 function validateProfiles(registry: PlatformRegistryV1): void {
   const pluginIds = new Set(registry.plugins.map((plugin) => plugin.id))
+  const defaults = Object.entries(registry.profiles).filter(([, profile]) => profile.default)
+  if (defaults.length !== 1) {
+    fail(
+      'PLATFORM_DEFAULT_PROFILE',
+      'platform registry must define exactly one default profile',
+      'Mark exactly one usable profile as default.',
+      'profiles',
+    )
+  }
   for (const [profileName, profile] of Object.entries(registry.profiles)) {
+    if (profile.default && profile.plugins.length === 0) {
+      fail(
+        'PLATFORM_DEFAULT_PROFILE',
+        `default profile "${profileName}" must contain at least one registered plugin`,
+        'Add a registered plugin to the default profile.',
+        `profiles.${profileName}.plugins`,
+      )
+    }
     for (const [index, plugin] of profile.plugins.entries()) {
       if (!pluginIds.has(plugin)) {
         fail(
@@ -176,6 +247,14 @@ function validateProfiles(registry: PlatformRegistryV1): void {
 async function resolveContainedPath(repoRoot: string, value: string, field: string): Promise<string> {
   if (isAbsolute(value)) {
     fail('PLATFORM_PATH_ESCAPE', `registry path "${value}" must be relative to the repository`, 'Use a repository-relative path.', field)
+  }
+  if (value.split(/[\\/]/).some((segment) => segment === '.' || segment === '..')) {
+    fail(
+      'PLATFORM_PATH_ESCAPE',
+      `registry path "${value}" contains a noncanonical dot segment`,
+      'Use a normalized repository-relative path without . or .. segments.',
+      field,
+    )
   }
   const candidate = resolve(repoRoot, value)
   if (isOutside(repoRoot, candidate)) {
@@ -396,6 +475,7 @@ export function resolvePlugin(
     id: declaration.id,
     npmPackage: config.distribution.npm,
     version: config.version,
+    sourcePackagePath: declaration.source,
     sourcePath: declaration.sourcePath,
     configPath: declaration.configPath,
     packageJson: sourceManifest,
@@ -439,7 +519,8 @@ async function readSourceManifest(plugin: PlatformRegistryV1['plugins'][number])
 }
 
 export async function resolvePlatform(repoRoot: string): Promise<ResolvedPlatform> {
-  const registry = await loadPlatformRegistry(repoRoot)
+  const repositoryRoot = await resolveRepositoryRoot(repoRoot)
+  const registry = await loadPlatformRegistry(repositoryRoot)
   const plugins: ResolvedPlugin[] = []
   for (const declaration of registry.plugins) {
     const config = loadConfig(dirname(declaration.configPath), basename(declaration.configPath), declaration.config)
@@ -456,17 +537,20 @@ export async function resolvePlatform(repoRoot: string): Promise<ResolvedPlatfor
       packageJson: sourceManifest,
     })
   }
-  return { registry, plugins }
+  return { repositoryRoot, registry, plugins }
 }
 
-export async function loadPlatformRegistry(repoRoot: string): Promise<PlatformRegistryV1> {
-  let root: string
+async function resolveRepositoryRoot(repoRoot: string): Promise<string> {
   try {
-    root = await realpath(repoRoot)
+    return await realpath(repoRoot)
   } catch (error) {
     const code = (error as NodeJS.ErrnoException).code === 'ENOENT' ? 'PLATFORM_ROOT_NOT_FOUND' : 'PLATFORM_ROOT_UNAVAILABLE'
     fail(code, `repository root "${repoRoot}" is not accessible`, 'Use an accessible repository root.', undefined, repoRoot, { source: repoRoot, cause: error })
   }
+}
+
+export async function loadPlatformRegistry(repoRoot: string): Promise<PlatformRegistryV1> {
+  const root = await resolveRepositoryRoot(repoRoot)
   const filePath = resolve(root, REGISTRY_FILE)
   let contents: string
   try {
@@ -485,6 +569,7 @@ export async function loadPlatformRegistry(repoRoot: string): Promise<PlatformRe
   validateKnownTargetIds(doc)
   validateOperatingSystemIds(doc)
   validateForbiddenPluginMetadata(doc)
+  validateTargetSemantics(doc)
   const parsed = platformRegistrySchema.safeParse(doc)
   if (!parsed.success) {
     const issue = parsed.error.issues[0] ?? { message: 'unknown schema error', path: [] }

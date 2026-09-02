@@ -87,7 +87,7 @@ function installDoc(model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const cursor: HarnessAdapter = {
+export const cursor: HarnessAdapter = Object.freeze({
   name: 'cursor',
   installDoc,
   emit(model: PluginModel) {
@@ -140,4 +140,4 @@ export const cursor: HarnessAdapter = {
 
     return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('cursor', model, files) }
   },
-}
+})

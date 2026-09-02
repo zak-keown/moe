@@ -153,7 +153,7 @@ function installDoc(model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const claudeCode: HarnessAdapter = {
+export const claudeCode: HarnessAdapter = Object.freeze({
   name: 'claude-code',
   installDoc,
   emit(model: PluginModel) {
@@ -201,4 +201,4 @@ export const claudeCode: HarnessAdapter = {
     }
     return { files, limitations: [], emittedCapabilities: deriveEmittedCapabilities('claude-code', model, files) }
   },
-}
+})

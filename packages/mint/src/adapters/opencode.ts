@@ -248,7 +248,7 @@ function installDoc(model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const opencode: HarnessAdapter = {
+export const opencode: HarnessAdapter = Object.freeze({
   name: 'opencode',
   installDoc,
   emit(model: PluginModel) {
@@ -275,4 +275,4 @@ export const opencode: HarnessAdapter = {
 
     return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('opencode', model, files) }
   },
-}
+})

@@ -62,7 +62,7 @@ function installDoc(_model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const codex: HarnessAdapter = {
+export const codex: HarnessAdapter = Object.freeze({
   name: 'codex',
   installDoc,
   emit(model: PluginModel) {
@@ -81,4 +81,4 @@ export const codex: HarnessAdapter = {
 
     return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('codex', model, files) }
   },
-}
+})
