@@ -28,7 +28,6 @@
       "inputs": [
         "scripts/mint-plugins.mjs",
         "moe-platform.yaml",
-        ".claude-plugin/marketplace.json",
         "packages/*/package.json",
         "packages/core/skill-tiers.yaml",
         "packages/*/mint/*.yaml",
