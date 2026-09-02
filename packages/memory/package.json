@@ -1,6 +1,6 @@
 {
   "name": "@bubstack/moe-memory",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "type": "module",
   "description": "Semantic recall over past sessions and journal entries. One MCP server.",
   "license": "MIT",
@@ -11,7 +11,7 @@
   "homepage": "https://gitlab.com/moe-ai/moe",
   "repository": {
     "type": "git",
-    "url": "https://gitlab.com/moe-ai/moe.git"
+    "url": "git+https://github.com/zak-keown/moe.git"
   },
   "keywords": [
     "claude-code",

@@ -1,6 +1,6 @@
 {
   "name": "@bubstack/moe-core",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "type": "module",
   "description": "The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring, and the stop-hook. Marketplace-published as the `moe` plugin.",
   "license": "MIT AND Apache-2.0",
@@ -11,7 +11,7 @@
   "homepage": "https://gitlab.com/moe-ai/moe",
   "repository": {
     "type": "git",
-    "url": "https://gitlab.com/moe-ai/moe.git"
+    "url": "git+https://github.com/zak-keown/moe.git"
   },
   "keywords": [
     "claude-code",

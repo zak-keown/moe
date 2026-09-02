@@ -515,7 +515,7 @@ let browserOpened = false;
 function maybeOpenBrowser() {
   if (browserOpened) return;
   browserOpened = true;
-  if (!process.env.BRAINSTORM_OPEN) return; // opt-in: only after the user approves the companion
+  if (!process.env.BRAINSTORM_OPEN) return; // opt-in: callers decide when a visual question warrants opening
   if (HOST !== '127.0.0.1' && HOST !== 'localhost') return;
   if (clients.size > 0) return; // the user already opened it
   const url = companionUrl(); // must carry the key or the gate 403s it

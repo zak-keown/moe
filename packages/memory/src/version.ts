@@ -9,4 +9,4 @@
  * constant instead. `test/version-consistency.test.ts` asserts it equals
  * package.json, which is the invariant the generator existed to guarantee.
  */
-export const VERSION = "0.1.3";
+export const VERSION = "0.1.4";
