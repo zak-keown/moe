@@ -119,8 +119,17 @@ func extractEmbedded(b []byte, ext, base string) (string, error) {
 	sum := sha256.Sum256(b)
 	dir := filepath.Join(base, "moe", "tab-go", hex.EncodeToString(sum[:8]))
 	target := filepath.Join(dir, "libmoe_tab_ffi."+ext)
-	if fileExists(target) {
-		return target, nil
+	// The target's name is a hash of b, which is public (embedded in the
+	// published module), so on a shared host a local user can pre-plant
+	// arbitrary bytes at this exact path before the real writer ever runs.
+	// Existence alone is not proof of authenticity — re-hash what is
+	// actually there and fall through to a rewrite on any mismatch (missing,
+	// unreadable, or wrong content, including a symlink to attacker data).
+	if existing, err := os.ReadFile(target); err == nil {
+		existingSum := sha256.Sum256(existing)
+		if existingSum == sum {
+			return target, nil
+		}
 	}
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
