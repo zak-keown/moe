@@ -3,6 +3,7 @@ import { basename, resolve, join } from 'node:path'
 import { stringify } from 'yaml'
 import { generate } from './generate.js'
 import { ConfigError } from './config.js'
+import { TARGET_IDS } from './vocabulary.js'
 
 export interface InitResult {
   created: string[]
@@ -51,6 +52,13 @@ export function init(root: string, opts: { force?: boolean } = {}): InitResult {
     description: 'TODO describe this plugin',
     // v2 tagged bootstrap: the 'generate' string literal.
     bootstrap: 'generate',
+    // A scaffold has no evidence for a target/capability claim. Keep every
+    // target explicitly omitted until its author declares a reviewed policy.
+    distribution: { npm: `@example/${pluginName}` },
+    artifact: { payloads: [] },
+    targets: Object.fromEntries(TARGET_IDS.map((target) => [target, { intent: 'omit' }])),
+    imported_works: [],
+    harnesses: { exclude: [...TARGET_IDS] },
   }
 
   const created: string[] = []

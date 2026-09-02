@@ -8,6 +8,30 @@ import { importPlugin } from '../src/import.js'
 import { ConfigError, loadConfig } from '../src/config.js'
 import { buildModel } from '../src/model.js'
 
+const OMITTED_TARGETS = ['cursor', 'codex', 'kimi', 'opencode', 'pi', 'agent-plugins-1.0', 'copilot']
+
+function importedPolicy(name: string, manifest?: Record<string, unknown>): Record<string, unknown> {
+  return {
+    distribution: { npm: `@example/${name}` },
+    artifact: { payloads: [] },
+    targets: {
+      'claude-code': { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] },
+      cursor: { intent: 'omit' },
+      codex: { intent: 'omit' },
+      kimi: { intent: 'omit' },
+      opencode: { intent: 'omit' },
+      pi: { intent: 'omit' },
+      'agent-plugins-1.0': { intent: 'omit' },
+      copilot: { intent: 'omit' },
+    },
+    imported_works: [],
+    harnesses: {
+      exclude: OMITTED_TARGETS,
+      ...(manifest === undefined ? {} : { 'claude-code': { manifest } }),
+    },
+  }
+}
+
 const REPO_ROOT = process.cwd()
 const CLI = join(REPO_ROOT, 'dist', 'cli.js')
 
@@ -75,13 +99,13 @@ describe('importPlugin', () => {
       name: 'demo',
       version: '1.2.3',
       description: 'A demo plugin',
+      ...importedPolicy('demo', { xPortal: { a: 1 } }),
       author: { name: 'Test Author', email: 'test@example.com' },
       license: 'MIT',
       repository: 'https://github.com/test/demo',
       homepage: 'https://example.com/demo',
       keywords: ['demo', 'test'],
       bootstrap: { skill: 'using-demo' },
-      harnesses: { 'claude-code': { manifest: { xPortal: { a: 1 } } } },
     })
     expect(readFileSync(result.configPath, 'utf8')).toBe(expected)
 
@@ -157,9 +181,9 @@ describe('importPlugin', () => {
       name: 'custom-paths',
       version: '1.0.0',
       description: 'Custom paths',
+      ...importedPolicy('custom-paths', { xClaude: { b: 2 } }),
       bootstrap: 'generate',
       components: { commands: 'my-cmds' },
-      harnesses: { 'claude-code': { manifest: { xClaude: { b: 2 } } } },
     })
     expect(readFileSync(result.configPath, 'utf8')).toBe(expected)
 

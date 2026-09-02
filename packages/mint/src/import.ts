@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, unlinkSync,
 import { dirname, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { ConfigError, PLUGIN_NAME_RE, loadConfig } from './config.js'
+import { TARGET_IDS } from './vocabulary.js'
 
 export interface ImportResult {
   configPath: string
@@ -153,7 +154,24 @@ export function importPlugin(root: string): ImportResult {
     warnings.push('plugin.json has no description; defaulting to "TODO describe this plugin"')
   }
 
-  const output: Record<string, unknown> = { name, version, description }
+  const output: Record<string, unknown> = {
+    name,
+    version,
+    description,
+    // An imported Claude manifest proves only that the author needs to review
+    // the target policy. Keep its Claude projection in preview, and omit all
+    // other adapters rather than inventing certification/capability claims.
+    distribution: { npm: `@example/${name}` },
+    artifact: { payloads: [] },
+    targets: Object.fromEntries(TARGET_IDS.map((target) => [
+      target,
+      target === 'claude-code'
+        ? { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] }
+        : { intent: 'omit' },
+    ])),
+    imported_works: [],
+    harnesses: { exclude: TARGET_IDS.filter((target) => target !== 'claude-code') },
+  }
   if (pluginJson.author !== undefined) {
     if (isPlainObject(pluginJson.author)) {
       output.author = pluginJson.author
@@ -272,7 +290,10 @@ export function importPlugin(root: string): ImportResult {
   }
   if (Object.keys(overrideExtras).length > 0) {
     // Carried extras become a manifest patch under harnesses.claude-code.
-    output.harnesses = { 'claude-code': { manifest: overrideExtras } }
+    output.harnesses = {
+      exclude: TARGET_IDS.filter((target) => target !== 'claude-code'),
+      'claude-code': { manifest: overrideExtras },
+    }
   }
 
   writeFileSync(configPath, stringify(output))

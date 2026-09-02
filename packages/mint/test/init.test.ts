@@ -132,10 +132,11 @@ describe('init function', () => {
 
   it('reports partial scaffold on generate failure', () => {
     const testDir = tmpDir('generate-fail')
-    // Pre-place a file that generate would emit (agent-plugins-1.0's root
-    // plugin.json), with content that differs from what generate would write,
+    // Pre-place a file that generate emits even for the deliberately
+    // target-omitted safe scaffold, with content that differs from its output,
     // to trip the refuse-to-overwrite path inside init()'s wrapped generate().
-    writeFileSync(join(testDir, 'plugin.json'), 'existing hand-written content, not generated\n')
+    mkdirSync(join(testDir, 'docs'), { recursive: true })
+    writeFileSync(join(testDir, 'docs', 'support-matrix.md'), 'existing hand-written content, not generated\n')
 
     try {
       init(testDir)
@@ -144,7 +145,7 @@ describe('init function', () => {
       expect(err).toBeInstanceOf(ConfigError)
       const message = (err as Error).message
       expect(message).toMatch(/scaffolded .* but generate failed/)
-      expect(message).toMatch(/plugin\.json/)
+      expect(message).toMatch(/support-matrix\.md/)
     }
 
     // Verify moe-mint.yaml exists (partial scaffold survives)

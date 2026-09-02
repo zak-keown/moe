@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { byPathMap, mustGet } from '../helpers.js'
+import { byPathMap, mustGet, withV1Policy } from '../helpers.js'
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -87,7 +87,7 @@ describe('cursor adapter with harnesses.cursor.manifest', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-cursor-override-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      [
+      withV1Policy([
         'name: override-demo',
         'version: 1.0.0',
         'description: override fixture for cursor displayName',
@@ -96,7 +96,7 @@ describe('cursor adapter with harnesses.cursor.manifest', () => {
         '  cursor:',
         '    manifest:',
         '      displayName: Fancy',
-      ].join('\n'),
+      ].join('\n')),
     )
     const overrideModel = buildModel(dir)
     const result = cursor.emit(overrideModel)
@@ -115,7 +115,7 @@ describe('cursor adapter with harnesses.cursor.hooks: own', () => {
     )
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: no-hooks\nversion: 1.0.0\ndescription: hooks own fixture\nbootstrap:\n  skill: using-demo\nharnesses:\n  cursor:\n    hooks: own\n',
+      withV1Policy('name: no-hooks\nversion: 1.0.0\ndescription: hooks own fixture\nbootstrap:\n  skill: using-demo\nharnesses:\n  cursor:\n    hooks: own\n'),
     )
     const noHooksModel = buildModel(dir)
     const result = cursor.emit(noHooksModel)
@@ -128,7 +128,7 @@ describe('cursor adapter with harnesses.cursor.hooks: own', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-cursor-emithooks-generate-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: no-hooks-generate\nversion: 1.0.0\ndescription: hooks own generate fixture\nbootstrap: generate\nharnesses:\n  cursor:\n    hooks: own\n',
+      withV1Policy('name: no-hooks-generate\nversion: 1.0.0\ndescription: hooks own generate fixture\nbootstrap: generate\nharnesses:\n  cursor:\n    hooks: own\n'),
     )
     const noHooksModel = buildModel(dir)
     const result = cursor.emit(noHooksModel)
@@ -150,7 +150,7 @@ describe('cursor adapter with harnesses.cursor.hooks: own', () => {
     )
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: no-hooks-doc\nversion: 1.0.0\ndescription: hooks own installDoc fixture\nbootstrap:\n  skill: using-demo\nharnesses:\n  cursor:\n    hooks: own\n',
+      withV1Policy('name: no-hooks-doc\nversion: 1.0.0\ndescription: hooks own installDoc fixture\nbootstrap:\n  skill: using-demo\nharnesses:\n  cursor:\n    hooks: own\n'),
     )
     const noHooksModel = buildModel(dir)
     const body = cursor.installDoc!(noHooksModel)
@@ -168,7 +168,7 @@ describe('cursor adapter with harnesses.cursor.hooks: own', () => {
     writeFileSync(join(dir, 'hooks', 'hooks.json'), '{"hooks":{}}\n')
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: no-hooks-doc-hooks\nversion: 1.0.0\ndescription: hooks own installDoc fixture with hand-written hooks\nbootstrap:\n  skill: using-demo\nharnesses:\n  cursor:\n    hooks: own\n',
+      withV1Policy('name: no-hooks-doc-hooks\nversion: 1.0.0\ndescription: hooks own installDoc fixture with hand-written hooks\nbootstrap:\n  skill: using-demo\nharnesses:\n  cursor:\n    hooks: own\n'),
     )
     const noHooksModel = buildModel(dir)
     const body = cursor.installDoc!(noHooksModel)
@@ -188,7 +188,7 @@ describe('per-harness hooks: own', () => {
     )
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      [
+      withV1Policy([
         'name: mixed-emithooks',
         'version: 1.0.0',
         'description: per-harness hooks fixture',
@@ -197,7 +197,7 @@ describe('per-harness hooks: own', () => {
         'harnesses:',
         '  claude-code:',
         '    hooks: own',
-      ].join('\n'),
+      ].join('\n')),
     )
     const mixedModel = buildModel(dir)
 
@@ -228,7 +228,7 @@ describe('cursor adapter with bootstrap.generate', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-cursor-generate-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: generate-bootstrap\nversion: 1.0.0\ndescription: bootstrap.generate fixture\nbootstrap: generate\n',
+      withV1Policy('name: generate-bootstrap\nversion: 1.0.0\ndescription: bootstrap.generate fixture\nbootstrap: generate\n'),
     )
     const generateModel = buildModel(dir)
     const result = cursor.emit(generateModel)

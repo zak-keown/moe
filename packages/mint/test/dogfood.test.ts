@@ -182,6 +182,19 @@ function buildConfig(originals: Record<ComparedFile, Record<string, unknown>>): 
     license: claude.license,
     keywords: claude.keywords,
     bootstrap: { skill: 'using-superpowers' },
+    distribution: { npm: '@example/superpowers-dogfood' },
+    artifact: { payloads: [] },
+    targets: {
+      'claude-code': { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] },
+      cursor: { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] },
+      codex: { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] },
+      kimi: { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] },
+      opencode: { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] },
+      pi: { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] },
+      'agent-plugins-1.0': { intent: 'preview', expected_capabilities: [] },
+      copilot: { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] },
+    },
+    imported_works: [],
     // Closes Finding 1: marketplaceManifest() (src/adapters/claude-code.ts)
     // deep-merges this onto its hardcoded `Development marketplace for
     // ${config.name}` default, reproducing superpowers' hand-written copy.

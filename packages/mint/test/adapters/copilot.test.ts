@@ -5,12 +5,13 @@ import { join } from 'node:path'
 import { buildModel } from '../../src/model.js'
 import { copilot } from '../../src/adapters/copilot.js'
 import { adapters, getAdapter } from '../../src/adapters/index.js'
+import { withV1Policy } from '../helpers.js'
 
 const model = buildModel('fixtures/kitchen-sink')
 
 function modelFromYaml(yaml: string) {
   const dir = mkdtempSync(join(tmpdir(), 'mint-copilot-'))
-  writeFileSync(join(dir, 'moe-mint.yaml'), yaml)
+  writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy(yaml))
   return buildModel(dir)
 }
 

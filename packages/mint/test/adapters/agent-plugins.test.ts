@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { byPathMap, mustGet } from '../helpers.js'
+import { byPathMap, mustGet, withV1Policy } from '../helpers.js'
 import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -13,7 +13,7 @@ function mcpFixtureModel(mcpServers: Record<string, unknown>) {
   const dir = mkdtempSync(join(tmpdir(), 'mint-ap-mcp-'))
   writeFileSync(
     join(dir, 'moe-mint.yaml'),
-    'name: mcp-fixture\nversion: 1.0.0\ndescription: mcp translation fixture\nbootstrap: none\n',
+    withV1Policy('name: mcp-fixture\nversion: 1.0.0\ndescription: mcp translation fixture\nbootstrap: none\n'),
   )
   writeFileSync(join(dir, '.mcp.json'), JSON.stringify({ mcpServers }))
   return buildModel(dir)
@@ -137,7 +137,7 @@ describe('agent-plugins-1.0 name gate', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-ap-name-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: bad--name\nversion: 1.0.0\ndescription: name gate fixture\nbootstrap: none\n',
+      withV1Policy('name: bad--name\nversion: 1.0.0\ndescription: name gate fixture\nbootstrap: none\n'),
     )
     const badModel = buildModel(dir)
     const result = agentPlugins.emit(badModel)
@@ -153,7 +153,7 @@ describe('agent-plugins-1.0 without an mcp source', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-ap-no-mcp-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: no-mcp\nversion: 1.0.0\ndescription: no mcp fixture\nbootstrap: none\n',
+      withV1Policy('name: no-mcp\nversion: 1.0.0\ndescription: no mcp fixture\nbootstrap: none\n'),
     )
     const noMcpModel = buildModel(dir)
     const result = agentPlugins.emit(noMcpModel)
@@ -166,7 +166,7 @@ describe('agent-plugins-1.0 with malformed mcpServers', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-ap-badmcp-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: bad-mcp-shape\nversion: 1.0.0\ndescription: malformed mcpServers fixture\nbootstrap: none\n',
+      withV1Policy('name: bad-mcp-shape\nversion: 1.0.0\ndescription: malformed mcpServers fixture\nbootstrap: none\n'),
     )
     writeFileSync(join(dir, '.mcp.json'), JSON.stringify({ servers: {} }))
     const badMcpModel = buildModel(dir)
@@ -181,7 +181,7 @@ describe('agent-plugins-1.0 with a non-default skills path', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-ap-skills-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: custom-skills\nversion: 1.0.0\ndescription: custom skills path fixture\ncomponents:\n  skills: my-skills\nbootstrap: none\n',
+      withV1Policy('name: custom-skills\nversion: 1.0.0\ndescription: custom skills path fixture\ncomponents:\n  skills: my-skills\nbootstrap: none\n'),
     )
     const customModel = buildModel(dir)
     const result = agentPlugins.emit(customModel)
@@ -196,7 +196,7 @@ describe('agent-plugins-1.0 mcp.json collision with the source MCP config', () =
     const dir = mkdtempSync(join(tmpdir(), 'mint-ap-mcp-collision-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: mcp-collision\nversion: 1.0.0\ndescription: mcp.json collision fixture\ncomponents:\n  mcp: mcp.json\nbootstrap: none\n',
+      withV1Policy('name: mcp-collision\nversion: 1.0.0\ndescription: mcp.json collision fixture\ncomponents:\n  mcp: mcp.json\nbootstrap: none\n'),
     )
     writeFileSync(join(dir, 'mcp.json'), JSON.stringify({ mcpServers: { demo: { command: 'node' } } }))
     const collisionModel = buildModel(dir)
@@ -214,7 +214,7 @@ describe('agent-plugins-1.0 with harnesses[agent-plugins-1.0].manifest.extension
     const dir = mkdtempSync(join(tmpdir(), 'mint-ap-ext-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      [
+      withV1Policy([
         'name: ext-demo',
         'version: 1.0.0',
         'description: extensions override fixture',
@@ -226,7 +226,7 @@ describe('agent-plugins-1.0 with harnesses[agent-plugins-1.0].manifest.extension
         '        com.example.demo:',
         '          enabled: true',
         '        com.example.bad: not-an-object',
-      ].join('\n'),
+      ].join('\n')),
     )
     const extModel = buildModel(dir)
     const result = agentPlugins.emit(extModel)

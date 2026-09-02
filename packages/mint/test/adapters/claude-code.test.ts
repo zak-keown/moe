@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { byPathMap, mustGet } from '../helpers.js'
+import { byPathMap, mustGet, withV1Policy } from '../helpers.js'
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -90,7 +90,7 @@ describe('claude-code adapter with bootstrap.generate', () => {
     )
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: generate-bootstrap\nversion: 1.0.0\ndescription: bootstrap.generate fixture\nbootstrap: generate\n',
+      withV1Policy('name: generate-bootstrap\nversion: 1.0.0\ndescription: bootstrap.generate fixture\nbootstrap: generate\n'),
     )
     const generateModel = buildModel(dir)
     const result = claudeCode.emit(generateModel)
@@ -149,7 +149,7 @@ describe('claude-code adapter installDoc', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-installdoc-norepo-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: no-repo\nversion: 1.0.0\ndescription: no repository fixture\nbootstrap: none\n',
+      withV1Policy('name: no-repo\nversion: 1.0.0\ndescription: no repository fixture\nbootstrap: none\n'),
     )
     const noRepoModel = buildModel(dir)
     const body = claudeCode.installDoc!(noRepoModel)
@@ -161,7 +161,7 @@ describe('claude-code adapter installDoc', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-installdoc-nongithub-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: non-github\nversion: 1.0.0\ndescription: non-github repository fixture\nrepository: https://gitlab.com/owner/repo\nbootstrap: none\n',
+      withV1Policy('name: non-github\nversion: 1.0.0\ndescription: non-github repository fixture\nrepository: https://gitlab.com/owner/repo\nbootstrap: none\n'),
     )
     const nonGithubModel = buildModel(dir)
     const body = claudeCode.installDoc!(nonGithubModel)
@@ -177,7 +177,7 @@ describe('claude-code adapter installDoc', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-installdoc-selfhosted-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: custom-host\nversion: 1.0.0\ndescription: self-hosted git fixture\nrepository: https://gitlab.example.com/owner/repo\nbootstrap: none\n',
+      withV1Policy('name: custom-host\nversion: 1.0.0\ndescription: self-hosted git fixture\nrepository: https://gitlab.example.com/owner/repo\nbootstrap: none\n'),
     )
     const arbitraryHostModel = buildModel(dir)
     const body = claudeCode.installDoc!(arbitraryHostModel)
@@ -189,7 +189,7 @@ describe('claude-code adapter installDoc', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-installdoc-ssh-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: ssh-repo\nversion: 1.0.0\ndescription: ssh repository fixture\nrepository: git@github.com:owner/repo.git\nbootstrap: none\n',
+      withV1Policy('name: ssh-repo\nversion: 1.0.0\ndescription: ssh repository fixture\nrepository: git@github.com:owner/repo.git\nbootstrap: none\n'),
     )
     const sshModel = buildModel(dir)
     expect(claudeCode.installDoc!(sshModel)).toContain('claude /plugin marketplace add <your-repo>')
@@ -199,7 +199,7 @@ describe('claude-code adapter installDoc', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-installdoc-nobootstrap-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: no-bootstrap\nversion: 1.0.0\ndescription: no bootstrap fixture\nbootstrap: none\n',
+      withV1Policy('name: no-bootstrap\nversion: 1.0.0\ndescription: no bootstrap fixture\nbootstrap: none\n'),
     )
     const noBootstrapModel = buildModel(dir)
     const body = claudeCode.installDoc!(noBootstrapModel)
@@ -213,7 +213,7 @@ describe('claude-code adapter marketplace field handling', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-marketplace-pub-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      [
+      withV1Policy([
         'name: proving-it-works',
         'version: 1.0.0',
         'description: proves marketplace fields work',
@@ -223,7 +223,7 @@ describe('claude-code adapter marketplace field handling', () => {
         '  description: Real desc',
         '  source: repository',
         '  strict: false',
-      ].join('\n'),
+      ].join('\n')),
     )
     const pubModel = buildModel(dir)
     const marketplace = JSON.parse(
@@ -240,13 +240,13 @@ describe('claude-code adapter marketplace field handling', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-marketplace-url-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      [
+      withV1Policy([
         'name: url-source',
         'version: 1.0.0',
         'description: explicit url source fixture',
         'marketplace:',
         '  source: https://example.com/repo.git',
-      ].join('\n'),
+      ].join('\n')),
     )
     const urlModel = buildModel(dir)
     const marketplace = JSON.parse(
@@ -271,7 +271,7 @@ describe('claude-code adapter marketplace field handling', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-no-author-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: no-author\nversion: 1.0.0\ndescription: no author fixture\nbootstrap: none\n',
+      withV1Policy('name: no-author\nversion: 1.0.0\ndescription: no author fixture\nbootstrap: none\n'),
     )
     const noAuthorModel = buildModel(dir)
     const marketplace = JSON.parse(
@@ -291,7 +291,7 @@ describe('claude-code adapter with harnesses.claude-code.hooks: own', () => {
     )
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: no-hooks\nversion: 1.0.0\ndescription: hooks own fixture\nbootstrap:\n  skill: using-demo\nharnesses:\n  claude-code:\n    hooks: own\n',
+      withV1Policy('name: no-hooks\nversion: 1.0.0\ndescription: hooks own fixture\nbootstrap:\n  skill: using-demo\nharnesses:\n  claude-code:\n    hooks: own\n'),
     )
     const noHooksModel = buildModel(dir)
     const result = claudeCode.emit(noHooksModel)
@@ -304,7 +304,7 @@ describe('claude-code adapter with harnesses.claude-code.hooks: own', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-emithooks-generate-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: no-hooks-generate\nversion: 1.0.0\ndescription: hooks own generate fixture\nbootstrap: generate\nharnesses:\n  claude-code:\n    hooks: own\n',
+      withV1Policy('name: no-hooks-generate\nversion: 1.0.0\ndescription: hooks own generate fixture\nbootstrap: generate\nharnesses:\n  claude-code:\n    hooks: own\n'),
     )
     const noHooksModel = buildModel(dir)
     const result = claudeCode.emit(noHooksModel)
@@ -327,7 +327,7 @@ describe('claude-code adapter with harnesses.claude-code.hooks: own', () => {
     writeFileSync(join(dir, 'my-hooks.json'), '{"hooks":{}}\n')
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      [
+      withV1Policy([
         'name: own-hooks',
         'version: 1.0.0',
         'description: own hooks fallback fixture',
@@ -338,7 +338,7 @@ describe('claude-code adapter with harnesses.claude-code.hooks: own', () => {
         'harnesses:',
         '  claude-code:',
         '    hooks: own',
-      ].join('\n'),
+      ].join('\n')),
     )
     const fallbackModel = buildModel(dir)
     const result = claudeCode.emit(fallbackModel)
@@ -356,7 +356,7 @@ describe('claude-code adapter with harnesses.claude-code.hooks: own', () => {
     )
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: no-hooks-doc\nversion: 1.0.0\ndescription: hooks own installDoc fixture\nbootstrap:\n  skill: using-demo\nharnesses:\n  claude-code:\n    hooks: own\n',
+      withV1Policy('name: no-hooks-doc\nversion: 1.0.0\ndescription: hooks own installDoc fixture\nbootstrap:\n  skill: using-demo\nharnesses:\n  claude-code:\n    hooks: own\n'),
     )
     const noHooksModel = buildModel(dir)
     const body = claudeCode.installDoc!(noHooksModel)
@@ -370,7 +370,7 @@ describe('claude-code adapter with a non-default skills path', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-claude-code-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: custom-skills\nversion: 1.0.0\ndescription: custom skills path fixture\ncomponents:\n  skills: my-skills\n',
+      withV1Policy('name: custom-skills\nversion: 1.0.0\ndescription: custom skills path fixture\ncomponents:\n  skills: my-skills\n'),
     )
     mkdirSync(join(dir, 'my-skills', 'demo'), { recursive: true })
     writeFileSync(

@@ -7,6 +7,7 @@ import { MANIFEST_PATH, checkDrift } from '../src/manifest.js'
 import type { HarnessAdapter } from '../src/adapters/index.js'
 import { opencode } from '../src/adapters/opencode.js'
 import { pi } from '../src/adapters/pi.js'
+import { withV1Policy } from './helpers.js'
 
 const fullSupport = {
   skills: 'full',
@@ -78,7 +79,10 @@ describe('generate', () => {
     expect(existsSync(join(dir, 'docs/install/claude-code.md'))).toBe(true)
 
     const yaml = readFileSync(join(dir, 'moe-mint.yaml'), 'utf8')
-    writeFileSync(join(dir, 'moe-mint.yaml'), yaml.replace('harnesses:\n', 'harnesses:\n  exclude: [claude-code]\n'))
+    writeFileSync(join(dir, 'moe-mint.yaml'), yaml
+      .replace('  claude-code: { intent: preview, expected_capabilities: [], operating_systems: [macos] }', '  claude-code: { intent: omit }')
+      .replace('harnesses:\n  claude-code:\n    manifest:\n      homepage: https://example.com/kitchen-sink\n', 'harnesses:\n')
+      .replace('harnesses:\n', 'harnesses:\n  exclude: [claude-code]\n'))
     const result = generate(dir)
 
     expect(result.pruned).toContain('docs/install/claude-code.md')
@@ -98,7 +102,10 @@ describe('generate', () => {
   it('respects harnesses.exclude', () => {
     const dir = freshFixture()
     const yaml = readFileSync(join(dir, 'moe-mint.yaml'), 'utf8')
-    const patched = yaml.replace('harnesses:\n', 'harnesses:\n  exclude: [claude-code]\n')
+    const patched = yaml
+      .replace('  claude-code: { intent: preview, expected_capabilities: [], operating_systems: [macos] }', '  claude-code: { intent: omit }')
+      .replace('harnesses:\n  claude-code:\n    manifest:\n      homepage: https://example.com/kitchen-sink\n', 'harnesses:\n')
+      .replace('harnesses:\n', 'harnesses:\n  exclude: [claude-code]\n')
     writeFileSync(join(dir, 'moe-mint.yaml'), patched)
     const result = generate(dir)
     expect(result.adaptersRun).toEqual(['cursor', 'codex', 'kimi', 'opencode', 'pi', 'agent-plugins-1.0', 'copilot'])
@@ -178,14 +185,14 @@ describe('generate', () => {
 
   it('rejects adapter emission over source paths even when components have trailing slashes', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-gen-trailing-'))
-    writeFileSync(join(dir, 'moe-mint.yaml'), [
+    writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy([
       'name: test-trailing',
       'version: 1.0.0',
       'description: Test with trailing slashes',
       'components:',
       '  skills: skills/',
       'bootstrap: none',
-    ].join('\n'))
+    ].join('\n')))
     mkdirSync(join(dir, 'skills'))
     writeFileSync(join(dir, 'skills', 'demo.md'), '# Demo Skill\n')
     const evilAdapter = { name: 'evil', support: fullSupport, emit: () => ({ files: [{ path: 'skills/demo.md', content: 'overwritten' }], warnings: [] }) }
@@ -348,14 +355,14 @@ describe('generate', () => {
 
   it('does not warn about a stray root mcp.json when components.mcp is explicitly set to mcp.json', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-gen-mcp-explicit-'))
-    writeFileSync(join(dir, 'moe-mint.yaml'), [
+    writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy([
       'name: explicit-mcp-json',
       'version: 1.0.0',
       'description: components.mcp explicitly set to mcp.json',
       'components:',
       '  mcp: mcp.json',
       'bootstrap: none',
-    ].join('\n'))
+    ].join('\n')))
     writeFileSync(join(dir, 'mcp.json'), JSON.stringify({ mcpServers: { demo: { command: 'node' } } }))
     const result = generate(dir)
     expect(result.warnings.some((w) => w.includes('found mcp.json at the plugin root'))).toBe(false)
@@ -363,14 +370,14 @@ describe('generate', () => {
 
   it('succeeds with agent-plugins-1.0 active when components.mcp collides with the spec on-disk mcp.json name, warning instead of throwing', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-gen-mcp-collision-'))
-    writeFileSync(join(dir, 'moe-mint.yaml'), [
+    writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy([
       'name: explicit-mcp-json',
       'version: 1.0.0',
       'description: components.mcp explicitly set to mcp.json',
       'components:',
       '  mcp: mcp.json',
       'bootstrap: none',
-    ].join('\n'))
+    ].join('\n')))
     writeFileSync(join(dir, 'mcp.json'), JSON.stringify({ mcpServers: { demo: { command: 'node' } } }))
     const result = generate(dir)
     expect(result.warnings).toContain(
@@ -384,7 +391,7 @@ describe('generate', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-gen-inprocess-bootstrap-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: inprocess-demo\nversion: 1.0.0\ndescription: in-process adapters generate-mode fixture\nbootstrap: generate\n',
+      withV1Policy('name: inprocess-demo\nversion: 1.0.0\ndescription: in-process adapters generate-mode fixture\nbootstrap: generate\n'),
     )
     const result = generate(dir, [opencode, pi])
     expect(result.adaptersRun).toEqual(['opencode', 'pi'])

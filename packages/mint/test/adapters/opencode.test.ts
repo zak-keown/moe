@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { byPathMap, mustGet } from '../helpers.js'
+import { byPathMap, mustGet, withV1Policy } from '../helpers.js'
 import { mkdtempSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -14,7 +14,7 @@ const model = buildModel('fixtures/kitchen-sink')
 
 function tmpFixture(yaml: string): string {
   const dir = mkdtempSync(join(tmpdir(), 'mint-opencode-'))
-  writeFileSync(join(dir, 'moe-mint.yaml'), yaml)
+  writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy(yaml))
   return dir
 }
 
@@ -167,7 +167,7 @@ describe('opencode plugin JS — dynamic import execution (skill mode)', () => {
     const dir = realpathSync(mkdtempSync(join(tmpdir(), 'mint-opencode-exec-')))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: demo\nversion: 1.0.0\ndescription: exec fixture\nbootstrap:\n  skill: using-demo\n',
+      withV1Policy('name: demo\nversion: 1.0.0\ndescription: exec fixture\nbootstrap:\n  skill: using-demo\n'),
     )
     mkdirSync(join(dir, 'skills', 'using-demo'), { recursive: true })
     writeFileSync(
@@ -223,7 +223,7 @@ describe('opencode plugin JS — dynamic import execution (bootstrap: none)', ()
     const dir = realpathSync(mkdtempSync(join(tmpdir(), 'mint-opencode-exec-none-')))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: nodemo\nversion: 1.0.0\ndescription: exec none fixture\nbootstrap: none\n',
+      withV1Policy('name: nodemo\nversion: 1.0.0\ndescription: exec none fixture\nbootstrap: none\n'),
     )
     mkdirSync(join(dir, 'skills', 'demo'), { recursive: true })
     writeFileSync(join(dir, 'skills', 'demo', 'SKILL.md'), '---\nname: demo\ndescription: demo\n---\n\nBody.\n')
