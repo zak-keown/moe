@@ -34,7 +34,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Created file: src/webhooks/github.ts]\n\nI've set up the basic webhook handler structure:\n\n```typescript\nexport async function handleGithubWebhook(payload: any) {\n  // TODO: Add signature verification\n  // TODO: Add event type routing\n  // TODO: Add error handling\n  \n  const eventType = payload.event;\n  return { status: 'received' };\n}\n```\n\nNow I need to implement the signature verification, event routing, and proper error handling."
+            "text": "I've set up the basic webhook handler structure:\n\n```typescript\nexport async function handleGithubWebhook(payload: any) {\n  // TODO: Add signature verification\n  // TODO: Add event type routing\n  // TODO: Add error handling\n  \n  const eventType = payload.event;\n  return { status: 'received' };\n}\n```\n\nNow I need to implement the signature verification, event routing, and proper error handling."
           }
         ]
       }

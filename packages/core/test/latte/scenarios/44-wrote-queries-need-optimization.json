@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Created: SQL queries for all dashboard widgets]\n\nAll report queries are working but slow. I need to add indexes, optimize joins, and consider materialized views for the aggregated data."
+            "text": "All report queries are working but slow. I need to add indexes, optimize joins, and consider materialized views for the aggregated data."
           }
         ]
       }

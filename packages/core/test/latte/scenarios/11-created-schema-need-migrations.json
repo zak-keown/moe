@@ -34,7 +34,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Created: schema/blog.sql with tables for posts, comments, authors]\n\nI've defined the schema. Now I need to create the migration files and seed data."
+            "text": "I've defined the schema. Now I need to create the migration files and seed data."
           }
         ]
       }

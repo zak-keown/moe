@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Implemented: Data export to CSV, JSON, and XML formats]\n\nExport functionality is working correctly. I'll now write tests for each export format, edge cases like empty data, and large datasets."
+            "text": "Export functionality is working correctly. I'll now write tests for each export format, edge cases like empty data, and large datasets."
           }
         ]
       }

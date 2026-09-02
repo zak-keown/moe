@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Created: analytics-service.ts with event tracking and user identification]\n\nThe analytics service is ready. Now I need to integrate it into all the key user flows and add event tracking to buttons, forms, and navigation."
+            "text": "The analytics service is ready. Now I need to integrate it into all the key user flows and add event tracking to buttons, forms, and navigation."
           }
         ]
       }

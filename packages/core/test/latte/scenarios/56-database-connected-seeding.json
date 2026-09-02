@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Configured: PostgreSQL connection with connection pooling]\n\nDatabase connection is working. Now I'll create seed scripts for development data, test data fixtures, and migration scripts."
+            "text": "Database connection is working. Now I'll create seed scripts for development data, test data fixtures, and migration scripts."
           }
         ]
       }

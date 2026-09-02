@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Created: components/DataTable.tsx with sorting, filtering, and pagination logic]\n\nThe DataTable component is functional. Now I need to add the CSS styling, responsive design, and accessibility features."
+            "text": "The DataTable component is functional. Now I need to add the CSS styling, responsive design, and accessibility features."
           }
         ]
       }

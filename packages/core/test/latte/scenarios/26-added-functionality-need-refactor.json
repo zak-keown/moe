@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Implemented: Basic search with text matching]\n\nSearch is working but slow with large datasets. I need to refactor to use database indexes and implement pagination for better performance."
+            "text": "Search is working but slow with large datasets. I need to refactor to use database indexes and implement pagination for better performance."
           }
         ]
       }

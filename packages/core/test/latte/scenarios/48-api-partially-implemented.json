@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Implemented: POST /posts, GET /posts/:id]\n\nCreated the create and read endpoints. Still need to implement:\n- PUT /posts/:id (update)\n- DELETE /posts/:id (delete)\n- GET /posts (list with filtering)\n- POST /posts/:id/publish"
+            "text": "Created the create and read endpoints. Still need to implement:\n- PUT /posts/:id (update)\n- DELETE /posts/:id (delete)\n- GET /posts (list with filtering)\n- POST /posts/:id/publish"
           }
         ]
       }

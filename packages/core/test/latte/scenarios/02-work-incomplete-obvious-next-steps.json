@@ -34,7 +34,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Created file: src/auth/login.ts with login implementation]\n\nI've created the login handler. Next I need to create the logout handler and registration handler."
+            "text": "What remains? Next I need to create the logout handler and registration handler."
           }
         ]
       }

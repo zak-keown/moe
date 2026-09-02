@@ -22,7 +22,7 @@
         "content": [
           {
             "type": "text",
-            "text": "[Created: src/payments/processor.ts with charge, refund, and validate methods]\n\nI've implemented the core payment processing logic. Next I need to add comprehensive tests for each payment method and edge cases."
+            "text": "I've implemented the core payment processing logic. Next I need to add comprehensive tests for each payment method and edge cases."
           }
         ]
       }
