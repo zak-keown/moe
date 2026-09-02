@@ -5,10 +5,15 @@ import type { WebToolCtx } from "./types.js";
 /**
  * Keyboard tools: type, press.
  *
- * `type` with a selector clicks-then-fills; without a selector it
- * walks the text character by character through keyboardPress so
- * each char fires a real keydown/keyup. `press` is the single-key
- * path for Enter, Tab, arrow keys, etc.
+ * `type` always goes through `fill`, which focuses+clears the target
+ * when a selector is given and, either way, drives the text in via
+ * `Input.insertText` (with \t/\n handled as Tab/Enter). `press` is the
+ * separate single-key path for Enter, Tab, arrow keys, etc. — its
+ * `keyboardPress` only knows named keys, so it must never be handed an
+ * ordinary character (CR-035: the old no-selector branch here did
+ * exactly that, walking `text` char-by-char through `keyboardPress`,
+ * which threw `Unknown key: <char>` on the first letter/digit/
+ * punctuation character since none of them are in its named-key table).
  */
 
 export async function executeType(
@@ -17,14 +22,7 @@ export async function executeType(
 ): Promise<ToolResult> {
   const selector = args.selector as string | undefined;
   const text = args.text as string;
-  if (selector) {
-    await ctx.chrome.fill(ctx.tab, selector, text);
-  } else {
-    // No selector — type via keyboard
-    for (const char of text) {
-      await ctx.chrome.keyboardPress(ctx.tab, char);
-    }
-  }
+  await ctx.chrome.fill(ctx.tab, selector, text);
   return composeResult("typed", await ctx.takeReturnScreenshot());
 }
 

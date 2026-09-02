@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 15
-  stale: 9
+  fixed: 16
+  stale: 10
   skipped: 1
   deferred: 0
-  open: 568
+  open: 566
 ---
 
 # Codebase Review — moe
@@ -606,6 +606,10 @@ Fix: strip or reject `\r` and `\n` in both fields at the single point they are w
 **Verification:** confirmed
 **Verification evidence:** Reproduced the frame split with a transcribed oneLine and cellId and a WHATWG EventSource line-terminator simulation: a bare carriage return in scenario forges a second event and data pair with unescaped HTML, which htmx-ext-sse swaps as markup. Traced scenario back through card.id and asCardId, which has no validation, to fanout/generator.ts, which parses raw LLM output into new story cards, so the value is not limited to operator-typed filenames. Same root defect as CR-024; one fix covers both.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Superseded by cd94092 (CR-024's fix): oneLine() now strips both CR and LF, and publishCell() routes the SSE event name through oneLine(). Same root defect as CR-024 (server.ts's event-name sanitization gap) — one fix covers both, verified by the CR-024 red/green test (dashboard-server.test.ts: "a CR in a run's scenario cannot forge an extra SSE event/data pair").
 ### CR-026: Docker build context is the monorepo root with no ignore file, so an operator's provider keys land in an image layer
 **File:** `packages/flight/docker/compose.yaml`
 **Anchor:** `context: ../../..` under `services.moe-flight.build`, together with `env_file: - path: ../.env`
@@ -1357,6 +1361,10 @@ Reproduced. A scratch tree with `~/.claude/projects/-Users-ZKeown-Code-secret-re
 **Verification:** confirmed
 **Verification evidence:** indexer.ts checks excludedProjects only against the top-level directory name from readdirSync, which for the Codex sessions tree is a year (the codex-transcripts test itself passes project 2026); the real project from projectFromCwd in parseCodexConversation is never re-checked, and findJsonlFiles excludedDirNames only sees month and day names. docs/SCHEMA.md promises one project name per line for exclude.txt, which can never match. Reproduced the guard logic standalone: project 2026 is never excluded.
 
+**Disposition:** fixed
+**Commit:** `6cade68`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-070: The in-transcript DO-NOT-INDEX marker is ignored by every `moe-memory index` path
 **File:** `packages/memory/src/indexer.ts`
 **Anchor:** indexConversations, indexSession and indexUnprocessed never call `shouldSkipConversation`
