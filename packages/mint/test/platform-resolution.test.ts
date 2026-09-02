@@ -129,12 +129,19 @@ describe('platform resolution', () => {
   })
 
   it('rejects Copilot when its Claude prerequisite is omitted', async () => {
-    const root = repoWith(configYaml()
+    const config = configYaml()
       .replace('  claude-code: { intent: certify, expected_capabilities: [skill-discovery], operating_systems: [macos, linux] }', '  claude-code: { intent: omit }')
       .replace('agent-plugins-1.0, copilot]', 'agent-plugins-1.0, claude-code]')
-      .replace('  copilot: { intent: omit }', '  copilot: { intent: preview, expected_capabilities: [], operating_systems: [macos] }'))
+      .replace('  copilot: { intent: omit }', '  copilot: { intent: preview, expected_capabilities: [], operating_systems: [macos] }')
+    const root = repoWith(config, undefined, 'policy/custom-mint.yaml')
     await expect(resolvePlatform(root)).rejects.toMatchObject({
-      diagnostic: { code: 'TARGET_PREREQUISITE_UNMET', plugin: 'moe-memory', target: 'copilot' },
+      diagnostic: {
+        code: 'TARGET_PREREQUISITE_UNMET',
+        source: 'packages/memory/mint/policy/custom-mint.yaml',
+        field: 'targets.copilot.intent',
+        plugin: 'moe-memory',
+        target: 'copilot',
+      },
     })
   })
 
