@@ -141,21 +141,21 @@ describe('basic-auth router', () => {
 });
 
 describe('permission router', () => {
-  function permState(shimId = '7') {
-    return { kind: 'permission', payload: { name: 'camera', origin: 'x', jsApi: 'getUserMedia' }, staged: { _shimId: shimId } };
+  function permState(shimId = '7', shimSecret = 'test-secret') {
+    return { kind: 'permission', payload: { name: 'camera', origin: 'x', jsApi: 'getUserMedia' }, staged: { _shimId: shimId, _shimSecret: shimSecret } };
   }
   it('dialog::accept resolves shim with grant via Runtime.evaluate', async () => {
     const cdp = makeCdpSpy();
     await tryHandleDialogSelector({ selector: 'dialog::accept', op: 'click', state: permState('42'), sendCdpCommand: cdp, wsUrl: 'ws://x' });
     const call = cdp.calls.find(c => c.method === 'Runtime.evaluate');
     assert.ok(call);
-    assert.match(call.params.expression, /__dialogShim_resolve\("42",\s*"grant"\)/);
+    assert.match(call.params.expression, /__dialogShim_resolve\("42",\s*"grant",\s*"test-secret"\)/);
   });
   it('dialog::dismiss resolves shim with deny', async () => {
     const cdp = makeCdpSpy();
     await tryHandleDialogSelector({ selector: 'dialog::dismiss', op: 'click', state: permState('9'), sendCdpCommand: cdp, wsUrl: 'ws://x' });
     const call = cdp.calls.find(c => c.method === 'Runtime.evaluate');
-    assert.match(call.params.expression, /__dialogShim_resolve\("9",\s*"deny"\)/);
+    assert.match(call.params.expression, /__dialogShim_resolve\("9",\s*"deny",\s*"test-secret"\)/);
   });
 
   // CR-058: `id` is attacker-controlled (a page-supplied Runtime.bindingCalled
@@ -194,7 +194,7 @@ describe('permission router', () => {
     assert.equal(resolveCalls.length, 1, `expected exactly one resolve call, got ${JSON.stringify(resolveCalls)}`);
     assert.deepEqual(
       resolveCalls[0],
-      [maliciousId, 'deny'],
+      [maliciousId, 'deny', 'test-secret'],
       'the id must reach the shim as a single opaque string and the decision must stay DENY'
     );
     assert.equal(r.handled, true);
@@ -328,13 +328,13 @@ describe('tryHandleDialogSelectorForSession', () => {
 
   it('dialog::accept on permission resolves the shim via Runtime.evaluate', async () => {
     const ps = makePageSessionSpy();
-    const state = { kind: 'permission', staged: { _shimId: 'SHIM-A' }, payload: {} };
+    const state = { kind: 'permission', staged: { _shimId: 'SHIM-A', _shimSecret: 'sess-secret' }, payload: {} };
     const r = await tryHandleDialogSelectorForSession({
       selector: 'dialog::accept', op: 'click', payload: null, state, pageSession: ps,
     });
     assert.equal(r.handled, true);
     assert.equal(ps.calls[0].method, 'Runtime.evaluate');
-    assert.match(ps.calls[0].params.expression, /window\.__dialogShim_resolve\("SHIM-A",\s*"grant"\)/);
+    assert.match(ps.calls[0].params.expression, /window\.__dialogShim_resolve\("SHIM-A",\s*"grant",\s*"sess-secret"\)/);
   });
 
   it('unknown dialog selector returns handled+error', async () => {
