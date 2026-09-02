@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 50
+  fixed: 51
   stale: 14
   skipped: 6
   deferred: 1
-  open: 522
+  open: 521
 ---
 
 # Codebase Review — moe
@@ -1183,6 +1183,10 @@ Fix: give the handler its own `try/catch` around the ack and the write (logging 
 **Verification:** confirmed
 **Verification evidence:** The try/catch in cdp-router.js around fn(msg) catches only synchronous throws; the screencast.ts handler is async so it never throws synchronously, and a rejection from await ps.send for Page.screencastFrameAck (the page-session 30 second timeout or a detached session) becomes an unhandled rejection. Reproduced with tsx: mirroring the exact dispatch shape exits the process with code 1 and the catch never fires. No unhandledRejection handler exists in packages/flight/src outside a test.
 
+**Disposition:** fixed
+**Commit:** `52ca9cc`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-054: Static run report links every screenshot, artifact and TUI capture to a server that is not there
 **File:** `packages/flight/ui/src/components/transcript/Screenshot.tsx`
 **Anchor:** `Screenshot` — `const url = api.results.fileUrl(runId, path)`
