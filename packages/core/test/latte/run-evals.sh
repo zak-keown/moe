@@ -33,7 +33,14 @@ export MOE_LATTE_ENABLED=1
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+
+# Abort once fall-through errors (not judge verdicts — see below) reach this
+# count. A handful is scenario-specific noise; this many means something
+# systemic broke (missing binary, exhausted credential, rate limit) and every
+# further run would just be reporting the same non-verdict.
+ERROR_THRESHOLD=5
 
 # Cleanup on exit
 cleanup() {
@@ -68,6 +75,8 @@ echo ""
 total_scenarios=0
 total_passed=0
 total_failed=0
+total_inconclusive=0
+total_errors=0
 
 for scenario_file in "$SCENARIOS_DIR"/*.json; do
     if [ ! -f "$scenario_file" ]; then
@@ -86,6 +95,7 @@ for scenario_file in "$SCENARIOS_DIR"/*.json; do
 
     passes=0
     fails=0
+    scenario_errors=0
 
     for run in {1..5}; do
         # Create transcript file from scenario (NDJSON - one message per line)
@@ -104,10 +114,43 @@ for scenario_file in "$SCENARIOS_DIR"/*.json; do
                 "session_id": $session_id
             }')
 
-        hook_output=$(echo "$hook_event" | bash "$HOOK_SCRIPT" 2>/dev/null || echo '{"decision": "error"}')
+        stderr_file="$TEMP_DIR/stderr-$total_scenarios-$run.log"
+        # set +e around the call: a nonzero hook exit is a real outcome we
+        # score as "error" below, not a harness bug that should abort the
+        # whole suite via `set -e`.
+        set +e
+        hook_output=$(echo "$hook_event" | bash "$HOOK_SCRIPT" 2>"$stderr_file")
+        hook_exit=$?
+        set -e
+        hook_stderr=$(cat "$stderr_file" 2>/dev/null || true)
+        if [ $hook_exit -ne 0 ]; then
+            hook_output='{"decision": "error"}'
+        fi
 
         decision=$(echo "$hook_output" | jq -r '.decision')
         reason=$(echo "$hook_output" | jq -r '.reason // "No reason provided"')
+
+        # Every fall-through in the hook (missing binary, timeout, non-zero
+        # exit, no structured_output — see allow_stop() in
+        # claude-judge-continuation) logs a "moe-latte: <reason>" line to
+        # stderr before emitting {"decision":"approve"}. A genuine judge
+        # verdict never writes to stderr. That prefix is the one reliable
+        # signal that separates "the judge said stop" from "the judge never
+        # ran" — both would otherwise show up as decision=approve.
+        if [ "$decision" = "error" ] || printf '%s\n' "$hook_stderr" | grep -q '^moe-latte: '; then
+            scenario_errors=$((scenario_errors + 1))
+            total_errors=$((total_errors + 1))
+            echo -e "   ${YELLOW}ERROR${NC} run $run (fall-through, not a judge verdict: $reason)"
+            if [ $total_errors -gt $ERROR_THRESHOLD ]; then
+                echo ""
+                echo -e "${RED}Aborting: $total_errors fall-through errors exceeds the threshold of $ERROR_THRESHOLD.${NC}"
+                echo "This means the judge is not actually running (missing binary, exhausted"
+                echo "credential, rate limit, ...) — every further run would report the same"
+                echo "non-verdict, not a real pass or fail. Fix the underlying cause and rerun."
+                exit 1
+            fi
+            continue
+        fi
 
         # block = continue, anything else = allow the stop
         hook_should_continue=false
@@ -118,6 +161,7 @@ for scenario_file in "$SCENARIOS_DIR"/*.json; do
         if [ "$hook_should_continue" = "$expected_decision" ]; then
             passes=$((passes + 1))
             echo -e "   ${GREEN}PASS${NC} run $run (decision: $decision)"
+            echo "      Reason: $reason"
         else
             fails=$((fails + 1))
             echo -e "   ${RED}FAIL${NC} run $run (decision: $decision, expected should_continue: $expected_decision)"
@@ -127,7 +171,10 @@ for scenario_file in "$SCENARIOS_DIR"/*.json; do
 
     echo ""
 
-    if [ $fails -eq 0 ]; then
+    if [ $scenario_errors -gt 0 ] && [ $fails -eq 0 ]; then
+        echo -e "   ${YELLOW}Scenario INCONCLUSIVE${NC} ($passes/5 verdicts correct, $scenario_errors run(s) never reached the judge)"
+        total_inconclusive=$((total_inconclusive + 1))
+    elif [ $fails -eq 0 ]; then
         echo -e "   ${GREEN}Scenario PASSED${NC} (5/5 runs correct)"
         total_passed=$((total_passed + 1))
     else
@@ -146,13 +193,15 @@ echo "================================="
 echo "Total scenarios: $total_scenarios"
 echo -e "Passed: ${GREEN}$total_passed${NC}"
 echo -e "Failed: ${RED}$total_failed${NC}"
+echo -e "Inconclusive (judge never reached a verdict on every run): ${YELLOW}$total_inconclusive${NC}"
+echo "Fall-through errors (not verdicts, not counted above): $total_errors"
 
-if [ $total_failed -eq 0 ]; then
+if [ $total_failed -eq 0 ] && [ $total_inconclusive -eq 0 ]; then
     echo ""
     echo -e "${GREEN}All scenarios passed.${NC}"
     exit 0
 else
     echo ""
-    echo -e "${RED}Some scenarios failed.${NC}"
+    echo -e "${RED}Some scenarios failed or never reached a verdict.${NC}"
     exit 1
 fi
