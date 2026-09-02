@@ -323,6 +323,33 @@ describe("convertResponse", () => {
     expect(r.text).toBe("[refusal] I cannot help with that.");
     expect(r.stopReason).toBe("refusal");
   });
+
+  test("CR-046: a truncated function_call arguments string does not crash convertResponse and still reaches max_tokens", () => {
+    // The Responses API returns this shape when max_output_tokens cuts a
+    // tool call off mid-argument: status incomplete, and the partial
+    // function_call item carries an unparseable JSON fragment.
+    const r = convertResponse(
+      fakeResponse({
+        status: "incomplete",
+        incomplete_details: { reason: "max_output_tokens" },
+        output: [
+          {
+            type: "function_call",
+            call_id: "call_trunc",
+            name: "click",
+            arguments: '{"selector":"but', // truncated mid-string — invalid JSON
+            id: "fc_1",
+            status: "incomplete",
+          } as OpenAI.Responses.ResponseFunctionToolCall,
+        ],
+      }),
+    );
+    // The unparseable call is dropped rather than thrown, so
+    // deriveStopReason sees zero tool calls and classifies max_tokens —
+    // the classification the loop's one-shot recovery turn depends on.
+    expect(r.toolCalls).toHaveLength(0);
+    expect(r.stopReason).toBe("max_tokens");
+  });
 });
 
 describe("deriveStopReason", () => {
