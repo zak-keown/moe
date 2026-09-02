@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, unlinkSync,
 import { dirname, join, resolve } from 'node:path'
 import { stringify } from 'yaml'
 import { ConfigError, PLUGIN_NAME_RE, loadConfig } from './config.js'
-import { TARGET_IDS } from './vocabulary.js'
+import { CAPABILITY_IDS, TARGET_IDS, type CapabilityId, type TargetId } from './vocabulary.js'
 
 export interface ImportResult {
   configPath: string
@@ -109,6 +109,22 @@ function fileExists(root: string, path: string): boolean {
   return existsSync(abs) && statSync(abs).isFile()
 }
 
+function importedClaudeCapabilities(input: {
+  skills: number
+  commands: number
+  agents: number
+  hooks: boolean
+  mcp: boolean
+}): CapabilityId[] {
+  const detected = new Set<CapabilityId>(['bootstrap-routing'])
+  if (input.skills > 0) detected.add('skill-discovery')
+  if (input.commands > 0) detected.add('command-discovery')
+  if (input.agents > 0) detected.add('agent-discovery')
+  if (input.hooks) detected.add('hook-execution')
+  if (input.mcp) detected.add('mcp-registration')
+  return CAPABILITY_IDS.filter((capability) => detected.has(capability))
+}
+
 export function importPlugin(root: string): ImportResult {
   const rootAbs = resolve(root)
   const configPath = join(rootAbs, 'moe-mint.yaml')
@@ -154,6 +170,12 @@ export function importPlugin(root: string): ImportResult {
     warnings.push('plugin.json has no description; defaulting to "TODO describe this plugin"')
   }
 
+  const targets = {} as Record<TargetId, Record<string, unknown>>
+  for (const target of TARGET_IDS) {
+    targets[target] = target === 'claude-code'
+      ? { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] }
+      : { intent: 'omit' }
+  }
   const output: Record<string, unknown> = {
     name,
     version,
@@ -163,12 +185,7 @@ export function importPlugin(root: string): ImportResult {
     // other adapters rather than inventing certification/capability claims.
     distribution: { npm: `@example/${name}` },
     artifact: { payloads: [] },
-    targets: Object.fromEntries(TARGET_IDS.map((target) => [
-      target,
-      target === 'claude-code'
-        ? { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] }
-        : { intent: 'omit' },
-    ])),
+    targets,
     imported_works: [],
     harnesses: { exclude: TARGET_IDS.filter((target) => target !== 'claude-code') },
   }
@@ -239,9 +256,11 @@ export function importPlugin(root: string): ImportResult {
       warnings,
       createdPaths,
     )
+  let hasHooks = hooksExtracted
   if (!hooksExtracted) {
     const hooksPath = resolveComponentPath(pluginJson, 'hooks', DEFAULT_PATHS.hooks)
     if (fileExists(rootAbs, hooksPath)) {
+      hasHooks = true
       found.push('hooks')
       if (hooksPath !== DEFAULT_PATHS.hooks) components.hooks = hooksPath
     }
@@ -262,9 +281,11 @@ export function importPlugin(root: string): ImportResult {
       warnings,
       createdPaths,
     )
+  let hasMcp = mcpExtracted
   if (!mcpExtracted) {
     const mcpPath = resolveComponentPath(pluginJson, 'mcpServers', DEFAULT_PATHS.mcp)
     if (fileExists(rootAbs, mcpPath)) {
+      hasMcp = true
       found.push('mcp')
       if (mcpPath !== DEFAULT_PATHS.mcp) components.mcp = mcpPath
     }
@@ -276,6 +297,17 @@ export function importPlugin(root: string): ImportResult {
   // v2 tagged bootstrap: the { skill } object form, or the 'generate' string
   // literal.
   output.bootstrap = skillDirs.includes(bootstrapSkillName) ? { skill: bootstrapSkillName } : 'generate'
+  // Import knows which Claude-discoverable inputs it carried into the Mint
+  // config. It declares only those structural outcomes (not invocation or
+  // executable claims) in canonical vocabulary order; Task 4 will validate
+  // that declaration against adapter output during generation.
+  targets['claude-code'].expected_capabilities = importedClaudeCapabilities({
+    skills: skillDirs.length,
+    commands: commandsCount,
+    agents: agentsCount,
+    hooks: hasHooks,
+    mcp: hasMcp,
+  })
 
   if (Object.keys(components).length > 0) output.components = components
 

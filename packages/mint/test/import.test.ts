@@ -10,12 +10,16 @@ import { buildModel } from '../src/model.js'
 
 const OMITTED_TARGETS = ['cursor', 'codex', 'kimi', 'opencode', 'pi', 'agent-plugins-1.0', 'copilot']
 
-function importedPolicy(name: string, manifest?: Record<string, unknown>): Record<string, unknown> {
+function importedPolicy(
+  name: string,
+  expectedCapabilities: string[] = [],
+  manifest?: Record<string, unknown>,
+): Record<string, unknown> {
   return {
     distribution: { npm: `@example/${name}` },
     artifact: { payloads: [] },
     targets: {
-      'claude-code': { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] },
+      'claude-code': { intent: 'preview', expected_capabilities: expectedCapabilities, operating_systems: ['macos'] },
       cursor: { intent: 'omit' },
       codex: { intent: 'omit' },
       kimi: { intent: 'omit' },
@@ -99,7 +103,14 @@ describe('importPlugin', () => {
       name: 'demo',
       version: '1.2.3',
       description: 'A demo plugin',
-      ...importedPolicy('demo', { xPortal: { a: 1 } }),
+      ...importedPolicy('demo', [
+        'skill-discovery',
+        'command-discovery',
+        'agent-discovery',
+        'hook-execution',
+        'mcp-registration',
+        'bootstrap-routing',
+      ], { xPortal: { a: 1 } }),
       author: { name: 'Test Author', email: 'test@example.com' },
       license: 'MIT',
       repository: 'https://github.com/test/demo',
@@ -112,6 +123,14 @@ describe('importPlugin', () => {
     const config = loadConfig(dir)
     expect(config.name).toBe('demo')
     expect(config.bootstrap).toEqual({ kind: 'skill', skill: 'using-demo' })
+    expect(config.targets['claude-code'].expectedCapabilities).toEqual([
+      'skill-discovery',
+      'command-discovery',
+      'agent-discovery',
+      'hook-execution',
+      'mcp-registration',
+      'bootstrap-routing',
+    ])
   })
 
   it('falls back to bootstrap: generate when no using-<name> skill is present', () => {
@@ -181,7 +200,7 @@ describe('importPlugin', () => {
       name: 'custom-paths',
       version: '1.0.0',
       description: 'Custom paths',
-      ...importedPolicy('custom-paths', { xClaude: { b: 2 } }),
+      ...importedPolicy('custom-paths', ['command-discovery', 'bootstrap-routing'], { xClaude: { b: 2 } }),
       bootstrap: 'generate',
       components: { commands: 'my-cmds' },
     })
