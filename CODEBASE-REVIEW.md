@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 26
+  fixed: 28
   stale: 11
   skipped: 6
   deferred: 0
-  open: 550
+  open: 548
 ---
 
 # Codebase Review — moe
@@ -1034,6 +1034,10 @@ Fix: route all three through `resolveInside(runDir, rel)` and turn a rejection i
 **Verification:** confirmed
 **Verification evidence:** Reproduced: a run.jsonl row with artifact ../secret.txt makes rebuildMessages return a tool_result whose text is the outside file bytes. rebuildToolResult uses plain join(runDir, rel) for artifact, capturePath and image and never calls resolveInside or isSafePath from paths.ts. Normal producers only write counter-based paths, but the CLI adapter runs an unsandboxed bash with cwd one level below run.jsonl, so an agent under test can append a crafted row that a later qa ask revival reads and sends to the model provider.
 
+**Disposition:** fixed
+**Commit:** `853fe6d`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-048: A duplicate cardId in a run set reuses one runId and abandons another
 **File:** `packages/flight/src/qa/runs/run-set.ts`
 **Anchor:** `runLoop`'s `allRuns.find((r) => r.cardId === cardId && r.attemptNumber === attemptNumber)`
@@ -1058,6 +1062,10 @@ Fix: iterate `allRuns` directly instead of re-finding by (cardId, attemptNumber)
 **Verification:** confirmed
 **Verification evidence:** Reproduced directly: runRunSet with cards login and login invokes the executor twice with the same runId, leaves the other queued, and finalize perCard doubles the overall counts to totalRuns 4 for two real runs, because runLoop finds runs by cardId value rather than index. Only batch.ts can pass duplicate cardIds, via cardIdForPath by filename stem with no dedupe; same root cause and reachability as CR-043, filed at the engine layer.
 
+**Disposition:** fixed
+**Commit:** `7ad5e1f`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-050: A malformed Host header on an upgrade request kills the whole API server
 **File:** `packages/flight/src/qa/runtime/serve.ts`
 **Anchor:** `serveViaNode`, the `httpServer.on("upgrade", ...)` handler's `new URL(req.url ?? "/", \`http://${req.headers.host ?? "localhost"}\`)`
