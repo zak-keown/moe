@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 17
+  fixed: 20
   stale: 10
-  skipped: 1
+  skipped: 2
   deferred: 0
-  open: 565
+  open: 561
 ---
 
 # Codebase Review — moe
@@ -237,6 +237,10 @@ comment already describes, and `pnpm mint:check` then fails on drift.
 **Verification:** confirmed
 **Verification evidence:** scripts/mint-plugins.mjs has no import of config/distribution.mjs; marketplaceProblems(), which pnpm mint:check calls, compares only PLUGINS against marketplace.json and returned clean when run live regardless of MARKETPLACE.plugins content. bin/test/doctor.test.mjs uses MARKETPLACE.plugins only as its own source of truth and never cross-checks it, and scripts/check-downstream-scope.mjs has no reference to the plugin roster.
 
+**Disposition:** skipped
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** config/distribution.mjs does not exist on main (or this branch, forked from main). It exists only on the unmerged origin/codex/backlog-completion-20260901 branch (62 commits ahead of main, 52 behind, dated 2026-09-01) — this review's actual base tree appears to include work from that branch (its base_sha, a01dcd5ffd06fefba341c2480fdae2c4777151f7, is not a valid object on any fetched branch, including that one). Same root cause as CR-004. Porting or merging that branch is out of scope for a review-findings pass off main; not applicable to this tree as checked out.
 ### CR-008: Session key can be written through a symlink planted in a predictable /tmp path
 **File:** `packages/core/skills/brainstorming/scripts/start-server.sh`
 **Anchor:** `SESSION_ID="$$-$(date +%s)"` and the comment "Session files (server.log, server-info, .last-token) embed the session key — keep everything this script and the server create owner-only."
@@ -757,6 +761,10 @@ Fix: route the no-selector branch through `chrome.fill(ctx.tab, null, text)` (wh
 **Verification:** confirmed
 **Verification evidence:** Reproduced by importing attachKeyboardInput and calling keyboardPress with a stubbed CDP send: iterating hello world throws Unknown key: h on the first character with zero CDP calls issued, because KEY_DEFINITIONS holds no letter, digit or punctuation entries and the no-selector branch of executeType calls keyboardPress per character. The type tool schema requires only text and its description never says selector is mandatory.
 
+**Disposition:** fixed
+**Commit:** `10c4ebf`
+**Resolved:** 2026-09-02
+**Note:** Fix landed correctly but got swept into 10c4ebf (chore(review): stamp CR-069 disposition) by a concurrent agent's commit race in this shared working tree, same pattern as CR-033 -- verified via git show that the diff is byte-identical to what this session authored and tested. Citing the commit that actually carries the diff.
 ### CR-036: A max_tokens truncation that carries a report_result call skips the truncation-recovery path and replays an unsigned thinking block
 **File:** `packages/flight/src/qa/agent/agent.ts`
 **Anchor:** `const report = response.toolCalls.find((tc) => tc.name === "report_result")`, which is evaluated before `if (response.stopReason === "max_tokens")`
@@ -1163,6 +1171,10 @@ Fix: after the readiness probe on a caller-specified port, verify the endpoint i
 **Verification:** confirmed
 **Verification evidence:** The startChrome port poll calls isPortAlive(host, chosenPort) with no expectedPid, unlike the reconnect and orphan-adopt steps which pass a pid; isolated reproduction shows isPortAlive returns true against a foreign /json/version responder even when the spawned pid never bound the port, and startChrome then writes meta.json with the spawned pid against that port. Full startChrome was not run because it writes under HOME.
 
+**Disposition:** fixed
+**Commit:** `8d4e4f3`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-058: A page-chosen shim id is interpolated into a Runtime.evaluate expression, turning a permission deny into a grant
 **File:** `packages/glass/skills/browsing/lib/dialogs-router.js`
 **Anchor:** `tryHandleDialogSelector` — `window.__dialogShim_resolve('${id}', '${decision}')`
@@ -2327,6 +2339,10 @@ Fix: parse with `yaml.safe_load` on the frontmatter block (`yaml` is already a
 CPython, so `pyyaml` would be a new dependency — failing that, strip matching outer quotes
 and handle the `>`/`>-`/`|` markers explicitly).
 
+**Disposition:** fixed
+**Commit:** `6abda29`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-101: validate_skill.py's "Use when" rule is a hard error that nine of the repo's own skills fail
 **File:** `packages/core/scripts/validate_skill.py`
 **Anchor:** `errors.append(f"frontmatter 'description' should start with 'Use when' but starts with: {desc[:30]!r}")`
