@@ -451,6 +451,21 @@ deep_exec_bits() {
 # writable git-repo copy, and run each harness check. Called after the shallow
 # checks so both share the FAILED/exit-3 accounting.
 deep_checks() {
+  # The deep tier performs REAL installs into whatever harness CLIs are on
+  # PATH — writing straight into $HOME (e.g. deep_opencode truncates
+  # $HOME/.config/opencode/opencode.json unconditionally). That is safe only
+  # inside the disposable container moe-mint test runs it in. Require an
+  # explicit opt-in so running this script directly on a dev host (which its
+  # own MOE_MINT_PLUGIN_ROOT override invites) never mutates the invoker's
+  # real CLI state. src/test-command.ts sets this for every container run.
+  if [ "${MOE_MINT_DEEP:-}" != 1 ]; then
+    local h
+    for h in claude-code codex copilot opencode pi kimi cursor; do
+      skip "install-$h" "deep tier not enabled (set MOE_MINT_DEEP=1; moe-mint test does this automatically inside its container)"
+    done
+    return
+  fi
+
   PLUGIN_NAME=$(jq -r '.name // empty' "$PLUGIN_ROOT/.claude-plugin/plugin.json" 2>/dev/null)
   [ -n "$PLUGIN_NAME" ] || PLUGIN_NAME="$MOE_MINT_PLUGIN_NAME"
 
