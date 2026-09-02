@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 3
+  fixed: 4
   stale: 3
   skipped: 0
   deferred: 0
-  open: 587
+  open: 586
 ---
 
 # Codebase Review — moe
@@ -1799,6 +1799,10 @@ these files, only the opt-in `latte:evals` script consumes them.
 **Verification:** confirmed-lower
 **Verification evidence:** The cited authority, moe-completion-evidence, never consumes these fixtures; the actual consumer, claude-judge-continuation, does no structural parsing and interpolates raw JSON into a judge prompt, so there is no crash or silent-false path. The shape mismatch is real, confirmed against the production row shape in packages/memory/src/parser.ts, but the eval script is opt-in, not run by CI, and its own header documents an unestablished baseline.
 
+**Disposition:** fixed
+**Commit:** `8f4db7e`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-013: Two surface cues let a classifier score 30/30 without reading the rubric
 
 **File:** `packages/core/test/latte/scenarios/48-api-partially-implemented.json`
