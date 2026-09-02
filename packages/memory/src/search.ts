@@ -58,8 +58,21 @@ function buildSearchFilters(options: SearchOptions): { sql: string; params: unkn
   };
 }
 
+/**
+ * True when any filter in `buildSearchFilters` will add a WHERE predicate.
+ *
+ * vec0 applies its KNN `k` limit BEFORE that WHERE clause runs, so when a
+ * filter is active the vector query has to over-fetch candidates and trim
+ * afterwards (CR-074) — otherwise a date window (or any other filter) can
+ * discard every one of the `k` nearest neighbours and return nothing even
+ * though rows matching both the query and the window exist. `after`/`before`
+ * were missing here even though `buildSearchFilters` has always emitted
+ * `e.timestamp >= ?` / `<= ?` for them.
+ */
 function hasMetadataFilters(options: SearchOptions): boolean {
-  return Boolean(options.project || options.session_id || options.git_branch);
+  return Boolean(
+    options.project || options.session_id || options.git_branch || options.after || options.before,
+  );
 }
 
 const EXCHANGE_SELECT_COLUMNS = `
