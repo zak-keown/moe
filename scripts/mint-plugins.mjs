@@ -267,7 +267,7 @@ async function main() {
   }
   const { resolvePlatform } = await import(pathToFileURL(path.join(ROOT, "packages/mint/dist/platform/load.js")).href);
   const { generate } = await import(pathToFileURL(path.join(ROOT, "packages/mint/dist/generate.js")).href);
-  const { defaultProfileId, projectionRecordForCurrentGeneration, writeRegistryProjections } = await import(pathToFileURL(path.join(ROOT, "packages/mint/dist/platform/projections.js")).href);
+  const { currentProjectionRecords, defaultProfileId, writeRegistryProjections } = await import(pathToFileURL(path.join(ROOT, "packages/mint/dist/platform/projections.js")).href);
   const platform = await resolvePlatform(ROOT);
   const marketplaceName = defaultProfileId(platform);
 
@@ -278,15 +278,14 @@ async function main() {
       fs.rmSync(path.join(OUT, entry.name), { recursive: true, force: true });
     }
   }
-  const artifacts = [];
   for (const plugin of platform.plugins) {
     const { dest, staged } = stage(plugin);
-    const result = runGeneration(plugin, dest, marketplaceName, generate);
-    artifacts.push(projectionRecordForCurrentGeneration(plugin, result.validation));
+    runGeneration(plugin, dest, marketplaceName, generate);
     console.log(
       `${plugin.id.padEnd(16)} ${String(staged).padStart(3)} skills staged`,
     );
   }
+  const artifacts = currentProjectionRecords(platform);
   await writeRegistryProjections(platform, artifacts, {
     marketplacePath: path.join(ROOT, ".claude-plugin/marketplace.json"),
     publicCatalogPath: path.join(ROOT, "docs/moe/generated/plugin-catalog.md"),

@@ -2,18 +2,25 @@ import { lstat, mkdir, realpath, writeFile } from 'node:fs/promises'
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path'
 import type { AdapterEmission } from '../adapters/types.js'
 import {
-  isCurrentGenerationValidation,
-  validateGeneration,
+  isCanonicalGenerationFor,
+  validateCanonicalGeneration,
+  type CanonicalGenerationIdentity,
   type GenerationValidation,
 } from '../generate.js'
 import { TARGET_IDS, type TargetId } from '../vocabulary.js'
 import type { ResolvedPlatform, ResolvedPlugin } from './load.js'
 
 export interface PluginProjectionRecord {
+  readonly plugin: ResolvedPlugin
+  readonly emissions: Readonly<Partial<Record<TargetId, AdapterEmission>>>
+}
+
+interface ProjectionProvenance {
   plugin: ResolvedPlugin
-  emissions: Readonly<Partial<Record<TargetId, AdapterEmission>>>
   validation: GenerationValidation
 }
+
+const projectionProvenance = new WeakMap<PluginProjectionRecord, ProjectionProvenance>()
 
 export interface PublishMatrixEntry {
   plugin: string
@@ -41,11 +48,25 @@ function projectionRecords(
     if (record === undefined || record.plugin !== plugin) {
       throw new Error(`projection record for ${plugin.id} does not match the resolved registry plugin`)
     }
-    if (!isCurrentGenerationValidation(record.validation) || record.emissions !== record.validation.emissions) {
+    const provenance = projectionProvenance.get(record)
+    if (
+      provenance === undefined
+      || provenance.plugin !== plugin
+      || record.emissions !== provenance.validation.emissions
+      || !isCanonicalGenerationFor(provenance.validation, generationIdentity(plugin))
+    ) {
       throw new Error(`projection record for ${plugin.id} lacks a current validated generation`)
     }
     return record
   })
+}
+
+function generationIdentity(plugin: ResolvedPlugin): CanonicalGenerationIdentity {
+  return {
+    sourcePath: plugin.sourcePath,
+    configPath: plugin.configPath,
+    configSource: plugin.config.source,
+  }
 }
 
 /** Bind a plugin to the exact result of a real adapter validation/emission pass. */
@@ -53,10 +74,12 @@ export function projectionRecordForCurrentGeneration(
   plugin: ResolvedPlugin,
   validation: GenerationValidation,
 ): PluginProjectionRecord {
-  if (!isCurrentGenerationValidation(validation)) {
-    throw new Error(`projection record for ${plugin.id} lacks a current validated generation`)
+  if (!isCanonicalGenerationFor(validation, generationIdentity(plugin))) {
+    throw new Error(`projection record for ${plugin.id} lacks a current canonical generation`)
   }
-  return { plugin, emissions: validation.emissions, validation }
+  const record = Object.freeze({ plugin, emissions: validation.emissions })
+  projectionProvenance.set(record, { plugin, validation })
+  return record
 }
 
 /**
@@ -68,11 +91,7 @@ export function currentProjectionRecords(platform: ResolvedPlatform): readonly P
   const marketplaceName = defaultProfileId(platform)
   return platform.plugins.map((plugin) => projectionRecordForCurrentGeneration(
     plugin,
-    validateGeneration(plugin.sourcePath, undefined, {
-      marketplaceName,
-      configPath: plugin.configPath,
-      configSource: plugin.config.source,
-    }),
+    validateCanonicalGeneration(generationIdentity(plugin), { marketplaceName }),
   ))
 }
 
