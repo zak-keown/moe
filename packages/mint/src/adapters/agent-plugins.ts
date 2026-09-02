@@ -5,15 +5,14 @@ import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { baseManifestFields, json } from './shared.js'
 
 // Agent Plugins 1.0 (https://agent-plugins.org) only defines skills/ and
-// root-level plugin.json / mcp.json — commands, agents, and hooks have no
-// place in the spec, and there is no bootstrap-injection mechanism, so
-// those component supports stay 'none' below (with warnings when present).
+// root-level plugin.json / mcp.json. Commands, agents, hooks, and bootstrap
+// therefore become typed emission limitations when present; emitted
+// capabilities are calculated from the resulting format projection.
 //
 // The spec's standard skills location IS skills/ at the plugin root. When
 // components.skills is customized we can't relocate the manifest to point
-// at it (the spec has no such key), so we only warn; support.skills stays
-// the static 'full' declared below and the run-specific limitation is
-// communicated via the warning instead.
+// at it (the spec has no such key), so the resulting omission is represented
+// by a typed skills limitation rather than a static support claim.
 //
 // plugin.json's schema is CLOSED (additionalProperties: false), unlike the
 // other adapters' manifests. A general deepMerge of the full manifest

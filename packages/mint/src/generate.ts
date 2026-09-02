@@ -7,7 +7,7 @@ import { adapters, type HarnessAdapter } from './adapters/index.js'
 import type { AdapterEmission } from './adapters/types.js'
 import { emitDocs, injectReadme } from './docs-emit.js'
 import { ConfigError, type MintConfig } from './config.js'
-import { validateTargetEmission } from './platform/capabilities.js'
+import { capabilityError, validateTargetEmission } from './platform/capabilities.js'
 import { TARGET_IDS, type TargetId } from './vocabulary.js'
 
 export const TOOL_VERSION = '0.0.0'
@@ -80,7 +80,11 @@ export function generate(
     const result = adapter.emit(model)
     emittedByAdapter.set(adapter, result)
     if ('warnings' in result) {
-      throw new ConfigError(`adapter "${adapter.name}" returned unrecognized free-form warnings`)
+      throw capabilityError(
+        'CAPABILITY_ADAPTER_WARNING_UNRECOGNIZED', model.config.name, adapter.name as TargetId, model.config.source,
+        `adapters.${adapter.name}.warnings`, `adapter "${adapter.name}" returned unrecognized free-form warnings`,
+        'Return typed limitations instead of free-form warnings.',
+      )
     }
     mergeFiles(byPath, adapter.name, result.files, model.config)
     if ((TARGET_IDS as readonly string[]).includes(adapter.name)) {
@@ -89,7 +93,7 @@ export function generate(
       const policy = model.config.targets[target]
       emissions[target] = {
         ...result,
-        emittedCapabilities: validateTargetEmission(model.config.name, target, policy, result.emittedCapabilities, result.limitations),
+        emittedCapabilities: validateTargetEmission(model.config.name, target, policy, result.emittedCapabilities, result.limitations, model.config.source),
       }
     }
   }
@@ -100,10 +104,18 @@ export function generate(
     const target = adapter.name as TargetId
     const owner = emissions[result.projectionOwner]
     if (owner === undefined) {
-      throw new ConfigError(`adapter "${target}" requires projection owner "${result.projectionOwner}" to emit first`)
+      throw capabilityError(
+        'CAPABILITY_PROJECTION_OWNER_MISSING', model.config.name, target, model.config.source,
+        `targets.${target}.projection_owner`, `adapter "${target}" requires projection owner "${result.projectionOwner}" to emit first`,
+        'Activate the required projection owner target or omit this target.',
+      )
     }
     if (result.files.length !== 0 || result.emittedCapabilities.length !== 0) {
-      throw new ConfigError(`adapter "${target}" projection must not emit independent files or capabilities`)
+      throw capabilityError(
+        'CAPABILITY_PROJECTION_OWNER_CONFLICT', model.config.name, target, model.config.source,
+        `targets.${target}.projection_owner`, `adapter "${target}" projection must not emit independent files or capabilities`,
+        'Remove independent projection output and use the owner emission.',
+      )
     }
     emissions[target] = {
       ...result,
@@ -113,6 +125,7 @@ export function generate(
         model.config.targets[target],
         owner.emittedCapabilities,
         result.limitations,
+        model.config.source,
       ),
     }
   }

@@ -30,6 +30,33 @@ function ordered(capabilities: Iterable<CapabilityId>): CapabilityId[] {
   return CAPABILITY_IDS.filter((capability) => seen.has(capability))
 }
 
+function sameOrder(left: readonly CapabilityId[], right: readonly CapabilityId[]): boolean {
+  return left.length === right.length && left.every((capability, index) => capability === right[index])
+}
+
+export function capabilityError(
+  code: string,
+  plugin: string,
+  target: TargetId,
+  source: string,
+  field: string,
+  message: string,
+  action: string,
+): ConfigError {
+  return new ConfigError(message, [], { diagnostic: { code, plugin, target, source, field, action } })
+}
+
+function jsonObject(files: FileSet, path: string): Record<string, unknown> | undefined {
+  const file = files.find((entry) => entry.path === path)
+  if (file === undefined) return undefined
+  try {
+    const parsed: unknown = JSON.parse(file.content)
+    return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) ? parsed as Record<string, unknown> : undefined
+  } catch {
+    return undefined
+  }
+}
+
 /**
  * Temporary migration oracle for the retired component-support matrix. It is
  * intentionally not used by adapters: direct emissions below are the source
@@ -47,7 +74,7 @@ export function mapLegacyComponentSupport(
   for (const [component, capability] of Object.entries(componentCapability) as Array<[keyof ComponentSupport, CapabilityId]>) {
     if (support[component] !== 'none') allowed.add(capability)
   }
-  return ordered(direct.filter((capability) => allowed.has(capability)))
+  return ordered(direct.filter((capability) => allowed.has(capability) || capability === 'format-conformance'))
 }
 
 /** Derives claims from this plugin's concrete source metadata and projection. */
@@ -82,9 +109,16 @@ export function deriveEmittedCapabilities(target: TargetId, model: PluginModel, 
       }
       break
     case 'kimi':
-      if (!includes(emitted, '.kimi-plugin/plugin.json')) break
-      if (hasSkills) capabilities.add('skill-discovery')
-      if (model.config.bootstrap.kind === 'skill') capabilities.add('bootstrap-routing')
+      const manifest = jsonObject(files, '.kimi-plugin/plugin.json')
+      if (manifest === undefined) break
+      if (hasSkills && manifest.skills === `./${model.config.components.skills}/`) capabilities.add('skill-discovery')
+      if (
+        model.config.bootstrap.kind === 'skill'
+        && typeof manifest.sessionStart === 'object'
+        && manifest.sessionStart !== null
+        && !Array.isArray(manifest.sessionStart)
+        && (manifest.sessionStart as Record<string, unknown>).skill === model.config.bootstrap.skill
+      ) capabilities.add('bootstrap-routing')
       break
     case 'opencode':
       if (!hasPrefix(emitted, '.opencode/plugins/')) break
@@ -118,7 +152,9 @@ function normalized(values: readonly CapabilityId[]): CapabilityId[] {
 }
 
 export function validateEmissionLimitations(
+  plugin: string,
   target: TargetId,
+  source: string,
   emitted: readonly CapabilityId[],
   limitations: readonly EmissionLimitation[],
 ): void {
@@ -127,7 +163,11 @@ export function validateEmissionLimitations(
     if (limitation.code === 'SETTING_DROPPED') continue
     const capability = componentCapability[limitation.component]
     if (limitation.code === 'COMPONENT_OMITTED' && actual.has(capability)) {
-      throw new ConfigError(`adapter "${target}" reports ${limitation.component} omitted while emitting ${capability}`)
+      throw capabilityError(
+        'CAPABILITY_LIMITATION_CONTRADICTION', plugin, target, source, `targets.${target}.expected_capabilities`,
+        `adapter "${target}" reports ${limitation.component} omitted while emitting ${capability}`,
+        'Remove the contradictory limitation or emitted capability.',
+      )
     }
   }
 }
@@ -138,20 +178,40 @@ export function validateEmittedCapabilities(
   expected: readonly CapabilityId[],
   emitted: readonly CapabilityId[],
   intent: TargetIntent = 'preview',
+  source = 'moe-mint.yaml',
 ): CapabilityId[] {
   const normalizedExpected = normalized(expected)
   const normalizedEmitted = normalized(emitted)
+  const field = `targets.${target}.expected_capabilities`
+  if (normalizedExpected.length !== expected.length) {
+    throw capabilityError(
+      'CAPABILITY_EXPECTED_DUPLICATE', plugin, target, source, field,
+      `plugin "${plugin}" target "${target}" declares duplicate expected capabilities`,
+      'Declare every expected capability once in canonical capability order.',
+    )
+  }
+  if (!sameOrder(expected, normalizedExpected)) {
+    throw capabilityError(
+      'CAPABILITY_EXPECTED_NONCANONICAL', plugin, target, source, field,
+      `plugin "${plugin}" target "${target}" expected capabilities are not in canonical order`,
+      'Sort expected capabilities in the canonical capability order.',
+    )
+  }
   if (intent === 'omit') {
-    if (normalizedEmitted.length !== 0) throw new ConfigError(`plugin "${plugin}" omitted target "${target}" emitted capabilities`)
+    if (normalizedEmitted.length !== 0) throw capabilityError(
+      'CAPABILITY_OMITTED_EMITTED', plugin, target, source, field,
+      `plugin "${plugin}" omitted target "${target}" emitted capabilities`,
+      'Remove emitted capabilities for the omitted target.',
+    )
     return normalizedEmitted
   }
   if (normalizedEmitted.length !== emitted.length) {
-    throw new ConfigError(`plugin "${plugin}" target "${target}" emitted duplicate capabilities`)
+    throw capabilityError('CAPABILITY_EMITTED_DUPLICATE', plugin, target, source, field, `plugin "${plugin}" target "${target}" emitted duplicate capabilities`, 'Emit each capability once.')
   }
   const missing = normalizedExpected.filter((capability) => !normalizedEmitted.includes(capability))
-  if (missing.length) throw new ConfigError(`plugin "${plugin}" target "${target}" is missing capabilities: ${missing.join(', ')}`)
+  if (missing.length) throw capabilityError('CAPABILITY_EMITTED_MISSING', plugin, target, source, field, `plugin "${plugin}" target "${target}" is missing capabilities: ${missing.join(', ')}`, 'Emit every declared capability or correct the target declaration.')
   const extra = normalizedEmitted.filter((capability) => !normalizedExpected.includes(capability))
-  if (extra.length) throw new ConfigError(`plugin "${plugin}" target "${target}" emitted undeclared capabilities: ${extra.join(', ')}`)
+  if (extra.length) throw capabilityError('CAPABILITY_EMITTED_UNDECLARED', plugin, target, source, field, `plugin "${plugin}" target "${target}" emitted undeclared capabilities: ${extra.join(', ')}`, 'Declare every emitted capability or stop emitting it.')
   return normalizedEmitted
 }
 
@@ -161,8 +221,9 @@ export function validateTargetEmission(
   policy: PluginTargetIntent,
   emitted: readonly CapabilityId[],
   limitations: readonly EmissionLimitation[],
+  source = 'moe-mint.yaml',
 ): CapabilityId[] {
-  const normalizedEmission = validateEmittedCapabilities(plugin, target, policy.expectedCapabilities, emitted, policy.intent)
-  validateEmissionLimitations(target, normalizedEmission, limitations)
+  const normalizedEmission = validateEmittedCapabilities(plugin, target, policy.expectedCapabilities, emitted, policy.intent, source)
+  validateEmissionLimitations(plugin, target, source, normalizedEmission, limitations)
   return normalizedEmission
 }

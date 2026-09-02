@@ -115,6 +115,23 @@ describe('generate', () => {
     expect(existsSync(join(dir, '.claude-plugin/plugin.json'))).toBe(false)
   })
 
+  it('rejects an active Copilot target when its Claude projection owner is omitted', () => {
+    const dir = freshFixture()
+    const yaml = readFileSync(join(dir, 'moe-mint.yaml'), 'utf8')
+    writeFileSync(join(dir, 'moe-mint.yaml'), yaml
+      .replace('  claude-code: { intent: preview, expected_capabilities: [skill-discovery, command-discovery, agent-discovery, hook-execution, mcp-registration, bootstrap-routing], operating_systems: [macos] }', '  claude-code: { intent: omit }')
+      .replace('harnesses:\n  claude-code:\n    manifest:\n      homepage: https://example.com/kitchen-sink\n', 'harnesses:\n')
+      .replace('harnesses:\n', 'harnesses:\n  exclude: [claude-code]\n'))
+    try {
+      generate(dir)
+      throw new Error('expected missing Copilot projection owner rejection')
+    } catch (error) {
+      expect((error as { diagnostic?: unknown }).diagnostic).toMatchObject({
+        code: 'CAPABILITY_PROJECTION_OWNER_MISSING', plugin: 'kitchen-sink', target: 'copilot', source: 'moe-mint.yaml',
+      })
+    }
+  })
+
   it('snapshots the generated tree for the kitchen-sink fixture', () => {
     const dir = freshFixture()
     const result = generate(dir)
