@@ -3,8 +3,8 @@
 Make each installable Moe plugin one complete, deterministic artifact, then
 publish and mirror the exact bytes that passed verification.
 
-**Status:** Architecture approved; this written specification awaits review.
-Implementation has not started.
+**Status:** Approved for implementation planning. Implementation has not
+started.
 
 **Scope:** This is the first foundation slice of Moe's platform program. It
 defines the artifact, registry, composition, provenance, and release contracts
