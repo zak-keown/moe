@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 9
+  fixed: 10
   stale: 6
   skipped: 1
   deferred: 0
-  open: 577
+  open: 576
 ---
 
 # Codebase Review — moe
@@ -134,7 +134,7 @@ Fix: resolve the `global_cli` path in `check_prerequisites` and fail there, befo
 **Resolved:** 2026-09-02
 **Note:** Cannot locate the cited code anywhere: .claude/skills/moe-dogfood/ does not exist on disk, and stage.py / check_prerequisites / apply_repoint / global_cli appear nowhere in git history on any local branch (checked git ls-files, find across the tree, and git log --all -S for each identifier — the only hit is this report's own text). No mint/*.yaml source generates a moe-dogfood output either. This appears to describe a file that was never part of this repository's tracked or generated content; code has drifted past recognition (or never existed here), so no fix is applicable.
 ### CR-005: The provenance self-test cannot fail, because the flag it passes makes the checker exit before reading the fixture
-**File:** `.gitlab-ci.yml`
+**File:** `.github/workflows/ci.yml` (corrected — the cited `.gitlab-ci.yml` was removed by the GitLab→GitHub Actions migration, `b0ae97f`; the identical bug survived the move into the `provenance` job here)
 **Anchor:** job `provenance`, second script entry, the echo message "self-test failed: the red fixture passed"
 **Severity:** high
 
@@ -149,6 +149,10 @@ Fix: drop the unsupported flag, give the fixture a `NOTICE` whose imported-work 
 **Verification:** confirmed
 **Verification evidence:** Reproduced the exact CI command: node scripts/check-provenance.mjs scripts/fixtures/provenance-red --min-readmes 1 exits 2 with a usage error from main() before reading the fixture. Ran the job shell wrapper with CI_PROJECT_DIR set; the if-then-fail sees the non-zero exit as a pass and the wrapper exits 0, so the self-test always passes. The fixture is also stale: without the flag the checker crashes on ENOENT for a missing NOTICE rather than reporting a detection.
 
+**Disposition:** fixed
+**Commit:** `afc339c`
+**Resolved:** 2026-09-02
+**Note:** Report cited .gitlab-ci.yml, which no longer exists (migrated to .github/workflows/ci.yml in b0ae97f) — corrected the File line above; the bug and fix both live in the new location.
 ### CR-006: tmux is reported missing on every machine, because no tmux release has a three-part version
 **File:** `bin/lib/probes.mjs`
 **Anchor:** `probeTmux`, and `extractVersion`'s "the first `N.N.N` triple wins"
