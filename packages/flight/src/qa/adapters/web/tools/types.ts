@@ -16,4 +16,13 @@ export interface WebToolCtx {
   tab: string | number;
   logger: EvidenceLogger;
   takeReturnScreenshot: (tabOverride?: string | number) => Promise<ScreenshotResult>;
+  /**
+   * The run's context root (WebAdapterOptions.contextRoot), or null when
+   * none was configured. CR-032: file_upload resolves each requested path
+   * against this root via resolveInside() — the same containment every
+   * other file-touching tool (install_cookies, install_passkey) already
+   * goes through — instead of handing an LLM-chosen absolute path straight
+   * to DOM.setFileInputFiles.
+   */
+  contextRoot: string | null;
 }

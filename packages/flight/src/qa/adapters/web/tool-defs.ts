@@ -258,9 +258,11 @@ export function webToolDefinitions(): ToolDefinition[] {
     {
       name: "file_upload",
       description:
-        "Upload local files to an <input type=file> element via " +
-        "DOM.setFileInputFiles — the only way to programmatically set " +
-        "files (JS cannot). File paths must be absolute.",
+        "Upload files from the project's context directory to an " +
+        "<input type=file> element via DOM.setFileInputFiles — the only " +
+        "way to programmatically set files (JS cannot). File paths must " +
+        "be relative to the context directory (CR-032: absolute paths " +
+        "and '..' segments are rejected).",
       parameters: {
         type: "object",
         properties: {
@@ -271,7 +273,9 @@ export function webToolDefinitions(): ToolDefinition[] {
           file_paths: {
             type: "array",
             items: { type: "string" },
-            description: "Absolute paths of files to upload.",
+            description:
+              "Paths of files to upload, relative to the project's context directory. " +
+              "Example: 'alice/resume.pdf'.",
           },
           return_screenshot: {
             type: "boolean",
