@@ -77,4 +77,36 @@ describe("generateHtmlDiff (Myers)", () => {
     expect(generateHtmlDiff(null, null)).toBe("(no changes detected)");
     expect(generateHtmlDiff("", "")).toBe("(no changes detected)");
   });
+
+  // CR-033: Myers' trace pushes a full frontier snapshot (`v.slice()`) at
+  // every depth, so memory is O(D * (N + M)) with no cap on either input.
+  // Two large, fully-different documents (a route change or re-render --
+  // exactly the case captureActionWithDiff exists to describe) blow this
+  // up: the full pathological repro in the review report OOMs a 512 MB
+  // heap at 3000 lines per side. That is too slow/heavy to run as a unit
+  // test directly, so this uses a bounded but still-adversarial size
+  // (2000 fully-unique lines per side, comfortably above the module's
+  // fallback threshold) and asserts a time budget the unfixed O(D*(N+M))
+  // trace cannot meet -- it measured ~220ms/~110MB at this size, over 100x
+  // the cheap multiset fallback's ~2ms/~1MB.
+  test("stays fast on two large, fully-different documents instead of building the full Myers trace", () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { createSession } = require("../../../../src/qa/adapters/web/lib/chrome-ws-lib.js");
+    const { generateHtmlDiff } = createSession();
+    const before = Array.from({ length: 2000 }, (_, i) => `<p>before-line-${i}-unique</p>`).join(
+      "\n",
+    );
+    const after = Array.from({ length: 2000 }, (_, i) => `<p>after-line-${i}-unique</p>`).join(
+      "\n",
+    );
+
+    const start = performance.now();
+    const diff = generateHtmlDiff(before, after);
+    const elapsedMs = performance.now() - start;
+
+    expect(elapsedMs).toBeLessThan(100);
+    // Still a real diff, not a bail-out that reports nothing.
+    expect(diff).toMatch(/=== REMOVED ===/);
+    expect(diff).toMatch(/=== ADDED ===/);
+  });
 });

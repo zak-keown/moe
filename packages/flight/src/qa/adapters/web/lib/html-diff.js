@@ -13,6 +13,15 @@
 const MAX_LINES_PER_SIDE = 50;
 const MAX_LINE_LENGTH = 200;
 
+// Above this many combined input lines, Myers' trace below -- a full
+// frontier snapshot (`v.slice()`) pushed onto `trace` at *every* depth --
+// allocates O(D * (N + M)) memory with no cap on either input. Two large,
+// mostly-different documents (whole-document outerHTML before/after a
+// route change, say) exhaust the heap before the backtrack step is ever
+// reached. Above this size, fall back to a cheap O(N + M) multiset diff
+// instead (see CR-033).
+const MAX_DIFF_INPUT_LINES = 3000;
+
 // Myers' O((N+M)D) shortest-edit-script. Returns an array of
 // { type: 'eq'|'del'|'add', value: string } operations in order.
 function myersDiff(a, b) {
@@ -82,14 +91,49 @@ function backtrack(trace, a, b, N, M, max) {
   return ops.reverse();
 }
 
+// Cheap O(N + M) fallback for inputs too large for Myers (see
+// MAX_DIFF_INPUT_LINES): counts each line's occurrences on both sides and
+// reports the excess as removed/added. Order-insensitive -- a large block
+// that is only reordered, not changed, reports as "no changes" -- which is
+// an acceptable tradeoff for documents this large; the alternative is the
+// unbounded trace allocation this fallback exists to avoid.
+function multisetDiff(a, b) {
+  const countA = new Map();
+  for (const line of a) countA.set(line, (countA.get(line) || 0) + 1);
+  const countB = new Map();
+  for (const line of b) countB.set(line, (countB.get(line) || 0) + 1);
+
+  const removed = [];
+  const added = [];
+  const keys = new Set([...countA.keys(), ...countB.keys()]);
+  for (const key of keys) {
+    const inA = countA.get(key) || 0;
+    const inB = countB.get(key) || 0;
+    for (let i = 0; i < inA - inB; i++) removed.push(key);
+    for (let i = 0; i < inB - inA; i++) added.push(key);
+  }
+  return { removed, added };
+}
+
+function diffOps(a, b) {
+  const ops = myersDiff(a, b);
+  return {
+    removed: ops.filter(o => o.type === 'del').map(o => o.value),
+    added: ops.filter(o => o.type === 'add').map(o => o.value),
+  };
+}
+
 function generateHtmlDiff(beforeHtml, afterHtml) {
   const beforeLines = (beforeHtml || '').split('\n');
   const afterLines = (afterHtml || '').split('\n');
 
-  const ops = myersDiff(beforeLines, afterLines);
+  const { removed: rawRemoved, added: rawAdded } =
+    beforeLines.length + afterLines.length > MAX_DIFF_INPUT_LINES
+      ? multisetDiff(beforeLines, afterLines)
+      : diffOps(beforeLines, afterLines);
 
-  const removed = ops.filter(o => o.type === 'del' && o.value.trim()).map(o => o.value);
-  const added = ops.filter(o => o.type === 'add' && o.value.trim()).map(o => o.value);
+  const removed = rawRemoved.filter(l => l.trim());
+  const added = rawAdded.filter(l => l.trim());
 
   let diff = '';
   if (removed.length > 0) {
