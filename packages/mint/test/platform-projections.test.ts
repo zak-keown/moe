@@ -19,6 +19,47 @@ function recordsFor(platform: Awaited<ReturnType<typeof resolvePlatform>>): Plug
 }
 
 describe('registry projections', () => {
+  it('declares Plan 1 registry authorities as Mint inputs and checks every projection', () => {
+    const turbo = JSON.parse(readFileSync(join(REPO_ROOT, 'turbo.json'), 'utf8')) as {
+      tasks: Record<
+        string,
+        { dependsOn?: string[]; inputs?: string[]; outputs?: string[] }
+      >
+    }
+    const rootPackage = JSON.parse(readFileSync(join(REPO_ROOT, 'package.json'), 'utf8')) as {
+      scripts: Record<string, string>
+    }
+    const mint = turbo.tasks['//#mint:generate']
+
+    expect(mint).toBeDefined()
+    if (mint === undefined) {
+      throw new Error('missing //#mint:generate Turbo task')
+    }
+    expect(mint.dependsOn).toContain('@bubstack/moe-mint#build')
+    expect(mint.inputs).toEqual(
+      expect.arrayContaining([
+        'moe-platform.yaml',
+        'packages/*/mint/*.yaml',
+        'packages/*/package.json',
+        'packages/mint/src/adapters/**',
+        'scripts/mint-plugins.mjs',
+      ]),
+    )
+    expect(mint.outputs).toEqual(
+      expect.arrayContaining([
+        'plugins/**',
+        '.claude-plugin/marketplace.json',
+        'docs/moe/generated/plugin-catalog.md',
+      ]),
+    )
+    expect(rootPackage.scripts['mint:check']).toContain(
+      'git diff --exit-code -- plugins .claude-plugin/marketplace.json docs/moe/generated/plugin-catalog.md',
+    )
+    expect(rootPackage.scripts['mint:check']).toContain(
+      'git status --porcelain -- plugins .claude-plugin/marketplace.json docs/moe/generated/plugin-catalog.md',
+    )
+  })
+
   it('renders a deterministic marketplace from the Claude emissions and the default profile author', async () => {
     const platform = await resolvePlatform(REPO_ROOT)
     const first = renderMarketplace(platform, recordsFor(platform))

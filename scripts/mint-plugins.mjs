@@ -201,7 +201,9 @@ function runGeneration(plugin, dest, marketplaceName, mintGenerate) {
   try {
     return mintGenerate(dest, undefined, { marketplaceName });
   } catch (error) {
-    fail(`moe-mint generate failed for ${plugin.id}: ${error instanceof Error ? error.message : String(error)}`);
+    fail(
+      `moe-mint generate failed for ${plugin.id}: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
@@ -265,9 +267,15 @@ async function main() {
       `${path.relative(ROOT, MINT_CLI)} not found — run \`pnpm --filter @bubstack/moe-mint build\` first`,
     );
   }
-  const { resolvePlatform } = await import(pathToFileURL(path.join(ROOT, "packages/mint/dist/platform/load.js")).href);
-  const { generate } = await import(pathToFileURL(path.join(ROOT, "packages/mint/dist/generate.js")).href);
-  const { currentProjectionRecords, defaultProfileId, writeRegistryProjections } = await import(pathToFileURL(path.join(ROOT, "packages/mint/dist/platform/projections.js")).href);
+  const { resolvePlatform } = await import(
+    pathToFileURL(path.join(ROOT, "packages/mint/dist/platform/load.js")).href
+  );
+  const { generate } = await import(
+    pathToFileURL(path.join(ROOT, "packages/mint/dist/generate.js")).href
+  );
+  const { currentProjectionRecords, defaultProfileId, writeRegistryProjections } = await import(
+    pathToFileURL(path.join(ROOT, "packages/mint/dist/platform/projections.js")).href
+  );
   const platform = await resolvePlatform(ROOT);
   const marketplaceName = defaultProfileId(platform);
 
@@ -281,9 +289,7 @@ async function main() {
   for (const plugin of platform.plugins) {
     const { dest, staged } = stage(plugin);
     runGeneration(plugin, dest, marketplaceName, generate);
-    console.log(
-      `${plugin.id.padEnd(16)} ${String(staged).padStart(3)} skills staged`,
-    );
+    console.log(`${plugin.id.padEnd(16)} ${String(staged).padStart(3)} skills staged`);
   }
   const artifacts = currentProjectionRecords(platform);
   await writeRegistryProjections(platform, artifacts, {

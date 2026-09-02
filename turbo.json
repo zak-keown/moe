@@ -27,16 +27,23 @@
       "dependsOn": ["@bubstack/moe-mint#build"],
       "inputs": [
         "scripts/mint-plugins.mjs",
+        "moe-platform.yaml",
         ".claude-plugin/marketplace.json",
+        "packages/*/package.json",
         "packages/core/skill-tiers.yaml",
         "packages/*/mint/*.yaml",
+        "packages/mint/src/adapters/**",
         "packages/*/skills/**",
         "packages/*/commands/**",
         "packages/*/agents/**",
         "packages/*/hooks/**",
         "packages/*/.mcp.json"
       ],
-      "outputs": ["plugins/**"]
+      "outputs": [
+        "plugins/**",
+        ".claude-plugin/marketplace.json",
+        "docs/moe/generated/plugin-catalog.md"
+      ]
     }
   }
 }
