@@ -1,0 +1,11 @@
+# Attribution (fixture)
+
+A deliberately misattributed NOTICE: it names a different upstream than the
+one PARITY.md's `## Map` records, so `checkAttributionRegister` must flag the
+disagreement in both directions.
+
+## Imported works
+
+| Project | Revision | License | Copyright notice |
+|---|---:|---|---|
+| `moe-flight` | `91b6f7e` | Apache-2.0 | Prime Radiant, Inc. |

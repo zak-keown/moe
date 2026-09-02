@@ -55,8 +55,15 @@ function walk(root, current = root) {
 }
 
 function checkAttributionRegister(root, problems) {
-  const ledger = tableNames(join(root, "PARITY.md"), "## Map");
-  const notice = tableNames(join(root, "NOTICE"), "## Imported works");
+  let ledger;
+  let notice;
+  try {
+    ledger = tableNames(join(root, "PARITY.md"), "## Map");
+    notice = tableNames(join(root, "NOTICE"), "## Imported works");
+  } catch (err) {
+    problems.push(`could not read attribution register: ${err.message}`);
+    return 0;
+  }
   for (const name of ledger) {
     if (!notice.has(name)) problems.push(`NOTICE is missing imported work ${name}`);
   }
