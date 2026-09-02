@@ -1,12 +1,29 @@
 import { describe, it, expect } from 'vitest'
-import { mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { loadConfig, ConfigError } from '../src/config.js'
 
-function repoWith(yamlText: string): string {
+const POLICY = `
+distribution:
+  npm: "@scope/demo"
+artifact:
+  payloads: []
+targets:
+  claude-code: { intent: preview, expected_capabilities: [], operating_systems: [macos] }
+  cursor: { intent: preview, expected_capabilities: [], operating_systems: [macos] }
+  codex: { intent: preview, expected_capabilities: [], operating_systems: [macos] }
+  kimi: { intent: preview, expected_capabilities: [], operating_systems: [macos] }
+  opencode: { intent: preview, expected_capabilities: [], operating_systems: [macos] }
+  pi: { intent: preview, expected_capabilities: [], operating_systems: [macos] }
+  agent-plugins-1.0: { intent: preview, expected_capabilities: [] }
+  copilot: { intent: preview, expected_capabilities: [], operating_systems: [macos] }
+imported_works: []
+`
+
+function repoWith(yamlText: string, appendPolicy = true): string {
   const dir = mkdtempSync(join(tmpdir(), 'mint-config-'))
-  writeFileSync(join(dir, 'moe-mint.yaml'), yamlText)
+  writeFileSync(join(dir, 'moe-mint.yaml'), appendPolicy ? `${yamlText}${POLICY}` : yamlText)
   return dir
 }
 
@@ -40,17 +57,107 @@ describe('loadConfig', () => {
       'bootstrap:',
       '  skill: using-kitchen-sink',
       'harnesses:',
-      '  exclude: [cursor]',
       '  claude-code:',
       '    manifest:',
       '      homepage: https://example.com/kitchen-sink',
     ].join('\n')))
     expect(cfg.bootstrap).toEqual({ kind: 'skill', skill: 'using-kitchen-sink' })
-    expect(cfg.harnesses.exclude).toEqual(['cursor'])
+    expect(cfg.harnesses.exclude).toEqual([])
     expect(cfg.harnesses.settings['claude-code']?.manifest).toEqual({
       homepage: 'https://example.com/kitchen-sink',
     })
     expect(cfg.author?.name).toBe('Bubstack')
+  })
+
+  describe('package-local artifact policy', () => {
+    it('parses a typed distribution, payload, target and imported-work policy', () => {
+      const cfg = loadConfig(repoWith([
+        'name: demo',
+        'version: 1.0.0',
+        'description: demo',
+        'distribution:',
+        '  npm: "@scope/demo"',
+        'artifact:',
+        '  payloads:',
+        '    - { from: "dist/", to: "runtime//dist/", required: true }',
+        'targets:',
+        '  claude-code: { intent: certify, expected_capabilities: [skill-discovery], operating_systems: [macos] }',
+        '  cursor: { intent: omit }',
+        '  codex: { intent: omit }',
+        '  kimi: { intent: omit }',
+        '  opencode: { intent: omit }',
+        '  pi: { intent: omit }',
+        '  agent-plugins-1.0: { intent: omit }',
+        '  copilot: { intent: omit }',
+        'imported_works: [{ name: upstream-work }]',
+        'harnesses:',
+        '  exclude: [cursor, codex, kimi, opencode, pi, agent-plugins-1.0, copilot]',
+      ].join('\n'), false))
+
+      expect(cfg.distribution).toEqual({ npm: '@scope/demo' })
+      expect(cfg.artifact.payloads).toEqual([{ from: 'dist', to: 'runtime/dist', required: true }])
+      expect(cfg.targets['claude-code']).toEqual({
+        intent: 'certify', expectedCapabilities: ['skill-discovery'], operatingSystems: ['macos'],
+      })
+      expect(cfg.targets.cursor).toEqual({ intent: 'omit', expectedCapabilities: [] })
+      expect(cfg.importedWorks).toEqual([{ name: 'upstream-work' }])
+    })
+
+    it.each([
+      ['an unscoped npm name', '  npm: demo', /distribution\.npm/],
+      ['an invalid npm name', '  npm: "@Scope/demo"', /distribution\.npm/],
+      ['a glob payload source', '  payloads: [{ from: "dist/*", to: dist, required: true }]', /artifact\.payloads/],
+      ['a traversal payload destination', '  payloads: [{ from: dist, to: "../dist", required: true }]', /artifact\.payloads/],
+      ['a reserved payload destination', '  payloads: [{ from: dist, to: package.json, required: true }]', /artifact\.payloads/],
+      ['a missing payload required boolean', '  payloads: [{ from: dist, to: dist }]', /required/],
+    ])('rejects %s', (_name, replacement, expected) => {
+      const yaml = `name: demo\nversion: 1.0.0\ndescription: demo\n${POLICY}`
+      const start = replacement.startsWith('  npm') ? '  npm: "@scope/demo"' : '  payloads: []'
+      expect(() => loadConfig(repoWith(yaml.replace(start, replacement), false))).toThrow(expected)
+    })
+
+    it.each([
+      ['unknown target', '  unknown: { intent: omit }', /unknown/],
+      ['unknown capability', '  claude-code: { intent: preview, expected_capabilities: [unknown-capability], operating_systems: [macos] }', /targets\.claude-code/],
+      ['unknown operating system', '  claude-code: { intent: preview, expected_capabilities: [], operating_systems: [haiku] }', /targets\.claude-code/],
+    ])('rejects an %s', (_name, entry, expected) => {
+      const yaml = `name: demo\nversion: 1.0.0\ndescription: demo\n${POLICY}`
+      expect(() => loadConfig(repoWith(yaml.replace('  claude-code: { intent: preview, expected_capabilities: [], operating_systems: [macos] }', entry), false))).toThrow(expected)
+    })
+
+    it('rejects duplicate imported work names', () => {
+      const yaml = `name: demo\nversion: 1.0.0\ndescription: demo\n${POLICY}`
+      expect(() => loadConfig(repoWith(yaml.replace('imported_works: []', 'imported_works: [{ name: one }, { name: one }]'), false))).toThrow(/duplicate/i)
+    })
+
+    it.each([
+      ['omits a host operating-system matrix', '  claude-code: { intent: preview, expected_capabilities: [] }'],
+      ['adds an operating-system matrix to the format target', '  agent-plugins-1.0: { intent: preview, expected_capabilities: [], operating_systems: [macos] }'],
+      ['omits a canonical target', ''],
+    ])('rejects a target policy that %s', (_name, replacement) => {
+      const yaml = `name: demo\nversion: 1.0.0\ndescription: demo\n${POLICY}`
+      const invalid = replacement === ''
+        ? yaml.replace('  copilot: { intent: preview, expected_capabilities: [], operating_systems: [macos] }\n', '')
+        : yaml.replace(replacement.includes('agent-plugins')
+          ? '  agent-plugins-1.0: { intent: preview, expected_capabilities: [] }'
+          : '  claude-code: { intent: preview, expected_capabilities: [], operating_systems: [macos] }', replacement)
+      expect(() => loadConfig(repoWith(invalid, false))).toThrow(ConfigError)
+    })
+
+    it('rejects an exclude list that disagrees with target intent', () => {
+      const yaml = `name: demo\nversion: 1.0.0\ndescription: demo\n${POLICY}`
+      expect(() => loadConfig(repoWith(`${yaml}harnesses:\n  exclude: [cursor]\n`, false))).toThrow(/disagree/)
+    })
+
+    it('rejects scalar imported works with the object-form migration action', () => {
+      const yaml = `name: demo\nversion: 1.0.0\ndescription: demo\n${POLICY}`
+      try {
+        loadConfig(repoWith(yaml.replace('imported_works: []', 'imported_works: [one]'), false))
+        expect.unreachable('loadConfig should reject scalar imported work')
+      } catch (error) {
+        expect(error).toMatchObject({ diagnostic: { action: expect.stringContaining('{name: ...}') } })
+      }
+    })
   })
 
   it('rejects a missing required field, naming its YAML path', () => {
@@ -385,6 +492,12 @@ describe('loadConfig', () => {
     const cfg = loadConfig('fixtures/kitchen-sink')
     expect(cfg.name).toBe('kitchen-sink')
     expect(cfg.bootstrap).toEqual({ kind: 'skill', skill: 'using-kitchen-sink' })
+  })
+
+  it('loads the typed policy fixture', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mint-typed-fixture-'))
+    writeFileSync(join(dir, 'moe-mint.yaml'), readFileSync('test/fixtures/config/typed-policy.yaml', 'utf8'))
+    expect(loadConfig(dir).artifact.payloads).toEqual([{ from: 'dist', to: 'dist', required: true }])
   })
 
   it('normalizes trailing slashes on component paths', () => {
