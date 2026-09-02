@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 37
+  fixed: 38
   stale: 12
   skipped: 6
   deferred: 1
-  open: 537
+  open: 536
 ---
 
 # Codebase Review — moe
@@ -1107,6 +1107,10 @@ Fix: wrap the URL construction (or the whole handler body) in a try/catch that `
 **Verification:** confirmed
 **Verification evidence:** Reproduced live: the real serve.ts run via tsx crashed with an uncaught TypeError Invalid URL on a raw upgrade request with Host: [ and exited with code 1. No try/catch wraps the URL construction and no uncaughtException or clientError handler exists anywhere in packages/flight/src. The crash occurs before hooks.upgrade runs, so it also bypasses the Origin allowlist.
 
+**Disposition:** fixed
+**Commit:** `90463fc`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-051: The API server binds every network interface and has no authentication
 **File:** `packages/flight/src/qa/runtime/serve.ts`
 **Anchor:** `serveViaNode`'s `honoServe({ port: opts.port, fetch: ... })`; `ServeOptions` has `port` but no bind-address field
