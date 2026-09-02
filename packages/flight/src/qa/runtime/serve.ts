@@ -72,7 +72,22 @@ function serveViaNode<T>(opts: ServeOptions<T>): RunningServer {
     const hooks = opts.websocket;
     const wss = new WebSocketServer({ noServer: true });
     httpServer.on("upgrade", (req: IncomingMessage, socket: Duplex, head: Buffer) => {
-      const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
+      // The Host header is only needed to satisfy the URL constructor
+      // (the upgrade hook decides on `url.pathname` / query / headers,
+      // never on host) — use a fixed authority so a Host header Node's
+      // parser accepts but WHATWG URL rejects as an illegal authority
+      // (`[`, `%`, `a b`, ...) can't throw here. Node's HTTP parser does
+      // not validate Host syntax, and this handler runs synchronously
+      // inside the 'upgrade' event with nothing above it to catch a
+      // throw, so an unhandled exception here previously crashed the
+      // whole process (CR-050).
+      let url: URL;
+      try {
+        url = new URL(req.url ?? "/", "http://localhost");
+      } catch {
+        socket.destroy();
+        return;
+      }
       // Translate Node's `req.headers` (Record<string, string|string[]>) into
       // a Headers object so the upgrade hook has the same shape on both runtimes.
       const headerMap = new Headers();

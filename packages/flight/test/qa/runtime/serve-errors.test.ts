@@ -1,3 +1,4 @@
+import { connect } from "node:net";
 import { describe, expect, test } from "vitest";
 import { serve } from "../../../src/qa/runtime/serve.js";
 import { pickFreePort } from "../../../src/qa/util/pick-free-port.js";
@@ -50,6 +51,70 @@ describe("runtime/serve error paths", () => {
       expect(await followup.text()).toBe("ok");
     } finally {
       await server.stop();
+    }
+  });
+
+  test("CR-050: a malformed Host header on an upgrade request does not crash the process", async () => {
+    const port = await pickFreePort();
+    const server = serve({
+      port,
+      fetch: () => new Response("ok"),
+      websocket: {
+        upgrade: () => ({}),
+        open: () => {},
+        close: () => {},
+      },
+    });
+
+    // Node's HTTP parser does not validate Host header syntax, so the
+    // upgrade listener's `new URL(req.url, \`http://${host}\`)` can throw a
+    // synchronous TypeError inside an event listener with nothing to
+    // catch it. Register a temporary uncaughtException listener so this
+    // test process survives the throw either way (Node's default handler
+    // would otherwise tear the whole process down) while still letting
+    // us observe whether the throw happened at all.
+    const uncaught: unknown[] = [];
+    const onUncaught = (err: unknown) => {
+      uncaught.push(err);
+    };
+    process.on("uncaughtException", onUncaught);
+
+    try {
+      const socket = connect(port, "127.0.0.1");
+      await new Promise<void>((resolve, reject) => {
+        socket.once("connect", resolve);
+        socket.once("error", reject);
+      });
+      socket.write(
+        "GET /api/ws HTTP/1.1\r\n" +
+          "Host: [\r\n" +
+          "Upgrade: websocket\r\n" +
+          "Connection: Upgrade\r\n" +
+          "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n" +
+          "Sec-WebSocket-Version: 13\r\n" +
+          "\r\n",
+      );
+      await new Promise((r) => setTimeout(r, 100));
+      socket.destroy();
+
+      expect(uncaught).toHaveLength(0);
+
+      // The server (and its other in-flight runs) must still be alive —
+      // an ordinary request after the malformed one must still succeed.
+      const res = await fetch(`http://127.0.0.1:${port}/`);
+      expect(res.status).toBe(200);
+      expect(await res.text()).toBe("ok");
+    } finally {
+      process.removeListener("uncaughtException", onUncaught);
+      // Pre-fix, the crashed upgrade handler leaves Node's internal
+      // connection bookkeeping for the malformed socket in a state that
+      // never lets httpServer.close() complete — server.stop() would
+      // hang forever and take the whole suite down with it. Bound the
+      // cleanup so a still-broken fix fails this test instead of hanging.
+      await Promise.race([
+        server.stop(),
+        new Promise((resolve) => setTimeout(resolve, 1000)),
+      ]);
     }
   });
 });
