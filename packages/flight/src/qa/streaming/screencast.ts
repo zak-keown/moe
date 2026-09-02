@@ -69,28 +69,42 @@ export class ScreencastStreamer {
           metadata?: { deviceWidth?: number | undefined; deviceHeight?: number | undefined };
         };
       }) => {
-        if (!this.running) return;
-        if (event.method !== "Page.screencastFrame") return;
+        try {
+          if (!this.running) return;
+          if (event.method !== "Page.screencastFrame") return;
 
-        const params = event.params;
-        this.onFrame({
-          data: params.data,
-          metadata: {
-            width: params.metadata?.deviceWidth || 0,
-            height: params.metadata?.deviceHeight || 0,
-          },
-        });
+          const params = event.params;
+          this.onFrame({
+            data: params.data,
+            metadata: {
+              width: params.metadata?.deviceWidth || 0,
+              height: params.metadata?.deviceHeight || 0,
+            },
+          });
 
-        if (this.saveDir) {
-          const filename = `frame-${String(this.frameCount).padStart(5, "0")}.jpg`;
-          writeFileSync(join(this.saveDir, filename), Buffer.from(params.data, "base64"));
-          this.frameCount++;
+          if (this.saveDir) {
+            const filename = `frame-${String(this.frameCount).padStart(5, "0")}.jpg`;
+            writeFileSync(join(this.saveDir, filename), Buffer.from(params.data, "base64"));
+            this.frameCount++;
+          }
+
+          // Acknowledge frame so Chrome sends the next one.
+          await ps.send("Page.screencastFrameAck", {
+            sessionId: params.sessionId,
+          });
+        } catch (err) {
+          // cdp-router.js's dispatcher wraps this listener call in a
+          // synchronous try/catch only (`try { fn(msg) } catch {...}`),
+          // which can never observe a rejection from an async listener
+          // like this one — an uncaught rejection here would otherwise
+          // be an unhandled promise rejection that takes down the whole
+          // `moe-flight` daemon and every concurrent run (CR-052). The
+          // ack send rejects under ordinary conditions: the browser
+          // WebSocket dying mid-run, the page session detaching, or
+          // page-session.js's 30s "Page session timeout". Log and drop
+          // the single frame rather than crash the process.
+          console.error("screencast: frame handling failed, dropping frame:", err);
         }
-
-        // Acknowledge frame so Chrome sends the next one.
-        await ps.send("Page.screencastFrameAck", {
-          sessionId: params.sessionId,
-        });
       },
     );
 
