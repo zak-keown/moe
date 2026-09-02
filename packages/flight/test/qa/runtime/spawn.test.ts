@@ -56,7 +56,14 @@ describe("runtime/spawn", () => {
   });
 
   test("spawn kill stops a long-running process", async () => {
-    const proc = spawn(["sh", "-c", "sleep 30"]);
+    // Spawn `sleep` directly, not via `sh -c "sleep 30"`. `proc.kill()` sends
+    // SIGTERM to the top process only; a shell wrapper that isn't job-control-
+    // aware (dash under container:node:24 on GitHub Actions is the case that
+    // exposed this) exits itself but doesn't forward the signal, so the sleep
+    // child inherits the stdout fd and holds it open — readAll then blocks
+    // waiting for an EOF the fd never closes, past the 5s test timeout.
+    // Spawning sleep directly makes kill land on the process that owns stdout.
+    const proc = spawn(["sleep", "30"]);
     proc.kill();
     // If kill works, stdout closes promptly.
     const out = await readAll(proc.stdout);
