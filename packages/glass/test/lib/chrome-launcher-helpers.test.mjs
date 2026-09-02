@@ -147,6 +147,43 @@ describe('chrome-launcher-helpers', () => {
     assert.equal(r, null);
   });
 
+  // CR-056: profile names are auto-disambiguated by suffix (moe-glass,
+  // moe-glass-2, moe-glass-3), so getChromeProfileDir('moe-glass') is a
+  // literal string prefix of getChromeProfileDir('moe-glass-2'). A `ps` line
+  // that carries the SIBLING profile's --user-data-dir must never be adopted
+  // for the base profile.
+  //
+  // findOrphanChromeForProfile shells out to the real `ps auxw` with no
+  // maxBuffer override, so on a machine with a large process table (this
+  // dev box included: ps auxw exceeds the 1MB default) execSync throws and
+  // the function silently returns null via its catch-all — masking the
+  // defect for any test that spawns a real decoy and reads the real process
+  // table. Stubbing child_process.execSync (it is destructured fresh inside
+  // the function body on every call, so patching the shared module export
+  // is picked up) gives a deterministic repro of the substring-match bug
+  // itself, independent of the host's process table.
+  it('findOrphanChromeForProfile does not adopt a sibling profile whose dir is a superstring of ours', () => {
+    const cp = require('child_process');
+    const baseProfile = 'cr056-orphan-base';
+    const siblingDir = getChromeProfileDir('cr056-orphan-base-2'); // superstring of the base profile's dir
+
+    const fakePsOutput = [
+      'USER               PID  %CPU %MEM      VSZ    RSS   TT  STAT STARTED      TIME COMMAND',
+      `zakkeown         55555   0.0  0.1        0      0   ??  S    10:00AM   0:00.01 ` +
+        `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome ` +
+        `--remote-debugging-port=19999 --user-data-dir=${siblingDir}`,
+    ].join('\n');
+
+    const originalExecSync = cp.execSync;
+    cp.execSync = () => fakePsOutput;
+    try {
+      const r = findOrphanChromeForProfile(baseProfile);
+      assert.equal(r, null, `must not adopt the sibling profile's Chrome, got ${JSON.stringify(r)}`);
+    } finally {
+      cp.execSync = originalExecSync;
+    }
+  });
+
   // portFreeFromProbes: the pure decision over the IPv4 + IPv6 loopback bind
   // probes. The dual-stack check is a race-guard for hosts where Chrome may bind
   // ::1 only — but an UNAVAILABLE IPv6 loopback (e.g. a container with
