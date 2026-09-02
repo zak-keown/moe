@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 67
-  stale: 17
+  fixed: 68
+  stale: 18
   skipped: 7
   deferred: 1
-  open: 501
+  open: 499
 ---
 
 # Codebase Review — moe
@@ -1860,6 +1860,10 @@ Fix: extend `tab:test:bindings` to run `go test ./...` in `bindings/go` and the 
 **Verification:** confirmed
 **Verification evidence:** tab:test:bindings in package.json runs only pytest on the Python binding; grep of turbo.json and .gitlab-ci.yml shows no go test or validate-bindings.sh invocation anywhere, and the TypeScript binding test:ffi project is never run by default, so the Go test file real FFI assertions are exercised by nothing. Related to CR-084, which names the unwired script; this one names the unreached Go test.
 
+**Disposition:** fixed
+**Commit:** `9c71df7`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-083: OpenAI reasoning tokens are added to output_tokens that already contains them
 
 **File:** `packages/tab/crates/moe-tab-core/src/transcript/provider/openai.rs`
@@ -1936,6 +1940,10 @@ Fix: add `packages/tab/scripts/validate-bindings.sh` to a root script and run it
 **Verification:** confirmed
 **Verification evidence:** grep confirms validate-bindings.sh is invoked nowhere outside its own header and a comment; tab:test:bindings resolves to Python pytest only; the CI tab job runs only cargo test; the turbo test task skips the TypeScript binding test:ffi project; no go test or go build exists outside the script itself. Broader parent of CR-082.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Same root cause as CR-082 (both name the unwired cross-binding gate; CR-082 covers the Go suite, this one the validate-bindings.sh angle). Superseded by 9c71df7: tab:test:bindings now runs go test and the TS test:ffi project, not just Python pytest. validate-bindings.sh itself is still not wired into any script, but the finding's own suggested fix accepted wiring go test + test:ffi as sufficient ('at minimum'). Residual environment-level dlopen issue documented in 9c71df7 is unrelated to this finding (wiring, not symbol drift).
 ### CR-085: An eval name with no ASCII word characters makes `build` delete every other eval in the site
 **File:** `py/proof/src/moe_proof/site.py`
 **Anchor:** `build_eval`, the two statements "if eval_dir.exists(): shutil.rmtree(eval_dir)"
