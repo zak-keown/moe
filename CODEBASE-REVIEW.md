@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 39
+  fixed: 41
   stale: 12
   skipped: 6
   deferred: 1
-  open: 535
+  open: 533
 ---
 
 # Codebase Review — moe
@@ -268,6 +268,10 @@ In `server.cjs`, open `server-info` with the `wx`-style flag set (`fs.openSync(p
 **Verification:** confirmed
 **Verification evidence:** Reproduced live: mkdir -p over a pre-existing attacker-owned directory tree returns 0 without altering ownership or mode, and the fs.writeFileSync of server-info with mode 0o600 follows a symlink planted at that path, writing the session key into a pre-existing world-writable target whose mode stays 666. No O_EXCL, lstat check or noclobber exists in start-server.sh or server.cjs for this path, and the hardcoded /tmp/brainstorm-<pid>-<epoch> naming bypasses the per-user TMPDIR isolation on macOS.
 
+**Disposition:** fixed
+**Commit:** `b62def5`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-009: Title-only dedup merges unrelated requirements across epics and the dedup test blesses it
 **File:** `packages/core/test/iterative-development/test_aggregate_stories.py`
 **Anchor:** `test_dedup_merges_duplicate_titles`, "Stories with identical titles should be merged, sources combined."
@@ -1570,6 +1574,10 @@ Fix: move the marker check into a single guard that every archive consumer calls
 **Verification:** confirmed
 **Verification evidence:** shouldSkipConversation is defined and called only in sync.ts; verifyIndex and repairIndex in verify.ts never call it, so a marked conversation that sync deliberately archived without a summary lands in missing with reason No summary file, and repairIndex then calls parseConversation, summarizeConversation (a Claude Agent SDK query carrying the full exchange text) and insertExchange unguarded. Same root cause as CR-076.
 
+**Disposition:** fixed
+**Commit:** `6ec2329`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-076: Index repair re-indexes and summarizes conversations the user marked DO-NOT-INDEX
 **File:** `packages/memory/src/verify.ts`
 **Anchor:** `repairIndex`, and verifyIndex's "No summary file" reason
