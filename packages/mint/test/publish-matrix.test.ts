@@ -1,7 +1,14 @@
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { adapters } from '../src/adapters/index.js'
+import { validateGeneration } from '../src/generate.js'
 import { resolvePlatform } from '../src/platform/load.js'
-import { currentProjectionRecords, resolvePublishMatrix, type PluginProjectionRecord } from '../src/platform/projections.js'
+import {
+  currentProjectionRecords,
+  projectionRecordForCurrentGeneration,
+  resolvePublishMatrix,
+  type PluginProjectionRecord,
+} from '../src/platform/projections.js'
 
 const REPO_ROOT = join(import.meta.dirname, '../../..')
 
@@ -28,6 +35,49 @@ describe('publish matrix', () => {
 
     expect(() => resolvePublishMatrix(platform, fabricated)).toThrow(
       'current validated generation',
+    )
+  })
+
+  it('rejects a genuine validation rebound to another resolved plugin', async () => {
+    const platform = await resolvePlatform(REPO_ROOT)
+    const [first, second] = platform.plugins
+    if (first === undefined || second === undefined) throw new Error('expected two resolved plugins')
+    const validation = validateGeneration(first.sourcePath, undefined, {
+      configPath: first.configPath,
+      configSource: first.config.source,
+    })
+
+    expect(() => projectionRecordForCurrentGeneration(second, validation)).toThrow(
+      'current canonical generation',
+    )
+  })
+
+  it('rejects a zero-adapter validation pass', async () => {
+    const platform = await resolvePlatform(REPO_ROOT)
+    const [plugin] = platform.plugins
+    if (plugin === undefined) throw new Error('expected a resolved plugin')
+    const validation = validateGeneration(plugin.sourcePath, [], {
+      configPath: plugin.configPath,
+      configSource: plugin.config.source,
+    })
+
+    expect(() => projectionRecordForCurrentGeneration(plugin, validation)).toThrow(
+      'current canonical generation',
+    )
+  })
+
+  it('rejects an incomplete custom-adapter validation pass', async () => {
+    const platform = await resolvePlatform(REPO_ROOT)
+    const [plugin] = platform.plugins
+    const claude = adapters.find((adapter) => adapter.name === 'claude-code')
+    if (plugin === undefined || claude === undefined) throw new Error('expected the core plugin and Claude adapter')
+    const validation = validateGeneration(plugin.sourcePath, [claude], {
+      configPath: plugin.configPath,
+      configSource: plugin.config.source,
+    })
+
+    expect(() => projectionRecordForCurrentGeneration(plugin, validation)).toThrow(
+      'current canonical generation',
     )
   })
 })

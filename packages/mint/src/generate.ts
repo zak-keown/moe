@@ -18,7 +18,6 @@ export interface GenerateResult {
   emissions: Partial<Record<TargetId, AdapterEmission>>
   adaptersRun: string[]
   pruned: string[]
-  validation: GenerationValidation
 }
 
 /**
@@ -34,7 +33,19 @@ export interface GenerationValidation {
   config: MintConfig
 }
 
-const currentValidations = new WeakSet<GenerationValidation>()
+export interface CanonicalGenerationIdentity {
+  sourcePath: string
+  configPath: string
+  configSource: string
+}
+
+interface CanonicalGenerationProvenance {
+  sourcePath: string
+  configPath: string
+  configSource: string
+}
+
+const canonicalValidations = new WeakMap<GenerationValidation, CanonicalGenerationProvenance>()
 
 export interface GenerateOptions {
   force?: boolean
@@ -173,12 +184,43 @@ export function validateGeneration(
     adaptersRun: active.map((adapter) => adapter.name),
     config: model.config,
   }
-  currentValidations.add(validation)
   return validation
 }
 
-export function isCurrentGenerationValidation(value: unknown): value is GenerationValidation {
-  return typeof value === 'object' && value !== null && currentValidations.has(value as GenerationValidation)
+/**
+ * Validate one registry package with Mint's complete canonical adapter set,
+ * without writing generated files. The provenance remains private so a caller
+ * cannot turn a custom-adapter validation into projection evidence.
+ */
+export function validateCanonicalGeneration(
+  identity: CanonicalGenerationIdentity,
+  opts: Pick<GenerateOptions, 'marketplaceName'> = {},
+): GenerationValidation {
+  const options: GenerateOptions = opts.marketplaceName === undefined
+    ? { configPath: identity.configPath, configSource: identity.configSource }
+    : {
+      marketplaceName: opts.marketplaceName,
+      configPath: identity.configPath,
+      configSource: identity.configSource,
+    }
+  const validation = validateGeneration(identity.sourcePath, adapters, options)
+  canonicalValidations.set(validation, {
+    sourcePath: resolve(identity.sourcePath),
+    configPath: resolve(identity.configPath),
+    configSource: identity.configSource,
+  })
+  return validation
+}
+
+export function isCanonicalGenerationFor(
+  validation: GenerationValidation,
+  identity: CanonicalGenerationIdentity,
+): boolean {
+  const provenance = canonicalValidations.get(validation)
+  return provenance !== undefined
+    && provenance.sourcePath === resolve(identity.sourcePath)
+    && provenance.configPath === resolve(identity.configPath)
+    && provenance.configSource === identity.configSource
 }
 
 export function generate(
@@ -306,5 +348,5 @@ export function generate(
   writeFileSet(root, files)
   saveManifest(root, files, TOOL_VERSION)
 
-  return { files, warnings, emissions, adaptersRun, pruned, validation }
+  return { files, warnings, emissions, adaptersRun, pruned }
 }
