@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 36
+  fixed: 37
   stale: 12
   skipped: 6
   deferred: 1
-  open: 538
+  open: 537
 ---
 
 # Codebase Review — moe
@@ -1307,6 +1307,10 @@ Fix: drop the rewrite from `fill` and do the un-escaping (if it is still wanted)
 **Verification:** confirmed
 **Verification evidence:** Reproduced with a stubbed CDP session: filling the Windows path C:\new\table yields insertText calls of C:, ew and able plus Enter and Tab key presses, corrupting the value to C:ewable and submitting early; a password containing a literal backslash-n collapsed similarly. The MCP schema states the value is literal text never JSON-parsed, so callers cannot avoid this for real backslash-containing data.
 
+**Disposition:** fixed
+**Commit:** `6fb5d20`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-062: click() on a zero-rect element presses the mouse at viewport (0,0) instead of using the JS fallback
 **File:** `packages/glass/skills/browsing/lib/mouse.js`
 **Anchor:** `resolveCenter`, and the `click` comment "Fallback for cases where CDP coordinate resolution failed but the element actually exists (e.g., hidden / zero bounding rect)"
