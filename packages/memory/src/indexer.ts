@@ -42,6 +42,27 @@ function sessionIdForSummary(exchanges: ConversationExchange[]): string | undefi
   return exchanges.find((exchange) => exchange.sessionId)?.sessionId;
 }
 
+/**
+ * Drop exchanges whose *resolved* project is on the exclusion list.
+ *
+ * The `excludedProjects.includes(project)` check at each call site below only
+ * ever matches Claude Code's encoded-path project directories, because it is
+ * matched against the walk's top-level source directory name. Codex nests as
+ * `<year>/<month>/<day>/rollout-*.jsonl`, so that top-level name is a year and
+ * the real project never appears there at all (CR-069) — it only shows up once
+ * the transcript is parsed and `parseCodexConversation` resolves it via
+ * `projectFromCwd`. Re-checking here, against each exchange's own `project`
+ * field, catches that case without needing to parse ahead of the walk.
+ */
+function excludeByResolvedProject(
+  exchanges: ConversationExchange[],
+  excludedProjects: string[],
+): ConversationExchange[] {
+  if (excludedProjects.length === 0) return exchanges;
+  const excluded = new Set(excludedProjects);
+  return exchanges.filter((exchange) => !excluded.has(exchange.project));
+}
+
 export async function indexConversations(
   limitToProject?: string,
   maxConversations?: number,
@@ -119,7 +140,10 @@ export async function indexConversations(
         }
 
         // Parse conversation
-        const exchanges = await parseConversation(sourcePath, project, archivePath);
+        const exchanges = excludeByResolvedProject(
+          await parseConversation(sourcePath, project, archivePath),
+          excludedProjects,
+        );
 
         if (exchanges.length === 0) {
           console.log(`  Skipped ${file} (no exchanges)`);
@@ -257,7 +281,10 @@ export async function indexSession(
         }
 
         // Parse and summarize
-        const exchanges = await parseConversation(sourcePath, project, archivePath);
+        const exchanges = excludeByResolvedProject(
+          await parseConversation(sourcePath, project, archivePath),
+          excludedProjects,
+        );
 
         if (exchanges.length > 0) {
           // Generate summary (unless --no-summaries)
@@ -371,7 +398,10 @@ export async function indexUnprocessed(
         }
 
         // Parse and filter to exchanges past the high-water mark
-        const exchanges = await parseConversation(sourcePath, project, archivePath);
+        const exchanges = excludeByResolvedProject(
+          await parseConversation(sourcePath, project, archivePath),
+          excludedProjects,
+        );
         const newExchanges =
           maxIndexedLine > 0 ? exchanges.filter((e) => e.lineStart > maxIndexedLine) : exchanges;
         if (newExchanges.length === 0) continue;
