@@ -144,6 +144,28 @@ describe('keyboard-input', () => {
     assert.deepEqual(inserts.map(c => c.params.text), ['a', '\n', 'b']);
   });
 
+  // CR-061: fill() used to run value.replace(/\\t/g,'\t').replace(/\\n/g,'\n')
+  // to repair MCP payloads arriving with un-evaluated escapes — but that
+  // substitution cannot tell a genuine backslash-then-letter (a Windows
+  // path, a regex, LaTeX, escaped JSON) from a doubled escape, so it silently
+  // ate characters and injected real Tab/Enter key presses the caller never
+  // asked for. `value` must be typed as fully literal text: a real backslash
+  // followed by 't' or 'n' must reach the page as two ordinary characters,
+  // not become a Tab/Enter and not lose the backslash.
+  it('fill types a literal backslash-t / backslash-n as plain text, not Tab/Enter (CR-061)', async () => {
+    const { fill, ps } = setup();
+    // Two literal characters each: an actual backslash, then the letter t / n.
+    await fill(0, null, 'C:\\temp\\notes');
+    const calls = ps.calls;
+    const inserts = calls.filter(c => c.method === 'Input.insertText');
+    const keys = calls.filter(c => c.method === 'Input.dispatchKeyEvent');
+
+    assert.equal(keys.length, 0, 'a literal backslash-t/n must never trigger a Tab/Enter key press');
+    // The whole literal string reaches the page as one contiguous insert —
+    // no characters silently eaten, nothing rewritten to a control character.
+    assert.deepEqual(inserts.map(c => c.params.text), ['C:\\temp\\notes']);
+  });
+
   it('humanType in headed mode sends keyDown/keyUp around each char', async () => {
     const { humanType, ps } = setup({ headless: false });
     await humanType(0, null, 'ab', { delay: 0, jitter: 0 });
