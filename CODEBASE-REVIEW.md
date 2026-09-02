@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 57
+  fixed: 58
   stale: 15
   skipped: 7
   deferred: 1
-  open: 513
+  open: 512
 ---
 
 # Codebase Review — moe
@@ -1748,6 +1748,10 @@ Fix: either require `author` whenever the claude-code adapter is active, or emit
 **Verification:** confirmed
 **Verification evidence:** Reproduced with claude plugin validate --strict on a synthetic marketplace.json matching the authorless scaffold from moe-mint init: owner Invalid input, expected object, received undefined; adding owner clears it. SCHEMA_TARGETS in validate.ts never checks marketplace.json, so moe-mint validate gives false confidence. All five of this repo own mint YAML files set author, which is why the shipped plugins tree never surfaces it.
 
+**Disposition:** fixed
+**Commit:** `d948f25`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-080: A symlink at a generated path lets generate write outside the plugin root
 
 **File:** `packages/mint/src/generate.ts`
