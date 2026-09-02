@@ -6,6 +6,7 @@ interface ConfigOutput {
     projectRoot: string;
     stateDirName: string;
     port: number;
+    host: string;
     defaultChrome: { host: string; port: number };
     defaultTarget: string | null;
     defaultBudgetMs: number;
@@ -46,6 +47,7 @@ export function buildConfigOutput(config: AppConfig, env: NodeJS.ProcessEnv): Co
       projectRoot: config.projectRoot,
       stateDirName: config.stateDirName,
       port: config.port,
+      host: config.host,
       defaultChrome: config.defaultChrome,
       defaultTarget: config.defaultTarget ?? null,
       defaultBudgetMs: config.defaultBudgetMs,
@@ -95,6 +97,7 @@ export function formatConfigText(output: ConfigOutput): string {
     `  stateDirName:   ${output.flight.stateDirName}  (${output.flight.sources.stateDirName})`,
   );
   lines.push(`  port:           ${output.flight.port}  (${output.flight.sources.port})`);
+  lines.push(`  host:           ${output.flight.host}  (${output.flight.sources.host})`);
   lines.push(
     `  defaultChrome:  ${output.flight.defaultChrome.host}:${output.flight.defaultChrome.port}  (${output.flight.sources.defaultChrome})`,
   );

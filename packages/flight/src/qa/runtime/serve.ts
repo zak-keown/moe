@@ -11,10 +11,21 @@
  * `wsIdleTimeoutSec` options it owned are now documented as no-ops rather
  * than silently dropped.
  */
+import type { AddressInfo } from "node:net";
 import type { IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
 import { serve as honoServe } from "@hono/node-server";
 import { WebSocketServer } from "ws";
+
+/**
+ * Default bind address (CR-051). `ServeOptions` previously had no
+ * hostname field, so `@hono/node-server`'s `serve()` fell through to
+ * Node's `http.Server.listen(port)` default of the IPv6/IPv4 wildcard
+ * address — reachable from any interface, with no authentication on any
+ * HTTP route. `moe-flight qa serve` is a local dev tool; bind loopback
+ * unless a caller explicitly opts into something else.
+ */
+export const DEFAULT_HOSTNAME = "127.0.0.1";
 
 export interface WsLike {
   send(data: string): void;
@@ -37,6 +48,14 @@ export interface WebsocketHooks<T> {
 export interface ServeOptions<T = unknown> {
   port: number;
   /**
+   * Bind address. Defaults to `127.0.0.1` (loopback-only) when omitted —
+   * see `DEFAULT_HOSTNAME` (CR-051). Pass `"0.0.0.0"` (or a specific
+   * interface address) to accept connections from other hosts; the
+   * server has no authentication on any HTTP route, so widening this is
+   * an explicit, caller-owned decision, not a default.
+   */
+  hostname?: string | undefined;
+  /**
    * Accepted and ignored. Was `Bun.serve`'s per-connection idle timeout;
    * `@hono/node-server` has no equivalent knob, and Node's
    * `http.Server` defaults (no per-request idle close) are what the API
@@ -56,6 +75,9 @@ export interface ServeOptions<T = unknown> {
 
 export interface RunningServer {
   stop(): Promise<void>;
+  /** The bound address, once listening. Exposed for tests/diagnostics
+   * that need to confirm which interface the server is actually on. */
+  address(): AddressInfo | string | null;
 }
 
 export function serve<T extends object>(opts: ServeOptions<T>): RunningServer {
@@ -65,6 +87,7 @@ export function serve<T extends object>(opts: ServeOptions<T>): RunningServer {
 function serveViaNode<T>(opts: ServeOptions<T>): RunningServer {
   const httpServer = honoServe({
     port: opts.port,
+    hostname: opts.hostname ?? DEFAULT_HOSTNAME,
     fetch: (req) => opts.fetch(req as Request) as Response | Promise<Response>,
   });
 
@@ -115,5 +138,6 @@ function serveViaNode<T>(opts: ServeOptions<T>): RunningServer {
       new Promise<void>((resolve, reject) => {
         httpServer.close((err) => (err ? reject(err) : resolve()));
       }),
+    address: () => httpServer.address(),
   };
 }

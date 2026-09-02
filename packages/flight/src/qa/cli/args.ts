@@ -78,6 +78,7 @@ const VALIDATE_ALLOWED = new Set<string>([]);
 const FANOUT_ALLOWED = new Set(["out", "model", "from-result"]);
 const SERVE_ALLOWED = new Set([
   "port",
+  "host",
   "project-dir",
   "state-dir",
   "chrome",
@@ -93,6 +94,7 @@ const CONFIG_ALLOWED = new Set([
   "project-dir",
   "state-dir",
   "port",
+  "host",
   "chrome",
   "target",
   "model",
@@ -242,6 +244,7 @@ function parseConfigArgs(args: string[]): ConfigArgs {
       projectRoot: flags["project-dir"],
       stateDirName: flags["state-dir"],
       port: parseIntFlag(flags.port, "--port"),
+      host: flags.host,
       chrome: flags.chrome,
       target: flags.target,
       viewport: flags.viewport,
@@ -455,6 +458,7 @@ function parseServeArgs(args: string[]): ServeArgs {
       projectRoot: flags["project-dir"],
       stateDirName: flags["state-dir"],
       port: parseIntFlag(flags.port, "--port"),
+      host: flags.host,
       chrome: flags.chrome,
       target: flags.target,
       viewport: flags.viewport,
@@ -597,6 +601,8 @@ Commands:
 
   serve                    Start the API server
     --port <n>               Server port (default: 4400)
+    --host <address>         Bind address (default: 127.0.0.1 — loopback only; the server has
+                             no authentication, so binding wider is an explicit opt-in)
     --project-dir <dir>      Project root (contains the state dir)
     --state-dir <name>       State directory leaf name (default: .moe-flight)
     --chrome host:port       Default Chrome endpoint for runs
@@ -623,6 +629,7 @@ Commands:
 
 Environment:
   MOE_FLIGHT_PORT              Server port
+  MOE_FLIGHT_HOST              Bind address (default: 127.0.0.1)
   MOE_FLIGHT_PROJECT_ROOT      Project root (contains the state dir)
   MOE_FLIGHT_STATE_DIR         State directory leaf name (default: .moe-flight)
   MOE_FLIGHT_CHROME            Default Chrome endpoint (host:port)

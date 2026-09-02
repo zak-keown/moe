@@ -10,6 +10,8 @@ describe("runConfigCommand", () => {
     const parsed = JSON.parse(result);
     expect(parsed.flight.projectRoot).toBe(".");
     expect(parsed.flight.port).toBe(4400);
+    // CR-051: default bind address surfaced for operator diagnosis.
+    expect(parsed.flight.host).toBe("127.0.0.1");
     expect(parsed.sdkEnv.ANTHROPIC_API_KEY).toBe("unset");
   });
 
@@ -26,6 +28,13 @@ describe("runConfigCommand", () => {
     } as NodeJS.ProcessEnv);
     expect(result).toMatch(/projectRoot:\s+\/flag\s+\(flag\)/);
     expect(result).toMatch(/port:\s+5500\s+\(env\)/);
+  });
+
+  test("CR-051: text output shows host and its source", () => {
+    const result = runConfigCommand(minimalArgs(), {
+      MOE_FLIGHT_HOST: "0.0.0.0",
+    } as NodeJS.ProcessEnv);
+    expect(result).toMatch(/host:\s+0\.0\.0\.0\s+\(env\)/);
   });
 
   test("runConfigCommand propagates loadConfig errors (caller responsible for display)", () => {
