@@ -160,8 +160,13 @@ function createSession({ host, port, _testFakes } = {}) {
 
   state.ensureBridge = () => {
     // Detect stale bridge: if the cached browserSession is no longer connected,
-    // reset everything so we re-attach to the restarted Chrome process.
-    if (state.browserBridge && state.browserSession && !state.browserSession.isConnected()) {
+    // reset everything so we re-attach to the restarted Chrome process. This
+    // check must NOT be gated on state.browserBridge being truthy — a root
+    // WebSocket drop while the *first* attach is still in flight rejects
+    // bridgePromise without ever setting browserBridge, and would otherwise
+    // leave the next call re-attaching over the same dead browserSession
+    // forever (CR-055).
+    if (state.browserSession && !state.browserSession.isConnected()) {
       state.resetBridge();
     }
     if (state.browserBridge) return Promise.resolve(state.browserBridge);
