@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 30
+  fixed: 31
   stale: 12
   skipped: 6
   deferred: 1
-  open: 544
+  open: 543
 ---
 
 # Codebase Review — moe
@@ -855,6 +855,10 @@ Fix: treat the whole `sdkEnv` block the way the API keys are already treated, re
 **Verification:** confirmed
 **Verification evidence:** Reproduced by driving the real Hono app from the built dist against dummy env values carrying user:pass@host credentials in ANTHROPIC_BASE_URL, OPENAI_BASE_URL, HTTPS_PROXY and HTTP_PROXY; GET /api/config/effective returned them verbatim in JSON while the two API keys stayed redacted. createApp registers only a drain gate and a body-size limiter; no auth or origin middleware exists.
 
+**Disposition:** fixed
+**Commit:** `adac2af`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-040: Fanout writes an LLM-chosen card id as a filename with no containment check
 **File:** `packages/flight/src/qa/api/routes/fanout.ts`
 **Anchor:** `writeCards`
