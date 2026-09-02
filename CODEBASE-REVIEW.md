@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 54
+  fixed: 55
   stale: 14
   skipped: 6
   deferred: 1
-  open: 518
+  open: 517
 ---
 
 # Codebase Review — moe
@@ -383,6 +383,10 @@ errors exceed a small threshold. Print `$reason` on the PASS branch too.
 **Verification:** confirmed
 **Verification evidence:** Ran run-evals.sh with claude absent from PATH and HOME and TMPDIR redirected to scratch, no network: it produced Passed 36 / Failed 29, identical to a real judge run, because the harness only tests decision != block, so the hook allow_stop fallback scores the same as a genuine STOP verdict and the reason field is never printed on the PASS branch.
 
+**Disposition:** fixed
+**Commit:** `2213f17`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-014: The privacy guard resolves paths lexically, so a symlink defeats the deny checks these tests assert are exact
 **File:** `packages/core/test/tc-governance-enforce.test.ts`
 **Anchor:** test names "denies a level-1 read only after explicit opt-in" and "denies an opted-in %s call that reaches the level-1 fixture"
