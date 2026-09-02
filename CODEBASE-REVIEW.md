@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 35
+  fixed: 36
   stale: 12
   skipped: 6
   deferred: 1
-  open: 539
+  open: 538
 ---
 
 # Codebase Review — moe
@@ -1534,6 +1534,10 @@ grow `k` until either `limit` rows survive the WHERE or the candidate set is exh
 **Verification:** confirmed
 **Verification evidence:** Reproduced against the repo real better-sqlite3 and sqlite-vec builds using the actual hasMetadataFilters and buildSearchFilters logic: a date-only filter with ten true in-window rows returned 0 of 10 because hasMetadataFilters ignores after and before, so k stays at limit while vec0 applies KNN before WHERE; widening k to three times limit recovered all ten. The MCP search_conversations tool exposes after and before directly.
 
+**Disposition:** fixed
+**Commit:** `26599ba`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-075: DO-NOT-INDEX conversations are indexed and sent to the summarizer by index --repair
 **File:** `packages/memory/src/verify.ts`
 **Anchor:** `repairIndex`, and "Check for missing or errored summary" in `verifyIndex`
