@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 63
+  fixed: 64
   stale: 17
   skipped: 7
   deferred: 1
-  open: 505
+  open: 504
 ---
 
 # Codebase Review — moe
@@ -1748,6 +1748,10 @@ Fix: gate the whole deep tier behind an explicit opt-in that only `moe-mint test
 **Verification:** confirmed
 **Verification evidence:** deep_opencode has no container, CI or opt-in guard and unconditionally truncates $HOME/.config/opencode/opencode.json with a temp path the EXIT trap then deletes; moe-mint test always wraps the script in docker, but the script header documents direct invocation and neither pnpm check nor .gitlab-ci.yml calls it, and the mint unit test sandboxes HOME and PATH itself, showing the authors knew the raw script is unsafe. Empirically established on this host by the reviewing shard; not re-run.
 
+**Disposition:** fixed
+**Commit:** `0a59886`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-079: Generated marketplace descriptor omits the required owner, so any plugin without an author is rejected by Claude Code
 **File:** `packages/mint/src/adapters/claude-code.ts`
 **Anchor:** `marketplaceManifest`, the line `if (config.author) marketplace.owner = config.author`
