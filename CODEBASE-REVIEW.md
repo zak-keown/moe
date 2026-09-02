@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 25
+  fixed: 26
   stale: 11
   skipped: 6
   deferred: 0
-  open: 551
+  open: 550
 ---
 
 # Codebase Review — moe
@@ -1409,6 +1409,10 @@ Reproduced by enumerating the call sites: `grep -rn shouldSkipConversation packa
 **Verification:** confirmed
 **Verification evidence:** grep shows shouldSkipConversation defined and called only in sync.ts; indexConversations, indexSession and indexUnprocessed in indexer.ts read and insert exchanges with no reference to it, and index-cli.ts calls those three functions with no intervening filter, so moe-memory index has no marker check anywhere between invocation and the database insert. Same root cause as CR-072, CR-075 and CR-076. Static trace.
 
+**Disposition:** fixed
+**Commit:** `4982b29`
+**Resolved:** 2026-09-02
+**Note:** Fix landed correctly (indexer.ts + do-not-index-indexer.test.ts) but the commit was swept into an unrelated flight agent's commit by a shared-index race (bare git commit after concurrent git add); see CR-028's commit message. Content verified via git show --stat 4982b29.
 ### CR-072: The index CLI backfill path ignores the DO-NOT-INDEX marker
 **File:** `packages/memory/src/indexer.ts`
 **Anchor:** `indexUnprocessed`, and its two siblings indexConversations and indexSession
