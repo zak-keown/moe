@@ -19,6 +19,12 @@ verification:
   refuted: 1
   unproven: 0
 status: issues_found
+dispositions:
+  fixed: 1
+  stale: 0
+  skipped: 0
+  deferred: 0
+  open: 592
 ---
 
 # Codebase Review — moe
@@ -51,6 +57,10 @@ Fix: validate the name at the one place it enters the store. Reject any `tmux_na
 **Verification:** confirmed
 **Verification evidence:** Reproduced in an isolated scratch dir: removeWorker(dir, sid, "../../sandbox/VICTIM") from the compiled packages/crew/dist/core/worker-store.js deleted a directory outside the worker home. Reachable from real input: cmdPrune calls removeWorker with meta.tmux_name for any meta whose computeStatus is gone, which a planted meta with a nonexistent tmux_name always is; no validation of tmux_name exists anywhere in packages/crew/src, and mkdirSync never checks ownership or mode of a pre-existing /tmp/moe-crew-workers. Requires local co-residency on a shared host.
 
+**Disposition:** fixed
+**Commit:** `30dd1eb`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-002: Live-run file route serves the snapshotted credential fixtures
 **File:** `packages/flight/src/qa/api/routes/results.ts`
 **Anchor:** `"we skip the manifest check and serve any file that exists under the run dir"`
