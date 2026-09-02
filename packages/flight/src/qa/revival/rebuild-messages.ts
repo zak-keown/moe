@@ -227,7 +227,12 @@ function rebuildToolResult(tr: RawEvent, runDir: string, warnings: string[]): To
   const textTruncated = tr.textTruncated === true;
   const artifactRel = tr.artifact as string | undefined;
   if (textTruncated && artifactRel) {
-    const resolved = safeResolveInside(runDir, artifactRel, warnings, `${String(tr.name)} artifact`);
+    const resolved = safeResolveInside(
+      runDir,
+      artifactRel,
+      warnings,
+      `${String(tr.name)} artifact`,
+    );
     text = resolved
       ? readFileSync(resolved, "utf8")
       : "[revival: artifact path rejected — outside the run directory]";

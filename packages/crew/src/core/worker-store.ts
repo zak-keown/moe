@@ -69,7 +69,11 @@ export function stageCredentialFile(src: string, dest: string): void {
   } catch {
     // nothing there yet
   }
-  const fd = openSync(dest, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
+  const fd = openSync(
+    dest,
+    constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW,
+    0o600,
+  );
   try {
     writeSync(fd, data);
   } finally {

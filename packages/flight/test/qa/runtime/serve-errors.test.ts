@@ -111,10 +111,7 @@ describe("runtime/serve error paths", () => {
       // never lets httpServer.close() complete — server.stop() would
       // hang forever and take the whole suite down with it. Bound the
       // cleanup so a still-broken fix fails this test instead of hanging.
-      await Promise.race([
-        server.stop(),
-        new Promise((resolve) => setTimeout(resolve, 1000)),
-      ]);
+      await Promise.race([server.stop(), new Promise((resolve) => setTimeout(resolve, 1000))]);
     }
   });
 

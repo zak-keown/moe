@@ -212,7 +212,9 @@ describe("cmdSend", () => {
     // The sanitiser strips the ESC byte itself (CR-017), not the marker
     // substrings — the residual "[201~"/"[200~" text is inert without a
     // leading ESC, so it survives as harmless prompt text.
-    expect(calls.sendText).toEqual([{ name: TMUX_NAME, text: `${PASTE_START}a[201~b[200~c${PASTE_END}` }]);
+    expect(calls.sendText).toEqual([
+      { name: TMUX_NAME, text: `${PASTE_START}a[201~b[200~c${PASTE_END}` },
+    ]);
   });
 
   it("does not let deleting an embedded PASTE_START weld a live PASTE_END from the surrounding bytes (CR-017)", async () => {

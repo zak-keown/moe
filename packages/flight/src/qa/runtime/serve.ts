@@ -11,8 +11,9 @@
  * `wsIdleTimeoutSec` options it owned are now documented as no-ops rather
  * than silently dropped.
  */
-import type { AddressInfo } from "node:net";
+
 import type { IncomingMessage } from "node:http";
+import type { AddressInfo } from "node:net";
 import type { Duplex } from "node:stream";
 import { serve as honoServe } from "@hono/node-server";
 import { WebSocketServer } from "ws";

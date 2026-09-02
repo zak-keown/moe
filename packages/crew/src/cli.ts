@@ -122,7 +122,7 @@ Environment variables:
                        to this path on timeout, then emits "moe-crew-diagnostic: <path>" to
                        stderr. Overwritten on each timeout. Unset = no diagnostic file.
   MOE_CREW_WORKER_DIR  Directory for worker runtime state (meta/events/shim).
-                       Default: \$XDG_RUNTIME_DIR/moe-crew-workers if set, else
+                       Default: $XDG_RUNTIME_DIR/moe-crew-workers if set, else
                        ~/.local/state/moe-crew/workers. Created privately
                        (mode 0700); refuses an existing directory not owned
                        by the current user.

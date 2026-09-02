@@ -1165,7 +1165,12 @@ describe("runAgent", () => {
         {
           id: "c2",
           name: "report_result",
-          arguments: { status: "pass", summary: "All good", reasoning: "Verified", observations: [] },
+          arguments: {
+            status: "pass",
+            summary: "All good",
+            reasoning: "Verified",
+            observations: [],
+          },
         },
       ],
       stopReason: "tool_use" as const,

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from "vitest";
-import { api } from "../src/lib/api";
 import type { StaticRunPayload, VerdictResult } from "../src/lib/api";
+import { api } from "../src/lib/api";
 
 // CR-054: api.results.fileUrl must resolve evidence files relative to the
 // report's own location when rendered as a self-contained static HTML

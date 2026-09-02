@@ -248,10 +248,7 @@ export const api = {
     // to the report's own location instead of 404ing against a server
     // that isn't there.
     fileUrl: (runId: string, relPath: string) => {
-      const encodedPath = relPath
-        .split("/")
-        .map(encodeURIComponent)
-        .join("/");
+      const encodedPath = relPath.split("/").map(encodeURIComponent).join("/");
       const isStatic = typeof window !== "undefined" && window.__MOE_FLIGHT_RUN__ !== undefined;
       if (isStatic) return encodedPath;
       return `/api/results/${encodeURIComponent(runId)}/file/${encodedPath}`;

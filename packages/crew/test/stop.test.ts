@@ -5,7 +5,13 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { CommandContext } from "../src/commands/context.js";
 import { cmdStop } from "../src/commands/stop.js";
 import { appendEvent } from "../src/core/event-log.js";
-import { eventsPath, harnessMarkerPath, metaPath, shimPath, workerHomePath } from "../src/core/paths.js";
+import {
+  eventsPath,
+  harnessMarkerPath,
+  metaPath,
+  shimPath,
+  workerHomePath,
+} from "../src/core/paths.js";
 import type { Tmux } from "../src/core/tmux.js";
 import { writeHarnessMarker, writeMeta, writeShim } from "../src/core/worker-store.js";
 import { getDriver } from "../src/harness/registry.js";
