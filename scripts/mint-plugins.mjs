@@ -117,6 +117,12 @@ const PLUGINS = [
     config: "mint/moe-crew.yaml",
     distribution: { npm: "@bubstack/moe-crew" },
   },
+  {
+    name: "moe-statusline",
+    pkg: "statusline",
+    config: "mint/moe-statusline.yaml",
+    distribution: { npm: "@bubstack/moe-statusline" },
+  },
 ];
 
 /**

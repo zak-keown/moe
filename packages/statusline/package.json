@@ -1,0 +1,49 @@
+{
+  "name": "@bubstack/moe-statusline",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Automatically wires a vendored, MIT-licensed Claude Code statusline (ccstatusline) into settings.json on session start.",
+  "license": "MIT",
+  "author": {
+    "name": "Zak Keown",
+    "email": "zak.keown@outlook.com"
+  },
+  "homepage": "https://gitlab.com/moe-ai/moe",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zak-keown/moe.git"
+  },
+  "keywords": [
+    "claude-code",
+    "statusline",
+    "terminal",
+    "ui"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "files": [
+    "dist",
+    "hooks",
+    "vendor",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -b && tsup",
+    "prepack": "pnpm run build",
+    "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --pretty",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check ."
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.4"
+  }
+}

@@ -114,7 +114,7 @@ CI is five workflows under `.github/workflows/`. `ci.yml` runs `lint`,
 `provenance` on `node:24`. Three path-scoped workflows: `bin.yml` for
 `bin/**`, `tab.yml` on `rust:latest` for `packages/tab/**`, and `proof.yml`
 on `python:3.12` for `py/proof/**`. `publish.yml` runs on tags matching `v*`
-and OIDC-publishes the five `@bubstack/moe-*` packages to npm — no long-lived
+and OIDC-publishes the six `@bubstack/moe-*` packages to npm — no long-lived
 `NPM_TOKEN` (see https://docs.npmjs.com/trusted-publishers).
 
 Not in CI: `pnpm tab:test:bindings` (needs the cdylib built first);

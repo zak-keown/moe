@@ -1,0 +1,25 @@
+{
+  "name": "moe",
+  "description": "Development marketplace for moe-statusline",
+  "plugins": [
+    {
+      "name": "moe-statusline",
+      "description": "Configures a vendored, MIT-licensed Claude Code statusline (ccstatusline) automatically on session start.",
+      "version": "0.1.0",
+      "source": "./",
+      "author": {
+        "name": "Zak Keown",
+        "email": "zak.keown@outlook.com"
+      },
+      "category": "development",
+      "keywords": [
+        "statusline",
+        "terminal"
+      ]
+    }
+  ],
+  "owner": {
+    "name": "Zak Keown",
+    "email": "zak.keown@outlook.com"
+  }
+}
