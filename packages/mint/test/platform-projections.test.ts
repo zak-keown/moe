@@ -2,30 +2,20 @@ import { mkdtempSync, readFileSync, readdirSync, symlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import type { AdapterEmission } from '../src/adapters/types.js'
 import { resolvePlatform, type ResolvedPlatform } from '../src/platform/load.js'
 import {
+  currentProjectionRecords,
   renderMarketplace,
   renderPublicCatalog,
   writeRegistryProjections,
   type PluginProjectionRecord,
 } from '../src/platform/projections.js'
-import { TARGET_IDS, type TargetId } from '../src/vocabulary.js'
+import { TARGET_IDS } from '../src/vocabulary.js'
 
 const REPO_ROOT = join(import.meta.dirname, '../../..')
 
 function recordsFor(platform: Awaited<ReturnType<typeof resolvePlatform>>): PluginProjectionRecord[] {
-  return platform.plugins.map((plugin) => {
-    const emissions: Partial<Record<TargetId, AdapterEmission>> = {}
-    for (const target of TARGET_IDS) {
-      if (plugin.targets[target].intent === 'omit') continue
-      // These deliberately empty, hand-authored emissions prove projections use
-      // their current generation input rather than rebuilding expectations from
-      // package policy.
-      emissions[target] = { files: [], limitations: [], emittedCapabilities: [] }
-    }
-    return { plugin, emissions }
-  })
+  return [...currentProjectionRecords(platform)]
 }
 
 describe('registry projections', () => {
@@ -46,13 +36,13 @@ describe('registry projections', () => {
     )
   })
 
-  it('renders only supplied emitted capabilities as preview output, never policy expectations or certification', async () => {
+  it('renders current validated capabilities as preview output, never certification', async () => {
     const platform = await resolvePlatform(REPO_ROOT)
     const catalog = renderPublicCatalog(platform, recordsFor(platform))
 
     expect(catalog).toContain('| Plugin | npm package | Summary | Claude Code |')
     expect(catalog).toContain('| `moe` | `@bubstack/moe-core` |')
-    expect(catalog).toContain('preview: none')
+    expect(catalog).toContain('preview: agent-discovery, bootstrap-routing, hook-execution, skill-discovery')
     expect(catalog).not.toContain('certified')
     expect(catalog.endsWith('\n')).toBe(true)
   })

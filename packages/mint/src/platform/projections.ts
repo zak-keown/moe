@@ -1,12 +1,18 @@
 import { lstat, mkdir, realpath, writeFile } from 'node:fs/promises'
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path'
 import type { AdapterEmission } from '../adapters/types.js'
+import {
+  isCurrentGenerationValidation,
+  validateGeneration,
+  type GenerationValidation,
+} from '../generate.js'
 import { TARGET_IDS, type TargetId } from '../vocabulary.js'
 import type { ResolvedPlatform, ResolvedPlugin } from './load.js'
 
 export interface PluginProjectionRecord {
   plugin: ResolvedPlugin
   emissions: Readonly<Partial<Record<TargetId, AdapterEmission>>>
+  validation: GenerationValidation
 }
 
 export interface PublishMatrixEntry {
@@ -35,8 +41,39 @@ function projectionRecords(
     if (record === undefined || record.plugin !== plugin) {
       throw new Error(`projection record for ${plugin.id} does not match the resolved registry plugin`)
     }
+    if (!isCurrentGenerationValidation(record.validation) || record.emissions !== record.validation.emissions) {
+      throw new Error(`projection record for ${plugin.id} lacks a current validated generation`)
+    }
     return record
   })
+}
+
+/** Bind a plugin to the exact result of a real adapter validation/emission pass. */
+export function projectionRecordForCurrentGeneration(
+  plugin: ResolvedPlugin,
+  validation: GenerationValidation,
+): PluginProjectionRecord {
+  if (!isCurrentGenerationValidation(validation)) {
+    throw new Error(`projection record for ${plugin.id} lacks a current validated generation`)
+  }
+  return { plugin, emissions: validation.emissions, validation }
+}
+
+/**
+ * Run current adapter validation against each package source without writing
+ * generated artifacts. This is the authority used by the ephemeral publish
+ * matrix route.
+ */
+export function currentProjectionRecords(platform: ResolvedPlatform): readonly PluginProjectionRecord[] {
+  const marketplaceName = defaultProfileId(platform)
+  return platform.plugins.map((plugin) => projectionRecordForCurrentGeneration(
+    plugin,
+    validateGeneration(plugin.sourcePath, undefined, {
+      marketplaceName,
+      configPath: plugin.configPath,
+      configSource: plugin.config.source,
+    }),
+  ))
 }
 
 function defaultProfile(platform: ResolvedPlatform): [string, (typeof platform.registry.profiles)[string]] {

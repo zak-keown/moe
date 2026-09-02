@@ -44,7 +44,6 @@
  *     depend on the filesystem.
  */
 
-import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -198,22 +197,11 @@ function stage(plugin) {
   return { dest, staged };
 }
 
-function generate(plugin, dest, marketplaceName) {
+function runGeneration(plugin, dest, marketplaceName, mintGenerate) {
   try {
-    const out = execFileSync(
-      process.execPath,
-      [MINT_CLI, "generate", "--dir", path.relative(ROOT, dest), "--marketplace-name", marketplaceName, "--projection-record"],
-      {
-        cwd: ROOT,
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "pipe"],
-      },
-    );
-    return JSON.parse(out);
+    return mintGenerate(dest, undefined, { marketplaceName });
   } catch (error) {
-    process.stderr.write(error.stdout ?? "");
-    process.stderr.write(error.stderr ?? "");
-    fail(`moe-mint generate failed for ${plugin.id}`);
+    fail(`moe-mint generate failed for ${plugin.id}: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -278,7 +266,8 @@ async function main() {
     );
   }
   const { resolvePlatform } = await import(pathToFileURL(path.join(ROOT, "packages/mint/dist/platform/load.js")).href);
-  const { defaultProfileId, writeRegistryProjections } = await import(pathToFileURL(path.join(ROOT, "packages/mint/dist/platform/projections.js")).href);
+  const { generate } = await import(pathToFileURL(path.join(ROOT, "packages/mint/dist/generate.js")).href);
+  const { defaultProfileId, projectionRecordForCurrentGeneration, writeRegistryProjections } = await import(pathToFileURL(path.join(ROOT, "packages/mint/dist/platform/projections.js")).href);
   const platform = await resolvePlatform(ROOT);
   const marketplaceName = defaultProfileId(platform);
 
@@ -292,8 +281,8 @@ async function main() {
   const artifacts = [];
   for (const plugin of platform.plugins) {
     const { dest, staged } = stage(plugin);
-    const record = generate(plugin, dest, marketplaceName);
-    artifacts.push({ plugin, emissions: record.emissions });
+    const result = runGeneration(plugin, dest, marketplaceName, generate);
+    artifacts.push(projectionRecordForCurrentGeneration(plugin, result.validation));
     console.log(
       `${plugin.id.padEnd(16)} ${String(staged).padStart(3)} skills staged`,
     );
