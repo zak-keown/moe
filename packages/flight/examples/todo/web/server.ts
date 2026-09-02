@@ -23,6 +23,35 @@ import {
 const PORT = Number(process.env.TODO_WEB_PORT ?? 7891);
 const PUBLIC_DIR = resolve(import.meta.dirname, "public");
 
+// CR-028: `Bun.file(path)` (the pre-port static handler) supplied the
+// content-type from the extension; the port to `@hono/node-server` dropped
+// it and nothing replaced it, so every static response went out as
+// `text/plain` and a browser rendered the page's markup as text instead of
+// HTML. Mirrors the dashboard's `contentTypeFor()` (packages/flight/dashboard
+// /src/server.ts) — same shape, only the extensions this fixture's public/
+// tree actually needs.
+function contentTypeFor(path: string): string {
+  if (path.endsWith(".html")) {
+    return "text/html; charset=utf-8";
+  }
+  if (path.endsWith(".css")) {
+    return "text/css; charset=utf-8";
+  }
+  if (path.endsWith(".js")) {
+    return "text/javascript; charset=utf-8";
+  }
+  if (path.endsWith(".json")) {
+    return "application/json; charset=utf-8";
+  }
+  if (path.endsWith(".svg")) {
+    return "image/svg+xml";
+  }
+  if (path.endsWith(".png")) {
+    return "image/png";
+  }
+  return "application/octet-stream";
+}
+
 let state = loadState();
 
 function persist() {
@@ -112,7 +141,9 @@ serve({
     const body = Readable.toWeb(
       createReadStream(resolved),
     ) as unknown as ReadableStream<Uint8Array>;
-    return new Response(body);
+    return new Response(body, {
+      headers: { "content-type": contentTypeFor(resolved) },
+    });
   },
 });
 
