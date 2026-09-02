@@ -1,5 +1,7 @@
 'use strict';
 
+const { throwIfExceptionDetails } = require('./cdp-utils.js');
+
 const JS_KINDS = new Set(['alert', 'confirm', 'prompt', 'beforeunload']);
 const DEVICE_SELECTOR_RE = /^dialog::device\[id="([^"]+)"\]$/;
 
@@ -93,9 +95,16 @@ async function tryHandleDialogSelector({ selector, op, payload, state, sendCdpCo
     const decision = selector === 'dialog::accept' ? 'grant' : (selector === 'dialog::dismiss' ? 'deny' : null);
     if (decision) {
       const id = state.staged._shimId;
-      await sendCdpCommand(wsUrl, 'Runtime.evaluate', {
-        expression: `window.__dialogShim_resolve('${id}', '${decision}')`,
-      });
+      // id comes verbatim from a page-supplied Runtime.bindingCalled payload
+      // (see dialogs.js), so it MUST NOT be spliced into the expression by
+      // string interpolation — a crafted id like `1', 'grant'); void('` used
+      // to let a page turn an operator's deny into a grant. JSON.stringify
+      // produces a safe JS string literal for both operands instead.
+      const expression = `window.__dialogShim_resolve(${JSON.stringify(id)}, ${JSON.stringify(decision)})`;
+      const result = await sendCdpCommand(wsUrl, 'Runtime.evaluate', { expression });
+      // A malformed id can still make the expression throw (e.g. an id that
+      // isn't a string at all); don't report ok:true when it did.
+      throwIfExceptionDetails(result);
       return { handled: true, clearDialog: true, result: { ok: true } };
     }
   }

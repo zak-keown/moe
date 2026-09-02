@@ -149,13 +149,56 @@ describe('permission router', () => {
     await tryHandleDialogSelector({ selector: 'dialog::accept', op: 'click', state: permState('42'), sendCdpCommand: cdp, wsUrl: 'ws://x' });
     const call = cdp.calls.find(c => c.method === 'Runtime.evaluate');
     assert.ok(call);
-    assert.match(call.params.expression, /__dialogShim_resolve\('42', 'grant'\)/);
+    assert.match(call.params.expression, /__dialogShim_resolve\("42",\s*"grant"\)/);
   });
   it('dialog::dismiss resolves shim with deny', async () => {
     const cdp = makeCdpSpy();
     await tryHandleDialogSelector({ selector: 'dialog::dismiss', op: 'click', state: permState('9'), sendCdpCommand: cdp, wsUrl: 'ws://x' });
     const call = cdp.calls.find(c => c.method === 'Runtime.evaluate');
-    assert.match(call.params.expression, /__dialogShim_resolve\('9', 'deny'\)/);
+    assert.match(call.params.expression, /__dialogShim_resolve\("9",\s*"deny"\)/);
+  });
+
+  // CR-058: `id` is attacker-controlled (a page-supplied Runtime.bindingCalled
+  // payload, copied verbatim into state.staged._shimId by dialogs.js). The
+  // router used to splice it into the Runtime.evaluate expression by string
+  // interpolation, so a crafted id could inject extra JS — e.g. turning an
+  // operator's *deny* into a *grant* the page resolves for itself. Prove the
+  // fix by actually EXECUTING the emitted expression (as Chrome would) against
+  // a stub __dialogShim_resolve and asserting the page cannot smuggle a
+  // different decision or extra calls through the id.
+  it('a crafted _shimId cannot inject extra JS or flip the decision (CR-058)', async () => {
+    const vm = require('node:vm');
+    const maliciousId = "1', 'grant'); void('";
+    const cdp = makeCdpSpy();
+
+    const r = await tryHandleDialogSelector({
+      selector: 'dialog::dismiss', // operator chose DENY
+      op: 'click',
+      state: permState(maliciousId),
+      sendCdpCommand: cdp,
+      wsUrl: 'ws://x',
+    });
+
+    const call = cdp.calls.find(c => c.method === 'Runtime.evaluate');
+    assert.ok(call, 'Runtime.evaluate must have been sent');
+
+    // Actually run the expression the way Chrome's page world would, against
+    // a recording stub for the binding the shim installs.
+    const resolveCalls = [];
+    const sandbox = {
+      window: { __dialogShim_resolve: (...args) => resolveCalls.push(args) },
+    };
+    vm.createContext(sandbox);
+    vm.runInContext(call.params.expression, sandbox);
+
+    assert.equal(resolveCalls.length, 1, `expected exactly one resolve call, got ${JSON.stringify(resolveCalls)}`);
+    assert.deepEqual(
+      resolveCalls[0],
+      [maliciousId, 'deny'],
+      'the id must reach the shim as a single opaque string and the decision must stay DENY'
+    );
+    assert.equal(r.handled, true);
+    assert.equal(r.result.ok, true);
   });
 });
 
@@ -291,7 +334,7 @@ describe('tryHandleDialogSelectorForSession', () => {
     });
     assert.equal(r.handled, true);
     assert.equal(ps.calls[0].method, 'Runtime.evaluate');
-    assert.match(ps.calls[0].params.expression, /window\.__dialogShim_resolve\('SHIM-A',\s*'grant'\)/);
+    assert.match(ps.calls[0].params.expression, /window\.__dialogShim_resolve\("SHIM-A",\s*"grant"\)/);
   });
 
   it('unknown dialog selector returns handled+error', async () => {
