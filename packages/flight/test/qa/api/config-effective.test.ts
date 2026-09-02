@@ -38,6 +38,36 @@ describe("GET /api/config/effective", () => {
     }
   });
 
+  // CR-039: sdkEnv previously passed ANTHROPIC_BASE_URL, HTTPS_PROXY and
+  // friends through verbatim on this unauthenticated GET. Proxy URLs
+  // routinely embed user:password and a gateway base URL routinely embeds
+  // a token, so this endpoint returned operator secrets in full to any
+  // host that could reach the daemon's port.
+  test("CR-039: credential-capable sdkEnv fields report presence, not the raw value", async () => {
+    const config = loadConfig({}, {} as NodeJS.ProcessEnv);
+    const app = new Hono();
+    app.route("/api/config/effective", configEffectiveRoutes(config));
+    const saved = {
+      ANTHROPIC_BASE_URL: process.env.ANTHROPIC_BASE_URL,
+      HTTPS_PROXY: process.env.HTTPS_PROXY,
+    };
+    try {
+      process.env.ANTHROPIC_BASE_URL = "https://gateway.example/v1?token=super-secret-token";
+      process.env.HTTPS_PROXY = "https://user:hunter2@proxy.example:8080";
+      const body = await (await app.request("/api/config/effective")).json();
+      const raw = JSON.stringify(body);
+      expect(raw).not.toContain("super-secret-token");
+      expect(raw).not.toContain("hunter2");
+      expect(body.sdkEnv.ANTHROPIC_BASE_URL).toBe("set");
+      expect(body.sdkEnv.HTTPS_PROXY).toBe("set");
+    } finally {
+      for (const [k, v] of Object.entries(saved)) {
+        if (v !== undefined) process.env[k] = v;
+        else delete process.env[k];
+      }
+    }
+  });
+
   test("createApp mounts /api/config/effective alongside /api/config", async () => {
     const config = loadConfig({ projectRoot: "." }, {
       MOE_FLIGHT_AGENT_MODEL: "claude-sonnet-4-6",
