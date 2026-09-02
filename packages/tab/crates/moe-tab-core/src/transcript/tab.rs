@@ -147,7 +147,9 @@ mod tests {
                     cache_read: 40,
                     cache_write_5m: 0,
                     cache_write_1h: 0,
-                    output: 25,
+                    // reasoning_tokens (5) is a breakdown WITHIN output_tokens
+                    // (20), not additive — CR-083.
+                    output: 20,
                     request_input_tokens: 100,
                     service_tier: None,
                     native_cost_usd: None,
