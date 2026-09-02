@@ -2,11 +2,19 @@ import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { parse } from 'yaml'
 import { z } from 'zod'
+import { MintError } from './diagnostics.js'
+import { TARGET_IDS } from './vocabulary.js'
 
-export class ConfigError extends Error {
+export class ConfigError extends MintError {
   details: string[]
   constructor(message: string, details: string[] = [], opts: { cause?: unknown } = {}) {
-    super(details.length ? `${message}\n  - ${details.join('\n  - ')}` : message, { cause: opts.cause })
+    super({
+      severity: 'error',
+      code: 'CONFIG_INVALID',
+      source: 'moe-mint.yaml',
+      message: details.length ? `${message}\n  - ${details.join('\n  - ')}` : message,
+      action: 'Correct the configuration and run the command again.',
+    }, { cause: opts.cause })
     this.name = 'ConfigError'
     this.details = details
   }
@@ -18,23 +26,9 @@ export class ConfigError extends Error {
 // bootstrapEmitsHooks's callers (each adapter passes its own name).
 export const HOOK_EMITTING_HARNESSES = ['claude-code', 'cursor'] as const
 
-// The canonical adapter-name registry, used to validate that every key under
-// `harnesses:` (other than `exclude`) names a real adapter — so a typo like
-// `claudecode:` is a ConfigError instead of a silently-ignored block.
-// config.ts cannot import the live registry from src/adapters/index.ts without
-// an import cycle (every adapter imports MintConfig from this file), so
-// the list is duplicated here and kept honest by test/adapters/registry.test.ts,
-// which asserts it matches `adapters.map(a => a.name)`.
-export const ADAPTER_NAMES = [
-  'claude-code',
-  'cursor',
-  'codex',
-  'kimi',
-  'opencode',
-  'pi',
-  'agent-plugins-1.0',
-  'copilot',
-] as const
+// Keep this legacy export for existing config callers. TARGET_IDS is the one
+// canonical vocabulary shared by config validation and the adapter registry.
+export const ADAPTER_NAMES = TARGET_IDS
 
 export type BootstrapMode =
   | { kind: 'skill'; skill: string }

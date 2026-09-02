@@ -1,0 +1,67 @@
+schema: 1
+
+targets:
+  claude-code: {display_name: Claude Code, kind: host}
+  cursor: {display_name: Cursor, kind: host}
+  codex: {display_name: Codex, kind: host}
+  kimi: {display_name: Kimi, kind: host}
+  opencode:
+    display_name: OpenCode
+    kind: host
+    contract:
+      source: https://github.com/anomalyco/opencode
+      revision: ef2792511deb406f3b064e05a7cc1a01979260ee
+      path: packages/opencode/src/plugin/shared.ts
+  pi:
+    display_name: Pi
+    kind: host
+    contract:
+      source: https://github.com/badlogic/pi-mono
+      revision: e266507b606b9552fa277252644054afd4384b11
+      path: packages/coding-agent/docs/packages.md
+  agent-plugins-1.0: {display_name: Agent Plugins 1.0, kind: format}
+  copilot:
+    display_name: GitHub Copilot CLI
+    kind: host
+    requires: [claude-code]
+
+profiles:
+  core:
+    default: true
+    plugins: [moe]
+
+plugins:
+  - id: moe
+    source: packages/core
+    config: packages/core/mint/moe.yaml
+  - id: moe-backstory
+    source: packages/backstory
+    config: packages/backstory/mint/moe-backstory.yaml
+  - id: moe-memory
+    source: packages/memory
+    config: packages/memory/mint/moe-memory.yaml
+  - id: moe-glass
+    source: packages/glass
+    config: packages/glass/mint/moe-glass.yaml
+  - id: moe-crew
+    source: packages/crew
+    config: packages/crew/mint/moe-crew.yaml
+  - id: moe-statusline
+    source: packages/statusline
+    config: packages/statusline/mint/moe-statusline.yaml
+
+platform:
+  known_operating_systems: [macos, linux, wsl2, windows]
+  contributor_operating_systems: [macos, linux, wsl2]
+  core_cli_required_operating_systems: [macos, linux, wsl2, windows]
+  formal_release_requires_target_os_matrix: true
+
+release:
+  origin:
+    kind: npm
+    registry: https://registry.npmjs.org
+  mirror:
+    kind: github-release
+  channels:
+    stable: latest
+    prerelease: next
