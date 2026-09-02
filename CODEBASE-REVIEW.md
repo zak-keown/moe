@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 68
+  fixed: 69
   stale: 18
   skipped: 7
   deferred: 1
-  open: 499
+  open: 498
 ---
 
 # Codebase Review — moe
@@ -1914,6 +1914,10 @@ here.
 **Verification:** confirmed
 **Verification evidence:** openai.rs normalize() sums output_tokens with output_tokens_details.reasoning_tokens into the output field and the unit test in the same file pins 20 plus 5 equals 25 as expected; tab.rs parse_row routes provider openai rows there unmodified and cost.rs cost_for multiplies output by the output rate directly, so reasoning tokens are billed twice for every OpenAI reasoning-model transcript. The API contract that reasoning_tokens is a breakdown inside output_tokens was confirmed from documentation knowledge, not fetched live.
 
+**Disposition:** fixed
+**Commit:** `57b6ca1`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-084: Cross-language C ABI gate is invoked by nothing; only the Python binding is ever exercised
 **File:** `packages/tab/scripts/validate-bindings.sh`
 **Anchor:** the header comment "Consumers: Rust CLI, Python (ctypes), Go (purego), TypeScript under Node (koffi)" and its `check` function
