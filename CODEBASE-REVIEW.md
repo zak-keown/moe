@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 58
+  fixed: 59
   stale: 15
   skipped: 7
   deferred: 1
-  open: 512
+  open: 511
 ---
 
 # Codebase Review — moe
@@ -1493,6 +1493,10 @@ Fix: point the test at a reserved port and an isolated `XDG_CACHE_HOME` plus a u
 **Verification:** confirmed
 **Verification evidence:** cli-dispatch.test.mjs is in the vitest unit project that pnpm test and CI run, not behind test:chrome, and its stop test runs the real CLI as a child process with the inherited environment and no port or profile override; chrome-ws defaults to port 9222 and profile moe-glass, and killChrome with no launched Chrome kills whatever holds that port and unconditionally deletes the real moe-glass meta.json. The test asserts only on stderr strings, so this happens silently. Traced by reading; the test was not run.
 
+**Disposition:** fixed
+**Commit:** `3b4e2c5`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-069: Project exclusion list cannot exclude any Codex session
 **File:** `packages/memory/src/indexer.ts`
 **Anchor:** `if (excludedProjects.includes(project))` in indexConversations, indexSession and indexUnprocessed
