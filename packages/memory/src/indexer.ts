@@ -11,6 +11,7 @@ import {
 } from "./paths.js";
 import { summarizeConversation } from "./summarizer.js";
 import { formatErrorSentinel, shouldQueueForSummary } from "./summary-sentinel.js";
+import { shouldSkipConversation } from "./sync.js";
 import type { ConversationExchange } from "./types.js";
 
 // Set max output tokens for Claude SDK (used by summarizer)
@@ -137,6 +138,14 @@ export async function indexConversations(
           fs.mkdirSync(path.dirname(archivePath), { recursive: true });
           fs.copyFileSync(sourcePath, archivePath);
           console.log(`  Archived: ${file}`);
+        }
+
+        // Honor the in-transcript DO-NOT-INDEX opt-out (CR-070). The file is
+        // still archived above — sync.ts does the same — but it must never be
+        // parsed for summarization or embedded and inserted into the index.
+        if (shouldSkipConversation(archivePath)) {
+          console.log(`  Skipping DO-NOT-INDEX conversation: ${file}`);
+          continue;
         }
 
         // Parse conversation
@@ -280,6 +289,13 @@ export async function indexSession(
           fs.copyFileSync(sourcePath, archivePath);
         }
 
+        // Honor the in-transcript DO-NOT-INDEX opt-out (CR-070).
+        if (shouldSkipConversation(archivePath)) {
+          console.log(`Skipping DO-NOT-INDEX conversation: ${sessionId}`);
+          db.close();
+          break;
+        }
+
         // Parse and summarize
         const exchanges = excludeByResolvedProject(
           await parseConversation(sourcePath, project, archivePath),
@@ -395,6 +411,14 @@ export async function indexUnprocessed(
         // Refresh the archive when the source may have grown beyond what we've seen.
         if (!fs.existsSync(archivePath) || maxIndexedLine > 0) {
           fs.copyFileSync(sourcePath, archivePath);
+        }
+
+        // Honor the in-transcript DO-NOT-INDEX opt-out (CR-070/CR-072). This is
+        // the backfill path `--cleanup` routes to, so it is the one every
+        // marked conversation eventually reaches even if the initial index run
+        // predates the marker being typed.
+        if (shouldSkipConversation(archivePath)) {
+          continue;
         }
 
         // Parse and filter to exchanges past the high-water mark
