@@ -117,8 +117,14 @@ function importedClaudeCapabilities(input: {
   mcp: boolean
 }): CapabilityId[] {
   const detected = new Set<CapabilityId>(['bootstrap-routing'])
-  if (input.skills > 0) detected.add('skill-discovery')
-  if (input.commands > 0) detected.add('command-discovery')
+  if (input.skills > 0) {
+    detected.add('skill-discovery')
+    detected.add('skill-invocation')
+  }
+  if (input.commands > 0) {
+    detected.add('command-discovery')
+    detected.add('command-invocation')
+  }
   if (input.agents > 0) detected.add('agent-discovery')
   if (input.hooks) detected.add('hook-execution')
   if (input.mcp) detected.add('mcp-registration')
@@ -298,9 +304,9 @@ export function importPlugin(root: string): ImportResult {
   // literal.
   output.bootstrap = skillDirs.includes(bootstrapSkillName) ? { skill: bootstrapSkillName } : 'generate'
   // Import knows which Claude-discoverable inputs it carried into the Mint
-  // config. It declares only those structural outcomes (not invocation or
-  // executable claims) in canonical vocabulary order; Task 4 will validate
-  // that declaration against adapter output during generation.
+  // config. It declares the full current adapter contract for each detected
+  // component in canonical vocabulary order; Task 4 will validate that
+  // declaration against adapter output during generation.
   targets['claude-code'].expected_capabilities = importedClaudeCapabilities({
     skills: skillDirs.length,
     commands: commandsCount,

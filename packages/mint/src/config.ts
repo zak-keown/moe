@@ -18,6 +18,7 @@ export type ConfigErrorDiagnostic = Omit<MintError['diagnostic'], 'severity' | '
 export interface ConfigErrorOptions {
   cause?: unknown
   diagnostic?: ConfigErrorDiagnostic
+  source?: string
 }
 
 const OPERATION_DIAGNOSTIC: ConfigErrorDiagnostic = {
@@ -46,8 +47,24 @@ export class ConfigError extends MintError {
   }
 }
 
-function configError(message: string, details: string[] = [], opts: Omit<ConfigErrorOptions, 'diagnostic'> = {}): ConfigError {
-  return new ConfigError(message, details, { ...opts, diagnostic: CONFIG_DIAGNOSTIC })
+function configError(message: string, details: string[] = [], opts: ConfigErrorOptions = {}): ConfigError {
+  return new ConfigError(message, details, {
+    ...opts,
+    diagnostic: opts.diagnostic ?? { ...CONFIG_DIAGNOSTIC, source: opts.source ?? CONFIG_DIAGNOSTIC.source },
+  })
+}
+
+function migrationError(
+  source: string,
+  code: string,
+  field: string,
+  message: string,
+  action: string,
+  target?: string,
+): ConfigError {
+  return configError(message, [], {
+    diagnostic: { code, source, field, action, ...(target === undefined ? {} : { target }) },
+  })
 }
 
 // The harnesses whose adapters have a shell-hook tier and therefore honor
@@ -307,38 +324,55 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 // own plugins use moe-mint, so no back-compat). Each is caught on the raw
 // document BEFORE the schema parse so the author gets a pointed migration
 // message naming the replacement, not a generic zod validation error.
-function rejectLegacySyntax(doc: unknown): void {
+function rejectLegacySyntax(doc: unknown, source: string): void {
   if (!isPlainObject(doc)) return
   const bootstrap = doc.bootstrap
   if (isPlainObject(bootstrap)) {
     if ('none' in bootstrap || 'generate' in bootstrap) {
-      throw configError(
+      throw migrationError(
+        source,
+        'CONFIG_BOOTSTRAP_MIGRATION_REQUIRED',
+        'bootstrap',
         'bootstrap is now a tagged value: use "bootstrap: none", "bootstrap: generate", or "bootstrap: { skill: <name> }"',
+        'Replace the legacy bootstrap object with its tagged v1 form.',
       )
     }
     if ('emitHooks' in bootstrap) {
-      throw configError('bootstrap.emitHooks moved: set harnesses.<name>.hooks: own')
+      throw migrationError(
+        source,
+        'CONFIG_BOOTSTRAP_HOOKS_MIGRATION_REQUIRED',
+        'bootstrap.emitHooks',
+        'bootstrap.emitHooks moved: set harnesses.<name>.hooks: own',
+        'Move the hook ownership setting to the affected harness.',
+      )
     }
   }
   const harnesses = doc.harnesses
   if (isPlainObject(harnesses) && 'overrides' in harnesses) {
-    throw configError('harnesses.overrides moved: put manifest patches under harnesses.<name>.manifest')
+    throw migrationError(
+      source,
+      'CONFIG_HARNESS_OVERRIDES_MIGRATION_REQUIRED',
+      'harnesses.overrides',
+      'harnesses.overrides moved: put manifest patches under harnesses.<name>.manifest',
+      'Move each manifest patch to its named harness.',
+    )
   }
   if ('bump' in doc) {
-    throw configError('bump: was renamed: use release: (same fields)')
+    throw migrationError(
+      source,
+      'CONFIG_RELEASE_MIGRATION_REQUIRED',
+      'bump',
+      'bump: was renamed: use release: (same fields)',
+      'Rename bump to release.',
+    )
   }
   if (Array.isArray(doc.imported_works) && doc.imported_works.some((entry) => !isPlainObject(entry))) {
-    throw new ConfigError(
+    throw migrationError(
+      source,
+      'CONFIG_IMPORTED_WORK_MIGRATION_REQUIRED',
+      'imported_works',
       'imported_works entries must use object form',
-      [],
-      {
-        diagnostic: {
-          code: 'CONFIG_IMPORTED_WORK_MIGRATION_REQUIRED',
-          source: 'moe-mint.yaml',
-          field: 'imported_works',
-          action: 'Replace each scalar entry with {name: ...}.',
-        },
-      },
+      'Replace each scalar entry with {name: ...}.',
     )
   }
 }
@@ -347,7 +381,7 @@ function rejectLegacySyntax(doc: unknown): void {
 // names (typo-catching against ADAPTER_NAMES), the hooks enum, that manifest is
 // a mapping, and that no stray keys sneak in. Returns the resolved per-harness
 // settings that consumers read directly (hooks defaults to 'generated').
-function resolveHarnessSettings(raw: Record<string, unknown> | undefined): {
+function resolveHarnessSettings(raw: Record<string, unknown> | undefined, source: string): {
   exclude: string[]
   settings: Record<string, HarnessSettings>
 } {
@@ -361,35 +395,35 @@ function resolveHarnessSettings(raw: Record<string, unknown> | undefined): {
     if (!(ADAPTER_NAMES as readonly string[]).includes(name)) {
       throw configError(`harnesses.exclude: unknown harness name "${name}"`, [
         `valid names: ${ADAPTER_NAMES.join(', ')}`,
-      ])
+      ], { source })
     }
   }
 
   for (const [key, value] of Object.entries(raw)) {
     if (key === 'exclude') continue
     if (!(ADAPTER_NAMES as readonly string[]).includes(key)) {
-      throw configError(`harnesses.${key}: unknown harness name`, [`valid names: ${ADAPTER_NAMES.join(', ')}`])
+      throw configError(`harnesses.${key}: unknown harness name`, [`valid names: ${ADAPTER_NAMES.join(', ')}`], { source })
     }
     if (!isPlainObject(value)) {
-      throw configError(`harnesses.${key}: must be a mapping of hooks and/or manifest`)
+      throw configError(`harnesses.${key}: must be a mapping of hooks and/or manifest`, [], { source })
     }
     for (const settingKey of Object.keys(value)) {
       if (settingKey !== 'hooks' && settingKey !== 'manifest') {
-        throw configError(`harnesses.${key}.${settingKey}: unknown key (expected hooks or manifest)`)
+        throw configError(`harnesses.${key}.${settingKey}: unknown key (expected hooks or manifest)`, [], { source })
       }
     }
     const entry: HarnessSettings = { hooks: 'generated' }
     if ('hooks' in value) {
       const hooks = value.hooks
       if (hooks !== 'generated' && hooks !== 'own') {
-        throw configError(`harnesses.${key}.hooks: must be "generated" or "own"`)
+        throw configError(`harnesses.${key}.hooks: must be "generated" or "own"`, [], { source })
       }
       entry.hooks = hooks
     }
     if ('manifest' in value) {
       const manifest = value.manifest
       if (!isPlainObject(manifest)) {
-        throw configError(`harnesses.${key}.manifest: must be a mapping`)
+        throw configError(`harnesses.${key}.manifest: must be a mapping`, [], { source })
       }
       entry.manifest = manifest
     }
@@ -410,26 +444,36 @@ function resolveBootstrap(raw: z.infer<typeof rawSchema>['bootstrap']): Bootstra
 // A `hooks: own` opt-out is only meaningful on a hook-emitting harness with an
 // active bootstrap; anywhere else there are no generated hooks to suppress, so
 // it's a pointed ConfigError rather than a silent no-op.
-function validateHarnessHooks(settings: Record<string, HarnessSettings>, bootstrap: BootstrapMode): void {
+function validateHarnessHooks(settings: Record<string, HarnessSettings>, bootstrap: BootstrapMode, source: string): void {
   for (const [name, entry] of Object.entries(settings)) {
     if (entry.hooks !== 'own') continue
     if (!(HOOK_EMITTING_HARNESSES as readonly string[]).includes(name)) {
       throw configError(
         `harnesses.${name}.hooks: own is only valid on hook-emitting harnesses (${HOOK_EMITTING_HARNESSES.join(', ')})`,
+        [],
+        { source },
       )
     }
     if (bootstrap.kind === 'none') {
       throw configError(
         `harnesses.${name}.hooks: own requires an active bootstrap (bootstrap: generate or bootstrap: { skill: <name> }); there are no generated hooks to suppress`,
+        [],
+        { source },
       )
     }
   }
 }
 
-function checkMarketplace(marketplace: z.infer<typeof rawSchema>['marketplace'], repository: string | undefined): void {
+function checkMarketplace(
+  marketplace: z.infer<typeof rawSchema>['marketplace'],
+  repository: string | undefined,
+  source: string,
+): void {
   if (marketplace?.source === 'repository' && !repository) {
     throw configError(
       'marketplace.source: repository requires a top-level repository field',
+      [],
+      { source },
     )
   }
 }
@@ -450,60 +494,79 @@ function resolveTargets(raw: z.infer<typeof rawSchema>['targets']): Readonly<Rec
 function validateTargetMigration(
   targets: Readonly<Record<TargetId, PluginTargetIntent>>,
   harnesses: { exclude: string[]; settings: Record<string, HarnessSettings> },
+  source: string,
 ): void {
   for (const target of TARGET_IDS) {
     const omitted = targets[target].intent === 'omit'
     const excluded = harnesses.exclude.includes(target)
     if (omitted !== excluded) {
-      throw configError(
+      throw migrationError(
+        source,
+        'TARGET_EXCLUSION_MISMATCH',
+        `targets.${target}.intent`,
         `targets.${target}.intent and harnesses.exclude disagree`,
-        [`intent ${omitted ? 'omit' : targets[target].intent} must ${omitted ? 'exclude' : 'activate'} ${target}`],
+        `Make harnesses.exclude and targets.${target}.intent agree.`,
+        target,
       )
     }
     if (omitted && harnesses.settings[target] !== undefined) {
-      throw configError(`harnesses.${target}: settings are not allowed for an omitted target`)
+      throw migrationError(
+        source,
+        'TARGET_OMITTED_SETTINGS',
+        `harnesses.${target}`,
+        `harnesses.${target}: settings are not allowed for an omitted target`,
+        `Remove harnesses.${target} settings or activate ${target}.`,
+        target,
+      )
     }
   }
 }
 
-function validateImportedWorks(importedWorks: readonly ImportedWorkRef[]): void {
+function validateImportedWorks(importedWorks: readonly ImportedWorkRef[], source: string): void {
   const names = new Set<string>()
-  for (const importedWork of importedWorks) {
+  for (const [index, importedWork] of importedWorks.entries()) {
     if (names.has(importedWork.name)) {
-      throw configError(`imported_works: duplicate work name "${importedWork.name}"`)
+      throw migrationError(
+        source,
+        'CONFIG_DUPLICATE_IMPORTED_WORK',
+        `imported_works[${index}].name`,
+        `imported_works: duplicate work name "${importedWork.name}"`,
+        'Keep each imported work name unique.',
+      )
     }
     names.add(importedWork.name)
   }
 }
 
-export function loadConfig(root: string, configFile = 'moe-mint.yaml'): MintConfig {
+export function loadConfig(root: string, configFile = 'moe-mint.yaml', source = configFile): MintConfig {
   const path = join(root, configFile)
   if (!existsSync(path)) {
-    throw configError(`moe-mint.yaml not found in ${root}`)
+    throw configError(`${configFile} not found in ${root}`, [], { source })
   }
   let doc: unknown
   try {
     doc = parse(readFileSync(path, 'utf8'))
   } catch (e) {
-    throw configError(`moe-mint.yaml is not valid YAML: ${(e as Error).message}`, [], { cause: e })
+    throw configError(`${configFile} is not valid YAML: ${(e as Error).message}`, [], { cause: e, source })
   }
-  rejectLegacySyntax(doc)
+  rejectLegacySyntax(doc, source)
   const parsed = rawSchema.safeParse(doc)
   if (!parsed.success) {
     throw configError(
-      'moe-mint.yaml is invalid',
+      `${configFile} is invalid`,
       parsed.error.issues.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`),
+      { source },
     )
   }
   const raw = parsed.data
-  checkMarketplace(raw.marketplace, raw.repository)
+  checkMarketplace(raw.marketplace, raw.repository, source)
 
-  const { exclude, settings } = resolveHarnessSettings(raw.harnesses)
+  const { exclude, settings } = resolveHarnessSettings(raw.harnesses, source)
   const bootstrap = resolveBootstrap(raw.bootstrap)
-  validateHarnessHooks(settings, bootstrap)
+  validateHarnessHooks(settings, bootstrap, source)
   const targets = resolveTargets(raw.targets)
-  validateTargetMigration(targets, { exclude, settings })
-  validateImportedWorks(raw.imported_works)
+  validateTargetMigration(targets, { exclude, settings }, source)
+  validateImportedWorks(raw.imported_works, source)
 
   return {
     name: raw.name,

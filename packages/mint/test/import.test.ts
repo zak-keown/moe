@@ -105,7 +105,9 @@ describe('importPlugin', () => {
       description: 'A demo plugin',
       ...importedPolicy('demo', [
         'skill-discovery',
+        'skill-invocation',
         'command-discovery',
+        'command-invocation',
         'agent-discovery',
         'hook-execution',
         'mcp-registration',
@@ -125,7 +127,9 @@ describe('importPlugin', () => {
     expect(config.bootstrap).toEqual({ kind: 'skill', skill: 'using-demo' })
     expect(config.targets['claude-code'].expectedCapabilities).toEqual([
       'skill-discovery',
+      'skill-invocation',
       'command-discovery',
+      'command-invocation',
       'agent-discovery',
       'hook-execution',
       'mcp-registration',
@@ -200,7 +204,7 @@ describe('importPlugin', () => {
       name: 'custom-paths',
       version: '1.0.0',
       description: 'Custom paths',
-      ...importedPolicy('custom-paths', ['command-discovery', 'bootstrap-routing'], { xClaude: { b: 2 } }),
+      ...importedPolicy('custom-paths', ['command-discovery', 'command-invocation', 'bootstrap-routing'], { xClaude: { b: 2 } }),
       bootstrap: 'generate',
       components: { commands: 'my-cmds' },
     })

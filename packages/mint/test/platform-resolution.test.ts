@@ -1,5 +1,5 @@
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { describe, expect, it } from 'vitest'
 import { loadConfig } from '../src/config.js'
@@ -61,12 +61,13 @@ ${extra}`
 
 function repoWith(config = configYaml(), manifest: Record<string, unknown> = {
   name: '@bubstack/moe-memory', version: '1.0.0', license: 'MIT',
-}): string {
+}, configFile = 'moe-mint.yaml'): string {
   const root = mkdtempSync(join(tmpdir(), 'mint-platform-resolution-'))
   const packageRoot = join(root, 'packages/memory')
   mkdirSync(join(packageRoot, 'mint'), { recursive: true })
-  writeFileSync(join(root, 'moe-platform.yaml'), platformYaml.trimStart())
-  writeFileSync(join(packageRoot, 'mint/moe-mint.yaml'), config)
+  writeFileSync(join(root, 'moe-platform.yaml'), platformYaml.replace('packages/memory/mint/moe-mint.yaml', `packages/memory/mint/${configFile}`).trimStart())
+  mkdirSync(dirname(join(packageRoot, 'mint', configFile)), { recursive: true })
+  writeFileSync(join(packageRoot, 'mint', configFile), config)
   writeFileSync(join(packageRoot, 'package.json'), JSON.stringify(manifest))
   return root
 }
@@ -96,7 +97,35 @@ describe('platform resolution', () => {
       .replace('  codex: { intent: preview, expected_capabilities: [skill-discovery], operating_systems: [macos] }', '  codex: { intent: omit }')
       .replace('agent-plugins-1.0, copilot]', 'agent-plugins-1.0, copilot, codex]')
       .replace('  exclude: [cursor, kimi, opencode, pi, agent-plugins-1.0, copilot, codex]', '  exclude: [cursor, kimi, opencode, pi, agent-plugins-1.0, copilot, codex]\n  codex: { manifest: { name: ignored } }'))
-    expect(() => loadConfig(join(root, 'packages/memory/mint'))).toThrow(/codex.*omit/i)
+    try {
+      loadConfig(join(root, 'packages/memory/mint'))
+      expect.unreachable('loadConfig should reject settings for an omitted target')
+    } catch (error) {
+      expect(error).toMatchObject({
+        diagnostic: {
+          code: 'TARGET_OMITTED_SETTINGS',
+          source: 'moe-mint.yaml',
+          field: 'harnesses.codex',
+          target: 'codex',
+        },
+      })
+    }
+  })
+
+  it('attributes a registry-declared custom config filename in migration diagnostics', async () => {
+    const config = configYaml()
+      .replace('  codex: { intent: preview, expected_capabilities: [skill-discovery], operating_systems: [macos] }', '  codex: { intent: omit }')
+      .replace('agent-plugins-1.0, copilot]', 'agent-plugins-1.0, copilot, codex]')
+      .replace('  exclude: [cursor, kimi, opencode, pi, agent-plugins-1.0, copilot, codex]', '  exclude: [cursor, kimi, opencode, pi, agent-plugins-1.0, copilot, codex]\n  codex: { manifest: { name: ignored } }')
+    const root = repoWith(config, undefined, 'policy/custom-mint.yaml')
+    await expect(resolvePlatform(root)).rejects.toMatchObject({
+      diagnostic: {
+        code: 'TARGET_OMITTED_SETTINGS',
+        source: 'packages/memory/mint/policy/custom-mint.yaml',
+        field: 'harnesses.codex',
+        target: 'codex',
+      },
+    })
   })
 
   it('rejects Copilot when its Claude prerequisite is omitted', async () => {
@@ -113,10 +142,10 @@ describe('platform resolution', () => {
     ['name', { name: '@bubstack/other', version: '1.0.0', license: 'MIT' }, 'PACKAGE_NAME_MISMATCH'],
     ['version', { name: '@bubstack/moe-memory', version: '9.0.0', license: 'MIT' }, 'PACKAGE_VERSION_MISMATCH'],
     ['license', { name: '@bubstack/moe-memory', version: '1.0.0', license: 'Apache-2.0' }, 'PACKAGE_LICENSE_MISMATCH'],
-  ])('reports a source package %s mismatch with context', async (_field, manifest, code) => {
+  ])('reports a source package %s mismatch with context', async (field, manifest, code) => {
     const root = repoWith(undefined, manifest)
     await expect(resolvePlatform(root)).rejects.toMatchObject({
-      diagnostic: { code, plugin: 'moe-memory', source: expect.stringContaining('package.json') },
+      diagnostic: { code, plugin: 'moe-memory', source: expect.stringContaining('package.json'), field },
     })
   })
 
