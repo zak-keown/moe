@@ -2,29 +2,20 @@
   "name": "@bubstack/moe-backstory",
   "version": "0.1.4",
   "type": "module",
-  "description": "Recover a behavioral spec from a codebase that never had one. 22 skills, 2 agents, 2 commands.",
+  "description": "Recover a behavioral spec from a codebase that never had one.",
   "license": "Apache-2.0",
   "author": {
     "name": "Zak Keown",
     "email": "zak.keown@outlook.com"
   },
-  "homepage": "https://gitlab.com/moe-ai/moe",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/zak-keown/moe.git"
-  },
+  "homepage": "https://github.com/zak-keown/moe",
+  "repository": "https://github.com/zak-keown/moe",
   "keywords": [
-    "claude-code",
-    "codex",
-    "cursor",
-    "kimi",
-    "opencode",
-    "pi",
-    "copilot",
     "reverse-engineering",
     "specification",
-    "documentation",
-    "archaeology"
+    "analysis",
+    "archaeology",
+    "documentation"
   ],
   "engines": {
     "node": ">=24"
