@@ -54,6 +54,26 @@ export interface RunSetHandle {
 
 export async function runRunSet(cfg: RunSetConfig): Promise<RunSetHandle> {
   // ── Prep phase (fast: id gen, eager runIds, set.json stub) ──
+
+  // A duplicate cardId makes runLoop's by-value lookup (below) match the
+  // same eagerly-generated run entry for two different loop iterations —
+  // one attempt gets executed twice under one runId while its sibling is
+  // never started, and RunSetWriter's perCard/overall roll-up (which
+  // groups `manifest.runs` by cardId) then double-counts every run that
+  // shares the id (CR-048). Reject the ambiguity outright rather than
+  // silently corrupt the run set. The only caller today, batch.ts,
+  // disambiguates its card ids before reaching here (CR-043), so this
+  // should never fire in production.
+  const seenCardIds = new Set<string>();
+  for (const cardId of cfg.cards) {
+    if (seenCardIds.has(cardId)) {
+      throw new Error(
+        `runRunSet: duplicate cardId "${cardId}" in cards[] — card ids must be unique`,
+      );
+    }
+    seenCardIds.add(cardId);
+  }
+
   const runSetId = makeRunSetId(cfg.kind);
   const gen = cfg.generateRunId ?? ((cardId, _i) => makeRunId(cardId));
 

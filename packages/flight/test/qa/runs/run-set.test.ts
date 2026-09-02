@@ -105,6 +105,16 @@ describe("runRunSet — orchestrator loop", () => {
     expect(result.summary?.perCard[0].byStatus.cancelled).toBe(2);
   });
 
+  test("CR-048: a duplicate cardId in cards[] is rejected up front rather than reusing one runId", async () => {
+    const cfg = baseConfig({ cards: ["dup", "dup"], passes: 1 });
+    await expect(
+      runRunSet({
+        ...cfg,
+        executor: async () => ({ runId: "x", outDir: "x", result: fakeResult("pass") }),
+      }),
+    ).rejects.toThrow(/duplicate/i);
+  });
+
   test("runRunSet resolves with the id and runs before the loop completes", async () => {
     let executorStarted = false;
     const config = baseConfig({ passes: 2 });
