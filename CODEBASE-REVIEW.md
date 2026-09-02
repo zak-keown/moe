@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 1
+  fixed: 2
   stale: 0
   skipped: 0
   deferred: 0
-  open: 592
+  open: 591
 ---
 
 # Codebase Review — moe
@@ -101,6 +101,10 @@ because it also keeps agent-written scratch files out of the response.
 **Verification:** confirmed
 **Verification evidence:** Reproduced in-process against the real resultRoutes handler: GET /<liveRun>/file/inputs/context/alice/credentials.yaml returned 200 with the credential body while the completed-run equivalent 404d as not in manifest. snapshotRunInputs copies the real .moe-flight/context profile tree, which holds password and passkey files per context.md, verbatim into the run dir; createApp has no auth middleware; /api/runs/active lists live run ids without gating; serve.ts passes no hostname so the server binds all interfaces.
 
+**Disposition:** fixed
+**Commit:** `e9cc13f`
+**Resolved:** 2026-09-02
+**Note:** —
 ## High
 
 ### CR-004: The global_cli prerequisite is never pre-checked, so a missing runtime aborts mid-write and leaves a half-staged install
