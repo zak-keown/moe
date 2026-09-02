@@ -144,6 +144,13 @@ describe('runTest', () => {
     process.env.PATH = emptyBin()
     await expect((async () => runTest(dir))()).rejects.toThrowError(ConfigError)
     await expect((async () => runTest(dir))()).rejects.toThrowError(/docker is required/)
+    await expect((async () => runTest(dir))()).rejects.toMatchObject({
+      diagnostic: {
+        code: 'DOCKER_NOT_FOUND',
+        source: 'docker',
+        action: 'Install Docker or run the checks manually (see docs/install/*).',
+      },
+    })
   })
 
   it('invokes docker with --rm, both read-only mounts, MOE_MINT_PLUGIN_NAME, and the default image', async () => {

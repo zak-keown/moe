@@ -49,16 +49,11 @@ const releaseSchema = z.object({
   }).strict(),
 }).strict()
 
-const targetsSchema = z.object({
-  'claude-code': targetSchema,
-  cursor: targetSchema,
-  codex: targetSchema,
-  kimi: targetSchema,
-  opencode: targetSchema,
-  pi: targetSchema,
-  'agent-plugins-1.0': targetSchema,
-  copilot: targetSchema,
-}).strict()
+const targetShape = Object.fromEntries(TARGET_IDS.map((id) => [id, targetSchema])) as {
+  [Id in TargetId]: typeof targetSchema
+}
+
+const targetsSchema = z.object(targetShape).strict()
 
 export const platformRegistrySchema = z.object({
   schema: z.literal(1),

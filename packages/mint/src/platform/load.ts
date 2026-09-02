@@ -23,17 +23,22 @@ const PINNED_CONTRACTS = {
   },
 } as const
 
-function fail(code: string, message: string, action: string, field?: string, path?: string): never {
+interface FailureOptions {
+  source?: string
+  cause?: unknown
+}
+
+function fail(code: string, message: string, action: string, field?: string, path?: string, options: FailureOptions = {}): never {
   const diagnostic: MintDiagnostic = {
     severity: 'error',
     code,
-    source: REGISTRY_FILE,
+    source: options.source ?? REGISTRY_FILE,
     ...(field === undefined ? {} : { field }),
     ...(path === undefined ? {} : { path }),
     message,
     action,
   }
-  throw new MintError(diagnostic)
+  throw new MintError(diagnostic, { cause: options.cause })
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -119,6 +124,18 @@ function validateContracts(registry: PlatformRegistryV1): void {
   }
 }
 
+function validateTargetPrerequisites(registry: PlatformRegistryV1): void {
+  const requires = registry.targets.copilot.requires
+  if (requires?.length !== 1 || requires[0] !== 'claude-code') {
+    fail(
+      'PLATFORM_TARGET_PREREQUISITE',
+      'copilot must require Claude Code as its sole prerequisite',
+      'Set targets.copilot.requires to [claude-code].',
+      'targets.copilot.requires',
+    )
+  }
+}
+
 function validateProfiles(registry: PlatformRegistryV1): void {
   const pluginIds = new Set(registry.plugins.map((plugin) => plugin.id))
   for (const [profileName, profile] of Object.entries(registry.profiles)) {
@@ -146,13 +163,17 @@ async function resolveContainedPath(repoRoot: string, value: string, field: stri
   let resolved: string
   try {
     resolved = await realpath(candidate)
-  } catch (_error) {
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code === 'ENOENT' ? 'PLATFORM_PATH_NOT_FOUND' : 'PLATFORM_PATH_UNAVAILABLE'
     fail(
-      'PLATFORM_PATH_NOT_FOUND',
-      `registry path "${value}" does not exist`,
-      'Create the declared path or correct moe-platform.yaml.',
+      code,
+      code === 'PLATFORM_PATH_NOT_FOUND'
+        ? `registry path "${value}" does not exist`
+        : `registry path "${value}" could not be resolved: ${(error as Error).message}`,
+      'Make the declared path accessible or correct moe-platform.yaml.',
       field,
       candidate,
+      { cause: error },
     )
   }
   if (isOutside(repoRoot, resolved)) {
@@ -187,15 +208,26 @@ async function resolvePluginPaths(repoRoot: string, plugins: readonly PlatformPl
 }
 
 export async function loadPlatformRegistry(repoRoot: string): Promise<PlatformRegistryV1> {
-  const root = await realpath(repoRoot)
+  let root: string
+  try {
+    root = await realpath(repoRoot)
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code === 'ENOENT' ? 'PLATFORM_ROOT_NOT_FOUND' : 'PLATFORM_ROOT_UNAVAILABLE'
+    fail(code, `repository root "${repoRoot}" is not accessible`, 'Use an accessible repository root.', undefined, repoRoot, { source: repoRoot, cause: error })
+  }
   const filePath = resolve(root, REGISTRY_FILE)
+  let contents: string
+  try {
+    contents = await readFile(filePath, 'utf8')
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code === 'ENOENT' ? 'PLATFORM_REGISTRY_NOT_FOUND' : 'PLATFORM_REGISTRY_READ_FAILED'
+    fail(code, `moe-platform.yaml could not be read: ${(error as Error).message}`, 'Make moe-platform.yaml readable at the repository root.', undefined, filePath, { cause: error })
+  }
   let doc: unknown
   try {
-    doc = parse(await readFile(filePath, 'utf8'))
+    doc = parse(contents)
   } catch (error) {
-    const message = (error as Error).message
-    const code = (error as NodeJS.ErrnoException).code === 'ENOENT' ? 'PLATFORM_REGISTRY_NOT_FOUND' : 'PLATFORM_YAML_INVALID'
-    fail(code, `moe-platform.yaml could not be loaded: ${message}`, 'Create valid moe-platform.yaml at the repository root.', undefined, filePath)
+    fail('PLATFORM_YAML_INVALID', `moe-platform.yaml is not valid YAML: ${(error as Error).message}`, 'Correct the YAML syntax in moe-platform.yaml.', undefined, filePath, { cause: error })
   }
 
   validateKnownTargetIds(doc)
@@ -218,6 +250,7 @@ export async function loadPlatformRegistry(repoRoot: string): Promise<PlatformRe
     plugins: await resolvePluginPaths(root, raw.plugins),
   }
   validateContracts(registry)
+  validateTargetPrerequisites(registry)
   validateProfiles(registry)
   return registry
 }

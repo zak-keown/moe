@@ -5,19 +5,41 @@ import { z } from 'zod'
 import { MintError } from './diagnostics.js'
 import { TARGET_IDS } from './vocabulary.js'
 
+export type ConfigErrorDiagnostic = Omit<MintError['diagnostic'], 'severity' | 'message'>
+
+export interface ConfigErrorOptions {
+  cause?: unknown
+  diagnostic?: ConfigErrorDiagnostic
+}
+
+const OPERATION_DIAGNOSTIC: ConfigErrorDiagnostic = {
+  code: 'MINT_OPERATION_INVALID',
+  source: 'moe-mint',
+  action: 'Resolve the reported operational issue and retry.',
+}
+
+const CONFIG_DIAGNOSTIC: ConfigErrorDiagnostic = {
+  code: 'CONFIG_INVALID',
+  source: 'moe-mint.yaml',
+  action: 'Correct the configuration and run the command again.',
+}
+
 export class ConfigError extends MintError {
   details: string[]
-  constructor(message: string, details: string[] = [], opts: { cause?: unknown } = {}) {
+  constructor(message: string, details: string[] = [], opts: ConfigErrorOptions = {}) {
+    const diagnostic = opts.diagnostic ?? OPERATION_DIAGNOSTIC
     super({
       severity: 'error',
-      code: 'CONFIG_INVALID',
-      source: 'moe-mint.yaml',
+      ...diagnostic,
       message: details.length ? `${message}\n  - ${details.join('\n  - ')}` : message,
-      action: 'Correct the configuration and run the command again.',
     }, { cause: opts.cause })
     this.name = 'ConfigError'
     this.details = details
   }
+}
+
+function configError(message: string, details: string[] = [], opts: Omit<ConfigErrorOptions, 'diagnostic'> = {}): ConfigError {
+  return new ConfigError(message, details, { ...opts, diagnostic: CONFIG_DIAGNOSTIC })
 }
 
 // The harnesses whose adapters have a shell-hook tier and therefore honor
@@ -190,20 +212,20 @@ function rejectLegacySyntax(doc: unknown): void {
   const bootstrap = doc.bootstrap
   if (isPlainObject(bootstrap)) {
     if ('none' in bootstrap || 'generate' in bootstrap) {
-      throw new ConfigError(
+      throw configError(
         'bootstrap is now a tagged value: use "bootstrap: none", "bootstrap: generate", or "bootstrap: { skill: <name> }"',
       )
     }
     if ('emitHooks' in bootstrap) {
-      throw new ConfigError('bootstrap.emitHooks moved: set harnesses.<name>.hooks: own')
+      throw configError('bootstrap.emitHooks moved: set harnesses.<name>.hooks: own')
     }
   }
   const harnesses = doc.harnesses
   if (isPlainObject(harnesses) && 'overrides' in harnesses) {
-    throw new ConfigError('harnesses.overrides moved: put manifest patches under harnesses.<name>.manifest')
+    throw configError('harnesses.overrides moved: put manifest patches under harnesses.<name>.manifest')
   }
   if ('bump' in doc) {
-    throw new ConfigError('bump: was renamed: use release: (same fields)')
+    throw configError('bump: was renamed: use release: (same fields)')
   }
 }
 
@@ -223,7 +245,7 @@ function resolveHarnessSettings(raw: Record<string, unknown> | undefined): {
   // name that matches no adapter would silently exclude nothing.
   for (const name of exclude) {
     if (!(ADAPTER_NAMES as readonly string[]).includes(name)) {
-      throw new ConfigError(`harnesses.exclude: unknown harness name "${name}"`, [
+      throw configError(`harnesses.exclude: unknown harness name "${name}"`, [
         `valid names: ${ADAPTER_NAMES.join(', ')}`,
       ])
     }
@@ -232,28 +254,28 @@ function resolveHarnessSettings(raw: Record<string, unknown> | undefined): {
   for (const [key, value] of Object.entries(raw)) {
     if (key === 'exclude') continue
     if (!(ADAPTER_NAMES as readonly string[]).includes(key)) {
-      throw new ConfigError(`harnesses.${key}: unknown harness name`, [`valid names: ${ADAPTER_NAMES.join(', ')}`])
+      throw configError(`harnesses.${key}: unknown harness name`, [`valid names: ${ADAPTER_NAMES.join(', ')}`])
     }
     if (!isPlainObject(value)) {
-      throw new ConfigError(`harnesses.${key}: must be a mapping of hooks and/or manifest`)
+      throw configError(`harnesses.${key}: must be a mapping of hooks and/or manifest`)
     }
     for (const settingKey of Object.keys(value)) {
       if (settingKey !== 'hooks' && settingKey !== 'manifest') {
-        throw new ConfigError(`harnesses.${key}.${settingKey}: unknown key (expected hooks or manifest)`)
+        throw configError(`harnesses.${key}.${settingKey}: unknown key (expected hooks or manifest)`)
       }
     }
     const entry: HarnessSettings = { hooks: 'generated' }
     if ('hooks' in value) {
       const hooks = value.hooks
       if (hooks !== 'generated' && hooks !== 'own') {
-        throw new ConfigError(`harnesses.${key}.hooks: must be "generated" or "own"`)
+        throw configError(`harnesses.${key}.hooks: must be "generated" or "own"`)
       }
       entry.hooks = hooks
     }
     if ('manifest' in value) {
       const manifest = value.manifest
       if (!isPlainObject(manifest)) {
-        throw new ConfigError(`harnesses.${key}.manifest: must be a mapping`)
+        throw configError(`harnesses.${key}.manifest: must be a mapping`)
       }
       entry.manifest = manifest
     }
@@ -278,12 +300,12 @@ function validateHarnessHooks(settings: Record<string, HarnessSettings>, bootstr
   for (const [name, entry] of Object.entries(settings)) {
     if (entry.hooks !== 'own') continue
     if (!(HOOK_EMITTING_HARNESSES as readonly string[]).includes(name)) {
-      throw new ConfigError(
+      throw configError(
         `harnesses.${name}.hooks: own is only valid on hook-emitting harnesses (${HOOK_EMITTING_HARNESSES.join(', ')})`,
       )
     }
     if (bootstrap.kind === 'none') {
-      throw new ConfigError(
+      throw configError(
         `harnesses.${name}.hooks: own requires an active bootstrap (bootstrap: generate or bootstrap: { skill: <name> }); there are no generated hooks to suppress`,
       )
     }
@@ -292,7 +314,7 @@ function validateHarnessHooks(settings: Record<string, HarnessSettings>, bootstr
 
 function checkMarketplace(marketplace: z.infer<typeof rawSchema>['marketplace'], repository: string | undefined): void {
   if (marketplace?.source === 'repository' && !repository) {
-    throw new ConfigError(
+    throw configError(
       'marketplace.source: repository requires a top-level repository field',
     )
   }
@@ -301,18 +323,18 @@ function checkMarketplace(marketplace: z.infer<typeof rawSchema>['marketplace'],
 export function loadConfig(root: string): MintConfig {
   const path = join(root, 'moe-mint.yaml')
   if (!existsSync(path)) {
-    throw new ConfigError(`moe-mint.yaml not found in ${root}`)
+    throw configError(`moe-mint.yaml not found in ${root}`)
   }
   let doc: unknown
   try {
     doc = parse(readFileSync(path, 'utf8'))
   } catch (e) {
-    throw new ConfigError(`moe-mint.yaml is not valid YAML: ${(e as Error).message}`, [], { cause: e })
+    throw configError(`moe-mint.yaml is not valid YAML: ${(e as Error).message}`, [], { cause: e })
   }
   rejectLegacySyntax(doc)
   const parsed = rawSchema.safeParse(doc)
   if (!parsed.success) {
-    throw new ConfigError(
+    throw configError(
       'moe-mint.yaml is invalid',
       parsed.error.issues.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`),
     )

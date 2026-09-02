@@ -38,7 +38,13 @@ export interface TestResult {
 // no socket perms), or a failure to invoke docker at all, -> ConfigError.
 export function runTest(root: string, opts: TestOptions = {}): Promise<TestResult> {
   if (!existsSync(join(root, MANIFEST_PATH))) {
-    throw new ConfigError('no generation manifest; run moe-mint generate first')
+    throw new ConfigError('no generation manifest; run moe-mint generate first', [], {
+      diagnostic: {
+        code: 'GENERATION_MANIFEST_NOT_FOUND',
+        source: MANIFEST_PATH,
+        action: 'Run moe-mint generate before running container checks.',
+      },
+    })
   }
   const config = loadConfig(root)
   const image = opts.image ?? DEFAULT_IMAGE
@@ -80,6 +86,14 @@ export function runTest(root: string, opts: TestOptions = {}): Promise<TestResul
         reject(
           new ConfigError(
             'docker is required for moe-mint test; install docker or run the checks manually (see docs/install/*)',
+            [],
+            {
+              diagnostic: {
+                code: 'DOCKER_NOT_FOUND',
+                source: 'docker',
+                action: 'Install Docker or run the checks manually (see docs/install/*).',
+              },
+            },
           ),
         )
       } else {
@@ -95,6 +109,14 @@ export function runTest(root: string, opts: TestOptions = {}): Promise<TestResul
         reject(
           new ConfigError(
             `docker invocation failed (exit ${code === null ? 'null, terminated by signal' : code}); is the docker daemon running and the image pullable?`,
+            [],
+            {
+              diagnostic: {
+                code: 'DOCKER_INVOCATION_FAILED',
+                source: 'docker',
+                action: 'Start Docker and ensure the configured image is pullable.',
+              },
+            },
           ),
         )
     })
