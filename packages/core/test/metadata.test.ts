@@ -770,11 +770,23 @@ describe("hooks", () => {
   it("the Stop hook is opt-in and exits 0 when disarmed", () => {
     // It overrides the agent's own decision to stop and spends a model call on
     // every stop attempt, for everyone, permanently. Default off.
-    const out = execFileSync("bash", [join(PKG, "hooks/claude-judge-continuation")], {
-      input: JSON.stringify({ stop_hook_active: false, session_id: "t", transcript_path: "" }),
-      env: { ...process.env, MOE_LATTE_ENABLED: "" },
-      encoding: "utf8",
-    });
+    // The disarmed path exits 0 at the opt-in-gate case-statement without
+    // reading stdin. When execFileSync's stdin-write races with bash exiting,
+    // node raises EPIPE — status 0, stdout '', which is the pass condition
+    // here. Passed on GitLab (looser scheduler), fails deterministically under
+    // GitHub Actions' container-with-init. Accept EPIPE as the same outcome.
+    let out: string;
+    try {
+      out = execFileSync("bash", [join(PKG, "hooks/claude-judge-continuation")], {
+        input: JSON.stringify({ stop_hook_active: false, session_id: "t", transcript_path: "" }),
+        env: { ...process.env, MOE_LATTE_ENABLED: "" },
+        encoding: "utf8",
+      });
+    } catch (e) {
+      const err = e as NodeJS.ErrnoException & { status?: number; stdout?: string };
+      if (err.code !== "EPIPE" || err.status !== 0) throw e;
+      out = err.stdout ?? "";
+    }
     expect(out).toBe("");
   });
 
