@@ -21,10 +21,10 @@ verification:
 status: issues_found
 dispositions:
   fixed: 2
-  stale: 0
+  stale: 1
   skipped: 0
   deferred: 0
-  open: 591
+  open: 590
 ---
 
 # Codebase Review — moe
@@ -491,6 +491,10 @@ Fix: validate the name once at parse time against something like `/^[A-Za-z0-9._
 **Verification:** confirmed
 **Verification evidence:** Reproduced via the compiled worker-store.js: removeOrphan(workerDir, "../../victim") deleted a sibling directory outside the worker dir. parseLaunchArgs applies no validation to the tmux-name positional before it reaches workerHomePath, and in launchDerive the credential staging into workerHome runs before tmux.newSession, so a failed launch alone fires the unsafe path. The driving-claude-code-sessions skill frames an LLM controller as the caller that picks names, so the input is not limited to a human at their own shell.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Superseded by 30dd1eb (CR-001): workerHomePath/shimPath/harnessMarkerPath now reject any name that isn't a single [A-Za-z0-9_-]+ segment, closing this for removeOrphan too. Verified with a scratch vitest case (not committed): removeOrphan(dir, "../../victim") throws and the sibling victim dir survives.
 ### CR-021: Operator pi credentials are staged into a predictable world-traversable /tmp path, and the copy follows a planted symlink
 **File:** `packages/crew/src/harness/pi.ts`
 **Anchor:** `prepare` / `PI_AUTH_FILES`
