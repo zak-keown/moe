@@ -24,6 +24,9 @@ jobs:
     container: node:24
     steps:
       - uses: actions/checkout@v4
+      # Container runs as root but checkout ran as the runner user, so
+      # `git diff` (used by pnpm mint:check and turbo) refuses without this.
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - run: corepack enable
       - uses: actions/cache@v4
         with:
@@ -38,6 +41,9 @@ jobs:
     container: node:24
     steps:
       - uses: actions/checkout@v4
+      # Container runs as root but checkout ran as the runner user, so
+      # `git diff` (used by pnpm mint:check and turbo) refuses without this.
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - run: corepack enable
       - uses: actions/cache@v4
         with:
@@ -52,6 +58,9 @@ jobs:
     container: node:24
     steps:
       - uses: actions/checkout@v4
+      # Container runs as root but checkout ran as the runner user, so
+      # `git diff` (used by pnpm mint:check and turbo) refuses without this.
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - run: corepack enable
       # System deps the suite reaches for that node:24 does not ship:
       #   jq   — packages/mint/checks/run-checks.sh parses manifests with jq;
@@ -73,6 +82,9 @@ jobs:
     container: node:24
     steps:
       - uses: actions/checkout@v4
+      # Container runs as root but checkout ran as the runner user, so
+      # `git diff` (used by pnpm mint:check and turbo) refuses without this.
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - run: corepack enable
       - uses: actions/cache@v4
         with:
@@ -91,6 +103,9 @@ jobs:
     container: node:24
     steps:
       - uses: actions/checkout@v4
+      # Container runs as root but checkout ran as the runner user, so
+      # `git diff` (used by pnpm mint:check and turbo) refuses without this.
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - run: corepack enable
       - uses: actions/cache@v4
         with:
@@ -109,6 +124,7 @@ jobs:
     container: node:24
     steps:
       - uses: actions/checkout@v4
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - run: node scripts/check-provenance.mjs
       - name: self-test — red fixture must fail
         run: |
