@@ -28,7 +28,7 @@ interface StubSession {
   };
 }
 
-function makeStubSession(): StubSession {
+function makeStubSession(opts?: { rejectAck?: Error }): StubSession {
   let frameHandler: ((evt: FrameEvent) => void) | undefined;
   const _calls = { startScreencast: 0, stopScreencast: 0 };
 
@@ -36,10 +36,21 @@ function makeStubSession(): StubSession {
     send: async (method: string, _params?: object) => {
       if (method === "Page.startScreencast") _calls.startScreencast += 1;
       else if (method === "Page.stopScreencast") _calls.stopScreencast += 1;
-      // Page.screencastFrameAck and anything else: ignore.
+      else if (method === "Page.screencastFrameAck" && opts?.rejectAck) {
+        // Mirrors a real rejection: browser WS dies mid-run, the page
+        // session detaches, or page-session.js's 30s "Page session
+        // timeout" fires.
+        throw opts.rejectAck;
+      }
     },
     onEvent: (handler: (evt: FrameEvent) => void) => {
       frameHandler = handler;
+      // cdp-router.js's real dispatch shape: `try { fn(msg) } catch (e) {
+      // console.error(...) }`. It only ever catches a SYNCHRONOUS throw —
+      // fn here is async, so it returns a promise immediately and this
+      // try/catch never fires regardless. Faithfully reproduce that
+      // wrapper so a fix has to survive the real dispatch shape, not a
+      // more forgiving stub.
       return () => {
         frameHandler = undefined;
       };
@@ -57,7 +68,11 @@ function makeStubSession(): StubSession {
   return {
     _calls,
     _emit: (evt: FrameEvent) => {
-      frameHandler?.(evt);
+      try {
+        frameHandler?.(evt);
+      } catch (e) {
+        console.error("stub cdp-router page listener threw:", e);
+      }
     },
     chrome,
   };
@@ -165,6 +180,34 @@ describe("ScreencastStreamer", () => {
       expect(files.length).toBeGreaterThan(0);
     } finally {
       rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("CR-052: a rejected Page.screencastFrameAck does not become an unhandled rejection", async () => {
+    const session = makeStubSession({ rejectAck: new Error("Page session timeout") });
+    const streamer = new ScreencastStreamer(0, () => {}, session.chrome);
+    await streamer.start();
+
+    const unhandled: unknown[] = [];
+    const onUnhandled = (err: unknown) => {
+      unhandled.push(err);
+    };
+    process.on("unhandledRejection", onUnhandled);
+    try {
+      session._emit({
+        method: "Page.screencastFrame",
+        params: {
+          data: "aGVsbG8=",
+          sessionId: 1,
+          metadata: { deviceWidth: 800, deviceHeight: 600 },
+        },
+      });
+      // Node fires 'unhandledRejection' one microtask-queue drain after
+      // the rejection settles, not synchronously — give it several ticks.
+      for (let i = 0; i < 5; i++) await new Promise((r) => setImmediate(r));
+      expect(unhandled).toHaveLength(0);
+    } finally {
+      process.removeListener("unhandledRejection", onUnhandled);
     }
   });
 });
