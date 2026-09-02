@@ -22,9 +22,9 @@ status: issues_found
 dispositions:
   fixed: 21
   stale: 10
-  skipped: 3
+  skipped: 4
   deferred: 0
-  open: 559
+  open: 558
 ---
 
 # Codebase Review — moe
@@ -2051,6 +2051,10 @@ The consequence is worse than a skipped check. The write phase has already compl
 
 Fix: substitute only the plugin-root variable names, honour `:-` defaults rather than swallowing the whole expression, and expand the remaining variables from `os.environ`. A token still holding an unresolved `$` after expansion should be skipped explicitly with a note, not silently turned into a bogus absolute path.
 
+**Disposition:** skipped
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** The cited .claude/skills/moe-dogfood/scripts/stage.py is absent from this branch and has no reachable file history, so its variable-expansion logic cannot be reproduced or patched here.
 ### CR-090: The hand-rolled command tokeniser mis-parses shell quoting in both directions
 **File:** `.claude/skills/moe-dogfood/scripts/stage.py`
 **Anchor:** `hook_targets`, `re.findall(r'"([^"]+)"|(\S+)', expanded)`
