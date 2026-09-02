@@ -20,11 +20,11 @@ verification:
   unproven: 0
 status: issues_found
 dispositions:
-  fixed: 14
-  stale: 7
+  fixed: 15
+  stale: 8
   skipped: 1
   deferred: 0
-  open: 571
+  open: 569
 ---
 
 # Codebase Review — moe
@@ -580,6 +580,10 @@ Fix: sanitize the event name the same way as the data, and reject rather than ma
 **Verification:** confirmed
 **Verification evidence:** publishCell writes an unsanitized event name into the SSE frame while only data passes through oneLine; templates.ts sets hx-swap outerHTML so the htmx SSE extension renders forged data unescaped. A carriage return embedded in an id submitted through the network-reachable POST /scenarios route survives story-card serialization and reparsing, which split only on newline, into cell.scenario and the frame; the browser EventSource treats a lone CR as a line terminator. Same root cause as CR-025.
 
+**Disposition:** fixed
+**Commit:** `cd94092`
+**Resolved:** 2026-09-02
+**Note:** —
 ### CR-025: SSE event names are written to the stream unsanitized, allowing frame injection into the dashboard
 **File:** `packages/flight/dashboard/src/server.ts`
 **Anchor:** `controller.enqueue(encoder.encode(\`event: ${msg.event}\ndata: ${msg.data}\n\n\`))` in `handleEvents`, and `oneLine`
@@ -2184,6 +2188,10 @@ already does this correctly in "namespace table has exactly the seven expected
 keys", which is why the namespace set is genuinely protected and the
 distribution constants are not.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Superseded by 1c00797, which deleted config/distribution.mjs; the reviewed exported constants and tautological imports no longer exist in the current lifecycle implementation.
 ### CR-097: The "packaging invariants" block guards `bin` but not `files`, and dropping either non-bin file breaks every published entry point
 **File:** `bin/test/moe.test.mjs`
 **Anchor:** test "root package.json publishes all three durable CLI bins"
