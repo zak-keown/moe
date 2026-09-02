@@ -22,9 +22,9 @@ status: issues_found
 dispositions:
   fixed: 21
   stale: 10
-  skipped: 4
+  skipped: 5
   deferred: 0
-  open: 558
+  open: 557
 ---
 
 # Codebase Review — moe
@@ -2073,6 +2073,10 @@ The first row is the dangerous one: wrapping a command in `sh -c "..."` disables
 
 Fix: tokenise with `shlex.split(expanded)`, which handles both quote styles and strips them, and drop tokens that are shell operators. Expansion must still happen before splitting, or after, against the unquoted tokens.
 
+**Disposition:** skipped
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** The cited .claude/skills/moe-dogfood/scripts/stage.py is absent from this branch and has no reachable file history, so the hand-rolled tokeniser cannot be reproduced or patched here.
 ### CR-091: Retired plugin directories are deleted in the same run that prints the instruction to uninstall them first
 **File:** `.claude/skills/moe-dogfood/scripts/stage.py`
 **Anchor:** the printed note "`claude plugin uninstall <name>@moe` each of these FIRST"
