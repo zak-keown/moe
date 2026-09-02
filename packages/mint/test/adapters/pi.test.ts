@@ -264,7 +264,10 @@ describe('pi adapter with bootstrap: none', () => {
     expect((ts.match(/pi\.on\(/g) ?? []).length).toBe(1)
   })
 
+  // 30s timeout: same reason as the skill-mode twin above — `npx tsc` cold
+  // on the runner exceeds vitest's 5000ms default. This test was missed when
+  // its sibling was bumped and flaked once on the GitHub Actions container.
   it('type-checks the emitted none-mode extension under strict NodeNext', () => {
     expect(() => typeCheckExtension(ts)).not.toThrow()
-  })
+  }, 30000)
 })
