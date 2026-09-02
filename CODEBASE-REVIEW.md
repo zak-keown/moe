@@ -21,10 +21,10 @@ verification:
 status: issues_found
 dispositions:
   fixed: 7
-  stale: 3
+  stale: 4
   skipped: 1
   deferred: 0
-  open: 582
+  open: 581
 ---
 
 # Codebase Review — moe
@@ -1897,6 +1897,10 @@ Fix: stop copying secret-bearing context into the served run dir, or make the ex
 **Verification:** confirmed-lower
 **Verification evidence:** snapshotRunInputs copies contextRoot unfiltered into the served inputs/context and scratch directories, and the copy is load-bearing for revival in orchestrator.ts; but result.json never lists those paths, so results.ts exposes them only through the live-run registry branch that CR-002 already covers. No independent exposure remains once that route gap is fixed; excluding secrets from the copy is defense in depth. Static trace only.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-02
+**Note:** Superseded by e9cc13f: the live-run file route now allow-lists transcript assets and its regression test proves inputs/context credentials return a non-200 response.
 ### CR-053: Server tests pin only loopback while the API actually binds every interface
 **File:** `packages/flight/test/qa/runtime/serve.test.ts`
 **Anchor:** `test("HTTP fetch roundtrip")` — `await fetch(`http://localhost:${port}/`)`
