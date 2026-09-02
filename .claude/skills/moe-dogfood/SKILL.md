@@ -77,10 +77,22 @@ never starts, so conversation search returns nothing and nothing announces why.
 
 Its four files are the trap worth internalising, because each one looks like the
 only one. `mcp.json` and `.mcp.json` sit side by side — the neutral plugin spec
-and the Claude Code one, separate files with separate contents. And mint emits a
-*second* hooks file at `hooks/moe-mint/hooks.json` carrying its own copy of the
-same sync command, so a fix applied to `hooks/hooks.json` alone leaves a live
-SessionStart hook aimed at a `dist/` that was never staged.
+and the Claude Code one, separate files with separate contents.
+
+The fourth is the subtle one. Mint emits a merged `hooks/moe-mint/hooks.json`
+alongside the plugin's own `hooks/hooks.json`, and Claude Code **reads and
+registers both** — supplement, not replace. It survives that by deduping
+exact-duplicate `{matcher, command}` entries at execution time, which works only
+while the merged copy stays byte-identical to the source. The reasoning and the
+empirical confirmation are in `packages/mint/src/adapters/claude-code.ts` and
+`packages/mint/docs/history/2026-08-11-hook-double-fire-findings.md`.
+
+That invariant is what a staging edit breaks. Repoint `hooks/hooks.json` and not
+the merged copy and the two entries stop matching, so dedup no longer fires and
+Claude registers *both* — the working one and the stale one. The symptom is a
+SessionStart error that survives a fix you can see is correct in the file you
+edited. `generate()` guarantees the two stay in sync; nothing guarantees it
+after generation, which is exactly what staging is.
 
 The lesson generalises past this one plugin: **glob the tree, never a fixed
 filename.** Every miss here came from matching one path and assuming it was the
