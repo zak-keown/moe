@@ -127,7 +127,18 @@ describe('loadConfig', () => {
 
     it('rejects duplicate imported work names', () => {
       const yaml = `name: demo\nversion: 1.0.0\ndescription: demo\n${POLICY}`
-      expect(() => loadConfig(repoWith(yaml.replace('imported_works: []', 'imported_works: [{ name: one }, { name: one }]'), false))).toThrow(/duplicate/i)
+      try {
+        loadConfig(repoWith(yaml.replace('imported_works: []', 'imported_works: [{ name: one }, { name: one }]'), false))
+        expect.unreachable('loadConfig should reject duplicate imported work names')
+      } catch (error) {
+        expect(error).toMatchObject({
+          diagnostic: {
+            code: 'CONFIG_DUPLICATE_IMPORTED_WORK',
+            source: 'moe-mint.yaml',
+            field: 'imported_works[1].name',
+          },
+        })
+      }
     })
 
     it.each([
@@ -146,7 +157,19 @@ describe('loadConfig', () => {
 
     it('rejects an exclude list that disagrees with target intent', () => {
       const yaml = `name: demo\nversion: 1.0.0\ndescription: demo\n${POLICY}`
-      expect(() => loadConfig(repoWith(`${yaml}harnesses:\n  exclude: [cursor]\n`, false))).toThrow(/disagree/)
+      try {
+        loadConfig(repoWith(`${yaml}harnesses:\n  exclude: [cursor]\n`, false))
+        expect.unreachable('loadConfig should reject target/exclusion disagreement')
+      } catch (error) {
+        expect(error).toMatchObject({
+          diagnostic: {
+            code: 'TARGET_EXCLUSION_MISMATCH',
+            source: 'moe-mint.yaml',
+            field: 'targets.cursor.intent',
+            target: 'cursor',
+          },
+        })
+      }
     })
 
     it('rejects scalar imported works with the object-form migration action', () => {
@@ -155,7 +178,13 @@ describe('loadConfig', () => {
         loadConfig(repoWith(yaml.replace('imported_works: []', 'imported_works: [one]'), false))
         expect.unreachable('loadConfig should reject scalar imported work')
       } catch (error) {
-        expect(error).toMatchObject({ diagnostic: { action: expect.stringContaining('{name: ...}') } })
+        expect(error).toMatchObject({
+          diagnostic: {
+            code: 'CONFIG_IMPORTED_WORK_MIGRATION_REQUIRED',
+            source: 'moe-mint.yaml',
+            field: 'imported_works',
+          },
+        })
       }
     })
   })
@@ -357,45 +386,41 @@ describe('loadConfig', () => {
     })
   })
 
-  describe('old-syntax hard errors (each names its replacement)', () => {
-    it('rejects bootstrap: { none: true } with the tagged-value message', () => {
+  describe('old-syntax hard errors', () => {
+    it('rejects bootstrap: { none: true } with migration context', () => {
       try {
         loadConfig(repoWith(
           'name: x\nversion: 1.0.0\ndescription: x\nbootstrap:\n  none: true\n'
         ))
         expect.unreachable('should have thrown')
       } catch (e) {
-        expect((e as ConfigError).message).toBe(
-          'bootstrap is now a tagged value: use "bootstrap: none", "bootstrap: generate", or "bootstrap: { skill: <name> }"',
-        )
+        expect(e).toMatchObject({ diagnostic: { code: 'CONFIG_BOOTSTRAP_MIGRATION_REQUIRED', source: 'moe-mint.yaml', field: 'bootstrap' } })
       }
     })
 
-    it('rejects bootstrap: { generate: true } with the tagged-value message', () => {
+    it('rejects bootstrap: { generate: true } with migration context', () => {
       try {
         loadConfig(repoWith(
           'name: x\nversion: 1.0.0\ndescription: x\nbootstrap:\n  generate: true\n'
         ))
         expect.unreachable('should have thrown')
       } catch (e) {
-        expect((e as ConfigError).message).toBe(
-          'bootstrap is now a tagged value: use "bootstrap: none", "bootstrap: generate", or "bootstrap: { skill: <name> }"',
-        )
+        expect(e).toMatchObject({ diagnostic: { code: 'CONFIG_BOOTSTRAP_MIGRATION_REQUIRED', source: 'moe-mint.yaml', field: 'bootstrap' } })
       }
     })
 
-    it('rejects bootstrap.emitHooks with the moved message', () => {
+    it('rejects bootstrap.emitHooks with migration context', () => {
       try {
         loadConfig(repoWith(
           'name: x\nversion: 1.0.0\ndescription: x\nbootstrap:\n  skill: using-x\n  emitHooks: false\n'
         ))
         expect.unreachable('should have thrown')
       } catch (e) {
-        expect((e as ConfigError).message).toBe('bootstrap.emitHooks moved: set harnesses.<name>.hooks: own')
+        expect(e).toMatchObject({ diagnostic: { code: 'CONFIG_BOOTSTRAP_HOOKS_MIGRATION_REQUIRED', source: 'moe-mint.yaml', field: 'bootstrap.emitHooks' } })
       }
     })
 
-    it('rejects harnesses.overrides with the moved message', () => {
+    it('rejects harnesses.overrides with migration context', () => {
       try {
         loadConfig(repoWith([
           'name: x',
@@ -408,13 +433,11 @@ describe('loadConfig', () => {
         ].join('\n')))
         expect.unreachable('should have thrown')
       } catch (e) {
-        expect((e as ConfigError).message).toBe(
-          'harnesses.overrides moved: put manifest patches under harnesses.<name>.manifest',
-        )
+        expect(e).toMatchObject({ diagnostic: { code: 'CONFIG_HARNESS_OVERRIDES_MIGRATION_REQUIRED', source: 'moe-mint.yaml', field: 'harnesses.overrides' } })
       }
     })
 
-    it('rejects a bump: section with the renamed message', () => {
+    it('rejects a bump: section with migration context', () => {
       try {
         loadConfig(repoWith([
           'name: x',
@@ -426,7 +449,7 @@ describe('loadConfig', () => {
         ].join('\n')))
         expect.unreachable('should have thrown')
       } catch (e) {
-        expect((e as ConfigError).message).toBe('bump: was renamed: use release: (same fields)')
+        expect(e).toMatchObject({ diagnostic: { code: 'CONFIG_RELEASE_MIGRATION_REQUIRED', source: 'moe-mint.yaml', field: 'bump' } })
       }
     })
   })

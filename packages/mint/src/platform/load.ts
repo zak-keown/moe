@@ -437,7 +437,7 @@ export async function resolvePlatform(repoRoot: string): Promise<ResolvedPlatfor
   const registry = await loadPlatformRegistry(repoRoot)
   const plugins: ResolvedPlugin[] = []
   for (const declaration of registry.plugins) {
-    const config = loadConfig(dirname(declaration.configPath), basename(declaration.configPath))
+    const config = loadConfig(dirname(declaration.configPath), basename(declaration.configPath), declaration.config)
     const sourceManifest = await readSourceManifest(declaration)
     const resolved = resolvePlugin(registry, config, sourceManifest, resolve(declaration.sourcePath, 'package.json'))
     plugins.push({
