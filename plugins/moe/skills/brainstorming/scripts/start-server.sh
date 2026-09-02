@@ -93,6 +93,24 @@ is_windows_like_shell() {
   return 1
 }
 
+# Create the session directory exclusively (fail if anything — a real
+# directory, a stray file, or a symlink planted ahead of us — already exists
+# at that path). SESSION_ID embeds this process's pid and the current epoch
+# second, so a legitimate collision should never happen; treating any
+# pre-existing path as an error, rather than reusing it via `mkdir -p`, is
+# what keeps a planted symlink from receiving the session's secrets.
+create_session_dir_exclusive() {
+  local dir="$1"
+  mkdir -p "$(dirname "$dir")" || return 1
+  mkdir "$dir"
+}
+
+# Test seam: let the test suite source this file for its functions alone,
+# without running the script's argument-parsing/server-launch body below.
+if [[ "${BRAINSTORM_TEST_SOURCE_ONLY:-}" == "1" ]]; then
+  return 0 2>/dev/null || exit 0
+fi
+
 # Some environments reap detached/background processes. Auto-foreground when detected.
 if [[ -n "${CODEX_CI:-}" && "$FOREGROUND" != "true" && "$FORCE_BACKGROUND" != "true" ]]; then
   FOREGROUND="true"
@@ -127,7 +145,14 @@ PID_FILE="${STATE_DIR}/server.pid"
 LOG_FILE="${STATE_DIR}/server.log"
 SERVER_ID_FILE="${STATE_DIR}/server-instance-id"
 
-# Create fresh session directory with content and state peers
+# Create fresh session directory with content and state peers. The leaf
+# SESSION_DIR itself must be created exclusively (see create_session_dir_exclusive);
+# the two subdirs are safe to `mkdir -p` since they are nested inside a
+# directory we just proved nothing was staged into ahead of us.
+if ! create_session_dir_exclusive "$SESSION_DIR"; then
+  echo "{\"error\": \"Session directory already exists: $SESSION_DIR\"}"
+  exit 1
+fi
 mkdir -p "${SESSION_DIR}/content" "$STATE_DIR"
 
 SERVER_ID=""

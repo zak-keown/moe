@@ -238,8 +238,18 @@ function findOrphanChromeForProfile(profileName) {
         continue;
       }
 
-      // Must contain our profile dir
-      if (!line.includes(profileDir)) {
+      // Must carry --user-data-dir=<our exact profile dir>. A substring test
+      // on the raw line (the old check) also matches any sibling profile
+      // whose directory has ours as a prefix — profile names are
+      // auto-disambiguated by suffix (moe-glass, moe-glass-2, moe-glass-3),
+      // so getChromeProfileDir('moe-glass') is a literal prefix of
+      // getChromeProfileDir('moe-glass-2'). Parse the flag's value out and
+      // compare resolved paths for equality instead (CR-056).
+      const userDataDirMatch = line.match(/--user-data-dir=(\S+)/);
+      if (!userDataDirMatch || !userDataDirMatch[1]) {
+        continue;
+      }
+      if (path.resolve(userDataDirMatch[1]) !== path.resolve(profileDir)) {
         continue;
       }
 
