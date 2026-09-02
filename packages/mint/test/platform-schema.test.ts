@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { describe, expect, it } from 'vitest'
@@ -97,6 +97,41 @@ describe('platform registry schema', () => {
     })
   })
 
+  it('rejects a registry missing a canonical target ID', async () => {
+    const root = fixtureRoot('missing-target', registry.replace('  kimi: { display_name: Kimi, kind: host }\n', ''))
+
+    await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
+      diagnostic: { code: 'PLATFORM_SCHEMA_INVALID', source: 'moe-platform.yaml', field: 'targets.kimi' },
+    })
+  })
+
+  it('rejects a registry target with an arbitrary unknown key', async () => {
+    const root = fixtureRoot('unknown-target-key', registry.replace(
+      '  cursor: { display_name: Cursor, kind: host }\n',
+      '  cursor:\n    display_name: Cursor\n    kind: host\n    unexpected: true\n',
+    ))
+
+    await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
+      diagnostic: { code: 'PLATFORM_SCHEMA_INVALID', source: 'moe-platform.yaml' },
+    })
+  })
+
+  it('requires Copilot to name Claude Code as its sole prerequisite', async () => {
+    const root = fixtureRoot('copilot-prerequisite-missing', registry.replace('    requires: [claude-code]\n', ''))
+
+    await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
+      diagnostic: { code: 'PLATFORM_TARGET_PREREQUISITE', source: 'moe-platform.yaml', field: 'targets.copilot.requires' },
+    })
+  })
+
+  it('rejects a Copilot prerequisite other than Claude Code', async () => {
+    const root = fixtureRoot('copilot-prerequisite-wrong', registry.replace('[claude-code]', '[cursor]'))
+
+    await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
+      diagnostic: { code: 'PLATFORM_TARGET_PREREQUISITE', source: 'moe-platform.yaml', field: 'targets.copilot.requires' },
+    })
+  })
+
   it('rejects duplicate plugin IDs', async () => {
     const root = fixtureRoot('duplicate-id', registry.replace('platform:\n', '  - id: moe\n    source: packages/other\n    config: packages/other/mint/moe.yaml\nplatform:\n'))
     mkdirSync(join(root, 'packages/other/mint'), { recursive: true })
@@ -112,6 +147,15 @@ describe('platform registry schema', () => {
 
     await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
       diagnostic: { code: 'PLATFORM_DUPLICATE_PLUGIN_PATH', source: 'moe-platform.yaml', field: 'plugins[1].source' },
+    })
+  })
+
+  it('rejects duplicate resolved plugin config paths', async () => {
+    const root = fixtureRoot('duplicate-config-path', registry.replace('platform:\n', '  - id: other\n    source: packages/other\n    config: packages/core/mint/./moe.yaml\nplatform:\n'))
+    mkdirSync(join(root, 'packages/other'), { recursive: true })
+
+    await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
+      diagnostic: { code: 'PLATFORM_DUPLICATE_PLUGIN_PATH', source: 'moe-platform.yaml', field: 'plugins[1].config' },
     })
   })
 
@@ -136,6 +180,41 @@ describe('platform registry schema', () => {
 
     await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
       diagnostic: { code: 'PLATFORM_PATH_ESCAPE', source: 'moe-platform.yaml', field: 'plugins[0].source' },
+    })
+  })
+
+  it('rejects a registry path whose symlink resolves outside the repository', async () => {
+    const root = fixtureRoot('symlink-escape', registry.replace('source: packages/core', 'source: packages/escape'))
+    const outside = mkdtempSync(join(tmpdir(), 'mint-platform-outside-'))
+    symlinkSync(outside, join(root, 'packages/escape'))
+
+    await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
+      diagnostic: { code: 'PLATFORM_PATH_ESCAPE', source: 'moe-platform.yaml', field: 'plugins[0].source' },
+    })
+  })
+
+  it('reports a missing repository root as an actionable diagnostic', async () => {
+    const root = join(mkdtempSync(join(tmpdir(), 'mint-platform-missing-root-')), 'missing')
+
+    await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
+      diagnostic: { code: 'PLATFORM_ROOT_NOT_FOUND', source: root, path: root },
+    })
+  })
+
+  it('distinguishes a registry read failure from invalid YAML', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'mint-platform-registry-directory-'))
+    mkdirSync(join(root, 'moe-platform.yaml'))
+
+    await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
+      diagnostic: { code: 'PLATFORM_REGISTRY_READ_FAILED', source: 'moe-platform.yaml', path: expect.stringContaining('moe-platform.yaml') },
+    })
+  })
+
+  it('reports invalid YAML separately from registry filesystem failures', async () => {
+    const root = fixtureRoot('invalid-yaml', 'schema: [')
+
+    await expect(loadPlatformRegistry(root)).rejects.toMatchObject({
+      diagnostic: { code: 'PLATFORM_YAML_INVALID', source: 'moe-platform.yaml' },
     })
   })
 

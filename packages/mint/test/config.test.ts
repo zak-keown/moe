@@ -60,6 +60,11 @@ describe('loadConfig', () => {
       loadConfig(repoWith('version: 1.0.0\ndescription: x\n'))
     } catch (e) {
       expect((e as ConfigError).details.join('\n')).toContain('name')
+      expect((e as ConfigError).diagnostic).toMatchObject({
+        code: 'CONFIG_INVALID',
+        source: 'moe-mint.yaml',
+        action: 'Correct the configuration and run the command again.',
+      })
     }
   })
 
