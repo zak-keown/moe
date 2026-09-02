@@ -238,11 +238,24 @@ export const api = {
     // This is the one place in the FE that turns a manifest path into a URL.
     // The path segment is a runId (directory name under .moe-flight/results/),
     // not a cardId.
-    fileUrl: (runId: string, relPath: string) =>
-      `/api/results/${encodeURIComponent(runId)}/file/${relPath
+    //
+    // Static mode (CR-054): the self-contained HTML report renderRun()
+    // writes lives in the run directory itself, as a sibling of
+    // screenshots/, artifacts/ and captures/ — there is no Flight server
+    // to answer /api/results/... there. When window.__MOE_FLIGHT_RUN__ is
+    // present (the marker useTranscript already checks), resolve the
+    // manifest-relative path verbatim so the browser fetches it relative
+    // to the report's own location instead of 404ing against a server
+    // that isn't there.
+    fileUrl: (runId: string, relPath: string) => {
+      const encodedPath = relPath
         .split("/")
         .map(encodeURIComponent)
-        .join("/")}`,
+        .join("/");
+      const isStatic = typeof window !== "undefined" && window.__MOE_FLIGHT_RUN__ !== undefined;
+      if (isStatic) return encodedPath;
+      return `/api/results/${encodeURIComponent(runId)}/file/${encodedPath}`;
+    },
     // Fetch the text contents of a file listed in a run's manifest.
     // Used by the transcript view (run.jsonl) and the artifact drawer.
     fileText: async (runId: string, relPath: string): Promise<string> => {
