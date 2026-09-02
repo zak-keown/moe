@@ -6,13 +6,13 @@
       "sha256": "3cf131ed1fc95705dd86deda98b755c9a7053c77714f45780b7782d537a26e4c"
     },
     ".claude-plugin/plugin.json": {
-      "sha256": "8b7116a29e0689ace08b1f554b11cb0562a709004a3c6942394a5c245aac89a0"
+      "sha256": "387a4f7f764ccf17c55f8d143a9c4c1665ba37c6bbe99276295810ca0ae790d0"
     },
     "docs/install/claude-code.md": {
-      "sha256": "829b36de35fb4169fade183bb001cd49adcc1cf5528f02e2b5fcc04c5659fc89"
+      "sha256": "c86d767e5bfdc4eebed8673e33d696ce69f57d020231f43ab8ed01407dc6796b"
     },
     "docs/support-matrix.md": {
-      "sha256": "bd57a6c502f51b6cb8cdb9af79cab9eae31046ff8eb53a698052970a13758e69"
+      "sha256": "6f71b42a43391786bfdcbd63f2e3688f193e03bd60fc6999b45029ec63fe86d5"
     }
   }
 }

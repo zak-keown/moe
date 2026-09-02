@@ -47,7 +47,7 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(ROOT, "plugins");
@@ -59,71 +59,6 @@ const MINT_CLI = path.join(ROOT, "packages/mint/dist/cli.js");
  * `components:` finds them exactly here.
  */
 const COMPONENTS = ["skills", "commands", "agents", "hooks", ".mcp.json"];
-
-/**
- * The plugin registry.
- *
- * `checkMarketplace()` below asserts this list agrees with
- * `.claude-plugin/marketplace.json`, in both directions: a plugin generated but
- * not listed is uninstallable, and one listed but not generated is a broken
- * link. Both fail silently otherwise, which is why it is checked here rather
- * than left to discovery.
- *
- * `distribution` is how installers get the plugin, not how it's staged for
- * generation. Every plugin is generated the same way ("./plugins/<name>/"),
- * but the marketplace listing points elsewhere depending on how a user
- * installs it:
- *
- *   - "local": marketplace listing is "./plugins/<name>", installed from
- *     the checkout (contributor path) or a sparse marketplace clone (main
- *     end-user path for content plugins).
- *   - { npm: "<package-name>" }: marketplace listing is the npm-source
- *     shape `{"source":"npm","package":"…"}`, installed by `claude plugin`
- *     from the `@bubstack` scope. Used for the two MCP-server plugins
- *     (memory, glass) so a native-Windows user gets prebuilt `better-sqlite3`
- *     without an MSVC toolchain — see the installer-hq-dx backlog item.
- *
- * checkMarketplace() below asserts the marketplace listing agrees with each
- * plugin's declared distribution, and rejects any surprise combinations.
- */
-const PLUGINS = [
-  {
-    name: "moe",
-    pkg: "core",
-    config: "mint/moe.yaml",
-    distribution: { npm: "@bubstack/moe-core" },
-  },
-  {
-    name: "moe-backstory",
-    pkg: "backstory",
-    config: "mint/moe-backstory.yaml",
-    distribution: { npm: "@bubstack/moe-backstory" },
-  },
-  {
-    name: "moe-memory",
-    pkg: "memory",
-    config: "mint/moe-memory.yaml",
-    distribution: { npm: "@bubstack/moe-memory" },
-  },
-  {
-    name: "moe-glass",
-    pkg: "glass",
-    config: "mint/moe-glass.yaml",
-    distribution: { npm: "@bubstack/moe-glass" },
-  },
-  {
-    name: "moe-crew",
-    pkg: "crew",
-    config: "mint/moe-crew.yaml",
-    distribution: { npm: "@bubstack/moe-crew" },
-  },
-  {
-    name: "moe-statusline",
-    pkg: "statusline",
-    config: "mint/moe-statusline.yaml",
-    distribution: { npm: "@bubstack/moe-statusline" },
-  },
-];
 
 /**
  * Skill directories that are not skills.
@@ -191,42 +126,21 @@ function readAttributions() {
   return rows;
 }
 
-/** Imported works declared in a plugin's mint config. */
-function readImportedWorks(yamlPath) {
-  const works = [];
-  let inSection = false;
-  for (const line of fs.readFileSync(yamlPath, "utf8").split(/\r?\n/)) {
-    if (/^imported_works:\s*$/.test(line)) {
-      inSection = true;
-      continue;
-    }
-    if (inSection) {
-      const match = /^\s+-\s+(.+)$/.exec(line);
-      if (match) {
-        works.push(match[1].trim());
-        continue;
-      }
-      break;
-    }
-  }
-  return works;
-}
-
 /** Generate the legal payload an independently installed plugin receives. */
 function writePluginLicense(plugin, dest) {
   const attributions = readAttributions();
-  const sources = readImportedWorks(path.join(dest, "moe-mint.yaml"));
-  if (sources.length === 0) fail(`${plugin.name} has no imported_works in its mint config`);
+  const sources = plugin.config.importedWorks.map((work) => work.name);
+  if (sources.length === 0) fail(`${plugin.id} has no imported_works in its mint config`);
 
   const rows = sources.map((source) => {
     const row = attributions.get(source);
-    if (!row) fail(`${plugin.name} names ${source}, which NOTICE does not account for`);
+    if (!row) fail(`${plugin.id} names ${source}, which NOTICE does not account for`);
     return row;
   });
 
   const unlicensed = rows.filter((row) => row.license.startsWith("No license"));
   if (unlicensed.length > 0) {
-    fail(`${plugin.name} includes material with no located license grant`);
+    fail(`${plugin.id} includes material with no located license grant`);
   }
 
   const sections = [];
@@ -249,14 +163,14 @@ function writePluginLicense(plugin, dest) {
     );
   }
 
-  if (sections.length === 0) fail(`${plugin.name} resolved no distributable license text`);
+  if (sections.length === 0) fail(`${plugin.id} resolved no distributable license text`);
   fs.writeFileSync(path.join(dest, "LICENSE"), `${sections.join("\n\n---\n\n")}\n`);
 }
 
 function stage(plugin) {
-  const pkgDir = path.join(ROOT, "packages", plugin.pkg);
-  const dest = path.join(OUT, plugin.name);
-  const configSrc = path.join(pkgDir, plugin.config);
+  const pkgDir = plugin.sourcePath;
+  const dest = path.join(OUT, plugin.id);
+  const configSrc = plugin.configPath;
   if (!fs.existsSync(configSrc)) fail(`missing config ${path.relative(ROOT, configSrc)}`);
 
   // Wipe first. A staging root is generated output in its entirety, so an
@@ -288,18 +202,18 @@ function generate(plugin, dest) {
   try {
     const out = execFileSync(
       process.execPath,
-      [MINT_CLI, "generate", "--dir", path.relative(ROOT, dest)],
+      [MINT_CLI, "generate", "--dir", path.relative(ROOT, dest), "--projection-record"],
       {
         cwd: ROOT,
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
       },
     );
-    return out.trim();
+    return JSON.parse(out);
   } catch (error) {
     process.stderr.write(error.stdout ?? "");
     process.stderr.write(error.stderr ?? "");
-    fail(`moe-mint generate failed for ${plugin.name}`);
+    fail(`moe-mint generate failed for ${plugin.id}`);
   }
 }
 
@@ -318,14 +232,8 @@ function describeSource(source) {
   return JSON.stringify(source);
 }
 
-/** The `source` value the marketplace listing must carry for the given
- *  plugin registry entry, derived from `distribution` above. */
 function expectedSource(plugin) {
-  if (plugin.distribution === "local") return `./plugins/${plugin.name}`;
-  if (plugin.distribution?.npm) {
-    return { source: "npm", package: plugin.distribution.npm };
-  }
-  fail(`unknown distribution for ${plugin.name}: ${JSON.stringify(plugin.distribution)}`);
+  return { source: "npm", package: plugin.npmPackage };
 }
 
 /** Two `source` values agree. Object shape only — no deep-merge tolerance. */
@@ -335,11 +243,11 @@ function sourcesMatch(actual, expected) {
   return actual.source === expected.source && actual.package === expected.package;
 }
 
-function checkMarketplace() {
+function checkMarketplace(artifacts) {
   const file = path.join(ROOT, ".claude-plugin/marketplace.json");
   const listed = JSON.parse(fs.readFileSync(file, "utf8")).plugins ?? [];
   const listedNames = new Set(listed.map((p) => p.name));
-  const built = new Map(PLUGINS.map((p) => [p.name, p]));
+  const built = new Map(artifacts.map((artifact) => [artifact.plugin.id, artifact.plugin]));
 
   const problems = [];
   for (const name of built.keys()) {
@@ -363,24 +271,32 @@ function checkMarketplace() {
     fail(`marketplace.json disagrees with the plugin registry:\n  - ${problems.join("\n  - ")}`);
 }
 
-function main() {
+async function main() {
   if (!fs.existsSync(MINT_CLI)) {
     fail(
       `${path.relative(ROOT, MINT_CLI)} not found — run \`pnpm --filter @bubstack/moe-mint build\` first`,
     );
   }
-  checkMarketplace();
+  const { resolvePlatform } = await import(pathToFileURL(path.join(ROOT, "packages/mint/dist/platform/load.js")).href);
+  const { writeRegistryProjections } = await import(pathToFileURL(path.join(ROOT, "packages/mint/dist/platform/projections.js")).href);
+  const platform = await resolvePlatform(ROOT);
 
   fs.mkdirSync(OUT, { recursive: true });
-  for (const plugin of PLUGINS) {
+  const artifacts = [];
+  for (const plugin of platform.plugins) {
     const { dest, staged } = stage(plugin);
-    const out = generate(plugin, dest);
-    const summary = out.split("\n").filter(Boolean).pop() ?? "";
+    const record = generate(plugin, dest);
+    artifacts.push({ plugin, emissions: record.emissions });
     console.log(
-      `${plugin.name.padEnd(16)} ${String(staged).padStart(3)} skills staged — ${summary}`,
+      `${plugin.id.padEnd(16)} ${String(staged).padStart(3)} skills staged`,
     );
   }
-  console.log(`\n${PLUGINS.length} plugins generated into ${path.relative(ROOT, OUT)}/`);
+  await writeRegistryProjections(platform, artifacts, {
+    marketplacePath: path.join(ROOT, ".claude-plugin/marketplace.json"),
+    publicCatalogPath: path.join(ROOT, "docs/moe/generated/plugin-catalog.md"),
+  });
+  checkMarketplace(artifacts);
+  console.log(`\n${platform.plugins.length} plugins generated into ${path.relative(ROOT, OUT)}/`);
 }
 
-main();
+main().catch((error) => fail(error instanceof Error ? error.message : String(error)));

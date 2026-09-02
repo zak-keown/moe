@@ -32,11 +32,26 @@ describe('CLI end-to-end', () => {
     expect(result.stdout).toContain('harness(es)')
   })
 
-  it('prints "README.md install section updated" when the fixture README has install markers, and omits it on the idempotent second run', () => {
+  it('prints the ephemeral registry publish matrix as canonical JSON without writing a matrix file', () => {
+    const result = runCli(['publish-matrix', '--repo', join(REPO_ROOT, '../..')], REPO_ROOT)
+
+    expect(result.status).toBe(0)
+    expect(result.stderr).toBe('')
+    expect(JSON.parse(result.stdout)).toEqual([
+      { plugin: 'moe', package: '@bubstack/moe-core', version: '0.1.4', sourcePackagePath: 'packages/core', generatedArtifactPath: 'plugins/moe' },
+      { plugin: 'moe-backstory', package: '@bubstack/moe-backstory', version: '0.1.4', sourcePackagePath: 'packages/backstory', generatedArtifactPath: 'plugins/moe-backstory' },
+      { plugin: 'moe-memory', package: '@bubstack/moe-memory', version: '0.1.4', sourcePackagePath: 'packages/memory', generatedArtifactPath: 'plugins/moe-memory' },
+      { plugin: 'moe-glass', package: '@bubstack/moe-glass', version: '0.1.4', sourcePackagePath: 'packages/glass', generatedArtifactPath: 'plugins/moe-glass' },
+      { plugin: 'moe-crew', package: '@bubstack/moe-crew', version: '0.1.4', sourcePackagePath: 'packages/crew', generatedArtifactPath: 'plugins/moe-crew' },
+      { plugin: 'moe-statusline', package: '@bubstack/moe-statusline', version: '0.1.0', sourcePackagePath: 'packages/statusline', generatedArtifactPath: 'plugins/moe-statusline' },
+    ])
+  })
+
+  it('does not claim to rewrite a human-authored README when the fixture has historical markers', () => {
     const dir = tmpPluginDir()
     const first = runCli(['generate'], dir)
     expect(first.status).toBe(0)
-    expect(first.stdout).toContain('README.md install section updated')
+    expect(first.stdout).not.toContain('README.md install section updated')
 
     const second = runCli(['generate'], dir)
     expect(second.status).toBe(0)

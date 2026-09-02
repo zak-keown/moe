@@ -8,6 +8,8 @@ import { importPlugin } from './import.js'
 import { runTest, DEFAULT_IMAGE } from './test-command.js'
 import { bumpVersion, bumpCheck, bumpAudit, type BumpResult, type CheckResult, type AuditResult } from './bump.js'
 import { ConfigError } from './config.js'
+import { resolvePlatform } from './platform/load.js'
+import { resolvePublishMatrix, type PluginProjectionRecord } from './platform/projections.js'
 
 const LABEL_WIDTH = 45
 
@@ -97,8 +99,13 @@ program
   .description('Generate per-harness plugin files from moe-mint.yaml')
   .option('--dir <path>', 'plugin root directory', '.')
   .option('--force', 'overwrite existing files not created by moe-mint', false)
-  .action((opts: { dir: string; force: boolean }) => {
+  .option('--projection-record', 'print current validated emissions as JSON', false)
+  .action((opts: { dir: string; force: boolean; projectionRecord: boolean }) => {
     const result = generate(opts.dir, undefined, { force: opts.force })
+    if (opts.projectionRecord) {
+      process.stdout.write(`${JSON.stringify({ emissions: result.emissions })}\n`)
+      return
+    }
     for (const warning of result.warnings) console.warn(`warning: ${warning}`)
     if (result.pruned.length > 0) {
       for (const path of result.pruned) console.log(`pruned: ${path}`)
@@ -107,7 +114,6 @@ program
     console.log(
       `Generated ${result.files.length} files for ${result.adaptersRun.length} harness(es): ${result.adaptersRun.join(', ')}`,
     )
-    if (result.readmeInjected) console.log('README.md install section updated')
   })
 
 program
@@ -133,6 +139,20 @@ program
   .description('Show which components each harness supports')
   .action(() => {
     process.stdout.write(renderMatrix())
+  })
+
+program
+  .command('publish-matrix')
+  .description('Print the current registry publish matrix as ephemeral JSON')
+  .option('--repo <path>', 'repository root containing moe-platform.yaml', process.cwd())
+  .action(async (opts: { repo: string }) => {
+    const platform = await resolvePlatform(opts.repo)
+    // Publish selection is metadata-only: it has no target/capability claim.
+    // These records deliberately contain no synthetic emissions; projection
+    // rendering receives validated current-generation records from the root
+    // mint orchestration below.
+    const artifacts: PluginProjectionRecord[] = platform.plugins.map((plugin) => ({ plugin, emissions: {} }))
+    process.stdout.write(`${JSON.stringify(resolvePublishMatrix(platform, artifacts), null, 2)}\n`)
   })
 
 program

@@ -1,12 +1,8 @@
 {
-  "name": "moe",
+  "name": "core",
   "owner": {
     "name": "Zak Keown",
     "email": "zak.keown@outlook.com"
-  },
-  "metadata": {
-    "description": "Moe \u2014 skills, memory, browser control and session orchestration for coding agents. Just ask Moe.",
-    "version": "0.0.0"
   },
   "plugins": [
     {

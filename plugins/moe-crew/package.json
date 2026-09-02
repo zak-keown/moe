@@ -7,8 +7,8 @@
     "email": "zak.keown@outlook.com"
   },
   "license": "MIT",
-  "repository": "https://gitlab.com/moe-ai/moe",
-  "homepage": "https://gitlab.com/moe-ai/moe",
+  "repository": "https://github.com/zak-keown/moe",
+  "homepage": "https://github.com/zak-keown/moe",
   "type": "module",
   "main": "./.opencode/plugins/moe-crew.js",
   "pi": {

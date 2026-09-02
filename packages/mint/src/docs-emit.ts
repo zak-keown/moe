@@ -1,5 +1,3 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
 import type { PluginModel } from './model.js'
 import type { HarnessAdapter } from './adapters/types.js'
 import type { AdapterEmission } from './adapters/types.js'
@@ -24,8 +22,6 @@ const DISPLAY_NAMES: Record<string, string> = {
   copilot: 'GitHub Copilot CLI',
 }
 
-// Exported so README injection (below) can reuse the same names as the
-// docs/install/<name>.md headings instead of maintaining a second map.
 export function displayName(adapterName: string): string {
   return DISPLAY_NAMES[adapterName] ?? adapterName
 }
@@ -87,52 +83,4 @@ export function emitDocs(
   }
   files.push(supportMatrixFile(model, emissions))
   return files
-}
-
-const README_START = '<!-- moe-mint:install:start -->'
-const README_END = '<!-- moe-mint:install:end -->'
-
-function installMatrixTable(activeAdapters: HarnessAdapter[]): string {
-  const rows = activeAdapters
-    .filter((a) => a.installDoc)
-    .map((a) => `| ${displayName(a.name)} | see docs/install/${a.name}.md |`)
-  return ['| Harness | Install |', '|---|---|', ...rows].join('\n')
-}
-
-// Injects the install matrix into the plugin's README.md, between two
-// hand-placed markers. README.md is a user file — never created, never
-// manifest-tracked, never touched by validate — so this runs outside the
-// FileSet/manifest machinery generate() uses for everything else. No
-// README.md at all is silent (nothing to inject into, nothing written, no
-// warning) since most component-only plugins won't have one; a README.md
-// that exists but lacks either marker (or has them in the wrong order) DOES
-// warn — that's a plugin author who has a README but hasn't opted into
-// install-matrix injection yet, worth flagging. `model` is threaded through
-// for parity with emitDocs's signature; the table itself doesn't need it
-// yet.
-export function injectReadme(
-  root: string,
-  model: PluginModel,
-  activeAdapters: HarnessAdapter[],
-): { injected: boolean; warning?: string } {
-  const path = join(root, 'README.md')
-  if (!existsSync(path)) return { injected: false }
-
-  const content = readFileSync(path, 'utf8')
-  const startIdx = content.indexOf(README_START)
-  const endIdx = content.indexOf(README_END)
-  if (startIdx === -1 || endIdx === -1 || endIdx < startIdx) {
-    return {
-      injected: false,
-      warning: `README.md has no moe-mint install markers; skipping install-matrix injection\n  add ${README_START} and ${README_END} where the table should go`,
-    }
-  }
-
-  const before = content.slice(0, startIdx + README_START.length)
-  const after = content.slice(endIdx)
-  const next = `${before}\n\n${installMatrixTable(activeAdapters)}\n\n${after}`
-
-  if (next === content) return { injected: false }
-  writeFileSync(path, next)
-  return { injected: true }
 }

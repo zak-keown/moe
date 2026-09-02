@@ -10,7 +10,7 @@
 ## Installing
 
 ```
-pi install git:gitlab.com/moe-ai/moe
+pi install git:github.com/zak-keown/moe
 ```
 
 Pi discovers the extension and skills directory through the `pi` field in `package.json`. Consult Pi's extension docs if this command doesn't match your installed version.
