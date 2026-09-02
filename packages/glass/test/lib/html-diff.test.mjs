@@ -50,4 +50,34 @@ describe('generateHtmlDiff', () => {
     assert.equal(generateHtmlDiff(null, null), '(no changes detected)');
     assert.equal(generateHtmlDiff('', ''), '(no changes detected)');
   });
+
+  // CR-059 / CR-060: myersDiff's `trace` snapshots its full O(N+M)-wide `v`
+  // array on every edit-distance step, so memory is O(D*(N+M)) with D
+  // unbounded (two completely different documents make D = N+M). Two
+  // ordinary, moderately large pages that differ on every line can exhaust
+  // the process heap — a hard V8 abort, not a catchable exception — with no
+  // cap anywhere in the call chain. This uses a size well below the
+  // measured-unsafe range (thousands of fully-differing lines already cost
+  // hundreds of MB per the findings' own repro tables) so the test stays
+  // cheap and safe to run on a shared machine; the point under test is that
+  // a cap/bail-out exists at all, not the exact crash threshold.
+  it('bails out to a cheap summary instead of running Myers above a line-count safety cap', () => {
+    const N = 2200; // comfortably over any reasonable "a few thousand" cap floor
+    const before = Array.from({ length: N }, (_, i) => `before-line-${i}`).join('\n');
+    const after = Array.from({ length: N }, (_, i) => `after-line-${i}`).join('\n'); // every line differs: worst case for edit distance
+    const diff = generateHtmlDiff(before, after);
+
+    // A full Myers diff at this size would enumerate every one of the N
+    // differing lines under these markers — exactly the per-line, O(N+M)
+    // work the cap exists to skip.
+    assert.doesNotMatch(diff, /=== REMOVED ===/);
+    assert.doesNotMatch(diff, /=== ADDED ===/);
+    assert.match(diff, new RegExp(String(N)), 'summary should report the (large) line counts');
+    assert.match(diff, /too large to diff/i);
+  });
+
+  it('still reports "(no changes detected)" for identical oversized input (cheap equality check, no diff needed)', () => {
+    const big = Array.from({ length: 2200 }, (_, i) => `line-${i}`).join('\n');
+    assert.equal(generateHtmlDiff(big, big), '(no changes detected)');
+  });
 });
