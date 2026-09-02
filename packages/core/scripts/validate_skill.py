@@ -33,17 +33,28 @@ def parse_frontmatter(content: str) -> tuple[dict, str]:
 
     fm: dict = {}
     current_key: str | None = None
+    block_style: str | None = None
     for line in fm_text.splitlines():
         if not line.strip():
             continue
         if line.startswith(" ") and current_key:
-            fm[current_key] = fm[current_key] + " " + line.strip()
+            separator = "\n" if block_style == "|" else " "
+            if fm[current_key]:
+                fm[current_key] += separator
+            fm[current_key] += line.strip()
             continue
         if ":" in line:
             key, _, value = line.partition(":")
             key = key.strip()
             value = value.strip()
-            fm[key] = value
+            if value in {">", ">-", ">+", "|", "|-", "|+"}:
+                fm[key] = ""
+                block_style = value[0]
+            else:
+                if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+                    value = value[1:-1]
+                fm[key] = value
+                block_style = None
             current_key = key
     return fm, body
 
