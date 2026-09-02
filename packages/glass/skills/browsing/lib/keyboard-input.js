@@ -93,9 +93,17 @@ function attachKeyboardInput({ state, getPageSession, click, dialogs }) {
    * runs of plain characters into single insertText calls — that batches
    * fewer events and is faster than per-character.
    *
-   * Special characters in `value`: \t = Tab, \n = Enter (or newline in textarea).
-   * Literal "\\t" / "\\n" in the input are also normalised — MCP payloads
-   * often arrive with the escapes un-evaluated.
+   * Special characters in `value`: an actual TAB character (U+0009) presses
+   * Tab, an actual NEWLINE (U+000A) presses Enter (or inserts a newline in a
+   * textarea). `value` is otherwise literal text, never JSON-parsed and
+   * never escape-processed — a backslash is just a backslash. (Previously
+   * this also rewrote the two-character sequences "\\t"/"\\n" into real
+   * control characters, which corrupted any literal backslash followed by
+   * a `t` or `n` — e.g. a Windows path like `C:\temp` — into control-flow
+   * it never asked for: lost characters, a mid-value Tab/Enter, and no way
+   * for a caller to opt out. Removed; do any escape-un-evaluation, if still
+   * wanted, at the MCP payload boundary where the string's provenance is
+   * actually known.)
    */
   async function fill(tabIndexOrWsUrl, selector, value) {
     const ps = await getPageSession(tabIndexOrWsUrl);
@@ -129,10 +137,9 @@ function attachKeyboardInput({ state, getPageSession, click, dialogs }) {
       }
     }
 
-    // Normalise literal escape sequences from MCP payloads.
-    const processedValue = value
-      .replace(/\\t/g, '\t')
-      .replace(/\\n/g, '\n');
+    // `value` is literal text — see the doc comment above for why this used
+    // to rewrite "\t"/"\n" here and no longer does.
+    const processedValue = value;
 
     const settle = (ms = 50) => new Promise(r => setTimeout(r, ms));
 
