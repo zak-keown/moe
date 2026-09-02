@@ -9,7 +9,7 @@ import { agentPlugins } from './agent-plugins.js'
 import { copilot } from './copilot.js'
 import { TARGET_IDS } from '../vocabulary.js'
 
-export type { SupportLevel, ComponentSupport, EmitResult, HarnessAdapter } from './types.js'
+export type { SupportLevel, ComponentSupport, AdapterEmission, EmissionLimitation, HarnessAdapter } from './types.js'
 
 export const adapters: HarnessAdapter[] = [claudeCode, cursor, codex, kimi, opencode, pi, agentPlugins, copilot]
 

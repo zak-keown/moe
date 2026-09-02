@@ -52,7 +52,7 @@ describe('codex adapter', () => {
   })
 
   it('warns about hooks, commands, agents, and mcp not being emitted for codex', () => {
-    expect(result.warnings).toEqual([
+    expect(result.limitations.map((limitation) => limitation.message)).toEqual([
       'hooks are not supported on codex; bootstrap relies on native skill discovery',
       'commands are not supported on codex (no plugin-shipped prompt mechanism)',
       'agents are not emitted for codex in v1',
@@ -60,15 +60,8 @@ describe('codex adapter', () => {
     ])
   })
 
-  it('declares expected support levels', () => {
-    expect(codex.support).toEqual({
-      skills: 'full',
-      commands: 'none',
-      agents: 'none',
-      hooks: 'none',
-      mcp: 'none',
-      bootstrap: 'partial',
-    })
+  it('derives only skill discovery from the Codex projection', () => {
+    expect(result.emittedCapabilities).toEqual(['skill-discovery'])
   })
 })
 

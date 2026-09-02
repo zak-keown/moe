@@ -77,7 +77,7 @@ describe('CLI end-to-end', () => {
     // the translated command/agent .md files, and the install doc); the shared
     // package.json stays because pi still emits it byte-identically.
     writeFileSync(yamlPath, yaml
-      .replace('  opencode: { intent: preview, expected_capabilities: [], operating_systems: [macos] }', '  opencode: { intent: omit }')
+      .replace('  opencode: { intent: preview, expected_capabilities: [skill-discovery, command-discovery, agent-discovery, bootstrap-routing], operating_systems: [macos] }', '  opencode: { intent: omit }')
       .replace('harnesses:\n', 'harnesses:\n  exclude: [opencode]\n'))
 
     const result = runCli(['generate'], dir)

@@ -54,11 +54,13 @@ describe('claude-code adapter', () => {
   })
 
   it('emits no warnings for full-support components', () => {
-    expect(result.warnings).toEqual([])
+    expect(result.limitations).toEqual([])
   })
 
-  it('declares full support for every component', () => {
-    expect(Object.values(claudeCode.support).every((level) => level === 'full')).toBe(true)
+  it('derives all available capabilities from the emitted Claude projection', () => {
+    expect(result.emittedCapabilities).toEqual([
+      'skill-discovery', 'command-discovery', 'agent-discovery', 'hook-execution', 'mcp-registration', 'bootstrap-routing',
+    ])
   })
 
   it('emits an executable bootstrap session-start hook', () => {
@@ -94,7 +96,7 @@ describe('claude-code adapter with bootstrap.generate', () => {
     )
     const generateModel = buildModel(dir)
     const result = claudeCode.emit(generateModel)
-    expect(result.warnings).toEqual([])
+    expect(result.limitations).toEqual([])
     const bootstrapMd = result.files.find((f) => f.path === 'hooks/moe-mint/bootstrap.md')
     expect(bootstrapMd?.content).toBe(
       [

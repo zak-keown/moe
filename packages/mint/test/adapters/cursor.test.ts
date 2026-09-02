@@ -62,7 +62,7 @@ describe('cursor adapter', () => {
   })
 
   it('warns about user hooks, commands, agents, and mcp not being translated/emitted', () => {
-    expect(result.warnings).toEqual([
+    expect(result.limitations.map((limitation) => limitation.message)).toEqual([
       'user hooks are not translated for cursor in v1',
       'commands are not emitted for cursor in v1',
       'agents are not emitted for cursor in v1',
@@ -70,15 +70,8 @@ describe('cursor adapter', () => {
     ])
   })
 
-  it('declares expected support levels', () => {
-    expect(cursor.support).toEqual({
-      skills: 'full',
-      commands: 'none',
-      agents: 'none',
-      hooks: 'partial',
-      mcp: 'none',
-      bootstrap: 'full',
-    })
+  it('derives capabilities from emitted Cursor projection files', () => {
+    expect(result.emittedCapabilities).toEqual(['skill-discovery', 'hook-execution', 'bootstrap-routing'])
   })
 })
 
@@ -232,7 +225,7 @@ describe('cursor adapter with bootstrap.generate', () => {
     )
     const generateModel = buildModel(dir)
     const result = cursor.emit(generateModel)
-    expect(result.warnings).toEqual([])
+    expect(result.limitations).toEqual([])
     const bootstrapMd = result.files.find((f) => f.path === 'hooks/moe-mint/bootstrap.md')
     expect(bootstrapMd?.content).toContain('# generate-bootstrap plugin')
     const sessionStart = result.files.find((f) => f.path === 'hooks/moe-mint/session-start')

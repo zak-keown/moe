@@ -1,7 +1,8 @@
 import { deepMerge } from '../fileset.js'
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmitResult } from './types.js'
+import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { sessionStartScript, runHookCmd } from '../bootstrap/shell-hook.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
 import { baseManifestFields, json, bootstrapEmitsHooks } from './shared.js'
@@ -88,18 +89,10 @@ function installDoc(model: PluginModel): string {
 
 export const cursor: HarnessAdapter = {
   name: 'cursor',
-  support: {
-    skills: 'full',
-    commands: 'none',
-    agents: 'none',
-    hooks: 'partial',
-    mcp: 'none',
-    bootstrap: 'full',
-  },
   installDoc,
-  emit(model: PluginModel): EmitResult {
+  emit(model: PluginModel) {
     const { config } = model
-    const warnings: string[] = []
+    const limitations: EmissionLimitation[] = []
     const files: GeneratedFile[] = [{ path: '.cursor-plugin/plugin.json', content: json(pluginManifest(model)) }]
 
     const emitHooks = bootstrapEmitsHooks(config, cursor.name)
@@ -140,11 +133,11 @@ export const cursor: HarnessAdapter = {
       }
     }
 
-    if (model.hooks !== undefined) warnings.push('user hooks are not translated for cursor in v1')
-    if (model.commands.length) warnings.push('commands are not emitted for cursor in v1')
-    if (model.agents.length) warnings.push('agents are not emitted for cursor in v1')
-    if (model.mcp !== undefined) warnings.push('mcp servers are not emitted for cursor in v1')
+    if (model.hooks !== undefined) limitations.push({ code: 'COMPONENT_PARTIAL', component: 'hooks', message: 'user hooks are not translated for cursor in v1' })
+    if (model.commands.length) limitations.push({ code: 'COMPONENT_OMITTED', component: 'commands', message: 'commands are not emitted for cursor in v1' })
+    if (model.agents.length) limitations.push({ code: 'COMPONENT_OMITTED', component: 'agents', message: 'agents are not emitted for cursor in v1' })
+    if (model.mcp !== undefined) limitations.push({ code: 'COMPONENT_OMITTED', component: 'mcp', message: 'mcp servers are not emitted for cursor in v1' })
 
-    return { files, warnings }
+    return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('cursor', model, files) }
   },
 }

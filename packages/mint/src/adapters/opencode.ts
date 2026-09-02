@@ -1,7 +1,8 @@
 import { stringify } from 'yaml'
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel, CommandRef, AgentRef } from '../model.js'
-import type { HarnessAdapter, EmitResult } from './types.js'
+import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { json } from './shared.js'
 import { nodePackageManifest, opencodePluginPath, bootstrapContentPath } from '../bootstrap/node-package.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
@@ -249,17 +250,9 @@ function installDoc(model: PluginModel): string {
 
 export const opencode: HarnessAdapter = {
   name: 'opencode',
-  support: {
-    skills: 'full',
-    commands: 'full',
-    agents: 'partial',
-    hooks: 'none',
-    mcp: 'none',
-    bootstrap: 'full',
-  },
   installDoc,
-  emit(model: PluginModel): EmitResult {
-    const warnings: string[] = []
+  emit(model: PluginModel) {
+    const limitations: EmissionLimitation[] = []
     const files: GeneratedFile[] = [
       { path: 'package.json', content: json(nodePackageManifest(model)) },
       { path: opencodePluginPath(model.config.name), content: pluginModule(model) },
@@ -274,12 +267,12 @@ export const opencode: HarnessAdapter = {
       files.push({ path: GENERATED_BOOTSTRAP_PATH, content: generatedBootstrap(model) })
     }
 
-    if (model.hooks !== undefined) warnings.push('hooks are not emitted for opencode')
-    if (model.mcp !== undefined) warnings.push('mcp servers are not emitted for opencode in v1')
+    if (model.hooks !== undefined) limitations.push({ code: 'COMPONENT_OMITTED', component: 'hooks', message: 'hooks are not emitted for opencode' })
+    if (model.mcp !== undefined) limitations.push({ code: 'COMPONENT_OMITTED', component: 'mcp', message: 'mcp servers are not emitted for opencode in v1' })
     if (model.agents.some((a) => a.tools !== undefined)) {
-      warnings.push('agent tool restrictions are not translated for opencode')
+      limitations.push({ code: 'SETTING_DROPPED', component: 'agents', message: 'agent tool restrictions are not translated for opencode' })
     }
 
-    return { files, warnings }
+    return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('opencode', model, files) }
   },
 }

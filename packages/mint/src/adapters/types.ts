@@ -1,5 +1,6 @@
 import type { PluginModel } from '../model.js'
 import type { FileSet } from '../fileset.js'
+import type { CapabilityId, TargetId } from '../vocabulary.js'
 
 export type SupportLevel = 'full' | 'partial' | 'none'
 
@@ -12,15 +13,22 @@ export interface ComponentSupport {
   bootstrap: SupportLevel
 }
 
-export interface EmitResult {
+export interface EmissionLimitation {
+  code: 'COMPONENT_OMITTED' | 'COMPONENT_PARTIAL' | 'SETTING_DROPPED'
+  component: keyof ComponentSupport
+  message: string
+}
+
+export interface AdapterEmission {
   files: FileSet
-  warnings: string[]
+  limitations: readonly EmissionLimitation[]
+  emittedCapabilities: readonly CapabilityId[]
+  projectionOwner?: TargetId
 }
 
 export interface HarnessAdapter {
   name: string
-  support: ComponentSupport
-  emit(model: PluginModel): EmitResult
+  emit(model: PluginModel): AdapterEmission
   // Optional: markdown BODY (no marker, no heading — docs-emit.ts adds
   // both) describing how to install the plugin on this harness. Adapters
   // without an install story yet simply omit it; docs-emit.ts skips the

@@ -55,22 +55,15 @@ describe('agent-plugins-1.0 adapter', () => {
   })
 
   it('warns that commands, agents, and hooks are excluded from the spec', () => {
-    expect(result.warnings).toEqual([
+    expect(result.limitations.map((limitation) => limitation.message)).toEqual([
       'commands are excluded from the Agent Plugins 1.0 spec',
       'agents are excluded from the Agent Plugins 1.0 spec',
       'hooks are excluded from the Agent Plugins 1.0 spec',
     ])
   })
 
-  it('declares expected support levels', () => {
-    expect(agentPlugins.support).toEqual({
-      skills: 'full',
-      commands: 'none',
-      agents: 'none',
-      hooks: 'none',
-      mcp: 'full',
-      bootstrap: 'none',
-    })
+  it('derives format conformance and source-backed capabilities', () => {
+    expect(result.emittedCapabilities).toEqual(['skill-discovery', 'mcp-registration', 'format-conformance'])
   })
 })
 
@@ -79,21 +72,21 @@ describe('agent-plugins-1.0 mcp server translation', () => {
     const result = agentPlugins.emit(mcpFixtureModel({ demo: { url: 'https://example.com/mcp' } }))
     const mcp = JSON.parse(result.files.find((f) => f.path === 'mcp.json')!.content)
     expect(mcp.mcpServers.demo).toEqual({ type: 'streamable-http', url: 'https://example.com/mcp' })
-    expect(result.warnings).toEqual([])
+    expect(result.limitations).toEqual([])
   })
 
   it('passes through an sse server', () => {
     const result = agentPlugins.emit(mcpFixtureModel({ demo: { url: 'https://example.com/sse', type: 'sse' } }))
     const mcp = JSON.parse(result.files.find((f) => f.path === 'mcp.json')!.content)
     expect(mcp.mcpServers.demo).toEqual({ type: 'sse', url: 'https://example.com/sse' })
-    expect(result.warnings).toEqual([])
+    expect(result.limitations).toEqual([])
   })
 
   it('skips a shell-string command with a warning', () => {
     const result = agentPlugins.emit(mcpFixtureModel({ demo: { command: 'node x.js' } }))
     const mcp = JSON.parse(result.files.find((f) => f.path === 'mcp.json')!.content)
     expect(mcp.mcpServers.demo).toBeUndefined()
-    expect(result.warnings).toEqual(['mcp server "demo" command is not a single executable token; skipped'])
+    expect(result.limitations.map((limitation) => limitation.message)).toEqual(['mcp server "demo" command is not a single executable token; skipped'])
   })
 
   it('drops a reserved PLUGIN_ROOT env key with a warning but keeps the server', () => {
@@ -102,7 +95,7 @@ describe('agent-plugins-1.0 mcp server translation', () => {
     )
     const mcp = JSON.parse(result.files.find((f) => f.path === 'mcp.json')!.content)
     expect(mcp.mcpServers.demo).toEqual({ type: 'stdio', command: 'node', env: { OTHER: 'y' } })
-    expect(result.warnings).toEqual(['mcp server "demo" env key "PLUGIN_ROOT" is reserved by Agent Plugins; dropped'])
+    expect(result.limitations.map((limitation) => limitation.message)).toEqual(['mcp server "demo" env key "PLUGIN_ROOT" is reserved by Agent Plugins; dropped'])
   })
 
   it('normalizes a bare "." cwd to "./" so the emitted mcp.json validates', () => {
@@ -128,7 +121,7 @@ describe('agent-plugins-1.0 mcp server translation', () => {
     const result = agentPlugins.emit(mcpFixtureModel({ demo: {} }))
     const mcp = JSON.parse(result.files.find((f) => f.path === 'mcp.json')!.content)
     expect(mcp.mcpServers.demo).toBeUndefined()
-    expect(result.warnings).toEqual(['mcp server "demo" could not be translated to Agent Plugins format; skipped'])
+    expect(result.limitations.map((limitation) => limitation.message)).toEqual(['mcp server "demo" could not be translated to Agent Plugins format; skipped'])
   })
 })
 
@@ -142,7 +135,7 @@ describe('agent-plugins-1.0 name gate', () => {
     const badModel = buildModel(dir)
     const result = agentPlugins.emit(badModel)
     expect(result.files).toEqual([])
-    expect(result.warnings).toEqual([
+    expect(result.limitations.map((limitation) => limitation.message)).toEqual([
       'plugin name "bad--name" is not valid under the Agent Plugins 1.0 spec; skipping agent-plugins-1.0 output',
     ])
   })
@@ -172,7 +165,7 @@ describe('agent-plugins-1.0 with malformed mcpServers', () => {
     const badMcpModel = buildModel(dir)
     const result = agentPlugins.emit(badMcpModel)
     expect(result.files.some((f) => f.path === 'mcp.json')).toBe(false)
-    expect(result.warnings).toContain('mcp config has no mcpServers object; nothing translated for agent-plugins-1.0')
+    expect(result.limitations.map((limitation) => limitation.message)).toContain('mcp config has no mcpServers object; nothing translated for agent-plugins-1.0')
   })
 })
 
@@ -185,7 +178,7 @@ describe('agent-plugins-1.0 with a non-default skills path', () => {
     )
     const customModel = buildModel(dir)
     const result = agentPlugins.emit(customModel)
-    expect(result.warnings).toContain(
+    expect(result.limitations.map((limitation) => limitation.message)).toContain(
       'agent-plugins-1.0 requires skills/ at the plugin root; my-skills will not be discovered',
     )
   })
@@ -203,7 +196,7 @@ describe('agent-plugins-1.0 mcp.json collision with the source MCP config', () =
     const result = agentPlugins.emit(collisionModel)
     expect(result.files.some((f) => f.path === 'mcp.json')).toBe(false)
     expect(result.files.some((f) => f.path === 'plugin.json')).toBe(true)
-    expect(result.warnings).toEqual([
+    expect(result.limitations.map((limitation) => limitation.message)).toEqual([
       'mcp.json is occupied by the source MCP config (components.mcp); agent-plugins-1.0 mcp output skipped — rename the source to .mcp.json',
     ])
   })
@@ -232,6 +225,6 @@ describe('agent-plugins-1.0 with harnesses[agent-plugins-1.0].manifest.extension
     const result = agentPlugins.emit(extModel)
     const manifest = JSON.parse(result.files.find((f) => f.path === 'plugin.json')!.content)
     expect(manifest.extensions).toEqual({ 'com.example.demo': { enabled: true } })
-    expect(result.warnings).toContain('extensions entry "com.example.bad" is not an object; dropped')
+    expect(result.limitations.map((limitation) => limitation.message)).toContain('extensions entry "com.example.bad" is not an object; dropped')
   })
 })

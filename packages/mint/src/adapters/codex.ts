@@ -1,7 +1,8 @@
 import { deepMerge } from '../fileset.js'
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmitResult } from './types.js'
+import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { baseManifestFields, json } from './shared.js'
 
 function pluginManifest(model: PluginModel): Record<string, unknown> {
@@ -63,29 +64,21 @@ function installDoc(_model: PluginModel): string {
 
 export const codex: HarnessAdapter = {
   name: 'codex',
-  support: {
-    skills: 'full',
-    commands: 'none',
-    agents: 'none',
-    hooks: 'none',
-    mcp: 'none',
-    bootstrap: 'partial',
-  },
   installDoc,
-  emit(model: PluginModel): EmitResult {
-    const warnings: string[] = []
+  emit(model: PluginModel) {
+    const limitations: EmissionLimitation[] = []
     const files: GeneratedFile[] = [
       { path: '.codex-plugin/plugin.json', content: json(pluginManifest(model)) },
       { path: '.agents/plugins/marketplace.json', content: json(marketplaceDescriptor(model)) },
     ]
 
     if (model.hooks !== undefined) {
-      warnings.push('hooks are not supported on codex; bootstrap relies on native skill discovery')
+      limitations.push({ code: 'COMPONENT_OMITTED', component: 'hooks', message: 'hooks are not supported on codex; bootstrap relies on native skill discovery' })
     }
-    if (model.commands.length) warnings.push('commands are not supported on codex (no plugin-shipped prompt mechanism)')
-    if (model.agents.length) warnings.push('agents are not emitted for codex in v1')
-    if (model.mcp !== undefined) warnings.push('mcp servers are not emitted for codex in v1')
+    if (model.commands.length) limitations.push({ code: 'COMPONENT_OMITTED', component: 'commands', message: 'commands are not supported on codex (no plugin-shipped prompt mechanism)' })
+    if (model.agents.length) limitations.push({ code: 'COMPONENT_OMITTED', component: 'agents', message: 'agents are not emitted for codex in v1' })
+    if (model.mcp !== undefined) limitations.push({ code: 'COMPONENT_OMITTED', component: 'mcp', message: 'mcp servers are not emitted for codex in v1' })
 
-    return { files, warnings }
+    return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('codex', model, files) }
   },
 }
