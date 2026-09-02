@@ -867,3 +867,97 @@ describe('chrome-process: CHROME_WS_BROWSER overrides binary auto-detection', ()
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// CR-057: on a caller-specified port, the readiness probe must verify it is
+// talking to the Chrome we just spawned — not just that *something* answers
+// on that port. Without an expectedPid, a foreign browser already listening
+// on an explicitly requested port (`--port` / CHROME_WS_PORT) satisfies the
+// probe even though our own spawn failed to bind, and startChrome reports
+// success while meta.json records the failed spawn's pid against a port
+// someone else owns.
+// ---------------------------------------------------------------------------
+
+describe('chrome-process: startChrome readiness probe on an explicit port (CR-057)', () => {
+  const HELPERS_PATH = require.resolve('../../skills/browsing/lib/chrome-launcher-helpers.js');
+  const EXPLICIT_PORT = 19222;
+  const SPAWNED_PID = 424242;
+
+  it('scopes the post-spawn isPortAlive probe to the pid it spawned, not a bare port check', async () => {
+    const origHelpers = require.cache[HELPERS_PATH];
+    const origCp = require.cache['child_process'];
+    const origWsBrowser = process.env.CHROME_WS_BROWSER;
+    // Bypass the hard-coded Chrome path auto-detection (as the spawn-failure
+    // test above does) — /tmp always exists.
+    process.env.CHROME_WS_BROWSER = '/tmp';
+
+    const isPortAliveCalls = [];
+    const fakeHelpers = {
+      readProfileMeta: () => null,
+      writeProfileMeta: () => {},
+      clearProfileMeta: () => {},
+      // Always answers "alive" — a foreign Chrome (or anything) already on
+      // the port would do exactly this regardless of who we spawned. The
+      // defect under test is not whether isPortAlive itself works (that has
+      // its own unit tests); it's whether startChrome ever tells it who it
+      // is checking for.
+      isPortAlive: async (...args) => { isPortAliveCalls.push(args); return true; },
+      findAvailablePort: async () => { throw new Error('must not be called: port was explicit'); },
+      findPidOnPort: () => null,
+      findOrphanChromeForProfile: () => { throw new Error('must not be called: port was explicit'); },
+      buildChromeArgs: () => ['--fake'],
+      getChromeProfileDir: () => '/tmp/fake-profile-cr057',
+    };
+    require.cache[HELPERS_PATH] = {
+      id: HELPERS_PATH, filename: HELPERS_PATH, loaded: true, exports: fakeHelpers,
+    };
+    require.cache['child_process'] = {
+      id: 'child_process', filename: 'child_process', loaded: true,
+      exports: { spawn: () => makeFakeProc({ pid: SPAWNED_PID }) },
+    };
+    delete require.cache[CHROME_PROCESS_PATH];
+    const { attachChromeProcess: fresh } = require(CHROME_PROCESS_PATH);
+
+    try {
+      const state = {
+        hostOverride: { getHost: () => '127.0.0.1', getPort: () => 9222 },
+        activePort: 9222,
+        chromeHeadless: true,
+        chromeProcess: null,
+        chromeProfileName: 'test-cr057',
+        chromeUserDataDir: '/tmp/fake-profile-cr057',
+      };
+      const { startChrome } = fresh({
+        state,
+        chromeHttp: async () => ({}),
+        getTabs: async () => [],
+        newTab: async () => ({}),
+      });
+
+      const result = await startChrome(true, null, EXPLICIT_PORT);
+      assert.equal(result, true, 'startChrome should report success once its own probe is satisfied');
+
+      // Every readiness check against the chosen port, once a Chrome has been
+      // spawned, must name the pid it is vouching for.
+      const portChecks = isPortAliveCalls.filter(([, port]) => port === EXPLICIT_PORT);
+      assert.ok(portChecks.length > 0, 'expected at least one isPortAlive check against the explicit port');
+      for (const call of portChecks) {
+        assert.equal(
+          call[2],
+          SPAWNED_PID,
+          `isPortAlive(${JSON.stringify(call)}) must be scoped to the pid startChrome spawned, ` +
+            `otherwise a foreign Chrome already on the port satisfies the probe`
+        );
+      }
+    } finally {
+      if (origHelpers) { require.cache[HELPERS_PATH] = origHelpers; }
+      else { delete require.cache[HELPERS_PATH]; }
+      if (origCp) { require.cache['child_process'] = origCp; }
+      else { delete require.cache['child_process']; }
+      delete require.cache[CHROME_PROCESS_PATH];
+      require(CHROME_PROCESS_PATH);
+      if (origWsBrowser === undefined) { delete process.env.CHROME_WS_BROWSER; }
+      else { process.env.CHROME_WS_BROWSER = origWsBrowser; }
+    }
+  });
+});
