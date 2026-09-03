@@ -5,7 +5,7 @@
     {
       "name": "moe-statusline",
       "description": "Configures a vendored, MIT-licensed Claude Code statusline (ccstatusline) automatically on session start.",
-      "version": "0.1.0",
+      "version": "0.1.2",
       "source": "./",
       "author": {
         "name": "Zak Keown",

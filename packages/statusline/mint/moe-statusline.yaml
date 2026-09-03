@@ -7,7 +7,7 @@
 # copied into the plugin.
 
 name: moe-statusline
-version: 0.1.0
+version: 0.1.2
 description: Configures a vendored, MIT-licensed Claude Code statusline (ccstatusline) automatically on session start.
 author:
   name: Zak Keown

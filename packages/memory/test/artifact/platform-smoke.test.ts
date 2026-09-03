@@ -22,9 +22,9 @@ function readRuntimeMatrix(): RuntimeMatrix {
   }
 
   return {
-    node: JSON.parse(nodeMatch[1]) as string[],
-    native: JSON.parse(nativeMatch[1]) as string[],
-    databaseOnly: JSON.parse(dbOnlyMatch[1]) as string[],
+    node: JSON.parse(nodeMatch[1]!) as string[],
+    native: JSON.parse(nativeMatch[1]!) as string[],
+    databaseOnly: JSON.parse(dbOnlyMatch[1]!) as string[],
   };
 }
 
