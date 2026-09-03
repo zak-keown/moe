@@ -42,7 +42,8 @@ plans:
   - id: rollback-recovery
     plan: docs/moe/plans/2026-09-02-moe-memory-06-rollback-recovery.md
     depends_on: [harness-integration]
-    status: pending
+    status: done
+    commits: bc6e544..aa41286
   - id: release-qualification
     plan: docs/moe/plans/2026-09-02-moe-memory-07-release-qualification.md
     depends_on: [rollback-recovery]
