@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { renderClaudeCandidate } from "./harnesses/claude.mjs";
-import { renderCodexPermission } from "./harnesses/codex.mjs";
+import { renderCodexPermission, renderCodexPermissionBody } from "./harnesses/codex.mjs";
 import { classifyFilesystem } from "./safety/filesystem.mjs";
 import { classifyMcp } from "./safety/mcp.mjs";
 import { classifyNetwork } from "./safety/network.mjs";
@@ -68,8 +68,8 @@ function compareCandidates(left, right) {
     (right.rootSessionCount ?? 0) - (left.rootSessionCount ?? 0) ||
     Date.parse(right.lastSeen ?? 0) - Date.parse(left.lastSeen ?? 0) ||
     (right.successfulObservationCount ?? 0) - (left.successfulObservationCount ?? 0) ||
-    canonicalRule(left.rule).localeCompare(canonicalRule(right.rule)) ||
-    String(left.id ?? "").localeCompare(String(right.id ?? ""))
+    compareCodeUnits(canonicalRule(left.rule), canonicalRule(right.rule)) ||
+    compareCodeUnits(String(left.id ?? ""), String(right.id ?? ""))
   );
 }
 
@@ -87,20 +87,20 @@ export async function buildCandidates(records, context = {}) {
     if (policy?.eligible) classified.push({ record, policy });
   }
 
-  const projectGroups = groupClassified(classified, true);
+  const projectGroups = groupClassifiedByAuthority(classified, "project", context);
   const candidates = [];
   const dispositions = [];
   const operationHasProjectCandidate = new Set();
-  for (const [, group] of [...projectGroups].sort(([left], [right]) => left.localeCompare(right))) {
+  for (const [, group] of [...projectGroups].sort(([left], [right]) => compareCodeUnits(left, right))) {
     if (isSuppressed(group)) continue;
     const successful = group.filter(({ record }) => record.outcome === "success");
     if (distinct(successful, ({ record }) => record.rootSessionId).size < 2) continue;
-    operationHasProjectCandidate.add(operationKey(group[0]));
+    operationHasProjectCandidate.add(authorityKey(group[0], "global", context, false));
     addRenderedCandidate(candidates, dispositions, candidateFor(successful, group[0].policy, "project"), context);
   }
 
-  const operationGroups = groupClassified(classified, false);
-  for (const [groupKey, group] of [...operationGroups].sort(([left], [right]) => left.localeCompare(right))) {
+  const operationGroups = groupClassifiedByAuthority(classified, "global", context);
+  for (const [groupKey, group] of [...operationGroups].sort(([left], [right]) => compareCodeUnits(left, right))) {
     if (operationHasProjectCandidate.has(groupKey) || !group.every(({ policy }) => policy.globalSafe)) continue;
     if (isSuppressed(group)) continue;
     const successful = group.filter(({ record }) => record.outcome === "success");
@@ -122,12 +122,12 @@ export async function buildCandidates(records, context = {}) {
       ),
     );
   }
-  dispositions.sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+  dispositions.sort((left, right) => compareCodeUnits(JSON.stringify(left), JSON.stringify(right)));
   return { suggestions, dispositions };
 }
 
 function compareEvidence(left, right) {
-  return stableJson(left).localeCompare(stableJson(right));
+  return compareCodeUnits(stableJson(left), stableJson(right));
 }
 
 async function classifyRecord(record, context) {
@@ -153,12 +153,10 @@ function harnessContext(context, harness, projectRoot) {
   };
 }
 
-function groupClassified(classified, includeProject) {
+function groupClassifiedByAuthority(classified, scope, context) {
   const groups = new Map();
   for (const item of classified) {
-    const key = includeProject
-      ? `${operationKey(item)}\0${item.record.projectRoot}`
-      : operationKey(item);
+    const key = authorityKey(item, scope, context, scope === "project");
     const group = groups.get(key) ?? [];
     group.push(item);
     groups.set(key, group);
@@ -166,8 +164,31 @@ function groupClassified(classified, includeProject) {
   return groups;
 }
 
-function operationKey({ record, policy }) {
-  return [record.harness, record.class, stableJson(policy.normalized)].join("\0");
+function authorityKey(item, scope, context, includeProject) {
+  const authority = canonicalAuthorityRule(item, scope, context) ??
+    `unrenderable:${stableJson(item.policy.normalized)}`;
+  return [
+    item.record.harness,
+    item.record.class,
+    scope,
+    authority,
+    ...(includeProject ? [item.record.projectRoot] : []),
+  ].join("\0");
+}
+
+function canonicalAuthorityRule({ record, policy }, scope, context) {
+  const candidate = {
+    harness: record.harness,
+    class: record.class,
+    scope,
+    ...(scope === "project" ? { projectRoot: record.projectRoot } : {}),
+    operation: policy.normalized,
+  };
+  const renderContext = harnessContext(context, record.harness, record.projectRoot);
+  if (record.harness === "claude") {
+    return renderClaudeCandidate(candidate, renderContext)?.rule ?? null;
+  }
+  return renderCodexPermissionBody(candidate, renderContext);
 }
 
 function isSuppressed(group) {
@@ -209,10 +230,10 @@ function addRenderedCandidate(candidates, dispositions, candidate, context) {
     candidate.harness,
     candidate.projectRoot ?? context.projectRoot ?? "",
   );
-  const canonical = candidate.harness === "claude"
-    ? renderClaudeCandidate(candidate, renderContext)
-    : renderCodexPermission({ ...candidate, id: "" }, renderContext);
-  if (!canonical) {
+  const canonicalRuleValue = candidate.harness === "claude"
+    ? renderClaudeCandidate(candidate, renderContext)?.rule
+    : renderCodexPermissionBody(candidate, renderContext);
+  if (!canonicalRuleValue) {
     dispositions.push({
       harness: candidate.harness,
       class: candidate.class,
@@ -221,11 +242,20 @@ function addRenderedCandidate(candidates, dispositions, candidate, context) {
     });
     return;
   }
-  const id = candidateId({ ...candidate, rule: canonical.rule });
+  const id = candidateId({ ...candidate, rule: canonicalRuleValue });
   const rendered = candidate.harness === "claude"
-    ? { ...canonical, id }
+    ? renderClaudeCandidate({ ...candidate, id }, renderContext)
     : renderCodexPermission({ ...candidate, id }, renderContext);
-  if (rendered) candidates.push(rendered);
+  if (rendered) {
+    candidates.push(rendered);
+  } else {
+    dispositions.push({
+      harness: candidate.harness,
+      class: candidate.class,
+      scope: candidate.scope,
+      disposition: "no narrow renderer",
+    });
+  }
 }
 
 function distinct(values, select) {
@@ -244,4 +274,8 @@ function sortValue(value) {
       .sort()
       .map((key) => [key, sortValue(value[key])]),
   );
+}
+
+function compareCodeUnits(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
 }

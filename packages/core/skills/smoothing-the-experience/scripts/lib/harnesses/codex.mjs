@@ -509,12 +509,54 @@ function isNonEmptyString(value) {
  * @param {object} [context]
  */
 export function renderCodexPermission(candidate, context = {}) {
+  const canonical = codexPermissionBody(candidate, context);
+  if (!canonical) return null;
+  const projectRoot = candidate.projectRoot ?? context.projectRoot;
+  const layerState = candidate.layerState ?? context.layerState;
+  const codexHome = candidate.codexHome ?? context.codexHome;
+  if (
+    candidate.scope === "project" && !isNonEmptyString(projectRoot) ||
+    candidate.scope === "global" && !isNonEmptyString(codexHome)
+  ) {
+    return null;
+  }
+  const destination = codexDestination({
+    scope: candidate.scope,
+    codexHome,
+    projectRoot,
+    layerState,
+  });
+  if (!destination) return null;
+
+  const rule = `# moe-smoothing:${candidate.id}\n${canonical.rule}`;
+  return {
+    ...candidate,
+    operation: canonical.operation,
+    rule,
+    destination: destination.path,
+    restartRequired: true,
+  };
+}
+
+/**
+ * Produce the metadata-free rule body used to group observed operations by
+ * the authority they would grant. This helper deliberately performs no layer
+ * or destination decision; only renderCodexPermission may produce a selectable
+ * candidate.
+ *
+ * @param {object} candidate
+ * @param {object} [context]
+ */
+export function renderCodexPermissionBody(candidate, context = {}) {
+  return codexPermissionBody(candidate, context)?.rule ?? null;
+}
+
+function codexPermissionBody(candidate, context = {}) {
   if (!isObject(candidate) || candidate.harness && candidate.harness !== "codex") return null;
   if (candidate.class !== "shell" || !["project", "global"].includes(candidate.scope)) return null;
-  const projectRoot = candidate.projectRoot ?? context.projectRoot;
   const classified = classifyShell(candidate.operation, {
     harness: "codex",
-    projectRoot: projectRoot ?? "",
+    projectRoot: candidate.projectRoot ?? context.projectRoot ?? "",
     realpath: context.realpath,
   });
   if (!classified.eligible) return null;
@@ -522,29 +564,10 @@ export function renderCodexPermission(candidate, context = {}) {
   const catalog = PROJECT_SHELL_CATALOG.get(command);
   if (!catalog?.suffixSafe) return null;
   if (candidate.scope === "global" && !GLOBAL_SHELL_CATALOG.has(command)) return null;
-
-  const layerState = candidate.layerState ?? context.layerState;
-  const codexHome = candidate.codexHome ?? context.codexHome;
-  let destination;
-  if (layerState !== undefined) {
-    destination = codexDestination({
-      scope: candidate.scope,
-      codexHome,
-      projectRoot,
-      layerState,
-    });
-    if (!destination) return null;
-  }
-
   const pattern = catalog.prefix.map((token) => JSON.stringify(token)).join(", ");
-  const marker = isNonEmptyString(candidate.id) ? `# moe-smoothing:${candidate.id}\n` : "";
-  const rule = `${marker}prefix_rule(\n    pattern = [${pattern}],\n    decision = "allow",\n    justification = "Moe smoothing: repeated safe use",\n)\n`;
   return {
-    ...candidate,
     operation: classified.normalized,
-    rule,
-    ...(destination ? { destination: destination.path } : {}),
-    restartRequired: true,
+    rule: `prefix_rule(\n    pattern = [${pattern}],\n    decision = "allow",\n    justification = "Moe smoothing: repeated safe use",\n)\n`,
   };
 }
 
@@ -572,7 +595,7 @@ export function renderCodexRules(sourceContents, selected) {
   }
   const sections = [
     sourceContents.trimEnd(),
-    ...[...byId].sort(([left], [right]) => left.localeCompare(right)).map(([, rule]) => rule),
+    ...[...byId].sort(([left], [right]) => compareCodeUnits(left, right)).map(([, rule]) => rule),
   ].filter(Boolean);
   return sections.length === 0 ? "" : `${sections.join("\n\n")}\n`;
 }
@@ -691,20 +714,19 @@ export async function validateCodexReplacement({
   }
   try {
     await fsOps.writeFile(validationPath, contents, { flag: "wx", mode: 0o600 });
-    const activeRules = [...ruleFiles, validationPath];
-    for (const witness of normalizedWitnesses) {
-      const result = await inspectCodexDecision({
-        ruleFiles: activeRules,
-        argv: witness.argv,
+    await validateWitnessSet({
+      ruleFiles: [validationPath],
+      witnesses: normalizedWitnesses,
+      codexBin,
+      runExecpolicy,
+    });
+    if (ruleFiles.length > 0) {
+      await validateWitnessSet({
+        ruleFiles: [...ruleFiles, validationPath],
+        witnesses: normalizedWitnesses,
         codexBin,
         runExecpolicy,
       });
-      if (witness.expectation === "match" && result.decision !== "allow") {
-        throw new Error("Codex positive witness did not match the proposed rule");
-      }
-      if (witness.expectation === "not_match" && result.decision !== "not_match") {
-        throw new Error("Codex negative witness matched the proposed rule");
-      }
     }
   } finally {
     try {
@@ -719,15 +741,54 @@ function normalizeWitnesses(witnesses) {
   if (!Array.isArray(witnesses) || witnesses.length === 0) {
     throw new TypeError("Codex validation witnesses are required");
   }
-  return witnesses.map((witness) => {
-    if (Array.isArray(witness)) return { argv: witness, expectation: "match" };
+  const normalized = witnesses.map((witness) => {
     if (
       !isObject(witness) ||
       !Array.isArray(witness.argv) ||
+      witness.argv.length === 0 ||
+      !witness.argv.every(isNonEmptyString) ||
       !["match", "not_match"].includes(witness.expectation)
     ) {
       throw new TypeError("invalid Codex validation witness");
     }
-    return witness;
+    return { argv: [...witness.argv], expectation: witness.expectation };
   });
+  const positives = normalized.filter(({ expectation }) => expectation === "match");
+  const negatives = normalized.filter(({ expectation }) => expectation === "not_match");
+  if (
+    positives.length === 0 ||
+    negatives.length === 0 ||
+    !negatives.some((negative) =>
+      positives.some(
+        (positive) =>
+          positive.argv[0] === negative.argv[0] &&
+          (positive.argv.length !== negative.argv.length ||
+            positive.argv.some((token, index) => token !== negative.argv[index])),
+      ),
+    )
+  ) {
+    throw new TypeError("Codex validation requires positive and adjacent negative witnesses");
+  }
+  return normalized;
+}
+
+async function validateWitnessSet({ ruleFiles, witnesses, codexBin, runExecpolicy }) {
+  for (const witness of witnesses) {
+    const result = await inspectCodexDecision({
+      ruleFiles,
+      argv: witness.argv,
+      codexBin,
+      runExecpolicy,
+    });
+    if (witness.expectation === "match" && result.decision !== "allow") {
+      throw new Error("Codex positive witness did not match the proposed rule");
+    }
+    if (witness.expectation === "not_match" && result.decision !== "not_match") {
+      throw new Error("Codex negative witness matched the proposed rule");
+    }
+  }
+}
+
+function compareCodeUnits(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
 }
