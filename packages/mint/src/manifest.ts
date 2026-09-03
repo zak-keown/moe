@@ -3,18 +3,21 @@ import { readFileSync, existsSync, mkdirSync, writeFileSync, statSync } from 'no
 import { dirname, join } from 'node:path'
 import { ConfigError } from './config.js'
 import { contentBytes, type FileContent, type FileSet } from './fileset.js'
+import type { PersistedSkillSource } from './model.js'
 
 export const MANIFEST_PATH = '.moe-mint/manifest.json'
 
 export interface ManifestEntry {
   sha256: string
   executable?: true
+  mode?: number
 }
 
 export interface GenerationManifest {
   schema: 1
   tool: string
   files: Record<string, ManifestEntry>
+  skillSources?: Record<string, PersistedSkillSource>
 }
 
 export function sha256(content: FileContent): string {
@@ -23,6 +26,10 @@ export function sha256(content: FileContent): string {
 
 function isExecutable(path: string): boolean {
   return (statSync(path).mode & 0o111) !== 0
+}
+
+function permissionMode(path: string): number {
+  return statSync(path).mode & 0o777
 }
 
 export function loadManifest(root: string): GenerationManifest | undefined {
@@ -41,15 +48,28 @@ export function loadManifest(root: string): GenerationManifest | undefined {
   return m
 }
 
-export function saveManifest(root: string, files: FileSet<FileContent>, toolVersion: string): void {
+export function saveManifest(
+  root: string,
+  files: FileSet<FileContent>,
+  toolVersion: string,
+  skillSources: Record<string, PersistedSkillSource> = {},
+): void {
   const manifest: GenerationManifest = {
     schema: 1,
     tool: `moe-mint@${toolVersion}`,
     files: Object.fromEntries(
       [...files]
         .sort((a, b) => (a.path < b.path ? -1 : 1))
-        .map((f) => [f.path, { sha256: sha256(f.content), ...(f.executable ? { executable: true as const } : {}) }]),
+        .map((f) => [f.path, {
+          sha256: sha256(f.content),
+          ...(f.mode !== undefined
+            ? { mode: f.mode }
+            : f.executable
+              ? { executable: true as const }
+              : {}),
+        }]),
     ),
+    ...(Object.keys(skillSources).length > 0 ? { skillSources } : {}),
   }
   const abs = join(root, MANIFEST_PATH)
   mkdirSync(dirname(abs), { recursive: true })
@@ -75,7 +95,11 @@ export function checkDrift(root: string, opts: { checkExecBit?: boolean } = {}):
     if (!existsSync(filePath)) missing.push(path)
     else if (
       sha256(readFileSync(filePath)) !== entry.sha256 ||
-      (checkExecBit && isExecutable(filePath) !== Boolean(entry.executable))
+      (checkExecBit && (
+        entry.mode !== undefined
+          ? permissionMode(filePath) !== entry.mode
+          : isExecutable(filePath) !== Boolean(entry.executable)
+      ))
     )
       modified.push(path)
   }

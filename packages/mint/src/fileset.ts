@@ -7,6 +7,7 @@ export type FileContent = string | Uint8Array
 export interface GeneratedFile<TContent extends FileContent = string> {
   path: string
   content: TContent
+  mode?: number | undefined
   // Adapters that compute this pass the computed value through unconditionally,
   // so `undefined` has to be assignable under exactOptionalPropertyTypes — see
   // the dedupe cases in test/generate.test.ts, which construct the same shape.
@@ -20,6 +21,16 @@ export function contentBytes(content: FileContent): Buffer {
 
 export function contentEquals(left: FileContent, right: FileContent): boolean {
   return contentBytes(left).equals(contentBytes(right))
+}
+
+export function generatedFileMode(file: Pick<GeneratedFile<FileContent>, 'mode' | 'executable'>): number {
+  if (file.mode !== undefined) {
+    if (!Number.isInteger(file.mode) || file.mode < 0 || file.mode > 0o777) {
+      throw new ConfigError(`generated file mode must be an integer from 0000 through 0777: ${file.mode}`)
+    }
+    return file.mode
+  }
+  return file.executable ? 0o755 : 0o644
 }
 
 // Refuse to write through a symlink planted anywhere between rootAbs and
@@ -83,7 +94,7 @@ export function writeFileSet(root: string, files: FileSet<FileContent>): void {
     } finally {
       closeSync(fd)
     }
-    chmodSync(abs, file.executable ? 0o755 : 0o644)
+    chmodSync(abs, generatedFileMode(file))
   }
 }
 

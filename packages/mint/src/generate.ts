@@ -1,8 +1,9 @@
 import { rmSync, rmdirSync, readdirSync, readFileSync, existsSync, statSync, lstatSync } from 'node:fs'
 import { dirname, resolve, isAbsolute, sep } from 'node:path'
-import { buildModel } from './model.js'
+import { buildModel, capturePersistedSkillSources } from './model.js'
 import {
   contentEquals,
+  generatedFileMode,
   writeFileSet,
   type FileContent,
   type FileSet,
@@ -80,7 +81,7 @@ function mergeFiles(
     if (existing) {
       const identical =
         contentEquals(existing.file.content, file.content) &&
-        Boolean(existing.file.executable) === Boolean(file.executable)
+        generatedFileMode(existing.file) === generatedFileMode(file)
       if (!identical) {
         throw new ConfigError(`adapters "${existing.owner}" and "${owner}" both emit ${file.path}`)
       }
@@ -95,7 +96,17 @@ export function generate(
   adapterList: HarnessAdapter[] = adapters,
   opts: { force?: boolean } = {},
 ): GenerateResult {
-  const model = buildModel(root)
+  const warnings: string[] = []
+  let prior: GenerationManifest | undefined
+  try {
+    prior = loadManifest(root)
+  } catch (e) {
+    if (!(e instanceof ConfigError)) throw e
+    warnings.push(`ignoring unreadable generation manifest (${e.message}); skipping prune for this run`)
+    prior = undefined
+  }
+
+  const model = buildModel(root, prior?.skillSources)
   const excluded = new Set(model.config.harnesses.exclude)
   const active = adapterList.filter((a) => !excluded.has(a.name))
 
@@ -112,7 +123,6 @@ export function generate(
   // through the same collision, manifest, and writer pipeline as adapter files.
   const renderedSkillFiles = substituteAllSkills(root, model, vocab, active)
 
-  const warnings: string[] = []
   const byPath = new Map<string, { owner: string; file: GeneratedFile<FileContent> }>()
   for (const adapter of active) {
     const adapterModel =
@@ -134,14 +144,6 @@ export function generate(
   // recover by treating this run as if there were no prior manifest at all, and
   // skip pruning (we have no record of what to prune). validate() still fails
   // loudly on the same corruption — regenerating is the recovery path.
-  let prior: GenerationManifest | undefined
-  try {
-    prior = loadManifest(root)
-  } catch (e) {
-    if (!(e instanceof ConfigError)) throw e
-    warnings.push(`ignoring unreadable generation manifest (${e.message}); skipping prune for this run`)
-    prior = undefined
-  }
   const rootAbs = resolve(root)
 
   // A plain `mcp.json` at the plugin root is the Agent Plugins 1.0 on-disk
@@ -245,7 +247,7 @@ export function generate(
   }
 
   writeFileSet(root, files)
-  saveManifest(root, files, TOOL_VERSION)
+  saveManifest(root, files, TOOL_VERSION, capturePersistedSkillSources(root, model))
 
   // README.md is a user file (never a GeneratedFile, never manifest-tracked),
   // so its injection runs after everything else is written and on its own path.
