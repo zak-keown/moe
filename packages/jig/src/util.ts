@@ -26,3 +26,13 @@ export function resolvePrimaryRoot(): string {
   const resolved = resolve(commonDir, "..");
   return git("-C", resolved, "rev-parse", "--show-toplevel");
 }
+
+export function gitIn(cwd: string, ...args: string[]): string {
+  return execFileSync("git", args, { cwd, encoding: "utf-8" }).trim();
+}
+
+export function primaryRoot(cwd: string): string {
+  const commonDir = gitIn(cwd, "rev-parse", "--git-common-dir");
+  const resolved = resolve(cwd, commonDir, "..");
+  return gitIn(resolved, "rev-parse", "--show-toplevel");
+}
