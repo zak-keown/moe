@@ -156,16 +156,6 @@ function installDoc(model: PluginModel): string {
 
 export const claudeCode: HarnessAdapter = Object.freeze({
   name: 'claude-code',
-  support: {
-    skills: 'full',
-    commands: 'full',
-    agents: 'full',
-    hooks: 'full',
-    mcp: 'full',
-    bootstrap: 'full',
-    rules: 'none',
-    variables: 'none',
-  },
   skillsOutputDir: undefined,
   installDoc,
   emit(model: PluginModel) {

@@ -107,18 +107,6 @@ describe('cursor adapter', () => {
     expect(result.emittedCapabilities).toEqual(['skill-discovery', 'hook-execution', 'bootstrap-routing'])
   })
 
-  it('declares expected support levels', () => {
-    expect(cursor.support).toEqual({
-      skills: 'full',
-      commands: 'full',
-      agents: 'full',
-      hooks: 'partial',
-      mcp: 'full',
-      bootstrap: 'full',
-      rules: 'none',
-      variables: 'none',
-    })
-  })
 })
 
 describe('cursor adapter with harnesses.cursor.manifest', () => {
@@ -287,7 +275,7 @@ describe('cursor adapter omits optional manifest fields when model is empty', ()
     const dir = mkdtempSync(join(tmpdir(), 'mint-cursor-empty-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: empty-demo\nversion: 1.0.0\ndescription: empty fixture\nbootstrap: none\n',
+      withV1Policy('name: empty-demo\nversion: 1.0.0\ndescription: empty fixture\nbootstrap: none\n'),
     )
     const emptyModel = buildModel(dir)
     const result = cursor.emit(emptyModel)
@@ -303,7 +291,7 @@ describe('cursor adapter omits optional manifest fields when model is empty', ()
     const dir = mkdtempSync(join(tmpdir(), 'mint-cursor-no-mcp-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: no-mcp-demo\nversion: 1.0.0\ndescription: no mcp fixture\nbootstrap: none\n',
+      withV1Policy('name: no-mcp-demo\nversion: 1.0.0\ndescription: no mcp fixture\nbootstrap: none\n'),
     )
     const noMcpModel = buildModel(dir)
     const result = cursor.emit(noMcpModel)

@@ -11,17 +11,6 @@ import { withV1Policy } from './helpers.js'
 import { parse, stringify } from 'yaml'
 import { TARGET_IDS, type CapabilityId, type TargetId } from '../src/vocabulary.js'
 
-const fullSupport = {
-  skills: 'full',
-  commands: 'full',
-  agents: 'full',
-  hooks: 'full',
-  mcp: 'full',
-  bootstrap: 'full',
-  rules: 'none',
-  variables: 'none',
-} as const
-
 function freshFixture(): string {
   const dir = mkdtempSync(join(tmpdir(), 'mint-gen-'))
   // Exclude the fixture's own moe-mint-vocab.yaml: most tests in this file

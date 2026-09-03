@@ -261,11 +261,14 @@ describe('CLI end-to-end', () => {
       'claude-judge-continuation',
       'governance-marker-check',
       'hooks.json',
+      'jig-review-format-guard',
+      'jig-worktree-guard',
       'moe-completion-evidence',
       'moe-mint',
       'plan-set',
       'plan-set-notice',
       'run-hook.cmd',
+      'task-set',
     ])
   })
 

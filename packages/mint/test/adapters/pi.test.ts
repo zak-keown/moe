@@ -109,18 +109,6 @@ describe('pi adapter', () => {
 
   it('derives capabilities from emitted Pi projection files', () => {
     expect(result.emittedCapabilities).toEqual(['skill-discovery', 'bootstrap-routing'])
-
-  it('declares expected support levels', () => {
-    expect(pi.support).toEqual({
-      skills: 'full',
-      commands: 'none',
-      agents: 'none',
-      hooks: 'none',
-      mcp: 'none',
-      bootstrap: 'full',
-      rules: 'none',
-      variables: 'none',
-    })
   })
 
   it('keeps package.json out of adapter files and contributes complete Pi discovery metadata', () => {

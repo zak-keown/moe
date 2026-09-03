@@ -246,16 +246,6 @@ function installDoc(model: PluginModel): string {
 
 export const opencode: HarnessAdapter = Object.freeze({
   name: 'opencode',
-  support: {
-    skills: 'full',
-    commands: 'full',
-    agents: 'partial',
-    hooks: 'none',
-    mcp: 'none',
-    bootstrap: 'full',
-    rules: 'none',
-    variables: 'none',
-  },
   skillsOutputDir: '.opencode/skills',
   installDoc,
   emit(model: PluginModel) {
