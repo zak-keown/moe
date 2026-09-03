@@ -1,0 +1,17 @@
+{
+  "name": "@bubstack/moe-example",
+  "version": "1.2.3",
+  "description": "Caf\u00e9 plugin\n  keeps intentional spacing",
+  "author": {
+    "name": "Ada Lovelace",
+    "email": "ada@example.com",
+    "url": "https://example.com/ada"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example/moe-example"
+  },
+  "homepage": "https://example.com/moe-example",
+  "keywords": ["plugin", "Mint", "mint"]
+}
