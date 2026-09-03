@@ -33,6 +33,8 @@
       ],
       "inputs": [
         "scripts/mint-plugins.mjs",
+        "scripts/mint-prepare.mjs",
+        "scripts/clean-package-dist.mjs",
         "scripts/lib/mint-diagnostics.mjs",
         "scripts/lib/mint-host-contract.mjs",
         "scripts/lib/mint-generation-transaction.mjs",

@@ -36,6 +36,8 @@ function seedRecoveryFixture(states: readonly RecoveryState[], recovery?: 'old')
   const root = mkdtempSync(join(tmpdir(), 'mint-root-recovery-'))
   mkdirSync(join(root, 'scripts', 'lib'), { recursive: true })
   mkdirSync(join(root, 'bin'), { recursive: true })
+  cpSync(join(WORKSPACE_ROOT, 'scripts', 'clean-package-dist.mjs'), join(root, 'scripts', 'clean-package-dist.mjs'))
+  cpSync(join(WORKSPACE_ROOT, 'scripts', 'mint-prepare.mjs'), join(root, 'scripts', 'mint-prepare.mjs'))
   cpSync(join(WORKSPACE_ROOT, 'scripts', 'mint-recover.mjs'), join(root, 'scripts', 'mint-recover.mjs'))
   cpSync(join(WORKSPACE_ROOT, 'scripts', 'lib', 'mint-diagnostics.mjs'), join(root, 'scripts', 'lib', 'mint-diagnostics.mjs'))
   cpSync(join(WORKSPACE_ROOT, 'scripts', 'lib', 'mint-host-contract.mjs'), join(root, 'scripts', 'lib', 'mint-host-contract.mjs'))
@@ -48,8 +50,28 @@ function seedRecoveryFixture(states: readonly RecoveryState[], recovery?: 'old')
     scripts: { mint: scripts.mint, 'mint:check': scripts['mint:check'] },
   }, null, 2)}\n`)
   const fakeTurbo = join(root, 'bin', 'turbo')
-  writeFileSync(fakeTurbo, '#!/usr/bin/env node\nimport { writeFileSync } from "node:fs"\nwriteFileSync("turbo-ran", "yes\\n")\n')
+  writeFileSync(fakeTurbo, `#!/usr/bin/env node
+import { existsSync, mkdirSync, writeFileSync } from "node:fs"
+const packages = ["memory", "glass", "crew", "statusline"]
+for (const packageName of packages) {
+  const dist = \`packages/\${packageName}/dist\`
+  for (const stale of ["stale.js.map", "stale.d.ts.map", "obsolete.js"]) {
+    if (existsSync(\`\${dist}/\${stale}\`)) throw new Error(\`stale output reached Turbo: \${dist}/\${stale}\`)
+  }
+  mkdirSync(dist, { recursive: true })
+  writeFileSync(\`\${dist}/index.js\`, "cache-restored\\n")
+}
+writeFileSync("turbo-ran", "yes\\n")
+`)
   chmodSync(fakeTurbo, 0o755)
+
+  for (const packageName of ['memory', 'glass', 'crew', 'statusline']) {
+    const dist = join(root, 'packages', packageName, 'dist')
+    mkdirSync(dist, { recursive: true })
+    writeFileSync(join(dist, 'stale.js.map'), '{}\n')
+    writeFileSync(join(dist, 'stale.d.ts.map'), '{}\n')
+    writeFileSync(join(dist, 'obsolete.js'), 'obsolete\n')
+  }
 
   for (const [index, target] of RECOVERY_TARGETS.entries()) {
     const state = states[index]
@@ -155,7 +177,7 @@ describe('CLI end-to-end', () => {
     { name: 'fully committed', states: ['committed', 'committed', 'committed'] as const, expected: 'new' },
     { name: 'stale complete', states: ['clean', 'clean', 'clean'] as const, expected: 'new' },
     { name: 'interrupted old cleanup', states: ['clean', 'unstarted', 'unstarted'] as const, recovery: 'old' as const, expected: 'old' },
-  ])('root mint recovers a $name journal before Turbo build or staging', ({ states, recovery, expected }) => {
+  ])('root mint recovers a $name journal, cleans runtime dist, then permits a Turbo cache restore', ({ states, recovery, expected }) => {
     const root = seedRecoveryFixture(states, recovery)
 
     const result = runRootMint(root)
@@ -171,6 +193,13 @@ describe('CLI end-to-end', () => {
       expect(existsSync(join(root, target.next))).toBe(false)
       expect(existsSync(join(root, target.backup))).toBe(false)
     }
+    for (const packageName of ['memory', 'glass', 'crew', 'statusline']) {
+      const dist = join(root, 'packages', packageName, 'dist')
+      expect(readFileSync(join(dist, 'index.js'), 'utf8')).toBe('cache-restored\n')
+      expect(existsSync(join(dist, 'stale.js.map'))).toBe(false)
+      expect(existsSync(join(dist, 'stale.d.ts.map'))).toBe(false)
+      expect(existsSync(join(dist, 'obsolete.js'))).toBe(false)
+    }
   })
 
   it('root mint:check stops an invalid journal before Turbo without labeling it projection drift', () => {
@@ -180,9 +209,17 @@ describe('CLI end-to-end', () => {
     const result = runRootMintCheck(root)
 
     expect(result.status).toBe(1)
-    expect(result.stderr).toContain('Mint recovery failed')
+    expect(result.stderr).toContain('Mint preparation failed')
+    expect(result.stderr).toContain('code: GENERATION_TRANSACTION_UNRECOVERABLE')
+    expect(result.stderr).toContain('paths: .moe-mint-generation-recovery.json')
+    expect(result.stderr).toContain('action: preserve the journal and outputs')
     expect(result.stdout).not.toContain('Generated plugin projections are not reproducible')
     expect(existsSync(join(root, 'turbo-ran'))).toBe(false)
+    for (const packageName of ['memory', 'glass', 'crew', 'statusline']) {
+      expect(existsSync(join(root, 'packages', packageName, 'dist', 'stale.js.map'))).toBe(true)
+      expect(existsSync(join(root, 'packages', packageName, 'dist', 'stale.d.ts.map'))).toBe(true)
+      expect(existsSync(join(root, 'packages', packageName, 'dist', 'obsolete.js'))).toBe(true)
+    }
   })
 
   it('assemble fails at plugin six without changing one byte of the canonical plugin tree', () => {
