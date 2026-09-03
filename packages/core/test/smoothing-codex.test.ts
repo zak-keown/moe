@@ -50,6 +50,59 @@ describe("Codex rollout decoding", () => {
     expect(result.evidence[0].approvalProvenance).toBe("existing-rule");
   });
 
+  it("does not retroactively apply a later world-state prefix", async () => {
+    const file = await writeTemporaryFixture(
+      [
+        codexMeta("root-a", "2026-09-01T12:00:00.000Z"),
+        codexCommand("2026-09-01T12:00:01.000Z"),
+        codexWorldState("2026-09-01T12:00:02.000Z", ["git", "status"]),
+      ].join("\n"),
+    );
+    const result = await readCodexSessions({
+      files: [file],
+      ...readerOptions,
+      existingPrefixes: [],
+    });
+    expect(result.evidence[0].approvalProvenance).toBe("unknown");
+  });
+
+  it("does not apply a different root session's approved prefix", async () => {
+    const evidenceFile = await writeTemporaryFixture(
+      [
+        codexMeta("root-a", "2026-09-01T12:00:00.000Z"),
+        codexCommand("2026-09-01T12:00:02.000Z"),
+      ].join("\n"),
+    );
+    const prefixFile = await writeTemporaryFixture(
+      [
+        codexMeta("root-b", "2026-09-01T12:00:00.000Z"),
+        codexWorldState("2026-09-01T12:00:01.000Z", ["git", "status"]),
+      ].join("\n"),
+    );
+    const result = await readCodexSessions({
+      files: [evidenceFile, prefixFile],
+      ...readerOptions,
+      existingPrefixes: [],
+    });
+    expect(result.evidence[0].approvalProvenance).toBe("unknown");
+  });
+
+  it("uses a matching prefix already captured for the same root session", async () => {
+    const file = await writeTemporaryFixture(
+      [
+        codexMeta("root-a", "2026-09-01T12:00:00.000Z"),
+        codexWorldState("2026-09-01T12:00:01.000Z", ["git", "status"]),
+        codexCommand("2026-09-01T12:00:02.000Z"),
+      ].join("\n"),
+    );
+    const result = await readCodexSessions({
+      files: [file],
+      ...readerOptions,
+      existingPrefixes: [],
+    });
+    expect(result.evidence[0].approvalProvenance).toBe("existing-rule");
+  });
+
   it("decodes structural legacy shell, filesystem, network, and MCP records without output", async () => {
     const result = await readCodexSessions({
       files: [legacyFixture],
@@ -177,7 +230,48 @@ describe("Codex App Server layer proof", () => {
       }),
     ).toBeNull();
   });
+
+  it.each([
+    ["project", { trustedProjectRoots: ["/fixture/repo-a"] }],
+    ["global", { userLayerEnabled: true }],
+  ] as const)("does not trust forged %s layer-state flags", (scope, forgedState) => {
+    expect(
+      codexDestination({
+        scope,
+        codexHome: "/fixture/codex",
+        projectRoot: "/fixture/repo-a",
+        layerState: { status: "available", layers: [], ...forgedState },
+      }),
+    ).toBeNull();
+  });
 });
+
+function codexMeta(id: string, timestamp: string) {
+  return JSON.stringify({
+    timestamp,
+    type: "session_meta",
+    payload: { id, cwd: "/fixture/repo-a" },
+  });
+}
+
+function codexCommand(timestamp: string) {
+  return JSON.stringify({
+    timestamp,
+    type: "event_msg",
+    payload: {
+      type: "item_completed",
+      item: { type: "CommandExecution", command: ["git", "status"], status: "completed" },
+    },
+  });
+}
+
+function codexWorldState(timestamp: string, prefix: string[]) {
+  return JSON.stringify({
+    timestamp,
+    type: "world_state",
+    payload: { state: { permissions: { approved_command_prefixes: [prefix] } } },
+  });
+}
 
 async function writeTemporaryFixture(contents: string) {
   const { mkdtemp, writeFile } = await import("node:fs/promises");

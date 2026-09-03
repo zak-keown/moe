@@ -201,13 +201,13 @@ function absorbSessionHeader(row, state) {
 
 function absorbApprovedPrefixes(row, state) {
   const prefixes = row?.payload?.state?.permissions?.approved_command_prefixes;
-  if (!Array.isArray(prefixes)) return;
+  if (!Array.isArray(prefixes) || !state.currentSession?.id || !Number.isFinite(Date.parse(row.timestamp))) return;
   state.capturedPrefixes ??= [];
-  for (const prefix of prefixes) {
-    if (Array.isArray(prefix) && prefix.length > 0 && prefix.every(isNonEmptyString)) {
-      state.capturedPrefixes.push(prefix);
-    }
-  }
+  state.capturedPrefixes.push({
+    sessionId: state.currentSession.id,
+    observedAt: row.timestamp,
+    prefixes: prefixes.filter(validPrefix),
+  });
 }
 
 /**
@@ -257,7 +257,7 @@ export async function readCodexSessions({ files, cutoffMs, resolveProjectRoot, e
     }
   }
   const roots = collapseCodexRoots(state.headers);
-  const prefixes = [...existingPrefixes, ...state.capturedPrefixes].filter(validPrefix);
+  const configuredPrefixes = existingPrefixes.filter(validPrefix);
   const evidence = [];
   for (const event of decoded) {
     if (!event.cwd) {
@@ -272,15 +272,21 @@ export async function readCodexSessions({ files, cutoffMs, resolveProjectRoot, e
       continue;
     }
     try {
+      const rootSessionId = roots.get(event.sessionId) ?? event.sessionId;
       evidence.push(makeEvidence({
         harness: "codex",
-        rootSessionId: roots.get(event.sessionId) ?? event.sessionId,
+        rootSessionId,
         projectRoot,
         observedAt: event.observedAt,
         class: event.class,
         operation: event.operation,
         outcome: event.outcome,
-        approvalProvenance: matchesPrefix(event.operation, prefixes) ? "existing-rule" : "unknown",
+        approvalProvenance: matchesPrefix(
+          event.operation,
+          [...configuredPrefixes, ...capturedPrefixesFor(event, rootSessionId, roots, state.capturedPrefixes)],
+        )
+          ? "existing-rule"
+          : "unknown",
         sourceSchema: event.sourceSchema,
       }));
     } catch {
@@ -291,6 +297,18 @@ export async function readCodexSessions({ files, cutoffMs, resolveProjectRoot, e
     if (header.cliVersion) diagnostics.push({ cliVersion: header.cliVersion });
   }
   return { evidence, diagnostics };
+}
+
+function capturedPrefixesFor(event, rootSessionId, roots, capturedStates) {
+  let latest = null;
+  const eventMs = Date.parse(event.observedAt);
+  for (const captured of capturedStates) {
+    const capturedRoot = roots.get(captured.sessionId) ?? captured.sessionId;
+    const capturedMs = Date.parse(captured.observedAt);
+    if (capturedRoot !== rootSessionId || capturedMs > eventMs) continue;
+    if (!latest || capturedMs > Date.parse(latest.observedAt)) latest = captured;
+  }
+  return latest?.prefixes ?? [];
 }
 
 /**
@@ -430,14 +448,31 @@ export function codexDestination({ scope, codexHome, projectRoot, layerState }) 
   if (
     scope === "project" &&
     layerState?.status === "available" &&
-    layerState.trustedProjectRoots?.includes(projectRoot)
+    hasTrustedProjectLayer(layerState.layers, projectRoot)
   ) {
     return { path: join(projectRoot, ".codex", "rules", "moe-smoothing.rules"), scope, restartRequired: true };
   }
-  if (scope === "global" && layerState?.status === "available" && layerState.userLayerEnabled) {
+  if (scope === "global" && layerState?.status === "available" && hasEnabledUserLayer(layerState.layers)) {
     return { path: join(codexHome, "rules", "moe-smoothing.rules"), scope: "global", restartRequired: true };
   }
   return null;
+}
+
+function hasTrustedProjectLayer(layers, projectRoot) {
+  return Array.isArray(layers) && layers.some(
+    (layer) =>
+      isObject(layer) &&
+      layer.scope === "project" &&
+      layer.enabled === true &&
+      layer.trusted === true &&
+      layer.root === projectRoot,
+  );
+}
+
+function hasEnabledUserLayer(layers) {
+  return Array.isArray(layers) && layers.some(
+    (layer) => isObject(layer) && layer.scope === "user" && layer.enabled === true,
+  );
 }
 
 function matchesPrefix(operation, prefixes) {
