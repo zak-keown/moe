@@ -12,7 +12,9 @@ import {
   writeHarnessMarker,
   writeMeta,
   writeShim,
+  writeWorktreeMarker,
 } from "../core/worker-store.js";
+import { createWorktree, worktreePath } from "../core/worktree.js";
 import type { HarnessDriver } from "../harness/driver.js";
 import { getDriver } from "../harness/registry.js";
 import { awaitSessionStart } from "./await-start.js";
@@ -56,6 +58,12 @@ export interface LaunchArgs {
    * getDriver, which validates the id (the CLI also validates it at parse time).
    */
   harness: string;
+  /**
+   * When true, create a disposable git worktree for this worker and use it as
+   * the tmux session's cwd. The worktree path is stored in the meta so `stop`
+   * can remove it.
+   */
+  worktree?: boolean;
 }
 
 /** The one-time-consent error, matching the bash text. */
@@ -160,11 +168,25 @@ export async function cmdLaunch(
   ensureOwnedDir(ctx.workerDir);
   mkdirSync(join(ctx.workerDir, "bin"), { recursive: true, mode: 0o700 });
 
+  // When --worktree is set, create a disposable git worktree and substitute the
+  // cwd BEFORE either launch path runs. Both launchAssign and launchDerive
+  // receive the worktree path as cwd; the original cwd is only used for the
+  // invocation reproduce line.
+  let effectiveCwd = cwd;
+  let worktreeDir: string | undefined;
+  if (args.worktree) {
+    worktreeDir = await createWorktree(undefined, cwd, tmuxName);
+    effectiveCwd = worktreeDir;
+    // Write the sidecar marker so stop can locate and remove the worktree even
+    // on the derive path where the meta is self-registered later.
+    writeWorktreeMarker(ctx.workerDir, tmuxName, worktreeDir);
+  }
+
   const invocation = extraArgs.length > 0 ? [tmuxName, cwd, "--", ...extraArgs] : [tmuxName, cwd];
 
   return driver.idStrategy === "derive"
-    ? launchDerive(ctx, { driver, tmuxName, cwd, extraArgs, invocation }, opts)
-    : launchAssign(ctx, { driver, tmuxName, cwd, extraArgs, invocation }, opts);
+    ? launchDerive(ctx, { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir }, opts)
+    : launchAssign(ctx, { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir }, opts);
 }
 
 interface LaunchInner {
@@ -173,6 +195,8 @@ interface LaunchInner {
   cwd: string;
   extraArgs: string[];
   invocation: string[];
+  /** Absolute path to the disposable worktree, if --worktree was set. */
+  worktreeDir?: string | undefined;
 }
 
 /**
@@ -182,7 +206,7 @@ interface LaunchInner {
  */
 async function launchAssign(
   ctx: CommandContext,
-  { driver, tmuxName, cwd, extraArgs, invocation }: LaunchInner,
+  { driver, tmuxName, cwd, extraArgs, invocation, worktreeDir }: LaunchInner,
   opts: BootstrapOpts,
 ): Promise<CommandResult> {
   const sessionId = randomUUID();
@@ -198,14 +222,10 @@ async function launchAssign(
     harness: driver.id,
     started_at: isoSecondsUtc(),
     invocation,
+    ...(worktreeDir !== undefined ? { worktree: worktreeDir } : {}),
   });
 
   const env = driver.workerEnv(ctx.home, tmuxName, process.env);
-  // Propagate the active run id so the worker's emit-event hook stamps it on
-  // every event, correlating worker events to the run without a separate file.
-  if (process.env.MOE_CREW_RUN_ID) {
-    env.MOE_CREW_RUN_ID = process.env.MOE_CREW_RUN_ID;
-  }
   await driver.prepare(tmuxName, cwd, ctx.home);
 
   const argv = [
@@ -249,7 +269,7 @@ async function launchAssign(
  */
 async function launchDerive(
   ctx: CommandContext,
-  { driver, tmuxName, cwd, extraArgs, invocation }: LaunchInner,
+  { driver, tmuxName, cwd, extraArgs, invocation, worktreeDir }: LaunchInner,
   opts: BootstrapOpts,
 ): Promise<CommandResult> {
   // Sidecar marker so per-worker commands load the codex or pi driver during
@@ -258,9 +278,6 @@ async function launchDerive(
 
   const workerHome = deriveWorkerHome(ctx.workerDir, tmuxName);
   const env = driver.workerEnv(workerHome, tmuxName, process.env);
-  if (process.env.MOE_CREW_RUN_ID) {
-    env.MOE_CREW_RUN_ID = process.env.MOE_CREW_RUN_ID;
-  }
   await driver.prepare(tmuxName, cwd, workerHome);
 
   const argv = [...driver.launchArgv("launch", "", cwd, opts.pluginDir, workerHome), ...extraArgs];
