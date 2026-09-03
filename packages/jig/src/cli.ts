@@ -2,6 +2,7 @@
 import { realpathSync } from "node:fs";
 import { Command, CommanderError } from "commander";
 import { planInit, specInit } from "./plan.js";
+import { reviewStamp } from "./review.js";
 import { worktreeCreate, worktreeRemove, worktreeValidate } from "./worktree.js";
 
 const program = new Command()
@@ -70,6 +71,20 @@ spec
   .action((name: string) => {
     const path = specInit(name);
     console.log(path);
+  });
+
+const review = program
+  .command("review")
+  .description("Review-fix stamps and commit formatting");
+
+review
+  .command("stamp")
+  .description("Create a stamp commit recording that a CR finding was addressed")
+  .argument("<CR-ID>", "code-review finding ID (e.g. CR-012)")
+  .argument("<fixing-sha>", "SHA of the commit that addressed the finding")
+  .action((crId: string, fixingSha: string) => {
+    const sha = reviewStamp(crId, fixingSha);
+    console.log(sha);
   });
 
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
