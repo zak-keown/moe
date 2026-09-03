@@ -34,11 +34,13 @@ plans:
   - id: artifact-integration
     plan: docs/moe/plans/2026-09-02-moe-memory-04-artifact-integration.md
     depends_on: [process-mcp]
-    status: pending
+    status: done
+    commits: 987b090..afa836b
   - id: harness-integration
     plan: docs/moe/plans/2026-09-02-moe-memory-05-harness-integration.md
     depends_on: [artifact-integration]
-    status: pending
+    status: done
+    commits: 5de5f4b..d8282a4
   - id: rollback-recovery
     plan: docs/moe/plans/2026-09-02-moe-memory-06-rollback-recovery.md
     depends_on: [harness-integration]
