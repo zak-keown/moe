@@ -270,7 +270,7 @@ file is the source of truth.
 
 ## Execution Handoff
 
-After saving the plan, offer execution choice:
+After saving the plan, use ask in the terminal to offer the execution choice:
 
 **"Plan complete and saved to `docs/moe/plans/<filename>.md`. Two execution options:**
 
