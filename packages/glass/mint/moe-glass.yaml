@@ -56,6 +56,15 @@ bootstrap: none
 
 imported_works:
   - name: superpowers-chrome
+    artifact_roots: [skills/browsing]
+  - name: "@modelcontextprotocol/sdk"
+  - name: ajv
+  - name: ajv-formats
+  - name: fast-deep-equal
+  - name: fast-uri
+  - name: json-schema-traverse
+  - name: zod
+  - name: zod-to-json-schema
 
 # harnesses: no exclusions. All 8 adapters run.
 

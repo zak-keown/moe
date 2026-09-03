@@ -24,6 +24,9 @@ import { validateArtifactReferences } from './references.js'
 import { artifactCollisionKey, artifactPath, compareArtifactPaths, type ArtifactPath } from './paths.js'
 import { stagePayloads } from './payload.js'
 import { writeLicensePayload } from './license-payload.js'
+import type { BundledPackage } from './bundle-inventory.js'
+import { assertLegalClosure, parseNotice, readArtifactLicenseRecords, readBundledLicenseRecords } from './legal.js'
+import { classifyStagedImports, type StagedEvidence } from './staged-imports.js'
 
 export interface AssembledArtifact {
   readonly plugin: ResolvedPlugin
@@ -413,12 +416,43 @@ export async function assembleArtifact(input: AssembleArtifactInput): Promise<As
   const validation = validateCanonicalGeneration(identity(input.plugin), { marketplaceName: defaultProfileId(input.platform) })
   await assertGeneratedPathsCompatible(input.plugin, root, validation.files.map((file) => file.path))
   writeValidatedGeneration(root, validation)
-  await writeLicensePayload({
+  const licensePayload = await writeLicensePayload({
     repoRoot,
     artifactRoot: root,
     pluginId: input.plugin.id,
     license: input.plugin.config.license,
     importedWorks: input.plugin.config.importedWorks.map((work) => work.name),
+  })
+  let bundledPackages: readonly BundledPackage[] = []
+  try {
+    bundledPackages = JSON.parse(await readFile(join(input.plugin.sourcePath, '.moe-build/bundle-inventory.json'), 'utf8')) as BundledPackage[]
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+  }
+  const stagedEvidence: StagedEvidence[] = [
+    ...componentFiles.map((file) => ({ artifactPath: file.destination, sourceKind: 'component' as const })),
+    ...validation.files.map((file) => ({ artifactPath: file.path, sourceKind: 'component' as const })),
+    ...stagedPayloads.filter((payload) => !payload.omitted).flatMap((payload) => payload.files.map((file) => ({ artifactPath: file, sourceKind: 'payload' as const }))),
+    ...bundledPackages.flatMap((bundle) => bundle.outputs.map((output) => ({ artifactPath: output, sourceKind: 'bundle' as const, work: bundle.name }))),
+  ]
+  const stagedImports = classifyStagedImports({ importedWorks: input.plugin.config.importedWorks, staged: stagedEvidence })
+  const legalPaths = await artifactFiles(input.plugin, root)
+  const [artifactLicenses, bundledLicenses] = await Promise.all([
+    readArtifactLicenseRecords(root),
+    readBundledLicenseRecords(repoRoot, bundledPackages),
+  ])
+  assertLegalClosure({
+    bundledPackages,
+    stagedImports,
+    importedWorks: input.plugin.config.importedWorks,
+    notice: parseNotice(await readFile(join(repoRoot, 'NOTICE'), 'utf8')),
+    artifactLicenses,
+    bundledLicenses,
+    expectedLegalPayload: {
+      LICENSE: Buffer.from(licensePayload.license),
+      NOTICE: Buffer.from(licensePayload.notice),
+    },
+    artifactPaths: legalPaths,
   })
   const paths = await artifactFiles(input.plugin, root)
   const releaseVersions = Object.fromEntries(input.platform.plugins.map((plugin) => [plugin.npmPackage, plugin.version]))

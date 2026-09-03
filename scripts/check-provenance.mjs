@@ -4,6 +4,7 @@
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
+import { parseNotice, readCanonicalLegalTemplates } from "../packages/mint/src/artifact/legal.ts";
 
 const UNICODE_CASE_FOLDING_WORK = "Unicode Character Database CaseFolding";
 const UNICODE_LICENSE_V3_SHA256 =
@@ -11,11 +12,6 @@ const UNICODE_LICENSE_V3_SHA256 =
 const UNICODE_CASE_FOLDING_FIXTURE = "packages/mint/test/fixtures/casefold/CaseFolding-16.0.0.txt";
 const UNICODE_CASE_FOLDING_FIXTURE_SHA256 =
   "6f1f9c588eb4a5c718d9e8f93b782685e5c7fec872cf05e8e6878053599e09bb";
-const UNICODE_CASE_FOLDING_ROW = [
-  "`16.0.0` (2024-04-30)",
-  "Unicode Terms of Use",
-  "© 2024 Unicode, Inc.",
-];
 
 const SKIP_SEGMENTS = new Set([
   ".claude",
@@ -28,30 +24,6 @@ const SKIP_SEGMENTS = new Set([
   "test",
   "tests",
 ]);
-function cells(line) {
-  return line
-    .split("|")
-    .slice(1, -1)
-    .map((cell) => cell.trim());
-}
-
-function tableRows(file, heading) {
-  const rows = new Map();
-  let active = false;
-  for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
-    if (line === heading) {
-      active = true;
-      continue;
-    }
-    if (active && /^#{2,3}\s/.test(line)) break;
-    if (!active || !line.startsWith("| `")) continue;
-    const row = cells(line);
-    const name = /^`([^`]+)`$/.exec(row[0] ?? "")?.[1];
-    if (name) rows.set(name, row.slice(1));
-  }
-  return rows;
-}
-
 function walk(root, current = root) {
   const files = [];
   for (const entry of readdirSync(current, { withFileTypes: true })) {
@@ -84,7 +56,7 @@ function sha256(text) {
 function countImportedWorks(root, problems) {
   let notice;
   try {
-    notice = tableRows(join(root, "NOTICE"), "## Imported works");
+    notice = parseNotice(readFileSync(join(root, "NOTICE"), "utf8")).works;
   } catch (err) {
     problems.push(`could not read NOTICE: ${err.message}`);
     return 0;
@@ -94,7 +66,12 @@ function countImportedWorks(root, problems) {
     problems.push("NOTICE is missing required Unicode CaseFolding imported-work row");
   } else if (
     JSON.stringify(notice.get(UNICODE_CASE_FOLDING_WORK)) !==
-    JSON.stringify(UNICODE_CASE_FOLDING_ROW)
+    JSON.stringify({
+      name: UNICODE_CASE_FOLDING_WORK,
+      revision: "16.0.0",
+      license: "Unicode Terms of Use",
+      copyrightNotice: "© 2024 Unicode, Inc.",
+    })
   ) {
     problems.push(
       "NOTICE Unicode CaseFolding imported-work row does not match the pinned source, version, and license metadata",
@@ -168,7 +145,7 @@ function checkCanonicalLegalFiles(root, problems) {
   }
 }
 
-function main(argv) {
+async function main(argv) {
   if (argv.length > 1) {
     console.error("usage: check-provenance.mjs [root]");
     return 2;
@@ -176,6 +153,11 @@ function main(argv) {
   const root = argv[0] ?? ".";
   const problems = [];
   const upstreams = countImportedWorks(root, problems);
+  try {
+    await readCanonicalLegalTemplates(root);
+  } catch (err) {
+    problems.push(err.message);
+  }
   const plugins = checkPluginLicenses(root, problems);
   checkCanonicalLegalFiles(root, problems);
 
@@ -190,4 +172,4 @@ function main(argv) {
   return 1;
 }
 
-process.exit(main(process.argv.slice(2)));
+process.exit(await main(process.argv.slice(2)));

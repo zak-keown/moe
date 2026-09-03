@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from 'node:fs'
 import { join, posix } from 'node:path'
 import { parse } from 'yaml'
 import { z } from 'zod'
-import { artifactPath, isReservedArtifactDestination } from './artifact/paths.js'
+import { artifactCollisionKey, artifactPath, compareArtifactPaths, isReservedArtifactDestination, type ArtifactPath } from './artifact/paths.js'
 import { MintError } from './diagnostics.js'
 import {
   CAPABILITY_IDS,
@@ -231,7 +231,7 @@ const targetShape = Object.fromEntries(TARGET_IDS.map((id) => [
 ])) as unknown as Record<TargetId, z.ZodType>
 const targetsSchema = z.object(targetShape).strict()
 
-const importedWorkSchema = z.object({ name: z.string().min(1) }).strict()
+const importedWorkSchema = z.object({ name: z.string().min(1), artifact_roots: z.array(z.string().min(1)).optional() }).strict()
 
 const rawSchema = z.object({
   name: z.string().regex(PLUGIN_NAME_RE, 'lowercase alphanumerics and hyphens'),
@@ -288,6 +288,7 @@ export interface PluginTargetIntent {
 
 export interface ImportedWorkRef {
   name: string
+  artifactRoots: readonly string[]
 }
 
 export interface MintConfig {
@@ -534,8 +535,10 @@ function validateTargetMigration(
   }
 }
 
-function validateImportedWorks(importedWorks: readonly ImportedWorkRef[], source: string): void {
+function normalizeImportedWorks(importedWorks: readonly z.infer<typeof importedWorkSchema>[], source: string): readonly ImportedWorkRef[] {
   const names = new Set<string>()
+  const allRoots = new Map<string, { work: string; root: ArtifactPath }>()
+  const normalized: ImportedWorkRef[] = []
   for (const [index, importedWork] of importedWorks.entries()) {
     if (names.has(importedWork.name)) {
       throw migrationError(
@@ -547,7 +550,22 @@ function validateImportedWorks(importedWorks: readonly ImportedWorkRef[], source
       )
     }
     names.add(importedWork.name)
+    const roots: ArtifactPath[] = []
+    for (const [rootIndex, value] of (importedWork.artifact_roots ?? []).entries()) {
+      let root: ArtifactPath
+      try { root = artifactPath(value) } catch {
+        throw migrationError(source, 'CONFIG_IMPORTED_ROOT_INVALID', `imported_works[${index}].artifact_roots[${rootIndex}]`, `invalid imported-work artifact root "${value}"`, 'Use a canonical literal artifact-relative path without globs, traversal, or trailing slashes.')
+      }
+      const key = artifactCollisionKey(root)
+      const conflict = [...allRoots.values()].find((claim) => key === artifactCollisionKey(claim.root) || key.startsWith(`${artifactCollisionKey(claim.root)}/`) || artifactCollisionKey(claim.root).startsWith(`${key}/`))
+      if (conflict !== undefined) throw migrationError(source, 'CONFIG_IMPORTED_ROOT_OVERLAP', `imported_works[${index}].artifact_roots[${rootIndex}]`, `imported-work roots "${conflict.root}" and "${root}" overlap or collide`, 'Assign each non-overlapping artifact root to exactly one imported work.')
+      allRoots.set(key, { work: importedWork.name, root })
+      roots.push(root)
+    }
+    roots.sort(compareArtifactPaths)
+    normalized.push(Object.freeze({ name: importedWork.name, artifactRoots: Object.freeze(roots) }))
   }
+  return Object.freeze(normalized)
 }
 
 export function loadConfig(root: string, configFile = 'moe-mint.yaml', source = configFile): MintConfig {
@@ -578,7 +596,7 @@ export function loadConfig(root: string, configFile = 'moe-mint.yaml', source = 
   validateHarnessHooks(settings, bootstrap, source)
   const targets = resolveTargets(raw.targets)
   validateTargetMigration(targets, { exclude, settings }, source)
-  validateImportedWorks(raw.imported_works, source)
+  const importedWorks = normalizeImportedWorks(raw.imported_works, source)
 
   return {
     source,
@@ -602,7 +620,7 @@ export function loadConfig(root: string, configFile = 'moe-mint.yaml', source = 
     distribution: raw.distribution,
     artifact: { payloads: raw.artifact.payloads },
     targets,
-    importedWorks: raw.imported_works,
+    importedWorks,
     marketplace: raw.marketplace,
     release: raw.release,
   }

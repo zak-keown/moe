@@ -13,6 +13,18 @@ afterEach(async () => {
 })
 
 describe('artifact legal payload', () => {
+  it('emits reviewed BSD and ISC grants after MIT and Apache in fixed family order', async () => {
+    const payload = await renderLicensePayload({
+      repoRoot,
+      pluginId: 'glass',
+      license: 'MIT AND Apache-2.0',
+      importedWorks: ['fast-uri', 'zod-to-json-schema'],
+    })
+    const positions = ['MIT License', 'Apache License', 'Redistribution and use', 'ISC License'].map((marker) => payload.license.indexOf(marker))
+    expect(positions).toEqual([...positions].sort((left, right) => left - right))
+    expect(payload.license).not.toContain('THIRD_PARTY_NOTICES')
+  })
+
   it('renders deduplicated MIT then Apache terms and raw-UTF-8-sorted imported rows', async () => {
     const payload = await renderLicensePayload({
       repoRoot,

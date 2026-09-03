@@ -51,6 +51,7 @@ bootstrap: none
 
 imported_works:
   - name: claude-session-driver
+    artifact_roots: [skills/driving-claude-code-sessions]
 
 # harnesses: no exclusions. All 8 adapters run.
 

@@ -28,6 +28,27 @@ function repoWith(yamlText: string, appendPolicy = true): string {
 }
 
 describe('loadConfig', () => {
+  it('normalizes optional imported-work artifact roots to immutable canonical raw-UTF-8 order', () => {
+    const config = loadConfig(repoWith('name: demo\nversion: 1.0.0\ndescription: demo\n'.concat(POLICY.replace(
+      'imported_works: []',
+      'imported_works: [{ name: work, artifact_roots: [vendor/z, vendor/a] }, { name: bundle-only }]',
+    )), false))
+    expect(config.importedWorks).toEqual([
+      { name: 'work', artifactRoots: ['vendor/a', 'vendor/z'] },
+      { name: 'bundle-only', artifactRoots: [] },
+    ])
+    expect(Object.isFrozen(config.importedWorks[0]?.artifactRoots)).toBe(true)
+  })
+
+  it.each(['vendor/', 'vendor/./x', '../vendor', 'vendor/*', 'Vendor/x, vendor/x', 'vendor, vendor/nested'])('rejects ambiguous imported-work artifact roots %s', (roots) => {
+    const entries = roots.split(', ').map((root) => root.trim())
+    const config = 'name: demo\nversion: 1.0.0\ndescription: demo\n'.concat(POLICY.replace(
+      'imported_works: []',
+      `imported_works: [{ name: work, artifact_roots: [${entries.join(', ')}] }]`,
+    ))
+    expect(() => loadConfig(repoWith(config, false))).toThrow(ConfigError)
+  })
+
   it('loads a minimal config with defaults', () => {
     const cfg = loadConfig(repoWith(
       'name: demo\nversion: 1.0.0\ndescription: A demo plugin\n'
@@ -100,7 +121,7 @@ describe('loadConfig', () => {
         intent: 'certify', expectedCapabilities: ['skill-discovery'], operatingSystems: ['macos'],
       })
       expect(cfg.targets.cursor).toEqual({ intent: 'omit', expectedCapabilities: [] })
-      expect(cfg.importedWorks).toEqual([{ name: 'upstream-work' }])
+      expect(cfg.importedWorks).toEqual([{ name: 'upstream-work', artifactRoots: [] }])
     })
 
     it.each([

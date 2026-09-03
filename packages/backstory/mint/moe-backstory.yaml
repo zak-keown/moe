@@ -55,6 +55,7 @@ bootstrap: none
 
 imported_works:
   - name: greenfield
+    artifact_roots: [agents, commands, skills]
 
 marketplace:
   # Standalone generation uses this package-local name. Root minting overrides

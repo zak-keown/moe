@@ -1,6 +1,7 @@
 import { constants } from 'node:fs'
 import { open, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { readCanonicalLegalTemplates } from './legal.js'
 import { MintError } from '../diagnostics.js'
 
 interface AttributionRow {
@@ -105,7 +106,7 @@ function sourceLicenseFamilies(input: LicensePayloadInput): ReadonlySet<'MIT' | 
   )
 }
 
-function importedFamily(input: LicensePayloadInput, row: AttributionRow): 'MIT' | 'Apache-2.0' | 'Public domain' {
+function importedFamily(input: LicensePayloadInput, row: AttributionRow): 'MIT' | 'Apache-2.0' | 'BSD-3-Clause' | 'ISC' | 'Public domain' {
   if (row.license.startsWith('No license')) {
     throw legalError(
       'ARTIFACT_LICENSE_GRANT_MISSING',
@@ -118,6 +119,8 @@ function importedFamily(input: LicensePayloadInput, row: AttributionRow): 'MIT' 
   if (row.license === 'Public domain') return 'Public domain'
   if (row.license.startsWith('MIT')) return 'MIT'
   if (row.license.startsWith('Apache-2.0')) return 'Apache-2.0'
+  if (row.license === 'BSD-3-Clause') return 'BSD-3-Clause'
+  if (row.license === 'ISC') return 'ISC'
   throw legalError(
     'ARTIFACT_LICENSE_UNSUPPORTED',
     input,
@@ -155,7 +158,7 @@ export async function renderLicensePayload(input: LicensePayloadInput): Promise<
     return row
   }).sort((left, right) => compareRawUtf8(left.name, right.name))
 
-  const families = new Set(sourceLicenseFamilies(input))
+  const families = new Set<string>(sourceLicenseFamilies(input))
   const mitCopyrights = new Set<string>()
   if (families.has('MIT')) mitCopyrights.add('Copyright 2026 Zak Keown')
   for (const row of rows) {
@@ -165,12 +168,19 @@ export async function renderLicensePayload(input: LicensePayloadInput): Promise<
       mitCopyrights.add(row.copyright.split(';')[0]?.trim() ?? row.copyright)
     } else if (family === 'Apache-2.0') {
       families.add('Apache-2.0')
+    } else if (family === 'BSD-3-Clause' || family === 'ISC') {
+      families.add(family)
     }
   }
 
   const sections: string[] = []
   if (families.has('MIT')) sections.push(mitSection(rootMit, [...mitCopyrights]))
   if (families.has('Apache-2.0')) sections.push(rootApache.trim())
+  if (families.has('BSD-3-Clause') || families.has('ISC')) {
+    const templates = await readCanonicalLegalTemplates(input.repoRoot)
+    if (families.has('BSD-3-Clause')) sections.push(templates['LICENSE-BSD-3-CLAUSE'].trim())
+    if (families.has('ISC')) sections.push(templates['LICENSE-ISC'].trim())
+  }
   const license = `${sections.join('\n\n---\n\n')}\n`
   const noticeLines = [
     'Moe',

@@ -32,11 +32,6 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = resolve(HERE, "..");
 const SKILLS = join(PKG, "skills");
 
-// Third-party verbatim text: 1,150 lines of Anthropic's public skill-authoring
-// documentation, containing EXAMPLE frontmatter blocks inside fenced code that a
-// frontmatter scanner would read as real skills.
-const THIRD_PARTY = new Set(["anthropic-best-practices.md"]);
-
 // Self-contained example plugins the developing-claude-code-plugins skill ships
 // as teaching material. They have their own plugin roots and their own
 // (deliberately different) manifests.
@@ -127,11 +122,9 @@ const registry: Record<string, { from: string; why: string }> = {
 };
 
 // Every markdown file we are allowed to make assertions about: the skill bodies
-// and companion documents this fork authored or rebranded. Excludes third-party
-// verbatim text and the example plugins.
-const ownedMarkdown = walk(SKILLS, { skipExamples: true }).filter(
-  (p) => p.endsWith(".md") && !THIRD_PARTY.has(p.split("/").pop() as string),
-);
+// and companion documents this fork authored or rebranded. Excludes the
+// example plugins.
+const ownedMarkdown = walk(SKILLS, { skipExamples: true }).filter((p) => p.endsWith(".md"));
 
 describe("skill inventory", () => {
   it("every directory under skills/ is either a skill or the shared reference dir", () => {
