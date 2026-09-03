@@ -30,6 +30,10 @@ importers:
   packages/backstory: {}
 
   packages/core:
+    dependencies:
+      '@bubstack/moe-jig':
+        specifier: workspace:*
+        version: link:../jig
     devDependencies:
       vitest:
         specifier: ^3.2.4

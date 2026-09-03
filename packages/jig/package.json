@@ -22,6 +22,10 @@
     "jig"
   ],
   "main": "dist/cli.js",
+  "exports": {
+    ".": "./dist/cli.js",
+    "./parser": "./dist/parser.js"
+  },
   "bin": {
     "moe-jig": "./dist/cli.js"
   },
