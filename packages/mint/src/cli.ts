@@ -248,6 +248,33 @@ const release = program
   .description('Release lifecycle commands: candidate preparation, certification, and promotion')
 
 release
+  .command('candidate')
+  .description('Prepare a candidate release: pack changed artifacts, upload to draft, build lock and catalog')
+  .requiredOption('--tag <tag>', 'candidate platform tag (e.g. v0.1.5-rc.1)')
+  .requiredOption('--repo <path>', 'repository root containing moe-platform.yaml')
+  .option('--execute', 'execute candidate preparation (default is plan/verify mode)', false)
+  .action(async (opts: { tag: string; repo: string; execute: boolean }) => {
+    if (!opts.execute) {
+      console.log(`candidate: would prepare candidate ${opts.tag} (pass --execute to run)`)
+      return
+    }
+    console.log(`candidate: preparing candidate ${opts.tag} in ${opts.repo}`)
+  })
+
+release
+  .command('preflight')
+  .description('Run release preflight checks against the registry')
+  .requiredOption('--tag <tag>', 'platform tag to preflight')
+  .requiredOption('--repo <path>', 'repository root containing moe-platform.yaml')
+  .option('--plugin-version <items...>', 'plugin=version pairs')
+  .action(async (opts: { tag: string; repo: string; pluginVersion?: string[] }) => {
+    console.log(`preflight: checking ${opts.tag} in ${opts.repo}`)
+    if (opts.pluginVersion) {
+      for (const pv of opts.pluginVersion) console.log(`  ${pv}`)
+    }
+  })
+
+release
   .command('certify-claude')
   .description('Run Claude Code/macOS maintenance certification against a candidate release')
   .requiredOption('--candidate <tag>', 'candidate platform tag (e.g. v0.1.5-rc.1)')
@@ -315,6 +342,19 @@ release
       return
     }
     console.log(`promote: promoting ${opts.tag} in ${opts.repo}`)
+  })
+
+release
+  .command('verify')
+  .description('Verify a published catalog against its release assets and registry state')
+  .requiredOption('--catalog-tag <tag>', 'platform tag whose catalog to verify')
+  .requiredOption('--repo <path>', 'repository root containing moe-platform.yaml')
+  .option('--require-evidence <items...>', 'target:os pairs to require evidence for')
+  .action(async (opts: { catalogTag: string; repo: string; requireEvidence?: string[] }) => {
+    console.log(`verify: checking catalog for ${opts.catalogTag}`)
+    if (opts.requireEvidence) {
+      for (const re of opts.requireEvidence) console.log(`  require-evidence: ${re}`)
+    }
   })
 
 program.parseAsync().catch((error: unknown) => {

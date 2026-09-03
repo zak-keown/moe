@@ -450,6 +450,25 @@ describe('CLI end-to-end', () => {
     expect(result.stdout).toContain('v0.1.5-rc.1')
   })
 
+  it('release candidate exits 0 in plan mode', () => {
+    const result = runCli(['release', 'candidate', '--tag', 'v0.1.5-rc.1', '--repo', '.'], REPO_ROOT)
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('candidate')
+    expect(result.stdout).toContain('v0.1.5-rc.1')
+  })
+
+  it('release preflight exits 0 with tag', () => {
+    const result = runCli(['release', 'preflight', '--tag', 'v0.1.5-rc.1', '--repo', '.'], REPO_ROOT)
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('preflight')
+  })
+
+  it('release verify exits 0 with catalog tag', () => {
+    const result = runCli(['release', 'verify', '--catalog-tag', 'v0.1.5', '--repo', '.'], REPO_ROOT)
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('verify')
+  })
+
   it('release promote exits 0 in plan mode with stable tag', () => {
     const result = runCli(['release', 'promote', '--tag', 'v0.1.5', '--repo', '.'], REPO_ROOT)
     expect(result.status).toBe(0)
