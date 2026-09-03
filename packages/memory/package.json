@@ -47,7 +47,7 @@
     ".mcp.json"
   ],
   "scripts": {
-    "build": "node ../../scripts/clean-package-dist.mjs && tsc -b --force",
+    "build": "node ../../scripts/clean-package-dist.mjs && node scripts/build-runtime.mjs",
     "prepack": "pnpm run build",
     "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --pretty",
     "test": "vitest run --project unit",
@@ -67,6 +67,7 @@
   "devDependencies": {
     "@types/node": "^24.7.0",
     "@types/proper-lockfile": "^4.1.4",
+    "esbuild": "^0.25.11",
     "typescript": "^5.9.0",
     "vitest": "^3.2.4"
   }

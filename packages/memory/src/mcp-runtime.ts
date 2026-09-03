@@ -2,15 +2,12 @@ import type { DatabaseSync } from "node:sqlite";
 import { initDatabase } from "./db.js";
 import { JournalSearchService } from "./journal/search.js";
 import { JournalStore } from "./journal/store.js";
-import type {
-  SearchOptions,
-  SearchResult,
-} from "./search.js";
+import type { SearchOptions } from "./search.js";
 import {
   searchConversations,
   searchMultipleConcepts,
 } from "./search.js";
-import type { JournalSearchResult } from "./journal/search.js";
+import type { SearchResult } from "./types.js";
 
 export interface MemoryToolRuntime {
   searchConversations(query: string, options: SearchOptions): Promise<SearchResult[]>;

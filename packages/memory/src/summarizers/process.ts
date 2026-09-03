@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 export interface ProcessSpec {
   command: string;
   args: readonly string[];
-  cwd?: string;
+  cwd?: string | undefined;
   env: NodeJS.ProcessEnv;
   stdin: string;
   timeoutMs: number;

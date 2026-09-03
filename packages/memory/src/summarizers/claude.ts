@@ -7,10 +7,10 @@ export const MIN_CLAUDE_VERSION = "2.1.141";
 
 export interface ClaudeCommandOptions {
   prompt: string;
-  sessionId?: string;
-  cwd?: string;
+  sessionId?: string | undefined;
+  cwd?: string | undefined;
   model: string;
-  systemPrompt?: string;
+  systemPrompt?: string | undefined;
 }
 
 export function buildClaudeSummarizerCommand(options: ClaudeCommandOptions): ProcessSpec {
