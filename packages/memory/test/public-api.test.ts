@@ -49,6 +49,12 @@ const RETAINED = new Set([
   "pickPendingEnrichment",
   "commitEnrichment",
   "searchJournalTextDb",
+  // recovery-capsule.ts
+  "RecoveryCapsuleError",
+  "verifyRecoveryCapsule",
+  "ensureRecoveryCapsule",
+  "validateCapsuleManifest",
+  "loadRecoveryCatalog",
   // search.ts
   "l2DistanceToCosineSimilarity",
   "searchConversations",
