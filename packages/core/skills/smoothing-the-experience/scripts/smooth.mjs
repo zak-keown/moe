@@ -19,6 +19,7 @@ import {
   renderClaudeSettings,
 } from "./lib/harnesses/claude.mjs";
 import {
+  classifyCodexActiveRules,
   discoverCodex,
   readCodexConfigLayers,
   readCodexSessions,
@@ -228,6 +229,12 @@ async function scan({ days, harnesses, all }) {
       });
     }
   }
+  if (SUPPORTED_HARNESSES.every((harness) => harnesses.includes(harness))) {
+    for (const entry of discovery.harnesses) {
+      if (SUPPORTED_HARNESSES.includes(entry.harness)) continue;
+      reports.push({ ...entry, suggestions: [], dispositions: [] });
+    }
+  }
   return { windowDays: days, evidenceClasses: EVIDENCE_CLASSES, harnesses: reports };
 }
 
@@ -296,23 +303,23 @@ async function scanCodex({ env, homeDir, cwd, cutoffMs, all, requireLayerState =
     resolveProjectRoot,
     existingPrefixes: [],
   });
-  const globalPrefixes = await readManagedPrefixes(join(codexHome, "rules"));
-  const perProject = new Map();
-  for (const projectRoot of new Set(reader.evidence.map((record) => record.projectRoot))) {
-    perProject.set(
-      projectRoot,
-      await readManagedPrefixes(join(projectRoot, ".codex", "rules")),
+  const globalRuleFiles = await listRuleFiles(join(codexHome, "rules"));
+  const byProject = Map.groupBy(reader.evidence, ({ projectRoot }) => projectRoot);
+  const evidence = [];
+  for (const projectRoot of [...byProject.keys()].sort(compareCodeUnits)) {
+    const projectRuleFiles = await listRuleFiles(join(projectRoot, ".codex", "rules"));
+    const ruleFiles = [...new Set([...globalRuleFiles, ...projectRuleFiles])].sort(
+      compareCodeUnits,
+    );
+    evidence.push(
+      ...(await classifyCodexActiveRules({
+        evidence: byProject.get(projectRoot),
+        ruleFiles,
+        codexBin: "codex",
+        runExecpolicy: runCodexExecpolicy,
+      })),
     );
   }
-  const evidence = reader.evidence.map((record) =>
-    record.class === "shell" &&
-      matchesAnyPrefix(record.operation, [
-        ...globalPrefixes,
-        ...(perProject.get(record.projectRoot) ?? []),
-      ])
-      ? { ...record, approvalProvenance: "existing-rule" }
-      : record,
-  );
   const candidateReport = await buildCandidates(evidence, {
     all,
     realpath,
@@ -488,43 +495,6 @@ async function resolveProjectRoot(cwd) {
     if (parent === current || current === parse(current).root) return fallback;
     current = parent;
   }
-}
-
-async function readManagedPrefixes(rulesDir) {
-  let names;
-  try {
-    names = await readdir(rulesDir);
-  } catch (error) {
-    if (error?.code === "ENOENT") return [];
-    throw error;
-  }
-  const prefixes = [];
-  for (const name of names.sort()) {
-    if (!name.endsWith(".rules") || name.includes("/") || name.includes("\\")) continue;
-    const contents = await readFile(join(rulesDir, name), "utf8");
-    for (const match of contents.matchAll(
-      /# moe-smoothing:[^\n]+\nprefix_rule\(\n    pattern = \[([^\]]+)\],/g,
-    )) {
-      const tokens = [...match[1].matchAll(/"((?:\\.|[^"\\])*)"/g)].map((token) =>
-        JSON.parse(`"${token[1]}"`),
-      );
-      if (tokens.length > 0 && tokens.every((token) => typeof token === "string")) {
-        prefixes.push(tokens);
-      }
-    }
-  }
-  return prefixes;
-}
-
-function matchesAnyPrefix(operation, prefixes) {
-  const argv = Array.isArray(operation?.argv)
-    ? operation.argv
-    : typeof operation?.command === "string" &&
-        operation.command.length > 0 &&
-        !/[;|&$><`\\"']/.test(operation.command)
-      ? operation.command.split(/\s+/)
-      : null;
-  return argv && prefixes.some((prefix) => prefix.every((token, index) => argv[index] === token));
 }
 
 function deriveReplacementForPlan(plan, sourceBytes) {
@@ -720,6 +690,10 @@ function isPlainObject(value) {
 
 function isString(value) {
   return typeof value === "string";
+}
+
+function compareCodeUnits(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
 }
 
 function usageError(message) {

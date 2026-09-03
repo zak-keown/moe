@@ -11,7 +11,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
@@ -248,6 +248,49 @@ describe("smoothing helper CLI", () => {
     expect(
       rescanned.harnesses.find(({ harness }) => harness === "codex")?.suggestions,
     ).not.toContainEqual(expect.objectContaining({ id: selected?.id }));
+  });
+
+  it("suppresses Codex evidence matched by an unmarked native rule", async () => {
+    const fixture = await isolatedHome();
+    const initial = await scanReport(fixture);
+    const selected = initial.harnesses.find(({ harness }) => harness === "codex")?.suggestions[0];
+    expect(selected).toBeDefined();
+    const rulesDir = join(fixture.repo, ".codex", "rules");
+    await mkdir(rulesDir, { recursive: true });
+    await writeFile(
+      join(rulesDir, "native.rules"),
+      `prefix_rule(
+    pattern = ["git", "status"],
+    decision = "allow",
+    justification = "fixture native rule",
+)
+`,
+    );
+
+    const rescanned = await scanReport(fixture);
+    expect(
+      rescanned.harnesses.find(({ harness }) => harness === "codex")?.suggestions,
+    ).not.toContainEqual(expect.objectContaining({ id: selected?.id }));
+  });
+
+  it("reports installed unsupported harnesses from local commands and config roots", async () => {
+    const fixture = await isolatedHome();
+    const executedMarker = join(fixture.root, "cursor-was-executed");
+    const cursorAgent = join(fixture.root, "bin", "cursor-agent");
+    await writeFile(cursorAgent, `#!/bin/sh\ntouch "${executedMarker}"\n`);
+    await chmod(cursorAgent, 0o755);
+    await mkdir(join(fixture.home, ".kimi"));
+
+    const report = JSON.parse((await runCli(fixture, ["scan", "--json"])).stdout) as {
+      harnesses: Array<{ harness: string; status: string; reason?: string }>;
+    };
+    expect(report.harnesses.map(({ harness, status }) => [harness, status])).toEqual(
+      expect.arrayContaining([
+        ["cursor", "not-evaluated"],
+        ["kimi", "not-evaluated"],
+      ]),
+    );
+    await expect(access(executedMarker)).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   it("creates the exact first-use Codex global rules parent with mode 0700", async () => {
@@ -581,7 +624,7 @@ async function isolatedHome({
     HOME: home,
     CLAUDE_CONFIG_DIR: claudeConfig,
     CODEX_HOME: codexHome,
-    PATH: `${bin}:${process.env.PATH ?? ""}`,
+    PATH: `${bin}:${dirname(process.execPath)}`,
   };
   return { root, home, claudeConfig, codexHome, repo, repoB, fakeCodex, env };
 }
