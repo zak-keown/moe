@@ -96,7 +96,7 @@ The script combines, deduplicates by title, groups into epics, assigns stable ST
 Run the scenario aggregation script:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_scenarios.py" \
+node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_scenarios.mjs" \
   -o docs/moe/iterations/behavior-scenarios.md \
   --stories-dir docs/moe/iterations/requirements/ \
   <json-file-1> <json-file-2> ...
@@ -115,7 +115,7 @@ Same as before: review the epic list, merge near-duplicates, re-run aggregation.
 After both aggregations complete, run the back-linking script to update per-epic story files with scenario references:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/backlink_scenarios.py" \
+node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/backlink_scenarios.mjs" \
   docs/moe/iterations/behavior-scenarios.md \
   docs/moe/iterations/requirements/
 ```
