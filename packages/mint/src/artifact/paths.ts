@@ -15,6 +15,18 @@ export const RESERVED_ARTIFACT_FILES = new Set([
 ])
 export const RESERVED_ARTIFACT_ROOTS = ['.moe', '.moe-mint'] as const
 
+// Pinned exceptional full-fold mappings (Unicode 16.0); the ordinary simple
+// folds are supplied by ECMAScript's locale-independent default conversion.
+const CASE_FOLD_OVERRIDES: Readonly<Record<string, string>> = {
+  'µ': 'μ', 'ß': 'ss', 'ŉ': 'ʼn', 'ſ': 's', 'ǰ': 'ǰ', 'ͅ': 'ι',
+  'ΐ': 'ΐ', 'ΰ': 'ΰ', 'ς': 'σ', 'ϐ': 'β', 'ϑ': 'θ', 'ϕ': 'φ',
+  'ϖ': 'π', 'ϰ': 'κ', 'ϱ': 'ρ', 'ϵ': 'ε', 'և': 'եւ',
+}
+
+function fullCaseFold(value: string): string {
+  return [...value.toLowerCase()].map((character) => CASE_FOLD_OVERRIDES[character] ?? character).join('').normalize('NFC')
+}
+
 export class ArtifactPathError extends Error {
   constructor(
     readonly path: string,
@@ -51,8 +63,10 @@ export function joinArtifactPath(base: ArtifactPath, child: string): ArtifactPat
 }
 
 export function isReservedArtifactDestination(path: ArtifactPath): boolean {
-  return RESERVED_ARTIFACT_FILES.has(path)
-    || RESERVED_ARTIFACT_ROOTS.some((root) => path === root || path.startsWith(`${root}/`))
+  const key = artifactCollisionKey(path)
+  return [...RESERVED_ARTIFACT_FILES, ...RESERVED_ARTIFACT_ROOTS]
+    .map((reserved) => artifactCollisionKey(reserved as ArtifactPath))
+    .some((reserved) => key === reserved || key.startsWith(`${reserved}/`))
 }
 
 /**
@@ -64,7 +78,7 @@ export function isReservedArtifactDestination(path: ArtifactPath): boolean {
  * consumer can observe an ambiguous artifact.
  */
 export function artifactCollisionKey(path: ArtifactPath): string {
-  return path.normalize('NFC').toUpperCase().toLowerCase()
+  return fullCaseFold(path.normalize('NFC'))
 }
 
 /** Raw UTF-8 order is the artifact order, never host collation order. */

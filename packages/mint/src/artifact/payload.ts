@@ -1,5 +1,5 @@
 import { constants } from 'node:fs'
-import { chmod, lstat, mkdir, open, readdir } from 'node:fs/promises'
+import { lstat, mkdir, open, readdir } from 'node:fs/promises'
 import { join, relative, resolve } from 'node:path'
 import type { ArtifactPayload } from '../config.js'
 import { MintError } from '../diagnostics.js'
@@ -19,11 +19,17 @@ export interface StagedPayload {
   readonly omitted: boolean
 }
 
+/** Injectable only for deterministic filesystem-race regression tests. */
+export interface PayloadStageHooks {
+  readonly afterPreflight?: () => Promise<void> | void
+}
+
 interface PayloadFile {
   readonly sourceAbsolute: string
   readonly destination: ArtifactPath
   readonly executable: boolean
   readonly identity: { readonly dev: number; readonly ino: number }
+  readonly bytes?: Buffer
 }
 
 interface PreflightPayload extends StagedPayload {
@@ -315,6 +321,19 @@ function assertNoCollisions(payloads: readonly PreflightPayload[], existing?: Ex
     }
   }
   for (const payload of payloads) {
+    for (const directory of payload.directories) {
+      if (existing.files.some((file) => artifactCollisionKey(file) === artifactCollisionKey(directory))) {
+        throw payloadError(
+          'ARTIFACT_PATH_COLLISION',
+          `payload directory "${directory}" conflicts with an existing artifact file`,
+          'Choose a destination not already owned as a file by another artifact contributor.',
+          'artifact.payloads',
+          directory,
+        )
+      }
+    }
+  }
+  for (const payload of payloads) {
     for (const file of payload.files) {
       if ([...existing.directories].some((directory) => artifactCollisionKey(directory) === artifactCollisionKey(file))) {
         throw payloadError(
@@ -387,12 +406,13 @@ async function preflightPayloads(sourceRoot: string, payloads: readonly Artifact
     const entries: PayloadFile[] = []
     await inspectDirectory(root, from, to, `artifact.payloads.${from}`, directories, entries)
     entries.sort((left, right) => compareArtifactPaths(left.destination, right.destination))
+    const snapshotted = await Promise.all(entries.map(async (entry) => ({ ...entry, bytes: await readCheckedFile(entry, `artifact.payloads.${from}`) })))
     inspected.push({
       source: from,
       destination: to,
-      files: entries.map((entry) => entry.destination),
+      files: snapshotted.map((entry) => entry.destination),
       directories: directories.sort(compareArtifactPaths),
-      entries,
+      entries: snapshotted,
       omitted: false,
     })
   }
@@ -425,7 +445,7 @@ async function inspectExistingArtifact(artifactRoot: string): Promise<ExistingAr
     for (const name of names) {
       const decoded = decodeUtf8Name(name, 'artifact root', relativePath || root)
       const relativeChild = relativePath === '' ? decoded : `${relativePath}/${decoded}`
-      const path = artifactPath(relativeChild)
+      const path = safeArtifactPath(relativeChild, 'artifact root')
       const absoluteChild = join(absolute, decoded)
       const stats = await checkedLstat(absoluteChild, 'artifact root', path)
       if (stats.isSymbolicLink()) {
@@ -480,24 +500,25 @@ async function readCheckedFile(entry: PayloadFile, source: string): Promise<Buff
 }
 
 async function writeCheckedFile(root: string, entry: PayloadFile, source: string): Promise<void> {
-  const bytes = await readCheckedFile(entry, source)
+  const bytes = entry.bytes ?? await readCheckedFile(entry, source)
   const destinationAbsolute = join(root, entry.destination)
   let handle
   try {
     handle = await open(destinationAbsolute, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600)
     await handle.writeFile(bytes)
+    await handle.chmod(entry.executable ? 0o755 : 0o644)
   } catch (error) {
     throw payloadError('ARTIFACT_PAYLOAD_WRITE', `cannot safely create artifact file "${entry.destination}"`, 'Use a fresh artifact staging directory.', 'artifact root', entry.destination, error)
   } finally {
     await handle?.close()
   }
-  await chmod(destinationAbsolute, entry.executable ? 0o755 : 0o644)
 }
 
 export async function stagePayloads(
   sourceRoot: string,
   artifactRoot: string,
   payloads: readonly ArtifactPayload[],
+  hooks?: PayloadStageHooks,
 ): Promise<readonly StagedPayload[]> {
   // All source validation and collision detection happens before this function
   // creates a directory or opens a destination for writing.
@@ -505,6 +526,7 @@ export async function stagePayloads(
   const absoluteArtifactRoot = resolve(artifactRoot)
   const existing = await inspectExistingArtifact(absoluteArtifactRoot)
   assertNoCollisions(inspected, existing)
+  await hooks?.afterPreflight?.()
 
   try {
     await mkdir(absoluteArtifactRoot, { recursive: true })
