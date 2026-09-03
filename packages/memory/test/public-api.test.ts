@@ -45,6 +45,10 @@ const RETAINED = new Set([
   // database-transaction.ts
   "withTransaction",
   "withForeignKeysDisabled",
+  // enrichment.ts
+  "pickPendingEnrichment",
+  "commitEnrichment",
+  "searchJournalTextDb",
   // search.ts
   "l2DistanceToCosineSimilarity",
   "searchConversations",

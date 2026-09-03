@@ -283,3 +283,62 @@ export class JournalSearchService {
 function isUnderRoot(candidate: string, roots: string[]): boolean {
   return roots.some((root) => candidate === root || candidate.startsWith(root + path.sep));
 }
+
+export interface JournalTextSearchOptions {
+  limit?: number | undefined;
+  scope?: JournalScopeFilter | undefined;
+  dateRange?:
+    | {
+        start?: Date | undefined;
+        end?: Date | undefined;
+      }
+    | undefined;
+}
+
+export interface JournalTextSearchResult {
+  entry: {
+    id: string;
+    path: string;
+    root: string;
+    scope: JournalScope;
+    timestamp: number;
+    text: string;
+    sections: string[];
+  };
+  embeddingVersion: number;
+  excerpt: string;
+}
+
+export function searchJournalText(
+  db: MemoryDatabase,
+  query: string,
+  roots: readonly string[],
+  options: JournalTextSearchOptions = {},
+): JournalTextSearchResult[] {
+  const limit = options.limit ?? 10;
+  const { sql: filterClause, params: filterParams } = buildFilters(options, roots as string[]);
+
+  const rows = db
+    .prepare(`
+    SELECT
+      ${JOURNAL_SELECT_COLUMNS},
+      j.embedding_version
+    FROM journal_entries AS j
+    WHERE j.text LIKE ?
+      ${filterClause}
+    ORDER BY j.timestamp DESC
+    LIMIT ?
+  `)
+    .all(`%${query}%`, ...filterParams, limit) as unknown as Array<
+    Parameters<typeof journalEntryFromRow>[0] & { embedding_version: number }
+  >;
+
+  return rows.map((row) => {
+    const entry = journalEntryFromRow(row);
+    return {
+      entry,
+      embeddingVersion: row.embedding_version,
+      excerpt: generateExcerpt(entry.text, query),
+    };
+  });
+}

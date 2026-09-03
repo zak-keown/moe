@@ -418,12 +418,11 @@ export function initDatabase(options?: DatabaseOptions): MemoryDatabase {
 export function insertExchange(
   db: MemoryDatabase,
   exchange: ConversationExchange,
-  embedding: number[],
-  // Never read: the tool names actually written come off `exchange.toolCalls`
-  // below. Retained so the seven existing call sites keep compiling.
+  embedding: number[] | null,
   _toolNames?: string[],
 ): void {
   const now = Date.now();
+  const hasEmbedding = embedding !== null && embedding.length > 0;
 
   const stmt = db.prepare(`
     INSERT OR REPLACE INTO exchanges
@@ -457,19 +456,18 @@ export function insertExchange(
     exchange.thinkingLevel || null,
     exchange.thinkingDisabled ? 1 : 0,
     exchange.thinkingTriggers || null,
-    EMBEDDING_VERSION,
+    hasEmbedding ? EMBEDDING_VERSION : 0,
   );
 
-  // Insert into vector table (delete first since virtual tables don't support REPLACE)
-  const delStmt = db.prepare(`DELETE FROM vec_exchanges WHERE id = ?`);
-  delStmt.run(exchange.id);
+  // Delete any stale vec row (virtual tables don't support REPLACE)
+  db.prepare("DELETE FROM vec_exchanges WHERE id = ?").run(exchange.id);
 
-  const vecStmt = db.prepare(`
-    INSERT INTO vec_exchanges (id, embedding)
-    VALUES (?, ?)
-  `);
-
-  vecStmt.run(exchange.id, new Uint8Array(new Float32Array(embedding).buffer));
+  if (hasEmbedding) {
+    db.prepare("INSERT INTO vec_exchanges (id, embedding) VALUES (?, ?)").run(
+      exchange.id,
+      new Uint8Array(new Float32Array(embedding).buffer),
+    );
+  }
 
   // Insert tool calls if present
   if (exchange.toolCalls && exchange.toolCalls.length > 0) {
@@ -568,8 +566,10 @@ export function upsertJournalEntry(
   db: MemoryDatabase,
   entry: JournalEntry,
   sourceMtimeMs: number,
-  embedding: number[],
+  embedding: number[] | null = null,
 ): void {
+  const hasEmbedding = embedding !== null && embedding.length > 0;
+
   db.prepare(`
     INSERT OR REPLACE INTO journal_entries
       (id, path, root, scope, timestamp, text, sections, source_mtime_ms, last_indexed, embedding_version)
@@ -584,14 +584,17 @@ export function upsertJournalEntry(
     JSON.stringify(entry.sections),
     sourceMtimeMs,
     Date.now(),
-    EMBEDDING_VERSION,
+    hasEmbedding ? EMBEDDING_VERSION : 0,
   );
 
   db.prepare("DELETE FROM vec_journal_entries WHERE id = ?").run(entry.id);
-  db.prepare("INSERT INTO vec_journal_entries (id, embedding) VALUES (?, ?)").run(
-    entry.id,
-    new Uint8Array(new Float32Array(embedding).buffer),
-  );
+
+  if (hasEmbedding) {
+    db.prepare("INSERT INTO vec_journal_entries (id, embedding) VALUES (?, ?)").run(
+      entry.id,
+      new Uint8Array(new Float32Array(embedding).buffer),
+    );
+  }
 }
 
 export function deleteJournalEntry(db: MemoryDatabase, id: string): void {
