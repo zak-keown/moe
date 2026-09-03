@@ -14,7 +14,8 @@
   "scripts": {
     "bin:test": "vitest run --dir bin/test",
     "build": "turbo run build",
-    "check": "pnpm lint && turbo run typecheck test",
+    "check": "pnpm lint && turbo run typecheck test && pnpm hooks:test",
+    "hooks:test": "node scripts/check-session-start-hooks.mjs",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "mint": "turbo run mint:generate",
@@ -25,7 +26,7 @@
     "tab:build": "cargo build --release --manifest-path packages/tab/Cargo.toml",
     "tab:test": "cargo test --manifest-path packages/tab/Cargo.toml",
     "tab:test:bindings": "pnpm tab:build && uv run --project packages/tab/bindings/python pytest packages/tab/bindings/python && (cd packages/tab/bindings/go && CGO_ENABLED=0 go test ./...) && pnpm --filter @bubstack/moe-tab test:ffi",
-    "test": "turbo run test && pnpm bin:test",
+    "test": "turbo run test && pnpm bin:test && pnpm hooks:test",
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {

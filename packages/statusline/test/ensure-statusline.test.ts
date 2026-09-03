@@ -1,8 +1,15 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ensureStatusLine } from "../src/hooks/ensure-statusline.js";
+import { defaultSettingsPath, ensureStatusLine } from "../src/hooks/ensure-statusline.js";
+
+const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const SESSION_START_COMMAND = JSON.parse(
+  readFileSync(join(PACKAGE_ROOT, "hooks/hooks.json"), "utf8"),
+).hooks.SessionStart[0].hooks[0].command as string;
 
 describe("ensureStatusLine", () => {
   let dir: string;
@@ -108,5 +115,67 @@ describe("ensureStatusLine", () => {
 
     expect(result).toEqual({ wrote: true, reason: "written" });
     expect(JSON.parse(readFileSync(nestedPath, "utf8")).statusLine).toBeDefined();
+  });
+});
+
+describe("defaultSettingsPath", () => {
+  it("uses CLAUDE_CONFIG_DIR instead of the OS home when configured", () => {
+    expect(defaultSettingsPath({ CLAUDE_CONFIG_DIR: "/isolated/claude" }, "/host/home")).toBe(
+      "/isolated/claude/settings.json",
+    );
+  });
+
+  it("falls back to the current ~/.claude location", () => {
+    expect(defaultSettingsPath({}, "/host/home")).toBe("/host/home/.claude/settings.json");
+  });
+});
+
+describe("packed SessionStart command", () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "moe-statusline-hook-test-"));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function execute(envOverrides: NodeJS.ProcessEnv) {
+    const env: NodeJS.ProcessEnv = {
+      ...process.env,
+      CLAUDE_CONFIG_DIR: join(dir, "claude-config"),
+      CLAUDE_PLUGIN_ROOT: PACKAGE_ROOT,
+      ...envOverrides,
+    };
+    if (envOverrides.PLUGIN_ROOT === undefined) delete env.PLUGIN_ROOT;
+    return spawnSync(SESSION_START_COMMAND, {
+      cwd: dir,
+      env,
+      input: '{"hook_event_name":"SessionStart","source":"startup"}\n',
+      shell: "/bin/bash",
+      encoding: "utf8",
+    });
+  }
+
+  it("is a silent no-op under Codex plugin-root semantics", () => {
+    const result = execute({ PLUGIN_ROOT: PACKAGE_ROOT });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe("");
+    expect(existsSync(join(dir, "claude-config", "settings.json"))).toBe(false);
+  });
+
+  it("preserves Claude's first-run configuration behavior", () => {
+    const result = execute({});
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe("Moe: configured the Claude Code statusline (ccstatusline).\n");
+    expect(result.stderr).toBe("");
+    const settings = JSON.parse(readFileSync(join(dir, "claude-config", "settings.json"), "utf8"));
+    expect(settings.statusLine.command).toBe(
+      `node "${join(PACKAGE_ROOT, "vendor/ccstatusline/ccstatusline.js")}"`,
+    );
   });
 });
