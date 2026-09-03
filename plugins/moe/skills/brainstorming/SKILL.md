@@ -19,6 +19,20 @@ to EVERY task at EVERY depth below — the ceremony scales with the task;
 the approval gate never does.
 </HARD-GATE>
 
+## Stress-testing an existing design
+
+Before classifying by depth, check: is the user arriving with a substantially
+complete design, plan, or decision and asking to **validate** it — "grill me on
+this," "stress-test this plan," "poke holes in this," "what am I missing"? If
+so, skip depth classification entirely. Read the design, build the design tree
+from it, and enter the **Sharpening an agreed shape** round loop directly. The
+`<HARD-GATE>` still holds: when rounds are done, present what held up and what
+didn't, then get approval before any implementation.
+
+If a gap discovered during stress-testing upgrades the scope — the design needs
+a new subsystem, or an assumption collapses — stop the round loop, re-enter
+depth classification at the appropriate depth, and continue from there.
+
 ## Three Depths
 
 Before your first question, classify the request by DEPTH and say the

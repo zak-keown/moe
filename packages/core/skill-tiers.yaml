@@ -230,6 +230,13 @@ imported:
       a design question: a single-file HTML logic demo, or a set of UI
       variants switchable via `?variant=`.
 
+  resolving-merge-conflicts:
+    from: imported
+    why: >-
+      Fires when git status shows unmerged paths — during a merge, rebase, or
+      cherry-pick. No other skill covers conflict resolution; without this the
+      agent has no guidance at the moment discipline matters most.
+
 
 # ---------------------------------------------------------------------------
 # authored: skills this fork wrote. OPEN.
