@@ -24,7 +24,7 @@ function record(value: unknown, field: string): Record<string, unknown> {
 function local(value: unknown, field: string): string {
   if (typeof value !== 'string' || value.length === 0) failure('ARTIFACT_REFERENCE_INVALID', `${field} must be a non-empty string`)
   const candidate = value.replace(/^\.\//, '').replace(/\/$/, '')
-  if (candidate === '') return ''
+  if (candidate === '' || candidate === '.') return ''
   try {
     return artifactPath(candidate)
   } catch (error) {
@@ -59,7 +59,11 @@ export function validateArtifactReferences(context: ArtifactReferenceContext): v
   }
 
   for (const [kind, value] of Object.entries(context.componentDirectories ?? {})) {
-    if (kind === 'hooks' || kind === 'mcp') exact(value, `components.${kind}`)
+    if (kind === 'hooks') {
+      const path = local(value, `components.${kind}`)
+      if (paths.has(path)) exact(path, `components.${kind}`)
+      else directory(path, `components.${kind}`)
+    } else if (kind === 'mcp') exact(value, `components.${kind}`)
     else directory(value, `components.${kind}`)
   }
 

@@ -78,7 +78,7 @@ function context(artifactPaths = paths): ArtifactReferenceContext {
     ],
     componentFiles: [{
       path: '.mcp.json',
-      content: JSON.stringify({ mcpServers: { demo: { command: 'node', args: ['./dist/mcp-server.js'] } } }),
+      content: JSON.stringify({ mcpServers: { demo: { command: 'node', args: ['./dist/mcp-server.js'], cwd: '.' } } }),
     }],
   }
 }
@@ -142,6 +142,20 @@ describe('complete artifact references', () => {
         { path: 'config/custom-mcp.json', content: JSON.stringify({ mcpServers: { demo: { command: 'node', args: ['./missing-mcp.js'] } } }) },
         { path: 'config/custom-hooks.json', content: JSON.stringify({ hooks: { SessionStart: [{ command: './missing-hook.cmd' }] } }) },
       ],
+    })).toThrow(expect.objectContaining({ diagnostic: expect.objectContaining({ code: 'ARTIFACT_REFERENCE_MISSING' }) }))
+  })
+
+  it('accepts a hooks component directory only when at least one hook manifest row represents it', () => {
+    const configured = context()
+    expect(() => validateArtifactReferences({
+      ...configured,
+      componentDirectories: { ...configured.componentDirectories, hooks: 'hooks' },
+    })).not.toThrow()
+
+    expect(() => validateArtifactReferences({
+      ...configured,
+      artifactManifest: manifest(paths.filter((path) => !path.startsWith('hooks/'))),
+      componentDirectories: { ...configured.componentDirectories, hooks: 'hooks' },
     })).toThrow(expect.objectContaining({ diagnostic: expect.objectContaining({ code: 'ARTIFACT_REFERENCE_MISSING' }) }))
   })
 
