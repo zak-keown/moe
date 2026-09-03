@@ -281,6 +281,13 @@ authored:
       slot plus the script that fills it, so a fix run cannot forget to
       record which commit fixed which finding.
 
+  docs-update:
+    from: moe
+    why: >-
+      Subagent-driven documentation generation and verification against the
+      codebase. Dispatches one agent per doc type; each reads code before
+      writing prose. Invoked deliberately with /docs-update.
+
 
 # Not a skill: skills/_shared/ holds the three PAR reference documents the
 # iterative-development cluster reads at runtime. It carries no SKILL.md, so
