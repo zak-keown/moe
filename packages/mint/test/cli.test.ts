@@ -450,6 +450,13 @@ describe('CLI end-to-end', () => {
     expect(result.stdout).toContain('v0.1.5-rc.1')
   })
 
+  it('release promote exits 0 in plan mode with stable tag', () => {
+    const result = runCli(['release', 'promote', '--tag', 'v0.1.5', '--repo', '.'], REPO_ROOT)
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('promote')
+    expect(result.stdout).toContain('v0.1.5')
+  })
+
   it('release certify-claude exits 1 when --execute is missing producer identity', () => {
     const result = runCli(['release', 'certify-claude', '--candidate', 'v0.1.5-rc.1', '--repo', '.', '--execute'], REPO_ROOT)
     expect(result.status).toBe(1)
