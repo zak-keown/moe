@@ -113,7 +113,6 @@ function normalizeUrl(value: unknown, field: string, repository: boolean): strin
     candidate = requiredTrimmed(value, field)
   }
   if (repository && candidate.startsWith('git+')) candidate = candidate.slice('git+'.length)
-  if (repository) candidate = candidate.replace(/\/+$/, '').replace(/\.git$/, '').replace(/\/+$/, '')
   let parsed: URL
   try {
     parsed = new URL(candidate)
@@ -123,7 +122,9 @@ function normalizeUrl(value: unknown, field: string, repository: boolean): strin
   if (parsed.protocol !== 'https:' || parsed.username || parsed.password || parsed.hash) {
     diagnostic('PACKAGE_METADATA_INVALID', field, `package metadata field "${field}" must be a canonical HTTPS URL`, `Set ${field} to a canonical HTTPS URL without credentials or a fragment.`)
   }
-  const path = parsed.pathname.replace(/\/+$/, '')
+  const path = repository
+    ? parsed.pathname.replace(/\/+$/, '').replace(/\.git$/, '').replace(/\/+$/, '')
+    : parsed.pathname.replace(/\/+$/, '')
   return `${parsed.origin}${path}${parsed.search}`
 }
 
@@ -301,7 +302,7 @@ function contributionRecord(value: unknown): ContributionRecord {
  */
 export function mergeAdapterPackageContributions(
   sourceExports: NormalizedExports,
-  contributions: readonly unknown[],
+  contributions: readonly AdapterPackageContributionInput[],
 ): MergedAdapterPackageContributions {
   const exports: Record<string, ExportTarget> = {}
   for (const [key, target] of Object.entries(sourceExports)) exports[key] = cloneExportTarget(target, `exports.${key}`)
@@ -337,7 +338,7 @@ export function mergeAdapterPackageContributions(
       if (exportKeys.length !== 1 || exportKeys[0] !== './server' || typeof next['./server'] !== 'string') {
         diagnostic('PACKAGE_MANIFEST_COLLISION', 'exports', 'OpenCode may contribute only exports["./server"] as a string target', 'Emit exactly { "./server": "./local-target" } from OpenCode.', [owner, 'exports'])
       }
-      const server = next['./server']
+      const server = canonicalSynthesizedTarget(next['./server'], 'exports./server')
       const existing = exports['./server']
       if (existing !== undefined && !sameValue(existing, server)) {
         diagnostic('PACKAGE_MANIFEST_COLLISION', 'exports./server', 'source and OpenCode server exports disagree', 'Make source exports["./server"] equal OpenCode\'s contribution or remove the source-owned subpath.', [serverOwner ?? 'source', owner])

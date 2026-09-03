@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { MintError, type MintDiagnostic } from '../src/diagnostics.js'
 import {
+  type AdapterPackageContributionInput,
   mergeAdapterPackageContributions,
   normalizeExports,
   normalizeMetadata,
@@ -81,6 +82,16 @@ describe('normalizeMetadata', () => {
       { ...metadataSource, keywords: ['Mint', 1] },
       metadataMint,
     ), { code: 'PACKAGE_METADATA_INVALID', field: 'keywords' })
+  })
+
+  it.each([
+    ['git suffix before query', 'git+https://github.com/example/moe-example.git?ref=v1', 'https://github.com/example/moe-example?ref=v1'],
+    ['git slash suffix before query', 'https://github.com/example/moe-example.git/?ref=v1', 'https://github.com/example/moe-example?ref=v1'],
+  ])('normalizes repository suffixes without losing a query: %s', (_name, sourceRepository, repository) => {
+    expect(normalizeMetadata(
+      { ...metadataSource, repository: sourceRepository },
+      { ...metadataMint, repository },
+    ).repository).toBe('https://github.com/example/moe-example?ref=v1')
   })
 })
 
@@ -168,6 +179,39 @@ describe('mergeAdapterPackageContributions', () => {
     ).exports['./server']).toBe('./.opencode/plugins/moe.js')
   })
 
+  it.each([
+    ['already canonical', './.opencode/plugins/moe.js', './.opencode/plugins/moe.js'],
+    ['unprefixed local path', '.opencode/plugins/moe.js', './.opencode/plugins/moe.js'],
+    ['package root', '.', './'],
+  ])('normalizes an OpenCode server target: %s', (_name, server, expected) => {
+    expect(mergeAdapterPackageContributions({}, [
+      { owner: 'opencode', exports: { './server': server } },
+    ]).exports['./server']).toBe(expected)
+  })
+
+  it.each([
+    ['empty', ''],
+    ['whitespace-only', '  '],
+    ['parent traversal', '../server.js'],
+    ['nested parent traversal', 'dist/../server.js'],
+    ['absolute path', '/server.js'],
+    ['URL-like target', 'https://example.com/server.js'],
+    ['backslash path', 'dist\\server.js'],
+  ])('rejects an invalid OpenCode server target: %s', (_name, server) => {
+    expectFailure(() => mergeAdapterPackageContributions({}, [
+      { owner: 'opencode', exports: { './server': server } },
+    ]), {
+      code: 'PACKAGE_EXPORTS_INVALID_SHAPE', field: 'exports./server',
+    })
+  })
+
+  it('compares a canonicalized OpenCode target with the source-owned server export', () => {
+    expect(mergeAdapterPackageContributions(
+      { './server': './.opencode/plugins/moe.js' },
+      [{ owner: 'opencode', exports: { './server': '.opencode/plugins/moe.js' } }],
+    ).exports['./server']).toBe('./.opencode/plugins/moe.js')
+  })
+
   it('identifies both OpenCode emissions when their server targets disagree', () => {
     const error = expectFailure(() => mergeAdapterPackageContributions({}, [
       { owner: 'opencode', exports: { './server': './first.js' } },
@@ -209,7 +253,7 @@ describe('mergeAdapterPackageContributions', () => {
     ['missing owner', { pi: {} }],
     ['non-string owner', { owner: 42, pi: {} }],
   ])('rejects a malformed contribution entry: %s', (_name, contribution) => {
-    const error = expectFailure(() => mergeAdapterPackageContributions({}, [contribution]), {
+    const error = expectFailure(() => mergeAdapterPackageContributions({}, [contribution] as unknown as readonly AdapterPackageContributionInput[]), {
       code: 'PACKAGE_MANIFEST_COLLISION', source: 'package-manifest', field: expect.any(String),
     })
     expect(error.owners).toEqual(['invalid-contribution', 'field-policy'])
