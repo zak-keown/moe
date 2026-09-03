@@ -84,7 +84,7 @@ type ComparedFile = (typeof COMPARED_FILES)[number]
 // generate() runs. Each one is either a manifest generate() is about to
 // rewrite (and would otherwise refuse to clobber) or a hand-authored
 // equivalent of a file moe-mint emits itself under a different name/path
-// (package.json, .opencode/, .pi/). Everything else in the real
+// (.opencode/, .pi/). The root package.json remains source-owned. Everything else in the real
 // tree (skills/, hooks/hooks.json, docs/, tests/, README.md, ...) is left in
 // place: skills/ and hooks/hooks.json are component sources moe-mint
 // reads, and the rest doesn't collide with anything generate() writes.
@@ -105,7 +105,6 @@ const HAND_MAINTAINED_PATHS = [
   '.cursor-plugin',
   '.kimi-plugin',
   ...SNAPSHOT_ONLY_PATHS,
-  'package.json',
   '.opencode',
   '.pi',
 ]
@@ -182,6 +181,19 @@ function buildConfig(originals: Record<ComparedFile, Record<string, unknown>>): 
     license: claude.license,
     keywords: claude.keywords,
     bootstrap: { skill: 'using-superpowers' },
+    distribution: { npm: '@example/superpowers-dogfood' },
+    artifact: { payloads: [] },
+    targets: {
+      'claude-code': { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] },
+      cursor: { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] },
+      codex: { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] },
+      kimi: { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] },
+      opencode: { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] },
+      pi: { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] },
+      'agent-plugins-1.0': { intent: 'preview', expected_capabilities: [] },
+      copilot: { intent: 'preview', expected_capabilities: [], operating_systems: ['macos'] },
+    },
+    imported_works: [],
     // Closes Finding 1: marketplaceManifest() (src/adapters/claude-code.ts)
     // deep-merges this onto its hardcoded `Development marketplace for
     // ${config.name}` default, reproducing superpowers' hand-written copy.

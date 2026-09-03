@@ -1,8 +1,9 @@
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmitResult } from './types.js'
-import { json, parseRepo } from './shared.js'
-import { nodePackageManifest, piExtensionPath, bootstrapContentPath } from '../bootstrap/node-package.js'
+import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import { deriveEmittedCapabilities } from '../platform/capabilities.js'
+import { parseRepo } from './shared.js'
+import { piDiscoveryMetadata, piExtensionPath, bootstrapContentPath } from '../bootstrap/node-package.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
 
 // Pi's extension loader (`.pi/extensions/<name>.ts`) uses `resources_discover`
@@ -183,7 +184,7 @@ function installDoc(model: PluginModel): string {
   const extensionPath = piExtensionPath(config.name)
 
   const emitted = [
-    "`package.json` (shared with the opencode adapter when both are active), declaring the extension and skills directory under its `pi` field",
+    'Pi discovery metadata contributed under the composed root `package.json`\'s `pi` field',
   ]
   const bootstrapClause = config.bootstrap.kind !== 'none'
     ? 'the Pi extension module that registers the plugin\'s skills directory and injects bootstrap context'
@@ -206,14 +207,11 @@ function installDoc(model: PluginModel): string {
     '',
     "Pi discovers the extension and skills directory through the `pi` field in `package.json`. Consult Pi's extension docs if this command doesn't match your installed version.",
     '',
-    '## Caveats',
-    '',
-    "- `package.json` is generated at the plugin root; if you maintain your own `package.json` for this plugin, exclude the pi and opencode adapters from generation (`harnesses.exclude`) or merge the fields by hand.",
   ]
   return lines.join('\n')
 }
 
-export const pi: HarnessAdapter = {
+export const pi: HarnessAdapter = Object.freeze({
   name: 'pi',
   support: {
     skills: 'full',
@@ -227,10 +225,9 @@ export const pi: HarnessAdapter = {
   },
   skillsOutputDir: '.pi/skills',
   installDoc,
-  emit(model: PluginModel): EmitResult {
-    const warnings: string[] = []
+  emit(model: PluginModel) {
+    const limitations: EmissionLimitation[] = []
     const files: GeneratedFile[] = [
-      { path: 'package.json', content: json(nodePackageManifest(model)) },
       extensionFile(model),
     ]
     // pi's extension module reads GENERATED_BOOTSTRAP_PATH at runtime (via
@@ -241,11 +238,16 @@ export const pi: HarnessAdapter = {
       files.push({ path: GENERATED_BOOTSTRAP_PATH, content: generatedBootstrap(model) })
     }
 
-    if (model.commands.length) warnings.push('commands are not emitted for pi')
-    if (model.agents.length) warnings.push('agents are not emitted for pi')
-    if (model.hooks !== undefined) warnings.push('hooks are not emitted for pi')
-    if (model.mcp !== undefined) warnings.push('mcp servers are not emitted for pi')
+    if (model.commands.length) limitations.push({ code: 'COMPONENT_OMITTED', component: 'commands', message: 'commands are not emitted for pi' })
+    if (model.agents.length) limitations.push({ code: 'COMPONENT_OMITTED', component: 'agents', message: 'agents are not emitted for pi' })
+    if (model.hooks !== undefined) limitations.push({ code: 'COMPONENT_OMITTED', component: 'hooks', message: 'hooks are not emitted for pi' })
+    if (model.mcp !== undefined) limitations.push({ code: 'COMPONENT_OMITTED', component: 'mcp', message: 'mcp servers are not emitted for pi' })
 
-    return { files, warnings }
+    return {
+      files,
+      limitations,
+      emittedCapabilities: deriveEmittedCapabilities('pi', model, files),
+      packageContribution: { owner: 'pi' as const, pi: piDiscoveryMetadata(model) },
+    }
   },
-}
+})

@@ -2,26 +2,20 @@
   "name": "@bubstack/moe-glass",
   "version": "0.1.4",
   "type": "module",
-  "description": "Direct Chrome DevTools Protocol access. Skill mode (17 CLI commands) plus MCP mode (single use_browser tool). Auto-starts Chrome.",
+  "description": "Direct Chrome DevTools Protocol access. Skill mode plus MCP mode, zero dependencies.",
   "license": "MIT",
   "author": {
     "name": "Zak Keown",
     "email": "zak.keown@outlook.com"
   },
-  "homepage": "https://gitlab.com/moe-ai/moe",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/zak-keown/moe.git"
-  },
+  "homepage": "https://github.com/zak-keown/moe",
+  "repository": "https://github.com/zak-keown/moe",
   "keywords": [
-    "claude-code",
-    "codex",
     "chrome",
     "devtools-protocol",
     "browser",
     "automation",
-    "screenshots",
-    "mcp"
+    "screenshots"
   ],
   "main": "dist/index.js",
   "bin": {
@@ -40,7 +34,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "build": "tsc -b && esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:fsevents && node ../../scripts/copy-license.mjs MIT dist/LICENSE",
+    "build": "node ../../scripts/clean-package-dist.mjs && cd ../.. && node --experimental-strip-types scripts/write-bundle-inventory.mjs --prepare packages/glass && tsc -b packages/glass/tsconfig.json --force && esbuild packages/glass/src/index.ts --bundle --platform=node --format=esm --outfile=packages/glass/dist/index.js --external:fsevents --metafile=packages/glass/.moe-build/metafile-esm.json && node --experimental-strip-types scripts/write-bundle-inventory.mjs packages/glass packages/glass/.moe-build/metafile-esm.json",
     "prepack": "pnpm run build",
     "typecheck": "tsc -b --pretty",
     "test": "vitest run --project unit",

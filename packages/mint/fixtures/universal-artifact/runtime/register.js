@@ -1,0 +1,1 @@
+globalThis.__MOE_UNIVERSAL_FIXTURE_REGISTERED__ = true;

@@ -1,16 +1,54 @@
 import { describe, it, expect } from 'vitest'
-import { mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { loadConfig, ConfigError } from '../src/config.js'
 
-function repoWith(yamlText: string): string {
+const POLICY = `
+distribution:
+  npm: "@scope/demo"
+artifact:
+  payloads: []
+targets:
+  claude-code: { intent: preview, expected_capabilities: [], operating_systems: [macos] }
+  cursor: { intent: preview, expected_capabilities: [], operating_systems: [macos] }
+  codex: { intent: preview, expected_capabilities: [], operating_systems: [macos] }
+  kimi: { intent: preview, expected_capabilities: [], operating_systems: [macos] }
+  opencode: { intent: preview, expected_capabilities: [], operating_systems: [macos] }
+  pi: { intent: preview, expected_capabilities: [], operating_systems: [macos] }
+  agent-plugins-1.0: { intent: preview, expected_capabilities: [] }
+  copilot: { intent: preview, expected_capabilities: [], operating_systems: [macos] }
+imported_works: []
+`
+
+function repoWith(yamlText: string, appendPolicy = true): string {
   const dir = mkdtempSync(join(tmpdir(), 'mint-config-'))
-  writeFileSync(join(dir, 'moe-mint.yaml'), yamlText)
+  writeFileSync(join(dir, 'moe-mint.yaml'), appendPolicy ? `${yamlText}${POLICY}` : yamlText)
   return dir
 }
 
 describe('loadConfig', () => {
+  it('normalizes optional imported-work artifact roots to immutable canonical raw-UTF-8 order', () => {
+    const config = loadConfig(repoWith('name: demo\nversion: 1.0.0\ndescription: demo\n'.concat(POLICY.replace(
+      'imported_works: []',
+      'imported_works: [{ name: work, artifact_roots: [vendor/z, vendor/a] }, { name: bundle-only }]',
+    )), false))
+    expect(config.importedWorks).toEqual([
+      { name: 'work', artifactRoots: ['vendor/a', 'vendor/z'] },
+      { name: 'bundle-only', artifactRoots: [] },
+    ])
+    expect(Object.isFrozen(config.importedWorks[0]?.artifactRoots)).toBe(true)
+  })
+
+  it.each(['vendor/', 'vendor/./x', '../vendor', 'vendor/*', 'Vendor/x, vendor/x', 'vendor, vendor/nested'])('rejects ambiguous imported-work artifact roots %s', (roots) => {
+    const entries = roots.split(', ').map((root) => root.trim())
+    const config = 'name: demo\nversion: 1.0.0\ndescription: demo\n'.concat(POLICY.replace(
+      'imported_works: []',
+      `imported_works: [{ name: work, artifact_roots: [${entries.join(', ')}] }]`,
+    ))
+    expect(() => loadConfig(repoWith(config, false))).toThrow(ConfigError)
+  })
+
   it('loads a minimal config with defaults', () => {
     const cfg = loadConfig(repoWith(
       'name: demo\nversion: 1.0.0\ndescription: A demo plugin\n'
@@ -40,17 +78,166 @@ describe('loadConfig', () => {
       'bootstrap:',
       '  skill: using-kitchen-sink',
       'harnesses:',
-      '  exclude: [cursor]',
       '  claude-code:',
       '    manifest:',
       '      homepage: https://example.com/kitchen-sink',
     ].join('\n')))
     expect(cfg.bootstrap).toEqual({ kind: 'skill', skill: 'using-kitchen-sink' })
-    expect(cfg.harnesses.exclude).toEqual(['cursor'])
+    expect(cfg.harnesses.exclude).toEqual([])
     expect(cfg.harnesses.settings['claude-code']?.manifest).toEqual({
       homepage: 'https://example.com/kitchen-sink',
     })
     expect(cfg.author?.name).toBe('Bubstack')
+  })
+
+  describe('package-local artifact policy', () => {
+    it('parses a typed distribution, payload, target and imported-work policy', () => {
+      const cfg = loadConfig(repoWith([
+        'name: demo',
+        'version: 1.0.0',
+        'description: demo',
+        'distribution:',
+        '  npm: "@scope/demo"',
+        'artifact:',
+        '  payloads:',
+        '    - { from: "dist/", to: "runtime//dist/", required: true }',
+        'targets:',
+        '  claude-code: { intent: certify, expected_capabilities: [skill-discovery], operating_systems: [macos] }',
+        '  cursor: { intent: omit }',
+        '  codex: { intent: omit }',
+        '  kimi: { intent: omit }',
+        '  opencode: { intent: omit }',
+        '  pi: { intent: omit }',
+        '  agent-plugins-1.0: { intent: omit }',
+        '  copilot: { intent: omit }',
+        'imported_works: [{ name: upstream-work }]',
+        'harnesses:',
+        '  exclude: [cursor, codex, kimi, opencode, pi, agent-plugins-1.0, copilot]',
+      ].join('\n'), false))
+
+      expect(cfg.distribution).toEqual({ npm: '@scope/demo' })
+      expect(cfg.artifact.payloads).toEqual([{ from: 'dist', to: 'runtime/dist', required: true }])
+      expect(cfg.targets['claude-code']).toEqual({
+        intent: 'certify', expectedCapabilities: ['skill-discovery'], operatingSystems: ['macos'],
+      })
+      expect(cfg.targets.cursor).toEqual({ intent: 'omit', expectedCapabilities: [] })
+      expect(cfg.importedWorks).toEqual([{ name: 'upstream-work', artifactRoots: [] }])
+    })
+
+    it.each([
+      ['an unscoped npm name', '  npm: demo', /distribution\.npm/],
+      ['an invalid npm name', '  npm: "@Scope/demo"', /distribution\.npm/],
+      ['a glob payload source', '  payloads: [{ from: "dist/*", to: dist, required: true }]', /artifact\.payloads/],
+      ['a traversal payload destination', '  payloads: [{ from: dist, to: "../dist", required: true }]', /artifact\.payloads/],
+      ['a reserved payload destination', '  payloads: [{ from: dist, to: package.json, required: true }]', /artifact\.payloads/],
+      ['the bundle evidence destination', '  payloads: [{ from: dist, to: .moe-build/runtime, required: true }]', /artifact\.payloads/],
+      ['the NOTICE legal output destination', '  payloads: [{ from: dist, to: NOTICE, required: true }]', /artifact\.payloads/],
+      ['the THIRD_PARTY_NOTICES legal output destination', '  payloads: [{ from: dist, to: THIRD_PARTY_NOTICES, required: true }]', /artifact\.payloads/],
+      ['a missing payload required boolean', '  payloads: [{ from: dist, to: dist }]', /required/],
+    ])('rejects %s', (_name, replacement, expected) => {
+      const yaml = `name: demo\nversion: 1.0.0\ndescription: demo\n${POLICY}`
+      const start = replacement.startsWith('  npm') ? '  npm: "@scope/demo"' : '  payloads: []'
+      expect(() => loadConfig(repoWith(yaml.replace(start, replacement), false))).toThrow(expected)
+    })
+
+    it.each([
+      ['unknown target', '  unknown: { intent: omit }', /unknown/],
+      ['unknown capability', '  claude-code: { intent: preview, expected_capabilities: [unknown-capability], operating_systems: [macos] }', /targets\.claude-code/],
+      ['unknown operating system', '  claude-code: { intent: preview, expected_capabilities: [], operating_systems: [haiku] }', /targets\.claude-code/],
+    ])('rejects an %s', (_name, entry, expected) => {
+      const yaml = `name: demo\nversion: 1.0.0\ndescription: demo\n${POLICY}`
+      expect(() => loadConfig(repoWith(yaml.replace('  claude-code: { intent: preview, expected_capabilities: [], operating_systems: [macos] }', entry), false))).toThrow(expected)
+    })
+
+    it('rejects duplicate imported work names', () => {
+      const yaml = `name: demo\nversion: 1.0.0\ndescription: demo\n${POLICY}`
+      try {
+        loadConfig(repoWith(yaml.replace('imported_works: []', 'imported_works: [{ name: one }, { name: one }]'), false))
+        expect.unreachable('loadConfig should reject duplicate imported work names')
+      } catch (error) {
+        expect(error).toMatchObject({
+          diagnostic: {
+            code: 'CONFIG_DUPLICATE_IMPORTED_WORK',
+            source: 'moe-mint.yaml',
+            field: 'imported_works[1].name',
+          },
+        })
+      }
+    })
+
+    it.each([
+      ['omits a host operating-system matrix', '  claude-code: { intent: preview, expected_capabilities: [] }'],
+      ['adds an operating-system matrix to the format target', '  agent-plugins-1.0: { intent: preview, expected_capabilities: [], operating_systems: [macos] }'],
+      ['omits a canonical target', ''],
+    ])('rejects a target policy that %s', (_name, replacement) => {
+      const yaml = `name: demo\nversion: 1.0.0\ndescription: demo\n${POLICY}`
+      const invalid = replacement === ''
+        ? yaml.replace('  copilot: { intent: preview, expected_capabilities: [], operating_systems: [macos] }\n', '')
+        : yaml.replace(replacement.includes('agent-plugins')
+          ? '  agent-plugins-1.0: { intent: preview, expected_capabilities: [] }'
+          : '  claude-code: { intent: preview, expected_capabilities: [], operating_systems: [macos] }', replacement)
+      expect(() => loadConfig(repoWith(invalid, false))).toThrow(ConfigError)
+    })
+
+    it('rejects an exclude list that disagrees with target intent', () => {
+      const yaml = `name: demo\nversion: 1.0.0\ndescription: demo\n${POLICY}`
+      try {
+        loadConfig(repoWith(`${yaml}harnesses:\n  exclude: [cursor]\n`, false))
+        expect.unreachable('loadConfig should reject target/exclusion disagreement')
+      } catch (error) {
+        expect(error).toMatchObject({
+          diagnostic: {
+            code: 'TARGET_EXCLUSION_MISMATCH',
+            source: 'moe-mint.yaml',
+            field: 'targets.cursor.intent',
+            target: 'cursor',
+          },
+        })
+      }
+    })
+
+    it('rejects scalar imported works with the object-form migration action', () => {
+      const yaml = `name: demo\nversion: 1.0.0\ndescription: demo\n${POLICY}`
+      try {
+        loadConfig(repoWith(yaml.replace('imported_works: []', 'imported_works: [one]'), false))
+        expect.unreachable('loadConfig should reject scalar imported work')
+      } catch (error) {
+        expect(error).toMatchObject({
+          diagnostic: {
+            code: 'CONFIG_IMPORTED_WORK_MIGRATION_REQUIRED',
+            source: 'moe-mint.yaml',
+            field: 'imported_works',
+            action: 'Replace each scalar entry with {name: ...}.',
+          },
+        })
+      }
+    })
+
+    it.each([
+      ['top level', 'description: demo', 'description: demo\nunknown_root: true'],
+      ['author', 'description: demo', 'description: demo\nauthor: { name: Demo, unknown: true }'],
+      ['components', 'description: demo', 'description: demo\ncomponents: { skills: skills, unknown: true }'],
+      ['release', 'description: demo', 'description: demo\nrelease: { unknown: true }'],
+      ['release file', 'description: demo', 'description: demo\nrelease: { files: [{ path: package.json, field: version, unknown: true }] }'],
+      ['release audit', 'description: demo', 'description: demo\nrelease: { audit: { exclude: [], unknown: true } }'],
+      ['marketplace', 'description: demo', 'description: demo\nmarketplace: { unknown: true }'],
+      ['distribution', 'distribution:\n  npm: "@scope/demo"', 'distribution:\n  npm: "@scope/demo"\n  unknown: true'],
+      ['artifact', 'artifact:\n  payloads: []', 'artifact:\n  payloads: []\n  unknown: true'],
+      ['artifact payload', 'payloads: []', 'payloads: [{ from: dist, to: dist, required: true, unknown: true }]'],
+      ['target', '  cursor: { intent: preview, expected_capabilities: [], operating_systems: [macos] }', '  cursor: { intent: preview, expected_capabilities: [], operating_systems: [macos], unknown: true }'],
+      ['imported work', 'imported_works: []', 'imported_works: [{ name: work, unknown: true }]'],
+    ])('rejects an unknown key at the closed %s schema level', (_name, from, to) => {
+      const yaml = `name: demo\nversion: 1.0.0\ndescription: demo\n${POLICY}`.replace(from, to)
+
+      try {
+        loadConfig(repoWith(yaml, false))
+        expect.unreachable('loadConfig should reject unknown closed-schema keys')
+      } catch (error) {
+        expect(error).toMatchObject({
+          diagnostic: { code: 'CONFIG_INVALID', source: 'moe-mint.yaml' },
+        })
+      }
+    })
   })
 
   it('rejects a missing required field, naming its YAML path', () => {
@@ -60,6 +247,11 @@ describe('loadConfig', () => {
       loadConfig(repoWith('version: 1.0.0\ndescription: x\n'))
     } catch (e) {
       expect((e as ConfigError).details.join('\n')).toContain('name')
+      expect((e as ConfigError).diagnostic).toMatchObject({
+        code: 'CONFIG_INVALID',
+        source: 'moe-mint.yaml',
+        action: 'Correct the configuration and run the command again.',
+      })
     }
   })
 
@@ -245,45 +437,41 @@ describe('loadConfig', () => {
     })
   })
 
-  describe('old-syntax hard errors (each names its replacement)', () => {
-    it('rejects bootstrap: { none: true } with the tagged-value message', () => {
+  describe('old-syntax hard errors', () => {
+    it('rejects bootstrap: { none: true } with migration context', () => {
       try {
         loadConfig(repoWith(
           'name: x\nversion: 1.0.0\ndescription: x\nbootstrap:\n  none: true\n'
         ))
         expect.unreachable('should have thrown')
       } catch (e) {
-        expect((e as ConfigError).message).toBe(
-          'bootstrap is now a tagged value: use "bootstrap: none", "bootstrap: generate", or "bootstrap: { skill: <name> }"',
-        )
+        expect(e).toMatchObject({ diagnostic: { code: 'CONFIG_BOOTSTRAP_MIGRATION_REQUIRED', source: 'moe-mint.yaml', field: 'bootstrap' } })
       }
     })
 
-    it('rejects bootstrap: { generate: true } with the tagged-value message', () => {
+    it('rejects bootstrap: { generate: true } with migration context', () => {
       try {
         loadConfig(repoWith(
           'name: x\nversion: 1.0.0\ndescription: x\nbootstrap:\n  generate: true\n'
         ))
         expect.unreachable('should have thrown')
       } catch (e) {
-        expect((e as ConfigError).message).toBe(
-          'bootstrap is now a tagged value: use "bootstrap: none", "bootstrap: generate", or "bootstrap: { skill: <name> }"',
-        )
+        expect(e).toMatchObject({ diagnostic: { code: 'CONFIG_BOOTSTRAP_MIGRATION_REQUIRED', source: 'moe-mint.yaml', field: 'bootstrap' } })
       }
     })
 
-    it('rejects bootstrap.emitHooks with the moved message', () => {
+    it('rejects bootstrap.emitHooks with migration context', () => {
       try {
         loadConfig(repoWith(
           'name: x\nversion: 1.0.0\ndescription: x\nbootstrap:\n  skill: using-x\n  emitHooks: false\n'
         ))
         expect.unreachable('should have thrown')
       } catch (e) {
-        expect((e as ConfigError).message).toBe('bootstrap.emitHooks moved: set harnesses.<name>.hooks: own')
+        expect(e).toMatchObject({ diagnostic: { code: 'CONFIG_BOOTSTRAP_HOOKS_MIGRATION_REQUIRED', source: 'moe-mint.yaml', field: 'bootstrap.emitHooks' } })
       }
     })
 
-    it('rejects harnesses.overrides with the moved message', () => {
+    it('rejects harnesses.overrides with migration context', () => {
       try {
         loadConfig(repoWith([
           'name: x',
@@ -296,13 +484,11 @@ describe('loadConfig', () => {
         ].join('\n')))
         expect.unreachable('should have thrown')
       } catch (e) {
-        expect((e as ConfigError).message).toBe(
-          'harnesses.overrides moved: put manifest patches under harnesses.<name>.manifest',
-        )
+        expect(e).toMatchObject({ diagnostic: { code: 'CONFIG_HARNESS_OVERRIDES_MIGRATION_REQUIRED', source: 'moe-mint.yaml', field: 'harnesses.overrides' } })
       }
     })
 
-    it('rejects a bump: section with the renamed message', () => {
+    it('rejects a bump: section with migration context', () => {
       try {
         loadConfig(repoWith([
           'name: x',
@@ -314,7 +500,7 @@ describe('loadConfig', () => {
         ].join('\n')))
         expect.unreachable('should have thrown')
       } catch (e) {
-        expect((e as ConfigError).message).toBe('bump: was renamed: use release: (same fields)')
+        expect(e).toMatchObject({ diagnostic: { code: 'CONFIG_RELEASE_MIGRATION_REQUIRED', source: 'moe-mint.yaml', field: 'bump' } })
       }
     })
   })
@@ -380,6 +566,12 @@ describe('loadConfig', () => {
     const cfg = loadConfig('fixtures/kitchen-sink')
     expect(cfg.name).toBe('kitchen-sink')
     expect(cfg.bootstrap).toEqual({ kind: 'skill', skill: 'using-kitchen-sink' })
+  })
+
+  it('loads the typed policy fixture', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mint-typed-fixture-'))
+    writeFileSync(join(dir, 'moe-mint.yaml'), readFileSync('test/fixtures/config/typed-policy.yaml', 'utf8'))
+    expect(loadConfig(dir).artifact.payloads).toEqual([{ from: 'dist', to: 'dist', required: true }])
   })
 
   it('normalizes trailing slashes on component paths', () => {

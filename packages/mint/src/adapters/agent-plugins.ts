@@ -1,18 +1,18 @@
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmitResult } from './types.js'
+import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { baseManifestFields, json } from './shared.js'
 
 // Agent Plugins 1.0 (https://agent-plugins.org) only defines skills/ and
-// root-level plugin.json / mcp.json — commands, agents, and hooks have no
-// place in the spec, and there is no bootstrap-injection mechanism, so
-// those component supports stay 'none' below (with warnings when present).
+// root-level plugin.json / mcp.json. Commands, agents, hooks, and bootstrap
+// therefore become typed emission limitations when present; emitted
+// capabilities are calculated from the resulting format projection.
 //
 // The spec's standard skills location IS skills/ at the plugin root. When
 // components.skills is customized we can't relocate the manifest to point
-// at it (the spec has no such key), so we only warn; support.skills stays
-// the static 'full' declared below and the run-specific limitation is
-// communicated via the warning instead.
+// at it (the spec has no such key), so the resulting omission is represented
+// by a typed skills limitation rather than a static support claim.
 //
 // plugin.json's schema is CLOSED (additionalProperties: false), unlike the
 // other adapters' manifests. A general deepMerge of the full manifest
@@ -135,6 +135,28 @@ function mcpManifest(model: PluginModel): { manifest?: Record<string, unknown>; 
   return { manifest: { $schema: MCP_SCHEMA, mcpServers }, warnings }
 }
 
+function limitationForWarning(message: string): EmissionLimitation {
+  if (message.startsWith('commands are excluded')) {
+    return { code: 'COMPONENT_OMITTED', component: 'commands', message }
+  }
+  if (message.startsWith('agents are excluded')) {
+    return { code: 'COMPONENT_OMITTED', component: 'agents', message }
+  }
+  if (message.startsWith('hooks are excluded')) {
+    return { code: 'COMPONENT_OMITTED', component: 'hooks', message }
+  }
+  if (message.startsWith('agent-plugins-1.0 requires skills/')) {
+    return { code: 'COMPONENT_OMITTED', component: 'skills', message }
+  }
+  if (message.startsWith('mcp.json is occupied') || message.startsWith('mcp config has no mcpServers')) {
+    return { code: 'COMPONENT_OMITTED', component: 'mcp', message }
+  }
+  if (message.startsWith('plugin name') || message.startsWith('extensions entry') || message.startsWith('mcp server')) {
+    return { code: 'SETTING_DROPPED', component: 'mcp', message }
+  }
+  throw new Error(`unrecognized Agent Plugins emission warning: ${message}`)
+}
+
 // Ground truth per Design decision 4: Agent Plugins 1.0 has no install
 // command of its own — any compliant client loads the plugin directory
 // directly, so the doc points at that mechanism instead of a fabricated CLI
@@ -169,7 +191,7 @@ function installDoc(model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const agentPlugins: HarnessAdapter = {
+export const agentPlugins: HarnessAdapter = Object.freeze({
   name: 'agent-plugins-1.0',
   support: {
     skills: 'full',
@@ -183,14 +205,13 @@ export const agentPlugins: HarnessAdapter = {
   },
   skillsOutputDir: undefined,
   installDoc,
-  emit(model: PluginModel): EmitResult {
+  emit(model: PluginModel) {
     const { config } = model
     if (!NAME_PATTERN.test(config.name)) {
       return {
         files: [],
-        warnings: [
-          `plugin name "${config.name}" is not valid under the Agent Plugins 1.0 spec; skipping agent-plugins-1.0 output`,
-        ],
+        limitations: [limitationForWarning(`plugin name "${config.name}" is not valid under the Agent Plugins 1.0 spec; skipping agent-plugins-1.0 output`)],
+        emittedCapabilities: [],
       }
     }
 
@@ -225,6 +246,10 @@ export const agentPlugins: HarnessAdapter = {
     if (model.agents.length) warnings.push('agents are excluded from the Agent Plugins 1.0 spec')
     if (model.hooks !== undefined) warnings.push('hooks are excluded from the Agent Plugins 1.0 spec')
 
-    return { files, warnings }
+    return {
+      files,
+      limitations: warnings.map(limitationForWarning),
+      emittedCapabilities: deriveEmittedCapabilities('agent-plugins-1.0', model, files),
+    }
   },
-}
+})

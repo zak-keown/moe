@@ -1,7 +1,8 @@
 import { deepMerge } from '../fileset.js'
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmitResult } from './types.js'
+import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { baseManifestFields, json } from './shared.js'
 
 // Ground truth per Design decision 4: `/plugins install URL` inside Kimi
@@ -52,7 +53,7 @@ function pluginManifest(model: PluginModel): Record<string, unknown> {
   return override ? (deepMerge(manifest, override) as Record<string, unknown>) : manifest
 }
 
-export const kimi: HarnessAdapter = {
+export const kimi: HarnessAdapter = Object.freeze({
   name: 'kimi',
   support: {
     skills: 'full',
@@ -66,20 +67,20 @@ export const kimi: HarnessAdapter = {
   },
   skillsOutputDir: '.kimi-plugin/skills',
   installDoc,
-  emit(model: PluginModel): EmitResult {
+  emit(model: PluginModel) {
     const { config } = model
-    const warnings: string[] = []
+    const limitations: EmissionLimitation[] = []
     const files: GeneratedFile[] = [{ path: '.kimi-plugin/plugin.json', content: json(pluginManifest(model)) }]
 
     if (config.bootstrap.kind === 'generate') {
-      warnings.push('kimi sessionStart requires a named bootstrap skill; generate mode is not supported on kimi')
+      limitations.push({ code: 'COMPONENT_PARTIAL', component: 'bootstrap', message: 'kimi sessionStart requires a named bootstrap skill; generate mode is not supported on kimi' })
     }
 
-    if (model.hooks !== undefined) warnings.push('hooks are not emitted for kimi')
-    if (model.commands.length) warnings.push('commands are not emitted for kimi')
-    if (model.agents.length) warnings.push('agents are not emitted for kimi')
-    if (model.mcp !== undefined) warnings.push('mcp servers are not emitted for kimi')
+    if (model.hooks !== undefined) limitations.push({ code: 'COMPONENT_OMITTED', component: 'hooks', message: 'hooks are not emitted for kimi' })
+    if (model.commands.length) limitations.push({ code: 'COMPONENT_OMITTED', component: 'commands', message: 'commands are not emitted for kimi' })
+    if (model.agents.length) limitations.push({ code: 'COMPONENT_OMITTED', component: 'agents', message: 'agents are not emitted for kimi' })
+    if (model.mcp !== undefined) limitations.push({ code: 'COMPONENT_OMITTED', component: 'mcp', message: 'mcp servers are not emitted for kimi' })
 
-    return { files, warnings }
+    return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('kimi', model, files) }
   },
-}
+})

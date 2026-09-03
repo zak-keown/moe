@@ -1,10 +1,12 @@
 import { deepMerge } from '../fileset.js'
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmitResult } from './types.js'
+import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { sessionStartScript, runHookCmd } from '../bootstrap/shell-hook.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
 import { baseManifestFields, json, bootstrapEmitsHooks, marketplaceName } from './shared.js'
+import { hooksManifestPath } from '../config.js'
 
 // Where the cursor adapter emits the bootstrap SessionStart hook and its
 // hooks-cursor.json, when config.bootstrap.kind === 'skill'. Shares the
@@ -124,7 +126,7 @@ function installDoc(model: PluginModel): string {
       ? 'only the bootstrap sessionStart hook is emitted'
       : 'no hooks are emitted for Cursor'
     caveats.push(
-      `- Hand-written entries in \`${config.components.hooks}\` are not translated for Cursor; ${bootstrapHookNote}.`,
+      `- Hand-written entries in \`${hooksManifestPath(config)}\` are not translated for Cursor; ${bootstrapHookNote}.`,
     )
   }
   if (caveats.length) {
@@ -133,7 +135,7 @@ function installDoc(model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const cursor: HarnessAdapter = {
+export const cursor: HarnessAdapter = Object.freeze({
   name: 'cursor',
   support: {
     skills: 'full',
@@ -147,9 +149,9 @@ export const cursor: HarnessAdapter = {
   },
   skillsOutputDir: '.cursor-plugin/skills',
   installDoc,
-  emit(model: PluginModel): EmitResult {
+  emit(model: PluginModel) {
     const { config } = model
-    const warnings: string[] = []
+    const limitations: EmissionLimitation[] = []
     const files: GeneratedFile[] = [{ path: '.cursor-plugin/plugin.json', content: json(pluginManifest(model)) }]
 
     // Emit Cursor marketplace.json.
@@ -199,8 +201,11 @@ export const cursor: HarnessAdapter = {
       }
     }
 
-    if (model.hooks !== undefined) warnings.push('user hooks are not translated for cursor in v1')
+    if (model.hooks !== undefined) limitations.push({ code: 'COMPONENT_PARTIAL', component: 'hooks', message: 'user hooks are not translated for cursor in v1' })
+    if (model.commands.length) limitations.push({ code: 'COMPONENT_OMITTED', component: 'commands', message: 'commands are not emitted for cursor in v1' })
+    if (model.agents.length) limitations.push({ code: 'COMPONENT_OMITTED', component: 'agents', message: 'agents are not emitted for cursor in v1' })
+    if (model.mcp !== undefined) limitations.push({ code: 'COMPONENT_OMITTED', component: 'mcp', message: 'mcp servers are not emitted for cursor in v1' })
 
-    return { files, warnings }
+    return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('cursor', model, files) }
   },
-}
+})

@@ -8,6 +8,34 @@ import { importPlugin } from '../src/import.js'
 import { ConfigError, loadConfig } from '../src/config.js'
 import { buildModel } from '../src/model.js'
 
+const OMITTED_TARGETS = ['cursor', 'codex', 'kimi', 'opencode', 'pi', 'agent-plugins-1.0', 'copilot']
+
+function importedPolicy(
+  name: string,
+  expectedCapabilities: string[] = [],
+  manifest?: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    distribution: { npm: `@example/${name}` },
+    artifact: { payloads: [] },
+    targets: {
+      'claude-code': { intent: 'preview', expected_capabilities: expectedCapabilities, operating_systems: ['macos'] },
+      cursor: { intent: 'omit' },
+      codex: { intent: 'omit' },
+      kimi: { intent: 'omit' },
+      opencode: { intent: 'omit' },
+      pi: { intent: 'omit' },
+      'agent-plugins-1.0': { intent: 'omit' },
+      copilot: { intent: 'omit' },
+    },
+    imported_works: [],
+    harnesses: {
+      exclude: OMITTED_TARGETS,
+      ...(manifest === undefined ? {} : { 'claude-code': { manifest } }),
+    },
+  }
+}
+
 const REPO_ROOT = process.cwd()
 const CLI = join(REPO_ROOT, 'dist', 'cli.js')
 
@@ -75,19 +103,38 @@ describe('importPlugin', () => {
       name: 'demo',
       version: '1.2.3',
       description: 'A demo plugin',
+      ...importedPolicy('demo', [
+        'skill-discovery',
+        'skill-invocation',
+        'command-discovery',
+        'command-invocation',
+        'agent-discovery',
+        'hook-execution',
+        'mcp-registration',
+        'bootstrap-routing',
+      ], { xPortal: { a: 1 } }),
       author: { name: 'Test Author', email: 'test@example.com' },
       license: 'MIT',
       repository: 'https://github.com/test/demo',
       homepage: 'https://example.com/demo',
       keywords: ['demo', 'test'],
       bootstrap: { skill: 'using-demo' },
-      harnesses: { 'claude-code': { manifest: { xPortal: { a: 1 } } } },
     })
     expect(readFileSync(result.configPath, 'utf8')).toBe(expected)
 
     const config = loadConfig(dir)
     expect(config.name).toBe('demo')
     expect(config.bootstrap).toEqual({ kind: 'skill', skill: 'using-demo' })
+    expect(config.targets['claude-code'].expectedCapabilities).toEqual([
+      'skill-discovery',
+      'skill-invocation',
+      'command-discovery',
+      'command-invocation',
+      'agent-discovery',
+      'hook-execution',
+      'mcp-registration',
+      'bootstrap-routing',
+    ])
   })
 
   it('falls back to bootstrap: generate when no using-<name> skill is present', () => {
@@ -157,9 +204,9 @@ describe('importPlugin', () => {
       name: 'custom-paths',
       version: '1.0.0',
       description: 'Custom paths',
+      ...importedPolicy('custom-paths', ['command-discovery', 'command-invocation', 'bootstrap-routing'], { xClaude: { b: 2 } }),
       bootstrap: 'generate',
       components: { commands: 'my-cmds' },
-      harnesses: { 'claude-code': { manifest: { xClaude: { b: 2 } } } },
     })
     expect(readFileSync(result.configPath, 'utf8')).toBe(expected)
 
@@ -379,7 +426,7 @@ describe('CLI import command', () => {
     expect(first.stdout).toContain(
       'Wrote moe-mint.yaml — review it, then run moe-mint generate. Note: generate will report conflicts with your existing hand-maintained harness files (e.g. .claude-plugin/plugin.json); after reviewing, re-run with --force to let moe-mint own them.',
     )
-    expect(first.stdout).toContain('<!-- moe-mint:install:start -->')
+    expect(first.stdout).not.toContain('moe-mint:install')
     expect(existsSync(join(dir, 'moe-mint.yaml'))).toBe(true)
 
     const second = runCli(['import'], dir)

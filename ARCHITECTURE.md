@@ -100,23 +100,31 @@ committed header, and TypeScript, Python, and Go bindings must change together;
 
 ## 5. Plugin generation
 
-`scripts/mint-plugins.mjs` stages each plugin into its own generated root. A
-staging root receives:
+`scripts/mint-plugins.mjs` resolves the platform registry through compiled Mint
+and assembles all six plugins into one fresh `plugins.next-<nonce>` sibling.
+For each resolved package, the compositor:
 
-1. one `moe-mint.yaml` configuration;
-2. the selected skills and other component directories;
-3. a generated legal payload derived from the canonical root legal files; and
-4. the manifests emitted by every supported harness adapter.
+1. classifies and copies only declared component content;
+2. stages required runtime payloads from clean package builds;
+3. runs the canonical adapter set exactly once and writes that validated output
+   plus the adapter-only ownership ledger;
+4. composes artifact-scoped `LICENSE`, `NOTICE`, and the root `package.json`;
+5. validates the complete portable file/directory namespace and every manifest
+   reference; and
+6. builds marketplace, catalog, and publish-matrix projections from those exact
+   in-process adapter results.
 
-Staging is wiped before every run, directory traversal is sorted, and generated
-manifests contain no timestamps. These properties make `pnpm mint:check` a byte
-reproducibility check rather than a best-effort comparison.
+The package-local Mint config is source authority: it is read from
+`packages/<package>/mint/`, never copied into or shipped with the artifact.
+Traversal and manifest allowlists are deterministic, generated metadata has no
+timestamps, and no canonical path is touched until every plugin and projection
+preflight succeeds. The current wrapper deliberately stops at that validated
+nonce sibling; the transaction layer owns recovery and promotion to `plugins/`.
 
-The marketplace and plugin registry are checked in both directions. A generated
-plugin without a listing is unreachable; a listing without a generator is
-broken. Content plugins install from tracked local plugin directories. Memory
-and glass use npm-source marketplace entries because their runtime dependencies
-need normal package installation.
+All six public marketplace entries use their package-local npm identities, so
+install coordinates and the ephemeral publish matrix share one validated
+authority. Generated plugin trees are the complete harness and runtime
+artifacts those packages ultimately publish.
 
 ## 6. Toolchain and project references
 

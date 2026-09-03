@@ -1,8 +1,9 @@
 # moe-mint config for moe-backstory.
 #
-# Built by `scripts/mint-plugins.mjs`, which stages this file plus the package's
-# skills/, commands/ and agents/ into `plugins/moe-backstory/` and runs
-# `moe-mint generate` there.
+# The platform registry resolves this source package and config. Compiled Mint
+# assembles its declared components/payloads, exact validated adapter output,
+# legal files, and root package metadata into the shared `plugins.next-<nonce>`
+# sibling. This config remains source-only and is never copied into the plugin.
 
 name: moe-backstory
 version: 0.1.4
@@ -11,14 +12,30 @@ author:
   name: Zak Keown
   email: zak.keown@outlook.com
 license: Apache-2.0
-repository: https://gitlab.com/moe-ai/moe
-homepage: https://gitlab.com/moe-ai/moe
+repository: https://github.com/zak-keown/moe
+homepage: https://github.com/zak-keown/moe
 keywords:
   - reverse-engineering
   - specification
   - analysis
   - archaeology
   - documentation
+
+distribution:
+  npm: "@bubstack/moe-backstory"
+
+artifact:
+  payloads: []
+
+targets:
+  claude-code: {intent: certify, expected_capabilities: [skill-discovery, command-discovery, agent-discovery], operating_systems: [macos, linux, wsl2, windows]}
+  cursor: {intent: preview, expected_capabilities: [skill-discovery], operating_systems: [macos, linux, wsl2, windows]}
+  codex: {intent: preview, expected_capabilities: [skill-discovery], operating_systems: [macos, linux, wsl2, windows]}
+  kimi: {intent: preview, expected_capabilities: [skill-discovery], operating_systems: [macos, linux, wsl2, windows]}
+  opencode: {intent: preview, expected_capabilities: [skill-discovery, command-discovery, agent-discovery], operating_systems: [macos, linux, wsl2, windows]}
+  pi: {intent: preview, expected_capabilities: [skill-discovery], operating_systems: [macos, linux, wsl2, windows]}
+  agent-plugins-1.0: {intent: preview, expected_capabilities: [skill-discovery, format-conformance]}
+  copilot: {intent: preview, expected_capabilities: [skill-discovery, command-discovery, agent-discovery], operating_systems: [macos, linux, wsl2, windows]}
 
 # bootstrap: none.
 #
@@ -37,14 +54,13 @@ bootstrap: none
 # the two commands are not duplicated as skills.
 
 imported_works:
-  - greenfield
+  - name: greenfield
+    artifact_roots: [agents, commands, skills]
 
 marketplace:
-  # The marketplace users actually install from is the hand-maintained root
-  # .claude-plugin/marketplace.json, whose name is `moe`. Without this, every
-  # generated install doc emits `<plugin>@<plugin>-dev` (the local-dev default
-  # in src/adapters/shared.ts, marketplaceName) — a marketplace that does not
-  # exist, in the one command a new user copies verbatim.
+  # Standalone generation uses this package-local name. Root minting overrides
+  # it with the default profile ID `core` and generates the npm-backed root
+  # marketplace from validated registry authority.
   name: moe
   source: local
   category: development

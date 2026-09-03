@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { byPathMap, mustGet } from '../helpers.js'
+import { byPathMap, mustGet, withV1Policy } from '../helpers.js'
 import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -52,13 +52,16 @@ describe('codex adapter', () => {
   })
 
   it('warns about hooks, commands, agents, and mcp not being emitted for codex', () => {
-    expect(result.warnings).toEqual([
+    expect(result.limitations.map((limitation) => limitation.message)).toEqual([
       'hooks are not supported on codex; bootstrap relies on native skill discovery',
       'commands are not supported on codex (no plugin-shipped prompt mechanism)',
       'agents are not emitted for codex in v1',
       'mcp servers are not emitted for codex in v1',
     ])
   })
+
+  it('derives only skill discovery from the Codex projection', () => {
+    expect(result.emittedCapabilities).toEqual(['skill-discovery'])
 
   it('declares expected support levels', () => {
     expect(codex.support).toEqual({
@@ -79,7 +82,7 @@ describe('codex adapter with harnesses.codex.manifest', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-codex-override-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      [
+      withV1Policy([
         'name: override-demo',
         'version: 1.0.0',
         'description: override fixture for codex interface metadata',
@@ -88,7 +91,7 @@ describe('codex adapter with harnesses.codex.manifest', () => {
         '    manifest:',
         '      interface:',
         '        displayName: Demo',
-      ].join('\n'),
+      ].join('\n')),
     )
     const overrideModel = buildModel(dir)
     const result = codex.emit(overrideModel)

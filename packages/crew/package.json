@@ -2,25 +2,15 @@
   "name": "@bubstack/moe-crew",
   "version": "0.1.4",
   "type": "module",
-  "description": "Launch, control and monitor worker coding-agent sessions (Claude Code, Codex, Pi) over tmux.",
+  "description": "Launch, control and monitor worker Claude sessions over tmux.",
   "license": "MIT",
   "author": {
     "name": "Zak Keown",
     "email": "zak.keown@outlook.com"
   },
-  "homepage": "https://gitlab.com/moe-ai/moe",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/zak-keown/moe.git"
-  },
+  "homepage": "https://github.com/zak-keown/moe",
+  "repository": "https://github.com/zak-keown/moe",
   "keywords": [
-    "claude-code",
-    "codex",
-    "cursor",
-    "kimi",
-    "opencode",
-    "pi",
-    "copilot",
     "tmux",
     "orchestration",
     "subagents",
@@ -45,7 +35,7 @@
     "moe-crew": "./dist/moe-crew.cjs"
   },
   "scripts": {
-    "build": "tsc -b && tsup",
+    "build": "node ../../scripts/clean-package-dist.mjs && cd ../.. && node --experimental-strip-types scripts/write-bundle-inventory.mjs --prepare packages/crew && tsc -b packages/crew/tsconfig.json --force && packages/crew/node_modules/.bin/tsup --config packages/crew/tsup.config.ts && node --experimental-strip-types scripts/write-bundle-inventory.mjs packages/crew packages/crew/dist/metafile-cjs.json packages/crew/dist/metafile-esm.json",
     "prepack": "pnpm run build",
     "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --pretty",
     "test": "vitest run",

@@ -123,6 +123,21 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm mint:check
 
+  artifacts:
+    runs-on: ubuntu-latest
+    container: node:24
+    steps:
+      - uses: actions/checkout@v4
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: corepack enable
+      - uses: actions/cache@v4
+        with:
+          path: .pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm config set store-dir .pnpm-store
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm artifact:check
+
   # No pnpm install: the checker uses only node stdlib, so a workspace install
   # would cost a minute to change nothing. Second step is the self-test — asserts
   # the red fixture still fails, so a checker nobody has seen fail is not a
@@ -135,10 +150,4 @@ jobs:
       - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - run: node scripts/check-provenance.mjs
       - name: self-test — red fixture must fail
-        run: |
-          node scripts/check-provenance.mjs scripts/fixtures/provenance-red
-          status=$?
-          if [ "$status" -ne 1 ]; then
-            echo "self-test failed: expected exit 1 (a detected defect), got $status"
-            exit 1
-          fi
+        run: node scripts/test-provenance-red.mjs

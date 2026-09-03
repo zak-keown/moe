@@ -6,8 +6,8 @@
     "name": "Zak Keown",
     "email": "zak.keown@outlook.com"
   },
-  "homepage": "https://gitlab.com/moe-ai/moe",
-  "repository": "https://gitlab.com/moe-ai/moe",
+  "homepage": "https://github.com/zak-keown/moe",
+  "repository": "https://github.com/zak-keown/moe",
   "license": "MIT AND Apache-2.0",
   "keywords": [
     "skills",
@@ -20,6 +20,6 @@
     "writing",
     "plugin-authoring"
   ],
-  "skills": "./.codex-plugin/skills/",
+  "skills": "./skills/",
   "hooks": {}
 }

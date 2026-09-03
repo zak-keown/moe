@@ -1,0 +1,23 @@
+name: demo
+version: 1.0.0
+description: Typed policy fixture
+distribution:
+  npm: "@scope/demo"
+artifact:
+  payloads:
+    - from: dist
+      to: dist
+      required: true
+targets:
+  claude-code: { intent: certify, expected_capabilities: [skill-discovery], operating_systems: [macos] }
+  cursor: { intent: omit }
+  codex: { intent: omit }
+  kimi: { intent: omit }
+  opencode: { intent: omit }
+  pi: { intent: omit }
+  agent-plugins-1.0: { intent: omit }
+  copilot: { intent: omit }
+imported_works:
+  - name: upstream-work
+harnesses:
+  exclude: [cursor, codex, kimi, opencode, pi, agent-plugins-1.0, copilot]

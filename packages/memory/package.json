@@ -2,25 +2,20 @@
   "name": "@bubstack/moe-memory",
   "version": "0.1.4",
   "type": "module",
-  "description": "Semantic recall over past sessions and journal entries. One MCP server.",
+  "description": "Semantic recall over past sessions and journal entries.",
   "license": "MIT",
   "author": {
     "name": "Zak Keown",
     "email": "zak.keown@outlook.com"
   },
-  "homepage": "https://gitlab.com/moe-ai/moe",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/zak-keown/moe.git"
-  },
+  "homepage": "https://github.com/zak-keown/moe",
+  "repository": "https://github.com/zak-keown/moe",
   "keywords": [
-    "claude-code",
-    "codex",
-    "conversations",
-    "journal",
+    "memory",
     "search",
-    "semantic-search",
-    "embeddings"
+    "embeddings",
+    "journal",
+    "mcp"
   ],
   "engines": {
     "node": ">=24"
@@ -43,7 +38,7 @@
     ".mcp.json"
   ],
   "scripts": {
-    "build": "tsc -b && node ../../scripts/copy-license.mjs MIT dist/LICENSE",
+    "build": "node ../../scripts/clean-package-dist.mjs && tsc -b --force",
     "prepack": "pnpm run build",
     "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --pretty",
     "test": "vitest run --project unit",

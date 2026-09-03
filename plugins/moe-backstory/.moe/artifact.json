@@ -1,0 +1,378 @@
+{
+  "schema": 1,
+  "plugin": {
+    "id": "moe-backstory",
+    "package": "@bubstack/moe-backstory",
+    "version": "0.1.4"
+  },
+  "files": [
+    {
+      "path": ".agents/plugins/marketplace.json",
+      "size": 361,
+      "sha256": "5bbf713adae87d6cdc2d989a413905b97384f5bbc04843179e53d89891bcda19",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/marketplace.json",
+      "size": 562,
+      "sha256": "159e1d3958616ebe505bb8cd958994421f25b45d73279f565a50755df2e1ace1",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/plugin.json",
+      "size": 468,
+      "sha256": "6f9473a87533a203987700a2412c7a0f022bc52124fe77dbf5006fecd997739e",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/plugin.json",
+      "size": 508,
+      "sha256": "d96deac0f9ed93e30d929f095b8796a86220ec708d9b6b8c537fd20723c6ccf0",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/marketplace.json",
+      "size": 375,
+      "sha256": "894ffddb378f28f8d8b9e220230aa53b15e08c14f2c4d92854669b98f4c744c7",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/plugin.json",
+      "size": 663,
+      "sha256": "cb74d50306174401f1613277dd34330210355e041923d522b4141d2494fa4e8d",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/plugin.json",
+      "size": 493,
+      "sha256": "f4c8f7616db7a90304f1a47ed04b6e7e35bbeff6c82827f24fa715d1dd500852",
+      "mode": "0644"
+    },
+    {
+      "path": ".moe-mint/manifest.json",
+      "size": 2956,
+      "sha256": "4a46faf299a662efa9e61ea31bf18e407d68619c720f738f269ad9788d35298c",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/agent/analyzer.md",
+      "size": 857,
+      "sha256": "dcc48cb7960f39cfebea82fe2b0eddd094d2b3d3f58aeb0f7792f16c3403a5ef",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/agent/sanitizer.md",
+      "size": 778,
+      "sha256": "bb09b761104f7aa01c1139f162314f5e2c7c81f911cdfd567d4985899e864961",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/command/analyze.md",
+      "size": 71897,
+      "sha256": "5d62c68bc9bb03fd8b3333d8620ed17465db745f7d67b9dd50ce406cfc988d13",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/command/sanitize.md",
+      "size": 10542,
+      "sha256": "dede7b453c711cd649253b53d284456216edc2ab26652c5cdfe2723e22d9e74f",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/plugins/moe-backstory.js",
+      "size": 793,
+      "sha256": "2aaa9ae7555266f0233fd73b678aba3b0fd3b2cc72fb1f2f278dfe2121203054",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/extensions/moe-backstory.ts",
+      "size": 580,
+      "sha256": "e57f02c707342a6c3b6088f8791bdc57e5e69db2a4291f0f0ff7a74d60ad9b67",
+      "mode": "0644"
+    },
+    {
+      "path": "LICENSE",
+      "size": 11324,
+      "sha256": "50e6751797c50dedd75ef1b8a0d9e42f5f8472e9fbce91f34718e9f97b0c780a",
+      "mode": "0644"
+    },
+    {
+      "path": "NOTICE",
+      "size": 209,
+      "sha256": "30bead98f267df24064e1973fca4c84990710f337a9bb096bb999abc62dafd3c",
+      "mode": "0644"
+    },
+    {
+      "path": "agents/analyzer.md",
+      "size": 1601,
+      "sha256": "dfe52e09d90ad8d50eeb18abd7369aa5a8f016c3d8639e64dc9c504aca2044d8",
+      "mode": "0644"
+    },
+    {
+      "path": "agents/sanitizer.md",
+      "size": 877,
+      "sha256": "ea6d244f554c88cbd9187d026c7ab7020edaba86a8796e06a8405436c62a0ef8",
+      "mode": "0644"
+    },
+    {
+      "path": "commands/analyze.md",
+      "size": 72752,
+      "sha256": "ec5c27152ec559901dcb155bccc30d274be6d5a158a6d36cb9bf03a253a424ca",
+      "mode": "0644"
+    },
+    {
+      "path": "commands/sanitize.md",
+      "size": 10699,
+      "sha256": "463b5c75450d4f04b7740b050c9bc1ac0117bb8635b6070cd9cb28afffe74c05",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/install/agent-plugins-1.0.md",
+      "size": 552,
+      "sha256": "58e2d23574934d6074a980aaa894059d925a4a33ce71cd9fe440f60f293a44c8",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/install/claude-code.md",
+      "size": 529,
+      "sha256": "7e3fd28757847bf699762683e49d4b756c098fe3748d3569ee3400ecd79c6dff",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/install/codex.md",
+      "size": 728,
+      "sha256": "6b966be7f8b607897a0b991696b856dd598c82b1c05f6650aefe3306f5285ef0",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/install/copilot.md",
+      "size": 610,
+      "sha256": "d4cf22763688befb600be6c5816e67850bb93baf969b8bb2da59450dacce998c",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/install/cursor.md",
+      "size": 469,
+      "sha256": "20f31ef1b16a0ba8b0e8e23c09efd7c8ec13ad2754cb920ad96872a2e90f5f21",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/install/kimi.md",
+      "size": 357,
+      "sha256": "3401c8df1cc23a7d7434ec8458d90c502ebbdbe4d6ce5822462a77d769655c43",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/install/opencode.md",
+      "size": 889,
+      "sha256": "764b89525398a7939b2d8de4aa14765f1bd6c7e4358ca22ce2da9686efc3667e",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/install/pi.md",
+      "size": 550,
+      "sha256": "624802d94561249e222b78c740706eea8a92eee8656c4384ce91c8a4d5f1f7ee",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/support-matrix.md",
+      "size": 823,
+      "sha256": "8d824b8c5ac786de381d6877aa2d7d1f977a66af570099b9bff7193f1e817ba1",
+      "mode": "0644"
+    },
+    {
+      "path": "package.json",
+      "size": 2755,
+      "sha256": "5df6dc849ec8ff10dad6701b5fcd80b3d861c6f9832c8a1c6579f8c0c25f23b2",
+      "mode": "0644"
+    },
+    {
+      "path": "plugin.json",
+      "size": 543,
+      "sha256": "eb402292b8a7e69cb7cd6cddae2253c938c7d78331fff5737dc8488fec902a4a",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/analysis-pipeline/SKILL.md",
+      "size": 14616,
+      "sha256": "a6d6c278879125f7bca7a837f4a4ee0abe75d35385b7be2ffc26039bc862fe48",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/autonomous-discovery/SKILL.md",
+      "size": 26050,
+      "sha256": "cfae7bb92ac46d8023eaff7a888c481d6be493beb89fe66ac2bc1f49f4e3dcc9",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/behavioral-spec-writing/SKILL.md",
+      "size": 54846,
+      "sha256": "f5dcbcb4c55536fd3bb78cc2523b96d18f01847fc31f308b3739ad58b9343fe4",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/binary-analysis/SKILL.md",
+      "size": 13932,
+      "sha256": "abf3fb2b474fcdb00486bbde66f5c2f6f755f747c56b5f8f7f6b782b2d9be5fb",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/community-intelligence/SKILL.md",
+      "size": 17860,
+      "sha256": "783f12f91d62b0474a09a49f759e574560f1e08d64721c9b6e090d6ec994873a",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/container-execution/SKILL.md",
+      "size": 8319,
+      "sha256": "bb6436c729b9804ccac02b30b0d685ab4da2c4371edef5a666d3c070e22dcf2a",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/contract-detection/SKILL.md",
+      "size": 16741,
+      "sha256": "77a9f98064f60dd29d2cd3bedfeb3107f4d92f1f7f52852ba922b7647d82e9af",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/doc-research/SKILL.md",
+      "size": 18497,
+      "sha256": "98425b2d3f8bb60ee10722dfde4a0eb29bb926ca497684580690ac71384765c7",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/ecosystem-analysis/SKILL.md",
+      "size": 11562,
+      "sha256": "1eaece7c427c61261fa4230666a5d3c2f7ddb1887c948154757fb6338804937e",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/fidelity-validation/SKILL.md",
+      "size": 7357,
+      "sha256": "f1ad935f849e5d846217a83943a96e8ab2574dbdb14020e402b6eb1fd03c5f9f",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/git-archaeology/SKILL.md",
+      "size": 12532,
+      "sha256": "903280b930284773a4870c649ac19b68f943001f4b5e8b78d1e073d82934b3ac",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/incremental-analysis/SKILL.md",
+      "size": 8653,
+      "sha256": "b85c0f8f1635159c2c804d4c5441df76227387a4df3db1f3d33bdf47414dc7fb",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/multi-source-synthesis/SKILL.md",
+      "size": 37114,
+      "sha256": "ae7d65733801b1770cbcfdd4def01e90833f272389a44452969ee5d59f111cc2",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/provenance-methodology/SKILL.md",
+      "size": 9838,
+      "sha256": "1d1251bb7d249ca064432ac2c3de8188c2cd14cefb0ea483246cbb4f4851cdea",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/runtime-observation/SKILL.md",
+      "size": 19561,
+      "sha256": "f0a407384d6d9846805d843d24a6965b92c38336df88f03169d1e5d3f47743be",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/second-pass-review/SKILL.md",
+      "size": 24565,
+      "sha256": "59d66fe0ccbad8604ea78341e46dafa126a25382a390fd2de7054fc0e78f661d",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/source-analysis/SKILL.md",
+      "size": 38654,
+      "sha256": "6dbb3abafc4b47e8368fd41d4a5c0895e06b0ecf69ea29f22ddc683844096e68",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/source-completeness/SKILL.md",
+      "size": 8272,
+      "sha256": "ef244131ead051f6db8cd61bdab3985de978dafe0aa091fee37cd4c15e29eef1",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/spec-sanitization/SKILL.md",
+      "size": 25915,
+      "sha256": "6aacb5056beba92b7a5bd271c93445b6215c98c88542237326b3e0f9ce001323",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/test-suite-analysis/SKILL.md",
+      "size": 12673,
+      "sha256": "4d998b19aee6945f1ec49b821ac18ea820fd6a53038a950ab9313ae49608bcb3",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/validation-methodology/SKILL.md",
+      "size": 11829,
+      "sha256": "673fb08b5ecfc2bb00279360e5fb383eeb83f877453be58726678dc56b69b677",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/visual-exploration/SKILL.md",
+      "size": 14974,
+      "sha256": "a917ca2049cd4fcd40a07a2ca2ce5ff5a22db8814b8d73b8b1a0fa0043f50265",
+      "mode": "0644"
+    }
+  ],
+  "tree_sha256": "7e7a902219aff90dec0bde391d6fbb17c92b1b38074fe1d9fbdee5048713f664",
+  "targets": {
+    "claude-code": {
+      "emitted_capabilities": [
+        "skill-discovery",
+        "command-discovery",
+        "agent-discovery"
+      ]
+    },
+    "cursor": {
+      "emitted_capabilities": [
+        "skill-discovery"
+      ]
+    },
+    "codex": {
+      "emitted_capabilities": [
+        "skill-discovery"
+      ]
+    },
+    "kimi": {
+      "emitted_capabilities": [
+        "skill-discovery"
+      ]
+    },
+    "opencode": {
+      "emitted_capabilities": [
+        "skill-discovery",
+        "command-discovery",
+        "agent-discovery"
+      ]
+    },
+    "pi": {
+      "emitted_capabilities": [
+        "skill-discovery"
+      ]
+    },
+    "agent-plugins-1.0": {
+      "emitted_capabilities": [
+        "skill-discovery",
+        "format-conformance"
+      ]
+    },
+    "copilot": {
+      "emitted_capabilities": [
+        "skill-discovery",
+        "command-discovery",
+        "agent-discovery"
+      ]
+    }
+  }
+}

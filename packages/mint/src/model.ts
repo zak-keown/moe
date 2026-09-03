@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { loadConfig, ConfigError, type MintConfig } from './config.js'
+import { loadConfig, ConfigError, hooksManifestPath, type MintConfig } from './config.js'
 import { parseFrontmatter } from './frontmatter.js'
 
 export interface SkillRef {
@@ -95,8 +95,8 @@ function readJsonIfPresent(root: string, rel: string): unknown {
   return parsed
 }
 
-export function buildModel(root: string): PluginModel {
-  const config = loadConfig(root)
+export function buildModel(root: string, configFile = 'moe-mint.yaml', configSource = configFile): PluginModel {
+  const config = loadConfig(root, configFile, configSource)
   const skills = readSkills(root, config.components.skills)
   const commands = readMarkdownComponents(root, config.components.commands).map((c) => ({
     name: c.name,
@@ -119,7 +119,7 @@ export function buildModel(root: string): PluginModel {
     skills,
     commands,
     agents,
-    hooks: readJsonIfPresent(root, config.components.hooks),
+    hooks: readJsonIfPresent(root, hooksManifestPath(config)),
     mcp: readJsonIfPresent(root, config.components.mcp),
   }
   if (config.bootstrap.kind === 'skill') {

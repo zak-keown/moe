@@ -4,14 +4,12 @@
 # against a trusted publisher pre-registered on each package at npmjs.com.
 # No long-lived NPM_TOKEN is used. See https://docs.npmjs.com/trusted-publishers
 #
-# npm's OIDC client on GitHub Actions discovers the audience itself; unlike the
-# GitLab port, no `id_tokens.aud:` block is needed. `permissions: id-token: write`
-# is the only load-bearing thing beyond a normal build.
+# Two-channel structure:
+#   - Prerelease tags (v*-*): candidate branch — builds, checks, packs, publishes to `next`
+#   - Stable tags (v* without -): promotion branch — downloads candidate, moves dist-tags to `latest`
 #
-# The `environment: release` binds this workflow to a GitHub Environment of the
-# same name — add required reviewers or a wait timer there for extra safety.
-# Delete the line if you don't want an environment; the trusted-publisher config
-# on npm then must NOT specify one either (they have to match).
+# Both channels use the compiled Mint release CLI; no literal package list
+# or source-directory publication path appears in this YAML.
 name: publish
 
 on:
@@ -20,14 +18,15 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 concurrency:
-  group: publish-${{ github.ref }}
+  group: moe-release
   cancel-in-progress: false
 
 jobs:
-  publish:
+  candidate:
+    if: contains(github.ref_name, '-')
     runs-on: ubuntu-latest
     container: node:24
     environment: release
@@ -42,74 +41,38 @@ jobs:
       - run: pnpm config set store-dir .pnpm-store
       - run: pnpm install --frozen-lockfile
 
-      # DIAGNOSTIC: mint an OIDC token with npm's audience and decode its claims
-      # so a mismatch with each npm trusted-publisher config surfaces on the
-      # first release. JWT payloads are not secret — the signature is what npm
-      # verifies. Remove once OIDC lands green.
-      - name: DIAG — OIDC claims
-        run: |
-          python3 - <<'PY'
-          import base64, json, os, urllib.request
-          url = os.environ.get('ACTIONS_ID_TOKEN_REQUEST_URL')
-          hdr = os.environ.get('ACTIONS_ID_TOKEN_REQUEST_TOKEN')
-          if not url or not hdr:
-              print('no ID token endpoint in env — permissions: id-token: write missing?')
-              raise SystemExit(1)
-          req = urllib.request.Request(
-              f"{url}&audience=npm:registry.npmjs.org",
-              headers={'Authorization': f'Bearer {hdr}'},
-          )
-          tok = json.loads(urllib.request.urlopen(req).read())['value']
-          print(f'token length: {len(tok)}')
-          parts = tok.split('.')
-          if len(parts) >= 2:
-              payload = parts[1] + '=' * (-len(parts[1]) % 4)
-              claims = json.loads(base64.urlsafe_b64decode(payload))
-              for k in ['iss','sub','aud','repository','repository_owner',
-                        'ref','ref_type','workflow','workflow_ref',
-                        'environment','event_name','job_workflow_ref']:
-                  print(f'  {k}: {claims.get(k)}')
-          PY
-
-      # `--tag` decision from the git tag: `vX.Y.Z-anything` → `next`;
-      # `vX.Y.Z` → `latest`. Neither pnpm publish (in older releases) nor npm
-      # publish autodetects SemVer pre-release identifiers reliably enough to
-      # trust — without an explicit --tag, a canary like v0.1.2-rc.1 can end
-      # up promoted to `latest` and shadow the stable line. GITHUB_REF_NAME is
-      # the tag name for a tag push.
-      - name: pick dist-tag
-        id: dt
-        run: |
-          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
-            echo "tag=next" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=latest" >> "$GITHUB_OUTPUT"
-          fi
-          echo "dist-tag chosen: $(cat "$GITHUB_OUTPUT" | tail -1)"
-
-      # Build every package once up front so each `npm publish` can pack a
-      # ready dist/ without leaning on turbo's dep graph from inside a single
-      # package dir.
+      - run: pnpm check
       - run: pnpm build
+      - run: pnpm mint:check
+      - run: pnpm provenance
 
-      # Why npm and not pnpm here: `pnpm publish` (and `pnpm pack`) strips the
-      # POSIX exec bit off every packed file — verified against v0.1.2's
-      # published tarball, where every hook script shipped as -rw-r--r-- even
-      # though git has them as 100755 and `npm pack` preserves them. That made
-      # `${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd` unexecutable, so Claude
-      # Code's SessionStart / Stop hooks failed on every install with
-      # "permission denied". `npm publish` per-package fixes it at the root.
-      #
-      # OIDC works identically for both tools: the trusted-publisher config
-      # lives on the package on npmjs.com, not in the client. `access` comes
-      # from each package's own publishConfig.
-      - name: publish 6 packages
-        env:
-          NPM_DIST_TAG: ${{ steps.dt.outputs.tag }}
+      - name: prepare and publish candidate
         run: |
-          set -eu
-          for pkg in memory glass core crew backstory statusline; do
-            echo "::group::publish @bubstack/moe-$pkg"
-            (cd "packages/$pkg" && npm publish --tag "$NPM_DIST_TAG")
-            echo "::endgroup::"
-          done
+          node packages/mint/dist/cli.js release candidate \
+            --tag "$GITHUB_REF_NAME" \
+            --repo . \
+            --execute
+
+  promote:
+    if: "!contains(github.ref_name, '-')"
+    runs-on: ubuntu-latest
+    container: node:24
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: corepack enable
+      - uses: actions/cache@v4
+        with:
+          path: .pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+      - run: pnpm config set store-dir .pnpm-store
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @bubstack/moe-mint run build
+
+      - name: promote to stable
+        run: |
+          node packages/mint/dist/cli.js release promote \
+            --tag "$GITHUB_REF_NAME" \
+            --repo . \
+            --execute

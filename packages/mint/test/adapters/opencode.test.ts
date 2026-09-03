@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { byPathMap, mustGet } from '../helpers.js'
+import { byPathMap, mustGet, withV1Policy } from '../helpers.js'
 import { mkdtempSync, mkdirSync, realpathSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -14,7 +14,7 @@ const model = buildModel('fixtures/kitchen-sink')
 
 function tmpFixture(yaml: string): string {
   const dir = mkdtempSync(join(tmpdir(), 'mint-opencode-'))
-  writeFileSync(join(dir, 'moe-mint.yaml'), yaml)
+  writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy(yaml))
   return dir
 }
 
@@ -32,6 +32,11 @@ describe('opencode adapter', () => {
   const result = opencode.emit(model)
   const byPath = byPathMap(result.files)
 
+  it('derives capabilities from emitted OpenCode projection files', () => {
+    expect(result.emittedCapabilities).toEqual([
+      'skill-discovery', 'command-discovery', 'agent-discovery', 'bootstrap-routing',
+    ])
+
   it('declares expected support levels', () => {
     expect(opencode.support).toEqual({
       skills: 'full',
@@ -45,18 +50,11 @@ describe('opencode adapter', () => {
     })
   })
 
-  it('emits package.json with the exact ground-truth shape', () => {
-    expect(JSON.parse(mustGet(byPath, 'package.json'))).toEqual({
-      name: 'kitchen-sink',
-      version: '0.1.0',
-      description: 'Fixture plugin exercising every component type',
-      author: { name: 'Bubstack', email: 'dev@bubstack.example' },
-      license: 'MIT',
-      repository: 'https://github.com/example/kitchen-sink',
-      type: 'module',
-      main: './.opencode/plugins/kitchen-sink.js',
-      pi: { extensions: ['./.pi/extensions/kitchen-sink.ts'], skills: ['./skills'] },
-      keywords: ['fixture', 'pi-package'],
+  it('keeps package.json out of adapter files and contributes only its server export', () => {
+    expect(byPath['package.json']).toBeUndefined()
+    expect(result.packageContribution).toEqual({
+      owner: 'opencode',
+      exports: { './server': './.opencode/plugins/kitchen-sink.js' },
     })
   })
 
@@ -100,7 +98,7 @@ describe('opencode adapter', () => {
   })
 
   it('warns about hooks, mcp, and dropped agent tool restrictions', () => {
-    expect(result.warnings).toEqual([
+    expect(result.limitations.map((limitation) => limitation.message)).toEqual([
       'hooks are not emitted for opencode',
       'mcp servers are not emitted for opencode in v1',
       'agent tool restrictions are not translated for opencode',
@@ -128,7 +126,7 @@ describe('opencode adapter without hooks/mcp/tools-bearing agents', () => {
     const dir = tmpFixture('name: plain\nversion: 1.0.0\ndescription: plain fixture\nbootstrap: none\n')
     const plainModel = buildModel(dir)
     const result = opencode.emit(plainModel)
-    expect(result.warnings).toEqual([])
+    expect(result.limitations).toEqual([])
   })
 })
 
@@ -169,7 +167,7 @@ describe('opencode plugin JS — dynamic import execution (skill mode)', () => {
     const dir = realpathSync(mkdtempSync(join(tmpdir(), 'mint-opencode-exec-')))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: demo\nversion: 1.0.0\ndescription: exec fixture\nbootstrap:\n  skill: using-demo\n',
+      withV1Policy('name: demo\nversion: 1.0.0\ndescription: exec fixture\nbootstrap:\n  skill: using-demo\n'),
     )
     mkdirSync(join(dir, 'skills', 'using-demo'), { recursive: true })
     writeFileSync(
@@ -225,7 +223,7 @@ describe('opencode plugin JS — dynamic import execution (bootstrap: none)', ()
     const dir = realpathSync(mkdtempSync(join(tmpdir(), 'mint-opencode-exec-none-')))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: nodemo\nversion: 1.0.0\ndescription: exec none fixture\nbootstrap: none\n',
+      withV1Policy('name: nodemo\nversion: 1.0.0\ndescription: exec none fixture\nbootstrap: none\n'),
     )
     mkdirSync(join(dir, 'skills', 'demo'), { recursive: true })
     writeFileSync(join(dir, 'skills', 'demo', 'SKILL.md'), '---\nname: demo\ndescription: demo\n---\n\nBody.\n')

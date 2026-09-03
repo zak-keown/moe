@@ -29,6 +29,17 @@ function setYaml(dir: string, text: string): void {
   writeFileSync(join(dir, 'moe-mint.yaml'), text)
 }
 
+function declareSourcePackage(dir: string): void {
+  writeFileSync(join(dir, 'package.json'), '{\n  "version": "0.1.0"\n}\n')
+  setYaml(
+    dir,
+    yaml(dir).replace(
+      '    - { path: release.json, field: version }',
+      '    - { path: release.json, field: version }\n    - { path: package.json, field: version }',
+    ),
+  )
+}
+
 describe('bumpVersion', () => {
   it('rejects a non-semver version with a ConfigError carrying the schema wording', () => {
     const dir = generatedFixture()
@@ -109,7 +120,7 @@ describe('bumpVersion', () => {
   })
 })
 
-describe('bump refuses a declared generated file', () => {
+describe('bump release-file ownership', () => {
   it('bumpVersion rejects moe-mint.yaml as a declared bump.files entry', () => {
     const dir = generatedFixture()
     setYaml(
@@ -128,22 +139,14 @@ describe('bump refuses a declared generated file', () => {
     }
   })
 
-  it('bumpVersion rejects a manifest-tracked generated file (package.json)', () => {
+  it('bumpVersion updates a declared source-owned package.json', () => {
     const dir = generatedFixture()
-    setYaml(
-      dir,
-      yaml(dir).replace(
-        '    - { path: release.json, field: version }',
-        '    - { path: release.json, field: version }\n    - { path: package.json, field: version }',
-      ),
-    )
-    try {
-      bumpVersion(dir, '9.9.9')
-      expect.unreachable('bumpVersion should have thrown')
-    } catch (e) {
-      expect(e).toBeInstanceOf(ConfigError)
-      expect((e as ConfigError).message).toContain('package.json')
-    }
+    declareSourcePackage(dir)
+
+    const result = bumpVersion(dir, '9.9.9')
+
+    expect(readField(join(dir, 'package.json'), 'version')).toBe('9.9.9')
+    expect(result.files.find((file) => file.path === 'package.json')).toMatchObject({ status: 'bumped', newVersion: '9.9.9' })
   })
 
   it('bumpCheck rejects moe-mint.yaml as a declared bump.files entry', () => {
@@ -164,40 +167,23 @@ describe('bump refuses a declared generated file', () => {
     }
   })
 
-  it('bumpCheck rejects a manifest-tracked generated file (package.json)', () => {
+  it('bumpCheck accepts a declared source-owned package.json', () => {
     const dir = generatedFixture()
-    setYaml(
-      dir,
-      yaml(dir).replace(
-        '    - { path: release.json, field: version }',
-        '    - { path: release.json, field: version }\n    - { path: package.json, field: version }',
-      ),
-    )
-    try {
-      bumpCheck(dir)
-      expect.unreachable('bumpCheck should have thrown')
-    } catch (e) {
-      expect(e).toBeInstanceOf(ConfigError)
-      expect((e as ConfigError).message).toContain('package.json')
-    }
+    declareSourcePackage(dir)
+
+    const result = bumpCheck(dir)
+
+    expect(result.drift).toBe(false)
+    expect(result.files.find((file) => file.path === 'package.json')).toEqual({
+      path: 'package.json', field: 'version', version: '0.1.0',
+    })
   })
 
-  it('bumpAudit rejects a manifest-tracked generated file (package.json)', () => {
+  it('bumpAudit accounts for a declared source-owned package.json', () => {
     const dir = generatedFixture()
-    setYaml(
-      dir,
-      yaml(dir).replace(
-        '    - { path: release.json, field: version }',
-        '    - { path: release.json, field: version }\n    - { path: package.json, field: version }',
-      ),
-    )
-    try {
-      bumpAudit(dir)
-      expect.unreachable('bumpAudit should have thrown')
-    } catch (e) {
-      expect(e).toBeInstanceOf(ConfigError)
-      expect((e as ConfigError).message).toContain('package.json')
-    }
+    declareSourcePackage(dir)
+
+    expect(bumpAudit(dir).clean).toBe(true)
   })
 })
 

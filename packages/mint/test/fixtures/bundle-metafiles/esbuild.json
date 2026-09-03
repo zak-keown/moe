@@ -1,0 +1,31 @@
+{
+  "inputs": {
+    "source/source/index.ts": { "bytes": 40, "imports": [] },
+    "modules/external-only/index.js": { "bytes": 20, "imports": [] },
+    "modules/plain/lib/a.js": { "bytes": 20, "imports": [] },
+    "modules/outer/nested/index.js": { "bytes": 30, "imports": [] }
+  },
+  "outputs": {
+    "source/dist/index.js": {
+      "imports": [{ "path": "modules/external-only/index.js", "kind": "import-statement", "external": true }],
+      "exports": [],
+      "entryPoint": "source/source/index.ts",
+      "inputs": {
+        "source/source/index.ts": { "bytesInOutput": 35 },
+        "modules/external-only/index.js": { "bytesInOutput": 15 },
+        "modules/plain/lib/a.js": { "bytesInOutput": 15 },
+        "modules/outer/nested/index.js": { "bytesInOutput": 25 }
+      },
+      "bytes": 75
+    },
+    "source/dist/secondary.js": {
+      "imports": [],
+      "exports": [],
+      "entryPoint": "source/source/index.ts",
+      "inputs": {
+        "modules/plain/lib/a.js": { "bytesInOutput": 15 }
+      },
+      "bytes": 15
+    }
+  }
+}

@@ -2,19 +2,18 @@
 
 # moe-glass harness support matrix
 
-| Harness | skills | commands | agents | hooks | mcp | bootstrap | rules | variables |
-|---|---|---|---|---|---|---|---|---|
-| claude-code | full | full | full | full | full | full | none | none |
-| cursor | full | full | full | partial | full | full | none | none |
-| codex | full | none | none | none | none | partial | none | none |
-| kimi | full | none | none | none | none | partial | none | none |
-| opencode | full | full | partial | none | none | full | none | none |
-| pi | full | none | none | none | none | full | none | none |
-| agent-plugins-1.0 | full | none | none | none | full | none | none | none |
-| copilot | full | full | full | full | full | full | none | none |
+| Harness | Emitted capabilities |
+|---|---|
+| claude-code | skill-discovery, agent-discovery |
+| cursor | skill-discovery |
+| codex | skill-discovery |
+| kimi | skill-discovery |
+| opencode | skill-discovery, agent-discovery |
+| pi | skill-discovery |
+| agent-plugins-1.0 | skill-discovery, format-conformance |
+| copilot | skill-discovery, agent-discovery |
 
 ## Notes
 
 - Copilot consumes the Claude Code layout through `.claude-plugin/marketplace.json`; keep the `claude-code` adapter enabled when targeting Copilot.
-- codex's `bootstrap: partial` means native skill discovery only, with no active injection hook.
 - Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.

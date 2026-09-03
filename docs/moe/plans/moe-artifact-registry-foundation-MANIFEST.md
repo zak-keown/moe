@@ -12,18 +12,22 @@ plans:
     plan: docs/moe/plans/2026-09-02-moe-platform-registry.md
     depends_on: []
     status: done
+    commits: 9103fa5..f809e51
   - id: artifact-composition
     plan: docs/moe/plans/2026-09-02-moe-artifact-composition.md
     depends_on: [platform-registry]
     status: done
+    commits: 046dcc0..a68326d
   - id: artifact-verification
     plan: docs/moe/plans/2026-09-02-moe-artifact-verification.md
     depends_on: [artifact-composition]
     status: done
+    commits: 6176ed8..4c938b1
   - id: release-catalog-and-promotion
     plan: docs/moe/plans/2026-09-02-moe-release-catalog-and-promotion.md
     depends_on: [artifact-verification]
-    status: pending
+    status: done
+    commits: fb35ef1..1437ffb
 ```
 
 ## Acceptance Boundary

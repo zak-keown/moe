@@ -4,7 +4,12 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/scripts/write-bundle-inventory.mjs",
+        "$TURBO_ROOT$/packages/mint/src/artifact/bundle-inventory.ts"
+      ],
+      "outputs": ["dist/**", ".moe-build/**"]
     },
     "typecheck": {
       "dependsOn": ["^build"],
@@ -23,20 +28,71 @@
     "lint": {
       "outputs": []
     },
+    "//#artifact:check": {
+      "dependsOn": ["@bubstack/moe-mint#build", "//#mint:generate"],
+      "inputs": [
+        "scripts/check-artifacts.mjs",
+        "moe-platform.yaml",
+        "NOTICE",
+        "LICENSE",
+        "LICENSE-MIT",
+        "LICENSE-BSD-3-CLAUSE",
+        "LICENSE-ISC",
+        "plugins/**",
+        "packages/mint/src/**",
+        "packages/*/package.json",
+        "packages/*/mint/*.yaml"
+      ],
+      "outputs": [],
+      "cache": false
+    },
     "//#mint:generate": {
-      "dependsOn": ["@bubstack/moe-mint#build"],
+      "dependsOn": [
+        "@bubstack/moe-mint#build",
+        "@bubstack/moe-memory#build",
+        "@bubstack/moe-glass#build",
+        "@bubstack/moe-crew#build",
+        "@bubstack/moe-statusline#build"
+      ],
       "inputs": [
         "scripts/mint-plugins.mjs",
-        ".claude-plugin/marketplace.json",
+        "scripts/mint-prepare.mjs",
+        "scripts/clean-package-dist.mjs",
+        "scripts/write-bundle-inventory.mjs",
+        "scripts/lib/mint-diagnostics.mjs",
+        "scripts/lib/mint-host-contract.mjs",
+        "scripts/lib/mint-generation-transaction.mjs",
+        "moe-platform.yaml",
+        "NOTICE",
+        "LICENSE",
+        "LICENSE-MIT",
+        "LICENSE-BSD-3-CLAUSE",
+        "LICENSE-ISC",
+        "packages/*/package.json",
+        "packages/*/tsup.config.ts",
         "packages/core/skill-tiers.yaml",
         "packages/*/mint/*.yaml",
+        "packages/mint/src/**",
         "packages/*/skills/**",
         "packages/*/commands/**",
         "packages/*/agents/**",
         "packages/*/hooks/**",
-        "packages/*/.mcp.json"
+        "packages/*/.mcp.json",
+        "packages/memory/dist/**",
+        "packages/memory/prompts/**",
+        "packages/glass/dist/**",
+        "packages/glass/.moe-build/**",
+        "packages/crew/dist/**",
+        "packages/crew/.moe-build/**",
+        "packages/statusline/dist/**",
+        "packages/statusline/.moe-build/**",
+        "packages/statusline/vendor/**"
       ],
-      "outputs": ["plugins/**"]
+      "outputs": [
+        "plugins/**",
+        ".claude-plugin/marketplace.json",
+        "docs/moe/generated/plugin-catalog.md"
+      ]
     }
   }
 }
