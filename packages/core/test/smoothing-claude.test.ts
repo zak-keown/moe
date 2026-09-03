@@ -168,6 +168,101 @@ describe("Claude smoothing reader", () => {
     expect(result.diagnostics.invalidOperations).toBe(1);
     expect(JSON.stringify(result)).not.toContain("private");
   });
+
+  it.each([
+    ["stale", "2026-08-31T23:59:59.000Z"],
+    ["invalid", "not-a-timestamp"],
+  ])("does not join a %s tool result across the cutoff", async (_label, resultTimestamp) => {
+    const result = await readClaudeSession(`${fixture}.${_label}-result`, {
+      cutoffMs: Date.parse("2026-09-01T00:00:00Z"),
+      resolveProjectRoot: async () => "/fixture/repo-a",
+      realpath: async (value: string) => value,
+      effectivePermissions: { deny: [], ask: [], allow: [] },
+      readFile: async () =>
+        [
+          JSON.stringify({
+            type: "assistant",
+            sessionId: "root-a",
+            cwd: "/fixture/repo-a",
+            timestamp: "2026-09-01T00:00:01.000Z",
+            message: {
+              content: [
+                {
+                  type: "tool_use",
+                  id: "tool-with-old-result",
+                  name: "Bash",
+                  input: { command: "git status" },
+                },
+              ],
+            },
+          }),
+          JSON.stringify({
+            type: "user",
+            sessionId: "root-a",
+            timestamp: resultTimestamp,
+            message: {
+              content: [
+                {
+                  type: "tool_result",
+                  tool_use_id: "tool-with-old-result",
+                  is_error: true,
+                },
+              ],
+            },
+          }),
+        ].join("\n"),
+    });
+
+    expect(result.evidence.map((row: { outcome: string }) => row.outcome)).toEqual(["unknown"]);
+  });
+
+  it.each([
+    ["empty", ""],
+    ["null", null],
+  ])("fails closed when a tool result has a %s denial marker", async (_label, toolDenialKind) => {
+    const result = await readClaudeSession(`${fixture}.${_label}-denial`, {
+      cutoffMs: 0,
+      resolveProjectRoot: async () => "/fixture/repo-a",
+      realpath: async (value: string) => value,
+      effectivePermissions: { deny: [], ask: [], allow: [] },
+      readFile: async () =>
+        [
+          JSON.stringify({
+            type: "assistant",
+            sessionId: "root-a",
+            cwd: "/fixture/repo-a",
+            timestamp: "2026-09-01T00:00:00.000Z",
+            message: {
+              content: [
+                {
+                  type: "tool_use",
+                  id: "tool-with-denial-marker",
+                  name: "Bash",
+                  input: { command: "git status" },
+                },
+              ],
+            },
+          }),
+          JSON.stringify({
+            type: "user",
+            sessionId: "root-a",
+            timestamp: "2026-09-01T00:00:01.000Z",
+            message: {
+              content: [
+                {
+                  type: "tool_result",
+                  tool_use_id: "tool-with-denial-marker",
+                  is_error: false,
+                  toolDenialKind,
+                },
+              ],
+            },
+          }),
+        ].join("\n"),
+    });
+
+    expect(result.evidence.map((row: { outcome: string }) => row.outcome)).toEqual(["denied"]);
+  });
 });
 
 describe("Claude permissions", () => {
