@@ -1,0 +1,1 @@
+{"permissions":{"deny":["Bash(git status)"],"ask":[],"allow":["WebFetch(domain:docs.example.invalid)"]}}
