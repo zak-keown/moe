@@ -1,4 +1,4 @@
-# Publishes the six @bubstack/moe-* packages to npm when a tag matching /^v/
+# Publishes the seven @bubstack/moe-* packages to npm when a tag matching /^v/
 # is pushed. Authenticates via OIDC "trusted publishing" — pnpm/npm mint a
 # short-lived ID token per job via ACTIONS_ID_TOKEN_REQUEST_URL, verified
 # against a trusted publisher pre-registered on each package at npmjs.com.
@@ -103,12 +103,12 @@ jobs:
       # OIDC works identically for both tools: the trusted-publisher config
       # lives on the package on npmjs.com, not in the client. `access` comes
       # from each package's own publishConfig.
-      - name: publish 6 packages
+      - name: publish 7 packages
         env:
           NPM_DIST_TAG: ${{ steps.dt.outputs.tag }}
         run: |
           set -eu
-          for pkg in memory glass core crew backstory statusline; do
+          for pkg in memory glass core crew backstory statusline jig; do
             echo "::group::publish @bubstack/moe-$pkg"
             (cd "packages/$pkg" && npm publish --tag "$NPM_DIST_TAG")
             echo "::endgroup::"
