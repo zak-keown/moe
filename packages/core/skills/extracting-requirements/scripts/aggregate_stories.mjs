@@ -173,7 +173,7 @@ function help(program) {
     "",
     "options:",
     "  -h, --help            show this help message and exit",
-    "  -o OUTPUT_DIR, --output-dir OUTPUT_DIR",
+    "  -o, --output-dir OUTPUT_DIR",
     "                        Directory to write per-epic files (created if needed)",
     "",
   ].join("\n");
@@ -190,7 +190,7 @@ function parseArgs(args) {
     if (arg === "-o" || arg === "--output-dir") {
       const value = args[++index];
       if (value === undefined || value.startsWith("-")) {
-        return { error: `argument ${arg}: expected one argument` };
+        return { error: "argument -o/--output-dir: expected one argument" };
       }
       outputDir = value;
     } else if (arg.startsWith("--output-dir=")) {
