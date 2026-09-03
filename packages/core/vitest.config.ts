@@ -8,7 +8,10 @@ import { defineConfig } from "vitest/config";
 // keeps its bit, and every skill has a recorded rationale. That is what
 // test/metadata.test.ts asserts.
 //
-// The three suites that are NOT in this project, and why:
+// The four suites that are NOT in this project, and why:
+//   test/iterative-development/test_skill_validator.py
+//                                six repo-only tests for the unshipped Python
+//                                skill validator. `pnpm test:python`.
 //   test/brainstorm-server/      3,000 lines of upstream node:assert + `ws`
 //                                suites that spawn real servers on fixed ports.
 //                                `pnpm test:brainstorm`.
