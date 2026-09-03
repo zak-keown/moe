@@ -11,6 +11,7 @@ import { ConfigError } from './config.js'
 import { MintError } from './diagnostics.js'
 import { resolvePlatform } from './platform/load.js'
 import { currentProjectionRecords, resolvePublishMatrix } from './platform/projections.js'
+import { assembleArtifactSet } from './artifact/assemble.js'
 
 const LABEL_WIDTH = 45
 
@@ -144,6 +145,25 @@ program
   .description('Show which components each harness supports')
   .action(() => {
     process.stdout.write(renderMatrix())
+  })
+
+program
+  .command('assemble')
+  .description('Assemble and preflight every registry plugin in a nonce-bearing sibling tree')
+  .option('--repo <path>', 'repository root containing moe-platform.yaml', process.cwd())
+  .requiredOption('--destination <path>', 'plugins.next-<nonce> sibling destination')
+  .action(async (opts: { repo: string; destination: string }) => {
+    const platform = await resolvePlatform(opts.repo)
+    const artifacts = await assembleArtifactSet({
+      repoRoot: platform.repositoryRoot,
+      platform,
+      destinationRoot: opts.destination,
+    })
+    process.stdout.write(`${JSON.stringify(artifacts.map((artifact) => ({
+      plugin: artifact.plugin.id,
+      root: artifact.root,
+      omittedOptionalPayloads: artifact.omittedOptionalPayloads,
+    })), null, 2)}\n`)
   })
 
 program

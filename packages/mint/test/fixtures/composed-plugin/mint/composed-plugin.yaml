@@ -1,0 +1,31 @@
+name: composed-plugin
+version: 1.2.3
+description: Composed plugin fixture.
+author: {name: Fixture Author}
+license: MIT
+repository: https://github.com/example/composed-plugin
+homepage: https://github.com/example/composed-plugin
+keywords: [fixture, composition]
+distribution: {npm: "@example/composed-plugin"}
+artifact:
+  payloads:
+    - {from: dist, to: dist, required: true}
+components:
+  skills: skills
+  commands: commands
+  agents: agents
+  hooks: hooks/hooks.json
+  mcp: .mcp.json
+targets:
+  claude-code: {intent: preview, expected_capabilities: [skill-discovery, command-discovery, agent-discovery, hook-execution, mcp-registration], operating_systems: [macos]}
+  cursor: {intent: omit}
+  codex: {intent: omit}
+  kimi: {intent: omit}
+  opencode: {intent: preview, expected_capabilities: [skill-discovery, command-discovery, agent-discovery], operating_systems: [macos]}
+  pi: {intent: preview, expected_capabilities: [skill-discovery], operating_systems: [macos]}
+  agent-plugins-1.0: {intent: omit}
+  copilot: {intent: omit}
+bootstrap: none
+harnesses:
+  exclude: [cursor, codex, kimi, agent-plugins-1.0, copilot]
+imported_works: []
