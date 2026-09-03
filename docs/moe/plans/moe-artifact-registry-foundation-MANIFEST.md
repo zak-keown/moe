@@ -21,11 +21,13 @@ plans:
   - id: artifact-verification
     plan: docs/moe/plans/2026-09-02-moe-artifact-verification.md
     depends_on: [artifact-composition]
-    status: pending
+    status: done
+    commits: 6176ed8..4c938b1
   - id: release-catalog-and-promotion
     plan: docs/moe/plans/2026-09-02-moe-release-catalog-and-promotion.md
     depends_on: [artifact-verification]
-    status: pending
+    status: done
+    commits: fb35ef1..1437ffb
 ```
 
 ## Acceptance Boundary
