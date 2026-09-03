@@ -404,6 +404,7 @@ const X_BIT_ALLOWLIST = [
   "hooks/moe-completion-evidence",
   "hooks/plan-set",
   "hooks/plan-set-notice",
+  "hooks/task-set",
   "hooks/run-hook.cmd",
   "hooks/governance-marker-check",
   "skills/brainstorming/scripts/start-server.sh",
@@ -556,11 +557,12 @@ describe("runtime paths", () => {
 
     // Floors. A walk that stopped finding anything — a moved directory, a
     // tightened filter — would otherwise satisfy every assertion below by
-    // iterating zero times. Node floor is 6 now, not 5: the four .cjs/.mjs
-    // scripts plus the two extensionless Node hooks (`hooks/plan-set` and
-    // `hooks/moe-completion-evidence`) with node shebangs.
+    // iterating zero times. Node floor is 7 now, not 6: the four .cjs/.mjs
+    // scripts plus the three extensionless Node hooks (`hooks/plan-set`,
+    // `hooks/moe-completion-evidence`, and `hooks/task-set`) with node
+    // shebangs.
     expect(bash.length, "bash targets discovered").toBeGreaterThanOrEqual(11);
-    expect(node.length, "node targets discovered").toBeGreaterThanOrEqual(6);
+    expect(node.length, "node targets discovered").toBeGreaterThanOrEqual(7);
     for (const rel of [
       "hooks/claude-judge-continuation",
       "hooks/plan-set-notice",
@@ -576,9 +578,10 @@ describe("runtime paths", () => {
     // Extensionless node script(s). Same regression concern in the mirror
     // direction: if the node-shebang branch above is removed, these fall
     // through and node's floor could still be met by the .cjs/.mjs four.
-    // Both plan-set (deterministic-task-dag) and moe-completion-evidence
-    // (verification-split-and-firing-rate) are extensionless Node hooks.
-    for (const rel of ["hooks/plan-set", "hooks/moe-completion-evidence"]) {
+    // plan-set (deterministic-task-dag), moe-completion-evidence
+    // (verification-split-and-firing-rate), and task-set are all
+    // extensionless Node hooks.
+    for (const rel of ["hooks/plan-set", "hooks/moe-completion-evidence", "hooks/task-set"]) {
       expect(node, `extensionless script ${rel} not routed to node --check`).toContain(rel);
     }
     expect(bash).not.toContain("hooks/run-hook.cmd");
@@ -1297,5 +1300,60 @@ describe("plan-set-notice", () => {
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
+  });
+});
+
+describe("task-set", () => {
+  const CLI = join(PKG, "hooks/task-set");
+  const FIXTURES = join(PKG, "test/fixtures/task-set");
+  const run = (args: string[]): { status: number; stdout: string; stderr: string } => {
+    try {
+      const stdout = execFileSync(process.execPath, [CLI, ...args], {
+        stdio: ["ignore", "pipe", "pipe"],
+        encoding: "utf8",
+      });
+      return { status: 0, stdout, stderr: "" };
+    } catch (err) {
+      const e = err as { status: number; stdout: string; stderr: string };
+      return { status: e.status ?? 1, stdout: e.stdout ?? "", stderr: e.stderr ?? "" };
+    }
+  };
+
+  it("check passes on a diamond plan and reports the task count", () => {
+    const r = run(["check", join(FIXTURES, "diamond-plan.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout).toContain("ok — 4 tasks");
+  });
+
+  it("check passes on a plan without depends_on fields", () => {
+    const r = run(["check", join(FIXTURES, "valid-no-deps-plan.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout).toContain("ok — 2 tasks");
+  });
+
+  it("check fails on a cycle and names every task on stderr", () => {
+    const r = run(["check", join(FIXTURES, "cycle-plan.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/cycle detected among:.*1/);
+    expect(r.stderr).toMatch(/cycle detected among:.*2/);
+    expect(r.stderr).toMatch(/cycle detected among:.*3/);
+  });
+
+  it("check fails on an unresolvable dependency", () => {
+    const r = run(["check", join(FIXTURES, "missing-dep-plan.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/task 1: depends_on 99 — not a known task/);
+  });
+
+  it("check fails when a task has no Files block", () => {
+    const r = run(["check", join(FIXTURES, "no-files-plan.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/task 1.*missing "Files:" block/);
+  });
+
+  it("--help prints usage and exits 0", () => {
+    const r = run(["--help"]);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toMatch(/task-set: compute the intra-plan task DAG/);
   });
 });
