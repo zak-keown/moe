@@ -15,13 +15,14 @@ import { defineConfig } from "vitest/config";
 //   test/brainstorm-server/      3,000 lines of upstream node:assert + `ws`
 //                                suites that spawn real servers on fixed ports.
 //                                `pnpm test:brainstorm`.
-//   test/shell/                  two bash suites; test-render-graphs.sh needs
-//                                graphviz. `pnpm test:shell`.
+//   test/shell/                  find-polluter and latte shell suites.
+//                                `pnpm test:shell`.
 //   test/latte/                  65 conversation scenarios x 5 runs = 325
 //                                authenticated model calls. `pnpm latte:evals`,
 //                                never in CI.
 export default defineConfig({
   test: {
     include: ["test/**/*.test.ts"],
+    pool: "forks",
   },
 });

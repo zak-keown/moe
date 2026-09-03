@@ -398,7 +398,7 @@ describe("cross-references", () => {
 });
 
 // Paths a skill legitimately names that are not in git. The Claude Code docs
-// cache is populated on demand by update_docs.cjs and deliberately not
+// cache is populated on demand by update_docs.mjs and deliberately not
 // committed - see skills/working-with-claude-code/SKILL.md.
 const NOT_COMMITTED = new Set(["/skills/working-with-claude-code/references/"]);
 
@@ -428,7 +428,6 @@ const X_BIT_ALLOWLIST = [
   "hooks/jig-review-format-guard",
   "skills/brainstorming/scripts/start-server.sh",
   "skills/brainstorming/scripts/stop-server.sh",
-  "skills/fixing-a-code-review/scripts/compact-resolved.mjs",
   "skills/finding-duplicate-functions/scripts/extract-functions.sh",
   "skills/finding-duplicate-functions/scripts/generate-report.sh",
   "skills/finding-duplicate-functions/scripts/prepare-category-analysis.sh",
@@ -437,8 +436,6 @@ const X_BIT_ALLOWLIST = [
   "skills/subagent-driven-development/scripts/task-brief",
   "skills/systematic-debugging/find-polluter.sh",
   "skills/using-tmux-for-interactive-commands/tmux-wrapper.sh",
-  "skills/working-with-claude-code/scripts/update_docs.cjs",
-  "skills/writing-skills/render-graphs.mjs",
 ];
 
 // Everything Zone-A discovery walks: the skills tree and the hooks directory,
