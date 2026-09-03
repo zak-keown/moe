@@ -1,8 +1,9 @@
 # Skill Backend Runtime Standard — Design Spec
 
 Date: 2026-09-03  
-Status: Approved in conversation; awaiting review of this written spec  
+Status: Approved
 Evidence baseline: `37f4a855ee8a7667ffee200886fe8645b2a6c18d`
+Implementation plans: `docs/moe/plans/skill-backend-runtime-standard-MANIFEST.md`
 
 ## 1. Problem
 
