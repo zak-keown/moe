@@ -129,7 +129,11 @@ function restartedSwapFs(previous: FakeSwapFs): FakeSwapFs {
 
 type TransactionState = 'unstarted' | 'backed-up' | 'committed' | 'clean'
 
-function recoveryFs(states: readonly TransactionState[], rawJournal = JSON.stringify(journal())) {
+function recoveryFs(
+  states: readonly TransactionState[],
+  rawJournal = JSON.stringify(journal()),
+  cleanIdentity: 'old' | 'new' = 'old',
+) {
   const files = new Map<string, PathState>([
     ['.', 'directory'],
     ['.claude-plugin', 'directory'],
@@ -141,21 +145,35 @@ function recoveryFs(states: readonly TransactionState[], rawJournal = JSON.strin
   const journalBytes = new Map<string, Uint8Array>([
     ['.moe-mint-generation-abc123.json', new TextEncoder().encode(rawJournal)],
   ])
+  const identities = new Map<string, 'old' | 'new' | 'journal'>([
+    ['.moe-mint-generation-abc123.json', 'journal'],
+  ])
   for (const [index, target] of journal().targets.entries()) {
     const state = states[index]
     if (state === undefined) throw new Error('transaction state missing')
-    if (state === 'unstarted' || state === 'committed' || state === 'clean') files.set(target.current, target.kind)
-    if (state === 'unstarted' || state === 'backed-up') files.set(target.next, target.kind)
-    if (state === 'backed-up' || state === 'committed') files.set(target.backup, target.kind)
+    if (state === 'unstarted' || state === 'committed' || state === 'clean') {
+      files.set(target.current, target.kind)
+      identities.set(target.current, state === 'committed' ? 'new' : state === 'clean' ? cleanIdentity : 'old')
+    }
+    if (state === 'unstarted' || state === 'backed-up') {
+      files.set(target.next, target.kind)
+      identities.set(target.next, 'new')
+    }
+    if (state === 'backed-up' || state === 'committed') {
+      files.set(target.backup, target.kind)
+      identities.set(target.backup, 'old')
+    }
   }
   const operations: string[] = []
   return {
     operations,
     files,
     journalBytes,
+    identities,
     async writeDurableFile(filePath: string, bytes: Uint8Array) {
       files.set(filePath, 'file')
       journalBytes.set(filePath, bytes)
+      identities.set(filePath, 'journal')
     },
     async readFile(filePath: string) {
       operations.push(`read:${filePath}`)
@@ -172,11 +190,15 @@ function recoveryFs(states: readonly TransactionState[], rawJournal = JSON.strin
       if (state === undefined) throw new Error(`missing ${from}`)
       files.delete(from)
       files.set(to, state)
+      const identity = identities.get(from)
+      identities.delete(from)
+      if (identity !== undefined) identities.set(to, identity)
     },
     async remove(filePath: string) {
       operations.push(`remove:${filePath}`)
       files.delete(filePath)
       journalBytes.delete(filePath)
+      identities.delete(filePath)
     },
     async fsyncDirectory(directory: string) {
       operations.push(`fsync:${directory}`)
@@ -190,8 +212,10 @@ function restartedRecoveryFs(previous: RecoveryFs): RecoveryFs {
   const restarted = recoveryFs(['unstarted', 'unstarted', 'unstarted'])
   restarted.files.clear()
   restarted.journalBytes.clear()
+  restarted.identities.clear()
   for (const [key, value] of previous.files) restarted.files.set(key, value)
   for (const [key, value] of previous.journalBytes) restarted.journalBytes.set(key, value.slice())
+  for (const [key, value] of previous.identities) restarted.identities.set(key, value)
   return restarted
 }
 
@@ -503,12 +527,53 @@ describe('generation transaction', () => {
     const interrupted = recoveryFs(['committed', 'backed-up', 'unstarted'])
 
     await expect(recoverGeneratedOutputs({ journalPath: '.moe-mint-generation-abc123.json' }, failAfterRecoveryEvent(interrupted, cut))).rejects.toMatchObject({
-      code: 'GENERATION_TRANSACTION_RECOVERY_FAILED',
+      code: cut >= 15
+        ? 'GENERATION_TRANSACTION_RECOVERY_OLD_INSTALLED_DURABILITY_UNCERTAIN'
+        : 'GENERATION_TRANSACTION_RECOVERY_FAILED',
     })
     const restarted = restartedRecoveryFs(interrupted)
     await expect(recoverGeneratedOutputs({ journalPath: '.moe-mint-generation-abc123.json' }, restarted)).resolves.toEqual({ generation: cut >= 14 ? 'none' : 'old' })
-    for (const target of journal().targets) await expect(restarted.pathState(target.current)).resolves.toBe(target.kind)
+    expect(new Set(journal().targets.map((target) => restarted.identities.get(target.current)))).toEqual(new Set(['old']))
     await expect(recoverGeneratedOutputs({ journalPath: '.moe-mint-generation-abc123.json' }, restarted)).resolves.toEqual({ generation: 'none' })
+  })
+
+  test.each(Array.from({ length: 6 }, (_value, index) => index + 1))('restarts all-new recovery after cleanup durability cut %i', async (cut) => {
+    // Break caught: cleanup after a fully committed generation must never
+    // resurrect a backup or mix old projections with the new plugin tree.
+    const { recoverGeneratedOutputs } = await import(transactionModule)
+    const interrupted = recoveryFs(['committed', 'clean', 'committed'], undefined, 'new')
+
+    await expect(recoverGeneratedOutputs({ journalPath: '.moe-mint-generation-abc123.json' }, failAfterRecoveryEvent(interrupted, cut))).rejects.toMatchObject({
+      code: cut >= 6
+        ? 'GENERATION_TRANSACTION_RECOVERY_NEW_INSTALLED_DURABILITY_UNCERTAIN'
+        : 'GENERATION_TRANSACTION_RECOVERY_FAILED',
+    })
+    const restarted = restartedRecoveryFs(interrupted)
+    await expect(recoverGeneratedOutputs({ journalPath: '.moe-mint-generation-abc123.json' }, restarted)).resolves.toEqual({ generation: cut >= 5 ? 'none' : 'new' })
+    expect(new Set(journal().targets.map((target) => restarted.identities.get(target.current)))).toEqual(new Set(['new']))
+    await expect(recoverGeneratedOutputs({ journalPath: '.moe-mint-generation-abc123.json' }, restarted)).resolves.toEqual({ generation: 'none' })
+  })
+
+  test('reports a removed recovery journal as selected-generation durability uncertainty', async () => {
+    // Break caught: the journal unlink has already selected and installed the
+    // all-new generation when its parent sync fails; saying recovery failed
+    // and asking to preserve that now-gone journal is false.
+    const { recoverGeneratedOutputs } = await import(transactionModule)
+    const fs = recoveryFs(['committed', 'clean', 'committed'], undefined, 'new')
+
+    await expect(
+      recoverGeneratedOutputs(
+        { journalPath: '.moe-mint-generation-abc123.json' },
+        failAfterRecoveryEvent(fs, 6),
+      ),
+    ).rejects.toMatchObject({
+      code: 'GENERATION_TRANSACTION_RECOVERY_NEW_INSTALLED_DURABILITY_UNCERTAIN',
+      paths: journal().targets.map((target) => target.current),
+      action: expect.stringContaining('selected generation as installed'),
+      cause: expect.objectContaining({ message: 'injected recovery durability failure 6' }),
+    })
+    await expect(fs.pathState('.moe-mint-generation-abc123.json')).resolves.toBe('missing')
+    expect(new Set(journal().targets.map((target) => fs.identities.get(target.current)))).toEqual(new Set(['new']))
   })
 
   test('rejects a journal symlink before it is read', async () => {
@@ -542,7 +607,38 @@ describe('generation transaction', () => {
     })
 
     await expect(recoverGeneratedOutputs({ journalPath: '.moe-mint-generation-abc123.json' }, guardedFs)).rejects.toMatchObject({
-      code: 'GENERATION_TRANSACTION_RECOVERY_FAILED',
+      code: 'GENERATION_TRANSACTION_UNRECOVERABLE',
+    })
+    expect(fs.operations.filter((operation) => operation.startsWith('rename:') || operation.startsWith('remove:'))).toEqual([])
+  })
+
+  test('rejects a parent substituted during validation before it can become the boundary baseline', async () => {
+    // Break caught: capturing after multi-await validation accepted a normal
+    // replacement as the new baseline, despite state being read from the old tree.
+    const { recoverGeneratedOutputs } = await import(transactionModule)
+    const fs = recoveryFs(['backed-up', 'unstarted', 'unstarted'])
+    let version = 0
+    let captureCount = 0
+    const originalPathState = fs.pathState
+    fs.pathState = async (path: string) => {
+      const state = await originalPathState(path)
+      if (path === 'plugins') version = 1
+      return state
+    }
+    const guardedFs = Object.assign(fs, {
+      async captureTrustedBoundary() {
+        captureCount += 1
+        const captured = version
+        return {
+          async assert() {
+            if (captureCount === 2 && version !== captured) throw new Error('trusted generation parent changed: plugins')
+          },
+        }
+      },
+    })
+
+    await expect(recoverGeneratedOutputs({ journalPath: '.moe-mint-generation-abc123.json' }, guardedFs)).rejects.toMatchObject({
+      code: 'GENERATION_TRANSACTION_UNRECOVERABLE',
     })
     expect(fs.operations.filter((operation) => operation.startsWith('rename:') || operation.startsWith('remove:'))).toEqual([])
   })

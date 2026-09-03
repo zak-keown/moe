@@ -351,6 +351,17 @@ async function removeAndSync(fs, relativePath) {
   await syncParent(fs, relativePath);
 }
 
+async function removeJournalAndSync(fs, journalPath, boundary, onRemoved) {
+  await guarded(boundary, async () => {
+    await fs.remove(journalPath);
+    // A subsequent parent fsync can fail after the unlink has happened. Keep
+    // that fact independent from another path lookup, which could itself race
+    // or fail and obscure which coherent generation is now installed.
+    onRemoved();
+    await syncParent(fs, journalPath);
+  });
+}
+
 /**
  * Replace the three checked-in generation outputs. The caller owns and has
  * already selected the journal path; this module only accepts the exact
@@ -503,7 +514,7 @@ async function stateFor(target, fs) {
   );
 }
 
-async function restoreOld(validated, states, fs, boundary) {
+async function restoreOld(validated, states, fs, boundary, onJournalRemoved) {
   for (let index = 0; index < validated.journal.targets.length; index += 1) {
     const target = validated.journal.targets[index];
     const state = states[index];
@@ -525,16 +536,16 @@ async function restoreOld(validated, states, fs, boundary) {
       await guarded(boundary, () => removeAndSync(fs, target.backup));
     }
   }
-  await guarded(boundary, () => removeAndSync(fs, validated.journalPath));
+  await removeJournalAndSync(fs, validated.journalPath, boundary, onJournalRemoved);
 }
 
-async function finishNew(validated, fs, boundary) {
+async function finishNew(validated, fs, boundary, onJournalRemoved) {
   for (const target of validated.journal.targets) {
     if ((await fs.pathState(target.backup)) !== "missing") {
       await guarded(boundary, () => removeAndSync(fs, target.backup));
     }
   }
-  await guarded(boundary, () => removeAndSync(fs, validated.journalPath));
+  await removeJournalAndSync(fs, validated.journalPath, boundary, onJournalRemoved);
 }
 
 /**
@@ -564,9 +575,20 @@ export async function recoverGeneratedOutputs(operation, fs = nodeSwapFs) {
     );
   }
   const journal = await readJournal(operation, fs, journalBoundary);
+  const shape = validateShape({ journalPath: operation.journalPath, journal });
+  const paths = [
+    shape.journalPath,
+    ...shape.journal.targets.flatMap((target) => [target.current, target.next, target.backup]),
+  ];
+  // Capture before *any* target-path validation. This prevents a normal parent
+  // replacement during the multi-await validation/classification pass from
+  // becoming the accepted boundary for later destructive operations.
+  const boundary = await trustedBoundary(fs, paths);
   let validated;
   try {
-    validated = await validateSafePaths({ journalPath: operation.journalPath, journal }, fs);
+    validated = await guarded(boundary, () =>
+      validateSafePaths({ journalPath: operation.journalPath, journal }, fs),
+    );
   } catch (error) {
     if (error instanceof GenerationTransactionError) throw error;
     throw transactionError(
@@ -575,21 +597,23 @@ export async function recoverGeneratedOutputs(operation, fs = nodeSwapFs) {
       { paths: [operation.journalPath], cause: error },
     );
   }
-  const states = [];
-  for (const target of validated.journal.targets) states.push(await stateFor(target, fs));
-  const paths = [
-    validated.journalPath,
-    ...validated.journal.targets.flatMap((target) => [target.current, target.next, target.backup]),
-  ];
-  const boundary = await trustedBoundary(fs, paths);
+  const states = await guarded(boundary, async () => {
+    const classified = [];
+    for (const target of validated.journal.targets) classified.push(await stateFor(target, fs));
+    return classified;
+  });
   let generation;
   let operationToRun;
+  let journalRemoved = false;
   if (
     validated.journal.recovery !== "old" &&
     states.every((state) => state === "committed" || state === "clean")
   ) {
     generation = "new";
-    operationToRun = () => finishNew(validated, fs, boundary);
+    operationToRun = () =>
+      finishNew(validated, fs, boundary, () => {
+        journalRemoved = true;
+      });
   } else if (
     (states.includes("clean") &&
       states.every((state) => state === "clean" || state === "unstarted") &&
@@ -601,7 +625,10 @@ export async function recoverGeneratedOutputs(operation, fs = nodeSwapFs) {
       ))
   ) {
     generation = "old";
-    operationToRun = () => restoreOld(validated, states, fs, boundary);
+    operationToRun = () =>
+      restoreOld(validated, states, fs, boundary, () => {
+        journalRemoved = true;
+      });
   } else {
     throw transactionError(
       "GENERATION_TRANSACTION_UNRECOVERABLE",
@@ -623,6 +650,18 @@ export async function recoverGeneratedOutputs(operation, fs = nodeSwapFs) {
     }
     await operationToRun();
   } catch (error) {
+    if (journalRemoved) {
+      throw transactionError(
+        `GENERATION_TRANSACTION_RECOVERY_${generation.toUpperCase()}_INSTALLED_DURABILITY_UNCERTAIN`,
+        `${generation} generation is installed but final journal-parent durability is uncertain: ${error.message}`,
+        {
+          paths: validated.journal.targets.map((target) => target.current),
+          action:
+            "treat the selected generation as installed; verify the output parents after filesystem recovery before another generation",
+          cause: error,
+        },
+      );
+    }
     throw transactionError(
       "GENERATION_TRANSACTION_RECOVERY_FAILED",
       `generation recovery could not complete ${generation} generation: ${error.message}`,
