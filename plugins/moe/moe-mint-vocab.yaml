@@ -1,2 +1,29 @@
-tokens: {}
+tokens:
+  ask:
+    claude-code: "`AskUserQuestion`"
+    cursor: "`AskUserQuestion`"
+    codex: "ask in the terminal"
+    kimi: "`AskUserQuestion`"
+    opencode: "ask in the terminal"
+    pi: "ask in the terminal"
+    agent-plugins-1.0: "`AskUserQuestion`"
+    copilot: "`AskUserQuestion`"
+  todo:
+    claude-code: "`TaskCreate`/`TaskUpdate`"
+    cursor: "`TaskCreate`/`TaskUpdate`"
+    codex: "track in a checklist file"
+    kimi: "`TodoList`"
+    opencode: "`todowrite`"
+    pi: "`TODO.md`"
+    agent-plugins-1.0: "`TaskCreate`/`TaskUpdate`"
+    copilot: "`TaskCreate`/`TaskUpdate`"
+  skill:
+    claude-code: "the `Skill` tool"
+    cursor: "the `Skill` tool"
+    codex: "native skill discovery"
+    kimi: "the `Skill` tool"
+    opencode: "the `skill` tool"
+    pi: "read the skill's `SKILL.md`"
+    agent-plugins-1.0: "the `Skill` tool"
+    copilot: "the `Skill` tool"
 blocks: {}
