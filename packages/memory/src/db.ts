@@ -21,7 +21,13 @@ import * as sqliteVec from "sqlite-vec";
 import { EMBEDDING_DIMENSIONS } from "./constants.js";
 import { EMBEDDING_VERSION } from "./embedding-migration.js";
 import { getDbPath } from "./paths.js";
-import type { ConversationExchange, JournalEntry, JournalScope } from "./types.js";
+import type {
+  ConversationExchange,
+  JournalEntry,
+  JournalScope,
+  MemoryEdge,
+  MemoryNode,
+} from "./types.js";
 
 export function migrateSchema(db: Database.Database): void {
   const columns = db.prepare(`SELECT name FROM pragma_table_info('exchanges')`).all() as Array<{
@@ -283,6 +289,39 @@ export function initDatabase(): Database.Database {
     )
   `);
 
+  // Graph memory: nodes, node vectors, and edges.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS memory_nodes (
+      id TEXT PRIMARY KEY,
+      node_type TEXT NOT NULL,
+      project TEXT,
+      content TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      superseded_at TEXT,
+      embedding_version INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+  db.exec(`
+    CREATE VIRTUAL TABLE IF NOT EXISTS vec_memory_nodes USING vec0(
+      id TEXT PRIMARY KEY,
+      embedding FLOAT[${EMBEDDING_DIMENSIONS}]
+    )
+  `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS memory_edges (
+      id TEXT PRIMARY KEY,
+      source_type TEXT NOT NULL,
+      source_id TEXT NOT NULL,
+      target_type TEXT NOT NULL,
+      target_id TEXT NOT NULL,
+      relation TEXT NOT NULL,
+      confidence REAL DEFAULT 1.0,
+      created_at TEXT NOT NULL,
+      created_by TEXT,
+      metadata TEXT
+    )
+  `);
+
   // Run migrations first
   migrateSchema(db);
 
@@ -319,6 +358,17 @@ export function initDatabase(): Database.Database {
   `);
   db.exec(`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_journal_path ON journal_entries(path)
+  `);
+
+  // Graph memory indexes
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_edge_source ON memory_edges(source_type, source_id)
+  `);
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_edge_target ON memory_edges(target_type, target_id)
+  `);
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_node_type ON memory_nodes(node_type)
   `);
 
   return db;
@@ -567,4 +617,180 @@ export function countJournalEntries(db: Database.Database, scope?: JournalScope)
       : db.prepare("SELECT COUNT(*) AS c FROM journal_entries").get()
   ) as { c: number };
   return row.c;
+}
+
+// ---------------------------------------------------------------------------
+// Graph memory: nodes and edges
+// ---------------------------------------------------------------------------
+
+export function insertNode(db: Database.Database, node: MemoryNode): void {
+  db.prepare(`
+    INSERT OR REPLACE INTO memory_nodes
+      (id, node_type, project, content, created_at, superseded_at, embedding_version)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    node.id,
+    node.nodeType,
+    node.project ?? null,
+    node.content,
+    node.createdAt,
+    node.supersededAt ?? null,
+    node.embeddingVersion,
+  );
+}
+
+export function insertEdge(db: Database.Database, edge: MemoryEdge): void {
+  db.prepare(`
+    INSERT OR REPLACE INTO memory_edges
+      (id, source_type, source_id, target_type, target_id, relation, confidence, created_at, created_by, metadata)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    edge.id,
+    edge.sourceType,
+    edge.sourceId,
+    edge.targetType,
+    edge.targetId,
+    edge.relation,
+    edge.confidence,
+    edge.createdAt,
+    edge.createdBy,
+    edge.metadata ? JSON.stringify(edge.metadata) : null,
+  );
+}
+
+interface MemoryNodeRow {
+  id: string;
+  node_type: string;
+  project: string | null;
+  content: string;
+  created_at: string;
+  superseded_at: string | null;
+  embedding_version: number;
+}
+
+function nodeFromRow(row: MemoryNodeRow): MemoryNode {
+  return {
+    id: row.id,
+    nodeType: row.node_type as MemoryNode["nodeType"],
+    project: row.project ?? undefined,
+    content: row.content,
+    createdAt: row.created_at,
+    supersededAt: row.superseded_at ?? undefined,
+    embeddingVersion: row.embedding_version,
+  };
+}
+
+export function getNode(db: Database.Database, id: string): MemoryNode | null {
+  const row = db
+    .prepare("SELECT * FROM memory_nodes WHERE id = ?")
+    .get(id) as MemoryNodeRow | undefined;
+  return row ? nodeFromRow(row) : null;
+}
+
+interface MemoryEdgeRow {
+  id: string;
+  source_type: string;
+  source_id: string;
+  target_type: string;
+  target_id: string;
+  relation: string;
+  confidence: number;
+  created_at: string;
+  created_by: string | null;
+  metadata: string | null;
+}
+
+function edgeFromRow(row: MemoryEdgeRow): MemoryEdge {
+  let metadata: Record<string, unknown> | undefined;
+  if (row.metadata) {
+    try {
+      metadata = JSON.parse(row.metadata) as Record<string, unknown>;
+    } catch {
+      // Ignore malformed metadata
+    }
+  }
+  return {
+    id: row.id,
+    sourceType: row.source_type as MemoryEdge["sourceType"],
+    sourceId: row.source_id,
+    targetType: row.target_type as MemoryEdge["targetType"],
+    targetId: row.target_id,
+    relation: row.relation as MemoryEdge["relation"],
+    confidence: row.confidence,
+    createdAt: row.created_at,
+    createdBy: (row.created_by ?? "system") as MemoryEdge["createdBy"],
+    metadata,
+  };
+}
+
+export function getEdgesFrom(
+  db: Database.Database,
+  sourceType: string,
+  sourceId: string,
+): MemoryEdge[] {
+  const rows = db
+    .prepare("SELECT * FROM memory_edges WHERE source_type = ? AND source_id = ?")
+    .all(sourceType, sourceId) as MemoryEdgeRow[];
+  return rows.map(edgeFromRow);
+}
+
+export function getEdgesTo(
+  db: Database.Database,
+  targetType: string,
+  targetId: string,
+): MemoryEdge[] {
+  const rows = db
+    .prepare("SELECT * FROM memory_edges WHERE target_type = ? AND target_id = ?")
+    .all(targetType, targetId) as MemoryEdgeRow[];
+  return rows.map(edgeFromRow);
+}
+
+/**
+ * Walk the edge graph from a starting record, collecting edges up to `depth`.
+ *
+ * `direction`:
+ *   - `"causes"` — follow edges where the current node is the **target**
+ *     (i.e. find what caused it), walking target→source.
+ *   - `"effects"` — follow edges where the current node is the **source**
+ *     (i.e. find what it caused), walking source→target.
+ *
+ * Uses an iterative BFS to avoid stack overflow on deep chains.
+ */
+export function traceProvenance(
+  db: Database.Database,
+  type: string,
+  id: string,
+  depth: number,
+  direction: "causes" | "effects",
+): Array<{ depth: number; edge: MemoryEdge }> {
+  const results: Array<{ depth: number; edge: MemoryEdge }> = [];
+  const visited = new Set<string>();
+
+  // BFS frontier: each entry is [currentType, currentId, currentDepth]
+  let frontier: Array<[string, string, number]> = [[type, id, 0]];
+
+  while (frontier.length > 0) {
+    const next: Array<[string, string, number]> = [];
+    for (const [curType, curId, curDepth] of frontier) {
+      if (curDepth >= depth) continue;
+
+      const edges =
+        direction === "causes"
+          ? getEdgesTo(db, curType, curId)
+          : getEdgesFrom(db, curType, curId);
+
+      for (const edge of edges) {
+        if (visited.has(edge.id)) continue;
+        visited.add(edge.id);
+        results.push({ depth: curDepth + 1, edge });
+
+        const nextType = direction === "causes" ? edge.sourceType : edge.targetType;
+        const nextId = direction === "causes" ? edge.sourceId : edge.targetId;
+        next.push([nextType, nextId, curDepth + 1]);
+      }
+    }
+    frontier = next;
+  }
+
+  return results;
 }
