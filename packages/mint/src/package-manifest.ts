@@ -1,4 +1,6 @@
 import { MintError, type MintDiagnostic } from './diagnostics.js'
+import type { MintConfig } from './config.js'
+import type { AdapterPackageContribution } from './adapters/types.js'
 
 export interface MintPackageMetadata {
   readonly npm: string
@@ -27,15 +29,6 @@ export interface ExportConditionMap {
   readonly [condition: string]: ExportTarget
 }
 export type NormalizedExports = Readonly<Record<string, ExportTarget>>
-
-// Task 1 introduces this same shape at the adapter boundary. Task 2 remains
-// independently testable on its recorded base by deliberately accepting only
-// this local structural view; Task 3 imports the canonical type.
-export interface AdapterPackageContributionInput {
-  readonly owner: string
-  readonly pi?: Readonly<Record<string, unknown>> | undefined
-  readonly exports?: Readonly<Record<string, unknown>> | undefined
-}
 
 export interface MergedAdapterPackageContributions {
   readonly exports: NormalizedExports
@@ -302,7 +295,7 @@ function contributionRecord(value: unknown): ContributionRecord {
  */
 export function mergeAdapterPackageContributions(
   sourceExports: NormalizedExports,
-  contributions: readonly AdapterPackageContributionInput[],
+  contributions: readonly AdapterPackageContribution[],
 ): MergedAdapterPackageContributions {
   const exports: Record<string, ExportTarget> = {}
   for (const [key, target] of Object.entries(sourceExports)) exports[key] = cloneExportTarget(target, `exports.${key}`)
@@ -348,4 +341,320 @@ export function mergeAdapterPackageContributions(
     }
   }
   return { exports, ...(pi === undefined ? {} : { pi }) }
+}
+
+export interface ComposePackageManifestInput {
+  source: Readonly<Record<string, unknown>>
+  config: MintConfig
+  contributions: readonly AdapterPackageContribution[]
+  artifactPaths: ReadonlySet<string>
+  registryUrl: string
+}
+
+export interface ComposedPackageManifest extends NormalizedPackageMetadata {
+  readonly [field: string]: unknown
+  readonly type?: string | undefined
+  readonly main?: string | undefined
+  readonly exports?: NormalizedExports | undefined
+  readonly imports?: Readonly<Record<string, ExportTarget>> | undefined
+  readonly types?: string | undefined
+  readonly bin?: string | Readonly<Record<string, string>> | undefined
+  readonly engines?: Readonly<Record<string, string>> | undefined
+  readonly os?: readonly string[] | undefined
+  readonly cpu?: readonly string[] | undefined
+  readonly sideEffects?: boolean | readonly string[] | undefined
+  readonly dependencies?: Readonly<Record<string, string>> | undefined
+  readonly optionalDependencies?: Readonly<Record<string, string>> | undefined
+  readonly peerDependencies?: Readonly<Record<string, string>> | undefined
+  readonly peerDependenciesMeta?: Readonly<Record<string, Readonly<Record<string, unknown>>>> | undefined
+  readonly pi?: Readonly<Record<string, unknown>> | undefined
+  readonly files: readonly string[]
+  readonly publishConfig: Readonly<{ access: 'public'; registry: string }>
+}
+
+interface RuntimeManifestFields {
+  type?: string
+  main?: string
+  imports?: Readonly<Record<string, ExportTarget>>
+  types?: string
+  bin?: string | Readonly<Record<string, string>>
+  engines?: Readonly<Record<string, string>>
+  os?: readonly string[]
+  cpu?: readonly string[]
+  sideEffects?: boolean | readonly string[]
+  dependencies?: Readonly<Record<string, string>>
+  optionalDependencies?: Readonly<Record<string, string>>
+  peerDependencies?: Readonly<Record<string, string>>
+  peerDependenciesMeta?: Readonly<Record<string, Readonly<Record<string, unknown>>>>
+}
+
+const DESCRIPTIVE_FIELDS = new Set([
+  'name', 'version', 'description', 'author', 'license', 'repository', 'homepage', 'keywords',
+])
+const OMITTED_FIELDS = new Set([
+  'scripts', 'devDependencies', 'private', 'workspaces', 'packageManager', 'overrides', 'pnpm',
+])
+const RUNTIME_FIELDS = new Set([
+  'type', 'main', 'exports', 'imports', 'types', 'bin', 'engines', 'os', 'cpu', 'sideEffects',
+  'dependencies', 'optionalDependencies', 'peerDependencies', 'peerDependenciesMeta',
+])
+
+function manifestFieldInvalid(field: string, expected: string): never {
+  diagnostic(
+    'PACKAGE_MANIFEST_FIELD_INVALID',
+    field,
+    `package manifest field "${field}" must be ${expected}`,
+    `Set ${field} to ${expected}.`,
+  )
+}
+
+function manifestString(value: unknown, field: string): string {
+  if (typeof value !== 'string' || value.length === 0) manifestFieldInvalid(field, 'a non-empty string')
+  return value
+}
+
+function stringRecord(value: unknown, field: string): Readonly<Record<string, string>> {
+  if (!isRecord(value)) manifestFieldInvalid(field, 'an object with string values')
+  const result: Record<string, string> = {}
+  for (const [key, entry] of Object.entries(value)) result[key] = manifestString(entry, `${field}.${key}`)
+  return result
+}
+
+function stringArray(value: unknown, field: string): readonly string[] {
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string' || entry.length === 0)) {
+    manifestFieldInvalid(field, 'an array of non-empty strings')
+  }
+  return [...value]
+}
+
+function manifestTarget(value: unknown, field: string): ExportTarget {
+  if (typeof value === 'string') return manifestString(value, field)
+  if (!isRecord(value)) manifestFieldInvalid(field, 'a string or condition object')
+  const result: Record<string, ExportTarget> = {}
+  for (const [condition, target] of Object.entries(value)) {
+    result[condition] = manifestTarget(target, `${field}.${condition}`)
+  }
+  return result
+}
+
+function importsRecord(value: unknown): Readonly<Record<string, ExportTarget>> {
+  if (!isRecord(value)) manifestFieldInvalid('imports', 'an object of package import targets')
+  const result: Record<string, ExportTarget> = {}
+  for (const [specifier, target] of Object.entries(value)) {
+    if (!specifier.startsWith('#')) manifestFieldInvalid(`imports.${specifier}`, 'a package import key beginning with #')
+    result[specifier] = manifestTarget(target, `imports.${specifier}`)
+  }
+  return result
+}
+
+function binValue(value: unknown): string | Readonly<Record<string, string>> {
+  if (typeof value === 'string') return manifestString(value, 'bin')
+  return stringRecord(value, 'bin')
+}
+
+function peerMeta(value: unknown): Readonly<Record<string, Readonly<Record<string, unknown>>>> {
+  if (!isRecord(value)) manifestFieldInvalid('peerDependenciesMeta', 'an object of peer metadata objects')
+  const result: Record<string, Readonly<Record<string, unknown>>> = {}
+  for (const [dependency, metadata] of Object.entries(value)) {
+    if (!isRecord(metadata)) manifestFieldInvalid(`peerDependenciesMeta.${dependency}`, 'an object')
+    result[dependency] = cloneData(metadata) as Readonly<Record<string, unknown>>
+  }
+  return result
+}
+
+function registryOrigin(value: string): string {
+  let parsed: URL
+  try {
+    parsed = new URL(value)
+  } catch {
+    diagnostic('PACKAGE_REGISTRY_INVALID', 'publishConfig.registry', 'platform npm registry must be a valid URL', 'Set release.origin.registry to a valid HTTPS registry URL.')
+  }
+  if (parsed.protocol !== 'https:' || parsed.username || parsed.password) {
+    diagnostic('PACKAGE_REGISTRY_INVALID', 'publishConfig.registry', 'platform npm registry must be an HTTPS origin without credentials', 'Set release.origin.registry to a credential-free HTTPS origin.')
+  }
+  return parsed.origin
+}
+
+function artifactFileList(paths: ReadonlySet<string>): readonly string[] {
+  const files = new Set<string>(['.moe/artifact.json'])
+  for (const path of paths) {
+    if (path === 'package.json') continue
+    files.add(path)
+  }
+  return [...files].sort()
+}
+
+function localReferencePath(value: string, field: string): string {
+  if (
+    value.includes('\\')
+    || value.startsWith('/')
+    || /^[A-Za-z][A-Za-z\d+.-]*:/.test(value)
+    || value.includes('?')
+    || value.includes('#')
+  ) {
+    diagnostic('PACKAGE_REFERENCE_ESCAPE', field, `package reference "${value}" is not a package-relative POSIX path`, 'Use a non-traversing path within the staged artifact.')
+  }
+  const segments = value.split('/')
+  if (segments.includes('..')) {
+    diagnostic('PACKAGE_REFERENCE_ESCAPE', field, `package reference "${value}" escapes the staged artifact`, 'Use a non-traversing path within the staged artifact.')
+  }
+  return segments.filter((segment) => segment !== '' && segment !== '.').join('/')
+}
+
+function referenceExists(path: string, artifactPaths: ReadonlySet<string>): boolean {
+  if (path === '' || path === '.moe/artifact.json') return true
+  if (!path.includes('*')) {
+    return artifactPaths.has(path) || [...artifactPaths].some((candidate) => candidate.startsWith(`${path}/`))
+  }
+  const expression = new RegExp(`^${path.split('*').map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[^/]*')}$`)
+  return [...artifactPaths].some((candidate) => expression.test(candidate))
+}
+
+function validateLocalReference(value: unknown, field: string, artifactPaths: ReadonlySet<string>): void {
+  const reference = manifestString(value, field)
+  const path = localReferencePath(reference, field)
+  if (!referenceExists(path, artifactPaths)) {
+    diagnostic('PACKAGE_REFERENCE_MISSING', field, `package reference "${reference}" is not present in the staged artifact`, 'Stage the referenced file or update the package manifest target.')
+  }
+}
+
+function isLocalPackageTarget(value: string): boolean {
+  return value === '.' || value === '..' || value.startsWith('./') || value.startsWith('../') || value.startsWith('/') || value.includes('\\')
+}
+
+function isBarePackageTarget(value: string): boolean {
+  if (value.startsWith('node:') || value.startsWith('#')) return true
+  if (value.startsWith('@')) return /^@[^/\s]+\/[^/\s]+(?:\/[^\s]*)?$/.test(value)
+  return /^[A-Za-z0-9][^/:\s]*(?:\/[^\s]*)?$/.test(value)
+}
+
+function validateTargetReferences(value: unknown, field: string, artifactPaths: ReadonlySet<string>): void {
+  if (typeof value === 'string') {
+    if (isLocalPackageTarget(value)) validateLocalReference(value, field, artifactPaths)
+    else if (!isBarePackageTarget(value)) {
+      diagnostic('PACKAGE_REFERENCE_ESCAPE', field, `package target "${value}" is neither local nor a bare package dependency`, 'Use a staged local path or a bare package dependency target.')
+    }
+    return
+  }
+  if (!isRecord(value)) manifestFieldInvalid(field, 'a string or condition object')
+  for (const [condition, target] of Object.entries(value)) {
+    validateTargetReferences(target, `${field}.${condition}`, artifactPaths)
+  }
+}
+
+/** Validates all package-local runtime and harness discovery references. */
+export function validateManifestReferences(
+  manifest: Readonly<Record<string, unknown>>,
+  artifactPaths: ReadonlySet<string>,
+): void {
+  if (manifest.main !== undefined) validateLocalReference(manifest.main, 'main', artifactPaths)
+  if (manifest.types !== undefined) validateLocalReference(manifest.types, 'types', artifactPaths)
+  if (manifest.bin !== undefined) {
+    if (typeof manifest.bin === 'string') validateLocalReference(manifest.bin, 'bin', artifactPaths)
+    else {
+      const bins = stringRecord(manifest.bin, 'bin')
+      for (const [name, target] of Object.entries(bins)) validateLocalReference(target, `bin.${name}`, artifactPaths)
+    }
+  }
+  if (manifest.exports !== undefined) {
+    if (typeof manifest.exports === 'string') validateTargetReferences(manifest.exports, 'exports', artifactPaths)
+    else {
+      if (!isRecord(manifest.exports)) manifestFieldInvalid('exports', 'a string or object')
+      for (const [key, target] of Object.entries(manifest.exports)) {
+        validateTargetReferences(target, `exports.${key}`, artifactPaths)
+      }
+    }
+  }
+  if (manifest.imports !== undefined) {
+    const imports = importsRecord(manifest.imports)
+    for (const [key, target] of Object.entries(imports)) {
+      validateTargetReferences(target, `imports.${key}`, artifactPaths)
+    }
+  }
+  if (manifest.pi !== undefined) {
+    if (!isRecord(manifest.pi)) manifestFieldInvalid('pi', 'an object')
+    for (const key of ['extensions', 'skills', 'prompts', 'themes']) {
+      const entries = manifest.pi[key]
+      if (entries === undefined) continue
+      const paths = stringArray(entries, `pi.${key}`)
+      for (const [index, path] of paths.entries()) validateLocalReference(path, `pi.${key}[${index}]`, artifactPaths)
+    }
+  }
+}
+
+/** Composes the one publishable package manifest without inheriting source-only fields. */
+export function composePackageManifest(input: ComposePackageManifestInput): ComposedPackageManifest {
+  const runtime: RuntimeManifestFields = {}
+  for (const [field, value] of Object.entries(input.source)) {
+    if (DESCRIPTIVE_FIELDS.has(field) || OMITTED_FIELDS.has(field)) continue
+    if (field === 'bundledDependencies' || field === 'bundleDependencies') {
+      diagnostic('PACKAGE_BUNDLED_DEPENDENCIES_FORBIDDEN', field, `${field} is forbidden because universal artifacts do not contain node_modules`, `Remove ${field} and declare runtime packages as dependencies.`)
+    }
+    if (!RUNTIME_FIELDS.has(field)) {
+      diagnostic('PACKAGE_MANIFEST_FIELD_UNCLASSIFIED', field, `source package field "${field}" has no version-1 composition policy`, 'Classify the field before adding it to a publishable artifact.')
+    }
+    switch (field) {
+      case 'type':
+        runtime.type = manifestString(value, field)
+        break
+      case 'main':
+        runtime.main = manifestString(value, field)
+        break
+      case 'exports':
+        break
+      case 'imports':
+        runtime.imports = importsRecord(value)
+        break
+      case 'types':
+        runtime.types = manifestString(value, field)
+        break
+      case 'bin':
+        runtime.bin = binValue(value)
+        break
+      case 'engines':
+      case 'dependencies':
+      case 'optionalDependencies':
+      case 'peerDependencies':
+        runtime[field] = stringRecord(value, field)
+        break
+      case 'os':
+      case 'cpu':
+        runtime[field] = stringArray(value, field)
+        break
+      case 'sideEffects':
+        runtime.sideEffects = typeof value === 'boolean' ? value : stringArray(value, field)
+        break
+      case 'peerDependenciesMeta':
+        runtime.peerDependenciesMeta = peerMeta(value)
+        break
+    }
+  }
+
+  const metadata = normalizeMetadata(input.source, {
+    npm: input.config.distribution.npm,
+    version: input.config.version,
+    description: input.config.description,
+    author: input.config.author === undefined
+      ? undefined
+      : {
+          name: input.config.author.name,
+          ...(input.config.author.email === undefined ? {} : { email: input.config.author.email }),
+          ...(input.config.author.url === undefined ? {} : { url: input.config.author.url }),
+        },
+    license: input.config.license,
+    repository: input.config.repository,
+    homepage: input.config.homepage,
+    keywords: input.config.keywords,
+  })
+  const contribution = mergeAdapterPackageContributions(normalizeExports(input.source), input.contributions)
+  const manifest: ComposedPackageManifest = {
+    ...metadata,
+    ...runtime,
+    ...(Object.keys(contribution.exports).length === 0 ? {} : { exports: contribution.exports }),
+    ...(contribution.pi === undefined ? {} : { pi: contribution.pi }),
+    files: artifactFileList(input.artifactPaths),
+    publishConfig: { access: 'public', registry: registryOrigin(input.registryUrl) },
+  }
+  validateManifestReferences(manifest, input.artifactPaths)
+  return manifest
 }
