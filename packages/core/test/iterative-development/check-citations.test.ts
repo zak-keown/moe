@@ -84,6 +84,43 @@ describe.each(SCRIPTS)("%s", (script) => {
     );
   });
 
+  it("normalizes CRLF and bare CR before parsing citation files", () => {
+    const root = tempDir("citation-newlines-");
+    const roadmap = write(root, "roadmap.md", "# Roadmap\rSTORY-0001\r\nSTORY-0002\r");
+    const requirements = write(
+      root,
+      "requirements.md",
+      "# Requirements\r## STORY-0001\r\n## STORY-0002\r",
+    );
+
+    const result = runHelper(script, [roadmap, requirements]);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe("OK: all 2 cited stories exist in requirements\n");
+  });
+
+  it.each(["\u2028", "\u2029"])(
+    "does not treat Unicode separator %j as a story-heading line boundary",
+    (separator) => {
+      const root = tempDir("citation-unicode-separator-");
+      const roadmap = write(root, "roadmap.md", "STORY-0001\n");
+      const requirements = write(
+        root,
+        "requirements.md",
+        `# Requirements${separator}## STORY-0001\n`,
+      );
+
+      const result = runHelper(script, [roadmap, requirements]);
+
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe(
+        "error: STORY-0001 cited in roadmap but not found in requirements\n",
+      );
+    },
+  );
+
   it("preserves exact invocation and normalized missing-path diagnostics", () => {
     const usage = runHelper(script, []);
     expect(usage.status).toBe(2);

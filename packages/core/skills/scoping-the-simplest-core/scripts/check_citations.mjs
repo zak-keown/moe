@@ -3,7 +3,7 @@ import { join, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const CITED_STORY_PATTERN = /STORY-\p{Nd}+/gu;
-const DEFINED_STORY_PATTERN = /^## (STORY-\p{Nd}+)/gmu;
+const DEFINED_STORY_PATTERN = /(?:^|\n)## (STORY-\p{Nd}+)/gu;
 
 function pathParts(path, separatorPattern) {
   return path.split(separatorPattern).filter((part) => part && part !== ".");
@@ -57,6 +57,10 @@ export function extractDefinedStories(content) {
   return new Set([...content.matchAll(DEFINED_STORY_PATTERN)].map((match) => match[1]));
 }
 
+function readText(path) {
+  return readFileSync(path, "utf8").replace(/\r\n?/g, "\n");
+}
+
 export function loadDefinedStories(requirementsPath) {
   const defined = new Set();
   const files = statSync(requirementsPath).isDirectory()
@@ -66,7 +70,7 @@ export function loadDefinedStories(requirementsPath) {
         .map((name) => join(requirementsPath, name))
     : [requirementsPath];
   for (const file of files) {
-    for (const story of extractDefinedStories(readFileSync(file, "utf8"))) defined.add(story);
+    for (const story of extractDefinedStories(readText(file))) defined.add(story);
   }
   return defined;
 }
@@ -90,7 +94,7 @@ export function main(args = process.argv.slice(2)) {
     return 2;
   }
 
-  const cited = extractCitedStories(readFileSync(roadmapPath, "utf8"));
+  const cited = extractCitedStories(readText(roadmapPath));
   const defined = loadDefinedStories(requirementsPath);
   const missing = [...cited].filter((story) => !defined.has(story)).sort(compareCodePoints);
   if (missing.length > 0) {
