@@ -79,7 +79,7 @@ artifact, never the approval.
 
 ## Checklist
 
-Classify first, announce the depth, then create a task for each item
+Classify first, announce the depth, then use `todowrite` to manage each item
 on that depth's list and complete them in order.
 
 **Patch:**
@@ -177,7 +177,7 @@ questions plus a short in-chat design is the whole process.
 - Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
 - If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then brainstorm the first sub-project through the normal design flow. Each sub-project gets its own spec → plan → implementation cycle.
 - For appropriately-scoped projects, ask questions one at a time to refine the idea
-- Prefer multiple choice questions when possible, but open-ended is fine too
+- Prefer multiple choice questions via ask in the terminal when possible, but open-ended is fine too
 - Only one question per message *while the shape is still moving* - if a topic needs more exploration, break it into multiple questions. Once the shape is agreed and only decisions remain, switch to rounds (see **Sharpening an agreed shape** below)
 - Focus on understanding: purpose, constraints, success criteria
 

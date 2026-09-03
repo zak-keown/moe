@@ -33,7 +33,7 @@
       "sha256": "94039969871619a24adb14881355c86bbda305456498ad42a2da9d7cd5ea7496"
     },
     ".codex-plugin/skills/brainstorming/SKILL.md": {
-      "sha256": "9bd1d22a430abfba8e28ee9ff713e1cd2acf4512b6f8f222742a52c1839cca56"
+      "sha256": "6f4364761d9c3a6ac8c8fa984a74e1970898225d588c1765a76c0c0d0d3932dc"
     },
     ".codex-plugin/skills/brainstorming/spec-document-reviewer-prompt.md": {
       "sha256": "51dfa7686560108235983c13fe7505811c9d79b872e22028065e95e063b615e1"
@@ -51,7 +51,7 @@
       "sha256": "2c20617f87ec8af6a434859f381b2f061a69b530444e74eb39e78bb016a6d1e2"
     },
     ".codex-plugin/skills/developing-claude-code-plugins/SKILL.md": {
-      "sha256": "7b556d56a12895646af95d91db22c7e8d723f3711ee56c395ef793ad7f376be1"
+      "sha256": "53edf23b235b46a0b7f88177af60a3125ebdd6b00034f846a6a5acb70e52ff37"
     },
     ".codex-plugin/skills/developing-claude-code-plugins/examples/full-featured-plugin/README.md": {
       "sha256": "ff58cae1ec3a97e47346a3e41b88a2870dae9debe4c8fa609a75f850b02a747f"
@@ -303,7 +303,7 @@
       "sha256": "348ad0147792e162981f4c566f6d14026bcfb337d9b4820a3fd914e16aaf75df"
     },
     ".codex-plugin/skills/writing-plans/SKILL.md": {
-      "sha256": "7727076bfbdd29b9febbd000b730a008028a880723c374a537f373a88f2414be"
+      "sha256": "dcb05887ece23721cbf1131889648c8ced87c0297ee099121b125d05b69dfac9"
     },
     ".codex-plugin/skills/writing-plans/plan-document-reviewer-prompt.md": {
       "sha256": "df5f1ab940ad6aa0ac7df42aeded53107a39fb6d2e1a19cafa5eb808ac5ac602"
@@ -351,7 +351,7 @@
       "sha256": "94039969871619a24adb14881355c86bbda305456498ad42a2da9d7cd5ea7496"
     },
     ".cursor-plugin/skills/brainstorming/SKILL.md": {
-      "sha256": "9bd1d22a430abfba8e28ee9ff713e1cd2acf4512b6f8f222742a52c1839cca56"
+      "sha256": "ad8fef9b7c6a8eece27e6bd0a1a08f8b46849fea1693f12a295cad61e880933c"
     },
     ".cursor-plugin/skills/brainstorming/spec-document-reviewer-prompt.md": {
       "sha256": "51dfa7686560108235983c13fe7505811c9d79b872e22028065e95e063b615e1"
@@ -369,7 +369,7 @@
       "sha256": "2c20617f87ec8af6a434859f381b2f061a69b530444e74eb39e78bb016a6d1e2"
     },
     ".cursor-plugin/skills/developing-claude-code-plugins/SKILL.md": {
-      "sha256": "7b556d56a12895646af95d91db22c7e8d723f3711ee56c395ef793ad7f376be1"
+      "sha256": "be53be7120700c5381889cf5f93534bea4751b813f4a278be908d35652bcf355"
     },
     ".cursor-plugin/skills/developing-claude-code-plugins/examples/full-featured-plugin/README.md": {
       "sha256": "ff58cae1ec3a97e47346a3e41b88a2870dae9debe4c8fa609a75f850b02a747f"
@@ -621,7 +621,7 @@
       "sha256": "348ad0147792e162981f4c566f6d14026bcfb337d9b4820a3fd914e16aaf75df"
     },
     ".cursor-plugin/skills/writing-plans/SKILL.md": {
-      "sha256": "7727076bfbdd29b9febbd000b730a008028a880723c374a537f373a88f2414be"
+      "sha256": "47a0db45741199ec1b4edd0791f4a93cc00da269e004075ec393556e5d6a49a7"
     },
     ".cursor-plugin/skills/writing-plans/plan-document-reviewer-prompt.md": {
       "sha256": "df5f1ab940ad6aa0ac7df42aeded53107a39fb6d2e1a19cafa5eb808ac5ac602"
@@ -669,7 +669,7 @@
       "sha256": "94039969871619a24adb14881355c86bbda305456498ad42a2da9d7cd5ea7496"
     },
     ".kimi-plugin/skills/brainstorming/SKILL.md": {
-      "sha256": "9bd1d22a430abfba8e28ee9ff713e1cd2acf4512b6f8f222742a52c1839cca56"
+      "sha256": "c7a74e9e82e3edf9014e0de01b39d9c9b151c522139248b6f967d99521765ee7"
     },
     ".kimi-plugin/skills/brainstorming/spec-document-reviewer-prompt.md": {
       "sha256": "51dfa7686560108235983c13fe7505811c9d79b872e22028065e95e063b615e1"
@@ -687,7 +687,7 @@
       "sha256": "2c20617f87ec8af6a434859f381b2f061a69b530444e74eb39e78bb016a6d1e2"
     },
     ".kimi-plugin/skills/developing-claude-code-plugins/SKILL.md": {
-      "sha256": "7b556d56a12895646af95d91db22c7e8d723f3711ee56c395ef793ad7f376be1"
+      "sha256": "33ded2846993e5fe63d848c92e61e2e5ba40a0726b7957bdc2950faf803185da"
     },
     ".kimi-plugin/skills/developing-claude-code-plugins/examples/full-featured-plugin/README.md": {
       "sha256": "ff58cae1ec3a97e47346a3e41b88a2870dae9debe4c8fa609a75f850b02a747f"
@@ -939,7 +939,7 @@
       "sha256": "348ad0147792e162981f4c566f6d14026bcfb337d9b4820a3fd914e16aaf75df"
     },
     ".kimi-plugin/skills/writing-plans/SKILL.md": {
-      "sha256": "7727076bfbdd29b9febbd000b730a008028a880723c374a537f373a88f2414be"
+      "sha256": "47a0db45741199ec1b4edd0791f4a93cc00da269e004075ec393556e5d6a49a7"
     },
     ".kimi-plugin/skills/writing-plans/plan-document-reviewer-prompt.md": {
       "sha256": "df5f1ab940ad6aa0ac7df42aeded53107a39fb6d2e1a19cafa5eb808ac5ac602"
@@ -996,7 +996,7 @@
       "sha256": "94039969871619a24adb14881355c86bbda305456498ad42a2da9d7cd5ea7496"
     },
     ".opencode/skills/brainstorming/SKILL.md": {
-      "sha256": "9bd1d22a430abfba8e28ee9ff713e1cd2acf4512b6f8f222742a52c1839cca56"
+      "sha256": "8751ccca8b4e1de031bd7cc977962d3e5ec53411207217f886339c826c3790e5"
     },
     ".opencode/skills/brainstorming/spec-document-reviewer-prompt.md": {
       "sha256": "51dfa7686560108235983c13fe7505811c9d79b872e22028065e95e063b615e1"
@@ -1014,7 +1014,7 @@
       "sha256": "2c20617f87ec8af6a434859f381b2f061a69b530444e74eb39e78bb016a6d1e2"
     },
     ".opencode/skills/developing-claude-code-plugins/SKILL.md": {
-      "sha256": "7b556d56a12895646af95d91db22c7e8d723f3711ee56c395ef793ad7f376be1"
+      "sha256": "be0456ca00aef2deeca83862c4c34a421848af5ab886c9d44b6eb18900d943b6"
     },
     ".opencode/skills/developing-claude-code-plugins/examples/full-featured-plugin/README.md": {
       "sha256": "ff58cae1ec3a97e47346a3e41b88a2870dae9debe4c8fa609a75f850b02a747f"
@@ -1266,7 +1266,7 @@
       "sha256": "348ad0147792e162981f4c566f6d14026bcfb337d9b4820a3fd914e16aaf75df"
     },
     ".opencode/skills/writing-plans/SKILL.md": {
-      "sha256": "7727076bfbdd29b9febbd000b730a008028a880723c374a537f373a88f2414be"
+      "sha256": "dcb05887ece23721cbf1131889648c8ced87c0297ee099121b125d05b69dfac9"
     },
     ".opencode/skills/writing-plans/plan-document-reviewer-prompt.md": {
       "sha256": "df5f1ab940ad6aa0ac7df42aeded53107a39fb6d2e1a19cafa5eb808ac5ac602"
@@ -1314,7 +1314,7 @@
       "sha256": "94039969871619a24adb14881355c86bbda305456498ad42a2da9d7cd5ea7496"
     },
     ".pi/skills/brainstorming/SKILL.md": {
-      "sha256": "9bd1d22a430abfba8e28ee9ff713e1cd2acf4512b6f8f222742a52c1839cca56"
+      "sha256": "1eb4b75f3bbded68d015bcd4c2e3f812081ff6bd74f89d784ae7a29433d071e6"
     },
     ".pi/skills/brainstorming/spec-document-reviewer-prompt.md": {
       "sha256": "51dfa7686560108235983c13fe7505811c9d79b872e22028065e95e063b615e1"
@@ -1332,7 +1332,7 @@
       "sha256": "2c20617f87ec8af6a434859f381b2f061a69b530444e74eb39e78bb016a6d1e2"
     },
     ".pi/skills/developing-claude-code-plugins/SKILL.md": {
-      "sha256": "7b556d56a12895646af95d91db22c7e8d723f3711ee56c395ef793ad7f376be1"
+      "sha256": "4c786e6a668e741865ca26309d2eb74ef9582412ace296e9a4ea1027fd4d5689"
     },
     ".pi/skills/developing-claude-code-plugins/examples/full-featured-plugin/README.md": {
       "sha256": "ff58cae1ec3a97e47346a3e41b88a2870dae9debe4c8fa609a75f850b02a747f"
@@ -1584,7 +1584,7 @@
       "sha256": "348ad0147792e162981f4c566f6d14026bcfb337d9b4820a3fd914e16aaf75df"
     },
     ".pi/skills/writing-plans/SKILL.md": {
-      "sha256": "7727076bfbdd29b9febbd000b730a008028a880723c374a537f373a88f2414be"
+      "sha256": "dcb05887ece23721cbf1131889648c8ced87c0297ee099121b125d05b69dfac9"
     },
     ".pi/skills/writing-plans/plan-document-reviewer-prompt.md": {
       "sha256": "df5f1ab940ad6aa0ac7df42aeded53107a39fb6d2e1a19cafa5eb808ac5ac602"
