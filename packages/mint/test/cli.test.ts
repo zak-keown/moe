@@ -37,6 +37,7 @@ function seedRecoveryFixture(states: readonly RecoveryState[], recovery?: 'old')
   mkdirSync(join(root, 'scripts', 'lib'), { recursive: true })
   mkdirSync(join(root, 'bin'), { recursive: true })
   cpSync(join(WORKSPACE_ROOT, 'scripts', 'mint-recover.mjs'), join(root, 'scripts', 'mint-recover.mjs'))
+  cpSync(join(WORKSPACE_ROOT, 'scripts', 'lib', 'mint-diagnostics.mjs'), join(root, 'scripts', 'lib', 'mint-diagnostics.mjs'))
   cpSync(join(WORKSPACE_ROOT, 'scripts', 'lib', 'mint-generation-transaction.mjs'), join(root, 'scripts', 'lib', 'mint-generation-transaction.mjs'))
   const scripts = (JSON.parse(readFileSync(join(WORKSPACE_ROOT, 'package.json'), 'utf8')) as { scripts: Record<string, string> }).scripts
   if (scripts.mint === undefined || scripts['mint:check'] === undefined) throw new Error('root Mint scripts missing')

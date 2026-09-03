@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readdir } from "node:fs/promises";
 import path from "node:path";
+import { renderMintFailure } from "./lib/mint-diagnostics.mjs";
 import { recoverGeneratedOutputs } from "./lib/mint-generation-transaction.mjs";
 
 const journalPattern = /^\.moe-mint-generation-[A-Za-z0-9][A-Za-z0-9_-]{0,127}\.json$/;
@@ -42,20 +43,6 @@ async function selectedJournal(explicit) {
   return explicit ?? names[0];
 }
 
-function renderFailure(error) {
-  const detail = error instanceof Error ? error : new Error(String(error));
-  const lines = [
-    "Mint recovery failed",
-    `code: ${typeof detail.code === "string" ? detail.code : "GENERATION_TRANSACTION_CLI_FAILED"}`,
-    `message: ${detail.message}`,
-  ];
-  if (Array.isArray(detail.paths) && detail.paths.length > 0)
-    lines.push(`paths: ${detail.paths.join(", ")}`);
-  if (typeof detail.action === "string") lines.push(`action: ${detail.action}`);
-  if (detail.cause instanceof Error) lines.push(`cause: ${detail.cause.message}`);
-  return lines.join("\n");
-}
-
 try {
   const { repositoryRoot, explicitJournal } = invocation();
   process.chdir(repositoryRoot);
@@ -65,6 +52,6 @@ try {
     console.log(`Recovered generated outputs from ${journalPath}`);
   }
 } catch (error) {
-  console.error(renderFailure(error));
+  console.error(renderMintFailure("Mint recovery", error, "GENERATION_TRANSACTION_CLI_FAILED"));
   process.exitCode = 1;
 }

@@ -57,7 +57,10 @@ describe('registry projections', () => {
         'LICENSE',
         'LICENSE-MIT',
         'scripts/lib/mint-generation-transaction.mjs',
+        'scripts/lib/mint-diagnostics.mjs',
         'scripts/mint-plugins.mjs',
+        'packages/memory/prompts/**',
+        'packages/statusline/vendor/**',
       ]),
     )
     expect(mint.outputs).toEqual(
