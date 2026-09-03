@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "marketplace": {
+    "name": "moe",
+    "repository": "https://github.com/zak-keown/moe"
+  },
+  "plugins": [
+    "moe",
+    "moe-backstory",
+    "moe-memory",
+    "moe-glass",
+    "moe-crew",
+    "moe-statusline"
+  ]
+}
