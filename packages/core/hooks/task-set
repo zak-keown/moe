@@ -69,6 +69,7 @@ function parsePlan(text) {
         num: parseInt(taskMatch[1], 10),
         title: taskMatch[2].trim(),
         dependsOn: [],
+        blockedBy: null,
         files: [],
         hasConsumes: false,
         hasProduces: false,
@@ -90,6 +91,13 @@ function parsePlan(text) {
           return n;
         });
       }
+      continue;
+    }
+
+    // Blocked by: decision id(s)
+    const blockedMatch = /^\*\*Blocked by:\*\*\s*(.+)/.exec(line);
+    if (blockedMatch) {
+      current.blockedBy = blockedMatch[1].trim();
       continue;
     }
 
@@ -287,7 +295,13 @@ function verbWaves(planPath) {
     for (const e of errors) process.stderr.write(`task-set: ${e}\n`);
     process.exit(1);
   }
-  const waves = computeWaves(tasks);
+  const blocked = tasks.filter((t) => t.blockedBy !== null);
+  const schedulable = tasks.filter((t) => t.blockedBy === null);
+  for (const t of blocked) {
+    process.stderr.write(`task-set: task ${t.num} excluded — blocked by: ${t.blockedBy}\n`);
+  }
+  if (schedulable.length === 0) return;
+  const waves = computeWaves(schedulable);
   for (let i = 0; i < waves.length; i++) {
     process.stdout.write(`wave ${i + 1}: ${waves[i].join(", ")}\n`);
   }
@@ -306,7 +320,7 @@ function verbNext(planPath) {
   // A task is complete when every checkbox is checked.
   const complete = new Set();
   for (const t of tasks) {
-    if (t.steps.length > 0 && t.steps.every((s) => s.checked)) {
+    if (t.steps.every((s) => s.checked)) {
       complete.add(t.num);
     }
   }
