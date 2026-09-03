@@ -330,14 +330,53 @@ describe("Claude rendering", () => {
     ).toBe(false);
   });
 
+  it("matches Claude filesystem anchors without confusing cwd and project paths", () => {
+    const context = {
+      projectRoot: "/fixture/repo-a",
+      primaryCwd: "/fixture/repo-a/packages/core",
+      homeDir: "/fixture/home",
+      observationCwdProven: true,
+    };
+    const read = (path: string) => ({ class: "filesystem", action: "read", path }) as const;
+
+    expect(matchClaudePermission("Read(/src/index.ts)", read("src/index.ts"), context)).toBe(true);
+    expect(
+      matchClaudePermission("Read(src/index.ts)", read("packages/core/src/index.ts"), context),
+    ).toBe(true);
+    expect(
+      matchClaudePermission("Read(src/index.ts)", read("packages/core/src/index.ts"), {
+        ...context,
+        observationCwdProven: false,
+      }),
+    ).toBe(false);
+    expect(matchClaudePermission("Read(src/index.ts)", read("src/index.ts"), context)).toBe(false);
+    expect(
+      matchClaudePermission("Read(//fixture/repo-a/src/index.ts)", read("src/index.ts"), context),
+    ).toBe(true);
+    expect(
+      matchClaudePermission("Read(~/repo-a/src/index.ts)", read("src/index.ts"), {
+        ...context,
+        projectRoot: "/fixture/home/repo-a",
+      }),
+    ).toBe(true);
+  });
+
+  it("keeps a single star inside one path segment and lets a double star cross separators", () => {
+    const context = { projectRoot: "/fixture/repo-a" };
+    const nested = { class: "filesystem", action: "read", path: "src/nested/index.ts" } as const;
+
+    expect(matchClaudePermission("Read(/src/*.ts)", nested, context)).toBe(false);
+    expect(matchClaudePermission("Read(/src/**/*.ts)", nested, context)).toBe(true);
+  });
+
   it.each([
     [
       { class: "filesystem", operation: { action: "read", path: "src/index.ts" } },
-      "Read(src/index.ts)",
+      "Read(/src/index.ts)",
     ],
     [
       { class: "filesystem", operation: { action: "modify", path: "src/index.ts" } },
-      "Edit(src/index.ts)",
+      "Edit(/src/index.ts)",
     ],
     [
       { class: "network", operation: { hostname: "docs.example.invalid" } },
@@ -390,21 +429,38 @@ describe("Claude rendering", () => {
       ),
     ).toMatchObject({ destination: "/fixture/claude/settings.json" });
     expect(
-      renderClaudeSettings('{"permissions":{"allow":[]},"unrelated":true}', ["Edit(src/index.ts)"]),
+      renderClaudeSettings('{"permissions":{"allow":[]},"unrelated":true}', [
+        "Edit(/src/index.ts)",
+      ]),
     ).not.toContain("Write(");
+  });
+
+  it("declines an exact filesystem candidate whose filename would become a glob", () => {
+    expect(
+      renderClaudeCandidate(
+        {
+          harness: "claude",
+          class: "filesystem",
+          operation: { action: "read", path: "src/*.ts" },
+          scope: "project",
+          projectRoot: "/fixture/repo-a",
+        },
+        { anchorProven: true },
+      ),
+    ).toBeNull();
   });
 
   it("preserves unrelated settings and deduplicates existing semantic rules", () => {
     const rendered = renderClaudeSettings(
       JSON.stringify({
-        permissions: { allow: ["Read(src/index.ts)"], ask: ["Bash(git push)"] },
+        permissions: { allow: ["Read(/src/index.ts)"], ask: ["Bash(git push)"] },
         unrelated: { enabled: true },
       }),
-      ["Read(src/index.ts)", "Edit(src/index.ts)", "Edit(src/index.ts)"],
+      ["Read(/src/index.ts)", "Edit(/src/index.ts)", "Edit(/src/index.ts)"],
     );
     expect(JSON.parse(rendered)).toEqual({
       permissions: {
-        allow: ["Read(src/index.ts)", "Edit(src/index.ts)"],
+        allow: ["Read(/src/index.ts)", "Edit(/src/index.ts)"],
         ask: ["Bash(git push)"],
       },
       unrelated: { enabled: true },
@@ -418,7 +474,7 @@ describe("Claude rendering", () => {
   it.each(["allow", "deny", "ask"])("fails closed on malformed permissions.%s", (kind) => {
     expect(() =>
       renderClaudeSettings(JSON.stringify({ permissions: { [kind]: "not-an-array" } }), [
-        "Read(src/index.ts)",
+        "Read(/src/index.ts)",
       ]),
     ).toThrow(new RegExp(`permissions\\.${kind} must contain strings`));
   });

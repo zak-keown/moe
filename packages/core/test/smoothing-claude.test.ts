@@ -38,7 +38,7 @@ function makeFixtureFs(userSettings: string) {
         permissions: {
           deny: [],
           ask: [],
-          allow: ["Bash(git status)", "Read(src/index.ts)"],
+          allow: ["Bash(git status)", "Read(/src/index.ts)"],
         },
       }),
     ],
@@ -78,7 +78,7 @@ describe("Claude smoothing reader", () => {
     ]);
     expect(result.evidence.map((row: { operation: unknown }) => row.operation)).toEqual([
       { command: "git status" },
-      { action: "read", path: "/fixture/repo-a/src/index.ts" },
+      { action: "read", path: "src/index.ts" },
       { hostname: "docs.example.invalid" },
       { toolId: "mcp__plugin_moe-memory_moe-memory__search_conversations" },
     ]);
@@ -167,6 +167,99 @@ describe("Claude smoothing reader", () => {
     expect(result.evidence).toEqual([]);
     expect(result.diagnostics.invalidOperations).toBe(1);
     expect(JSON.stringify(result)).not.toContain("private");
+  });
+
+  it("normalizes a cwd-relative filesystem observation to its project path", async () => {
+    const result = await readClaudeSession(`${fixture}.subdirectory-cwd`, {
+      cutoffMs: 0,
+      resolveProjectRoot: async () => "/fixture/repo-a",
+      realpath: async (value: string) => value,
+      effectivePermissions: { deny: [], ask: [], allow: [] },
+      readFile: async () =>
+        [
+          JSON.stringify({
+            type: "assistant",
+            sessionId: "root-a",
+            cwd: "/fixture/repo-a/packages/core",
+            timestamp: "2026-09-01T00:00:00.000Z",
+            message: {
+              content: [
+                {
+                  type: "tool_use",
+                  id: "tool-relative-read",
+                  name: "Read",
+                  input: { file_path: "src/index.ts" },
+                },
+              ],
+            },
+          }),
+          JSON.stringify({
+            type: "user",
+            sessionId: "root-a",
+            timestamp: "2026-09-01T00:00:01.000Z",
+            message: {
+              content: [
+                {
+                  type: "tool_result",
+                  tool_use_id: "tool-relative-read",
+                  is_error: false,
+                },
+              ],
+            },
+          }),
+        ].join("\n"),
+    });
+
+    expect(result.evidence.map((row: { operation: unknown }) => row.operation)).toEqual([
+      { action: "read", path: "packages/core/src/index.ts" },
+    ]);
+  });
+
+  it("normalizes a cwd-relative filesystem observation through its canonical cwd", async () => {
+    const result = await readClaudeSession(`${fixture}.symlinked-cwd`, {
+      cutoffMs: 0,
+      resolveProjectRoot: async () => "/fixture/repo-a",
+      realpath: async (value: string) =>
+        value === "/fixture/core-link" ? "/fixture/repo-a/packages/core" : value,
+      effectivePermissions: { deny: [], ask: [], allow: [] },
+      readFile: async () =>
+        [
+          JSON.stringify({
+            type: "assistant",
+            sessionId: "root-a",
+            cwd: "/fixture/core-link",
+            timestamp: "2026-09-01T00:00:00.000Z",
+            message: {
+              content: [
+                {
+                  type: "tool_use",
+                  id: "tool-symlinked-read",
+                  name: "Read",
+                  input: { file_path: "src/index.ts" },
+                },
+              ],
+            },
+          }),
+          JSON.stringify({
+            type: "user",
+            sessionId: "root-a",
+            timestamp: "2026-09-01T00:00:01.000Z",
+            message: {
+              content: [
+                {
+                  type: "tool_result",
+                  tool_use_id: "tool-symlinked-read",
+                  is_error: false,
+                },
+              ],
+            },
+          }),
+        ].join("\n"),
+    });
+
+    expect(result.evidence.map((row: { operation: unknown }) => row.operation)).toEqual([
+      { action: "read", path: "packages/core/src/index.ts" },
+    ]);
   });
 
   it.each([
@@ -263,6 +356,60 @@ describe("Claude smoothing reader", () => {
 
     expect(result.evidence.map((row: { outcome: string }) => row.outcome)).toEqual(["denied"]);
   });
+
+  it.each([
+    ["missing is_error", {}, "unknown"],
+    ["non-boolean is_error", { is_error: "false" }, "unknown"],
+    ["canonical success", { is_error: false }, "success"],
+    ["canonical failure", { is_error: true }, "failed"],
+    [
+      "success contradicted by a denial marker",
+      { is_error: false, toolDenialKind: "permission-rule" },
+      "denied",
+    ],
+  ])("decodes a %s result without inventing success", async (_label, resultFields, outcome) => {
+    const result = await readClaudeSession(`${fixture}.${_label}-outcome`, {
+      cutoffMs: 0,
+      resolveProjectRoot: async () => "/fixture/repo-a",
+      realpath: async (value: string) => value,
+      effectivePermissions: { deny: [], ask: [], allow: [] },
+      readFile: async () =>
+        [
+          JSON.stringify({
+            type: "assistant",
+            sessionId: "root-a",
+            cwd: "/fixture/repo-a",
+            timestamp: "2026-09-01T00:00:00.000Z",
+            message: {
+              content: [
+                {
+                  type: "tool_use",
+                  id: "tool-with-versioned-result",
+                  name: "Bash",
+                  input: { command: "git status" },
+                },
+              ],
+            },
+          }),
+          JSON.stringify({
+            type: "user",
+            sessionId: "root-a",
+            timestamp: "2026-09-01T00:00:01.000Z",
+            message: {
+              content: [
+                {
+                  type: "tool_result",
+                  tool_use_id: "tool-with-versioned-result",
+                  ...resultFields,
+                },
+              ],
+            },
+          }),
+        ].join("\n"),
+    });
+
+    expect(result.evidence.map((row: { outcome: string }) => row.outcome)).toEqual([outcome]);
+  });
 });
 
 describe("Claude permissions", () => {
@@ -314,6 +461,31 @@ describe("Claude permissions", () => {
         },
       }),
     ).rejects.toThrow(/permissions.allow must contain strings/);
+  });
+
+  it("keeps an unmasked ask nonselectable when a broader allow also matches", async () => {
+    const state = await loadClaudePermissions({
+      configDir: "/fixture/claude",
+      projectRoot: "/fixture/repo-a",
+      primaryCwd: "/fixture/repo-a/packages/core",
+      homeDir: "/fixture/home",
+      fsOps: makeFixtureFs(
+        JSON.stringify({
+          permissions: {
+            deny: [],
+            ask: ["Read(/src/*.ts)"],
+            allow: ["Read(/src/**)"],
+          },
+        }),
+      ),
+    });
+
+    expect(
+      classifyClaudePermission(
+        { class: "filesystem", action: "read", path: "src/index.ts" },
+        state,
+      ),
+    ).toBe("ask");
   });
 });
 
