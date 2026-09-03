@@ -24,6 +24,7 @@ import { EMBEDDING_VERSION } from "./embedding-migration.js";
 import { resolveNativeAsset } from "./native-assets.js";
 import type { InstalledPackageRoot } from "./installed-package-root.js";
 import { getDbPath } from "./paths.js";
+import { assertWritesAllowed } from "./rollback/fence.js";
 import type {
   ConversationExchange,
   JournalEntry,
@@ -425,6 +426,7 @@ export function insertExchange(
   embedding: number[] | null,
   _toolNames?: string[],
 ): void {
+  assertWritesAllowed();
   const now = Date.now();
   const hasEmbedding = embedding !== null && embedding.length > 0;
 
@@ -511,6 +513,7 @@ export function getFileLastIndexed(db: MemoryDatabase, archivePath: string): num
 }
 
 export function deleteExchange(db: MemoryDatabase, id: string): void {
+  assertWritesAllowed();
   // Delete from vector table
   db.prepare(`DELETE FROM vec_exchanges WHERE id = ?`).run(id);
 
@@ -572,6 +575,7 @@ export function upsertJournalEntry(
   sourceMtimeMs: number,
   embedding: number[] | null = null,
 ): void {
+  assertWritesAllowed();
   const hasEmbedding = embedding !== null && embedding.length > 0;
 
   db.prepare(`
@@ -602,6 +606,7 @@ export function upsertJournalEntry(
 }
 
 export function deleteJournalEntry(db: MemoryDatabase, id: string): void {
+  assertWritesAllowed();
   db.prepare("DELETE FROM vec_journal_entries WHERE id = ?").run(id);
   db.prepare("DELETE FROM journal_entries WHERE id = ?").run(id);
 }
@@ -673,6 +678,7 @@ export function countJournalEntries(db: MemoryDatabase, scope?: JournalScope): n
 // ---------------------------------------------------------------------------
 
 export function insertNode(db: MemoryDatabase, node: MemoryNode): void {
+  assertWritesAllowed();
   db.prepare(`
     INSERT OR REPLACE INTO memory_nodes
       (id, node_type, project, content, created_at, superseded_at, embedding_version)
@@ -689,6 +695,7 @@ export function insertNode(db: MemoryDatabase, node: MemoryNode): void {
 }
 
 export function insertEdge(db: MemoryDatabase, edge: MemoryEdge): void {
+  assertWritesAllowed();
   db.prepare(`
     INSERT OR REPLACE INTO memory_edges
       (id, source_type, source_id, target_type, target_id, relation, confidence, created_at, created_by, metadata)

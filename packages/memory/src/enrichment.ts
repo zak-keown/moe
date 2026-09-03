@@ -1,6 +1,7 @@
 import type { MemoryDatabase } from "./db.js";
 import { EMBEDDING_VERSION } from "./embedding-migration.js";
 import { withTransaction } from "./database-transaction.js";
+import { assertWritesAllowed } from "./rollback/fence.js";
 
 export interface PendingEnrichment {
   family: "exchange" | "journal";
@@ -78,6 +79,7 @@ export function commitEnrichment(
   item: PendingEnrichment,
   vector: Float32Array,
 ): void {
+  assertWritesAllowed();
   withTransaction(db, () => {
     if (item.family === "exchange") {
       db.prepare("DELETE FROM vec_exchanges WHERE id = ?").run(item.id);
