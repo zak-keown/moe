@@ -58,3 +58,42 @@ export function reviewStamp(
 
   return gitIn(root, "rev-parse", "HEAD");
 }
+
+export interface CommitReviewFixOpts {
+  cwd?: string;
+}
+
+export function commitReviewFix(
+  crId: string,
+  title: string,
+  opts?: CommitReviewFixOpts,
+): string {
+  validateCrId(crId);
+
+  if (!title.trim()) {
+    throw new Error(
+      "Title is required. Usage: moe jig commit review-fix <CR-ID> <title>",
+    );
+  }
+
+  const cwd = opts?.cwd ?? process.cwd();
+
+  // Check for staged changes: git diff --cached --quiet exits 1 when there ARE staged changes
+  try {
+    gitIn(cwd, "diff", "--cached", "--quiet");
+    // If we get here, exit code was 0 = nothing staged
+    throw new Error(
+      "Nothing staged. Stage your changes with `git add` before running this command.",
+    );
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("Nothing staged")) {
+      throw err;
+    }
+    // Exit code 1 from git diff = there ARE staged changes, which is what we want
+  }
+
+  const message = `fix(review): ${crId} — ${title.trim()}`;
+  gitIn(cwd, "commit", "-m", message);
+
+  return gitIn(cwd, "rev-parse", "HEAD");
+}

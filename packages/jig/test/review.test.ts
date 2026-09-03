@@ -81,3 +81,63 @@ describe("reviewStamp", () => {
     );
   });
 });
+
+describe("commitReviewFix", () => {
+  let repo: string;
+
+  beforeEach(() => {
+    repo = makeRepo();
+  });
+
+  afterEach(() => {
+    rmSync(repo, { recursive: true, force: true });
+  });
+
+  it("commits with the correct message format when changes are staged", async () => {
+    const { commitReviewFix } = await import("../src/review.js");
+    writeFileSync(join(repo, "fix.txt"), "fixed\n");
+    gitIn(repo, "add", "fix.txt");
+    const sha = commitReviewFix("CR-001", "fix the parser", { cwd: repo });
+    expect(sha).toMatch(/^[0-9a-f]{40}$/);
+    const subject = gitIn(repo, "log", "-1", "--format=%s");
+    expect(subject).toBe("fix(review): CR-001 — fix the parser");
+  });
+
+  it("rejects an invalid CR-ID", async () => {
+    const { commitReviewFix } = await import("../src/review.js");
+    writeFileSync(join(repo, "fix.txt"), "x\n");
+    gitIn(repo, "add", "fix.txt");
+    expect(() => commitReviewFix("CR-1", "title", { cwd: repo })).toThrow(/Invalid CR-ID/);
+    expect(() => commitReviewFix("CR-0001", "title", { cwd: repo })).toThrow(/Invalid CR-ID/);
+  });
+
+  it("rejects an empty title", async () => {
+    const { commitReviewFix } = await import("../src/review.js");
+    writeFileSync(join(repo, "fix.txt"), "x\n");
+    gitIn(repo, "add", "fix.txt");
+    expect(() => commitReviewFix("CR-001", "", { cwd: repo })).toThrow(/Title is required/);
+    expect(() => commitReviewFix("CR-001", "   ", { cwd: repo })).toThrow(/Title is required/);
+  });
+
+  it("refuses to commit when nothing is staged", async () => {
+    const { commitReviewFix } = await import("../src/review.js");
+    expect(() => commitReviewFix("CR-001", "fix something", { cwd: repo })).toThrow(
+      /Nothing staged/,
+    );
+  });
+
+  it("works from inside a worktree", async () => {
+    const { commitReviewFix } = await import("../src/review.js");
+    // Create a worktree manually (to avoid importing worktree.ts)
+    const wtPath = join(repo, ".moe", "worktrees", "review-wt");
+    gitIn(repo, "worktree", "add", wtPath, "-b", "review-wt");
+    writeFileSync(join(wtPath, "wt-fix.txt"), "wt-fixed\n");
+    gitIn(wtPath, "add", "wt-fix.txt");
+    const sha = commitReviewFix("CR-099", "worktree fix", { cwd: wtPath });
+    expect(sha).toMatch(/^[0-9a-f]{40}$/);
+    const subject = gitIn(wtPath, "log", "-1", "--format=%s");
+    expect(subject).toContain("CR-099");
+    // Clean up worktree
+    gitIn(repo, "worktree", "remove", "--force", wtPath);
+  });
+});
