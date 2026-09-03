@@ -77,19 +77,20 @@ Follow this priority order. Explicit user preference always beats observed files
 
 2. **Check for an existing project-local worktree directory:**
    ```bash
-   ls -d .worktrees 2>/dev/null     # Preferred (hidden)
+   ls -d .moe/worktrees 2>/dev/null # Preferred
+   ls -d .worktrees 2>/dev/null     # Legacy
    ls -d worktrees 2>/dev/null      # Alternative
    ```
-   If found, use it. If both exist, `.worktrees` wins.
+   If found, use the first match. `.moe/worktrees` wins over `.worktrees` wins over `worktrees`.
 
-3. **If there is no other guidance available**, default to `.worktrees/` at the project root.
+3. **If there is no other guidance available**, default to `.moe/worktrees/` at the project root.
 
 #### Safety Verification (project-local directories only)
 
 **MUST verify directory is ignored before creating worktree:**
 
 ```bash
-git check-ignore -q .worktrees 2>/dev/null || git check-ignore -q worktrees 2>/dev/null
+git check-ignore -q .moe/worktrees 2>/dev/null || git check-ignore -q .worktrees 2>/dev/null || git check-ignore -q worktrees 2>/dev/null
 ```
 
 **If NOT ignored:** Add to .gitignore, commit the change, then proceed.
@@ -201,10 +202,11 @@ Ready to implement <feature-name>
 | No native tool | Git worktree fallback (Step 1c) |
 | Parallel worker dispatch | Validate pairwise-unique linked Git dirs for every worker (Step 1d) |
 | Any parallel worktree setup failure | Dispatch the entire wave sequentially (Step 1d) |
-| `.worktrees/` exists | Use it (verify ignored) |
+| `.moe/worktrees/` exists | Use it (verify ignored) |
+| `.worktrees/` exists | Use it — legacy (verify ignored) |
 | `worktrees/` exists | Use it (verify ignored) |
-| Both exist | Use `.worktrees/` |
-| Neither exists | Check instruction file, then default `.worktrees/` |
+| Multiple exist | `.moe/worktrees/` wins over `.worktrees/` wins over `worktrees/` |
+| None exists | Check instruction file, then default `.moe/worktrees/` |
 | Directory not ignored | Add to .gitignore + commit |
 | Permission error on create | Sandbox fallback, work in place |
 | Tests fail during baseline | Report failures + ask |
@@ -217,5 +219,5 @@ Ready to implement <feature-name>
 | "I'm obviously not in a worktree — no need to check" | Run Step 0. Harness-created isolation and submodules both fool eyeballing; the detection commands settle it. |
 | "`git worktree add` is quicker than hunting for a native tool" | A native tool (e.g. `EnterWorktree`) owns placement, branching, and cleanup. Bypassing it is the #1 mistake — it creates phantom state your harness can't see or manage. |
 | "The worktree directory is surely ignored already" | Run `git check-ignore`. An unignored worktree directory commits the whole tree into the repo. |
-| "Any directory name works" | Explicit instructions beat an existing project-local directory, which beats the `.worktrees/` default. |
+| "Any directory name works" | Explicit instructions beat an existing project-local directory, which beats the `.moe/worktrees/` default. |
 | "The workspace is fresh — baseline tests can wait" | A dirty baseline makes every later failure ambiguous. Run the tests now; proceeding past failures is your human partner's call. |
