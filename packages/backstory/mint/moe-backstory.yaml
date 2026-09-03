@@ -1,8 +1,9 @@
 # moe-mint config for moe-backstory.
 #
-# Built by `scripts/mint-plugins.mjs`, which stages this file plus the package's
-# skills/, commands/ and agents/ into `plugins/moe-backstory/` and runs
-# `moe-mint generate` there.
+# The platform registry resolves this source package and config. Compiled Mint
+# assembles its declared components/payloads, exact validated adapter output,
+# legal files, and root package metadata into the shared `plugins.next-<nonce>`
+# sibling. This config remains source-only and is never copied into the plugin.
 
 name: moe-backstory
 version: 0.1.4
