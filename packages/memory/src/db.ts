@@ -51,6 +51,10 @@ export function getDefaultPackageRoot(): InstalledPackageRoot | undefined {
   return _defaultPackageRoot;
 }
 
+export function getDatabaseLease(db: MemoryDatabase): DatabaseLease | undefined {
+  return _leases.get(db);
+}
+
 export function closeDatabase(db: MemoryDatabase): void {
   const lease = _leases.get(db);
   if (lease) {

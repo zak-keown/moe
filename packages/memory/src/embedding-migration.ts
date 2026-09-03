@@ -31,7 +31,7 @@ import { acquireFileLock, type FileLockHandle, releaseFileLock } from "./file-lo
  * column accepts either vector without complaint and a mixed corpus ranks
  * wrongly with no error — which is exactly the event this constant exists for.
  */
-export const EMBEDDING_VERSION = 2;
+export const EMBEDDING_VERSION = 3;
 
 /**
  * Lock primitives for the migration are the same as for sync (#97) and any
