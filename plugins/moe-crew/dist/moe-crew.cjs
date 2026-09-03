@@ -18,7 +18,7 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/cli.ts
+// packages/crew/src/cli.ts
 var cli_exports = {};
 __export(cli_exports, {
   followStream: () => followStream,
@@ -31,11 +31,11 @@ var import_node_os4 = require("os");
 var import_node_path9 = require("path");
 var import_node_readline = require("readline");
 
-// src/commands/adopt.ts
+// packages/crew/src/commands/adopt.ts
 var import_node_fs6 = require("fs");
 var import_node_path7 = require("path");
 
-// src/core/consent.ts
+// packages/crew/src/core/consent.ts
 var import_node_fs = require("fs");
 var import_node_path = require("path");
 function consentPath(home) {
@@ -50,7 +50,7 @@ function grantConsent(home) {
   (0, import_node_fs.writeFileSync)(p, "");
 }
 
-// src/core/paths.ts
+// packages/crew/src/core/paths.ts
 var import_node_os = require("os");
 var import_node_path2 = require("path");
 function defaultWorkerDir() {
@@ -90,12 +90,12 @@ function claudeTranscriptPath(home, cwd, sid) {
   return `${home}/.claude/projects/${cwd.replace(/[/._:]/g, "-")}/${sid}.jsonl`;
 }
 
-// src/core/time.ts
+// packages/crew/src/core/time.ts
 function isoSecondsUtc(date = /* @__PURE__ */ new Date()) {
   return date.toISOString().replace(/\.\d{3}Z$/, "Z");
 }
 
-// src/core/worker-store.ts
+// packages/crew/src/core/worker-store.ts
 var import_node_fs2 = require("fs");
 var import_node_path3 = require("path");
 function ensureOwnedDir(dir) {
@@ -210,13 +210,13 @@ function removeOrphan(dir, name) {
   (0, import_node_fs2.rmSync)(workerHomePath(dir, name), { recursive: true, force: true });
 }
 
-// src/core/tool-name.ts
+// packages/crew/src/core/tool-name.ts
 function canonicalToolName(name) {
   if (typeof name !== "string" || name.length === 0) return "";
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-// src/core/transcript.ts
+// packages/crew/src/core/transcript.ts
 var COMMAND_PREFIX = /^<(local-command|command-name)/;
 var NO_OUTPUT = "(no output)";
 function parseLines(jsonl) {
@@ -527,7 +527,7 @@ function assistantText(turn) {
   return turn.filter((item) => item.kind === "text").map((item) => item.text).join("\n");
 }
 
-// src/harness/claude.ts
+// packages/crew/src/harness/claude.ts
 var CLAUDE_PROVIDER_ENV_VARS = [
   "CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST",
   "CLAUDE_CODE_USE_BEDROCK",
@@ -595,12 +595,12 @@ var claude = {
   }
 };
 
-// src/harness/codex.ts
+// packages/crew/src/harness/codex.ts
 var import_node_fs3 = require("fs");
 var import_node_os2 = require("os");
 var import_node_path4 = require("path");
 
-// src/core/shell.ts
+// packages/crew/src/core/shell.ts
 function shellQuote(token) {
   if (token === "") return "''";
   if (/^[A-Za-z0-9_./:=@-]+$/.test(token)) return token;
@@ -610,7 +610,7 @@ function shellQuoteAlways(token) {
   return `'${token.replaceAll("'", "'\\''")}'`;
 }
 
-// src/harness/codex.ts
+// packages/crew/src/harness/codex.ts
 var CODEX_HOOK_EVENTS = [
   "SessionStart",
   "UserPromptSubmit",
@@ -758,7 +758,7 @@ var codex = {
   }
 };
 
-// src/harness/pi.ts
+// packages/crew/src/harness/pi.ts
 var import_node_os3 = require("os");
 var import_node_path5 = require("path");
 var PI_AUTH_FILES = ["auth.json", "models.json", "settings.json"];
@@ -843,7 +843,7 @@ var pi = {
   }
 };
 
-// src/harness/registry.ts
+// packages/crew/src/harness/registry.ts
 var DRIVERS = {
   claude,
   codex,
@@ -857,10 +857,10 @@ function getDriver(id) {
   return driver;
 }
 
-// src/core/event-log.ts
+// packages/crew/src/core/event-log.ts
 var import_node_fs4 = require("fs");
 
-// src/events.ts
+// packages/crew/src/events.ts
 var EVENT_NAMES = [
   "session_start",
   "user_prompt_submit",
@@ -882,7 +882,7 @@ function parseEvent(line) {
   return v;
 }
 
-// src/core/event-log.ts
+// packages/crew/src/core/event-log.ts
 function readRawLines(file) {
   if (!(0, import_node_fs4.existsSync)(file)) return [];
   return (0, import_node_fs4.readFileSync)(file, "utf8").split("\n").filter((line) => line.length > 0);
@@ -910,7 +910,7 @@ function classifyStatus(last) {
   }
 }
 
-// src/commands/await-start.ts
+// packages/crew/src/commands/await-start.ts
 var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 var DEFAULT_TRUST_TIMEOUT_MS = 5e3;
 var DEFAULT_START_TIMEOUT_MS = 3e4;
@@ -957,12 +957,12 @@ async function awaitSessionStart(ctx, tmuxName, sessionId, opts = {}) {
   return { started: false, failureMessage: lines.join("\n") };
 }
 
-// src/commands/launch.ts
+// packages/crew/src/commands/launch.ts
 var import_node_crypto = require("crypto");
 var import_node_fs5 = require("fs");
 var import_node_path6 = require("path");
 
-// src/commands/codex-launch.ts
+// packages/crew/src/commands/codex-launch.ts
 var sleep2 = (ms) => new Promise((r) => setTimeout(r, ms));
 var DEFAULT_TRUST_TIMEOUT_MS2 = 8e3;
 var DEFAULT_TRUST_POLL_MS = 250;
@@ -1005,7 +1005,7 @@ async function capture(ctx, tmuxName) {
   }
 }
 
-// src/commands/pi-launch.ts
+// packages/crew/src/commands/pi-launch.ts
 var sleep3 = (ms) => new Promise((r) => setTimeout(r, ms));
 var DEFAULT_READY_TIMEOUT_MS2 = 1e4;
 var DEFAULT_READY_POLL_MS2 = 250;
@@ -1028,7 +1028,7 @@ async function capture2(ctx, tmuxName) {
   }
 }
 
-// src/commands/launch.ts
+// packages/crew/src/commands/launch.ts
 function consentError(moeCrewPath) {
   return {
     stderr: `Error: moe-crew requires one-time consent before launching workers.
@@ -1155,7 +1155,7 @@ async function launchDerive(ctx, { driver, tmuxName, cwd, extraArgs, invocation 
   return { stdout: shim, stderr: panel, code: 0 };
 }
 
-// src/commands/adopt.ts
+// packages/crew/src/commands/adopt.ts
 var CLAUDE_SESSION_ID = /^[0-9a-fA-F][0-9a-fA-F-]{7,}$/;
 async function cmdAdopt(ctx, args, opts) {
   const { tmuxName, sessionId, extraArgs } = args;
@@ -1228,14 +1228,14 @@ async function cmdAdopt(ctx, args, opts) {
   return { stdout: shim, stderr: panel, code: 0 };
 }
 
-// src/commands/converse.ts
+// packages/crew/src/commands/converse.ts
 var import_node_fs9 = require("fs");
 
-// src/core/diagnostics.ts
+// packages/crew/src/core/diagnostics.ts
 var import_node_fs7 = require("fs");
 var import_node_path8 = require("path");
 
-// src/core/proc.ts
+// packages/crew/src/core/proc.ts
 var import_node_child_process = require("child_process");
 var run = (cmd, args) => new Promise((resolve2) => {
   (0, import_node_child_process.execFile)(
@@ -1254,7 +1254,7 @@ var run = (cmd, args) => new Promise((resolve2) => {
   );
 });
 
-// src/core/diagnostics.ts
+// packages/crew/src/core/diagnostics.ts
 function tailLines(text, n) {
   const trimmed = text.endsWith("\n") ? text.slice(0, -1) : text;
   if (trimmed.length === 0) return "";
@@ -1330,7 +1330,7 @@ async function dumpConverseDiag(opts) {
   return true;
 }
 
-// src/commands/context.ts
+// packages/crew/src/commands/context.ts
 function resolveWorker(ctx, worker) {
   const sid = resolveSession(ctx.workerDir, worker);
   if (sid === null) {
@@ -1346,7 +1346,7 @@ function resolveWorker(ctx, worker) {
   return { sid, meta };
 }
 
-// src/commands/send.ts
+// packages/crew/src/commands/send.ts
 var ESC = "\x1B";
 var PASTE_START = `${ESC}[200~`;
 var PASTE_END = `${ESC}[201~`;
@@ -1442,7 +1442,7 @@ async function confirmSubmission(ctx, tmuxName, eventFile, beforeLine, opts) {
   return { code: 0 };
 }
 
-// src/commands/wait-for-turn.ts
+// packages/crew/src/commands/wait-for-turn.ts
 var import_node_fs8 = require("fs");
 var sleep5 = (ms) => new Promise((r) => setTimeout(r, ms));
 var isTurnEnd = (line) => {
@@ -1485,7 +1485,7 @@ async function cmdWaitForTurn(ctx, worker, opts) {
   };
 }
 
-// src/commands/converse.ts
+// packages/crew/src/commands/converse.ts
 var sleep6 = (ms) => new Promise((r) => setTimeout(r, ms));
 function readTranscript(file) {
   return (0, import_node_fs9.existsSync)(file) ? (0, import_node_fs9.readFileSync)(file, "utf8") : "";
@@ -1578,7 +1578,7 @@ moe-crew-diagnostic: ${diagDest}` : "";
   };
 }
 
-// src/commands/events-file.ts
+// packages/crew/src/commands/events-file.ts
 async function cmdEventsFile(ctx, worker) {
   const sid = resolveSession(ctx.workerDir, worker);
   if (sid === null) {
@@ -1590,7 +1590,7 @@ async function cmdEventsFile(ctx, worker) {
   return { stdout: eventsPath(ctx.workerDir, sid), code: 0 };
 }
 
-// src/commands/grant-consent.ts
+// packages/crew/src/commands/grant-consent.ts
 var PREAMBLE = `moe-crew runs workers with --dangerously-skip-permissions.
 Workers execute tool calls without prompting. By granting consent, you
 acknowledge this risk and accept responsibility for any actions the
@@ -1615,7 +1615,7 @@ async function cmdGrantConsent(ctx, opts) {
   };
 }
 
-// src/commands/handoff.ts
+// packages/crew/src/commands/handoff.ts
 async function cmdHandoff(ctx, worker) {
   const resolved = resolveWorker(ctx, worker);
   if ("code" in resolved) return resolved;
@@ -1634,7 +1634,7 @@ the session.
   return { stdout, code: 0 };
 }
 
-// src/commands/status.ts
+// packages/crew/src/commands/status.ts
 var import_node_fs10 = require("fs");
 async function computeStatus(ctx, meta) {
   if (!await ctx.tmux.hasSession(meta.tmux_name)) {
@@ -1669,7 +1669,7 @@ async function cmdStatus(ctx, worker) {
   return { stdout: status, code: 0 };
 }
 
-// src/commands/list.ts
+// packages/crew/src/commands/list.ts
 var HEADER = ["STATUS", "HARNESS", "TMUX", "SESSION_ID", "SHIM", "CWD"].join("	");
 async function cmdList(ctx, opts) {
   const rows = [];
@@ -1708,7 +1708,7 @@ async function cmdList(ctx, opts) {
   return { stdout: [HEADER, ...rows].join("\n"), code: 0 };
 }
 
-// src/commands/prune.ts
+// packages/crew/src/commands/prune.ts
 async function cmdPrune(ctx) {
   const removed = [];
   for (const meta of listWorkers(ctx.workerDir)) {
@@ -1730,7 +1730,7 @@ async function cmdPrune(ctx) {
   };
 }
 
-// src/commands/read-events.ts
+// packages/crew/src/commands/read-events.ts
 var import_node_fs11 = require("fs");
 function filterByType(lines, type) {
   return lines.filter((line) => parseEvent(line)?.event === type);
@@ -1791,7 +1791,7 @@ async function followEvents(ctx, worker, opts, sink, signal) {
   }
 }
 
-// src/commands/read-turn.ts
+// packages/crew/src/commands/read-turn.ts
 var import_node_fs12 = require("fs");
 async function cmdReadTurn(ctx, worker, opts) {
   const resolved = resolveWorker(ctx, worker);
@@ -1817,7 +1817,7 @@ async function cmdReadTurn(ctx, worker, opts) {
   };
 }
 
-// src/commands/session-id.ts
+// packages/crew/src/commands/session-id.ts
 async function cmdSessionId(ctx, worker) {
   const sid = resolveSession(ctx.workerDir, worker);
   if (sid === null) {
@@ -1829,7 +1829,7 @@ async function cmdSessionId(ctx, worker) {
   return { stdout: sid, code: 0 };
 }
 
-// src/commands/stop.ts
+// packages/crew/src/commands/stop.ts
 var sleep7 = (ms) => new Promise((r) => setTimeout(r, ms));
 function sawSessionEnd(eventFile) {
   return readRawLines(eventFile).some((line) => parseEvent(line)?.event === "session_end");
@@ -1877,7 +1877,7 @@ async function cmdStop(ctx, worker, opts = {}) {
   };
 }
 
-// src/core/tmux.ts
+// packages/crew/src/core/tmux.ts
 function envArgs(env) {
   return Object.entries(env).flatMap(([k, v]) => ["-e", `${k}=${v}`]);
 }
@@ -1929,7 +1929,7 @@ function makeTmux(run3 = run) {
 }
 var tmux = makeTmux();
 
-// src/cli.ts
+// packages/crew/src/cli.ts
 var realIo = {
   out: (s) => process.stdout.write(s),
   err: (s) => process.stderr.write(s)

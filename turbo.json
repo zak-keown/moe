@@ -28,6 +28,24 @@
     "lint": {
       "outputs": []
     },
+    "//#artifact:check": {
+      "dependsOn": ["@bubstack/moe-mint#build", "//#mint:generate"],
+      "inputs": [
+        "scripts/check-artifacts.mjs",
+        "moe-platform.yaml",
+        "NOTICE",
+        "LICENSE",
+        "LICENSE-MIT",
+        "LICENSE-BSD-3-CLAUSE",
+        "LICENSE-ISC",
+        "plugins/**",
+        "packages/mint/src/**",
+        "packages/*/package.json",
+        "packages/*/mint/*.yaml"
+      ],
+      "outputs": [],
+      "cache": false
+    },
     "//#mint:generate": {
       "dependsOn": [
         "@bubstack/moe-mint#build",
