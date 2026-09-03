@@ -12,6 +12,9 @@
       "path": "packages/glass"
     },
     {
+      "path": "packages/jig"
+    },
+    {
       "path": "packages/memory"
     },
     {

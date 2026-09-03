@@ -198,6 +198,25 @@ describe("resolve", () => {
     expect(r.source).toBe("sibling");
     expect(r.command).toBe(join(self, "moe-mint.cmd"));
   });
+
+  it("resolves jig from a workspace checkout", () => {
+    const root = mktree();
+    const distDir = join(root, "packages", "jig", "dist");
+    mkdirSync(distDir, { recursive: true });
+    writeFileSync(join(distDir, "cli.js"), "// stub");
+    // pnpm-workspace.yaml marks the workspace root
+    writeFileSync(join(root, "pnpm-workspace.yaml"), "packages: ['packages/*']");
+
+    const binDir = mktree();
+    const r = resolve("jig", ["worktree", "create", "my-branch"], {
+      self: binDir,
+      root,
+      env: { PATH: "" },
+      platform: "linux",
+    });
+    expect(r.source).toBe("workspace");
+    expect(r.args).toContain("worktree");
+  });
 });
 
 describe("main", () => {
@@ -355,11 +374,12 @@ describe("packaging invariants", () => {
     expect(pkg.bin?.moe).toBe("./bin/moe.js");
   });
 
-  it("namespace table has exactly the seven expected keys", () => {
+  it("namespace table has exactly the eight expected keys", () => {
     expect(Object.keys(NAMESPACES).sort()).toEqual([
       "crew",
       "flight",
       "glass",
+      "jig",
       "memory",
       "mint",
       "proof",

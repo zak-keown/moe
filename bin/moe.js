@@ -27,13 +27,14 @@ export const NAMESPACES = {
   crew: { bin: "moe-crew", workspace: "packages/crew/dist/moe-crew.cjs" },
   flight: { bin: "moe-flight", workspace: "packages/flight/dist/cli.js" },
   glass: { bin: "moe-glass", workspace: "packages/glass/dist/index.js" },
+  jig: { bin: "moe-jig", workspace: "packages/jig/dist/cli.js" },
   memory: { bin: "moe-memory", workspace: "packages/memory/dist/cli.js" },
   mint: { bin: "moe-mint", workspace: "packages/mint/dist/cli.js" },
   proof: { bin: "moe-proof", runner: "uv" },
   tab: { bin: "moe-tab", workspace: "packages/tab/target/release/moe-tab" },
 };
 
-export const USAGE = `moe — one dispatcher in front of seven namespace bins.
+export const USAGE = `moe — one dispatcher in front of eight namespace bins.
 
 usage: moe <namespace> [args...]
 
@@ -41,6 +42,7 @@ namespaces:
   crew     Launch and monitor worker sessions over tmux.
   flight   Drive web/CLI/TUI targets through acceptance criteria and grade them.
   glass    Zero-dependency Chrome DevTools Protocol client (MCP: moe-glass).
+  jig      Deterministic enforcement tooling for skill conventions.
   memory   Semantic recall over past sessions and journal entries (MCP: moe-memory).
   mint     Generate native plugin manifests for every harness from one config.
   proof    Evals against small models (Python).
