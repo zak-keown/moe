@@ -14,7 +14,7 @@ import {
   writeShim,
   writeWorktreeMarker,
 } from "../core/worker-store.js";
-import { createWorktree, worktreePath } from "../core/worktree.js";
+import { createWorktree } from "../core/worktree.js";
 import type { HarnessDriver } from "../harness/driver.js";
 import { getDriver } from "../harness/registry.js";
 import { awaitSessionStart } from "./await-start.js";
@@ -185,8 +185,16 @@ export async function cmdLaunch(
   const invocation = extraArgs.length > 0 ? [tmuxName, cwd, "--", ...extraArgs] : [tmuxName, cwd];
 
   return driver.idStrategy === "derive"
-    ? launchDerive(ctx, { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir }, opts)
-    : launchAssign(ctx, { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir }, opts);
+    ? launchDerive(
+        ctx,
+        { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir },
+        opts,
+      )
+    : launchAssign(
+        ctx,
+        { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir },
+        opts,
+      );
 }
 
 interface LaunchInner {

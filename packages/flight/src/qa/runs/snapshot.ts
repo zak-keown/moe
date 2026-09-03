@@ -1,5 +1,5 @@
-import { cpSync, mkdirSync, readdirSync, statSync } from "fs";
-import { join } from "path";
+import { cpSync, mkdirSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 
 export interface SnapshotInputs {
   /** Absolute path to the run output directory (`.moe-flight/results/<runId>`). */

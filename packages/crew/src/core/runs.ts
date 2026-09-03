@@ -1,17 +1,11 @@
 import { randomUUID } from "node:crypto";
-import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { isoSecondsUtc } from "./time.js";
-import { eventsPath } from "./paths.js";
-import { readRawLines } from "./event-log.js";
-import { parseEvent } from "../events.js";
 import type { WorkerEvent } from "../events.js";
+import { parseEvent } from "../events.js";
+import { readRawLines } from "./event-log.js";
+import { eventsPath } from "./paths.js";
+import { isoSecondsUtc } from "./time.js";
 
 export interface RunMeta {
   id: string;
@@ -44,7 +38,7 @@ function readRunMeta(workerDir: string, runId: string): RunMeta | null {
 function writeRunMeta(workerDir: string, meta: RunMeta): void {
   const dir = runDir(workerDir, meta.id);
   mkdirSync(dir, { recursive: true });
-  writeFileSync(runMetaPath(workerDir, meta.id), JSON.stringify(meta, null, 2) + "\n");
+  writeFileSync(runMetaPath(workerDir, meta.id), `${JSON.stringify(meta, null, 2)}\n`);
 }
 
 /**

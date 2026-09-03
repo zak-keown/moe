@@ -1,5 +1,5 @@
-import { mkdirSync } from "fs";
-import { join } from "path";
+import { mkdirSync } from "node:fs";
+import { join } from "node:path";
 import { buildSharedTools, type SharedTools } from "../../agent/shared-tools.js";
 import { validateToolArgs } from "../../agent/validators.js";
 import type { CredentialResolverConfig, Viewport } from "../../config.js";

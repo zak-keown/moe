@@ -1,6 +1,6 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { buildSharedTools } from "../../../src/qa/agent/shared-tools.js";
 

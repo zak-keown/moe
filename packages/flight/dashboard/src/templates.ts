@@ -163,9 +163,7 @@ export function cellHtml(view: CellView): string {
       );
     }
     // not_run: plain middle-dot, no tooltip, default opacity.
-    return (
-      `${open}` + `<div class="cell"><span class="${sg.cls}">${sg.glyph}</span></div>` + `</td>`
-    );
+    return `${open}<div class="cell"><span class="${sg.cls}">${sg.glyph}</span></div></td>`;
   }
 
   const stateClass = view.state === "running" ? " running" : "";

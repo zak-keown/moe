@@ -12,7 +12,8 @@
       "!**/dist-static",
       "!plugins",
       "!**/packages/statusline/vendor",
-      "!**/packages/flight/src/qa/agent/prompts/generated.ts"
+      "!**/packages/flight/src/qa/agent/prompts/generated.ts",
+      "!**/packages/core/skills/_shared/*.html"
     ]
   },
   "formatter": {

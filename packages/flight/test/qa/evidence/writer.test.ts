@@ -1,6 +1,6 @@
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { writeResultFiles } from "../../../src/qa/evidence/writer.js";
 import type { VerdictResult } from "../../../src/qa/types.js";

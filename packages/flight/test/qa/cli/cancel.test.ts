@@ -20,7 +20,7 @@ describe("installSigintHandler", () => {
       // Pull the registered handler and fire it
       const sigintCall = onSpy.mock.calls.find((c) => c[0] === "SIGINT");
       expect(sigintCall).toBeDefined();
-      const handler = sigintCall![1] as () => void;
+      const handler = sigintCall?.[1] as () => void;
 
       // Suppress the stderr write during the test
       const stderrSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);

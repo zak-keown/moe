@@ -1,6 +1,6 @@
-import { existsSync, readdirSync, readFileSync } from "fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { Hono } from "hono";
-import { join } from "path";
 import { isSafePath } from "../../paths.js";
 import type { ActiveRunRegistry } from "../active-runs.js";
 import { getMimeType } from "../mime-types.js";
@@ -208,7 +208,7 @@ function collectManifestPaths(manifest: unknown): Set<string> {
       for (const a of e.captures) {
         if (typeof a !== "string") continue;
         paths.add(a);
-        if (a.endsWith(".ansi")) paths.add(a.slice(0, -5) + ".json");
+        if (a.endsWith(".ansi")) paths.add(`${a.slice(0, -5)}.json`);
       }
     }
   }

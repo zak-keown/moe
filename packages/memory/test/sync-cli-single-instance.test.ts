@@ -33,10 +33,10 @@ function spawnWith(env: Record<string, string>) {
 async function collectOutput(child: ReturnType<typeof spawn>): Promise<RunResult> {
   let stdout = "";
   let stderr = "";
-  child.stdout!.on("data", (d) => {
+  child.stdout?.on("data", (d) => {
     stdout += d.toString();
   });
-  child.stderr!.on("data", (d) => {
+  child.stderr?.on("data", (d) => {
     stderr += d.toString();
   });
   const status: number | null = await new Promise((resolve) => {

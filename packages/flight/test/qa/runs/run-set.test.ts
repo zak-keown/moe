@@ -1,6 +1,6 @@
-import { existsSync, mkdtempSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { existsSync, mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { runRunSet } from "../../../src/qa/runs/run-set.js";
 import type { RunSetCtx } from "../../../src/qa/runs/run-set-types.js";
@@ -36,7 +36,7 @@ describe("runRunSet — orchestrator loop", () => {
       ...cfg,
       executor: async ({ cardId, runSetCtx }) => {
         calls.push({ cardId, ctx: runSetCtx });
-        return { runId: runSetCtx.runSetId + "/x", outDir: "x", result: fakeResult("pass") };
+        return { runId: `${runSetCtx.runSetId}/x`, outDir: "x", result: fakeResult("pass") };
       },
     });
     const result = await handle.completion;

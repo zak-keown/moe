@@ -1,11 +1,11 @@
 import type { PackDefinition } from "../core/packs.js";
 import { loadPack } from "../core/packs.js";
 import { listWorkers } from "../core/worker-store.js";
+import type { CommandContext, CommandResult } from "./context.js";
 import type { BootstrapOpts } from "./launch.js";
 import { cmdLaunch } from "./launch.js";
 import { cmdSend } from "./send.js";
 import { cmdStop } from "./stop.js";
-import type { CommandContext, CommandResult } from "./context.js";
 
 export interface PackArgs {
   packFile: string;
@@ -104,10 +104,7 @@ export interface PackStopArgs {
  * the argument as a direct name. Finds all workers in the store whose
  * tmux_name starts with `<packName>-` and stops each one.
  */
-export async function cmdPackStop(
-  ctx: CommandContext,
-  args: PackStopArgs,
-): Promise<CommandResult> {
+export async function cmdPackStop(ctx: CommandContext, args: PackStopArgs): Promise<CommandResult> {
   let packName: string;
 
   if (/\.(ya?ml|json)$/.test(args.nameOrFile)) {
@@ -137,9 +134,7 @@ export async function cmdPackStop(
     if (result.code === 0) {
       stopped++;
     } else {
-      errors.push(
-        `Failed to stop ${meta.tmux_name}: ${result.stderr ?? "unknown error"}`,
-      );
+      errors.push(`Failed to stop ${meta.tmux_name}: ${result.stderr ?? "unknown error"}`);
     }
   }
 

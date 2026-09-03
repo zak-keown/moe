@@ -1,4 +1,4 @@
-import { createServer } from "net";
+import { createServer } from "node:net";
 
 /**
  * Picks a free TCP port by binding to 0 on localhost, reading the

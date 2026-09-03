@@ -44,7 +44,7 @@ function asBool(args: StringRecord, key: string): boolean {
  */
 function clip(s: string, max: number): string {
   if (s.length <= max) return s;
-  return s.slice(0, Math.max(8, max - 1)) + "…";
+  return `${s.slice(0, Math.max(8, max - 1))}…`;
 }
 
 function jsonFallback(args: StringRecord): FormattedArgs {

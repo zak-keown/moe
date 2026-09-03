@@ -22,7 +22,7 @@ function tmpFixture(yaml: string): string {
   return dir
 }
 
-const fullSupport = {
+const _fullSupport = {
   skills: 'full',
   commands: 'full',
   agents: 'full',

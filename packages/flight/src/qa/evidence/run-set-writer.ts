@@ -1,5 +1,5 @@
-import { mkdirSync, writeFileSync } from "fs";
-import { join } from "path";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { deriveBucket, median } from "../runs/aggregate.js";
 import type { RunSetCtx, SetBucket } from "../runs/run-set-types.js";
 import type { VerdictResult, VerdictStatus } from "../types.js";
@@ -43,7 +43,7 @@ export class RunSetWriter {
   private manifest!: SetManifest;
 
   constructor(
-    private resultsRoot: string,
+    resultsRoot: string,
     private ctx: RunSetCtx,
   ) {
     this.dir = join(resultsRoot, "run-sets", ctx.runSetId);
@@ -206,5 +206,5 @@ function renderSummaryMarkdown(m: SetManifest): string {
       lines.push(`- median duration_ms: ${c.medianDurationMs}`);
     }
   }
-  return lines.join("\n") + "\n";
+  return `${lines.join("\n")}\n`;
 }

@@ -6,9 +6,9 @@
 // The point is a deterministic target for the Web adapter.
 
 import { createReadStream, existsSync, statSync } from "node:fs";
+import { resolve } from "node:path";
 import { Readable } from "node:stream";
 import { serve } from "@hono/node-server";
-import { resolve } from "path";
 import {
   addItem,
   clearCompleted,
@@ -130,9 +130,9 @@ serve({
     }
     // Serve index.html for "/" and anything not under /api/.
     const reqPath = url.pathname === "/" ? "/index.html" : url.pathname;
-    const resolved = resolve(PUBLIC_DIR, "." + reqPath);
+    const resolved = resolve(PUBLIC_DIR, `.${reqPath}`);
     // Guard against path traversal — keep resolved path inside PUBLIC_DIR.
-    if (!resolved.startsWith(PUBLIC_DIR + "/") && resolved !== PUBLIC_DIR) {
+    if (!resolved.startsWith(`${PUBLIC_DIR}/`) && resolved !== PUBLIC_DIR) {
       return new Response("not found", { status: 404 });
     }
     if (!existsSync(resolved) || statSync(resolved).isDirectory()) {

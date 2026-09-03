@@ -1,4 +1,4 @@
-import { basename, extname } from "path";
+import { basename, extname } from "node:path";
 import type { AppConfig } from "../config.js";
 import type { EventObserver, EvidenceLogger } from "../evidence/logger.js";
 import type { LLMClient } from "../models/provider.js";
@@ -78,7 +78,7 @@ function makeBatchObserver(
 
       if (format === "jsonl" && !silent) {
         const enriched = { runId: currentRunId, ...ev };
-        sink.write(JSON.stringify(enriched) + "\n");
+        sink.write(`${JSON.stringify(enriched)}\n`);
       }
     };
     return logger.addEventObserver(observer);
@@ -219,7 +219,7 @@ export async function runBatch(opts: BatchOptions, runOneImpl: RunOneFn = runOne
 
         if (opts.format === "jsonl" && !opts.silent) {
           const enriched = { runId: currentRunId, ...ev };
-          opts.sink.write(JSON.stringify(enriched) + "\n");
+          opts.sink.write(`${JSON.stringify(enriched)}\n`);
         }
       };
       return logger.addEventObserver(observer);

@@ -48,11 +48,11 @@ function runTaskSet(args: string[]): { status: number | null; stdout: string; st
 }
 
 function writeSidecar(planPath: string, data: Record<string, unknown>): void {
-  writeFileSync(planPath + ".governance.json", JSON.stringify(data, null, 2) + "\n");
+  writeFileSync(`${planPath}.governance.json`, `${JSON.stringify(data, null, 2)}\n`);
 }
 
 function readSidecar(planPath: string): Record<string, unknown> | null {
-  const p = planPath + ".governance.json";
+  const p = `${planPath}.governance.json`;
   if (!existsSync(p)) return null;
   return JSON.parse(readFileSync(p, "utf8")) as Record<string, unknown>;
 }
@@ -113,7 +113,7 @@ describe("task-set status verb", () => {
 describe("task-set gate verb", () => {
   it("creates a sidecar when none exists and records approval", () => {
     const plan = copyFixture("diamond-plan.md");
-    expect(existsSync(plan + ".governance.json")).toBe(false);
+    expect(existsSync(`${plan}.governance.json`)).toBe(false);
 
     const result = runTaskSet(["gate", plan, "1"]);
     expect(result.status).toBe(0);
@@ -121,10 +121,13 @@ describe("task-set gate verb", () => {
 
     const sidecar = readSidecar(plan);
     expect(sidecar).not.toBeNull();
-    const gates = sidecar!.gates as Record<string, { approved: boolean; approvedAt: string; approvedBy: string }>;
-    expect(gates["1"]!.approved).toBe(true);
-    expect(gates["1"]!.approvedBy).toBe("human");
-    expect(typeof gates["1"]!.approvedAt).toBe("string");
+    const gates = sidecar?.gates as Record<
+      string,
+      { approved: boolean; approvedAt: string; approvedBy: string }
+    >;
+    expect(gates["1"]?.approved).toBe(true);
+    expect(gates["1"]?.approvedBy).toBe("human");
+    expect(typeof gates["1"]?.approvedAt).toBe("string");
   });
 
   it("updates an existing sidecar preserving other data", () => {
@@ -140,12 +143,12 @@ describe("task-set gate verb", () => {
 
     const sidecar = readSidecar(plan);
     // Original quota data preserved.
-    const quotas = sidecar!.quotas as Record<string, unknown>;
+    const quotas = sidecar?.quotas as Record<string, unknown>;
     expect(quotas["1"]).toEqual({ maxToolCalls: 10, maxTokenEstimate: 5000 });
     // Original gate preserved, new gate added.
-    const gates = sidecar!.gates as Record<string, { approved: boolean }>;
-    expect(gates["1"]!.approved).toBe(true);
-    expect(gates["2"]!.approved).toBe(true);
+    const gates = sidecar?.gates as Record<string, { approved: boolean }>;
+    expect(gates["1"]?.approved).toBe(true);
+    expect(gates["2"]?.approved).toBe(true);
   });
 
   it("rejects an invalid wave number", () => {
@@ -253,7 +256,7 @@ describe("task-set next verb with governance", () => {
 
   it("handles a malformed sidecar by ignoring it (fail open)", () => {
     const plan = copyFixture("diamond-plan.md");
-    writeFileSync(plan + ".governance.json", "not-json{{{");
+    writeFileSync(`${plan}.governance.json`, "not-json{{{");
 
     const result = runTaskSet(["next", plan]);
     expect(result.status).toBe(0);
@@ -293,7 +296,7 @@ describe("moe-completion-evidence governance spend counter", () => {
   }
 
   function writeTranscript(target: string, rows: Array<Record<string, unknown>>): void {
-    writeFileSync(target, rows.map((r) => JSON.stringify(r)).join("\n") + "\n");
+    writeFileSync(target, `${rows.map((r) => JSON.stringify(r)).join("\n")}\n`);
   }
 
   function runEvidence(
@@ -302,7 +305,7 @@ describe("moe-completion-evidence governance spend counter", () => {
   ): { status: number | null; stdout: string; stderr: string } {
     const input = JSON.stringify({ session_id: "gov-session", transcript_path: f.transcript });
     const env: Record<string, string> = {
-      ...process.env as Record<string, string>,
+      ...(process.env as Record<string, string>),
       HOME: f.home,
       USERPROFILE: f.home,
       MOE_EVIDENCE_DISABLED: "",
@@ -354,9 +357,9 @@ describe("moe-completion-evidence governance spend counter", () => {
     const sidecar = readSidecar(planPath)!;
     const spend = sidecar.spend as Record<string, { toolCalls: number; tokenEstimate: number }>;
     // 5 prior + 3 this turn = 8.
-    expect(spend["1"]!.toolCalls).toBe(8);
+    expect(spend["1"]?.toolCalls).toBe(8);
     // tokenEstimate unchanged (hook only increments toolCalls).
-    expect(spend["1"]!.tokenEstimate).toBe(1000);
+    expect(spend["1"]?.tokenEstimate).toBe(1000);
   });
 
   it("does nothing when MOE_CURRENT_PLAN is not set", () => {
@@ -375,9 +378,7 @@ describe("moe-completion-evidence governance spend counter", () => {
         type: "assistant",
         message: {
           role: "assistant",
-          content: [
-            { type: "tool_use", id: "t1", name: "Read", input: {} },
-          ],
+          content: [{ type: "tool_use", id: "t1", name: "Read", input: {} }],
         },
       },
     ]);
@@ -389,7 +390,7 @@ describe("moe-completion-evidence governance spend counter", () => {
     // Spend counter unchanged.
     const sidecar = readSidecar(planPath)!;
     const spend = sidecar.spend as Record<string, { toolCalls: number }>;
-    expect(spend["1"]!.toolCalls).toBe(5);
+    expect(spend["1"]?.toolCalls).toBe(5);
   });
 
   it("does nothing when sidecar file does not exist", () => {
@@ -404,9 +405,7 @@ describe("moe-completion-evidence governance spend counter", () => {
         type: "assistant",
         message: {
           role: "assistant",
-          content: [
-            { type: "tool_use", id: "t1", name: "Read", input: {} },
-          ],
+          content: [{ type: "tool_use", id: "t1", name: "Read", input: {} }],
         },
       },
     ]);
@@ -414,7 +413,7 @@ describe("moe-completion-evidence governance spend counter", () => {
     const result = runEvidence(f, { plan: planPath, task: "1" });
     expect(result.status).toBe(0);
     // No sidecar should have been created.
-    expect(existsSync(planPath + ".governance.json")).toBe(false);
+    expect(existsSync(`${planPath}.governance.json`)).toBe(false);
   });
 
   it("initializes spend entry when task has no prior spend", () => {
@@ -441,9 +440,12 @@ describe("moe-completion-evidence governance spend counter", () => {
     expect(result.status).toBe(0);
 
     const sidecar = readSidecar(planPath)!;
-    const spend = sidecar.spend as Record<string, { toolCalls: number; tokenEstimate: number; lastUpdatedAt: string }>;
-    expect(spend["2"]!.toolCalls).toBe(2);
-    expect(spend["2"]!.tokenEstimate).toBe(0);
-    expect(typeof spend["2"]!.lastUpdatedAt).toBe("string");
+    const spend = sidecar.spend as Record<
+      string,
+      { toolCalls: number; tokenEstimate: number; lastUpdatedAt: string }
+    >;
+    expect(spend["2"]?.toolCalls).toBe(2);
+    expect(spend["2"]?.tokenEstimate).toBe(0);
+    expect(typeof spend["2"]?.lastUpdatedAt).toBe("string");
   });
 });

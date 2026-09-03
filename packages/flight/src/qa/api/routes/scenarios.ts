@@ -1,6 +1,6 @@
-import { mkdirSync, unlinkSync, writeFileSync } from "fs";
+import { mkdirSync, unlinkSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { Hono } from "hono";
-import { join } from "path";
 import { findCard, loadAllCards } from "../../cards/store.js";
 import type { StoryCard } from "../../format/story-card.js";
 import { serializeStoryCard } from "../../format/story-card.js";

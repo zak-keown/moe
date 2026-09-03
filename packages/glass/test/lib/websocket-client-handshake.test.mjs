@@ -95,7 +95,7 @@ describe('websocket-client handshake (CR-066)', () => {
   it('rejects when the server upgrades but with the wrong Sec-WebSocket-Accept', async () => {
     await new Promise((resolvePromise, rejectPromise) => {
       const server = createHttpServer();
-      server.on('upgrade', (req, socket) => {
+      server.on('upgrade', (_req, socket) => {
         // A conforming server would compute this from the client's
         // Sec-WebSocket-Key; send an obviously wrong value instead.
         socket.write(
