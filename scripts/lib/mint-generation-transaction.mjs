@@ -83,6 +83,20 @@ function expectedTargets(nonce) {
   ];
 }
 
+/**
+ * Build the only supported generation journal and nonce-bearing target set.
+ * Callers use this factory instead of duplicating the private path grammar.
+ */
+export function createGenerationTransaction(nonce) {
+  const journalPath = `.moe-mint-generation-${nonce}.json`;
+  const journal = {
+    schema: 1,
+    transactionId: nonce,
+    targets: expectedTargets(nonce),
+  };
+  return validateShape({ journalPath, journal });
+}
+
 function sameTarget(left, right) {
   return (
     left.kind === right.kind &&

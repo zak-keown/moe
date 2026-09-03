@@ -45,16 +45,13 @@
       "sha256": "101ced56d6433ed6f969b84900d1292ba4855fa51fa3e087fc84e1dd66e78fd3"
     },
     "docs/install/opencode.md": {
-      "sha256": "3917cafe988e849895f115ab9c0b3f065fbac19bc5cf59881ae397f78e03fb14"
+      "sha256": "3ede3335ed0a9d4b1660624712c4c0b42687aeb4ebdc57e814ba9caa9b920083"
     },
     "docs/install/pi.md": {
-      "sha256": "819d6a8b874ccb8b949b69350ac06e4e5218d7b1d82e595ac5de8f2e1605d3a0"
+      "sha256": "8d38e7ec54b7c8987c73378fbf81eac8f8e7bc15124fcf708e08c52e559f506b"
     },
     "docs/support-matrix.md": {
       "sha256": "b65b317dd6d43fb1dfe0fe94697c90c4b0f2df7e9c176a9776beaa0a0292182c"
-    },
-    "package.json": {
-      "sha256": "2224627fd3ce8e13a27a81503c767fc966ca90c2dd7c068bbfbfc809e1a8e271"
     },
     "plugin.json": {
       "sha256": "69486923cc9785d7f319a383a6773b38e406b2f05b13d71500061c8fd0d3d540"

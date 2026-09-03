@@ -6,6 +6,7 @@ import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { sessionStartScript, runHookCmd } from '../bootstrap/shell-hook.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
 import { baseManifestFields, json, bootstrapEmitsHooks } from './shared.js'
+import { hooksManifestPath } from '../config.js'
 
 // Where the cursor adapter emits the bootstrap SessionStart hook and its
 // hooks-cursor.json, when config.bootstrap.kind === 'skill'. Shares the
@@ -81,7 +82,7 @@ function installDoc(model: PluginModel): string {
       '',
       '## Caveats',
       '',
-      `- Hand-written entries in \`${config.components.hooks}\` are not translated for Cursor; ${bootstrapHookNote}.`,
+      `- Hand-written entries in \`${hooksManifestPath(config)}\` are not translated for Cursor; ${bootstrapHookNote}.`,
     )
   }
   return lines.join('\n')

@@ -831,6 +831,25 @@ describe('generation transaction', () => {
     }
   })
 
+  test('CLI refuses an explicit journal that would bypass a discovered transaction', async () => {
+    // Break caught: an operator-supplied missing nonce cannot make recovery
+    // ignore the one durable transaction that owns the canonical outputs.
+    const directory = await mkdtemp(join(tmpdir(), 'moe-transaction-cli-selection-'))
+    try {
+      await writeFile(join(directory, '.moe-mint-generation-alpha.json'), '{}')
+      const result = spawnSync(process.execPath, [recoverScript, '.moe-mint-generation-beta.json'], {
+        cwd: directory,
+        encoding: 'utf8',
+      })
+
+      expect(result.status).toBe(1)
+      expect(result.stderr).toContain('code: GENERATION_TRANSACTION_JOURNAL_SELECTION_CONFLICT')
+      expect(result.stderr).toContain('paths: .moe-mint-generation-alpha.json, .moe-mint-generation-beta.json')
+    } finally {
+      await rm(directory, { recursive: true, force: true })
+    }
+  })
+
   test('CLI renders code paths action and cause for a malformed journal', async () => {
     // Break caught: the pre-build operator interface previously hid the
     // structured survivor/action data carried by the recovery error.

@@ -4,7 +4,7 @@
 
 ## What gets emitted
 
-- `package.json` (shared with the pi adapter when both are active)
+- a `./server` export contribution for the artifact's composed root `package.json`
 - `.opencode/plugins/moe-glass.js`, the OpenCode plugin module that registers the plugin's skills directory
 - a `.opencode/agent/<name>.md` file for each agent (`browser-user`)
 
@@ -17,7 +17,3 @@ Add the plugin to your project's `opencode.json`:
 ```
 
 OpenCode loads the plugin module on startup: it registers the skills directory through a config hook (no symlinks needed) and reads commands/agents translated under `.opencode/`. Consult the OpenCode plugin docs if this doesn't match your installed version.
-
-## Caveats
-
-- `package.json` is generated at the plugin root; if you maintain your own `package.json` for this plugin, exclude the opencode and pi adapters from generation (`harnesses.exclude`) or merge the fields by hand.

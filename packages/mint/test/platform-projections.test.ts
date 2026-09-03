@@ -35,13 +35,28 @@ describe('registry projections', () => {
     if (mint === undefined) {
       throw new Error('missing //#mint:generate Turbo task')
     }
-    expect(mint.dependsOn).toContain('@bubstack/moe-mint#build')
+    expect(mint.dependsOn).toEqual(expect.arrayContaining([
+      '@bubstack/moe-mint#build',
+      '@bubstack/moe-memory#build',
+      '@bubstack/moe-glass#build',
+      '@bubstack/moe-crew#build',
+      '@bubstack/moe-statusline#build',
+    ]))
     expect(mint.inputs).toEqual(
       expect.arrayContaining([
         'moe-platform.yaml',
         'packages/*/mint/*.yaml',
         'packages/*/package.json',
-        'packages/mint/src/adapters/**',
+        'packages/mint/src/**',
+        'packages/*/skills/**',
+        'packages/*/commands/**',
+        'packages/*/agents/**',
+        'packages/*/hooks/**',
+        'packages/*/.mcp.json',
+        'NOTICE',
+        'LICENSE',
+        'LICENSE-MIT',
+        'scripts/lib/mint-generation-transaction.mjs',
         'scripts/mint-plugins.mjs',
       ]),
     )

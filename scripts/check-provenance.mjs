@@ -125,7 +125,13 @@ function checkPluginLicenses(root, problems) {
     if (!entry.isDirectory()) continue;
     count++;
     const dir = join(pluginsRoot, entry.name);
-    const config = readFileSync(join(dir, "moe-mint.yaml"), "utf8");
+    let manifest;
+    try {
+      manifest = JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
+    } catch (err) {
+      problems.push(`plugins/${entry.name}/package.json is missing or invalid: ${err.message}`);
+      continue;
+    }
     let license;
     try {
       license = readFileSync(join(dir, "LICENSE"), "utf8");
@@ -133,7 +139,7 @@ function checkPluginLicenses(root, problems) {
       problems.push(`plugins/${entry.name}/LICENSE is missing`);
       continue;
     }
-    const expression = /^license:\s*(.+)$/m.exec(config)?.[1]?.trim() ?? "";
+    const expression = typeof manifest.license === "string" ? manifest.license : "";
     if (expression.includes("MIT") && !license.includes("Permission is hereby granted")) {
       problems.push(`plugins/${entry.name}/LICENSE is missing MIT terms`);
     }

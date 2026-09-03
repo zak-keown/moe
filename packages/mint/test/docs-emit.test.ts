@@ -44,7 +44,7 @@ describe('emitDocs install-doc files', () => {
   })
 
   it('wraps the installDoc body with a generated marker and a heading naming the plugin and the mapped display name', () => {
-    const withDoc = adapterWithInstallDoc('kimi', 'Body text for kimi.')
+    const withDoc = adapterWithInstallDoc('kimi', 'Body text for kimi.\n\n')
     const files = emitDocs(model, [withDoc])
     const file = files.find((f) => f.path === 'docs/install/kimi.md')!
     const lines = file.content.split('\n')
@@ -54,6 +54,7 @@ describe('emitDocs install-doc files', () => {
     expect(lines[3]).toBe('')
     expect(file.content).toContain('Body text for kimi.')
     expect(file.content.endsWith('\n')).toBe(true)
+    expect(file.content.endsWith('\n\n')).toBe(false)
   })
 
   it('falls back to the adapter name itself when it has no entry in the display-name map', () => {
@@ -179,7 +180,6 @@ describe('opencode installDoc (exact content, kitchen-sink model)', () => {
         '```',
         '',
         "OpenCode loads the plugin module on startup: it registers the skills directory through a config hook (no symlinks needed) and reads commands/agents translated under `.opencode/`. Consult the OpenCode plugin docs if this doesn't match your installed version.",
-        '',
         '',
       ].join('\n'),
     )

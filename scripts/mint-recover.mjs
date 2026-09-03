@@ -1,11 +1,23 @@
 #!/usr/bin/env node
 import { readdir } from "node:fs/promises";
+import path from "node:path";
 import { recoverGeneratedOutputs } from "./lib/mint-generation-transaction.mjs";
 
 const journalPattern = /^\.moe-mint-generation-[A-Za-z0-9][A-Za-z0-9_-]{0,127}\.json$/;
 
-async function selectedJournal() {
-  const explicit = process.argv[2];
+function invocation() {
+  const args = process.argv.slice(2);
+  let repositoryRoot = process.cwd();
+  if (args[0] === "--root") {
+    if (args[1] === undefined) throw new Error("--root requires a repository path");
+    repositoryRoot = args[1];
+    args.splice(0, 2);
+  }
+  if (args.length > 1) throw new Error("recovery accepts at most one explicit journal path");
+  return { repositoryRoot: path.resolve(repositoryRoot), explicitJournal: args[0] };
+}
+
+async function selectedJournal(explicit) {
   const names = (await readdir(".")).filter((name) => journalPattern.test(name)).sort();
   if (names.length !== 1) {
     if (names.length === 0 && explicit !== undefined) return explicit;
@@ -16,6 +28,15 @@ async function selectedJournal() {
     error.code = "GENERATION_TRANSACTION_MULTIPLE_JOURNALS";
     error.paths = names;
     error.action = "preserve every journal and reconcile the shared generated outputs manually";
+    throw error;
+  }
+  if (explicit !== undefined && explicit !== names[0]) {
+    const error = new Error(
+      `refusing recovery: explicit journal ${explicit} does not match discovered journal ${names[0]}`,
+    );
+    error.code = "GENERATION_TRANSACTION_JOURNAL_SELECTION_CONFLICT";
+    error.paths = [names[0], explicit];
+    error.action = "recover the discovered durable journal before selecting another transaction";
     throw error;
   }
   return explicit ?? names[0];
@@ -36,7 +57,9 @@ function renderFailure(error) {
 }
 
 try {
-  const journalPath = await selectedJournal();
+  const { repositoryRoot, explicitJournal } = invocation();
+  process.chdir(repositoryRoot);
+  const journalPath = await selectedJournal(explicitJournal);
   if (journalPath !== undefined) {
     await recoverGeneratedOutputs({ journalPath });
     console.log(`Recovered generated outputs from ${journalPath}`);

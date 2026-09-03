@@ -35,7 +35,7 @@ function installDocFile(model: PluginModel, adapter: HarnessAdapter): GeneratedF
       '',
       `# Installing ${model.config.name} on ${displayName(adapter.name)}`,
       '',
-      body,
+      body.trimEnd(),
     ].join('\n') + '\n'
   return { path: `docs/install/${adapter.name}.md`, content }
 }

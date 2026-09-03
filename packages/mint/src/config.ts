@@ -321,6 +321,17 @@ export interface MintConfig {
   release?: z.infer<typeof releaseSchema>
 }
 
+/**
+ * `components.hooks` may name the conventional component directory so the
+ * artifact compositor can stage hook siblings, or a standalone JSON manifest
+ * for plugins whose hooks live elsewhere.
+ */
+export function hooksManifestPath(config: MintConfig): string {
+  return config.components.hooks.endsWith('.json')
+    ? config.components.hooks
+    : posix.join(config.components.hooks, 'hooks.json')
+}
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }

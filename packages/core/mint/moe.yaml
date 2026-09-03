@@ -71,12 +71,13 @@ targets:
 bootstrap:
   skill: using-moe
 
-# components: are all defaults (skills/, commands/, agents/, hooks/hooks.json,
-# .mcp.json) and therefore omitted. This package has no commands/ and no
-# .mcp.json. It does have agents/ — retrieving-context's search agent, picked
-# up with no config change because agents/ is already a default component.
-# hooks/hooks.json carries a Stop hook and a SessionStart hook, and mint
-# merges its own SessionStart entry into hooks/moe-mint/hooks.json.
+# Most components use their defaults (skills/, commands/, agents/, .mcp.json).
+# Core stages the complete hooks/ component because hooks/hooks.json invokes
+# sibling executables; hook-execution would be incomplete if only the manifest
+# were copied. This package has no commands/ and no .mcp.json. It does have
+# agents/ — retrieving-context's search agent, picked up by the default.
+components:
+  hooks: hooks
 
 # harnesses: no exclusions. All 8 adapters run; the composed root package
 # manifest keeps package ownership separate from adapter emission.

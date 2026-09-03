@@ -1,0 +1,17 @@
+Moe
+Copyright 2026 Zak Keown
+
+THIRD-PARTY ATTRIBUTION
+
+## Imported works
+
+| Project | Revision | License | Copyright notice |
+|---|---:|---|---|
+| `double-shot-latte` | `dfe7567` | MIT | Copyright (c) 2024 Anthropic |
+| `iterative-development` | `c05889a` | Apache-2.0 | Prime Radiant, Inc. |
+| `mattpocock-skills` | `6654f6b` | MIT | Copyright (c) 2026 Matt Pocock |
+| `open-gsd/gsd-core` | `05092ff3` | MIT | Copyright (c) 2026 Open GSD |
+| `superpowers` | `b36e082` | MIT | Copyright (c) 2025 Jesse Vincent |
+| `superpowers-developing-for-claude-code` | `74afe93` | MIT declared; upstream license file absent | Copyright (c) 2025 Jesse Vincent |
+| `superpowers-lab` | `51111f7` | MIT | Copyright (c) 2025 Jesse Vincent |
+| `the-elements-of-style` | `05fc4f0` | Public domain | William Strunk Jr., The Elements of Style (1918) |

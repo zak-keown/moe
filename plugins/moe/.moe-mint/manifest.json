@@ -54,10 +54,10 @@
       "sha256": "af5707d066d48cdca5ad0722f37ae0937e03a09f72f52098c0bf852854ad9388"
     },
     "docs/install/opencode.md": {
-      "sha256": "3380a1b873ebd075f2f4b1f5412a2d54b31fbd5faada7f3f72994dda815310cc"
+      "sha256": "f1afe1e4300732a60b3e0454257a39d67e1ef6aec0d81707ab7507d7ef94241f"
     },
     "docs/install/pi.md": {
-      "sha256": "5f64fb0e8d650f7d1abe1e2e618403ad5faa432d6eb509a50f963308aae9d3cb"
+      "sha256": "2b179aac3a65c8c88bce49a4b5b1fdbd4600ac02729e98a80f4e3f8394214b72"
     },
     "docs/support-matrix.md": {
       "sha256": "fc1d134c12095245ed7f14a2e252c5bbbcb103ebdae21c9617e0b3563a0393f1"
@@ -75,9 +75,6 @@
     "hooks/moe-mint/session-start": {
       "sha256": "22c83296f07522da880ed027c1c522681371d59b1388ba28ca7113c699c80edb",
       "executable": true
-    },
-    "package.json": {
-      "sha256": "11559a927b45c6d836d0656ce4d287fe01657ef87207350bbc9df463479497e3"
     },
     "plugin.json": {
       "sha256": "70cdddf08760726cbd79c0e081cd2082c8530deec755fb9c217de24823095e06"
