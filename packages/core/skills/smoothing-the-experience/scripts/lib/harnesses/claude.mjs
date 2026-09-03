@@ -1,6 +1,9 @@
 import { readFile, readdir, realpath } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import { makeEvidence } from "../evidence.mjs";
+import { classifyMcp } from "../safety/mcp.mjs";
+import { classifyNetwork } from "../safety/network.mjs";
+import { classifyShell } from "../safety/shell.mjs";
 
 const DENIALS = new Set([
   "user-rejected",
@@ -411,4 +414,137 @@ function isPlainObject(value) {
 
 function isNonEmptyString(value) {
   return typeof value === "string" && value.length > 0;
+}
+
+const CLAUDE_RULE = {
+  read: (path) => `Read(${path})`,
+  modify: (path) => `Edit(${path})`,
+  network: (hostname) => `WebFetch(domain:${hostname})`,
+  mcp: (toolId) => toolId,
+};
+
+/**
+ * Render one already-classified candidate without broadening its scope.
+ * Context is optional so callers may render a canonical rule body before a
+ * destination is available; when path information is supplied it is retained
+ * on the returned candidate for planning.
+ *
+ * @param {object} candidate
+ * @param {object} [context]
+ */
+export function renderClaudeCandidate(candidate, context = {}) {
+  if (!isPlainObject(candidate) || candidate.harness && candidate.harness !== "claude") {
+    return null;
+  }
+  const scope = candidate.scope;
+  if (!["project", "global"].includes(scope)) return null;
+
+  let rule;
+  if (candidate.class === "shell") {
+    const classified = classifyShell(candidate.operation, {
+      harness: "claude",
+      projectRoot: candidate.projectRoot ?? context.projectRoot ?? "",
+      realpath: context.realpath,
+    });
+    if (!classified.eligible || (scope === "global" && !classified.globalSafe)) return null;
+    rule = renderClaudeShell(classified.normalized);
+    if (!rule) return null;
+  } else if (candidate.class === "filesystem") {
+    if (scope !== "project" || context.anchorProven !== true) return null;
+    const { action, path } = candidate.operation ?? {};
+    if (
+      !["read", "modify"].includes(action) ||
+      !isNonEmptyString(path) ||
+      isAbsolute(path) ||
+      path.split(/[\\/]/).includes("..")
+    ) {
+      return null;
+    }
+    rule = CLAUDE_RULE[action](path);
+  } else if (candidate.class === "network") {
+    const classified = classifyNetwork(candidate.operation);
+    if (!classified.eligible) return null;
+    rule = CLAUDE_RULE.network(classified.normalized.hostname);
+  } else if (candidate.class === "mcp") {
+    const classified = classifyMcp(candidate.operation);
+    if (scope !== "project" || !classified.eligible) return null;
+    rule = CLAUDE_RULE.mcp(classified.normalized.toolId);
+  } else {
+    return null;
+  }
+
+  const projectRoot = candidate.projectRoot ?? context.projectRoot;
+  const configDir = context.configDir ?? context.canonicalConfigDir;
+  const destination = scope === "project"
+    ? isNonEmptyString(projectRoot)
+      ? join(projectRoot, ".claude", "settings.local.json")
+      : undefined
+    : isNonEmptyString(configDir)
+      ? join(configDir, "settings.json")
+      : undefined;
+  return {
+    ...candidate,
+    rule,
+    ...(destination ? { destination } : {}),
+    restartRequired: false,
+  };
+}
+
+function renderClaudeShell(operation) {
+  const argv = operation?.argv;
+  if (!Array.isArray(argv) || argv.length < 2 || !argv.every(isNonEmptyString)) return null;
+  const command = argv.slice(0, 2).join(" ");
+  if (["git status", "git add"].includes(command)) return `Bash(${command}:*)`;
+  if (["git diff", "git log", "git show"].includes(command) && argv.length === 2) {
+    return `Bash(${command})`;
+  }
+  if (
+    argv.some((token) => /\s/.test(token)) ||
+    !(
+      ["git diff", "git log", "git show"].includes(command) ||
+      (argv.length === 4 && argv[0] === "cp" && argv[1] === "-n")
+    )
+  ) {
+    return null;
+  }
+  return `Bash(${argv.join(" ")})`;
+}
+
+/**
+ * Clone a complete Claude settings document and append selected allow rules.
+ * Existing settings retain their order and values; duplicate selected rules
+ * are collapsed without rewriting any other permission list.
+ *
+ * @param {string} sourceJson
+ * @param {string[]} selectedRules
+ */
+export function renderClaudeSettings(sourceJson, selectedRules) {
+  let settings;
+  try {
+    settings = JSON.parse(sourceJson);
+  } catch {
+    throw new TypeError("invalid Claude settings JSON");
+  }
+  if (!isPlainObject(settings)) throw new TypeError("Claude settings must contain an object");
+  if (!Array.isArray(selectedRules) || !selectedRules.every(isNonEmptyString)) {
+    throw new TypeError("selected Claude rules must contain strings");
+  }
+  if (selectedRules.some((rule) => rule.startsWith("Write("))) {
+    throw new TypeError("Write rules are not supported");
+  }
+
+  const permissions = settings.permissions === undefined ? {} : settings.permissions;
+  if (!isPlainObject(permissions)) throw new TypeError("permissions must contain an object");
+  const existing = permissions.allow === undefined ? [] : permissions.allow;
+  if (!Array.isArray(existing) || !existing.every(isNonEmptyString)) {
+    throw new TypeError("permissions.allow must contain strings");
+  }
+  const replacement = {
+    ...settings,
+    permissions: {
+      ...permissions,
+      allow: [...new Set([...existing, ...selectedRules])],
+    },
+  };
+  return `${JSON.stringify(replacement, null, 2)}\n`;
 }

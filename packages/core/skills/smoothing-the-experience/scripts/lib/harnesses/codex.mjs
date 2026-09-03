@@ -1,6 +1,9 @@
-import { readFile, readdir, realpath, stat } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { execFile } from "node:child_process";
+import { readFile, readdir, realpath, stat, unlink, writeFile } from "node:fs/promises";
 import { join, relative, resolve } from "node:path";
 import { makeEvidence } from "../evidence.mjs";
+import { GLOBAL_SHELL_CATALOG, PROJECT_SHELL_CATALOG, classifyShell } from "../safety/shell.mjs";
 
 const MAX_JSON_LINE_BYTES = 1024 * 1024;
 
@@ -495,4 +498,236 @@ function isObject(value) {
 
 function isNonEmptyString(value) {
   return typeof value === "string" && value.length > 0;
+}
+
+/**
+ * Render a literal-only prefix rule for the two suffix-safe Codex catalog
+ * entries. Passing explicit layer state also binds rendering to a proven
+ * destination; callers that only need a canonical body may omit it.
+ *
+ * @param {object} candidate
+ * @param {object} [context]
+ */
+export function renderCodexPermission(candidate, context = {}) {
+  if (!isObject(candidate) || candidate.harness && candidate.harness !== "codex") return null;
+  if (candidate.class !== "shell" || !["project", "global"].includes(candidate.scope)) return null;
+  const projectRoot = candidate.projectRoot ?? context.projectRoot;
+  const classified = classifyShell(candidate.operation, {
+    harness: "codex",
+    projectRoot: projectRoot ?? "",
+    realpath: context.realpath,
+  });
+  if (!classified.eligible) return null;
+  const command = classified.normalized.argv.slice(0, 2).join(" ");
+  const catalog = PROJECT_SHELL_CATALOG.get(command);
+  if (!catalog?.suffixSafe) return null;
+  if (candidate.scope === "global" && !GLOBAL_SHELL_CATALOG.has(command)) return null;
+
+  const layerState = candidate.layerState ?? context.layerState;
+  const codexHome = candidate.codexHome ?? context.codexHome;
+  let destination;
+  if (layerState !== undefined) {
+    destination = codexDestination({
+      scope: candidate.scope,
+      codexHome,
+      projectRoot,
+      layerState,
+    });
+    if (!destination) return null;
+  }
+
+  const pattern = catalog.prefix.map((token) => JSON.stringify(token)).join(", ");
+  const marker = isNonEmptyString(candidate.id) ? `# moe-smoothing:${candidate.id}\n` : "";
+  const rule = `${marker}prefix_rule(\n    pattern = [${pattern}],\n    decision = "allow",\n    justification = "Moe smoothing: repeated safe use",\n)\n`;
+  return {
+    ...candidate,
+    operation: classified.normalized,
+    rule,
+    ...(destination ? { destination: destination.path } : {}),
+    restartRequired: true,
+  };
+}
+
+/**
+ * Append selected Moe-owned blocks in stable-ID order while preserving an
+ * unrelated existing rule file byte-for-byte apart from normalized trailing
+ * newlines at the append boundary.
+ *
+ * @param {string} sourceContents
+ * @param {{id: string, rule: string}[]} selected
+ */
+export function renderCodexRules(sourceContents, selected) {
+  if (typeof sourceContents !== "string" || !Array.isArray(selected)) {
+    throw new TypeError("Codex rule source and selected blocks are required");
+  }
+  const byId = new Map();
+  for (const entry of selected) {
+    if (!isNonEmptyString(entry?.id) || !isNonEmptyString(entry?.rule)) {
+      throw new TypeError("selected Codex blocks require IDs and rules");
+    }
+    if (!entry.rule.startsWith(`# moe-smoothing:${entry.id}\n`)) {
+      throw new TypeError("Codex block marker does not match its ID");
+    }
+    byId.set(entry.id, entry.rule.trimEnd());
+  }
+  const sections = [
+    sourceContents.trimEnd(),
+    ...[...byId].sort(([left], [right]) => left.localeCompare(right)).map(([, rule]) => rule),
+  ].filter(Boolean);
+  return sections.length === 0 ? "" : `${sections.join("\n\n")}\n`;
+}
+
+/**
+ * Run one execpolicy check and accept only the currently recognized JSON
+ * result schema. Unknown fields and malformed match records fail closed.
+ *
+ * @param {object} options
+ */
+export async function inspectCodexDecision({
+  ruleFiles,
+  argv,
+  codexBin = "codex",
+  runExecpolicy = runExecpolicyFile,
+}) {
+  if (!Array.isArray(ruleFiles) || !ruleFiles.every(isNonEmptyString)) {
+    throw new TypeError("Codex rule files must contain paths");
+  }
+  if (!Array.isArray(argv) || argv.length === 0 || !argv.every(isNonEmptyString)) {
+    throw new TypeError("Codex witness argv is required");
+  }
+  const args = [
+    "execpolicy",
+    "check",
+    ...ruleFiles.flatMap((path) => ["--rules", path]),
+    "--",
+    ...argv,
+  ];
+  const output = await runExecpolicy(codexBin, args);
+  const parsed = parseExecpolicyOutput(output);
+  if (!isRecognizedDecision(parsed)) throw new Error("unsupported execpolicy output");
+  return {
+    decision: parsed.decision ?? "not_match",
+    matchedRules: parsed.matchedRules,
+  };
+}
+
+function runExecpolicyFile(codexBin, args) {
+  return new Promise((resolveRun, reject) => {
+    execFile(codexBin, args, { encoding: "utf8" }, (error, stdout, stderr) => {
+      if (error) {
+        reject(new Error(`codex execpolicy failed: ${stderr || error.message}`));
+      } else {
+        resolveRun({ stdout });
+      }
+    });
+  });
+}
+
+function parseExecpolicyOutput(output) {
+  if (isObject(output) && Object.hasOwn(output, "stdout")) return parseJson(output.stdout);
+  if (typeof output === "string" || Buffer.isBuffer(output)) return parseJson(output.toString());
+  return output;
+}
+
+function parseJson(value) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function isRecognizedDecision(value) {
+  if (!isObject(value)) return false;
+  if (Object.keys(value).some((key) => !["matchedRules", "decision"].includes(key))) return false;
+  if (!Array.isArray(value.matchedRules) || !value.matchedRules.every(isRecognizedMatch)) return false;
+  if (value.decision === undefined) return value.matchedRules.length === 0;
+  if (!["allow", "prompt", "forbidden"].includes(value.decision)) return false;
+  return value.matchedRules.length > 0;
+}
+
+function isRecognizedMatch(match) {
+  if (!isObject(match) || Object.keys(match).length !== 1 || !isObject(match.prefixRuleMatch)) {
+    return false;
+  }
+  const value = match.prefixRuleMatch;
+  if (
+    Object.keys(value).some(
+      (key) => !["matchedPrefix", "decision", "justification"].includes(key),
+    ) ||
+    !Array.isArray(value.matchedPrefix) ||
+    value.matchedPrefix.length === 0 ||
+    !value.matchedPrefix.every(isNonEmptyString) ||
+    !["allow", "prompt", "forbidden"].includes(value.decision)
+  ) {
+    return false;
+  }
+  return value.justification === undefined || typeof value.justification === "string";
+}
+
+/**
+ * Validate a complete replacement using positive and adjacent negative
+ * witnesses, then remove the temporary rule file regardless of outcome.
+ *
+ * @param {object} options
+ */
+export async function validateCodexReplacement({
+  contents,
+  ruleFiles,
+  witnesses,
+  codexBin = "codex",
+  tempDir,
+  runExecpolicy = runExecpolicyFile,
+  fsOps = { writeFile, unlink },
+}) {
+  if (typeof contents !== "string" || !isNonEmptyString(tempDir)) {
+    throw new TypeError("Codex replacement contents and temporary directory are required");
+  }
+  const normalizedWitnesses = normalizeWitnesses(witnesses);
+  const validationPath = resolve(tempDir, `moe-smoothing-${randomUUID()}.rules`);
+  const relativePath = relative(resolve(tempDir), validationPath);
+  if (relativePath.startsWith("..") || relativePath.startsWith("/")) {
+    throw new Error("Codex validation path escaped its temporary directory");
+  }
+  try {
+    await fsOps.writeFile(validationPath, contents, { flag: "wx", mode: 0o600 });
+    const activeRules = [...ruleFiles, validationPath];
+    for (const witness of normalizedWitnesses) {
+      const result = await inspectCodexDecision({
+        ruleFiles: activeRules,
+        argv: witness.argv,
+        codexBin,
+        runExecpolicy,
+      });
+      if (witness.expectation === "match" && result.decision !== "allow") {
+        throw new Error("Codex positive witness did not match the proposed rule");
+      }
+      if (witness.expectation === "not_match" && result.decision !== "not_match") {
+        throw new Error("Codex negative witness matched the proposed rule");
+      }
+    }
+  } finally {
+    try {
+      await fsOps.unlink(validationPath);
+    } catch (error) {
+      if (error?.code !== "ENOENT") throw error;
+    }
+  }
+}
+
+function normalizeWitnesses(witnesses) {
+  if (!Array.isArray(witnesses) || witnesses.length === 0) {
+    throw new TypeError("Codex validation witnesses are required");
+  }
+  return witnesses.map((witness) => {
+    if (Array.isArray(witness)) return { argv: witness, expectation: "match" };
+    if (
+      !isObject(witness) ||
+      !Array.isArray(witness.argv) ||
+      !["match", "not_match"].includes(witness.expectation)
+    ) {
+      throw new TypeError("invalid Codex validation witness");
+    }
+    return witness;
+  });
 }
