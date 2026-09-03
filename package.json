@@ -24,6 +24,7 @@
     "artifact:check": "node scripts/check-artifacts.mjs",
     "provenance": "node scripts/check-provenance.mjs",
     "provenance:selftest": "node scripts/test-provenance-red.mjs",
+    "memory:native:refresh": "node packages/memory/scripts/refresh-sqlite-vec.mjs",
     "tab:build": "cargo build --release --manifest-path packages/tab/Cargo.toml",
     "tab:test": "cargo test --manifest-path packages/tab/Cargo.toml",
     "tab:test:bindings": "pnpm tab:build && uv run --project packages/tab/bindings/python pytest packages/tab/bindings/python && (cd packages/tab/bindings/go && CGO_ENABLED=0 go test ./...) && pnpm --filter @bubstack/moe-tab test:ffi",
