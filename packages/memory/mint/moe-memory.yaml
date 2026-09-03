@@ -69,6 +69,11 @@ imported_works:
     artifact_roots: [agents/search-conversations.md, hooks/hooks.json, prompts/search-agent.md, dist/sync.d.ts, dist/sync.js, dist/sync-cli.d.ts, dist/sync-cli.js]
   - name: private-journal-mcp
     artifact_roots: [dist/journal/markdown.d.ts, dist/journal/markdown.js]
+  - name: huggingface-tokenizers
+  - name: onnxruntime-web
+  - name: sqlite-vec
+  - name: proper-lockfile
+  - name: marked
 
 # harnesses: no exclusions. All 8 adapters run.
 
