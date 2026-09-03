@@ -273,6 +273,30 @@ describe("smoothing helper CLI", () => {
     ).not.toContainEqual(expect.objectContaining({ id: selected?.id }));
   });
 
+  it.each(["system", "nested-project"])(
+    "suppresses Codex evidence matched by an active %s layer rule",
+    async (layer) => {
+      const fixture = await isolatedHome();
+      const initial = await scanReport(fixture);
+      const selected = initial.harnesses.find(({ harness }) => harness === "codex")?.suggestions[0];
+      expect(selected).toBeDefined();
+      const rulesDir =
+        layer === "system"
+          ? join(fixture.systemCodex, "rules")
+          : join(fixture.repo, "packages", "core", ".codex", "rules");
+      await mkdir(rulesDir, { recursive: true });
+      await writeFile(
+        join(rulesDir, "native.rules"),
+        'prefix_rule(\n    pattern = ["git", "status"],\n    decision = "allow",\n    justification = "fixture layer rule",\n)\n',
+      );
+
+      const rescanned = await scanReport(fixture);
+      expect(
+        rescanned.harnesses.find(({ harness }) => harness === "codex")?.suggestions,
+      ).not.toContainEqual(expect.objectContaining({ id: selected?.id }));
+    },
+  );
+
   it("reports installed unsupported harnesses from local commands and config roots", async () => {
     const fixture = await isolatedHome();
     const executedMarker = join(fixture.root, "cursor-was-executed");
@@ -559,12 +583,14 @@ async function isolatedHome({
   const home = join(root, "home");
   const claudeConfig = join(home, "claude-config");
   const codexHome = join(home, "codex-home");
+  const systemCodex = join(root, "system-codex");
   const repo = join(root, "repo");
   const repoB = join(root, "repo-b");
   const bin = join(root, "bin");
   await Promise.all([
     mkdir(join(claudeConfig, "projects"), { recursive: true }),
     mkdir(join(codexHome, "sessions"), { recursive: true }),
+    mkdir(systemCodex, { recursive: true }),
     mkdir(join(repo, "src"), { recursive: true }),
     mkdir(join(repoB, "src"), { recursive: true }),
     mkdir(bin, { recursive: true }),
@@ -624,9 +650,10 @@ async function isolatedHome({
     HOME: home,
     CLAUDE_CONFIG_DIR: claudeConfig,
     CODEX_HOME: codexHome,
+    FAKE_CODEX_SYSTEM: systemCodex,
     PATH: `${bin}:${dirname(process.execPath)}`,
   };
-  return { root, home, claudeConfig, codexHome, repo, repoB, fakeCodex, env };
+  return { root, home, claudeConfig, codexHome, systemCodex, repo, repoB, fakeCodex, env };
 }
 
 function makeCurrent(contents: string) {
@@ -667,8 +694,18 @@ if (process.argv[2] === "app-server") {
             config: {}
           },
           {
+            name: { type: "system", file: process.env.FAKE_CODEX_SYSTEM + "/config.toml" },
+            version: "sha256:${"c".repeat(64)}",
+            config: {}
+          },
+          {
             name: { type: "project", dotCodexFolder: process.cwd() + "/.codex" },
             version: "sha256:${"b".repeat(64)}",
+            config: {}
+          },
+          {
+            name: { type: "project", dotCodexFolder: process.cwd() + "/packages/core/.codex" },
+            version: "sha256:${"d".repeat(64)}",
             config: {}
           }
         ] } }) + "\\n");

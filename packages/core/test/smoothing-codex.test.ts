@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 // biome-ignore format: TypeScript's next-line suppression must cover this import.
 // @ts-expect-error — plain ESM production helper.
-import { CODEX_SCHEMA_DECODERS, classifyCodexActiveRules, codexDestination, collapseCodexRoots, decodeCodexLine, readCodexConfigLayers, readCodexSessions } from "../skills/smoothing-the-experience/scripts/lib/harnesses/codex.mjs";
+import { CODEX_SCHEMA_DECODERS, classifyCodexActiveRules, codexDestination, codexRuleDirectories, collapseCodexRoots, decodeCodexLine, readCodexConfigLayers, readCodexSessions } from "../skills/smoothing-the-experience/scripts/lib/harnesses/codex.mjs";
 
 const itemCompletedFixture = fileURLToPath(
   new URL("fixtures/smoothing-the-experience/codex/item-completed.jsonl", import.meta.url),
@@ -225,6 +225,11 @@ describe("Codex App Server layer proof", () => {
         },
       ],
     });
+    expect(codexRuleDirectories(state)).toEqual([
+      "/fixture/codex/rules",
+      "/etc/codex/rules",
+      "/fixture/repo-a/.codex/rules",
+    ]);
     expect(
       codexDestination({
         scope: "project",
