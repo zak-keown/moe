@@ -1,5 +1,6 @@
+import { constants } from "node:fs";
 import { access, readdir, stat } from "node:fs/promises";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 
 /**
  * @typedef {object} HarnessDiscovery
@@ -27,6 +28,16 @@ const KNOWN = [
   "opencode",
   "pi",
 ];
+const COMMANDS = {
+  claude: ["claude"],
+  codex: ["codex"],
+  cursor: ["cursor-agent", "cursor"],
+  copilot: ["copilot", "github-copilot"],
+  gemini: ["gemini"],
+  kimi: ["kimi"],
+  opencode: ["opencode"],
+  pi: ["pi"],
+};
 
 /**
  * @param {object} options
@@ -54,12 +65,20 @@ export async function discoverHarnesses({
   const roots = {
     claude: join(env.CLAUDE_CONFIG_DIR || join(homeDir, ".claude"), "projects"),
     codex: join(env.CODEX_HOME || join(homeDir, ".codex"), "sessions"),
+    cursor: join(homeDir, ".cursor"),
+    copilot: join(env.XDG_CONFIG_HOME || join(homeDir, ".config"), "github-copilot"),
+    gemini: join(homeDir, ".gemini"),
+    kimi: join(homeDir, ".kimi"),
+    opencode: join(env.XDG_CONFIG_HOME || join(homeDir, ".config"), "opencode"),
+    pi: join(homeDir, ".pi"),
   };
   const harnesses = [];
   for (const harness of KNOWN) {
     const installed =
       detectedCommands.has(harness) ||
-      (SUPPORTED.includes(harness) && (await exists(fsOps, roots[harness])));
+      COMMANDS[harness].some((command) => detectedCommands.has(command)) ||
+      (await exists(fsOps, roots[harness])) ||
+      (await commandExists(fsOps, env.PATH, COMMANDS[harness]));
     if (!installed) continue;
     harnesses.push(
       SUPPORTED.includes(harness)
@@ -81,4 +100,19 @@ async function exists(fsOps, path) {
   } catch {
     return false;
   }
+}
+
+async function commandExists(fsOps, pathValue, commands) {
+  if (typeof pathValue !== "string" || pathValue.length === 0) return false;
+  for (const directory of pathValue.split(delimiter).filter(Boolean)) {
+    for (const command of commands) {
+      try {
+        await fsOps.access(join(directory, command), constants.X_OK);
+        return true;
+      } catch {
+        // Best-effort local detection continues through every known path.
+      }
+    }
+  }
+  return false;
 }

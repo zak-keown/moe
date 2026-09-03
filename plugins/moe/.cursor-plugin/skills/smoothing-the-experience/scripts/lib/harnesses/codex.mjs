@@ -6,6 +6,9 @@ import { makeEvidence } from "../evidence.mjs";
 import { GLOBAL_SHELL_CATALOG, PROJECT_SHELL_CATALOG, classifyShell } from "../safety/shell.mjs";
 
 const MAX_JSON_LINE_BYTES = 1024 * 1024;
+const CONFIG_LAYER_VERSION = /^sha256:[0-9a-f]{64}$/;
+const RECOGNIZED_SUCCESS_STATUSES = new Set(["completed", "success", "succeeded"]);
+const RECOGNIZED_FAILURE_STATUSES = new Set(["failed", "error"]);
 
 /**
  * The three rollout envelopes documented by Codex. Additional typed operations
@@ -160,9 +163,13 @@ function shellOperation(command) {
 }
 
 function outcomeFor(value) {
-  if (value?.status === "denied" || value?.status === "rejected") return "denied";
-  if (value?.exit_code === 0 || ["completed", "success", "succeeded"].includes(value?.status)) return "success";
-  if (typeof value?.exit_code === "number" || ["failed", "error"].includes(value?.status)) return "failed";
+  const status = value?.status;
+  const exitCode = value?.exit_code;
+  if (status === "denied" || status === "rejected") return "denied";
+  if (typeof exitCode === "number" && exitCode !== 0) return "failed";
+  if (RECOGNIZED_FAILURE_STATUSES.has(status)) return "failed";
+  if (status !== undefined && !RECOGNIZED_SUCCESS_STATUSES.has(status)) return "unknown";
+  if (exitCode === 0 || RECOGNIZED_SUCCESS_STATUSES.has(status)) return "success";
   return "unknown";
 }
 
@@ -356,7 +363,9 @@ export async function readCodexConfigLayers({ codexBin, cwd, spawnProcess, timeo
   try {
     child = spawnProcess(codexBin, ["app-server", "--stdio", "--strict-config"], { stdio: ["pipe", "pipe", "pipe"] });
     const client = jsonLineClient(child, timeoutMs);
-    await client.request({ id: 1, method: "initialize", params: { clientInfo: { name: "moe-smoothing", version: "1" }, capabilities: {} } });
+    const initialized = await client.request({ id: 1, method: "initialize", params: { clientInfo: { name: "moe-smoothing", version: "1" }, capabilities: {} } });
+    if (!isInitializeResponse(initialized)) throw new Error("unsupported Codex initialize response");
+    client.notify({ method: "initialized" });
     const response = await client.request({ id: 2, method: "config/read", params: { cwd, includeLayers: true } });
     return parseEnabledLayers(response);
   } catch {
@@ -410,6 +419,10 @@ function jsonLineClient(child, timeoutMs) {
     }
   });
   child.once?.("error", fail);
+  const writeMessage = (message) => {
+    if (terminalError) throw terminalError;
+    child.stdin.write(`${JSON.stringify(message)}\n`);
+  };
   return {
     request(message) {
       if (terminalError) return Promise.reject(terminalError);
@@ -420,7 +433,7 @@ function jsonLineClient(child, timeoutMs) {
         }, timeoutMs);
         pending.set(message.id, { resolve: resolveRequest, reject, timer });
         try {
-          child.stdin.write(`${JSON.stringify(message)}\n`);
+          writeMessage(message);
         } catch (error) {
           clearTimeout(timer);
           pending.delete(message.id);
@@ -428,20 +441,101 @@ function jsonLineClient(child, timeoutMs) {
         }
       });
     },
+    notify(message) {
+      if (!isObject(message) || Object.hasOwn(message, "id") || !isNonEmptyString(message.method)) {
+        throw new TypeError("Codex App Server notification is invalid");
+      }
+      writeMessage(message);
+    },
   };
 }
 
 function parseEnabledLayers(response) {
-  const layers = Array.isArray(response?.layers) ? response.layers.filter(isObject) : [];
-  const trustedProjectRoots = layers
-    .filter((layer) => layer.scope === "project" && layer.enabled === true && layer.trusted === true && typeof layer.root === "string")
-    .map((layer) => layer.root);
+  if (
+    !hasOnlyKeys(response, ["config", "origins", "layers"]) ||
+    !isObject(response.config) ||
+    !isObject(response.origins) ||
+    !Array.isArray(response.layers) ||
+    !Object.values(response.origins).every(isConfigLayerMetadata)
+  ) {
+    throw new Error("unsupported Codex config/read response");
+  }
+  const layers = response.layers.map(parseConfigLayer);
+  if (layers.some((layer) => layer === null)) {
+    throw new Error("unsupported Codex config layer");
+  }
   return {
     status: "available",
-    layers: layers.map((layer) => ({ scope: layer.scope, enabled: layer.enabled === true, trusted: layer.trusted === true, root: layer.root })).filter((layer) => typeof layer.scope === "string"),
-    trustedProjectRoots,
-    userLayerEnabled: layers.some((layer) => layer.scope === "user" && layer.enabled === true),
+    layers,
   };
+}
+
+function isInitializeResponse(value) {
+  return (
+    hasOnlyKeys(value, ["userAgent", "codexHome", "platformFamily", "platformOs"]) &&
+    isNonEmptyString(value.userAgent) &&
+    isNonEmptyString(value.codexHome) &&
+    isNonEmptyString(value.platformFamily) &&
+    isNonEmptyString(value.platformOs)
+  );
+}
+
+function parseConfigLayer(layer) {
+  if (
+    !hasOnlyKeys(layer, ["name", "version", "config", "disabledReason"]) ||
+    !isConfigLayerSource(layer.name) ||
+    !isConfigLayerVersion(layer.version) ||
+    !Object.hasOwn(layer, "config") ||
+    !(layer.disabledReason === undefined || layer.disabledReason === null || typeof layer.disabledReason === "string")
+  ) {
+    return null;
+  }
+  return {
+    name: { ...layer.name },
+    version: layer.version,
+    config: layer.config,
+    ...(Object.hasOwn(layer, "disabledReason") ? { disabledReason: layer.disabledReason } : {}),
+  };
+}
+
+function isConfigLayerMetadata(value) {
+  return (
+    hasOnlyKeys(value, ["name", "version"]) &&
+    isConfigLayerSource(value.name) &&
+    isConfigLayerVersion(value.version)
+  );
+}
+
+function isConfigLayerVersion(value) {
+  return typeof value === "string" && CONFIG_LAYER_VERSION.test(value);
+}
+
+function isConfigLayerSource(source) {
+  if (!isObject(source) || !isNonEmptyString(source.type)) return false;
+  switch (source.type) {
+    case "packagedDefaults":
+    case "system":
+    case "legacyManagedConfigTomlFromFile":
+      return hasOnlyKeys(source, ["type", "file"]) && isNonEmptyString(source.file);
+    case "mdm":
+      return hasOnlyKeys(source, ["type", "domain", "key"]) && isNonEmptyString(source.domain) && isNonEmptyString(source.key);
+    case "enterpriseManaged":
+      return hasOnlyKeys(source, ["type", "id", "name"]) && isNonEmptyString(source.id) && isNonEmptyString(source.name);
+    case "user":
+      return (
+        hasOnlyKeys(source, ["type", "file", "profile"]) &&
+        isNonEmptyString(source.file) &&
+        Object.hasOwn(source, "profile") &&
+        (source.profile === null || isNonEmptyString(source.profile))
+      );
+    case "project":
+      return hasOnlyKeys(source, ["type", "dotCodexFolder"]) && isNonEmptyString(source.dotCodexFolder);
+    case "sessionFlags":
+    case "legacyManagedConfigTomlFromMdm":
+      return hasOnlyKeys(source, ["type"]);
+    default:
+      return false;
+  }
 }
 
 /**
@@ -462,20 +556,21 @@ export function codexDestination({ scope, codexHome, projectRoot, layerState }) 
 }
 
 function hasTrustedProjectLayer(layers, projectRoot) {
-  return Array.isArray(layers) && layers.some(
-    (layer) =>
-      isObject(layer) &&
-      layer.scope === "project" &&
-      layer.enabled === true &&
-      layer.trusted === true &&
-      layer.root === projectRoot,
-  );
+  return Array.isArray(layers) && layers.some((layer) => {
+    const parsed = parseConfigLayer(layer);
+    return (
+      parsed?.name.type === "project" &&
+      parsed.disabledReason == null &&
+      parsed.name.dotCodexFolder === join(projectRoot, ".codex")
+    );
+  });
 }
 
 function hasEnabledUserLayer(layers) {
-  return Array.isArray(layers) && layers.some(
-    (layer) => isObject(layer) && layer.scope === "user" && layer.enabled === true,
-  );
+  return Array.isArray(layers) && layers.some((layer) => {
+    const parsed = parseConfigLayer(layer);
+    return parsed?.name.type === "user" && parsed.disabledReason == null;
+  });
 }
 
 function matchesPrefix(operation, prefixes) {
@@ -494,6 +589,10 @@ function validPrefix(prefix) {
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function hasOnlyKeys(value, allowed) {
+  return isObject(value) && Object.keys(value).every((key) => allowed.includes(key));
 }
 
 function isNonEmptyString(value) {
@@ -602,6 +701,55 @@ export function renderCodexRules(sourceContents, selected) {
 }
 
 /**
+ * Classify shell evidence against every active native Codex rule before
+ * candidate construction. The input remains untouched, duplicate witnesses
+ * are evaluated once, and an unavailable or drifting execpolicy result rejects
+ * this adapter rather than manufacturing permission provenance.
+ *
+ * @param {object} options
+ */
+export async function classifyCodexActiveRules({
+  evidence,
+  ruleFiles,
+  codexBin = "codex",
+  runExecpolicy = runExecpolicyFile,
+  timeoutMs = 2000,
+}) {
+  if (!Array.isArray(evidence)) throw new TypeError("Codex evidence must be an array");
+  if (!Array.isArray(ruleFiles) || !ruleFiles.every(isNonEmptyString)) {
+    throw new TypeError("Codex rule files must contain paths");
+  }
+  if (ruleFiles.length === 0) return [...evidence];
+
+  const decisions = new Map();
+  for (const record of evidence) {
+    if (record?.class !== "shell") continue;
+    const argv = record.operation?.argv ?? conservativeTokens(record.operation?.command);
+    if (!Array.isArray(argv) || argv.length === 0 || !argv.every(isNonEmptyString)) continue;
+    const key = JSON.stringify(argv);
+    if (decisions.has(key)) continue;
+    const result = await inspectCodexDecision({
+      ruleFiles,
+      argv,
+      codexBin,
+      runExecpolicy,
+      timeoutMs,
+    });
+    decisions.set(key, result.decision);
+  }
+
+  return evidence.map((record) => {
+    if (record?.class !== "shell") return record;
+    const argv = record.operation?.argv ?? conservativeTokens(record.operation?.command);
+    if (!Array.isArray(argv)) return record;
+    const decision = decisions.get(JSON.stringify(argv));
+    return ["allow", "prompt", "forbidden"].includes(decision)
+      ? { ...record, approvalProvenance: "existing-rule" }
+      : record;
+  });
+}
+
+/**
  * Run one execpolicy check and accept only the currently recognized JSON
  * result schema. Unknown fields and malformed match records fail closed.
  *
@@ -612,6 +760,7 @@ export async function inspectCodexDecision({
   argv,
   codexBin = "codex",
   runExecpolicy = runExecpolicyFile,
+  timeoutMs = 2000,
 }) {
   if (!Array.isArray(ruleFiles) || !ruleFiles.every(isNonEmptyString)) {
     throw new TypeError("Codex rule files must contain paths");
@@ -626,7 +775,13 @@ export async function inspectCodexDecision({
     "--",
     ...argv,
   ];
-  const output = await runExecpolicy(codexBin, args);
+  if (!Number.isInteger(timeoutMs) || timeoutMs <= 0) {
+    throw new TypeError("Codex execpolicy timeout must be a positive integer");
+  }
+  const output = await boundedExecpolicy(
+    () => runExecpolicy(codexBin, args, { timeoutMs }),
+    timeoutMs,
+  );
   const parsed = parseExecpolicyOutput(output);
   if (!isRecognizedDecision(parsed)) throw new Error("unsupported execpolicy output");
   return {
@@ -635,9 +790,9 @@ export async function inspectCodexDecision({
   };
 }
 
-function runExecpolicyFile(codexBin, args) {
+function runExecpolicyFile(codexBin, args, { timeoutMs = 2000 } = {}) {
   return new Promise((resolveRun, reject) => {
-    execFile(codexBin, args, { encoding: "utf8" }, (error, stdout, stderr) => {
+    execFile(codexBin, args, { encoding: "utf8", maxBuffer: MAX_JSON_LINE_BYTES, timeout: timeoutMs }, (error, stdout, stderr) => {
       if (error) {
         reject(new Error(`codex execpolicy failed: ${stderr || error.message}`));
       } else {
@@ -645,6 +800,19 @@ function runExecpolicyFile(codexBin, args) {
       }
     });
   });
+}
+
+function boundedExecpolicy(run, timeoutMs) {
+  let timer;
+  return Promise.race([
+    Promise.resolve().then(run),
+    new Promise((_, reject) => {
+      timer = setTimeout(
+        () => reject(new Error("Codex execpolicy timed out")),
+        timeoutMs,
+      );
+    }),
+  ]).finally(() => clearTimeout(timer));
 }
 
 function parseExecpolicyOutput(output) {
