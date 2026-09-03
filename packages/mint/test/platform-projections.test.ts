@@ -101,7 +101,7 @@ describe('registry projections', () => {
       },
     }
 
-    expect(renderPublicCatalog(reordered, recordsFor(platform)).split('\n')[4]).toBe(
+    expect(renderPublicCatalog(reordered, recordsFor(reordered)).split('\n')[4]).toBe(
       '| Plugin | npm package | Summary | Claude Code | Cursor | Codex | Kimi | OpenCode | Pi | Agent Plugins 1.0 | GitHub Copilot CLI |',
     )
   })
@@ -119,7 +119,7 @@ describe('registry projections', () => {
       },
     }
 
-    expect(renderPublicCatalog(escaped, recordsFor(platform)).split('\n')[4]).toContain('Cursor \\| preview channel')
+    expect(renderPublicCatalog(escaped, recordsFor(escaped)).split('\n')[4]).toContain('Cursor \\| preview channel')
   })
 
   it('rejects a post-load default-profile mutation with a structured projection diagnostic', async () => {
@@ -135,7 +135,7 @@ describe('registry projections', () => {
       },
     }
 
-    expect(() => renderMarketplace(invalid, recordsFor(platform))).toThrowError(expect.objectContaining({
+    expect(() => renderMarketplace(invalid, recordsFor(invalid))).toThrowError(expect.objectContaining({
       diagnostic: expect.objectContaining({
         code: 'PROJECTION_PROFILE_INVALID',
         source: 'moe-platform.yaml',
@@ -189,12 +189,10 @@ describe('registry projections', () => {
   it('writes allowed relative projection destinations against the repository root, not the current working directory', async () => {
     const platform = await resolvePlatform(REPO_ROOT)
     const root = mkdtempSync(join(tmpdir(), 'mint-projection-root-'))
-    const isolated = {
-      ...platform,
-      repositoryRoot: root,
-    }
+    platform.repositoryRoot = root
+    const records = recordsFor(platform)
     expect(process.cwd()).not.toBe(root)
-    await writeRegistryProjections(isolated, recordsFor(platform), {
+    await writeRegistryProjections(platform, records, {
       marketplacePath: '.claude-plugin/marketplace.json',
       publicCatalogPath: 'docs/moe/generated/plugin-catalog.md',
     })
