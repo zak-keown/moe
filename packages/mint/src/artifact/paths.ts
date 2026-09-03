@@ -1,0 +1,73 @@
+import { isAbsolute, posix } from 'node:path'
+
+/** A slash-separated, artifact-root-relative path that has passed lexical validation. */
+export type ArtifactPath = string & { readonly __artifactPath: unique symbol }
+
+const GLOB_METACHARACTER_RE = /[*?\[\]{}!]/
+
+// These files and roots have a compositor authority. Keeping the policy here
+// lets every writer use one boundary rather than accumulating local deny lists.
+export const RESERVED_ARTIFACT_FILES = new Set([
+  'package.json',
+  'LICENSE',
+  'NOTICE',
+  'THIRD_PARTY_NOTICES',
+])
+export const RESERVED_ARTIFACT_ROOTS = ['.moe', '.moe-mint'] as const
+
+export class ArtifactPathError extends Error {
+  constructor(
+    readonly path: string,
+    readonly reason: string,
+  ) {
+    super(`invalid artifact path "${path}": ${reason}`)
+    this.name = 'ArtifactPathError'
+  }
+}
+
+/**
+ * Validates a payload path without consulting the host filesystem. Artifact
+ * paths deliberately use POSIX separators on every contributor platform.
+ */
+export function artifactPath(value: string): ArtifactPath {
+  if (value.length === 0) throw new ArtifactPathError(value, 'path must not be empty')
+  if (isAbsolute(value) || posix.isAbsolute(value)) throw new ArtifactPathError(value, 'path must be relative')
+  if (/^[A-Za-z]:\//.test(value)) throw new ArtifactPathError(value, 'path must not use a Windows drive prefix')
+  if (value.includes('\\')) throw new ArtifactPathError(value, 'path must use slash separators')
+  if (GLOB_METACHARACTER_RE.test(value)) throw new ArtifactPathError(value, 'globs are not payload roots')
+  const segments = value.split('/')
+  if (segments.some((segment) => segment.length === 0 || segment === '.' || segment === '..')) {
+    throw new ArtifactPathError(value, 'path must not contain empty, dot, or parent segments')
+  }
+  const normalized = posix.normalize(value)
+  if (normalized !== value || normalized === '.') {
+    throw new ArtifactPathError(value, 'path must already be normalized')
+  }
+  return value as ArtifactPath
+}
+
+export function joinArtifactPath(base: ArtifactPath, child: string): ArtifactPath {
+  return artifactPath(`${base}/${child}`)
+}
+
+export function isReservedArtifactDestination(path: ArtifactPath): boolean {
+  return RESERVED_ARTIFACT_FILES.has(path)
+    || RESERVED_ARTIFACT_ROOTS.some((root) => path === root || path.startsWith(`${root}/`))
+}
+
+/**
+ * The key is intentionally independent of the contributor locale. JavaScript
+ * default case conversion is Unicode-aware and locale-independent. The
+ * uppercase/lowercase round trip also applies the multi-character and final
+ * sigma folds that a bare lowercase conversion misses (for example ß → ss).
+ * NFC makes canonically equivalent names collide before a case-insensitive
+ * consumer can observe an ambiguous artifact.
+ */
+export function artifactCollisionKey(path: ArtifactPath): string {
+  return path.normalize('NFC').toUpperCase().toLowerCase()
+}
+
+/** Raw UTF-8 order is the artifact order, never host collation order. */
+export function compareArtifactPaths(left: ArtifactPath, right: ArtifactPath): number {
+  return Buffer.compare(Buffer.from(left, 'utf8'), Buffer.from(right, 'utf8'))
+}
