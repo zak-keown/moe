@@ -19,12 +19,14 @@ COMMAND="$(printf '%s' "$EVENT" | grep -o '"command"\s*:\s*"[^"]*"' | head -1 | 
 if ! printf '%s' "$COMMAND" | grep -qE 'git\s+commit\b'; then
   exit 0
 fi
-if ! printf '%s' "$COMMAND" | grep -qF 'fix(review)'; then
+if ! printf '%s' "$EVENT" | grep -qF 'fix(review)'; then
   exit 0
 fi
 
 # Validate format: fix(review): CR-### — <title>
-if ! printf '%s' "$COMMAND" | grep -qE 'fix\(review\):\s*CR-[0-9]{3}\s*(—|--)\s*.+'; then
+# Match against EVENT, not COMMAND — grep's [^"]* truncates at escaped quotes
+# in the JSON value, so the extracted COMMAND loses the commit message body.
+if ! printf '%s' "$EVENT" | grep -qE 'fix\(review\):\s*CR-[0-9]{3}\s*(—|--)\s*.+'; then
   cat >&2 <<'MSG'
 BLOCKED: review-fix commit message does not match the required format.
 Expected: fix(review): CR-### — <title>
