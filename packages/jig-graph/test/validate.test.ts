@@ -1,5 +1,4 @@
 import type { JigContext } from "@bubstack/moe-jig/extension";
-import type { PlanTask } from "@bubstack/moe-jig/parser";
 import { describe, expect, it, vi } from "vitest";
 import type { MoedexClient } from "../src/moedex.js";
 import { validatePlanAgainstGraph } from "../src/validate.js";
@@ -78,6 +77,129 @@ describe("validatePlanAgainstGraph", () => {
 
     const phantoms = findings.filter((f) => f.check === "phantom");
     expect(phantoms).toHaveLength(1);
+  });
+
+  it("reports missing-edge when tasks are coupled but have no depends_on", async () => {
+    const ctx = await makeCtx();
+    const client = makeMockClient({
+      impactAnalysis: vi.fn().mockResolvedValue({ results: [] }),
+      traceConsumers: vi.fn().mockImplementation((files: string[]) => {
+        if (files.includes("src/module-b.ts")) {
+          return { results: [{ rel_path: "src/module-a.ts", score: 0.8, repo: "moe" }] };
+        }
+        return { results: [] };
+      }),
+    });
+
+    const twoTaskPlan = `
+# Test Plan
+
+**Goal:** Refactor modules
+
+---
+
+### Task 1: Update Module A
+
+**depends_on:** []
+
+**Files:**
+- Modify: \`src/module-a.ts\`
+
+**Interfaces:**
+- Consumes: None
+- Produces: \`moduleA(): void\`
+
+- [ ] **Step 1: Implement**
+
+### Task 2: Update Module B
+
+**depends_on:** []
+
+**Files:**
+- Modify: \`src/module-b.ts\`
+
+**Interfaces:**
+- Consumes: None
+- Produces: \`moduleB(): void\`
+
+- [ ] **Step 1: Implement**
+`;
+
+    const findings = await validatePlanAgainstGraph(twoTaskPlan, ctx, client);
+    const missingEdge = findings.filter((f) => f.check === "missing-edge");
+    expect(missingEdge).toHaveLength(1);
+    expect(missingEdge[0]!.tasks).toContain(1);
+    expect(missingEdge[0]!.tasks).toContain(2);
+  });
+
+  it("reports wave-conflict when same-wave tasks are coupled", async () => {
+    const ctx = await makeCtx();
+    const client = makeMockClient({
+      impactAnalysis: vi.fn().mockResolvedValue({ results: [] }),
+      traceConsumers: vi.fn().mockImplementation((files: string[]) => {
+        if (files.includes("src/module-a.ts")) {
+          return { results: [{ rel_path: "src/module-b.ts", score: 0.7, repo: "moe" }] };
+        }
+        return { results: [] };
+      }),
+    });
+
+    const twoTaskPlan = `
+# Test Plan
+
+**Goal:** Refactor modules
+
+---
+
+### Task 1: Update Module A
+
+**depends_on:** []
+
+**Files:**
+- Modify: \`src/module-a.ts\`
+
+**Interfaces:**
+- Consumes: None
+- Produces: \`moduleA(): void\`
+
+- [ ] **Step 1: Implement**
+
+### Task 2: Update Module B
+
+**depends_on:** []
+
+**Files:**
+- Modify: \`src/module-b.ts\`
+
+**Interfaces:**
+- Consumes: None
+- Produces: \`moduleB(): void\`
+
+- [ ] **Step 1: Implement**
+`;
+
+    const findings = await validatePlanAgainstGraph(twoTaskPlan, ctx, client);
+    const waveConflicts = findings.filter((f) => f.check === "wave-conflict");
+    expect(waveConflicts).toHaveLength(1);
+    expect(waveConflicts[0]!.tasks).toContain(1);
+    expect(waveConflicts[0]!.tasks).toContain(2);
+  });
+
+  it("skips graph checks when graphChecks is false", async () => {
+    const ctx = await makeCtx();
+    const client = makeMockClient();
+
+    const findings = await validatePlanAgainstGraph(PLAN_WITH_GAP, ctx, client, {
+      graphChecks: false,
+      checkPhantoms: true,
+      cwd: "/fake/root",
+    });
+
+    expect(client.impactAnalysis).not.toHaveBeenCalled();
+    expect(client.traceConsumers).not.toHaveBeenCalled();
+    const phantoms = findings.filter((f) => f.check === "phantom");
+    expect(phantoms).toHaveLength(1);
+    expect(findings.every((f) => f.check === "phantom")).toBe(true);
   });
 
   it("returns empty findings for a well-covered plan", async () => {
