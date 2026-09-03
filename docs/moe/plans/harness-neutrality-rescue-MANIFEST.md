@@ -17,7 +17,7 @@ plans:
   - id: semantic-vocabulary-and-core-migration
     plan: docs/moe/plans/2026-09-03-harness-neutrality-02-semantics.md
     depends_on: [renderer-and-adapter-correctness]
-    status: pending
+    status: done
   - id: crew-installer-and-host-ux
     plan: docs/moe/plans/2026-09-03-harness-neutrality-03-host-ux.md
     depends_on: [semantic-vocabulary-and-core-migration]
