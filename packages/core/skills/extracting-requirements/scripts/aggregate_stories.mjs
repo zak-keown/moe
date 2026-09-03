@@ -25,7 +25,9 @@ export function loadStories(paths, warn = (message) => process.stderr.write(`${m
   for (const path of paths) {
     const data = JSON.parse(readFileSync(path, "utf8"));
     if (Array.isArray(data)) stories.push(...data);
-    else if (data && typeof data === "object" && "stories" in data) stories.push(...data.stories);
+    else if (data && typeof data === "object" && Array.isArray(data.stories)) {
+      stories.push(...data.stories);
+    }
     else warn(`warning: ${path} has unexpected format, skipping`);
   }
   return stories;
@@ -181,22 +183,35 @@ function help(program) {
 
 function parseArgs(args) {
   let outputDir;
+  let outputDirSet = false;
+  let optionsEnded = false;
   const jsonFiles = [];
   const unrecognized = [];
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
+    if (optionsEnded) {
+      jsonFiles.push(arg);
+      continue;
+    }
+    if (arg === "--") {
+      optionsEnded = true;
+      continue;
+    }
     if (arg === "-h" || arg === "--help") return { help: true };
-    if (arg === "-o" || arg === "--output-dir") {
+    if (arg === "-o" || arg === "--output-dir" || arg === "--output-d") {
       const value = args[++index];
       if (value === undefined || value.startsWith("-")) {
         return { error: "argument -o/--output-dir: expected one argument" };
       }
       outputDir = value;
+      outputDirSet = true;
     } else if (arg.startsWith("--output-dir=")) {
       outputDir = arg.slice("--output-dir=".length);
+      outputDirSet = true;
     } else if (arg.startsWith("-o") && arg.length > 2) {
       outputDir = arg.slice(2);
+      outputDirSet = true;
     } else if (arg.startsWith("-")) {
       unrecognized.push(arg);
     } else {
@@ -206,7 +221,7 @@ function parseArgs(args) {
 
   if (unrecognized.length > 0) return { error: `unrecognized arguments: ${unrecognized.join(" ")}` };
   const required = [];
-  if (!outputDir) required.push("-o/--output-dir");
+  if (!outputDirSet) required.push("-o/--output-dir");
   if (jsonFiles.length === 0) required.push("json_files");
   if (required.length > 0) {
     return { error: `the following arguments are required: ${required.join(", ")}` };
@@ -240,9 +255,10 @@ export async function main(args) {
   }
 
   const epics = assignIds(groupIntoEpics(dedupStories(stories)));
-  mkdirSync(options.outputDir, { recursive: true });
-  for (const name of readdirSync(options.outputDir)) {
-    if (/^EPIC-.*\.md$/.test(name)) unlinkSync(join(options.outputDir, name));
+  const outputDirectoryPath = options.outputDir || ".";
+  mkdirSync(outputDirectoryPath, { recursive: true });
+  for (const name of readdirSync(outputDirectoryPath)) {
+    if (/^EPIC-.*\.md$/.test(name)) unlinkSync(join(outputDirectoryPath, name));
   }
 
   for (const [theme, epicStories] of epics) {

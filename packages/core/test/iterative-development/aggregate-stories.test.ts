@@ -230,6 +230,30 @@ describe("aggregate_stories", () => {
     );
   });
 
+  it.each([
+    ["null wrapper", { stories: null }],
+    ["object wrapper", { stories: {} }],
+    ["string wrapper", { stories: "abc" }],
+    ["number wrapper", { stories: 42 }],
+    ["null top level", null],
+    ["string top level", "abc"],
+    ["number top level", 42],
+  ])("warns and reaches the no-stories result for a malformed %s", (_label, value) => {
+    const root = tempDir("aggregate-stories-malformed-");
+    const output = join(root, "requirements");
+    const input = writeJson(root, "malformed.json", value);
+
+    const result = run(output, [input]);
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe(
+      `warning: ${input} has unexpected format, skipping\n` +
+        "error: no stories found in input files\n",
+    );
+    expect(() => readdirSync(output)).toThrow();
+  });
+
   it("returns exit 1 for valid input containing no stories", () => {
     const root = tempDir("aggregate-stories-empty-");
     const output = join(root, "requirements");
@@ -289,6 +313,55 @@ describe("aggregate_stories", () => {
       );
     },
   );
+
+  it("honors -- so an option-looking JSON filename remains positional", () => {
+    const root = tempDir("aggregate-stories-end-options-");
+    writeJson(root, "-stories.json", [{ title: "End options", epic_theme: "CLI", sources: [] }]);
+
+    const result = runHelper(HELPER, ["-o", "requirements", "--", "-stories.json"], root);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe(
+      "wrote requirements/EPIC-001.md (1 stories)\nOK: 1 epics, 1 stories\n",
+    );
+    expect(readFileSync(join(root, "requirements", "EPIC-001.md"), "utf8")).toContain(
+      "**Title:** End options",
+    );
+  });
+
+  it("accepts argparse's unique --output-d abbreviation", () => {
+    const root = tempDir("aggregate-stories-abbreviation-");
+    writeJson(root, "stories.json", [{ title: "Abbreviated", epic_theme: "CLI", sources: [] }]);
+
+    const result = runHelper(HELPER, ["--output-d", "requirements", "stories.json"], root);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe(
+      "wrote requirements/EPIC-001.md (1 stories)\nOK: 1 epics, 1 stories\n",
+    );
+    expect(readFileSync(join(root, "requirements", "EPIC-001.md"), "utf8")).toContain(
+      "**Title:** Abbreviated",
+    );
+  });
+
+  it("treats --output-dir= as the current working directory", () => {
+    const root = tempDir("aggregate-stories-empty-output-");
+    writeJson(root, "stories.json", [
+      { title: "Current directory", epic_theme: "CLI", sources: [] },
+    ]);
+
+    const result = runHelper(HELPER, ["--output-dir=", "stories.json"], root);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe("wrote EPIC-001.md (1 stories)\nOK: 1 epics, 1 stories\n");
+    expect(readFileSync(join(root, "EPIC-001.md"), "utf8")).toContain(
+      "**Title:** Current directory",
+    );
+    expect(readFileSync(join(root, "stories.json"), "utf8")).not.toBe("");
+  });
 
   it("returns exit 2 when an input file is missing", () => {
     const root = tempDir("aggregate-stories-missing-");
