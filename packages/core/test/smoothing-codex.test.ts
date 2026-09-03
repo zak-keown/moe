@@ -2,15 +2,9 @@ import { EventEmitter } from "node:events";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+// biome-ignore format: TypeScript's next-line suppression must cover this import.
 // @ts-expect-error — plain ESM production helper.
-import {
-  CODEX_SCHEMA_DECODERS,
-  codexDestination,
-  collapseCodexRoots,
-  decodeCodexLine,
-  readCodexConfigLayers,
-  readCodexSessions,
-} from "../skills/smoothing-the-experience/scripts/lib/harnesses/codex.mjs";
+import { CODEX_SCHEMA_DECODERS, codexDestination, collapseCodexRoots, decodeCodexLine, readCodexConfigLayers, readCodexSessions } from "../skills/smoothing-the-experience/scripts/lib/harnesses/codex.mjs";
 
 const itemCompletedFixture = fileURLToPath(
   new URL("fixtures/smoothing-the-experience/codex/item-completed.jsonl", import.meta.url),
@@ -207,7 +201,7 @@ describe("Codex App Server layer proof", () => {
     });
   });
 
-  it.each(["timeout", "malformed", "error"])(
+  it.each(["timeout", "malformed", "error"] as const)(
     "returns unavailable when config/read %s",
     async (mode) => {
       const state = await readCodexConfigLayers({
