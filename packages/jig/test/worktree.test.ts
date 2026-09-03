@@ -88,3 +88,87 @@ describe("worktreeCreate", () => {
     expect(() => worktreeCreate("dup-branch", { cwd: repo })).toThrow();
   });
 });
+
+describe("worktreeRemove", () => {
+  let repo: string;
+
+  beforeEach(() => {
+    repo = makeRepo();
+  });
+
+  afterEach(() => {
+    try {
+      const list = gitIn(repo, "worktree", "list", "--porcelain");
+      for (const line of list.split("\n")) {
+        if (line.startsWith("worktree ") && !line.endsWith(repo)) {
+          gitIn(repo, "worktree", "remove", "--force", line.replace("worktree ", ""));
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    rmSync(repo, { recursive: true, force: true });
+  });
+
+  it("removes a jig-created worktree by branch name", async () => {
+    const { worktreeCreate, worktreeRemove } = await import("../src/worktree.js");
+    const path = worktreeCreate("remove-me", { cwd: repo });
+    expect(existsSync(path)).toBe(true);
+    worktreeRemove("remove-me", { cwd: repo });
+    expect(existsSync(path)).toBe(false);
+  });
+
+  it("refuses to remove a worktree outside .moe/worktrees/", async () => {
+    const { worktreeRemove } = await import("../src/worktree.js");
+    expect(() => worktreeRemove("/tmp/some-other-worktree", { cwd: repo })).toThrow(
+      /outside \.moe\/worktrees/,
+    );
+  });
+});
+
+describe("worktreeValidate", () => {
+  let repo: string;
+
+  beforeEach(() => {
+    repo = makeRepo();
+  });
+
+  afterEach(() => {
+    try {
+      const list = gitIn(repo, "worktree", "list", "--porcelain");
+      for (const line of list.split("\n")) {
+        if (line.startsWith("worktree ") && !line.endsWith(repo)) {
+          gitIn(repo, "worktree", "remove", "--force", line.replace("worktree ", ""));
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    rmSync(repo, { recursive: true, force: true });
+  });
+
+  it("passes for valid pairwise-unique worktrees", async () => {
+    const { worktreeCreate, worktreeValidate } = await import("../src/worktree.js");
+    const a = worktreeCreate("wt-a", { cwd: repo });
+    const b = worktreeCreate("wt-b", { cwd: repo });
+    const result = worktreeValidate([a, b]);
+    expect(result.valid).toBe(true);
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it("fails if the main checkout is included", async () => {
+    const { worktreeCreate, worktreeValidate } = await import("../src/worktree.js");
+    const a = worktreeCreate("wt-only", { cwd: repo });
+    const result = worktreeValidate([a, repo]);
+    expect(result.valid).toBe(false);
+    expect(result.diagnostics.some((d: string) => d.includes("main checkout"))).toBe(true);
+  });
+
+  it("fails for duplicate paths", async () => {
+    const { worktreeCreate, worktreeValidate } = await import("../src/worktree.js");
+    const a = worktreeCreate("wt-dup", { cwd: repo });
+    const result = worktreeValidate([a, a]);
+    expect(result.valid).toBe(false);
+    expect(result.diagnostics.some((d: string) => d.includes("pairwise unique"))).toBe(true);
+  });
+});
