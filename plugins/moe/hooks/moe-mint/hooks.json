@@ -47,6 +47,23 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" jig-worktree-guard",
+            "shell": "bash"
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" jig-review-format-guard",
+            "shell": "bash"
+          }
+        ]
+      }
     ]
   }
 }

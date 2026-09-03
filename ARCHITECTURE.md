@@ -41,6 +41,7 @@ moe/
 │   ├── mint/                    plugin generator
 │   ├── crew/                    tmux worker orchestration
 │   ├── glass/                   Chrome DevTools Protocol client
+│   ├── jig/                     deterministic enforcement CLI
 │   └── tab/                     Rust transcript-pricing core and bindings
 ├── py/proof/                    model evals, Python + uv
 ├── infra/container/             shared harness test image
@@ -62,6 +63,7 @@ moe/
 | `@bubstack/moe-mint` | Generate native plugin manifests and installation metadata | workspace tool |
 | `@bubstack/moe-crew` | Launch and supervise coding-agent workers through tmux | generated `moe-crew` plugin |
 | `@bubstack/moe-glass` | Direct Chrome DevTools Protocol access through a skill and MCP server | npm-backed `moe-glass` plugin |
+| `@bubstack/moe-jig` | Deterministic enforcement tooling for skill conventions | npm-published CLI |
 | `@bubstack/moe-tab` | Parse usage records and estimate transcript cost in Rust | workspace library and CLI |
 | `moe-proof` | Run and grade model evals | internal Python tool |
 
@@ -76,7 +78,7 @@ install story.
 ## 4. Dependency topology
 
 ```text
-L0   tab        glass        mint
+L0   tab        glass        mint         jig
       │                       ▲
 L1   memory     crew          │ reads content as files
       │                       │
@@ -144,12 +146,12 @@ pnpm postinstall scripts must be approved by package name under `allowBuilds` in
 
 ## 7. Commands and runtime names
 
-The dependency-free `bin/moe.js` dispatcher fronts seven permanent namespace
+The dependency-free `bin/moe.js` dispatcher fronts eight permanent namespace
 bins:
 
 ```text
-moe crew       moe flight      moe glass      moe memory
-moe mint       moe proof       moe tab
+moe crew       moe flight      moe glass      moe jig
+moe memory     moe mint        moe proof      moe tab
 ```
 
 The corresponding `moe-<namespace>` binaries remain valid direct entry points
