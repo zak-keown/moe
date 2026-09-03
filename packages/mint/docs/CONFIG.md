@@ -154,8 +154,7 @@ the version.
 release:
   files:
     - { path: release.json, field: version }   # a version-bearing file moe-mint does not generate
-      # note: package.json is usually generated (by the opencode/pi adapters) — declaring
-      # a generated file here is a ConfigError; generate already bumps those
+    - { path: package.json, field: version }   # source-owned package manifest, when it carries the release version
   audit:
     exclude:
       - CHANGELOG.md                            # files the audit should ignore (glob, matched per path segment)
@@ -165,7 +164,10 @@ release:
 - **`files`** — extra files to rewrite, each a `{ path, field }` where `field`
   is a dotted path (`version`, `plugins.0.version`) that must already exist as a
   string in a `.json`, `.yaml`, or `.yml` file. moe-mint.yaml is always
-  bumped and is not listed here.
+  bumped and is not listed here. `package.json` is source-owned: Pi and
+  OpenCode contribute only their package metadata, so a source manifest may be
+  listed here when it carries the release version. Adapter-generated files still
+  must not be listed.
 - **`audit.exclude`** — glob patterns the `--audit` scan skips. A pattern is
   matched against the basename or any single path segment (grep
   `--exclude`/`--exclude-dir` semantics). A pattern containing `/` (e.g.

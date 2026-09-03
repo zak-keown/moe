@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { opencode } from '../src/adapters/opencode.js'
 import { pi } from '../src/adapters/pi.js'
 import type { HarnessAdapter } from '../src/adapters/types.js'
-import { validateGeneration } from '../src/generate.js'
+import { generate, validateGeneration } from '../src/generate.js'
 
 function freshFixture(): string {
   const dir = mkdtempSync(join(tmpdir(), 'mint-package-contributions-'))
@@ -32,20 +32,71 @@ describe('adapter package contributions', () => {
     expect(Object.isFrozen(result.packageContributions[0]!)).toBe(true)
     expect(Object.isFrozen(result.packageContributions[0]!.exports!)).toBe(true)
     expect(Object.isFrozen(result.packageContributions[1]!.pi!)).toBe(true)
+    expect(Object.isFrozen(result.packageContributions[1]!.pi!.extensions)).toBe(true)
+    expect(Object.isFrozen(result.packageContributions[1]!.pi!.skills)).toBe(true)
+    expect(() => (result.packageContributions[1]!.pi!.extensions as string[]).push('./mutation')).toThrow(TypeError)
+
+    const generated = generate(freshFixture(), [opencode, pi])
+    expect(Object.isFrozen(generated.packageContributions)).toBe(true)
+    expect(Object.isFrozen(generated.packageContributions[1]!.pi!.extensions)).toBe(true)
+    expect(Object.isFrozen(generated.packageContributions[1]!.pi!.skills)).toBe(true)
   })
 
-  it('rejects package.json from every adapter before file merging', () => {
+  it.each(['package.json', './package.json', 'nested/../package.json', 'nested/./../package.json'])(
+    'rejects %s as a reserved root package manifest through a stable diagnostic',
+    (path) => {
+      const adapter: HarnessAdapter = {
+        name: 'codex',
+        emit: () => ({
+          files: [{ path, content: '{"name":"replacement"}\n' }],
+          limitations: [],
+          emittedCapabilities: [],
+        }),
+      }
+
+      try {
+        validateGeneration(freshFixture(), [adapter])
+        expect.unreachable('reserved root package manifest should have been rejected')
+      } catch (error) {
+        expect((error as { diagnostic?: unknown }).diagnostic).toMatchObject({
+          code: 'ADAPTER_PACKAGE_MANIFEST_EMITTED',
+          plugin: 'kitchen-sink',
+          target: 'codex',
+          source: 'moe-mint.yaml',
+          field: 'adapters.codex.files.0.path',
+        })
+      }
+    },
+  )
+
+  it.each([
+    ['codex', 'pi', { pi: { extensions: ['./foreign.ts'] } }],
+    ['codex', 'opencode', { exports: { './server': './foreign.js' } }],
+    ['synthetic', 'pi', { pi: { extensions: ['./foreign.ts'] } }],
+    ['synthetic', 'opencode', { exports: { './server': './foreign.js' } }],
+  ] as const)('rejects %s from claiming %s package metadata', (adapterName, declaredOwner, fields) => {
     const adapter: HarnessAdapter = {
-      name: 'codex',
+      name: adapterName,
       emit: () => ({
-        files: [{ path: 'package.json', content: '{"name":"replacement"}\n' }],
+        files: [],
         limitations: [],
         emittedCapabilities: [],
+        packageContribution: { owner: declaredOwner, ...fields },
       }),
     }
 
-    expect(() => validateGeneration(freshFixture(), [adapter])).toThrowError(
-      /adapter "codex" must not emit package\.json; return packageContribution instead/,
-    )
+    try {
+      validateGeneration(freshFixture(), [adapter])
+      expect.unreachable('foreign package contribution should have been rejected')
+    } catch (error) {
+      expect((error as { diagnostic?: unknown }).diagnostic).toMatchObject({
+        code: 'ADAPTER_PACKAGE_CONTRIBUTION_OWNER_INVALID',
+        plugin: 'kitchen-sink',
+        target: adapterName,
+        source: 'moe-mint.yaml',
+        field: `adapters.${adapterName}.packageContribution.owner`,
+        message: expect.stringContaining(`declared owner "${declaredOwner}"`),
+      })
+    }
   })
 })

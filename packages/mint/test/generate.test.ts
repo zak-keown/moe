@@ -229,6 +229,33 @@ describe('generate', () => {
     }
   })
 
+  it('rejects a projection carrying package metadata through the projection-owner diagnostic', () => {
+    const dir = freshFixture()
+    const owner: HarnessAdapter = {
+      name: 'claude-code',
+      emit: () => ({
+        files: [], limitations: [],
+        emittedCapabilities: ['skill-discovery', 'command-discovery', 'agent-discovery', 'hook-execution', 'mcp-registration', 'bootstrap-routing'],
+      }),
+    }
+    const projection: HarnessAdapter = {
+      name: 'copilot',
+      emit: () => ({
+        files: [], limitations: [], emittedCapabilities: [], projectionOwner: 'claude-code',
+        packageContribution: { owner: 'copilot', pi: { extensions: ['./foreign.ts'] } },
+      }),
+    }
+
+    try {
+      generate(dir, [owner, projection])
+      expect.unreachable('projection package metadata should have been rejected')
+    } catch (error) {
+      expect((error as { diagnostic?: unknown }).diagnostic).toMatchObject({
+        code: 'CAPABILITY_PROJECTION_OWNER_CONFLICT', plugin: 'kitchen-sink', target: 'copilot', source: 'moe-mint.yaml', field: 'targets.copilot.projection_owner',
+      })
+    }
+  })
+
   it('dedupes identical-content collisions between adapters', () => {
     const dir = freshFixture()
     const file = { path: 'gen/shared.txt', content: 'same', executable: undefined }

@@ -1,6 +1,6 @@
 import { rmSync, rmdirSync, readdirSync, readFileSync, existsSync, statSync, lstatSync } from 'node:fs'
 import { dirname, relative, resolve, isAbsolute, sep } from 'node:path'
-import { buildModel } from './model.js'
+import { buildModel, type PluginModel } from './model.js'
 import { writeFileSet, type FileSet, type GeneratedFile } from './fileset.js'
 import { saveManifest, loadManifest, sha256, type GenerationManifest } from './manifest.js'
 import { adapters, type HarnessAdapter } from './adapters/index.js'
@@ -127,6 +127,30 @@ function immutablePackageContribution(contribution: AdapterPackageContribution):
   return immutableValue({ ...contribution })
 }
 
+function isTargetId(name: string): name is TargetId {
+  return (TARGET_IDS as readonly string[]).includes(name)
+}
+
+function adapterEmissionError(
+  code: string,
+  model: PluginModel,
+  adapter: HarnessAdapter,
+  field: string,
+  message: string,
+  action: string,
+): ConfigError {
+  return new ConfigError(message, [], {
+    diagnostic: {
+      code,
+      plugin: model.config.name,
+      target: adapter.name,
+      source: model.config.source,
+      field,
+      action,
+    },
+  })
+}
+
 export function validateGeneration(
   root: string,
   adapterList: readonly HarnessAdapter[] = adapters,
@@ -151,10 +175,32 @@ export function validateGeneration(
   const packageContributions: AdapterPackageContribution[] = []
   const emittedByAdapter = new Map<HarnessAdapter, AdapterEmission>()
   const byPath = new Map<string, { owner: string; file: GeneratedFile }>()
+  const rootAbs = resolve(root)
+  const packageManifestAbs = resolve(rootAbs, 'package.json')
   for (const adapter of active) {
     const rawResult = adapter.emit(model)
-    if (rawResult.files.some((file) => file.path === 'package.json')) {
-      throw new ConfigError(`adapter "${adapter.name}" must not emit package.json; return packageContribution instead`)
+    for (const [index, file] of rawResult.files.entries()) {
+      if (resolve(rootAbs, file.path) === packageManifestAbs) {
+        throw adapterEmissionError(
+          'ADAPTER_PACKAGE_MANIFEST_EMITTED', model, adapter, `adapters.${adapter.name}.files.${index}.path`,
+          `adapter "${adapter.name}" must not emit the root package.json; return packageContribution instead`,
+          'Remove the package.json file emission and return only adapter-owned package metadata.',
+        )
+      }
+    }
+    if (rawResult.projectionOwner !== undefined && rawResult.packageContribution !== undefined) {
+      throw adapterEmissionError(
+        'CAPABILITY_PROJECTION_OWNER_CONFLICT', model, adapter, `targets.${adapter.name}.projection_owner`,
+        `adapter "${adapter.name}" projection must not emit package metadata`,
+        'Remove the package contribution and use the projection owner emission.',
+      )
+    }
+    if (rawResult.packageContribution !== undefined && (!isTargetId(adapter.name) || rawResult.packageContribution.owner !== adapter.name)) {
+      throw adapterEmissionError(
+        'ADAPTER_PACKAGE_CONTRIBUTION_OWNER_INVALID', model, adapter, `adapters.${adapter.name}.packageContribution.owner`,
+        `adapter "${adapter.name}" declared owner "${rawResult.packageContribution.owner}" for its package contribution`,
+        'Use a recognized adapter target and set packageContribution.owner to that adapter name.',
+      )
     }
     const result = rawResult.packageContribution === undefined
       ? rawResult
@@ -169,8 +215,8 @@ export function validateGeneration(
       )
     }
     mergeFiles(byPath, adapter.name, result.files, model.config)
-    if ((TARGET_IDS as readonly string[]).includes(adapter.name)) {
-      const target = adapter.name as TargetId
+    if (isTargetId(adapter.name)) {
+      const target = adapter.name
       if (result.projectionOwner !== undefined) continue
       const policy = model.config.targets[target]
       emissions[target] = {
@@ -182,8 +228,8 @@ export function validateGeneration(
   for (const adapter of active) {
     const result = emittedByAdapter.get(adapter)
     if (result === undefined) throw new Error(`adapter "${adapter.name}" did not produce an emission`)
-    if (result.projectionOwner === undefined || !(TARGET_IDS as readonly string[]).includes(adapter.name)) continue
-    const target = adapter.name as TargetId
+    if (result.projectionOwner === undefined || !isTargetId(adapter.name)) continue
+    const target = adapter.name
     const owner = emissions[result.projectionOwner]
     if (owner === undefined) {
       throw capabilityError(
