@@ -45,7 +45,7 @@ describe("legal closure for redistributed Memory runtime", () => {
       (w) => w.name,
     );
     const missing = BUNDLED_WORKS.filter(
-      (work) => !importedWorks.includes(work.replace("@huggingface/tokenizers", "huggingface-tokenizers")),
+      (work) => !importedWorks.includes(work),
     );
     expect(missing).toEqual([]);
   });

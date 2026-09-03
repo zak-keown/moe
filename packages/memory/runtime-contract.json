@@ -30,9 +30,9 @@
     "XDG_CONFIG_HOME"
   ],
   "assets": {
-    "native": "vendor/sqlite-vec",
-    "embedding": "runtime",
-    "model": "runtime",
+    "native": "vendor/sqlite-vec/manifest.json",
+    "model": "runtime/model-manifest.json",
+    "embedding": "runtime/embedding-assets.json",
     "claudeCompatibility": "runtime/claude-compatibility.json",
     "codexCompatibility": "runtime/codex-compatibility.json"
   }
