@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { lstat, open, readFile, rename, rm } from "node:fs/promises";
+import { constants } from "node:fs";
+import { lstat, open, readdir, readFile, rename, rm } from "node:fs/promises";
 import path from "node:path";
 
 const encoder = new TextEncoder();
@@ -270,7 +271,136 @@ export async function fsyncDirectory(directory) {
   }
 }
 
+const nodePreparedOutputIo = { lstat, open, readdir };
+
+function preparedOutputError(code, message, filePath, cause) {
+  return transactionError(code, message, {
+    paths: [filePath],
+    action:
+      "preserve canonical outputs; remove only this transaction's prepared nonce siblings before retrying",
+    cause,
+  });
+}
+
+function sameFileIdentity(before, after) {
+  return before.dev === after.dev && before.ino === after.ino;
+}
+
+async function syncOpenedPreparedPath(filePath, kind, inspected, io) {
+  let handle;
+  try {
+    handle = await io.open(filePath, constants.O_RDONLY | constants.O_NOFOLLOW);
+    const opened = await handle.stat();
+    const correctKind = kind === "file" ? opened.isFile() : opened.isDirectory();
+    if (!correctKind || !sameFileIdentity(inspected, opened)) {
+      throw preparedOutputError(
+        "GENERATION_TRANSACTION_UNSAFE_PATH",
+        `prepared ${kind} changed while it was being synchronized`,
+        filePath,
+      );
+    }
+    await handle.sync();
+  } catch (error) {
+    if (error instanceof GenerationTransactionError) throw error;
+    throw preparedOutputError(
+      "GENERATION_TRANSACTION_PREPARED_OUTPUT_SYNC_FAILED",
+      `cannot durably synchronize prepared ${kind}: ${filePath}`,
+      filePath,
+      error,
+    );
+  } finally {
+    await handle?.close().catch(() => undefined);
+  }
+}
+
+function compareDirectoryEntries(left, right) {
+  return Buffer.compare(Buffer.from(left.name), Buffer.from(right.name));
+}
+
+async function syncPreparedTree(filePath, io, expectedKind) {
+  let inspected;
+  try {
+    inspected = await io.lstat(filePath);
+  } catch (error) {
+    throw preparedOutputError(
+      "GENERATION_TRANSACTION_PREPARED_OUTPUT_SYNC_FAILED",
+      `cannot inspect prepared output: ${filePath}`,
+      filePath,
+      error,
+    );
+  }
+  if (inspected.isSymbolicLink()) {
+    throw preparedOutputError(
+      "GENERATION_TRANSACTION_UNSAFE_PATH",
+      "prepared outputs must not contain symbolic links",
+      filePath,
+    );
+  }
+  const actualKind = inspected.isFile() ? "file" : inspected.isDirectory() ? "directory" : "other";
+  if (expectedKind !== undefined && actualKind !== expectedKind) {
+    throw preparedOutputError(
+      "GENERATION_TRANSACTION_UNSAFE_PATH",
+      `prepared ${expectedKind} changed into ${actualKind}`,
+      filePath,
+    );
+  }
+  if (inspected.isFile()) {
+    await syncOpenedPreparedPath(filePath, "file", inspected, io);
+    return;
+  }
+  if (!inspected.isDirectory()) {
+    throw preparedOutputError(
+      "GENERATION_TRANSACTION_UNSAFE_PATH",
+      "prepared outputs must contain only regular files and directories",
+      filePath,
+    );
+  }
+
+  let entries;
+  try {
+    entries = await io.readdir(filePath, { withFileTypes: true });
+  } catch (error) {
+    throw preparedOutputError(
+      "GENERATION_TRANSACTION_PREPARED_OUTPUT_SYNC_FAILED",
+      `cannot traverse prepared directory: ${filePath}`,
+      filePath,
+      error,
+    );
+  }
+  entries.sort(compareDirectoryEntries);
+  for (const entry of entries) {
+    await syncPreparedTree(path.join(filePath, entry.name), io);
+  }
+  await syncOpenedPreparedPath(filePath, "directory", inspected, io);
+}
+
+/**
+ * Make a fully prepared output durable before its transaction journal exists.
+ * This rejects static symlinks and special files and detects ordinary identity
+ * drift. It does not claim immunity from a malicious same-UID pathname race.
+ */
+export async function syncPreparedOutput(target, io = nodePreparedOutputIo) {
+  if (!isRecord(target) || (target.kind !== "file" && target.kind !== "directory")) {
+    throw preparedOutputError(
+      "GENERATION_TRANSACTION_INVALID",
+      "prepared output target must name a file or directory",
+      String(target?.next),
+    );
+  }
+  await syncPreparedTree(target.next, io, target.kind);
+  const inspectedParent = await io.lstat(path.dirname(target.next));
+  if (inspectedParent.isSymbolicLink() || !inspectedParent.isDirectory()) {
+    throw preparedOutputError(
+      "GENERATION_TRANSACTION_UNSAFE_PATH",
+      "prepared output parent must be a real directory",
+      path.dirname(target.next),
+    );
+  }
+  await syncOpenedPreparedPath(path.dirname(target.next), "directory", inspectedParent, io);
+}
+
 export const nodeSwapFs = {
+  syncPreparedOutput,
   writeDurableFile,
   readFile,
   async pathState(filePath) {
@@ -362,6 +492,20 @@ async function removeJournalAndSync(fs, journalPath, boundary, onRemoved) {
   });
 }
 
+async function syncPreparedTarget(fs, target, boundary) {
+  try {
+    await guarded(boundary, () => fs.syncPreparedOutput(target));
+  } catch (error) {
+    if (error instanceof GenerationTransactionError) throw error;
+    throw preparedOutputError(
+      "GENERATION_TRANSACTION_PREPARED_OUTPUT_SYNC_FAILED",
+      `cannot durably synchronize prepared output: ${target.next}`,
+      target.next,
+      error,
+    );
+  }
+}
+
 /**
  * Replace the three checked-in generation outputs. The caller owns and has
  * already selected the journal path; this module only accepts the exact
@@ -374,6 +518,9 @@ export async function replaceGeneratedOutputs(operation, fs = nodeSwapFs) {
     ...shape.journal.targets.flatMap((target) => [target.current, target.next, target.backup]),
   ]);
   const validated = await assertInitialState(operation, fs);
+  for (const target of validated.journal.targets) {
+    await syncPreparedTarget(fs, target, boundary);
+  }
   let journalDurable = false;
   try {
     await guarded(boundary, () =>

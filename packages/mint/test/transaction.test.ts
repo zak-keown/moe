@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process'
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
-import { join, resolve } from 'node:path'
+import { lstat, mkdir, mkdtemp, open, readdir, rm, symlink, writeFile } from 'node:fs/promises'
+import { join, relative, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { pathToFileURL } from 'node:url'
 import { describe, expect, test } from 'vitest'
@@ -18,6 +18,7 @@ interface FakeSwapFs {
   readonly states: Map<string, PathState>
   readonly bytes: Map<string, Uint8Array>
   readonly identities: Map<string, 'old' | 'new' | 'journal'>
+  syncPreparedOutput(target: (ReturnType<typeof journal>)['targets'][number]): Promise<void>
   writeDurableFile(path: string, bytes: Uint8Array): Promise<void>
   readFile(path: string): Promise<Uint8Array>
   pathState(path: string): Promise<PathState>
@@ -77,6 +78,9 @@ function fakeSwapFs(): FakeSwapFs {
     states,
     bytes,
     identities,
+    async syncPreparedOutput(target) {
+      operations.push(`sync-prepared:${target.next}`)
+    },
     async writeDurableFile(path, content) {
       operations.push(`write-temp:${path}`)
       operations.push(`fsync-file:${path}`)
@@ -257,6 +261,7 @@ function failAfterSwapEvent(fs: FakeSwapFs, after: number): FakeSwapFs {
     states: fs.states,
     bytes: fs.bytes,
     identities: fs.identities,
+    syncPreparedOutput: fs.syncPreparedOutput.bind(fs),
     async writeDurableFile(filePath, bytes) {
       await fs.writeDurableFile(filePath, bytes)
       fault()
@@ -292,6 +297,7 @@ function crashAfterSwapEvent(fs: FakeSwapFs, after: number): FakeSwapFs {
   }
   return {
     ...crashing,
+    syncPreparedOutput: crashing.syncPreparedOutput.bind(crashing),
     writeDurableFile: (path, bytes) => wrap(() => crashing.writeDurableFile(path, bytes))(),
     rename: (from, to) => wrap(() => crashing.rename(from, to))(),
     remove: (path) => wrap(() => crashing.remove(path))(),
@@ -314,6 +320,9 @@ describe('generation transaction', () => {
     await replaceGeneratedOutputs({ journalPath: '.moe-mint-generation-abc123.json', journal: journal() }, fs)
 
     expect(fs.operations).toEqual([
+      'sync-prepared:plugins.next-abc123',
+      'sync-prepared:.claude-plugin/marketplace.next-abc123.json',
+      'sync-prepared:docs/moe/generated/plugin-catalog.next-abc123.md',
       'write-temp:.moe-mint-generation-abc123.json',
       'fsync-file:.moe-mint-generation-abc123.json',
       'rename-temp:.moe-mint-generation-abc123.json',
@@ -340,6 +349,151 @@ describe('generation transaction', () => {
       'fsync:.',
     ])
   })
+
+  test('leaves every canonical path and prepared sibling untouched when prepared sync fails', async () => {
+    // Break caught: writing the recovery journal before all prepared bytes are
+    // durable can authorize a swap whose new generation cannot survive a crash.
+    const { replaceGeneratedOutputs } = await import(transactionModule)
+    const fs = fakeSwapFs()
+    fs.syncPreparedOutput = async (target) => {
+      fs.operations.push(`sync-prepared:${target.next}`)
+      if (target.next.includes('marketplace')) throw new Error('injected prepared sync failure')
+    }
+
+    await expect(
+      replaceGeneratedOutputs(
+        { journalPath: '.moe-mint-generation-abc123.json', journal: journal() },
+        fs,
+      ),
+    ).rejects.toMatchObject({
+      code: 'GENERATION_TRANSACTION_PREPARED_OUTPUT_SYNC_FAILED',
+      paths: ['.claude-plugin/marketplace.next-abc123.json'],
+      cause: expect.objectContaining({ message: 'injected prepared sync failure' }),
+    })
+
+    expect(fs.operations).toEqual([
+      'sync-prepared:plugins.next-abc123',
+      'sync-prepared:.claude-plugin/marketplace.next-abc123.json',
+    ])
+    await expect(fs.pathState('.moe-mint-generation-abc123.json')).resolves.toBe('missing')
+    for (const target of journal().targets) {
+      await expect(fs.pathState(target.current)).resolves.toBe(target.kind)
+      await expect(fs.pathState(target.next)).resolves.toBe(target.kind)
+      await expect(fs.pathState(target.backup)).resolves.toBe('missing')
+      expect(fs.identities.get(target.current)).toBe('old')
+      expect(fs.identities.get(target.next)).toBe('new')
+    }
+  })
+
+  test('syncs every nested prepared file and directory in deterministic postorder', async () => {
+    // Break caught: syncing only the staging root leaves descendant data and
+    // directory entries outside the durability boundary before the swap.
+    const { syncPreparedOutput } = await import(transactionModule)
+    const directory = await mkdtemp(join(tmpdir(), 'moe-prepared-sync-'))
+    const staging = join(directory, 'plugins.next-abc123')
+    const projectionParent = join(directory, 'projections')
+    const projection = join(projectionParent, 'catalog.next-abc123.md')
+    const synced: string[] = []
+    const io = {
+      lstat,
+      readdir,
+      async open(filePath: string, flags: number) {
+        const handle = await open(filePath, flags)
+        return {
+          stat: () => handle.stat(),
+          async sync() {
+            synced.push(relative(directory, filePath) || '.')
+            await handle.sync()
+          },
+          close: () => handle.close(),
+        }
+      },
+    }
+    try {
+      await mkdir(join(staging, 'zeta', 'inner'), { recursive: true })
+      await mkdir(projectionParent)
+      await writeFile(join(staging, 'alpha.txt'), 'alpha')
+      await writeFile(join(staging, 'zeta', 'beta.txt'), 'beta')
+      await writeFile(join(staging, 'zeta', 'inner', 'gamma.txt'), 'gamma')
+      await writeFile(projection, 'projection')
+
+      await syncPreparedOutput({ kind: 'directory', next: staging }, io)
+      await syncPreparedOutput({ kind: 'file', next: projection }, io)
+
+      expect(synced).toEqual([
+        'plugins.next-abc123/alpha.txt',
+        'plugins.next-abc123/zeta/beta.txt',
+        'plugins.next-abc123/zeta/inner/gamma.txt',
+        'plugins.next-abc123/zeta/inner',
+        'plugins.next-abc123/zeta',
+        'plugins.next-abc123',
+        '.',
+        'projections/catalog.next-abc123.md',
+        'projections',
+      ])
+    } finally {
+      await rm(directory, { recursive: true, force: true })
+    }
+  })
+
+  test.each(['symlink', 'non-regular'] as const)(
+    'rejects a static %s inside a prepared directory',
+    async (entryKind) => {
+      // Break caught: traversing symlinks or special files can sync content
+      // outside the staged artifact or authorize unstable device/socket bytes.
+      const { syncPreparedOutput } = await import(transactionModule)
+      const directory = await mkdtemp(join(tmpdir(), 'moe-prepared-unsafe-'))
+      const staging = join(directory, 'plugins.next-abc123')
+      await mkdir(staging)
+      try {
+        const entry = join(staging, entryKind === 'symlink' ? 'outside-link' : 'special-fifo')
+        if (entryKind === 'symlink') {
+          const outside = join(directory, 'outside.txt')
+          await writeFile(outside, 'outside')
+          await symlink(outside, entry)
+        } else {
+          const result = spawnSync('mkfifo', [entry], { encoding: 'utf8' })
+          expect(result.status, result.stderr).toBe(0)
+        }
+
+        await expect(
+          syncPreparedOutput({ kind: 'directory', next: staging }),
+        ).rejects.toMatchObject({
+          code: 'GENERATION_TRANSACTION_UNSAFE_PATH',
+          paths: [entry],
+        })
+      } finally {
+        await rm(directory, { recursive: true, force: true })
+      }
+    },
+  )
+
+  test.each([
+    ['file', 'directory'],
+    ['directory', 'file'],
+  ] as const)(
+    'rejects a prepared %s target that changed into a %s',
+    async (expectedKind, actualKind) => {
+      // Break caught: a root kind change after initial validation must not let
+      // a directory replace a projection file (or a file replace the tree).
+      const { syncPreparedOutput } = await import(transactionModule)
+      const directory = await mkdtemp(join(tmpdir(), 'moe-prepared-kind-'))
+      const prepared = join(directory, 'prepared')
+      try {
+        if (actualKind === 'directory') await mkdir(prepared)
+        else await writeFile(prepared, 'file')
+
+        await expect(
+          syncPreparedOutput({ kind: expectedKind, next: prepared }),
+        ).rejects.toMatchObject({
+          code: 'GENERATION_TRANSACTION_UNSAFE_PATH',
+          paths: [prepared],
+        })
+      } finally {
+        await rm(directory, { recursive: true, force: true })
+      }
+    },
+  )
 
   test('restores one complete old generation from a mixed interrupted swap', async () => {
     // Break caught: accepting per-target recovery independently would expose a
