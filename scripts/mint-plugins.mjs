@@ -47,8 +47,13 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { excludedHarnesses, PLUGINS, REPOSITORY_URL } from "../bin/lib/plugin-registry.mjs";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import {
+  excludedHarnesses,
+  harnessRegistryProblems,
+  PLUGINS,
+  REPOSITORY_URL,
+} from "../bin/lib/plugin-registry.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(ROOT, "plugins");
@@ -391,12 +396,34 @@ function checkPluginConfigs() {
   }
 }
 
-function main() {
+async function checkHarnessRegistries() {
+  const adaptersUrl = pathToFileURL(path.join(ROOT, "packages/mint/dist/adapters/index.js")).href;
+  const configUrl = pathToFileURL(path.join(ROOT, "packages/mint/dist/config.js")).href;
+  const [{ adapters }, { ADAPTER_NAMES }] = await Promise.all([
+    import(adaptersUrl),
+    import(configUrl),
+  ]);
+  const problems = [
+    ...harnessRegistryProblems(
+      "Mint live adapter registry",
+      adapters.map((adapter) => adapter.name),
+    ),
+    ...harnessRegistryProblems("Mint ADAPTER_NAMES", [...ADAPTER_NAMES]),
+  ];
+  if (problems.length > 0) {
+    fail(
+      `Mint harness registries disagree with the canonical registry:\n  - ${problems.join("\n  - ")}`,
+    );
+  }
+}
+
+async function main() {
   if (!fs.existsSync(MINT_CLI)) {
     fail(
       `${path.relative(ROOT, MINT_CLI)} not found — run \`pnpm --filter @bubstack/moe-mint build\` first`,
     );
   }
+  await checkHarnessRegistries();
   checkPluginConfigs();
   checkMarketplace();
 
@@ -412,4 +439,4 @@ function main() {
   console.log(`\n${PLUGINS.length} plugins generated into ${path.relative(ROOT, OUT)}/`);
 }
 
-main();
+await main();

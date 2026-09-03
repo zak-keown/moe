@@ -5,6 +5,7 @@ import { spawnSync } from "node:child_process";
 import {
   getHarness,
   HARNESS_IDS,
+  manualPlanForHarness,
   MARKETPLACE_NAME,
   pluginsForHarness,
   REPOSITORY_CLONE_URL,
@@ -74,25 +75,13 @@ function scopeArgs(scope) {
   return scope ? ["--scope", scope] : [];
 }
 
-function automatedActions(route, action, plugins, scope) {
+function automatedInstallActions(route, plugins, scope) {
   const s = scopeArgs(scope);
   const command = route === "copilot-marketplace" ? "copilot" : "claude";
-  if (action === "install") {
-    const repository = route === "copilot-marketplace" ? REPOSITORY_URL : REPOSITORY_CLONE_URL;
-    return [
-      [command, "plugin", "marketplace", "add", repository, ...s],
-      ...plugins.map((plugin) => [command, "plugin", "install", `${plugin.name}@${MARKETPLACE_NAME}`, ...s]),
-    ];
-  }
-  if (action === "upgrade") {
-    return [
-      [command, "plugin", "marketplace", "update", MARKETPLACE_NAME, ...s],
-      ...plugins.map((plugin) => [command, "plugin", "update", `${plugin.name}@${MARKETPLACE_NAME}`, ...s]),
-    ];
-  }
+  const repository = route === "copilot-marketplace" ? REPOSITORY_URL : REPOSITORY_CLONE_URL;
   return [
-    ...plugins.map((plugin) => [command, "plugin", "uninstall", `${plugin.name}@${MARKETPLACE_NAME}`, ...s]),
-    [command, "plugin", "marketplace", "remove", MARKETPLACE_NAME, ...s],
+    [command, "plugin", "marketplace", "add", repository, ...s],
+    ...plugins.map((plugin) => [command, "plugin", "install", `${plugin.name}@${MARKETPLACE_NAME}`, ...s]),
   ];
 }
 
@@ -100,12 +89,9 @@ function printableAction(action) {
   return action.join(" ");
 }
 
-function printManualPlan(harnessId, action, plugins) {
-  const harness = getHarness(harnessId);
+function printManualPlan(harnessId, action) {
   process.stdout.write("Manual plan (no commands will be executed):\n");
-  process.stdout.write(`  ${harness.manual[action]}\n`);
-  process.stdout.write("  Plugins:\n");
-  for (const plugin of plugins) process.stdout.write(`    - ${plugin.name}\n`);
+  for (const line of manualPlanForHarness(harnessId, action)) process.stdout.write(`  ${line}\n`);
 }
 
 function runDoctor(harnessId) {
@@ -174,7 +160,7 @@ process.stdout.write(
 );
 
 if (!route) {
-  printManualPlan(selection.id, parsed.action, plugins);
+  printManualPlan(selection.id, parsed.action);
   if (parsed.apply) {
     process.stderr.write(
       `\nmoe-install: ${selection.id} ${parsed.action} is manual-only; no stable automated route is verified, so --apply made no changes.\n`,
@@ -184,7 +170,7 @@ if (!route) {
   process.exit(0);
 }
 
-const actions = automatedActions(route, parsed.action, plugins, parsed.scope);
+const actions = automatedInstallActions(route, plugins, parsed.scope);
 if (!parsed.apply) {
   process.stdout.write("Plan (dry-run — re-run with --apply to execute):\n");
   for (const action of actions) process.stdout.write(`  ${printableAction(action)}\n`);

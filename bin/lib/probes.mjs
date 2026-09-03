@@ -196,14 +196,21 @@ export function probeGit() {
  * check in this item".
  *
  * Resolution order mirrors `packages/mint/src/bootstrap/shell-hook.ts`'s
- * generated `run-hook.cmd`: honour the CLAUDE_CODE_GIT_BASH_PATH override
- * first (Claude Code's own documented settings knob), then the two standard
- * Git for Windows install paths, then `where bash` on PATH.
+ * generated `run-hook.cmd`: the two standard Git for Windows install paths,
+ * then bash on PATH. Claude Code may additionally honor its own documented
+ * CLAUDE_CODE_GIT_BASH_PATH host setting; Cursor and Copilot do not.
  */
-export function probeBashOnWindows(harnessId) {
-  if (!WIN32 || !getHarness(harnessId)?.requiresWindowsBash) return undefined;
-  const envPath = process.env.CLAUDE_CODE_GIT_BASH_PATH;
-  if (envPath && existsSync(envPath)) {
+export function probeBashOnWindows(harnessId, options = {}) {
+  const targetPlatform = options.platform ?? platform;
+  const environment = options.env ?? process.env;
+  const exists = options.exists ?? existsSync;
+  const resolvesOnPath =
+    options.executableOnPath ??
+    ((executable) => executableOnPath(executable, { platform: targetPlatform, env: environment }));
+  const harness = getHarness(harnessId);
+  if (targetPlatform !== "win32" || !harness?.requiresWindowsBash) return undefined;
+  const envPath = environment.CLAUDE_CODE_GIT_BASH_PATH;
+  if (harnessId === "claude-code" && envPath && exists(envPath)) {
     return result({
       name: "bash (win32)",
       tier: "hard",
@@ -217,26 +224,28 @@ export function probeBashOnWindows(harnessId) {
     "C:\\Program Files (x86)\\Git\\bin\\bash.exe",
   ];
   for (const candidate of stdCandidates) {
-    if (existsSync(candidate)) {
+    if (exists(candidate)) {
       return result({ name: "bash (win32)", tier: "hard", ok: true, version: candidate });
     }
   }
-  const found = tryExec("where", ["bash"]);
-  if (found) {
+  if (resolvesOnPath("bash")) {
     return result({
       name: "bash (win32)",
       tier: "hard",
       ok: true,
-      version: found.split(/\r?\n/)[0],
+      version: "bash.exe on PATH",
     });
   }
+  const hostFix =
+    harnessId === "claude-code"
+      ? "Install Git for Windows, put bash.exe on PATH, or set CLAUDE_CODE_GIT_BASH_PATH in Claude Code settings to an existing bash.exe."
+      : `Install Git for Windows or put bash.exe on PATH so ${harness.displayName}'s generated run-hook.cmd can find it.`;
   return result({
     name: "bash (win32)",
     tier: "hard",
     ok: false,
     capability: "bootstrap SessionStart hook (will silent-skip without bash)",
-    fixHint:
-      "Install Git for Windows OR add CLAUDE_CODE_GIT_BASH_PATH to your Claude Code settings.json pointing at a bash.exe. Without this, the bootstrap-hook silent-skip disables Moe's central value: its skills firing without being asked for.",
+    fixHint: `${hostFix} Without bash, the bootstrap SessionStart hook silently skips.`,
   });
 }
 
