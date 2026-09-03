@@ -133,29 +133,116 @@ function assertNoNodeModules(packageRoot) {
   }
 }
 
-function runHook(packageName, packageRoot, command, sandboxRoot) {
+function hookSandbox(packageRoot, sandboxRoot) {
   const cwd = join(sandboxRoot, "cwd");
   const claudeConfig = join(sandboxRoot, "claude-config");
   const codexHome = join(sandboxRoot, "codex-home");
   const crewWorkers = join(sandboxRoot, "crew-workers");
-  for (const path of [cwd, claudeConfig, codexHome, crewWorkers]) {
+  const xdgConfig = join(sandboxRoot, "xdg-config");
+  const xdgCache = join(sandboxRoot, "xdg-cache");
+  const xdgData = join(sandboxRoot, "xdg-data");
+  const temp = join(sandboxRoot, "tmp");
+  for (const path of [
+    cwd,
+    claudeConfig,
+    codexHome,
+    crewWorkers,
+    xdgConfig,
+    xdgCache,
+    xdgData,
+    temp,
+  ]) {
     mkdirSync(path, { recursive: true });
   }
 
-  const env = {
-    ...process.env,
+  const env = {};
+  for (const key of [
+    "PATH",
+    "LANG",
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_COLLATE",
+    "LC_CTYPE",
+    "LC_MESSAGES",
+    "LC_MONETARY",
+    "LC_NUMERIC",
+    "LC_TIME",
+    "SystemRoot",
+    "WINDIR",
+    "ComSpec",
+    "PATHEXT",
+  ]) {
+    if (typeof process.env[key] === "string") env[key] = process.env[key];
+  }
+  Object.assign(env, {
+    TMPDIR: temp,
+    TMP: temp,
+    TEMP: temp,
     PLUGIN_ROOT: packageRoot,
     CLAUDE_PLUGIN_ROOT: packageRoot,
     CLAUDE_CONFIG_DIR: claudeConfig,
     CODEX_HOME: codexHome,
+    XDG_CONFIG_HOME: xdgConfig,
+    XDG_CACHE_HOME: xdgCache,
+    XDG_DATA_HOME: xdgData,
     MOE_CREW_WORKER_DIR: crewWorkers,
     MOE_GOVERNANCE_MARKER: "",
     MOE_GOVERNANCE_MARKER_CHECK_DISABLED: "1",
-  };
-  delete env.CURSOR_PLUGIN_ROOT;
-  delete env.COPILOT_CLI;
-  delete env.MOE_CREW_RUN_ID;
-  delete env.MOE_CREW_TMUX_NAME;
+  });
+
+  return { cwd, env };
+}
+
+function assertRuntimeDependenciesUnresolvable(packageName, packageRoot, manifest, sandboxRoot) {
+  const dependencies = Object.keys(manifest.dependencies ?? {}).sort();
+  const { cwd, env } = hookSandbox(packageRoot, sandboxRoot);
+  const probe = String.raw`
+const { createRequire } = require("node:module");
+const forbiddenEnvironment = Object.keys(process.env).filter((key) => {
+  const normalized = key.toUpperCase();
+  return normalized === "HOME" || normalized.startsWith("NODE_");
+});
+if (forbiddenEnvironment.length > 0) {
+  process.stderr.write("forbidden environment: " + forbiddenEnvironment.sort().join(", ") + "\n");
+  process.exit(1);
+}
+const requireFromPackage = createRequire(process.argv[1]);
+const resolutions = [];
+for (const dependency of process.argv.slice(2)) {
+  try {
+    resolutions.push(dependency + " -> " + requireFromPackage.resolve(dependency));
+  } catch (error) {
+    if (error && error.code === "MODULE_NOT_FOUND") continue;
+    throw error;
+  }
+}
+if (resolutions.length > 0) {
+  process.stderr.write(resolutions.join("\n") + "\n");
+  process.exit(1);
+}
+`;
+  const result = spawnSync(
+    process.execPath,
+    ["-e", probe, join(packageRoot, "package.json"), ...dependencies],
+    {
+      cwd,
+      env,
+      encoding: "utf8",
+      maxBuffer: 10 * 1024 * 1024,
+    },
+  );
+  if (result.error || result.status !== 0) {
+    fail(
+      `${packageName} resolves runtime dependencies from outside its packed artifact\n` +
+        `exit: ${result.status ?? `signal ${result.signal}`}\n` +
+        `stdout: ${JSON.stringify(result.stdout)}\n` +
+        `stderr: ${JSON.stringify(result.stderr ?? result.error?.message)}`,
+    );
+  }
+}
+
+function runHook(packageName, packageRoot, command, sandboxRoot) {
+  const { cwd, env } = hookSandbox(packageRoot, sandboxRoot);
 
   const result = spawnSync("bash", ["-c", command], {
     cwd,
@@ -215,10 +302,17 @@ try {
       fail(`${sourceManifest.name} npm files allowlist omitted hooks/hooks.json`);
     }
 
+    const packedManifest = readJson(join(packageRoot, "package.json"));
     const packedCommands = sessionStartCommands(packageRoot);
     if (packedCommands.length !== commands.length) {
       fail(`${sourceManifest.name} packed SessionStart command count differs from source`);
     }
+    assertRuntimeDependenciesUnresolvable(
+      sourceManifest.name,
+      packageRoot,
+      packedManifest,
+      join(packageTemp, "resolution-probe"),
+    );
     for (const [commandIndex, command] of packedCommands.entries()) {
       runHook(sourceManifest.name, packageRoot, command, join(packageTemp, `hook-${commandIndex}`));
       commandCount += 1;

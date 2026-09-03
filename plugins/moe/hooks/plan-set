@@ -288,6 +288,52 @@ function loadManifestSet(located) {
 const VALID_STATUS = new Set(["pending", "running", "done", "blocked"]);
 const VALID_PLAN_SET_ID = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
+// Kahn's algorithm proves that a graph is cyclic, but its residual also
+// contains acyclic nodes downstream of a cycle. Use SCCs only to make the
+// diagnostic exact; validation still uses Kahn's zero-indegree walk.
+function exactCycleMembers(adj, residualIds) {
+  const residual = new Set(residualIds);
+  const indexById = new Map();
+  const lowById = new Map();
+  const stack = [];
+  const onStack = new Set();
+  const members = new Set();
+  let nextIndex = 0;
+
+  function visit(id) {
+    indexById.set(id, nextIndex);
+    lowById.set(id, nextIndex);
+    nextIndex += 1;
+    stack.push(id);
+    onStack.add(id);
+
+    for (const neighbor of adj.get(id) ?? []) {
+      if (!residual.has(neighbor)) continue;
+      if (!indexById.has(neighbor)) {
+        visit(neighbor);
+        lowById.set(id, Math.min(lowById.get(id), lowById.get(neighbor)));
+      } else if (onStack.has(neighbor)) {
+        lowById.set(id, Math.min(lowById.get(id), indexById.get(neighbor)));
+      }
+    }
+
+    if (lowById.get(id) !== indexById.get(id)) return;
+    const component = [];
+    while (stack.length > 0) {
+      const member = stack.pop();
+      onStack.delete(member);
+      component.push(member);
+      if (member === id) break;
+    }
+    if (component.length > 1 || (adj.get(id) ?? []).includes(id)) {
+      for (const member of component) members.add(member);
+    }
+  }
+
+  for (const id of residual) if (!indexById.has(id)) visit(id);
+  return [...members].sort();
+}
+
 function validate(doc, manifestPath) {
   const errors = [];
   const ids = new Map(); // id -> line-ish
@@ -355,8 +401,9 @@ function validate(doc, manifestPath) {
     }
   }
 
-  // Kahn: pull zero-indegree nodes off, decrement neighbors. Anything left
-  // with indegree > 0 is on a cycle.
+  // Kahn: pull zero-indegree nodes off and decrement neighbors. A non-empty
+  // residual proves a cycle exists, then SCC membership excludes any
+  // downstream tail from the diagnostic.
   const q = [];
   const remaining = new Map(indeg);
   for (const [id, deg] of remaining) if (deg === 0) q.push(id);
@@ -369,9 +416,9 @@ function validate(doc, manifestPath) {
       if (remaining.get(n) === 0) q.push(n);
     }
   }
-  const inCycle = [...remaining.entries()].filter(([, d]) => d > 0).map(([id]) => id);
-  if (inCycle.length > 0) {
-    errors.push(`cycle detected among: ${inCycle.sort().join(", ")}`);
+  const residual = [...remaining.entries()].filter(([, d]) => d > 0).map(([id]) => id);
+  if (residual.length > 0) {
+    errors.push(`cycle detected among: ${exactCycleMembers(adj, residual).join(", ")}`);
   }
 
   return { errors, indeg: new Map(indeg), adj, ids: known };
@@ -456,11 +503,12 @@ function validateManifestSet(records) {
       if (remaining.get(dependent) === 0) queue.push(dependent);
     }
   }
-  const inCycle = [...remaining.entries()]
+  const residual = [...remaining.entries()]
     .filter(([, degree]) => degree > 0)
-    .map(([id]) => id)
-    .sort();
-  if (inCycle.length > 0) errors.push(`plan-set cycle detected among: ${inCycle.join(", ")}`);
+    .map(([id]) => id);
+  if (residual.length > 0) {
+    errors.push(`plan-set cycle detected among: ${exactCycleMembers(adj, residual).join(", ")}`);
+  }
 
   const completedSets = new Set();
   const blockedSets = new Set();
