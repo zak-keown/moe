@@ -1,11 +1,13 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { CommandContext } from "../src/commands/context.js";
-import { cmdPack, resolvePackHarnesses } from "../src/commands/pack.js";
+import { cmdPack, cmdPackStop, resolvePackHarnesses } from "../src/commands/pack.js";
 import { loadPack, parsePackYaml } from "../src/core/packs.js";
+import { harnessMarkerPath, shimPath } from "../src/core/paths.js";
 import { makeTmux } from "../src/core/tmux.js";
+import { writeHarnessMarker, writeShim } from "../src/core/worker-store.js";
 import { getDriver } from "../src/harness/registry.js";
 
 function tmpDir(prefix: string): string {
@@ -507,5 +509,70 @@ workers:
       { name: "my-pack-alpha-0", text: "/exit" },
       { name: "my-pack-beta-1", text: "/quit" },
     ]);
+  });
+
+  it("stops a live derive worker left as a marker-only orphan after initial send failure", async () => {
+    const name = "my-pack-codex-0";
+    writeHarnessMarker(dir, name, "codex");
+    writeShim(dir, name, "/fake/moe-crew.cjs");
+    const alive = new Set([name]);
+    const quitKeys: string[] = [];
+    const tmux = makeTmux(async (_cmd, args) => {
+      const target = args[args.indexOf("-t") + 1] ?? "";
+      if (args[0] === "has-session") {
+        return { stdout: "", stderr: "", code: alive.has(target) ? 0 : 1 };
+      }
+      if (args[0] === "send-keys" && args.includes("-l")) {
+        const text = args.at(-1) ?? "";
+        quitKeys.push(text);
+        if (text === "/quit") alive.delete(target);
+      }
+      if (args[0] === "kill-session") alive.delete(target);
+      return { stdout: "", stderr: "", code: 0 };
+    });
+    const ctx: CommandContext = {
+      workerDir: dir,
+      home: dir,
+      tmux,
+      driver: getDriver("claude"),
+    };
+
+    const result = await cmdPackStop(ctx, { nameOrFile: "my-pack" });
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain("stopped: 1 worker");
+    expect(quitKeys).toContain("/quit");
+    expect(alive.has(name)).toBe(false);
+    expect(existsSync(harnessMarkerPath(dir, name))).toBe(false);
+    expect(existsSync(shimPath(dir, name))).toBe(false);
+  });
+
+  it("returns code 2 for an invalid orphan marker after killing and cleaning the live session", async () => {
+    const name = "my-pack-broken-0";
+    writeHarnessMarker(dir, name, "cursor");
+    writeShim(dir, name, "/fake/moe-crew.cjs");
+    const alive = new Set([name]);
+    const tmux = makeTmux(async (_cmd, args) => {
+      const target = args[args.indexOf("-t") + 1] ?? "";
+      if (args[0] === "has-session") {
+        return { stdout: "", stderr: "", code: alive.has(target) ? 0 : 1 };
+      }
+      if (args[0] === "kill-session") alive.delete(target);
+      return { stdout: "", stderr: "", code: 0 };
+    });
+    const ctx: CommandContext = {
+      workerDir: dir,
+      home: dir,
+      tmux,
+      driver: getDriver("claude"),
+    };
+
+    const result = await cmdPackStop(ctx, { nameOrFile: "my-pack" });
+
+    expect(result.code).toBe(2);
+    expect(result.stderr).toContain("worker harness 'cursor'");
+    expect(alive.has(name)).toBe(false);
+    expect(existsSync(harnessMarkerPath(dir, name))).toBe(false);
+    expect(existsSync(shimPath(dir, name))).toBe(false);
   });
 });
