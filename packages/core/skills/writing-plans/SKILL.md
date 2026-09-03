@@ -257,7 +257,7 @@ exists, and every decision's **Blocks** list names tasks that exist.
 omits it, meaning []), a non-empty `Files:` block, an `Interfaces:` block,
 and explicit `Consumes:` and `Produces:` entries. Resolve
 {resource:skills/subagent-driven-development/scripts/task-set.mjs} relative to
-this loaded document and invoke it as `node <resolved-task-set.mjs> check <plan.md>` to validate
+this loaded document and invoke it as `node "<resolved-task-set.mjs>" check <plan.md>` to validate
 structural integrity — cycles, unresolvable deps, missing blocks.
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task — unless the task cannot be written until something is decided, in which case add the decision.

@@ -148,7 +148,7 @@ instead.
    this loaded document and run:
 
    ```bash
-   node <resolved-docs-verify-report.mjs> \
+   node "<resolved-docs-verify-report.mjs>" \
      --staging .moe/docs-verify --out DOCS-VERIFY-REPORT.md
    ```
 

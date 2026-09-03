@@ -119,12 +119,12 @@ loop.
 ## The loop
 
 1. **Confirm the manifest.** Invoke the resolved `plan-set.mjs` resource as
-   `node <resolved-plan-set.mjs> check --manifest docs/moe/plans/<project>-MANIFEST.md`
+   `node "<resolved-plan-set.mjs>" check --manifest docs/moe/plans/<project>-MANIFEST.md`
    before anything else. A cycle, a missing plan file, or a duplicate id is a
    dead end before the first plan runs, and `check` says which one at once.
 
 2. **Pick the next plan.** Invoke it as
-   `node <resolved-plan-set.mjs> next --manifest …`. `next`
+   `node "<resolved-plan-set.mjs>" next --manifest …`. `next`
    returns a set; v1 takes the first line of it.
 
    ```bash

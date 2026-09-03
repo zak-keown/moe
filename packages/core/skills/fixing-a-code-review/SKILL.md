@@ -91,7 +91,7 @@ hand — it also updates the frontmatter counts, which is the half that gets
 forgotten:
 
 ```bash
-node <resolved-stamp-disposition.mjs> \
+node "<resolved-stamp-disposition.mjs>" \
   --id CR-004 --disposition fixed --commit abc1234
 ```
 
