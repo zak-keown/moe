@@ -97,7 +97,9 @@ const CLAUDE_EXACT_READ_OPTIONS = new Map([
 export function parseConservativeShell(command) {
   const argv = tokenize(command);
   if (!argv || !tokensAreConservative(argv)) return null;
-  if (catalogPrefix(argv) || isExactCopy(argv)) return argv;
+  if (catalogEntry(argv) || hasSafeExactReadSuffix(argv) || isExactCopy(argv)) {
+    return argv;
+  }
   return null;
 }
 
