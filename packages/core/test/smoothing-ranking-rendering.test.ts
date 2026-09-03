@@ -315,6 +315,19 @@ describe("Claude rendering", () => {
         {},
       ),
     ).toBe(false);
+    expect(
+      matchClaudePermission("Bash(git add:*)", { class: "shell", command: "git add" }, {}),
+    ).toBe(true);
+    expect(
+      matchClaudePermission(
+        "Bash(git add:*)",
+        { class: "shell", command: "git add src/index.ts" },
+        {},
+      ),
+    ).toBe(true);
+    expect(
+      matchClaudePermission("Bash(git add:*)", { class: "shell", command: "git address" }, {}),
+    ).toBe(false);
   });
 
   it.each([

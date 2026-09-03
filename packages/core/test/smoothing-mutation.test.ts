@@ -357,6 +357,36 @@ describe("atomic smoothing mutation", () => {
       status: "already-applied",
     });
   });
+
+  it("creates only the missing mode-0700 parent chain before a first-use atomic apply", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "moe-smoothing-parent-"));
+    const planDir = join(directory, "plans");
+    const destination = join(directory, "config", "nested", "settings.json");
+    await (await import("node:fs/promises")).mkdir(planDir);
+    const plan = await createBoundPlan({
+      harness: "claude",
+      selected: [{ id: "claude-shell-a", rule: "Bash(git status:*)" }],
+      destination,
+      sourceBytes: null,
+      replacement: REPLACEMENT,
+      now: () => "2026-09-03T00:00:00.000Z",
+      planDir,
+    });
+
+    await expect(
+      applyBoundPlan({
+        planPath: plan.path,
+        expectedHarness: "claude",
+        confirmToken: `apply:claude:${plan.replacementSha256}`,
+        validateReplacement: async () => true,
+        createParent: true,
+      }),
+    ).resolves.toMatchObject({ status: "applied", destination });
+
+    expect((await stat(join(directory, "config"))).mode & 0o777).toBe(0o700);
+    expect((await stat(join(directory, "config", "nested"))).mode & 0o777).toBe(0o700);
+    await expect(readFile(destination, "utf8")).resolves.toBe(REPLACEMENT);
+  });
 });
 
 type Failure =

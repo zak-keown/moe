@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   mkdtemp,
   readFile,
@@ -134,6 +135,36 @@ async function applyVerb(args) {
     throw new CliError(4, "confirmation does not match the permission plan");
   }
 
+  let current;
+  try {
+    current = await readOptional(plan.destination);
+  } catch {
+    throw new CliError(5, `the ${plan.harness} permission file could not be read`);
+  }
+  const currentHash = current === null ? null : sha256(current);
+  if (currentHash === plan.replacementSha256) {
+    process.stdout.write(
+      `${JSON.stringify({
+        harness: plan.harness,
+        status: "already-applied",
+        destination: plan.destination,
+        restartRequired: plan.restartRequired,
+      })}\n`,
+    );
+    return;
+  }
+  if (currentHash !== plan.source.sha256) {
+    throw new CliError(4, "the permission plan is stale or invalid");
+  }
+  try {
+    await validateSelectablePlan(plan);
+  } catch (error) {
+    if (error instanceof InvalidPlanError) {
+      throw new CliError(4, "the permission plan is stale or invalid");
+    }
+    throw new CliError(5, `the ${plan.harness} permission adapter could not be validated`);
+  }
+
   const validateReplacement = plan.harness === "claude"
     ? async (replacement) => validateClaudeReplacement(plan, replacement)
     : async (replacement) => validateCodexReplacementForPlan(plan, replacement);
@@ -144,6 +175,7 @@ async function applyVerb(args) {
       expectedHarness: plan.harness,
       confirmToken: args.confirm,
       validateReplacement,
+      createParent: true,
     });
   } catch (error) {
     if (error instanceof InvalidPlanError || /stale source config/.test(error?.message ?? "")) {
@@ -154,6 +186,38 @@ async function applyVerb(args) {
   process.stdout.write(
     `${JSON.stringify({ harness: plan.harness, ...result, restartRequired: plan.restartRequired })}\n`,
   );
+}
+
+async function validateSelectablePlan(plan) {
+  const env = process.env;
+  const homeDir = env.HOME || homedir();
+  const cwd = await realpath(process.cwd());
+  const discovery = await discoverHarnesses({ env, homeDir, cwd, days: 30 });
+  if (!discovery.harnesses.some(({ harness }) => harness === plan.harness)) {
+    throw new Error("permission harness is unavailable");
+  }
+  const report = plan.harness === "claude"
+    ? await scanClaude({ env, homeDir, cwd, cutoffMs: discovery.cutoffMs, all: true })
+    : await scanCodex({
+        env,
+        homeDir,
+        cwd,
+        cutoffMs: discovery.cutoffMs,
+        all: true,
+        requireLayerState: true,
+      });
+  const byId = new Map(report.suggestions.map((candidate) => [candidate.id, candidate]));
+  for (const selected of plan.selected) {
+    const candidate = byId.get(selected.id);
+    if (
+      !candidate ||
+      candidate.rule !== selected.rule ||
+      candidate.destination !== plan.destination ||
+      candidate.harness !== plan.harness
+    ) {
+      throw new InvalidPlanError();
+    }
+  }
 }
 
 async function scan({ days, harnesses, all }) {
@@ -241,7 +305,7 @@ async function scanClaude({ env, homeDir, cwd, cutoffMs, all }) {
   return harnessReport("claude", classifiedEvidence, candidateReport);
 }
 
-async function scanCodex({ env, homeDir, cwd, cutoffMs, all }) {
+async function scanCodex({ env, homeDir, cwd, cutoffMs, all, requireLayerState = false }) {
   const codexHome = resolve(env.CODEX_HOME || join(homeDir, ".codex"));
   const discovery = await discoverCodex({ env, homeDir, cutoffMs });
   if (discovery.status !== "ready") throw new Error("Codex sessions are unavailable");
@@ -250,6 +314,9 @@ async function scanCodex({ env, homeDir, cwd, cutoffMs, all }) {
     cwd,
     spawnProcess: spawn,
   });
+  if (requireLayerState && layerState.status !== "available") {
+    throw new Error("Codex active layers are unavailable");
+  }
   const reader = await readCodexSessions({
     files: discovery.files,
     cutoffMs,
@@ -549,6 +616,7 @@ async function validateCodexReplacementForPlan(plan, replacement) {
     ];
   });
   const tempDir = await mkdtemp(join(tmpdir(), "moe-smoothing-validation-"));
+  let validationError;
   try {
     const ruleFiles = await activeCodexRuleFiles(plan.destination);
     await validateCodexReplacement({
@@ -557,17 +625,43 @@ async function validateCodexReplacementForPlan(plan, replacement) {
       witnesses,
       codexBin: "codex",
       tempDir,
+      runExecpolicy: runCodexExecpolicy,
     });
-  } catch {
-    throw new InvalidPlanError();
+  } catch (error) {
+    validationError = error;
   } finally {
     try {
       await rmdir(tempDir);
-    } catch {
-      // The validator owns its temporary children and reports cleanup failures.
+    } catch (error) {
+      if (validationError === undefined) throw error;
+      validationError = error;
     }
   }
+  if (validationError) {
+    if (isCodexPlanValidationError(validationError)) throw new InvalidPlanError();
+    throw validationError;
+  }
   return true;
+}
+
+function runCodexExecpolicy(codexBin, args) {
+  return new Promise((resolveRun, reject) => {
+    execFile(
+      codexBin,
+      args,
+      { encoding: "utf8", maxBuffer: 1024 * 1024, timeout: 2000 },
+      (error, stdout) => {
+        if (error) reject(new Error("Codex execpolicy process failed", { cause: error }));
+        else resolveRun({ stdout });
+      },
+    );
+  });
+}
+
+function isCodexPlanValidationError(error) {
+  return /Codex (?:positive witness did not match|negative witness matched)|selected Codex rule .* (?:missing|duplicated|malformed)/.test(
+    error?.message ?? "",
+  );
 }
 
 async function activeCodexRuleFiles(destination) {
@@ -624,6 +718,10 @@ async function readOptional(path) {
 
 function decode(bytes) {
   return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+}
+
+function sha256(bytes) {
+  return createHash("sha256").update(bytes).digest("hex");
 }
 
 function isPlainObject(value) {
