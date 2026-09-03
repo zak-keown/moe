@@ -45,10 +45,13 @@ This determines which menu to show and how cleanup works:
 
 ## Step 3: Determine Base Branch
 
-The base branch is whatever this work forked from — usually named in the
-plan, the conversation, or the branch's upstream. If it is not already
-known, ask: "This branch split from <your best guess> - is that correct?"
-Confirm before merging: merging into the wrong base is expensive to undo.
+Use the `BASE_BRANCH` and `BASE_SHA` recorded when the worktree was created.
+Verify that `BASE_SHA` is an ancestor of the feature branch before presenting
+integration options. If the lifecycle predates those fields, recover the base
+from the plan, conversation, or branch upstream and ask: "This branch split
+from <your best guess> - is that correct?" Record the confirmed values before
+merging. Never replace missing intent with whichever branch happens to be the
+current merge base.
 
 ## Step 4: Present Options
 
