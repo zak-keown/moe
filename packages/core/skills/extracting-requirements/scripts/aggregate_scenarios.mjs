@@ -10,6 +10,14 @@ class JsonInteger {
   toString() {
     return this.value.toString();
   }
+
+  toJSON() {
+    return JSON.rawJSON(this.value.toString());
+  }
+}
+
+function isPlainObject(value) {
+  return value !== null && typeof value === "object" && Object.getPrototypeOf(value) === Object.prototype;
 }
 
 function parseJsonLosslessly(text) {
@@ -29,15 +37,22 @@ function parseJsonLosslessly(text) {
 }
 
 function pythonEqual(left, right) {
-  if (left instanceof JsonInteger || right instanceof JsonInteger) {
+  const leftIsNumeric =
+    left instanceof JsonInteger || typeof left === "number" || typeof left === "boolean";
+  const rightIsNumeric =
+    right instanceof JsonInteger || typeof right === "number" || typeof right === "boolean";
+  if (leftIsNumeric && rightIsNumeric) {
     if (left instanceof JsonInteger && right instanceof JsonInteger) {
       return left.value === right.value;
     }
-    const integer = left instanceof JsonInteger ? left : right;
-    const number = left instanceof JsonInteger ? right : left;
-    return typeof number === "number" && Number.isInteger(number) && integer.value === BigInt(number);
+    if (left instanceof JsonInteger || right instanceof JsonInteger) {
+      const integer = left instanceof JsonInteger ? left : right;
+      const other = left instanceof JsonInteger ? right : left;
+      const number = typeof other === "boolean" ? Number(other) : other;
+      return Number.isInteger(number) && integer.value === BigInt(number);
+    }
+    return Number(left) === Number(right);
   }
-  if (typeof left === "boolean" || typeof right === "boolean") return left === right;
   if (left === right) return true;
   if (Array.isArray(left) || Array.isArray(right)) {
     return (
@@ -115,9 +130,11 @@ export function loadScenarios(paths) {
       throw error;
     }
     if (Array.isArray(data)) scenarios.push(...data);
-    else if (data && typeof data === "object" && Object.hasOwn(data, "scenarios")) {
+    else if (isPlainObject(data) && Object.hasOwn(data, "scenarios")) {
       if (Array.isArray(data.scenarios) || typeof data.scenarios === "string") {
         scenarios.push(...data.scenarios);
+      } else if (isPlainObject(data.scenarios)) {
+        scenarios.push(...Object.keys(data.scenarios));
       } else {
         throw new TypeError("scenarios is not iterable");
       }
@@ -250,7 +267,7 @@ export function formatScenario(scenario) {
   lines.push("");
   lines.push("**Sources:**");
   for (const source of scenario.sources ?? []) {
-    if (source && typeof source === "object") {
+    if (isPlainObject(source)) {
       const file = source.file ?? "";
       lines.push(source.lines ? `- \`${file}:${source.lines}\`` : `- \`${file}\``);
     } else if (typeof source === "string") lines.push(`- \`${source}\``);
@@ -306,6 +323,17 @@ function help(program) {
   ].join("\n");
 }
 
+function looksLikeNegativeNumber(value) {
+  return /^-(?:\.)?\p{Nd}/u.test(value);
+}
+
+function isOptionValue(value) {
+  return (
+    value !== undefined &&
+    (!value.startsWith("-") || value === "-" || looksLikeNegativeNumber(value))
+  );
+}
+
 function parseArgs(args) {
   let output;
   let storiesDirectory;
@@ -320,6 +348,10 @@ function parseArgs(args) {
     }
     if (arg === "--") {
       optionsEnded = true;
+    } else if (arg.startsWith("--=")) {
+      return {
+        error: `ambiguous option: ${arg} could match --help, --output, --stories-dir`,
+      };
     } else if (arg === "-h" || (arg.startsWith("--") && "--help".startsWith(arg))) {
       return { help: true };
     } else if (
@@ -327,7 +359,7 @@ function parseArgs(args) {
       (arg.startsWith("--") && !arg.includes("=") && "--output".startsWith(arg))
     ) {
       const value = args[++index];
-      if (value === undefined || (value !== "-" && value.startsWith("-"))) {
+      if (!isOptionValue(value)) {
         return { error: "argument -o/--output: expected one argument" };
       }
       output = value;
@@ -345,7 +377,7 @@ function parseArgs(args) {
       "--stories-dir".startsWith(arg)
     ) {
       const value = args[++index];
-      if (value === undefined || (value !== "-" && value.startsWith("-"))) {
+      if (!isOptionValue(value)) {
         return { error: "argument --stories-dir: expected one argument" };
       }
       storiesDirectory = value;
@@ -355,7 +387,7 @@ function parseArgs(args) {
       "--stories-dir".startsWith(arg.slice(0, arg.indexOf("=")))
     ) {
       storiesDirectory = arg.slice(arg.indexOf("=") + 1);
-    } else if (arg.startsWith("-")) {
+    } else if (arg.startsWith("-") && arg !== "-" && !looksLikeNegativeNumber(arg)) {
       unrecognized.push(arg);
     } else {
       jsonFiles.push(arg);
