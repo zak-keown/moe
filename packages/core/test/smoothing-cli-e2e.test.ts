@@ -1,5 +1,15 @@
 import { execFile } from "node:child_process";
-import { chmod, mkdir, mkdtemp, readdir, readFile, stat, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import {
+  access,
+  chmod,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -45,7 +55,8 @@ describe("smoothing helper CLI", () => {
 
   it("keeps scan read-only while reporting both harnesses and all four evidence classes", async () => {
     const fixture = await isolatedHome();
-    const before = await snapshotTree(fixture.home);
+    const beforeHome = await snapshotTree(fixture.home);
+    const beforeRepo = await snapshotTree(fixture.repo);
 
     const { stdout, stderr } = await runCli(fixture, ["scan", "--days", "30", "--json"]);
     const report = JSON.parse(stdout) as {
@@ -58,8 +69,10 @@ describe("smoothing helper CLI", () => {
     expect(new Set(report.evidenceClasses)).toEqual(
       new Set(["shell", "filesystem", "network", "mcp"]),
     );
-    expect(await snapshotTree(fixture.home)).toEqual(before);
+    expect(await snapshotTree(fixture.home)).toEqual(beforeHome);
+    expect(await snapshotTree(fixture.repo)).toEqual(beforeRepo);
     expect(`${stdout}${stderr}`).not.toContain("discard");
+    expect(`${stdout}${stderr}`).not.toMatch(/root-[ab]|codex-root-[ab]|password|token=|\?q=/);
   });
 
   it("plans an individual ID, applies one harness, and suppresses that permission on rescan", async () => {
@@ -93,6 +106,7 @@ describe("smoothing helper CLI", () => {
       planned.confirmToken,
     ]);
     expect(applied.stdout).toContain("applied");
+    expect((await stat(join(fixture.repo, ".claude"))).mode & 0o777).toBe(0o700);
     const rescanned = await scanReport(fixture);
     expect(
       rescanned.harnesses.find(({ harness }) => harness === "claude")?.suggestions,
@@ -130,7 +144,7 @@ describe("smoothing helper CLI", () => {
     const planned = JSON.parse(
       (await runCli(fixture, ["plan", "--select", selected?.id ?? "missing", "--json"])).stdout,
     ) as { confirmToken: string; plan: { path: string; destination: string } };
-    const before = await readFile(planned.plan.destination);
+    await expect(access(planned.plan.destination)).rejects.toMatchObject({ code: "ENOENT" });
 
     expect((await runFailure(fixture, ["apply", "--plan", planned.plan.path])).code).toBe(2);
     expect(
@@ -144,7 +158,7 @@ describe("smoothing helper CLI", () => {
         ])
       ).code,
     ).toBe(4);
-    expect(await readFile(planned.plan.destination)).toEqual(before);
+    await expect(access(planned.plan.destination)).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   it("validates a Codex plan with execpolicy before applying and suppresses it on rescan", async () => {
@@ -164,10 +178,230 @@ describe("smoothing helper CLI", () => {
       planned.confirmToken,
     ]);
     expect(await readFile(planned.plan.destination, "utf8")).toContain(selected?.rule);
+    expect((await stat(join(fixture.repo, ".codex"))).mode & 0o777).toBe(0o700);
+    expect((await stat(join(fixture.repo, ".codex", "rules"))).mode & 0o777).toBe(0o700);
     const rescanned = await scanReport(fixture);
     expect(
       rescanned.harnesses.find(({ harness }) => harness === "codex")?.suggestions,
     ).not.toContainEqual(expect.objectContaining({ id: selected?.id }));
+  });
+
+  it("creates the exact first-use Codex global rules parent with mode 0700", async () => {
+    const fixture = await isolatedHome({ codexGlobal: true });
+    const scan = await scanReport(fixture);
+    const selected = scan.harnesses.find(({ harness }) => harness === "codex")?.suggestions[0];
+    expect(selected).toMatchObject({ scope: "global" });
+    const planned = await planCandidate(fixture, selected?.id);
+
+    await runCli(fixture, [
+      "apply",
+      "--plan",
+      planned.plan.path,
+      "--confirm",
+      planned.confirmToken,
+    ]);
+
+    expect(planned.plan.destination).toBe(join(fixture.codexHome, "rules", "moe-smoothing.rules"));
+    expect((await stat(join(fixture.codexHome, "rules"))).mode & 0o777).toBe(0o700);
+  });
+
+  it.each([
+    ["claude", "Bash(rm -rf /:*)"],
+    [
+      "codex",
+      `# moe-smoothing:ID
+prefix_rule(
+    pattern = ["rm", "-rf"],
+    decision = "allow",
+    justification = "Moe smoothing: repeated safe use",
+)
+`,
+    ],
+  ])(
+    "rejects an internally consistent forged %s plan whose rule was never selectable",
+    async (harness, maliciousRule) => {
+      const fixture = await isolatedHome({ duplicateClaudeSessions: true });
+      const scan = await scanReport(fixture);
+      const selected = scan.harnesses.find((entry) => entry.harness === harness)?.suggestions[0];
+      const planned = await planCandidate(fixture, selected?.id);
+      const forged = await forgePlan(planned.plan.path, (stored) => {
+        const selection = stored.selected[0];
+        if (!selection) throw new Error("fixture plan has no selection");
+        const rule = maliciousRule.replace("ID", selection.id);
+        selection.rule = rule;
+        stored.replacement =
+          harness === "claude"
+            ? `${JSON.stringify({ permissions: { allow: [rule] } }, null, 2)}\n`
+            : rule;
+        return stored;
+      });
+
+      const failure = await runFailure(fixture, [
+        "apply",
+        "--plan",
+        planned.plan.path,
+        "--confirm",
+        forged.confirmToken,
+      ]);
+
+      expect(failure.code).toBe(4);
+      await expect(access(planned.plan.destination)).rejects.toMatchObject({ code: "ENOENT" });
+    },
+  );
+
+  it("returns 4 for stale plans and 5 for an operational lock failure", async () => {
+    const staleFixture = await isolatedHome({ duplicateClaudeSessions: true });
+    const staleScan = await scanReport(staleFixture);
+    const staleSelected = staleScan.harnesses.find(({ harness }) => harness === "claude")
+      ?.suggestions[0];
+    const stalePlan = await planCandidate(staleFixture, staleSelected?.id);
+    await mkdir(join(staleFixture.repo, ".claude"), { recursive: true });
+    await writeFile(stalePlan.plan.destination, '{"changed":true}\n');
+    expect(
+      (
+        await runFailure(staleFixture, [
+          "apply",
+          "--plan",
+          stalePlan.plan.path,
+          "--confirm",
+          stalePlan.confirmToken,
+        ])
+      ).code,
+    ).toBe(4);
+    await expect(readFile(stalePlan.plan.destination, "utf8")).resolves.toBe('{"changed":true}\n');
+
+    const lockedFixture = await isolatedHome({ duplicateClaudeSessions: true });
+    const lockedScan = await scanReport(lockedFixture);
+    const lockedSelected = lockedScan.harnesses.find(({ harness }) => harness === "claude")
+      ?.suggestions[0];
+    const lockedPlan = await planCandidate(lockedFixture, lockedSelected?.id);
+    await mkdir(join(lockedFixture.repo, ".claude"), { recursive: true });
+    await writeFile(`${lockedPlan.plan.destination}.moe-smoothing.lock`, "held\n");
+    expect(
+      (
+        await runFailure(lockedFixture, [
+          "apply",
+          "--plan",
+          lockedPlan.plan.path,
+          "--confirm",
+          lockedPlan.confirmToken,
+        ])
+      ).code,
+    ).toBe(5);
+    await expect(access(lockedPlan.plan.destination)).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it.each(["missing", "malformed", "hanging"])(
+    "classifies a %s Codex validator process as operational exit 5",
+    async (failureMode) => {
+      const fixture = await isolatedHome({ duplicateClaudeSessions: true });
+      const scan = await scanReport(fixture);
+      const selected = scan.harnesses.find(({ harness }) => harness === "codex")?.suggestions[0];
+      const planned = await planCandidate(fixture, selected?.id);
+      if (failureMode === "missing") {
+        fixture.env.FAKE_CODEX_MODE = "exec-missing";
+      } else {
+        fixture.env.FAKE_CODEX_MODE = failureMode === "malformed" ? "exec-malformed" : "exec-hang";
+      }
+
+      const failure = await runFailure(fixture, [
+        "apply",
+        "--plan",
+        planned.plan.path,
+        "--confirm",
+        planned.confirmToken,
+      ]);
+      expect(failure.code).toBe(5);
+      await expect(access(planned.plan.destination)).rejects.toMatchObject({ code: "ENOENT" });
+    },
+    10_000,
+  );
+
+  it("parses boundaries strictly and filters requested harnesses", async () => {
+    const fixture = await isolatedHome();
+    for (const args of [
+      ["scan", "--days", "0"],
+      ["scan", "--days", "366"],
+      ["scan", "--days"],
+      ["scan", "--harness"],
+      ["scan", "--days", "30", "--days", "30"],
+      ["scan", "--harness", "claude,claude"],
+      ["scan", "--harness", "claude", "--harness", "codex"],
+      ["scan", "--all", "--all"],
+      ["scan", "--json", "--json"],
+      ["plan", "--select"],
+      ["plan", "--select", "claude-shell-000000000000", "--select", "claude-shell-000000000000"],
+      ["apply", "--plan"],
+      ["apply", "--confirm"],
+    ]) {
+      expect((await runFailure(fixture, args)).code).toBe(2);
+    }
+    for (const days of ["1", "365"]) {
+      expect(
+        JSON.parse((await runCli(fixture, ["scan", "--days", days, "--json"])).stdout),
+      ).toMatchObject({
+        windowDays: Number(days),
+      });
+    }
+    const claudeOnly = JSON.parse(
+      (await runCli(fixture, ["scan", "--harness", "claude", "--json"])).stdout,
+    );
+    const codexOnly = JSON.parse(
+      (await runCli(fixture, ["scan", "--harness", "codex", "--json"])).stdout,
+    );
+    expect(claudeOnly.harnesses.map(({ harness }: { harness: string }) => harness)).toEqual([
+      "claude",
+    ]);
+    expect(codexOnly.harnesses.map(({ harness }: { harness: string }) => harness)).toEqual([
+      "codex",
+    ]);
+  });
+
+  it("caps the default report while plan resolves an ID visible only through --all", async () => {
+    const fixture = await isolatedHome({
+      duplicateClaudeSessions: true,
+      manyClaudeCandidates: true,
+    });
+    const capped = JSON.parse((await runCli(fixture, ["scan", "--json"])).stdout);
+    const uncapped = await scanReport(fixture);
+    const cappedClaude = capped.harnesses.find(
+      ({ harness }: { harness: string }) => harness === "claude",
+    ).suggestions;
+    const uncappedClaude =
+      uncapped.harnesses.find(({ harness }) => harness === "claude")?.suggestions ?? [];
+    expect(cappedClaude.length).toBeLessThanOrEqual(10);
+    const perClass = new Map<string, number>();
+    for (const candidate of cappedClaude as Array<{ class: string }>) {
+      perClass.set(candidate.class, (perClass.get(candidate.class) ?? 0) + 1);
+    }
+    expect([...perClass.values()].every((count) => count <= 5)).toBe(true);
+    expect(uncappedClaude.length).toBeGreaterThan(10);
+    const hidden = uncappedClaude.find(
+      ({ id }) => !cappedClaude.some((candidate: { id: string }) => candidate.id === id),
+    );
+    expect(hidden).toBeDefined();
+    await expect(planCandidate(fixture, hidden?.id)).resolves.toMatchObject({
+      plan: { harness: "claude" },
+    });
+  });
+
+  it("binds each ruleId while applying more than one Codex rule", async () => {
+    const fixture = await isolatedHome({ codexMultiple: true });
+    const scan = await scanReport(fixture);
+    const selected = scan.harnesses.find(({ harness }) => harness === "codex")?.suggestions ?? [];
+    expect(selected).toHaveLength(2);
+    const planned = await planCandidate(fixture, selected.map(({ id }) => id).join(","));
+
+    await runCli(fixture, [
+      "apply",
+      "--plan",
+      planned.plan.path,
+      "--confirm",
+      planned.confirmToken,
+    ]);
+
+    const applied = await readFile(planned.plan.destination, "utf8");
+    for (const candidate of selected) expect(applied).toContain(`# moe-smoothing:${candidate.id}`);
   });
 
   it("isolates a blocked harness and retains the other harness report", async () => {
@@ -212,20 +446,24 @@ describe("smoothing helper CLI", () => {
   });
 });
 
-async function isolatedHome({ duplicateClaudeSessions = false } = {}) {
+async function isolatedHome({
+  codexGlobal = false,
+  codexMultiple = false,
+  duplicateClaudeSessions = false,
+  manyClaudeCandidates = false,
+} = {}) {
   const root = await mkdtemp(join(tmpdir(), "moe-smoothing-e2e-"));
   const home = join(root, "home");
   const claudeConfig = join(home, "claude-config");
   const codexHome = join(home, "codex-home");
   const repo = join(root, "repo");
+  const repoB = join(root, "repo-b");
   const bin = join(root, "bin");
   await Promise.all([
     mkdir(join(claudeConfig, "projects"), { recursive: true }),
     mkdir(join(codexHome, "sessions"), { recursive: true }),
-    mkdir(join(codexHome, "rules"), { recursive: true }),
-    mkdir(join(repo, ".claude"), { recursive: true }),
-    mkdir(join(repo, ".codex", "rules"), { recursive: true }),
     mkdir(join(repo, "src"), { recursive: true }),
+    mkdir(join(repoB, "src"), { recursive: true }),
     mkdir(bin, { recursive: true }),
   ]);
 
@@ -234,7 +472,8 @@ async function isolatedHome({ duplicateClaudeSessions = false } = {}) {
     readFile(codexCurrentFixture, "utf8"),
     readFile(codexLegacyFixture, "utf8"),
   ]);
-  const atRepo = (value: string) => value.replaceAll("/fixture/repo-a", repo);
+  const atRepo = (value: string, destination = repo) =>
+    makeCurrent(value.replaceAll("/fixture/repo-a", destination));
   await writeFile(join(claudeConfig, "projects", "root-a.jsonl"), atRepo(claudeSource));
   if (duplicateClaudeSessions) {
     await writeFile(
@@ -242,26 +481,57 @@ async function isolatedHome({ duplicateClaudeSessions = false } = {}) {
       atRepo(claudeSource).replaceAll("root-a", "root-b"),
     );
   }
+  if (manyClaudeCandidates) {
+    for (let index = 0; index < 12; index += 1) {
+      const command = `git diff --name-only file-${index}.txt`;
+      const source = atRepo(claudeSource).replaceAll("git status", command);
+      await writeFile(join(claudeConfig, "projects", `many-a-${index}.jsonl`), source);
+      await writeFile(
+        join(claudeConfig, "projects", `many-b-${index}.jsonl`),
+        source.replaceAll("root-a", "root-b"),
+      );
+    }
+  }
   await writeFile(join(codexHome, "sessions", "current.jsonl"), atRepo(codexCurrent));
-  await writeFile(join(codexHome, "sessions", "legacy.jsonl"), atRepo(codexLegacy));
+  await writeFile(
+    join(codexHome, "sessions", "legacy.jsonl"),
+    atRepo(codexLegacy, codexGlobal ? repoB : repo),
+  );
+  if (codexMultiple) {
+    const addSource = atRepo(codexCurrent)
+      .replaceAll("codex-root-a", "codex-root-c")
+      .replaceAll("git status", "git add src/index.ts");
+    await writeFile(join(codexHome, "sessions", "add-c.jsonl"), addSource);
+    await writeFile(
+      join(codexHome, "sessions", "add-d.jsonl"),
+      addSource.replaceAll("codex-root-c", "codex-root-d"),
+    );
+  }
   await Promise.all([
     writeFile(join(claudeConfig, "settings.json"), '{"permissions":{"allow":[]}}\n'),
-    writeFile(join(repo, ".claude", "settings.json"), '{"permissions":{"allow":[]}}\n'),
-    writeFile(join(repo, ".claude", "settings.local.json"), '{"permissions":{"allow":[]}}\n'),
     writeFile(join(repo, "src", "index.ts"), "export const fixture = true;\n"),
+    writeFile(join(repoB, "src", "index.ts"), "export const fixture = true;\n"),
   ]);
 
   const fakeCodex = join(bin, "codex");
   await writeFile(fakeCodex, fakeCodexSource());
   await chmod(fakeCodex, 0o755);
-  const env = {
+  const env: NodeJS.ProcessEnv = {
     ...process.env,
     HOME: home,
     CLAUDE_CONFIG_DIR: claudeConfig,
     CODEX_HOME: codexHome,
     PATH: `${bin}:${process.env.PATH ?? ""}`,
   };
-  return { root, home, claudeConfig, codexHome, repo, env };
+  return { root, home, claudeConfig, codexHome, repo, repoB, fakeCodex, env };
+}
+
+function makeCurrent(contents: string) {
+  const fixtureEpoch = Date.parse("2026-09-01T00:00:00.000Z");
+  const currentEpoch = Date.now() - 86_400_000;
+  return contents.replace(/2026-09-[0-9]{2}T[0-9:.]+Z/g, (timestamp) =>
+    new Date(currentEpoch + Date.parse(timestamp) - fixtureEpoch).toISOString(),
+  );
 }
 
 function fakeCodexSource() {
@@ -288,6 +558,17 @@ if (process.argv[2] === "app-server") {
     }
   });
 } else if (process.argv[2] === "execpolicy" && process.argv[3] === "check") {
+  if (process.env.FAKE_CODEX_MODE === "exec-missing") {
+    process.stderr.write("execpolicy unavailable\\n");
+    process.exit(127);
+  }
+  if (process.env.FAKE_CODEX_MODE === "exec-malformed") {
+    process.stdout.write("not-json");
+    process.exit(0);
+  }
+  if (process.env.FAKE_CODEX_MODE === "exec-hang") {
+    setInterval(() => {}, 1000);
+  }
   const separator = process.argv.indexOf("--");
   const argv = process.argv.slice(separator + 1);
   const ruleFiles = [];
@@ -339,9 +620,38 @@ async function scanReport(fixture: IsolatedFixture) {
     harnesses: Array<{
       harness: string;
       status: string;
-      suggestions: Array<{ id: string; rule: string }>;
+      suggestions: Array<{ id: string; rule: string; scope: string }>;
     }>;
   };
+}
+
+async function planCandidate(fixture: IsolatedFixture, id: string | undefined) {
+  return JSON.parse(
+    (await runCli(fixture, ["plan", "--select", id ?? "missing", "--json"])).stdout,
+  ) as {
+    confirmToken: string;
+    plan: { path: string; harness: string; destination: string };
+  };
+}
+
+async function forgePlan(
+  path: string,
+  mutate: (stored: {
+    harness: string;
+    selected: Array<{ id: string; rule: string }>;
+    replacement: string;
+    replacementSha256: string;
+  }) => {
+    harness: string;
+    selected: Array<{ id: string; rule: string }>;
+    replacement: string;
+    replacementSha256: string;
+  },
+) {
+  const stored = mutate(JSON.parse(await readFile(path, "utf8")));
+  stored.replacementSha256 = createHash("sha256").update(stored.replacement).digest("hex");
+  await writeFile(path, `${JSON.stringify(stored, null, 2)}\n`);
+  return { confirmToken: `apply:${stored.harness}:${stored.replacementSha256}` };
 }
 
 async function snapshotTree(root: string) {

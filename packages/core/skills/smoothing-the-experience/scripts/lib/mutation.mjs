@@ -1,8 +1,8 @@
 import { createHash, randomUUID } from "node:crypto";
-import { open, readFile, rename, unlink, writeFile } from "node:fs/promises";
+import { mkdir, open, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join } from "node:path";
 
-const defaultFs = { open, readFile, rename, unlink, writeFile };
+const defaultFs = { mkdir, open, readFile, rename, unlink, writeFile };
 const HARNESSES = new Set(["claude", "codex"]);
 const PLAN_FIELDS = [
   "version",
@@ -98,6 +98,7 @@ export async function applyBoundPlan({
   expectedHarness,
   confirmToken,
   validateReplacement,
+  createParent = false,
   fsOps = defaultFs,
 }) {
   const plan = await readBoundPlan(planPath, fsOps);
@@ -116,6 +117,9 @@ export async function applyBoundPlan({
   if (sha256OrNull(current) !== plan.source.sha256) throw new Error("stale source config");
   const validation = await validateReplacement(plan.replacement);
   if (validation === false) throw new Error("replacement validation failed");
+  if (createParent && current === null) {
+    await fsOps.mkdir(dirname(plan.destination), { recursive: true, mode: 0o700 });
+  }
 
   return withExclusiveLock(`${plan.destination}.moe-smoothing.lock`, fsOps, () =>
     atomicReplace(plan, fsOps),
