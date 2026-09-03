@@ -339,6 +339,12 @@ describe("resolvePluginRoot", () => {
       "/opt/moe-crew",
     );
   });
+
+  it("treats an empty MOE_CREW_PLUGIN_ROOT override as absent", () => {
+    expect(resolvePluginRoot("/opt/moe-crew/dist", { MOE_CREW_PLUGIN_ROOT: "" })).toBe(
+      "/opt/moe-crew",
+    );
+  });
 });
 
 describe("read-turn — trailing newline parity (bash: exactly two)", () => {

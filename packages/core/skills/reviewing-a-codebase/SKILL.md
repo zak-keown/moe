@@ -128,7 +128,7 @@ are in scope at **every** depth regardless of extension. A committed secret is
 the highest-severity thing a review can find and it never lives in a file with a
 code extension, so an extension filter is exactly the wrong instrument for it.
 
-Only `deep` escalates the model, by passing `model: {model-deep}` when dispatching
+Only `deep` escalates the model, by passing `model:` {model-deep} when dispatching
 `review-shard`. Shallow is cheaper by scope, not by capability.
 
 **This is review breadth. It is not the `patch` / `change` / `feature` workflow
@@ -141,7 +141,7 @@ never appear in the same decision.
 Resolve {resource:skills/reviewing-a-codebase/scripts/review-scope.mjs} relative to this loaded document, then invoke it as:
 
 ```bash
-node <resolved-review-scope.mjs> \
+node "<resolved-review-scope.mjs>" \
   --depth medium --out .moe/review-shards
 ```
 
@@ -161,7 +161,7 @@ prompt may add to it, never subtract.
 As reports land, resolve {resource:skills/reviewing-a-codebase/scripts/review-check.mjs} relative to this loaded document and validate each one before the merge ever sees it:
 
 ```bash
-node <resolved-review-check.mjs> \
+node "<resolved-review-check.mjs>" \
   --shards .moe/review-shards
 ```
 
@@ -180,7 +180,7 @@ order. The output is identical and only the wall clock changes. See
 Finally, resolve {resource:skills/reviewing-a-codebase/scripts/review-merge.mjs} relative to this loaded document:
 
 ```bash
-node <resolved-review-merge.mjs> \
+node "<resolved-review-merge.mjs>" \
   --shards .moe/review-shards --out CODEBASE-REVIEW.md
 ```
 
@@ -202,7 +202,7 @@ Run the ordinary merge first so the serious findings have their stable
 `CR-###` IDs. Resolve {resource:skills/reviewing-a-codebase/scripts/review-verify-scope.mjs} relative to this loaded document, then split them out:
 
 ```bash
-node <resolved-review-verify-scope.mjs> \
+node "<resolved-review-verify-scope.mjs>" \
   --shards .moe/review-shards --report CODEBASE-REVIEW.md
 ```
 
@@ -214,9 +214,9 @@ relative to this loaded document and record each reply as it arrives, from the
 saved reply or the bare object:
 
 ```bash
-node <resolved-review-verify-record.mjs> \
+node "<resolved-review-verify-record.mjs>" \
   --shards .moe/review-shards --from-file reply.txt
-node <resolved-review-verify-record.mjs> \
+node "<resolved-review-verify-record.mjs>" \
   --shards .moe/review-shards \
   '{"id":"CR-001","verdict":"confirmed","evidence":"Reproduced from the public route."}'
 ```
@@ -231,7 +231,7 @@ ID unless `--replace` is passed; it rewrites
 shows nothing missing, finalize:
 
 ```bash
-node <resolved-review-merge.mjs> \
+node "<resolved-review-merge.mjs>" \
   --shards .moe/review-shards \
   --verification-results .moe/review-shards/verifications.json \
   --out CODEBASE-REVIEW.md

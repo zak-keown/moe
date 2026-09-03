@@ -8,11 +8,9 @@ import { baseManifestFields, json } from './shared.js'
 // place in the spec, and there is no bootstrap-injection mechanism, so
 // those component supports stay 'none' below (with warnings when present).
 //
-// The spec's standard skills location IS skills/ at the plugin root. When
-// components.skills is customized we can't relocate the manifest to point
-// at it (the spec has no such key), so we only warn; support.skills stays
-// the static 'full' declared below and the run-specific limitation is
-// communicated via the warning instead.
+// The spec's standard skills location IS skills/ at the plugin root and has no
+// manifest key for relocating it. The generation pipeline therefore renders a
+// custom source skill directory into root skills/ for this adapter.
 //
 // plugin.json's schema is CLOSED (additionalProperties: false), unlike the
 // other adapters' manifests. A general deepMerge of the full manifest
@@ -140,18 +138,12 @@ function mcpManifest(model: PluginModel): { manifest?: Record<string, unknown>; 
 // directly, so the doc points at that mechanism instead of a fabricated CLI
 // invocation.
 function installDoc(model: PluginModel): string {
-  const { config } = model
   const emitted = ['`plugin.json`']
   if (wouldEmitMcp(model)) {
     emitted.push("`mcp.json`, translated from the plugin's MCP server config")
   }
 
   const caveats = ["- Commands, agents, and hooks are excluded from the Agent Plugins 1.0 spec entirely."]
-  if (config.components.skills !== 'skills') {
-    caveats.unshift(
-      `- The spec requires skills at the fixed \`skills/\` location; \`${config.components.skills}/\` will not be discovered.`,
-    )
-  }
 
   const lines = [
     '## What gets emitted',
@@ -184,9 +176,10 @@ export const agentPlugins: HarnessAdapter = {
   skillLayout: {
     outputDir: 'skills',
     profile: 'agent-plugins-1.0',
-    mode: 'in-place',
+    mode: 'source-or-rendered',
   },
   skillDelivery: 'native-discovery',
+  nativeDiscoveryFile: 'plugin.json',
   installDoc,
   emit(model: PluginModel): EmitResult {
     const { config } = model
@@ -221,11 +214,6 @@ export const agentPlugins: HarnessAdapter = {
       if (mcp) files.push({ path: 'mcp.json', content: json(mcp) })
     }
 
-    if (config.components.skills !== 'skills') {
-      warnings.push(
-        `agent-plugins-1.0 requires skills/ at the plugin root; ${config.components.skills} will not be discovered`,
-      )
-    }
     if (model.commands.length) warnings.push('commands are excluded from the Agent Plugins 1.0 spec')
     if (model.agents.length) warnings.push('agents are excluded from the Agent Plugins 1.0 spec')
     if (model.hooks !== undefined) warnings.push('hooks are excluded from the Agent Plugins 1.0 spec')

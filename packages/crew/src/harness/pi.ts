@@ -75,7 +75,7 @@ export const pi: HarnessDriver = {
   stopGraceSeconds: 10,
 
   bin(environment: NodeJS.ProcessEnv = process.env): string {
-    return environment.MOE_CREW_PI_BIN ?? "pi";
+    return environment.MOE_CREW_PI_BIN || "pi";
   },
 
   // Pi's env genuinely depends on BOTH workerHome (PI_CODING_AGENT_DIR) and

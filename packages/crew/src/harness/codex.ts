@@ -143,7 +143,7 @@ export const codex: HarnessDriver = {
   stopGraceSeconds: 2,
 
   bin(environment: NodeJS.ProcessEnv = process.env): string {
-    return environment.MOE_CREW_CODEX_BIN ?? "codex";
+    return environment.MOE_CREW_CODEX_BIN || "codex";
   },
 
   // CODEX_HOME is per-worker, so the env genuinely depends on workerHome (unlike

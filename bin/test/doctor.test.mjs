@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import {
   allProbes,
   cmpVersion,
+  executableFile,
   extractTmuxVersion,
   extractVersion,
   overallExit,
@@ -131,7 +132,7 @@ describe("probes library", () => {
     const options = {
       platform: "win32",
       env: { CLAUDE_CODE_GIT_BASH_PATH: "C:\\custom\\bash.exe", PATH: "" },
-      exists: (path) => path === "C:\\custom\\bash.exe",
+      isExecutableFile: (path) => path === "C:\\custom\\bash.exe",
       executableOnPath: () => false,
     };
 
@@ -150,18 +151,41 @@ describe("probes library", () => {
     const standard = probeBashOnWindows("cursor", {
       platform: "win32",
       env: { PATH: "" },
-      exists: (path) => path === "C:\\Program Files\\Git\\bin\\bash.exe",
+      isExecutableFile: (path) => path === "C:\\Program Files\\Git\\bin\\bash.exe",
       executableOnPath: () => false,
     });
     const onPath = probeBashOnWindows("copilot", {
       platform: "win32",
       env: { PATH: "C:\\tools" },
-      exists: () => false,
+      isExecutableFile: () => false,
       executableOnPath: () => true,
     });
 
     expect(standard).toMatchObject({ ok: true, version: "C:\\Program Files\\Git\\bin\\bash.exe" });
     expect(onPath).toMatchObject({ ok: true, version: "bash.exe on PATH" });
+  });
+
+  it("accepts a Windows executable candidate only when it is a regular file", () => {
+    const dir = mkdtempSync(join(tmpdir(), "moe-windows-bash-"));
+    const file = join(dir, "bash.exe");
+    writeFileSync(file, "fixture\n");
+
+    expect(executableFile(dir, { platform: "win32" })).toBe(false);
+    expect(executableFile(file, { platform: "win32" })).toBe(true);
+  });
+
+  it("rejects a non-file Claude bash override before trying executable standard candidates", () => {
+    const result = probeBashOnWindows("claude-code", {
+      platform: "win32",
+      env: { CLAUDE_CODE_GIT_BASH_PATH: "C:\\directory", PATH: "" },
+      isExecutableFile: (path) => path === "C:\\Program Files\\Git\\bin\\bash.exe",
+      executableOnPath: () => false,
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      version: "C:\\Program Files\\Git\\bin\\bash.exe",
+    });
   });
 });
 
@@ -188,6 +212,45 @@ describe("moe-doctor and moe-install entry points", () => {
     expect(parsed.results).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ name: "claude" })]),
     );
+  });
+
+  it("moe-doctor uses the configured default ahead of an ambiguous installed fleet without mutation", () => {
+    const actionLog = join(mkdtempSync(join(tmpdir(), "moe-doctor-log-")), "actions");
+    const proc = runBin("moe-doctor", [], {
+      path: harnessBin("claude", "codex"),
+      defaultHarness: "pi",
+      env: { MOE_TEST_ACTION_LOG: actionLog },
+    });
+
+    expect([0, 1], proc.stderr).toContain(proc.status);
+    expect(proc.stdout).toMatch(/harness: pi; selected-by: MOE_DEFAULT_HARNESS/);
+    expect(existsSync(actionLog)).toBe(false);
+  });
+
+  it("moe-doctor selects the sole installed harness without mutation", () => {
+    const actionLog = join(mkdtempSync(join(tmpdir(), "moe-doctor-log-")), "actions");
+    const proc = runBin("moe-doctor", [], {
+      path: harnessBin("opencode"),
+      env: { MOE_TEST_ACTION_LOG: actionLog },
+    });
+
+    expect([0, 1], proc.stderr).toContain(proc.status);
+    expect(proc.stdout).toMatch(/harness: opencode; selected-by: installed executable/);
+    expect(existsSync(actionLog)).toBe(false);
+  });
+
+  it("moe-doctor rejects ambiguous installed harnesses without mutation", () => {
+    const actionLog = join(mkdtempSync(join(tmpdir(), "moe-doctor-log-")), "actions");
+    const proc = runBin("moe-doctor", [], {
+      path: harnessBin("claude", "codex"),
+      env: { MOE_TEST_ACTION_LOG: actionLog },
+    });
+
+    expect(proc.status).toBe(2);
+    expect(proc.stderr).toMatch(
+      /multiple harness executables are installed \(claude-code, codex\)/,
+    );
+    expect(existsSync(actionLog)).toBe(false);
   });
 
   it("moe-install --help documents apply and no migration surface", () => {

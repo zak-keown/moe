@@ -79,7 +79,7 @@ export const claude: HarnessDriver = {
   stopGraceSeconds: 10,
 
   bin(environment: NodeJS.ProcessEnv = process.env): string {
-    return environment.MOE_CREW_CLAUDE_BIN ?? "claude";
+    return environment.MOE_CREW_CLAUDE_BIN || "claude";
   },
 
   // Claude's worker HOME is the controller HOME, so `workerHome` is ignored;

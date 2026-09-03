@@ -20,6 +20,7 @@ import type { HarnessAdapter } from '../src/adapters/index.js'
 import type { FileSet } from '../src/fileset.js'
 import { opencode } from '../src/adapters/opencode.js'
 import { pi } from '../src/adapters/pi.js'
+import { agentPlugins } from '../src/adapters/agent-plugins.js'
 
 const fullSupport = {
   skills: 'full',
@@ -122,6 +123,59 @@ describe('generate', () => {
     expect(matrix).toContain('| claude-code | rendered | full |')
     expect(matrix).toContain('| agent-plugins-1.0 | native-discovery | full |')
     expect(matrix).toContain('| copilot | shared-compatible | full |')
+  })
+
+  it('reports Agent Plugins skill delivery as unsupported when plugin.json is not emitted', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mint-gen-agent-name-'))
+    writeFileSync(
+      join(dir, 'moe-mint.yaml'),
+      'name: bad--name\nversion: 1.0.0\ndescription: invalid Agent Plugins name\nbootstrap: none\n',
+    )
+    mkdirSync(join(dir, 'skills/demo'), { recursive: true })
+    writeFileSync(join(dir, 'skills/demo/SKILL.md'), '---\nname: demo\ndescription: Demo\n---\n')
+
+    const result = generate(dir, [agentPlugins])
+
+    expect(result.files.some((file) => file.path === 'plugin.json')).toBe(false)
+    expect(result.skillDelivery['agent-plugins-1.0']).toBe('unsupported')
+    expect(readFileSync(join(dir, 'docs/support-matrix.md'), 'utf8')).toContain(
+      '| agent-plugins-1.0 | unsupported | none |',
+    )
+  })
+
+  it('renders a custom source skill directory into Agent Plugins root skills and tracks it', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mint-gen-agent-skills-'))
+    writeFileSync(
+      join(dir, 'moe-mint.yaml'),
+      [
+        'name: custom-skills',
+        'version: 1.0.0',
+        'description: custom Agent Plugins skills source',
+        'components:',
+        '  skills: source-skills',
+        'bootstrap: none',
+      ].join('\n'),
+    )
+    mkdirSync(join(dir, 'source-skills/demo'), { recursive: true })
+    const source = '---\nname: demo\ndescription: Demo\n---\nUse {ask}.\n'
+    writeFileSync(join(dir, 'source-skills/demo/SKILL.md'), source)
+    writeFileSync(
+      join(dir, 'moe-mint-vocab.yaml'),
+      ['tokens:', '  ask:', '    agent-plugins-1.0: ask through the client', 'blocks: {}'].join('\n'),
+    )
+
+    const result = generate(dir, [agentPlugins])
+
+    expect(result.skillDelivery['agent-plugins-1.0']).toBe('native-discovery')
+    expect(existsSync(join(dir, 'plugin.json'))).toBe(true)
+    expect(readFileSync(join(dir, 'skills/demo/SKILL.md'), 'utf8')).toContain(
+      'Use ask through the client.',
+    )
+    expect(readFileSync(join(dir, 'source-skills/demo/SKILL.md'), 'utf8')).toBe(source)
+    expect(result.files.some((file) => file.path === 'skills/demo/SKILL.md')).toBe(true)
+    const manifest = JSON.parse(readFileSync(join(dir, MANIFEST_PATH), 'utf8'))
+    expect(manifest.files['skills/demo/SKILL.md']).toBeDefined()
+    expect(checkDrift(dir).clean).toBe(true)
   })
 
   it('downgrades a shared-compatible adapter to unsupported when its provider is excluded', () => {
@@ -396,6 +450,23 @@ describe('generate', () => {
     const manifest = JSON.parse(readFileSync(join(dir, MANIFEST_PATH), 'utf8'))
     expect(manifest.schema).toBe(1)
     expect(Object.keys(manifest.files).length).toBeGreaterThan(0)
+  })
+
+  it.each([
+    ['null map', null],
+    ['malformed entry', { 'skills/demo/SKILL.md': null }],
+  ])('recovers from a manifest whose optional skillSources has a %s', (_label, skillSources) => {
+    const dir = freshFixture()
+    generate(dir)
+    const manifestPath = join(dir, MANIFEST_PATH)
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
+    manifest.skillSources = skillSources
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
+
+    const result = generate(dir)
+
+    expect(result.warnings.join('\n')).toMatch(/unreadable generation manifest.*skillSources/)
+    expect(checkDrift(dir).clean).toBe(true)
   })
 
   it('refuses to overwrite a pre-existing hand-written file not created by moe-mint', () => {

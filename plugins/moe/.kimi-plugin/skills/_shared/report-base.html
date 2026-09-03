@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{{TITLE}}</title>
+    <title><!-- MOE:SLOT:TITLE --></title>
     <style>
       /* ── tokens ── */
       :root {
@@ -212,10 +212,10 @@
     <button class="theme-toggle" aria-label="Toggle theme">Theme</button>
     <div class="report-shell">
       <nav class="report-nav" aria-label="Report navigation">
-        {{NAV}}
+        <!-- MOE:SLOT:NAV -->
       </nav>
       <main class="report-content">
-        {{CONTENT}}
+        <!-- MOE:SLOT:CONTENT -->
       </main>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.4.1/mermaid.min.js"></script>
@@ -257,6 +257,6 @@
         }
       })();
     </script>
-    {{SCRIPTS}}
+    <!-- MOE:SLOT:SCRIPTS -->
   </body>
 </html>

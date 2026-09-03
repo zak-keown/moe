@@ -45,6 +45,29 @@ export function loadManifest(root: string): GenerationManifest | undefined {
   if (typeof m !== 'object' || m === null || typeof m.files !== 'object' || m.files === null) {
     throw new ConfigError(`${MANIFEST_PATH} has an unrecognized format — regenerate with \`moe-mint generate\``)
   }
+  if (m.skillSources !== undefined) {
+    if (typeof m.skillSources !== 'object' || m.skillSources === null || Array.isArray(m.skillSources)) {
+      throw new ConfigError(
+        `${MANIFEST_PATH} has an invalid skillSources map — regenerate with \`moe-mint generate\``,
+      )
+    }
+    for (const [path, source] of Object.entries(m.skillSources)) {
+      if (
+        typeof source !== 'object' ||
+        source === null ||
+        typeof source.contentBase64 !== 'string' ||
+        typeof source.mode !== 'number' ||
+        !Number.isFinite(source.mode) ||
+        typeof source.renderedSha256 !== 'string' ||
+        typeof source.renderedMode !== 'number' ||
+        !Number.isFinite(source.renderedMode)
+      ) {
+        throw new ConfigError(
+          `${MANIFEST_PATH} has an invalid skillSources entry for ${path} — regenerate with \`moe-mint generate\``,
+        )
+      }
+    }
+  }
   return m
 }
 
