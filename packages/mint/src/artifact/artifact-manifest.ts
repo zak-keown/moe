@@ -1,6 +1,5 @@
 import { createHash } from 'node:crypto'
-import { constants } from 'node:fs'
-import { lstat, open, readdir } from 'node:fs/promises'
+import { constants, promises as fs } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { MintError } from '../diagnostics.js'
 import type { CapabilityId, TargetId } from '../vocabulary.js'
@@ -45,6 +44,22 @@ function manifestError(code: string, message: string, action: string, path?: str
 }
 
 function checkedArtifactPath(value: string): ArtifactPath {
+  if (value.includes('\0')) {
+    throw manifestError(
+      'ARTIFACT_PATH_INVALID',
+      `artifact path "${value}" is invalid: path must not contain the NUL row delimiter`,
+      'Use a path containing only Unicode scalar values and no NUL bytes.',
+      value,
+    )
+  }
+  if (/[\uD800-\uDFFF]/u.test(value)) {
+    throw manifestError(
+      'ARTIFACT_PATH_INVALID',
+      `artifact path "${value}" is invalid: path must not contain an unpaired UTF-16 surrogate`,
+      'Use a path containing only Unicode scalar values and no NUL bytes.',
+      value,
+    )
+  }
   try {
     return artifactPath(value)
   } catch (error) {
@@ -134,7 +149,7 @@ function normalizedMode(mode: number, path: ArtifactPath): '0644' | '0755' {
   )
 }
 
-async function readRegularFile(absolute: string, path: ArtifactPath, initial: Awaited<ReturnType<typeof lstat>>): Promise<Buffer> {
+async function readRegularFile(absolute: string, path: ArtifactPath, initial: Awaited<ReturnType<typeof fs.lstat>>): Promise<Buffer> {
   if (!initial.isFile() || initial.isSymbolicLink()) {
     throw manifestError(
       'ARTIFACT_UNSAFE_FILE_TYPE',
@@ -149,7 +164,7 @@ async function readRegularFile(absolute: string, path: ArtifactPath, initial: Aw
 
   let handle
   try {
-    handle = await open(absolute, constants.O_RDONLY | constants.O_NOFOLLOW)
+    handle = await fs.open(absolute, constants.O_RDONLY | constants.O_NOFOLLOW)
     const before = await handle.stat()
     if (
       !before.isFile()
@@ -191,7 +206,7 @@ export async function scanArtifact(root: string): Promise<readonly ArtifactEntry
   const absoluteRoot = resolve(root)
   let rootStats
   try {
-    rootStats = await lstat(absoluteRoot)
+    rootStats = await fs.lstat(absoluteRoot)
   } catch (error) {
     throw manifestError('ARTIFACT_READ_FAILED', `cannot inspect artifact root "${root}"`, 'Pass an existing readable artifact directory.', undefined, error)
   }
@@ -205,7 +220,7 @@ export async function scanArtifact(root: string): Promise<readonly ArtifactEntry
   async function walk(absolute: string, parent: string): Promise<void> {
     let names: Buffer[]
     try {
-      names = await readdir(absolute, { encoding: 'buffer' }) as Buffer[]
+      names = await fs.readdir(absolute, { encoding: 'buffer' }) as Buffer[]
     } catch (error) {
       throw manifestError('ARTIFACT_READ_FAILED', `cannot enumerate artifact directory "${parent || '.'}"`, 'Ensure the complete artifact tree is readable.', parent || undefined, error)
     }
@@ -228,7 +243,7 @@ export async function scanArtifact(root: string): Promise<readonly ArtifactEntry
       const absoluteChild = join(absolute, name)
       let stats
       try {
-        stats = await lstat(absoluteChild)
+        stats = await fs.lstat(absoluteChild)
       } catch (error) {
         throw manifestError('ARTIFACT_READ_FAILED', `cannot inspect artifact entry "${logical}"`, 'Scan a stable, readable artifact tree.', logical, error)
       }
