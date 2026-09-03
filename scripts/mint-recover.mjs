@@ -65,6 +65,7 @@ export async function runMintRecovery({
     await recover({ journalPath });
     log(`Recovered generated outputs from ${journalPath}`);
   }
+  return { repositoryRoot, journalPath };
 }
 
 export async function executeMintRecoveryCli(options = {}, io = console) {

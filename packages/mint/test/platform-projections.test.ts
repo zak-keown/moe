@@ -60,6 +60,8 @@ describe('registry projections', () => {
         'scripts/lib/mint-diagnostics.mjs',
         'scripts/lib/mint-host-contract.mjs',
         'scripts/mint-plugins.mjs',
+        'scripts/mint-prepare.mjs',
+        'scripts/clean-package-dist.mjs',
         'packages/memory/prompts/**',
         'packages/statusline/vendor/**',
       ]),
@@ -80,6 +82,8 @@ describe('registry projections', () => {
     expect(rootPackage.scripts['mint:check']).toContain(
       'git status --porcelain -- plugins .claude-plugin/marketplace.json docs/moe/generated/plugin-catalog.md',
     )
+    expect(rootPackage.scripts.mint).toMatch(/^node scripts\/mint-prepare\.mjs --root \. && turbo run mint:generate$/)
+    expect(rootPackage.scripts['mint:check']).toMatch(/^node scripts\/mint-prepare\.mjs --root \. && turbo run mint:generate --force/)
   })
 
   it('renders a deterministic marketplace from the Claude emissions and the default profile author', async () => {
