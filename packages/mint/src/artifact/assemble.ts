@@ -18,7 +18,9 @@ import {
 } from '../platform/projections.js'
 import type { ResolvedPlatform, ResolvedPlugin } from '../platform/load.js'
 import type { AdapterEmission } from '../adapters/types.js'
-import type { TargetId } from '../vocabulary.js'
+import { TARGET_IDS, type TargetId } from '../vocabulary.js'
+import { readArtifactManifest, validateArtifact, writeArtifactManifest, type ExpectedArtifactContext } from './artifact-manifest.js'
+import { validateArtifactReferences } from './references.js'
 import { artifactCollisionKey, artifactPath, compareArtifactPaths, type ArtifactPath } from './paths.js'
 import { stagePayloads } from './payload.js'
 import { writeLicensePayload } from './license-payload.js'
@@ -234,12 +236,13 @@ async function writeNewFile(path: string, bytes: Uint8Array | string, executable
   }
 }
 
-async function stageComponents(plugin: ResolvedPlugin, artifactRoot: string): Promise<void> {
+async function stageComponents(plugin: ResolvedPlugin, artifactRoot: string): Promise<readonly ComponentFile[]> {
   const files = await collectComponentFiles(plugin)
   for (const file of files) {
     await mkdir(dirname(join(artifactRoot, file.destination)), { recursive: true })
     await writeNewFile(join(artifactRoot, file.destination), file.bytes, file.executable)
   }
+  return files
 }
 
 type ArtifactEntryKind = 'directory' | 'file'
@@ -405,7 +408,7 @@ export async function assembleArtifact(input: AssembleArtifactInput): Promise<As
     throw assemblyError('ARTIFACT_ROOT_NOT_FRESH', input.plugin, input.plugin.config.source, `artifact root "${root}" is not fresh`, 'Use an empty nonce-bearing sibling staging tree.', root, error)
   }
 
-  await stageComponents(input.plugin, root)
+  const componentFiles = await stageComponents(input.plugin, root)
   const stagedPayloads = await stagePayloads(input.plugin.sourcePath, root, input.plugin.config.artifact.payloads)
   const validation = validateCanonicalGeneration(identity(input.plugin), { marketplaceName: defaultProfileId(input.platform) })
   await assertGeneratedPathsCompatible(input.plugin, root, validation.files.map((file) => file.path))
@@ -430,11 +433,38 @@ export async function assembleArtifact(input: AssembleArtifactInput): Promise<As
   validateManifestReferences(manifest, paths)
   await writeNewFile(join(root, 'package.json'), `${JSON.stringify(manifest, null, 2)}\n`)
   const projection = projectionRecordForCurrentGeneration(input.platform, input.plugin, validation)
+  const omittedOptionalPayloads = Object.freeze(stagedPayloads.filter((payload) => payload.omitted).map((payload) => payload.destination))
+  const targets: ExpectedArtifactContext['targets'] = Object.fromEntries(TARGET_IDS.flatMap((target) => {
+    const emission = projection.emissions[target]
+    return emission === undefined ? [] : [[target, { emitted_capabilities: emission.emittedCapabilities }]]
+  }))
+  const expected: ExpectedArtifactContext = {
+    plugin: { id: input.plugin.id, package: input.plugin.npmPackage, version: input.plugin.version },
+    targets,
+    omitted_optional_payloads: omittedOptionalPayloads,
+  }
+  await writeArtifactManifest(root, expected)
+  await validateArtifact(root, expected)
+  const artifactManifest = await readArtifactManifest(root)
+  const stagedComponentPaths = new Set<string>(componentFiles.map((file) => file.destination))
+  const componentDirectories = Object.fromEntries(Object.entries(input.plugin.config.components).filter(([, path]) => (
+    stagedComponentPaths.has(path) || [...stagedComponentPaths].some((candidate) => candidate.startsWith(`${path}/`))
+  )))
+  validateArtifactReferences({
+    artifactManifest,
+    packageManifest: manifest,
+    generatedFiles: validation.files,
+    componentDirectories,
+    componentFiles: componentFiles.filter((file) => file.destination.endsWith('.json')).map((file) => ({
+      path: file.destination,
+      content: file.bytes.toString('utf8'),
+    })),
+  })
   return Object.freeze({
     plugin: input.plugin,
     root,
     emissions: projection.emissions,
-    omittedOptionalPayloads: Object.freeze(stagedPayloads.filter((payload) => payload.omitted).map((payload) => payload.destination)),
+    omittedOptionalPayloads,
     projection,
   })
 }

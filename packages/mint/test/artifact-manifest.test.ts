@@ -9,10 +9,14 @@ import { fileURLToPath } from 'node:url'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   computeTreeDigest,
+  readArtifactManifest,
   scanArtifact,
   serializeTreeRow,
   type ArtifactEntry,
   type ArtifactManifestV1,
+  type ExpectedArtifactContext,
+  validateArtifact,
+  writeArtifactManifest,
 } from '../src/artifact/artifact-manifest.js'
 
 const execFile = promisify(execFileCallback)
@@ -40,6 +44,103 @@ async function fixture(): Promise<string> {
 const zeroHash = '0'.repeat(64)
 
 describe('artifact tree manifest', () => {
+  const expectedContext: ExpectedArtifactContext = {
+    plugin: { id: 'demo', package: '@example/demo', version: '1.2.3' },
+    targets: {
+      opencode: { emitted_capabilities: ['format-conformance', 'skill-discovery'] },
+      'claude-code': { emitted_capabilities: ['mcp-registration', 'skill-discovery'] },
+    },
+    omitted_optional_payloads: ['vendor/z', 'vendor/a'],
+  }
+
+  async function writableArtifact(): Promise<string> {
+    const root = await workspace()
+    await writeFile(join(root, 'package.json'), '{}\n', { mode: 0o644 })
+    await mkdir(join(root, 'dist'))
+    await writeFile(join(root, 'dist/index.js'), 'export {}\n', { mode: 0o644 })
+    return root
+  }
+
+  it('round-trips the strict external schema with canonical target, capability, file, and omission order', async () => {
+    const root = await writableArtifact()
+
+    const written = await writeArtifactManifest(root, expectedContext)
+    const bytes = await fs.readFile(join(root, '.moe/artifact.json'), 'utf8')
+
+    expect(bytes).toBe(`${JSON.stringify(written, null, 2)}\n`)
+    expect(written.plugin).toEqual({ id: 'demo', package: '@example/demo', version: '1.2.3' })
+    expect(Object.keys(written.targets)).toEqual(['claude-code', 'opencode'])
+    expect(written.targets['claude-code']?.emitted_capabilities).toEqual(['skill-discovery', 'mcp-registration'])
+    expect(written.omitted_optional_payloads).toEqual(['vendor/a', 'vendor/z'])
+    expect(written.files.map((entry) => entry.path)).toEqual(['dist/index.js', 'package.json'])
+    await expect(readArtifactManifest(root)).resolves.toEqual(written)
+    await expect(validateArtifact(root, expectedContext)).resolves.toBeUndefined()
+  })
+
+  it('omits empty optional-payload evidence while the reader and validator treat absence as an empty list', async () => {
+    const root = await writableArtifact()
+    const expected = { ...expectedContext, omitted_optional_payloads: [] }
+
+    const written = await writeArtifactManifest(root, expected)
+
+    expect(written).not.toHaveProperty('omitted_optional_payloads')
+    await expect(validateArtifact(root, expected)).resolves.toBeUndefined()
+  })
+
+  it.each([
+    ['root', (manifest: ArtifactManifestV1) => ({ ...manifest, unknown: true })],
+    ['plugin', (manifest: ArtifactManifestV1) => ({ ...manifest, plugin: { ...manifest.plugin, unknown: true } })],
+    ['file row', (manifest: ArtifactManifestV1) => ({ ...manifest, files: [{ ...manifest.files[0], unknown: true }, ...manifest.files.slice(1)] })],
+    ['target emission', (manifest: ArtifactManifestV1) => ({
+      ...manifest,
+      targets: { ...manifest.targets, opencode: { ...manifest.targets.opencode, unknown: true } },
+    })],
+  ] as const)('rejects unknown manifest fields at the %s schema boundary', async (_name, mutate) => {
+    const root = await writableArtifact()
+    const written = await writeArtifactManifest(root, expectedContext)
+    await fs.writeFile(join(root, '.moe/artifact.json'), `${JSON.stringify(mutate(written))}\n`)
+
+    await expect(readArtifactManifest(root)).rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_MANIFEST_INVALID' } })
+  })
+
+  it.each([
+    ['missing listed file', async (root: string) => fs.rm(join(root, 'dist/index.js'))],
+    ['unlisted extra file', async (root: string) => fs.writeFile(join(root, 'extra.txt'), 'extra\n', { mode: 0o644 })],
+    ['changed bytes', async (root: string) => fs.writeFile(join(root, 'dist/index.js'), 'different!\n', { mode: 0o644 })],
+    ['changed mode', async (root: string) => fs.chmod(join(root, 'dist/index.js'), 0o755)],
+    ['changed declared size', async (root: string, manifest: ArtifactManifestV1) => {
+      const files = manifest.files.map((entry, index) => index === 0 ? { ...entry, size: entry.size + 1 } : entry)
+      await fs.writeFile(join(root, '.moe/artifact.json'), `${JSON.stringify({ ...manifest, files })}\n`)
+    }],
+    ['wrong tree digest', async (root: string, manifest: ArtifactManifestV1) => {
+      await fs.writeFile(join(root, '.moe/artifact.json'), `${JSON.stringify({ ...manifest, tree_sha256: zeroHash })}\n`)
+    }],
+    ['duplicate row', async (root: string, manifest: ArtifactManifestV1) => {
+      await fs.writeFile(join(root, '.moe/artifact.json'), `${JSON.stringify({ ...manifest, files: [...manifest.files, manifest.files[0]] })}\n`)
+    }],
+    ['reordered rows', async (root: string, manifest: ArtifactManifestV1) => {
+      await fs.writeFile(join(root, '.moe/artifact.json'), `${JSON.stringify({ ...manifest, files: [...manifest.files].reverse() })}\n`)
+    }],
+    ['wrong subject', async (root: string, manifest: ArtifactManifestV1) => {
+      await fs.writeFile(join(root, '.moe/artifact.json'), `${JSON.stringify({ ...manifest, plugin: { ...manifest.plugin, id: 'forged' } })}\n`)
+    }],
+    ['forged target capability', async (root: string, manifest: ArtifactManifestV1) => {
+      await fs.writeFile(join(root, '.moe/artifact.json'), `${JSON.stringify({ ...manifest, targets: { ...manifest.targets, opencode: { emitted_capabilities: ['skill-invocation'] } } })}\n`)
+    }],
+    ['omission drift', async (root: string, manifest: ArtifactManifestV1) => {
+      await fs.writeFile(join(root, '.moe/artifact.json'), `${JSON.stringify({ ...manifest, omitted_optional_payloads: ['vendor/other'] })}\n`)
+    }],
+  ] as const)('rejects %s by comparing the manifest bidirectionally with fresh authority', async (_name, mutate) => {
+    const root = await writableArtifact()
+    const manifest = await writeArtifactManifest(root, expectedContext)
+
+    await mutate(root, manifest)
+
+    await expect(validateArtifact(root, expectedContext)).rejects.toMatchObject({
+      diagnostic: { code: expect.stringMatching(/^ARTIFACT_MANIFEST_/) },
+    })
+  })
+
   it('scans raw text and binary bytes with exact hashes, normalized modes, sorting, and self-exclusion', async () => {
     const root = await fixture()
     await writeFile(join(root, 'opaque.bin'), Uint8Array.from([0, 255, 1, 128, 10]))
