@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { realpathSync } from "node:fs";
 import { Command, CommanderError } from "commander";
+import { worktreeCreate, worktreeRemove, worktreeValidate } from "./worktree.js";
 
 const program = new Command()
   .name("moe-jig")
@@ -8,9 +9,41 @@ const program = new Command()
   .version("0.1.4")
   .exitOverride();
 
-program
+const wt = program
   .command("worktree")
   .description("Create, remove, and validate worktrees in .moe/worktrees/");
+
+wt.command("create")
+  .description("Create a linked worktree in .moe/worktrees/<branch>")
+  .argument("<branch>", "branch name for the worktree")
+  .option("--base <ref>", "base ref to branch from (default: repo default branch)")
+  .action((branch: string, opts: { base?: string }) => {
+    const path = worktreeCreate(branch, opts.base !== undefined ? { base: opts.base } : {});
+    console.log(path);
+  });
+
+wt.command("remove")
+  .description("Remove a jig-created worktree")
+  .argument("<path-or-branch>", "worktree path or branch name")
+  .action((pathOrBranch: string) => {
+    worktreeRemove(pathOrBranch);
+    console.log(`removed: ${pathOrBranch}`);
+  });
+
+wt.command("validate")
+  .description("Run the parallel-dispatch gate on worktree paths")
+  .argument("<paths...>", "worktree paths to validate")
+  .action((paths: string[]) => {
+    const result = worktreeValidate(paths);
+    if (result.valid) {
+      console.log("all conditions pass");
+    } else {
+      for (const d of result.diagnostics) {
+        console.error(`FAIL: ${d}`);
+      }
+      process.exitCode = 1;
+    }
+  });
 
 program.command("plan").description("Initialize plan files with correct naming and placement");
 
