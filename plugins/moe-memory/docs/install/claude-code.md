@@ -12,7 +12,7 @@
 Register the marketplace, then install the plugin:
 
 ```
-claude /plugin marketplace add https://gitlab.com/moe-ai/moe
+claude /plugin marketplace add zak-keown/moe
 ```
 
 ```

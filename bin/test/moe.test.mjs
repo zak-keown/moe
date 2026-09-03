@@ -345,6 +345,66 @@ describe("main", () => {
 });
 
 describe("packaging invariants", () => {
+  it("publishes one exact registry for every active adapter and current plugin", async () => {
+    const registry = await import("../lib/plugin-registry.mjs");
+
+    expect(registry.HARNESS_IDS).toEqual([
+      "claude-code",
+      "cursor",
+      "codex",
+      "kimi",
+      "opencode",
+      "pi",
+      "agent-plugins-1.0",
+      "copilot",
+    ]);
+    expect(registry.PLUGINS.map((plugin) => plugin.name)).toEqual([
+      "moe",
+      "moe-backstory",
+      "moe-memory",
+      "moe-glass",
+      "moe-crew",
+      "moe-statusline",
+    ]);
+    expect(registry.REPOSITORY_URL).toBe("https://github.com/zak-keown/moe");
+    expect(registry.REPOSITORY_CLONE_URL).toBe("https://github.com/zak-keown/moe.git");
+    expect(registry.PLUGINS.map((plugin) => plugin.name)).not.toEqual(
+      expect.arrayContaining(["moe-core", "moe-everything"]),
+    );
+    expect(JSON.stringify(registry.PLUGINS)).not.toMatch(/gitlab\.com\/moe-ai/);
+    expect(registry.HARNESS_IDS.filter((id) => registry.HARNESSES[id].requiresWindowsBash)).toEqual(
+      ["claude-code", "cursor", "copilot"],
+    );
+  });
+
+  it("excludes the Claude-only statusline from every other harness plan", async () => {
+    const { HARNESS_IDS, pluginsForHarness } = await import("../lib/plugin-registry.mjs");
+
+    for (const harness of HARNESS_IDS) {
+      const names = pluginsForHarness(harness).map((plugin) => plugin.name);
+      expect(names.includes("moe-statusline"), harness).toBe(harness === "claude-code");
+      expect(names).not.toContain("moe-core");
+      expect(names).not.toContain("moe-everything");
+    }
+  });
+
+  it("keeps every Mint source config aligned with the canonical registry", async () => {
+    const { HARNESS_IDS, PLUGINS, REPOSITORY_URL } = await import("../lib/plugin-registry.mjs");
+
+    for (const plugin of PLUGINS) {
+      const yaml = readFileSync(join(REPO_ROOT, "packages", plugin.pkg, plugin.config), "utf8");
+      expect(/^name:\s*(\S+)$/m.exec(yaml)?.[1], plugin.name).toBe(plugin.name);
+      expect(/^repository:\s*(\S+)$/m.exec(yaml)?.[1], plugin.name).toBe(REPOSITORY_URL);
+      expect(/^homepage:\s*(\S+)$/m.exec(yaml)?.[1], plugin.name).toBe(REPOSITORY_URL);
+
+      const excluded = HARNESS_IDS.filter((harness) => !plugin.harnesses.includes(harness));
+      for (const harness of excluded)
+        expect(yaml, `${plugin.name} must exclude ${harness}`).toMatch(
+          new RegExp(`^\\s+- ${harness.replace(".", "\\.")}$`, "m"),
+        );
+    }
+  });
+
   it("bin/moe.js opens with #!/usr/bin/env node", () => {
     const src = readFileSync(join(HERE, "..", "moe.js"), "utf8");
     expect(src.split("\n")[0]).toBe("#!/usr/bin/env node");
