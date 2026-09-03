@@ -19,7 +19,8 @@ plans:
   - id: storage-native
     plan: docs/moe/plans/2026-09-02-moe-memory-01-storage-native.md
     depends_on: []
-    status: pending
+    status: done
+    commits: 4f57bd8..1a729c7
   - id: embeddings-migration
     plan: docs/moe/plans/2026-09-02-moe-memory-02-embeddings-migration.md
     depends_on: [storage-native]
