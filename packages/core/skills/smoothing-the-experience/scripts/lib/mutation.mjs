@@ -1,8 +1,8 @@
 import { createHash, randomUUID } from "node:crypto";
-import { mkdir, open, readFile, rename, unlink, writeFile } from "node:fs/promises";
+import { mkdir, open, readFile, rename, rmdir, unlink, writeFile } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join } from "node:path";
 
-const defaultFs = { mkdir, open, readFile, rename, unlink, writeFile };
+const defaultFs = { mkdir, open, readFile, rename, rmdir, unlink, writeFile };
 const HARNESSES = new Set(["claude", "codex"]);
 const PLAN_FIELDS = [
   "version",
@@ -117,13 +117,47 @@ export async function applyBoundPlan({
   if (sha256OrNull(current) !== plan.source.sha256) throw new Error("stale source config");
   const validation = await validateReplacement(plan.replacement);
   if (validation === false) throw new Error("replacement validation failed");
-  if (createParent && current === null) {
-    await fsOps.mkdir(dirname(plan.destination), { recursive: true, mode: 0o700 });
+  const createdParents = [];
+  try {
+    if (createParent && current === null) {
+      await createMissingParentDirectories(dirname(plan.destination), fsOps, createdParents);
+    }
+    return await withExclusiveLock(`${plan.destination}.moe-smoothing.lock`, fsOps, () =>
+      atomicReplace(plan, fsOps),
+    );
+  } catch (error) {
+    await rollbackEmptyDirectories(createdParents, fsOps);
+    throw error;
+  }
+}
+
+async function createMissingParentDirectories(path, fsOps, created) {
+  try {
+    await fsOps.mkdir(path, { mode: 0o700 });
+    created.push(path);
+    return;
+  } catch (error) {
+    if (error?.code === "EEXIST") return;
+    if (error?.code !== "ENOENT" || dirname(path) === path) throw error;
   }
 
-  return withExclusiveLock(`${plan.destination}.moe-smoothing.lock`, fsOps, () =>
-    atomicReplace(plan, fsOps),
-  );
+  await createMissingParentDirectories(dirname(path), fsOps, created);
+  try {
+    await fsOps.mkdir(path, { mode: 0o700 });
+    created.push(path);
+  } catch (error) {
+    if (error?.code !== "EEXIST") throw error;
+  }
+}
+
+async function rollbackEmptyDirectories(created, fsOps) {
+  for (let index = created.length - 1; index >= 0; index -= 1) {
+    try {
+      await fsOps.rmdir(created[index]);
+    } catch {
+      // rmdir is intentionally the gate: it preserves nonempty or replaced paths.
+    }
+  }
 }
 
 function normalizeSelected(selected, harness) {

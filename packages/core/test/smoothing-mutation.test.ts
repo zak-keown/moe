@@ -1,9 +1,11 @@
 import {
   access,
+  mkdir,
   mkdtemp,
   open as openFile,
   readdir,
   readFile,
+  rmdir,
   stat,
   unlink,
   writeFile,
@@ -387,6 +389,55 @@ describe("atomic smoothing mutation", () => {
     expect((await stat(join(directory, "config", "nested"))).mode & 0o777).toBe(0o700);
     await expect(readFile(destination, "utf8")).resolves.toBe(REPLACEMENT);
   });
+
+  it.each(["lock-failure", "write-failure"] as const)(
+    "rolls back newly created empty parents after %s",
+    async (failure) => {
+      const fixture = await mutationFixture(failure, {
+        sourceMissing: true,
+        missingParent: true,
+        createParent: true,
+      });
+      const createdLeaf = dirname(fixture.destination);
+      const createdRoot = dirname(createdLeaf);
+
+      await expect(applyBoundPlan(fixture.input)).rejects.toThrow();
+
+      await expect(access(createdLeaf)).rejects.toMatchObject({ code: "ENOENT" });
+      await expect(access(createdRoot)).rejects.toMatchObject({ code: "ENOENT" });
+    },
+  );
+
+  it("preserves an empty pre-existing parent while rolling back its created child", async () => {
+    const fixture = await mutationFixture("lock-failure", {
+      sourceMissing: true,
+      missingParent: true,
+      preExistingParent: true,
+      createParent: true,
+    });
+    const createdLeaf = dirname(fixture.destination);
+    const preExistingRoot = dirname(createdLeaf);
+
+    await expect(applyBoundPlan(fixture.input)).rejects.toThrow(/fixture lock failure/);
+
+    await expect(access(createdLeaf)).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(stat(preExistingRoot)).resolves.toMatchObject({ mode: expect.any(Number) });
+  });
+
+  it("preserves concurrent content added to a newly created parent", async () => {
+    const fixture = await mutationFixture("lock-failure-with-content", {
+      sourceMissing: true,
+      missingParent: true,
+      createParent: true,
+    });
+    const createdLeaf = dirname(fixture.destination);
+
+    await expect(applyBoundPlan(fixture.input)).rejects.toThrow(/fixture lock failure/);
+
+    await expect(readFile(join(createdLeaf, "concurrent.txt"), "utf8")).resolves.toBe(
+      "keep concurrent\n",
+    );
+  });
 });
 
 type Failure =
@@ -394,6 +445,8 @@ type Failure =
   | "stale-source"
   | "stale-under-lock"
   | "lock-held"
+  | "lock-failure"
+  | "lock-failure-with-content"
   | "validator-failure"
   | "open-failure"
   | "write-failure"
@@ -403,12 +456,25 @@ type Failure =
   | "readback-failure"
   | "readback-mismatch";
 
-async function mutationFixture(failure: Failure, { sourceMissing = false } = {}) {
+async function mutationFixture(
+  failure: Failure,
+  {
+    sourceMissing = false,
+    missingParent = false,
+    preExistingParent = false,
+    createParent = false,
+  } = {},
+) {
   const directory = await mkdtemp(join(tmpdir(), "moe-smoothing-mutation-"));
   const planDir = join(directory, "plans");
-  const destination = join(directory, "settings.json");
+  const destination = missingParent
+    ? join(directory, "config", "nested", "settings.json")
+    : join(directory, "settings.json");
   const lockPath = `${destination}.moe-smoothing.lock`;
   await (await import("node:fs/promises")).mkdir(planDir);
+  if (preExistingParent) {
+    await mkdir(dirname(dirname(destination)), { recursive: true });
+  }
   if (!sourceMissing) await writeFile(destination, ORIGINAL);
   if (failure === "lock-held") await writeFile(lockPath, "held-by-another-writer\n");
   const sourceBytes = sourceMissing ? null : Buffer.from(ORIGINAL);
@@ -440,6 +506,11 @@ async function mutationFixture(failure: Failure, { sourceMissing = false } = {})
   const open = vi.fn(async (path: string, flags: string, mode: number) => {
     if (path.endsWith(".moe-smoothing.lock")) {
       events.push("open:lock");
+      if (failure === "lock-failure-with-content") {
+        await writeFile(join(dirname(destination), "concurrent.txt"), "keep concurrent\n");
+        throw new Error("fixture lock failure");
+      }
+      if (failure === "lock-failure") throw new Error("fixture lock failure");
     } else {
       events.push("open:temporary");
       temporaryPaths.push(path);
@@ -497,7 +568,15 @@ async function mutationFixture(failure: Failure, { sourceMissing = false } = {})
     events.push("validate");
     if (failure === "validator-failure") throw new Error("fixture validator failure");
   });
-  const fsOps = { open, readFile: read, rename, unlink: remove, writeFile: planWrite };
+  const fsOps = {
+    mkdir,
+    open,
+    readFile: read,
+    rename,
+    rmdir,
+    unlink: remove,
+    writeFile: planWrite,
+  };
 
   return {
     destination,
@@ -507,6 +586,7 @@ async function mutationFixture(failure: Failure, { sourceMissing = false } = {})
       expectedHarness: "claude",
       confirmToken: `apply:claude:${plan.replacementSha256}`,
       validateReplacement: validator,
+      createParent,
       fsOps,
     },
     lockPath,
