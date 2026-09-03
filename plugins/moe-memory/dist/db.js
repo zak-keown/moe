@@ -500,9 +500,7 @@ function nodeFromRow(row) {
     };
 }
 export function getNode(db, id) {
-    const row = db
-        .prepare("SELECT * FROM memory_nodes WHERE id = ?")
-        .get(id);
+    const row = db.prepare("SELECT * FROM memory_nodes WHERE id = ?").get(id);
     return row ? nodeFromRow(row) : null;
 }
 function edgeFromRow(row) {
@@ -561,9 +559,7 @@ export function traceProvenance(db, type, id, depth, direction) {
         for (const [curType, curId, curDepth] of frontier) {
             if (curDepth >= depth)
                 continue;
-            const edges = direction === "causes"
-                ? getEdgesTo(db, curType, curId)
-                : getEdgesFrom(db, curType, curId);
+            const edges = direction === "causes" ? getEdgesTo(db, curType, curId) : getEdgesFrom(db, curType, curId);
             for (const edge of edges) {
                 if (visited.has(edge.id))
                     continue;

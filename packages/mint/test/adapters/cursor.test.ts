@@ -287,7 +287,17 @@ describe('cursor adapter omits optional manifest fields when model is empty', ()
     const dir = mkdtempSync(join(tmpdir(), 'mint-cursor-empty-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: empty-demo\nversion: 1.0.0\ndescription: empty fixture\nbootstrap: none\n',
+      [
+        'name: empty-demo', 'version: 1.0.0', 'description: empty fixture', 'bootstrap: none',
+        'distribution:', '  npm: "@scope/empty-demo"',
+        'artifact:', '  payloads: []',
+        'harnesses:', '  exclude: [claude-code, codex, kimi, opencode, pi, agent-plugins-1.0, copilot]',
+        'targets:',
+        '  claude-code: { intent: omit }', '  cursor: { intent: preview, expected_capabilities: [skill-discovery], operating_systems: [macos] }',
+        '  codex: { intent: omit }', '  kimi: { intent: omit }', '  opencode: { intent: omit }',
+        '  pi: { intent: omit }', '  agent-plugins-1.0: { intent: omit }', '  copilot: { intent: omit }',
+        'imported_works: []',
+      ].join('\n') + '\n',
     )
     const emptyModel = buildModel(dir)
     const result = cursor.emit(emptyModel)
@@ -303,7 +313,17 @@ describe('cursor adapter omits optional manifest fields when model is empty', ()
     const dir = mkdtempSync(join(tmpdir(), 'mint-cursor-no-mcp-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      'name: no-mcp-demo\nversion: 1.0.0\ndescription: no mcp fixture\nbootstrap: none\n',
+      [
+        'name: no-mcp-demo', 'version: 1.0.0', 'description: no mcp fixture', 'bootstrap: none',
+        'distribution:', '  npm: "@scope/no-mcp-demo"',
+        'artifact:', '  payloads: []',
+        'harnesses:', '  exclude: [claude-code, codex, kimi, opencode, pi, agent-plugins-1.0, copilot]',
+        'targets:',
+        '  claude-code: { intent: omit }', '  cursor: { intent: preview, expected_capabilities: [skill-discovery], operating_systems: [macos] }',
+        '  codex: { intent: omit }', '  kimi: { intent: omit }', '  opencode: { intent: omit }',
+        '  pi: { intent: omit }', '  agent-plugins-1.0: { intent: omit }', '  copilot: { intent: omit }',
+        'imported_works: []',
+      ].join('\n') + '\n',
     )
     const noMcpModel = buildModel(dir)
     const result = cursor.emit(noMcpModel)

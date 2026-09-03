@@ -131,6 +131,11 @@ function sixPluginFailureFixture(): string {
     mkdirSync(join(packageRoot, 'mint'), { recursive: true })
     const packageJson = structuredClone(corePackage)
     packageJson.name = `@example/${id}`
+    if (packageJson.dependencies) {
+      for (const [dep, range] of Object.entries(packageJson.dependencies as Record<string, string>)) {
+        if (range.startsWith('workspace:')) delete packageJson.dependencies[dep]
+      }
+    }
     writeFileSync(join(packageRoot, 'package.json'), `${JSON.stringify(packageJson, null, 2)}\n`)
     const config = structuredClone(coreConfig)
     config.name = id
@@ -259,13 +264,17 @@ describe('CLI end-to-end', () => {
     }
     expect(readdirSync(join(pluginRoot, 'hooks')).sort()).toEqual([
       'claude-judge-continuation',
+      'developing-for-moe-notice',
       'governance-marker-check',
       'hooks.json',
+      'jig-review-format-guard',
+      'jig-worktree-guard',
       'moe-completion-evidence',
       'moe-mint',
       'plan-set',
       'plan-set-notice',
       'run-hook.cmd',
+      'task-set',
     ])
   })
 

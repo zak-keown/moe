@@ -21,15 +21,7 @@ export function worktreePath(repoRoot, name) {
  */
 export async function createWorktree(runner = realRun, repoRoot, name, ref = "HEAD") {
     const wt = worktreePath(repoRoot, name);
-    const result = await runner("git", [
-        "-C",
-        repoRoot,
-        "worktree",
-        "add",
-        "--detach",
-        wt,
-        ref,
-    ]);
+    const result = await runner("git", ["-C", repoRoot, "worktree", "add", "--detach", wt, ref]);
     if (result.code !== 0) {
         throw new Error(`git worktree add failed (code ${result.code}): ${result.stderr.trim()}`);
     }
@@ -43,14 +35,7 @@ export async function createWorktree(runner = realRun, repoRoot, name, ref = "HE
  * it) so `stop` never fails because of a manually cleaned-up worktree.
  */
 export async function removeWorktree(runner = realRun, repoRoot, wtPath) {
-    const result = await runner("git", [
-        "-C",
-        repoRoot,
-        "worktree",
-        "remove",
-        "--force",
-        wtPath,
-    ]);
+    const result = await runner("git", ["-C", repoRoot, "worktree", "remove", "--force", wtPath]);
     // Swallow "not a working tree" / path-doesn't-exist errors gracefully.
     if (result.code !== 0) {
         const msg = result.stderr.toLowerCase();

@@ -60,7 +60,12 @@ function buildSearchFilters(options) {
  * `e.timestamp >= ?` / `<= ?` for them.
  */
 function hasMetadataFilters(options) {
-    return Boolean(options.project || options.session_id || options.git_branch || options.git_commit || options.after || options.before);
+    return Boolean(options.project ||
+        options.session_id ||
+        options.git_branch ||
+        options.git_commit ||
+        options.after ||
+        options.before);
 }
 const EXCHANGE_SELECT_COLUMNS = `
         e.id,

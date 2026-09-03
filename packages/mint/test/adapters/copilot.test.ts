@@ -31,7 +31,7 @@ describe('copilot adapter', () => {
   })
 
   it('emits no Copilot-specific files and reports effective Claude-layout support', () => {
-    expect(copilot.emit(model)).toEqual({ files: [], warnings: [] })
+    expect(copilot.emit(model)).toEqual({ files: [], limitations: [], emittedCapabilities: [], projectionOwner: 'claude-code' })
     expect(copilot.support).toEqual({
       skills: 'full',
       commands: 'full',

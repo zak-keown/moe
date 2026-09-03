@@ -132,21 +132,11 @@ const ReadRecentEntriesInputSchema = z
     type: JournalScopeEnum.default("both"),
 })
     .strict();
-const RelationEnum = z.enum([
-    "caused_by",
-    "contradicts",
-    "supersedes",
-    "supports",
-    "implements",
-]);
+const RelationEnum = z.enum(["caused_by", "contradicts", "supersedes", "supports", "implements"]);
 const LinkMemoriesInputSchema = z
     .object({
-    source: z
-        .string()
-        .min(3, "Source must be type:id format (e.g. 'exchange:abc123')"),
-    target: z
-        .string()
-        .min(3, "Target must be type:id format (e.g. 'journal:def456')"),
+    source: z.string().min(3, "Source must be type:id format (e.g. 'exchange:abc123')"),
+    target: z.string().min(3, "Target must be type:id format (e.g. 'journal:def456')"),
     relation: RelationEnum,
     confidence: z.number().min(0).max(1).default(1.0),
 })

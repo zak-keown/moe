@@ -5,14 +5,14 @@ import type { ComponentSupport, EmissionLimitation } from '../adapters/types.js'
 import { CAPABILITY_IDS, type CapabilityId, type TargetId, type TargetIntent } from '../vocabulary.js'
 import { conformsToGeneratedSchema } from '../validate.js'
 
-const componentCapability = {
+const componentCapability: Readonly<Partial<Record<keyof ComponentSupport, CapabilityId>>> = {
   skills: 'skill-discovery',
   commands: 'command-discovery',
   agents: 'agent-discovery',
   hooks: 'hook-execution',
   mcp: 'mcp-registration',
   bootstrap: 'bootstrap-routing',
-} as const satisfies Record<keyof ComponentSupport, CapabilityId>
+} as const
 
 function paths(files: FileSet): ReadonlySet<string> {
   return new Set(files.map((file) => file.path))
@@ -205,6 +205,7 @@ export function validateEmissionLimitations(
   for (const limitation of limitations) {
     if (limitation.code === 'SETTING_DROPPED') continue
     const capability = componentCapability[limitation.component]
+    if (capability === undefined) continue
     if (limitation.code === 'COMPONENT_OMITTED' && actual.has(capability)) {
       throw capabilityError(
         'CAPABILITY_LIMITATION_CONTRADICTION', plugin, target, source, `targets.${target}.expected_capabilities`,

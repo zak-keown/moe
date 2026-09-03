@@ -15,6 +15,12 @@
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" governance-marker-check",
             "shell": "bash",
             "async": false
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" developing-for-moe-notice",
+            "shell": "bash",
+            "async": false
           }
         ]
       },

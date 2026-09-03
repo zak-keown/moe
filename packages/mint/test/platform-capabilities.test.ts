@@ -23,14 +23,14 @@ const model = buildModel('fixtures/kitchen-sink')
 describe('platform emitted capabilities', () => {
   it('maps every legacy adapter matrix to capabilities from its emitted projection', () => {
     const matrix = [
-      [claudeCode, { skills: 'full', commands: 'full', agents: 'full', hooks: 'full', mcp: 'full', bootstrap: 'full' }, ['skill-discovery', 'command-discovery', 'agent-discovery', 'hook-execution', 'mcp-registration', 'bootstrap-routing']],
-      [cursor, { skills: 'full', commands: 'none', agents: 'none', hooks: 'partial', mcp: 'none', bootstrap: 'full' }, ['skill-discovery', 'hook-execution', 'bootstrap-routing']],
-      [codex, { skills: 'full', commands: 'none', agents: 'none', hooks: 'none', mcp: 'none', bootstrap: 'partial' }, ['skill-discovery']],
-      [kimi, { skills: 'full', commands: 'none', agents: 'none', hooks: 'none', mcp: 'none', bootstrap: 'partial' }, ['skill-discovery', 'bootstrap-routing']],
-      [opencode, { skills: 'full', commands: 'full', agents: 'partial', hooks: 'none', mcp: 'none', bootstrap: 'full' }, ['skill-discovery', 'command-discovery', 'agent-discovery', 'bootstrap-routing']],
-      [pi, { skills: 'full', commands: 'none', agents: 'none', hooks: 'none', mcp: 'none', bootstrap: 'full' }, ['skill-discovery', 'bootstrap-routing']],
-      [agentPlugins, { skills: 'full', commands: 'none', agents: 'none', hooks: 'none', mcp: 'full', bootstrap: 'none' }, ['skill-discovery', 'mcp-registration', 'format-conformance']],
-      [copilot, { skills: 'full', commands: 'full', agents: 'full', hooks: 'full', mcp: 'full', bootstrap: 'full' }, []],
+      [claudeCode, { skills: 'full', commands: 'full', agents: 'full', hooks: 'full', mcp: 'full', bootstrap: 'full', rules: 'none', variables: 'none' }, ['skill-discovery', 'command-discovery', 'agent-discovery', 'hook-execution', 'mcp-registration', 'bootstrap-routing']],
+      [cursor, { skills: 'full', commands: 'none', agents: 'none', hooks: 'partial', mcp: 'none', bootstrap: 'full', rules: 'none', variables: 'none' }, ['skill-discovery', 'hook-execution', 'bootstrap-routing']],
+      [codex, { skills: 'full', commands: 'none', agents: 'none', hooks: 'none', mcp: 'none', bootstrap: 'partial', rules: 'none', variables: 'none' }, ['skill-discovery']],
+      [kimi, { skills: 'full', commands: 'none', agents: 'none', hooks: 'none', mcp: 'none', bootstrap: 'partial', rules: 'none', variables: 'none' }, ['skill-discovery', 'bootstrap-routing']],
+      [opencode, { skills: 'full', commands: 'full', agents: 'partial', hooks: 'none', mcp: 'none', bootstrap: 'full', rules: 'none', variables: 'none' }, ['skill-discovery', 'command-discovery', 'agent-discovery', 'bootstrap-routing']],
+      [pi, { skills: 'full', commands: 'none', agents: 'none', hooks: 'none', mcp: 'none', bootstrap: 'full', rules: 'none', variables: 'none' }, ['skill-discovery', 'bootstrap-routing']],
+      [agentPlugins, { skills: 'full', commands: 'none', agents: 'none', hooks: 'none', mcp: 'full', bootstrap: 'none', rules: 'none', variables: 'none' }, ['skill-discovery', 'mcp-registration', 'format-conformance']],
+      [copilot, { skills: 'full', commands: 'full', agents: 'full', hooks: 'full', mcp: 'full', bootstrap: 'full', rules: 'none', variables: 'none' }, []],
     ] as const
     for (const [adapter, support, expected] of matrix) {
       expect(mapLegacyComponentSupport(adapter.name as Parameters<typeof mapLegacyComponentSupport>[0], support, model, adapter.emit(model).files)).toEqual(expected)

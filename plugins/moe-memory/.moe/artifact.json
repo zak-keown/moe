@@ -158,8 +158,8 @@
     },
     {
       "path": "dist/db.js",
-      "size": 23357,
-      "sha256": "e554128ba1b9f3cc4abff0a00f2599bedf26e315d8b531780fc4abd9437d1252",
+      "size": 23307,
+      "sha256": "bc6ea5c3ef9f68e81e75c31c0d7f64e3302ca028674e4120a41b44823f69e21b",
       "mode": "0644"
     },
     {
@@ -350,8 +350,8 @@
     },
     {
       "path": "dist/mcp-server.js",
-      "size": 36410,
-      "sha256": "dca1ffc13872d6b10ad44cd5f50ff35c7da135a72e8c41b48bcb786bd8b42422",
+      "size": 36351,
+      "sha256": "84f6b5edd6681080e3c8bd3040809f769c7a4eb5cad1d0dd392969e5ddce15dd",
       "mode": "0644"
     },
     {
@@ -398,8 +398,8 @@
     },
     {
       "path": "dist/search.js",
-      "size": 15756,
-      "sha256": "7395f087157f3266ef24a982930508573aa2a8d1a9970ade85d22d6c2e9f900c",
+      "size": 15796,
+      "sha256": "df5143d7f42475a99e17de593d0f903113ecd2b90b08d541c6f2f45413ad2faf",
       "mode": "0644"
     },
     {
@@ -655,7 +655,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "d90be26b6bae896ccd775b8ae53cc45e2ece98875e60a255344e62b249831b00",
+  "tree_sha256": "72f285722cae71e612add8022ec6600ce0af004312bc72b0a29c00bf38f6ffe3",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

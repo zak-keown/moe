@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
@@ -495,13 +495,25 @@ describe('composePackageManifest', () => {
         }
       }
 
+      const releaseVersions: Record<string, string> = {}
+      for (const dir of readdirSync(resolve(repoRoot, 'packages'), { withFileTypes: true })) {
+        if (!dir.isDirectory()) continue
+        const pkgPath = resolve(repoRoot, 'packages', dir.name, 'package.json')
+        try {
+          const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as Record<string, unknown>
+          if (typeof pkg.name === 'string' && typeof pkg.version === 'string') {
+            releaseVersions[pkg.name] = pkg.version
+          }
+        } catch {}
+      }
+
       const manifest = composePackageManifest({
         source,
         config,
         contributions: [],
         artifactPaths: referencedFiles,
         registryUrl: 'https://registry.npmjs.org',
-        releaseVersions: {},
+        releaseVersions,
       })
       expect(manifest.files).toEqual(['.moe/artifact.json', ...referencedFiles].sort())
       expect(manifest.publishConfig).toEqual({ access: 'public', registry: 'https://registry.npmjs.org' })

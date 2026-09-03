@@ -1,7 +1,7 @@
 import { stringify } from 'yaml'
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel, CommandRef, AgentRef } from '../model.js'
-import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import type { ComponentSupport, HarnessAdapter, EmissionLimitation } from './types.js'
 import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { opencodeServerExport, opencodePluginPath, bootstrapContentPath } from '../bootstrap/node-package.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
@@ -255,7 +255,7 @@ export const opencode: HarnessAdapter = Object.freeze({
     bootstrap: 'full',
     rules: 'none',
     variables: 'none',
-  },
+  } satisfies ComponentSupport,
   skillsOutputDir: '.opencode/skills',
   installDoc,
   emit(model: PluginModel) {

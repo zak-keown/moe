@@ -32,10 +32,33 @@ skill assumes the red-green cycle rather than restating it.
 
 ## The loop, per finding
 
-Findings are worked one at a time, in severity order, on one branch. This is
-deliberately serial: every fix commits to the same tree, so parallel dispatch
-would need a worktree per finding and buys nothing at the volumes a review
-produces.
+The per-finding discipline is fixed; the dispatch model is not.
+
+### Subagent-driven flow (preferred)
+
+Bucket findings by directory (see **Waves** below). Dispatch one subagent per
+bucket, each in its own git worktree, so they run concurrently without
+conflicting on the index. Every subagent follows the same red-green-commit
+cycle and stamps its own dispositions inside its worktree's copy of the report.
+
+When a subagent finishes its bucket, it pushes its worktree branch. The
+coordinator merges each bucket branch in severity order, re-running `pnpm check`
+after each merge. If a merge conflicts on a source file, the coordinator
+resolves it (the stamp commits never conflict because they touch disjoint
+`CR-###` blocks). If `pnpm check` fails after a merge, stop and fix forward
+before merging the next bucket.
+
+Use `subagent-driven-development` for the dispatch mechanics. The subagent
+prompt includes: the bucket's finding IDs and their full text, the branch name,
+and the instruction to follow this skill's per-finding loop below.
+
+### Serial fallback
+
+When subagents or worktrees are unavailable — session policy, runtime limits, a
+harness without subagents — work findings one at a time on one branch, in
+severity order.
+
+### Per-finding cycle (both flows)
 
 1. **Re-read the cited code.** The report is a snapshot; the tree has moved.
 2. **Decide whether the defect is still real** — and prove it, don't infer it.
@@ -46,8 +69,16 @@ produces.
 4. **Green.** The smallest change that passes it.
 5. **Commit**, source and test together, one finding per commit:
    `fix(review): CR-### — <title>`
+   Use `moe jig commit review-fix <CR-ID> <title>` to commit staged changes
+   with the correct format. If `moe-jig` is not on PATH, format the commit
+   manually as `git commit -m "fix(review): CR-### — <title>"`.
 6. **Stamp the disposition** into the report, as its own commit, before
-   starting the next finding.
+   starting the next finding. Create the stamp commit with
+   `moe jig review stamp <CR-ID> <fixing-sha>`. The command validates the
+   CR-ID format, confirms the fixing commit is on the current branch, and
+   produces the correctly formatted empty commit. If `moe-jig` is not on PATH,
+   create the stamp manually:
+   `git commit --allow-empty -m "fix(review): CR-### — addressed by <sha>"`.
 
 **The stamp is always a separate commit, and it is always per finding.** It
 records the sha of the commit that fixed the finding, and no commit can contain
@@ -114,6 +145,40 @@ in the same commit and say so in the Note. A finding whose repro is wrong is
 still usually a real defect with a bad description; treat a failed reproduction
 as a reason to look harder before it is a reason to mark `stale`.
 
+## Session finalization — compacting fixed findings
+
+When every finding in the current session has a disposition, compact the report
+before the final commit. This keeps the document navigable as the fixed-issue
+count grows across sessions — readers care about what is still open, not the
+full prose of a defect that was resolved three sessions ago.
+
+**What compaction does:**
+
+1. Collect every finding whose disposition is `fixed` or `stale`.
+2. Replace each finding's full block (heading through disposition lines) with a
+   single summary line under the finding's severity section:
+   `- **CR-###:** <title> — <disposition> (<commit>)`
+3. Append the removed full blocks to a `## Resolved findings` section at the
+   bottom of the document, below `## Checked and found sound` if it exists.
+   Preserve severity ordering within that section.
+4. Refresh the frontmatter counts (the stamp script already does this; the
+   compaction commit updates the body only).
+
+Run compaction with:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/skills/fixing-a-code-review/scripts/compact-resolved.mjs" \
+  --file CODEBASE-REVIEW.md
+```
+
+**The compaction is its own commit:** `chore(review): compact resolved findings`.
+It touches only the report, never source, so it cannot break the tree.
+
+Findings with disposition `skipped` or `deferred` stay in place — they still
+need attention. `open` findings (no disposition) obviously stay. A re-run of
+this skill skips the `## Resolved findings` section entirely and works only the
+inline findings that remain.
+
 ## Red flags
 
 - A commit message naming two finding IDs
@@ -121,3 +186,4 @@ as a reason to look harder before it is a reason to mark `stale`.
 - A disposition with no `Commit` line, on a finding that produced a commit
 - Frontmatter counts that disagree with the stamped dispositions
 - Starting the next finding with the tree dirty
+- A compaction that moved `skipped` or `deferred` findings to the resolved section

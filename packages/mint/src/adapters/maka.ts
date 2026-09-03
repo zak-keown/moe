@@ -37,7 +37,7 @@
 // ──────────────────────────────────────────────────────────────────────
 
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmitResult } from './types.js'
+import type { HarnessAdapter, AdapterEmission } from './types.js'
 
 function installDoc(_model: PluginModel): string {
   return [
@@ -79,10 +79,15 @@ export const maka: HarnessAdapter = {
     variables: 'none',
   },
   installDoc,
-  emit(_model: PluginModel): EmitResult {
+  emit(_model: PluginModel): AdapterEmission {
     return {
       files: [],
-      warnings: ['maka adapter is a placeholder; no files emitted (Apache Maka plugin spec is not yet confirmed)'],
+      limitations: [{
+        code: 'COMPONENT_OMITTED',
+        component: 'skills',
+        message: 'maka adapter is a placeholder; no files emitted (Apache Maka plugin spec is not yet confirmed)',
+      }],
+      emittedCapabilities: [],
     }
   },
 }
