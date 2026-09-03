@@ -293,6 +293,35 @@ function verbWaves(planPath) {
   }
 }
 
+function verbNext(planPath) {
+  const text = readFileSync(planPath, "utf8");
+  const { tasks } = parsePlan(text);
+  if (tasks.length === 0) die(`${planPath}: no tasks found`);
+  const { errors } = validate(tasks);
+  if (errors.length > 0) {
+    for (const e of errors) process.stderr.write(`task-set: ${e}\n`);
+    process.exit(1);
+  }
+
+  // A task is complete when every checkbox is checked.
+  const complete = new Set();
+  for (const t of tasks) {
+    if (t.steps.length > 0 && t.steps.every((s) => s.checked)) {
+      complete.add(t.num);
+    }
+  }
+
+  // A task is ready when all deps are complete and it is not complete itself.
+  const ready = [];
+  for (const t of tasks) {
+    if (complete.has(t.num)) continue;
+    const allDepsComplete = t.dependsOn.every((d) => complete.has(d));
+    if (allDepsComplete) ready.push(t.num);
+  }
+
+  for (const num of ready) process.stdout.write(num + "\n");
+}
+
 // ---------------------------------------------------------------------------
 // Verbs.
 
@@ -337,7 +366,7 @@ function main() {
   if (verb === "next") {
     if (!planPath) die("usage: task-set next <plan.md>");
     if (!existsSync(planPath)) die(`plan not found: ${planPath}`);
-    die(`next: not yet implemented`);
+    verbNext(resolve(planPath));
     return;
   }
   die(`unknown verb "${verb}"\n${USAGE}`);
