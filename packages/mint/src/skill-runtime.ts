@@ -25,6 +25,9 @@ export interface SkillRuntimeReport {
 
 const CODE_EXTENSIONS = new Set(['.mjs', '.py', '.sh', '.bash', '.cjs', '.js', '.ts', '.cmd'])
 const NODE_BUILTINS = new Set(builtinModules)
+const LEGACY_BACKEND_SUFFIX = /\.(?:py|sh|bash|cjs|js|ts|cmd)(?:\b|$)/
+const SHELL_FENCE_LANGUAGES = new Set(['bash', 'console', 'fish', 'sh', 'shell', 'shellscript', 'zsh'])
+const RUNTIME_ACTION = 'Use dependency-free Node 24 ESM under the owning scripts/ directory.'
 
 type AstNode = Node & Record<string, unknown>
 
@@ -53,6 +56,10 @@ function extension(path: string): string {
   const basename = path.slice(path.lastIndexOf('/') + 1)
   const index = basename.lastIndexOf('.')
   return index < 0 ? '' : basename.slice(index)
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 function hasShebang(content: Uint8Array): boolean {
@@ -228,6 +235,149 @@ function inspectModule(
   return diagnostics
 }
 
+interface MarkdownCodeFragment {
+  readonly command: boolean
+  readonly text: string
+}
+
+function markdownCodeFragments(source: string): MarkdownCodeFragment[] {
+  const fragments: MarkdownCodeFragment[] = []
+  const proseLines: string[] = []
+  let fence: { readonly marker: string; readonly command: boolean } | undefined
+
+  for (const line of source.split('\n')) {
+    if (fence !== undefined) {
+      if (line.trimStart().startsWith(fence.marker)) {
+        fence = undefined
+      } else if (fence.command && !line.trimStart().startsWith('#')) {
+        fragments.push({ command: true, text: line.trim() })
+      }
+      proseLines.push('')
+      continue
+    }
+
+    const opening = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/)
+    if (opening !== null) {
+      const marker = opening[1]
+      const info = opening[2]
+      if (marker === undefined || info === undefined) continue
+      const language = info.trim().split(/\s+/, 1)[0]?.toLowerCase()
+      fence = { marker, command: language !== undefined && SHELL_FENCE_LANGUAGES.has(language) }
+      proseLines.push('')
+      continue
+    }
+    proseLines.push(line)
+  }
+
+  const inline = proseLines.join('\n')
+  for (const match of inline.matchAll(/(`+)([\s\S]*?)\1/g)) {
+    const text = match[2]
+    if (text !== undefined) fragments.push({ command: false, text })
+  }
+  return fragments
+}
+
+function commandText(fragment: string): string {
+  return fragment.trim().replace(/^(?:[$#]|>)\s+/, '')
+}
+
+function mentionsBackendCode(command: string, scriptBasenames: ReadonlySet<string>): boolean {
+  return command.includes('/scripts/')
+    || LEGACY_BACKEND_SUFFIX.test(command)
+    || [...scriptBasenames].some((basename) => command.includes(basename))
+}
+
+function isInlineCommandCandidate(command: string): boolean {
+  return /^(?:node|python|python3|bash|sh)\b/.test(command)
+    || /^(?:\$\{[A-Z][A-Z0-9_]*\}|\$[A-Z][A-Z0-9_]*)/.test(command)
+    || /^(?:\.\/|\/)/.test(command)
+}
+
+function resolveScriptReference(scriptRoot: string, reference: string): string | undefined {
+  const segments = scriptRoot.split('/')
+  for (const segment of reference.split('/')) {
+    if (segment === '' || segment === '.') continue
+    if (segment === '..') {
+      if (segments.length === scriptRoot.split('/').length) return undefined
+      segments.pop()
+    } else {
+      segments.push(segment)
+    }
+  }
+  return segments.join('/')
+}
+
+function canonicalInvocation(input: ValidateSkillRuntimeInput, skill: string, command: string): string | undefined {
+  const root = `${escapeRegExp(input.skillsRoot)}/${escapeRegExp(skill)}/scripts/`
+  const match = command.match(new RegExp(`^node\\s+(["'])?\\$\\{CLAUDE_PLUGIN_ROOT\\}/${root}([^"'\\s]+\\.mjs)\\1\\s*$`))
+  return match === null ? undefined : match[2] ?? undefined
+}
+
+function inspectMarkdown(
+  input: ValidateSkillRuntimeInput,
+  file: SkillRuntimeFile,
+  skill: string,
+  filePaths: ReadonlySet<string>,
+): MintDiagnostic[] {
+  const scriptRoot = `${input.skillsRoot}/${skill}/scripts`
+  const scriptBasenames = new Set(
+    input.files
+      .filter((candidate) => candidate.path.startsWith(`${scriptRoot}/`) && extension(candidate.path) === '.mjs')
+      .map((candidate) => candidate.path.slice(candidate.path.lastIndexOf('/') + 1)),
+  )
+  const diagnostics: MintDiagnostic[] = []
+
+  for (const fragment of markdownCodeFragments(Buffer.from(file.content).toString('utf8'))) {
+    const command = commandText(fragment.text)
+    if (command === '' || !mentionsBackendCode(command, scriptBasenames)) continue
+    if (!fragment.command && !isInlineCommandCandidate(command)) continue
+
+    const reference = canonicalInvocation(input, skill, command)
+    if (reference === undefined) {
+      diagnostics.push(diagnostic(
+        input,
+        file,
+        'SKILL_RUNTIME_INVOCATION',
+        `documented runtime invocation "${command}" must use the canonical node command`,
+        `Use node \"\${CLAUDE_PLUGIN_ROOT}/${input.skillsRoot}/${skill}/scripts/<path>.mjs\".`,
+      ))
+      continue
+    }
+
+    const resolved = resolveScriptReference(scriptRoot, reference)
+    if (resolved === undefined || !filePaths.has(resolved)) {
+      diagnostics.push(diagnostic(
+        input,
+        file,
+        'SKILL_RUNTIME_REFERENCE',
+        `documented runtime invocation "${command}" must reference an existing .mjs script`,
+        'Reference an existing .mjs script under this skill\'s scripts directory.',
+      ))
+    }
+  }
+  return diagnostics
+}
+
+export class SkillRuntimeError extends MintError {
+  readonly diagnostics: readonly MintDiagnostic[]
+
+  constructor(input: ValidateSkillRuntimeInput, diagnostics: readonly MintDiagnostic[]) {
+    const first = diagnostics[0]!
+    if (first.path === undefined) throw new TypeError('skill runtime diagnostics must identify a path')
+    super({
+      severity: 'error',
+      code: 'SKILL_RUNTIME_INVALID',
+      plugin: input.plugin,
+      source: input.source,
+      path: first.path,
+      message: `skill runtime validation found ${diagnostics.length} violation${diagnostics.length === 1 ? '' : 's'}`,
+      action: RUNTIME_ACTION,
+    })
+    this.name = 'SkillRuntimeError'
+    this.diagnostics = diagnostics
+  }
+}
+
 export function validateSkillRuntime(input: ValidateSkillRuntimeInput): SkillRuntimeReport {
   const skills = new Set(input.files.map((file) => skillName(file.path, input.skillsRoot)).filter((name): name is string => name !== undefined))
   const filePaths = new Set(input.files.map((file) => file.path as string))
@@ -260,12 +410,19 @@ export function validateSkillRuntime(input: ValidateSkillRuntimeInput): SkillRun
     if (fileExtension === '.mjs') diagnostics.push(...inspectModule(input, file, skill, filePaths))
   }
 
+  for (const file of input.files) {
+    const relative = skillRelativePath(file.path, input.skillsRoot)
+    const skill = skillDirectory(file.path, input.skillsRoot)
+    if (relative === undefined || skill === undefined || !skills.has(skill) || relative.startsWith('examples/') || extension(relative) !== '.md') continue
+    diagnostics.push(...inspectMarkdown(input, file, skill, filePaths))
+  }
+
   diagnostics.sort((left, right) => compareArtifactPaths(left.path as ArtifactPath, right.path as ArtifactPath) || left.code.localeCompare(right.code) || left.message.localeCompare(right.message))
   return { skills: skills.size, modules, diagnostics, ok: diagnostics.length === 0 }
 }
 
 export function assertValidSkillRuntime(input: ValidateSkillRuntimeInput): SkillRuntimeReport {
   const report = validateSkillRuntime(input)
-  if (!report.ok) throw new MintError(report.diagnostics[0]!)
+  if (!report.ok) throw new SkillRuntimeError(input, report.diagnostics)
   return report
 }
