@@ -24,7 +24,7 @@
 #     their owned files/package namespaces to the compositor's root manifest.
 
 name: moe
-version: 0.1.4
+version: 0.1.6
 # No skill count in the description, deliberately. A number in a SHIPPED
 # description rots on the first authored skill, and it rots in twelve places at
 # once because mint byte-copies this string into every harness manifest. The

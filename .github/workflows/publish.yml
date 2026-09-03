@@ -46,6 +46,18 @@ jobs:
       - run: pnpm mint:check
       - run: pnpm provenance
 
+      - name: memory artifact test
+        run: pnpm memory:artifact:test --output-dir .artifacts --record .artifacts/moe-memory-packed.json
+
+      - name: memory runtime smoke
+        run: pnpm memory:runtime:smoke --packed-artifact .artifacts/moe-memory-packed.json
+
+      - name: memory release evidence verify
+        run: |
+          node packages/mint/dist/cli.js release verify-memory-evidence \
+            --packed-artifact .artifacts/moe-memory-packed.json \
+            --repo .
+
       - name: prepare and publish candidate
         run: |
           node packages/mint/dist/cli.js release candidate \

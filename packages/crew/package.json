@@ -1,6 +1,6 @@
 {
   "name": "@bubstack/moe-crew",
-  "version": "0.1.4",
+  "version": "0.1.6",
   "type": "module",
   "description": "Launch, control and monitor worker Claude sessions over tmux.",
   "license": "MIT",
