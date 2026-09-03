@@ -262,6 +262,15 @@ function claimArtifactEntry(
   claims.set(key, { path, kind })
 }
 
+function claimArtifactFile(plugin: ResolvedPlugin, claims: ArtifactClaims, value: string): void {
+  const path = artifactPath(value)
+  const segments = path.split('/')
+  for (let length = 1; length < segments.length; length += 1) {
+    claimArtifactEntry(plugin, claims, artifactPath(segments.slice(0, length).join('/')), 'directory')
+  }
+  claimArtifactEntry(plugin, claims, path, 'file')
+}
+
 async function inspectArtifact(plugin: ResolvedPlugin, root: string): Promise<{
   readonly files: ReadonlySet<string>
   readonly claims: ArtifactClaims
@@ -301,17 +310,15 @@ async function assertGeneratedPathsCompatible(
 ): Promise<void> {
   const { claims } = await inspectArtifact(plugin, root)
   for (const generatedPath of generatedPaths) {
-    const path = artifactPath(generatedPath)
-    const segments = path.split('/')
-    for (let length = 1; length < segments.length; length += 1) {
-      claimArtifactEntry(plugin, claims, artifactPath(segments.slice(0, length).join('/')), 'directory')
-    }
-    claimArtifactEntry(plugin, claims, path, 'file')
+    claimArtifactFile(plugin, claims, generatedPath)
   }
 }
 
 async function artifactFiles(plugin: ResolvedPlugin, root: string): Promise<ReadonlySet<string>> {
-  return (await inspectArtifact(plugin, root)).files
+  const { files, claims } = await inspectArtifact(plugin, root)
+  claimArtifactFile(plugin, claims, 'package.json')
+  claimArtifactFile(plugin, claims, '.moe/artifact.json')
+  return files
 }
 
 async function canonicalRepositoryRoot(
