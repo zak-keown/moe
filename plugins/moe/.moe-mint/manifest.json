@@ -204,7 +204,7 @@
       "sha256": "fdb5b720603105528a15c25204ad77b664f122fe4c706517451d9f677c2de847"
     },
     ".codex-plugin/skills/sequencing-plans/SKILL.md": {
-      "sha256": "8066f6e3481523b727783e9c512993fa9d0cf3ca19a52bd574fecb1e89f95a3d"
+      "sha256": "ee93e4637837cc8220cd96c660a8a058cc1acb620435ea478e350373e77a21d5"
     },
     ".codex-plugin/skills/subagent-driven-development/SKILL.md": {
       "sha256": "3b219e14cb00f0c6c034f60d9648ecddfec5fea6f9795d2696b827938e459673"
@@ -543,7 +543,7 @@
       "sha256": "fdb5b720603105528a15c25204ad77b664f122fe4c706517451d9f677c2de847"
     },
     ".cursor-plugin/skills/sequencing-plans/SKILL.md": {
-      "sha256": "8066f6e3481523b727783e9c512993fa9d0cf3ca19a52bd574fecb1e89f95a3d"
+      "sha256": "ee93e4637837cc8220cd96c660a8a058cc1acb620435ea478e350373e77a21d5"
     },
     ".cursor-plugin/skills/subagent-driven-development/SKILL.md": {
       "sha256": "30fa496c969d55fa67755798b22a01e70681d3f2404e25fd12747458cf815b26"
@@ -879,7 +879,7 @@
       "sha256": "fdb5b720603105528a15c25204ad77b664f122fe4c706517451d9f677c2de847"
     },
     ".kimi-plugin/skills/sequencing-plans/SKILL.md": {
-      "sha256": "8066f6e3481523b727783e9c512993fa9d0cf3ca19a52bd574fecb1e89f95a3d"
+      "sha256": "ee93e4637837cc8220cd96c660a8a058cc1acb620435ea478e350373e77a21d5"
     },
     ".kimi-plugin/skills/subagent-driven-development/SKILL.md": {
       "sha256": "00396c3de76404087ce21801f0c5f15bb2be14027910d305ca1e8856d6e6da66"
@@ -1224,7 +1224,7 @@
       "sha256": "fdb5b720603105528a15c25204ad77b664f122fe4c706517451d9f677c2de847"
     },
     ".opencode/skills/sequencing-plans/SKILL.md": {
-      "sha256": "8066f6e3481523b727783e9c512993fa9d0cf3ca19a52bd574fecb1e89f95a3d"
+      "sha256": "ee93e4637837cc8220cd96c660a8a058cc1acb620435ea478e350373e77a21d5"
     },
     ".opencode/skills/subagent-driven-development/SKILL.md": {
       "sha256": "f91cc1e63d02979282581502ef5810fceec5b11cb815d2520658ccbf42701522"
@@ -1560,7 +1560,7 @@
       "sha256": "fdb5b720603105528a15c25204ad77b664f122fe4c706517451d9f677c2de847"
     },
     ".pi/skills/sequencing-plans/SKILL.md": {
-      "sha256": "8066f6e3481523b727783e9c512993fa9d0cf3ca19a52bd574fecb1e89f95a3d"
+      "sha256": "ee93e4637837cc8220cd96c660a8a058cc1acb620435ea478e350373e77a21d5"
     },
     ".pi/skills/subagent-driven-development/SKILL.md": {
       "sha256": "ce8bb3f8e524b0026e5aa572168769992d06073518126178d518d2eb80544128"

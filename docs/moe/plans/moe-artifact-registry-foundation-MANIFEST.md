@@ -7,6 +7,8 @@ The plans were written against repository SHA `8bd3d7432fdf57cc5f82a353fd33109ea
 All four plans are runnable in sequence. `OD-R1` is resolved in the design and Plan 4: Statusline's registry-confirmed first publication records `NO_PREDECESSOR` and remains preview, while the five predecessor-backed Claude/macOS tuples may certify. The plan-set dispatcher can therefore release Plan 4 after artifact verification completes.
 
 ```yaml
+plan_set_id: moe-artifact-registry-foundation
+depends_on_plan_sets: []
 plans:
   - id: platform-registry
     plan: docs/moe/plans/2026-09-02-moe-platform-registry.md

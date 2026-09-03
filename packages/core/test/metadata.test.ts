@@ -1181,9 +1181,13 @@ describe("plan-set", () => {
   // assertion has one thing to say when it fires.
   const CLI = join(PKG, "hooks/plan-set");
   const FIXTURES = join(PKG, "test/fixtures/plan-set");
-  const run = (args: string[]): { status: number; stdout: string; stderr: string } => {
+  const run = (
+    args: string[],
+    cwd?: string,
+  ): { status: number; stdout: string; stderr: string } => {
     try {
       const stdout = execFileSync(process.execPath, [CLI, ...args], {
+        cwd,
         stdio: ["ignore", "pipe", "pipe"],
         encoding: "utf8",
       });
@@ -1228,6 +1232,12 @@ describe("plan-set", () => {
     expect(r.stdout).toBe("");
   });
 
+  it("next still returns an independent plan in a set with a blocked branch", () => {
+    const r = run(["next", "--manifest", join(FIXTURES, "partially-blocked-MANIFEST.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout.trim()).toBe("C");
+  });
+
   it("check fails on a duplicate id", () => {
     const r = run(["check", "--manifest", join(FIXTURES, "duplicate-MANIFEST.md")]);
     expect(r.status).not.toBe(0);
@@ -1256,6 +1266,94 @@ describe("plan-set", () => {
     const r = run(["check", "--manifest", join(FIXTURES, "does-not-exist.md")]);
     expect(r.status).not.toBe(0);
     expect(r.stderr).toMatch(/manifest not found/);
+  });
+
+  it("keeps legacy single-manifest output bare and derives its set id from the filename", () => {
+    const manifest = join(FIXTURES, "diamond-MANIFEST.md");
+    const r = run(["next", "--manifest", manifest]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout.trim().split(/\n/)).toEqual(["B", "C"]);
+  });
+
+  it("discovers multiple manifests in sorted order and qualifies every ready plan", () => {
+    const root = join(FIXTURES, "aggregate-legacy");
+    const r = run(["next"], root);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout.trim().split(/\n/)).toEqual(["alpha/A", "zeta/Z"]);
+  });
+
+  it("withholds a dependent plan set until its prerequisite set is complete", () => {
+    const root = join(FIXTURES, "aggregate-prerequisite");
+    const r = run(["next"], root);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout.trim().split(/\n/)).toEqual(["foundation/F"]);
+  });
+
+  it("releases a dependent plan set after qualified done completes its prerequisite", () => {
+    const tmp = mkdtempSync(join(tmpdir(), "plan-set-qualified-done-"));
+    const root = join(tmp, "project");
+    try {
+      execFileSync("cp", ["-R", join(FIXTURES, "aggregate-prerequisite"), root]);
+      const done = run(["done", "foundation/F", "aaaaaaa..bbbbbbb"], root);
+      expect(done.status, done.stderr).toBe(0);
+      expect(done.stdout).toContain("marked foundation/F done");
+
+      const manifest = readFileSync(join(root, "docs/moe/plans/01-foundation-MANIFEST.md"), "utf8");
+      expect(manifest).toContain("plan_set_id: foundation");
+      expect(manifest).toContain("depends_on_plan_sets: []");
+      expect(manifest).toContain("status: done");
+      expect(manifest).toContain("commits: aaaaaaa..bbbbbbb");
+
+      const next = run(["next"], root);
+      expect(next.status, next.stderr).toBe(0);
+      expect(next.stdout.trim()).toBe("memory/M");
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("scoped commands enforce prerequisite sets without loading unrelated bad siblings", () => {
+    const root = join(FIXTURES, "scoped-closure");
+    const manifest = join(root, "docs/moe/plans/memory-MANIFEST.md");
+    const next = run(["next", "--manifest", manifest], root);
+    expect(next.status, next.stderr).toBe(0);
+    expect(next.stdout).toBe("");
+
+    const done = run(["done", "M", "aaaaaaa..bbbbbbb", "--manifest", manifest], root);
+    expect(done.status).not.toBe(0);
+    expect(done.stderr).toMatch(/prerequisite plan set "foundation" is incomplete/);
+    expect(done.stderr).not.toContain("unrelated-bad");
+  });
+
+  it("check rejects an unknown plan-set dependency", () => {
+    const r = run(["check"], join(FIXTURES, "invalid-set-dependency"));
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/depends_on_plan_sets "missing" — not a known plan-set id/);
+  });
+
+  it("check rejects duplicate plan-set ids", () => {
+    const r = run(["check"], join(FIXTURES, "duplicate-set-id"));
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/duplicate plan_set_id "same"/);
+  });
+
+  it("check rejects cycles across plan sets and names every set", () => {
+    const r = run(["check"], join(FIXTURES, "set-cycle"));
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/plan-set cycle detected among:.*alpha/);
+    expect(r.stderr).toMatch(/plan-set cycle detected among:.*beta/);
+  });
+
+  it("next propagates a blocked prerequisite across plan sets", () => {
+    const r = run(["next"], join(FIXTURES, "blocked-set"));
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout).toBe("");
+  });
+
+  it("check rejects a plan path listed in two manifests", () => {
+    const r = run(["check"], join(FIXTURES, "duplicate-plan-path"));
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/plan file .*shared-plan\.md.*listed by both alpha\/A and beta\/B/);
   });
 });
 
@@ -1322,6 +1420,17 @@ describe("plan-set-notice", () => {
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
+  });
+
+  it("prints aggregate qualified next output when the project has multiple manifests", () => {
+    const root = join(PKG, "test/fixtures/plan-set/aggregate-legacy");
+    const r = runHook(JSON.stringify({ cwd: root, hook_event_name: "SessionStart" }), {
+      CLAUDE_PLUGIN_ROOT: "/fake",
+    });
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain("Next runnable plan(s): alpha/A,zeta/Z");
+    expect(r.stdout).toContain("`plan-set next`");
+    expect(r.stdout).not.toContain("Pass --manifest");
   });
 });
 

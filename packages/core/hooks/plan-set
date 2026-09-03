@@ -16,33 +16,21 @@
 // guessing. Manifest lives at `docs/moe/plans/<project>-MANIFEST.md`, one entry
 // per plan, YAML in a fenced code block.
 //
-// Verbs:
-//   next          Print every id whose dependencies are all `done` and whose
-//                 own status is `pending`. One id per line. `blocked` is
-//                 terminal and propagates transitively — a `blocked` node and
-//                 all of its dependents are never in the output.
-//   done <id> <range>
-//                 Mark <id> as done and record its commit range. Fails if <id>
-//                 is unknown, if any of its dependencies are not `done`, or if
-//                 the range is not two 7+-char SHA-ish tokens joined by `..`.
-//   check         Validate: unique ids, all plan files exist, all deps resolve
-//                 to known ids, no cycle (Kahn), no plan path listed twice.
-//                 Non-zero on any failure; a cycle names its nodes on stderr.
+// With no --manifest, every manifest under docs/moe/plans participates in a
+// second DAG. Output is qualified as <plan-set-id>/<plan-id> when more than one
+// manifest exists. With --manifest, only that set and its prerequisite closure
+// are loaded, and output remains the legacy bare plan id.
 //
 // This file lives under `packages/core/hooks/` rather than
-// `skills/sequencing-plans/scripts/`. `sequencing-plans` is `everything`-tier
-// per decision D2, so it does not ship in `moe-core`; scripts under a skill
-// directory are filtered out with the skill by scripts/mint-plugins.mjs, while
-// `hooks/` is staged unfiltered. Keeping the CLI under `hooks/` lets a lean
-// user run `plan-set next` even without the skill installed. See the
-// deterministic-task-dag item in .planning/backlog/ (cited by slug — the
-// W##P## filename prefix moves whenever the backlog is re-waved).
+// `skills/sequencing-plans/scripts/` because SessionStart invokes the adjacent
+// notice before any skill body is loaded. Keeping both runtime pieces together
+// also gives every generated harness the same stable plugin-relative path.
 //
 // Only Node built-ins. The CLI ships as a plugin hook and cannot assume the
 // user has run `pnpm install` inside their project.
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
+import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 
 const USAGE = `plan-set: sequence a set of plans in one project.
 
@@ -51,8 +39,9 @@ Usage:
   plan-set done <id> <base>..<head> [--manifest <path>]
   plan-set check            [--manifest <path>]
 
-If --manifest is omitted, plan-set looks for exactly one file matching
-docs/moe/plans/*-MANIFEST.md under the current directory.`;
+If --manifest is omitted, plan-set loads every file matching
+docs/moe/plans/*-MANIFEST.md under the current directory. Multi-manifest plan
+references are qualified as <plan-set-id>/<plan-id>.`;
 
 // -----------------------------------------------------------------------------
 // Small argv parser: --manifest <path> optional, positional args after.
@@ -85,37 +74,32 @@ function die(msg, code = 2) {
 // The .md wrapper is a courtesy for humans: the file is prose plus one YAML
 // fenced block, and the block is what plan-set reads. Only one fenced block
 // with the language tag `yaml` is allowed, and the shape it must hold is small
-// enough to parse without a dependency: a top-level `plans:` list, each entry
-// with `id`, `plan`, `depends_on`, `status`, and optionally `commits`.
+// enough to parse without a dependency: optional top-level `plan_set_id` and
+// `depends_on_plan_sets`, then a `plans:` list whose entries carry `id`, `plan`,
+// `depends_on`, `status`, and optionally `commits`.
 
-function locateManifest(explicit) {
+function manifestCandidates(dir) {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((f) => f.endsWith("-MANIFEST.md"))
+    .sort()
+    .map((f) => resolve(dir, f));
+}
+
+function locateManifests(explicit) {
   if (explicit) {
     if (!existsSync(explicit)) die(`manifest not found: ${explicit}`);
-    return resolve(explicit);
+    return { scoped: true, targetPath: resolve(explicit) };
   }
   const dir = join(process.cwd(), "docs", "moe", "plans");
-  if (!existsSync(dir)) {
-    die(
-      `no manifest found. Expected exactly one docs/moe/plans/*-MANIFEST.md ` +
-        `under ${process.cwd()}, or pass --manifest.`,
-    );
-  }
-  const candidates = readdirSync(dir)
-    .filter((f) => f.endsWith("-MANIFEST.md"))
-    .map((f) => join(dir, f));
+  const candidates = manifestCandidates(dir);
   if (candidates.length === 0) {
     die(
-      `no manifest found. Expected exactly one docs/moe/plans/*-MANIFEST.md ` +
+      `no manifest found. Expected at least one docs/moe/plans/*-MANIFEST.md ` +
         `under ${process.cwd()}, or pass --manifest.`,
     );
   }
-  if (candidates.length > 1) {
-    die(
-      `more than one manifest found under docs/moe/plans/. Pass --manifest to ` +
-        `pick one:\n  - ${candidates.map((c) => relative(process.cwd(), c)).join("\n  - ")}`,
-    );
-  }
-  return candidates[0];
+  return { scoped: false, paths: candidates };
 }
 
 function extractYaml(text, manifestPath) {
@@ -132,21 +116,47 @@ function extractYaml(text, manifestPath) {
 
 // Minimal YAML parser for the manifest shape only.
 //
-// Accepts one top-level key `plans:` whose value is a list of maps. Each map
-// key must be one of id/plan/depends_on/status/commits, indented two spaces
-// past the `-`. `depends_on` is a flow list `[a, b]` or an empty `[]`.
+// Accepts optional plan-set metadata followed by `plans:`, whose value is a
+// list of maps. Each map key must be one of id/plan/depends_on/status/commits,
+// indented two spaces past the `-`. Dependencies are flow lists.
 //
 // A generic YAML parser would work — bringing one in as a dep for a hook that
 // ships in a plugin does not. This parser fails loudly on anything it does not
 // recognise so a malformed manifest does not silently degrade to "no plans".
 function parseManifestYaml(body, manifestPath) {
   const lines = body.split(/\r?\n/);
-  const doc = { plans: [] };
+  const doc = {
+    plan_set_id: null,
+    depends_on_plan_sets: [],
+    has_plan_set_id: false,
+    has_depends_on_plan_sets: false,
+    plans: [],
+  };
   let i = 0;
   // Skip leading blanks and comments.
   while (i < lines.length && /^\s*(#|$)/.test(lines[i])) i++;
-  if (i >= lines.length || !/^plans:\s*$/.test(lines[i])) {
-    die(`${manifestPath}: expected top-level "plans:" key at start of yaml block`);
+  for (; i < lines.length && !/^plans:\s*$/.test(lines[i]); i++) {
+    const line = lines[i];
+    if (/^\s*(#|$)/.test(line)) continue;
+    const m = /^([a-z_]+):\s*(.*)$/.exec(line);
+    if (!m) die(`${manifestPath}:${i + 1}: unrecognised top-level line: ${line}`);
+    if (m[1] === "plan_set_id") {
+      doc.plan_set_id = stripQuotes(m[2].trim());
+      doc.has_plan_set_id = true;
+    } else if (m[1] === "depends_on_plan_sets") {
+      doc.depends_on_plan_sets = parseFlowList(
+        m[2].trim(),
+        manifestPath,
+        i + 1,
+        "depends_on_plan_sets",
+      );
+      doc.has_depends_on_plan_sets = true;
+    } else {
+      die(`${manifestPath}:${i + 1}: unknown top-level key "${m[1]}"`);
+    }
+  }
+  if (i >= lines.length) {
+    die(`${manifestPath}: expected top-level "plans:" key in yaml block`);
   }
   i++;
   let current = null;
@@ -196,13 +206,76 @@ function stripQuotes(v) {
   return v;
 }
 
-function parseFlowList(v, path, lineNo) {
+function parseFlowList(v, path, lineNo, field = "depends_on") {
   if (!v.startsWith("[") || !v.endsWith("]")) {
-    die(`${path}:${lineNo}: depends_on must be a flow list like [] or [a, b]`);
+    die(`${path}:${lineNo}: ${field} must be a flow list like [] or [a, b]`);
   }
   const inner = v.slice(1, -1).trim();
   if (inner === "") return [];
   return inner.split(",").map((s) => stripQuotes(s.trim()));
+}
+
+function derivedSetId(manifestPath) {
+  return basename(manifestPath).replace(/-MANIFEST\.md$/, "");
+}
+
+function parseManifest(manifestPath) {
+  const rawText = readFileSync(manifestPath, "utf8");
+  const body = extractYaml(rawText, manifestPath);
+  const doc = parseManifestYaml(body, manifestPath);
+  return {
+    path: manifestPath,
+    rawText,
+    doc,
+    setId: doc.plan_set_id || derivedSetId(manifestPath),
+  };
+}
+
+// Read only enough metadata to index siblings for a scoped prerequisite walk.
+// A malformed, unrelated sibling must not poison `--manifest foo`.
+function peekSetId(manifestPath) {
+  const rawText = readFileSync(manifestPath, "utf8");
+  const block = /```yaml\r?\n([\s\S]*?)\r?\n```/.exec(rawText)?.[1] ?? "";
+  const match = /^plan_set_id:\s*(.*?)\s*$/m.exec(block);
+  return match?.[1] ? stripQuotes(match[1]) : derivedSetId(manifestPath);
+}
+
+function loadManifestSet(located) {
+  if (!located.scoped) {
+    return {
+      scoped: false,
+      target: null,
+      records: located.paths.map(parseManifest),
+    };
+  }
+
+  const target = parseManifest(located.targetPath);
+  const candidates = manifestCandidates(dirname(located.targetPath));
+  const byId = new Map();
+  for (const path of candidates) {
+    const id = peekSetId(path);
+    const list = byId.get(id) ?? [];
+    list.push(path);
+    byId.set(id, list);
+  }
+
+  const selected = new Map([[target.setId, target]]);
+  const queue = [...target.doc.depends_on_plan_sets];
+  while (queue.length > 0) {
+    const id = queue.shift();
+    if (selected.has(id)) continue;
+    const matches = byId.get(id) ?? [];
+    if (matches.length === 0) die(`${target.setId}: depends_on_plan_sets "${id}" — not a known plan-set id`);
+    if (matches.length > 1) die(`duplicate plan_set_id "${id}" in scoped prerequisite closure`);
+    const record = parseManifest(matches[0]);
+    selected.set(id, record);
+    queue.push(...record.doc.depends_on_plan_sets);
+  }
+  return {
+    scoped: true,
+    target,
+    records: [...selected.values()].sort((a, b) => a.path.localeCompare(b.path)),
+  };
 }
 
 // -----------------------------------------------------------------------------
@@ -303,16 +376,126 @@ function validate(doc, manifestPath) {
   return { errors, indeg: new Map(indeg), adj, ids: known };
 }
 
+function canonicalPlanPath(plan, manifestPath) {
+  const manifestDir = dirname(manifestPath);
+  const candidates = isAbsolute(plan)
+    ? [plan]
+    : [
+        resolve(process.cwd(), plan),
+        resolve(manifestDir, "..", "..", "..", plan),
+        resolve(manifestDir, plan),
+        resolve(manifestDir, basename(plan)),
+      ];
+  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0];
+}
+
+function validateManifestSet(records) {
+  const errors = [];
+  for (const record of records) errors.push(...validate(record.doc, record.path).errors);
+
+  const setById = new Map();
+  const setLocations = new Map();
+  const planPaths = new Map();
+  for (const record of records) {
+    if (record.doc.has_plan_set_id && !record.doc.plan_set_id) {
+      errors.push(`${record.path}: plan_set_id must not be empty`);
+    }
+    if (setById.has(record.setId)) {
+      errors.push(
+        `duplicate plan_set_id "${record.setId}" (${setLocations.get(record.setId)} and ${record.path})`,
+      );
+    } else {
+      setById.set(record.setId, record);
+      setLocations.set(record.setId, record.path);
+    }
+    for (const plan of record.doc.plans) {
+      if (!plan.plan || !plan.id) continue;
+      const canonical = canonicalPlanPath(plan.plan, record.path);
+      const owner = `${record.setId}/${plan.id}`;
+      if (planPaths.has(canonical)) {
+        errors.push(`plan file "${plan.plan}" listed by both ${planPaths.get(canonical)} and ${owner}`);
+      } else {
+        planPaths.set(canonical, owner);
+      }
+    }
+  }
+
+  const indeg = new Map();
+  const adj = new Map();
+  for (const id of setById.keys()) {
+    indeg.set(id, 0);
+    adj.set(id, []);
+  }
+  for (const record of records) {
+    for (const dependency of record.doc.depends_on_plan_sets) {
+      if (!setById.has(dependency)) {
+        errors.push(
+          `${record.setId}: depends_on_plan_sets "${dependency}" — not a known plan-set id`,
+        );
+        continue;
+      }
+      indeg.set(record.setId, (indeg.get(record.setId) ?? 0) + 1);
+      adj.get(dependency)?.push(record.setId);
+    }
+  }
+
+  const remaining = new Map(indeg);
+  const queue = [...remaining.entries()].filter(([, degree]) => degree === 0).map(([id]) => id);
+  while (queue.length > 0) {
+    const id = queue.shift();
+    for (const dependent of adj.get(id) ?? []) {
+      remaining.set(dependent, remaining.get(dependent) - 1);
+      if (remaining.get(dependent) === 0) queue.push(dependent);
+    }
+  }
+  const inCycle = [...remaining.entries()]
+    .filter(([, degree]) => degree > 0)
+    .map(([id]) => id)
+    .sort();
+  if (inCycle.length > 0) errors.push(`plan-set cycle detected among: ${inCycle.join(", ")}`);
+
+  const completedSets = new Set();
+  const blockedSets = new Set();
+  for (const record of records) {
+    if (record.doc.plans.length > 0 && record.doc.plans.every((plan) => plan.status === "done")) {
+      completedSets.add(record.setId);
+    }
+    if (record.doc.plans.some((plan) => plan.status === "blocked")) blockedSets.add(record.setId);
+  }
+  const blockedQueue = [...blockedSets];
+  while (blockedQueue.length > 0) {
+    const id = blockedQueue.shift();
+    for (const dependent of adj.get(id) ?? []) {
+      if (blockedSets.has(dependent)) continue;
+      blockedSets.add(dependent);
+      blockedQueue.push(dependent);
+    }
+  }
+
+  return { errors, setById, completedSets, blockedSets };
+}
+
 // -----------------------------------------------------------------------------
 // Verbs.
 
-function verbCheck(doc, manifestPath) {
-  const { errors } = validate(doc, manifestPath);
+function printErrorsAndExit(errors) {
   if (errors.length > 0) {
     for (const e of errors) process.stderr.write(`plan-set: ${e}\n`);
     process.exit(1);
   }
-  process.stdout.write(`plan-set: ${manifestPath} ok — ${doc.plans.length} plans\n`);
+}
+
+function verbCheck(loaded) {
+  const { errors } = validateManifestSet(loaded.records);
+  printErrorsAndExit(errors);
+  const planCount = loaded.records.reduce((count, record) => count + record.doc.plans.length, 0);
+  if (loaded.scoped && loaded.records.length === 1) {
+    process.stdout.write(`plan-set: ${loaded.target.path} ok — ${planCount} plans\n`);
+  } else {
+    process.stdout.write(
+      `plan-set: ${loaded.records.length} manifests ok — ${planCount} plans\n`,
+    );
+  }
 }
 
 function statusOf(doc) {
@@ -347,31 +530,76 @@ function blockedClosure(doc) {
   return closure;
 }
 
-function verbNext(doc) {
+function readyPlans(doc) {
   const status = statusOf(doc);
   const blocked = blockedClosure(doc);
-  const ready = [];
-  for (const p of doc.plans) {
-    if (!p.id) continue;
-    if (blocked.has(p.id)) continue;
-    if (p.status !== "pending") continue;
-    const allDone = p.depends_on.every((d) => status.get(d) === "done");
-    if (allDone) ready.push(p.id);
-  }
-  // Deterministic order: as-written in the manifest is already deterministic
-  // (JS Map keys preserve insertion order), so no re-sort.
-  for (const id of ready) process.stdout.write(id + "\n");
+  return doc.plans
+    .filter((plan) => {
+      if (!plan.id || blocked.has(plan.id) || plan.status !== "pending") return false;
+      return plan.depends_on.every((dependency) => status.get(dependency) === "done");
+    })
+    .map((plan) => plan.id);
 }
 
-function verbDone(doc, id, range, manifestPath, rawText) {
+function prerequisitesComplete(record, completedSets) {
+  return record.doc.depends_on_plan_sets.every((dependency) => completedSets.has(dependency));
+}
+
+function verbNext(loaded, state) {
+  const records = loaded.scoped ? [loaded.target] : loaded.records;
+  const qualified = !loaded.scoped && loaded.records.length > 1;
+  for (const record of records) {
+    if (!prerequisitesComplete(record, state.completedSets)) continue;
+    for (const id of readyPlans(record.doc)) {
+      process.stdout.write((qualified ? `${record.setId}/${id}` : id) + "\n");
+    }
+  }
+}
+
+function selectDoneTarget(loaded, reference) {
+  if (loaded.scoped) {
+    const prefix = `${loaded.target.setId}/`;
+    return {
+      record: loaded.target,
+      id: reference?.startsWith(prefix) ? reference.slice(prefix.length) : reference,
+      display: reference,
+    };
+  }
+  if (loaded.records.length === 1) {
+    return { record: loaded.records[0], id: reference, display: reference };
+  }
+  const slash = reference?.indexOf("/") ?? -1;
+  if (slash <= 0 || slash === reference.length - 1) {
+    die(`done: multi-manifest plan id must be qualified as <plan-set-id>/<plan-id>`);
+  }
+  const setId = reference.slice(0, slash);
+  const id = reference.slice(slash + 1);
+  const record = loaded.records.find((candidate) => candidate.setId === setId);
+  if (!record) die(`done: unknown plan-set id "${setId}"`);
+  return { record, id, display: reference };
+}
+
+function verbDone(loaded, state, reference, range) {
+  const { record, id, display } = selectDoneTarget(loaded, reference);
   if (!id) die(`done: usage: plan-set done <id> <base>..<head>`);
   if (!range) die(`done: usage: plan-set done <id> <base>..<head>`);
   if (!/^[0-9a-f]{7,40}\.\.[0-9a-f]{7,40}$/.test(range)) {
     die(`done: range "${range}" is not two 7+-char hex SHAs joined by ".."`);
   }
-  const status = statusOf(doc);
+  for (const dependency of record.doc.depends_on_plan_sets) {
+    if (!state.completedSets.has(dependency)) {
+      const condition = state.blockedSets.has(dependency) ? "blocked" : "incomplete";
+      die(
+        `done: cannot mark ${display} done — prerequisite plan set "${dependency}" is ${condition}`,
+      );
+    }
+  }
+  const status = statusOf(record.doc);
   if (!status.has(id)) die(`done: unknown id "${id}"`);
-  const entry = doc.plans.find((p) => p.id === id);
+  const entry = record.doc.plans.find((p) => p.id === id);
+  if (blockedClosure(record.doc).has(id)) {
+    die(`done: cannot mark ${display} done — plan is blocked by its local dependency graph`);
+  }
   for (const d of entry.depends_on) {
     if (status.get(d) !== "done") {
       die(`done: cannot mark ${id} done — dep "${d}" is ${status.get(d) ?? "unknown"}`);
@@ -382,14 +610,22 @@ function verbDone(doc, id, range, manifestPath, rawText) {
   // may not survive but the semantics do.
   entry.status = "done";
   entry.commits = range;
-  const newBlock = renderYaml(doc);
-  const newText = rawText.replace(/```yaml\r?\n([\s\S]*?)\r?\n```/, "```yaml\n" + newBlock + "```");
-  writeFileSync(manifestPath, newText);
-  process.stdout.write(`plan-set: marked ${id} done (${range})\n`);
+  const newBlock = renderYaml(record.doc);
+  const newText = record.rawText.replace(
+    /```yaml\r?\n([\s\S]*?)\r?\n```/,
+    "```yaml\n" + newBlock + "```",
+  );
+  writeFileSync(record.path, newText);
+  process.stdout.write(`plan-set: marked ${display} done (${range})\n`);
 }
 
 function renderYaml(doc) {
-  const lines = ["plans:"];
+  const lines = [];
+  if (doc.has_plan_set_id) lines.push(`plan_set_id: ${doc.plan_set_id}`);
+  if (doc.has_depends_on_plan_sets) {
+    lines.push(`depends_on_plan_sets: [${doc.depends_on_plan_sets.join(", ")}]`);
+  }
+  lines.push("plans:");
   for (const p of doc.plans) {
     lines.push(`  - id: ${p.id}`);
     lines.push(`    plan: ${p.plan}`);
@@ -411,30 +647,24 @@ function main() {
   }
   const verb = argv[0];
   const rest = parseArgs(argv.slice(1));
-  const manifestPath = locateManifest(rest.manifest);
-  const rawText = readFileSync(manifestPath, "utf8");
-  const body = extractYaml(rawText, manifestPath);
-  const doc = parseManifestYaml(body, manifestPath);
+  const loaded = loadManifestSet(locateManifests(rest.manifest));
 
   if (verb === "check") {
-    verbCheck(doc, manifestPath);
+    verbCheck(loaded);
     return;
   }
 
   // next and done require a valid manifest; a cycle in the graph would give
   // both wrong answers, so run validate first.
-  const { errors } = validate(doc, manifestPath);
-  if (errors.length > 0) {
-    for (const e of errors) process.stderr.write(`plan-set: ${e}\n`);
-    process.exit(1);
-  }
+  const state = validateManifestSet(loaded.records);
+  printErrorsAndExit(state.errors);
 
   if (verb === "next") {
-    verbNext(doc);
+    verbNext(loaded, state);
     return;
   }
   if (verb === "done") {
-    verbDone(doc, rest.positional[0], rest.positional[1], manifestPath, rawText);
+    verbDone(loaded, state, rest.positional[0], rest.positional[1]);
     return;
   }
   die(`unknown verb "${verb}"\n${USAGE}`);
