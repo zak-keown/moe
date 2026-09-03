@@ -9,11 +9,16 @@ that the fix itself broke nothing.
 
 Resolve [skills/subagent-driven-development/scripts/review-package](scripts/review-package) relative to this loaded document before filling `[DIFF_FILE]` below.
 
+**Dispatch model selection:** Kimi's `Agent` surface used here does not
+expose a portable call-level model override. Route the selected role
+through the model configured for the chosen Kimi subagent type, or use
+the configured default when no role-specific choice exists. Do not
+invent a `model` field.
+
+
 ```
 Subagent (general-purpose):
   description: "Re-review Task N fix round R"
-  model: [MODEL — REQUIRED: choose per SKILL.md Model Selection; an omitted
-         model silently inherits the session's most expensive one]
   prompt: |
     You are re-reviewing one task's fix round. A previous review produced
     findings; an implementer has attempted to fix them. Your job is to
@@ -103,8 +108,6 @@ Subagent (general-purpose):
 ```
 
 **Placeholders:**
-- `[MODEL]` — REQUIRED: reviewer model per SKILL.md Model Selection; scoped
-  re-reviews of small fix diffs take a cheap-to-mid tier
 - `[BRIEF_FILE]` — the task brief file (same file the implementer worked from)
 - `[FINDINGS]` — the Critical/Important findings and spec gaps from the
   previous review, copied verbatim, one per bullet

@@ -274,9 +274,10 @@ re-reviews of small mechanical fix diffs may use a fast model from the current s
 **Fix-loop escalation (rounds 4-5)**: use a deep-reasoning model from the current spawn allowlist after the earlier
 implementer gets stuck.
 
-**Always specify the model explicitly when dispatching a subagent.** An
-omitted model inherits your session's model — often the most capable and
-most expensive — which silently defeats this section.
+**Dispatch model selection:** Every `spawn_agent` call must set `model`
+and `reasoning_effort` explicitly, resolving the selected role against
+the current spawn allowlist before dispatch.
+
 
 **Turn count beats token price.** Wall-clock and context cost scale with how
 many turns a subagent takes, and the cheapest models routinely take 2-3× the

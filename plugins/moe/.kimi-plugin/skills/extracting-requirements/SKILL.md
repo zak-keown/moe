@@ -158,7 +158,15 @@ Set command to `TBD` — the implementing iterations will fill these in.
 
 ### 10. Validate
 
-Resolve [skills/extracting-requirements/scripts/validate_requirements_index.py](scripts/validate_requirements_index.py) and [skills/extracting-requirements/scripts/validate_scenarios.py](scripts/validate_scenarios.py) relative to this loaded document. Invoke the first with `python3 docs/moe/iterations/requirements/`, then invoke the second with `python3 docs/moe/iterations/behavior-scenarios.md docs/moe/iterations/requirements/`.
+Resolve [skills/extracting-requirements/scripts/validate_requirements_index.py](scripts/validate_requirements_index.py)
+as `<resolved-validate-requirements-index.py>` and
+[skills/extracting-requirements/scripts/validate_scenarios.py](scripts/validate_scenarios.py) as
+`<resolved-validate-scenarios.py>`, relative to this loaded document. Then run:
+
+```bash
+python3 "<resolved-validate-requirements-index.py>" docs/moe/iterations/requirements/
+python3 "<resolved-validate-scenarios.py>" docs/moe/iterations/behavior-scenarios.md docs/moe/iterations/requirements/
+```
 
 If validation fails, inspect the output, fix formatting issues, and re-validate.
 

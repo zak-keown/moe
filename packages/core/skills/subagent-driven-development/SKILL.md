@@ -274,9 +274,7 @@ re-reviews of small mechanical fix diffs may use {model-fast}.
 **Fix-loop escalation (rounds 4-5)**: use {model-deep} after the earlier
 implementer gets stuck.
 
-**Always specify the model explicitly when dispatching a subagent.** An
-omitted model inherits your session's model — often the most capable and
-most expensive — which silently defeats this section.
+{model-dispatch-guidance}
 
 **Turn count beats token price.** Wall-clock and context cost scale with how
 many turns a subagent takes, and the cheapest models routinely take 2-3× the
