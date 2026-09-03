@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "runtime-contract.schema.json",
-  "title": "Runtime Contract",
-  "description": "Data-only contract declaring MCP server identity, forwarded environment, and package-relative asset selectors. Physical from/to payload mappings belong in the Mint YAML, not here.",
+  "title": "MemoryRuntimeContractV1",
+  "description": "Declares the MCP server command, forwarded environment, and asset selectors for the packaged Memory plugin. Physical from/to payload mappings belong in the Mint YAML, not here.",
   "type": "object",
   "required": ["schema", "server", "forwardEnv", "assets"],
   "additionalProperties": false,

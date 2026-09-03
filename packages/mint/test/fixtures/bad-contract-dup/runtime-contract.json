@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "server": { "name": "moe-memory", "command": "node", "args": ["./dist/cli.js", "mcp-server"], "cwd": "." },
+  "forwardEnv": ["CLAUDE_CONFIG_DIR", "CLAUDE_CONFIG_DIR"],
+  "assets": { "native": "vendor/sqlite-vec/manifest.json", "model": "runtime/model-manifest.json", "embedding": "runtime/embedding-assets.json" }
+}

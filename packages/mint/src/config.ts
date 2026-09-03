@@ -272,6 +272,7 @@ const rawSchema = z.object({
     node_package: z.object({
       dependencies: z.enum(['preserve', 'bundled']),
     }).strict().optional(),
+    runtime_dependency_policy: z.enum(['preserve', 'bundled']).default('preserve'),
     payloads: z.array(artifactPayloadSchema),
   }).strict(),
   targets: targetsSchema,
@@ -322,7 +323,11 @@ export interface MintConfig {
   components: { skills: string; commands: string; agents: string; hooks: string; mcp: string }
   harnesses: { exclude: string[]; settings: Record<string, HarnessSettings> }
   distribution: DistributionConfig
-  artifact: { nodePackage?: NodePackagePolicy | undefined; payloads: readonly ArtifactPayload[] }
+<<<<<<< HEAD
+  artifact: { nodePackage?: NodePackagePolicy | undefined; runtimeDependencyPolicy: RuntimeDependencyPolicy; payloads: readonly ArtifactPayload[] }
+=======
+  artifact: { payloads: readonly ArtifactPayload[]; runtimeDependencyPolicy: RuntimeDependencyPolicy }
+>>>>>>> 2d6a235 (feat(memory): artifact integration — runtime contract, dependency-free payload, legal closure, tarball gate)
   targets: Readonly<Record<TargetId, PluginTargetIntent>>
   importedWorks: readonly ImportedWorkRef[]
   // Inferred from the schemas rather than restated: a hand-written copy drifts,
@@ -646,6 +651,7 @@ export function loadConfig(root: string, configFile = 'moe-mint.yaml', source = 
       nodePackage: raw.artifact.node_package
         ? { dependencies: raw.artifact.node_package.dependencies }
         : undefined,
+      runtimeDependencyPolicy: raw.artifact.runtime_dependency_policy,
       payloads: raw.artifact.payloads,
     },
     targets,
