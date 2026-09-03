@@ -18,6 +18,7 @@
  */
 
 import path from "node:path";
+import { withTransaction } from "./database-transaction.js";
 import type { MemoryDatabase } from "./db.js";
 import { acquireFileLock, type FileLockHandle, releaseFileLock } from "./file-lock.js";
 
@@ -140,14 +141,9 @@ export async function runMigrationBatch(
       const vec = await embedFn(row.user_message, row.assistant_message, tools);
       embeddings.push({ id: row.id, vec });
     }
-    db.exec("BEGIN");
-    try {
+    withTransaction(db, () => {
       for (const item of embeddings) recordReembedded(db, item.id, item.vec);
-      db.exec("COMMIT");
-    } catch (error) {
-      db.exec("ROLLBACK");
-      throw error;
-    }
+    });
     return embeddings.length;
   } finally {
     releaseMigrationLock(lock);

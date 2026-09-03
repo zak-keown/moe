@@ -18,6 +18,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { EMBEDDING_DIMENSIONS } from "./constants.js";
+import { acquireSharedDatabaseLease, type DatabaseLease } from "./database-lease.js";
+import { withTransaction, withForeignKeysDisabled } from "./database-transaction.js";
 import { EMBEDDING_VERSION } from "./embedding-migration.js";
 import { resolveNativeAsset } from "./native-assets.js";
 import type { InstalledPackageRoot } from "./installed-package-root.js";
@@ -31,6 +33,8 @@ import type {
 } from "./types.js";
 
 export type MemoryDatabase = DatabaseSync;
+
+const _leases = new WeakMap<MemoryDatabase, DatabaseLease>();
 
 export interface DatabaseOptions {
   path?: string;
@@ -48,6 +52,11 @@ export function getDefaultPackageRoot(): InstalledPackageRoot | undefined {
 }
 
 export function closeDatabase(db: MemoryDatabase): void {
+  const lease = _leases.get(db);
+  if (lease) {
+    _leases.delete(db);
+    lease.release();
+  }
   db.close();
 }
 
@@ -181,12 +190,7 @@ export function migrateToolCallsCascade(db: MemoryDatabase): void {
     console.log(`  Removing ${orphanCount} orphaned tool_calls row(s)`);
   }
 
-  // FK is enforced by default, but ALTER ... RENAME of a table that other
-  // objects reference can trip checks during the rebuild. Disable temporarily;
-  // the post-migration FK_check verifies integrity.
-  db.exec("PRAGMA foreign_keys = OFF");
-  db.exec("BEGIN");
-  try {
+  withForeignKeysDisabled(db, () => withTransaction(db, () => {
     db.exec(`
       CREATE TABLE tool_calls_new (
         id TEXT PRIMARY KEY,
@@ -207,12 +211,7 @@ export function migrateToolCallsCascade(db: MemoryDatabase): void {
     `);
     db.exec(`DROP TABLE tool_calls`);
     db.exec(`ALTER TABLE tool_calls_new RENAME TO tool_calls`);
-    db.exec("COMMIT");
-  } catch (error) {
-    db.exec("ROLLBACK");
-    throw error;
-  }
-  db.exec("PRAGMA foreign_keys = ON");
+  }));
 
   console.log("  tool_calls migration complete.");
 }
@@ -232,7 +231,11 @@ export function initDatabase(options?: DatabaseOptions): MemoryDatabase {
     fs.mkdirSync(dbDir, { recursive: true });
   }
 
+  // Acquire a shared lease before opening the database
+  const lease = acquireSharedDatabaseLease(dbPath);
+
   const db = new DatabaseSync(dbPath, { allowExtension: true });
+  _leases.set(db, lease);
 
   // Load sqlite-vec extension from vendored binary
   const asset = resolveNativeAsset(packageRoot);
