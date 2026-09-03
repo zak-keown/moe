@@ -13,6 +13,7 @@ import { initDatabase } from "./db.js";
 import { generateQueryEmbedding, initEmbeddings } from "./embeddings.js";
 import { isErroredSentinel } from "./summary-sentinel.js";
 import type { ConversationExchange, MultiConceptResult, SearchResult } from "./types.js";
+import { isVectorQueryAuthorized } from "./vector-readiness.js";
 
 export interface SearchOptions {
   limit?: number | undefined;
@@ -214,33 +215,43 @@ export async function searchConversations(
   const { sql: filterClause, params: filterParams } = buildSearchFilters(options);
 
   if (mode === "vector" || mode === "both") {
-    // Vector similarity search.
-    // vec0 applies KNN before WHERE, so when extra metadata filters are
-    // active we ask for more candidates than `limit` and trim afterwards.
-    await initEmbeddings();
-    const queryEmbedding = await generateQueryEmbedding(query);
-    const k = hasMetadataFilters(options) ? limit * 3 : limit;
+    // Vector search requires all records at version 3 — no mixed-version KNN.
+    if (!isVectorQueryAuthorized(db)) {
+      if (mode === "vector") {
+        db.close();
+        return [];
+      }
+      // Fall through to text-only in "both" mode
+    } else {
+      // Vector similarity search.
+      // vec0 applies KNN before WHERE, so when extra metadata filters are
+      // active we ask for more candidates than `limit` and trim afterwards.
+      await initEmbeddings();
+      const queryEmbedding = await generateQueryEmbedding(query);
+      const k = hasMetadataFilters(options) ? limit * 3 : limit;
 
-    const stmt = db.prepare(`
-      SELECT
-        ${EXCHANGE_SELECT_COLUMNS},
-        vec.distance
-      FROM vec_exchanges AS vec
-      JOIN exchanges AS e ON vec.id = e.id
-      WHERE vec.embedding MATCH ?
-        AND k = ?
-        AND e.is_sidechain = 0
-        ${filterClause}
-      ORDER BY vec.distance ASC
-    `);
+      const stmt = db.prepare(`
+        SELECT
+          ${EXCHANGE_SELECT_COLUMNS},
+          vec.distance
+        FROM vec_exchanges AS vec
+        JOIN exchanges AS e ON vec.id = e.id
+        WHERE vec.embedding MATCH ?
+          AND k = ?
+          AND e.is_sidechain = 0
+          AND e.embedding_version = 3
+          ${filterClause}
+        ORDER BY vec.distance ASC
+      `);
 
-    results = stmt.all(
-      new Uint8Array(new Float32Array(queryEmbedding).buffer),
-      k,
-      ...filterParams,
-    ) as unknown as ExchangeRow[];
-    if (results.length > limit) {
-      results = results.slice(0, limit);
+      results = stmt.all(
+        new Uint8Array(new Float32Array(queryEmbedding).buffer),
+        k,
+        ...filterParams,
+      ) as unknown as ExchangeRow[];
+      if (results.length > limit) {
+        results = results.slice(0, limit);
+      }
     }
   }
 

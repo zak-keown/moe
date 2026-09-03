@@ -31,6 +31,7 @@ import { JOURNAL_SELECT_COLUMNS, journalEntryFromRow } from "../db.js";
 import { type EmbedFn, generateQueryEmbedding } from "../embeddings.js";
 import { l2DistanceToCosineSimilarity } from "../search.js";
 import type { JournalScope, JournalSearchResult } from "../types.js";
+import { isVectorQueryAuthorized } from "../vector-readiness.js";
 import { generateExcerpt, sectionsMatch } from "./markdown.js";
 
 /** `both` means "do not filter by scope", matching upstream's `type` parameter. */
@@ -142,6 +143,10 @@ export class JournalSearchService {
     const minScore = options.minScore ?? 0.1;
     const sections = options.sections ?? [];
 
+    if (!isVectorQueryAuthorized(this.db)) {
+      return [];
+    }
+
     const queryEmbedding = await this.embedQuery(query);
     const { sql: filterClause, params: filterParams } = buildFilters(options, this.roots);
 
@@ -159,6 +164,7 @@ export class JournalSearchService {
       JOIN journal_entries AS j ON vec.id = j.id
       WHERE vec.embedding MATCH ?
         AND k = ?
+        AND j.embedding_version = 3
         ${filterClause}
       ORDER BY vec.distance ASC
     `)

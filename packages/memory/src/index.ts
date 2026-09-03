@@ -36,6 +36,26 @@ export {
   type RecoveryCatalogEntry,
   type IntegrityFile,
 } from "./recovery-capsule.js";
+export {
+  createDatabaseSnapshot,
+  verifySnapshot,
+  collectSnapshotSources,
+  validateSnapshotSources,
+  type SnapshotSourceRecord,
+  type SnapshotSidecar,
+  type SnapshotResult,
+} from "./database-snapshot.js";
+export {
+  assessVectorReadiness,
+  isVectorQueryAuthorized,
+  vectorReadinessMessage,
+  type VectorReadiness,
+} from "./vector-readiness.js";
+export {
+  createEmbeddingCoordinator,
+  type EmbeddingCoordinator,
+  type EmbeddingCoordinatorOptions,
+} from "./embedding-coordinator.js";
 export * from "./parser.js";
 export * from "./paths.js";
 export * from "./search.js";
