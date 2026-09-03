@@ -189,7 +189,7 @@ describe("skill inventory", () => {
     // `argument-hint` is a COMMAND property in the vendored manifest schema and
     // is inert on a skill; windows-vm carries it because it is written as a
     // slash command. Recorded, not silently dropped.
-    const allowed = new Set(["name", "description", "allowed-tools", "argument-hint"]);
+    const allowed = new Set(["name", "description", "allowed-tools", "argument-hint", "triggers"]);
     for (const s of skills) {
       for (const k of s.frontmatterKeys) {
         expect(allowed.has(k), `skills/${s.dir}: unexpected frontmatter key "${k}"`).toBe(true);
