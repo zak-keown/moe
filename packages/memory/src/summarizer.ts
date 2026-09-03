@@ -1,7 +1,5 @@
 import { spawn } from "node:child_process";
-import fs from "node:fs";
 import { createInterface } from "node:readline";
-import { query } from "@anthropic-ai/claude-agent-sdk";
 import {
   codexVersionRequirementMessage,
   parseCodexCliVersion,
@@ -10,12 +8,16 @@ import {
 import { SUMMARIZER_CONTEXT_MARKER } from "./constants.js";
 import type { ConversationExchange } from "./types.js";
 import { VERSION } from "./version.js";
+import { createChildProcessAdapter } from "./summarizers/process.js";
+import {
+  buildClaudeSummarizerCommand,
+  buildSummarySystemPrompt,
+  buildSummaryPrompt,
+  buildChunkPrompt,
+  buildSynthesisPrompt,
+  runClaudeCommand,
+} from "./summarizers/claude.js";
 
-/**
- * Thrown by callClaude when the SDK yields an `is_error: true` result message.
- * Carries the SDK's `subtype` and `session_id` as typed fields so callers can
- * dispatch on structural metadata rather than parsing error message text.
- */
 export class SummarizerSdkError extends Error {
   constructor(
     public readonly subtype: string,
@@ -26,10 +28,6 @@ export class SummarizerSdkError extends Error {
   }
 }
 
-/**
- * True when the SDK's reported failure subtype indicates resume couldn't find
- * the session — the trigger for the non-resume fallback in summarizeConversation.
- */
 export function isResumeFailure(error: unknown): boolean {
   return error instanceof SummarizerSdkError && error.subtype === "error_during_execution";
 }
@@ -44,27 +42,11 @@ export interface CodexSummarizerCommand {
   skipVersionCheck?: boolean | undefined;
 }
 
-/**
- * Get API environment overrides for summarization calls.
- * Returns full env merged with process.env so subprocess inherits PATH, HOME, etc.
- *
- * Env vars (all optional):
- * - MOE_MEMORY_API_MODEL: Model to use (default: haiku)
- * - MOE_MEMORY_API_MODEL_FALLBACK: Fallback model on error (default: sonnet)
- * - MOE_MEMORY_API_BASE_URL: Custom API endpoint
- * - MOE_MEMORY_API_TOKEN: Auth token for custom endpoint
- * - MOE_MEMORY_API_TIMEOUT_MS: Timeout for API calls (default: SDK default)
- */
 export function getApiEnv(): Record<string, string | undefined> | undefined {
   const baseUrl = process.env.MOE_MEMORY_API_BASE_URL;
   const token = process.env.MOE_MEMORY_API_TOKEN;
   const timeoutMs = process.env.MOE_MEMORY_API_TIMEOUT_MS;
 
-  // Always include the reentrancy guard so the SDK-spawned Claude subprocess
-  // (which inherits this env) marks itself as a reentrant context. The
-  // SessionStart hook checks the guard via shouldSkipReentrantSync() and
-  // exits before launching another sync, breaking the recursive cascade
-  // reported in #87.
   return {
     ...process.env,
     MOE_MEMORY_SUMMARIZER_GUARD: "1",
@@ -74,12 +56,6 @@ export function getApiEnv(): Record<string, string | undefined> | undefined {
   };
 }
 
-/**
- * Detect whether the current process is running inside the Claude Agent SDK
- * subprocess that the summarizer just spawned. The flag is set by getApiEnv()
- * and inherited by the spawned subprocess. Used by sync entry points to bail
- * out before re-entering the sync→summarizer→spawn cycle (#87).
- */
 export function shouldSkipReentrantSync(): boolean {
   return process.env.MOE_MEMORY_SUMMARIZER_GUARD === "1";
 }
@@ -98,40 +74,23 @@ function extractSummary(text: string): string {
   if (captured !== undefined) {
     return captured.trim();
   }
-  // Fallback if no tags found
   return text.trim();
 }
 
-/**
- * Build the options object passed to the Claude Agent SDK's query() for a
- * summarization call.
- *
- * persistSession: false keeps the SDK from writing its session transcript to
- * ~/.claude/projects/ (#83). Without it, every summarization spawns a fake
- * session JSONL that pollutes the IDE session sidebar. The option is honored
- * by claude-agent-sdk >= 0.2.0.
- */
 export function buildSummarizerQueryOptions(args: {
   model: string;
   sessionId?: string | undefined;
-  cwd?: string | undefined;
 }): Record<string, unknown> {
-  const { model, sessionId, cwd } = args;
+  const { model, sessionId } = args;
   return {
     model,
     max_tokens: 4096,
     env: getApiEnv(),
     resume: sessionId,
     persistSession: false,
-    // Resume looks up the session under ~/.claude/projects/<encoded-cwd>/, so pass the recorded cwd when it still exists on disk.
-    ...(cwd && fs.existsSync(cwd) ? { cwd } : {}),
-    // Don't override systemPrompt when resuming — the resumed session's prompt stays in effect.
     ...(sessionId
       ? {}
-      : {
-          systemPrompt:
-            'Write concise, factual summaries. Output ONLY the summary - no preamble, no "Here is", no "I will". Your output will be indexed directly.',
-        }),
+      : { systemPrompt: buildSummarySystemPrompt() }),
   };
 }
 
@@ -188,40 +147,30 @@ async function callClaude(
   const fallbackModel = process.env.MOE_MEMORY_API_MODEL_FALLBACK || "sonnet";
   const model = useFallback ? fallbackModel : primaryModel;
 
-  for await (const message of query({
+  const spec = buildClaudeSummarizerCommand({
     prompt,
-    options: buildSummarizerQueryOptions({ model, sessionId, cwd }) as any,
-  })) {
-    if (message && typeof message === "object" && "type" in message && message.type === "result") {
-      // Throw on is_error — otherwise we return `message.result` (undefined) and the SDK's later iterator throw never fires.
-      if ((message as any).is_error) {
-        throw new SummarizerSdkError(
-          (message as any).subtype || "unknown",
-          (message as any).session_id,
-        );
-      }
-      const result = (message as any).result;
+    model,
+    sessionId,
+    cwd,
+    systemPrompt: sessionId ? undefined : buildSummarySystemPrompt(),
+  });
 
-      // Check if result is an API error (SDK returns errors as result strings)
-      if (
-        typeof result === "string" &&
-        result.includes("API Error") &&
-        result.includes("thinking.budget_tokens")
-      ) {
-        if (!useFallback) {
-          console.log(
-            `    ${primaryModel} hit thinking budget error, retrying with ${fallbackModel}`,
-          );
-          return await callClaude(prompt, sessionId, true, cwd);
-        }
-        // If fallback also fails, return error message
-        return result;
-      }
-
-      return result;
+  const adapter = createChildProcessAdapter();
+  try {
+    return await runClaudeCommand(spec, adapter);
+  } catch (error) {
+    if (
+      !useFallback &&
+      error instanceof Error &&
+      error.message.includes("thinking.budget_tokens")
+    ) {
+      console.log(
+        `    ${primaryModel} hit thinking budget error, retrying with ${fallbackModel}`,
+      );
+      return await callClaude(prompt, sessionId, true, cwd);
     }
+    throw error;
   }
-  return "";
 }
 
 interface PendingAppServerRequest {
@@ -238,7 +187,7 @@ function appServerTimeoutMs(): number {
 function readCommandOutput(command: string, args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
-      env: getApiEnv(),
+      env: getApiEnv() as NodeJS.ProcessEnv,
       stdio: ["ignore", "pipe", "pipe"],
     });
     let output = "";
@@ -295,7 +244,7 @@ export async function runCodexCommand(command: CodexSummarizerCommand): Promise<
 
   return new Promise((resolve, reject) => {
     const child = spawn(command.command, command.args, {
-      env: getApiEnv(),
+      env: getApiEnv() as NodeJS.ProcessEnv,
       stdio: ["pipe", "pipe", "pipe"],
     });
 
@@ -478,19 +427,6 @@ function getCodexSessionId(
   return sessionId || exchanges.find((exchange) => exchange.sessionId)?.sessionId;
 }
 
-/**
- * Resolve the model to pass into Codex `thread/fork` for summarization.
- *
- * Historical exchanges may carry deprecated model ids (e.g. `gpt-5.2-codex`),
- * and `-codex`-suffixed variants are API-key-only — ChatGPT-subscription users
- * get a 400 from `app-server` regardless of the suffix used. Reading the model
- * from history therefore breaks summarization for two large user populations.
- *
- * Default to `undefined` so `app-server` uses the current Codex config
- * (`~/.codex/config.toml#model`). Operators can override via
- * `MOE_MEMORY_CODEX_MODEL` if they need a specific model id (e.g. an
- * API-key user wanting `gpt-5.5-codex`).
- */
 export function getCodexModel(_exchanges: ConversationExchange[]): string | undefined {
   return process.env.MOE_MEMORY_CODEX_MODEL || undefined;
 }
@@ -499,7 +435,6 @@ export async function summarizeConversation(
   exchanges: ConversationExchange[],
   sessionId?: string,
 ): Promise<string> {
-  // Handle trivial conversations
   if (exchanges.length === 0) {
     return "Trivial conversation with no substantive content.";
   }
@@ -527,48 +462,24 @@ export async function summarizeConversation(
     }
   }
 
-  // For short conversations (≤15 exchanges), summarize directly
   if (exchanges.length <= 15) {
     const claudeSessionId = codexSessionId ? undefined : sessionId;
     const cwd = claudeSessionId ? exchanges.find((e) => e.cwd)?.cwd : undefined;
     const conversationText = claudeSessionId
-      ? "" // When resuming, no need to include conversation text - it's already in context
+      ? ""
       : formatConversationText(exchanges);
 
-    const prompt = `${SUMMARIZER_CONTEXT_MARKER}.
-
-Please write a concise, factual summary of this conversation. Output ONLY the summary - no preamble. Claude will see this summary when searching previous conversations for useful memories and information.
-
-Summarize what happened in 2-4 sentences. Be factual and specific. Output in <summary></summary> tags.
-
-Include:
-- What was built/changed/discussed (be specific)
-- Key technical decisions or approaches
-- Problems solved or current state
-
-Exclude:
-- Apologies, meta-commentary, or your questions
-- Raw logs or debug output
-- Generic descriptions - focus on what makes THIS conversation unique
-
-Good:
-<summary>Built JWT authentication for React app with refresh tokens and protected routes. Fixed token expiration bug by implementing refresh-during-request logic.</summary>
-
-Bad:
-<summary>I apologize. The conversation discussed authentication and various approaches were considered...</summary>
-
-${conversationText}`;
+    const prompt = buildSummaryPrompt(conversationText, claudeSessionId);
 
     try {
       const result = await callClaude(prompt, claudeSessionId, false, cwd);
       return extractSummary(result);
     } catch (error) {
-      // Resume fails when the session's cwd doesn't exist on disk — retry without resume and feed the conversation text directly.
       if (claudeSessionId && isResumeFailure(error)) {
         console.log(
           `    resume failed for ${claudeSessionId} (${(error as Error).message}); retrying without resume`,
         );
-        const fullPrompt = `${prompt}\n\n${formatConversationText(exchanges)}`;
+        const fullPrompt = buildSummaryPrompt(formatConversationText(exchanges));
         const result = await callClaude(fullPrompt);
         return extractSummary(result);
       }
@@ -576,32 +487,20 @@ ${conversationText}`;
     }
   }
 
-  // For long conversations, use hierarchical summarization
   console.log(
     `  Long conversation (${exchanges.length} exchanges) - using hierarchical summarization`,
   );
 
-  // Note: Hierarchical summarization doesn't support resume mode (needs fresh session for each chunk)
-  // This is fine since we only use resume for the main session-end hook
-
-  // Chunk into groups of 8 exchanges
   const chunks = chunkExchanges(exchanges, 8);
   console.log(`  Split into ${chunks.length} chunks`);
 
-  // Summarize each chunk
   const chunkSummaries: string[] = [];
   for (const [i, chunk] of chunks.entries()) {
     const chunkText = formatConversationText(chunk);
-    const prompt = `${SUMMARIZER_CONTEXT_MARKER}.
-
-Please write a concise summary of this part of a conversation in 2-3 sentences. What happened, what was built/discussed. Use <summary></summary> tags.
-
-${chunkText}
-
-Example: <summary>Implemented HID keyboard functionality for ESP32. Hit Bluetooth controller initialization error, fixed by adjusting memory allocation.</summary>`;
+    const prompt = buildChunkPrompt(chunkText);
 
     try {
-      const summary = await callClaude(prompt); // No sessionId for chunks
+      const summary = await callClaude(prompt);
       const extracted = extractSummary(summary);
       chunkSummaries.push(extracted);
       console.log(`  Chunk ${i + 1}/${chunks.length}: ${extracted.split(/\s+/).length} words`);
@@ -614,25 +513,11 @@ Example: <summary>Implemented HID keyboard functionality for ESP32. Hit Bluetoot
     return "Error: Unable to summarize conversation.";
   }
 
-  // Synthesize chunks into final summary
-  const synthesisPrompt = `${SUMMARIZER_CONTEXT_MARKER}.
-
-Please write a concise, factual summary that synthesizes these part-summaries into one cohesive paragraph. Focus on what was accomplished and any notable technical decisions or challenges. Output in <summary></summary> tags. Claude will see this summary when searching previous conversations for useful memories and information.
-
-Part summaries:
-${chunkSummaries.map((s, i) => `${i + 1}. ${s}`).join("\n")}
-
-Good:
-<summary>Built conversation search system with JavaScript, sqlite-vec, and local embeddings. Implemented hierarchical summarization for long conversations. System archives conversations permanently and provides semantic search via CLI.</summary>
-
-Bad:
-<summary>This conversation synthesizes several topics discussed across multiple parts...</summary>
-
-Your summary (max 200 words):`;
+  const synthesisPrompt = buildSynthesisPrompt(chunkSummaries);
 
   console.log(`  Synthesizing final summary...`);
   try {
-    const result = await callClaude(synthesisPrompt); // No sessionId for synthesis
+    const result = await callClaude(synthesisPrompt);
     return extractSummary(result);
   } catch {
     console.log(`  Synthesis failed, using chunk summaries`);

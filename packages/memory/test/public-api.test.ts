@@ -49,6 +49,17 @@ const RETAINED = new Set([
   "pickPendingEnrichment",
   "commitEnrichment",
   "searchJournalTextDb",
+  // database-snapshot.ts
+  "createDatabaseSnapshot",
+  "verifySnapshot",
+  "collectSnapshotSources",
+  "validateSnapshotSources",
+  // vector-readiness.ts
+  "assessVectorReadiness",
+  "isVectorQueryAuthorized",
+  "vectorReadinessMessage",
+  // embedding-coordinator.ts
+  "createEmbeddingCoordinator",
   // recovery-capsule.ts
   "RecoveryCapsuleError",
   "verifyRecoveryCapsule",

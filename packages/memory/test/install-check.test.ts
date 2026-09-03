@@ -36,16 +36,15 @@ describe("findMissingDeps — runtime dependency health probe", () => {
   it("returns multiple missing packages so the operator sees the full scope of damage in one log line", () => {
     const resolver = (pkg: string) => pkg === "zod";
     const missing = findMissingDeps(resolver);
-    expect(missing).toContain("@huggingface/transformers");
-    expect(missing).toContain("@anthropic-ai/claude-agent-sdk");
+    expect(missing).toContain("@huggingface/tokenizers");
+    expect(missing).toContain("@modelcontextprotocol/sdk");
     expect(missing).not.toContain("zod");
   });
 
   it("does not require the transitive, optional, platform-specific backends", () => {
-    // onnxruntime-node and sharp arrive through @huggingface/transformers and are
-    // resolved from ITS tree, not ours. onnxruntime-node was on the upstream
-    // required list and is not a declared dependency, so probing for it returned
-    // a false positive on every single server start.
+    // onnxruntime-node was on the upstream required list and is not a declared
+    // dependency, so probing for it returned a false positive on every single
+    // server start. sharp was a transitive dep of the old transformers.js stack.
     expect(REQUIRED_PACKAGES).not.toContain("onnxruntime-node");
     expect(REQUIRED_PACKAGES).not.toContain("sharp");
     expect(REQUIRED_PACKAGES).not.toContain("fsevents");

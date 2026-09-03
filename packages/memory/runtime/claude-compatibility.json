@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "minimumVersion": "2.1.141",
+  "currentLane": "2.1.258",
+  "candidates": [
+    {
+      "version": "2.1.141",
+      "status": "baseline",
+      "npm": "@anthropic-ai/claude-code@2.1.141"
+    },
+    {
+      "version": "2.1.258",
+      "status": "current",
+      "npm": "@anthropic-ai/claude-code@2.1.258"
+    }
+  ],
+  "requiredFlags": ["-p", "--input-format", "--output-format", "--no-session-persistence", "--model"],
+  "optionalFlags": ["--resume", "--system-prompt"]
+}
