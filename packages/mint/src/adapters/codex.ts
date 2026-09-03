@@ -62,7 +62,7 @@ function installDoc(_model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const codex: HarnessAdapter = Object.freeze({
+export const codex = Object.freeze({
   name: 'codex',
   support: {
     skills: 'full',
@@ -73,7 +73,7 @@ export const codex: HarnessAdapter = Object.freeze({
     bootstrap: 'partial',
     rules: 'none',
     variables: 'none',
-  },
+  } as const,
   skillsOutputDir: '.codex-plugin/skills',
   installDoc,
   emit(model: PluginModel) {
@@ -92,4 +92,4 @@ export const codex: HarnessAdapter = Object.freeze({
 
     return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('codex', model, files) }
   },
-})
+}) satisfies HarnessAdapter

@@ -244,7 +244,7 @@ function installDoc(model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const opencode: HarnessAdapter = Object.freeze({
+export const opencode = Object.freeze({
   name: 'opencode',
   support: {
     skills: 'full',
@@ -255,7 +255,7 @@ export const opencode: HarnessAdapter = Object.freeze({
     bootstrap: 'full',
     rules: 'none',
     variables: 'none',
-  },
+  } as const,
   skillsOutputDir: '.opencode/skills',
   installDoc,
   emit(model: PluginModel) {
@@ -286,4 +286,4 @@ export const opencode: HarnessAdapter = Object.freeze({
       packageContribution: { owner: 'opencode' as const, exports: opencodeServerExport(model.config.name) },
     }
   },
-})
+}) satisfies HarnessAdapter

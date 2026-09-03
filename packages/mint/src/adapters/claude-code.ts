@@ -154,7 +154,7 @@ function installDoc(model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const claudeCode: HarnessAdapter = Object.freeze({
+export const claudeCode = Object.freeze({
   name: 'claude-code',
   support: {
     skills: 'full',
@@ -165,7 +165,7 @@ export const claudeCode: HarnessAdapter = Object.freeze({
     bootstrap: 'full',
     rules: 'none',
     variables: 'none',
-  },
+  } as const,
   skillsOutputDir: undefined,
   installDoc,
   emit(model: PluginModel) {
@@ -213,4 +213,4 @@ export const claudeCode: HarnessAdapter = Object.freeze({
     }
     return { files, limitations: [], emittedCapabilities: deriveEmittedCapabilities('claude-code', model, files) }
   },
-})
+}) satisfies HarnessAdapter

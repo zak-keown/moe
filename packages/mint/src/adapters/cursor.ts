@@ -135,7 +135,7 @@ function installDoc(model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const cursor: HarnessAdapter = Object.freeze({
+export const cursor = Object.freeze({
   name: 'cursor',
   support: {
     skills: 'full',
@@ -146,7 +146,7 @@ export const cursor: HarnessAdapter = Object.freeze({
     bootstrap: 'full',
     rules: 'none',
     variables: 'none',
-  },
+  } as const,
   skillsOutputDir: '.cursor-plugin/skills',
   installDoc,
   emit(model: PluginModel) {
@@ -208,4 +208,4 @@ export const cursor: HarnessAdapter = Object.freeze({
 
     return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('cursor', model, files) }
   },
-})
+}) satisfies HarnessAdapter

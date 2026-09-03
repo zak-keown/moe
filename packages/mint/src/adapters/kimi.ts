@@ -53,7 +53,7 @@ function pluginManifest(model: PluginModel): Record<string, unknown> {
   return override ? (deepMerge(manifest, override) as Record<string, unknown>) : manifest
 }
 
-export const kimi: HarnessAdapter = Object.freeze({
+export const kimi = Object.freeze({
   name: 'kimi',
   support: {
     skills: 'full',
@@ -64,7 +64,7 @@ export const kimi: HarnessAdapter = Object.freeze({
     bootstrap: 'partial', // sessionStart only supports a named bootstrap skill; bootstrap.generate is unsupported
     rules: 'none',
     variables: 'none',
-  },
+  } as const,
   skillsOutputDir: '.kimi-plugin/skills',
   installDoc,
   emit(model: PluginModel) {
@@ -83,4 +83,4 @@ export const kimi: HarnessAdapter = Object.freeze({
 
     return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('kimi', model, files) }
   },
-})
+}) satisfies HarnessAdapter

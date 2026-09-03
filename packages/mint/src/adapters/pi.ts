@@ -211,7 +211,7 @@ function installDoc(model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const pi: HarnessAdapter = Object.freeze({
+export const pi = Object.freeze({
   name: 'pi',
   support: {
     skills: 'full',
@@ -222,7 +222,7 @@ export const pi: HarnessAdapter = Object.freeze({
     bootstrap: 'full',
     rules: 'none',
     variables: 'none',
-  },
+  } as const,
   skillsOutputDir: '.pi/skills',
   installDoc,
   emit(model: PluginModel) {
@@ -250,4 +250,4 @@ export const pi: HarnessAdapter = Object.freeze({
       packageContribution: { owner: 'pi' as const, pi: piDiscoveryMetadata(model) },
     }
   },
-})
+}) satisfies HarnessAdapter
