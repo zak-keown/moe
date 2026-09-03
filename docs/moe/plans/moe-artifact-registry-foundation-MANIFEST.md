@@ -16,7 +16,8 @@ plans:
   - id: artifact-composition
     plan: docs/moe/plans/2026-09-02-moe-artifact-composition.md
     depends_on: [platform-registry]
-    status: pending
+    status: done
+    commits: 046dcc0..a68326d
   - id: artifact-verification
     plan: docs/moe/plans/2026-09-02-moe-artifact-verification.md
     depends_on: [artifact-composition]
