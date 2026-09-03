@@ -34,6 +34,7 @@
       "inputs": [
         "scripts/mint-plugins.mjs",
         "scripts/lib/mint-diagnostics.mjs",
+        "scripts/lib/mint-host-contract.mjs",
         "scripts/lib/mint-generation-transaction.mjs",
         "moe-platform.yaml",
         "NOTICE",

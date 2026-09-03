@@ -18,6 +18,7 @@ import {
   replaceGeneratedOutputs,
   writeDurableFile,
 } from "./lib/mint-generation-transaction.mjs";
+import { validateMintHostContract } from "./lib/mint-host-contract.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -39,26 +40,7 @@ export function validateHostContract({
   repositoryRoot = ROOT,
   chdir = process.chdir,
 } = {}) {
-  const major = Number.parseInt(nodeVersion.split(".")[0] ?? "", 10);
-  if (!Number.isInteger(major) || major < 24) {
-    throw operationalError(
-      "MINT_HOST_NODE_UNSUPPORTED",
-      `Node 24 or newer is required (running ${nodeVersion})`,
-      { action: "install Node 24 or newer before running Mint" },
-    );
-  }
-  if (platform !== "darwin" && platform !== "linux") {
-    throw operationalError(
-      "MINT_HOST_PLATFORM_UNSUPPORTED",
-      `Mint artifact generation requires macOS, Linux, or WSL2 (running ${platform})`,
-      {
-        action:
-          platform === "win32"
-            ? "run Mint inside WSL2; native Windows generation is not supported"
-            : "run Mint on macOS or Linux",
-      },
-    );
-  }
+  validateMintHostContract({ nodeVersion, platform });
   chdir(repositoryRoot);
 }
 
