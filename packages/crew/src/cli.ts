@@ -35,7 +35,16 @@ const realIo: Io = {
   err: (s) => process.stderr.write(s),
 };
 
-const TOP_LEVEL_SUBS = ["launch", "adopt", "list", "pack", "pack-stop", "prune", "grant-consent", "help"];
+const TOP_LEVEL_SUBS = [
+  "launch",
+  "adopt",
+  "list",
+  "pack",
+  "pack-stop",
+  "prune",
+  "grant-consent",
+  "help",
+];
 const PER_WORKER_SUBS = [
   "converse",
   "send",

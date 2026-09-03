@@ -1,7 +1,7 @@
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { composeResult, WebAdapter } from "../../../../src/qa/adapters/web/adapter.js";
 import { EvidenceLogger } from "../../../../src/qa/evidence/logger.js";
@@ -47,7 +47,7 @@ describe("WebAdapter", () => {
     const tools = adapter.toolDefinitions();
     const clickTool = tools.find((t) => t.name === "click");
     expect(clickTool).toBeDefined();
-    expect(clickTool!.parameters).toHaveProperty("properties");
+    expect(clickTool?.parameters).toHaveProperty("properties");
   });
 
   test("action tools have return_screenshot parameter", () => {
@@ -78,8 +78,8 @@ describe("WebAdapter", () => {
   test("screenshot/extract descriptions cue the text-vs-pixels split", () => {
     const adapter = new WebAdapter();
     const tools = adapter.toolDefinitions();
-    const screenshotDesc = tools.find((t) => t.name === "screenshot")!.description.toLowerCase();
-    const extractDesc = tools.find((t) => t.name === "extract")!.description.toLowerCase();
+    const screenshotDesc = tools.find((t) => t.name === "screenshot")?.description.toLowerCase();
+    const extractDesc = tools.find((t) => t.name === "extract")?.description.toLowerCase();
 
     // screenshot: cross-references extract and names visual content.
     expect(screenshotDesc).toContain("extract");
@@ -177,9 +177,9 @@ describe("WebAdapter", () => {
   });
 
   test("registers fetch_credential when contextRoot has files and credentialResolver is set", () => {
-    const { mkdtempSync, writeFileSync, chmodSync, rmSync } = require("fs");
-    const { tmpdir } = require("os");
-    const { join } = require("path");
+    const { mkdtempSync, writeFileSync, chmodSync, rmSync } = require("node:fs");
+    const { tmpdir } = require("node:os");
+    const { join } = require("node:path");
     const ctxTmp = mkdtempSync(join(tmpdir(), "moe-flight-web-cred-ctx-"));
     const resTmp = mkdtempSync(join(tmpdir(), "moe-flight-web-cred-res-"));
     try {
@@ -201,9 +201,9 @@ describe("WebAdapter", () => {
   });
 
   test("omits fetch_credential when credentialResolver is undefined", () => {
-    const { mkdtempSync, writeFileSync, rmSync } = require("fs");
-    const { tmpdir } = require("os");
-    const { join } = require("path");
+    const { mkdtempSync, writeFileSync, rmSync } = require("node:fs");
+    const { tmpdir } = require("node:os");
+    const { join } = require("node:path");
     const ctxTmp = mkdtempSync(join(tmpdir(), "moe-flight-web-cred-ctx-"));
     try {
       writeFileSync(join(ctxTmp, "alice.md"), "anything");
@@ -217,9 +217,9 @@ describe("WebAdapter", () => {
   });
 
   test("omits fetch_credential when contextRoot is empty even if resolver is set", () => {
-    const { mkdtempSync, writeFileSync, chmodSync, rmSync } = require("fs");
-    const { tmpdir } = require("os");
-    const { join } = require("path");
+    const { mkdtempSync, writeFileSync, chmodSync, rmSync } = require("node:fs");
+    const { tmpdir } = require("node:os");
+    const { join } = require("node:path");
     const ctxTmp = mkdtempSync(join(tmpdir(), "moe-flight-web-cred-ctx-empty-"));
     const resTmp = mkdtempSync(join(tmpdir(), "moe-flight-web-cred-res-"));
     try {
@@ -318,8 +318,8 @@ describe("WebAdapter", () => {
       const startCall = calls.find((c) => c[0] === "startChrome");
       expect(startCall).toBeDefined();
       // signature: startChrome(headless, profileName, port?)
-      expect(startCall![1][0]).toBe(true);
-      expect(startCall![1][1]).toBe("moe-flight-run-abc123-card1");
+      expect(startCall?.[1][0]).toBe(true);
+      expect(startCall?.[1][1]).toBe("moe-flight-run-abc123-card1");
       // clearBrowserData must NOT fire in local mode
       const clear = calls.find((c) => c[0] === "clearBrowserData");
       expect(clear).toBeUndefined();
@@ -406,7 +406,7 @@ describe("WebAdapter", () => {
       expect(calls.find((c) => c[0] === "createBrowserContext")).toBeDefined();
       const createPage = calls.find((c) => c[0] === "createPage");
       expect(createPage).toBeDefined();
-      expect(createPage![1][0]).toBe("http://localhost:3000/");
+      expect(createPage?.[1][0]).toBe("http://localhost:3000/");
     });
 
     test("remote mode: close() does not kill Chrome or clean up any profile dir", async () => {
@@ -597,7 +597,7 @@ describe("WebAdapter", () => {
         await adapter.executeTool("click", { selector: "#x" }, logger);
         const click = stub.calls.find((c) => c[0] === "click");
         expect(click).toBeDefined();
-        expect(click![1][0]).toBe("ws://stub/0");
+        expect(click?.[1][0]).toBe("ws://stub/0");
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
@@ -619,7 +619,7 @@ describe("WebAdapter", () => {
         await adapter.executeTool("click", { selector: "#otp" }, logger);
         // The newTab call routed to chrome.newTab with the side-trip URL.
         const newTabCall = stub.calls.find((c) => c[0] === "newTab");
-        expect(newTabCall![1][0]).toBe("https://mail.example/");
+        expect(newTabCall?.[1][0]).toBe("https://mail.example/");
         // Subsequent click hit the new tab's WS URL (ws://stub/1, the
         // first counter value the stub hands out).
         const clickCalls = stub.calls.filter((c) => c[0] === "click");
@@ -643,7 +643,7 @@ describe("WebAdapter", () => {
         await adapter.executeTool("click", { selector: "#submit" }, logger);
         // closeTab was called with the side-trip URL.
         const closeCall = stub.calls.find((c) => c[0] === "closeTab");
-        expect(closeCall![1][0]).toBe("ws://stub/1");
+        expect(closeCall?.[1][0]).toBe("ws://stub/1");
         // Post-pop click hit the original tab.
         const clickCalls = stub.calls.filter((c) => c[0] === "click");
         expect(clickCalls).toHaveLength(1);
@@ -708,7 +708,7 @@ describe("WebAdapter", () => {
         await adapter.executeTool("click", { selector: "#x" }, logger);
         // Click still hits the original tab — the failed new_tab did not push.
         const click = stub.calls.find((c) => c[0] === "click");
-        expect(click![1][0]).toBe("ws://stub/0");
+        expect(click?.[1][0]).toBe("ws://stub/0");
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
@@ -825,8 +825,8 @@ describe("WebAdapter", () => {
         await adapter.executeTool("close_tab", {}, logger);
         const pop = events.find((e) => e.name === "tab_focus_changed" && e.data.action === "pop");
         expect(pop).toBeDefined();
-        expect(pop!.data.url).toBe("https://mail.example/");
-        expect(pop!.data.ws_url).toBe("ws://stub/1");
+        expect(pop?.data.url).toBe("https://mail.example/");
+        expect(pop?.data.ws_url).toBe("ws://stub/1");
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
@@ -859,7 +859,7 @@ describe("WebAdapter", () => {
         expect(result.text).toContain("chrome went away");
         const failEvent = events.find((e) => e.name === "tab_force_close_failed");
         expect(failEvent).toBeDefined();
-        expect(failEvent!.data.ws_url).toBe("ws://stub/1");
+        expect(failEvent?.data.ws_url).toBe("ws://stub/1");
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
@@ -1045,8 +1045,8 @@ describe("WebAdapter", () => {
         }
         const warn = events.find((e) => e.name === "install_at_depth_warning");
         expect(warn).toBeDefined();
-        expect(warn!.data.tool).toBe("install_passkey");
-        expect(warn!.data.depth).toBe(2);
+        expect(warn?.data.tool).toBe("install_passkey");
+        expect(warn?.data.depth).toBe(2);
       } finally {
         rmSync(dir, { recursive: true, force: true });
         rmSync(tmpCtx, { recursive: true, force: true });

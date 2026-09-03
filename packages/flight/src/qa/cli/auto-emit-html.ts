@@ -15,7 +15,7 @@ export async function safeEmitIndexHtml(
   deps: AutoEmitDeps = {},
 ): Promise<string | null> {
   const renderer = deps.renderer ?? defaultRenderer;
-  const stderr = deps.stderr ?? ((m) => process.stderr.write(m + "\n"));
+  const stderr = deps.stderr ?? ((m) => process.stderr.write(`${m}\n`));
   try {
     return await renderer(runDir);
   } catch (err) {

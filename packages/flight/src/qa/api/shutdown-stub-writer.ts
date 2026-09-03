@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, writeFileSync } from "fs";
-import { dirname, join } from "path";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import type { VerdictResult } from "../types.js";
 import { RESULT_SCHEMA_VERSION } from "../types.js";
 import type { CardId, RunId } from "../util/brands.js";

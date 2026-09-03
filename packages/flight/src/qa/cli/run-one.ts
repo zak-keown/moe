@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync } from "node:fs";
 import type { AppConfig } from "../config.js";
 import type { EvidenceLogger } from "../evidence/logger.js";
 import { parseStoryCard } from "../format/story-card.js";
@@ -73,6 +73,6 @@ export async function runOne(opts: RunOneOptions): Promise<RunOneSummary> {
       saveScreencast: config.defaultSaveScreencast,
       credentialResolver: config.credentialResolver,
     },
-    hooks: opts.onLogger ? { onLogger: (logger) => opts.onLogger!(logger) } : undefined,
+    hooks: opts.onLogger ? { onLogger: (logger) => opts.onLogger?.(logger) } : undefined,
   });
 }

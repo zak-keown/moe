@@ -1,6 +1,6 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { Hono } from "hono";
-import { join } from "path";
 import type { ParseResult } from "../../agent/validators.js";
 import { findCard } from "../../cards/store.js";
 import type { AppConfig } from "../../config.js";

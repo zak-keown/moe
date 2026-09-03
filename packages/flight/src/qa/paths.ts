@@ -1,7 +1,7 @@
 // The one and only path-safety guard for Flight. All containment checks go through this.
 
-import { readdirSync, realpathSync, statSync } from "fs";
-import { isAbsolute, join, resolve as resolvePath, sep } from "path";
+import { readdirSync, realpathSync, statSync } from "node:fs";
+import { isAbsolute, join, resolve as resolvePath, sep } from "node:path";
 
 export const DEFAULT_STATE_DIR_NAME = ".moe-flight";
 

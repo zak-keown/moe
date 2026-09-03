@@ -1,7 +1,7 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from "fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { Hono } from "hono";
-import { tmpdir } from "os";
-import { join } from "path";
 import { beforeEach, describe, expect, test } from "vitest";
 import { ActiveRunRegistry } from "../../../src/qa/api/active-runs.js";
 import { runRoutes } from "../../../src/qa/api/routes/run.js";

@@ -127,7 +127,7 @@ export class BatchTableRenderer {
   onTurn(cardId: string, turn: number, attemptNumber = 1): void {
     const key = this.rowKey(cardId, attemptNumber);
     const row = this.rows.get(key);
-    if (!row || row.state !== "running") return;
+    if (row?.state !== "running") return;
     row.turn = turn;
     if (!this.opts.isTTY) {
       this.sink.write(`${cardId}: running turn ${turn}\n`);

@@ -1,6 +1,6 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { buildReadTool, READ_TOOL_DESCRIPTION } from "../../../src/qa/context/read-tool.js";
 
@@ -42,8 +42,8 @@ describe("buildReadTool", () => {
       writeFileSync(join(tmp, "alice.md"), "hi");
       const tool = buildReadTool(tmp);
       expect(tool).not.toBeNull();
-      expect(tool!.definition.name).toBe("read");
-      const params = tool!.definition.parameters as {
+      expect(tool?.definition.name).toBe("read");
+      const params = tool?.definition.parameters as {
         properties: { path: { type: string } };
         required: string[];
       };

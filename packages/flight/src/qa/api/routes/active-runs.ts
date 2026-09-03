@@ -31,5 +31,5 @@ export function activeRunRoutes(registry: ActiveRunRegistry, targetMaxBytes?: nu
  */
 function truncateTarget(info: ActiveRunInfo, cap: number): ActiveRunInfo {
   if (info.target.length <= cap) return info;
-  return { ...info, target: info.target.slice(0, cap) + "..." };
+  return { ...info, target: `${info.target.slice(0, cap)}...` };
 }

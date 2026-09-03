@@ -113,7 +113,7 @@ if (require.main === module) {
   try {
     main();
   } catch (err) {
-    process.stderr.write(err.message + "\n");
+    process.stderr.write(`${err.message}\n`);
     process.exit(1);
   }
 }

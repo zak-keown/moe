@@ -1,6 +1,6 @@
-import { existsSync, readFileSync } from "fs";
-import { resolve } from "path";
-import { createInterface } from "readline";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { createInterface } from "node:readline";
 import type { AppConfig } from "../config.js";
 import type { LLMClient } from "../models/provider.js";
 import { createClient, UnknownModelProviderError } from "../models/resolve.js";

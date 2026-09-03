@@ -11,7 +11,7 @@ import { withV1Policy } from './helpers.js'
 import { parse, stringify } from 'yaml'
 import { TARGET_IDS, type CapabilityId, type TargetId } from '../src/vocabulary.js'
 
-const fullSupport = {
+const _fullSupport = {
   skills: 'full',
   commands: 'full',
   agents: 'full',

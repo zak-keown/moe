@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync } from "node:fs";
 import * as YAML from "yaml";
 import type { EvidenceLogger } from "../../evidence/logger.js";
 import { type ToolDefinition, type ToolResult, textResult } from "../../models/provider.js";

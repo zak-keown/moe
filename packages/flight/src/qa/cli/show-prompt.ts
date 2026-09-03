@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync } from "node:fs";
 import type { Adapter, AdapterType } from "../adapters/adapter.js";
 import { CLIAdapter } from "../adapters/cli/adapter.js";
 import { TUIAdapter } from "../adapters/tui/adapter.js";

@@ -6,10 +6,10 @@ import {
   readFileSync,
   rmSync,
   writeFileSync,
-} from "fs";
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { Hono } from "hono";
-import { tmpdir } from "os";
-import { join } from "path";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { fanoutRoutes } from "../../../src/qa/api/routes/fanout.js";
 import type { LLMClient } from "../../../src/qa/models/provider.js";

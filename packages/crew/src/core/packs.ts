@@ -56,7 +56,7 @@ export function parsePackYaml(text: string): unknown {
     }
 
     const key = topMatch[1]!;
-    const inlineValue = topMatch[2]!.trim();
+    const inlineValue = topMatch[2]?.trim();
 
     // Block scalar (`|` or `|+` or `|-`)
     if (/^\|[+-]?\s*$/.test(inlineValue)) {
@@ -75,7 +75,7 @@ export function parsePackYaml(text: string): unknown {
 
     // No inline value — check for a sequence or nested mapping on the next line.
     const nextNonBlank = peekNonBlank(lines, i + 1);
-    if (nextNonBlank !== null && lines[nextNonBlank]!.match(/^\s+-\s/)) {
+    if (nextNonBlank !== null && lines[nextNonBlank]?.match(/^\s+-\s/)) {
       // It's a sequence of mappings (workers:).
       const { items, nextLine } = readSequence(lines, i + 1);
       root[key] = items;
@@ -105,8 +105,8 @@ function readBlockScalar(
     i++;
   }
   if (i < lines.length) {
-    const m = lines[i]!.match(/^(\s*)/);
-    bodyIndent = m ? m[1]!.length : minIndent;
+    const m = lines[i]?.match(/^(\s*)/);
+    bodyIndent = m ? m[1]?.length : minIndent;
     if (bodyIndent < minIndent) bodyIndent = minIndent;
   }
 
@@ -119,7 +119,7 @@ function readBlockScalar(
       continue;
     }
     // A line with less indent than the body ends the block.
-    const indent = line.match(/^(\s*)/)![1]!.length;
+    const indent = line.match(/^(\s*)/)?.[1]?.length;
     if (indent < bodyIndent) break;
     collected.push(line.slice(bodyIndent));
     i++;
@@ -153,7 +153,7 @@ function readSequence(
     const dashMatch = line.match(/^(\s*)-\s+(.*)/);
     if (!dashMatch) break; // End of sequence.
 
-    const dashIndent = dashMatch[1]!.length;
+    const dashIndent = dashMatch[1]?.length;
     const firstContent = dashMatch[2]!;
 
     const item: Record<string, unknown> = {};
@@ -161,7 +161,7 @@ function readSequence(
     const kvMatch = firstContent.match(/^([A-Za-z_][A-Za-z0-9_]*):\s*(.*)/);
     if (kvMatch) {
       const k = kvMatch[1]!;
-      const v = kvMatch[2]!.trim();
+      const v = kvMatch[2]?.trim();
       if (/^\|[+-]?\s*$/.test(v)) {
         const { value, nextLine } = readBlockScalar(lines, i + 1, dashIndent + 4);
         item[k] = value;
@@ -172,7 +172,7 @@ function readSequence(
       } else {
         // Check for sub-sequence (harnessArgs: followed by list items).
         const peek = peekNonBlank(lines, i + 1);
-        if (peek !== null && lines[peek]!.match(/^\s+-\s/)) {
+        if (peek !== null && lines[peek]?.match(/^\s+-\s/)) {
           const { scalarItems, nextLine } = readScalarSequence(lines, i + 1, dashIndent + 4);
           item[k] = scalarItems;
           i = nextLine;
@@ -194,7 +194,7 @@ function readSequence(
         continue;
       }
       // If indent is <= dashIndent, we're out of this item.
-      const cIndent = cLine.match(/^(\s*)/)![1]!.length;
+      const cIndent = cLine.match(/^(\s*)/)?.[1]?.length;
       if (cIndent <= dashIndent) break;
       // Must be within the item (indented past the dash).
       if (cIndent <= dashIndent + 1) break;
@@ -203,7 +203,7 @@ function readSequence(
       if (!ckMatch) break;
 
       const ck = ckMatch[1]!;
-      const cv = ckMatch[2]!.trim();
+      const cv = ckMatch[2]?.trim();
       if (/^\|[+-]?\s*$/.test(cv)) {
         const { value, nextLine } = readBlockScalar(lines, i + 1, cIndent + 2);
         item[ck] = value;
@@ -214,7 +214,7 @@ function readSequence(
       } else {
         // Sub-sequence (harnessArgs: followed by - items).
         const peek = peekNonBlank(lines, i + 1);
-        if (peek !== null && lines[peek]!.match(/^\s+-\s/)) {
+        if (peek !== null && lines[peek]?.match(/^\s+-\s/)) {
           const { scalarItems, nextLine } = readScalarSequence(lines, i + 1, cIndent + 2);
           item[ck] = scalarItems;
           i = nextLine;
@@ -246,8 +246,8 @@ function readScalarSequence(
       continue;
     }
     const dm = line.match(/^(\s*)-\s+(.*)/);
-    if (!dm || dm[1]!.length < minIndent) break;
-    scalarItems.push(parseScalar(dm[2]!.trim()) as string);
+    if (!dm || dm[1]?.length < minIndent) break;
+    scalarItems.push(parseScalar(dm[2]?.trim()) as string);
     i++;
   }
   return { scalarItems, nextLine: i };

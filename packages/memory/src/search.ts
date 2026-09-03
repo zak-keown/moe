@@ -76,7 +76,12 @@ function buildSearchFilters(options: SearchOptions): { sql: string; params: unkn
  */
 function hasMetadataFilters(options: SearchOptions): boolean {
   return Boolean(
-    options.project || options.session_id || options.git_branch || options.git_commit || options.after || options.before,
+    options.project ||
+      options.session_id ||
+      options.git_branch ||
+      options.git_commit ||
+      options.after ||
+      options.before,
   );
 }
 

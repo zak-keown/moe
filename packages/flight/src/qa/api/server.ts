@@ -1,7 +1,7 @@
-import { existsSync, readFileSync, statSync } from "fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
-import { join } from "path";
 import type { AppConfig } from "../config.js";
 import { flightPath, isSafePath } from "../paths.js";
 import { ErrorLog } from "../util/error-log.js";

@@ -1,6 +1,6 @@
-import { existsSync, mkdtempSync, readFileSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { RunSetWriter } from "../../../src/qa/evidence/run-set-writer.js";
 import type { RunSetCtx } from "../../../src/qa/runs/run-set-types.js";

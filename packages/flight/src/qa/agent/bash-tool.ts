@@ -1,4 +1,4 @@
-import { mkdirSync } from "fs";
+import { mkdirSync } from "node:fs";
 import type { EvidenceLogger } from "../evidence/logger.js";
 import { type ToolDefinition, type ToolResult, textResult } from "../models/provider.js";
 import { killProcessTree, listDescendants } from "../runtime/process-tree.js";

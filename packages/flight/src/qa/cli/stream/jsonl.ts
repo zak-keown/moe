@@ -8,7 +8,7 @@ export class JsonlRenderer implements StreamRenderer {
   constructor(private sink: WriteSink) {}
 
   handle(event: StreamEvent): void {
-    this.sink.write(JSON.stringify(event) + "\n");
+    this.sink.write(`${JSON.stringify(event)}\n`);
   }
 
   close(): void {

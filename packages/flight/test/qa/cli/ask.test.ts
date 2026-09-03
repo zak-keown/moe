@@ -1,6 +1,6 @@
-import { mkdirSync, mkdtempSync, rmSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
 import { parseArgs } from "../../../src/qa/cli/args.js";
 import { ask } from "../../../src/qa/cli/ask.js";

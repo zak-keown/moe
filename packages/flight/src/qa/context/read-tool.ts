@@ -1,4 +1,4 @@
-import { readFileSync, statSync } from "fs";
+import { readFileSync, statSync } from "node:fs";
 import { type ToolDefinition, type ToolResult, textResult } from "../models/provider.js";
 import { contextRootIsPopulated, resolveInside } from "../paths.js";
 

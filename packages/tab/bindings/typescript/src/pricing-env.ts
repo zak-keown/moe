@@ -26,10 +26,10 @@ async function nativeEnv(): Promise<LibcEnv> {
 
 export async function setPricingDir(dir: string): Promise<void> {
   process.env[KEY] = dir;
-  if (isBun) (await nativeEnv()).setenv(Buffer.from(KEY + "\0"), Buffer.from(dir + "\0"), 1);
+  if (isBun) (await nativeEnv()).setenv(Buffer.from(`${KEY}\0`), Buffer.from(`${dir}\0`), 1);
 }
 
 export async function clearPricingDir(): Promise<void> {
   delete process.env[KEY];
-  if (isBun) (await nativeEnv()).unsetenv(Buffer.from(KEY + "\0"));
+  if (isBun) (await nativeEnv()).unsetenv(Buffer.from(`${KEY}\0`));
 }

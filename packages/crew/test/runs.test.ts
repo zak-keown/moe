@@ -1,7 +1,9 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { appendEvent } from "../src/core/event-log.js";
+import { eventsPath } from "../src/core/paths.js";
 import {
   addWorkerToRun,
   endRun,
@@ -10,11 +12,9 @@ import {
   readRunMeta,
   startRun,
 } from "../src/core/runs.js";
-import { appendEvent } from "../src/core/event-log.js";
-import { eventsPath } from "../src/core/paths.js";
 import { writeMeta } from "../src/core/worker-store.js";
-import { EVENT_NAMES, parseEvent, serializeEvent } from "../src/events.js";
 import type { WorkerEvent } from "../src/events.js";
+import { EVENT_NAMES, parseEvent, serializeEvent } from "../src/events.js";
 
 describe("runs", () => {
   let dir: string;
@@ -130,7 +130,7 @@ describe("runs", () => {
       appendEvent(eventsPath(dir, "sid-2"), { event: "session_start", ts: "2026-09-02T10:00:02Z" });
       appendEvent(eventsPath(dir, "sid-2"), { event: "stop", ts: "2026-09-02T10:00:04Z" });
 
-      const resolver = (d: string, worker: string): string | null => {
+      const resolver = (_d: string, worker: string): string | null => {
         if (worker === "w1") return "sid-1";
         if (worker === "w2") return "sid-2";
         return null;

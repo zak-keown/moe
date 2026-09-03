@@ -1,5 +1,5 @@
-import { appendFileSync, mkdirSync, writeFileSync } from "fs";
-import { join } from "path";
+import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import type { CardId, RunId } from "../util/brands.js";
 
 export type BrowserEventCategory = "console" | "exception" | "log" | "network-ws";
@@ -230,7 +230,7 @@ export class EvidenceLogger {
       type,
       ...body,
     };
-    appendFileSync(join(this.outDir, "run.jsonl"), JSON.stringify(entry) + "\n");
+    appendFileSync(join(this.outDir, "run.jsonl"), `${JSON.stringify(entry)}\n`);
     this.lastEventId = eventId;
     this.notifyEventObservers(entry);
     return eventId;
@@ -261,7 +261,7 @@ export class EvidenceLogger {
       ...(typeof tier === "string" ? { service_tier: tier } : {}),
       usage: rawUsage,
     };
-    appendFileSync(join(this.outDir, "usage.jsonl"), JSON.stringify(row) + "\n");
+    appendFileSync(join(this.outDir, "usage.jsonl"), `${JSON.stringify(row)}\n`);
   }
 
   logSystemPrompt(content: string): void {
@@ -383,7 +383,7 @@ export class EvidenceLogger {
       category,
       ...data,
     };
-    appendFileSync(join(this.outDir, `${category}.jsonl`), JSON.stringify(entry) + "\n");
+    appendFileSync(join(this.outDir, `${category}.jsonl`), `${JSON.stringify(entry)}\n`);
   }
 
   saveScreenshot(data: Buffer, name?: string): string {

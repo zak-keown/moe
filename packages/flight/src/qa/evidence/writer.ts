@@ -1,10 +1,10 @@
-import { mkdirSync, writeFileSync } from "fs";
-import { join } from "path";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import type { Observation, VerdictResult } from "../types.js";
 
 export function writeResultFiles(outDir: string, result: VerdictResult): void {
   // Write result.json
-  writeFileSync(join(outDir, "result.json"), JSON.stringify(result, null, 2) + "\n");
+  writeFileSync(join(outDir, "result.json"), `${JSON.stringify(result, null, 2)}\n`);
 
   // Write result.md — human-readable summary
   writeFileSync(join(outDir, "result.md"), renderResultMarkdown(result));

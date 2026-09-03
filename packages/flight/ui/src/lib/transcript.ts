@@ -381,7 +381,7 @@ export function findSoftErrors(model: TranscriptModel): SoftErrorSite[] {
     for (const pair of turn.tools) {
       if (!isSoftErrorResult(pair.result)) continue;
       const firstLine = ((pair.result?.text ?? "").split("\n")[0] ?? "").trim();
-      const snippet = firstLine.length > 140 ? firstLine.slice(0, 140) + "…" : firstLine;
+      const snippet = firstLine.length > 140 ? `${firstLine.slice(0, 140)}…` : firstLine;
       sites.push({
         turn: turn.turn,
         toolUseId: pair.toolUseId,

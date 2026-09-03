@@ -1,6 +1,6 @@
-import { existsSync, mkdtempSync, readdirSync, rmSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { ScreencastStreamer } from "../../../src/qa/streaming/screencast.js";
 
@@ -155,9 +155,9 @@ describe("ScreencastStreamer", () => {
       },
     });
     expect(seen.length).toBe(1);
-    expect(seen[0]!.data).toBe("aGVsbG8=");
-    expect(seen[0]!.metadata.width).toBe(1920);
-    expect(seen[0]!.metadata.height).toBe(1200);
+    expect(seen[0]?.data).toBe("aGVsbG8=");
+    expect(seen[0]?.metadata.width).toBe(1920);
+    expect(seen[0]?.metadata.height).toBe(1200);
   });
 
   test("a frame received while saveDir is set writes a file synchronously", async () => {
