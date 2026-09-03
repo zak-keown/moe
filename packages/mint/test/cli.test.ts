@@ -80,9 +80,9 @@ describe('CLI end-to-end', () => {
     runCli(['generate'], dir)
     const yamlPath = join(dir, 'moe-mint.yaml')
     const yaml = readFileSync(yamlPath, 'utf8')
-    // Excluding opencode drops its four uniquely-owned files (the plugin JS,
-    // the translated command/agent .md files, and the install doc); the shared
-    // package.json stays because pi still emits it byte-identically.
+    // Excluding opencode drops its adapter files and complete three-file skill
+    // tree; the shared package.json stays because pi still emits it
+    // byte-identically.
     writeFileSync(yamlPath, yaml.replace('harnesses:\n', 'harnesses:\n  exclude: [opencode]\n'))
 
     const result = runCli(['generate'], dir)
@@ -91,15 +91,18 @@ describe('CLI end-to-end', () => {
     const pluginJsIndex = result.stdout.indexOf('pruned: .opencode/plugins/kitchen-sink.js')
     const commandIndex = result.stdout.indexOf('pruned: .opencode/command/ks-hello.md')
     const agentIndex = result.stdout.indexOf('pruned: .opencode/agent/ks-reviewer.md')
+    const skillIndex = result.stdout.indexOf('pruned: .opencode/skills/greeting/SKILL.md')
     const installDocIndex = result.stdout.indexOf('pruned: docs/install/opencode.md')
-    const countIndex = result.stdout.indexOf('Pruned 4 stale file(s)')
+    const countIndex = result.stdout.indexOf('Pruned 7 stale file(s)')
     expect(pluginJsIndex).toBeGreaterThanOrEqual(0)
     expect(commandIndex).toBeGreaterThanOrEqual(0)
     expect(agentIndex).toBeGreaterThanOrEqual(0)
+    expect(skillIndex).toBeGreaterThanOrEqual(0)
     expect(installDocIndex).toBeGreaterThanOrEqual(0)
     expect(countIndex).toBeGreaterThan(pluginJsIndex)
     expect(countIndex).toBeGreaterThan(commandIndex)
     expect(countIndex).toBeGreaterThan(agentIndex)
+    expect(countIndex).toBeGreaterThan(skillIndex)
     expect(countIndex).toBeGreaterThan(installDocIndex)
   })
 

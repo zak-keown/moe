@@ -64,9 +64,35 @@ exports[`generate > snapshots the generated tree for the kitchen-sink fixture 1`
   "keywords": [
     "fixture"
   ],
+  "skills": "./.claude-plugin/skills",
   "hooks": "./hooks/moe-mint/hooks.json",
   "homepage": "https://example.com/kitchen-sink"
 }
+
+=== .claude-plugin/skills/greeting/scripts/hello.sh ===
+#!/usr/bin/env bash
+echo hello
+
+=== .claude-plugin/skills/greeting/SKILL.md ===
+---
+name: greeting
+description: Use when the user asks for a greeting - produces a friendly greeting
+---
+
+# Greeting
+
+Respond with a friendly greeting that names the user's harness.
+
+=== .claude-plugin/skills/using-kitchen-sink/SKILL.md ===
+---
+name: using-kitchen-sink
+description: Use when starting any conversation - explains the kitchen-sink fixture plugin's capabilities
+---
+
+# Using Kitchen Sink
+
+This plugin exists to exercise every plugin component type. When a task
+mentions greetings, use the greeting skill.
 
 === .codex-plugin/plugin.json ===
 {
@@ -82,9 +108,34 @@ exports[`generate > snapshots the generated tree for the kitchen-sink fixture 1`
   "keywords": [
     "fixture"
   ],
-  "skills": "./skills/",
+  "skills": "./.codex-plugin/skills/",
   "hooks": {}
 }
+
+=== .codex-plugin/skills/greeting/scripts/hello.sh ===
+#!/usr/bin/env bash
+echo hello
+
+=== .codex-plugin/skills/greeting/SKILL.md ===
+---
+name: greeting
+description: Use when the user asks for a greeting - produces a friendly greeting
+---
+
+# Greeting
+
+Respond with a friendly greeting that names the user's harness.
+
+=== .codex-plugin/skills/using-kitchen-sink/SKILL.md ===
+---
+name: using-kitchen-sink
+description: Use when starting any conversation - explains the kitchen-sink fixture plugin's capabilities
+---
+
+# Using Kitchen Sink
+
+This plugin exists to exercise every plugin component type. When a task
+mentions greetings, use the greeting skill.
 
 === .cursor-plugin/marketplace.json ===
 {
@@ -132,7 +183,7 @@ exports[`generate > snapshots the generated tree for the kitchen-sink fixture 1`
   "keywords": [
     "fixture"
   ],
-  "skills": "./skills/",
+  "skills": "./.cursor-plugin/skills/",
   "category": "Developer Tools",
   "tags": [
     "demo",
@@ -143,6 +194,31 @@ exports[`generate > snapshots the generated tree for the kitchen-sink fixture 1`
   "mcpServers": "./.cursor-plugin/mcp.json",
   "hooks": "./hooks/moe-mint/hooks-cursor.json"
 }
+
+=== .cursor-plugin/skills/greeting/scripts/hello.sh ===
+#!/usr/bin/env bash
+echo hello
+
+=== .cursor-plugin/skills/greeting/SKILL.md ===
+---
+name: greeting
+description: Use when the user asks for a greeting - produces a friendly greeting
+---
+
+# Greeting
+
+Respond with a friendly greeting that names the user's harness.
+
+=== .cursor-plugin/skills/using-kitchen-sink/SKILL.md ===
+---
+name: using-kitchen-sink
+description: Use when starting any conversation - explains the kitchen-sink fixture plugin's capabilities
+---
+
+# Using Kitchen Sink
+
+This plugin exists to exercise every plugin component type. When a task
+mentions greetings, use the greeting skill.
 
 === .kimi-plugin/plugin.json ===
 {
@@ -158,11 +234,36 @@ exports[`generate > snapshots the generated tree for the kitchen-sink fixture 1`
   "keywords": [
     "fixture"
   ],
-  "skills": "./skills/",
+  "skills": "./.kimi-plugin/skills/",
   "sessionStart": {
     "skill": "using-kitchen-sink"
   }
 }
+
+=== .kimi-plugin/skills/greeting/scripts/hello.sh ===
+#!/usr/bin/env bash
+echo hello
+
+=== .kimi-plugin/skills/greeting/SKILL.md ===
+---
+name: greeting
+description: Use when the user asks for a greeting - produces a friendly greeting
+---
+
+# Greeting
+
+Respond with a friendly greeting that names the user's harness.
+
+=== .kimi-plugin/skills/using-kitchen-sink/SKILL.md ===
+---
+name: using-kitchen-sink
+description: Use when starting any conversation - explains the kitchen-sink fixture plugin's capabilities
+---
+
+# Using Kitchen Sink
+
+This plugin exists to exercise every plugin component type. When a task
+mentions greetings, use the greeting skill.
 
 === .opencode/agent/ks-reviewer.md ===
 ---
@@ -262,6 +363,31 @@ export const KitchenSinkPlugin = async ({ client, directory }) => {
     },
   }
 }
+
+=== .opencode/skills/greeting/scripts/hello.sh ===
+#!/usr/bin/env bash
+echo hello
+
+=== .opencode/skills/greeting/SKILL.md ===
+---
+name: greeting
+description: Use when the user asks for a greeting - produces a friendly greeting
+---
+
+# Greeting
+
+Respond with a friendly greeting that names the user's harness.
+
+=== .opencode/skills/using-kitchen-sink/SKILL.md ===
+---
+name: using-kitchen-sink
+description: Use when starting any conversation - explains the kitchen-sink fixture plugin's capabilities
+---
+
+# Using Kitchen Sink
+
+This plugin exists to exercise every plugin component type. When a task
+mentions greetings, use the greeting skill.
 
 === .pi/extensions/kitchen-sink.ts ===
 // kitchen-sink extension for Pi — registers the skills directory and injects bootstrap context into the conversation.
@@ -368,6 +494,31 @@ function firstNonCompactionSummaryIndex(messages: unknown[]): number {
   }
   return index
 }
+
+=== .pi/skills/greeting/scripts/hello.sh ===
+#!/usr/bin/env bash
+echo hello
+
+=== .pi/skills/greeting/SKILL.md ===
+---
+name: greeting
+description: Use when the user asks for a greeting - produces a friendly greeting
+---
+
+# Greeting
+
+Respond with a friendly greeting that names the user's harness.
+
+=== .pi/skills/using-kitchen-sink/SKILL.md ===
+---
+name: using-kitchen-sink
+description: Use when starting any conversation - explains the kitchen-sink fixture plugin's capabilities
+---
+
+# Using Kitchen Sink
+
+This plugin exists to exercise every plugin component type. When a task
+mentions greetings, use the greeting skill.
 
 === docs/install/agent-plugins-1.0.md ===
 <!-- GENERATED by moe-mint — edit moe-mint.yaml instead -->

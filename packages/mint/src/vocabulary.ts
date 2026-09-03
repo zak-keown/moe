@@ -1,11 +1,11 @@
-import { readFileSync, existsSync, readdirSync, statSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs'
+import { isAbsolute, join, resolve, sep } from 'node:path'
 import { parse } from 'yaml'
 import { z } from 'zod'
 import { ConfigError } from './config.js'
 import type { PluginModel } from './model.js'
-import type { GeneratedFile } from './fileset.js'
-import type { HarnessAdapter } from './adapters/types.js'
+import { writeFileSet, type GeneratedFile } from './fileset.js'
+import type { HarnessAdapter, SkillLayout } from './adapters/types.js'
 
 export const TOKEN_NAME_RE = /^[a-z][a-z0-9-]*$/
 
@@ -186,11 +186,14 @@ export function scanForUnknownTokens(
 }
 
 export function assertNoSurvivors(
-  files: Array<{ path: string; content: string }>,
+  files: Array<{ path: string; content: string | Uint8Array }>,
 ): void {
   const problems: string[] = []
   for (const file of files) {
-    const stripped = stripFencedBlocks(file.content)
+    if (!file.path.endsWith('.md')) continue
+    const stripped = stripFencedBlocks(
+      typeof file.content === 'string' ? file.content : Buffer.from(file.content).toString('utf8'),
+    )
     const lines: string[] = stripped.split('\n')
     for (let i = 0; i < lines.length; i++) {
       const line: string = lines[i]!
@@ -227,7 +230,7 @@ export function assertNoSurvivors(
 // so adjusting only that field is what those adapters actually need.
 export function adjustedModel(
   model: PluginModel,
-  skillsOutputDir: string,
+  layout: SkillLayout,
 ): PluginModel {
   return {
     ...model,
@@ -235,86 +238,98 @@ export function adjustedModel(
       ...model.config,
       components: {
         ...model.config.components,
-        skills: skillsOutputDir,
+        skills: layout.outputDir,
       },
     },
   }
 }
 
-// Substitutes every skill .md file per active adapter's vocabulary mapping.
-// Adapters with their own skillsOutputDir get a full copy of the skills tree
-// (substituted) returned as GeneratedFile[] for the caller to merge into the
-// output fileset. Adapters that share the source skills/ directory (no
-// skillsOutputDir — claude-code, agent-plugins-1.0, copilot) get their
-// mapping applied in place, overwriting the source files on disk, since
-// those adapters read skills/ directly rather than from a generated copy.
-//
-// All shared adapters MUST agree on every token/block mapping — there's only
-// one skills/ directory to overwrite, so divergent mappings between them are
-// unrepresentable and rejected up front.
+function validateLayout(root: string, sourceDir: string, adapter: HarnessAdapter): void {
+  const { outputDir, mode } = adapter.skillLayout
+  const rootAbs = resolve(root)
+  if (outputDir.length === 0 || outputDir.includes('\\') || outputDir.split('/').includes('')) {
+    throw new ConfigError(
+      `adapter "${adapter.name}" skill output directory is not a normalized relative path: ${outputDir}`,
+    )
+  }
+  if (isAbsolute(outputDir)) {
+    throw new ConfigError(`adapter "${adapter.name}" skill output directory must be relative: ${outputDir}`)
+  }
+  if (outputDir.split('/').some((segment) => segment === '.' || segment === '..')) {
+    throw new ConfigError(
+      `adapter "${adapter.name}" skill output directory contains traversal: ${outputDir}`,
+    )
+  }
+  const outputAbs = resolve(root, outputDir)
+  if (outputAbs !== rootAbs && !outputAbs.startsWith(rootAbs + sep)) {
+    throw new ConfigError(`adapter "${adapter.name}" skill output directory escapes plugin root: ${outputDir}`)
+  }
+  if (mode === 'in-place' && outputAbs !== resolve(root, sourceDir)) {
+    throw new ConfigError(
+      `adapter "${adapter.name}" in-place skill output directory must equal ${sourceDir}: ${outputDir}`,
+    )
+  }
+}
+
+function transformedContent(
+  file: PluginModel['skillFiles'][number],
+  profile: string,
+  vocab: Vocabulary,
+): Uint8Array {
+  if (!file.path.endsWith('.md')) return Buffer.from(file.content)
+  return Buffer.from(
+    substituteContent(Buffer.from(file.content).toString('utf8'), profile, vocab),
+    'utf8',
+  )
+}
+
+// Renders the complete, immutable skill-tree snapshot captured by buildModel.
+// Markdown is profile-substituted; every other regular file is copied as bytes.
+// In-place layouts update the staged source tree and rendered layouts return
+// GeneratedFiles for the normal collision, manifest, and writer pipeline.
 export function substituteAllSkills(
   root: string,
   model: PluginModel,
   vocab: Vocabulary,
   activeAdapters: HarnessAdapter[],
-): GeneratedFile[] {
+): GeneratedFile<Uint8Array>[] {
   const srcDir = model.config.components.skills
-  const mdFiles = collectMdFiles(root, srcDir)
-  const generatedFiles: GeneratedFile[] = []
-
-  // Read every source file's original content exactly once, up front. Both
-  // branches below derive their substitutions from this snapshot rather than
-  // re-reading from disk — the shared-adapter branch overwrites the source
-  // files in place, and a later disk read for a non-shared adapter would
-  // otherwise pick up that already-substituted content instead of the
-  // original {token} markers.
-  const originalContent = new Map<string, string>()
-  for (const relPath of mdFiles) {
-    originalContent.set(relPath, readFileSync(join(root, relPath), 'utf8'))
-  }
-
-  const sharedAdapters = activeAdapters.filter((a) => !a.skillsOutputDir)
-  if (sharedAdapters.length > 0) {
-    // All shared adapters must produce identical substitution — validate by
-    // checking that their mappings agree for every token.
-    const baseline = sharedAdapters[0]!.name
-    for (const other of sharedAdapters.slice(1)) {
-      for (const [name, entry] of vocab.tokens) {
-        if (entry[baseline] !== entry[other.name]) {
-          throw new ConfigError(
-            `adapters "${baseline}" and "${other.name}" share skills/ but differ on token "${name}": ` +
-              `"${entry[baseline]}" vs "${entry[other.name]}"`,
-          )
-        }
-      }
-      for (const [name, entry] of vocab.blocks) {
-        if (entry[baseline] !== entry[other.name]) {
-          throw new ConfigError(
-            `adapters "${baseline}" and "${other.name}" share skills/ but differ on block "${name}"`,
-          )
-        }
-      }
-    }
-
-    // Overwrite source in place once, using the baseline adapter's mappings.
-    for (const relPath of mdFiles) {
-      const substituted = substituteContent(originalContent.get(relPath)!, baseline, vocab)
-      writeFileSync(join(root, relPath), substituted)
-    }
-  }
+  const generatedFiles: GeneratedFile<Uint8Array>[] = []
+  const byOutputDir = new Map<string, { adapter: HarnessAdapter; names: string[] }>()
 
   for (const adapter of activeAdapters) {
-    const outputDir = adapter.skillsOutputDir
-    if (!outputDir) continue // handled above via in-place overwrite
-
-    for (const relPath of mdFiles) {
-      const substituted = substituteContent(originalContent.get(relPath)!, adapter.name, vocab)
-      const outputPath = relPath.startsWith(srcDir + '/')
-        ? outputDir + relPath.slice(srcDir.length)
-        : relPath
-      generatedFiles.push({ path: outputPath, content: substituted })
+    validateLayout(root, srcDir, adapter)
+    const existing = byOutputDir.get(adapter.skillLayout.outputDir)
+    if (existing) {
+      const sameProfile = existing.adapter.skillLayout.profile === adapter.skillLayout.profile
+      const sameMode = existing.adapter.skillLayout.mode === adapter.skillLayout.mode
+      if (!sameProfile || !sameMode) {
+        throw new ConfigError(
+          `adapters "${existing.names.join(', ')}" and "${adapter.name}" share skill output directory ` +
+            `${adapter.skillLayout.outputDir} with incompatible profiles or modes`,
+        )
+      }
+      existing.names.push(adapter.name)
+    } else {
+      byOutputDir.set(adapter.skillLayout.outputDir, { adapter, names: [adapter.name] })
     }
   }
 
-  return generatedFiles
+  for (const { adapter } of byOutputDir.values()) {
+    const { outputDir, profile, mode } = adapter.skillLayout
+    const tree = model.skillFiles.map((file) => ({
+      path: `${outputDir.replace(/\/$/, '')}/${file.path}`,
+      content: transformedContent(file, profile, vocab),
+      executable: file.executable,
+    }))
+    if (mode === 'in-place') {
+      writeFileSet(root, tree)
+    } else {
+      generatedFiles.push(...tree)
+    }
+  }
+
+  return generatedFiles.sort((left, right) =>
+    left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
+  )
 }
