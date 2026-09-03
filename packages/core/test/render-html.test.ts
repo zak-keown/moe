@@ -17,6 +17,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = resolve(HERE, "..");
 const SCRIPT = join(PKG, "skills", "_shared", "render-html.cjs");
 const DEFAULT_TEMPLATE = join(PKG, "skills", "_shared", "report-base.html");
+const SKILL = join(PKG, "skills", "improve-codebase-architecture", "SKILL.md");
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { renderTemplate, parseArgs } = require(SCRIPT) as {
@@ -169,6 +170,17 @@ describe("report-base.html template", () => {
 });
 
 // ── CLI integration ───────────────────────────────────────────────
+
+describe("installed report instructions", () => {
+  it("does not describe CDN-dependent output as self-contained", () => {
+    const instructions = readFileSync(SKILL, "utf8");
+
+    expect(instructions).not.toMatch(/self-contained HTML/i);
+    expect(instructions).toMatch(/single local HTML file/i);
+    expect(instructions).toMatch(/Tailwind via CDN/);
+    expect(instructions).toMatch(/requires network access/i);
+  });
+});
 
 describe("CLI (render-html.cjs)", () => {
   it("renders a report from JSON input and writes HTML output", () => {

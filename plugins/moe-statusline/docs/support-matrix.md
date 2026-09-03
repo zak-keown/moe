@@ -5,13 +5,13 @@
 | Harness | skill delivery | skills | commands | agents | hooks | mcp | bootstrap | rules | variables |
 |---|---|---|---|---|---|---|---|---|---|
 | claude-code | rendered | full | full | full | full | full | full | none | none |
-| cursor | rendered | full | full | full | partial | full | full | none | none |
-| codex | rendered | full | none | none | none | none | partial | none | none |
-| kimi | rendered | full | none | none | none | none | partial | none | none |
-| opencode | rendered | full | full | partial | none | none | full | none | none |
-| pi | rendered | full | none | none | none | none | full | none | none |
-| agent-plugins-1.0 | native-discovery | full | none | none | none | full | none | none | none |
-| copilot | shared-compatible | full | full | full | full | full | full | none | none |
+| cursor | unsupported | none | full | full | partial | full | full | none | none |
+| codex | unsupported | none | none | none | none | none | partial | none | none |
+| kimi | unsupported | none | none | none | none | none | partial | none | none |
+| opencode | unsupported | none | full | partial | none | none | full | none | none |
+| pi | unsupported | none | none | none | none | none | full | none | none |
+| agent-plugins-1.0 | unsupported | none | none | none | none | full | none | none | none |
+| copilot | unsupported | none | full | full | full | full | full | none | none |
 
 ## Notes
 

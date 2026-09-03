@@ -40,7 +40,9 @@ function validateSkillClosure(
   renderedSkillFiles: GeneratedFile<FileContent>[],
 ): Record<string, SkillDelivery> {
   const renderedPaths = new Set(renderedSkillFiles.map((file) => file.path))
-  const delivery: Record<string, SkillDelivery> = {}
+  const delivery: Record<string, SkillDelivery> = Object.fromEntries(
+    adapters.map((adapter) => [adapter.name, 'unsupported' as const]),
+  )
 
   for (const adapter of active) {
     let state = adapter.skillDelivery

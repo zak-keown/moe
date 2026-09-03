@@ -10,4 +10,10 @@ describe('renderMatrix', () => {
     // header + separator + at least the claude-code row
     expect(out).toMatch(/\| claude-code \| rendered \|( full \|){6}( none \|){2}/)
   })
+
+  it('treats a missing achieved-delivery entry as unsupported instead of using a static claim', () => {
+    const out = renderMatrix({ 'claude-code': 'rendered' })
+
+    expect(out).toContain('| cursor | unsupported | none |')
+  })
 })
