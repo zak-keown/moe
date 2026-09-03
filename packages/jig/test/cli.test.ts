@@ -17,6 +17,12 @@ describe("moe-jig CLI", () => {
     expect(out).toContain("worktree");
     expect(out).toContain("plan");
     expect(out).toContain("spec");
+    expect(out).toContain("review");
+    expect(out).toContain("commit");
+    expect(out).toContain("iterations");
+    expect(out).toContain("context");
+    expect(out).toContain("adr");
+    expect(out).toContain("progress");
   });
 
   it("prints version with --version", () => {
