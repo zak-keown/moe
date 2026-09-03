@@ -59,6 +59,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     if (err instanceof CommanderError) {
       return err.exitCode;
     }
+    console.error(err instanceof Error ? err.message : err);
     return 1;
   }
 }

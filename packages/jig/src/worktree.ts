@@ -90,14 +90,16 @@ export function worktreeRemove(pathOrBranch: string, opts: { cwd?: string } = {}
     );
   }
 
-  if (!wtPath.startsWith(worktreeDir)) {
+  const resolvedWt = resolve(wtPath);
+  const resolvedDir = resolve(worktreeDir);
+  if (resolvedWt !== resolvedDir && !resolvedWt.startsWith(`${resolvedDir}/`)) {
     throw new Error(
       `Refusing to remove "${wtPath}" — it is outside .moe/worktrees/. ` +
         `Worktrees in .claude/worktrees/ belong to the harness; remove them there.`,
     );
   }
 
-  gitIn(root, "worktree", "remove", "--force", wtPath);
+  gitIn(root, "worktree", "remove", "--force", resolvedWt);
 }
 
 export interface ValidateResult {
