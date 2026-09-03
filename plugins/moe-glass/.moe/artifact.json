@@ -20,14 +20,494 @@
     },
     {
       "path": ".claude-plugin/plugin.json",
-      "size": 467,
-      "sha256": "e40b68796ea9c462a91539978a5c400fb7c0a9c83f53da46a489702fb5270077",
+      "size": 506,
+      "sha256": "aa67ffec0a334029dbe0170c23d6083b904bb4a4db0bce9240cfe3b5b3c9e817",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/COMMANDLINE-USAGE.md",
+      "size": 14778,
+      "sha256": "40ea7a316b464bfb17ea24e5145631f8163fbe2d02cdc5276f83fbc2cc31ba84",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/EXAMPLES.md",
+      "size": 20505,
+      "sha256": "266b0f92196668917a7154a2355a9c1a6f7e85480cf7a2a26bd7ae03e29e4da9",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/README.md",
+      "size": 1554,
+      "sha256": "fdf86dce7d6e7e804f8603abd08aa4f8f9d64b6ea72fe71492c3d041b5880951",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/SKILL.md",
+      "size": 19551,
+      "sha256": "684e0ad61d784a4ddb6e347df1e0c6a1abd370307c5df543113e8581179e3084",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/chrome-ws",
+      "size": 31118,
+      "sha256": "46c7c83bc4e7729cb42625e81140ad0ce2f0926fd08a32bec054d87a3c25df7e",
+      "mode": "0755"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/chrome-ws-lib.js",
+      "size": 17958,
+      "sha256": "f7fb2daa07d7034b87d622f799edfcfc009e3b2375a4eacc437284b0f00c7266",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/host-override.js",
+      "size": 3320,
+      "sha256": "65a8b46308dc1c58c7545bf33850d5a41c956d9c7e848f7452b2fa3c95508631",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/browser-bridge.js",
+      "size": 6968,
+      "sha256": "7b7ff24d43ff780f2985b1827c26e14acec372b160ac6076e64106702d40c230",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/browser-session.js",
+      "size": 5187,
+      "sha256": "6b230893a81af3ddede455d1c0082c2598b1edffba693518b8e2e4d880e7c33c",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/capture.js",
+      "size": 19292,
+      "sha256": "d9c1d8c17f8d5457e4779e260392d57c5c66fda1025e807f782a6654f3f018f7",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/cdp-router.js",
+      "size": 2584,
+      "sha256": "d1aae89b46cba65657e67187bdfb461b8bdc120abfd5e5b75f960b3355ad68c4",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/cdp-utils.js",
+      "size": 764,
+      "sha256": "b705bc727a9a2727e85400edbe692e5d2571b9ff5d6e49113f888468ca36203d",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/chrome-launcher-helpers.js",
+      "size": 13480,
+      "sha256": "cda95adedea97a18b42c85b77928c3f38d4a42e13eca753239d6bf3279060310",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/chrome-process.js",
+      "size": 18176,
+      "sha256": "3dfc94a2188eff21fdd0db513f66d4176d501e4cbcffacd300e7accdd2d21d7c",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/console-logging.js",
+      "size": 2623,
+      "sha256": "53d8916a56c8f63fa0ee24ff3dd4eb2bf70500607d6d231d4581d0416ae730c8",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/cookies.js",
+      "size": 582,
+      "sha256": "240b3aaee21c66d0703bb9a5ab5f1ee818de7e886977d96e854505f1b8837bda",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/dialogs-render.js",
+      "size": 5346,
+      "sha256": "754c9bbe642b6c0c196933a27a04ee2dbb5e917daf41b6f3973f65621e12c0c1",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/dialogs-router.js",
+      "size": 6304,
+      "sha256": "100f81dacdd40530a24241dc605779722b815641a4ba989c39274f118d79a8c1",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/dialogs.js",
+      "size": 10887,
+      "sha256": "7deace784245d1214ae5f014164a9647c034c62c3c28ba82e9f8fccf9064305d",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/element-selector.js",
+      "size": 3915,
+      "sha256": "6c75da9c82364545bdf9e634c33ee0e7542e6d1d2b82ba99517390bf90bc5615",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/evaluation.js",
+      "size": 2876,
+      "sha256": "bf918034a2303067ef30f301ccd15b465d1903f22b681b90bbc4470a04799ad6",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/extraction.js",
+      "size": 2000,
+      "sha256": "1e554506d20edc1d735871aac4068ac17214ca61d4135f01afe0d2238a2edc29",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/file-upload.js",
+      "size": 1796,
+      "sha256": "f37dee79c045e12f7aa5f55954f96867affe7f4b1fc3fcebe03f9c2e5d44cc21",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/html-diff.js",
+      "size": 5535,
+      "sha256": "ba5ea361227f3d78dae33d74840be5ad7f0be14d585f37e9af121d582a65dac3",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/key-definitions.js",
+      "size": 4790,
+      "sha256": "6f652aa69aac41463c5ec376a9593702a4af415bed91de0915ef7ec7e8e04555",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/keyboard-input.js",
+      "size": 10885,
+      "sha256": "083b557ac34664b1e7a94fe6935a4bf2a3f1256e066e155a791689d41ed5d38e",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/mouse.js",
+      "size": 16771,
+      "sha256": "50cf0ccaaed77efc96ba2be03c14111d06c56c30886286aad9139cc05fe44f69",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/navigation.js",
+      "size": 10106,
+      "sha256": "b7590ec256bf0795aa8aa9d1e6992ebe8a9fd9eee1af21e95f21e6df8b304ad7",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/page-scripts/dom-summary.js",
+      "size": 1719,
+      "sha256": "667d88552f76d88026682e656bd6bef05c65db741649bec940cc804dc02df93e",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/page-scripts/markdown.js",
+      "size": 3155,
+      "sha256": "fae7aeda96efa2b349a7371eb32a0bc9ec8c1ef2ffd104b98b1992c61d597102",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/page-scripts/permission-shim.js",
+      "size": 5254,
+      "sha256": "ba0a498325a6b05862432edd86b24a4512c59fce9ecee68d0579e03cb2c1f1d1",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/page-session.js",
+      "size": 3877,
+      "sha256": "96c59bdea0aea7dc2646d98b2cabe4ba12235d38388fa3aed0e6a2b1739e4579",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/profile-lock.js",
+      "size": 6383,
+      "sha256": "b41b9234ab1b2943b3f010a07ce713d9b42592ef5b4f404e1e6db5987b4f0331",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/screenshot.js",
+      "size": 9730,
+      "sha256": "7bd275c15969539524a02eafc47012ba6e9181f49ae8d8bc9625d67b761ab5a5",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/select-option.js",
+      "size": 3559,
+      "sha256": "c86811542643a27819b17dbd6e0ed8d7aef2e97a2da8429b1f07a29ab1e5afea",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/session-state.js",
+      "size": 2534,
+      "sha256": "80df7c796ecf810b8eee428d6bbe5c38d1884c5a318d88960aea643ecc5258a5",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/tabs.js",
+      "size": 5944,
+      "sha256": "49eafe0f7b2a232ef9f8c6f940be3e2d735b28b6e3c26edda77de8a3bbad4aff",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/viewport.js",
+      "size": 4224,
+      "sha256": "51fbdde6e023d489c74092557cb1fe955aceac3a968d61215f95b73429da2548",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/lib/websocket-client.js",
+      "size": 6484,
+      "sha256": "c7feea5a126ba039b6f79fd4b696d0b98ee35a9d9ff9911b33fe225aa676aefd",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/browsing/package.json",
+      "size": 249,
+      "sha256": "c077c7b988ffd222d7f2249a05f47e2ab399347c51948969fe413aca56477784",
       "mode": "0644"
     },
     {
       "path": ".codex-plugin/plugin.json",
-      "size": 507,
-      "sha256": "003e0b5a4066ada238eb19a0219c031da48095008cae06e1d2a32d48e47c8da3",
+      "size": 521,
+      "sha256": "76f99fde9429a222d378025ceb168683cdbb5356d1bc6392ff31f02c9033c511",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/COMMANDLINE-USAGE.md",
+      "size": 14778,
+      "sha256": "40ea7a316b464bfb17ea24e5145631f8163fbe2d02cdc5276f83fbc2cc31ba84",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/EXAMPLES.md",
+      "size": 20505,
+      "sha256": "266b0f92196668917a7154a2355a9c1a6f7e85480cf7a2a26bd7ae03e29e4da9",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/README.md",
+      "size": 1554,
+      "sha256": "fdf86dce7d6e7e804f8603abd08aa4f8f9d64b6ea72fe71492c3d041b5880951",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/SKILL.md",
+      "size": 19551,
+      "sha256": "684e0ad61d784a4ddb6e347df1e0c6a1abd370307c5df543113e8581179e3084",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/chrome-ws",
+      "size": 31118,
+      "sha256": "46c7c83bc4e7729cb42625e81140ad0ce2f0926fd08a32bec054d87a3c25df7e",
+      "mode": "0755"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/chrome-ws-lib.js",
+      "size": 17958,
+      "sha256": "f7fb2daa07d7034b87d622f799edfcfc009e3b2375a4eacc437284b0f00c7266",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/host-override.js",
+      "size": 3320,
+      "sha256": "65a8b46308dc1c58c7545bf33850d5a41c956d9c7e848f7452b2fa3c95508631",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/browser-bridge.js",
+      "size": 6968,
+      "sha256": "7b7ff24d43ff780f2985b1827c26e14acec372b160ac6076e64106702d40c230",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/browser-session.js",
+      "size": 5187,
+      "sha256": "6b230893a81af3ddede455d1c0082c2598b1edffba693518b8e2e4d880e7c33c",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/capture.js",
+      "size": 19292,
+      "sha256": "d9c1d8c17f8d5457e4779e260392d57c5c66fda1025e807f782a6654f3f018f7",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/cdp-router.js",
+      "size": 2584,
+      "sha256": "d1aae89b46cba65657e67187bdfb461b8bdc120abfd5e5b75f960b3355ad68c4",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/cdp-utils.js",
+      "size": 764,
+      "sha256": "b705bc727a9a2727e85400edbe692e5d2571b9ff5d6e49113f888468ca36203d",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/chrome-launcher-helpers.js",
+      "size": 13480,
+      "sha256": "cda95adedea97a18b42c85b77928c3f38d4a42e13eca753239d6bf3279060310",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/chrome-process.js",
+      "size": 18176,
+      "sha256": "3dfc94a2188eff21fdd0db513f66d4176d501e4cbcffacd300e7accdd2d21d7c",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/console-logging.js",
+      "size": 2623,
+      "sha256": "53d8916a56c8f63fa0ee24ff3dd4eb2bf70500607d6d231d4581d0416ae730c8",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/cookies.js",
+      "size": 582,
+      "sha256": "240b3aaee21c66d0703bb9a5ab5f1ee818de7e886977d96e854505f1b8837bda",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/dialogs-render.js",
+      "size": 5346,
+      "sha256": "754c9bbe642b6c0c196933a27a04ee2dbb5e917daf41b6f3973f65621e12c0c1",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/dialogs-router.js",
+      "size": 6304,
+      "sha256": "100f81dacdd40530a24241dc605779722b815641a4ba989c39274f118d79a8c1",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/dialogs.js",
+      "size": 10887,
+      "sha256": "7deace784245d1214ae5f014164a9647c034c62c3c28ba82e9f8fccf9064305d",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/element-selector.js",
+      "size": 3915,
+      "sha256": "6c75da9c82364545bdf9e634c33ee0e7542e6d1d2b82ba99517390bf90bc5615",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/evaluation.js",
+      "size": 2876,
+      "sha256": "bf918034a2303067ef30f301ccd15b465d1903f22b681b90bbc4470a04799ad6",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/extraction.js",
+      "size": 2000,
+      "sha256": "1e554506d20edc1d735871aac4068ac17214ca61d4135f01afe0d2238a2edc29",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/file-upload.js",
+      "size": 1796,
+      "sha256": "f37dee79c045e12f7aa5f55954f96867affe7f4b1fc3fcebe03f9c2e5d44cc21",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/html-diff.js",
+      "size": 5535,
+      "sha256": "ba5ea361227f3d78dae33d74840be5ad7f0be14d585f37e9af121d582a65dac3",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/key-definitions.js",
+      "size": 4790,
+      "sha256": "6f652aa69aac41463c5ec376a9593702a4af415bed91de0915ef7ec7e8e04555",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/keyboard-input.js",
+      "size": 10885,
+      "sha256": "083b557ac34664b1e7a94fe6935a4bf2a3f1256e066e155a791689d41ed5d38e",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/mouse.js",
+      "size": 16771,
+      "sha256": "50cf0ccaaed77efc96ba2be03c14111d06c56c30886286aad9139cc05fe44f69",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/navigation.js",
+      "size": 10106,
+      "sha256": "b7590ec256bf0795aa8aa9d1e6992ebe8a9fd9eee1af21e95f21e6df8b304ad7",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/page-scripts/dom-summary.js",
+      "size": 1719,
+      "sha256": "667d88552f76d88026682e656bd6bef05c65db741649bec940cc804dc02df93e",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/page-scripts/markdown.js",
+      "size": 3155,
+      "sha256": "fae7aeda96efa2b349a7371eb32a0bc9ec8c1ef2ffd104b98b1992c61d597102",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/page-scripts/permission-shim.js",
+      "size": 5254,
+      "sha256": "ba0a498325a6b05862432edd86b24a4512c59fce9ecee68d0579e03cb2c1f1d1",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/page-session.js",
+      "size": 3877,
+      "sha256": "96c59bdea0aea7dc2646d98b2cabe4ba12235d38388fa3aed0e6a2b1739e4579",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/profile-lock.js",
+      "size": 6383,
+      "sha256": "b41b9234ab1b2943b3f010a07ce713d9b42592ef5b4f404e1e6db5987b4f0331",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/screenshot.js",
+      "size": 9730,
+      "sha256": "7bd275c15969539524a02eafc47012ba6e9181f49ae8d8bc9625d67b761ab5a5",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/select-option.js",
+      "size": 3559,
+      "sha256": "c86811542643a27819b17dbd6e0ed8d7aef2e97a2da8429b1f07a29ab1e5afea",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/session-state.js",
+      "size": 2534,
+      "sha256": "80df7c796ecf810b8eee428d6bbe5c38d1884c5a318d88960aea643ecc5258a5",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/tabs.js",
+      "size": 5944,
+      "sha256": "49eafe0f7b2a232ef9f8c6f940be3e2d735b28b6e3c26edda77de8a3bbad4aff",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/viewport.js",
+      "size": 4224,
+      "sha256": "51fbdde6e023d489c74092557cb1fe955aceac3a968d61215f95b73429da2548",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/lib/websocket-client.js",
+      "size": 6484,
+      "sha256": "c7feea5a126ba039b6f79fd4b696d0b98ee35a9d9ff9911b33fe225aa676aefd",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/browsing/package.json",
+      "size": 249,
+      "sha256": "c077c7b988ffd222d7f2249a05f47e2ab399347c51948969fe413aca56477784",
       "mode": "0644"
     },
     {
@@ -38,20 +518,500 @@
     },
     {
       "path": ".cursor-plugin/plugin.json",
-      "size": 625,
-      "sha256": "aacfffbe0aa280186cd362a13df18bc845336c13f8bd515df30158c677001c27",
+      "size": 640,
+      "sha256": "20a12aaf67c743835d289fd3eead0ff9b5658491d0645f3b2454842752df968a",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/COMMANDLINE-USAGE.md",
+      "size": 14778,
+      "sha256": "40ea7a316b464bfb17ea24e5145631f8163fbe2d02cdc5276f83fbc2cc31ba84",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/EXAMPLES.md",
+      "size": 20505,
+      "sha256": "266b0f92196668917a7154a2355a9c1a6f7e85480cf7a2a26bd7ae03e29e4da9",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/README.md",
+      "size": 1554,
+      "sha256": "fdf86dce7d6e7e804f8603abd08aa4f8f9d64b6ea72fe71492c3d041b5880951",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/SKILL.md",
+      "size": 19551,
+      "sha256": "684e0ad61d784a4ddb6e347df1e0c6a1abd370307c5df543113e8581179e3084",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/chrome-ws",
+      "size": 31118,
+      "sha256": "46c7c83bc4e7729cb42625e81140ad0ce2f0926fd08a32bec054d87a3c25df7e",
+      "mode": "0755"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/chrome-ws-lib.js",
+      "size": 17958,
+      "sha256": "f7fb2daa07d7034b87d622f799edfcfc009e3b2375a4eacc437284b0f00c7266",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/host-override.js",
+      "size": 3320,
+      "sha256": "65a8b46308dc1c58c7545bf33850d5a41c956d9c7e848f7452b2fa3c95508631",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/browser-bridge.js",
+      "size": 6968,
+      "sha256": "7b7ff24d43ff780f2985b1827c26e14acec372b160ac6076e64106702d40c230",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/browser-session.js",
+      "size": 5187,
+      "sha256": "6b230893a81af3ddede455d1c0082c2598b1edffba693518b8e2e4d880e7c33c",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/capture.js",
+      "size": 19292,
+      "sha256": "d9c1d8c17f8d5457e4779e260392d57c5c66fda1025e807f782a6654f3f018f7",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/cdp-router.js",
+      "size": 2584,
+      "sha256": "d1aae89b46cba65657e67187bdfb461b8bdc120abfd5e5b75f960b3355ad68c4",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/cdp-utils.js",
+      "size": 764,
+      "sha256": "b705bc727a9a2727e85400edbe692e5d2571b9ff5d6e49113f888468ca36203d",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/chrome-launcher-helpers.js",
+      "size": 13480,
+      "sha256": "cda95adedea97a18b42c85b77928c3f38d4a42e13eca753239d6bf3279060310",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/chrome-process.js",
+      "size": 18176,
+      "sha256": "3dfc94a2188eff21fdd0db513f66d4176d501e4cbcffacd300e7accdd2d21d7c",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/console-logging.js",
+      "size": 2623,
+      "sha256": "53d8916a56c8f63fa0ee24ff3dd4eb2bf70500607d6d231d4581d0416ae730c8",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/cookies.js",
+      "size": 582,
+      "sha256": "240b3aaee21c66d0703bb9a5ab5f1ee818de7e886977d96e854505f1b8837bda",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/dialogs-render.js",
+      "size": 5346,
+      "sha256": "754c9bbe642b6c0c196933a27a04ee2dbb5e917daf41b6f3973f65621e12c0c1",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/dialogs-router.js",
+      "size": 6304,
+      "sha256": "100f81dacdd40530a24241dc605779722b815641a4ba989c39274f118d79a8c1",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/dialogs.js",
+      "size": 10887,
+      "sha256": "7deace784245d1214ae5f014164a9647c034c62c3c28ba82e9f8fccf9064305d",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/element-selector.js",
+      "size": 3915,
+      "sha256": "6c75da9c82364545bdf9e634c33ee0e7542e6d1d2b82ba99517390bf90bc5615",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/evaluation.js",
+      "size": 2876,
+      "sha256": "bf918034a2303067ef30f301ccd15b465d1903f22b681b90bbc4470a04799ad6",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/extraction.js",
+      "size": 2000,
+      "sha256": "1e554506d20edc1d735871aac4068ac17214ca61d4135f01afe0d2238a2edc29",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/file-upload.js",
+      "size": 1796,
+      "sha256": "f37dee79c045e12f7aa5f55954f96867affe7f4b1fc3fcebe03f9c2e5d44cc21",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/html-diff.js",
+      "size": 5535,
+      "sha256": "ba5ea361227f3d78dae33d74840be5ad7f0be14d585f37e9af121d582a65dac3",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/key-definitions.js",
+      "size": 4790,
+      "sha256": "6f652aa69aac41463c5ec376a9593702a4af415bed91de0915ef7ec7e8e04555",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/keyboard-input.js",
+      "size": 10885,
+      "sha256": "083b557ac34664b1e7a94fe6935a4bf2a3f1256e066e155a791689d41ed5d38e",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/mouse.js",
+      "size": 16771,
+      "sha256": "50cf0ccaaed77efc96ba2be03c14111d06c56c30886286aad9139cc05fe44f69",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/navigation.js",
+      "size": 10106,
+      "sha256": "b7590ec256bf0795aa8aa9d1e6992ebe8a9fd9eee1af21e95f21e6df8b304ad7",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/page-scripts/dom-summary.js",
+      "size": 1719,
+      "sha256": "667d88552f76d88026682e656bd6bef05c65db741649bec940cc804dc02df93e",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/page-scripts/markdown.js",
+      "size": 3155,
+      "sha256": "fae7aeda96efa2b349a7371eb32a0bc9ec8c1ef2ffd104b98b1992c61d597102",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/page-scripts/permission-shim.js",
+      "size": 5254,
+      "sha256": "ba0a498325a6b05862432edd86b24a4512c59fce9ecee68d0579e03cb2c1f1d1",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/page-session.js",
+      "size": 3877,
+      "sha256": "96c59bdea0aea7dc2646d98b2cabe4ba12235d38388fa3aed0e6a2b1739e4579",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/profile-lock.js",
+      "size": 6383,
+      "sha256": "b41b9234ab1b2943b3f010a07ce713d9b42592ef5b4f404e1e6db5987b4f0331",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/screenshot.js",
+      "size": 9730,
+      "sha256": "7bd275c15969539524a02eafc47012ba6e9181f49ae8d8bc9625d67b761ab5a5",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/select-option.js",
+      "size": 3559,
+      "sha256": "c86811542643a27819b17dbd6e0ed8d7aef2e97a2da8429b1f07a29ab1e5afea",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/session-state.js",
+      "size": 2534,
+      "sha256": "80df7c796ecf810b8eee428d6bbe5c38d1884c5a318d88960aea643ecc5258a5",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/tabs.js",
+      "size": 5944,
+      "sha256": "49eafe0f7b2a232ef9f8c6f940be3e2d735b28b6e3c26edda77de8a3bbad4aff",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/viewport.js",
+      "size": 4224,
+      "sha256": "51fbdde6e023d489c74092557cb1fe955aceac3a968d61215f95b73429da2548",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/lib/websocket-client.js",
+      "size": 6484,
+      "sha256": "c7feea5a126ba039b6f79fd4b696d0b98ee35a9d9ff9911b33fe225aa676aefd",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/browsing/package.json",
+      "size": 249,
+      "sha256": "c077c7b988ffd222d7f2249a05f47e2ab399347c51948969fe413aca56477784",
       "mode": "0644"
     },
     {
       "path": ".kimi-plugin/plugin.json",
-      "size": 492,
-      "sha256": "793a80c614cbf910da01b16bed15fb5a41ed5273978a5bd32cb5992d9fa31a27",
+      "size": 505,
+      "sha256": "69aba128b803d184dd365f7917639502ca1b6b28c33e492c43bf9b73c25ba318",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/COMMANDLINE-USAGE.md",
+      "size": 14778,
+      "sha256": "40ea7a316b464bfb17ea24e5145631f8163fbe2d02cdc5276f83fbc2cc31ba84",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/EXAMPLES.md",
+      "size": 20505,
+      "sha256": "266b0f92196668917a7154a2355a9c1a6f7e85480cf7a2a26bd7ae03e29e4da9",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/README.md",
+      "size": 1554,
+      "sha256": "fdf86dce7d6e7e804f8603abd08aa4f8f9d64b6ea72fe71492c3d041b5880951",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/SKILL.md",
+      "size": 19551,
+      "sha256": "684e0ad61d784a4ddb6e347df1e0c6a1abd370307c5df543113e8581179e3084",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/chrome-ws",
+      "size": 31118,
+      "sha256": "46c7c83bc4e7729cb42625e81140ad0ce2f0926fd08a32bec054d87a3c25df7e",
+      "mode": "0755"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/chrome-ws-lib.js",
+      "size": 17958,
+      "sha256": "f7fb2daa07d7034b87d622f799edfcfc009e3b2375a4eacc437284b0f00c7266",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/host-override.js",
+      "size": 3320,
+      "sha256": "65a8b46308dc1c58c7545bf33850d5a41c956d9c7e848f7452b2fa3c95508631",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/browser-bridge.js",
+      "size": 6968,
+      "sha256": "7b7ff24d43ff780f2985b1827c26e14acec372b160ac6076e64106702d40c230",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/browser-session.js",
+      "size": 5187,
+      "sha256": "6b230893a81af3ddede455d1c0082c2598b1edffba693518b8e2e4d880e7c33c",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/capture.js",
+      "size": 19292,
+      "sha256": "d9c1d8c17f8d5457e4779e260392d57c5c66fda1025e807f782a6654f3f018f7",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/cdp-router.js",
+      "size": 2584,
+      "sha256": "d1aae89b46cba65657e67187bdfb461b8bdc120abfd5e5b75f960b3355ad68c4",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/cdp-utils.js",
+      "size": 764,
+      "sha256": "b705bc727a9a2727e85400edbe692e5d2571b9ff5d6e49113f888468ca36203d",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/chrome-launcher-helpers.js",
+      "size": 13480,
+      "sha256": "cda95adedea97a18b42c85b77928c3f38d4a42e13eca753239d6bf3279060310",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/chrome-process.js",
+      "size": 18176,
+      "sha256": "3dfc94a2188eff21fdd0db513f66d4176d501e4cbcffacd300e7accdd2d21d7c",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/console-logging.js",
+      "size": 2623,
+      "sha256": "53d8916a56c8f63fa0ee24ff3dd4eb2bf70500607d6d231d4581d0416ae730c8",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/cookies.js",
+      "size": 582,
+      "sha256": "240b3aaee21c66d0703bb9a5ab5f1ee818de7e886977d96e854505f1b8837bda",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/dialogs-render.js",
+      "size": 5346,
+      "sha256": "754c9bbe642b6c0c196933a27a04ee2dbb5e917daf41b6f3973f65621e12c0c1",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/dialogs-router.js",
+      "size": 6304,
+      "sha256": "100f81dacdd40530a24241dc605779722b815641a4ba989c39274f118d79a8c1",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/dialogs.js",
+      "size": 10887,
+      "sha256": "7deace784245d1214ae5f014164a9647c034c62c3c28ba82e9f8fccf9064305d",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/element-selector.js",
+      "size": 3915,
+      "sha256": "6c75da9c82364545bdf9e634c33ee0e7542e6d1d2b82ba99517390bf90bc5615",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/evaluation.js",
+      "size": 2876,
+      "sha256": "bf918034a2303067ef30f301ccd15b465d1903f22b681b90bbc4470a04799ad6",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/extraction.js",
+      "size": 2000,
+      "sha256": "1e554506d20edc1d735871aac4068ac17214ca61d4135f01afe0d2238a2edc29",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/file-upload.js",
+      "size": 1796,
+      "sha256": "f37dee79c045e12f7aa5f55954f96867affe7f4b1fc3fcebe03f9c2e5d44cc21",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/html-diff.js",
+      "size": 5535,
+      "sha256": "ba5ea361227f3d78dae33d74840be5ad7f0be14d585f37e9af121d582a65dac3",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/key-definitions.js",
+      "size": 4790,
+      "sha256": "6f652aa69aac41463c5ec376a9593702a4af415bed91de0915ef7ec7e8e04555",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/keyboard-input.js",
+      "size": 10885,
+      "sha256": "083b557ac34664b1e7a94fe6935a4bf2a3f1256e066e155a791689d41ed5d38e",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/mouse.js",
+      "size": 16771,
+      "sha256": "50cf0ccaaed77efc96ba2be03c14111d06c56c30886286aad9139cc05fe44f69",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/navigation.js",
+      "size": 10106,
+      "sha256": "b7590ec256bf0795aa8aa9d1e6992ebe8a9fd9eee1af21e95f21e6df8b304ad7",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/page-scripts/dom-summary.js",
+      "size": 1719,
+      "sha256": "667d88552f76d88026682e656bd6bef05c65db741649bec940cc804dc02df93e",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/page-scripts/markdown.js",
+      "size": 3155,
+      "sha256": "fae7aeda96efa2b349a7371eb32a0bc9ec8c1ef2ffd104b98b1992c61d597102",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/page-scripts/permission-shim.js",
+      "size": 5254,
+      "sha256": "ba0a498325a6b05862432edd86b24a4512c59fce9ecee68d0579e03cb2c1f1d1",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/page-session.js",
+      "size": 3877,
+      "sha256": "96c59bdea0aea7dc2646d98b2cabe4ba12235d38388fa3aed0e6a2b1739e4579",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/profile-lock.js",
+      "size": 6383,
+      "sha256": "b41b9234ab1b2943b3f010a07ce713d9b42592ef5b4f404e1e6db5987b4f0331",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/screenshot.js",
+      "size": 9730,
+      "sha256": "7bd275c15969539524a02eafc47012ba6e9181f49ae8d8bc9625d67b761ab5a5",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/select-option.js",
+      "size": 3559,
+      "sha256": "c86811542643a27819b17dbd6e0ed8d7aef2e97a2da8429b1f07a29ab1e5afea",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/session-state.js",
+      "size": 2534,
+      "sha256": "80df7c796ecf810b8eee428d6bbe5c38d1884c5a318d88960aea643ecc5258a5",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/tabs.js",
+      "size": 5944,
+      "sha256": "49eafe0f7b2a232ef9f8c6f940be3e2d735b28b6e3c26edda77de8a3bbad4aff",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/viewport.js",
+      "size": 4224,
+      "sha256": "51fbdde6e023d489c74092557cb1fe955aceac3a968d61215f95b73429da2548",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/lib/websocket-client.js",
+      "size": 6484,
+      "sha256": "c7feea5a126ba039b6f79fd4b696d0b98ee35a9d9ff9911b33fe225aa676aefd",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/browsing/package.json",
+      "size": 249,
+      "sha256": "c077c7b988ffd222d7f2249a05f47e2ab399347c51948969fe413aca56477784",
       "mode": "0644"
     },
     {
       "path": ".moe-mint/manifest.json",
-      "size": 2567,
-      "sha256": "c763d7a06fad2d9d9cafabb95561609046af17b90aee74928cadd294e240bf19",
+      "size": 42217,
+      "sha256": "e639a8b702e78aff8ef0f1bd138679d4a65b8674a922e0d611956cee351c1d74",
       "mode": "0644"
     },
     {
@@ -62,14 +1022,494 @@
     },
     {
       "path": ".opencode/plugins/moe-glass.js",
-      "size": 785,
-      "sha256": "c8802408fd2cb115b774dc3ab50b83565d912f719ee340517c9230d3f5618920",
+      "size": 795,
+      "sha256": "4e576071e91a6685c2870c94b468cced6d3c0e2cfe490522c85b860bc6b2a9a4",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/COMMANDLINE-USAGE.md",
+      "size": 14778,
+      "sha256": "40ea7a316b464bfb17ea24e5145631f8163fbe2d02cdc5276f83fbc2cc31ba84",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/EXAMPLES.md",
+      "size": 20505,
+      "sha256": "266b0f92196668917a7154a2355a9c1a6f7e85480cf7a2a26bd7ae03e29e4da9",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/README.md",
+      "size": 1554,
+      "sha256": "fdf86dce7d6e7e804f8603abd08aa4f8f9d64b6ea72fe71492c3d041b5880951",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/SKILL.md",
+      "size": 19551,
+      "sha256": "684e0ad61d784a4ddb6e347df1e0c6a1abd370307c5df543113e8581179e3084",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/chrome-ws",
+      "size": 31118,
+      "sha256": "46c7c83bc4e7729cb42625e81140ad0ce2f0926fd08a32bec054d87a3c25df7e",
+      "mode": "0755"
+    },
+    {
+      "path": ".opencode/skills/browsing/chrome-ws-lib.js",
+      "size": 17958,
+      "sha256": "f7fb2daa07d7034b87d622f799edfcfc009e3b2375a4eacc437284b0f00c7266",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/host-override.js",
+      "size": 3320,
+      "sha256": "65a8b46308dc1c58c7545bf33850d5a41c956d9c7e848f7452b2fa3c95508631",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/browser-bridge.js",
+      "size": 6968,
+      "sha256": "7b7ff24d43ff780f2985b1827c26e14acec372b160ac6076e64106702d40c230",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/browser-session.js",
+      "size": 5187,
+      "sha256": "6b230893a81af3ddede455d1c0082c2598b1edffba693518b8e2e4d880e7c33c",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/capture.js",
+      "size": 19292,
+      "sha256": "d9c1d8c17f8d5457e4779e260392d57c5c66fda1025e807f782a6654f3f018f7",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/cdp-router.js",
+      "size": 2584,
+      "sha256": "d1aae89b46cba65657e67187bdfb461b8bdc120abfd5e5b75f960b3355ad68c4",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/cdp-utils.js",
+      "size": 764,
+      "sha256": "b705bc727a9a2727e85400edbe692e5d2571b9ff5d6e49113f888468ca36203d",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/chrome-launcher-helpers.js",
+      "size": 13480,
+      "sha256": "cda95adedea97a18b42c85b77928c3f38d4a42e13eca753239d6bf3279060310",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/chrome-process.js",
+      "size": 18176,
+      "sha256": "3dfc94a2188eff21fdd0db513f66d4176d501e4cbcffacd300e7accdd2d21d7c",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/console-logging.js",
+      "size": 2623,
+      "sha256": "53d8916a56c8f63fa0ee24ff3dd4eb2bf70500607d6d231d4581d0416ae730c8",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/cookies.js",
+      "size": 582,
+      "sha256": "240b3aaee21c66d0703bb9a5ab5f1ee818de7e886977d96e854505f1b8837bda",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/dialogs-render.js",
+      "size": 5346,
+      "sha256": "754c9bbe642b6c0c196933a27a04ee2dbb5e917daf41b6f3973f65621e12c0c1",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/dialogs-router.js",
+      "size": 6304,
+      "sha256": "100f81dacdd40530a24241dc605779722b815641a4ba989c39274f118d79a8c1",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/dialogs.js",
+      "size": 10887,
+      "sha256": "7deace784245d1214ae5f014164a9647c034c62c3c28ba82e9f8fccf9064305d",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/element-selector.js",
+      "size": 3915,
+      "sha256": "6c75da9c82364545bdf9e634c33ee0e7542e6d1d2b82ba99517390bf90bc5615",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/evaluation.js",
+      "size": 2876,
+      "sha256": "bf918034a2303067ef30f301ccd15b465d1903f22b681b90bbc4470a04799ad6",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/extraction.js",
+      "size": 2000,
+      "sha256": "1e554506d20edc1d735871aac4068ac17214ca61d4135f01afe0d2238a2edc29",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/file-upload.js",
+      "size": 1796,
+      "sha256": "f37dee79c045e12f7aa5f55954f96867affe7f4b1fc3fcebe03f9c2e5d44cc21",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/html-diff.js",
+      "size": 5535,
+      "sha256": "ba5ea361227f3d78dae33d74840be5ad7f0be14d585f37e9af121d582a65dac3",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/key-definitions.js",
+      "size": 4790,
+      "sha256": "6f652aa69aac41463c5ec376a9593702a4af415bed91de0915ef7ec7e8e04555",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/keyboard-input.js",
+      "size": 10885,
+      "sha256": "083b557ac34664b1e7a94fe6935a4bf2a3f1256e066e155a791689d41ed5d38e",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/mouse.js",
+      "size": 16771,
+      "sha256": "50cf0ccaaed77efc96ba2be03c14111d06c56c30886286aad9139cc05fe44f69",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/navigation.js",
+      "size": 10106,
+      "sha256": "b7590ec256bf0795aa8aa9d1e6992ebe8a9fd9eee1af21e95f21e6df8b304ad7",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/page-scripts/dom-summary.js",
+      "size": 1719,
+      "sha256": "667d88552f76d88026682e656bd6bef05c65db741649bec940cc804dc02df93e",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/page-scripts/markdown.js",
+      "size": 3155,
+      "sha256": "fae7aeda96efa2b349a7371eb32a0bc9ec8c1ef2ffd104b98b1992c61d597102",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/page-scripts/permission-shim.js",
+      "size": 5254,
+      "sha256": "ba0a498325a6b05862432edd86b24a4512c59fce9ecee68d0579e03cb2c1f1d1",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/page-session.js",
+      "size": 3877,
+      "sha256": "96c59bdea0aea7dc2646d98b2cabe4ba12235d38388fa3aed0e6a2b1739e4579",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/profile-lock.js",
+      "size": 6383,
+      "sha256": "b41b9234ab1b2943b3f010a07ce713d9b42592ef5b4f404e1e6db5987b4f0331",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/screenshot.js",
+      "size": 9730,
+      "sha256": "7bd275c15969539524a02eafc47012ba6e9181f49ae8d8bc9625d67b761ab5a5",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/select-option.js",
+      "size": 3559,
+      "sha256": "c86811542643a27819b17dbd6e0ed8d7aef2e97a2da8429b1f07a29ab1e5afea",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/session-state.js",
+      "size": 2534,
+      "sha256": "80df7c796ecf810b8eee428d6bbe5c38d1884c5a318d88960aea643ecc5258a5",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/tabs.js",
+      "size": 5944,
+      "sha256": "49eafe0f7b2a232ef9f8c6f940be3e2d735b28b6e3c26edda77de8a3bbad4aff",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/viewport.js",
+      "size": 4224,
+      "sha256": "51fbdde6e023d489c74092557cb1fe955aceac3a968d61215f95b73429da2548",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/lib/websocket-client.js",
+      "size": 6484,
+      "sha256": "c7feea5a126ba039b6f79fd4b696d0b98ee35a9d9ff9911b33fe225aa676aefd",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/browsing/package.json",
+      "size": 249,
+      "sha256": "c077c7b988ffd222d7f2249a05f47e2ab399347c51948969fe413aca56477784",
       "mode": "0644"
     },
     {
       "path": ".pi/extensions/moe-glass.ts",
-      "size": 576,
-      "sha256": "ae4a11ffcbf06ed53816a8401a3ea32c060ed42fe05e8ecb9de701e74999b2d7",
+      "size": 580,
+      "sha256": "111aef0cb66b5f10591330a60ffbb85dcbfcbe6c0a888f770824e6d5e7d20436",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/COMMANDLINE-USAGE.md",
+      "size": 14778,
+      "sha256": "40ea7a316b464bfb17ea24e5145631f8163fbe2d02cdc5276f83fbc2cc31ba84",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/EXAMPLES.md",
+      "size": 20505,
+      "sha256": "266b0f92196668917a7154a2355a9c1a6f7e85480cf7a2a26bd7ae03e29e4da9",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/README.md",
+      "size": 1554,
+      "sha256": "fdf86dce7d6e7e804f8603abd08aa4f8f9d64b6ea72fe71492c3d041b5880951",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/SKILL.md",
+      "size": 19551,
+      "sha256": "684e0ad61d784a4ddb6e347df1e0c6a1abd370307c5df543113e8581179e3084",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/chrome-ws",
+      "size": 31118,
+      "sha256": "46c7c83bc4e7729cb42625e81140ad0ce2f0926fd08a32bec054d87a3c25df7e",
+      "mode": "0755"
+    },
+    {
+      "path": ".pi/skills/browsing/chrome-ws-lib.js",
+      "size": 17958,
+      "sha256": "f7fb2daa07d7034b87d622f799edfcfc009e3b2375a4eacc437284b0f00c7266",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/host-override.js",
+      "size": 3320,
+      "sha256": "65a8b46308dc1c58c7545bf33850d5a41c956d9c7e848f7452b2fa3c95508631",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/browser-bridge.js",
+      "size": 6968,
+      "sha256": "7b7ff24d43ff780f2985b1827c26e14acec372b160ac6076e64106702d40c230",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/browser-session.js",
+      "size": 5187,
+      "sha256": "6b230893a81af3ddede455d1c0082c2598b1edffba693518b8e2e4d880e7c33c",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/capture.js",
+      "size": 19292,
+      "sha256": "d9c1d8c17f8d5457e4779e260392d57c5c66fda1025e807f782a6654f3f018f7",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/cdp-router.js",
+      "size": 2584,
+      "sha256": "d1aae89b46cba65657e67187bdfb461b8bdc120abfd5e5b75f960b3355ad68c4",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/cdp-utils.js",
+      "size": 764,
+      "sha256": "b705bc727a9a2727e85400edbe692e5d2571b9ff5d6e49113f888468ca36203d",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/chrome-launcher-helpers.js",
+      "size": 13480,
+      "sha256": "cda95adedea97a18b42c85b77928c3f38d4a42e13eca753239d6bf3279060310",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/chrome-process.js",
+      "size": 18176,
+      "sha256": "3dfc94a2188eff21fdd0db513f66d4176d501e4cbcffacd300e7accdd2d21d7c",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/console-logging.js",
+      "size": 2623,
+      "sha256": "53d8916a56c8f63fa0ee24ff3dd4eb2bf70500607d6d231d4581d0416ae730c8",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/cookies.js",
+      "size": 582,
+      "sha256": "240b3aaee21c66d0703bb9a5ab5f1ee818de7e886977d96e854505f1b8837bda",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/dialogs-render.js",
+      "size": 5346,
+      "sha256": "754c9bbe642b6c0c196933a27a04ee2dbb5e917daf41b6f3973f65621e12c0c1",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/dialogs-router.js",
+      "size": 6304,
+      "sha256": "100f81dacdd40530a24241dc605779722b815641a4ba989c39274f118d79a8c1",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/dialogs.js",
+      "size": 10887,
+      "sha256": "7deace784245d1214ae5f014164a9647c034c62c3c28ba82e9f8fccf9064305d",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/element-selector.js",
+      "size": 3915,
+      "sha256": "6c75da9c82364545bdf9e634c33ee0e7542e6d1d2b82ba99517390bf90bc5615",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/evaluation.js",
+      "size": 2876,
+      "sha256": "bf918034a2303067ef30f301ccd15b465d1903f22b681b90bbc4470a04799ad6",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/extraction.js",
+      "size": 2000,
+      "sha256": "1e554506d20edc1d735871aac4068ac17214ca61d4135f01afe0d2238a2edc29",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/file-upload.js",
+      "size": 1796,
+      "sha256": "f37dee79c045e12f7aa5f55954f96867affe7f4b1fc3fcebe03f9c2e5d44cc21",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/html-diff.js",
+      "size": 5535,
+      "sha256": "ba5ea361227f3d78dae33d74840be5ad7f0be14d585f37e9af121d582a65dac3",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/key-definitions.js",
+      "size": 4790,
+      "sha256": "6f652aa69aac41463c5ec376a9593702a4af415bed91de0915ef7ec7e8e04555",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/keyboard-input.js",
+      "size": 10885,
+      "sha256": "083b557ac34664b1e7a94fe6935a4bf2a3f1256e066e155a791689d41ed5d38e",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/mouse.js",
+      "size": 16771,
+      "sha256": "50cf0ccaaed77efc96ba2be03c14111d06c56c30886286aad9139cc05fe44f69",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/navigation.js",
+      "size": 10106,
+      "sha256": "b7590ec256bf0795aa8aa9d1e6992ebe8a9fd9eee1af21e95f21e6df8b304ad7",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/page-scripts/dom-summary.js",
+      "size": 1719,
+      "sha256": "667d88552f76d88026682e656bd6bef05c65db741649bec940cc804dc02df93e",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/page-scripts/markdown.js",
+      "size": 3155,
+      "sha256": "fae7aeda96efa2b349a7371eb32a0bc9ec8c1ef2ffd104b98b1992c61d597102",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/page-scripts/permission-shim.js",
+      "size": 5254,
+      "sha256": "ba0a498325a6b05862432edd86b24a4512c59fce9ecee68d0579e03cb2c1f1d1",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/page-session.js",
+      "size": 3877,
+      "sha256": "96c59bdea0aea7dc2646d98b2cabe4ba12235d38388fa3aed0e6a2b1739e4579",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/profile-lock.js",
+      "size": 6383,
+      "sha256": "b41b9234ab1b2943b3f010a07ce713d9b42592ef5b4f404e1e6db5987b4f0331",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/screenshot.js",
+      "size": 9730,
+      "sha256": "7bd275c15969539524a02eafc47012ba6e9181f49ae8d8bc9625d67b761ab5a5",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/select-option.js",
+      "size": 3559,
+      "sha256": "c86811542643a27819b17dbd6e0ed8d7aef2e97a2da8429b1f07a29ab1e5afea",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/session-state.js",
+      "size": 2534,
+      "sha256": "80df7c796ecf810b8eee428d6bbe5c38d1884c5a318d88960aea643ecc5258a5",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/tabs.js",
+      "size": 5944,
+      "sha256": "49eafe0f7b2a232ef9f8c6f940be3e2d735b28b6e3c26edda77de8a3bbad4aff",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/viewport.js",
+      "size": 4224,
+      "sha256": "51fbdde6e023d489c74092557cb1fe955aceac3a968d61215f95b73429da2548",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/lib/websocket-client.js",
+      "size": 6484,
+      "sha256": "c7feea5a126ba039b6f79fd4b696d0b98ee35a9d9ff9911b33fe225aa676aefd",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/browsing/package.json",
+      "size": 249,
+      "sha256": "c077c7b988ffd222d7f2249a05f47e2ab399347c51948969fe413aca56477784",
       "mode": "0644"
     },
     {
@@ -164,14 +1604,14 @@
     },
     {
       "path": "docs/support-matrix.md",
-      "size": 762,
-      "sha256": "147b845836a27cd8ebe72db185c037d7cf30fd48d9d8239b2392c6b85710c859",
+      "size": 925,
+      "sha256": "a4244b32548ae1122452123a289ef5b667e7b4cfb6a7623d101bcce449a8e47c",
       "mode": "0644"
     },
     {
       "path": "package.json",
-      "size": 3625,
-      "sha256": "7a482df3a8ec579bdff549221df454968867d92a3a83c8e4ac01df250e2143f2",
+      "size": 16639,
+      "sha256": "a449000e5759fc90032ab9c0552214ea3edefe576377db3a70ce742164b405c1",
       "mode": "0644"
     },
     {
@@ -421,7 +1861,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "9c7882ff096ae4cd778e428855ba1888c43d6e91cb1a41ff929559ead0722972",
+  "tree_sha256": "4b35888061c85ffad5b6869a546e6632ed7d4afa072239fc4710e0b7ed3d96fc",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

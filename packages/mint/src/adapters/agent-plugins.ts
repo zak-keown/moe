@@ -203,7 +203,9 @@ export const agentPlugins: HarnessAdapter = Object.freeze({
     rules: 'none',
     variables: 'none',
   } satisfies ComponentSupport,
-  skillsOutputDir: undefined,
+  skillLayout: { outputDir: 'skills', profile: 'agent-plugins-1.0', mode: 'source-or-rendered' as const },
+  skillDelivery: 'native-discovery',
+  nativeDiscoveryFile: 'plugin.json',
   installDoc,
   emit(model: PluginModel) {
     const { config } = model
@@ -237,11 +239,6 @@ export const agentPlugins: HarnessAdapter = Object.freeze({
       if (mcp) files.push({ path: 'mcp.json', content: json(mcp) })
     }
 
-    if (config.components.skills !== 'skills') {
-      warnings.push(
-        `agent-plugins-1.0 requires skills/ at the plugin root; ${config.components.skills} will not be discovered`,
-      )
-    }
     if (model.commands.length) warnings.push('commands are excluded from the Agent Plugins 1.0 spec')
     if (model.agents.length) warnings.push('agents are excluded from the Agent Plugins 1.0 spec')
     if (model.hooks !== undefined) warnings.push('hooks are excluded from the Agent Plugins 1.0 spec')

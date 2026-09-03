@@ -1,4 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
+import type { HarnessId } from "../harness/driver.js";
+import { isHarnessId } from "../harness/registry.js";
 
 /**
  * A single worker definition inside a pack. Harness-agnostic data: the YAML
@@ -8,8 +10,8 @@ import { existsSync, readFileSync } from "node:fs";
 export interface PackWorker {
   /** Prefix for the worker's tmux session name (suffixed with `-<index>`). */
   namePrefix: string;
-  /** Harness override for this worker (default: the fleet default, "claude"). */
-  harness?: string | undefined;
+  /** Harness override for this worker; it outranks every default source. */
+  harness?: HarnessId | undefined;
   /** Extra CLI args forwarded to the harness binary (the tokens after `--`). */
   harnessArgs?: string[] | undefined;
   /** The initial prompt sent to the worker after launch. */
@@ -24,6 +26,8 @@ export interface PackWorker {
 export interface PackDefinition {
   name: string;
   description?: string | undefined;
+  /** Pack-local default, below `--harness` and above the environment default. */
+  defaultHarness?: HarnessId | undefined;
   workers: PackWorker[];
 }
 
@@ -302,6 +306,11 @@ function validatePack(raw: unknown): PackDefinition {
     throw new Error("Invalid pack file: 'description' must be a string");
   }
 
+  const defaultHarness = obj.defaultHarness;
+  if (defaultHarness !== undefined && !isHarnessId(defaultHarness)) {
+    throw new Error(`Invalid pack file: 'defaultHarness' must be one of claude, codex, pi`);
+  }
+
   const workers = obj.workers;
   if (!Array.isArray(workers) || workers.length === 0) {
     throw new Error("Invalid pack file: 'workers' is required and must be a non-empty array");
@@ -328,10 +337,12 @@ function validatePack(raw: unknown): PackDefinition {
       rolePrompt: w.rolePrompt as string,
     };
     if (w.harness !== undefined) {
-      if (typeof w.harness !== "string") {
-        throw new Error(`Invalid pack file: workers[${i}].harness must be a string`);
+      if (!isHarnessId(w.harness)) {
+        throw new Error(
+          `Invalid pack file: workers[${i}].harness must be one of claude, codex, pi`,
+        );
       }
-      pw.harness = w.harness as string;
+      pw.harness = w.harness;
     }
     if (w.harnessArgs !== undefined) {
       if (!Array.isArray(w.harnessArgs)) {
@@ -345,6 +356,7 @@ function validatePack(raw: unknown): PackDefinition {
   return {
     name: name.trim(),
     description: description !== undefined ? (description as string) : undefined,
+    defaultHarness,
     workers: validated,
   };
 }

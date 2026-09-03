@@ -206,7 +206,7 @@ describe("universal artifact", () => {
       },
       pi: {
         extensions: ["./.pi/extensions/universal-artifact.ts"],
-        skills: ["./skills"],
+        skills: ["./.pi/skills"],
       },
     });
     expect(await readFile(join(first.artifact.root, ".opencode/plugins/universal-artifact.js"), "utf8"))

@@ -17,7 +17,7 @@
     "journal",
     "mcp"
   ],
-  "skills": "./skills/",
+  "skills": "./.cursor-plugin/skills/",
   "category": "productivity",
   "tags": [
     "memory",
@@ -25,5 +25,5 @@
   ],
   "agents": "./agents/",
   "mcpServers": "./.cursor-plugin/mcp.json",
-  "hooks": "./hooks/moe-mint/hooks-cursor.json"
+  "hooks": "./.cursor-plugin/hooks/moe-mint/hooks.json"
 }

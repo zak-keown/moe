@@ -142,8 +142,8 @@ export const codex: HarnessDriver = {
   // always wasted — kill quickly instead of burning the full backstop.
   stopGraceSeconds: 2,
 
-  bin(): string {
-    return process.env.MOE_CREW_CODEX_BIN ?? "codex";
+  bin(environment: NodeJS.ProcessEnv = process.env): string {
+    return environment.MOE_CREW_CODEX_BIN || "codex";
   },
 
   // CODEX_HOME is per-worker, so the env genuinely depends on workerHome (unlike

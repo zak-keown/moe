@@ -1,7 +1,7 @@
 {
   "name": "moe-crew",
   "version": "0.1.4",
-  "description": "Launch, control and monitor worker Claude sessions over tmux.",
+  "description": "Launch, control and monitor Claude Code, Codex, and Pi workers over tmux.",
   "author": {
     "name": "Zak Keown",
     "email": "zak.keown@outlook.com"
@@ -15,6 +15,6 @@
     "subagents",
     "sessions"
   ],
-  "skills": "./skills/",
+  "skills": "./.codex-plugin/skills/",
   "hooks": {}
 }

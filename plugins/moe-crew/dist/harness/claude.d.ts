@@ -8,6 +8,8 @@
  * await-session-start wait, since those need the full launch-time context.
  */
 import type { HarnessDriver } from "./driver.js";
+/** Claude's harness-specific transcript location and cwd encoding. */
+export declare function claudeTranscriptPath(home: string, cwd: string, sid: string): string;
 /**
  * Build the `-e KEY=VALUE` pins for a Claude worker's tmux env, as a record
  * (tmux.newSession expands a record into `-e K=V` pairs; an empty-string value

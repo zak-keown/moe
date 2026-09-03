@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
+import { isHarnessId } from "../harness/registry.js";
 /**
  * Minimal YAML subset parser for pack files. Handles the flat key/value
  * scalars, block sequences of mappings, and YAML block-scalar (`|`) multiline
@@ -250,6 +251,10 @@ function validatePack(raw) {
     if (description !== undefined && typeof description !== "string") {
         throw new Error("Invalid pack file: 'description' must be a string");
     }
+    const defaultHarness = obj.defaultHarness;
+    if (defaultHarness !== undefined && !isHarnessId(defaultHarness)) {
+        throw new Error(`Invalid pack file: 'defaultHarness' must be one of claude, codex, pi`);
+    }
     const workers = obj.workers;
     if (!Array.isArray(workers) || workers.length === 0) {
         throw new Error("Invalid pack file: 'workers' is required and must be a non-empty array");
@@ -271,8 +276,8 @@ function validatePack(raw) {
             rolePrompt: w.rolePrompt,
         };
         if (w.harness !== undefined) {
-            if (typeof w.harness !== "string") {
-                throw new Error(`Invalid pack file: workers[${i}].harness must be a string`);
+            if (!isHarnessId(w.harness)) {
+                throw new Error(`Invalid pack file: workers[${i}].harness must be one of claude, codex, pi`);
             }
             pw.harness = w.harness;
         }
@@ -287,6 +292,7 @@ function validatePack(raw) {
     return {
         name: name.trim(),
         description: description !== undefined ? description : undefined,
+        defaultHarness,
         workers: validated,
     };
 }

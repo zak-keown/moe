@@ -310,7 +310,7 @@ Wait for the user's response. If they request changes, make them and re-run the 
 
 A browser-based companion for showing mockups, diagrams, and visual options during brainstorming. Available as a tool — not a mode. Starting the companion does NOT mean every question goes through the browser.
 
-The browser companion is rung 2 of the shared native-rendering ladder in `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md`.
+The browser companion is rung 2 of the shared native-rendering ladder in {resource:skills/_shared/native-rendering.md}, resolved relative to this loaded document.
 
 {render-ladder}
 

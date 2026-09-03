@@ -2,18 +2,18 @@
 
 # moe-backstory harness support matrix
 
-| Harness | Emitted capabilities |
-|---|---|
-| claude-code | skill-discovery, command-discovery, agent-discovery |
-| cursor | skill-discovery |
-| codex | skill-discovery |
-| kimi | skill-discovery |
-| opencode | skill-discovery, command-discovery, agent-discovery |
-| pi | skill-discovery |
-| agent-plugins-1.0 | skill-discovery, format-conformance |
-| copilot | skill-discovery, command-discovery, agent-discovery |
+| Harness | Skill delivery | Emitted capabilities |
+|---|---|---|
+| claude-code | rendered | skill-discovery, command-discovery, agent-discovery |
+| cursor | rendered | skill-discovery |
+| codex | rendered | skill-discovery |
+| kimi | rendered | skill-discovery |
+| opencode | rendered | skill-discovery, command-discovery, agent-discovery |
+| pi | rendered | skill-discovery |
+| agent-plugins-1.0 | native-discovery | skill-discovery, format-conformance |
+| copilot | shared-compatible | skill-discovery, command-discovery, agent-discovery |
 
 ## Notes
 
 - Copilot consumes the Claude Code layout through `.claude-plugin/marketplace.json`; keep the `claude-code` adapter enabled when targeting Copilot.
-- Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.
+- Repos consuming shell-hook output should pin both `hooks/moe-mint/*` and `.cursor-plugin/hooks/moe-mint/*` to LF in .gitattributes or accept drift warnings on autocrlf checkouts.

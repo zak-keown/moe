@@ -31,7 +31,12 @@ HEAD_SHA=$(git rev-parse HEAD)
 
 **2. Dispatch code reviewer subagent:**
 
-{subagent-dispatch}
+Use `invoke_subagent` with a built-in `TypeName`: `self` for work that
+needs the full tool surface or `research` for read-only investigation.
+Pass a complete brief that stands on its own. Dispatch independent calls
+together when the client supports concurrent tool calls; otherwise use
+the skill's sequential fallback. Keep dependent steps sequential.
+
 
 Fill the template at [code-reviewer.md](code-reviewer.md) and dispatch it as the reviewer.
 

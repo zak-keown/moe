@@ -56,6 +56,7 @@
       ],
       "inputs": [
         "scripts/mint-plugins.mjs",
+        "bin/lib/plugin-registry.mjs",
         "scripts/mint-prepare.mjs",
         "scripts/clean-package-dist.mjs",
         "scripts/write-bundle-inventory.mjs",

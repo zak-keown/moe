@@ -223,7 +223,8 @@ export const pi: HarnessAdapter = Object.freeze({
     rules: 'none',
     variables: 'none',
   } satisfies ComponentSupport,
-  skillsOutputDir: '.pi/skills',
+  skillLayout: { outputDir: '.pi/skills', profile: 'pi', mode: 'rendered' as const },
+  skillDelivery: 'rendered',
   installDoc,
   emit(model: PluginModel) {
     const limitations: EmissionLimitation[] = []

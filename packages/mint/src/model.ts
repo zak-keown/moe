@@ -1,4 +1,5 @@
-import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { readFileSync, readdirSync, existsSync, lstatSync } from 'node:fs'
 import { join } from 'node:path'
 import { loadConfig, ConfigError, hooksManifestPath, type MintConfig } from './config.js'
 import { parseFrontmatter } from './frontmatter.js'
@@ -7,6 +8,17 @@ export interface SkillRef {
   name: string
   dir: string
   description: string
+}
+export interface SkillTreeFile {
+  path: string
+  content: Uint8Array
+  mode: number
+}
+export interface PersistedSkillSource {
+  contentBase64: string
+  mode: number
+  renderedSha256: string
+  renderedMode: number
 }
 // `description` and `tools` come from optional markdown frontmatter, and
 // buildModel always sets the key — with `undefined` when the field is absent.
@@ -30,20 +42,80 @@ export interface PluginModel {
   root: string
   config: MintConfig
   skills: SkillRef[]
+  skillFiles: SkillTreeFile[]
   commands: CommandRef[]
   agents: AgentRef[]
   hooks?: unknown
   mcp?: unknown
 }
 
-function readSkills(root: string, skillsDir: string): SkillRef[] {
+function contentSha256(content: Uint8Array): string {
+  return createHash('sha256').update(content).digest('hex')
+}
+
+function snapshotSkillTree(
+  root: string,
+  skillsDir: string,
+  persistedSources: Record<string, PersistedSkillSource>,
+): SkillTreeFile[] {
   const abs = join(root, skillsDir)
   if (!existsSync(abs)) return []
-  return readdirSync(abs)
-    .filter((entry) => statSync(join(abs, entry)).isDirectory())
-    .filter((entry) => existsSync(join(abs, entry, 'SKILL.md')))
-    .map((entry) => {
-      const { data } = parseFrontmatter(readFileSync(join(abs, entry, 'SKILL.md'), 'utf8'))
+  const rootStat = lstatSync(abs)
+  if (rootStat.isSymbolicLink()) {
+    throw new ConfigError(`symbolic link is not supported in skill tree: ${skillsDir}`)
+  }
+  if (!rootStat.isDirectory()) {
+    throw new ConfigError(`unsupported node in skill tree: ${skillsDir}`)
+  }
+
+  const files: SkillTreeFile[] = []
+  const walk = (directory: string, relativeDir: string): void => {
+    for (const entry of readdirSync(directory).sort()) {
+      const absolutePath = join(directory, entry)
+      const relativePath = relativeDir ? `${relativeDir}/${entry}` : entry
+      const stat = lstatSync(absolutePath)
+      const displayPath = `${skillsDir.replace(/\/$/, '')}/${relativePath}`
+      if (stat.isSymbolicLink()) {
+        throw new ConfigError(`symbolic link is not supported in skill tree: ${displayPath}`)
+      }
+      if (stat.isDirectory()) {
+        walk(absolutePath, relativePath)
+      } else if (stat.isFile()) {
+        const diskContent = readFileSync(absolutePath)
+        const diskMode = stat.mode & 0o777
+        const persisted = persistedSources[displayPath]
+        const recoverPersistedSource =
+          persisted !== undefined &&
+          typeof persisted.contentBase64 === 'string' &&
+          typeof persisted.renderedSha256 === 'string' &&
+          typeof persisted.mode === 'number' &&
+          typeof persisted.renderedMode === 'number' &&
+          contentSha256(diskContent) === persisted.renderedSha256
+        files.push({
+          path: relativePath,
+          content: recoverPersistedSource
+            ? Buffer.from(persisted.contentBase64, 'base64')
+            : diskContent,
+          mode:
+            recoverPersistedSource && diskMode === persisted.renderedMode
+              ? persisted.mode
+              : diskMode,
+        })
+      } else {
+        throw new ConfigError(`unsupported node in skill tree: ${displayPath}`)
+      }
+    }
+  }
+  walk(abs, '')
+  return files
+}
+
+function readSkills(skillsDir: string, skillFiles: SkillTreeFile[]): SkillRef[] {
+  return skillFiles
+    .filter((file) => /^[^/]+\/SKILL\.md$/.test(file.path))
+    .map((file) => {
+      const entry = file.path.slice(0, -'/SKILL.md'.length)
+      const { data } = parseFrontmatter(Buffer.from(file.content).toString('utf8'))
       return {
         name: typeof data.name === 'string' ? data.name : entry,
         dir: `${skillsDir}/${entry}`,
@@ -95,9 +167,13 @@ function readJsonIfPresent(root: string, rel: string): unknown {
   return parsed
 }
 
-export function buildModel(root: string, configFile = 'moe-mint.yaml', configSource = configFile): PluginModel {
-  const config = loadConfig(root, configFile, configSource)
-  const skills = readSkills(root, config.components.skills)
+export function buildModelFromConfig(
+  root: string,
+  config: MintConfig,
+  persistedSources: Record<string, PersistedSkillSource> = {},
+): PluginModel {
+  const skillFiles = snapshotSkillTree(root, config.components.skills, persistedSources)
+  const skills = readSkills(config.components.skills, skillFiles)
   const commands = readMarkdownComponents(root, config.components.commands).map((c) => ({
     name: c.name,
     path: c.path,
@@ -117,6 +193,7 @@ export function buildModel(root: string, configFile = 'moe-mint.yaml', configSou
     root,
     config,
     skills,
+    skillFiles,
     commands,
     agents,
     hooks: readJsonIfPresent(root, hooksManifestPath(config)),
@@ -129,4 +206,41 @@ export function buildModel(root: string, configFile = 'moe-mint.yaml', configSou
     }
   }
   return model
+}
+
+export function buildModel(
+  root: string,
+  configFile = 'moe-mint.yaml',
+  configSource = configFile,
+  persistedSources: Record<string, PersistedSkillSource> = {},
+): PluginModel {
+  return buildModelFromConfig(
+    root,
+    loadConfig(root, configFile, configSource),
+    persistedSources,
+  )
+}
+
+export function capturePersistedSkillSources(
+  root: string,
+  model: PluginModel,
+): Record<string, PersistedSkillSource> {
+  const skillsDir = model.config.components.skills.replace(/\/$/, '')
+  return Object.fromEntries(
+    model.skillFiles.flatMap((file): Array<[string, PersistedSkillSource]> => {
+      const path = `${skillsDir}/${file.path}`
+      const absolutePath = join(root, path)
+      const renderedContent = readFileSync(absolutePath)
+      if (Buffer.from(file.content).equals(renderedContent)) return []
+      return [[
+        path,
+        {
+          contentBase64: Buffer.from(file.content).toString('base64'),
+          mode: file.mode,
+          renderedSha256: contentSha256(renderedContent),
+          renderedMode: lstatSync(absolutePath).mode & 0o777,
+        },
+      ]]
+    }),
+  )
 }

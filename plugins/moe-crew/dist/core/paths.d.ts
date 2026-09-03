@@ -24,4 +24,3 @@ export declare function harnessMarkerPath(dir: string, name: string): string;
  * remove it. Parallels the `.harness` marker.
  */
 export declare function worktreeMarkerPath(dir: string, name: string): string;
-export declare function claudeTranscriptPath(home: string, cwd: string, sid: string): string;

@@ -8,13 +8,23 @@ When dispatching ANY reviewer (scope reviewer, spec-compliance reviewer, code-qu
 
 1. **Dispatch TWO reviewer subagents simultaneously** with identical inputs. Neither reviewer sees the other's work.
 
-   {subagent-dispatch}
+   Use `invoke_subagent` with a built-in `TypeName`: `self` for work that
+   needs the full tool surface or `research` for read-only investigation.
+   Pass a complete brief that stands on its own. Dispatch independent calls
+   together when the client supports concurrent tool calls; otherwise use
+   the skill's sequential fallback. Keep dependent steps sequential.
+
 
 2. **Wrap each reviewer's prompt** with the competitive framing from `par-reviewer-wrapper.md` (in this directory). The wrapper adds the scoring incentive on top of the reviewer's domain-specific prompt.
 
 3. **Wait for both reviewers to return.**
 
-   {subagent-wait}
+   A normal `invoke_subagent` call returns the subagent's report directly;
+   there is no separate polling step. Read that report rather than
+   re-deriving its findings, then verify load-bearing claims before treating
+   them as final. If a particular client adds background execution, use its
+   documented status mechanism rather than inventing a poll loop.
+
 
 4. **Aggregate findings:**
    - **Same issue found by both reviewers** → one finding, high confidence

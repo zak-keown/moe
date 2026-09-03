@@ -9,10 +9,37 @@
       "sha256": "095d673c586c176c792716445ea6946e14629f64c2c6d041f5c4a971ffd20cc9"
     },
     ".claude-plugin/plugin.json": {
-      "sha256": "e078221946915088270429d9320fc40c56dd4a0bb05b3302dfa0ef3b910485d2"
+      "sha256": "5f8cead027419830e8fccd76df0c886c2583f37b0e38523440c7b4e1346aa7c9"
+    },
+    ".claude-plugin/skills/remembering-conversations/MCP-TOOLS.md": {
+      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "mode": 420
+    },
+    ".claude-plugin/skills/remembering-conversations/SKILL.md": {
+      "sha256": "f00b1db377ba134ea70cb60a2ed434e55a9d4fc27cec36e2fd862312eef007e1",
+      "mode": 420
     },
     ".codex-plugin/plugin.json": {
-      "sha256": "ec7524d5a0876c2f23bcbd786902f04541ef80c5f0ce58f836a92ab2aa868e73"
+      "sha256": "8df8f61d88249078ce6f06133c1b05e15aeb3e0809392f029eb5d3d612a8fd2c"
+    },
+    ".codex-plugin/skills/remembering-conversations/MCP-TOOLS.md": {
+      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "mode": 420
+    },
+    ".codex-plugin/skills/remembering-conversations/SKILL.md": {
+      "sha256": "f00b1db377ba134ea70cb60a2ed434e55a9d4fc27cec36e2fd862312eef007e1",
+      "mode": 420
+    },
+    ".cursor-plugin/hooks/moe-mint/hooks.json": {
+      "sha256": "f91dd564d6e7926eefcd5bd025ff2834197087915aa11881fb177722929f6d92"
+    },
+    ".cursor-plugin/hooks/moe-mint/run-hook.cmd": {
+      "sha256": "1091dc12af883e19c6f322221281ad7e1a9816d0e266ca60088dfbc278a50db8",
+      "executable": true
+    },
+    ".cursor-plugin/hooks/moe-mint/session-start": {
+      "sha256": "ff220e9cad123a02b2f7bb6b07529f144d4def9747abcda0ddf48eaa81b6dffe",
+      "executable": true
     },
     ".cursor-plugin/marketplace.json": {
       "sha256": "f7f2b50455815f9a84f4c672c6cdfc22d514adaff67a16176318776ee648f12f"
@@ -21,19 +48,51 @@
       "sha256": "e124142cbe932ed37ca08b900a7fddc4170b380768ff48c5a09bdf858dbdbbd4"
     },
     ".cursor-plugin/plugin.json": {
-      "sha256": "599ad596addc27feb1a7aba47f3ef6c3bba7dbcc8742a8df0e8024c6032d84ce"
+      "sha256": "7afe8a6ea2f5b8bd61d1adfb0075ec6362baf1e6592e1d146b441ddc61a8f80a"
+    },
+    ".cursor-plugin/skills/remembering-conversations/MCP-TOOLS.md": {
+      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/remembering-conversations/SKILL.md": {
+      "sha256": "f00b1db377ba134ea70cb60a2ed434e55a9d4fc27cec36e2fd862312eef007e1",
+      "mode": 420
     },
     ".kimi-plugin/plugin.json": {
-      "sha256": "12dfacfa4e847909d1279cd6bc4ce860a52a4acdf657f8ed41a55fe7d195780a"
+      "sha256": "2417c5ffeb53ff0e613a0914f4b527239a8aee4d99f14b7e371dea3b372cdc45"
+    },
+    ".kimi-plugin/skills/remembering-conversations/MCP-TOOLS.md": {
+      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/remembering-conversations/SKILL.md": {
+      "sha256": "f00b1db377ba134ea70cb60a2ed434e55a9d4fc27cec36e2fd862312eef007e1",
+      "mode": 420
     },
     ".opencode/agent/search-conversations.md": {
       "sha256": "0e14728af44751ed7de24a6df18a44164c1ab023730ee5ec376621ef62542eb9"
     },
     ".opencode/plugins/moe-memory.js": {
-      "sha256": "e46a35ca4487fe7c3f920d468734ac733c6f1b2d727f17501ea10045187e38a3"
+      "sha256": "d7c258d371834c2ae563b3ead530031c56c1501ca4bd2bd5ddbcd9be15874bbb"
+    },
+    ".opencode/skills/remembering-conversations/MCP-TOOLS.md": {
+      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "mode": 420
+    },
+    ".opencode/skills/remembering-conversations/SKILL.md": {
+      "sha256": "f00b1db377ba134ea70cb60a2ed434e55a9d4fc27cec36e2fd862312eef007e1",
+      "mode": 420
     },
     ".pi/extensions/moe-memory.ts": {
-      "sha256": "750a23a7a0ee816d093aa4e3eb0fe42462023dff175a8309165ec7bbf48dd7af"
+      "sha256": "d134a2d49ed7c9d8fe97ed8cbcc9faf3cf2df722154387a93b6c95e7d428d17e"
+    },
+    ".pi/skills/remembering-conversations/MCP-TOOLS.md": {
+      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "mode": 420
+    },
+    ".pi/skills/remembering-conversations/SKILL.md": {
+      "sha256": "f00b1db377ba134ea70cb60a2ed434e55a9d4fc27cec36e2fd862312eef007e1",
+      "mode": 420
     },
     "docs/install/agent-plugins-1.0.md": {
       "sha256": "6fa8acc74c24eacf5328208d2def4a7dea966c8e14bedcb339288c5d7a37851b"
@@ -48,7 +107,7 @@
       "sha256": "55915502c59bbbfaa01d031948bf70a82cb99bcfaf3a6782280096a238196c51"
     },
     "docs/install/cursor.md": {
-      "sha256": "2a574366b6848b020ee0e8e9c658345677343d246811753178f4944f4cea5cc8"
+      "sha256": "089d40225e66a689e70b154909ac32db87006981ffd7c651b6242eb012e1cf93"
     },
     "docs/install/kimi.md": {
       "sha256": "6afd4cc0c64389d638e837b12749b4d30a81a084b5255c488660e5bf78b55c12"
@@ -60,10 +119,7 @@
       "sha256": "962a860951403b566bae19dcfc9b5c5fd8924d4c8f400693006fbd3d8ecf3c13"
     },
     "docs/support-matrix.md": {
-      "sha256": "20d95faf62f383024f97a0e6cf47ec32b78018498d3d556232d84cf2f9d21073"
-    },
-    "hooks/moe-mint/hooks-cursor.json": {
-      "sha256": "7653af3eca8918a0fa45c4d67c321723d3906b8d3d6966959461be208f67d8a5"
+      "sha256": "8f66a350aeea2d8e1d30782ecf932a631e5914ff080bdfed7c4a96dbf2857113"
     },
     "hooks/moe-mint/hooks.json": {
       "sha256": "78e7becfee3177f6f757b824aa41441b1506c0e971ef01a3e1e35ad85b6ad0e7"
@@ -73,7 +129,7 @@
       "executable": true
     },
     "hooks/moe-mint/session-start": {
-      "sha256": "deba0f8578e79bbf55a4ef95a0c581cf575e83a7f88b19b6fecf43f7fa055d1c",
+      "sha256": "2eae4e5ff3745f1f425d92ad53df59d02d8c0cc67915bb787d5edc982a884424",
       "executable": true
     },
     "mcp.json": {

@@ -6,28 +6,76 @@
       "sha256": "62aba2c2e869558795c37c0862f5ba5e1ae65d6ddb08efa99f8fc41c28ef1841"
     },
     ".claude-plugin/marketplace.json": {
-      "sha256": "23deb36ce7b2e13177cc9d1e6b5b75e3b3041521f384b7b81286124a1902a367"
+      "sha256": "0b6281cd5bc9a29a5e6e100d177c9254512716694bc39264950fc408f654f310"
     },
     ".claude-plugin/plugin.json": {
-      "sha256": "9a984516d3dd49132f3739f3a5660657cf0e6f9659c337e823bee82517e4969f"
+      "sha256": "153bc942115d0449704e89a74802dcebc4aaca337fcb70d604c77d0500e8cbd5"
+    },
+    ".claude-plugin/skills/driving-claude-code-sessions/SKILL.md": {
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "mode": 420
+    },
+    ".claude-plugin/skills/driving-claude-code-sessions/scripts/moe-crew": {
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
+      "mode": 493
     },
     ".codex-plugin/plugin.json": {
-      "sha256": "c6b0941531e47c0a8d0c4eba63d74b3f58335a110f7bb9c6c5b5d4499e7057d5"
+      "sha256": "000486477be312820fd48256d0567f658ee327693ea1473fd46fb9bf7cd8b19e"
+    },
+    ".codex-plugin/skills/driving-claude-code-sessions/SKILL.md": {
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "mode": 420
+    },
+    ".codex-plugin/skills/driving-claude-code-sessions/scripts/moe-crew": {
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
+      "mode": 493
     },
     ".cursor-plugin/marketplace.json": {
-      "sha256": "8a31962b89e81ebac2badb0c9f1ed929d063163a24d06dab7ab1e7463887cc33"
+      "sha256": "07b1e208e8f2f76ff84f5bbc20f7721e22556238b8d442f46aac1dfc1e9c725c"
     },
     ".cursor-plugin/plugin.json": {
-      "sha256": "91c9434c3d802dea9aff43f115f0baa43f11b15a074d792202c001d2a7121d4b"
+      "sha256": "6dc2d9c415f1ba6dc07f7a06e44a3b09c093b9f987fea2375a603e98af14b902"
+    },
+    ".cursor-plugin/skills/driving-claude-code-sessions/SKILL.md": {
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/driving-claude-code-sessions/scripts/moe-crew": {
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
+      "mode": 493
     },
     ".kimi-plugin/plugin.json": {
-      "sha256": "80baabb3ca09848da225e9cf58596d22467630636c9e6bea4d7c7bc9de6a56b0"
+      "sha256": "4b52f0e1d9b3b07fb702041894af230cf6dd331cddc915489ffa5a277dda7b12"
+    },
+    ".kimi-plugin/skills/driving-claude-code-sessions/SKILL.md": {
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/driving-claude-code-sessions/scripts/moe-crew": {
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
+      "mode": 493
     },
     ".opencode/plugins/moe-crew.js": {
-      "sha256": "d354dd24922257722fd65cbc6e725ebe62344490d8bf30cfc7ff40dc48c9fb31"
+      "sha256": "75f9741bb89732c408fe86757c526516ceafedd392c593d99f35fe887b1e601c"
+    },
+    ".opencode/skills/driving-claude-code-sessions/SKILL.md": {
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "mode": 420
+    },
+    ".opencode/skills/driving-claude-code-sessions/scripts/moe-crew": {
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
+      "mode": 493
     },
     ".pi/extensions/moe-crew.ts": {
-      "sha256": "d728a1b64b8677a242f4e3c24e119c3f5574d2e8a6c281e9a3d492fda8d6e5f4"
+      "sha256": "11f3b2cf5ebe937208c9dc08f2510fe23240502363850699ab24a1db9ae3d298"
+    },
+    ".pi/skills/driving-claude-code-sessions/SKILL.md": {
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "mode": 420
+    },
+    ".pi/skills/driving-claude-code-sessions/scripts/moe-crew": {
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
+      "mode": 493
     },
     "docs/install/agent-plugins-1.0.md": {
       "sha256": "982089a59356f529f7809154b5f79243015d8b911bdf5b27bea8635c810ec0f3"
@@ -54,10 +102,10 @@
       "sha256": "8d38e7ec54b7c8987c73378fbf81eac8f8e7bc15124fcf708e08c52e559f506b"
     },
     "docs/support-matrix.md": {
-      "sha256": "b65b317dd6d43fb1dfe0fe94697c90c4b0f2df7e9c176a9776beaa0a0292182c"
+      "sha256": "56cd49b3275077fd4f5558f21b390490dae0f3ca7f18c949c9c7173bc788d7f6"
     },
     "plugin.json": {
-      "sha256": "69486923cc9785d7f319a383a6773b38e406b2f05b13d71500061c8fd0d3d540"
+      "sha256": "d7de0001982cff4d4964c21599fae9b4a63cf300061a04ba181c4102f7de8420"
     }
   }
 }

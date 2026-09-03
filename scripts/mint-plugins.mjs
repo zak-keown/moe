@@ -12,6 +12,7 @@ import fs from "node:fs";
 import { rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { HARNESS_IDS, PLUGINS } from "../bin/lib/plugin-registry.mjs";
 import { renderMintFailure } from "./lib/mint-diagnostics.mjs";
 import {
   createGenerationTransaction,
@@ -28,6 +29,170 @@ function operationalError(code, message, { paths = [], action, cause } = {}) {
   error.paths = paths;
   error.action = action;
   return error;
+}
+
+function portable(value) {
+  return typeof value === "string"
+    ? value.replaceAll("\\", "/").replace(/^\.\//, "").replace(/\/$/, "")
+    : "";
+}
+
+function duplicateValues(values) {
+  const seen = new Set();
+  const duplicates = [];
+  for (const value of values) {
+    if (seen.has(value)) duplicates.push(value);
+    seen.add(value);
+  }
+  return duplicates;
+}
+
+function orderedHarnesses(values) {
+  const selected = new Set(values);
+  return HARNESS_IDS.filter((id) => selected.has(id));
+}
+
+function sameStrings(left, right) {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function duplicateEntryIds(entries, fields) {
+  const ids = [];
+  for (const field of fields) {
+    const ownerByValue = new Map();
+    for (const entry of entries) {
+      const previous = ownerByValue.get(entry[field]);
+      if (previous !== undefined) ids.push(previous, entry.id);
+      else ownerByValue.set(entry[field], entry.id);
+    }
+  }
+  return ids;
+}
+
+/**
+ * Keep the dependency-free installer registry and the resolved Mint platform
+ * aligned on every field used to select or install a plugin. Capability policy
+ * remains exclusively owned by Mint; this boundary compares only active target
+ * IDs derived independently from target intents and harness exclusions.
+ */
+export function validateCanonicalPluginRegistry(platform, canonicalPlugins = PLUGINS) {
+  if (!Array.isArray(platform?.plugins) || !Array.isArray(canonicalPlugins)) {
+    throw operationalError(
+      "MINT_PLUGIN_REGISTRY_MISMATCH",
+      "resolved Mint platform did not provide a plugin registry",
+      { action: "resolve moe-platform.yaml before artifact assembly" },
+    );
+  }
+
+  const expected = canonicalPlugins.map((plugin) => ({
+    id: plugin.name,
+    source: portable(`packages/${plugin.pkg}`),
+    config: portable(`packages/${plugin.pkg}/${plugin.config}`),
+    repository: plugin.repository,
+    npmPackage: plugin.distribution?.npm,
+    harnesses: orderedHarnesses(Array.isArray(plugin.harnesses) ? plugin.harnesses : []),
+    invalid:
+      typeof plugin.name !== "string" ||
+      plugin.name.length === 0 ||
+      typeof plugin.pkg !== "string" ||
+      plugin.pkg.length === 0 ||
+      typeof plugin.config !== "string" ||
+      plugin.config.length === 0 ||
+      typeof plugin.repository !== "string" ||
+      plugin.repository.length === 0 ||
+      typeof plugin.distribution?.npm !== "string" ||
+      plugin.distribution.npm.length === 0 ||
+      !Array.isArray(plugin.harnesses) ||
+      plugin.harnesses.some((id) => typeof id !== "string" || !HARNESS_IDS.includes(id)) ||
+      duplicateValues(plugin.harnesses).length > 0,
+  }));
+  const actual = platform.plugins.map((plugin) => {
+    const targetEntries =
+      plugin.targets && typeof plugin.targets === "object" ? Object.entries(plugin.targets) : [];
+    const exclusions = Array.isArray(plugin.config?.harnesses?.exclude)
+      ? plugin.config.harnesses.exclude
+      : [];
+    const targetIds = targetEntries.map(([id]) => id);
+    const activeByIntent = orderedHarnesses(
+      targetEntries.filter(([, policy]) => policy?.intent !== "omit").map(([id]) => id),
+    );
+    const activeByExclusion = HARNESS_IDS.filter((id) => !exclusions.includes(id));
+    const validIntents = targetEntries.every(
+      ([, policy]) =>
+        policy?.intent === "certify" || policy?.intent === "preview" || policy?.intent === "omit",
+    );
+    const validTargets =
+      targetIds.length === HARNESS_IDS.length && targetIds.every((id) => HARNESS_IDS.includes(id));
+    const validExclusions =
+      Array.isArray(plugin.config?.harnesses?.exclude) &&
+      exclusions.every((id) => typeof id === "string" && HARNESS_IDS.includes(id)) &&
+      duplicateValues(exclusions).length === 0;
+    return {
+      id: plugin.id,
+      source: portable(plugin.sourcePackagePath),
+      config: portable(plugin.config?.source),
+      repository: plugin.config?.repository,
+      npmPackage: plugin.npmPackage,
+      configNpmPackage: plugin.config?.distribution?.npm,
+      activeByIntent,
+      activeByExclusion,
+      invalid:
+        typeof plugin.id !== "string" ||
+        plugin.id.length === 0 ||
+        typeof plugin.sourcePackagePath !== "string" ||
+        plugin.sourcePackagePath.length === 0 ||
+        typeof plugin.config?.source !== "string" ||
+        plugin.config.source.length === 0 ||
+        typeof plugin.config?.repository !== "string" ||
+        plugin.config.repository.length === 0 ||
+        typeof plugin.npmPackage !== "string" ||
+        plugin.npmPackage.length === 0 ||
+        typeof plugin.config?.distribution?.npm !== "string" ||
+        plugin.config.distribution.npm.length === 0 ||
+        !validTargets ||
+        !validIntents ||
+        !validExclusions,
+    };
+  });
+  const uniqueFields = ["id", "source", "config", "npmPackage"];
+  const expectedDuplicates = duplicateEntryIds(expected, uniqueFields);
+  const actualDuplicates = duplicateEntryIds(actual, uniqueFields);
+  const expectedById = new Map(expected.map((entry) => [entry.id, entry]));
+  const actualById = new Map(actual.map((entry) => [entry.id, entry]));
+  const mismatches = [];
+
+  for (const id of new Set([...expectedById.keys(), ...actualById.keys()])) {
+    const expectedEntry = expectedById.get(id);
+    const actualEntry = actualById.get(id);
+    if (
+      expectedEntry === undefined ||
+      actualEntry === undefined ||
+      expectedEntry.source !== actualEntry.source ||
+      expectedEntry.config !== actualEntry.config ||
+      expectedEntry.repository !== actualEntry.repository ||
+      expectedEntry.npmPackage !== actualEntry.npmPackage ||
+      expectedEntry.npmPackage !== actualEntry.configNpmPackage ||
+      !sameStrings(expectedEntry.harnesses, actualEntry.activeByIntent) ||
+      !sameStrings(expectedEntry.harnesses, actualEntry.activeByExclusion) ||
+      expectedEntry.invalid ||
+      actualEntry.invalid
+    ) {
+      mismatches.push(id);
+    }
+  }
+
+  if (expectedDuplicates.length > 0 || actualDuplicates.length > 0 || mismatches.length > 0) {
+    const ids = [...new Set([...expectedDuplicates, ...actualDuplicates, ...mismatches])].sort();
+    throw operationalError(
+      "MINT_PLUGIN_REGISTRY_MISMATCH",
+      `canonical bin registry and resolved Mint platform disagree for: ${ids.join(", ")}`,
+      {
+        paths: ["bin/lib/plugin-registry.mjs", "moe-platform.yaml"],
+        action:
+          "align plugin id, source/config paths, repository, npm distribution, and active harness IDs in both registries",
+      },
+    );
+  }
 }
 
 /**
@@ -84,11 +249,13 @@ export async function runMintPlugins({
   transactionFactory = createGenerationTransaction,
   replaceOutputs = replaceGeneratedOutputs,
   durableFileWriter = writeDurableFile,
+  validateRegistry = validateCanonicalPluginRegistry,
   remove = rm,
   log = console.log,
 } = {}) {
   const { resolvePlatform, assembleArtifactSet, projections } = await loadRuntime(mintDist);
   const platform = await resolvePlatform(repositoryRoot);
+  validateRegistry(platform);
   const nonce = nonceFactory();
   const transaction = transactionFactory(nonce);
   const absolute = (portablePath) => path.join(repositoryRoot, portablePath);

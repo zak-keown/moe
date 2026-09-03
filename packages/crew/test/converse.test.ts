@@ -5,9 +5,10 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { CommandContext } from "../src/commands/context.js";
 import { cmdConverse } from "../src/commands/converse.js";
 import { appendEvent } from "../src/core/event-log.js";
-import { claudeTranscriptPath, eventsPath } from "../src/core/paths.js";
+import { eventsPath } from "../src/core/paths.js";
 import type { Tmux } from "../src/core/tmux.js";
 import { writeMeta } from "../src/core/worker-store.js";
+import { claudeTranscriptPath } from "../src/harness/claude.js";
 import { getDriver } from "../src/harness/registry.js";
 
 function tmpDir(prefix: string): string {

@@ -1,9 +1,9 @@
 # Auditor Subagent Prompt Template
 
-Use this template when dispatching auditor subagents inside the PAR wrapper. Fill in the bracketed values.
+Use this template when dispatching auditor subagents inside the PAR wrapper. Resolve {resource:skills/_shared/par-reviewer-wrapper.md} relative to this loaded document and insert that wrapper where marked. Fill in the bracketed values.
 
 ~~~
-[REVIEWER INSTRUCTIONS — insert inside PAR wrapper from ${CLAUDE_PLUGIN_ROOT}/skills/_shared/par-reviewer-wrapper.md]
+[REVIEWER INSTRUCTIONS — insert the resolved PAR wrapper here]
 
 You are auditing a just-completed iteration's work against its story
 acceptance criteria AND verifying that behavior evidence exists at the

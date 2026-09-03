@@ -204,7 +204,7 @@ describe('agent-plugins-1.0 with malformed mcpServers', () => {
 })
 
 describe('agent-plugins-1.0 with a non-default skills path', () => {
-  it('warns that the custom skills directory will not be discovered', () => {
+  it('does not report a false omission when generation will materialize root skills/', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-ap-skills-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
@@ -212,8 +212,8 @@ describe('agent-plugins-1.0 with a non-default skills path', () => {
     )
     const customModel = buildModel(dir)
     const result = agentPlugins.emit(customModel)
-    expect(result.limitations.map((limitation) => limitation.message)).toContain(
-      'agent-plugins-1.0 requires skills/ at the plugin root; my-skills will not be discovered',
+    expect(result.limitations.map((limitation) => limitation.message)).not.toContain(
+      expect.stringContaining('will not be discovered'),
     )
   })
 })

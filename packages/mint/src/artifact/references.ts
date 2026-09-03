@@ -1,5 +1,5 @@
 import { MintError } from '../diagnostics.js'
-import type { GeneratedFile } from '../fileset.js'
+import type { FileContent, GeneratedFile } from '../fileset.js'
 import { validateManifestReferences } from '../package-manifest.js'
 import type { ArtifactManifestV1 } from './artifact-manifest.js'
 import { artifactCollisionKey, artifactPath, ArtifactPathError } from './paths.js'
@@ -8,8 +8,8 @@ export interface ArtifactReferenceContext {
   readonly artifactManifest: ArtifactManifestV1
   readonly packageManifest: Readonly<Record<string, unknown>>
   readonly componentDirectories?: Readonly<Partial<Record<'skills' | 'commands' | 'agents' | 'hooks' | 'prompts' | 'mcp', string>>>
-  readonly generatedFiles: readonly GeneratedFile[]
-  readonly componentFiles?: readonly GeneratedFile[]
+  readonly generatedFiles: readonly GeneratedFile<FileContent>[]
+  readonly componentFiles?: readonly GeneratedFile<FileContent>[]
 }
 
 function failure(code: string, message: string, path?: string, cause?: unknown): never {
@@ -67,7 +67,7 @@ export function validateArtifactReferences(context: ArtifactReferenceContext): v
     else directory(value, `components.${kind}`)
   }
 
-  function pluginManifest(file: GeneratedFile, parsed: Record<string, unknown>): void {
+  function pluginManifest(file: GeneratedFile<FileContent>, parsed: Record<string, unknown>): void {
     for (const field of ['skills', 'commands', 'agents']) if (parsed[field] !== undefined) directory(parsed[field], `${file.path}.${field}`)
     for (const field of ['hooks', 'mcpServers']) {
       if (parsed[field] !== undefined && typeof parsed[field] !== 'object') exact(parsed[field], `${file.path}.${field}`)
@@ -82,7 +82,7 @@ export function validateArtifactReferences(context: ArtifactReferenceContext): v
     }
   }
 
-  function hookManifest(file: GeneratedFile, parsed: Record<string, unknown>): void {
+  function hookManifest(file: GeneratedFile<FileContent>, parsed: Record<string, unknown>): void {
     const hooks = record(parsed.hooks, `${file.path}.hooks`)
     for (const [event, groups] of Object.entries(hooks)) {
       if (!Array.isArray(groups)) failure('ARTIFACT_REFERENCE_INVALID', `${file.path}.hooks.${event} must be an array`)
@@ -100,7 +100,7 @@ export function validateArtifactReferences(context: ArtifactReferenceContext): v
     }
   }
 
-  function mcpManifest(file: GeneratedFile, parsed: Record<string, unknown>): void {
+  function mcpManifest(file: GeneratedFile<FileContent>, parsed: Record<string, unknown>): void {
     const servers = record(parsed.mcpServers, `${file.path}.mcpServers`)
     for (const [name, value] of Object.entries(servers)) {
       const server = record(value, `${file.path}.mcpServers.${name}`)
@@ -120,7 +120,12 @@ export function validateArtifactReferences(context: ArtifactReferenceContext): v
     exact(file.path, 'generated file')
     if (!file.path.endsWith('.json')) continue
     let parsed: Record<string, unknown>
-    try { parsed = record(JSON.parse(file.content), file.path) } catch (error) {
+    try {
+      const contents = typeof file.content === 'string'
+        ? file.content
+        : Buffer.from(file.content).toString('utf8')
+      parsed = record(JSON.parse(contents), file.path)
+    } catch (error) {
       if (error instanceof MintError) throw error
       failure('ARTIFACT_REFERENCE_INVALID', `${file.path} is not valid JSON`, file.path, error)
     }

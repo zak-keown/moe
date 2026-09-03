@@ -255,4 +255,3 @@ MISMATCH: Checker looks in wrong directory → hooks "not found" → reported as
 ```
 
 **The discipline:** Never assume a constructed path is correct. Resolve it to its actual value and verify the other side agrees. When two systems share a resource (file, directory, key), trace the full path in both.
-

@@ -65,7 +65,8 @@ export const kimi: HarnessAdapter = Object.freeze({
     rules: 'none',
     variables: 'none',
   } satisfies ComponentSupport,
-  skillsOutputDir: '.kimi-plugin/skills',
+  skillLayout: { outputDir: '.kimi-plugin/skills', profile: 'kimi', mode: 'rendered' as const },
+  skillDelivery: 'rendered',
   installDoc,
   emit(model: PluginModel) {
     const { config } = model

@@ -125,7 +125,8 @@ export function deriveEmittedCapabilities(target: TargetId, model: PluginModel, 
         const manifest = jsonObject(files, '.cursor-plugin/plugin.json')
         if (manifest === undefined) break
         if (hasSkills && manifest.skills === `./${model.config.components.skills}/`) capabilities.add('skill-discovery')
-        const bootstrapHooks = manifest.hooks === './hooks/moe-mint/hooks-cursor.json' && includes(emitted, 'hooks/moe-mint/session-start')
+        const bootstrapHooks = manifest.hooks === './.cursor-plugin/hooks/moe-mint/hooks.json'
+          && includes(emitted, '.cursor-plugin/hooks/moe-mint/session-start')
         if (bootstrapHooks) capabilities.add('hook-execution')
         if (bootstrapActive && bootstrapHooks) capabilities.add('bootstrap-routing')
       }

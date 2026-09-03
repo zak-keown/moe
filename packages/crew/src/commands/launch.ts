@@ -15,7 +15,7 @@ import {
   writeWorktreeMarker,
 } from "../core/worker-store.js";
 import { createWorktree } from "../core/worktree.js";
-import type { HarnessDriver } from "../harness/driver.js";
+import type { HarnessDriver, HarnessId } from "../harness/driver.js";
 import { getDriver } from "../harness/registry.js";
 import { awaitSessionStart } from "./await-start.js";
 import { awaitComposerReady, dismissCodexTrustGate } from "./codex-launch.js";
@@ -57,7 +57,7 @@ export interface LaunchArgs {
    * The harness to launch; the command resolves its own driver from this via
    * getDriver, which validates the id (the CLI also validates it at parse time).
    */
-  harness: string;
+  harness: HarnessId;
   /**
    * When true, create a disposable git worktree for this worker and use it as
    * the tmux session's cwd. The worktree path is stored in the meta so `stop`
@@ -152,7 +152,7 @@ export async function cmdLaunch(
   if (typeof resolved !== "string") return resolved;
   const cwd = resolved;
 
-  if (!hasConsent(ctx.home)) return consentError(opts.moeCrewPath);
+  if (!hasConsent(ctx.home, ctx.environment ?? {})) return consentError(opts.moeCrewPath);
 
   if (await ctx.tmux.hasSession(tmuxName)) {
     return {
@@ -277,7 +277,7 @@ async function launchAssign(
  */
 async function launchDerive(
   ctx: CommandContext,
-  { driver, tmuxName, cwd, extraArgs, invocation, worktreeDir }: LaunchInner,
+  { driver, tmuxName, cwd, extraArgs, invocation }: LaunchInner,
   opts: BootstrapOpts,
 ): Promise<CommandResult> {
   // Sidecar marker so per-worker commands load the codex or pi driver during
