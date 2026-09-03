@@ -135,6 +135,25 @@ describe('substituteContent', () => {
     )
   })
 
+  it('preserves trailing blank line from YAML block scalar newline', () => {
+    const trailingVocab = {
+      tokens: new Map(),
+      blocks: new Map([
+        [
+          'subagent-dispatch',
+          {
+            'claude-code': 'Use the `Agent` tool.\nPass the prompt into `prompt`.\n',
+          },
+        ],
+      ]),
+    }
+    const input = '## Dispatch\n\n  {subagent-dispatch}\n\nKeep going.'
+    const result = substituteContent(input, 'claude-code', trailingVocab)
+    expect(result).toBe(
+      '## Dispatch\n\n  Use the `Agent` tool.\n  Pass the prompt into `prompt`.\n\n\nKeep going.',
+    )
+  })
+
   it('returns content unchanged when vocabulary has no tokens', () => {
     const empty = { tokens: new Map(), blocks: new Map() }
     const input = 'No tokens here.'
