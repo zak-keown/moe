@@ -3,7 +3,7 @@ import { join, posix } from 'node:path'
 import { parse } from 'yaml'
 import { z } from 'zod'
 import { artifactCollisionKey, artifactPath, compareArtifactPaths, isReservedArtifactDestination, type ArtifactPath } from './artifact/paths.js'
-import { MintError } from './diagnostics.js'
+import { ConfigError, type ConfigErrorDiagnostic, type ConfigErrorOptions } from './diagnostics.js'
 import {
   CAPABILITY_IDS,
   OPERATING_SYSTEM_IDS,
@@ -14,38 +14,12 @@ import {
   type TargetIntent,
 } from './vocabulary.js'
 
-export type ConfigErrorDiagnostic = Omit<MintError['diagnostic'], 'severity' | 'message'>
-
-export interface ConfigErrorOptions {
-  cause?: unknown
-  diagnostic?: ConfigErrorDiagnostic
-  source?: string
-}
-
-const OPERATION_DIAGNOSTIC: ConfigErrorDiagnostic = {
-  code: 'MINT_OPERATION_INVALID',
-  source: 'moe-mint',
-  action: 'Resolve the reported operational issue and retry.',
-}
+export { ConfigError, type ConfigErrorDiagnostic, type ConfigErrorOptions } from './diagnostics.js'
 
 const CONFIG_DIAGNOSTIC: ConfigErrorDiagnostic = {
   code: 'CONFIG_INVALID',
   source: 'moe-mint.yaml',
   action: 'Correct the configuration and run the command again.',
-}
-
-export class ConfigError extends MintError {
-  details: string[]
-  constructor(message: string, details: string[] = [], opts: ConfigErrorOptions = {}) {
-    const diagnostic = opts.diagnostic ?? OPERATION_DIAGNOSTIC
-    super({
-      severity: 'error',
-      ...diagnostic,
-      message: details.length ? `${message}\n  - ${details.join('\n  - ')}` : message,
-    }, { cause: opts.cause })
-    this.name = 'ConfigError'
-    this.details = details
-  }
 }
 
 function configError(message: string, details: string[] = [], opts: ConfigErrorOptions = {}): ConfigError {
@@ -216,20 +190,19 @@ const activeTargetSchema = z.object({
   expected_capabilities: z.array(z.enum(CAPABILITY_IDS)),
   operating_systems: z.array(z.enum(OPERATING_SYSTEM_IDS)).min(1),
 }).strict()
-
 const activeFormatTargetSchema = z.object({
   intent: z.enum(['certify', 'preview']),
   expected_capabilities: z.array(z.enum(CAPABILITY_IDS)),
 }).strict()
-
 const omittedTargetSchema = z.object({ intent: z.literal('omit') }).strict()
 const targetEntrySchema = z.union([activeTargetSchema, omittedTargetSchema])
 const formatTargetEntrySchema = z.union([activeFormatTargetSchema, omittedTargetSchema])
-const targetShape = Object.fromEntries(TARGET_IDS.map((id) => [
-  id,
-  id === 'agent-plugins-1.0' ? formatTargetEntrySchema : targetEntrySchema,
-])) as unknown as Record<TargetId, z.ZodType>
-const targetsSchema = z.object(targetShape).strict()
+const targetsSchema = z.object(
+  Object.fromEntries(TARGET_IDS.map((id) => [
+    id,
+    id === 'agent-plugins-1.0' ? formatTargetEntrySchema : targetEntrySchema,
+  ])) as unknown as Record<TargetId, z.ZodType>,
+).strict()
 
 const importedWorkSchema = z.object({ name: z.string().min(1), artifact_roots: z.array(z.string().min(1)).optional() }).strict()
 

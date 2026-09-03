@@ -24,6 +24,9 @@
   "engines": {
     "node": ">=24"
   },
+  "dependencies": {
+    "@bubstack/moe-jig": "0.1.4"
+  },
   "exports": {
     "./server": "./.opencode/plugins/moe.js"
   },
@@ -65,8 +68,11 @@
     "docs/install/pi.md",
     "docs/support-matrix.md",
     "hooks/claude-judge-continuation",
+    "hooks/developing-for-moe-notice",
     "hooks/governance-marker-check",
     "hooks/hooks.json",
+    "hooks/jig-review-format-guard",
+    "hooks/jig-worktree-guard",
     "hooks/moe-completion-evidence",
     "hooks/moe-mint/hooks-cursor.json",
     "hooks/moe-mint/hooks.json",
@@ -113,6 +119,7 @@
     "skills/developing-claude-code-plugins/references/plugin-structure.md",
     "skills/developing-claude-code-plugins/references/polyglot-hooks.md",
     "skills/developing-claude-code-plugins/references/troubleshooting.md",
+    "skills/developing-for-moe/SKILL.md",
     "skills/dispatching-parallel-agents/SKILL.md",
     "skills/docs-update/SKILL.md",
     "skills/docs-update/doc-types/api.md",
@@ -141,6 +148,7 @@
     "skills/finding-duplicate-functions/scripts/prepare-category-analysis.sh",
     "skills/finishing-a-development-branch/SKILL.md",
     "skills/fixing-a-code-review/SKILL.md",
+    "skills/fixing-a-code-review/scripts/compact-resolved.mjs",
     "skills/fixing-a-code-review/scripts/stamp-disposition.mjs",
     "skills/implementing-tasks/SKILL.md",
     "skills/implementing-tasks/code-quality-reviewer-prompt.md",

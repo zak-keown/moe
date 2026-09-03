@@ -1,7 +1,7 @@
 import { deepMerge } from '../fileset.js'
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import type { ComponentSupport, HarnessAdapter, EmissionLimitation } from './types.js'
 import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { baseManifestFields, json } from './shared.js'
 
@@ -64,7 +64,7 @@ export const kimi: HarnessAdapter = Object.freeze({
     bootstrap: 'partial', // sessionStart only supports a named bootstrap skill; bootstrap.generate is unsupported
     rules: 'none',
     variables: 'none',
-  },
+  } satisfies ComponentSupport,
   skillsOutputDir: '.kimi-plugin/skills',
   installDoc,
   emit(model: PluginModel) {

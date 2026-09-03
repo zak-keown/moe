@@ -2,7 +2,7 @@ import { deepMerge } from '../fileset.js'
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
 import { hooksManifestPath, type MintConfig } from '../config.js'
-import type { HarnessAdapter } from './types.js'
+import type { ComponentSupport, HarnessAdapter } from './types.js'
 import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { sessionStartScript, runHookCmd, mergedClaudeHooks } from '../bootstrap/shell-hook.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
@@ -165,7 +165,7 @@ export const claudeCode: HarnessAdapter = Object.freeze({
     bootstrap: 'full',
     rules: 'none',
     variables: 'none',
-  },
+  } satisfies ComponentSupport,
   skillsOutputDir: undefined,
   installDoc,
   emit(model: PluginModel) {

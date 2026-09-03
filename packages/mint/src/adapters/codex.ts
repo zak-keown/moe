@@ -1,7 +1,7 @@
 import { deepMerge } from '../fileset.js'
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import type { ComponentSupport, HarnessAdapter, EmissionLimitation } from './types.js'
 import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { baseManifestFields, json } from './shared.js'
 
@@ -73,7 +73,7 @@ export const codex: HarnessAdapter = Object.freeze({
     bootstrap: 'partial',
     rules: 'none',
     variables: 'none',
-  },
+  } satisfies ComponentSupport,
   skillsOutputDir: '.codex-plugin/skills',
   installDoc,
   emit(model: PluginModel) {

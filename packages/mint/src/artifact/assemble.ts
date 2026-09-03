@@ -456,6 +456,15 @@ export async function assembleArtifact(input: AssembleArtifactInput): Promise<As
   })
   const paths = await artifactFiles(input.plugin, root)
   const releaseVersions = Object.fromEntries(input.platform.plugins.map((plugin) => [plugin.npmPackage, plugin.version]))
+  for (const entry of await readdir(join(repoRoot, 'packages'), { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue
+    try {
+      const pkg = JSON.parse(await readFile(join(repoRoot, 'packages', entry.name, 'package.json'), 'utf8')) as Record<string, unknown>
+      if (typeof pkg.name === 'string' && typeof pkg.version === 'string' && !Object.hasOwn(releaseVersions, pkg.name)) {
+        releaseVersions[pkg.name] = pkg.version
+      }
+    } catch {}
+  }
   const manifest = composePackageManifest({
     source: input.plugin.packageJson,
     config: input.plugin.config,

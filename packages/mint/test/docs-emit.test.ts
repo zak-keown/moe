@@ -22,7 +22,7 @@ function tmpFixture(yaml: string): string {
   return dir
 }
 
-const _fullSupport = {
+const stubSupport = {
   skills: 'full',
   commands: 'full',
   agents: 'full',
@@ -37,13 +37,14 @@ const _fullSupport = {
 function adapterWithInstallDoc(name: string, body: string): HarnessAdapter {
   return {
     name,
+    support: stubSupport,
     emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }),
     installDoc: () => body,
   }
 }
 
 function adapterWithoutInstallDoc(name: string): HarnessAdapter {
-  return { name, emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }) }
+  return { name, support: stubSupport, emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }) }
 }
 
 describe('emitDocs install-doc files', () => {

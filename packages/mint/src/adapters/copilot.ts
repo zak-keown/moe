@@ -1,5 +1,5 @@
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter } from './types.js'
+import type { ComponentSupport, HarnessAdapter } from './types.js'
 import { marketplaceName } from './shared.js'
 
 // GitHub Copilot CLI reads Claude Code's marketplace descriptor and installs
@@ -38,7 +38,7 @@ export const copilot: HarnessAdapter = Object.freeze({
     bootstrap: 'full',
     rules: 'none',
     variables: 'none',
-  },
+  } satisfies ComponentSupport,
   skillsOutputDir: undefined,
   installDoc,
   emit(_model: PluginModel) {

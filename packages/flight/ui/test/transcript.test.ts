@@ -206,7 +206,7 @@ describe("reduceTranscript", () => {
       error: false,
     };
     const model = reduceTranscript([call, result]);
-    const pair = model.turns.get(1)!.tools[0];
+    const pair = model.turns.get(1)!.tools[0]!;
     expect(pair.result?.image).toBeNull();
     expect(pair.result?.artifact).toBeNull();
   });

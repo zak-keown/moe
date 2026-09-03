@@ -86,8 +86,8 @@
     },
     {
       "path": "dist/cli.js",
-      "size": 24429,
-      "sha256": "fb003a13053494f41297a63f81ec8e2f33107914e36b59bfdcccc23b785b8f36",
+      "size": 24464,
+      "sha256": "50b33cc69ea91cbc52e50faf08db92ede9e516d0f9b477a02df557d286cc1318",
       "mode": "0644"
     },
     {
@@ -194,8 +194,8 @@
     },
     {
       "path": "dist/commands/launch.js",
-      "size": 11879,
-      "sha256": "a57c8b986a6389adc90caf739d072088b5b75a7ed9a365318fd5ba6152c99bc8",
+      "size": 11865,
+      "sha256": "5091e5750cdf1ea3824275c9014580e80d6d4db3ce3bb3c5b61f9a4fe3961828",
       "mode": "0644"
     },
     {
@@ -213,7 +213,7 @@
     {
       "path": "dist/commands/pack.d.ts",
       "size": 1203,
-      "sha256": "febd8e683bfe830dab83bb01bd497b1df818206a995fe9029a88455b39e23534",
+      "sha256": "b02e720ca7fbe974490da06e65c6d68f553a8e6255adf397960abba50c9b5691",
       "mode": "0644"
     },
     {
@@ -315,7 +315,7 @@
     {
       "path": "dist/commands/stop.js",
       "size": 4730,
-      "sha256": "127e6fdf6b5851d1ca60d8e093d60ec14d93a2a4ab4a475f01dc3174045fb2c5",
+      "sha256": "515ff778ca1a47ad5c00f0cb121602a09955f731700bc5f47622bbfabefa07d3",
       "mode": "0644"
     },
     {
@@ -386,8 +386,8 @@
     },
     {
       "path": "dist/core/packs.js",
-      "size": 11335,
-      "sha256": "6658b12558a515ac0c4a94a885511446608a3ad88c6148382c1ac514bf122d7d",
+      "size": 11423,
+      "sha256": "73ae4345e6d80acc20a66f0c0c314bf373e6811b8e3c86c9b4ea212c7f85eec4",
       "mode": "0644"
     },
     {
@@ -422,8 +422,8 @@
     },
     {
       "path": "dist/core/runs.js",
-      "size": 4188,
-      "sha256": "988f370646bf9b07afcb021074bae67ed83875acecd5966df6967938f9683527",
+      "size": 4187,
+      "sha256": "286bf4ebcef8d106c6022c1f92257b47a8fc6ceded54f966fca40a9781ca43c7",
       "mode": "0644"
     },
     {
@@ -506,8 +506,8 @@
     },
     {
       "path": "dist/core/worktree.js",
-      "size": 2491,
-      "sha256": "9049f367ec3f397b043cafc805e85c607cafc7e775b03520972b0e354f7f3fa1",
+      "size": 2373,
+      "sha256": "e7d260789dc440e8383ea7c1f54ba040a023b8efbeb2d1688ae483557211a8aa",
       "mode": "0644"
     },
     {
@@ -602,8 +602,8 @@
     },
     {
       "path": "dist/moe-crew.cjs",
-      "size": 95436,
-      "sha256": "4b3dcf4ca15e9589f49fe7cf8f9dc75773e091f498236dba3b417cc398a6c51c",
+      "size": 95484,
+      "sha256": "fe4df727cb6108a822ad67b603ab752c31341e84d46f6800bff0e074f1423366",
       "mode": "0755"
     },
     {
@@ -709,7 +709,7 @@
       "mode": "0755"
     }
   ],
-  "tree_sha256": "ebd45136091371727020408c83d3462e2a8c03a2319ea5f0c762decdb53bc6cc",
+  "tree_sha256": "13e9c9b4ec896e16fcf3570320a3c92ddbc350fa36b1aaae75d2ca5db93ea3fc",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

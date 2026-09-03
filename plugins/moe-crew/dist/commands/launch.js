@@ -6,7 +6,7 @@ import { eventsPath, workerHomePath } from "../core/paths.js";
 import { shellQuote } from "../core/shell.js";
 import { isoSecondsUtc } from "../core/time.js";
 import { ensureOwnedDir, removeWorker, resolveSession, writeHarnessMarker, writeMeta, writeShim, writeWorktreeMarker, } from "../core/worker-store.js";
-import { createWorktree, worktreePath } from "../core/worktree.js";
+import { createWorktree } from "../core/worktree.js";
 import { getDriver } from "../harness/registry.js";
 import { awaitSessionStart } from "./await-start.js";
 import { awaitComposerReady, dismissCodexTrustGate } from "./codex-launch.js";

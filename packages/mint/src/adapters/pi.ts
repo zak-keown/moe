@@ -1,6 +1,6 @@
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import type { ComponentSupport, HarnessAdapter, EmissionLimitation } from './types.js'
 import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { parseRepo } from './shared.js'
 import { piDiscoveryMetadata, piExtensionPath, bootstrapContentPath } from '../bootstrap/node-package.js'
@@ -222,7 +222,7 @@ export const pi: HarnessAdapter = Object.freeze({
     bootstrap: 'full',
     rules: 'none',
     variables: 'none',
-  },
+  } satisfies ComponentSupport,
   skillsOutputDir: '.pi/skills',
   installDoc,
   emit(model: PluginModel) {
