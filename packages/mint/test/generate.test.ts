@@ -592,6 +592,29 @@ describe('vocabulary integration', () => {
     expect(codexSkill!.content).toBe(sourceSkill)
   })
 
+  it('copies executable skill support files into every adapter skill directory', () => {
+    const dir = freshFixture()
+    writeFileSync(join(dir, 'moe-mint-vocab.yaml'), 'tokens: {}\nblocks: {}')
+    const result = generate(dir)
+    const adapterSkillDirs = [
+      '.codex-plugin/skills',
+      '.cursor-plugin/skills',
+      '.kimi-plugin/skills',
+      '.opencode/skills',
+      '.pi/skills',
+    ]
+
+    for (const adapterSkillDir of adapterSkillDirs) {
+      const path = `${adapterSkillDir}/greeting/scripts/hello.sh`
+      const supportFile = result.files.find((file) => file.path === path)
+      expect(supportFile, path).toMatchObject({
+        content: '#!/usr/bin/env bash\necho hello\n',
+        executable: true,
+      })
+      expect(readFileSync(join(dir, path), 'utf8'), path).toBe('#!/usr/bin/env bash\necho hello\n')
+    }
+  })
+
   it('does not emit per-adapter skill directories when vocab file is absent', () => {
     const dir = freshFixture()
     const result = generate(dir)

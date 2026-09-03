@@ -165,17 +165,24 @@ export function substituteContent(
 }
 
 function collectMdFiles(root: string, dir: string): string[] {
+  return collectSkillFiles(root, dir)
+    .map(({ path }) => path)
+    .filter((path) => path.endsWith('.md'))
+}
+
+function collectSkillFiles(root: string, dir: string): Array<{ path: string; executable: boolean }> {
   const abs = join(root, dir)
   if (!existsSync(abs)) return []
-  const result: string[] = []
+  const result: Array<{ path: string; executable: boolean }> = []
   const walk = (d: string, rel: string) => {
     for (const entry of readdirSync(d).sort()) {
       const full = join(d, entry)
       const relPath = `${rel}/${entry}`
-      if (statSync(full).isDirectory()) {
+      const stat = statSync(full)
+      if (stat.isDirectory()) {
         walk(full, relPath)
-      } else if (entry.endsWith('.md')) {
-        result.push(relPath)
+      } else if (stat.isFile()) {
+        result.push({ path: relPath, executable: (stat.mode & 0o111) !== 0 })
       }
     }
   }
@@ -222,6 +229,7 @@ export function assertNoSurvivors(
 ): void {
   const problems: string[] = []
   for (const file of files) {
+    if (!file.path.endsWith('.md')) continue
     const stripped = stripFencedBlocks(file.content)
     const lines: string[] = stripped.split('\n')
     for (let i = 0; i < lines.length; i++) {
@@ -291,7 +299,8 @@ export function substituteAllSkills(
   activeAdapters: HarnessAdapter[],
 ): GeneratedFile[] {
   const srcDir = model.config.components.skills
-  const mdFiles = collectMdFiles(root, srcDir)
+  const skillFiles = collectSkillFiles(root, srcDir)
+  const mdFiles = skillFiles.filter(({ path }) => path.endsWith('.md'))
   const generatedFiles: GeneratedFile[] = []
 
   // Read every source file's original content exactly once, up front. Both
@@ -301,8 +310,8 @@ export function substituteAllSkills(
   // otherwise pick up that already-substituted content instead of the
   // original {token} markers.
   const originalContent = new Map<string, string>()
-  for (const relPath of mdFiles) {
-    originalContent.set(relPath, readFileSync(join(root, relPath), 'utf8'))
+  for (const { path } of skillFiles) {
+    originalContent.set(path, readFileSync(join(root, path), 'utf8'))
   }
 
   const sharedAdapters = activeAdapters.filter((a) => !a.skillsOutputDir)
@@ -329,9 +338,9 @@ export function substituteAllSkills(
     }
 
     // Overwrite source in place once, using the baseline adapter's mappings.
-    for (const relPath of mdFiles) {
-      const substituted = substituteContent(originalContent.get(relPath)!, baseline, vocab)
-      writeFileSync(join(root, relPath), substituted)
+    for (const { path } of mdFiles) {
+      const substituted = substituteContent(originalContent.get(path)!, baseline, vocab)
+      writeFileSync(join(root, path), substituted)
     }
   }
 
@@ -339,12 +348,14 @@ export function substituteAllSkills(
     const outputDir = adapter.skillsOutputDir
     if (!outputDir) continue // handled above via in-place overwrite
 
-    for (const relPath of mdFiles) {
-      const substituted = substituteContent(originalContent.get(relPath)!, adapter.name, vocab)
-      const outputPath = relPath.startsWith(srcDir + '/')
-        ? outputDir + relPath.slice(srcDir.length)
-        : relPath
-      generatedFiles.push({ path: outputPath, content: substituted })
+    for (const { path, executable } of skillFiles) {
+      const content = path.endsWith('.md')
+        ? substituteContent(originalContent.get(path)!, adapter.name, vocab)
+        : originalContent.get(path)!
+      const outputPath = path.startsWith(srcDir + '/')
+        ? outputDir + path.slice(srcDir.length)
+        : path
+      generatedFiles.push({ path: outputPath, content, executable: executable || undefined })
     }
   }
 

@@ -227,4 +227,12 @@ describe('assertNoSurvivors', () => {
       ]),
     ).not.toThrow()
   })
+
+  it('ignores token-shaped syntax in copied non-Markdown support files', () => {
+    expect(() =>
+      assertNoSurvivors([
+        { path: 'skills/demo/scripts/run.mjs', content: 'return `${name}`\n' },
+      ]),
+    ).not.toThrow()
+  })
 })
