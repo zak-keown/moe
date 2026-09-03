@@ -24,6 +24,18 @@ export {
   type PendingEnrichment,
   type JournalTextResult,
 } from "./enrichment.js";
+export {
+  RecoveryCapsuleError,
+  verifyRecoveryCapsule,
+  ensureRecoveryCapsule,
+  validateManifest as validateCapsuleManifest,
+  loadCatalog as loadRecoveryCatalog,
+  type RecoveryCapsuleManifest,
+  type VerifiedRecoveryCapsule,
+  type RecoveryCatalog,
+  type RecoveryCatalogEntry,
+  type IntegrityFile,
+} from "./recovery-capsule.js";
 export * from "./parser.js";
 export * from "./paths.js";
 export * from "./search.js";
