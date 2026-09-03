@@ -46,7 +46,11 @@ const result = await esbuild.build({
     "*.wasm",
   ],
   banner: {
-    js: "// @generated — do not edit; see scripts/build-runtime.mjs",
+    js: [
+      "// @generated — do not edit; see scripts/build-runtime.mjs",
+      "import { createRequire as __createRequire } from 'module';",
+      "const require = __createRequire(import.meta.url);",
+    ].join("\n"),
   },
 });
 
