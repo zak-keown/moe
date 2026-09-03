@@ -12,6 +12,7 @@ import { MintError } from './diagnostics.js'
 import { resolvePlatform } from './platform/load.js'
 import { currentProjectionRecords, resolvePublishMatrix } from './platform/projections.js'
 import { assembleArtifactSet } from './artifact/assemble.js'
+import { checkArtifactSet } from './artifact/check.js'
 
 const LABEL_WIDTH = 45
 
@@ -176,6 +177,29 @@ program
     // still prove the publish selection reflects the current adapter contract.
     const artifacts = currentProjectionRecords(platform)
     process.stdout.write(`${JSON.stringify(resolvePublishMatrix(platform, artifacts), null, 2)}\n`)
+  })
+
+program
+  .command('check-artifacts')
+  .description('Validate all six committed plugin artifacts: scan, manifest, legal closure, pack/extract')
+  .option('--repo <path>', 'repository root containing moe-platform.yaml', process.cwd())
+  .option('--json', 'emit structured JSON instead of human-readable output', false)
+  .action(async (opts: { repo: string; json: boolean }) => {
+    const { results, problems } = await checkArtifactSet(opts.repo)
+    if (opts.json) {
+      process.stdout.write(`${JSON.stringify({ results, problems }, null, 2)}\n`)
+    } else {
+      for (const r of results) {
+        console.log(`${r.plugin}: ${r.files} files, ${r.tarballBytes} bytes packed, digest ${r.treeDigest.slice(0, 12)}…`)
+      }
+      if (problems.length > 0) {
+        console.error(`\nartifact check: ${problems.length} problem(s)`)
+        for (const p of problems) console.error(`  - ${p}`)
+      } else {
+        console.log(`\nartifact check: all ${results.length} plugins validated`)
+      }
+    }
+    if (problems.length > 0) process.exit(1)
   })
 
 program

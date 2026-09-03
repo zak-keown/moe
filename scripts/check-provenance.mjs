@@ -19,6 +19,7 @@ const SKIP_SEGMENTS = new Set([
   ".planning",
   ".venv",
   "dist",
+  "fixtures",
   "node_modules",
   "scripts",
   "test",
@@ -145,12 +146,26 @@ function checkCanonicalLegalFiles(root, problems) {
   }
 }
 
+function classifyProblem(message) {
+  if (message.includes("LICENSE is missing")) return "LEGAL_PAYLOAD_MISSING";
+  if (message.includes("missing MIT terms") || message.includes("missing Apache"))
+    return "LEGAL_PAYLOAD_MISMATCH";
+  if (message.includes("NOTICE")) return "NOTICE_DEFECT";
+  if (message.includes("CaseFolding")) return "FIXTURE_DIGEST_MISMATCH";
+  if (message.includes("license copies remain") || message.includes("NOTICE copies remain"))
+    return "STALE_LEGAL_COPY";
+  if (message.includes("canonical legal templates")) return "TEMPLATE_MISSING";
+  return "PROVENANCE_ERROR";
+}
+
 async function main(argv) {
-  if (argv.length > 1) {
-    console.error("usage: check-provenance.mjs [root]");
+  const jsonMode = argv.includes("--json");
+  const positional = argv.filter((a) => a !== "--json");
+  if (positional.length > 1) {
+    console.error("usage: check-provenance.mjs [--json] [root]");
     return 2;
   }
-  const root = argv[0] ?? ".";
+  const root = positional[0] ?? ".";
   const problems = [];
   const upstreams = countImportedWorks(root, problems);
   try {
@@ -160,6 +175,15 @@ async function main(argv) {
   }
   const plugins = checkPluginLicenses(root, problems);
   checkCanonicalLegalFiles(root, problems);
+
+  if (jsonMode) {
+    const diagnostics = problems.map((message) => ({
+      code: classifyProblem(message),
+      message,
+    }));
+    process.stdout.write(`${JSON.stringify({ upstreams, plugins, diagnostics }, null, 2)}\n`);
+    return problems.length > 0 ? 1 : 0;
+  }
 
   console.log(`provenance: ${upstreams} imported works, ${plugins} plugin licenses`);
   if (problems.length === 0) {

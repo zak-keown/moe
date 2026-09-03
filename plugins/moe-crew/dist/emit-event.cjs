@@ -18,7 +18,7 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/hooks/emit-event.ts
+// packages/crew/src/hooks/emit-event.ts
 var emit_event_exports = {};
 __export(emit_event_exports, {
   runHook: () => runHook
@@ -26,21 +26,21 @@ __export(emit_event_exports, {
 module.exports = __toCommonJS(emit_event_exports);
 var import_node_fs3 = require("fs");
 
-// src/core/event-log.ts
+// packages/crew/src/core/event-log.ts
 var import_node_fs = require("fs");
 
-// src/events.ts
+// packages/crew/src/events.ts
 function serializeEvent(e) {
   return JSON.stringify(e);
 }
 
-// src/core/event-log.ts
+// packages/crew/src/core/event-log.ts
 function appendEvent(file, e) {
   (0, import_node_fs.appendFileSync)(file, `${serializeEvent(e)}
 `);
 }
 
-// src/core/paths.ts
+// packages/crew/src/core/paths.ts
 var import_node_os = require("os");
 var import_node_path = require("path");
 function defaultWorkerDir() {
@@ -58,12 +58,12 @@ function metaPath(dir, sid) {
   return `${dir}/${sid}.meta`;
 }
 
-// src/core/time.ts
+// packages/crew/src/core/time.ts
 function isoSecondsUtc(date = /* @__PURE__ */ new Date()) {
   return date.toISOString().replace(/\.\d{3}Z$/, "Z");
 }
 
-// src/core/worker-store.ts
+// packages/crew/src/core/worker-store.ts
 var import_node_fs2 = require("fs");
 var import_node_path2 = require("path");
 function writeMeta(dir, meta) {
@@ -71,7 +71,7 @@ function writeMeta(dir, meta) {
   (0, import_node_fs2.writeFileSync)(metaPath(dir, meta.session_id), JSON.stringify(meta));
 }
 
-// src/hooks/emit-event.ts
+// packages/crew/src/hooks/emit-event.ts
 var EVENT_MAP = {
   SessionStart: "session_start",
   Stop: "stop",

@@ -18,7 +18,7 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/hooks/ensure-statusline.ts
+// packages/statusline/src/hooks/ensure-statusline.ts
 var ensure_statusline_exports = {};
 __export(ensure_statusline_exports, {
   ensureStatusLine: () => ensureStatusLine

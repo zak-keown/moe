@@ -2,14 +2,14 @@ import { existsSync, mkdirSync, writeFileSync, appendFileSync } from 'fs';
 import 'os';
 import 'path';
 
-// src/pi-extension/index.ts
+// packages/crew/src/pi-extension/index.ts
 
-// src/events.ts
+// packages/crew/src/events.ts
 function serializeEvent(e) {
   return JSON.stringify(e);
 }
 
-// src/core/event-log.ts
+// packages/crew/src/core/event-log.ts
 function appendEvent(file, e) {
   appendFileSync(file, `${serializeEvent(e)}
 `);
@@ -21,12 +21,12 @@ function metaPath(dir, sid) {
   return `${dir}/${sid}.meta`;
 }
 
-// src/core/time.ts
+// packages/crew/src/core/time.ts
 function isoSecondsUtc(date = /* @__PURE__ */ new Date()) {
   return date.toISOString().replace(/\.\d{3}Z$/, "Z");
 }
 
-// src/core/tool-name.ts
+// packages/crew/src/core/tool-name.ts
 function canonicalToolName(name) {
   if (typeof name !== "string" || name.length === 0) return "";
   return name.charAt(0).toUpperCase() + name.slice(1);
@@ -36,7 +36,7 @@ function writeMeta(dir, meta) {
   writeFileSync(metaPath(dir, meta.session_id), JSON.stringify(meta));
 }
 
-// src/pi-extension/index.ts
+// packages/crew/src/pi-extension/index.ts
 function workerDirFromEnv() {
   const dir = process.env.MOE_CREW_WORKER_DIR;
   return dir !== void 0 && dir.length > 0 ? dir : null;
