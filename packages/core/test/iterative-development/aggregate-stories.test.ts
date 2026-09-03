@@ -1,11 +1,23 @@
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { runHelper } from "./cli-harness.js";
 
 const HELPER = "skills/extracting-requirements/scripts/aggregate_stories.mjs";
 const PROGRAM = "aggregate_stories.mjs";
+const CORE = resolve(import.meta.dirname, "..", "..");
+const HELPER_PATH = join(CORE, HELPER);
 const temporaryRoots: string[] = [];
 
 function tempDir(prefix: string): string {
@@ -373,5 +385,121 @@ describe("aggregate_stories", () => {
     expect(result.status).toBe(2);
     expect(result.stdout).toBe("");
     expect(result.stderr).toBe(`error: file not found: ${missing}\n`);
+  });
+
+  it("preserves unsafe acceptance-criterion integers and uses Python equality when merging sources", () => {
+    const root = tempDir("aggregate-stories-lossless-");
+    const output = join(root, "requirements");
+    const input = join(root, "stories.json");
+    writeFileSync(
+      input,
+      '[{"title":"Huge","epic_theme":"Numbers","acceptance_criteria":[9007199254740992],"sources":[{"file":"equivalent.md","meta":{"a":1,"b":[true,false]}},{"file":"huge.md","lines":9007199254740992}]},{"title":"Huge","epic_theme":"Numbers","acceptance_criteria":[9007199254740993],"sources":[{"file":"huge.md","lines":9007199254740993},9007199254740993,[9007199254740993]]},{"title":"Huge","epic_theme":"Numbers","acceptance_criteria":[9007199254740992],"sources":[{"meta":{"b":[1,0.0],"a":1.0},"file":"equivalent.md"}]}]',
+    );
+
+    const result = run(output, [input]);
+
+    expect(result.status).toBe(0);
+    const content = readEpics(output);
+    expect(content.match(/^## STORY-/gm)).toHaveLength(2);
+    expect(content).toContain("- 9007199254740992");
+    expect(content).toContain("- 9007199254740993");
+    expect(content.match(/^- `equivalent\.md`$/gm)).toHaveLength(1);
+    expect(content).toContain("- `huge.md:9007199254740992`");
+    expect(content).toContain("- `huge.md:9007199254740993`");
+    expect(content).not.toContain("[object Object]");
+    expect(content).not.toContain("- ``");
+  });
+
+  it("sorts primary sources by Python code points", () => {
+    const root = tempDir("aggregate-stories-source-order-");
+    const output = join(root, "requirements");
+    const input = writeJson(root, "stories.json", [
+      { title: "Ordered", epic_theme: "Sources", sources: ["\u{10000}.md", "\uE000.md"] },
+    ]);
+
+    expect(run(output, [input]).status).toBe(0);
+    expect(readEpics(output)).toContain("**Primary sources:** `\uE000.md`, `\u{10000}.md`");
+  });
+
+  it("accepts complete argparse option forms, negative-looking values, ordering, and --", () => {
+    const root = tempDir("aggregate-stories-argparse-complete-");
+    writeJson(root, "story.json", [{ title: "CLI", epic_theme: "Options", sources: [] }]);
+    writeJson(root, "-1", [{ title: "Negative", epic_theme: "Options", sources: [] }]);
+    writeJson(root, "--story", [{ title: "Terminated", epic_theme: "Options", sources: [] }]);
+
+    for (const args of [
+      ["--out", "out-a", "story.json"],
+      ["story.json", "--out", "out-b"],
+      ["-o", "-2", "story.json"],
+      ["-o", "out-c", "-1"],
+      ["-o", "out-d", "--", "--story"],
+      ["--output-dir=", "story.json"],
+    ]) {
+      const result = runHelper(HELPER, args, root);
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe("");
+    }
+  });
+
+  it("preserves argparse empty, missing, and ambiguous option behavior", () => {
+    const emptyValue = runHelper(HELPER, ["--output-dir", "", "missing.json"]);
+    expect(emptyValue.status).toBe(2);
+    expect(emptyValue.stderr).toBe("error: file not found: missing.json\n");
+
+    for (const [args, message] of [
+      [["--out"], "argument -o/--output-dir: expected one argument"],
+      [["--=x"], "ambiguous option: --=x could match --help, --output-dir"],
+    ] as const) {
+      const result = runHelper(HELPER, args);
+      expect(result.status).toBe(2);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe(
+        `usage: ${PROGRAM} [-h] -o OUTPUT_DIR json_files [json_files ...]\n` +
+          `${PROGRAM}: error: ${message}\n`,
+      );
+    }
+  });
+
+  it("normalizes leading-dot spelling in diagnostics and output paths", () => {
+    const root = tempDir("aggregate-stories-path-spelling-");
+    writeJson(root, "story.json", [{ title: "Path", epic_theme: "CLI", sources: [] }]);
+
+    const missing = runHelper(HELPER, ["-o", "./requirements", "./missing.json"], root);
+    expect(missing.status).toBe(2);
+    expect(missing.stderr).toBe("error: file not found: missing.json\n");
+
+    const result = runHelper(HELPER, ["-o", "./requirements", "./story.json"], root);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe(
+      "wrote requirements/EPIC-001.md (1 stories)\nOK: 1 epics, 1 stories\n",
+    );
+  });
+
+  it("executes through a symlink while remaining silent when imported", () => {
+    const root = tempDir("aggregate-stories-direct-entry-");
+    const link = join(root, "stories-link.mjs");
+    const input = writeJson(root, "story.json", [
+      { title: "Linked", epic_theme: "CLI", sources: [] },
+    ]);
+    const output = join(root, "requirements");
+    symlinkSync(HELPER_PATH, link);
+
+    const linked = spawnSync(process.execPath, [link, "-o", output, input], { encoding: "utf8" });
+    expect(linked.status).toBe(0);
+    expect(linked.stderr).toBe("");
+    expect(linked.stdout).toContain("OK: 1 epics, 1 stories\n");
+
+    const imported = spawnSync(
+      process.execPath,
+      [
+        "--input-type=module",
+        "--eval",
+        `import ${JSON.stringify(pathToFileURL(HELPER_PATH).href)}`,
+      ],
+      { encoding: "utf8" },
+    );
+    expect(imported.status).toBe(0);
+    expect(imported.stdout).toBe("");
+    expect(imported.stderr).toBe("");
   });
 });

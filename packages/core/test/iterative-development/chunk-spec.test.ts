@@ -1,11 +1,15 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, sep } from "node:path";
+import { join, resolve, sep } from "node:path";
+import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { runHelper } from "./cli-harness.js";
 
 const HELPER = "skills/extracting-requirements/scripts/chunk_spec.mjs";
 const PROGRAM = "chunk_spec.mjs";
+const CORE = resolve(import.meta.dirname, "..", "..");
+const HELPER_PATH = join(CORE, HELPER);
 const temporaryRoots: string[] = [];
 
 function tempDir(prefix: string): string {
@@ -263,5 +267,144 @@ describe("chunk_spec", () => {
     expect(result.status).toBe(0);
     const chunks = JSON.parse(result.stdout) as Array<{ heading: string | null }>;
     expect(chunks.map((chunk) => chunk.heading)).toEqual(["(preamble)", "First", "Second"]);
+  });
+
+  it("sorts recursive Markdown paths by Python code points", () => {
+    const root = tempDir("chunk-spec-code-point-order-");
+    writeFileSync(join(root, "\uE000.md"), "# BMP private use\n");
+    writeFileSync(join(root, "\u{10000}.md"), "# Astral\n");
+
+    const result = run(root);
+
+    expect(result.status).toBe(0);
+    const chunks = JSON.parse(result.stdout) as Array<{ source_file: string }>;
+    expect(chunks.map((chunk) => chunk.source_file)).toEqual([
+      join(root, "\uE000.md"),
+      join(root, "\u{10000}.md"),
+    ]);
+  });
+
+  it.each(["\r", "\r\n"])(
+    "translates %j newlines at the file boundary before chunking and line counting",
+    (newline) => {
+      const root = tempDir("chunk-spec-universal-newlines-");
+      const spec = join(root, "spec.md");
+      writeFileSync(
+        spec,
+        ["# Preamble", "", "## Alpha", "one two", "## Beta", "three"].join(newline),
+      );
+
+      const result = run(spec, ["--max", "3"]);
+
+      expect(result.status).toBe(0);
+      const chunks = JSON.parse(result.stdout) as Array<{
+        heading: string | null;
+        content: string;
+        start_line: number;
+        end_line: number;
+      }>;
+      expect(
+        chunks.map(({ heading, content, start_line, end_line }) => ({
+          heading,
+          content,
+          start_line,
+          end_line,
+        })),
+      ).toEqual([
+        { heading: "(preamble)", content: "# Preamble", start_line: 1, end_line: 1 },
+        { heading: "Alpha", content: "## Alpha\none two", start_line: 3, end_line: 4 },
+        { heading: "Beta", content: "## Beta\nthree", start_line: 5, end_line: 6 },
+      ]);
+    },
+  );
+
+  it.each(["\u2028", "\u2029"])("does not treat %j as a Python regex line anchor", (separator) => {
+    const root = tempDir("chunk-spec-unicode-separator-");
+    const spec = join(root, "spec.md");
+    writeFileSync(spec, `## Alpha${separator}## Not a heading\nbody words`);
+
+    const result = run(spec, ["--max", "1"]);
+
+    expect(result.status).toBe(0);
+    const chunks = JSON.parse(result.stdout) as Array<Record<string, unknown>>;
+    expect(chunks).toHaveLength(1);
+    expect(chunks[0]).toMatchObject({
+      heading: `Alpha${separator}## Not a heading`,
+      content: `## Alpha${separator}## Not a heading\nbody words`,
+      start_line: 1,
+      end_line: 2,
+    });
+  });
+
+  it("accepts argparse abbreviations, negative values and paths, option ordering, and --", () => {
+    const root = tempDir("chunk-spec-argparse-complete-");
+    writeFileSync(join(root, "-1"), "# Negative path\n");
+    writeFileSync(join(root, "--spec"), "# Option-looking path\n");
+    writeFileSync(join(root, "ordered.md"), "# Ordered\n");
+
+    for (const args of [
+      ["--max", "-1", "ordered.md"],
+      ["ordered.md", "--max", "-1"],
+      ["-1"],
+      ["--", "--spec"],
+    ]) {
+      const result = runHelper(HELPER, args, root);
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe("");
+    }
+  });
+
+  it("accepts an empty positional path as pathlib's current directory", () => {
+    const root = tempDir("chunk-spec-empty-path-");
+    writeFileSync(join(root, "only.md"), "# Current directory\n");
+
+    const result = runHelper(HELPER, [""], root);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    const chunks = JSON.parse(result.stdout) as Array<{ source_file: string }>;
+    expect(chunks.map((chunk) => chunk.source_file)).toEqual([join(".", "only.md")]);
+  });
+
+  it("preserves argparse empty, missing, and ambiguous option errors", () => {
+    for (const [args, message] of [
+      [["--max-tokens=", "missing.md"], "argument --max-tokens: invalid int value: ''"],
+      [["--max"], "argument --max-tokens: expected one argument"],
+      [["--=x"], "ambiguous option: --=x could match --help, --max-tokens"],
+    ] as const) {
+      const result = runHelper(HELPER, args);
+      expect(result.status).toBe(2);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe(
+        `usage: ${PROGRAM} [-h] [--max-tokens MAX_TOKENS] path\n` +
+          `${PROGRAM}: error: ${message}\n`,
+      );
+    }
+  });
+
+  it("executes through a symlink while remaining silent when imported", () => {
+    const root = tempDir("chunk-spec-direct-entry-");
+    const link = join(root, "chunk-link.mjs");
+    const spec = join(root, "spec.md");
+    symlinkSync(HELPER_PATH, link);
+    writeFileSync(spec, "# Linked\n");
+
+    const linked = spawnSync(process.execPath, [link, spec], { encoding: "utf8" });
+    expect(linked.status).toBe(0);
+    expect(linked.stderr).toBe("");
+    expect(JSON.parse(linked.stdout)).toHaveLength(1);
+
+    const imported = spawnSync(
+      process.execPath,
+      [
+        "--input-type=module",
+        "--eval",
+        `import ${JSON.stringify(pathToFileURL(HELPER_PATH).href)}`,
+      ],
+      { encoding: "utf8" },
+    );
+    expect(imported.status).toBe(0);
+    expect(imported.stdout).toBe("");
+    expect(imported.stderr).toBe("");
   });
 });

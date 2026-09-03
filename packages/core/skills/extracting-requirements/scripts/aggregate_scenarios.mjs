@@ -1,79 +1,20 @@
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  readFileSync,
+  readdirSync,
+  realpathSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { basename, join, resolve, sep } from "node:path";
-import { pathToFileURL } from "node:url";
-
-class JsonInteger {
-  constructor(source) {
-    this.value = BigInt(source);
-  }
-
-  toString() {
-    return this.value.toString();
-  }
-
-  toJSON() {
-    return JSON.rawJSON(this.value.toString());
-  }
-}
-
-function isPlainObject(value) {
-  return value !== null && typeof value === "object" && Object.getPrototypeOf(value) === Object.prototype;
-}
-
-function parseJsonLosslessly(text) {
-  return JSON.parse(text, (_key, value, context) => {
-    if (
-      typeof value === "number" &&
-      context?.source &&
-      !context.source.includes(".") &&
-      !context.source.includes("e") &&
-      !context.source.includes("E") &&
-      !Number.isSafeInteger(value)
-    ) {
-      return new JsonInteger(context.source);
-    }
-    return value;
-  });
-}
-
-function pythonEqual(left, right) {
-  const leftIsNumeric =
-    left instanceof JsonInteger || typeof left === "number" || typeof left === "boolean";
-  const rightIsNumeric =
-    right instanceof JsonInteger || typeof right === "number" || typeof right === "boolean";
-  if (leftIsNumeric && rightIsNumeric) {
-    if (left instanceof JsonInteger && right instanceof JsonInteger) {
-      return left.value === right.value;
-    }
-    if (left instanceof JsonInteger || right instanceof JsonInteger) {
-      const integer = left instanceof JsonInteger ? left : right;
-      const other = left instanceof JsonInteger ? right : left;
-      const number = typeof other === "boolean" ? Number(other) : other;
-      return Number.isInteger(number) && integer.value === BigInt(number);
-    }
-    return Number(left) === Number(right);
-  }
-  if (left === right) return true;
-  if (Array.isArray(left) || Array.isArray(right)) {
-    return (
-      Array.isArray(left) &&
-      Array.isArray(right) &&
-      left.length === right.length &&
-      left.every((value, index) => pythonEqual(value, right[index]))
-    );
-  }
-  if (left && right && typeof left === "object" && typeof right === "object") {
-    const leftKeys = Object.keys(left);
-    const rightKeys = Object.keys(right);
-    return (
-      leftKeys.length === rightKeys.length &&
-      leftKeys.every(
-        (key) => Object.hasOwn(right, key) && pythonEqual(left[key], right[key]),
-      )
-    );
-  }
-  return false;
-}
+import { fileURLToPath, pathToFileURL } from "node:url";
+import {
+  compareCodePoints,
+  isPlainObject,
+  parseJsonLosslessly,
+  pythonEqual,
+  splitLines,
+} from "./python_compat.mjs";
 
 function pathParts(path, separatorPattern) {
   return path.split(separatorPattern).filter((part) => part && part !== ".");
@@ -109,16 +50,6 @@ function normalizePathSpelling(path) {
   return parts.length > 0 ? parts.join("/") : ".";
 }
 
-function compareCodePoints(left, right) {
-  const leftPoints = Array.from(left, (character) => character.codePointAt(0));
-  const rightPoints = Array.from(right, (character) => character.codePointAt(0));
-  const length = Math.min(leftPoints.length, rightPoints.length);
-  for (let index = 0; index < length; index += 1) {
-    if (leftPoints[index] !== rightPoints[index]) return leftPoints[index] - rightPoints[index];
-  }
-  return leftPoints.length - rightPoints.length;
-}
-
 export function loadScenarios(paths) {
   const scenarios = [];
   for (const path of paths) {
@@ -151,7 +82,7 @@ export function loadStoryTitleToId(storiesDirectory) {
 
   for (const name of epicFiles) {
     let currentId;
-    for (const line of readFileSync(join(storiesDirectory, name), "utf8").split(/\r?\n/)) {
+    for (const line of splitLines(readFileSync(join(storiesDirectory, name), "utf8"))) {
       const idMatch = line.match(/^## (STORY-\p{Nd}+)/u);
       if (idMatch) currentId = idMatch[1];
       const titleMatch = line.match(/^\*\*Title:\*\* (.+)/);
@@ -456,5 +387,14 @@ export async function main(args) {
   return 0;
 }
 
-const isDirect = process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
+function isDirectEntry() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(resolve(process.argv[1])) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
+  }
+}
+
+const isDirect = isDirectEntry();
 if (isDirect) process.exitCode = await main(process.argv.slice(2));

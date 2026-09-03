@@ -1,6 +1,14 @@
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  readFileSync,
+  readdirSync,
+  realpathSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { join, resolve, sep } from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { compareCodePoints, splitLines } from "./python_compat.mjs";
 
 function pathParts(path, separatorPattern) {
   return path.split(separatorPattern).filter((part) => part && part !== ".");
@@ -34,22 +42,6 @@ function normalizePathSpelling(path) {
   const parts = pathParts(path, /\/+/);
   if (root) return parts.length > 0 ? `${root}${parts.join("/")}` : root;
   return parts.length > 0 ? parts.join("/") : ".";
-}
-
-function compareCodePoints(left, right) {
-  const leftPoints = Array.from(left, (character) => character.codePointAt(0));
-  const rightPoints = Array.from(right, (character) => character.codePointAt(0));
-  const length = Math.min(leftPoints.length, rightPoints.length);
-  for (let index = 0; index < length; index += 1) {
-    if (leftPoints[index] !== rightPoints[index]) return leftPoints[index] - rightPoints[index];
-  }
-  return leftPoints.length - rightPoints.length;
-}
-
-function splitLines(text) {
-  const lines = text.split(/\r\n|\n|\r/);
-  if (lines.at(-1) === "") lines.pop();
-  return lines;
 }
 
 export function parseScenarioToStories(content) {
@@ -139,5 +131,14 @@ export async function main(args) {
   return 0;
 }
 
-const isDirect = process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
+function isDirectEntry() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(resolve(process.argv[1])) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
+  }
+}
+
+const isDirect = isDirectEntry();
 if (isDirect) process.exitCode = await main(process.argv.slice(2));

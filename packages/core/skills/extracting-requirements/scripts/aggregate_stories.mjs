@@ -3,15 +3,25 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  realpathSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
-import { basename, join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { basename, join, resolve, sep } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import {
+  compareCodePoints,
+  isNegativeNumber,
+  isPlainObject,
+  JsonInteger,
+  parseJsonLosslessly,
+  pythonEqual,
+} from "./python_compat.mjs";
 
 function stableJson(value) {
+  if (value instanceof JsonInteger) return value.value.toString();
   if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
-  if (value && typeof value === "object") {
+  if (isPlainObject(value)) {
     return `{${Object.keys(value)
       .sort()
       .map((key) => `${JSON.stringify(key)}:${stableJson(value[key])}`)
@@ -23,7 +33,7 @@ function stableJson(value) {
 export function loadStories(paths, warn = (message) => process.stderr.write(`${message}\n`)) {
   const stories = [];
   for (const path of paths) {
-    const data = JSON.parse(readFileSync(path, "utf8"));
+    const data = parseJsonLosslessly(readFileSync(path, "utf8"));
     if (Array.isArray(data)) stories.push(...data);
     else if (data && typeof data === "object" && Array.isArray(data.stories)) {
       stories.push(...data.stories);
@@ -53,12 +63,9 @@ export function dedupStories(stories) {
 
     const existing = seen.get(key);
     if (existing) {
-      const sourceKeys = new Set(existing.sources.map(stableJson));
       for (const source of story.sources ?? []) {
-        const sourceKey = stableJson(source);
-        if (!sourceKeys.has(sourceKey)) {
+        if (!existing.sources.some((candidate) => pythonEqual(candidate, source))) {
           existing.sources.push(source);
-          sourceKeys.add(sourceKey);
         }
       }
     } else {
@@ -101,7 +108,8 @@ export function formatEpicFile(epicId, theme, stories) {
   const primarySources = new Set();
   for (const story of stories) {
     for (const source of story.sources ?? []) {
-      primarySources.add(typeof source === "object" && source !== null ? (source.file ?? "") : source);
+      if (isPlainObject(source)) primarySources.add(source.file ?? "");
+      else if (typeof source === "string") primarySources.add(source);
     }
   }
 
@@ -112,7 +120,7 @@ export function formatEpicFile(epicId, theme, stories) {
   if (primarySources.size > 0) {
     const sources = [...primarySources]
       .filter(Boolean)
-      .sort()
+      .sort((left, right) => compareCodePoints(String(left), String(right)))
       .map((source) => `\`${source}\``)
       .join(", ");
     lines.push(`**Primary sources:** ${sources}`);
@@ -132,7 +140,7 @@ export function formatEpicFile(epicId, theme, stories) {
     lines.push("");
     lines.push("**Acceptance criteria:**");
     for (const criterion of story.acceptance_criteria ?? []) {
-      if (criterion && typeof criterion === "object") {
+      if (isPlainObject(criterion)) {
         let line = `- ${criterion.id ?? ""}: ${criterion.text ?? ""}`;
         if (criterion.behavioral_impact) line += ` · impact:\`${criterion.behavioral_impact}\``;
         if (criterion.proof_seam) line += ` · seam:\`${criterion.proof_seam}\``;
@@ -144,7 +152,7 @@ export function formatEpicFile(epicId, theme, stories) {
     lines.push("");
     lines.push("**Sources:**");
     for (const source of story.sources ?? []) {
-      if (source && typeof source === "object") {
+      if (isPlainObject(source)) {
         const file = source.file ?? "unknown";
         const reference = source.lines ? `\`${file}:${source.lines}\`` : `\`${file}\``;
         lines.push(`- ${reference}`);
@@ -198,21 +206,28 @@ function parseArgs(args) {
       optionsEnded = true;
       continue;
     }
-    if (arg === "-h" || arg === "--help") return { help: true };
-    if (arg === "-o" || arg === "--output-dir" || arg === "--output-d") {
-      const value = args[++index];
-      if (value === undefined || value.startsWith("-")) {
+    if (arg.startsWith("--=")) {
+      return { error: `ambiguous option: ${arg} could match --help, --output-dir` };
+    }
+    if (arg === "-h" || (arg.startsWith("--") && !arg.includes("=") && "--help".startsWith(arg))) {
+      return { help: true };
+    }
+    const optionName = arg.includes("=") ? arg.slice(0, arg.indexOf("=")) : arg;
+    if (arg === "-o" || (arg.startsWith("--") && "--output-dir".startsWith(optionName))) {
+      const attached = arg.includes("=");
+      const value = attached ? arg.slice(arg.indexOf("=") + 1) : args[++index];
+      if (
+        value === undefined ||
+        (!attached && value.startsWith("-") && !isNegativeNumber(value) && value !== "-")
+      ) {
         return { error: "argument -o/--output-dir: expected one argument" };
       }
       outputDir = value;
       outputDirSet = true;
-    } else if (arg.startsWith("--output-dir=")) {
-      outputDir = arg.slice("--output-dir=".length);
-      outputDirSet = true;
     } else if (arg.startsWith("-o") && arg.length > 2) {
       outputDir = arg.slice(2);
       outputDirSet = true;
-    } else if (arg.startsWith("-")) {
+    } else if (arg.startsWith("-") && arg !== "-" && !isNegativeNumber(arg)) {
       unrecognized.push(arg);
     } else {
       jsonFiles.push(arg);
@@ -241,21 +256,23 @@ export async function main(args) {
     return 2;
   }
 
-  for (const path of options.jsonFiles) {
+  const jsonFiles = options.jsonFiles.map(normalizePathSpelling);
+  const outputDirectory = normalizePathSpelling(options.outputDir);
+  for (const path of jsonFiles) {
     if (!existsSync(path)) {
       process.stderr.write(`error: file not found: ${path}\n`);
       return 2;
     }
   }
 
-  const stories = loadStories(options.jsonFiles);
+  const stories = loadStories(jsonFiles);
   if (stories.length === 0) {
     process.stderr.write("error: no stories found in input files\n");
     return 1;
   }
 
   const epics = assignIds(groupIntoEpics(dedupStories(stories)));
-  const outputDirectoryPath = options.outputDir || ".";
+  const outputDirectoryPath = outputDirectory || ".";
   mkdirSync(outputDirectoryPath, { recursive: true });
   for (const name of readdirSync(outputDirectoryPath)) {
     if (/^EPIC-.*\.md$/.test(name)) unlinkSync(join(outputDirectoryPath, name));
@@ -263,7 +280,7 @@ export async function main(args) {
 
   for (const [theme, epicStories] of epics) {
     const epicId = epicStories[0]._epic_id;
-    const outputPath = join(options.outputDir, `${epicId}.md`);
+    const outputPath = join(outputDirectory, `${epicId}.md`);
     writeFileSync(outputPath, formatEpicFile(epicId, theme, epicStories));
     process.stdout.write(`wrote ${outputPath} (${epicStories.length} stories)\n`);
   }
@@ -272,5 +289,48 @@ export async function main(args) {
   return 0;
 }
 
-const isDirect = process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
+function pathParts(path, separatorPattern) {
+  return path.split(separatorPattern).filter((part) => part && part !== ".");
+}
+
+function normalizeWindowsPathSpelling(path) {
+  const windowsPath = path.replaceAll("/", "\\");
+  const unc = windowsPath.match(/^\\\\([^\\]+)\\([^\\]+)(?:\\|$)/);
+  if (unc) {
+    const root = `\\\\${unc[1]}\\${unc[2]}\\`;
+    const parts = pathParts(windowsPath.slice(unc[0].length), /\\+/);
+    return parts.length > 0 ? `${root}${parts.join("\\")}` : root;
+  }
+  const drive = windowsPath.match(/^([A-Za-z]:)(\\?)/);
+  if (drive) {
+    const rooted = drive[2] === "\\";
+    const parts = pathParts(windowsPath.slice(drive[1].length + (rooted ? 1 : 0)), /\\+/);
+    if (rooted) return parts.length > 0 ? `${drive[1]}\\${parts.join("\\")}` : `${drive[1]}\\`;
+    return parts.length > 0 ? `${drive[1]}${parts.join("\\")}` : drive[1];
+  }
+  const rooted = windowsPath.startsWith("\\");
+  const parts = pathParts(windowsPath.slice(rooted ? 1 : 0), /\\+/);
+  if (rooted) return parts.length > 0 ? `\\${parts.join("\\")}` : "\\";
+  return parts.length > 0 ? parts.join("\\") : ".";
+}
+
+function normalizePathSpelling(path) {
+  if (sep === "\\") return normalizeWindowsPathSpelling(path);
+  const doubleSlashRoot = path.startsWith("//") && !path.startsWith("///");
+  const root = doubleSlashRoot ? "//" : path.startsWith("/") ? "/" : "";
+  const parts = pathParts(path, /\/+/);
+  if (root) return parts.length > 0 ? `${root}${parts.join("/")}` : root;
+  return parts.length > 0 ? parts.join("/") : ".";
+}
+
+function isDirectEntry() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(resolve(process.argv[1])) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
+  }
+}
+
+const isDirect = isDirectEntry();
 if (isDirect) process.exitCode = await main(process.argv.slice(2));

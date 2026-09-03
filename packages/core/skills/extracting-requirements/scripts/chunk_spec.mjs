@@ -1,6 +1,11 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { basename, join, resolve, sep } from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import {
+  compareCodePoints,
+  isNegativeNumber,
+  normalizeUniversalNewlines,
+} from "./python_compat.mjs";
 
 export function estimateTokens(text) {
   const words = text.trim() ? text.trim().split(/\s+/).length : 0;
@@ -8,22 +13,25 @@ export function estimateTokens(text) {
 }
 
 export function splitByHeading(content, level) {
-  const pattern = new RegExp(`^${"#".repeat(level)} (.+)$`, "gm");
-  const matches = [...content.matchAll(pattern)];
+  const pattern = new RegExp(`(?:^|\\n)(${"#".repeat(level)} ([^\\n]+))(?=\\n|$)`, "g");
+  const matches = [...content.matchAll(pattern)].map((match) => ({
+    heading: match[2],
+    start: match.index + (match[0].startsWith("\n") ? 1 : 0),
+  }));
 
   if (matches.length === 0) return [{ heading: null, content }];
 
   const sections = [];
-  if (matches[0].index > 0) {
-    const preamble = content.slice(0, matches[0].index).trim();
+  if (matches[0].start > 0) {
+    const preamble = content.slice(0, matches[0].start).trim();
     if (preamble) sections.push({ heading: "(preamble)", content: preamble });
   }
 
   for (const [index, match] of matches.entries()) {
-    const start = match.index;
-    const end = matches[index + 1]?.index ?? content.length;
+    const start = match.start;
+    const end = matches[index + 1]?.start ?? content.length;
     sections.push({
-      heading: match[1].trim(),
+      heading: match.heading.trim(),
       content: content.slice(start, end).trim(),
     });
   }
@@ -44,7 +52,7 @@ export function findLineRange(fullContent, sectionContent) {
 }
 
 export function chunkFile(path, maxTokens) {
-  const content = readFileSync(path, "utf8");
+  const content = normalizeUniversalNewlines(readFileSync(path, "utf8"));
   const tokens = estimateTokens(content);
 
   if (tokens <= maxTokens) {
@@ -101,11 +109,9 @@ export function chunkFile(path, maxTokens) {
 
 function markdownFiles(path) {
   const files = [];
-  const entries = readdirSync(path, { withFileTypes: true }).sort((left, right) => {
-    if (left.name < right.name) return -1;
-    if (left.name > right.name) return 1;
-    return 0;
-  });
+  const entries = readdirSync(path, { withFileTypes: true }).sort((left, right) =>
+    compareCodePoints(left.name, right.name),
+  );
   for (const entry of entries) {
     const candidate = join(path, entry.name);
     if (entry.isDirectory()) files.push(...markdownFiles(candidate));
@@ -186,28 +192,45 @@ function normalizePathSpelling(path) {
 function parseArgs(args) {
   let path;
   let maxTokens = 4000;
+  let optionsEnded = false;
   const unrecognized = [];
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
-    if (arg === "-h" || arg === "--help") return { help: true };
-    if (arg === "--max-tokens" || arg.startsWith("--max-tokens=")) {
-      const value = arg === "--max-tokens" ? args[++index] : arg.slice("--max-tokens=".length);
+    if (optionsEnded) {
+      if (path === undefined) path = arg;
+      else unrecognized.push(arg);
+      continue;
+    }
+    if (arg === "--") {
+      optionsEnded = true;
+      continue;
+    }
+    if (arg.startsWith("--=")) {
+      return { error: `ambiguous option: ${arg} could match --help, --max-tokens` };
+    }
+    if (arg === "-h" || (arg.startsWith("--") && !arg.includes("=") && "--help".startsWith(arg))) {
+      return { help: true };
+    }
+    const optionName = arg.includes("=") ? arg.slice(0, arg.indexOf("=")) : arg;
+    if (arg.startsWith("--") && "--max-tokens".startsWith(optionName)) {
+      const attached = arg.includes("=");
+      const value = attached ? arg.slice(arg.indexOf("=") + 1) : args[++index];
       if (value === undefined) return { error: "argument --max-tokens: expected one argument" };
       const parsed = parseTokenCount(value);
-      if (arg === "--max-tokens" && value.startsWith("-") && parsed === null) {
+      if (!attached && value.startsWith("-") && parsed === null) {
         return { error: "argument --max-tokens: expected one argument" };
       }
       if (parsed === null) return { error: `argument --max-tokens: invalid int value: '${value}'` };
       maxTokens = parsed;
-    } else if (!path && !arg.startsWith("-")) {
+    } else if (path === undefined && (!arg.startsWith("-") || isNegativeNumber(arg))) {
       path = arg;
     } else {
       unrecognized.push(arg);
     }
   }
 
-  if (!path) return { error: "the following arguments are required: path" };
+  if (path === undefined) return { error: "the following arguments are required: path" };
   if (unrecognized.length > 0) return { error: `unrecognized arguments: ${unrecognized.join(" ")}` };
   return { path, maxTokens };
 }
@@ -237,5 +260,14 @@ export async function main(args) {
   return 0;
 }
 
-const isDirect = process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
+function isDirectEntry() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(resolve(process.argv[1])) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
+  }
+}
+
+const isDirect = isDirectEntry();
 if (isDirect) process.exitCode = await main(process.argv.slice(2));
