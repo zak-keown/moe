@@ -171,13 +171,13 @@ describe('bundle inventory evidence', () => {
     await symlink(outside, join(root, 'linked-dependency'))
     const metafile = join(root, 'metafile.json')
     await writeFile(metafile, JSON.stringify({
-      outputs: { 'dist/index.js': { inputs: { '../../linked-dependency/index.js': {} } } },
+      outputs: { 'packages/demo/dist/index.js': { inputs: { 'linked-dependency/index.js': {} } } },
     }))
 
     await expect(readBundleMetafiles({ repositoryRoot: root, packageRoot, metafiles: [metafile] }))
       .rejects.toThrow(/physical.*repository|outside repository/i)
     await writeFile(metafile, JSON.stringify({
-      outputs: { 'dist/index.js': { inputs: { 'missing.js': {} } } },
+      outputs: { 'packages/demo/dist/index.js': { inputs: { 'packages/demo/missing.js': {} } } },
     }))
     await expect(readBundleMetafiles({ repositoryRoot: root, packageRoot, metafiles: [metafile] }))
       .rejects.toThrow(/cannot resolve|does not exist/i)
@@ -198,15 +198,15 @@ describe('bundle inventory evidence', () => {
     await writeFile(join(dependencyRoot, 'index.js'), 'export {}\n')
     const metafile = JSON.stringify({
       inputs: {
-        'src/index.ts': { bytes: 1, imports: [] },
-        '../../node_modules/dependency/index.js': { bytes: 1, imports: [] },
+        'packages/demo/src/index.ts': { bytes: 1, imports: [] },
+        'node_modules/dependency/index.js': { bytes: 1, imports: [] },
       },
       outputs: {
-        'dist/index.cjs': {
-          imports: [], exports: [], entryPoint: 'src/index.ts',
+        'packages/demo/dist/index.cjs': {
+          imports: [], exports: [], entryPoint: 'packages/demo/src/index.ts',
           inputs: {
-            'src/index.ts': { bytesInOutput: 1 },
-            '../../node_modules/dependency/index.js': { bytesInOutput: 1 },
+            'packages/demo/src/index.ts': { bytesInOutput: 1 },
+            'node_modules/dependency/index.js': { bytesInOutput: 1 },
           }, bytes: 2,
         },
       },
@@ -254,6 +254,7 @@ describe('bundle inventory evidence', () => {
 
     await expect(execFile(process.execPath, ['--experimental-strip-types', inventoryScript, '--repository-root', root, packageRoot, join(outside, 'metafile-cjs.json')]))
       .rejects.toThrow(/metafile.*safe package build location/i)
+    expect(await readFile(join(outside, 'metafile-cjs.json'), 'utf8')).toBe('{"outputs":{}}\n')
     await expect(execFile(process.execPath, ['--experimental-strip-types', inventoryScript, '--repository-root', root, packageRoot, insideMetafile]))
       .rejects.toThrow(/timestamp|unknown metafile field/i)
     await writeFile(insideMetafile, '{"inputs":{"C:\\\\host\\\\input.js":{}},"outputs":{}}\n')
@@ -266,5 +267,8 @@ describe('bundle inventory evidence', () => {
     await symlink(outside, linkedRoot)
     await expect(execFile(process.execPath, ['--experimental-strip-types', inventoryScript, '--repository-root', root, '--prepare', linkedRoot]))
       .rejects.toThrow(/package root.*inside repository/i)
+    await symlink(outside, join(packageRoot, '.moe-build'))
+    await expect(execFile(process.execPath, ['--experimental-strip-types', inventoryScript, '--repository-root', root, '--prepare', packageRoot]))
+      .rejects.toThrow(/evidence root.*symbolic link/i)
   })
 })

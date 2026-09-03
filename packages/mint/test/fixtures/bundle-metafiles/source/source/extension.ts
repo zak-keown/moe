@@ -1,1 +1,1 @@
-const extension = true
+const _extension = true

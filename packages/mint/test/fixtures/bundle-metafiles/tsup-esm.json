@@ -1,16 +1,16 @@
 {
   "inputs": {
-    "source/extension.ts": { "bytes": 10, "imports": [] },
-    "../modules/outer/nested/index.js": { "bytes": 30, "imports": [] }
+    "source/source/extension.ts": { "bytes": 10, "imports": [] },
+    "modules/outer/nested/index.js": { "bytes": 30, "imports": [] }
   },
   "outputs": {
-    "dist/extension.mjs": {
+    "source/dist/extension.mjs": {
       "imports": [],
       "exports": [],
-      "entryPoint": "source/extension.ts",
+      "entryPoint": "source/source/extension.ts",
       "inputs": {
-        "source/extension.ts": { "bytesInOutput": 8 },
-        "../modules/outer/nested/index.js": { "bytesInOutput": 25 }
+        "source/source/extension.ts": { "bytesInOutput": 8 },
+        "modules/outer/nested/index.js": { "bytesInOutput": 25 }
       },
       "bytes": 33
     }

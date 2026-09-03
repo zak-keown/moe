@@ -35,7 +35,7 @@
     "moe-crew": "./dist/moe-crew.cjs"
   },
   "scripts": {
-    "build": "node ../../scripts/clean-package-dist.mjs && node --experimental-strip-types ../../scripts/write-bundle-inventory.mjs --prepare . && tsc -b --force && tsup && node --experimental-strip-types ../../scripts/write-bundle-inventory.mjs . dist/metafile-cjs.json dist/metafile-esm.json",
+    "build": "node ../../scripts/clean-package-dist.mjs && cd ../.. && node --experimental-strip-types scripts/write-bundle-inventory.mjs --prepare packages/crew && tsc -b packages/crew/tsconfig.json --force && packages/crew/node_modules/.bin/tsup --config packages/crew/tsup.config.ts && node --experimental-strip-types scripts/write-bundle-inventory.mjs packages/crew packages/crew/dist/metafile-cjs.json packages/crew/dist/metafile-esm.json",
     "prepack": "pnpm run build",
     "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --pretty",
     "test": "vitest run",

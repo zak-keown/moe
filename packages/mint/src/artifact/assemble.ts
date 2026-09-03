@@ -275,7 +275,7 @@ function claimArtifactFile(plugin: ResolvedPlugin, claims: ArtifactClaims, value
   claimArtifactEntry(plugin, claims, path, 'file')
 }
 
-async function inspectArtifact(plugin: ResolvedPlugin, root: string): Promise<{
+export async function inspectArtifact(plugin: ResolvedPlugin, root: string): Promise<{
   readonly files: ReadonlySet<string>
   readonly claims: ArtifactClaims
 }> {
