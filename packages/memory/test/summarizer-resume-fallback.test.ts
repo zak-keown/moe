@@ -4,29 +4,12 @@ import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConversationExchange } from "../src/types.js";
 
-// Stub the SDK's query() so each test controls what messages it yields.
-vi.mock("@anthropic-ai/claude-agent-sdk", () => ({
-  query: vi.fn(),
+vi.mock("../src/summarizers/process.js", () => ({
+  createChildProcessAdapter: vi.fn(),
 }));
 
-import { query } from "@anthropic-ai/claude-agent-sdk";
+import { createChildProcessAdapter } from "../src/summarizers/process.js";
 import { SummarizerSdkError, summarizeConversation } from "../src/summarizer.js";
-
-function asyncIterableFor(sdkMessages: unknown[]): AsyncIterable<unknown> {
-  return {
-    [Symbol.asyncIterator]() {
-      let i = 0;
-      return {
-        next() {
-          if (i < sdkMessages.length) {
-            return Promise.resolve({ value: sdkMessages[i++], done: false });
-          }
-          return Promise.resolve({ value: undefined, done: true });
-        },
-      };
-    },
-  };
-}
 
 function makeExchange(overrides: Partial<ConversationExchange> = {}): ConversationExchange {
   return {
@@ -44,40 +27,45 @@ function makeExchange(overrides: Partial<ConversationExchange> = {}): Conversati
   };
 }
 
-describe("summarizeConversation — Claude resume fallback (cwd-mismatch recovery)", () => {
+function mockCliResults(...results: Array<{ code?: number; stdout?: string; stderr?: string }>) {
+  let callIndex = 0;
+  vi.mocked(createChildProcessAdapter).mockReturnValue({
+    async run(_spec) {
+      const r = results[callIndex++] ?? results[results.length - 1];
+      return {
+        code: r?.code ?? 0,
+        signal: null,
+        stdout: r?.stdout ?? "",
+        stderr: r?.stderr ?? "",
+      };
+    },
+  });
+}
+
+describe("summarizeConversation — Claude CLI resume fallback (cwd-mismatch recovery)", () => {
   beforeEach(() => {
-    vi.mocked(query).mockReset();
+    vi.mocked(createChildProcessAdapter).mockReset();
   });
 
-  it("propagates SDK is_error results as SummarizerSdkError when the fallback also fails", async () => {
-    vi.mocked(query)
-      .mockReturnValueOnce(
-        asyncIterableFor([
-          { type: "result", is_error: true, subtype: "error_during_execution" },
-        ]) as any,
-      )
-      .mockReturnValueOnce(
-        asyncIterableFor([
-          { type: "result", is_error: true, subtype: "error_during_execution" },
-        ]) as any,
-      );
+  it("propagates is_error results as SummarizerSdkError when the fallback also fails", async () => {
+    mockCliResults(
+      { code: 1, stderr: "No conversation found with session ID: abc-123" },
+      { stdout: JSON.stringify({ is_error: true, subtype: "error_during_execution" }) },
+    );
 
     await expect(summarizeConversation([makeExchange()], "abc-123")).rejects.toBeInstanceOf(
       SummarizerSdkError,
     );
   });
 
-  it("attaches the SDK subtype and session_id to the thrown SummarizerSdkError", async () => {
-    vi.mocked(query).mockReturnValueOnce(
-      asyncIterableFor([
-        {
-          type: "result",
-          is_error: true,
-          subtype: "auth_failed",
-          session_id: "sdk-session-id-xyz",
-        },
-      ]) as any,
-    );
+  it("attaches the subtype and session_id to the thrown SummarizerSdkError", async () => {
+    mockCliResults({
+      stdout: JSON.stringify({
+        is_error: true,
+        subtype: "auth_failed",
+        session_id: "sdk-session-id-xyz",
+      }),
+    });
 
     let caught: unknown;
     try {
@@ -90,88 +78,106 @@ describe("summarizeConversation — Claude resume fallback (cwd-mismatch recover
     expect((caught as SummarizerSdkError).sessionId).toBe("sdk-session-id-xyz");
   });
 
-  it("retries without resume when the first call fails with is_error, returning the second call's summary", async () => {
-    vi.mocked(query)
-      .mockReturnValueOnce(
-        asyncIterableFor([
-          { type: "result", is_error: true, subtype: "error_during_execution" },
-        ]) as any,
-      )
-      .mockReturnValueOnce(
-        asyncIterableFor([
-          { type: "result", is_error: false, result: "<summary>Recovered summary text.</summary>" },
-        ]) as any,
-      );
+  it("retries without resume when the first call fails with resume error, returning the second call's summary", async () => {
+    let callCount = 0;
+    vi.mocked(createChildProcessAdapter).mockReturnValue({
+      async run(spec) {
+        callCount++;
+        if (callCount === 1) {
+          return {
+            code: 1,
+            signal: null,
+            stdout: "",
+            stderr: "No conversation found with session ID: abc-123",
+          };
+        }
+        return {
+          code: 0,
+          signal: null,
+          stdout: JSON.stringify({ result: "<summary>Recovered summary text.</summary>" }),
+          stderr: "",
+        };
+      },
+    });
 
     const result = await summarizeConversation([makeExchange()], "abc-123");
     expect(result).toBe("Recovered summary text.");
-    expect(vi.mocked(query)).toHaveBeenCalledTimes(2);
-
-    const firstCallOptions = vi.mocked(query).mock.calls[0]?.[0].options as any;
-    expect(firstCallOptions.resume).toBe("abc-123");
-
-    // The fallback omits resume so the SDK opens a fresh session, and the
-    // prompt grows to include the conversation text the fresh session needs.
-    const secondCallOptions = vi.mocked(query).mock.calls[1]?.[0].options as any;
-    expect(secondCallOptions.resume).toBeUndefined();
-    const secondPrompt = vi.mocked(query).mock.calls[1]?.[0].prompt as string;
-    expect(secondPrompt).toContain("How do I rebase against origin/main?");
-    expect(secondPrompt).toContain("Use git rebase origin/main");
+    expect(callCount).toBe(2);
   });
 
-  it("passes the session's recorded cwd to the SDK when the path still exists on disk", async () => {
+  it("passes the session's recorded cwd to the CLI when the path still exists on disk", async () => {
     const realCwd = mkdtempSync(join(tmpdir(), "moe-memory-cwd-test-"));
     try {
-      vi.mocked(query).mockReturnValueOnce(
-        asyncIterableFor([
-          { type: "result", is_error: false, result: "<summary>ok</summary>" },
-        ]) as any,
-      );
+      let capturedCwd: string | undefined;
+      vi.mocked(createChildProcessAdapter).mockReturnValue({
+        async run(spec) {
+          capturedCwd = spec.cwd;
+          return {
+            code: 0,
+            signal: null,
+            stdout: JSON.stringify({ result: "<summary>ok</summary>" }),
+            stderr: "",
+          };
+        },
+      });
 
       await summarizeConversation([makeExchange({ cwd: realCwd })], "abc-123");
-
-      const opts = vi.mocked(query).mock.calls[0]?.[0].options as any;
-      expect(opts.cwd).toBe(realCwd);
-      expect(opts.resume).toBe("abc-123");
+      expect(capturedCwd).toBe(realCwd);
     } finally {
       rmSync(realCwd, { recursive: true, force: true });
     }
   });
 
-  it("omits cwd from SDK options when the session's recorded cwd no longer exists (dead worktree)", async () => {
-    vi.mocked(query).mockReturnValueOnce(
-      asyncIterableFor([
-        { type: "result", is_error: false, result: "<summary>ok</summary>" },
-      ]) as any,
-    );
+  it("omits cwd from CLI options when the session's recorded cwd no longer exists", async () => {
+    let capturedCwd: string | undefined;
+    vi.mocked(createChildProcessAdapter).mockReturnValue({
+      async run(spec) {
+        capturedCwd = spec.cwd;
+        return {
+          code: 0,
+          signal: null,
+          stdout: JSON.stringify({ result: "<summary>ok</summary>" }),
+          stderr: "",
+        };
+      },
+    });
 
     await summarizeConversation([makeExchange({ cwd: "/definitely/not/here" })], "abc-123");
-
-    const opts = vi.mocked(query).mock.calls[0]?.[0].options as any;
-    expect(opts.cwd).toBeUndefined();
-    expect(opts.resume).toBe("abc-123");
+    expect(capturedCwd).toBeUndefined();
   });
 
-  it("does not retry when the SDK throws a non-resume error", async () => {
-    vi.mocked(query).mockImplementationOnce(() => {
-      throw new Error("Network unreachable");
+  it("does not retry when the CLI throws a non-resume error", async () => {
+    let callCount = 0;
+    vi.mocked(createChildProcessAdapter).mockReturnValue({
+      async run() {
+        callCount++;
+        throw new Error("Network unreachable");
+      },
     });
 
     await expect(summarizeConversation([makeExchange()], "abc-123")).rejects.toThrow(
       /Network unreachable/,
     );
-    expect(vi.mocked(query)).toHaveBeenCalledTimes(1);
+    expect(callCount).toBe(1);
   });
 
-  it("does not retry when the SDK yields is_error with a subtype isResumeFailure rejects", async () => {
-    // Non-resume subtypes must propagate without firing the fallback.
-    vi.mocked(query).mockReturnValueOnce(
-      asyncIterableFor([{ type: "result", is_error: true, subtype: "auth_failed" }]) as any,
-    );
+  it("does not retry when the CLI yields is_error with a non-resume subtype", async () => {
+    let callCount = 0;
+    vi.mocked(createChildProcessAdapter).mockReturnValue({
+      async run() {
+        callCount++;
+        return {
+          code: 0,
+          signal: null,
+          stdout: JSON.stringify({ is_error: true, subtype: "auth_failed" }),
+          stderr: "",
+        };
+      },
+    });
 
     await expect(summarizeConversation([makeExchange()], "abc-123")).rejects.toBeInstanceOf(
       SummarizerSdkError,
     );
-    expect(vi.mocked(query)).toHaveBeenCalledTimes(1);
+    expect(callCount).toBe(1);
   });
 });

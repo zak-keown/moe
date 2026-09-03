@@ -1,6 +1,3 @@
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   buildCodexSummarizerCommand,
@@ -38,34 +35,6 @@ describe("buildSummarizerQueryOptions", () => {
     expect(opts.systemPrompt).toBeUndefined();
   });
 
-  it("passes cwd through to the SDK so resume looks up the session under the correct project dir", () => {
-    // The session's cwd must exist on disk for the option to be honored.
-    const realCwd = mkdtempSync(join(tmpdir(), "moe-memory-cwd-test-"));
-    try {
-      const opts = buildSummarizerQueryOptions({
-        model: "haiku",
-        sessionId: "abc-123",
-        cwd: realCwd,
-      });
-      expect(opts.cwd).toBe(realCwd);
-    } finally {
-      rmSync(realCwd, { recursive: true, force: true });
-    }
-  });
-
-  it("omits cwd when the session's recorded cwd no longer exists on disk", () => {
-    const opts = buildSummarizerQueryOptions({
-      model: "haiku",
-      sessionId: "abc-123",
-      cwd: "/nonexistent/path/that/definitely/does/not/exist",
-    });
-    expect(opts.cwd).toBeUndefined();
-  });
-
-  it("omits cwd when not provided", () => {
-    const opts = buildSummarizerQueryOptions({ model: "haiku", sessionId: "abc-123" });
-    expect(opts.cwd).toBeUndefined();
-  });
 });
 
 describe("isResumeFailure", () => {
