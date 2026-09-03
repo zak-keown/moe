@@ -2,6 +2,7 @@
 import { realpathSync } from "node:fs";
 import { Command, CommanderError } from "commander";
 import { planInit, specInit } from "./plan.js";
+import { progressUpdate } from "./progress.js";
 import { commitReviewFix, reviewStamp } from "./review.js";
 import { adrCreate, contextInit, iterationsInit } from "./scaffold.js";
 import { worktreeCreate, worktreeRemove, worktreeValidate } from "./worktree.js";
@@ -133,6 +134,31 @@ adr
     const path = adrCreate(title);
     console.log(path);
   });
+
+const progress = program
+  .command("progress")
+  .description("Update the iterative-development progress snapshot");
+
+progress
+  .command("update")
+  .description("Overwrite docs/moe/iterations/progress.md with current state")
+  .requiredOption("--phase <phase>", "current phase (e.g. 'implementing ITER-0003')")
+  .requiredOption("--task <task>", "current task (e.g. '4/7 (CleanupPipeline integration)')")
+  .option("--iterations <done/total>", "iteration counts as done/total (e.g. '3/18')")
+  .option("--sentinel <pass/total>", "sentinel corpus status as pass/total (e.g. '10/10')")
+  .option("--event <text>", "last event description (e.g. 'Task 3 committed')")
+  .action(
+    (opts: {
+      phase: string;
+      task: string;
+      iterations?: string;
+      sentinel?: string;
+      event?: string;
+    }) => {
+      const path = progressUpdate(opts);
+      console.log(path);
+    },
+  );
 
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
   try {
