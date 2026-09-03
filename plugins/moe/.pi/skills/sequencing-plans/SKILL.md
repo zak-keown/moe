@@ -39,8 +39,10 @@ One file per plan set, committed alongside the plans it names:
 fenced YAML block. Fields:
 
 - `plan_set_id` — optional stable id unique across the manifests in this
-  repository. When omitted for a legacy manifest, the CLI derives it from the
-  filename by removing `-MANIFEST.md`.
+  repository. It must match `[A-Za-z0-9][A-Za-z0-9._-]*` so qualified
+  `<plan-set-id>/<plan-id>` references round-trip without ambiguity. When
+  omitted for a legacy manifest, the CLI derives it from the filename by
+  removing `-MANIFEST.md` and validates the derived id with the same grammar.
 - `depends_on_plan_sets` — optional list of plan-set ids that must be wholly
   `done` before any plan in this set is runnable. Defaults to `[]`. A blocked
   prerequisite blocks every dependent set transitively.
@@ -55,6 +57,9 @@ fenced YAML block. Fields:
   by design is never handed back as "ready".
 - `commits` — set by `plan-set done`, not by hand. `<base7>..<head7>` for the
   range of commits the finished plan produced.
+
+A manifest must contain at least one plan. Empty plan sets are rejected rather
+than treated as vacuously complete prerequisites.
 
 Example:
 

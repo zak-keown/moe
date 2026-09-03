@@ -1331,6 +1331,20 @@ describe("plan-set", () => {
     expect(r.stderr).toMatch(/depends_on_plan_sets "missing" — not a known plan-set id/);
   });
 
+  it("check rejects a plan-set id that cannot round-trip through a qualified plan id", () => {
+    const r = run(["check", "--manifest", join(FIXTURES, "invalid-plan-set-id-MANIFEST.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(
+      /plan_set_id "bad\/id" must match \[A-Za-z0-9\]\[A-Za-z0-9\._-\]\*/,
+    );
+  });
+
+  it("check rejects an empty plan set", () => {
+    const r = run(["check", "--manifest", join(FIXTURES, "empty-plan-set-MANIFEST.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/plan set "empty-set" must contain at least one plan/);
+  });
+
   it("check rejects duplicate plan-set ids", () => {
     const r = run(["check"], join(FIXTURES, "duplicate-set-id"));
     expect(r.status).not.toBe(0);
