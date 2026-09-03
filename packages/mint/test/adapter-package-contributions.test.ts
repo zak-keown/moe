@@ -49,6 +49,7 @@ describe('adapter package contributions', () => {
     'nested/./../package.json',
     'PACKAGE.JSON',
     'pac\u212Aage.json',
+    'package.j\u017Fon',
   ])(
     'rejects %s as a reserved root package manifest through a stable diagnostic',
     (path) => {
@@ -75,6 +76,22 @@ describe('adapter package contributions', () => {
       }
     },
   )
+
+  it.each([
+    ['package.j\u00DFon', 'sharp S folds to an extra s'],
+    ['package.j\uFB06on', 'the st ligature folds to two characters'],
+  ])('allows %s when %s does not fully fold to the reserved filename', (path) => {
+    const adapter: HarnessAdapter = {
+      name: 'codex',
+      emit: () => ({
+        files: [{ path, content: '{"name":"not-the-root-manifest"}\n' }],
+        limitations: [],
+        emittedCapabilities: ['skill-discovery'],
+      }),
+    }
+
+    expect(() => validateGeneration(freshFixture(), [adapter])).not.toThrow()
+  })
 
   it.each([
     ['codex', 'pi', { pi: { extensions: ['./foreign.ts'] } }],

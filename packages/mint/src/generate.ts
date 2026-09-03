@@ -127,13 +127,26 @@ function immutablePackageContribution(contribution: AdapterPackageContribution):
   return immutableValue({ ...contribution })
 }
 
-function artifactCollisionKey(path: string): string {
-  return path.normalize('NFC').toLowerCase()
+// This deliberately implements equality only for the ASCII-reserved root
+// filename, not a second general artifact-collision authority. It pins the
+// complete Unicode 16.0.0 CaseFolding.txt C/F mappings whose folded values are
+// non-empty substrings of "package.json". The table's only non-identity
+// scalars are ASCII uppercase letters, U+017F (long s), and U+212A (Kelvin
+// sign); all other scalars cannot fully case-fold into this reserved name.
+const RESERVED_PACKAGE_JSON_FULL_CASE_FOLD = new Map<string, string>([
+  ['A', 'a'], ['C', 'c'], ['E', 'e'], ['G', 'g'], ['J', 'j'], ['K', 'k'],
+  ['N', 'n'], ['O', 'o'], ['P', 'p'], ['S', 's'], ['\u017F', 's'], ['\u212A', 'k'],
+])
+
+function reservedPackageJsonCaseFold(path: string): string {
+  return [...path.normalize('NFC')]
+    .map((scalar) => RESERVED_PACKAGE_JSON_FULL_CASE_FOLD.get(scalar) ?? scalar)
+    .join('')
 }
 
 function isReservedRootPackagePath(rootAbs: string, path: string): boolean {
   const artifactRelative = relative(rootAbs, resolve(rootAbs, path)).split(sep).join('/')
-  return artifactCollisionKey(artifactRelative) === artifactCollisionKey('package.json')
+  return reservedPackageJsonCaseFold(artifactRelative) === 'package.json'
 }
 
 function isTargetId(name: string): name is TargetId {
