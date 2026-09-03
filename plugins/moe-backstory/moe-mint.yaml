@@ -11,8 +11,8 @@ author:
   name: Zak Keown
   email: zak.keown@outlook.com
 license: Apache-2.0
-repository: https://gitlab.com/moe-ai/moe
-homepage: https://gitlab.com/moe-ai/moe
+repository: https://github.com/zak-keown/moe
+homepage: https://github.com/zak-keown/moe
 keywords:
   - reverse-engineering
   - specification

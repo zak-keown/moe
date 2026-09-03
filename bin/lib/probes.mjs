@@ -5,10 +5,9 @@
 // Two-tier taxonomy per the installer-hq-dx backlog item (see
 // `.planning/backlog/W01P01 - installer-hq-dx.md`):
 //
-//   - HARD probes must pass for install to proceed. `node`, `pnpm`, `git`,
-//     and on native Windows, `bash` (the bootstrap-hook silent-skip is
-//     silent-death for Moe's whole value proposition; that is why bash is
-//     hard on win32 only).
+//   - HARD probes must pass for install to proceed. `node`, `git`, the
+//     selected harness executable, and on native Windows the `bash` required
+//     by Claude-layout/Cursor hook hosts.
 //   - SOFT probes name the capability each miss disables, and warn rather
 //     than fail. `cargo` → `moe-tab`, `tmux` → `moe-crew`, `uv` → `moe-proof`,
 //     Chrome → `moe-glass`, `docker` → `moe-mint test`.
@@ -19,8 +18,10 @@
 // `2.10.0` vs `2.9.0`).
 
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { accessSync, constants, existsSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { platform } from "node:process";
+import { getHarness, HARNESS_IDS, HARNESSES } from "./plugin-registry.mjs";
 
 const WIN32 = platform === "win32";
 
@@ -39,6 +40,47 @@ export function tryExec(cmd, args, opts = {}) {
   } catch {
     return undefined;
   }
+}
+
+/** True when executable resolves to a regular executable file on PATH.
+ * Detection reads directory entries only; it never launches the host CLI. */
+export function executableOnPath(executable, options = {}) {
+  const targetPlatform = options.platform ?? platform;
+  const environment = options.env ?? process.env;
+  const separator = targetPlatform === "win32" ? ";" : ":";
+  const pathEntries = (environment.PATH ?? "").split(separator).filter(Boolean);
+  const hasExtension = /\.[^./\\]+$/.test(executable);
+  const extensions =
+    targetPlatform === "win32" && !hasExtension
+      ? (environment.PATHEXT ?? ".COM;.EXE;.BAT;.CMD").split(";").filter(Boolean)
+      : [""];
+
+  for (const dir of pathEntries) {
+    for (const extension of extensions) {
+      const candidate = join(
+        dir,
+        targetPlatform === "win32" ? `${executable}${extension}` : executable,
+      );
+      try {
+        if (!statSync(candidate).isFile()) continue;
+        accessSync(candidate, targetPlatform === "win32" ? constants.F_OK : constants.X_OK);
+        return true;
+      } catch {
+        // Keep searching PATH after unreadable, non-executable, or absent candidates.
+      }
+    }
+  }
+  return false;
+}
+
+/** Adapter IDs whose unique host executable is installed. Agent Plugins 1.0
+ * deliberately has no executable and therefore can only be selected
+ * explicitly or through MOE_DEFAULT_HARNESS. */
+export function detectInstalledHarnesses(options = {}) {
+  return HARNESS_IDS.filter((id) => {
+    const executable = HARNESSES[id].executable;
+    return executable && executableOnPath(executable, options);
+  });
 }
 
 /** Compare two dotted version strings. `cmpVersion('24.19.0', '24.0.0') > 0`.
@@ -101,16 +143,16 @@ export function probeNode() {
   });
 }
 
-/** pnpm 11. Emitted plugins do not depend on pnpm at runtime, but every
- *  contributor path does and so does `moe-mint test`, so the doctor names
- *  it as hard. */
+/** pnpm 11. Emitted plugins do not depend on pnpm at runtime. It remains a
+ * soft contributor capability because workspace and moe-mint paths use it. */
 export function probePnpm() {
   const version = extractVersion(tryExec("pnpm", ["--version"]));
   if (!version) {
     return result({
       name: "pnpm",
-      tier: "hard",
+      tier: "soft",
       ok: false,
+      capability: "contributor workspace and moe-mint commands",
       fixHint:
         "Enable Corepack (`corepack enable`) and rerun; pnpm 11 will bootstrap itself from packageManager.",
     });
@@ -118,10 +160,11 @@ export function probePnpm() {
   const ok = cmpVersion(version, "11.0.0") >= 0;
   return result({
     name: "pnpm",
-    tier: "hard",
+    tier: "soft",
     ok,
     version,
     minVersion: "11.0.0",
+    capability: ok ? undefined : "contributor workspace and moe-mint commands",
     fixHint: ok ? undefined : "Upgrade to pnpm 11 (`corepack use pnpm@11`).",
   });
 }
@@ -157,8 +200,8 @@ export function probeGit() {
  * first (Claude Code's own documented settings knob), then the two standard
  * Git for Windows install paths, then `where bash` on PATH.
  */
-export function probeBashOnWindows() {
-  if (!WIN32) return undefined;
+export function probeBashOnWindows(harnessId) {
+  if (!WIN32 || !getHarness(harnessId)?.requiresWindowsBash) return undefined;
   const envPath = process.env.CLAUDE_CODE_GIT_BASH_PATH;
   if (envPath && existsSync(envPath)) {
     return result({
@@ -351,32 +394,32 @@ export function probePython() {
   });
 }
 
-/** `claude` CLI — hard for install. Every marketplace-add and plugin-install
- *  call routes through it, so its absence turns `moe-install` into a no-op
- *  that fails at the first spawn. */
-export function probeClaude() {
-  const version = extractVersion(tryExec("claude", ["--version"]));
-  if (!version) {
-    return result({
-      name: "claude",
-      tier: "hard",
-      ok: false,
-      fixHint:
-        "Install Claude Code (see https://code.claude.com/docs/en/setup). `moe-install` shells out to `claude plugin marketplace add` / `claude plugin install`.",
-    });
-  }
-  return result({ name: "claude", tier: "hard", ok: true, version });
+/** The selected host is the only host CLI that is a hard requirement. */
+export function probeHarness(harnessId) {
+  const harness = getHarness(harnessId);
+  if (!harness?.executable) return undefined;
+  const versionOutput = tryExec(harness.executable, ["--version"]);
+  const version = extractVersion(versionOutput) ?? versionOutput?.split(/\r?\n/)[0];
+  return result({
+    name: harness.executable,
+    tier: "hard",
+    ok: Boolean(versionOutput),
+    version,
+    fixHint: versionOutput
+      ? undefined
+      : `Install ${harness.displayName}; moe-install selected the ${harnessId} adapter.`,
+  });
 }
 
-/** Every probe, in a stable report order. `probeBashOnWindows` may return
- *  undefined on POSIX; the doctor filters those out. */
-export function allProbes() {
+/** Every probe, in a stable report order. Platform-inapplicable and
+ * specification-wide host probes return undefined and are filtered out. */
+export function allProbes(harnessId) {
   return [
     probeNode(),
     probePnpm(),
     probeGit(),
-    probeBashOnWindows(),
-    probeClaude(),
+    probeBashOnWindows(harnessId),
+    probeHarness(harnessId),
     probeCargo(),
     probeTmux(),
     probeUv(),

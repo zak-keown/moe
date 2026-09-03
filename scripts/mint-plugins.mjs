@@ -48,6 +48,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { excludedHarnesses, PLUGINS, REPOSITORY_URL } from "../bin/lib/plugin-registry.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(ROOT, "plugins");
@@ -61,9 +62,7 @@ const MINT_CLI = path.join(ROOT, "packages/mint/dist/cli.js");
 const COMPONENTS = ["skills", "commands", "agents", "hooks", ".mcp.json"];
 
 /**
- * The plugin registry.
- *
- * `checkMarketplace()` below asserts this list agrees with
+ * `checkMarketplace()` below asserts the canonical registry agrees with
  * `.claude-plugin/marketplace.json`, in both directions: a plugin generated but
  * not listed is uninstallable, and one listed but not generated is a broken
  * link. Both fail silently otherwise, which is why it is checked here rather
@@ -75,56 +74,16 @@ const COMPONENTS = ["skills", "commands", "agents", "hooks", ".mcp.json"];
  * installs it:
  *
  *   - "local": marketplace listing is "./plugins/<name>", installed from
- *     the checkout (contributor path) or a sparse marketplace clone (main
- *     end-user path for content plugins).
+ *     a checkout.
  *   - { npm: "<package-name>" }: marketplace listing is the npm-source
  *     shape `{"source":"npm","package":"…"}`, installed by `claude plugin`
- *     from the `@bubstack` scope. Used for the two MCP-server plugins
- *     (memory, glass) so a native-Windows user gets prebuilt `better-sqlite3`
- *     without an MSVC toolchain — see the installer-hq-dx backlog item.
+ *     from the `@bubstack` scope. Runtime-bearing packages therefore use
+ *     their published dependency graph and a native-Windows user gets
+ *     prebuilt dependencies without an MSVC toolchain.
  *
  * checkMarketplace() below asserts the marketplace listing agrees with each
  * plugin's declared distribution, and rejects any surprise combinations.
  */
-const PLUGINS = [
-  {
-    name: "moe",
-    pkg: "core",
-    config: "mint/moe.yaml",
-    distribution: { npm: "@bubstack/moe-core" },
-  },
-  {
-    name: "moe-backstory",
-    pkg: "backstory",
-    config: "mint/moe-backstory.yaml",
-    distribution: { npm: "@bubstack/moe-backstory" },
-  },
-  {
-    name: "moe-memory",
-    pkg: "memory",
-    config: "mint/moe-memory.yaml",
-    distribution: { npm: "@bubstack/moe-memory" },
-  },
-  {
-    name: "moe-glass",
-    pkg: "glass",
-    config: "mint/moe-glass.yaml",
-    distribution: { npm: "@bubstack/moe-glass" },
-  },
-  {
-    name: "moe-crew",
-    pkg: "crew",
-    config: "mint/moe-crew.yaml",
-    distribution: { npm: "@bubstack/moe-crew" },
-  },
-  {
-    name: "moe-statusline",
-    pkg: "statusline",
-    config: "mint/moe-statusline.yaml",
-    distribution: { npm: "@bubstack/moe-statusline" },
-  },
-];
-
 /**
  * Skill directories that are not skills.
  *
@@ -374,12 +333,71 @@ function checkMarketplace() {
     fail(`marketplace.json disagrees with the plugin registry:\n  - ${problems.join("\n  - ")}`);
 }
 
+function readHarnessExclusions(yaml) {
+  const excluded = [];
+  let inHarnesses = false;
+  let inExclude = false;
+  for (const line of yaml.split(/\r?\n/)) {
+    if (line === "harnesses:") {
+      inHarnesses = true;
+      continue;
+    }
+    if (!inHarnesses) continue;
+    if (/^[^\s#]/.test(line)) break;
+    if (/^\s{2}exclude:\s*$/.test(line)) {
+      inExclude = true;
+      continue;
+    }
+    if (inExclude) {
+      const match = /^\s{4}-\s+(\S+)\s*$/.exec(line);
+      if (match) excluded.push(match[1]);
+      else if (line.trim() && !line.trimStart().startsWith("#")) inExclude = false;
+    }
+  }
+  return excluded.sort();
+}
+
+function scalarField(yaml, field) {
+  return new RegExp(`^${field}:\\s*(\\S+)\\s*$`, "m").exec(yaml)?.[1];
+}
+
+function checkPluginConfigs() {
+  const problems = [];
+  for (const plugin of PLUGINS) {
+    const configPath = path.join(ROOT, "packages", plugin.pkg, plugin.config);
+    if (!fs.existsSync(configPath)) {
+      problems.push(`${plugin.name}: missing ${path.relative(ROOT, configPath)}`);
+      continue;
+    }
+    const yaml = fs.readFileSync(configPath, "utf8");
+    if (scalarField(yaml, "name") !== plugin.name) {
+      problems.push(`${plugin.name}: mint config name does not match the registry`);
+    }
+    for (const field of ["repository", "homepage"]) {
+      if (scalarField(yaml, field) !== REPOSITORY_URL) {
+        problems.push(`${plugin.name}: ${field} must be ${REPOSITORY_URL}`);
+      }
+    }
+    const actualExcluded = readHarnessExclusions(yaml);
+    const expectedExcluded = excludedHarnesses(plugin).sort();
+    if (JSON.stringify(actualExcluded) !== JSON.stringify(expectedExcluded)) {
+      problems.push(
+        `${plugin.name}: harness exclusions are ${actualExcluded.join(", ") || "none"}; expected ${expectedExcluded.join(", ") || "none"}`,
+      );
+    }
+  }
+  if (problems.length > 0) {
+    fail(`mint configs disagree with the plugin registry:\n  - ${problems.join("\n  - ")}`);
+  }
+}
+
 function main() {
   if (!fs.existsSync(MINT_CLI)) {
     fail(
       `${path.relative(ROOT, MINT_CLI)} not found — run \`pnpm --filter @bubstack/moe-mint build\` first`,
     );
   }
+  checkPluginConfigs();
   checkMarketplace();
 
   fs.mkdirSync(OUT, { recursive: true });

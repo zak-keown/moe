@@ -9,7 +9,7 @@
       "sha256": "c6dfb225f37e29a95cc87e7898493fd86ca6390a7c822a39f94d3a252d4f18fa"
     },
     ".claude-plugin/plugin.json": {
-      "sha256": "1409db366cfb4f71e2a8562f5184b03b19cff81570cd8e831304eceeafb07edc"
+      "sha256": "aa67ffec0a334029dbe0170c23d6083b904bb4a4db0bce9240cfe3b5b3c9e817"
     },
     ".claude-plugin/skills/browsing/.gitignore": {
       "sha256": "ad56777b8731985ccaa9cef39cc9f962c7b42006f5a460e1e412af85a75a8b08",
@@ -216,7 +216,7 @@
       "mode": 493
     },
     ".codex-plugin/plugin.json": {
-      "sha256": "d85886226dca768652a0cf98f746142ccb3e6795bc20cb689df1237ad45f3231"
+      "sha256": "76f99fde9429a222d378025ceb168683cdbb5356d1bc6392ff31f02c9033c511"
     },
     ".codex-plugin/skills/browsing/.gitignore": {
       "sha256": "ad56777b8731985ccaa9cef39cc9f962c7b42006f5a460e1e412af85a75a8b08",
@@ -426,7 +426,7 @@
       "sha256": "288bb4249f05bca3f7097550fcaa6a3e25a6e0b6860ec5c50e21673212476a1f"
     },
     ".cursor-plugin/plugin.json": {
-      "sha256": "7b1e657b7a588ebee6e3435d96b45da9db72ef4e88d8e968882bfb1cb96c829f"
+      "sha256": "20a12aaf67c743835d289fd3eead0ff9b5658491d0645f3b2454842752df968a"
     },
     ".cursor-plugin/skills/browsing/.gitignore": {
       "sha256": "ad56777b8731985ccaa9cef39cc9f962c7b42006f5a460e1e412af85a75a8b08",
@@ -633,7 +633,7 @@
       "mode": 493
     },
     ".kimi-plugin/plugin.json": {
-      "sha256": "f5b3ea8dc32f56ec72597b24fe347415bda73d06722f69f7b2ce6d86ef5560b2"
+      "sha256": "69aba128b803d184dd365f7917639502ca1b6b28c33e492c43bf9b73c25ba318"
     },
     ".kimi-plugin/skills/browsing/.gitignore": {
       "sha256": "ad56777b8731985ccaa9cef39cc9f962c7b42006f5a460e1e412af85a75a8b08",
@@ -1260,34 +1260,34 @@
       "sha256": "d378012d2d98993a88e2794b5736529b4e715f231fcfc13d595f73d013b89a4f"
     },
     "docs/install/claude-code.md": {
-      "sha256": "c1c4909b059a7f46cd3ac3bbd0512fd0a3a76ffa7c170541e486fc000a248015"
+      "sha256": "95be5ece32c53cb306913beea0ffe50b8ac194a0e4e047ad878e7909364da1c6"
     },
     "docs/install/codex.md": {
       "sha256": "01547105b494b71f784abdd814848b3c4d301620a949cdbe7b5d2eefb8f9e478"
     },
     "docs/install/copilot.md": {
-      "sha256": "31ea135ce55ce360ffe5406e4a6c6d16e52810261efe88df52669a77c5074770"
+      "sha256": "9b8fa30d7afe62c3e38245f2eb80a60234a3bfba93b229b8b42a7535e68bccb4"
     },
     "docs/install/cursor.md": {
       "sha256": "cb3437dc3a6bf0e37cb15452b91f2d7d065545c8f06d7f40f4b535148e867148"
     },
     "docs/install/kimi.md": {
-      "sha256": "c6727f4f2313e3b9d7b480ac693da18f790f6b6092d586bf9ff7021795161e65"
+      "sha256": "a7b995dac2b8e2ecefddf05b7f30f92d9f77c52a33e1c1e06c3fb575c35dddf2"
     },
     "docs/install/opencode.md": {
-      "sha256": "e96d1e0ca1a336d6cda79dce4912254af5e302a7a25b86e3688498e10852e498"
+      "sha256": "fe5d6d01ab93ae9dc3a05f127348c943ff1f1415312e8cef2e605a178ee2d9da"
     },
     "docs/install/pi.md": {
-      "sha256": "a1734a680937649ed765c4d2c86ef7130044b2fe28ca81ce7d94550c582a8c86"
+      "sha256": "804194f82ffb678f1bdf6c851ff5d8efd322de866d0e8c8b12a12dff991969c0"
     },
     "docs/support-matrix.md": {
       "sha256": "716dd6b7967ab805b5e944ffd73d6a304cc81be2390dd90b41a86eecee1e5412"
     },
     "package.json": {
-      "sha256": "6126f92934f8612e64b7bd86d4793ff76f874ef86984381ddd5188f9016954ad"
+      "sha256": "5490577a1445deef1189e6bd2601cfc74a2e26a99cac2d7922edf7b4340cda24"
     },
     "plugin.json": {
-      "sha256": "052fcd28396eddb0df88aea2f3b7b446ea32a4d2f7c01c658e64bd513c5c056f"
+      "sha256": "871f72520db8fc7829643afce67ae08d14aab39d6fccb2b85048c00e1a5cae55"
     }
   }
 }

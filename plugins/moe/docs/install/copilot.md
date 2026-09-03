@@ -9,7 +9,7 @@
 ## Installing
 
 ```
-copilot plugin marketplace add https://gitlab.com/moe-ai/moe
+copilot plugin marketplace add https://github.com/zak-keown/moe
 copilot plugin install moe@moe
 ```
 
