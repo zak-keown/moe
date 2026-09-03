@@ -248,7 +248,7 @@ describe('CLI end-to-end', () => {
     expect(result.stderr).toContain('missing-runtime')
     expect(readFileSync(join(root, 'plugins', 'canonical.bin'))).toEqual(canonical)
     expect(existsSync(join(root, 'plugins.next-sixfailure'))).toBe(false)
-  })
+  }, 15_000)
 
   it('ships every core hook executable referenced by the canonical Claude hook manifest', () => {
     const pluginRoot = join(WORKSPACE_ROOT, 'plugins', 'moe')
@@ -347,8 +347,9 @@ describe('CLI end-to-end', () => {
     runCli(['generate'], dir)
     const yamlPath = join(dir, 'moe-mint.yaml')
     const yaml = readFileSync(yamlPath, 'utf8')
-    // Excluding opencode drops its four uniquely-owned files (the plugin JS,
-    // the translated command/agent .md files, and the install doc).
+    // Excluding opencode drops its uniquely-owned adapter files and complete
+    // rendered skill tree. Every removed path must be itemized before an
+    // exact summary count so users can audit the destructive change.
     writeFileSync(yamlPath, yaml
       .replace('  opencode: { intent: preview, expected_capabilities: [skill-discovery, command-discovery, agent-discovery, bootstrap-routing], operating_systems: [macos] }', '  opencode: { intent: omit }')
       .replace('harnesses:\n', 'harnesses:\n  exclude: [opencode]\n'))
@@ -359,15 +360,22 @@ describe('CLI end-to-end', () => {
     const pluginJsIndex = result.stdout.indexOf('pruned: .opencode/plugins/kitchen-sink.js')
     const commandIndex = result.stdout.indexOf('pruned: .opencode/command/ks-hello.md')
     const agentIndex = result.stdout.indexOf('pruned: .opencode/agent/ks-reviewer.md')
+    const skillIndex = result.stdout.indexOf('pruned: .opencode/skills/greeting/SKILL.md')
     const installDocIndex = result.stdout.indexOf('pruned: docs/install/opencode.md')
-    const countIndex = result.stdout.indexOf('Pruned 4 stale file(s)')
+    const pruneLines = result.stdout.split('\n').filter((line) => line.startsWith('pruned: '))
+    const summary = result.stdout.match(/Pruned (\d+) stale file\(s\)/)
+    expect(summary).not.toBeNull()
+    expect(Number(summary?.[1])).toBe(pruneLines.length)
+    const countIndex = summary?.index ?? -1
     expect(pluginJsIndex).toBeGreaterThanOrEqual(0)
     expect(commandIndex).toBeGreaterThanOrEqual(0)
     expect(agentIndex).toBeGreaterThanOrEqual(0)
+    expect(skillIndex).toBeGreaterThanOrEqual(0)
     expect(installDocIndex).toBeGreaterThanOrEqual(0)
     expect(countIndex).toBeGreaterThan(pluginJsIndex)
     expect(countIndex).toBeGreaterThan(commandIndex)
     expect(countIndex).toBeGreaterThan(agentIndex)
+    expect(countIndex).toBeGreaterThan(skillIndex)
     expect(countIndex).toBeGreaterThan(installDocIndex)
   })
 

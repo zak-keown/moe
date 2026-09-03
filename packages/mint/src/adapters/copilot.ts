@@ -39,7 +39,8 @@ export const copilot: HarnessAdapter = Object.freeze({
     rules: 'none',
     variables: 'none',
   } satisfies ComponentSupport,
-  skillsOutputDir: undefined,
+  skillLayout: { outputDir: '.claude-plugin/skills', profile: 'claude-code', mode: 'rendered' as const },
+  skillDelivery: 'shared-compatible',
   installDoc,
   emit(_model: PluginModel) {
     // Copilot consumes Claude's validated marketplace layout. Generation

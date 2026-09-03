@@ -1,10 +1,19 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { hasConsent } from "../core/consent.js";
-import { eventsPath } from "../core/paths.js";
+import { eventsPath, harnessMarkerPath, metaPath } from "../core/paths.js";
 import { isoSecondsUtc } from "../core/time.js";
-import { ensureOwnedDir, readHarnessMarker, writeMeta, writeShim } from "../core/worker-store.js";
+import {
+  ensureOwnedDir,
+  listWorkers,
+  readHarnessMarker,
+  readMeta,
+  writeMeta,
+  writeShim,
+} from "../core/worker-store.js";
+import type { HarnessId } from "../harness/driver.js";
 import { getDriver } from "../harness/registry.js";
+import { resolveHarness } from "../harness/resolver.js";
 import { awaitSessionStart } from "./await-start.js";
 import type { CommandContext, CommandResult } from "./context.js";
 import { type BootstrapOpts, consentError, renderPanel, resolveCwd } from "./launch.js";
@@ -18,6 +27,84 @@ export interface AdoptArgs {
   /** The existing Claude session id to resume. */
   sessionId: string;
   extraArgs: string[];
+}
+
+type ExistingHarnessState =
+  | { ok: true; harness?: HarnessId | undefined }
+  | { ok: false; result: CommandResult };
+
+/**
+ * Inspect every persisted identity relevant to an adopt target. Metadata may
+ * be keyed by the supplied session id or by another id carrying the same tmux
+ * name; derive workers may instead have only a sidecar marker. Every present
+ * value goes through the canonical resolver, and contradictory evidence is a
+ * controlled state error rather than permission to overwrite it with Claude.
+ */
+function existingHarnessState(
+  workerDir: string,
+  tmuxName: string,
+  sessionId: string,
+): ExistingHarnessState {
+  const evidence: Array<{ source: string; value: unknown }> = [];
+  const seenSessionIds = new Set<string>();
+  const directMetaPath = metaPath(workerDir, sessionId);
+  if (existsSync(directMetaPath)) {
+    const meta = readMeta(workerDir, sessionId);
+    if (meta === null) {
+      evidence.push({ source: `metadata ${directMetaPath}`, value: "(unreadable metadata)" });
+    } else {
+      seenSessionIds.add(meta.session_id);
+      evidence.push({
+        source: `metadata ${directMetaPath}`,
+        value: meta.harness ?? "(missing harness field in metadata)",
+      });
+    }
+  }
+  for (const meta of listWorkers(workerDir)) {
+    if (meta.tmux_name !== tmuxName || seenSessionIds.has(meta.session_id)) continue;
+    seenSessionIds.add(meta.session_id);
+    evidence.push({
+      source: `metadata for session ${meta.session_id}`,
+      value: meta.harness ?? "(missing harness field in metadata)",
+    });
+  }
+
+  const markerPath = harnessMarkerPath(workerDir, tmuxName);
+  if (existsSync(markerPath)) {
+    evidence.push({
+      source: `harness marker ${markerPath}`,
+      value: readHarnessMarker(workerDir, tmuxName) ?? "(empty or unreadable harness marker)",
+    });
+  }
+
+  const resolved: Array<{ source: string; harness: HarnessId }> = [];
+  for (const item of evidence) {
+    const resolution = resolveHarness({ worker: item.value, installed: [] });
+    if (!resolution.ok) {
+      return {
+        ok: false,
+        result: {
+          stderr: `Error: invalid ${item.source}: ${resolution.diagnostic}`,
+          code: resolution.code,
+        },
+      };
+    }
+    resolved.push({ source: item.source, harness: resolution.harness });
+  }
+
+  const harnesses = new Set(resolved.map((item) => item.harness));
+  if (harnesses.size > 1) {
+    return {
+      ok: false,
+      result: {
+        stderr: `Error: conflicting harness state for '${tmuxName}': ${resolved
+          .map((item) => `${item.source} says ${item.harness}`)
+          .join("; ")}`,
+        code: 2,
+      },
+    };
+  }
+  return { ok: true, harness: resolved[0]?.harness };
 }
 
 /**
@@ -54,16 +141,15 @@ export async function cmdAdopt(
     };
   }
 
-  if (!hasConsent(ctx.home)) return consentError(opts.moeCrewPath);
+  if (!hasConsent(ctx.home, ctx.environment ?? {})) return consentError(opts.moeCrewPath);
 
-  // adopt is claude-only. A codex/pi worker of this tmux-name leaves a `.harness`
-  // sidecar; refuse rather than respawn its pane as `claude --resume <id>`, which
-  // would rewrite its meta and destroy it. Claude workers leave no sidecar, so
-  // re-adopting one is unaffected.
-  const existingHarness = readHarnessMarker(ctx.workerDir, tmuxName);
-  if (existingHarness !== null && existingHarness !== "claude") {
+  // Adopt is Claude-only. Refuse every non-Claude, malformed, or conflicting
+  // persisted identity before checking the transcript or touching tmux/state.
+  const existing = existingHarnessState(ctx.workerDir, tmuxName, sessionId);
+  if (!existing.ok) return existing.result;
+  if (existing.harness !== undefined && existing.harness !== "claude") {
     return {
-      stderr: `Error: '${tmuxName}' is a ${existingHarness} worker; adopt is claude-only (codex/pi mint their own ids and offer no resume-by-id). Stop it first, then relaunch.`,
+      stderr: `Error: '${tmuxName}' is a ${existing.harness} worker; adopt is claude-only (codex/pi mint their own ids and offer no resume-by-id). Stop it first, then relaunch.`,
       code: 1,
     };
   }

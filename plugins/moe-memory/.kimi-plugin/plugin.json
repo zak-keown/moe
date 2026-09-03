@@ -16,7 +16,7 @@
     "journal",
     "mcp"
   ],
-  "skills": "./skills/",
+  "skills": "./.kimi-plugin/skills/",
   "sessionStart": {
     "skill": "remembering-conversations"
   }

@@ -4,10 +4,11 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { buildModel } from '../../src/model.js'
+import { adjustedModel } from '../../src/vocabulary.js'
 import { kimi } from '../../src/adapters/kimi.js'
 import { adapters, getAdapter } from '../../src/adapters/index.js'
 
-const model = buildModel('fixtures/kitchen-sink')
+const model = adjustedModel(buildModel('fixtures/kitchen-sink'), kimi.skillLayout)
 
 describe('adapter registry', () => {
   it('registers kimi', () => {
@@ -30,7 +31,7 @@ describe('kimi adapter', () => {
       license: 'MIT',
       repository: 'https://github.com/example/kitchen-sink',
       keywords: ['fixture'],
-      skills: './skills/',
+      skills: './.kimi-plugin/skills/',
       sessionStart: { skill: 'using-kitchen-sink' },
     })
   })

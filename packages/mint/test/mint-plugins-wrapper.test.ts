@@ -7,6 +7,8 @@ import { describe, expect, it } from 'vitest'
 // source; importing the real entry keeps these tests on the pnpm-mint path.
 // @ts-expect-error scripts/mint-plugins.mjs intentionally has no package declaration file
 const wrapper = await import('../../../scripts/mint-plugins.mjs')
+// @ts-expect-error dependency-free bin registry intentionally has no package declaration file
+const { HARNESS_IDS, PLUGINS } = await import('../../../bin/lib/plugin-registry.mjs')
 // @ts-expect-error scripts/mint-recover.mjs intentionally has no package declaration file
 const recovery = await import('../../../scripts/mint-recover.mjs')
 // @ts-expect-error root transaction module intentionally has no package declaration file
@@ -64,7 +66,107 @@ function transactionError(code: string, paths: string[], action: string): Error 
   })
 }
 
+type CanonicalPlugin = {
+  name: string
+  pkg: string
+  config: string
+  repository: string
+  distribution: { npm: string }
+  harnesses: string[]
+}
+
+function resolvedPlugins() {
+  return (PLUGINS as CanonicalPlugin[]).map((plugin) => {
+    const excluded = HARNESS_IDS.filter((harness: string) => !plugin.harnesses.includes(harness))
+    return {
+      id: plugin.name,
+      npmPackage: plugin.distribution.npm,
+      sourcePackagePath: `packages/${plugin.pkg}`,
+      targets: Object.fromEntries(HARNESS_IDS.map((harness: string) => [
+        harness,
+        { intent: plugin.harnesses.includes(harness) ? 'preview' : 'omit' },
+      ])),
+      config: {
+        source: `packages/${plugin.pkg}/${plugin.config}`,
+        repository: plugin.repository,
+        distribution: { npm: plugin.distribution.npm },
+        harnesses: { exclude: excluded },
+      },
+    }
+  })
+}
+
 describe('root Mint generation wrapper', () => {
+  it('accepts the resolved platform only when it matches the canonical bin registry', () => {
+    expect(() => wrapper.validateCanonicalPluginRegistry({ plugins: resolvedPlugins() })).not.toThrow()
+  })
+
+  it.each([
+    ['source path', (plugin: ReturnType<typeof resolvedPlugins>[number]) => { plugin.sourcePackagePath = 'packages/wrong' }],
+    ['config path', (plugin: ReturnType<typeof resolvedPlugins>[number]) => { plugin.config.source = 'packages/wrong/mint/moe.yaml' }],
+    ['repository', (plugin: ReturnType<typeof resolvedPlugins>[number]) => { plugin.config.repository = 'https://example.com/wrong' }],
+    ['resolved npm package', (plugin: ReturnType<typeof resolvedPlugins>[number]) => { plugin.npmPackage = '@wrong/package' }],
+    ['config npm package', (plugin: ReturnType<typeof resolvedPlugins>[number]) => { plugin.config.distribution.npm = '@wrong/package' }],
+    ['target intent activation', (plugin: ReturnType<typeof resolvedPlugins>[number]) => { plugin.targets.codex = { intent: 'omit' } }],
+    ['harness exclusion activation', (plugin: ReturnType<typeof resolvedPlugins>[number]) => { plugin.config.harnesses.exclude.push('codex') }],
+  ])('rejects %s drift before preparing generated outputs', async (_field, mutate) => {
+    const operations: string[] = []
+    const errors: string[] = []
+    const plugins = resolvedPlugins()
+    const first = plugins[0]
+    if (first === undefined) throw new Error('canonical plugin fixture is empty')
+    mutate(first)
+    const status = await wrapper.executeMintPluginsCli({
+      repositoryRoot: generationRoot(),
+      host: host('/fixture/repository'),
+      nonceFactory: () => {
+        operations.push('nonce')
+        return FIXED_NONCE
+      },
+      loadRuntime: async () => ({
+        resolvePlatform: () => ({ plugins }),
+        assembleArtifactSet: () => {
+          operations.push('assemble')
+          return []
+        },
+        projections: {},
+      }),
+    }, { error: (message: string) => errors.push(message) })
+
+    expect(status).toBe(1)
+    expect(operations).toEqual([])
+    expect(errors.join('\n')).toContain('MINT_PLUGIN_REGISTRY_MISMATCH')
+  })
+
+  it('rejects missing, extra, and duplicate plugin records in either registry', () => {
+    const canonical = PLUGINS as CanonicalPlugin[]
+    const first = canonical[0]
+    if (first === undefined) throw new Error('canonical plugin fixture is empty')
+    const extra = { ...first, name: 'extra-plugin' }
+    const resolved = resolvedPlugins()
+    const firstResolved = resolved[0]
+    if (firstResolved === undefined) throw new Error('resolved plugin fixture is empty')
+
+    expect(() => wrapper.validateCanonicalPluginRegistry({ plugins: resolved.slice(1) })).toThrow(/moe/)
+    expect(() => wrapper.validateCanonicalPluginRegistry({ plugins: resolved }, [...canonical, extra])).toThrow(/extra-plugin/)
+    expect(() => wrapper.validateCanonicalPluginRegistry({ plugins: [...resolved, firstResolved] })).toThrow(/moe/)
+    expect(() => wrapper.validateCanonicalPluginRegistry({ plugins: resolved }, [...canonical, first])).toThrow(/moe/)
+  })
+
+  it('rejects duplicate canonical harness activations and duplicate Mint exclusions', () => {
+    const canonical = PLUGINS as CanonicalPlugin[]
+    const duplicateHarness = canonical.map((plugin, index) => index === 0
+      ? { ...plugin, harnesses: [...plugin.harnesses, plugin.harnesses[0]] }
+      : plugin)
+    const plugins = resolvedPlugins()
+    const statusline = plugins.at(-1)
+    if (statusline === undefined) throw new Error('resolved statusline fixture is missing')
+    statusline.config.harnesses.exclude.push('cursor')
+
+    expect(() => wrapper.validateCanonicalPluginRegistry({ plugins: resolvedPlugins() }, duplicateHarness)).toThrow(/moe/)
+    expect(() => wrapper.validateCanonicalPluginRegistry({ plugins })).toThrow(/moe/)
+  })
+
   it.each(['darwin', 'linux'])('accepts the supported %s host contract', (platform) => {
     let changedTo: string | undefined
     wrapper.validateHostContract({
@@ -158,6 +260,7 @@ describe('root Mint generation wrapper', () => {
         transaction = transactionModule.createGenerationTransaction(nonce)
         return transaction
       },
+      validateRegistry: () => undefined,
       loadRuntime: async () => ({
         resolvePlatform: (repoRoot: string) => {
           expect(repoRoot).toBe(root)
@@ -207,6 +310,7 @@ describe('root Mint generation wrapper', () => {
       repositoryRoot: root,
       host: host(root),
       nonceFactory: () => FIXED_NONCE,
+      validateRegistry: () => undefined,
       loadRuntime: async () => ({
         resolvePlatform: () => platform,
         assembleArtifactSet: () => assembled,
@@ -270,6 +374,7 @@ describe('root Mint generation wrapper', () => {
       repositoryRoot: root,
       host: host(root),
       nonceFactory: () => FIXED_NONCE,
+      validateRegistry: () => undefined,
       loadRuntime: async () => ({
         resolvePlatform: () => ({}),
         assembleArtifactSet: () => artifacts(),

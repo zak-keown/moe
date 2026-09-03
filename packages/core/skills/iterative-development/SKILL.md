@@ -71,7 +71,7 @@ while True:
 
     run next iteration:
         - running-an-iteration (sentinel baseline → scope review → decompose code + evidence tasks → implementing-tasks → impacted + sentinel scenario runs → wrap up)
-    
+
     audit:
         - auditing-progress (PAR paired auditors, three-tier: deep evidence + impacted behavior + sentinel corpus)
         - if gaps: append to backlog, revise roadmap, continue
@@ -213,4 +213,4 @@ Every evaluative gate uses parallel adversarial review (PAR):
 - Post-iteration impacted + sentinel scenario runs
 - Per-sprint audit (deep evidence + impacted behavior + sentinel corpus)
 
-See `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md` for PAR methodology.
+Resolve {resource:skills/_shared/parallel-adversarial-review.md} relative to this loaded document for the PAR methodology.

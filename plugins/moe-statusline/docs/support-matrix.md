@@ -2,18 +2,18 @@
 
 # moe-statusline harness support matrix
 
-| Harness | Emitted capabilities |
-|---|---|
-| claude-code | hook-execution |
-| cursor | omitted |
-| codex | omitted |
-| kimi | omitted |
-| opencode | omitted |
-| pi | omitted |
-| agent-plugins-1.0 | omitted |
-| copilot | omitted |
+| Harness | Skill delivery | Emitted capabilities |
+|---|---|---|
+| claude-code | unsupported | hook-execution |
+| cursor | unsupported | omitted |
+| codex | unsupported | omitted |
+| kimi | unsupported | omitted |
+| opencode | unsupported | omitted |
+| pi | unsupported | omitted |
+| agent-plugins-1.0 | unsupported | omitted |
+| copilot | unsupported | omitted |
 
 ## Notes
 
 - Copilot consumes the Claude Code layout through `.claude-plugin/marketplace.json`; keep the `claude-code` adapter enabled when targeting Copilot.
-- Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.
+- Repos consuming shell-hook output should pin both `hooks/moe-mint/*` and `.cursor-plugin/hooks/moe-mint/*` to LF in .gitattributes or accept drift warnings on autocrlf checkouts.

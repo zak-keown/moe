@@ -80,6 +80,8 @@ export const openclaude: HarnessAdapter = {
     rules: 'none',
     variables: 'none',
   },
+  skillLayout: { outputDir: 'skills', profile: 'openclaude', mode: 'in-place' },
+  skillDelivery: 'unsupported',
   installDoc,
   emit(_model: PluginModel): AdapterEmission {
     return {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { cpSync, mkdtempSync, mkdirSync, existsSync, readFileSync, writeFileSync, rmSync, symlinkSync } from 'node:fs'
+import { chmodSync, cpSync, mkdtempSync, mkdirSync, existsSync, readFileSync, writeFileSync, rmSync, statSync, symlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { generate, validateGeneration } from '../src/generate.js'
@@ -21,6 +21,12 @@ const stubSupport = {
   rules: 'none',
   variables: 'none',
 } as const
+
+const stubAdapterFields = {
+  support: stubSupport,
+  skillLayout: { outputDir: 'skills', profile: 'synthetic', mode: 'in-place' as const },
+  skillDelivery: 'unsupported' as const,
+}
 
 function freshFixture(): string {
   const dir = mkdtempSync(join(tmpdir(), 'mint-gen-'))
@@ -47,12 +53,31 @@ function withTargetCapabilities(yaml: string, capabilities: Partial<Record<Targe
 describe('generate', () => {
   it('validates current adapter emissions without writing generated files or a manifest', () => {
     const dir = freshFixture()
+    const skillPath = join(dir, 'skills/greeting/SKILL.md')
+    writeFileSync(skillPath, `${readFileSync(skillPath, 'utf8')}\nUse {ask}.\n`)
+    writeFileSync(join(dir, 'moe-mint-vocab.yaml'), [
+      'tokens:',
+      '  ask:',
+      '    claude-code: CLAUDE',
+      '    cursor: CURSOR',
+      '    codex: CODEX',
+      '    kimi: KIMI',
+      '    opencode: OPENCODE',
+      '    pi: PI',
+      '    agent-plugins-1.0: AGENT',
+      'blocks: {}',
+      '',
+    ].join('\n'))
+    const sourceBefore = readFileSync(skillPath)
+    const modeBefore = statSync(skillPath).mode & 0o777
 
     const result = validateGeneration(dir)
 
     expect(result.emissions['claude-code']?.emittedCapabilities).toContain('skill-discovery')
     expect(existsSync(join(dir, '.claude-plugin', 'plugin.json'))).toBe(false)
     expect(existsSync(join(dir, MANIFEST_PATH))).toBe(false)
+    expect(readFileSync(skillPath)).toEqual(sourceBefore)
+    expect(statSync(skillPath).mode & 0o777).toBe(modeBefore)
   })
 
   it('writes adapter files and a clean manifest', () => {
@@ -137,6 +162,43 @@ describe('generate', () => {
     expect(existsSync(join(dir, '.claude-plugin/plugin.json'))).toBe(false)
   })
 
+  it('materializes custom source skills at root skills/ for Agent Plugins discovery', () => {
+    const dir = freshFixture()
+    cpSync(join(dir, 'skills'), join(dir, 'my-skills'), { recursive: true })
+    rmSync(join(dir, 'skills'), { recursive: true })
+    writeFileSync(
+      join(dir, 'moe-mint.yaml'),
+      `${readFileSync(join(dir, 'moe-mint.yaml'), 'utf8')}\ncomponents:\n  skills: my-skills\n`,
+    )
+
+    const result = generate(dir)
+
+    expect(result.skillDelivery['agent-plugins-1.0']).toBe('native-discovery')
+    expect(existsSync(join(dir, 'skills/greeting/SKILL.md'))).toBe(true)
+    expect(existsSync(join(dir, 'my-skills/greeting/SKILL.md'))).toBe(true)
+    expect(result.emissions['agent-plugins-1.0']?.limitations.map((entry) => entry.message).join('\n'))
+      .not.toMatch(/will not be discovered/)
+  })
+
+  it('reports unsupported skill delivery when the source skill tree is empty', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mint-gen-empty-skills-'))
+    writeFileSync(
+      join(dir, 'moe-mint.yaml'),
+      withTargetCapabilities(
+        'name: empty-skills\nversion: 1.0.0\ndescription: no skill files\nbootstrap: none\n',
+        { 'agent-plugins-1.0': ['format-conformance'] },
+      ),
+    )
+
+    const result = generate(dir)
+    const supportMatrix = readFileSync(join(dir, 'docs/support-matrix.md'), 'utf8')
+
+    expect(new Set(Object.values(result.skillDelivery))).toEqual(new Set(['unsupported']))
+    expect(supportMatrix).not.toMatch(/\| (?:rendered|shared-compatible|native-discovery) \|/)
+    expect(supportMatrix).toContain('| claude-code | unsupported |')
+    expect(supportMatrix).toContain('| agent-plugins-1.0 | unsupported |')
+  })
+
   it('rejects an active Copilot target when its Claude projection owner is omitted', () => {
     const dir = freshFixture()
     const yaml = readFileSync(join(dir, 'moe-mint.yaml'), 'utf8')
@@ -167,11 +229,11 @@ describe('generate', () => {
   it('throws a ConfigError naming both adapters when they emit the same path', () => {
     const dir = freshFixture()
     const a: HarnessAdapter = {
-      name: 'adapter-a', support: stubSupport,
+      name: 'adapter-a', ...stubAdapterFields,
       emit: () => ({ files: [{ path: 'gen/collide.txt', content: 'a' }], limitations: [], emittedCapabilities: [] }),
     }
     const b: HarnessAdapter = {
-      name: 'adapter-b', support: stubSupport,
+      name: 'adapter-b', ...stubAdapterFields,
       emit: () => ({ files: [{ path: 'gen/collide.txt', content: 'b' }], limitations: [], emittedCapabilities: [] }),
     }
     expect(() => generate(dir, [a, b])).toThrowError(/both emit/)
@@ -187,7 +249,7 @@ describe('generate', () => {
   it('rejects unrecognized free-form adapter warnings', () => {
     const dir = freshFixture()
     const synthetic: HarnessAdapter = {
-      name: 'synthetic', support: stubSupport,
+      name: 'synthetic', ...stubAdapterFields,
       emit: () => ({
         files: [{ path: 'gen/x.txt', content: 'x' }],
         limitations: [],
@@ -208,7 +270,7 @@ describe('generate', () => {
   it('reports a contradictory typed limitation through a stable diagnostic', () => {
     const dir = freshFixture()
     const synthetic: HarnessAdapter = {
-      name: 'claude-code', support: stubSupport,
+      name: 'claude-code', ...stubAdapterFields,
       emit: () => ({
         files: [],
         limitations: [{ code: 'COMPONENT_OMITTED', component: 'skills', message: 'fixture contradiction' }],
@@ -228,14 +290,14 @@ describe('generate', () => {
   it('reports a projection emitting independent output through a stable diagnostic', () => {
     const dir = freshFixture()
     const owner: HarnessAdapter = {
-      name: 'claude-code', support: stubSupport,
+      name: 'claude-code', ...stubAdapterFields,
       emit: () => ({
         files: [], limitations: [],
         emittedCapabilities: ['skill-discovery', 'command-discovery', 'agent-discovery', 'hook-execution', 'mcp-registration', 'bootstrap-routing'],
       }),
     }
     const projection: HarnessAdapter = {
-      name: 'copilot', support: stubSupport,
+      name: 'copilot', ...stubAdapterFields,
       emit: () => ({ files: [{ path: 'gen/unexpected.txt', content: 'x' }], limitations: [], emittedCapabilities: [], projectionOwner: 'claude-code' }),
     }
     try {
@@ -251,14 +313,14 @@ describe('generate', () => {
   it('rejects a projection carrying package metadata through the projection-owner diagnostic', () => {
     const dir = freshFixture()
     const owner: HarnessAdapter = {
-      name: 'claude-code', support: stubSupport,
+      name: 'claude-code', ...stubAdapterFields,
       emit: () => ({
         files: [], limitations: [],
         emittedCapabilities: ['skill-discovery', 'command-discovery', 'agent-discovery', 'hook-execution', 'mcp-registration', 'bootstrap-routing'],
       }),
     }
     const projection: HarnessAdapter = {
-      name: 'copilot', support: stubSupport,
+      name: 'copilot', ...stubAdapterFields,
       emit: () => ({
         files: [], limitations: [], emittedCapabilities: [], projectionOwner: 'claude-code',
         packageContribution: { owner: 'copilot', pi: { extensions: ['./foreign.ts'] } },
@@ -278,8 +340,8 @@ describe('generate', () => {
   it('dedupes identical-content collisions between adapters', () => {
     const dir = freshFixture()
     const file = { path: 'gen/shared.txt', content: 'same', executable: undefined }
-    const a = { name: 'adapter-a', support: stubSupport, emit: () => ({ files: [{ ...file }], limitations: [], emittedCapabilities: [] }) }
-    const b = { name: 'adapter-b', support: stubSupport, emit: () => ({ files: [{ ...file }], limitations: [], emittedCapabilities: [] }) }
+    const a = { name: 'adapter-a', ...stubAdapterFields, emit: () => ({ files: [{ ...file }], limitations: [], emittedCapabilities: [] }) }
+    const b = { name: 'adapter-b', ...stubAdapterFields, emit: () => ({ files: [{ ...file }], limitations: [], emittedCapabilities: [] }) }
     const result = generate(dir, [a, b])
     expect(result.files.filter((f) => f.path === 'gen/shared.txt')).toHaveLength(1)
     expect(result.warnings).toEqual([])
@@ -287,16 +349,16 @@ describe('generate', () => {
 
   it('still rejects differing-content collisions', () => {
     const dir = freshFixture()
-    const a = { name: 'adapter-a', support: stubSupport, emit: () => ({ files: [{ path: 'gen/x.txt', content: 'one' }], limitations: [], emittedCapabilities: [] }) }
-    const b = { name: 'adapter-b', support: stubSupport, emit: () => ({ files: [{ path: 'gen/x.txt', content: 'two' }], limitations: [], emittedCapabilities: [] }) }
+    const a = { name: 'adapter-a', ...stubAdapterFields, emit: () => ({ files: [{ path: 'gen/x.txt', content: 'one' }], limitations: [], emittedCapabilities: [] }) }
+    const b = { name: 'adapter-b', ...stubAdapterFields, emit: () => ({ files: [{ path: 'gen/x.txt', content: 'two' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [a, b])).toThrowError(/both emit/)
   })
 
   it('rejects an adapter emitting over a source component path', () => {
     const dir = freshFixture()
-    const evil = { name: 'evil', support: stubSupport, emit: () => ({ files: [{ path: 'moe-mint.yaml', content: 'gotcha' }], limitations: [], emittedCapabilities: [] }) }
+    const evil = { name: 'evil', ...stubAdapterFields, emit: () => ({ files: [{ path: 'moe-mint.yaml', content: 'gotcha' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [evil])).toThrowError(/would overwrite source/)
-    const evil2 = { name: 'evil2', support: stubSupport, emit: () => ({ files: [{ path: 'skills/greeting/SKILL.md', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
+    const evil2 = { name: 'evil2', ...stubAdapterFields, emit: () => ({ files: [{ path: 'skills/greeting/SKILL.md', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [evil2])).toThrowError(/would overwrite source/)
   })
 
@@ -312,27 +374,27 @@ describe('generate', () => {
     ].join('\n')))
     mkdirSync(join(dir, 'skills'))
     writeFileSync(join(dir, 'skills', 'demo.md'), '# Demo Skill\n')
-    const evilAdapter = { name: 'evil', support: stubSupport, emit: () => ({ files: [{ path: 'skills/demo.md', content: 'overwritten' }], limitations: [], emittedCapabilities: [] }) }
+    const evilAdapter = { name: 'evil', ...stubAdapterFields, emit: () => ({ files: [{ path: 'skills/demo.md', content: 'overwritten' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [evilAdapter])).toThrowError(/would overwrite source/)
   })
 
   it('isSourcePath: allows non-.md siblings under commands/agents but still blocks .md and any skills path', () => {
     const dir = freshFixture()
-    const toml = { name: 'toml', support: stubSupport, emit: () => ({ files: [{ path: 'commands/x.toml', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
+    const toml = { name: 'toml', ...stubAdapterFields, emit: () => ({ files: [{ path: 'commands/x.toml', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [toml])).not.toThrow()
 
-    const md = { name: 'md', support: stubSupport, emit: () => ({ files: [{ path: 'commands/x.md', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
+    const md = { name: 'md', ...stubAdapterFields, emit: () => ({ files: [{ path: 'commands/x.md', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [md])).toThrowError(/would overwrite source/)
 
-    const skillFile = { name: 'skill-file', support: stubSupport, emit: () => ({ files: [{ path: 'skills/x/whatever.txt', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
+    const skillFile = { name: 'skill-file', ...stubAdapterFields, emit: () => ({ files: [{ path: 'skills/x/whatever.txt', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [skillFile])).toThrowError(/would overwrite source/)
   })
 
   it('prunes files dropped from the new generation when unmodified', () => {
     const dir = freshFixture()
-    const a = { name: 'a', support: stubSupport, emit: () => ({ files: [{ path: 'gen/old.txt', content: 'v1' }], limitations: [], emittedCapabilities: [] }) }
+    const a = { name: 'a', ...stubAdapterFields, emit: () => ({ files: [{ path: 'gen/old.txt', content: 'v1' }], limitations: [], emittedCapabilities: [] }) }
     generate(dir, [a])
-    const b = { name: 'a', support: stubSupport, emit: () => ({ files: [{ path: 'gen2/new.txt', content: 'v2' }], limitations: [], emittedCapabilities: [] }) }
+    const b = { name: 'a', ...stubAdapterFields, emit: () => ({ files: [{ path: 'gen2/new.txt', content: 'v2' }], limitations: [], emittedCapabilities: [] }) }
     const result = generate(dir, [b])
     expect(result.pruned).toEqual(['gen/old.txt'])
     expect(existsSync(join(dir, 'gen/old.txt'))).toBe(false)
@@ -342,10 +404,10 @@ describe('generate', () => {
 
   it('leaves hand-modified stale files and warns', () => {
     const dir = freshFixture()
-    const a = { name: 'a', support: stubSupport, emit: () => ({ files: [{ path: 'gen/old.txt', content: 'v1' }], limitations: [], emittedCapabilities: [] }) }
+    const a = { name: 'a', ...stubAdapterFields, emit: () => ({ files: [{ path: 'gen/old.txt', content: 'v1' }], limitations: [], emittedCapabilities: [] }) }
     generate(dir, [a])
     writeFileSync(join(dir, 'gen/old.txt'), 'edited')
-    const result = generate(dir, [{ name: 'a', support: stubSupport, emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }) }])
+    const result = generate(dir, [{ name: 'a', ...stubAdapterFields, emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }) }])
     expect(result.pruned).toEqual([])
     expect(result.warnings.join('\n')).toMatch(/stale generated file gen\/old\.txt/)
     expect(existsSync(join(dir, 'gen/old.txt'))).toBe(true)
@@ -354,7 +416,7 @@ describe('generate', () => {
   it('ignores manifest entries with unsafe paths and warns', () => {
     const dir = freshFixture()
     const synthetic: HarnessAdapter = {
-      name: 'synthetic', support: stubSupport,
+      name: 'synthetic', ...stubAdapterFields,
       emit: () => ({ files: [{ path: 'gen/file.txt', content: 'v1' }], limitations: [], emittedCapabilities: [] }),
     }
     generate(dir, [synthetic])
@@ -374,7 +436,7 @@ describe('generate', () => {
 
     try {
       // Regenerate with empty adapter — should skip the unsafe entry and warn
-      const result = generate(dir, [{ name: 'empty', support: stubSupport, emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }) }])
+      const result = generate(dir, [{ name: 'empty', ...stubAdapterFields, emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }) }])
 
       expect(existsSync(outsideFile)).toBe(true)
       expect(result.pruned).not.toContain('../escape.txt')
@@ -421,7 +483,7 @@ describe('generate', () => {
         owner: 'pi',
         pi: {
           extensions: ['./.pi/extensions/kitchen-sink.ts'],
-          skills: ['./skills'],
+          skills: ['./.pi/skills'],
         },
       },
     ])
@@ -589,12 +651,13 @@ describe('vocabulary integration', () => {
       (f) => f.path === '.codex-plugin/skills/greeting/SKILL.md',
     )
     expect(codexSkill).toBeDefined()
-    expect(codexSkill!.content).toBe(sourceSkill)
+    expect(Buffer.from(codexSkill!.content)).toEqual(Buffer.from(sourceSkill))
   })
 
-  it('copies executable skill support files into every adapter skill directory', () => {
+  it('preserves an exact nonstandard skill-file mode in every adapter skill directory', () => {
     const dir = freshFixture()
     writeFileSync(join(dir, 'moe-mint-vocab.yaml'), 'tokens: {}\nblocks: {}')
+    chmodSync(join(dir, 'skills/greeting/scripts/hello.sh'), 0o740)
     const result = generate(dir)
     const adapterSkillDirs = [
       '.codex-plugin/skills',
@@ -608,25 +671,27 @@ describe('vocabulary integration', () => {
       const path = `${adapterSkillDir}/greeting/scripts/hello.sh`
       const supportFile = result.files.find((file) => file.path === path)
       expect(supportFile, path).toMatchObject({
-        content: '#!/usr/bin/env bash\necho hello\n',
-        executable: true,
+        mode: 0o740,
       })
+      expect(Buffer.from(supportFile!.content), path).toEqual(Buffer.from('#!/usr/bin/env bash\necho hello\n'))
       expect(readFileSync(join(dir, path), 'utf8'), path).toBe('#!/usr/bin/env bash\necho hello\n')
+      expect(statSync(join(dir, path)).mode & 0o777, path).toBe(0o740)
     }
   })
 
-  it('does not emit per-adapter skill directories when vocab file is absent', () => {
+  it('emits per-adapter skill directories even when vocab file is absent', () => {
     const dir = freshFixture()
     const result = generate(dir)
-    expect(result.files.some((f) => f.path.startsWith('.codex-plugin/skills/'))).toBe(false)
+    expect(result.files.some((f) => f.path.startsWith('.codex-plugin/skills/'))).toBe(true)
   })
 
   it('adapter manifests reference their own skill directories when vocab is active', () => {
     const dir = freshFixture()
     writeFileSync(join(dir, 'moe-mint-vocab.yaml'), 'tokens: {}\nblocks: {}')
     const result = generate(dir)
+    const content = result.files.find((f) => f.path === '.codex-plugin/plugin.json')!.content
     const codexManifest = JSON.parse(
-      result.files.find((f) => f.path === '.codex-plugin/plugin.json')!.content,
+      typeof content === 'string' ? content : Buffer.from(content).toString('utf8'),
     )
     expect(codexManifest.skills).toBe('./.codex-plugin/skills/')
   })
@@ -636,6 +701,42 @@ describe('vocabulary integration', () => {
     writeFileSync(join(dir, 'moe-mint-vocab.yaml'), 'tokens: {}\nblocks: {}')
     generate(dir)
     generate(dir)
+    expect(checkDrift(dir).clean).toBe(true)
+  })
+
+  it('rerenders every profile from persisted canonical source after an in-place Agent Plugins pass', () => {
+    const dir = freshFixture()
+    const sourceSkill = join(dir, 'skills/greeting/SKILL.md')
+    writeFileSync(sourceSkill, `${readFileSync(sourceSkill, 'utf8')}\nUse {ask}.\n`)
+    writeFileSync(join(dir, 'moe-mint-vocab.yaml'), [
+      'tokens:',
+      '  ask:',
+      '    claude-code: CLAUDE',
+      '    cursor: CURSOR',
+      '    codex: CODEX',
+      '    kimi: KIMI',
+      '    opencode: OPENCODE',
+      '    pi: PI',
+      '    agent-plugins-1.0: AGENT',
+      'blocks: {}',
+      '',
+    ].join('\n'))
+
+    generate(dir)
+    const first = {
+      root: readFileSync(sourceSkill, 'utf8'),
+      cursor: readFileSync(join(dir, '.cursor-plugin/skills/greeting/SKILL.md'), 'utf8'),
+      codex: readFileSync(join(dir, '.codex-plugin/skills/greeting/SKILL.md'), 'utf8'),
+    }
+    generate(dir)
+
+    expect(readFileSync(sourceSkill, 'utf8')).toBe(first.root)
+    expect(readFileSync(join(dir, '.cursor-plugin/skills/greeting/SKILL.md'), 'utf8')).toBe(first.cursor)
+    expect(readFileSync(join(dir, '.codex-plugin/skills/greeting/SKILL.md'), 'utf8')).toBe(first.codex)
+    expect(first.root).toContain('Use AGENT.')
+    expect(first.cursor).toContain('Use CURSOR.')
+    expect(first.codex).toContain('Use CODEX.')
+    expect(first.codex).not.toContain('Use AGENT.')
     expect(checkDrift(dir).clean).toBe(true)
   })
 })

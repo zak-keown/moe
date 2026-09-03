@@ -19,7 +19,7 @@ Interactive CLI tools (vim, interactive git rebase, REPLs, etc.) cannot be contr
 - Commands that require terminal control codes or readline
 
 **Don't use for:**
-- Simple non-interactive commands (use {bash})
+- Simple non-interactive commands (use the client's native shell tool)
 - Commands that accept input via stdin redirection
 - One-shot commands that don't need interaction
 
@@ -87,10 +87,10 @@ tmux new-session -d -s git_session -c /path/to/repo git rebase -i HEAD~3
 
 ### Helper Wrapper
 
-This skill ships `tmux-wrapper.sh` beside its `SKILL.md`. Declare the path once,
-then use it:
+Resolve [skills/using-tmux-for-interactive-commands/tmux-wrapper.sh](tmux-wrapper.sh)
+relative to this loaded document. Declare that resolved path once, then use it:
 ```bash
-WRAPPER="${CLAUDE_PLUGIN_ROOT}/skills/using-tmux-for-interactive-commands/tmux-wrapper.sh"
+WRAPPER="<resolved-tmux-wrapper.sh>"
 
 # Start session
 "$WRAPPER" start <session-name> <command> [args...]

@@ -397,11 +397,6 @@ describe("cross-references", () => {
   });
 });
 
-// Paths a skill legitimately names that are not in git. The Claude Code docs
-// cache is populated on demand by update_docs.cjs and deliberately not
-// committed - see skills/working-with-claude-code/SKILL.md.
-const NOT_COMMITTED = new Set(["/skills/working-with-claude-code/references/"]);
-
 // Every shipped file that must carry the execute bit, package-relative.
 //
 // Cross-checked against `find`-style discovery in BOTH directions below: the
@@ -463,28 +458,6 @@ const isExecutable = (p: string) => {
 };
 
 describe("runtime paths", () => {
-  it("every ${CLAUDE_PLUGIN_ROOT}-anchored path resolves inside the package", () => {
-    // The convention adopted on import: every file a skill owns is addressed as
-    // ${CLAUDE_PLUGIN_ROOT}/skills/<skill>/<path>. Upstream used bare relative
-    // paths, which resolved against the USER's project and always missed.
-    const offenders: string[] = [];
-    for (const p of ownedMarkdown) {
-      const text = readFileSync(p, "utf8");
-      for (const m of text.matchAll(/\$\{CLAUDE_PLUGIN_ROOT\}(\/skills\/[A-Za-z0-9._\-/]+)/g)) {
-        const rel = (m[1] as string).replace(/[.,;:]+$/, "");
-        // Placeholders inside instructions to the reader, not real paths. The
-        // developing-claude-code-plugins references use ${CLAUDE_PLUGIN_ROOT}
-        // with invented paths (`/server.js`, `/config.json`) to teach the idiom;
-        // restricting the match to /skills/ excludes those without exempting the
-        // file, and NOT_COMMITTED covers the one real path that is generated.
-        if (/<|\$|PLAN_FILE|my-plugin/.test(rel)) continue;
-        if (NOT_COMMITTED.has(rel)) continue;
-        if (!existsSync(join(PKG, rel))) offenders.push(`${p.slice(PKG.length + 1)} -> ${rel}`);
-      }
-    }
-    expect(offenders).toEqual([]);
-  });
-
   it("the shared PAR references are reachable and referenced", () => {
     const shared = [
       "parallel-adversarial-review.md",

@@ -1,19 +1,29 @@
 import { rmSync, rmdirSync, readdirSync, readFileSync, existsSync, statSync, lstatSync } from 'node:fs'
 import { dirname, relative, resolve, isAbsolute, sep } from 'node:path'
-import { buildModel, type PluginModel } from './model.js'
-import { writeFileSet, type FileSet, type GeneratedFile } from './fileset.js'
+import {
+  buildModelFromConfig,
+  capturePersistedSkillSources,
+  type PluginModel,
+} from './model.js'
+import {
+  contentEquals,
+  generatedFileMode,
+  writeFileSet,
+  type FileContent,
+  type FileSet,
+  type GeneratedFile,
+} from './fileset.js'
 import { saveManifest, loadManifest, sha256, type GenerationManifest } from './manifest.js'
-import { adapters, type HarnessAdapter } from './adapters/index.js'
+import { adapters, type HarnessAdapter, type SkillDelivery } from './adapters/index.js'
 import type { AdapterEmission, AdapterPackageContribution } from './adapters/types.js'
 import { emitDocs } from './docs-emit.js'
-import { ConfigError, hooksManifestPath, type MintConfig, type PluginTargetIntent } from './config.js'
+import { ConfigError, hooksManifestPath, loadConfig, type MintConfig, type PluginTargetIntent } from './config.js'
 import { capabilityError, validateTargetEmission } from './platform/capabilities.js'
 import {
   loadVocabulary,
   validateCoverage,
   scanForUnknownTokens,
-  assertNoSurvivors,
-  substituteAllSkills,
+  planSkillRendering,
   adjustedModel,
   TARGET_IDS,
   type TargetId,
@@ -21,29 +31,14 @@ import {
 
 export const TOOL_VERSION = '0.0.0'
 
-// opencode and pi each have their own skillsOutputDir, but also both emit a
-// single, intentionally byte-identical root package.json (see "Design
-// decision 3" in bootstrap/node-package.ts's nodePackageManifest doc
-// comment) whose `pi.skills` field is read straight from
-// model.config.components.skills. Handing each of them its own
-// adjustedModel would make that one shared field diverge by adapter and
-// turn their dedupe into a "both adapters emit package.json" ConfigError.
-// Until node-package.ts is taught to resolve pi's own skills directory
-// independently of whichever of the two adapters happens to compute the
-// manifest, these two keep emitting from the un-adjusted model: their own
-// per-adapter skills copies still land in .opencode/skills/ and .pi/skills/
-// (substituteAllSkills doesn't go through adjustedModel at all), but their
-// package.json and in-process templates keep pointing at the shared source
-// skills/ path rather than their own output directory.
-const SHARED_MANIFEST_ADAPTERS = new Set(['opencode', 'pi'])
-
 export interface GenerateResult {
-  files: FileSet
+  files: FileSet<FileContent>
   warnings: string[]
   emissions: Partial<Record<TargetId, AdapterEmission>>
   packageContributions: readonly AdapterPackageContribution[]
   adaptersRun: string[]
   pruned: string[]
+  skillDelivery: Readonly<Record<string, SkillDelivery>>
 }
 
 /**
@@ -52,12 +47,13 @@ export interface GenerateResult {
  * object as evidence that their emissions came from the real current pass.
  */
 export interface GenerationValidation {
-  files: FileSet
+  files: FileSet<FileContent>
   warnings: string[]
   emissions: Partial<Record<TargetId, AdapterEmission>>
   packageContributions: readonly AdapterPackageContribution[]
   adaptersRun: string[]
   config: MintConfig
+  skillDelivery: Readonly<Record<string, SkillDelivery>>
 }
 
 export interface CanonicalGenerationIdentity {
@@ -85,8 +81,16 @@ export interface CanonicalProjectionEvidence {
 
 type CanonicalGenerationProvenance = Readonly<CanonicalGenerationIdentity>
 
+interface GenerationWriteContext {
+  readonly componentRoot: string
+  readonly model: PluginModel
+  readonly sourceUpdates: FileSet<Uint8Array>
+  readonly prior: GenerationManifest | undefined
+}
+
 const canonicalValidations = new WeakMap<GenerationValidation, CanonicalGenerationProvenance>()
 const canonicalEvidence = new WeakMap<GenerationValidation, CanonicalProjectionEvidence>()
+const writeContexts = new WeakMap<GenerationValidation, GenerationWriteContext>()
 const canonicalAdapters = Object.freeze([...adapters])
 
 export interface GenerateOptions {
@@ -96,6 +100,8 @@ export interface GenerateOptions {
   /** Registry validation reads a package-local config without staging it. */
   configPath?: string
   configSource?: string
+  /** Read components from a separately staged artifact while config remains source-authoritative. */
+  componentRoot?: string
 }
 
 function isSourcePath(path: string, config: MintConfig): boolean {
@@ -118,9 +124,9 @@ function isSourcePath(path: string, config: MintConfig): boolean {
 // Shared by the adapter emission loop and the docs stage below so both go
 // through the exact same collision rules.
 function mergeFiles(
-  byPath: Map<string, { owner: string; file: GeneratedFile }>,
+  byPath: Map<string, { owner: string; file: GeneratedFile<FileContent> }>,
   owner: string,
-  files: GeneratedFile[],
+  files: GeneratedFile<FileContent>[],
   config: MintConfig,
 ): void {
   for (const file of files) {
@@ -130,7 +136,8 @@ function mergeFiles(
     const existing = byPath.get(file.path)
     if (existing) {
       const identical =
-        existing.file.content === file.content && Boolean(existing.file.executable) === Boolean(file.executable)
+        contentEquals(existing.file.content, file.content)
+        && generatedFileMode(existing.file) === generatedFileMode(file)
       if (!identical) {
         throw new ConfigError(`adapters "${existing.owner}" and "${owner}" both emit ${file.path}`)
       }
@@ -206,54 +213,100 @@ function adapterEmissionError(
   })
 }
 
+function classifySkillDelivery(
+  model: PluginModel,
+  active: readonly HarnessAdapter[],
+  emittedByAdapter: ReadonlyMap<HarnessAdapter, AdapterEmission>,
+): Record<string, SkillDelivery> {
+  const delivery: Record<string, SkillDelivery> = Object.fromEntries(
+    [...new Set([...adapters.map((adapter) => adapter.name), ...active.map((adapter) => adapter.name)])]
+      .map((name) => [name, 'unsupported' as const]),
+  )
+
+  if (model.skillFiles.length === 0) return delivery
+
+  for (const adapter of active) {
+    let state = adapter.skillDelivery
+    if (state === 'native-discovery') {
+      const discoveryFile = adapter.nativeDiscoveryFile
+      if (
+        discoveryFile === undefined
+        || !emittedByAdapter.get(adapter)?.files.some((file) => file.path === discoveryFile)
+      ) state = 'unsupported'
+    }
+    delivery[adapter.name] = state
+  }
+
+  for (const adapter of active) {
+    if (delivery[adapter.name] !== 'shared-compatible') continue
+    const provider = active.find((candidate) =>
+      candidate !== adapter
+      && delivery[candidate.name] !== 'shared-compatible'
+      && delivery[candidate.name] !== 'unsupported'
+      && candidate.skillLayout.outputDir === adapter.skillLayout.outputDir
+      && candidate.skillLayout.profile === adapter.skillLayout.profile)
+    if (provider === undefined) delivery[adapter.name] = 'unsupported'
+  }
+
+  return delivery
+}
+
+function validateSkillClosure(
+  model: PluginModel,
+  active: readonly HarnessAdapter[],
+  renderedSkillFiles: readonly GeneratedFile<FileContent>[],
+  sourceUpdates: readonly GeneratedFile<FileContent>[],
+  achieved: Readonly<Record<string, SkillDelivery>>,
+): Readonly<Record<string, SkillDelivery>> {
+  const plannedPaths = new Set(
+    [...renderedSkillFiles, ...sourceUpdates].map((file) => file.path),
+  )
+  const delivery: Record<string, SkillDelivery> = { ...achieved }
+  for (const adapter of active) {
+    const state = delivery[adapter.name] ?? 'unsupported'
+    if (state === 'unsupported') continue
+    for (const file of model.skillFiles) {
+      const path = `${adapter.skillLayout.outputDir.replace(/\/$/, '')}/${file.path}`
+      if (!plannedPaths.has(path)) {
+        throw new ConfigError(`adapter "${adapter.name}" skill delivery is incomplete: missing ${path}`)
+      }
+    }
+  }
+  return Object.freeze(delivery)
+}
+
 export function validateGeneration(
   root: string,
   adapterList: readonly HarnessAdapter[] = adapters,
   opts: GenerateOptions = {},
 ): GenerationValidation {
   const configFile = opts.configPath === undefined ? 'moe-mint.yaml' : relative(root, opts.configPath)
-  const sourceModel = buildModel(root, configFile, opts.configSource ?? configFile)
-  const model: typeof sourceModel = opts.marketplaceName === undefined
-    ? sourceModel
+  const componentRoot = resolve(opts.componentRoot ?? root)
+  const warnings: string[] = []
+  let prior: GenerationManifest | undefined
+  try {
+    prior = loadManifest(componentRoot)
+  } catch (error) {
+    if (!(error instanceof ConfigError)) throw error
+    warnings.push(`ignoring unreadable generation manifest (${error.message}); skipping prune for this run`)
+  }
+  const sourceConfig = loadConfig(root, configFile, opts.configSource ?? configFile)
+  const config = opts.marketplaceName === undefined
+    ? sourceConfig
     : {
-      ...sourceModel,
-      config: {
-        ...sourceModel.config,
-        marketplace: { ...(sourceModel.config.marketplace ?? {}), name: opts.marketplaceName },
-      },
+      ...sourceConfig,
+      marketplace: { ...(sourceConfig.marketplace ?? {}), name: opts.marketplaceName },
     }
+  const model = buildModelFromConfig(componentRoot, config, prior?.skillSources)
   const excluded = new Set(model.config.harnesses.exclude)
   const active = adapterList.filter((a) => !excluded.has(a.name))
-
-  const vocab = loadVocabulary(root)
-  if (vocab) {
-    const activeNames = active.map((a) => a.name)
-    validateCoverage(vocab, activeNames)
-    scanForUnknownTokens(root, model.config.components.skills, vocab)
-  }
-
-  // Substitute skills BEFORE the adapter emit loop: shared adapters
-  // (claude-code, agent-plugins-1.0, copilot — no skillsOutputDir) get their
-  // mapping overwritten onto the source skills/ directory in place here, so
-  // that when claude-code's adapter reads skills/ below during emit(), it
-  // sees already-substituted content. Non-shared adapters' substituted
-  // copies are collected for merging into the output fileset after the loop.
-  let vocabSkillFiles: GeneratedFile[] = []
-  if (vocab) {
-    vocabSkillFiles = substituteAllSkills(root, model, vocab, active)
-  }
-
-  const warnings: string[] = []
   const emissions: Partial<Record<TargetId, AdapterEmission>> = {}
   const packageContributions: AdapterPackageContribution[] = []
   const emittedByAdapter = new Map<HarnessAdapter, AdapterEmission>()
-  const byPath = new Map<string, { owner: string; file: GeneratedFile }>()
-  const rootAbs = resolve(root)
+  const byPath = new Map<string, { owner: string; file: GeneratedFile<FileContent> }>()
+  const rootAbs = componentRoot
   for (const adapter of active) {
-    const adapterModel =
-      vocab && adapter.skillsOutputDir && !SHARED_MANIFEST_ADAPTERS.has(adapter.name)
-        ? adjustedModel(model, adapter.skillsOutputDir)
-        : model
+    const adapterModel = adjustedModel(model, adapter.skillLayout)
     const rawResult = adapter.emit(adapterModel)
     for (const [index, file] of rawResult.files.entries()) {
       if (isReservedRootPackagePath(rootAbs, file.path)) {
@@ -343,21 +396,42 @@ export function validateGeneration(
       ),
     }
   }
-  if (vocab) {
-    mergeFiles(byPath, 'vocabulary', vocabSkillFiles, model.config)
-    assertNoSurvivors(vocabSkillFiles)
+  const classifiedDelivery = classifySkillDelivery(model, active, emittedByAdapter)
+  const skillAdapters = active.filter((adapter) => classifiedDelivery[adapter.name] !== 'unsupported')
+  const configuredVocabulary = loadVocabulary(root, configFile)
+  const vocabulary = configuredVocabulary ?? { tokens: new Map(), blocks: new Map() }
+  if (configuredVocabulary !== null) {
+    const activeProfiles = [...new Set(skillAdapters.map((adapter) => adapter.skillLayout.profile))]
+    validateCoverage(vocabulary, activeProfiles)
+    scanForUnknownTokens(componentRoot, model.config.components.skills, vocabulary)
   }
-  mergeFiles(byPath, 'docs', emitDocs(model, active, emissions), model.config)
-  const files: FileSet = [...byPath.values()].map((v) => v.file)
+  const skillPlan = planSkillRendering(componentRoot, model, vocabulary, skillAdapters)
+  const skillDelivery = validateSkillClosure(
+    model,
+    active,
+    skillPlan.generatedFiles,
+    skillPlan.sourceUpdates,
+    classifiedDelivery,
+  )
+  mergeFiles(byPath, 'skill-renderer', skillPlan.generatedFiles, model.config)
+  mergeFiles(byPath, 'docs', emitDocs(model, active, emissions, skillDelivery), model.config)
+  const files: FileSet<FileContent> = [...byPath.values()].map((value) => value.file)
 
-  const validation = {
+  const validation: GenerationValidation = {
     files,
     warnings,
     emissions,
     packageContributions: Object.freeze([...packageContributions]),
     adaptersRun: active.map((adapter) => adapter.name),
     config: model.config,
+    skillDelivery,
   }
+  writeContexts.set(validation, {
+    componentRoot,
+    model,
+    sourceUpdates: skillPlan.sourceUpdates,
+    prior,
+  })
   return validation
 }
 
@@ -412,7 +486,7 @@ function immutablePluginAuthority(
  */
 export function validateCanonicalGeneration(
   identity: CanonicalGenerationIdentity,
-  opts: Pick<GenerateOptions, 'marketplaceName'> = {},
+  opts: Pick<GenerateOptions, 'marketplaceName' | 'componentRoot'> = {},
 ): GenerationValidation {
   const canonicalTargets = canonicalAdapters.map((adapter) => adapter.name)
   if (
@@ -422,12 +496,11 @@ export function validateCanonicalGeneration(
   ) {
     throw new Error('canonical adapter registry must contain every target exactly once')
   }
-  const options: GenerateOptions = opts.marketplaceName === undefined
-    ? { configPath: identity.configPath, configSource: identity.configSource }
-    : {
-      marketplaceName: opts.marketplaceName,
-      configPath: identity.configPath,
-      configSource: identity.configSource,
+  const options: GenerateOptions = {
+    configPath: identity.configPath,
+    configSource: identity.configSource,
+    ...(opts.marketplaceName === undefined ? {} : { marketplaceName: opts.marketplaceName }),
+    ...(opts.componentRoot === undefined ? {} : { componentRoot: opts.componentRoot }),
   }
   const validation = validateGeneration(identity.sourcePath, canonicalAdapters, options)
   canonicalEvidence.set(validation, Object.freeze({
@@ -487,20 +560,17 @@ export function writeValidatedGeneration(
   validation: GenerationValidation,
   opts: Pick<GenerateOptions, 'force'> = {},
 ): GenerateResult {
-  const { files, warnings, emissions, packageContributions, adaptersRun, config } = validation
-
-  // A corrupt manifest shouldn't dead-end generate the way it does validate:
-  // recover by treating this run as if there were no prior manifest at all, and
-  // skip pruning (we have no record of what to prune). validate() still fails
-  // loudly on the same corruption — regenerating is the recovery path.
-  let prior: GenerationManifest | undefined
-  try {
-    prior = loadManifest(root)
-  } catch (e) {
-    if (!(e instanceof ConfigError)) throw e
-    warnings.push(`ignoring unreadable generation manifest (${e.message}); skipping prune for this run`)
-    prior = undefined
+  const { files, warnings, emissions, packageContributions, adaptersRun, config, skillDelivery } = validation
+  const context = writeContexts.get(validation)
+  if (context === undefined) {
+    throw new ConfigError('generation validation is missing its private write context; validate again before writing')
   }
+  if (resolve(root) !== context.componentRoot) {
+    throw new ConfigError(
+      `validated component root ${context.componentRoot} does not match write root ${resolve(root)}`,
+    )
+  }
+  const prior = context.prior
   const rootAbs = resolve(root)
 
   // A plain `mcp.json` at the plugin root is the Agent Plugins 1.0 on-disk
@@ -554,7 +624,7 @@ export function writeValidatedGeneration(
       continue
     }
     if (prior && Object.prototype.hasOwnProperty.call(prior.files, file.path)) continue
-    if (readFileSync(abs, 'utf8') === file.content) continue
+    if (lst.isFile() && contentEquals(readFileSync(abs), file.content)) continue
     conflicts.push(file.path)
   }
   if (conflicts.length > 0 && !opts.force) {
@@ -586,7 +656,7 @@ export function writeValidatedGeneration(
       }
 
       if (!existsSync(abs)) continue
-      if (sha256(readFileSync(abs, 'utf8')) === entry.sha256) {
+      if (sha256(readFileSync(abs)) === entry.sha256) {
         rmSync(abs)
         pruned.push(path)
         let parent = dirname(abs)
@@ -600,8 +670,9 @@ export function writeValidatedGeneration(
     }
   }
 
+  writeFileSet(root, context.sourceUpdates)
   writeFileSet(root, files)
-  saveManifest(root, files, TOOL_VERSION)
+  saveManifest(root, files, TOOL_VERSION, capturePersistedSkillSources(root, context.model))
 
-  return { files, warnings, emissions, packageContributions, adaptersRun, pruned }
+  return { files, warnings, emissions, packageContributions, adaptersRun, pruned, skillDelivery }
 }

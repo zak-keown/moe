@@ -70,7 +70,7 @@ If authentication is required:
 
 ```javascript
 // Extract all navigation links
-const navLinks = await page.$$eval('nav a, [role="navigation"] a, .sidebar a, .menu a, header a', 
+const navLinks = await page.$$eval('nav a, [role="navigation"] a, .sidebar a, .menu a, header a',
   links => links.map(a => ({ text: a.textContent.trim(), href: a.href }))
 );
 ```
@@ -87,9 +87,9 @@ For each navigation element:
 ```javascript
 for (const [index, link] of navLinks.entries()) {
   await page.goto(link.href, { waitUntil: 'networkidle' });
-  await page.screenshot({ 
+  await page.screenshot({
     path: `workspace/raw/runtime/visual/screenshots/nav-${String(index).padStart(3, '0')}-${slugify(link.text)}.png`,
-    fullPage: true 
+    fullPage: true
   });
 }
 ```

@@ -12,6 +12,12 @@ const stubSupport: ComponentSupport = {
   mcp: 'full', bootstrap: 'full', rules: 'none', variables: 'none',
 }
 
+const stubAdapterFields = {
+  support: stubSupport,
+  skillLayout: { outputDir: 'skills', profile: 'synthetic', mode: 'in-place' as const },
+  skillDelivery: 'unsupported' as const,
+}
+
 function freshFixture(): string {
   const dir = mkdtempSync(join(tmpdir(), 'mint-package-contributions-'))
   cpSync('fixtures/kitchen-sink', dir, { recursive: true })
@@ -29,7 +35,7 @@ describe('adapter package contributions', () => {
         owner: 'pi',
         pi: {
           extensions: ['./.pi/extensions/kitchen-sink.ts'],
-          skills: ['./skills'],
+          skills: ['./.pi/skills'],
         },
       },
     ])
@@ -60,7 +66,7 @@ describe('adapter package contributions', () => {
     (path) => {
       const adapter: HarnessAdapter = {
         name: 'codex',
-        support: stubSupport,
+        ...stubAdapterFields,
         emit: () => ({
           files: [{ path, content: '{"name":"replacement"}\n' }],
           limitations: [],
@@ -89,7 +95,7 @@ describe('adapter package contributions', () => {
   ])('allows %s when %s does not fully fold to the reserved filename', (path) => {
     const adapter: HarnessAdapter = {
       name: 'codex',
-      support: stubSupport,
+      ...stubAdapterFields,
       emit: () => ({
         files: [{ path, content: '{"name":"not-the-root-manifest"}\n' }],
         limitations: [],
@@ -108,7 +114,7 @@ describe('adapter package contributions', () => {
   ] as const)('rejects %s from claiming %s package metadata', (adapterName, declaredOwner, fields) => {
     const adapter: HarnessAdapter = {
       name: adapterName,
-      support: stubSupport,
+      ...stubAdapterFields,
       emit: () => ({
         files: [],
         limitations: [],
@@ -141,7 +147,7 @@ describe('adapter package contributions', () => {
   ] as const)('rejects %s package contribution with a stable owner diagnostic', (contribution, _description) => {
     const adapter: HarnessAdapter = {
       name: 'opencode',
-      support: stubSupport,
+      ...stubAdapterFields,
       emit: () => ({
         files: [],
         limitations: [],

@@ -74,7 +74,8 @@ export const codex: HarnessAdapter = Object.freeze({
     rules: 'none',
     variables: 'none',
   } satisfies ComponentSupport,
-  skillsOutputDir: '.codex-plugin/skills',
+  skillLayout: { outputDir: '.codex-plugin/skills', profile: 'codex', mode: 'rendered' as const },
+  skillDelivery: 'rendered',
   installDoc,
   emit(model: PluginModel) {
     const limitations: EmissionLimitation[] = []

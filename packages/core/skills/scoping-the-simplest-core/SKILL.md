@@ -36,7 +36,7 @@ The walking skeleton must also produce:
 - The first executable behavior harness (the E2E test infrastructure)
 - A small sentinel corpus that can be rerun every iteration
 
-**Harness-first task:** The walking skeleton's FIRST task should be designing and building the E2E test harness — before implementing any product features. Use the test infrastructure checklist in `${CLAUDE_PLUGIN_ROOT}/skills/_shared/behavior-evidence-formats.md` to guide the design. Document the harness design decisions in the project's docs. The harness is a first-class deliverable, not an afterthought — every subsequent iteration extends it.
+**Harness-first task:** The walking skeleton's FIRST task should be designing and building the E2E test harness — before implementing any product features. Resolve {resource:skills/_shared/behavior-evidence-formats.md} relative to this loaded document and use its test infrastructure checklist to guide the design. Document the harness design decisions in the project's docs. The harness is a first-class deliverable, not an afterthought — every subsequent iteration extends it.
 
 Selection rule: "if someone ran just these stories, they should see a demo that proves the product exists AND have at least one passing journey scenario that proves the demo works."
 
@@ -58,15 +58,15 @@ Then SPLIT the story:
 
 ### 4. Run citation check
 
-Run: `python3 "${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/check_citations.py" docs/moe/iterations/roadmap.md docs/moe/iterations/requirements/`
+Resolve {resource:skills/scoping-the-simplest-core/scripts/check_citations.py} relative to this loaded document, then invoke it with `python3` and arguments `docs/moe/iterations/roadmap.md docs/moe/iterations/requirements/`.
 
 Every iteration must cite only valid STORY-IDs from the index.
 
 ### 5. Scope review via PAR
 
-Following `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md`:
+Following {resource:skills/_shared/parallel-adversarial-review.md}, resolved relative to this loaded document:
 
-1. Build scope reviewer prompts using `${CLAUDE_PLUGIN_ROOT}/skills/running-an-iteration/scope-reviewer-prompt.md` (a sibling skill's template, deliberately shared)
+1. Resolve {resource:skills/running-an-iteration/scope-reviewer-prompt.md} relative to this loaded document and build scope reviewer prompts from that deliberately shared sibling template
 2. Wrap in PAR competitive framing
 3. Dispatch paired scope reviewers focused on:
    - Is ITER-0000 really the thinnest possible walking skeleton?
@@ -107,7 +107,7 @@ Write the result to `docs/moe/iterations/roadmap.md` using this format:
 **Look-ahead check:** <does this block or get blocked by neighbors?>
 ```
 
-Run: `python3 "${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/validate_roadmap.py" docs/moe/iterations/roadmap.md`
+Resolve {resource:skills/scoping-the-simplest-core/scripts/validate_roadmap.py} relative to this loaded document, then invoke it with `python3` and argument `docs/moe/iterations/roadmap.md`.
 
 **Note:** The validator checks format only. The PAR scope review is the real structural gate.
 
@@ -129,7 +129,7 @@ git commit -m "docs: add roadmap — walking skeleton with journey scenario + it
 
 ## References
 
-- `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md` — PAR methodology
-- `${CLAUDE_PLUGIN_ROOT}/skills/_shared/behavior-evidence-formats.md` — scenario and proof obligation formats
-- `${CLAUDE_PLUGIN_ROOT}/skills/running-an-iteration/scope-reviewer-prompt.md` — scope reviewer prompt (reused from a sibling skill)
+- {resource:skills/_shared/parallel-adversarial-review.md} — PAR methodology; resolve relative to this loaded document
+- {resource:skills/_shared/behavior-evidence-formats.md} — scenario and proof obligation formats; resolve relative to this loaded document
+- {resource:skills/running-an-iteration/scope-reviewer-prompt.md} — scope reviewer prompt reused from a sibling skill; resolve relative to this loaded document
 - `scripts/check_citations.py` — mechanical citation check

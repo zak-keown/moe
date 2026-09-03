@@ -7,7 +7,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,8 +15,9 @@ import { afterEach, describe, expect, it } from "vitest";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = resolve(HERE, "..");
-const SCRIPT = join(PKG, "scripts", "render-html.cjs");
+const SCRIPT = join(PKG, "skills", "_shared", "render-html.cjs");
 const DEFAULT_TEMPLATE = join(PKG, "skills", "_shared", "report-base.html");
+const SKILL = join(PKG, "skills", "improve-codebase-architecture", "SKILL.md");
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { renderTemplate, parseArgs } = require(SCRIPT) as {
@@ -25,6 +26,12 @@ const { renderTemplate, parseArgs } = require(SCRIPT) as {
 };
 
 const temporaryRoots: string[] = [];
+const SENTINELS = {
+  TITLE: "<!-- MOE:SLOT:TITLE -->",
+  NAV: "<!-- MOE:SLOT:NAV -->",
+  CONTENT: "<!-- MOE:SLOT:CONTENT -->",
+  SCRIPTS: "<!-- MOE:SLOT:SCRIPTS -->",
+} as const;
 
 function tempDir(prefix: string): string {
   const dir = mkdtempSync(join(tmpdir(), prefix));
@@ -43,11 +50,11 @@ afterEach(() => {
 // don't depend on the real report-base.html layout.
 const MINI_TEMPLATE = [
   "<!doctype html>",
-  "<html><head><title>{{TITLE}}</title></head>",
+  `<html><head><title>${SENTINELS.TITLE}</title></head>`,
   "<body>",
-  "<nav>{{NAV}}</nav>",
-  "<main>{{CONTENT}}</main>",
-  "{{SCRIPTS}}",
+  `<nav>${SENTINELS.NAV}</nav>`,
+  `<main>${SENTINELS.CONTENT}</main>`,
+  SENTINELS.SCRIPTS,
   "</body></html>",
 ].join("\n");
 
@@ -66,8 +73,7 @@ describe("renderTemplate", () => {
     expect(result).toContain("<h1>Hello</h1>");
     expect(result).toContain("console.log('ok')");
     // No leftover slot markers.
-    expect(result).not.toContain("{{");
-    expect(result).not.toContain("}}");
+    expect(result).not.toContain("<!-- MOE:SLOT:");
   });
 
   it("produces clean output when optional slots are missing", () => {
@@ -78,8 +84,8 @@ describe("renderTemplate", () => {
     expect(result).toContain("<title>Minimal</title>");
     expect(result).toContain("<p>Body</p>");
     // NAV and SCRIPTS markers are gone, replaced with empty strings.
-    expect(result).not.toContain("{{NAV}}");
-    expect(result).not.toContain("{{SCRIPTS}}");
+    expect(result).not.toContain(SENTINELS.NAV);
+    expect(result).not.toContain(SENTINELS.SCRIPTS);
     expect(result).toContain("<nav></nav>");
   });
 
@@ -135,13 +141,10 @@ describe("report-base.html template", () => {
 
   it("contains all four slot markers", () => {
     const html = readFileSync(DEFAULT_TEMPLATE, "utf-8");
-    expect(html).toContain("{{TITLE}}");
-    expect(html).toContain("{{NAV}}");
-    expect(html).toContain("{{CONTENT}}");
-    expect(html).toContain("{{SCRIPTS}}");
+    for (const sentinel of Object.values(SENTINELS)) expect(html).toContain(sentinel);
   });
 
-  it("produces valid self-contained HTML when slots are filled", () => {
+  it("produces valid portable HTML with the documented Mermaid CDN when slots are filled", () => {
     const template = readFileSync(DEFAULT_TEMPLATE, "utf-8");
     const html = renderTemplate(template, {
       title: "Architecture Review",
@@ -169,6 +172,17 @@ describe("report-base.html template", () => {
 });
 
 // ── CLI integration ───────────────────────────────────────────────
+
+describe("installed report instructions", () => {
+  it("does not describe CDN-dependent output as self-contained", () => {
+    const instructions = readFileSync(SKILL, "utf8");
+
+    expect(instructions).not.toMatch(/self-contained HTML/i);
+    expect(instructions).toMatch(/single local HTML file/i);
+    expect(instructions).toMatch(/Tailwind via CDN/);
+    expect(instructions).toMatch(/requires network access/i);
+  });
+});
 
 describe("CLI (render-html.cjs)", () => {
   it("renders a report from JSON input and writes HTML output", () => {
@@ -201,7 +215,7 @@ describe("CLI (render-html.cjs)", () => {
 
     writeFileSync(
       customTemplate,
-      "<!doctype html><html><head><title>{{TITLE}}</title></head><body>{{CONTENT}}</body></html>",
+      `<!doctype html><html><head><title>${SENTINELS.TITLE}</title></head><body>${SENTINELS.CONTENT}</body></html>`,
     );
     writeFileSync(inputPath, JSON.stringify({ title: "Custom", content: "<p>Custom body</p>" }));
 
@@ -246,5 +260,20 @@ describe("CLI (render-html.cjs)", () => {
 
     execFileSync("node", [SCRIPT, "--input", inputPath, "--output", outputPath]);
     expect(existsSync(outputPath)).toBe(true);
+  });
+
+  it("uses its adjacent installed template when invoked from an unrelated project cwd", () => {
+    const dir = tempDir("moe-render-installed-");
+    const project = join(dir, "project");
+    mkdirSync(project);
+    const inputPath = join(project, "data.json");
+    const outputPath = join(project, "report.html");
+    writeFileSync(inputPath, JSON.stringify({ title: "Installed", content: "<p>Portable</p>" }));
+
+    execFileSync("node", [SCRIPT, "--input", inputPath, "--output", outputPath], { cwd: project });
+
+    const html = readFileSync(outputPath, "utf-8");
+    expect(html).toContain("<title>Installed</title>");
+    expect(html).toContain("cdnjs.cloudflare.com");
   });
 });

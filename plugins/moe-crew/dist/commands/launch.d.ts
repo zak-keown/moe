@@ -1,3 +1,4 @@
+import type { HarnessId } from "../harness/driver.js";
 import type { CommandContext, CommandResult } from "./context.js";
 /** The shared bootstrap options launch and adopt both accept. */
 export interface BootstrapOpts {
@@ -33,7 +34,7 @@ export interface LaunchArgs {
      * The harness to launch; the command resolves its own driver from this via
      * getDriver, which validates the id (the CLI also validates it at parse time).
      */
-    harness: string;
+    harness: HarnessId;
     /**
      * When true, create a disposable git worktree for this worker and use it as
      * the tmux session's cwd. The worktree path is stored in the meta so `stop`

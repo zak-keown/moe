@@ -70,7 +70,12 @@ Each agent gets:
 
 ### 3. Dispatch in Parallel
 
-{subagent-dispatch}
+Use `invoke_subagent` with a built-in `TypeName`: `self` for work that
+needs the full tool surface or `research` for read-only investigation.
+Pass a complete brief that stands on its own. Dispatch independent calls
+together when the client supports concurrent tool calls; otherwise use
+the skill's sequential fallback. Keep dependent steps sequential.
+
 
 For independent work like the three fixes above, issue every dispatch together so they run concurrently:
 

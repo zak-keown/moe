@@ -33,7 +33,14 @@ export async function cmdStop(ctx, worker, opts = {}) {
         if (harness !== null && (await ctx.tmux.hasSession(worker))) {
             // Read worktree marker before removeOrphan deletes it.
             const orphanWt = readWorktreeMarker(ctx.workerDir, worker);
-            await ctx.tmux.killSession(worker);
+            await ctx.tmux.sendText(worker, ctx.driver.quitKeys);
+            await ctx.tmux.sendEnter(worker);
+            const deadline = Date.now() + (opts.stopTimeout ?? ctx.driver.stopGraceSeconds) * 1000;
+            while (Date.now() < deadline && (await ctx.tmux.hasSession(worker))) {
+                await sleep(opts.pollMs ?? 500);
+            }
+            if (await ctx.tmux.hasSession(worker))
+                await ctx.tmux.killSession(worker);
             removeOrphan(ctx.workerDir, worker);
             // Clean up the disposable worktree if one was created at launch.
             if (orphanWt) {

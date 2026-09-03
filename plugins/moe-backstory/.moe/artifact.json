@@ -20,14 +20,278 @@
     },
     {
       "path": ".claude-plugin/plugin.json",
-      "size": 468,
-      "sha256": "6f9473a87533a203987700a2412c7a0f022bc52124fe77dbf5006fecd997739e",
+      "size": 507,
+      "sha256": "57aca35ace52527317a96a4dc34e5ea6a3340a4e53ff8ceb88f4495f8335eb58",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/analysis-pipeline/SKILL.md",
+      "size": 14616,
+      "sha256": "a6d6c278879125f7bca7a837f4a4ee0abe75d35385b7be2ffc26039bc862fe48",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/autonomous-discovery/SKILL.md",
+      "size": 26050,
+      "sha256": "cfae7bb92ac46d8023eaff7a888c481d6be493beb89fe66ac2bc1f49f4e3dcc9",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/behavioral-spec-writing/SKILL.md",
+      "size": 54846,
+      "sha256": "f5dcbcb4c55536fd3bb78cc2523b96d18f01847fc31f308b3739ad58b9343fe4",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/binary-analysis/SKILL.md",
+      "size": 13932,
+      "sha256": "abf3fb2b474fcdb00486bbde66f5c2f6f755f747c56b5f8f7f6b782b2d9be5fb",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/community-intelligence/SKILL.md",
+      "size": 17860,
+      "sha256": "783f12f91d62b0474a09a49f759e574560f1e08d64721c9b6e090d6ec994873a",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/container-execution/SKILL.md",
+      "size": 8319,
+      "sha256": "bb6436c729b9804ccac02b30b0d685ab4da2c4371edef5a666d3c070e22dcf2a",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/contract-detection/SKILL.md",
+      "size": 16741,
+      "sha256": "77a9f98064f60dd29d2cd3bedfeb3107f4d92f1f7f52852ba922b7647d82e9af",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/doc-research/SKILL.md",
+      "size": 18497,
+      "sha256": "98425b2d3f8bb60ee10722dfde4a0eb29bb926ca497684580690ac71384765c7",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/ecosystem-analysis/SKILL.md",
+      "size": 11562,
+      "sha256": "1eaece7c427c61261fa4230666a5d3c2f7ddb1887c948154757fb6338804937e",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/fidelity-validation/SKILL.md",
+      "size": 7357,
+      "sha256": "f1ad935f849e5d846217a83943a96e8ab2574dbdb14020e402b6eb1fd03c5f9f",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/git-archaeology/SKILL.md",
+      "size": 12532,
+      "sha256": "903280b930284773a4870c649ac19b68f943001f4b5e8b78d1e073d82934b3ac",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/incremental-analysis/SKILL.md",
+      "size": 8653,
+      "sha256": "b85c0f8f1635159c2c804d4c5441df76227387a4df3db1f3d33bdf47414dc7fb",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/multi-source-synthesis/SKILL.md",
+      "size": 37114,
+      "sha256": "ae7d65733801b1770cbcfdd4def01e90833f272389a44452969ee5d59f111cc2",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/provenance-methodology/SKILL.md",
+      "size": 9838,
+      "sha256": "1d1251bb7d249ca064432ac2c3de8188c2cd14cefb0ea483246cbb4f4851cdea",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/runtime-observation/SKILL.md",
+      "size": 19561,
+      "sha256": "f0a407384d6d9846805d843d24a6965b92c38336df88f03169d1e5d3f47743be",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/second-pass-review/SKILL.md",
+      "size": 24565,
+      "sha256": "59d66fe0ccbad8604ea78341e46dafa126a25382a390fd2de7054fc0e78f661d",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/source-analysis/SKILL.md",
+      "size": 38654,
+      "sha256": "6dbb3abafc4b47e8368fd41d4a5c0895e06b0ecf69ea29f22ddc683844096e68",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/source-completeness/SKILL.md",
+      "size": 8272,
+      "sha256": "ef244131ead051f6db8cd61bdab3985de978dafe0aa091fee37cd4c15e29eef1",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/spec-sanitization/SKILL.md",
+      "size": 25915,
+      "sha256": "6aacb5056beba92b7a5bd271c93445b6215c98c88542237326b3e0f9ce001323",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/test-suite-analysis/SKILL.md",
+      "size": 12673,
+      "sha256": "4d998b19aee6945f1ec49b821ac18ea820fd6a53038a950ab9313ae49608bcb3",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/validation-methodology/SKILL.md",
+      "size": 11829,
+      "sha256": "673fb08b5ecfc2bb00279360e5fb383eeb83f877453be58726678dc56b69b677",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/visual-exploration/SKILL.md",
+      "size": 14971,
+      "sha256": "a04ecd96610441999a122cd02dd581a82857dd7cd0140607aa6502e827484ae3",
       "mode": "0644"
     },
     {
       "path": ".codex-plugin/plugin.json",
-      "size": 508,
-      "sha256": "d96deac0f9ed93e30d929f095b8796a86220ec708d9b6b8c537fd20723c6ccf0",
+      "size": 522,
+      "sha256": "89aafe6ac2c27b02164567abb76f3f097ce5784fece709ceef909003f35ad98d",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/analysis-pipeline/SKILL.md",
+      "size": 14616,
+      "sha256": "a6d6c278879125f7bca7a837f4a4ee0abe75d35385b7be2ffc26039bc862fe48",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/autonomous-discovery/SKILL.md",
+      "size": 26050,
+      "sha256": "cfae7bb92ac46d8023eaff7a888c481d6be493beb89fe66ac2bc1f49f4e3dcc9",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/behavioral-spec-writing/SKILL.md",
+      "size": 54846,
+      "sha256": "f5dcbcb4c55536fd3bb78cc2523b96d18f01847fc31f308b3739ad58b9343fe4",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/binary-analysis/SKILL.md",
+      "size": 13932,
+      "sha256": "abf3fb2b474fcdb00486bbde66f5c2f6f755f747c56b5f8f7f6b782b2d9be5fb",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/community-intelligence/SKILL.md",
+      "size": 17860,
+      "sha256": "783f12f91d62b0474a09a49f759e574560f1e08d64721c9b6e090d6ec994873a",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/container-execution/SKILL.md",
+      "size": 8319,
+      "sha256": "bb6436c729b9804ccac02b30b0d685ab4da2c4371edef5a666d3c070e22dcf2a",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/contract-detection/SKILL.md",
+      "size": 16741,
+      "sha256": "77a9f98064f60dd29d2cd3bedfeb3107f4d92f1f7f52852ba922b7647d82e9af",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/doc-research/SKILL.md",
+      "size": 18497,
+      "sha256": "98425b2d3f8bb60ee10722dfde4a0eb29bb926ca497684580690ac71384765c7",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/ecosystem-analysis/SKILL.md",
+      "size": 11562,
+      "sha256": "1eaece7c427c61261fa4230666a5d3c2f7ddb1887c948154757fb6338804937e",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/fidelity-validation/SKILL.md",
+      "size": 7357,
+      "sha256": "f1ad935f849e5d846217a83943a96e8ab2574dbdb14020e402b6eb1fd03c5f9f",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/git-archaeology/SKILL.md",
+      "size": 12532,
+      "sha256": "903280b930284773a4870c649ac19b68f943001f4b5e8b78d1e073d82934b3ac",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/incremental-analysis/SKILL.md",
+      "size": 8653,
+      "sha256": "b85c0f8f1635159c2c804d4c5441df76227387a4df3db1f3d33bdf47414dc7fb",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/multi-source-synthesis/SKILL.md",
+      "size": 37114,
+      "sha256": "ae7d65733801b1770cbcfdd4def01e90833f272389a44452969ee5d59f111cc2",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/provenance-methodology/SKILL.md",
+      "size": 9838,
+      "sha256": "1d1251bb7d249ca064432ac2c3de8188c2cd14cefb0ea483246cbb4f4851cdea",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/runtime-observation/SKILL.md",
+      "size": 19561,
+      "sha256": "f0a407384d6d9846805d843d24a6965b92c38336df88f03169d1e5d3f47743be",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/second-pass-review/SKILL.md",
+      "size": 24565,
+      "sha256": "59d66fe0ccbad8604ea78341e46dafa126a25382a390fd2de7054fc0e78f661d",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/source-analysis/SKILL.md",
+      "size": 38654,
+      "sha256": "6dbb3abafc4b47e8368fd41d4a5c0895e06b0ecf69ea29f22ddc683844096e68",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/source-completeness/SKILL.md",
+      "size": 8272,
+      "sha256": "ef244131ead051f6db8cd61bdab3985de978dafe0aa091fee37cd4c15e29eef1",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/spec-sanitization/SKILL.md",
+      "size": 25915,
+      "sha256": "6aacb5056beba92b7a5bd271c93445b6215c98c88542237326b3e0f9ce001323",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/test-suite-analysis/SKILL.md",
+      "size": 12673,
+      "sha256": "4d998b19aee6945f1ec49b821ac18ea820fd6a53038a950ab9313ae49608bcb3",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/validation-methodology/SKILL.md",
+      "size": 11829,
+      "sha256": "673fb08b5ecfc2bb00279360e5fb383eeb83f877453be58726678dc56b69b677",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/visual-exploration/SKILL.md",
+      "size": 14971,
+      "sha256": "a04ecd96610441999a122cd02dd581a82857dd7cd0140607aa6502e827484ae3",
       "mode": "0644"
     },
     {
@@ -38,20 +302,284 @@
     },
     {
       "path": ".cursor-plugin/plugin.json",
-      "size": 663,
-      "sha256": "cb74d50306174401f1613277dd34330210355e041923d522b4141d2494fa4e8d",
+      "size": 678,
+      "sha256": "d06a0a53148258ded0abaf7cea596546624e4896dae731ed7e11a3294c5ad992",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/analysis-pipeline/SKILL.md",
+      "size": 14616,
+      "sha256": "a6d6c278879125f7bca7a837f4a4ee0abe75d35385b7be2ffc26039bc862fe48",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/autonomous-discovery/SKILL.md",
+      "size": 26050,
+      "sha256": "cfae7bb92ac46d8023eaff7a888c481d6be493beb89fe66ac2bc1f49f4e3dcc9",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/behavioral-spec-writing/SKILL.md",
+      "size": 54846,
+      "sha256": "f5dcbcb4c55536fd3bb78cc2523b96d18f01847fc31f308b3739ad58b9343fe4",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/binary-analysis/SKILL.md",
+      "size": 13932,
+      "sha256": "abf3fb2b474fcdb00486bbde66f5c2f6f755f747c56b5f8f7f6b782b2d9be5fb",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/community-intelligence/SKILL.md",
+      "size": 17860,
+      "sha256": "783f12f91d62b0474a09a49f759e574560f1e08d64721c9b6e090d6ec994873a",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/container-execution/SKILL.md",
+      "size": 8319,
+      "sha256": "bb6436c729b9804ccac02b30b0d685ab4da2c4371edef5a666d3c070e22dcf2a",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/contract-detection/SKILL.md",
+      "size": 16741,
+      "sha256": "77a9f98064f60dd29d2cd3bedfeb3107f4d92f1f7f52852ba922b7647d82e9af",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/doc-research/SKILL.md",
+      "size": 18497,
+      "sha256": "98425b2d3f8bb60ee10722dfde4a0eb29bb926ca497684580690ac71384765c7",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/ecosystem-analysis/SKILL.md",
+      "size": 11562,
+      "sha256": "1eaece7c427c61261fa4230666a5d3c2f7ddb1887c948154757fb6338804937e",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/fidelity-validation/SKILL.md",
+      "size": 7357,
+      "sha256": "f1ad935f849e5d846217a83943a96e8ab2574dbdb14020e402b6eb1fd03c5f9f",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/git-archaeology/SKILL.md",
+      "size": 12532,
+      "sha256": "903280b930284773a4870c649ac19b68f943001f4b5e8b78d1e073d82934b3ac",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/incremental-analysis/SKILL.md",
+      "size": 8653,
+      "sha256": "b85c0f8f1635159c2c804d4c5441df76227387a4df3db1f3d33bdf47414dc7fb",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/multi-source-synthesis/SKILL.md",
+      "size": 37114,
+      "sha256": "ae7d65733801b1770cbcfdd4def01e90833f272389a44452969ee5d59f111cc2",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/provenance-methodology/SKILL.md",
+      "size": 9838,
+      "sha256": "1d1251bb7d249ca064432ac2c3de8188c2cd14cefb0ea483246cbb4f4851cdea",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/runtime-observation/SKILL.md",
+      "size": 19561,
+      "sha256": "f0a407384d6d9846805d843d24a6965b92c38336df88f03169d1e5d3f47743be",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/second-pass-review/SKILL.md",
+      "size": 24565,
+      "sha256": "59d66fe0ccbad8604ea78341e46dafa126a25382a390fd2de7054fc0e78f661d",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/source-analysis/SKILL.md",
+      "size": 38654,
+      "sha256": "6dbb3abafc4b47e8368fd41d4a5c0895e06b0ecf69ea29f22ddc683844096e68",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/source-completeness/SKILL.md",
+      "size": 8272,
+      "sha256": "ef244131ead051f6db8cd61bdab3985de978dafe0aa091fee37cd4c15e29eef1",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/spec-sanitization/SKILL.md",
+      "size": 25915,
+      "sha256": "6aacb5056beba92b7a5bd271c93445b6215c98c88542237326b3e0f9ce001323",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/test-suite-analysis/SKILL.md",
+      "size": 12673,
+      "sha256": "4d998b19aee6945f1ec49b821ac18ea820fd6a53038a950ab9313ae49608bcb3",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/validation-methodology/SKILL.md",
+      "size": 11829,
+      "sha256": "673fb08b5ecfc2bb00279360e5fb383eeb83f877453be58726678dc56b69b677",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/visual-exploration/SKILL.md",
+      "size": 14971,
+      "sha256": "a04ecd96610441999a122cd02dd581a82857dd7cd0140607aa6502e827484ae3",
       "mode": "0644"
     },
     {
       "path": ".kimi-plugin/plugin.json",
-      "size": 493,
-      "sha256": "f4c8f7616db7a90304f1a47ed04b6e7e35bbeff6c82827f24fa715d1dd500852",
+      "size": 506,
+      "sha256": "c2523c5591be55384fbf6f38485c07b73be07dbf753f83a9f7adf6f41486cc70",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/analysis-pipeline/SKILL.md",
+      "size": 14616,
+      "sha256": "a6d6c278879125f7bca7a837f4a4ee0abe75d35385b7be2ffc26039bc862fe48",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/autonomous-discovery/SKILL.md",
+      "size": 26050,
+      "sha256": "cfae7bb92ac46d8023eaff7a888c481d6be493beb89fe66ac2bc1f49f4e3dcc9",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/behavioral-spec-writing/SKILL.md",
+      "size": 54846,
+      "sha256": "f5dcbcb4c55536fd3bb78cc2523b96d18f01847fc31f308b3739ad58b9343fe4",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/binary-analysis/SKILL.md",
+      "size": 13932,
+      "sha256": "abf3fb2b474fcdb00486bbde66f5c2f6f755f747c56b5f8f7f6b782b2d9be5fb",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/community-intelligence/SKILL.md",
+      "size": 17860,
+      "sha256": "783f12f91d62b0474a09a49f759e574560f1e08d64721c9b6e090d6ec994873a",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/container-execution/SKILL.md",
+      "size": 8319,
+      "sha256": "bb6436c729b9804ccac02b30b0d685ab4da2c4371edef5a666d3c070e22dcf2a",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/contract-detection/SKILL.md",
+      "size": 16741,
+      "sha256": "77a9f98064f60dd29d2cd3bedfeb3107f4d92f1f7f52852ba922b7647d82e9af",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/doc-research/SKILL.md",
+      "size": 18497,
+      "sha256": "98425b2d3f8bb60ee10722dfde4a0eb29bb926ca497684580690ac71384765c7",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/ecosystem-analysis/SKILL.md",
+      "size": 11562,
+      "sha256": "1eaece7c427c61261fa4230666a5d3c2f7ddb1887c948154757fb6338804937e",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/fidelity-validation/SKILL.md",
+      "size": 7357,
+      "sha256": "f1ad935f849e5d846217a83943a96e8ab2574dbdb14020e402b6eb1fd03c5f9f",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/git-archaeology/SKILL.md",
+      "size": 12532,
+      "sha256": "903280b930284773a4870c649ac19b68f943001f4b5e8b78d1e073d82934b3ac",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/incremental-analysis/SKILL.md",
+      "size": 8653,
+      "sha256": "b85c0f8f1635159c2c804d4c5441df76227387a4df3db1f3d33bdf47414dc7fb",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/multi-source-synthesis/SKILL.md",
+      "size": 37114,
+      "sha256": "ae7d65733801b1770cbcfdd4def01e90833f272389a44452969ee5d59f111cc2",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/provenance-methodology/SKILL.md",
+      "size": 9838,
+      "sha256": "1d1251bb7d249ca064432ac2c3de8188c2cd14cefb0ea483246cbb4f4851cdea",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/runtime-observation/SKILL.md",
+      "size": 19561,
+      "sha256": "f0a407384d6d9846805d843d24a6965b92c38336df88f03169d1e5d3f47743be",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/second-pass-review/SKILL.md",
+      "size": 24565,
+      "sha256": "59d66fe0ccbad8604ea78341e46dafa126a25382a390fd2de7054fc0e78f661d",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/source-analysis/SKILL.md",
+      "size": 38654,
+      "sha256": "6dbb3abafc4b47e8368fd41d4a5c0895e06b0ecf69ea29f22ddc683844096e68",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/source-completeness/SKILL.md",
+      "size": 8272,
+      "sha256": "ef244131ead051f6db8cd61bdab3985de978dafe0aa091fee37cd4c15e29eef1",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/spec-sanitization/SKILL.md",
+      "size": 25915,
+      "sha256": "6aacb5056beba92b7a5bd271c93445b6215c98c88542237326b3e0f9ce001323",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/test-suite-analysis/SKILL.md",
+      "size": 12673,
+      "sha256": "4d998b19aee6945f1ec49b821ac18ea820fd6a53038a950ab9313ae49608bcb3",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/validation-methodology/SKILL.md",
+      "size": 11829,
+      "sha256": "673fb08b5ecfc2bb00279360e5fb383eeb83f877453be58726678dc56b69b677",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/visual-exploration/SKILL.md",
+      "size": 14971,
+      "sha256": "a04ecd96610441999a122cd02dd581a82857dd7cd0140607aa6502e827484ae3",
       "mode": "0644"
     },
     {
       "path": ".moe-mint/manifest.json",
-      "size": 2956,
-      "sha256": "4a46faf299a662efa9e61ea31bf18e407d68619c720f738f269ad9788d35298c",
+      "size": 24792,
+      "sha256": "81d49936c2383d16061a5f0b30f87c35e2c3a65463f721c1167ab40120de4fdc",
       "mode": "0644"
     },
     {
@@ -80,14 +608,278 @@
     },
     {
       "path": ".opencode/plugins/moe-backstory.js",
-      "size": 793,
-      "sha256": "2aaa9ae7555266f0233fd73b678aba3b0fd3b2cc72fb1f2f278dfe2121203054",
+      "size": 803,
+      "sha256": "a8a05ed1a78359012e4a74020911cca9f83edee05201acf2aee05945a955515a",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/analysis-pipeline/SKILL.md",
+      "size": 14616,
+      "sha256": "a6d6c278879125f7bca7a837f4a4ee0abe75d35385b7be2ffc26039bc862fe48",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/autonomous-discovery/SKILL.md",
+      "size": 26050,
+      "sha256": "cfae7bb92ac46d8023eaff7a888c481d6be493beb89fe66ac2bc1f49f4e3dcc9",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/behavioral-spec-writing/SKILL.md",
+      "size": 54846,
+      "sha256": "f5dcbcb4c55536fd3bb78cc2523b96d18f01847fc31f308b3739ad58b9343fe4",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/binary-analysis/SKILL.md",
+      "size": 13932,
+      "sha256": "abf3fb2b474fcdb00486bbde66f5c2f6f755f747c56b5f8f7f6b782b2d9be5fb",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/community-intelligence/SKILL.md",
+      "size": 17860,
+      "sha256": "783f12f91d62b0474a09a49f759e574560f1e08d64721c9b6e090d6ec994873a",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/container-execution/SKILL.md",
+      "size": 8319,
+      "sha256": "bb6436c729b9804ccac02b30b0d685ab4da2c4371edef5a666d3c070e22dcf2a",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/contract-detection/SKILL.md",
+      "size": 16741,
+      "sha256": "77a9f98064f60dd29d2cd3bedfeb3107f4d92f1f7f52852ba922b7647d82e9af",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/doc-research/SKILL.md",
+      "size": 18497,
+      "sha256": "98425b2d3f8bb60ee10722dfde4a0eb29bb926ca497684580690ac71384765c7",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/ecosystem-analysis/SKILL.md",
+      "size": 11562,
+      "sha256": "1eaece7c427c61261fa4230666a5d3c2f7ddb1887c948154757fb6338804937e",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/fidelity-validation/SKILL.md",
+      "size": 7357,
+      "sha256": "f1ad935f849e5d846217a83943a96e8ab2574dbdb14020e402b6eb1fd03c5f9f",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/git-archaeology/SKILL.md",
+      "size": 12532,
+      "sha256": "903280b930284773a4870c649ac19b68f943001f4b5e8b78d1e073d82934b3ac",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/incremental-analysis/SKILL.md",
+      "size": 8653,
+      "sha256": "b85c0f8f1635159c2c804d4c5441df76227387a4df3db1f3d33bdf47414dc7fb",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/multi-source-synthesis/SKILL.md",
+      "size": 37114,
+      "sha256": "ae7d65733801b1770cbcfdd4def01e90833f272389a44452969ee5d59f111cc2",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/provenance-methodology/SKILL.md",
+      "size": 9838,
+      "sha256": "1d1251bb7d249ca064432ac2c3de8188c2cd14cefb0ea483246cbb4f4851cdea",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/runtime-observation/SKILL.md",
+      "size": 19561,
+      "sha256": "f0a407384d6d9846805d843d24a6965b92c38336df88f03169d1e5d3f47743be",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/second-pass-review/SKILL.md",
+      "size": 24565,
+      "sha256": "59d66fe0ccbad8604ea78341e46dafa126a25382a390fd2de7054fc0e78f661d",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/source-analysis/SKILL.md",
+      "size": 38654,
+      "sha256": "6dbb3abafc4b47e8368fd41d4a5c0895e06b0ecf69ea29f22ddc683844096e68",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/source-completeness/SKILL.md",
+      "size": 8272,
+      "sha256": "ef244131ead051f6db8cd61bdab3985de978dafe0aa091fee37cd4c15e29eef1",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/spec-sanitization/SKILL.md",
+      "size": 25915,
+      "sha256": "6aacb5056beba92b7a5bd271c93445b6215c98c88542237326b3e0f9ce001323",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/test-suite-analysis/SKILL.md",
+      "size": 12673,
+      "sha256": "4d998b19aee6945f1ec49b821ac18ea820fd6a53038a950ab9313ae49608bcb3",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/validation-methodology/SKILL.md",
+      "size": 11829,
+      "sha256": "673fb08b5ecfc2bb00279360e5fb383eeb83f877453be58726678dc56b69b677",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/visual-exploration/SKILL.md",
+      "size": 14971,
+      "sha256": "a04ecd96610441999a122cd02dd581a82857dd7cd0140607aa6502e827484ae3",
       "mode": "0644"
     },
     {
       "path": ".pi/extensions/moe-backstory.ts",
-      "size": 580,
-      "sha256": "e57f02c707342a6c3b6088f8791bdc57e5e69db2a4291f0f0ff7a74d60ad9b67",
+      "size": 584,
+      "sha256": "d28a63d172f4c3d8ce0925e69a1765a13922fc229ce84e41b6028f063e8b9b3d",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/analysis-pipeline/SKILL.md",
+      "size": 14616,
+      "sha256": "a6d6c278879125f7bca7a837f4a4ee0abe75d35385b7be2ffc26039bc862fe48",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/autonomous-discovery/SKILL.md",
+      "size": 26050,
+      "sha256": "cfae7bb92ac46d8023eaff7a888c481d6be493beb89fe66ac2bc1f49f4e3dcc9",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/behavioral-spec-writing/SKILL.md",
+      "size": 54846,
+      "sha256": "f5dcbcb4c55536fd3bb78cc2523b96d18f01847fc31f308b3739ad58b9343fe4",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/binary-analysis/SKILL.md",
+      "size": 13932,
+      "sha256": "abf3fb2b474fcdb00486bbde66f5c2f6f755f747c56b5f8f7f6b782b2d9be5fb",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/community-intelligence/SKILL.md",
+      "size": 17860,
+      "sha256": "783f12f91d62b0474a09a49f759e574560f1e08d64721c9b6e090d6ec994873a",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/container-execution/SKILL.md",
+      "size": 8319,
+      "sha256": "bb6436c729b9804ccac02b30b0d685ab4da2c4371edef5a666d3c070e22dcf2a",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/contract-detection/SKILL.md",
+      "size": 16741,
+      "sha256": "77a9f98064f60dd29d2cd3bedfeb3107f4d92f1f7f52852ba922b7647d82e9af",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/doc-research/SKILL.md",
+      "size": 18497,
+      "sha256": "98425b2d3f8bb60ee10722dfde4a0eb29bb926ca497684580690ac71384765c7",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/ecosystem-analysis/SKILL.md",
+      "size": 11562,
+      "sha256": "1eaece7c427c61261fa4230666a5d3c2f7ddb1887c948154757fb6338804937e",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/fidelity-validation/SKILL.md",
+      "size": 7357,
+      "sha256": "f1ad935f849e5d846217a83943a96e8ab2574dbdb14020e402b6eb1fd03c5f9f",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/git-archaeology/SKILL.md",
+      "size": 12532,
+      "sha256": "903280b930284773a4870c649ac19b68f943001f4b5e8b78d1e073d82934b3ac",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/incremental-analysis/SKILL.md",
+      "size": 8653,
+      "sha256": "b85c0f8f1635159c2c804d4c5441df76227387a4df3db1f3d33bdf47414dc7fb",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/multi-source-synthesis/SKILL.md",
+      "size": 37114,
+      "sha256": "ae7d65733801b1770cbcfdd4def01e90833f272389a44452969ee5d59f111cc2",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/provenance-methodology/SKILL.md",
+      "size": 9838,
+      "sha256": "1d1251bb7d249ca064432ac2c3de8188c2cd14cefb0ea483246cbb4f4851cdea",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/runtime-observation/SKILL.md",
+      "size": 19561,
+      "sha256": "f0a407384d6d9846805d843d24a6965b92c38336df88f03169d1e5d3f47743be",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/second-pass-review/SKILL.md",
+      "size": 24565,
+      "sha256": "59d66fe0ccbad8604ea78341e46dafa126a25382a390fd2de7054fc0e78f661d",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/source-analysis/SKILL.md",
+      "size": 38654,
+      "sha256": "6dbb3abafc4b47e8368fd41d4a5c0895e06b0ecf69ea29f22ddc683844096e68",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/source-completeness/SKILL.md",
+      "size": 8272,
+      "sha256": "ef244131ead051f6db8cd61bdab3985de978dafe0aa091fee37cd4c15e29eef1",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/spec-sanitization/SKILL.md",
+      "size": 25915,
+      "sha256": "6aacb5056beba92b7a5bd271c93445b6215c98c88542237326b3e0f9ce001323",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/test-suite-analysis/SKILL.md",
+      "size": 12673,
+      "sha256": "4d998b19aee6945f1ec49b821ac18ea820fd6a53038a950ab9313ae49608bcb3",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/validation-methodology/SKILL.md",
+      "size": 11829,
+      "sha256": "673fb08b5ecfc2bb00279360e5fb383eeb83f877453be58726678dc56b69b677",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/visual-exploration/SKILL.md",
+      "size": 14971,
+      "sha256": "a04ecd96610441999a122cd02dd581a82857dd7cd0140607aa6502e827484ae3",
       "mode": "0644"
     },
     {
@@ -176,14 +968,14 @@
     },
     {
       "path": "docs/support-matrix.md",
-      "size": 823,
-      "sha256": "8d824b8c5ac786de381d6877aa2d7d1f977a66af570099b9bff7193f1e817ba1",
+      "size": 986,
+      "sha256": "ccfeac06607b4fc776ccd7fdb873963314a2c5a9039ea2035f695809135797b1",
       "mode": "0644"
     },
     {
       "path": "package.json",
-      "size": 2755,
-      "sha256": "5df6dc849ec8ff10dad6701b5fcd80b3d861c6f9832c8a1c6579f8c0c25f23b2",
+      "size": 9943,
+      "sha256": "de41e1571b2b3955936203f4589e50fd542b459dc0fb9607d1fe859aa86752f5",
       "mode": "0644"
     },
     {
@@ -320,12 +1112,12 @@
     },
     {
       "path": "skills/visual-exploration/SKILL.md",
-      "size": 14974,
-      "sha256": "a917ca2049cd4fcd40a07a2ca2ce5ff5a22db8814b8d73b8b1a0fa0043f50265",
+      "size": 14971,
+      "sha256": "a04ecd96610441999a122cd02dd581a82857dd7cd0140607aa6502e827484ae3",
       "mode": "0644"
     }
   ],
-  "tree_sha256": "7e7a902219aff90dec0bde391d6fbb17c92b1b38074fe1d9fbdee5048713f664",
+  "tree_sha256": "d82fbedf11e619bd8c6d0e4c4c2799c2fcefc92c86e7a2e3786c89e19bc801f3",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

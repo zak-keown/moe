@@ -1,21 +1,21 @@
 tokens:
   ask:
     claude-code: "`AskUserQuestion`"
-    cursor: "`AskUserQuestion`"
+    cursor: "ask the user in chat"
     codex: "ask in the terminal"
-    kimi: "`AskUserQuestion`"
+    kimi: "ask the user in chat"
     opencode: "ask in the terminal"
     pi: "ask in the terminal"
-    agent-plugins-1.0: "`AskUserQuestion`"
+    agent-plugins-1.0: "ask the user through the client's native interaction"
     copilot: "`AskUserQuestion`"
   todo:
     claude-code: "`TaskCreate`/`TaskUpdate`"
-    cursor: "`TaskCreate`/`TaskUpdate`"
+    cursor: "maintain a markdown checklist"
     codex: "track in a checklist file"
     kimi: "`TodoList`"
     opencode: "`todowrite`"
     pi: "`TODO.md`"
-    agent-plugins-1.0: "`TaskCreate`/`TaskUpdate`"
+    agent-plugins-1.0: "maintain a task artifact with `write_to_file` and `replace_file_content`"
     copilot: "`TaskCreate`/`TaskUpdate`"
   skill:
     claude-code: "the `Skill` tool"
@@ -24,14 +24,8 @@ tokens:
     kimi: "the `Skill` tool"
     opencode: "the `skill` tool"
     pi: "read the skill's `SKILL.md`"
-    agent-plugins-1.0: "the `Skill` tool"
+    agent-plugins-1.0: "native skill discovery"
     copilot: "the `Skill` tool"
-  # claude-code, agent-plugins-1.0 (Antigravity), and copilot share ONE
-  # generated skills/ directory (see substituteAllSkills in
-  # packages/mint/src/vocabulary.ts) — mint hard-errors if these three
-  # disagree on any token or block. Antigravity's and Copilot's real tool
-  # surfaces differ from Claude Code's (see references/antigravity-tools.md);
-  # that divergence stays documented in the reference files, not here.
   artifact:
     claude-code: "the `Artifact` tool"
     cursor: "a self-contained local HTML file"
@@ -39,7 +33,7 @@ tokens:
     kimi: "a self-contained local HTML file"
     opencode: "a self-contained local HTML file"
     pi: "a self-contained local HTML file"
-    agent-plugins-1.0: "the `Artifact` tool"
+    agent-plugins-1.0: "a self-contained local HTML file"
     copilot: "the `Artifact` tool"
   read:
     claude-code: "`Read`"
@@ -48,7 +42,7 @@ tokens:
     kimi: "`Read`"
     opencode: "`read`"
     pi: "`read`"
-    agent-plugins-1.0: "`Read`"
+    agent-plugins-1.0: "the client's native file reader"
     copilot: "`Read`"
   write:
     claude-code: "`Write`"
@@ -57,7 +51,7 @@ tokens:
     kimi: "`Write`"
     opencode: "`apply_patch`"
     pi: "`write`"
-    agent-plugins-1.0: "`Write`"
+    agent-plugins-1.0: "`write_to_file`"
     copilot: "`Write`"
   edit:
     claude-code: "`Edit`"
@@ -66,7 +60,7 @@ tokens:
     kimi: "`Edit`"
     opencode: "`apply_patch`"
     pi: "`edit`"
-    agent-plugins-1.0: "`Edit`"
+    agent-plugins-1.0: "`replace_file_content` or `multi_replace_file_content`"
     copilot: "`Edit`"
   search:
     claude-code: "`Grep`"
@@ -75,7 +69,7 @@ tokens:
     kimi: "`Grep`"
     opencode: "`grep`"
     pi: "`grep`"
-    agent-plugins-1.0: "`Grep`"
+    agent-plugins-1.0: "the client's native text search"
     copilot: "`Grep`"
   find:
     claude-code: "`Glob`"
@@ -84,7 +78,7 @@ tokens:
     kimi: "`Glob`"
     opencode: "`glob`"
     pi: "`find`"
-    agent-plugins-1.0: "`Glob`"
+    agent-plugins-1.0: "the client's native file search"
     copilot: "`Glob`"
   bash:
     claude-code: "`Bash`"
@@ -93,7 +87,7 @@ tokens:
     kimi: "`Bash`"
     opencode: "`bash`"
     pi: "`bash`"
-    agent-plugins-1.0: "`Bash`"
+    agent-plugins-1.0: "the client's native shell tool"
     copilot: "`Bash`"
   web-fetch:
     claude-code: "`WebFetch`"
@@ -102,11 +96,109 @@ tokens:
     kimi: "`FetchURL`"
     opencode: "`webfetch`"
     pi: "`bash` (curl)"
-    agent-plugins-1.0: "`WebFetch`"
+    agent-plugins-1.0: "the client's native web-fetch tool"
     copilot: "`WebFetch`"
+  model-fast:
+    claude-code: "`haiku`"
+    cursor: "the configured fast model"
+    codex: "a fast model from the current spawn allowlist"
+    kimi: "the configured fast model"
+    opencode: "the configured fast model"
+    pi: "the configured fast model"
+    agent-plugins-1.0: "the configured fast model"
+    copilot: "`haiku`"
+  model-deep:
+    claude-code: "`opus`"
+    cursor: "the configured deep-reasoning model"
+    codex: "a deep-reasoning model from the current spawn allowlist"
+    kimi: "the configured deep-reasoning model"
+    opencode: "the configured deep-reasoning model"
+    pi: "the configured deep-reasoning model"
+    agent-plugins-1.0: "the configured deep-reasoning model"
+    copilot: "`opus`"
+  model-default:
+    claude-code: "the configured default"
+    cursor: "the configured default"
+    codex: "the configured default"
+    kimi: "the configured default"
+    opencode: "the configured default"
+    pi: "the configured default"
+    agent-plugins-1.0: "the configured default"
+    copilot: "the configured default"
 blocks:
-  # Same shared-directory constraint as above applies to every block below:
-  # claude-code, agent-plugins-1.0, and copilot must be byte-identical.
+  model-dispatch-guidance:
+    claude-code: |
+      **Dispatch model selection:** The `Agent` tool supports a call-level
+      `model` field. Every dispatch must set its `model` field explicitly to
+      the model assigned by the selected role in Model Selection.
+    cursor: |
+      **Dispatch model selection:** Set the selected role explicitly when the
+      installed `Agent` schema exposes a `model` field. Otherwise use the model
+      configured for that subagent type; do not invent an unsupported field.
+    codex: |
+      **Dispatch model selection:** Every `spawn_agent` call must set `model`
+      and `reasoning_effort` explicitly, resolving the selected role against
+      the current spawn allowlist before dispatch.
+    kimi: |
+      **Dispatch model selection:** Kimi's `Agent` surface used here does not
+      expose a portable call-level model override. Route the selected role
+      through the model configured for the chosen Kimi subagent type, or use
+      the configured default when no role-specific choice exists. Do not
+      invent a `model` field.
+    opencode: |
+      **Dispatch model selection:** OpenCode's `task` surface used here does
+      not expose a call-level model override. Route the selected role through
+      the configured `general` agent, or use its configured default. Do not
+      invent a `model` field.
+    pi: |
+      **Dispatch model selection:** Pass a call-level model override only when
+      the installed subagent tool documents that field. Otherwise route the
+      selected role through the tool's configured subagent profile, or use the
+      configured default. Do not invent an unsupported field.
+    agent-plugins-1.0: |
+      **Dispatch model selection:** `invoke_subagent` does not define a
+      call-level model override. Route roles through configured `self` or
+      `research` `TypeName` behavior, using the configured default when no
+      role-specific choice exists. Do not invent a `model` parameter.
+    copilot: |
+      **Dispatch model selection:** The `Agent` tool supports a call-level
+      `model` field. Every dispatch must set its `model` field explicitly to
+      the model assigned by the selected role in Model Selection.
+  bootstrap-context:
+    claude-code: |
+      This bootstrap is actively injected at session start and is already
+      loaded. Follow it now. Do not use the `Skill` tool to load `using-moe`
+      again; use that mechanism for every other skill.
+    cursor: |
+      This bootstrap is actively injected at session start and is already
+      loaded. Follow it now. Do not use the `Skill` tool to load `using-moe`
+      again; use that mechanism for every other skill.
+    codex: |
+      Codex provides native skill discovery only; this bootstrap is not
+      injected at session start. If you explicitly loaded `using-moe`, follow
+      it now and use native skill discovery for every other skill. Do not
+      assume it was preloaded merely because it is installed.
+    kimi: |
+      Kimi activates this named bootstrap skill at session start. Because you
+      are reading the named bootstrap skill now, follow it without loading
+      `using-moe` again. Use the `Skill` tool for every other skill.
+    opencode: |
+      This bootstrap is actively injected at session start and is already
+      loaded. Follow it now. Do not use the `skill` tool to load `using-moe`
+      again; use that mechanism for every other skill.
+    pi: |
+      This bootstrap is actively injected at session start and is already
+      loaded. Follow it now. Do not reload `using-moe`; read every other
+      skill's `SKILL.md` through Pi's configured skill discovery.
+    agent-plugins-1.0: |
+      Agent Plugins 1.0 has no bootstrap mechanism. If you loaded `using-moe`
+      explicitly, follow it now and use native skill discovery for every other
+      skill. Do not claim it was injected merely because the skill tree is
+      installed.
+    copilot: |
+      This bootstrap is actively injected at session start and is already
+      loaded. Follow it now. Do not use the `Skill` tool to load `using-moe`
+      again; use that mechanism for every other skill.
   subagent-dispatch:
     claude-code: |
       Use the `Agent` tool. Pass a fully filled `prompt` and a short
@@ -164,15 +256,11 @@ blocks:
       session, or tell the user the optional subagent capability is not
       installed.
     agent-plugins-1.0: |
-      Use the `Agent` tool. Pass a fully filled `prompt` and a short
-      `description`; choose `subagent_type` deliberately — `general-purpose`
-      for a task needing the full tool surface, `Explore` for read-only
-      research, `fork` to hand a subagent a copy of this conversation so it
-      shares your context and cache. A non-fork agent starts with zero
-      context: brief it like a colleague who just walked in, never with
-      "based on what we discussed." For independent work, send multiple
-      `Agent` calls in a single message to dispatch them in parallel; keep
-      dependent steps sequential.
+      Use `invoke_subagent` with a built-in `TypeName`: `self` for work that
+      needs the full tool surface or `research` for read-only investigation.
+      Pass a complete brief that stands on its own. Dispatch independent calls
+      together when the client supports concurrent tool calls; otherwise use
+      the skill's sequential fallback. Keep dependent steps sequential.
     copilot: |
       Use the `Agent` tool. Pass a fully filled `prompt` and a short
       `description`; choose `subagent_type` deliberately — `general-purpose`
@@ -233,14 +321,11 @@ blocks:
       When no subagent tool is installed, there is nothing to wait on: the
       work happens sequentially in the current session.
     agent-plugins-1.0: |
-      The `Agent` tool call itself blocks until the subagent finishes and
-      returns its final report in the tool result — there is no separate
-      polling step for a normal dispatch. For a background task, use the
-      `Monitor` tool to stream progress rather than a manual poll loop; you
-      are notified when the task completes. Read the subagent's report
-      directly rather than re-deriving what it found, but verify any
-      load-bearing claim (a bug fixed, a test passing) before treating it as
-      final — a summary describes intent, not always fact.
+      A normal `invoke_subagent` call returns the subagent's report directly;
+      there is no separate polling step. Read that report rather than
+      re-deriving its findings, then verify load-bearing claims before treating
+      them as final. If a particular client adds background execution, use its
+      documented status mechanism rather than inventing a poll loop.
     copilot: |
       The `Agent` tool call itself blocks until the subagent finishes and
       returns its final report in the tool result — there is no separate
@@ -252,65 +337,40 @@ blocks:
       final — a summary describes intent, not always fact.
   render-ladder:
     claude-code: |
-      All four rungs defined at
-      `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` are
-      available. Where the `Artifact` tool is present (Claude Code proper),
-      rung 1 is the default for anything with an audience. Where it isn't
-      (this same skill body also ships to Antigravity and Copilot CLI via
-      this shared skills/ directory), the ladder self-detects and starts at
-      rung 2 — the brainstorm browser companion — dropping further only when
-      `node` isn't on PATH or the sandbox blocks the port. Announce which
-      rung you took before the render lands.
+      All four rungs are available. Where the `Artifact` tool is present,
+      rung 1 is the default for anything with an audience. Otherwise start at
+      rung 2 and drop further only when `node` is unavailable or the sandbox
+      blocks the port. Announce which rung you took before the render lands.
     cursor: |
       The `Artifact` tool is not exposed in Cursor — start at rung 2 (the
       brainstorm browser companion) and drop to rung 3 (local HTML file) or
       rung 4 (markdown file) when `node` isn't on PATH or the sandbox blocks
-      the port bind. See
-      `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` for the
-      full ladder and the sharing default.
+      the port bind. Use the shared ladder's sharing default.
     codex: |
       Rung 1 (the Claude Code `Artifact` tool) is not exposed — start at
-      rung 2 (the brainstorm browser companion,
-      `${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/scripts/start-server.sh`)
+      rung 2 (the brainstorm browser companion)
       and fall through to rung 3 (local HTML file) or rung 4 (markdown file)
-      when the sandbox blocks a port bind. See
-      `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` for the
-      full ladder and the sharing default.
+      when the sandbox blocks a port bind. Use the shared ladder's sharing
+      default.
     kimi: |
       Rung 1 (the Claude Code `Artifact` tool) is not exposed — start at
       rung 2 (the brainstorm browser companion) and drop to rung 3 (local
       HTML file) or rung 4 (markdown file) when a browser is unavailable.
-      See `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` for the
-      full ladder.
     opencode: |
       Rung 1 (the Claude Code `Artifact` tool) is not exposed — start at
       rung 2 (the brainstorm browser companion) and drop to rung 3 (local
       HTML file) or rung 4 (markdown file) when a browser is unavailable.
-      See `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` for the
-      full ladder.
     pi: |
       Rung 1 (the Claude Code `Artifact` tool) is not exposed — start at
       rung 2 (the brainstorm browser companion) and drop to rung 3 (local
       HTML file) or rung 4 (markdown file) when a browser is unavailable.
-      See `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` for the
-      full ladder.
     agent-plugins-1.0: |
-      All four rungs defined at
-      `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` are
-      available. Where the `Artifact` tool is present (Claude Code proper),
-      rung 1 is the default for anything with an audience. Where it isn't
-      (this same skill body also ships to Antigravity and Copilot CLI via
-      this shared skills/ directory), the ladder self-detects and starts at
-      rung 2 — the brainstorm browser companion — dropping further only when
-      `node` isn't on PATH or the sandbox blocks the port. Announce which
-      rung you took before the render lands.
+      Rung 1 is unavailable. Start at rung 2, the brainstorm browser
+      companion. If the client cannot bind or open the browser companion,
+      fall directly to rung 4, a markdown file. A task artifact is not a
+      substitute for a presentation artifact. Announce the rung you took.
     copilot: |
-      All four rungs defined at
-      `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` are
-      available. Where the `Artifact` tool is present (Claude Code proper),
-      rung 1 is the default for anything with an audience. Where it isn't
-      (this same skill body also ships to Antigravity and Copilot CLI via
-      this shared skills/ directory), the ladder self-detects and starts at
-      rung 2 — the brainstorm browser companion — dropping further only when
-      `node` isn't on PATH or the sandbox blocks the port. Announce which
-      rung you took before the render lands.
+      All four rungs are available where the installed Claude-compatible tool
+      surface exposes `Artifact`; otherwise start at rung 2 and drop further
+      only when `node` is unavailable or the sandbox blocks the port. Announce
+      which rung you took before the render lands.

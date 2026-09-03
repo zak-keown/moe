@@ -6,7 +6,7 @@
 
 - `.cursor-plugin/plugin.json`
 - `.cursor-plugin/marketplace.json`
-- the `hooks/moe-mint` bootstrap hook and its `hooks/moe-mint/hooks-cursor.json`
+- the `.cursor-plugin/hooks/moe-mint` bootstrap hook and its `.cursor-plugin/hooks/moe-mint/hooks.json`
 
 ## Installing
 

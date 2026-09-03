@@ -1,26 +1,62 @@
 import { describe, it, expect } from 'vitest'
 import { adapters } from '../../src/adapters/index.js'
 
-describe('skillsOutputDir', () => {
-  it('every adapter has skillsOutputDir defined or explicitly undefined', () => {
-    for (const adapter of adapters) {
-      expect('skillsOutputDir' in adapter).toBe(true)
-    }
+describe('skillLayout', () => {
+  it('declares the exact profile, output directory, and rendering mode for every adapter', () => {
+    expect(Object.fromEntries(adapters.map((adapter) => [adapter.name, adapter.skillLayout]))).toEqual({
+      'claude-code': {
+        outputDir: '.claude-plugin/skills',
+        profile: 'claude-code',
+        mode: 'rendered',
+      },
+      copilot: {
+        outputDir: '.claude-plugin/skills',
+        profile: 'claude-code',
+        mode: 'rendered',
+      },
+      'agent-plugins-1.0': {
+        outputDir: 'skills',
+        profile: 'agent-plugins-1.0',
+        mode: 'source-or-rendered',
+      },
+      cursor: {
+        outputDir: '.cursor-plugin/skills',
+        profile: 'cursor',
+        mode: 'rendered',
+      },
+      codex: {
+        outputDir: '.codex-plugin/skills',
+        profile: 'codex',
+        mode: 'rendered',
+      },
+      kimi: {
+        outputDir: '.kimi-plugin/skills',
+        profile: 'kimi',
+        mode: 'rendered',
+      },
+      opencode: {
+        outputDir: '.opencode/skills',
+        profile: 'opencode',
+        mode: 'rendered',
+      },
+      pi: {
+        outputDir: '.pi/skills',
+        profile: 'pi',
+        mode: 'rendered',
+      },
+    })
   })
 
-  it('claude-code, agent-plugins-1.0, and copilot share the source directory', () => {
-    const shared = adapters.filter(
-      (a) => a.name === 'claude-code' || a.name === 'agent-plugins-1.0' || a.name === 'copilot',
-    )
-    for (const adapter of shared) {
-      expect(adapter.skillsOutputDir).toBeUndefined()
-    }
-  })
-
-  it('cursor, codex, kimi, opencode, and pi each have a distinct output dir', () => {
-    const withDir = adapters.filter((a) => a.skillsOutputDir !== undefined)
-    expect(withDir.length).toBe(5)
-    const dirs = withDir.map((a) => a.skillsOutputDir)
-    expect(new Set(dirs).size).toBe(5)
+  it('declares how each adapter delivers its skill tree', () => {
+    expect(Object.fromEntries(adapters.map((adapter) => [adapter.name, adapter.skillDelivery]))).toEqual({
+      'claude-code': 'rendered',
+      cursor: 'rendered',
+      codex: 'rendered',
+      kimi: 'rendered',
+      opencode: 'rendered',
+      pi: 'rendered',
+      'agent-plugins-1.0': 'native-discovery',
+      copilot: 'shared-compatible',
+    })
   })
 })

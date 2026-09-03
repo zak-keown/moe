@@ -1,14 +1,15 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { Readable } from "node:stream";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { followStream, grantConsentConfirm, readLine, run } from "../src/cli.js";
+import { followStream, grantConsentConfirm, readLine, resolvePluginRoot, run } from "../src/cli.js";
 import type { CommandContext } from "../src/commands/context.js";
 import { appendEvent } from "../src/core/event-log.js";
-import { claudeTranscriptPath, eventsPath } from "../src/core/paths.js";
+import { eventsPath, metaPath, shimPath } from "../src/core/paths.js";
 import { makeTmux } from "../src/core/tmux.js";
 import { writeMeta } from "../src/core/worker-store.js";
+import { claudeTranscriptPath } from "../src/harness/claude.js";
 import { getDriver } from "../src/harness/registry.js";
 
 /** Capture stdout/stderr that `run` would write. */
@@ -108,6 +109,10 @@ describe("run — validation and dispatch", () => {
     expect(usage).toContain("XDG_RUNTIME_DIR/moe-crew-workers");
     expect(usage).not.toContain("/tmp/moe-crew-workers");
     expect(usage).not.toContain("/tmp/claude-workers");
+    expect(usage).toContain("MOE_CREW_DEFAULT_HARNESS");
+    expect(usage).toContain("MOE_CREW_PLUGIN_ROOT");
+    expect(usage).toContain("Claude Code, Codex, or Pi");
+    expect(usage).not.toContain("harness defaults to claude");
     for (const sub of [
       "launch",
       "adopt",
@@ -147,7 +152,7 @@ describe("run — validation and dispatch", () => {
     const { io, err } = makeIo();
     const code = await run(["launch"], io);
     expect(code).toBe(2);
-    expect(err()).toContain("Usage: launch <tmux-name> <cwd> [-- claude-args...]");
+    expect(err()).toContain("Usage: launch <tmux-name> <cwd> [-- harness-args...]");
   });
 
   it("reports a usage error for adopt missing positionals", async () => {
@@ -250,9 +255,64 @@ describe("run — validation and dispatch", () => {
       const code = await run(["launch", "x", tmpCwd, "--harness", "bogus"], io);
       expect(code).toBe(2);
       expect(err()).toContain("Unknown harness 'bogus'");
-      expect(err()).toContain("Available: claude");
+      expect(err()).toContain("Valid harnesses: claude, codex, pi");
     } finally {
       rmSync(tmpCwd, { recursive: true, force: true });
+    }
+  });
+
+  it("returns code 2 for corrupt persisted worker harness state instead of defaulting to Claude", async () => {
+    writeMeta(workerDir, {
+      tmux_name: "bad-worker",
+      session_id: "bad-sid",
+      cwd: workerDir,
+      harness: "cursor",
+    });
+
+    const { io, err } = makeIo();
+    const code = await run(["--worker", "bad-worker", "status"], io);
+    expect(code).toBe(2);
+    expect(err()).toContain("worker harness 'cursor'");
+    expect(err()).toContain("claude, codex, pi");
+  });
+
+  it("returns code 2 for unreadable persisted worker metadata", async () => {
+    writeFileSync(metaPath(workerDir, "broken-sid"), "{not json\n");
+
+    const { io, err } = makeIo();
+    const code = await run(["--worker", "broken-sid", "status"], io);
+    expect(code).toBe(2);
+    expect(err()).toContain("missing or unreadable metadata");
+    expect(err()).toContain("claude, codex, pi");
+  });
+
+  it("does not launch when installed-harness detection is ambiguous", async () => {
+    const saved = {
+      claude: process.env.MOE_CREW_CLAUDE_BIN,
+      codex: process.env.MOE_CREW_CODEX_BIN,
+      pi: process.env.MOE_CREW_PI_BIN,
+      defaultHarness: process.env.MOE_CREW_DEFAULT_HARNESS,
+    };
+    process.env.MOE_CREW_CLAUDE_BIN = process.execPath;
+    process.env.MOE_CREW_CODEX_BIN = process.execPath;
+    process.env.MOE_CREW_PI_BIN = join(workerDir, "definitely-missing-pi");
+    delete process.env.MOE_CREW_DEFAULT_HARNESS;
+    try {
+      const { io, err } = makeIo();
+      const code = await run(["launch", "ambiguous", workerDir], io);
+      expect(code).toBe(2);
+      expect(err()).toContain("multiple crew harnesses are installed");
+      expect(existsSync(shimPath(workerDir, "ambiguous"))).toBe(false);
+    } finally {
+      for (const [key, value] of [
+        ["MOE_CREW_CLAUDE_BIN", saved.claude],
+        ["MOE_CREW_CODEX_BIN", saved.codex],
+        ["MOE_CREW_PI_BIN", saved.pi],
+        ["MOE_CREW_DEFAULT_HARNESS", saved.defaultHarness],
+      ] as const) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
     }
   });
 
@@ -261,6 +321,29 @@ describe("run — validation and dispatch", () => {
     const code = await run(["--worker", "w", "send"], io);
     expect(code).toBe(1);
     expect(err()).toContain("Usage: send <prompt-text>");
+  });
+});
+
+describe("resolvePluginRoot", () => {
+  it("prefers MOE_CREW_PLUGIN_ROOT over the bundle-relative root", () => {
+    expect(
+      resolvePluginRoot("/opt/moe-crew/dist", {
+        MOE_CREW_PLUGIN_ROOT: "/configured/moe-crew",
+        CLAUDE_PLUGIN_ROOT: "/claude/plugin",
+      }),
+    ).toBe("/configured/moe-crew");
+  });
+
+  it("falls back beside the bundle and ignores CLAUDE_PLUGIN_ROOT", () => {
+    expect(resolvePluginRoot("/opt/moe-crew/dist", { CLAUDE_PLUGIN_ROOT: "/claude/plugin" })).toBe(
+      "/opt/moe-crew",
+    );
+  });
+
+  it("treats an empty MOE_CREW_PLUGIN_ROOT override as absent", () => {
+    expect(resolvePluginRoot("/opt/moe-crew/dist", { MOE_CREW_PLUGIN_ROOT: "" })).toBe(
+      "/opt/moe-crew",
+    );
   });
 });
 

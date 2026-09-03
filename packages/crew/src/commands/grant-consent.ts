@@ -21,9 +21,10 @@ export async function cmdGrantConsent(
   ctx: CommandContext,
   opts: GrantConsentOpts,
 ): Promise<CommandResult> {
-  const path = consentPath(ctx.home);
+  const environment = ctx.environment ?? {};
+  const path = consentPath(ctx.home, environment);
 
-  if (hasConsent(ctx.home)) {
+  if (hasConsent(ctx.home, environment)) {
     return { stdout: `Consent already granted at ${path}`, code: 0 };
   }
 
@@ -38,7 +39,7 @@ export async function cmdGrantConsent(
     };
   }
 
-  grantConsent(ctx.home);
+  grantConsent(ctx.home, environment);
   return {
     stdout: `Consent granted. Written: ${path}`,
     code: 0,

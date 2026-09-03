@@ -122,6 +122,27 @@ function sandboxBinWithFakeOpencode(): string {
   return bin
 }
 
+// Models OpenCode's stdout behavior when its large `debug skill` response is
+// captured through a pipe: the response stops at 64 KiB. Redirecting stdout
+// to a regular file avoids the truncation and exposes the complete inventory.
+function sandboxBinWithPipeSensitiveOpencode(): string {
+  const bin = sandboxBin()
+  const opencodePath = join(bin, 'opencode')
+  writeFileSync(
+    opencodePath,
+    [
+      '#!/bin/bash',
+      'if [[ " $* " == *" --pure "* ]]; then echo "[]"; exit 0; fi',
+      'head -c 65536 /dev/zero | tr "\\0" x',
+      '[[ -p /dev/stdout ]] && exit 0',
+      "printf '\\ngreeting\\nusing-kitchen-sink\\n'",
+      '',
+    ].join('\n'),
+  )
+  chmodSync(opencodePath, 0o755)
+  return bin
+}
+
 describe('runTest', () => {
   const savedPath = process.env.PATH
   const savedExitCode = process.env.DOCKER_SHIM_EXIT_CODE
@@ -421,6 +442,23 @@ describe('checks/run-checks.sh', () => {
       expect(result.stdout).toMatch(new RegExp(`^skip install-${harness}:`, 'm'))
     }
     expect(result.stdout).not.toMatch(/^not ok install-/m)
+    expect(result.status).toBe(0)
+  }, 30_000)
+
+  it('checks OpenCode skill output beyond 64 KiB without pipe truncation', () => {
+    const dir = generatedKitchenSink()
+    const result = spawnSync('bash', [CHECKS_SCRIPT], {
+      encoding: 'utf8',
+      env: {
+        MOE_MINT_PLUGIN_NAME: 'kitchen-sink',
+        MOE_MINT_PLUGIN_ROOT: dir,
+        MOE_MINT_DEEP: '1',
+        PATH: sandboxBinWithPipeSensitiveOpencode(),
+        HOME: mkdtempSync(join(tmpdir(), 'mint-home-')),
+      },
+    })
+    expect(result.stdout).toContain('ok install-opencode:')
+    expect(result.stdout).not.toContain('not ok install-opencode:')
     expect(result.status).toBe(0)
   }, 30_000)
 

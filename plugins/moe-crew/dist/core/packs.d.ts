@@ -1,3 +1,4 @@
+import type { HarnessId } from "../harness/driver.js";
 /**
  * A single worker definition inside a pack. Harness-agnostic data: the YAML
  * carries the role prompt and an optional harness override; the CLI maps each
@@ -6,8 +7,8 @@
 export interface PackWorker {
     /** Prefix for the worker's tmux session name (suffixed with `-<index>`). */
     namePrefix: string;
-    /** Harness override for this worker (default: the fleet default, "claude"). */
-    harness?: string | undefined;
+    /** Harness override for this worker; it outranks every default source. */
+    harness?: HarnessId | undefined;
     /** Extra CLI args forwarded to the harness binary (the tokens after `--`). */
     harnessArgs?: string[] | undefined;
     /** The initial prompt sent to the worker after launch. */
@@ -21,6 +22,8 @@ export interface PackWorker {
 export interface PackDefinition {
     name: string;
     description?: string | undefined;
+    /** Pack-local default, below `--harness` and above the environment default. */
+    defaultHarness?: HarnessId | undefined;
     workers: PackWorker[];
 }
 /**

@@ -20,15 +20,57 @@
     },
     {
       "path": ".claude-plugin/plugin.json",
-      "size": 462,
-      "sha256": "e078221946915088270429d9320fc40c56dd4a0bb05b3302dfa0ef3b910485d2",
+      "size": 501,
+      "sha256": "5f8cead027419830e8fccd76df0c886c2583f37b0e38523440c7b4e1346aa7c9",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/remembering-conversations/MCP-TOOLS.md",
+      "size": 4114,
+      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/skills/remembering-conversations/SKILL.md",
+      "size": 4230,
+      "sha256": "f00b1db377ba134ea70cb60a2ed434e55a9d4fc27cec36e2fd862312eef007e1",
       "mode": "0644"
     },
     {
       "path": ".codex-plugin/plugin.json",
-      "size": 460,
-      "sha256": "ec7524d5a0876c2f23bcbd786902f04541ef80c5f0ce58f836a92ab2aa868e73",
+      "size": 474,
+      "sha256": "8df8f61d88249078ce6f06133c1b05e15aeb3e0809392f029eb5d3d612a8fd2c",
       "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/remembering-conversations/MCP-TOOLS.md",
+      "size": 4114,
+      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/skills/remembering-conversations/SKILL.md",
+      "size": 4230,
+      "sha256": "f00b1db377ba134ea70cb60a2ed434e55a9d4fc27cec36e2fd862312eef007e1",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/hooks/moe-mint/hooks.json",
+      "size": 161,
+      "sha256": "f91dd564d6e7926eefcd5bd025ff2834197087915aa11881fb177722929f6d92",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/hooks/moe-mint/run-hook.cmd",
+      "size": 1551,
+      "sha256": "1091dc12af883e19c6f322221281ad7e1a9816d0e266ca60088dfbc278a50db8",
+      "mode": "0755"
+    },
+    {
+      "path": ".cursor-plugin/hooks/moe-mint/session-start",
+      "size": 1255,
+      "sha256": "ff220e9cad123a02b2f7bb6b07529f144d4def9747abcda0ddf48eaa81b6dffe",
+      "mode": "0755"
     },
     {
       "path": ".cursor-plugin/marketplace.json",
@@ -44,14 +86,38 @@
     },
     {
       "path": ".cursor-plugin/plugin.json",
-      "size": 669,
-      "sha256": "599ad596addc27feb1a7aba47f3ef6c3bba7dbcc8742a8df0e8024c6032d84ce",
+      "size": 692,
+      "sha256": "7afe8a6ea2f5b8bd61d1adfb0075ec6362baf1e6592e1d146b441ddc61a8f80a",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/remembering-conversations/MCP-TOOLS.md",
+      "size": 4114,
+      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/skills/remembering-conversations/SKILL.md",
+      "size": 4230,
+      "sha256": "f00b1db377ba134ea70cb60a2ed434e55a9d4fc27cec36e2fd862312eef007e1",
       "mode": "0644"
     },
     {
       "path": ".kimi-plugin/plugin.json",
-      "size": 511,
-      "sha256": "12dfacfa4e847909d1279cd6bc4ce860a52a4acdf657f8ed41a55fe7d195780a",
+      "size": 524,
+      "sha256": "2417c5ffeb53ff0e613a0914f4b527239a8aee4d99f14b7e371dea3b372cdc45",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/remembering-conversations/MCP-TOOLS.md",
+      "size": 4114,
+      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/skills/remembering-conversations/SKILL.md",
+      "size": 4230,
+      "sha256": "f00b1db377ba134ea70cb60a2ed434e55a9d4fc27cec36e2fd862312eef007e1",
       "mode": "0644"
     },
     {
@@ -62,8 +128,8 @@
     },
     {
       "path": ".moe-mint/manifest.json",
-      "size": 3372,
-      "sha256": "c7c890ff2c65e6fd1ebe154338d6449cc38070391617665958f96581f0d46e40",
+      "size": 5803,
+      "sha256": "022c5b7fe3250b7f187529283afc17192aabe837f743df6a0f9bd32d145746fc",
       "mode": "0644"
     },
     {
@@ -74,14 +140,38 @@
     },
     {
       "path": ".opencode/plugins/moe-memory.js",
-      "size": 3187,
-      "sha256": "e46a35ca4487fe7c3f920d468734ac733c6f1b2d727f17501ea10045187e38a3",
+      "size": 3207,
+      "sha256": "d7c258d371834c2ae563b3ead530031c56c1501ca4bd2bd5ddbcd9be15874bbb",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/remembering-conversations/MCP-TOOLS.md",
+      "size": 4114,
+      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/skills/remembering-conversations/SKILL.md",
+      "size": 4230,
+      "sha256": "f00b1db377ba134ea70cb60a2ed434e55a9d4fc27cec36e2fd862312eef007e1",
       "mode": "0644"
     },
     {
       "path": ".pi/extensions/moe-memory.ts",
-      "size": 3215,
-      "sha256": "750a23a7a0ee816d093aa4e3eb0fe42462023dff175a8309165ec7bbf48dd7af",
+      "size": 3223,
+      "sha256": "d134a2d49ed7c9d8fe97ed8cbcc9faf3cf2df722154387a93b6c95e7d428d17e",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/remembering-conversations/MCP-TOOLS.md",
+      "size": 4114,
+      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/skills/remembering-conversations/SKILL.md",
+      "size": 4230,
+      "sha256": "f00b1db377ba134ea70cb60a2ed434e55a9d4fc27cec36e2fd862312eef007e1",
       "mode": "0644"
     },
     {
@@ -560,8 +650,8 @@
     },
     {
       "path": "docs/install/cursor.md",
-      "size": 761,
-      "sha256": "2a574366b6848b020ee0e8e9c658345677343d246811753178f4944f4cea5cc8",
+      "size": 784,
+      "sha256": "089d40225e66a689e70b154909ac32db87006981ffd7c651b6242eb012e1cf93",
       "mode": "0644"
     },
     {
@@ -584,20 +674,14 @@
     },
     {
       "path": "docs/support-matrix.md",
-      "size": 979,
-      "sha256": "20d95faf62f383024f97a0e6cf47ec32b78018498d3d556232d84cf2f9d21073",
+      "size": 1142,
+      "sha256": "8f66a350aeea2d8e1d30782ecf932a631e5914ff080bdfed7c4a96dbf2857113",
       "mode": "0644"
     },
     {
       "path": "hooks/hooks.json",
       "size": 327,
       "sha256": "3596f22ba73c5e7b6f5dd41d0aae2fecee176992fec9165525dee1fc54fc0b63",
-      "mode": "0644"
-    },
-    {
-      "path": "hooks/moe-mint/hooks-cursor.json",
-      "size": 146,
-      "sha256": "7653af3eca8918a0fa45c4d67c321723d3906b8d3d6966959461be208f67d8a5",
       "mode": "0644"
     },
     {
@@ -614,8 +698,8 @@
     },
     {
       "path": "hooks/moe-mint/session-start",
-      "size": 1237,
-      "sha256": "deba0f8578e79bbf55a4ef95a0c581cf575e83a7f88b19b6fecf43f7fa055d1c",
+      "size": 1252,
+      "sha256": "2eae4e5ff3745f1f425d92ad53df59d02d8c0cc67915bb787d5edc982a884424",
       "mode": "0755"
     },
     {
@@ -626,8 +710,8 @@
     },
     {
       "path": "package.json",
-      "size": 4333,
-      "sha256": "3e8861d6cadce54dbf2b80eae8997ea447d90b87233840627a241c541d6dbee7",
+      "size": 5200,
+      "sha256": "f8557609e226617404fbb7fbfba74e2de2ab315b7fb6059e37269b94a677d842",
       "mode": "0644"
     },
     {
@@ -655,7 +739,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "72f285722cae71e612add8022ec6600ce0af004312bc72b0a29c00bf38f6ffe3",
+  "tree_sha256": "53ffda2ae74c2f6d83e5ed63a4f06269207d5e6f2a983828bb005a8d85c5b31e",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

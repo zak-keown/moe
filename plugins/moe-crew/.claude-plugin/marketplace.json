@@ -4,7 +4,7 @@
   "plugins": [
     {
       "name": "moe-crew",
-      "description": "Launch, control and monitor worker Claude sessions over tmux.",
+      "description": "Launch, control and monitor Claude Code, Codex, and Pi workers over tmux.",
       "version": "0.1.4",
       "source": "./",
       "author": {

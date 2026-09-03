@@ -42,6 +42,16 @@ describe('sessionStartScript', () => {
     const copilot = run({ CLAUDE_PLUGIN_ROOT: dir, COPILOT_CLI: '1' })
     expect(copilot.additionalContext).toContain('using-demo')
   })
+
+  it('loads an adapter-private rendered bootstrap path from the plugin root', () => {
+    const privateTreeScript = sessionStartScript({
+      pluginName: 'demo',
+      bootstrapContentPath: '.cursor-plugin/skills/using-demo/SKILL.md',
+    })
+    expect(privateTreeScript).toContain(
+      '${PLUGIN_ROOT}/.cursor-plugin/skills/using-demo/SKILL.md',
+    )
+  })
 })
 
 describe('runHookCmd', () => {

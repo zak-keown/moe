@@ -1,127 +1,89 @@
 # Installing Moe
 
-One command with a real diagnostic. If it fails, you get a report that names
-the gap, names the capability the gap disables, and gives one concrete fix.
+The installer and doctor target one host harness at a time. Both are
+dependency-free Node scripts, and the installer is read-only unless `--apply`
+is present.
 
-> **Scope.** These instructions install Moe into Claude Code as an end-user.
-> For a contributor checkout (clone, `pnpm install`, `pnpm build`), read
-> `ARCHITECTURE.md §6` instead — that is a different workflow, and the two
-> should not be conflated.
+## Quick start
 
-## TL;DR
+Use the Mint adapter ID for your host:
 
 ```sh
-# 1. Check prerequisites. Reports what's missing and how to fix each gap.
-node bin/moe-doctor
-
-# 2. See what install will do (dry-run — nothing changes).
-node bin/moe-install
-
-# 3. Actually install.
-node bin/moe-install --apply
+node bin/moe-doctor --harness claude-code
+node bin/moe-install --harness claude-code
+node bin/moe-install --harness claude-code --apply
 ```
 
-Both scripts are dependency-free Node — they work on a fresh checkout with
-nothing installed but Node itself. The default is dry-run: `moe-install`
-without `--apply` prints the plan and refuses to change anything.
+Valid IDs are `claude-code`, `cursor`, `codex`, `kimi`, `opencode`, `pi`,
+`agent-plugins-1.0`, and `copilot`.
 
-## Supported platforms
+You may omit `--harness` when exactly one supported host executable is on
+`PATH`, or set `MOE_DEFAULT_HARNESS`. Explicit `--harness` wins over the
+environment and detection. Zero or multiple detected hosts are an exit-2
+selection error. Agent Plugins 1.0 spans several clients and has no unique
+executable, so select it explicitly or through the environment.
 
-| Platform | Status | Notes |
-|---|---|---|
-| macOS | supported | probed live on developer machines |
-| Linux | supported | any distro with Node 24, pnpm 11, git |
-| WSL 2 | **supported and recommended on Windows** | see below |
-| Windows (native) | **not first-class yet** | see the three gaps below |
+## Automation boundary
 
-**WSL 2 is the supported Windows path for now.** Native Windows becomes
-first-class once WSL 2 and macOS work solidly. Roughly half of Moe's
-audience is on Windows, so WSL 2 is a first-class path, not a fallback.
+`moe-install` only executes routes exercised by Mint's deep harness checks or
+already established by the Claude installer contract:
 
-**Three real gaps on native Windows** — the doctor names all three plainly:
-
-1. `bash` is optional on native Windows. Without it, Moe's bootstrap
-   `SessionStart` hook silently skips and its central value (skills firing
-   without being asked for) is off with no error. Install Git for Windows,
-   or set `CLAUDE_CODE_GIT_BASH_PATH` in your Claude Code `settings.json` to
-   the path of a `bash.exe`.
-2. `moe-crew` cannot run — it drives `tmux`, and `tmux` does not exist on
-   native Windows. This is a platform gap, not a missing optional tool. Use
-   WSL 2 if you need `moe-crew`.
-3. Claude Code sandboxing is unsupported on native Windows. WSL 2 has it.
-
-## Prerequisites, one table
-
-| Prereq | Tier | Gates | Fix |
+| Harness | Install | Upgrade | Uninstall |
 |---|---|---|---|
-| `node` ≥ 24 | hard | everything | nodejs.org, nvm, or your distro |
-| `pnpm` 11 | hard | everything | `corepack enable` |
-| `git` | hard | clone, sparse marketplace add | git-scm.com; on Windows Git for Windows also gives you `bash` |
-| `bash` (win32) | hard on win32 | bootstrap `SessionStart` hook | Git for Windows OR `CLAUDE_CODE_GIT_BASH_PATH` |
-| `claude` CLI | hard | every install/uninstall/upgrade step | https://code.claude.com/docs/en/setup |
-| `cargo` ≥ 1.98 | soft | `@bubstack/moe-tab` (contributor-only) | rustup |
-| `tmux` | soft | `@bubstack/moe-crew` and `using-tmux-for-interactive-commands` | your package manager; WSL only on Windows |
-| `uv` ≥ 0.12 | soft | `moe-proof` (small-model evals; Python) | astral.sh/uv or `brew install uv` |
-| Chrome | soft | `@bubstack/moe-glass` (CDP browser access) | google.com/chrome |
-| `docker` | soft | `moe-mint test` container tier (contributor-only) | Docker Desktop / engine |
-| `python3` ≥ 3.11 | soft | mint TOML check and `moe-proof` | python.org or your distro |
+| Claude Code | automated | manual | manual |
+| GitHub Copilot CLI | automated | manual | manual |
+| Cursor, Codex, Kimi, OpenCode, Pi, Agent Plugins 1.0 | manual | manual | manual |
 
-**Hard** prereqs must pass — `bin/moe-doctor` exits 1 if any are missing.
-**Soft** prereqs warn but never fail. `moe-doctor --json` emits machine-
-readable output for automation.
+Manual install plans render the adapter's generated-equivalent instruction for
+every concrete plugin name, directory, or configuration entry. Manual lifecycle
+plans likewise bind each action to an exact plugin identifier. Passing `--apply`
+to a manual route exits 2 before doctor probes, host commands, or state changes.
 
-## What `moe-install` does
+Claude Code receives all six plugins: `moe`, `moe-backstory`, `moe-memory`,
+`moe-glass`, `moe-crew`, and `moe-statusline`. The statusline configures a
+Claude Code-only setting and is excluded from every other harness plan.
 
-`moe-install --apply` runs `moe-doctor` first (skip with `--skip-doctor` if
-you know what you're doing), then:
+## Doctor
 
-1. `claude plugin marketplace add https://github.com/zak-keown/moe.git`
-2. `claude plugin install <name>@moe` for each of the five plugins:
-   `moe`, `moe-backstory`, `moe-crew`, `moe-memory`, `moe-glass`.
+Doctor always probes the common Node and git prerequisites, then requires only
+the selected host executable (`claude`, `cursor-agent`, `codex`, `kimi`,
+`opencode`, `pi`, or `copilot`). It never requires Claude for another harness.
+Agent Plugins 1.0 has no single host executable to require. On native Windows,
+bash remains hard for Claude-layout and Cursor hook hosts because bootstrap
+otherwise silently skips. Claude Code may use its
+`CLAUDE_CODE_GIT_BASH_PATH` host setting; Cursor and Copilot require the
+generated wrapper to find bash in a standard Git for Windows location or on
+`PATH`. Pnpm is a soft contributor-workflow probe; generated plugins do not
+need it at runtime.
 
-Three plugins install from a sparse clone of `.claude-plugin/` + `plugins/`
-(content only — no toolchain needed). `moe-memory` and `moe-glass` install
-from the `@bubstack` npm scope: prebuilt `better-sqlite3` on every platform
-including native Windows, no MSVC build tools required.
+Optional cargo, tmux, uv, Chrome, Docker, and Python probes name the capability
+they disable but do not fail the report. Use `--json` for machine-readable
+output. Exit codes are 0 for all hard probes present, 1 for a hard miss, and 2
+for an invalid option or unresolved harness.
 
-## Upgrading
+## Actions
 
-```sh
-node bin/moe-install --upgrade --apply
-```
-
-Under the hood: `claude plugin marketplace update moe` then
-`claude plugin update <name>@moe` for each plugin.
-
-## Uninstalling
+Dry-run is the default for every action:
 
 ```sh
-node bin/moe-install --uninstall --apply
+node bin/moe-install --harness claude-code
+node bin/moe-install --harness claude-code --upgrade
+node bin/moe-install --harness claude-code --uninstall
 ```
 
-Under the hood: `claude plugin uninstall <name>@moe` for each plugin, then
-`claude plugin marketplace remove moe`.
+Add `--apply` to execute an automated route. Automated installs run the doctor
+for the selected harness first; `--skip-doctor` bypasses that check.
 
-> **Caveat.** Removing the marketplace from its last scope uninstalls every
-> plugin from it. `moe-install --uninstall` does that intentionally — if you
-> only want to uninstall one plugin, run the `claude plugin uninstall`
-> command yourself.
+Claude's verified install route registers the canonical marketplace at
+`https://github.com/zak-keown/moe.git` and installs each supported
+`<plugin>@moe`. Copilot's verified install route uses the adapter-emitted
+`https://github.com/zak-keown/moe` repository form. Upgrade and uninstall plans
+remain manual because Mint establishes neither lifecycle command. Claude Code
+alone accepts `--scope user|project|local`; scopes on other harnesses are
+rejected with exit 2 rather than forwarded speculatively.
 
-## Scoping
+## Contributor setup
 
-Every `bin/moe-install` action forwards `--scope user|project|local` to
-`claude plugin`:
-
-```sh
-node bin/moe-install --apply --scope user     # available in every session
-node bin/moe-install --apply --scope project  # this project only
-node bin/moe-install --apply --scope local    # this checkout, this user
-```
-
-## When install goes wrong
-
-`bin/moe-doctor` is the diagnostic; run it first. If the doctor is happy
-but `moe-install` fails, the failing line is a `claude plugin …` command —
-run it by hand to see the underlying error. Both `bin/moe-doctor` and
-`bin/moe-install` are dependency-free ESM Node scripts; feel free to read
-them.
+These commands install the generated plugins for an end-user host. For a
+contributor checkout (`pnpm install`, builds, and package tests), follow
+`ARCHITECTURE.md` instead.

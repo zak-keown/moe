@@ -129,7 +129,7 @@ const PUBLIC_PLUGINS: readonly PublicPluginExpectation[] = [
     config: 'packages/crew/mint/moe-crew.yaml',
     version: '0.1.4',
     license: 'MIT',
-    description: 'Launch, control and monitor worker Claude sessions over tmux.',
+    description: 'Launch, control and monitor Claude Code, Codex, and Pi workers over tmux.',
     keywords: ['tmux', 'orchestration', 'subagents', 'sessions'],
     payloads: [{ from: 'dist', to: 'dist', required: true }],
     targets: {
