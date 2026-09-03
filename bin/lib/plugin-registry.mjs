@@ -71,11 +71,85 @@ export const PLUGINS = [
   },
 ];
 
-const MANAGE_IN_HOST = {
-  install: "Open the host's plugin manager and install the listed Moe plugins.",
-  upgrade: "Open the host's plugin manager and update the listed Moe plugins.",
-  uninstall: "Open the host's plugin manager and remove the listed Moe plugins.",
+function marketplaceLifecycle(host, surface, action, plugins) {
+  const verb = action === "upgrade" ? "update" : "remove";
+  return [
+    `Open ${host}'s ${surface} and ${verb} each exact marketplace plugin:`,
+    ...plugins.map((plugin) => `- ${plugin.name}@${MARKETPLACE_NAME}`),
+  ];
+}
+
+const CLAUDE_MANUAL = {
+  install: (plugins) => [
+    `Register ${REPOSITORY_CLONE_URL} in Claude Code's plugin marketplace, then install:`,
+    ...plugins.map((plugin) => `- ${plugin.name}@${MARKETPLACE_NAME}`),
+  ],
+  upgrade: (plugins) =>
+    marketplaceLifecycle("Claude Code", "`/plugins` interface", "upgrade", plugins),
+  uninstall: (plugins) =>
+    marketplaceLifecycle("Claude Code", "`/plugins` interface", "uninstall", plugins),
 };
+
+function cursorInstall(plugins) {
+  return [
+    `Clone ${REPOSITORY_CLONE_URL}. In Cursor Agent chat, use the generated \`/add-plugin\` flow for each directory:`,
+    ...plugins.map(
+      (plugin) =>
+        `- ${plugin.name}: run \`/add-plugin\`; plugin directory \`plugins/${plugin.name}/\``,
+    ),
+  ];
+}
+
+function codexInstall(plugins) {
+  return [
+    "From Codex CLI or the Codex App plugin sidebar, use `/plugins` for each generated marketplace descriptor:",
+    ...plugins.map(
+      (plugin) =>
+        `- ${plugin.name}: open \`/plugins\`; marketplace descriptor \`plugins/${plugin.name}/.agents/plugins/marketplace.json\``,
+    ),
+  ];
+}
+
+function kimiInstall(plugins) {
+  return [
+    "In Kimi Code, use the adapter-emitted install command for each plugin:",
+    ...plugins.map((plugin) => `- ${plugin.name}: \`/plugins install ${REPOSITORY_URL}\``),
+  ];
+}
+
+function opencodeInstall(plugins) {
+  return [
+    "Add these exact generated entries to your project's `opencode.json`:",
+    '{ "plugin": [',
+    ...plugins.map(
+      (plugin, index) =>
+        `  "${plugin.name}@git+${REPOSITORY_CLONE_URL}"${index === plugins.length - 1 ? "" : ","}`,
+    ),
+    "] }",
+  ];
+}
+
+function piInstall(plugins) {
+  return [
+    "Use Pi's adapter-emitted package target for each plugin:",
+    ...plugins.map((plugin) => `- ${plugin.name}: \`pi install git:github.com/zak-keown/moe\``),
+  ];
+}
+
+function agentPluginsInstall(plugins) {
+  return [
+    `Clone ${REPOSITORY_CLONE_URL}; point the client at each generated plugin directory (root \`plugin.json\`, \`skills/\`, and \`mcp.json\` when present):`,
+    ...plugins.map((plugin) => `- ${plugin.name}: \`plugins/${plugin.name}/\``),
+  ];
+}
+
+function directoryLifecycle(host, action, plugins) {
+  const verb = action === "upgrade" ? "reload after updating the checkout" : "remove";
+  return [
+    `In ${host}, ${verb} each exact plugin directory:`,
+    ...plugins.map((plugin) => `- ${plugin.name}: \`plugins/${plugin.name}/\``),
+  ];
+}
 
 export const HARNESSES = {
   "claude-code": {
@@ -85,10 +159,10 @@ export const HARNESSES = {
     scopes: ["user", "project", "local"],
     automation: {
       install: "claude-marketplace",
-      upgrade: "claude-marketplace",
-      uninstall: "claude-marketplace",
+      upgrade: null,
+      uninstall: null,
     },
-    manual: MANAGE_IN_HOST,
+    manual: CLAUDE_MANUAL,
   },
   cursor: {
     displayName: "Cursor",
@@ -97,10 +171,9 @@ export const HARNESSES = {
     scopes: [],
     automation: { install: null, upgrade: null, uninstall: null },
     manual: {
-      install:
-        "In Cursor Agent chat, run `/add-plugin`, then point it at each listed plugin directory (or use marketplace search once listed).",
-      upgrade: MANAGE_IN_HOST.upgrade,
-      uninstall: MANAGE_IN_HOST.uninstall,
+      install: cursorInstall,
+      upgrade: (plugins) => directoryLifecycle("Cursor's plugin manager", "upgrade", plugins),
+      uninstall: (plugins) => directoryLifecycle("Cursor's plugin manager", "uninstall", plugins),
     },
   },
   codex: {
@@ -110,10 +183,11 @@ export const HARNESSES = {
     scopes: [],
     automation: { install: null, upgrade: null, uninstall: null },
     manual: {
-      install:
-        "Open `/plugins` in Codex CLI or use the Codex App plugin sidebar, then install the listed plugins.",
-      upgrade: MANAGE_IN_HOST.upgrade,
-      uninstall: MANAGE_IN_HOST.uninstall,
+      install: codexInstall,
+      upgrade: (plugins) =>
+        marketplaceLifecycle("Codex", "`/plugins` interface", "upgrade", plugins),
+      uninstall: (plugins) =>
+        marketplaceLifecycle("Codex", "`/plugins` interface", "uninstall", plugins),
     },
   },
   kimi: {
@@ -123,10 +197,10 @@ export const HARNESSES = {
     scopes: [],
     automation: { install: null, upgrade: null, uninstall: null },
     manual: {
-      install:
-        "In Kimi Code, run `/plugins install https://github.com/zak-keown/moe`, then select the listed plugins.",
-      upgrade: MANAGE_IN_HOST.upgrade,
-      uninstall: MANAGE_IN_HOST.uninstall,
+      install: kimiInstall,
+      upgrade: (plugins) => marketplaceLifecycle("Kimi Code", "plugin manager", "upgrade", plugins),
+      uninstall: (plugins) =>
+        marketplaceLifecycle("Kimi Code", "plugin manager", "uninstall", plugins),
     },
   },
   opencode: {
@@ -136,12 +210,15 @@ export const HARNESSES = {
     scopes: [],
     automation: { install: null, upgrade: null, uninstall: null },
     manual: {
-      install:
-        "Add the listed plugins to the `plugin` array in your OpenCode configuration using the generated `NAME@git+https://github.com/zak-keown/moe.git` form.",
-      upgrade:
-        "Update the listed git-backed entries through your OpenCode configuration/package workflow.",
-      uninstall:
-        "Remove the listed entries from the `plugin` array in your OpenCode configuration.",
+      install: opencodeInstall,
+      upgrade: (plugins) => [
+        "Refresh these exact git-backed entries through your OpenCode configuration/package workflow:",
+        ...plugins.map((plugin) => `- ${plugin.name}@git+${REPOSITORY_CLONE_URL}`),
+      ],
+      uninstall: (plugins) => [
+        "Remove these exact entries from the `plugin` array in your OpenCode configuration:",
+        ...plugins.map((plugin) => `- ${plugin.name}@git+${REPOSITORY_CLONE_URL}`),
+      ],
     },
   },
   pi: {
@@ -151,10 +228,9 @@ export const HARNESSES = {
     scopes: [],
     automation: { install: null, upgrade: null, uninstall: null },
     manual: {
-      install:
-        "Use Pi's package manager with the generated `pi install git:github.com/zak-keown/moe` target, then select the listed plugins.",
-      upgrade: MANAGE_IN_HOST.upgrade,
-      uninstall: MANAGE_IN_HOST.uninstall,
+      install: piInstall,
+      upgrade: (plugins) => marketplaceLifecycle("Pi", "package manager", "upgrade", plugins),
+      uninstall: (plugins) => marketplaceLifecycle("Pi", "package manager", "uninstall", plugins),
     },
   },
   "agent-plugins-1.0": {
@@ -165,12 +241,10 @@ export const HARNESSES = {
     scopes: [],
     automation: { install: null, upgrade: null, uninstall: null },
     manual: {
-      install:
-        "Clone https://github.com/zak-keown/moe.git and point your Agent Plugins 1.0 client at each listed `plugins/<name>` directory.",
-      upgrade:
-        "Update the clone and reload the listed plugin directories in your Agent Plugins 1.0 client.",
-      uninstall:
-        "Remove the listed plugin directories from your Agent Plugins 1.0 client's configuration.",
+      install: agentPluginsInstall,
+      upgrade: (plugins) => directoryLifecycle("your Agent Plugins 1.0 client", "upgrade", plugins),
+      uninstall: (plugins) =>
+        directoryLifecycle("your Agent Plugins 1.0 client", "uninstall", plugins),
     },
   },
   copilot: {
@@ -179,7 +253,16 @@ export const HARNESSES = {
     requiresWindowsBash: true,
     scopes: [],
     automation: { install: "copilot-marketplace", upgrade: null, uninstall: null },
-    manual: MANAGE_IN_HOST,
+    manual: {
+      install: (plugins) => [
+        `Register ${REPOSITORY_URL} in Copilot's plugin marketplace, then install:`,
+        ...plugins.map((plugin) => `- ${plugin.name}@${MARKETPLACE_NAME}`),
+      ],
+      upgrade: (plugins) =>
+        marketplaceLifecycle("GitHub Copilot CLI", "plugin manager", "upgrade", plugins),
+      uninstall: (plugins) =>
+        marketplaceLifecycle("GitHub Copilot CLI", "plugin manager", "uninstall", plugins),
+    },
   },
 };
 
@@ -198,6 +281,34 @@ export function pluginsForHarness(id) {
 
 export function excludedHarnesses(plugin) {
   return HARNESS_IDS.filter((id) => !plugin.harnesses.includes(id));
+}
+
+export function manualPlanForHarness(id, action) {
+  const harness = getHarness(id);
+  const render = harness?.manual[action];
+  if (typeof render !== "function") return [];
+  return render(pluginsForHarness(id));
+}
+
+export function harnessRegistryProblems(label, names) {
+  const uniqueNames = [...new Set(names)];
+  const missing = HARNESS_IDS.filter((id) => !uniqueNames.includes(id));
+  const extra = uniqueNames.filter((id) => !HARNESS_IDS.includes(id));
+  const problems = [];
+  if (missing.length > 0)
+    problems.push(`${label} is missing canonical harnesses: ${missing.join(", ")}`);
+  if (extra.length > 0) {
+    problems.push(
+      `${label} contains harnesses absent from the canonical registry: ${extra.join(", ")}`,
+    );
+  }
+  if (missing.length === 0 && extra.length === 0 && names.length !== uniqueNames.length) {
+    problems.push(`${label} contains duplicate harness names`);
+  }
+  if (problems.length === 0 && names.some((name, index) => name !== HARNESS_IDS[index])) {
+    problems.push(`${label} order differs from the canonical registry`);
+  }
+  return problems;
 }
 
 export function selectHarness({ explicit, configuredDefault, installed }) {

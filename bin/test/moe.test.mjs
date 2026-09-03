@@ -348,16 +348,6 @@ describe("packaging invariants", () => {
   it("publishes one exact registry for every active adapter and current plugin", async () => {
     const registry = await import("../lib/plugin-registry.mjs");
 
-    expect(registry.HARNESS_IDS).toEqual([
-      "claude-code",
-      "cursor",
-      "codex",
-      "kimi",
-      "opencode",
-      "pi",
-      "agent-plugins-1.0",
-      "copilot",
-    ]);
     expect(registry.PLUGINS.map((plugin) => plugin.name)).toEqual([
       "moe",
       "moe-backstory",

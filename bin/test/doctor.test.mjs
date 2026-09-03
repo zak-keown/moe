@@ -12,10 +12,12 @@ import {
   extractTmuxVersion,
   extractVersion,
   overallExit,
+  probeBashOnWindows,
 } from "../lib/probes.mjs";
 
 const BIN_DIR = fileURLToPath(new URL("..", import.meta.url));
 const PROBES_URL = new URL("../lib/probes.mjs", import.meta.url).href;
+const GENERAL_PLUGIN_NAMES = ["moe", "moe-backstory", "moe-memory", "moe-glass", "moe-crew"];
 
 function harnessBin(...executables) {
   const dir = mkdtempSync(join(tmpdir(), "moe-host-bin-"));
@@ -124,6 +126,43 @@ describe("probes library", () => {
     expect(proc.error?.code).not.toBe("ETIMEDOUT");
     expect(proc.status, proc.stderr).toBe(0);
   });
+
+  it("honors the Claude bash override only for Claude Code on Windows", () => {
+    const options = {
+      platform: "win32",
+      env: { CLAUDE_CODE_GIT_BASH_PATH: "C:\\custom\\bash.exe", PATH: "" },
+      exists: (path) => path === "C:\\custom\\bash.exe",
+      executableOnPath: () => false,
+    };
+
+    expect(probeBashOnWindows("claude-code", options)).toMatchObject({
+      ok: true,
+      version: "C:\\custom\\bash.exe",
+    });
+    for (const harness of ["cursor", "copilot"]) {
+      const result = probeBashOnWindows(harness, options);
+      expect(result).toMatchObject({ ok: false, tier: "hard" });
+      expect(result.fixHint).not.toMatch(/CLAUDE_CODE_GIT_BASH_PATH|Claude Code/);
+    }
+  });
+
+  it("accepts only wrapper-visible standard or PATH bash for Cursor and Copilot", () => {
+    const standard = probeBashOnWindows("cursor", {
+      platform: "win32",
+      env: { PATH: "" },
+      exists: (path) => path === "C:\\Program Files\\Git\\bin\\bash.exe",
+      executableOnPath: () => false,
+    });
+    const onPath = probeBashOnWindows("copilot", {
+      platform: "win32",
+      env: { PATH: "C:\\tools" },
+      exists: () => false,
+      executableOnPath: () => true,
+    });
+
+    expect(standard).toMatchObject({ ok: true, version: "C:\\Program Files\\Git\\bin\\bash.exe" });
+    expect(onPath).toMatchObject({ ok: true, version: "bash.exe on PATH" });
+  });
 });
 
 describe("moe-doctor and moe-install entry points", () => {
@@ -213,11 +252,19 @@ describe("moe-doctor and moe-install entry points", () => {
     expect(existsSync(actionLog)).toBe(false);
   });
 
-  it.each(["cursor", "kimi", "agent-plugins-1.0", "codex", "opencode", "pi"])(
-    "refuses manual-only %s --apply before doctor or host mutation",
-    (harness) => {
+  it.each([
+    ...["cursor", "kimi", "agent-plugins-1.0", "codex", "opencode", "pi"].flatMap((harness) => [
+      [harness, "install", []],
+      [harness, "upgrade", ["--upgrade"]],
+      [harness, "uninstall", ["--uninstall"]],
+    ]),
+    ["copilot", "upgrade", ["--upgrade"]],
+    ["copilot", "uninstall", ["--uninstall"]],
+  ])(
+    "refuses manual-only %s %s --apply before doctor or host mutation",
+    (harness, _action, actionArgs) => {
       const actionLog = join(mkdtempSync(join(tmpdir(), "moe-action-log-")), "actions");
-      const proc = runBin("moe-install", ["--harness", harness, "--apply"], {
+      const proc = runBin("moe-install", ["--harness", harness, ...actionArgs, "--apply"], {
         path: harnessBin("claude", "cursor-agent", "codex", "kimi", "opencode", "pi"),
         env: { MOE_TEST_ACTION_LOG: actionLog },
       });
@@ -227,25 +274,11 @@ describe("moe-doctor and moe-install entry points", () => {
     },
   );
 
-  it.each([
-    [
-      "install",
-      [],
-      "plugin marketplace add https://github.com/zak-keown/moe.git",
-      "plugin install moe-statusline@moe",
-    ],
-    ["upgrade", ["--upgrade"], "plugin marketplace update moe", "plugin update moe-statusline@moe"],
-    [
-      "uninstall",
-      ["--uninstall"],
-      "plugin uninstall moe-statusline@moe",
-      "plugin marketplace remove moe",
-    ],
-  ])("routes Claude %s through the verified action commands", (_mode, modeArgs, first, last) => {
+  it("routes Claude install through the verified action commands", () => {
     const actionLog = join(mkdtempSync(join(tmpdir(), "moe-action-log-")), "actions");
     const proc = runBin(
       "moe-install",
-      ["--harness", "claude-code", ...modeArgs, "--apply", "--skip-doctor", "--scope", "project"],
+      ["--harness", "claude-code", "--apply", "--skip-doctor", "--scope", "project"],
       {
         path: harnessBin("claude"),
         env: { MOE_TEST_ACTION_LOG: actionLog },
@@ -253,8 +286,31 @@ describe("moe-doctor and moe-install entry points", () => {
     );
     expect(proc.status, proc.stderr).toBe(0);
     const actions = readFileSync(actionLog, "utf8");
-    expect(actions).toContain(`claude ${first} --scope project`);
-    expect(actions).toContain(`claude ${last} --scope project`);
+    expect(actions).toContain(
+      "claude plugin marketplace add https://github.com/zak-keown/moe.git --scope project",
+    );
+    expect(actions).toContain("claude plugin install moe-statusline@moe --scope project");
+  });
+
+  it.each([
+    ["upgrade", "--upgrade"],
+    ["uninstall", "--uninstall"],
+  ])("keeps Claude %s manual-only before any destructive host command", (_action, flag) => {
+    const actionLog = join(mkdtempSync(join(tmpdir(), "moe-action-log-")), "actions");
+    const proc = runBin(
+      "moe-install",
+      ["--harness", "claude-code", flag, "--apply", "--skip-doctor"],
+      {
+        path: harnessBin("claude"),
+        env: { MOE_TEST_ACTION_LOG: actionLog },
+      },
+    );
+    expect(proc.status).toBe(2);
+    expect(proc.stdout).toMatch(/Manual plan/);
+    for (const name of [...GENERAL_PLUGIN_NAMES, "moe-statusline"]) {
+      expect(proc.stdout).toContain(`${name}@moe`);
+    }
+    expect(existsSync(actionLog)).toBe(false);
   });
 
   it("routes the verified Copilot install without the Claude-only statusline", () => {
@@ -271,25 +327,22 @@ describe("moe-doctor and moe-install entry points", () => {
     expect(actions).not.toContain("moe-statusline");
   });
 
-  it("prints Cursor's generated-equivalent manual install instruction", () => {
-    const proc = runBin("moe-install", ["--harness", "cursor"], {
-      path: harnessBin("cursor-agent"),
-    });
+  it.each([
+    ["cursor", (name) => `- ${name}: run \`/add-plugin\`; plugin directory \`plugins/${name}/\``],
+    [
+      "codex",
+      (name) =>
+        `- ${name}: open \`/plugins\`; marketplace descriptor \`plugins/${name}/.agents/plugins/marketplace.json\``,
+    ],
+    ["kimi", (name) => `- ${name}: \`/plugins install https://github.com/zak-keown/moe\``],
+    ["opencode", (name) => `"${name}@git+https://github.com/zak-keown/moe.git"`],
+    ["pi", (name) => `- ${name}: \`pi install git:github.com/zak-keown/moe\``],
+    ["agent-plugins-1.0", (name) => `- ${name}: \`plugins/${name}/\``],
+  ])("prints concrete generated-equivalent %s install guidance per plugin", (harness, entry) => {
+    const proc = runBin("moe-install", ["--harness", harness]);
     expect(proc.status, proc.stderr).toBe(0);
-    expect(proc.stdout).toMatch(
-      /run `\/add-plugin`, then point it at each listed plugin directory/i,
-    );
-  });
-
-  it("routes unsupported upgrade actions to a manual plan and rejects --apply without mutation", () => {
-    const actionLog = join(mkdtempSync(join(tmpdir(), "moe-action-log-")), "actions");
-    const proc = runBin("moe-install", ["--harness", "copilot", "--upgrade", "--apply"], {
-      path: harnessBin("copilot"),
-      env: { MOE_TEST_ACTION_LOG: actionLog },
-    });
-    expect(proc.status).toBe(2);
-    expect(proc.stdout).toMatch(/Manual plan/);
-    expect(existsSync(actionLog)).toBe(false);
+    for (const name of GENERAL_PLUGIN_NAMES) expect(proc.stdout).toContain(entry(name));
+    expect(proc.stdout).not.toMatch(/<name>|<your-repo>|\bNAME\b|listed plugins|then select/i);
   });
 
   it.each([
