@@ -1,15 +1,129 @@
 import { describe, it, expect } from 'vitest'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, cpSync, writeFileSync, readFileSync, existsSync } from 'node:fs'
+import { chmodSync, mkdirSync, mkdtempSync, cpSync, writeFileSync, readFileSync, existsSync, readdirSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
+import { parse, stringify } from 'yaml'
 
 // The only test file allowed to shell out: it exercises the built dist/cli.js
 // binary directly (spawnSync) to prove the process-level exit-code contract,
 // which the in-process unit tests (generate.test.ts, validate.test.ts) can't
 // observe since they call the exported functions instead of the CLI.
 const REPO_ROOT = process.cwd()
+const WORKSPACE_ROOT = resolve(REPO_ROOT, '../..')
 const CLI = join(REPO_ROOT, 'dist', 'cli.js')
+
+type RecoveryState = 'unstarted' | 'backed-up' | 'committed' | 'clean'
+
+const RECOVERY_TARGETS = [
+  { kind: 'directory', current: 'plugins', next: 'plugins.next-recovery', backup: 'plugins.backup-recovery' },
+  { kind: 'file', current: '.claude-plugin/marketplace.json', next: '.claude-plugin/marketplace.next-recovery.json', backup: '.claude-plugin/marketplace.backup-recovery.json' },
+  { kind: 'file', current: 'docs/moe/generated/plugin-catalog.md', next: 'docs/moe/generated/plugin-catalog.next-recovery.md', backup: 'docs/moe/generated/plugin-catalog.backup-recovery.md' },
+] as const
+
+function writeGenerationPath(root: string, target: (typeof RECOVERY_TARGETS)[number], path: string, generation: 'old' | 'new'): void {
+  const absolute = join(root, path)
+  if (target.kind === 'directory') {
+    mkdirSync(absolute, { recursive: true })
+    writeFileSync(join(absolute, 'generation.txt'), `${generation}\n`)
+    return
+  }
+  mkdirSync(dirname(absolute), { recursive: true })
+  writeFileSync(absolute, `${generation}\n`)
+}
+
+function seedRecoveryFixture(states: readonly RecoveryState[], recovery?: 'old'): string {
+  const root = mkdtempSync(join(tmpdir(), 'mint-root-recovery-'))
+  mkdirSync(join(root, 'scripts', 'lib'), { recursive: true })
+  mkdirSync(join(root, 'bin'), { recursive: true })
+  cpSync(join(WORKSPACE_ROOT, 'scripts', 'mint-recover.mjs'), join(root, 'scripts', 'mint-recover.mjs'))
+  cpSync(join(WORKSPACE_ROOT, 'scripts', 'lib', 'mint-generation-transaction.mjs'), join(root, 'scripts', 'lib', 'mint-generation-transaction.mjs'))
+  const scripts = (JSON.parse(readFileSync(join(WORKSPACE_ROOT, 'package.json'), 'utf8')) as { scripts: Record<string, string> }).scripts
+  if (scripts.mint === undefined || scripts['mint:check'] === undefined) throw new Error('root Mint scripts missing')
+  writeFileSync(join(root, 'package.json'), `${JSON.stringify({
+    private: true,
+    type: 'module',
+    scripts: { mint: scripts.mint, 'mint:check': scripts['mint:check'] },
+  }, null, 2)}\n`)
+  const fakeTurbo = join(root, 'bin', 'turbo')
+  writeFileSync(fakeTurbo, '#!/usr/bin/env node\nimport { writeFileSync } from "node:fs"\nwriteFileSync("turbo-ran", "yes\\n")\n')
+  chmodSync(fakeTurbo, 0o755)
+
+  for (const [index, target] of RECOVERY_TARGETS.entries()) {
+    const state = states[index]
+    if (state === undefined) throw new Error('missing recovery state')
+    if (state === 'unstarted') {
+      writeGenerationPath(root, target, target.current, 'old')
+      writeGenerationPath(root, target, target.next, 'new')
+    } else if (state === 'backed-up') {
+      writeGenerationPath(root, target, target.backup, 'old')
+      writeGenerationPath(root, target, target.next, 'new')
+    } else if (state === 'committed') {
+      writeGenerationPath(root, target, target.current, 'new')
+      writeGenerationPath(root, target, target.backup, 'old')
+    } else {
+      writeGenerationPath(root, target, target.current, recovery === 'old' ? 'old' : 'new')
+    }
+  }
+  writeFileSync(join(root, '.moe-mint-generation-recovery.json'), `${JSON.stringify({
+    schema: 1,
+    transactionId: 'recovery',
+    targets: RECOVERY_TARGETS,
+    ...(recovery === undefined ? {} : { recovery }),
+  })}\n`)
+  return root
+}
+
+function runRootMint(root: string) {
+  return spawnSync('pnpm', ['--ignore-workspace', 'run', 'mint'], {
+    cwd: root,
+    encoding: 'utf8',
+    env: { ...process.env, PATH: `${join(root, 'bin')}:${process.env.PATH ?? ''}` },
+  })
+}
+
+function runRootMintCheck(root: string) {
+  return spawnSync('pnpm', ['--ignore-workspace', 'run', 'mint:check'], {
+    cwd: root,
+    encoding: 'utf8',
+    env: { ...process.env, PATH: `${join(root, 'bin')}:${process.env.PATH ?? ''}` },
+  })
+}
+
+function sixPluginFailureFixture(): string {
+  const root = mkdtempSync(join(tmpdir(), 'mint-cli-six-'))
+  for (const legal of ['LICENSE', 'LICENSE-MIT', 'NOTICE']) cpSync(join(WORKSPACE_ROOT, legal), join(root, legal))
+  const registry = parse(readFileSync(join(WORKSPACE_ROOT, 'moe-platform.yaml'), 'utf8')) as Record<string, any>
+  const coreConfig = parse(readFileSync(join(WORKSPACE_ROOT, 'packages/core/mint/moe.yaml'), 'utf8')) as Record<string, any>
+  const corePackage = JSON.parse(readFileSync(join(WORKSPACE_ROOT, 'packages/core/package.json'), 'utf8')) as Record<string, any>
+  registry.plugins = []
+  registry.profiles = { fixtures: { default: true, plugins: ['fixture-1'] } }
+  for (let index = 1; index <= 6; index += 1) {
+    const id = `fixture-${index}`
+    const source = `packages/${id}`
+    const packageRoot = join(root, source)
+    cpSync(join(WORKSPACE_ROOT, 'packages/core'), packageRoot, { recursive: true })
+    rmSync(join(packageRoot, 'mint'), { recursive: true, force: true })
+    mkdirSync(join(packageRoot, 'mint'), { recursive: true })
+    const packageJson = structuredClone(corePackage)
+    packageJson.name = `@example/${id}`
+    writeFileSync(join(packageRoot, 'package.json'), `${JSON.stringify(packageJson, null, 2)}\n`)
+    const config = structuredClone(coreConfig)
+    config.name = id
+    config.distribution.npm = `@example/${id}`
+    config.marketplace.name = id
+    config.artifact.payloads = index === 6
+      ? [{ from: 'missing-runtime', to: 'dist', required: true }]
+      : []
+    const configPath = `${source}/mint/${id}.yaml`
+    writeFileSync(join(root, configPath), stringify(config))
+    registry.plugins.push({ id, source, config: configPath })
+  }
+  writeFileSync(join(root, 'moe-platform.yaml'), stringify(registry))
+  mkdirSync(join(root, 'plugins'))
+  writeFileSync(join(root, 'plugins', 'canonical.bin'), Buffer.from([0x00, 0xff, 0x41, 0x0a]))
+  return root
+}
 
 function tmpPluginDir(): string {
   const dir = mkdtempSync(join(tmpdir(), 'mint-cli-'))
@@ -30,6 +144,83 @@ describe('CLI end-to-end', () => {
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('Generated')
     expect(result.stdout).toContain('harness(es)')
+  })
+
+  it.each([
+    { name: 'unstarted', states: ['unstarted', 'unstarted', 'unstarted'] as const, expected: 'old' },
+    { name: 'backed up', states: ['backed-up', 'backed-up', 'backed-up'] as const, expected: 'old' },
+    { name: 'partly committed', states: ['committed', 'backed-up', 'unstarted'] as const, expected: 'old' },
+    { name: 'fully committed', states: ['committed', 'committed', 'committed'] as const, expected: 'new' },
+    { name: 'stale complete', states: ['clean', 'clean', 'clean'] as const, expected: 'new' },
+    { name: 'interrupted old cleanup', states: ['clean', 'unstarted', 'unstarted'] as const, recovery: 'old' as const, expected: 'old' },
+  ])('root mint recovers a $name journal before Turbo build or staging', ({ states, recovery, expected }) => {
+    const root = seedRecoveryFixture(states, recovery)
+
+    const result = runRootMint(root)
+
+    expect(result.status, result.stderr).toBe(0)
+    expect(readFileSync(join(root, 'turbo-ran'), 'utf8')).toBe('yes\n')
+    expect(existsSync(join(root, '.moe-mint-generation-recovery.json'))).toBe(false)
+    for (const target of RECOVERY_TARGETS) {
+      const canonical = target.kind === 'directory'
+        ? join(root, target.current, 'generation.txt')
+        : join(root, target.current)
+      expect(readFileSync(canonical, 'utf8')).toBe(`${expected}\n`)
+      expect(existsSync(join(root, target.next))).toBe(false)
+      expect(existsSync(join(root, target.backup))).toBe(false)
+    }
+  })
+
+  it('root mint:check stops an invalid journal before Turbo without labeling it projection drift', () => {
+    const root = seedRecoveryFixture(['unstarted', 'unstarted', 'unstarted'])
+    writeFileSync(join(root, '.moe-mint-generation-recovery.json'), '{not json\n')
+
+    const result = runRootMintCheck(root)
+
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('Mint recovery failed')
+    expect(result.stdout).not.toContain('Generated plugin projections are not reproducible')
+    expect(existsSync(join(root, 'turbo-ran'))).toBe(false)
+  })
+
+  it('assemble fails at plugin six without changing one byte of the canonical plugin tree', () => {
+    const root = sixPluginFailureFixture()
+    const canonical = readFileSync(join(root, 'plugins', 'canonical.bin'))
+
+    const result = runCli([
+      'assemble',
+      '--repo', root,
+      '--destination', join(root, 'plugins.next-sixfailure'),
+    ], REPO_ROOT)
+
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('missing-runtime')
+    expect(readFileSync(join(root, 'plugins', 'canonical.bin'))).toEqual(canonical)
+    expect(existsSync(join(root, 'plugins.next-sixfailure'))).toBe(false)
+  })
+
+  it('ships every core hook executable referenced by the canonical Claude hook manifest', () => {
+    const pluginRoot = join(WORKSPACE_ROOT, 'plugins', 'moe')
+    const hookManifest = readFileSync(join(pluginRoot, 'hooks', 'hooks.json'), 'utf8')
+    const referenced = [...hookManifest.matchAll(/\$\{CLAUDE_PLUGIN_ROOT\}\/([^\\" ]+)/g)]
+      .map((match) => match[1])
+
+    expect(referenced).not.toEqual([])
+    for (const path of referenced) {
+      const absolute = join(pluginRoot, path as string)
+      expect(existsSync(absolute)).toBe(true)
+      expect(statSync(absolute).mode & 0o111).not.toBe(0)
+    }
+    expect(readdirSync(join(pluginRoot, 'hooks')).sort()).toEqual([
+      'claude-judge-continuation',
+      'governance-marker-check',
+      'hooks.json',
+      'moe-completion-evidence',
+      'moe-mint',
+      'plan-set',
+      'plan-set-notice',
+      'run-hook.cmd',
+    ])
   })
 
   it('prints the ephemeral registry publish matrix as canonical JSON without writing a matrix file', () => {

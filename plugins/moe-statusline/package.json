@@ -1,0 +1,40 @@
+{
+  "name": "@bubstack/moe-statusline",
+  "version": "0.1.0",
+  "description": "Configures a vendored, MIT-licensed Claude Code statusline (ccstatusline) automatically on session start.",
+  "author": {
+    "name": "Zak Keown",
+    "email": "zak.keown@outlook.com"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/zak-keown/moe",
+  "homepage": "https://github.com/zak-keown/moe",
+  "keywords": [
+    "statusline",
+    "claude-code",
+    "terminal"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "files": [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".moe-mint/manifest.json",
+    ".moe/artifact.json",
+    "LICENSE",
+    "NOTICE",
+    "dist/ensure-statusline.cjs",
+    "dist/hooks/ensure-statusline.d.ts",
+    "dist/hooks/ensure-statusline.js",
+    "docs/install/claude-code.md",
+    "docs/support-matrix.md",
+    "hooks/hooks.json",
+    "vendor/ccstatusline/ccstatusline.js"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
+}

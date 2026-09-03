@@ -4,6 +4,11 @@
 
 node_modules/
 dist/
+# Complete generated plugin artifacts intentionally carry their runtime build
+# payloads. Keep package-local build output ignored while exposing only these
+# canonical, Mint-owned distribution trees to git and mint:check.
+!/plugins/*/dist/
+!/plugins/*/dist/**
 build/
 target/
 .turbo/

@@ -1,0 +1,356 @@
+import fs from "node:fs";
+import path from "node:path";
+import { initDatabase, insertExchange } from "./db.js";
+import { generateExchangeEmbedding, initEmbeddings } from "./embeddings.js";
+import { parseConversation } from "./parser.js";
+import { findJsonlFiles, getArchiveDir, getConversationSourceDirs, getExcludedProjects, } from "./paths.js";
+import { summarizeConversation } from "./summarizer.js";
+import { formatErrorSentinel, shouldQueueForSummary } from "./summary-sentinel.js";
+import { shouldSkipConversation } from "./sync.js";
+// Set max output tokens for Claude SDK (used by summarizer)
+process.env.CLAUDE_CODE_MAX_OUTPUT_TOKENS = "20000";
+// Increase max listeners for concurrent API calls
+import { EventEmitter } from "node:events";
+EventEmitter.defaultMaxListeners = 20;
+// Process items in batches with limited concurrency
+async function processBatch(items, processor, concurrency) {
+    const results = [];
+    for (let i = 0; i < items.length; i += concurrency) {
+        const batch = items.slice(i, i + concurrency);
+        const batchResults = await Promise.all(batch.map(processor));
+        results.push(...batchResults);
+    }
+    return results;
+}
+function sessionIdForSummary(exchanges) {
+    return exchanges.find((exchange) => exchange.sessionId)?.sessionId;
+}
+/**
+ * Drop exchanges whose *resolved* project is on the exclusion list.
+ *
+ * The `excludedProjects.includes(project)` check at each call site below only
+ * ever matches Claude Code's encoded-path project directories, because it is
+ * matched against the walk's top-level source directory name. Codex nests as
+ * `<year>/<month>/<day>/rollout-*.jsonl`, so that top-level name is a year and
+ * the real project never appears there at all (CR-069) — it only shows up once
+ * the transcript is parsed and `parseCodexConversation` resolves it via
+ * `projectFromCwd`. Re-checking here, against each exchange's own `project`
+ * field, catches that case without needing to parse ahead of the walk.
+ */
+function excludeByResolvedProject(exchanges, excludedProjects) {
+    if (excludedProjects.length === 0)
+        return exchanges;
+    const excluded = new Set(excludedProjects);
+    return exchanges.filter((exchange) => !excluded.has(exchange.project));
+}
+export async function indexConversations(limitToProject, maxConversations, concurrency = 1, noSummaries = false) {
+    console.log("Initializing database...");
+    const db = initDatabase();
+    console.log("Loading embedding model...");
+    await initEmbeddings();
+    if (noSummaries) {
+        console.log("⚠️  Running in no-summaries mode (skipping AI summaries)");
+    }
+    console.log("Scanning for conversation files...");
+    const sourceDirs = getConversationSourceDirs();
+    const ARCHIVE_DIR = getArchiveDir();
+    let totalExchanges = 0;
+    let conversationsProcessed = 0;
+    const excludedProjects = getExcludedProjects();
+    const excludedDirSet = new Set(excludedProjects);
+    for (const sourceDir of sourceDirs) {
+        const projects = fs.readdirSync(sourceDir);
+        for (const project of projects) {
+            // Skip excluded projects
+            if (excludedProjects.includes(project)) {
+                console.log(`\nSkipping excluded project: ${project}`);
+                continue;
+            }
+            // Skip if limiting to specific project
+            if (limitToProject && project !== limitToProject)
+                continue;
+            const projectPath = path.join(sourceDir, project);
+            const stat = fs.statSync(projectPath);
+            if (!stat.isDirectory())
+                continue;
+            const files = findJsonlFiles(projectPath, excludedDirSet);
+            if (files.length === 0)
+                continue;
+            console.log(`\nProcessing project: ${project} (${files.length} conversations)`);
+            if (concurrency > 1)
+                console.log(`  Concurrency: ${concurrency}`);
+            // Create archive directory for this project
+            const projectArchive = path.join(ARCHIVE_DIR, project);
+            fs.mkdirSync(projectArchive, { recursive: true });
+            const toProcess = [];
+            for (const file of files) {
+                const sourcePath = path.join(projectPath, file);
+                const archivePath = path.join(projectArchive, file);
+                // Copy to archive (ensure parent dirs exist for subagent files)
+                if (!fs.existsSync(archivePath)) {
+                    fs.mkdirSync(path.dirname(archivePath), { recursive: true });
+                    fs.copyFileSync(sourcePath, archivePath);
+                    console.log(`  Archived: ${file}`);
+                }
+                // Honor the in-transcript DO-NOT-INDEX opt-out (CR-070). The file is
+                // still archived above — sync.ts does the same — but it must never be
+                // parsed for summarization or embedded and inserted into the index.
+                if (shouldSkipConversation(archivePath)) {
+                    console.log(`  Skipping DO-NOT-INDEX conversation: ${file}`);
+                    continue;
+                }
+                // Parse conversation
+                const exchanges = excludeByResolvedProject(await parseConversation(sourcePath, project, archivePath), excludedProjects);
+                if (exchanges.length === 0) {
+                    console.log(`  Skipped ${file} (no exchanges)`);
+                    continue;
+                }
+                toProcess.push({
+                    file,
+                    sourcePath,
+                    archivePath,
+                    summaryPath: archivePath.replace(".jsonl", "-summary.txt"),
+                    exchanges,
+                });
+            }
+            // Batch summarize conversations in parallel (unless --no-summaries)
+            if (!noSummaries) {
+                const needsSummary = toProcess.filter((c) => shouldQueueForSummary(c.summaryPath));
+                if (needsSummary.length > 0) {
+                    console.log(`  Generating ${needsSummary.length} summaries (concurrency: ${concurrency})...`);
+                    await processBatch(needsSummary, async (conv) => {
+                        try {
+                            const summary = await summarizeConversation(conv.exchanges, sessionIdForSummary(conv.exchanges));
+                            fs.writeFileSync(conv.summaryPath, summary, "utf-8");
+                            const wordCount = summary.split(/\s+/).length;
+                            console.log(`  ✓ ${conv.file}: ${wordCount} words`);
+                            return summary;
+                        }
+                        catch (error) {
+                            // Write an error sentinel so the failure is retryable on a later run (#96).
+                            try {
+                                fs.writeFileSync(conv.summaryPath, formatErrorSentinel(error), "utf-8");
+                            }
+                            catch { }
+                            console.log(`  ✗ ${conv.file}: ${error}`);
+                            return null;
+                        }
+                    }, concurrency);
+                }
+            }
+            else {
+                console.log(`  Skipping ${toProcess.length} summaries (--no-summaries mode)`);
+            }
+            // Now process embeddings and DB inserts (fast, sequential is fine)
+            for (const conv of toProcess) {
+                for (const exchange of conv.exchanges) {
+                    const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
+                    const embedding = await generateExchangeEmbedding(exchange.userMessage, exchange.assistantMessage, toolNames);
+                    insertExchange(db, exchange, embedding, toolNames);
+                }
+                totalExchanges += conv.exchanges.length;
+                conversationsProcessed++;
+                // Check if we hit the limit
+                if (maxConversations && conversationsProcessed >= maxConversations) {
+                    console.log(`\nReached limit of ${maxConversations} conversations`);
+                    db.close();
+                    console.log(`✅ Indexing complete! Conversations: ${conversationsProcessed}, Exchanges: ${totalExchanges}`);
+                    return;
+                }
+            }
+        }
+    } // end sourceDir loop
+    db.close();
+    console.log(`\n✅ Indexing complete! Conversations: ${conversationsProcessed}, Exchanges: ${totalExchanges}`);
+}
+export async function indexSession(sessionId, 
+// Accepted for symmetry with indexConversations/indexUnprocessed; this path
+// handles exactly one session, so there is nothing to parallelise.
+_concurrency = 1, noSummaries = false) {
+    console.log(`Indexing session: ${sessionId}`);
+    // Find the conversation file for this session
+    const sourceDirs = getConversationSourceDirs();
+    const ARCHIVE_DIR = getArchiveDir();
+    const excludedProjects = getExcludedProjects();
+    const excludedDirSet = new Set(excludedProjects);
+    let found = false;
+    for (const sourceDir of sourceDirs) {
+        const projects = fs.readdirSync(sourceDir);
+        for (const project of projects) {
+            if (excludedProjects.includes(project))
+                continue;
+            const projectPath = path.join(sourceDir, project);
+            if (!fs.statSync(projectPath).isDirectory())
+                continue;
+            const files = findJsonlFiles(projectPath, excludedDirSet).filter((f) => f.includes(sessionId));
+            if (files.length > 0) {
+                const file = files[0];
+                if (!file)
+                    continue;
+                found = true;
+                const sourcePath = path.join(projectPath, file);
+                const db = initDatabase();
+                await initEmbeddings();
+                const projectArchive = path.join(ARCHIVE_DIR, project);
+                fs.mkdirSync(projectArchive, { recursive: true });
+                const archivePath = path.join(projectArchive, file);
+                // Archive (ensure parent dirs exist for subagent files)
+                if (!fs.existsSync(archivePath)) {
+                    fs.mkdirSync(path.dirname(archivePath), { recursive: true });
+                    fs.copyFileSync(sourcePath, archivePath);
+                }
+                // Honor the in-transcript DO-NOT-INDEX opt-out (CR-070).
+                if (shouldSkipConversation(archivePath)) {
+                    console.log(`Skipping DO-NOT-INDEX conversation: ${sessionId}`);
+                    db.close();
+                    break;
+                }
+                // Parse and summarize
+                const exchanges = excludeByResolvedProject(await parseConversation(sourcePath, project, archivePath), excludedProjects);
+                if (exchanges.length > 0) {
+                    // Generate summary (unless --no-summaries)
+                    const summaryPath = archivePath.replace(".jsonl", "-summary.txt");
+                    if (!noSummaries && shouldQueueForSummary(summaryPath)) {
+                        fs.mkdirSync(path.dirname(summaryPath), { recursive: true });
+                        try {
+                            const summary = await summarizeConversation(exchanges, sessionIdForSummary(exchanges));
+                            fs.writeFileSync(summaryPath, summary, "utf-8");
+                            console.log(`Summary: ${summary.split(/\s+/).length} words`);
+                        }
+                        catch (error) {
+                            // Write an error sentinel so the failure is retryable on a later run (#96).
+                            try {
+                                fs.writeFileSync(summaryPath, formatErrorSentinel(error), "utf-8");
+                            }
+                            catch { }
+                            console.log(`Summary failed: ${error instanceof Error ? error.message : String(error)}`);
+                        }
+                    }
+                    // Index
+                    for (const exchange of exchanges) {
+                        const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
+                        const embedding = await generateExchangeEmbedding(exchange.userMessage, exchange.assistantMessage, toolNames);
+                        insertExchange(db, exchange, embedding, toolNames);
+                    }
+                    console.log(`✅ Indexed session ${sessionId}: ${exchanges.length} exchanges`);
+                }
+                db.close();
+                break;
+            }
+        }
+        if (found)
+            break;
+    } // end sourceDir loop
+    if (!found) {
+        console.log(`Session ${sessionId} not found`);
+    }
+}
+export async function indexUnprocessed(concurrency = 1, noSummaries = false) {
+    console.log("Finding unprocessed conversations...");
+    if (concurrency > 1)
+        console.log(`Concurrency: ${concurrency}`);
+    if (noSummaries)
+        console.log("⚠️  Running in no-summaries mode (skipping AI summaries)");
+    const db = initDatabase();
+    await initEmbeddings();
+    const sourceDirs = getConversationSourceDirs();
+    const ARCHIVE_DIR = getArchiveDir();
+    const excludedProjects = getExcludedProjects();
+    const excludedDirSet = new Set(excludedProjects);
+    const unprocessed = [];
+    // Collect all unprocessed conversations from all source dirs
+    for (const sourceDir of sourceDirs) {
+        const projects = fs.readdirSync(sourceDir);
+        for (const project of projects) {
+            if (excludedProjects.includes(project))
+                continue;
+            const projectPath = path.join(sourceDir, project);
+            if (!fs.statSync(projectPath).isDirectory())
+                continue;
+            const files = findJsonlFiles(projectPath, excludedDirSet);
+            for (const file of files) {
+                const sourcePath = path.join(projectPath, file);
+                const projectArchive = path.join(ARCHIVE_DIR, project);
+                const archivePath = path.join(projectArchive, file);
+                const summaryPath = archivePath.replace(".jsonl", "-summary.txt");
+                // High-water mark: index exchanges past the last line we've already covered.
+                // Transcript JSONLs are append-only, so MAX(line_end) tells us where to resume.
+                const hw = db
+                    .prepare("SELECT COALESCE(MAX(line_end), 0) as maxLine FROM exchanges WHERE archive_path = ?")
+                    .get(archivePath);
+                const maxIndexedLine = hw.maxLine;
+                // Ensure parent dirs exist for subagent files
+                fs.mkdirSync(path.dirname(archivePath), { recursive: true });
+                // Refresh the archive when the source may have grown beyond what we've seen.
+                if (!fs.existsSync(archivePath) || maxIndexedLine > 0) {
+                    fs.copyFileSync(sourcePath, archivePath);
+                }
+                // Honor the in-transcript DO-NOT-INDEX opt-out (CR-070/CR-072). This is
+                // the backfill path `--cleanup` routes to, so it is the one every
+                // marked conversation eventually reaches even if the initial index run
+                // predates the marker being typed.
+                if (shouldSkipConversation(archivePath)) {
+                    continue;
+                }
+                // Parse and filter to exchanges past the high-water mark
+                const exchanges = excludeByResolvedProject(await parseConversation(sourcePath, project, archivePath), excludedProjects);
+                const newExchanges = maxIndexedLine > 0 ? exchanges.filter((e) => e.lineStart > maxIndexedLine) : exchanges;
+                if (newExchanges.length === 0)
+                    continue;
+                unprocessed.push({
+                    project,
+                    file,
+                    sourcePath,
+                    archivePath,
+                    summaryPath,
+                    exchanges: newExchanges,
+                });
+            }
+        }
+    } // end sourceDir loop
+    if (unprocessed.length === 0) {
+        console.log("✅ All conversations are already processed!");
+        db.close();
+        return;
+    }
+    console.log(`Found ${unprocessed.length} unprocessed conversations`);
+    // Batch process summaries (unless --no-summaries)
+    if (!noSummaries) {
+        const needsSummary = unprocessed.filter((c) => shouldQueueForSummary(c.summaryPath));
+        if (needsSummary.length > 0) {
+            console.log(`Generating ${needsSummary.length} summaries (concurrency: ${concurrency})...\n`);
+            await processBatch(needsSummary, async (conv) => {
+                try {
+                    const summary = await summarizeConversation(conv.exchanges, sessionIdForSummary(conv.exchanges));
+                    fs.writeFileSync(conv.summaryPath, summary, "utf-8");
+                    const wordCount = summary.split(/\s+/).length;
+                    console.log(`  ✓ ${conv.project}/${conv.file}: ${wordCount} words`);
+                    return summary;
+                }
+                catch (error) {
+                    // Write an error sentinel so the failure is retryable on a later run (#96).
+                    try {
+                        fs.writeFileSync(conv.summaryPath, formatErrorSentinel(error), "utf-8");
+                    }
+                    catch { }
+                    console.log(`  ✗ ${conv.project}/${conv.file}: ${error}`);
+                    return null;
+                }
+            }, concurrency);
+        }
+    }
+    else {
+        console.log(`Skipping summaries for ${unprocessed.length} conversations (--no-summaries mode)\n`);
+    }
+    // Now index embeddings
+    console.log(`\nIndexing embeddings...`);
+    for (const conv of unprocessed) {
+        for (const exchange of conv.exchanges) {
+            const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
+            const embedding = await generateExchangeEmbedding(exchange.userMessage, exchange.assistantMessage, toolNames);
+            insertExchange(db, exchange, embedding, toolNames);
+        }
+    }
+    db.close();
+    console.log(`\n✅ Processed ${unprocessed.length} conversations`);
+}

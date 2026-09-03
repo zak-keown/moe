@@ -24,19 +24,33 @@
       "outputs": []
     },
     "//#mint:generate": {
-      "dependsOn": ["@bubstack/moe-mint#build"],
+      "dependsOn": [
+        "@bubstack/moe-mint#build",
+        "@bubstack/moe-memory#build",
+        "@bubstack/moe-glass#build",
+        "@bubstack/moe-crew#build",
+        "@bubstack/moe-statusline#build"
+      ],
       "inputs": [
         "scripts/mint-plugins.mjs",
+        "scripts/lib/mint-generation-transaction.mjs",
         "moe-platform.yaml",
+        "NOTICE",
+        "LICENSE",
+        "LICENSE-MIT",
         "packages/*/package.json",
         "packages/core/skill-tiers.yaml",
         "packages/*/mint/*.yaml",
-        "packages/mint/src/adapters/**",
+        "packages/mint/src/**",
         "packages/*/skills/**",
         "packages/*/commands/**",
         "packages/*/agents/**",
         "packages/*/hooks/**",
-        "packages/*/.mcp.json"
+        "packages/*/.mcp.json",
+        "packages/memory/dist/**",
+        "packages/glass/dist/**",
+        "packages/crew/dist/**",
+        "packages/statusline/dist/**"
       ],
       "outputs": [
         "plugins/**",

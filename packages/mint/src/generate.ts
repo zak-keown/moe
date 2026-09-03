@@ -6,7 +6,7 @@ import { saveManifest, loadManifest, sha256, type GenerationManifest } from './m
 import { adapters, type HarnessAdapter } from './adapters/index.js'
 import type { AdapterEmission, AdapterPackageContribution } from './adapters/types.js'
 import { emitDocs } from './docs-emit.js'
-import { ConfigError, type MintConfig, type PluginTargetIntent } from './config.js'
+import { ConfigError, hooksManifestPath, type MintConfig, type PluginTargetIntent } from './config.js'
 import { capabilityError, validateTargetEmission } from './platform/capabilities.js'
 import { TARGET_IDS, type TargetId } from './vocabulary.js'
 
@@ -75,7 +75,7 @@ export interface GenerateOptions {
 
 function isSourcePath(path: string, config: MintConfig): boolean {
   if (path === 'moe-mint.yaml') return true
-  if (path === config.components.hooks || path === config.components.mcp) return true
+  if (path === hooksManifestPath(config) || path === config.components.mcp) return true
   const { skills, commands, agents } = config.components
   if (path === skills || path.startsWith(`${skills}/`)) return true
   // commands/agents source files are always .md; adapters may emit

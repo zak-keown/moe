@@ -1,4 +1,4 @@
-import { ConfigError, type PluginTargetIntent } from '../config.js'
+import { ConfigError, hooksManifestPath, type PluginTargetIntent } from '../config.js'
 import type { FileSet } from '../fileset.js'
 import type { PluginModel } from '../model.js'
 import type { ComponentSupport, EmissionLimitation } from '../adapters/types.js'
@@ -113,7 +113,7 @@ export function deriveEmittedCapabilities(target: TargetId, model: PluginModel, 
         if (hasCommands && manifestPathSupports(manifest, 'commands', model.config.components.commands, 'commands')) capabilities.add('command-discovery')
         if (hasAgents && manifestPathSupports(manifest, 'agents', model.config.components.agents, 'agents')) capabilities.add('agent-discovery')
         const bootstrapHooks = manifest.hooks === './hooks/moe-mint/hooks.json' && includes(emitted, 'hooks/moe-mint/session-start')
-        const sourceHooks = model.hooks !== undefined && manifestPathSupports(manifest, 'hooks', model.config.components.hooks, 'hooks/hooks.json')
+        const sourceHooks = model.hooks !== undefined && manifestPathSupports(manifest, 'hooks', hooksManifestPath(model.config), 'hooks/hooks.json')
         if (bootstrapHooks || sourceHooks) capabilities.add('hook-execution')
         if (hasMcp && manifestPathSupports(manifest, 'mcpServers', model.config.components.mcp, '.mcp.json')) capabilities.add('mcp-registration')
         if (bootstrapActive && bootstrapHooks) capabilities.add('bootstrap-routing')
