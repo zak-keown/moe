@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "server": {
+    "name": "moe-memory",
+    "command": "node",
+    "args": ["./dist/cli.js", "mcp-server"],
+    "cwd": "."
+  },
+  "forwardEnv": [
+    "CLAUDE_CONFIG_DIR",
+    "CODEX_HOME",
+    "CONVERSATION_SEARCH_EXCLUDE_PROJECTS",
+    "MOE_DATA_DIR",
+    "MOE_MEMORY_API_BASE_URL",
+    "MOE_MEMORY_API_MODEL",
+    "MOE_MEMORY_API_MODEL_FALLBACK",
+    "MOE_MEMORY_API_TIMEOUT_MS",
+    "MOE_MEMORY_API_TOKEN",
+    "MOE_MEMORY_CLAUDE_BIN",
+    "MOE_MEMORY_CODEX_BIN",
+    "MOE_MEMORY_CODEX_MODEL",
+    "MOE_MEMORY_CODEX_SUMMARY_TIMEOUT_MS",
+    "MOE_MEMORY_CONFIG_DIR",
+    "MOE_MEMORY_DB_PATH",
+    "MOE_MEMORY_JOURNAL_PATH",
+    "MOE_MEMORY_MIGRATION_BATCH",
+    "MOE_MEMORY_MODEL_CACHE_DIR",
+    "MOE_MEMORY_MODEL_INIT_TIMEOUT_MS",
+    "MOE_MEMORY_SUMMARY_ERROR_RETRY_HOURS",
+    "XDG_CONFIG_HOME"
+  ],
+  "assets": {
+    "native": "vendor/sqlite-vec",
+    "embedding": "runtime",
+    "model": "runtime",
+    "claudeCompatibility": "runtime/claude-compatibility.json",
+    "codexCompatibility": "runtime/codex-compatibility.json"
+  }
+}
