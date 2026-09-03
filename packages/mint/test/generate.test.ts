@@ -3,7 +3,7 @@ import { cpSync, mkdtempSync, mkdirSync, existsSync, readFileSync, writeFileSync
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { generate, validateGeneration } from '../src/generate.js'
-import { MANIFEST_PATH, checkDrift } from '../src/manifest.js'
+import { MANIFEST_PATH, checkDrift, sha256 } from '../src/manifest.js'
 import type { HarnessAdapter } from '../src/adapters/index.js'
 import { opencode } from '../src/adapters/opencode.js'
 import { pi } from '../src/adapters/pi.js'
@@ -406,6 +406,33 @@ describe('generate', () => {
         },
       },
     ])
+  })
+
+  it('preserves a tracked retired package.json during upgrade while pruning other stale output', () => {
+    const dir = freshFixture()
+    const packageJson = '{"name":"generated-by-the-previous-mint"}\n'
+    const obsoletePath = 'gen/obsolete.txt'
+    const obsoleteContent = 'old generated output\n'
+    writeFileSync(join(dir, 'package.json'), packageJson)
+    mkdirSync(join(dir, '.moe-mint'), { recursive: true })
+    mkdirSync(join(dir, 'gen'), { recursive: true })
+    writeFileSync(join(dir, obsoletePath), obsoleteContent)
+    writeFileSync(join(dir, MANIFEST_PATH), JSON.stringify({
+      schema: 1,
+      tool: 'moe-mint@previous',
+      files: {
+        'package.json': { sha256: sha256(packageJson) },
+        [obsoletePath]: { sha256: sha256(obsoleteContent) },
+      },
+    }))
+
+    const result = generate(dir)
+
+    expect(readFileSync(join(dir, 'package.json'), 'utf8')).toBe(packageJson)
+    expect(result.pruned).toEqual([obsoletePath])
+    expect(existsSync(join(dir, obsoletePath))).toBe(false)
+    const currentManifest = JSON.parse(readFileSync(join(dir, MANIFEST_PATH), 'utf8'))
+    expect(currentManifest.files['package.json']).toBeUndefined()
   })
 
   it('reports a dangling symlink at a generated path as a conflict, not silently absent (CR-080)', () => {

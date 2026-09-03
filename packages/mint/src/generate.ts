@@ -505,6 +505,11 @@ export function generate(
     for (const [path, entry] of Object.entries(prior.files)) {
       if (newPaths.has(path)) continue
 
+      // Older Mint releases recorded an adapter-replacement package.json.
+      // It is now source-owned rather than stale generated output, so retire
+      // its ledger entry without deleting the existing root manifest.
+      if (path === 'package.json') continue
+
       // Skip and warn if path is unsafe (absolute or escapes root)
       if (isAbsolute(path)) {
         warnings.push(`ignoring manifest entry with unsafe path ${path}`)
