@@ -15,7 +15,7 @@ export type InstalledPackageRoot = string & {
 	readonly [installedPackageRootBrand]: true;
 };
 
-const KNOWN_ENTRYPOINTS = new Set(["index.js", "cli.js"]);
+const KNOWN_ENTRYPOINTS = new Set(["index.js", "cli.js", "index.ts", "cli.ts"]);
 
 export function resolveInstalledPackageRoot(
 	entrypointUrl: URL | string,

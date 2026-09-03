@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { suppressConsole } from "./test-utils.js";
 
@@ -124,7 +124,7 @@ describe("CR-069: project exclusion resolves the real (parsed) project for Codex
   it("does not index a Codex session whose real (cwd-derived) project is excluded", async () => {
     await indexUnprocessed(1, true);
 
-    const db = new Database(dbPath);
+    const db = new DatabaseSync(dbPath);
     const rows = db.prepare("SELECT project, archive_path FROM exchanges").all() as Array<{
       project: string;
       archive_path: string;

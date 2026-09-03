@@ -33,10 +33,10 @@ vi.mock("../src/summarizer.js", async () => {
   };
 });
 
-import { initDatabase } from "../src/db.js";
 import { summarizeConversation } from "../src/summarizer.js";
 import { EXCLUSION_MARKER } from "../src/sync.js";
 import { repairIndex } from "../src/verify.js";
+import { openTestDatabase } from "./test-utils.js";
 
 describe("repairIndex refuses a DO-NOT-INDEX conversation reached any other way", () => {
   const testDir = path.join(os.tmpdir(), `moe-memory-repair-marker-test-${Date.now()}`);
@@ -102,7 +102,7 @@ describe("repairIndex refuses a DO-NOT-INDEX conversation reached any other way"
 
     expect(summarizeConversation).not.toHaveBeenCalled();
 
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
     const row = db.prepare("SELECT COUNT(*) as n FROM exchanges").get() as { n: number };
     db.close();
     expect(row.n).toBe(0);

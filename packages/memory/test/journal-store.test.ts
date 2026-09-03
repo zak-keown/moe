@@ -2,11 +2,11 @@ import { existsSync, utimesSync } from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { countJournalEntries, initDatabase } from "../src/db.js";
+import type { MemoryDatabase } from "../src/db.js";
+import { countJournalEntries } from "../src/db.js";
 import { JournalStore } from "../src/journal/store.js";
-import { fakeEmbed } from "./test-utils.js";
+import { fakeEmbed, openTestDatabase } from "./test-utils.js";
 
 /**
  * Ported from private-journal-mcp's tests/journal.test.ts, and extended.
@@ -36,7 +36,7 @@ describe("JournalStore", () => {
   let userDir: string;
   let dataDir: string;
   let store: JournalStore;
-  let db: Database.Database;
+  let db: MemoryDatabase;
 
   beforeEach(async () => {
     projectDir = await fs.mkdtemp(path.join(os.tmpdir(), "journal-project-test-"));
@@ -51,7 +51,7 @@ describe("JournalStore", () => {
       userPath: userDir,
       embed: fakeEmbed(),
     });
-    db = initDatabase();
+    db = openTestDatabase(path.join(dataDir, "test.db"));
   });
 
   afterEach(async () => {

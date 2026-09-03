@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { suppressConsole } from "./test-utils.js";
 
@@ -106,7 +106,7 @@ describe("CR-070: DO-NOT-INDEX marker is honored by indexer.ts entry points", ()
   });
 
   function exchangeCount(): number {
-    const db = new Database(dbPath);
+    const db = new DatabaseSync(dbPath);
     const row = db.prepare("SELECT COUNT(*) as n FROM exchanges").get() as { n: number };
     db.close();
     return row.n;
@@ -129,7 +129,7 @@ describe("CR-070: DO-NOT-INDEX marker is honored by indexer.ts entry points", ()
 
     await indexConversations(undefined, undefined, 1, true);
 
-    const db = new Database(dbPath);
+    const db = new DatabaseSync(dbPath);
     const rows = db.prepare("SELECT session_id FROM exchanges").all() as Array<{
       session_id: string;
     }>;

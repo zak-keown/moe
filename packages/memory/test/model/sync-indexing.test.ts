@@ -1,10 +1,10 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import Database from "better-sqlite3";
-import * as sqliteVec from "sqlite-vec";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { EXCLUSION_MARKER, LEGACY_EXCLUSION_MARKER, syncConversations } from "../../src/sync.js";
+import { openTestDatabase } from "../test-utils.js";
 
 /**
  * Split out of test/sync.test.ts: every other test there passes
@@ -38,8 +38,7 @@ describe("sync — indexing", () => {
   });
 
   function seedDb(): void {
-    const db = new Database(dbPath);
-    sqliteVec.load(db);
+    const db = openTestDatabase(dbPath);
     db.exec(`
       CREATE TABLE exchanges (
         id TEXT PRIMARY KEY,
@@ -103,7 +102,7 @@ describe("sync — indexing", () => {
     expect(result.copied).toBe(2);
     expect(result.indexed).toBe(1);
 
-    const dbCheck = new Database(dbPath, { readonly: true });
+    const dbCheck = new DatabaseSync(dbPath, { readOnly: true });
     const count = dbCheck.prepare("SELECT COUNT(*) as count FROM exchanges").get() as {
       count: number;
     };
@@ -125,7 +124,7 @@ describe("sync — indexing", () => {
     expect(result.copied).toBe(1);
     expect(result.indexed).toBe(0);
 
-    const dbCheck = new Database(dbPath, { readonly: true });
+    const dbCheck = new DatabaseSync(dbPath, { readOnly: true });
     const count = dbCheck.prepare("SELECT COUNT(*) as count FROM exchanges").get() as {
       count: number;
     };

@@ -1,5 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
+import { initDatabase, setDefaultPackageRoot, type MemoryDatabase } from "../src/db.js";
+import type { InstalledPackageRoot } from "../src/installed-package-root.js";
 
 /**
  * Suppress console output during test execution
@@ -44,6 +46,17 @@ export function readFixture(filename: string): string {
 export function countLines(filePath: string): number {
   const content = fs.readFileSync(filePath, "utf-8");
   return content.trim().split("\n").length;
+}
+
+export const TEST_PACKAGE_ROOT = path.resolve(
+  import.meta.dirname,
+  "..",
+) as InstalledPackageRoot;
+
+setDefaultPackageRoot(TEST_PACKAGE_ROOT);
+
+export function openTestDatabase(dbPath: string): MemoryDatabase {
+  return initDatabase({ path: dbPath, packageRoot: TEST_PACKAGE_ROOT });
 }
 
 /**

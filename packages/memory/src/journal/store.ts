@@ -17,7 +17,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import type Database from "better-sqlite3";
+import type { MemoryDatabase } from "../db.js";
 import {
   countJournalEntries,
   deleteJournalEntry,
@@ -147,7 +147,7 @@ export class JournalStore {
    * `db` is optional: pass it to index the new entries immediately (what the MCP
    * server does), omit it to write markdown only.
    */
-  async writeThoughts(thoughts: JournalThoughts, db?: Database.Database): Promise<string[]> {
+  async writeThoughts(thoughts: JournalThoughts, db?: MemoryDatabase): Promise<string[]> {
     const timestamp = new Date();
     const written: string[] = [];
 
@@ -210,7 +210,7 @@ export class JournalStore {
   /**
    * Index one markdown file by absolute path. Used straight after a write.
    */
-  private async indexOne(db: Database.Database, entryPath: string): Promise<void> {
+  private async indexOne(db: MemoryDatabase, entryPath: string): Promise<void> {
     const root = this.roots().find(
       (candidate) =>
         entryPath === candidate.path || entryPath.startsWith(candidate.path + path.sep),
@@ -223,7 +223,7 @@ export class JournalStore {
   }
 
   private async indexContent(
-    db: Database.Database,
+    db: MemoryDatabase,
     root: JournalRoot,
     entryPath: string,
     content: string,
@@ -261,7 +261,7 @@ export class JournalStore {
    * rows whose file is gone — so an edited entry, a bumped encoder and a deleted
    * file are all handled.
    */
-  async indexJournal(db: Database.Database): Promise<JournalIndexResult> {
+  async indexJournal(db: MemoryDatabase): Promise<JournalIndexResult> {
     const result: JournalIndexResult = { indexed: 0, pruned: 0, failed: 0, total: 0 };
     const state = getJournalIndexState(db);
     const seen = new Set<string>();
@@ -349,7 +349,7 @@ export class JournalStore {
   }
 
   /** Count indexed entries, optionally for one scope. */
-  count(db: Database.Database, scope?: JournalScope): number {
+  count(db: MemoryDatabase, scope?: JournalScope): number {
     return countJournalEntries(db, scope);
   }
 }

@@ -25,9 +25,10 @@ vi.mock("@huggingface/transformers", () => ({
   env: {} as Record<string, unknown>,
 }));
 
-const { initDatabase, insertExchange } = await import("../src/db.js");
+const { insertExchange } = await import("../src/db.js");
 const { searchConversations } = await import("../src/search.js");
 const { resetEmbeddings } = await import("../src/embeddings.js");
+import { openTestDatabase } from "./test-utils.js";
 
 function vectorAtDistance(index: number): number[] {
   // A distinct unit-ish vector per index, all orthogonal to the query
@@ -67,7 +68,7 @@ describe("CR-074: a date filter on a vector search does not lose in-window match
   });
 
   it("still returns in-window rows when the nearest neighbours all fall outside the date window", async () => {
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
 
     // 3 rows nearer the query vector, all dated OUTSIDE the "after" window.
     for (let i = 0; i < 3; i++) {

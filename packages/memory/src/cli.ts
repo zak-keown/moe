@@ -19,8 +19,13 @@
  * left in the package.
  *
  * Subcommands are dispatched through dynamic import so that `moe-memory show`
- * does not load better-sqlite3 or transformers.js just to render a JSONL file.
+ * does not load node:sqlite or transformers.js just to render a JSONL file.
  */
+
+import { resolveInstalledPackageRoot } from "./installed-package-root.js";
+import { setDefaultPackageRoot } from "./db.js";
+
+setDefaultPackageRoot(resolveInstalledPackageRoot(import.meta.url));
 
 const HELP = `moe-memory - semantic recall over past sessions and journal entries
 

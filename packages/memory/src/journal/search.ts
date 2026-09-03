@@ -26,7 +26,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import type Database from "better-sqlite3";
+import type { MemoryDatabase } from "../db.js";
 import { JOURNAL_SELECT_COLUMNS, journalEntryFromRow } from "../db.js";
 import { type EmbedFn, generateQueryEmbedding } from "../embeddings.js";
 import { l2DistanceToCosineSimilarity } from "../search.js";
@@ -71,7 +71,7 @@ export interface JournalEntryContent {
 
 interface Filters {
   sql: string;
-  params: unknown[];
+  params: Array<string | number>;
 }
 
 function buildFilters(
@@ -82,7 +82,7 @@ function buildFilters(
   roots: readonly string[],
 ): Filters {
   const parts: string[] = [];
-  const params: unknown[] = [];
+  const params: Array<string | number> = [];
   // Confine retrieval to the roots this service was constructed with.
   //
   // The service has always been handed them and never used them for filtering,
@@ -129,7 +129,7 @@ export class JournalSearchService {
    * @param roots the journal roots, already de-duplicated (see `JournalStore.roots`)
    */
   constructor(
-    private readonly db: Database.Database,
+    private readonly db: MemoryDatabase,
     roots: string[],
     options: JournalSearchServiceOptions = {},
   ) {
@@ -163,10 +163,10 @@ export class JournalSearchService {
       ORDER BY vec.distance ASC
     `)
       .all(
-        Buffer.from(new Float32Array(queryEmbedding).buffer),
+        new Uint8Array(new Float32Array(queryEmbedding).buffer),
         limit * overfetch,
         ...filterParams,
-      ) as Array<Parameters<typeof journalEntryFromRow>[0] & { distance: number }>;
+      ) as unknown as Array<Parameters<typeof journalEntryFromRow>[0] & { distance: number }>;
 
     const results: JournalSearchResult[] = [];
     for (const row of rows) {
@@ -193,7 +193,7 @@ export class JournalSearchService {
       ORDER BY j.timestamp DESC
       LIMIT ?
     `)
-      .all(...filterParams, limit) as Array<Parameters<typeof journalEntryFromRow>[0]>;
+      .all(...filterParams, limit) as unknown as Array<Parameters<typeof journalEntryFromRow>[0]>;
 
     return rows.map((row) => {
       const entry = journalEntryFromRow(row);

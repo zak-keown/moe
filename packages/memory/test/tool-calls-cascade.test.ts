@@ -1,9 +1,11 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { deleteExchange, initDatabase } from "../src/db.js";
+import type { MemoryDatabase } from "../src/db.js";
+import { deleteExchange } from "../src/db.js";
+import { openTestDatabase } from "./test-utils.js";
 
 describe("tool_calls FK cascade", () => {
   let testDir: string;
@@ -22,21 +24,21 @@ describe("tool_calls FK cascade", () => {
     } catch {}
   });
 
-  function insertExchangeRow(db: Database.Database, id: string): void {
+  function insertExchangeRow(db: MemoryDatabase, id: string): void {
     db.prepare(
       `INSERT INTO exchanges (id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end)
        VALUES (?, 'p', '2026-01-01T00:00:00Z', 'u', 'a', '/x.jsonl', 1, 2)`,
     ).run(id);
   }
 
-  function insertToolCall(db: Database.Database, id: string, exchangeId: string): void {
+  function insertToolCall(db: MemoryDatabase, id: string, exchangeId: string): void {
     db.prepare(
       `INSERT INTO tool_calls (id, exchange_id, tool_name, timestamp)
        VALUES (?, ?, 't', '2026-01-01T00:00:00Z')`,
     ).run(id, exchangeId);
   }
 
-  function countToolCalls(db: Database.Database, exchangeId: string): number {
+  function countToolCalls(db: MemoryDatabase, exchangeId: string): number {
     return (
       db.prepare("SELECT COUNT(*) AS c FROM tool_calls WHERE exchange_id = ?").get(exchangeId) as {
         c: number;
@@ -45,7 +47,7 @@ describe("tool_calls FK cascade", () => {
   }
 
   it("deleteExchange succeeds when the exchange has tool_calls (regression for #81)", () => {
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
     insertExchangeRow(db, "ex-with-tools");
     insertToolCall(db, "tc-a", "ex-with-tools");
     insertToolCall(db, "tc-b", "ex-with-tools");
@@ -57,7 +59,7 @@ describe("tool_calls FK cascade", () => {
   });
 
   it("deletes dependent tool_calls when an exchange is deleted on a fresh database", () => {
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
     insertExchangeRow(db, "ex-1");
     insertToolCall(db, "tc-1", "ex-1");
     insertToolCall(db, "tc-2", "ex-1");
@@ -70,7 +72,7 @@ describe("tool_calls FK cascade", () => {
 
   it("migrates a legacy schema (no cascade, with orphans) to the cascading schema and removes orphans", () => {
     // Build a "legacy" database matching what initDatabase used to create.
-    const legacy = new Database(dbPath);
+    const legacy = new DatabaseSync(dbPath);
     legacy.exec(`
       CREATE TABLE exchanges (
         id TEXT PRIMARY KEY,
@@ -110,19 +112,19 @@ describe("tool_calls FK cascade", () => {
     // Insert an orphan: tool_call referencing a non-existent exchange.
     // Do this with FK temporarily off to simulate a database that already
     // ended up with orphans before this code shipped.
-    legacy.pragma("foreign_keys = OFF");
+    legacy.exec("PRAGMA foreign_keys = OFF");
     legacy
       .prepare(
         `INSERT INTO tool_calls (id, exchange_id, tool_name, timestamp)
        VALUES ('tc-orphan', 'missing-ex', 't', '2026-01-01T00:00:00Z')`,
       )
       .run();
-    legacy.pragma("foreign_keys = ON");
+    legacy.exec("PRAGMA foreign_keys = ON");
     legacy.close();
 
     // Open via initDatabase: migration should drop the orphan, preserve the
     // valid row, and apply ON DELETE CASCADE going forward.
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
 
     const remaining = db.prepare("SELECT id FROM tool_calls ORDER BY id").all() as Array<{
       id: string;

@@ -1,11 +1,10 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import Database from "better-sqlite3";
-import * as sqliteVec from "sqlite-vec";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { countStale, EMBEDDING_VERSION, runMigrationBatch } from "../../src/embedding-migration.js";
 import { generateExchangeEmbedding, initEmbeddings } from "../../src/embeddings.js";
+import { openTestDatabase } from "../test-utils.js";
 
 /**
  * Split out of test/embedding-migration.test.ts: this is the one test in that
@@ -33,8 +32,7 @@ describe("embedding migration — real encoder", () => {
   });
 
   it("re-embeds stale rows with the real encoder, advances embedding_version, and is resumable across batches", async () => {
-    const db = new Database(dbPath);
-    sqliteVec.load(db);
+    const db = openTestDatabase(dbPath);
     db.exec(`
       CREATE TABLE exchanges (
         id TEXT PRIMARY KEY,
@@ -58,7 +56,7 @@ describe("embedding migration — real encoder", () => {
       const dummy = new Float32Array(384);
       db.prepare("INSERT INTO vec_exchanges (id, embedding) VALUES (?, ?)").run(
         `r-${i}`,
-        Buffer.from(dummy.buffer),
+        new Uint8Array(dummy.buffer),
       );
     }
 

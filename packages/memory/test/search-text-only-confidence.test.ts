@@ -24,9 +24,10 @@ vi.mock("@huggingface/transformers", () => ({
   env: {} as Record<string, unknown>,
 }));
 
-const { initDatabase, insertExchange } = await import("../src/db.js");
+const { insertExchange } = await import("../src/db.js");
 const { searchConversations } = await import("../src/search.js");
 const { resetEmbeddings } = await import("../src/embeddings.js");
+import { openTestDatabase } from "./test-utils.js";
 
 function queryVector(): number[] {
   return [1, ...new Array(383).fill(0)];
@@ -70,7 +71,7 @@ describe("CR-073: text-only hits are not scored as vector matches in mode: both"
   });
 
   it("does not report a 100% match for a hit only the LIKE query found", async () => {
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
 
     const vectorHit: ConversationExchange = {
       id: "vector-hit",

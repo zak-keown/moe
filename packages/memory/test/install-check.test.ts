@@ -34,12 +34,10 @@ describe("findMissingDeps — runtime dependency health probe", () => {
   });
 
   it("returns multiple missing packages so the operator sees the full scope of damage in one log line", () => {
-    const resolver = (pkg: string) => pkg === "sqlite-vec" || pkg === "zod";
+    const resolver = (pkg: string) => pkg === "zod";
     const missing = findMissingDeps(resolver);
-    expect(missing).toContain("better-sqlite3");
     expect(missing).toContain("@huggingface/transformers");
     expect(missing).toContain("@anthropic-ai/claude-agent-sdk");
-    expect(missing).not.toContain("sqlite-vec");
     expect(missing).not.toContain("zod");
   });
 
