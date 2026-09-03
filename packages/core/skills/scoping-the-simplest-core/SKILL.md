@@ -58,7 +58,7 @@ Then SPLIT the story:
 
 ### 4. Run citation check
 
-Run: `python3 "${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/check_citations.py" docs/moe/iterations/roadmap.md docs/moe/iterations/requirements/`
+Run: `node "${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/check_citations.mjs" docs/moe/iterations/roadmap.md docs/moe/iterations/requirements/`
 
 Every iteration must cite only valid STORY-IDs from the index.
 
@@ -107,7 +107,7 @@ Write the result to `docs/moe/iterations/roadmap.md` using this format:
 **Look-ahead check:** <does this block or get blocked by neighbors?>
 ```
 
-Run: `python3 "${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/validate_roadmap.py" docs/moe/iterations/roadmap.md`
+Run: `node "${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/validate_roadmap.mjs" docs/moe/iterations/roadmap.md`
 
 **Note:** The validator checks format only. The PAR scope review is the real structural gate.
 

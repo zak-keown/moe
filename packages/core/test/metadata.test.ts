@@ -432,8 +432,6 @@ const X_BIT_ALLOWLIST = [
   "skills/finding-duplicate-functions/scripts/extract-functions.sh",
   "skills/finding-duplicate-functions/scripts/generate-report.sh",
   "skills/finding-duplicate-functions/scripts/prepare-category-analysis.sh",
-  "skills/running-an-iteration/scripts/check_citations.py",
-  "skills/scoping-the-simplest-core/scripts/check_citations.py",
   "skills/subagent-driven-development/scripts/review-package",
   "skills/subagent-driven-development/scripts/sdd-workspace",
   "skills/subagent-driven-development/scripts/task-brief",
