@@ -1,4 +1,5 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -148,6 +149,19 @@ describe("validate_requirements_index", () => {
     expect(invalid.status).toBe(1);
     expect(invalid.stderr).toContain(`error: ${basename(invalidFixture)}:`);
   });
+
+  it("runs validation when invoked through a symbolic link", () => {
+    const root = tempDir("requirements-symlink-");
+    const link = join(root, "validate-requirements.mjs");
+    symlinkSync(join(CORE, REQUIREMENTS_VALIDATOR), link);
+    const input = write(root, "requirements.md", validStory());
+
+    const result = spawnSync(process.execPath, [link, input], { encoding: "utf8" });
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe(`OK: ${input}\n`);
+  });
 });
 
 describe("validate_scenarios", () => {
@@ -247,6 +261,24 @@ describe("validate_scenarios", () => {
     expect(valid.stdout).toBe("OK: scenarios valid\n");
   });
 
+  it("recognizes Python U+001F whitespace before a numbered journey step", () => {
+    const root = tempDir("scenario-python-whitespace-");
+    const requirements = join(root, "requirements");
+    mkdirSync(requirements);
+    write(requirements, "EPIC-001.md", validStory());
+    const scenarios = write(
+      root,
+      "scenarios.md",
+      validScenario("JOURNEY-0001").replace("1. Complete checkout", "\u001f1. Complete checkout"),
+    );
+
+    const result = runHelper(SCENARIO_VALIDATOR, [scenarios, requirements]);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe("OK: scenarios valid\n");
+  });
+
   it("excludes nested epics when resolving stories", () => {
     const root = tempDir("scenario-nested-");
     const requirements = join(root, "requirements");
@@ -281,5 +313,23 @@ describe("validate_scenarios", () => {
     );
     expect(missingDirectory.status).toBe(2);
     expect(missingDirectory.stderr).toBe("error: directory not found: missing-requirements\n");
+  });
+
+  it("runs validation when invoked through a symbolic link", () => {
+    const root = tempDir("scenario-symlink-");
+    const link = join(root, "validate-scenarios.mjs");
+    symlinkSync(join(CORE, SCENARIO_VALIDATOR), link);
+    const requirements = join(root, "requirements");
+    mkdirSync(requirements);
+    write(requirements, "EPIC-001.md", validStory());
+    const scenarios = write(root, "scenarios.md", validScenario());
+
+    const result = spawnSync(process.execPath, [link, scenarios, requirements], {
+      encoding: "utf8",
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe("OK: scenarios valid\n");
   });
 });
