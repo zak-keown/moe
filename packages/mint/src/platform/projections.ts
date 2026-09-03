@@ -23,6 +23,7 @@ interface ProjectionProvenance {
   validation: GenerationValidation
   evidence: CanonicalProjectionEvidence
   identity: CanonicalGenerationIdentity
+  producer: ResolvedPlugin
 }
 
 const projectionProvenance = new WeakMap<PluginProjectionRecord, ProjectionProvenance>()
@@ -74,13 +75,24 @@ function projectionRecords(
       )
     }
     const provenance = projectionProvenance.get(record)
+    const currentPlugin = platform.plugins.find((plugin) => plugin.id === declaration.id)
+    const currentIdentity = currentPlugin === undefined ? undefined : generationIdentity(currentPlugin)
     if (
       provenance === undefined
+      || currentPlugin === undefined
+      || currentIdentity === undefined
+      || provenance.producer !== currentPlugin
       || record.plugin !== provenance.evidence.plugin
       || record.emissions !== provenance.evidence.emissions
-      || !isCanonicalGenerationFor(provenance.validation, provenance.identity)
+      || !sameGenerationIdentity(provenance.identity, currentIdentity)
+      || !isCanonicalGenerationFor(provenance.validation, currentIdentity)
       || record.plugin.id !== declaration.id
       || record.plugin.sourcePackagePath !== declaration.source
+      || record.plugin.configSource !== declaration.config
+      || currentPlugin.sourcePackagePath !== declaration.source
+      || currentPlugin.sourcePath !== declaration.sourcePath
+      || currentPlugin.configPath !== declaration.configPath
+      || currentPlugin.config.source !== declaration.config
     ) {
       throw projectionError(
         'PROJECTION_RECORD_PROVENANCE',
@@ -91,6 +103,16 @@ function projectionRecords(
     }
     return record
   })
+}
+
+function sameGenerationIdentity(
+  left: CanonicalGenerationIdentity,
+  right: CanonicalGenerationIdentity,
+): boolean {
+  return left.sourcePath === right.sourcePath
+    && left.sourcePackagePath === right.sourcePackagePath
+    && left.configPath === right.configPath
+    && left.configSource === right.configSource
 }
 
 function generationIdentity(plugin: ResolvedPlugin): CanonicalGenerationIdentity {
@@ -126,7 +148,12 @@ export function projectionRecordForCurrentGeneration(
     )
   }
   const record = Object.freeze({ plugin: evidence.plugin, emissions: evidence.emissions })
-  projectionProvenance.set(record, { validation, evidence, identity: Object.freeze({ ...identity }) })
+  projectionProvenance.set(record, {
+    validation,
+    evidence,
+    identity: Object.freeze({ ...identity }),
+    producer: plugin,
+  })
   return record
 }
 
