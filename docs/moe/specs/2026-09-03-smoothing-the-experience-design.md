@@ -127,9 +127,15 @@ command prefixes. These records prove use and outcome; some also preserve
 approval-related context. The reader records the strongest provenance present
 without claiming that every successful operation required a fresh human click.
 
-Codex shell permissions render as Starlark `prefix_rule` entries and are
-validated through `codex execpolicy check`. See the official
+Codex shell permissions render through the documented, experimental Starlark
+`prefix_rule` interface and are validated through `codex execpolicy check`.
+The adapter version-gates both rule rendering and validator output and fails
+closed on drift. See the official
 [rules documentation](https://developers.openai.com/codex/agent-configuration/rules/).
+The adapter uses App Server `config/read` with layer details to prove which user
+and trusted-project rule directories are active. If it cannot establish the
+effective project layer, it may continue the evidence scan but cannot render or
+apply a project-scoped rule.
 Other evidence classes remain report-only until Codex exposes a stable,
 narrowly scoped permission form that the helper can validate.
 
@@ -188,14 +194,17 @@ files, permission-policy files, and broad home-directory access. It normalizes
 paths only when the rendered rule grants no more access than the observed
 operations.
 
-Read, write, and edit are separate operations. Repeated reads do not justify a
-write rule. A harness renderer may decline a safe evidence candidate when its
-native syntax cannot preserve that distinction or path boundary.
+Read and modify are separate operations. Claude Edit and Write tool evidence
+both normalize to `modify` because Claude's permission engine governs both with
+`Edit(path)`; `Write(path)` rules are ignored. Repeated reads do not justify a
+modify rule, and the renderer never emits `Write(path)`.
 
-Write and edit candidates are always project-scoped and initially name exact
+Modify candidates are always project-scoped and initially name exact
 project-relative paths. They never produce directory-wide, extension-wide, or
 user-global rules. This restriction prevents sparse observations from becoming
-an unbounded overwrite permission.
+an unbounded overwrite permission. When the adapter cannot prove that Claude's
+path anchor is the canonical project root, it declines the candidate instead
+of rendering an absolute path or promoting scope.
 
 ### Network
 
@@ -254,7 +263,7 @@ Claude may render all four classes when its documented permission syntax can
 express the candidate without widening it:
 
 - `Bash(...)` for audited command shapes;
-- distinct `Read(...)`, `Write(...)`, or `Edit(...)` path rules;
+- `Read(...)` for exact reads and `Edit(...)` for exact modify operations;
 - exact `WebFetch(domain:...)` rules; and
 - exact MCP server/tool identifiers.
 
@@ -407,8 +416,9 @@ The feature is complete when all of these statements hold:
    evidence classes without model or network access.
 2. Repeated safe operations from two root sessions produce deterministic,
    scoped candidates; one session and unsafe operations do not.
-3. Claude can suggest supported shell, filesystem, network, and curated
-   read-only MCP permissions.
+3. Claude can suggest supported shell, exact Read/Edit filesystem, network,
+   and curated read-only MCP permissions without emitting ignored Write rules
+   or guessing path anchors.
 4. Codex can suggest validated shell prefix rules and reports other evidence
    classes without inventing unsupported permissions.
 5. A harness returns no more than ten suggestions and no more than five from
