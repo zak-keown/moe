@@ -35,7 +35,7 @@
     "moe-crew": "./dist/moe-crew.cjs"
   },
   "scripts": {
-    "build": "node ../../scripts/clean-package-dist.mjs && tsc -b --force && tsup",
+    "build": "node ../../scripts/clean-package-dist.mjs && node --experimental-strip-types ../../scripts/write-bundle-inventory.mjs --prepare . && tsc -b --force && tsup && node --experimental-strip-types ../../scripts/write-bundle-inventory.mjs . dist/metafile-cjs.json dist/metafile-esm.json",
     "prepack": "pnpm run build",
     "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --pretty",
     "test": "vitest run",

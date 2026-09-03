@@ -119,6 +119,7 @@ describe('declared artifact payload staging', () => {
     ['package manifest', { from: 'dist', to: 'package.json', required: true }],
     ['artifact manifest root', { from: 'dist', to: '.moe/runtime', required: true }],
     ['adapter ledger root', { from: 'dist', to: '.moe-mint/files', required: true }],
+    ['bundle evidence root', { from: 'dist', to: '.moe-build/files', required: true }],
     ['legal payload', { from: 'dist', to: 'LICENSE', required: true }],
     ['NOTICE legal payload', { from: 'dist', to: 'NOTICE', required: true }],
     ['third-party notice legal payload', { from: 'dist', to: 'THIRD_PARTY_NOTICES', required: true }],

@@ -4,7 +4,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", ".moe-build/**"]
     },
     "typecheck": {
       "dependsOn": ["^build"],
@@ -35,6 +35,7 @@
         "scripts/mint-plugins.mjs",
         "scripts/mint-prepare.mjs",
         "scripts/clean-package-dist.mjs",
+        "scripts/write-bundle-inventory.mjs",
         "scripts/lib/mint-diagnostics.mjs",
         "scripts/lib/mint-host-contract.mjs",
         "scripts/lib/mint-generation-transaction.mjs",
@@ -43,6 +44,7 @@
         "LICENSE",
         "LICENSE-MIT",
         "packages/*/package.json",
+        "packages/*/tsup.config.ts",
         "packages/core/skill-tiers.yaml",
         "packages/*/mint/*.yaml",
         "packages/mint/src/**",
@@ -54,8 +56,11 @@
         "packages/memory/dist/**",
         "packages/memory/prompts/**",
         "packages/glass/dist/**",
+        "packages/glass/.moe-build/**",
         "packages/crew/dist/**",
+        "packages/crew/.moe-build/**",
         "packages/statusline/dist/**",
+        "packages/statusline/.moe-build/**",
         "packages/statusline/vendor/**"
       ],
       "outputs": [

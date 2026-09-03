@@ -22,6 +22,7 @@ export default defineConfig([
     clean: false,
     splitting: false,
     format: ["cjs"],
+    metafile: true,
     outExtension: () => ({ js: ".cjs" }),
     // `moe-crew` is a declared bin (package.json `bin`), and src/cli.ts opens
     // with `import` rather than a shebang — so without this the bundle began
@@ -49,6 +50,7 @@ export default defineConfig([
     clean: false,
     splitting: false,
     format: ["esm"],
+    metafile: true,
     outExtension: () => ({ js: ".mjs" }),
     treeshake: true,
   },

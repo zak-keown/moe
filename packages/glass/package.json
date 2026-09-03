@@ -34,7 +34,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "build": "node ../../scripts/clean-package-dist.mjs && tsc -b --force && esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:fsevents",
+    "build": "node ../../scripts/clean-package-dist.mjs && node --experimental-strip-types ../../scripts/write-bundle-inventory.mjs --prepare . && tsc -b --force && esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:fsevents --metafile=.moe-build/metafile-esm.json && node --experimental-strip-types ../../scripts/write-bundle-inventory.mjs . .moe-build/metafile-esm.json",
     "prepack": "pnpm run build",
     "typecheck": "tsc -b --pretty",
     "test": "vitest run --project unit",

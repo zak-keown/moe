@@ -14,7 +14,7 @@ export const RESERVED_ARTIFACT_FILES = new Set([
   'NOTICE',
   'THIRD_PARTY_NOTICES',
 ])
-export const RESERVED_ARTIFACT_ROOTS = ['.moe', '.moe-mint'] as const
+export const RESERVED_ARTIFACT_ROOTS = ['.moe', '.moe-mint', '.moe-build'] as const
 
 function fullCaseFold(value: string): string {
   return [...value].map((character) => FULL_CASE_FOLD.get(character.codePointAt(0)!) ?? character).join('').normalize('NFC')

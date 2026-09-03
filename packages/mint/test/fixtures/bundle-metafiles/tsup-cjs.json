@@ -1,0 +1,18 @@
+{
+  "inputs": {
+    "source/hook.ts": { "bytes": 10, "imports": [] },
+    "../modules/plain/lib/a.js": { "bytes": 20, "imports": [] }
+  },
+  "outputs": {
+    "dist/hook.cjs": {
+      "imports": [],
+      "exports": [],
+      "entryPoint": "source/hook.ts",
+      "inputs": {
+        "source/hook.ts": { "bytesInOutput": 8 },
+        "../modules/plain/lib/a.js": { "bytesInOutput": 15 }
+      },
+      "bytes": 23
+    }
+  }
+}

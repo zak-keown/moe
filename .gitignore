@@ -4,6 +4,7 @@
 
 node_modules/
 dist/
+/packages/*/.moe-build/
 # Complete generated plugin artifacts intentionally carry their runtime build
 # payloads. Keep package-local build output ignored while exposing only these
 # canonical, Mint-owned distribution trees to git and mint:check.
