@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { parse } from 'yaml'
 import { z } from 'zod'
 import { ConfigError } from './config.js'
+import type { PluginModel } from './model.js'
 
 export const TOKEN_NAME_RE = /^[a-z][a-z0-9-]*$/
 
@@ -202,5 +203,30 @@ export function assertNoSurvivors(
 
   if (problems.length > 0) {
     throw new ConfigError('tokens survived substitution', problems)
+  }
+}
+
+export function adjustedModel(
+  model: PluginModel,
+  skillsOutputDir: string,
+): PluginModel {
+  const srcDir = model.config.components.skills
+  return {
+    ...model,
+    config: {
+      ...model.config,
+      components: {
+        ...model.config.components,
+        skills: skillsOutputDir,
+      },
+    },
+    skills: model.skills.map((s) => ({
+      ...s,
+      dir: s.dir.startsWith(srcDir + '/')
+        ? skillsOutputDir + s.dir.slice(srcDir.length)
+        : s.dir.startsWith(srcDir)
+          ? skillsOutputDir
+          : s.dir,
+    })),
   }
 }
