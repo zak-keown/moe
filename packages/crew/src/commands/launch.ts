@@ -185,8 +185,16 @@ export async function cmdLaunch(
   const invocation = extraArgs.length > 0 ? [tmuxName, cwd, "--", ...extraArgs] : [tmuxName, cwd];
 
   return driver.idStrategy === "derive"
-    ? launchDerive(ctx, { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir }, opts)
-    : launchAssign(ctx, { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir }, opts);
+    ? launchDerive(
+        ctx,
+        { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir },
+        opts,
+      )
+    : launchAssign(
+        ctx,
+        { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir },
+        opts,
+      );
 }
 
 interface LaunchInner {
