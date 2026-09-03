@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,9 +7,13 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { defaultSettingsPath, ensureStatusLine } from "../src/hooks/ensure-statusline.js";
 
 const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const SESSION_START_COMMAND = JSON.parse(
+const SESSION_START_COMMANDS = JSON.parse(
   readFileSync(join(PACKAGE_ROOT, "hooks/hooks.json"), "utf8"),
-).hooks.SessionStart[0].hooks[0].command as string;
+).hooks.SessionStart.flatMap((registration: { hooks?: Array<{ command?: string }> }) =>
+  (registration.hooks ?? []).flatMap((hook) =>
+    typeof hook.command === "string" ? [hook.command] : [],
+  ),
+) as string[];
 
 describe("ensureStatusLine", () => {
   let dir: string;
@@ -141,41 +145,52 @@ describe("packed SessionStart command", () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  function execute(envOverrides: NodeJS.ProcessEnv) {
+  function execute(command: string, commandIndex: number, envOverrides: NodeJS.ProcessEnv) {
+    const commandDir = join(dir, String(commandIndex));
+    mkdirSync(commandDir, { recursive: true });
     const env: NodeJS.ProcessEnv = {
       ...process.env,
-      CLAUDE_CONFIG_DIR: join(dir, "claude-config"),
+      CLAUDE_CONFIG_DIR: join(commandDir, "claude-config"),
       CLAUDE_PLUGIN_ROOT: PACKAGE_ROOT,
       ...envOverrides,
     };
     if (envOverrides.PLUGIN_ROOT === undefined) delete env.PLUGIN_ROOT;
-    return spawnSync(SESSION_START_COMMAND, {
-      cwd: dir,
+    return spawnSync("bash", ["-c", command], {
+      cwd: commandDir,
       env,
       input: '{"hook_event_name":"SessionStart","source":"startup"}\n',
-      shell: "/bin/bash",
       encoding: "utf8",
     });
   }
 
   it("is a silent no-op under Codex plugin-root semantics", () => {
-    const result = execute({ PLUGIN_ROOT: PACKAGE_ROOT });
+    expect(SESSION_START_COMMANDS.length).toBeGreaterThan(0);
+    for (const [index, command] of SESSION_START_COMMANDS.entries()) {
+      const result = execute(command, index, { PLUGIN_ROOT: PACKAGE_ROOT });
 
-    expect(result.status).toBe(0);
-    expect(result.stdout).toBe("");
-    expect(result.stderr).toBe("");
-    expect(existsSync(join(dir, "claude-config", "settings.json"))).toBe(false);
+      expect(result.error).toBeUndefined();
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe("");
+      expect(existsSync(join(dir, String(index), "claude-config", "settings.json"))).toBe(false);
+    }
   });
 
   it("preserves Claude's first-run configuration behavior", () => {
-    const result = execute({});
+    expect(SESSION_START_COMMANDS.length).toBeGreaterThan(0);
+    for (const [index, command] of SESSION_START_COMMANDS.entries()) {
+      const result = execute(command, index, {});
 
-    expect(result.status).toBe(0);
-    expect(result.stdout).toBe("Moe: configured the Claude Code statusline (ccstatusline).\n");
-    expect(result.stderr).toBe("");
-    const settings = JSON.parse(readFileSync(join(dir, "claude-config", "settings.json"), "utf8"));
-    expect(settings.statusLine.command).toBe(
-      `node "${join(PACKAGE_ROOT, "vendor/ccstatusline/ccstatusline.js")}"`,
-    );
+      expect(result.error).toBeUndefined();
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe("Moe: configured the Claude Code statusline (ccstatusline).\n");
+      expect(result.stderr).toBe("");
+      const settings = JSON.parse(
+        readFileSync(join(dir, String(index), "claude-config", "settings.json"), "utf8"),
+      );
+      expect(settings.statusLine.command).toBe(
+        `node "${join(PACKAGE_ROOT, "vendor/ccstatusline/ccstatusline.js")}"`,
+      );
+    }
   });
 });
