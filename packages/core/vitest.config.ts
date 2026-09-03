@@ -8,9 +8,7 @@ import { defineConfig } from "vitest/config";
 // keeps its bit, and every skill has a recorded rationale. That is what
 // test/metadata.test.ts asserts.
 //
-// The four suites that are NOT in this project, and why:
-//   test/iterative-development/  37 Python unittest tests covering the 9 skill
-//                                CLIs. `pnpm test:python`; needs python3.
+// The three suites that are NOT in this project, and why:
 //   test/brainstorm-server/      3,000 lines of upstream node:assert + `ws`
 //                                suites that spawn real servers on fixed ports.
 //                                `pnpm test:brainstorm`.
@@ -21,6 +19,6 @@ import { defineConfig } from "vitest/config";
 //                                never in CI.
 export default defineConfig({
   test: {
-    include: ["test/*.test.ts"],
+    include: ["test/**/*.test.ts"],
   },
 });

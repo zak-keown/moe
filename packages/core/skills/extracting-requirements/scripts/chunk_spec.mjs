@@ -1,0 +1,157 @@
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+
+export function estimateTokens(text) {
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  return Math.trunc(words * 1.3);
+}
+
+export function splitByHeading(content, level) {
+  const pattern = new RegExp(`^${"#".repeat(level)} (.+)$`, "gm");
+  const matches = [...content.matchAll(pattern)];
+
+  if (matches.length === 0) return [{ heading: null, content }];
+
+  const sections = [];
+  if (matches[0].index > 0) {
+    const preamble = content.slice(0, matches[0].index).trim();
+    if (preamble) sections.push({ heading: "(preamble)", content: preamble });
+  }
+
+  for (const [index, match] of matches.entries()) {
+    const start = match.index;
+    const end = matches[index + 1]?.index ?? content.length;
+    sections.push({
+      heading: match[1].trim(),
+      content: content.slice(start, end).trim(),
+    });
+  }
+
+  return sections;
+}
+
+function lineCount(content) {
+  return (content.match(/\n/g) ?? []).length;
+}
+
+export function findLineRange(fullContent, sectionContent) {
+  const position = fullContent.indexOf(sectionContent.slice(0, 80));
+  if (position === -1) return [1, lineCount(fullContent) + 1];
+
+  const startLine = lineCount(fullContent.slice(0, position)) + 1;
+  return [startLine, startLine + lineCount(sectionContent)];
+}
+
+export function chunkFile(path, maxTokens) {
+  const content = readFileSync(path, "utf8");
+  const tokens = estimateTokens(content);
+
+  if (tokens <= maxTokens) {
+    return [
+      {
+        source_file: path,
+        heading: null,
+        start_line: 1,
+        end_line: lineCount(content) + 1,
+        content,
+        estimated_tokens: tokens,
+      },
+    ];
+  }
+
+  const sections = splitByHeading(content, 2);
+  const chunks = [];
+  for (const section of sections) {
+    const sectionTokens = estimateTokens(section.content);
+    const [startLine, endLine] = findLineRange(content, section.content);
+
+    if (sectionTokens <= maxTokens) {
+      chunks.push({
+        source_file: path,
+        heading: section.heading,
+        start_line: startLine,
+        end_line: endLine,
+        content: section.content,
+        estimated_tokens: sectionTokens,
+      });
+      continue;
+    }
+
+    for (const subsection of splitByHeading(section.content, 3)) {
+      const subsectionTokens = estimateTokens(subsection.content);
+      const [subStart, subEnd] = findLineRange(content, subsection.content);
+      const heading =
+        subsection.heading && subsection.heading !== "(preamble)"
+          ? `${section.heading} > ${subsection.heading}`
+          : section.heading;
+      chunks.push({
+        source_file: path,
+        heading,
+        start_line: subStart,
+        end_line: subEnd,
+        content: subsection.content,
+        estimated_tokens: subsectionTokens,
+      });
+    }
+  }
+
+  return chunks;
+}
+
+function markdownFiles(path) {
+  const files = [];
+  for (const entry of readdirSync(path, { withFileTypes: true })) {
+    const candidate = join(path, entry.name);
+    if (entry.isDirectory()) files.push(...markdownFiles(candidate));
+    else if (entry.isFile() && entry.name.endsWith(".md")) files.push(candidate);
+  }
+  return files.sort();
+}
+
+export function chunkPath(path, maxTokens) {
+  if (statSync(path).isFile()) return chunkFile(path, maxTokens);
+  if (statSync(path).isDirectory()) return markdownFiles(path).flatMap((file) => chunkFile(file, maxTokens));
+  return [];
+}
+
+function parseArgs(args) {
+  let path;
+  let maxTokens = 4000;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === "--max-tokens") {
+      const value = args[++index];
+      if (!value || !/^[-+]?\d+$/.test(value)) return null;
+      maxTokens = Number(value);
+    } else if (!path && !arg.startsWith("-")) {
+      path = arg;
+    } else {
+      return null;
+    }
+  }
+
+  return path ? { path, maxTokens } : null;
+}
+
+export async function main(args) {
+  const options = parseArgs(args);
+  if (!options) {
+    process.stderr.write("error: expected <path> [--max-tokens 4000]\n");
+    return 2;
+  }
+
+  try {
+    statSync(options.path);
+  } catch {
+    process.stderr.write(`error: path not found: ${options.path}\n`);
+    return 2;
+  }
+
+  process.stdout.write(`${JSON.stringify(chunkPath(options.path, options.maxTokens), null, 2)}\n`);
+  return 0;
+}
+
+const isDirect = process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
+if (isDirect) process.exitCode = await main(process.argv.slice(2));

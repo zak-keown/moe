@@ -41,7 +41,7 @@ Extraction subagents use the appropriate prompt variant based on source file loc
 Enumerate the spec files without reading full contents:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/chunk_spec.py" <spec-path>
+node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/chunk_spec.mjs" <spec-path>
 ```
 
 This produces a JSON array of chunks. Each chunk has `source_file`, `heading`, `start_line`, `end_line`, `content`, and `estimated_tokens`. Small files (< 4K tokens) are kept whole. Larger files are split by `##` headings, or `###` if sections are still too large.

@@ -429,7 +429,6 @@ const X_BIT_ALLOWLIST = [
   "skills/brainstorming/scripts/start-server.sh",
   "skills/brainstorming/scripts/stop-server.sh",
   "skills/extracting-requirements/scripts/aggregate_stories.py",
-  "skills/extracting-requirements/scripts/chunk_spec.py",
   "skills/fixing-a-code-review/scripts/compact-resolved.mjs",
   "skills/finding-duplicate-functions/scripts/extract-functions.sh",
   "skills/finding-duplicate-functions/scripts/generate-report.sh",
