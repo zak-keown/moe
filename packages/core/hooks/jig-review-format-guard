@@ -1,0 +1,40 @@
+#!/bin/bash
+# jig-review-format-guard: PreToolUse hook that validates commit messages
+# containing `fix(review)` match the CR-### contract.
+set -u
+
+EVENT="$(cat 2>/dev/null || true)"
+if [ -z "$EVENT" ]; then
+  exit 0
+fi
+
+TOOL_NAME="$(printf '%s' "$EVENT" | grep -o '"tool_name"\s*:\s*"[^"]*"' | head -1 | sed 's/.*"\([^"]*\)"$/\1/')"
+if [ "$TOOL_NAME" != "Bash" ]; then
+  exit 0
+fi
+
+COMMAND="$(printf '%s' "$EVENT" | grep -o '"command"\s*:\s*"[^"]*"' | head -1 | sed 's/.*"\([^"]*\)"$/\1/')"
+
+# Only check commits with fix(review) in the message
+if ! printf '%s' "$COMMAND" | grep -qE 'git\s+commit\b'; then
+  exit 0
+fi
+if ! printf '%s' "$EVENT" | grep -qF 'fix(review)'; then
+  exit 0
+fi
+
+# Validate format: fix(review): CR-### — <title>
+# Match against EVENT, not COMMAND — grep's [^"]* truncates at escaped quotes
+# in the JSON value, so the extracted COMMAND loses the commit message body.
+if ! printf '%s' "$EVENT" | grep -qE 'fix\(review\):\s*CR-[0-9]{3}\s*(—|--)\s*.+'; then
+  cat >&2 <<'MSG'
+BLOCKED: review-fix commit message does not match the required format.
+Expected: fix(review): CR-### — <title>
+Example:  fix(review): CR-012 — handle nil pointer in parser
+
+Use `moe jig commit review-fix <CR-ID> <title>` to format it correctly.
+MSG
+  exit 2
+fi
+
+exit 0

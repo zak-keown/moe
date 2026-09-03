@@ -1,0 +1,36 @@
+#!/bin/bash
+# jig-worktree-guard: PreToolUse hook that blocks raw `git worktree add`.
+# Redirects to `moe jig worktree create` which handles placement, gitignore,
+# and lineage verification.
+#
+# Escape hatch: MOE_JIG_RAW_WORKTREE=1 disables this hook.
+set -u
+
+if [ -n "${MOE_JIG_RAW_WORKTREE:-}" ]; then
+  exit 0
+fi
+
+EVENT="$(cat 2>/dev/null || true)"
+if [ -z "$EVENT" ]; then
+  exit 0
+fi
+
+# Only act on Bash tool calls
+TOOL_NAME="$(printf '%s' "$EVENT" | grep -o '"tool_name"\s*:\s*"[^"]*"' | head -1 | sed 's/.*"\([^"]*\)"$/\1/')"
+if [ "$TOOL_NAME" != "Bash" ]; then
+  exit 0
+fi
+
+COMMAND="$(printf '%s' "$EVENT" | grep -o '"command"\s*:\s*"[^"]*"' | head -1 | sed 's/.*"\([^"]*\)"$/\1/')"
+
+if printf '%s' "$COMMAND" | grep -qE 'git\s+worktree\s+add\b'; then
+  cat >&2 <<'MSG'
+BLOCKED: raw `git worktree add` is not allowed.
+Use `moe jig worktree create <branch> [--base <ref>]` instead.
+This ensures worktrees land in .moe/worktrees/, are gitignored,
+and have verified lineage.
+MSG
+  exit 2
+fi
+
+exit 0
