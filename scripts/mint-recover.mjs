@@ -1,25 +1,27 @@
 #!/usr/bin/env node
 import { readdir } from "node:fs/promises";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { renderMintFailure } from "./lib/mint-diagnostics.mjs";
 import { recoverGeneratedOutputs } from "./lib/mint-generation-transaction.mjs";
+import { validateMintHostContract } from "./lib/mint-host-contract.mjs";
 
 const journalPattern = /^\.moe-mint-generation-[A-Za-z0-9][A-Za-z0-9_-]{0,127}\.json$/;
 
-function invocation() {
-  const args = process.argv.slice(2);
-  let repositoryRoot = process.cwd();
-  if (args[0] === "--root") {
-    if (args[1] === undefined) throw new Error("--root requires a repository path");
-    repositoryRoot = args[1];
-    args.splice(0, 2);
+function invocation(args, currentDirectory) {
+  const remaining = [...args];
+  let repositoryRoot = currentDirectory;
+  if (remaining[0] === "--root") {
+    if (remaining[1] === undefined) throw new Error("--root requires a repository path");
+    repositoryRoot = remaining[1];
+    remaining.splice(0, 2);
   }
-  if (args.length > 1) throw new Error("recovery accepts at most one explicit journal path");
-  return { repositoryRoot: path.resolve(repositoryRoot), explicitJournal: args[0] };
+  if (remaining.length > 1) throw new Error("recovery accepts at most one explicit journal path");
+  return { repositoryRoot: path.resolve(repositoryRoot), explicitJournal: remaining[0] };
 }
 
-async function selectedJournal(explicit) {
-  const names = (await readdir(".")).filter((name) => journalPattern.test(name)).sort();
+async function selectedJournal(explicit, readDirectory = readdir) {
+  const names = (await readDirectory(".")).filter((name) => journalPattern.test(name)).sort();
   if (names.length !== 1) {
     if (names.length === 0 && explicit !== undefined) return explicit;
     if (names.length === 0) return undefined;
@@ -43,15 +45,40 @@ async function selectedJournal(explicit) {
   return explicit ?? names[0];
 }
 
-try {
-  const { repositoryRoot, explicitJournal } = invocation();
-  process.chdir(repositoryRoot);
-  const journalPath = await selectedJournal(explicitJournal);
+export async function runMintRecovery({
+  nodeVersion = process.versions.node,
+  platform = process.platform,
+  args = process.argv.slice(2),
+  currentDirectory = process.cwd(),
+  chdir = process.chdir,
+  discoverJournal = selectedJournal,
+  recover = recoverGeneratedOutputs,
+  log = console.log,
+} = {}) {
+  // This must be the first operation: unsupported hosts cannot inspect a
+  // journal or enter the mutation protocol merely because recovery runs first.
+  validateMintHostContract({ nodeVersion, platform });
+  const { repositoryRoot, explicitJournal } = invocation(args, currentDirectory);
+  chdir(repositoryRoot);
+  const journalPath = await discoverJournal(explicitJournal);
   if (journalPath !== undefined) {
-    await recoverGeneratedOutputs({ journalPath });
-    console.log(`Recovered generated outputs from ${journalPath}`);
+    await recover({ journalPath });
+    log(`Recovered generated outputs from ${journalPath}`);
   }
-} catch (error) {
-  console.error(renderMintFailure("Mint recovery", error, "GENERATION_TRANSACTION_CLI_FAILED"));
-  process.exitCode = 1;
+}
+
+export async function executeMintRecoveryCli(options = {}, io = console) {
+  try {
+    await runMintRecovery(options);
+    return 0;
+  } catch (error) {
+    io.error(renderMintFailure("Mint recovery", error, "GENERATION_TRANSACTION_CLI_FAILED"));
+    return 1;
+  }
+}
+
+const invokedUrl =
+  process.argv[1] === undefined ? undefined : pathToFileURL(path.resolve(process.argv[1])).href;
+if (invokedUrl === import.meta.url) {
+  process.exitCode = await executeMintRecoveryCli();
 }

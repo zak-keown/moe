@@ -58,6 +58,7 @@ describe('registry projections', () => {
         'LICENSE-MIT',
         'scripts/lib/mint-generation-transaction.mjs',
         'scripts/lib/mint-diagnostics.mjs',
+        'scripts/lib/mint-host-contract.mjs',
         'scripts/mint-plugins.mjs',
         'packages/memory/prompts/**',
         'packages/statusline/vendor/**',

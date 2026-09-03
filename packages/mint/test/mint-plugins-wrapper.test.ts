@@ -7,6 +7,8 @@ import { describe, expect, it } from 'vitest'
 // source; importing the real entry keeps these tests on the pnpm-mint path.
 // @ts-expect-error scripts/mint-plugins.mjs intentionally has no package declaration file
 const wrapper = await import('../../../scripts/mint-plugins.mjs')
+// @ts-expect-error scripts/mint-recover.mjs intentionally has no package declaration file
+const recovery = await import('../../../scripts/mint-recover.mjs')
 // @ts-expect-error root transaction module intentionally has no package declaration file
 const transactionModule = await import('../../../scripts/lib/mint-generation-transaction.mjs')
 
@@ -83,13 +85,60 @@ describe('root Mint generation wrapper', () => {
       chdir: () => undefined,
     })).toThrowError(expect.objectContaining({
       code: 'MINT_HOST_PLATFORM_UNSUPPORTED',
-      action: 'run Mint inside WSL2; native Windows generation is not supported',
+      action: 'run Mint inside WSL2; native Windows generation and recovery are not supported',
     }))
     expect(() => wrapper.validateHostContract({
       nodeVersion: '24.1.0',
       platform: 'linux',
       chdir: () => undefined,
     })).not.toThrow()
+  })
+
+  it('rejects native Windows before recovery changes directory, discovers a journal, or mutates outputs', async () => {
+    const operations: string[] = []
+    const errors: string[] = []
+    const status = await recovery.executeMintRecoveryCli({
+      nodeVersion: '24.1.0',
+      platform: 'win32',
+      args: ['--root', '/fixture/repository'],
+      currentDirectory: '/fixture/current',
+      chdir: () => operations.push('chdir'),
+      discoverJournal: () => {
+        operations.push('discover')
+        return '.moe-mint-generation-test.json'
+      },
+      recover: () => operations.push('recover'),
+    }, { error: (message: string) => errors.push(message) })
+
+    expect(status).toBe(1)
+    expect(operations).toEqual([])
+    expect(errors).toEqual([expect.stringContaining('code: MINT_HOST_PLATFORM_UNSUPPORTED')])
+    expect(errors[0]).toContain('run Mint inside WSL2')
+  })
+
+  it.each(['darwin', 'linux'])('allows recovery discovery and mutation on supported %s hosts', async (platform) => {
+    const operations: string[] = []
+    const status = await recovery.executeMintRecoveryCli({
+      nodeVersion: '24.1.0',
+      platform,
+      args: ['--root', '/fixture/repository'],
+      currentDirectory: '/fixture/current',
+      chdir: (value: string) => operations.push(`chdir:${value}`),
+      discoverJournal: (explicit: string | undefined) => {
+        operations.push(`discover:${explicit ?? 'none'}`)
+        return '.moe-mint-generation-test.json'
+      },
+      recover: ({ journalPath }: { journalPath: string }) => operations.push(`recover:${journalPath}`),
+      log: (message: string) => operations.push(`log:${message}`),
+    }, { error: () => undefined })
+
+    expect(status).toBe(0)
+    expect(operations).toEqual([
+      'chdir:/fixture/repository',
+      'discover:none',
+      'recover:.moe-mint-generation-test.json',
+      'log:Recovered generated outputs from .moe-mint-generation-test.json',
+    ])
   })
 
   it('executes the pnpm-mint orchestration and cleans only its nonce when plugin six fails', async () => {
