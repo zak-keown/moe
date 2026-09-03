@@ -1,0 +1,99 @@
+# Runtime platform matrix for moe-memory.
+# Runs smoke tests against the packed artifact tarball on every supported
+# Node/OS/architecture combination. Never uses workspace dist or node_modules.
+name: memory-runtime
+
+on:
+  workflow_call:
+    inputs:
+      packed-artifact:
+        description: Path to the PackedArtifact record JSON
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      packed-artifact:
+        description: Path to the PackedArtifact record JSON
+        required: true
+        type: string
+
+concurrency:
+  group: memory-runtime-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS arm64 — Node 22.13.0, 22.23.2, 24.20.0
+          - os: macos-latest
+            node: "22.13.0"
+            lane: native
+          - os: macos-latest
+            node: "22.23.2"
+            lane: native
+          - os: macos-latest
+            node: "24.20.0"
+            lane: native
+          # macOS x64 (Intel runners)
+          - os: macos-13
+            node: "22.13.0"
+            lane: native
+          - os: macos-13
+            node: "22.23.2"
+            lane: native
+          - os: macos-13
+            node: "24.20.0"
+            lane: native
+          # Linux x64
+          - os: ubuntu-latest
+            node: "22.13.0"
+            lane: native
+          - os: ubuntu-latest
+            node: "22.23.2"
+            lane: native
+          - os: ubuntu-latest
+            node: "24.20.0"
+            lane: native
+          # Linux arm64
+          - os: ubuntu-24.04-arm
+            node: "22.13.0"
+            lane: native
+          - os: ubuntu-24.04-arm
+            node: "22.23.2"
+            lane: native
+          - os: ubuntu-24.04-arm
+            node: "24.20.0"
+            lane: native
+          # Windows x64 — database-asset smoke only
+          - os: windows-latest
+            node: "24.20.0"
+            lane: database-only
+
+    runs-on: ${{ matrix.os }}
+    name: smoke (${{ matrix.os }}, node ${{ matrix.node }}, ${{ matrix.lane }})
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Download packed artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: packed-artifact
+          path: .artifacts
+
+      - name: Run runtime smoke
+        run: node packages/memory/scripts/smoke-runtime.mjs --packed-artifact ${{ inputs.packed-artifact || '.artifacts/moe-memory-packed.json' }}
+
+      - name: Upload smoke results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-${{ matrix.os }}-node${{ matrix.node }}
+          path: .artifacts/smoke-*.json
