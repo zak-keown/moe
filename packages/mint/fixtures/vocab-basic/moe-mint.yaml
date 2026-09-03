@@ -1,0 +1,4 @@
+name: vocab-basic
+version: 1.0.0
+description: Fixture plugin exercising vocabulary substitution
+bootstrap: none
