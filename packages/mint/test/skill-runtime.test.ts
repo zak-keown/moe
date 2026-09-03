@@ -43,20 +43,20 @@ describe('skill runtime validation', () => {
   })
 
   it.each([
-    ['.py', 'skills/demo/scripts/tool.py', "print('tool')\n", 'SKILL_RUNTIME_LANGUAGE'],
-    ['.sh', 'skills/demo/scripts/tool.sh', '#!/bin/sh\necho tool\n', 'SKILL_RUNTIME_LANGUAGE'],
-    ['.bash', 'skills/demo/scripts/tool.bash', '#!/usr/bin/env bash\necho tool\n', 'SKILL_RUNTIME_LANGUAGE'],
-    ['.cjs', 'skills/demo/scripts/tool.cjs', 'module.exports = {}\n', 'SKILL_RUNTIME_LANGUAGE'],
-    ['.js', 'skills/demo/scripts/test-unlinked.js', 'console.log("tool")\n', 'SKILL_RUNTIME_LANGUAGE'],
-    ['.ts', 'skills/demo/scripts/tool.ts', 'export const tool: string = "tool"\n', 'SKILL_RUNTIME_LANGUAGE'],
-    ['.cmd', 'skills/demo/scripts/tool.cmd', '@echo off\r\n', 'SKILL_RUNTIME_LANGUAGE'],
-    ['extensionless code', 'skills/demo/scripts/tool', 'console.log("tool")\n', 'SKILL_RUNTIME_LANGUAGE'],
-    ['mjs outside scripts', 'skills/demo/tool.mjs', 'console.log("tool")\n', 'SKILL_RUNTIME_LOCATION'],
-  ] as const)('reports %s code as unsupported without inspecting invocation links', (_name, path, content, code) => {
+    ['.py', 'skills/demo/scripts/tool.py', "print('tool')\n", ['SKILL_RUNTIME_LANGUAGE']],
+    ['.sh', 'skills/demo/scripts/tool.sh', '#!/bin/sh\necho tool\n', ['SKILL_RUNTIME_LANGUAGE', 'SKILL_RUNTIME_SHEBANG']],
+    ['.bash', 'skills/demo/scripts/tool.bash', '#!/usr/bin/env bash\necho tool\n', ['SKILL_RUNTIME_LANGUAGE', 'SKILL_RUNTIME_SHEBANG']],
+    ['.cjs', 'skills/demo/scripts/tool.cjs', 'module.exports = {}\n', ['SKILL_RUNTIME_LANGUAGE']],
+    ['.js', 'skills/demo/scripts/test-unlinked.js', 'console.log("tool")\n', ['SKILL_RUNTIME_LANGUAGE']],
+    ['.ts', 'skills/demo/scripts/tool.ts', 'export const tool: string = "tool"\n', ['SKILL_RUNTIME_LANGUAGE']],
+    ['.cmd', 'skills/demo/scripts/tool.cmd', '@echo off\r\n', ['SKILL_RUNTIME_LANGUAGE']],
+    ['extensionless code', 'skills/demo/scripts/tool', 'console.log("tool")\n', ['SKILL_RUNTIME_LANGUAGE']],
+    ['mjs outside scripts', 'skills/demo/tool.mjs', 'console.log("tool")\n', ['SKILL_RUNTIME_LOCATION']],
+  ] as const)('reports %s code as unsupported without inspecting invocation links', (_name, path, content, codes) => {
     const report = validateSkillRuntime(input([...valid, file(path, content)]))
 
     expect(report).toMatchObject({ ok: false, skills: 1, modules: 3 })
-    expect(report.diagnostics).toEqual([expect.objectContaining({ code, path })])
+    expect(report.diagnostics).toEqual(codes.map((code) => expect.objectContaining({ code, path })))
   })
 
   it.each([
@@ -82,6 +82,36 @@ describe('skill runtime validation', () => {
     const report = validateSkillRuntime(input([...valid, file('skills/demo/scripts/shebang.mjs', '#!/usr/bin/env node\nconsole.log("tool")\n')]))
 
     expect(report.diagnostics).toEqual([expect.objectContaining({ code: 'SKILL_RUNTIME_SHEBANG', path: 'skills/demo/scripts/shebang.mjs' })])
+  })
+
+  it('reports every violation for an executable shebang JavaScript module outside scripts in stable order', () => {
+    const report = validateSkillRuntime(input([
+      ...valid,
+      file('skills/demo/tool.js', '#!/usr/bin/env node\nconsole.log("tool")\n', true),
+    ]))
+
+    expect(report.diagnostics.map(({ path, code, message }) => ({ path, code, message }))).toEqual([
+      {
+        path: 'skills/demo/tool.js',
+        code: 'SKILL_RUNTIME_EXECUTABLE',
+        message: 'runtime module "skills/demo/tool.js" must not be executable',
+      },
+      {
+        path: 'skills/demo/tool.js',
+        code: 'SKILL_RUNTIME_LANGUAGE',
+        message: 'runtime module "skills/demo/tool.js" must use the .mjs extension',
+      },
+      {
+        path: 'skills/demo/tool.js',
+        code: 'SKILL_RUNTIME_LOCATION',
+        message: 'runtime module "skills/demo/tool.js" must be under a skill\'s scripts directory',
+      },
+      {
+        path: 'skills/demo/tool.js',
+        code: 'SKILL_RUNTIME_SHEBANG',
+        message: 'runtime module "skills/demo/tool.js" must not begin with a shebang',
+      },
+    ])
   })
 
   it('throws its first stable diagnostic when assertion is requested', () => {

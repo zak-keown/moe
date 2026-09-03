@@ -84,11 +84,14 @@ export function validateSkillRuntime(input: ValidateSkillRuntimeInput): SkillRun
     modules += 1
     if (!inScripts) {
       diagnostics.push(diagnostic(input, file, 'SKILL_RUNTIME_LOCATION', `runtime module "${file.path}" must be under a skill's scripts directory`, 'Move the runtime module under scripts/ or remove it from the skill artifact.'))
-    } else if (fileExtension !== '.mjs') {
+    }
+    if (fileExtension !== '.mjs') {
       diagnostics.push(diagnostic(input, file, 'SKILL_RUNTIME_LANGUAGE', `runtime module "${file.path}" must use the .mjs extension`, 'Convert the runtime module to .mjs.'))
-    } else if (file.executable) {
+    }
+    if (file.executable) {
       diagnostics.push(diagnostic(input, file, 'SKILL_RUNTIME_EXECUTABLE', `runtime module "${file.path}" must not be executable`, 'Remove the executable mode from the runtime module.'))
-    } else if (hasShebang(file.content)) {
+    }
+    if (hasShebang(file.content)) {
       diagnostics.push(diagnostic(input, file, 'SKILL_RUNTIME_SHEBANG', `runtime module "${file.path}" must not begin with a shebang`, 'Remove the shebang from the runtime module.'))
     }
   }
