@@ -1,5 +1,5 @@
 import { MintError, type MintDiagnostic } from './diagnostics.js'
-import type { MintConfig } from './config.js'
+import { VERSION_RE, type MintConfig } from './config.js'
 import type { AdapterPackageContribution } from './adapters/types.js'
 
 export interface MintPackageMetadata {
@@ -349,6 +349,7 @@ export interface ComposePackageManifestInput {
   contributions: readonly AdapterPackageContribution[]
   artifactPaths: ReadonlySet<string>
   registryUrl: string
+  releaseVersions: Readonly<Record<string, string>>
 }
 
 export interface ComposedPackageManifest extends NormalizedPackageMetadata {
@@ -393,6 +394,7 @@ const DESCRIPTIVE_FIELDS = new Set([
 ])
 const OMITTED_FIELDS = new Set([
   'scripts', 'devDependencies', 'private', 'workspaces', 'packageManager', 'overrides', 'pnpm',
+  'files', 'publishConfig',
 ])
 const RUNTIME_FIELDS = new Set([
   'type', 'main', 'exports', 'imports', 'types', 'bin', 'engines', 'os', 'cpu', 'sideEffects',
@@ -417,6 +419,49 @@ function stringRecord(value: unknown, field: string): Readonly<Record<string, st
   if (!isRecord(value)) manifestFieldInvalid(field, 'an object with string values')
   const result: Record<string, string> = {}
   for (const [key, entry] of Object.entries(value)) result[key] = manifestString(entry, `${field}.${key}`)
+  return result
+}
+
+function dependencyRecord(
+  value: unknown,
+  field: 'dependencies' | 'optionalDependencies' | 'peerDependencies',
+  releaseVersions: Readonly<Record<string, string>>,
+): Readonly<Record<string, string>> {
+  const source = stringRecord(value, field)
+  const result: Record<string, string> = {}
+  for (const [packageName, range] of Object.entries(source)) {
+    if (!range.startsWith('workspace:')) {
+      result[packageName] = range
+      continue
+    }
+    if (range !== 'workspace:*' && range !== 'workspace:^' && range !== 'workspace:~') {
+      diagnostic(
+        'PACKAGE_WORKSPACE_PROTOCOL_UNSUPPORTED',
+        `${field}.${packageName}`,
+        `dependency "${packageName}" uses unsupported workspace protocol "${range}"`,
+        'Use workspace:*, workspace:^, or workspace:~ and provide the release package version.',
+      )
+    }
+    const releaseVersion = Object.hasOwn(releaseVersions, packageName) ? releaseVersions[packageName] : undefined
+    if (releaseVersion === undefined) {
+      diagnostic(
+        'PACKAGE_WORKSPACE_VERSION_MISSING',
+        `${field}.${packageName}`,
+        `dependency "${packageName}" has no release version`,
+        'Provide the dependency package version in releaseVersions.',
+      )
+    }
+    if (typeof releaseVersion !== 'string' || !VERSION_RE.test(releaseVersion)) {
+      diagnostic(
+        'PACKAGE_WORKSPACE_VERSION_INVALID',
+        `${field}.${packageName}`,
+        `dependency "${packageName}" has invalid release version "${String(releaseVersion)}"`,
+        'Provide an exact SemVer release version.',
+      )
+    }
+    const prefix = range === 'workspace:*' ? '' : range.slice('workspace:'.length)
+    result[packageName] = `${prefix}${releaseVersion}`
+  }
   return result
 }
 
@@ -501,20 +546,64 @@ function localReferencePath(value: string, field: string): string {
   return segments.filter((segment) => segment !== '' && segment !== '.').join('/')
 }
 
-function referenceExists(path: string, artifactPaths: ReadonlySet<string>): boolean {
-  if (path === '' || path === '.moe/artifact.json') return true
-  if (!path.includes('*')) {
-    return artifactPaths.has(path) || [...artifactPaths].some((candidate) => candidate.startsWith(`${path}/`))
+function patternExpression(pattern: string): RegExp {
+  let expression = '^'
+  for (let index = 0; index < pattern.length; index += 1) {
+    const scalar = pattern[index] ?? ''
+    if (scalar === '*' && pattern[index + 1] === '*' && pattern[index + 2] === '/') {
+      expression += '(?:.*/)?'
+      index += 2
+    } else if (scalar === '*' && pattern[index + 1] === '*') {
+      expression += '.*'
+      index += 1
+    } else if (scalar === '*') {
+      expression += '[^/]*'
+    } else {
+      expression += scalar.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    }
   }
-  const expression = new RegExp(`^${path.split('*').map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[^/]*')}$`)
-  return [...artifactPaths].some((candidate) => expression.test(candidate))
+  return new RegExp(`${expression}$`)
 }
 
-function validateLocalReference(value: unknown, field: string, artifactPaths: ReadonlySet<string>): void {
+function localReference(value: unknown, field: string): string {
   const reference = manifestString(value, field)
-  const path = localReferencePath(reference, field)
-  if (!referenceExists(path, artifactPaths)) {
-    diagnostic('PACKAGE_REFERENCE_MISSING', field, `package reference "${reference}" is not present in the staged artifact`, 'Stage the referenced file or update the package manifest target.')
+  return localReferencePath(reference, field)
+}
+
+function patternInvalid(field: string, reference: string): never {
+  diagnostic(
+    'PACKAGE_REFERENCE_PATTERN_INVALID',
+    field,
+    `package reference "${reference}" uses wildcard syntax where only an exact file is allowed`,
+    'Use an exact staged file path.',
+  )
+}
+
+function validateExactFileReference(value: unknown, field: string, artifactPaths: ReadonlySet<string>): void {
+  const path = localReference(value, field)
+  if (path.includes('*')) patternInvalid(field, String(value))
+  if (path !== '.moe/artifact.json' && !artifactPaths.has(path)) {
+    diagnostic('PACKAGE_REFERENCE_MISSING', field, `package reference "${String(value)}" is not present in the staged artifact`, 'Stage the referenced file or update the package manifest target.')
+  }
+}
+
+function validateDirectoryReference(value: unknown, field: string, artifactPaths: ReadonlySet<string>): void {
+  const path = localReference(value, field)
+  if (path.includes('*')) patternInvalid(field, String(value))
+  if (!artifactPaths.has(path) && ![...artifactPaths].some((candidate) => candidate.startsWith(`${path}/`))) {
+    diagnostic('PACKAGE_REFERENCE_MISSING', field, `package reference "${String(value)}" is not present in the staged artifact`, 'Stage the referenced file or directory or update the Pi discovery target.')
+  }
+}
+
+function validatePatternReference(value: unknown, field: string, artifactPaths: ReadonlySet<string>): void {
+  const path = localReference(value, field)
+  if (!path.includes('*')) {
+    validateExactFileReference(value, field, artifactPaths)
+    return
+  }
+  const expression = patternExpression(path)
+  if (![...artifactPaths].some((candidate) => expression.test(candidate))) {
+    diagnostic('PACKAGE_REFERENCE_MISSING', field, `package pattern "${String(value)}" matches no staged artifact file`, 'Stage a matching file or update the package manifest pattern.')
   }
 }
 
@@ -528,9 +617,18 @@ function isBarePackageTarget(value: string): boolean {
   return /^[A-Za-z0-9][^/:\s]*(?:\/[^\s]*)?$/.test(value)
 }
 
-function validateTargetReferences(value: unknown, field: string, artifactPaths: ReadonlySet<string>): void {
+function validateTargetReferences(
+  value: unknown,
+  field: string,
+  artifactPaths: ReadonlySet<string>,
+  patternAllowed: boolean,
+): void {
   if (typeof value === 'string') {
-    if (isLocalPackageTarget(value)) validateLocalReference(value, field, artifactPaths)
+    if (!patternAllowed && value.includes('*')) patternInvalid(field, value)
+    if (isLocalPackageTarget(value)) {
+      if (patternAllowed) validatePatternReference(value, field, artifactPaths)
+      else validateExactFileReference(value, field, artifactPaths)
+    }
     else if (!isBarePackageTarget(value)) {
       diagnostic('PACKAGE_REFERENCE_ESCAPE', field, `package target "${value}" is neither local nor a bare package dependency`, 'Use a staged local path or a bare package dependency target.')
     }
@@ -538,7 +636,7 @@ function validateTargetReferences(value: unknown, field: string, artifactPaths: 
   }
   if (!isRecord(value)) manifestFieldInvalid(field, 'a string or condition object')
   for (const [condition, target] of Object.entries(value)) {
-    validateTargetReferences(target, `${field}.${condition}`, artifactPaths)
+    validateTargetReferences(target, `${field}.${condition}`, artifactPaths, patternAllowed)
   }
 }
 
@@ -547,28 +645,28 @@ export function validateManifestReferences(
   manifest: Readonly<Record<string, unknown>>,
   artifactPaths: ReadonlySet<string>,
 ): void {
-  if (manifest.main !== undefined) validateLocalReference(manifest.main, 'main', artifactPaths)
-  if (manifest.types !== undefined) validateLocalReference(manifest.types, 'types', artifactPaths)
+  if (manifest.main !== undefined) validateExactFileReference(manifest.main, 'main', artifactPaths)
+  if (manifest.types !== undefined) validateExactFileReference(manifest.types, 'types', artifactPaths)
   if (manifest.bin !== undefined) {
-    if (typeof manifest.bin === 'string') validateLocalReference(manifest.bin, 'bin', artifactPaths)
+    if (typeof manifest.bin === 'string') validateExactFileReference(manifest.bin, 'bin', artifactPaths)
     else {
       const bins = stringRecord(manifest.bin, 'bin')
-      for (const [name, target] of Object.entries(bins)) validateLocalReference(target, `bin.${name}`, artifactPaths)
+      for (const [name, target] of Object.entries(bins)) validateExactFileReference(target, `bin.${name}`, artifactPaths)
     }
   }
   if (manifest.exports !== undefined) {
-    if (typeof manifest.exports === 'string') validateTargetReferences(manifest.exports, 'exports', artifactPaths)
+    if (typeof manifest.exports === 'string') validateTargetReferences(manifest.exports, 'exports', artifactPaths, false)
     else {
       if (!isRecord(manifest.exports)) manifestFieldInvalid('exports', 'a string or object')
       for (const [key, target] of Object.entries(manifest.exports)) {
-        validateTargetReferences(target, `exports.${key}`, artifactPaths)
+        validateTargetReferences(target, `exports.${key}`, artifactPaths, key.includes('*'))
       }
     }
   }
   if (manifest.imports !== undefined) {
     const imports = importsRecord(manifest.imports)
     for (const [key, target] of Object.entries(imports)) {
-      validateTargetReferences(target, `imports.${key}`, artifactPaths)
+      validateTargetReferences(target, `imports.${key}`, artifactPaths, key.includes('*'))
     }
   }
   if (manifest.pi !== undefined) {
@@ -577,7 +675,13 @@ export function validateManifestReferences(
       const entries = manifest.pi[key]
       if (entries === undefined) continue
       const paths = stringArray(entries, `pi.${key}`)
-      for (const [index, path] of paths.entries()) validateLocalReference(path, `pi.${key}[${index}]`, artifactPaths)
+      for (const [index, path] of paths.entries()) validateDirectoryReference(path, `pi.${key}[${index}]`, artifactPaths)
+    }
+  }
+  if (manifest.sideEffects !== undefined && manifest.sideEffects !== false && manifest.sideEffects !== true) {
+    const sideEffects = stringArray(manifest.sideEffects, 'sideEffects')
+    for (const [index, path] of sideEffects.entries()) {
+      validatePatternReference(path, `sideEffects[${index}]`, artifactPaths)
     }
   }
 }
@@ -612,10 +716,12 @@ export function composePackageManifest(input: ComposePackageManifestInput): Comp
         runtime.bin = binValue(value)
         break
       case 'engines':
+        runtime[field] = stringRecord(value, field)
+        break
       case 'dependencies':
       case 'optionalDependencies':
       case 'peerDependencies':
-        runtime[field] = stringRecord(value, field)
+        runtime[field] = dependencyRecord(value, field, input.releaseVersions)
         break
       case 'os':
       case 'cpu':
