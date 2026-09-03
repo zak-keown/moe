@@ -1,6 +1,12 @@
 ---
 name: subagent-driven-development
 description: Use when executing implementation plans with independent tasks in the current session
+triggers: >-
+  Load when executing a multi-task implementation plan whose tasks need
+  fresh-context isolation via subagents. Do NOT load for: single-task
+  implementation (just code directly), debugging (`systematic-debugging`),
+  initial planning (`writing-plans`), or low-level dispatch mechanics
+  without a plan (`dispatching-parallel-agents`).
 ---
 
 # Subagent-Driven Development

@@ -1,6 +1,12 @@
 ---
 name: improve-codebase-architecture
 description: Scan a codebase for deepening opportunities, present them as a visual HTML report, then work through whichever one you pick.
+triggers: >-
+  Load when conducting a deliberate architectural review to surface
+  deepening opportunities across modules. Do NOT load for: implementing
+  a known refactor, fixing a single module, answering code questions,
+  debugging (`systematic-debugging`), or initial feature design
+  (`brainstorming`).
 ---
 
 # Improve Codebase Architecture

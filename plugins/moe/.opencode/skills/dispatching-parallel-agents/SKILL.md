@@ -1,6 +1,11 @@
 ---
 name: dispatching-parallel-agents
 description: Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies
+triggers: >-
+  Load when you need the low-level mechanics of dispatching 2+
+  independent agents in parallel outside of a plan. Do NOT load when:
+  executing a plan (`subagent-driven-development` includes dispatching),
+  tasks share state or must run sequentially, or only one task exists.
 ---
 
 # Dispatching Parallel Agents
