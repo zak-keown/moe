@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { readFileSync, readdirSync, existsSync, lstatSync } from 'node:fs'
-import { join } from 'node:path'
+import { isAbsolute, join, posix } from 'node:path'
 import { loadConfig, ConfigError, type MintConfig } from './config.js'
 import { parseFrontmatter } from './frontmatter.js'
 
@@ -47,6 +47,56 @@ export interface PluginModel {
   agents: AgentRef[]
   hooks?: unknown
   mcp?: unknown
+}
+
+export function resolveSkillResource(
+  model: PluginModel,
+  resourcePath: string,
+): SkillTreeFile {
+  if (isAbsolute(resourcePath) || posix.isAbsolute(resourcePath)) {
+    throw new ConfigError(`resource path must be relative, not absolute: ${resourcePath}`)
+  }
+  if (resourcePath.includes('\\')) {
+    throw new ConfigError(`resource path must use POSIX separators: ${resourcePath}`)
+  }
+
+  const segments = resourcePath.split('/')
+  if (segments.some((segment) => segment === '..')) {
+    throw new ConfigError(`resource path contains traversal: ${resourcePath}`)
+  }
+  if (
+    segments.some((segment) => segment === '' || segment === '.') ||
+    segments[0] !== 'skills' ||
+    segments.length < 2
+  ) {
+    throw new ConfigError(
+      `resource path must be a normalized plugin-root-relative path under skills/: ${resourcePath}`,
+    )
+  }
+
+  const relativeSkillPath = segments.slice(1).join('/')
+  const target = model.skillFiles.find((file) => file.path === relativeSkillPath)
+  if (target) return target
+
+  const absoluteTarget = join(model.root, model.config.components.skills, relativeSkillPath)
+  let targetStat: ReturnType<typeof lstatSync>
+  try {
+    targetStat = lstatSync(absoluteTarget)
+  } catch {
+    throw new ConfigError(`resource target not found: ${resourcePath}`)
+  }
+  if (targetStat.isSymbolicLink()) {
+    throw new ConfigError(`resource target must not be a symbolic link: ${resourcePath}`)
+  }
+  if (!targetStat.isFile()) {
+    throw new ConfigError(`resource target must be a regular file: ${resourcePath}`)
+  }
+
+  // A regular file beneath the configured skills directory must have been
+  // captured in buildModel's immutable tree. Reaching this branch means the
+  // model and disk no longer agree, so treating it as missing is safer than
+  // rendering a link to bytes outside the snapshot being emitted.
+  throw new ConfigError(`resource target not found in skill snapshot: ${resourcePath}`)
 }
 
 function contentSha256(content: Uint8Array): string {

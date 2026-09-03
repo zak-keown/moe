@@ -171,6 +171,26 @@ describe('substituteContent', () => {
     const input = 'No tokens here.'
     expect(substituteContent(input, 'claude-code', empty)).toBe(input)
   })
+
+  it('renders the exact model roles through ordinary closed token mappings', () => {
+    const modelVocab = {
+      tokens: new Map([
+        ['model-fast', { codex: 'gpt-5.6-luna', 'claude-code': 'haiku' }],
+        ['model-deep', { codex: 'gpt-5.6-sol', 'claude-code': 'opus' }],
+        ['model-default', { codex: 'inherit the parent model', 'claude-code': 'sonnet' }],
+      ]),
+      blocks: new Map(),
+    }
+
+    expect(
+      substituteContent(
+        'Use {model-fast}, {model-deep}, or {model-default}.',
+        'codex',
+        modelVocab,
+      ),
+    ).toBe('Use gpt-5.6-luna, gpt-5.6-sol, or inherit the parent model.')
+    expect(() => validateCoverage(modelVocab, ['codex', 'claude-code'])).not.toThrow()
+  })
 })
 
 describe('scanForUnknownTokens', () => {
@@ -232,6 +252,17 @@ describe('assertNoSurvivors', () => {
     ).toThrow(/ask.*skills\/demo\/SKILL\.md/)
   })
 
+  it('throws for a surviving semantic resource expression', () => {
+    expect(() =>
+      assertNoSurvivors([
+        {
+          path: 'skills/demo/SKILL.md',
+          content: 'Run {resource:skills/demo/scripts/run.sh}.',
+        },
+      ]),
+    ).toThrow(/resource:skills\/demo\/scripts\/run\.sh.*skills\/demo\/SKILL\.md/)
+  })
+
   it('ignores escaped \\{tokens} and fenced code blocks in output', () => {
     expect(() =>
       assertNoSurvivors([
@@ -287,6 +318,99 @@ function renderedAdapter(
 }
 
 describe('substituteAllSkills full-tree rendering', () => {
+  it('remaps resource targets into the active adapter tree using document-relative Markdown links', () => {
+    const dir = fullTreeFixture()
+    writeFileSync(
+      join(dir, 'skills/demo/SKILL.md'),
+      [
+        '---',
+        'name: demo',
+        'description: demo',
+        '---',
+        '',
+        'Run {resource:skills/demo/scripts/run.sh}.',
+        'Read {resource:skills/demo/references/guide.md}.',
+        '',
+      ].join('\n'),
+    )
+    writeFileSync(
+      join(dir, 'skills/demo/references/guide.md'),
+      'Return to {resource:skills/demo/SKILL.md}.\n',
+    )
+    const model = buildModel(dir)
+
+    const files = substituteAllSkills(
+      dir,
+      model,
+      { tokens: new Map(), blocks: new Map() },
+      [renderedAdapter('codex', '.codex-plugin/skills')],
+    )
+
+    expect(
+      files.find((file) => file.path.endsWith('/demo/SKILL.md'))?.content.toString(),
+    ).toContain('[skills/demo/scripts/run.sh](scripts/run.sh)')
+    expect(
+      files.find((file) => file.path.endsWith('/demo/SKILL.md'))?.content.toString(),
+    ).toContain('[skills/demo/references/guide.md](references/guide.md)')
+    expect(
+      files.find((file) => file.path.endsWith('/references/guide.md'))?.content.toString(),
+    ).toBe('Return to [skills/demo/SKILL.md](../SKILL.md).\n')
+  })
+
+  it.each([
+    ['/skills/demo/scripts/run.sh', /absolute/i],
+    ['skills/demo/../demo/scripts/run.sh', /traversal/i],
+    ['skills/demo/scripts/missing.sh', /not found/i],
+    ['skills/demo/scripts', /regular file/i],
+  ])('rejects invalid resource target %s', (resource, message) => {
+    const dir = fullTreeFixture()
+    writeFileSync(
+      join(dir, 'skills/demo/SKILL.md'),
+      `Run {resource:${resource}}.\n`,
+    )
+    const model = buildModel(dir)
+
+    expect(() =>
+      substituteAllSkills(
+        dir,
+        model,
+        { tokens: new Map(), blocks: new Map() },
+        [renderedAdapter('codex', '.codex-plugin/skills')],
+      ),
+    ).toThrow(message)
+  })
+
+  it('preserves escaped and fenced resource expressions as literal examples', () => {
+    const dir = fullTreeFixture()
+    writeFileSync(
+      join(dir, 'skills/demo/SKILL.md'),
+      [
+        String.raw`Literal \{resource:skills/demo/scripts/missing.sh}.`,
+        '```markdown',
+        '{resource:skills/demo/scripts/missing.sh}',
+        '```',
+        '',
+      ].join('\n'),
+    )
+    const model = buildModel(dir)
+
+    const files = substituteAllSkills(
+      dir,
+      model,
+      { tokens: new Map(), blocks: new Map() },
+      [renderedAdapter('codex', '.codex-plugin/skills')],
+    )
+    const skill = files.find((file) => file.path.endsWith('/demo/SKILL.md'))!
+
+    expect(skill.content.toString()).toBe([
+      'Literal {resource:skills/demo/scripts/missing.sh}.',
+      '```markdown',
+      '{resource:skills/demo/scripts/missing.sh}',
+      '```',
+      '',
+    ].join('\n'))
+  })
+
   it('copies the complete skill closure, transforms only Markdown, and preserves executable files', () => {
     const dir = fullTreeFixture()
     const model = buildModel(dir)
@@ -433,5 +557,29 @@ describe('substituteAllSkills full-tree rendering', () => {
       Buffer.from([0x00, 0xff, 0x80, 0x41]),
     )
     expect(lstatSync(join(dir, 'skills/demo/scripts/run.sh')).mode & 0o111).not.toBe(0)
+  })
+
+  it('rejects a vocabulary expression introduced by an in-place profile mapping', () => {
+    const dir = fullTreeFixture()
+    const model = buildModel(dir)
+    const vocab = {
+      tokens: new Map([['ask', { 'agent-plugins-1.0': '{model-fast}' }]]),
+      blocks: new Map(),
+    }
+    const adapter: HarnessAdapter = {
+      name: 'agent-plugins-1.0',
+      support: noSupport,
+      skillLayout: {
+        outputDir: 'skills',
+        profile: 'agent-plugins-1.0',
+        mode: 'in-place',
+      },
+      skillDelivery: 'native-discovery',
+      emit: () => ({ files: [], warnings: [] }),
+    }
+
+    expect(() => substituteAllSkills(dir, model, vocab, [adapter])).toThrow(
+      /surviving token \{model-fast\}.*skills\/demo\/SKILL\.md/,
+    )
   })
 })
