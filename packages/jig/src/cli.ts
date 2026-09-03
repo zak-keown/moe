@@ -2,6 +2,9 @@
 import { realpathSync } from "node:fs";
 import { Command, CommanderError } from "commander";
 import { planInit, specInit } from "./plan.js";
+import { progressUpdate } from "./progress.js";
+import { commitReviewFix, reviewStamp } from "./review.js";
+import { adrCreate, contextInit, iterationsInit } from "./scaffold.js";
 import { worktreeCreate, worktreeRemove, worktreeValidate } from "./worktree.js";
 
 const program = new Command()
@@ -71,6 +74,91 @@ spec
     const path = specInit(name);
     console.log(path);
   });
+
+const review = program.command("review").description("Review-fix stamps and commit formatting");
+
+review
+  .command("stamp")
+  .description("Create a stamp commit recording that a CR finding was addressed")
+  .argument("<CR-ID>", "code-review finding ID (e.g. CR-012)")
+  .argument("<fixing-sha>", "SHA of the commit that addressed the finding")
+  .action((crId: string, fixingSha: string) => {
+    const sha = reviewStamp(crId, fixingSha);
+    console.log(sha);
+  });
+
+const commit = program.command("commit").description("Structured commits with validated formats");
+
+commit
+  .command("review-fix")
+  .description("Commit staged changes as a review fix: fix(review): CR-### — <title>")
+  .argument("<cr-id>", "code-review identifier (CR-###)")
+  .argument("<title...>", "one-line description of the fix")
+  .action((crId: string, titleParts: string[]) => {
+    const title = titleParts.join(" ");
+    const sha = commitReviewFix(crId, title);
+    console.log(sha);
+  });
+
+const iterations = program
+  .command("iterations")
+  .description("Scaffold and manage iteration state for iterative-development");
+
+iterations
+  .command("init")
+  .description("Create docs/moe/iterations/ with the iterative-development directory structure")
+  .action(() => {
+    const path = iterationsInit();
+    console.log(path);
+  });
+
+const context = program.command("context").description("Domain-modeling scaffolding");
+
+context
+  .command("init")
+  .description("Create a CONTEXT.md with the domain-modeling skeleton")
+  .argument("[name]", "context name for the heading (default: placeholder)")
+  .action((name: string | undefined) => {
+    const resolved = name && name.length > 0 ? name : undefined;
+    const path = contextInit(resolved);
+    console.log(path);
+  });
+
+const adr = program.command("adr").description("Architecture Decision Records");
+
+adr
+  .command("create")
+  .description("Create the next-numbered ADR in docs/adr/")
+  .argument("<title>", "short description of the decision")
+  .action((title: string) => {
+    const path = adrCreate(title);
+    console.log(path);
+  });
+
+const progress = program
+  .command("progress")
+  .description("Update the iterative-development progress snapshot");
+
+progress
+  .command("update")
+  .description("Overwrite docs/moe/iterations/progress.md with current state")
+  .requiredOption("--phase <phase>", "current phase (e.g. 'implementing ITER-0003')")
+  .requiredOption("--task <task>", "current task (e.g. '4/7 (CleanupPipeline integration)')")
+  .option("--iterations <done/total>", "iteration counts as done/total (e.g. '3/18')")
+  .option("--sentinel <pass/total>", "sentinel corpus status as pass/total (e.g. '10/10')")
+  .option("--event <text>", "last event description (e.g. 'Task 3 committed')")
+  .action(
+    (opts: {
+      phase: string;
+      task: string;
+      iterations?: string;
+      sentinel?: string;
+      event?: string;
+    }) => {
+      const path = progressUpdate(opts);
+      console.log(path);
+    },
+  );
 
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
   try {

@@ -1,16 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";
-
-function gitIn(cwd: string, ...args: string[]): string {
-  return execFileSync("git", args, { cwd, encoding: "utf-8" }).trim();
-}
-
-function primaryRoot(cwd: string): string {
-  const commonDir = gitIn(cwd, "rev-parse", "--git-common-dir");
-  const resolved = resolve(cwd, commonDir, "..");
-  return gitIn(resolved, "rev-parse", "--show-toplevel");
-}
+import { gitIn, primaryRoot } from "./util.js";
 
 function defaultBranch(cwd: string): string {
   try {
