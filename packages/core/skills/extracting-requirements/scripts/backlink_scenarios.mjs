@@ -1,6 +1,50 @@
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { basename, join, resolve } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
+
+function pathParts(path, separatorPattern) {
+  return path.split(separatorPattern).filter((part) => part && part !== ".");
+}
+
+function normalizeWindowsPathSpelling(path) {
+  const windowsPath = path.replaceAll("/", "\\");
+  const unc = windowsPath.match(/^\\\\([^\\]+)\\([^\\]+)(?:\\|$)/);
+  if (unc) {
+    const root = `\\\\${unc[1]}\\${unc[2]}\\`;
+    const parts = pathParts(windowsPath.slice(unc[0].length), /\\+/);
+    return parts.length > 0 ? `${root}${parts.join("\\")}` : root;
+  }
+  const drive = windowsPath.match(/^([A-Za-z]:)(\\?)/);
+  if (drive) {
+    const rooted = drive[2] === "\\";
+    const parts = pathParts(windowsPath.slice(drive[1].length + (rooted ? 1 : 0)), /\\+/);
+    if (rooted) return parts.length > 0 ? `${drive[1]}\\${parts.join("\\")}` : `${drive[1]}\\`;
+    return parts.length > 0 ? `${drive[1]}${parts.join("\\")}` : drive[1];
+  }
+  const rooted = windowsPath.startsWith("\\");
+  const parts = pathParts(windowsPath.slice(rooted ? 1 : 0), /\\+/);
+  if (rooted) return parts.length > 0 ? `\\${parts.join("\\")}` : "\\";
+  return parts.length > 0 ? parts.join("\\") : ".";
+}
+
+function normalizePathSpelling(path) {
+  if (sep === "\\") return normalizeWindowsPathSpelling(path);
+  const doubleSlashRoot = path.startsWith("//") && !path.startsWith("///");
+  const root = doubleSlashRoot ? "//" : path.startsWith("/") ? "/" : "";
+  const parts = pathParts(path, /\/+/);
+  if (root) return parts.length > 0 ? `${root}${parts.join("/")}` : root;
+  return parts.length > 0 ? parts.join("/") : ".";
+}
+
+function compareCodePoints(left, right) {
+  const leftPoints = Array.from(left, (character) => character.codePointAt(0));
+  const rightPoints = Array.from(right, (character) => character.codePointAt(0));
+  const length = Math.min(leftPoints.length, rightPoints.length);
+  for (let index = 0; index < length; index += 1) {
+    if (leftPoints[index] !== rightPoints[index]) return leftPoints[index] - rightPoints[index];
+  }
+  return leftPoints.length - rightPoints.length;
+}
 
 function splitLines(text) {
   const lines = text.split(/\r\n|\n|\r/);
@@ -12,11 +56,11 @@ export function parseScenarioToStories(content) {
   const storyToScenarios = new Map();
   let currentId;
   for (const line of splitLines(content)) {
-    const idMatch = line.match(/^## (SCENARIO-\d+|JOURNEY-\d+)/);
+    const idMatch = line.match(/^## (SCENARIO-\p{Nd}+|JOURNEY-\p{Nd}+)/u);
     if (idMatch) currentId = idMatch[1];
     if (currentId && line.startsWith("**Owning stories:**")) {
       const refsText = line.split(":**", 2)[1].trim();
-      for (const storyId of refsText.match(/STORY-\d+/g) ?? []) {
+      for (const storyId of refsText.match(/STORY-\p{Nd}+/gu) ?? []) {
         const scenarioIds = storyToScenarios.get(storyId) ?? [];
         scenarioIds.push(currentId);
         storyToScenarios.set(storyId, scenarioIds);
@@ -33,12 +77,12 @@ export function backlinkEpicContent(content, storyToScenarios) {
   let currentStoryId;
   const newLines = [];
   for (let line of lines) {
-    const storyMatch = line.match(/^## (STORY-\d+)/);
+    const storyMatch = line.match(/^## (STORY-\p{Nd}+)/u);
     if (storyMatch) currentStoryId = storyMatch[1];
     if (
       currentStoryId &&
       storyToScenarios.has(currentStoryId) &&
-      /^- AC-\d+:/.test(line)
+      /^- AC-\p{Nd}+:/u.test(line)
     ) {
       if (line.toLowerCase().includes("scenario:")) skipped += 1;
       else if (!line.includes("impact:`none`")) {
@@ -58,12 +102,13 @@ export function backlinkEpicFile(epicPath, storyToScenarios) {
 }
 
 export async function main(args) {
-  const program = basename(process.argv[1] ?? "backlink_scenarios.mjs");
+  const program = process.argv[1] ?? "backlink_scenarios.mjs";
   if (args.length !== 2) {
     process.stderr.write(`usage: ${program} <scenarios-file> <requirements-dir>\n`);
     return 2;
   }
-  const [scenariosPath, requirementsDirectory] = args;
+  const scenariosPath = normalizePathSpelling(args[0]);
+  const requirementsDirectory = normalizePathSpelling(args[1]);
   if (!existsSync(scenariosPath)) {
     process.stderr.write(`error: file not found: ${scenariosPath}\n`);
     return 2;
@@ -83,7 +128,7 @@ export async function main(args) {
   let totalSkipped = 0;
   const epicFiles = readdirSync(requirementsDirectory)
     .filter((name) => /^EPIC-.*\.md$/.test(name))
-    .sort();
+    .sort(compareCodePoints);
   for (const name of epicFiles) {
     const result = backlinkEpicFile(join(requirementsDirectory, name), storyToScenarios);
     if (result.updated > 0) process.stdout.write(`${name}: ${result.updated} AC(s) linked\n`);
