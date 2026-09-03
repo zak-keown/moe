@@ -41,7 +41,7 @@ artifact:
 targets:
   claude-code: {intent: certify, expected_capabilities: [skill-discovery, agent-discovery, hook-execution, mcp-registration, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
   cursor: {intent: preview, expected_capabilities: [skill-discovery, hook-execution, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
-  codex: {intent: preview, expected_capabilities: [skill-discovery, hook-execution, mcp-registration], operating_systems: [macos, linux, wsl2, windows]}
+  codex: {intent: preview, expected_capabilities: [skill-discovery], operating_systems: [macos, linux, wsl2, windows]}
   kimi: {intent: preview, expected_capabilities: [skill-discovery, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
   opencode: {intent: preview, expected_capabilities: [skill-discovery, agent-discovery, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
   pi: {intent: preview, expected_capabilities: [skill-discovery, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
@@ -67,14 +67,27 @@ bootstrap:
 
 imported_works:
   - name: episodic-memory
-    artifact_roots: [agents/search-conversations.md, hooks/hooks.json, prompts/search-agent.md, dist/sync.d.ts, dist/sync.js, dist/sync-cli.d.ts, dist/sync-cli.js]
+    artifact_roots: [agents/search-conversations.md, hooks/hooks.json, prompts/search-agent.md, dist/cli.js]
   - name: private-journal-mcp
-    artifact_roots: [dist/journal/markdown.d.ts, dist/journal/markdown.js]
+    artifact_roots: [dist/index.js]
   - name: "@huggingface/tokenizers"
-  - name: onnxruntime-web
-  - name: sqlite-vec
-  - name: proper-lockfile
+  - name: "@modelcontextprotocol/sdk"
+  - name: ajv
+  - name: ajv-formats
+  - name: fast-deep-equal
+  - name: fast-uri
+  - name: graceful-fs
+  - name: json-schema-traverse
   - name: marked
+  - name: onnxruntime-common
+  - name: onnxruntime-web
+  - name: proper-lockfile
+  - name: retry
+  - name: signal-exit
+  - name: sqlite-vec
+    artifact_roots: [vendor/sqlite-vec]
+  - name: zod
+  - name: zod-to-json-schema
 
 harnesses:
   codex:

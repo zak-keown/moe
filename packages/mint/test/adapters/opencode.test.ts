@@ -36,6 +36,7 @@ describe('opencode adapter', () => {
     expect(result.emittedCapabilities).toEqual([
       'skill-discovery', 'command-discovery', 'agent-discovery', 'bootstrap-routing',
     ])
+  })
 
   it('declares expected support levels', () => {
     expect(opencode.support).toEqual({

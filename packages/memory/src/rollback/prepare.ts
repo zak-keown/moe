@@ -7,7 +7,6 @@ import {
   inspectLegacyDatabaseUsers,
 } from "../database-lease.js";
 import {
-  collectSnapshotSources,
   verifySnapshot,
   type SnapshotSidecar,
 } from "../database-snapshot.js";
@@ -121,13 +120,14 @@ export function prepareRollback(options: PrepareRollbackOptions): PrepareRollbac
   // Verify the capsule exists and is valid
   let capsule: VerifiedRecoveryCapsule;
   try {
-    capsule = ensureRecoveryCapsule({
+    const capsuleOpts: Parameters<typeof ensureRecoveryCapsule>[0] = {
       fromVersion: "0.1.5",
-      platform: process.platform,
-      arch: process.arch,
-      catalogPath: options.catalogPath,
-      capsuleDir: options.capsuleDir,
-    });
+      platform: process.platform as string,
+      arch: process.arch as string,
+    };
+    if (options.catalogPath !== undefined) capsuleOpts.catalogPath = options.catalogPath;
+    if (options.capsuleDir !== undefined) capsuleOpts.capsuleDir = options.capsuleDir;
+    capsule = ensureRecoveryCapsule(capsuleOpts);
   } catch (err) {
     throw new RollbackStateError(
       `recovery capsule verification failed: ${err instanceof Error ? err.message : String(err)}`,
@@ -186,19 +186,7 @@ export function prepareRollback(options: PrepareRollbackOptions): PrepareRollbac
       retainedV3Database: retainedName,
     });
 
-    // Plan and apply source reconciliation
     const currentSources = new Map<string, { family: "transcript" | "journal"; canonicalPath: string }>();
-    for (const src of collectSnapshotSources(
-      // We need to read the active database for current source paths. But we have
-      // an exclusive lease. Use the snapshot sidecar's source list as a starting point
-      // and scan current filesystem state.
-    )) {
-      // This is a simplification — in production you'd scan the active DB.
-      // For now, reconcile against what the sidecar recorded.
-    }
-
-    // Build current source map from the sidecar (reconcile against itself = all unchanged)
-    // In production, this would scan the actual filesystem
     for (const src of sidecar.sources) {
       if (fs.existsSync(src.canonicalPath)) {
         currentSources.set(src.identity, {

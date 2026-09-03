@@ -266,6 +266,7 @@ describe('CLI end-to-end', () => {
       'plan-set',
       'plan-set-notice',
       'run-hook.cmd',
+      'task-set',
     ])
   })
 
@@ -277,7 +278,7 @@ describe('CLI end-to-end', () => {
     expect(JSON.parse(result.stdout)).toEqual([
       { plugin: 'moe', package: '@bubstack/moe-core', version: '0.1.4', sourcePackagePath: 'packages/core', generatedArtifactPath: 'plugins/moe' },
       { plugin: 'moe-backstory', package: '@bubstack/moe-backstory', version: '0.1.4', sourcePackagePath: 'packages/backstory', generatedArtifactPath: 'plugins/moe-backstory' },
-      { plugin: 'moe-memory', package: '@bubstack/moe-memory', version: '0.1.4', sourcePackagePath: 'packages/memory', generatedArtifactPath: 'plugins/moe-memory' },
+      { plugin: 'moe-memory', package: '@bubstack/moe-memory', version: '0.2.0', sourcePackagePath: 'packages/memory', generatedArtifactPath: 'plugins/moe-memory' },
       { plugin: 'moe-glass', package: '@bubstack/moe-glass', version: '0.1.4', sourcePackagePath: 'packages/glass', generatedArtifactPath: 'plugins/moe-glass' },
       { plugin: 'moe-crew', package: '@bubstack/moe-crew', version: '0.1.4', sourcePackagePath: 'packages/crew', generatedArtifactPath: 'plugins/moe-crew' },
       { plugin: 'moe-statusline', package: '@bubstack/moe-statusline', version: '0.1.0', sourcePackagePath: 'packages/statusline', generatedArtifactPath: 'plugins/moe-statusline' },

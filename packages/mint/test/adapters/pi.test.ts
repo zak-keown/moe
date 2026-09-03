@@ -109,6 +109,7 @@ describe('pi adapter', () => {
 
   it('derives capabilities from emitted Pi projection files', () => {
     expect(result.emittedCapabilities).toEqual(['skill-discovery', 'bootstrap-routing'])
+  })
 
   it('declares expected support levels', () => {
     expect(pi.support).toEqual({
