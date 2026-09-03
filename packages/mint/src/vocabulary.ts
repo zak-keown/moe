@@ -98,6 +98,45 @@ const RESOURCE_PATTERN = /(?<!\\)\{resource:([^{}\n]*)\}/g
 
 export type ResourceRenderer = (resourcePath: string) => string
 
+interface MarkdownFence {
+  marker: '`' | '~'
+  length: number
+}
+
+function advanceMarkdownFence(
+  line: string,
+  fence: MarkdownFence | null,
+): { literal: boolean; next: MarkdownFence | null } {
+  if (fence) {
+    const closing = /^ {0,3}(`{3,}|~{3,})[ \t]*$/.exec(line)
+    const markerRun = closing?.[1]
+    const closesFence =
+      markerRun !== undefined &&
+      markerRun[0] === fence.marker &&
+      markerRun.length >= fence.length
+    return { literal: true, next: closesFence ? null : fence }
+  }
+
+  const opening = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line)
+  const markerRun = opening?.[1]
+  const info = opening?.[2]
+  if (
+    markerRun === undefined ||
+    info === undefined ||
+    (markerRun[0] === '`' && info.includes('`'))
+  ) {
+    return { literal: false, next: null }
+  }
+
+  return {
+    literal: true,
+    next: {
+      marker: markerRun[0] as '`' | '~',
+      length: markerRun.length,
+    },
+  }
+}
+
 export function substituteContent(
   content: string,
   adapterName: string,
@@ -106,14 +145,13 @@ export function substituteContent(
 ): string {
   const lines = content.split('\n')
   const result: string[] = []
-  let inFence = false
+  let fence: MarkdownFence | null = null
 
   for (const line of lines) {
-    const fenceLine = /^```/.test(line)
-    const lineIsLiteral = inFence || fenceLine
-    if (lineIsLiteral) {
+    const fenceLine = advanceMarkdownFence(line, fence)
+    fence = fenceLine.next
+    if (fenceLine.literal) {
       result.push(line)
-      if (fenceLine) inFence = !inFence
       continue
     }
 
@@ -170,7 +208,15 @@ function collectMdFiles(root: string, dir: string): string[] {
 }
 
 function stripFencedBlocks(content: string): string {
-  return content.replace(/^```[^\n]*\n[\s\S]*?^```/gm, '')
+  let fence: MarkdownFence | null = null
+  return content
+    .split('\n')
+    .map((line) => {
+      const fenceLine = advanceMarkdownFence(line, fence)
+      fence = fenceLine.next
+      return fenceLine.literal ? '' : line
+    })
+    .join('\n')
 }
 
 export function scanForUnknownTokens(

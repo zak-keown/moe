@@ -212,6 +212,64 @@ describe('substituteContent', () => {
 
     expect(substituteContent(input, 'codex', fencedVocab)).toBe(input)
   })
+
+  it.each([
+    [
+      'an indented backtick fence',
+      [
+        '  ```markdown',
+        '{ask}',
+        '{resource:skills/demo/scripts/run.sh}',
+        '   ```',
+      ].join('\n'),
+    ],
+    [
+      'a tilde fence',
+      [
+        '~~~markdown',
+        '{model-fast}',
+        '{subagent-dispatch}',
+        '~~~',
+      ].join('\n'),
+    ],
+    [
+      'a four-backtick fence containing a shorter backtick run',
+      [
+        '````markdown',
+        '{ask}',
+        '```',
+        '{model-fast}',
+        '````',
+      ].join('\n'),
+    ],
+    [
+      'a tilde fence containing a different backtick delimiter',
+      [
+        '~~~~',
+        '{subagent-dispatch}',
+        '````',
+        '{resource:skills/demo/scripts/run.sh}',
+        '~~~~',
+      ].join('\n'),
+    ],
+  ])('preserves semantic literals inside %s', (_name, input) => {
+    const fencedVocab = {
+      tokens: new Map([
+        ['ask', { codex: 'ASK' }],
+        ['model-fast', { codex: 'FAST' }],
+      ]),
+      blocks: new Map([
+        ['subagent-dispatch', { codex: 'DISPATCH' }],
+      ]),
+    }
+
+    expect(
+      substituteContent(input, 'codex', fencedVocab, () => 'RESOURCE'),
+    ).toBe(input)
+    expect(() =>
+      assertNoSurvivors([{ path: 'skills/demo/SKILL.md', content: input }]),
+    ).not.toThrow()
+  })
 })
 
 describe('scanForUnknownTokens', () => {
