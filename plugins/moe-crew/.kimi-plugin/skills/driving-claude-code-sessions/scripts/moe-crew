@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-exec node "${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/../../.." && pwd)}/dist/moe-crew.cjs" "$@"
+exec node "${MOE_CREW_PLUGIN_ROOT:-$(cd "$(dirname "$0")/../../.." && pwd)}/dist/moe-crew.cjs" "$@"

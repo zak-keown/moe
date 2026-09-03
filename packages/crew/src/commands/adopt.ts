@@ -54,7 +54,7 @@ export async function cmdAdopt(
     };
   }
 
-  if (!hasConsent(ctx.home)) return consentError(opts.moeCrewPath);
+  if (!hasConsent(ctx.home, ctx.environment ?? {})) return consentError(opts.moeCrewPath);
 
   // adopt is claude-only. A codex/pi worker of this tmux-name leaves a `.harness`
   // sidecar; refuse rather than respawn its pane as `claude --resume <id>`, which

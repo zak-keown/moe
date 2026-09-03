@@ -8,9 +8,13 @@
  * await-session-start wait, since those need the full launch-time context.
  */
 
-import { claudeTranscriptPath } from "../core/paths.js";
 import { type NormalizedTurn, parseClaudeTurn } from "../core/transcript.js";
 import type { HarnessDriver, LaunchMode } from "./driver.js";
+
+/** Claude's harness-specific transcript location and cwd encoding. */
+export function claudeTranscriptPath(home: string, cwd: string, sid: string): string {
+  return `${home}/.claude/projects/${cwd.replace(/[/._:]/g, "-")}/${sid}.jsonl`;
+}
 
 /**
  * Provider/auth vars Claude resolves directly from the process env (issue #18).
@@ -74,8 +78,8 @@ export const claude: HarnessDriver = {
   quitKeys: "/exit",
   stopGraceSeconds: 10,
 
-  bin(): string {
-    return process.env.MOE_CREW_CLAUDE_BIN ?? "claude";
+  bin(environment: NodeJS.ProcessEnv = process.env): string {
+    return environment.MOE_CREW_CLAUDE_BIN ?? "claude";
   },
 
   // Claude's worker HOME is the controller HOME, so `workerHome` is ignored;

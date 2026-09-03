@@ -2,17 +2,10 @@ import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { RunResult, Runner } from "../src/core/proc.js";
-import {
-  createWorktree,
-  removeWorktree,
-  worktreePath,
-} from "../src/core/worktree.js";
-import {
-  readWorktreeMarker,
-  writeWorktreeMarker,
-} from "../src/core/worker-store.js";
 import { worktreeMarkerPath } from "../src/core/paths.js";
+import type { Runner, RunResult } from "../src/core/proc.js";
+import { readWorktreeMarker, writeWorktreeMarker } from "../src/core/worker-store.js";
+import { createWorktree, removeWorktree, worktreePath } from "../src/core/worktree.js";
 
 function tmpDir(prefix: string): string {
   return mkdtempSync(join(tmpdir(), prefix));
@@ -38,8 +31,11 @@ describe("createWorktree", () => {
     expect(calls).toHaveLength(1);
     expect(calls[0]!.cmd).toBe("git");
     expect(calls[0]!.args).toEqual([
-      "-C", "/repo",
-      "worktree", "add", "--detach",
+      "-C",
+      "/repo",
+      "worktree",
+      "add",
+      "--detach",
       "/repo/.moe-worktrees/w1",
       "main",
     ]);
@@ -80,8 +76,11 @@ describe("removeWorktree", () => {
 
     expect(calls).toHaveLength(1);
     expect(calls[0]!.args).toEqual([
-      "-C", "/repo",
-      "worktree", "remove", "--force",
+      "-C",
+      "/repo",
+      "worktree",
+      "remove",
+      "--force",
       "/repo/.moe-worktrees/w1",
     ]);
   });

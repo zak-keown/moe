@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { claude, claudeWorkerEnv } from "../src/harness/claude.js";
+import { claude, claudeTranscriptPath, claudeWorkerEnv } from "../src/harness/claude.js";
 import { getDriver } from "../src/harness/registry.js";
 
 describe("registry getDriver", () => {
@@ -77,10 +77,15 @@ describe("claude.workerEnv", () => {
 });
 
 describe("claude.transcriptPath", () => {
-  it("encodes cwd and names the file by session id", () => {
-    expect(claude.transcriptPath("SID", "/Users/x/p", "/home")).toBe(
-      "/home/.claude/projects/-Users-x-p/SID.jsonl",
-    );
+  it.each([
+    ["/Users/x/p", "/home/.claude/projects/-Users-x-p/SID.jsonl"],
+    ["/Users/x/.claude", "/home/.claude/projects/-Users-x--claude/SID.jsonl"],
+    ["/a/my_proj", "/home/.claude/projects/-a-my-proj/SID.jsonl"],
+    ["/u/lace/.worktrees/x", "/home/.claude/projects/-u-lace--worktrees-x/SID.jsonl"],
+    ["/a/c:d", "/home/.claude/projects/-a-c-d/SID.jsonl"],
+  ])("encodes the Claude transcript path for %s inside its driver", (cwd, expected) => {
+    expect(claudeTranscriptPath("/home", cwd, "SID")).toBe(expected);
+    expect(claude.transcriptPath("SID", cwd, "/home")).toBe(expected);
   });
 });
 

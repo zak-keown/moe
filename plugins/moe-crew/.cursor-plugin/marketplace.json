@@ -5,13 +5,13 @@
     "email": "zak.keown@outlook.com"
   },
   "metadata": {
-    "description": "Launch, control and monitor worker Claude sessions over tmux."
+    "description": "Launch, control and monitor Claude Code, Codex, and Pi workers over tmux."
   },
   "plugins": [
     {
       "name": "moe-crew",
       "source": "./",
-      "description": "Launch, control and monitor worker Claude sessions over tmux."
+      "description": "Launch, control and monitor Claude Code, Codex, and Pi workers over tmux."
     }
   ]
 }
