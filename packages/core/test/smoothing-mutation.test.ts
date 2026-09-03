@@ -292,6 +292,20 @@ describe("atomic smoothing mutation", () => {
     expect(fixture.spies.remove).not.toHaveBeenCalledWith(fixture.destination);
   });
 
+  it("rejects a post-rename hash mismatch without unlinking the renamed file", async () => {
+    const fixture = await mutationFixture("readback-mismatch");
+
+    await expect(applyBoundPlan(fixture.input)).rejects.toThrow(
+      /applied config hash verification failed/,
+    );
+
+    const temporaryPath = firstPath(fixture.temporaryPaths);
+    await expect(readFile(fixture.destination, "utf8")).resolves.toBe(REPLACEMENT);
+    await expect(access(fixture.lockPath)).rejects.toMatchObject({ code: "ENOENT" });
+    expect(fixture.spies.remove).not.toHaveBeenCalledWith(temporaryPath);
+    expect(fixture.spies.remove).not.toHaveBeenCalledWith(fixture.destination);
+  });
+
   it("rechecks the source under the exclusive config lock", async () => {
     const fixture = await mutationFixture("stale-under-lock");
 
@@ -356,7 +370,8 @@ type Failure =
   | "sync-failure"
   | "close-failure"
   | "rename-failure"
-  | "readback-failure";
+  | "readback-failure"
+  | "readback-mismatch";
 
 async function mutationFixture(failure: Failure, { sourceMissing = false } = {}) {
   const directory = await mkdtemp(join(tmpdir(), "moe-smoothing-mutation-"));
@@ -429,6 +444,9 @@ async function mutationFixture(failure: Failure, { sourceMissing = false } = {})
       }
       if (failure === "readback-failure" && destinationReads === 3) {
         throw new Error("fixture readback failure");
+      }
+      if (failure === "readback-mismatch" && destinationReads === 3) {
+        return Buffer.from('{"corrupted":true}\n');
       }
     } else if (path === plan.path) {
       events.push("read:plan");
