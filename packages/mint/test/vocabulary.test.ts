@@ -191,6 +191,27 @@ describe('substituteContent', () => {
     ).toBe('Use gpt-5.6-luna, gpt-5.6-sol, or inherit the parent model.')
     expect(() => validateCoverage(modelVocab, ['codex', 'claude-code'])).not.toThrow()
   })
+
+  it('preserves ordinary, model-role, and block vocabulary expressions inside fenced code', () => {
+    const fencedVocab = {
+      tokens: new Map([
+        ['ask', { codex: 'ASK' }],
+        ['model-fast', { codex: 'FAST' }],
+      ]),
+      blocks: new Map([
+        ['subagent-dispatch', { codex: 'DISPATCH' }],
+      ]),
+    }
+    const input = [
+      '```markdown',
+      '{ask}',
+      '{model-fast}',
+      '{subagent-dispatch}',
+      '```',
+    ].join('\n')
+
+    expect(substituteContent(input, 'codex', fencedVocab)).toBe(input)
+  })
 })
 
 describe('scanForUnknownTokens', () => {
@@ -355,6 +376,27 @@ describe('substituteAllSkills full-tree rendering', () => {
     expect(
       files.find((file) => file.path.endsWith('/references/guide.md'))?.content.toString(),
     ).toBe('Return to [skills/demo/SKILL.md](../SKILL.md).\n')
+  })
+
+  it('percent-encodes parentheses in generated Markdown resource destinations', () => {
+    const dir = fullTreeFixture()
+    writeFileSync(join(dir, 'skills/demo/scripts/(run).sh'), '#!/bin/sh\n')
+    writeFileSync(
+      join(dir, 'skills/demo/SKILL.md'),
+      'Run {resource:skills/demo/scripts/(run).sh}.\n',
+    )
+    const model = buildModel(dir)
+
+    const files = substituteAllSkills(
+      dir,
+      model,
+      { tokens: new Map(), blocks: new Map() },
+      [renderedAdapter('codex', '.codex-plugin/skills')],
+    )
+
+    expect(
+      files.find((file) => file.path.endsWith('/demo/SKILL.md'))?.content.toString(),
+    ).toBe('Run [skills/demo/scripts/(run).sh](scripts/%28run%29.sh).\n')
   })
 
   it.each([
