@@ -84,7 +84,7 @@ type ComparedFile = (typeof COMPARED_FILES)[number]
 // generate() runs. Each one is either a manifest generate() is about to
 // rewrite (and would otherwise refuse to clobber) or a hand-authored
 // equivalent of a file moe-mint emits itself under a different name/path
-// (package.json, .opencode/, .pi/). Everything else in the real
+// (.opencode/, .pi/). The root package.json remains source-owned. Everything else in the real
 // tree (skills/, hooks/hooks.json, docs/, tests/, README.md, ...) is left in
 // place: skills/ and hooks/hooks.json are component sources moe-mint
 // reads, and the rest doesn't collide with anything generate() writes.
@@ -105,7 +105,6 @@ const HAND_MAINTAINED_PATHS = [
   '.cursor-plugin',
   '.kimi-plugin',
   ...SNAPSHOT_ONLY_PATHS,
-  'package.json',
   '.opencode',
   '.pi',
 ]

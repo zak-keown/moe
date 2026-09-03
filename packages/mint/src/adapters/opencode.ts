@@ -3,8 +3,7 @@ import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel, CommandRef, AgentRef } from '../model.js'
 import type { HarnessAdapter, EmissionLimitation } from './types.js'
 import { deriveEmittedCapabilities } from '../platform/capabilities.js'
-import { json } from './shared.js'
-import { nodePackageManifest, opencodePluginPath, bootstrapContentPath } from '../bootstrap/node-package.js'
+import { opencodeServerExport, opencodePluginPath, bootstrapContentPath } from '../bootstrap/node-package.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
 
 // Marker text for command/agent files, placed as a `#` YAML comment inside
@@ -206,7 +205,7 @@ function installDoc(model: PluginModel): string {
   const pluginPath = opencodePluginPath(config.name)
 
   const emitted = [
-    '`package.json` (shared with the pi adapter when both are active)',
+    'a `./server` export contribution for the artifact\'s composed root `package.json`',
   ]
   const bootstrapClause = config.bootstrap.kind !== 'none'
     ? 'the OpenCode plugin module that registers the plugin\'s skills directory and injects bootstrap context'
@@ -241,9 +240,6 @@ function installDoc(model: PluginModel): string {
     '',
     "OpenCode loads the plugin module on startup: it registers the skills directory through a config hook (no symlinks needed) and reads commands/agents translated under `.opencode/`. Consult the OpenCode plugin docs if this doesn't match your installed version.",
     '',
-    '## Caveats',
-    '',
-    "- `package.json` is generated at the plugin root; if you maintain your own `package.json` for this plugin, exclude the opencode and pi adapters from generation (`harnesses.exclude`) or merge the fields by hand.",
   ]
   return lines.join('\n')
 }
@@ -254,7 +250,6 @@ export const opencode: HarnessAdapter = Object.freeze({
   emit(model: PluginModel) {
     const limitations: EmissionLimitation[] = []
     const files: GeneratedFile[] = [
-      { path: 'package.json', content: json(nodePackageManifest(model)) },
       { path: opencodePluginPath(model.config.name), content: pluginModule(model) },
       ...model.commands.map(commandFile),
       ...model.agents.map(agentFile),
@@ -273,6 +268,11 @@ export const opencode: HarnessAdapter = Object.freeze({
       limitations.push({ code: 'SETTING_DROPPED', component: 'agents', message: 'agent tool restrictions are not translated for opencode' })
     }
 
-    return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('opencode', model, files) }
+    return {
+      files,
+      limitations,
+      emittedCapabilities: deriveEmittedCapabilities('opencode', model, files),
+      packageContribution: { owner: 'opencode' as const, exports: opencodeServerExport(model.config.name) },
+    }
   },
 })

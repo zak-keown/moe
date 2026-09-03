@@ -38,18 +38,11 @@ describe('opencode adapter', () => {
     ])
   })
 
-  it('emits package.json with the exact ground-truth shape', () => {
-    expect(JSON.parse(mustGet(byPath, 'package.json'))).toEqual({
-      name: 'kitchen-sink',
-      version: '0.1.0',
-      description: 'Fixture plugin exercising every component type',
-      author: { name: 'Bubstack', email: 'dev@bubstack.example' },
-      license: 'MIT',
-      repository: 'https://github.com/example/kitchen-sink',
-      type: 'module',
-      main: './.opencode/plugins/kitchen-sink.js',
-      pi: { extensions: ['./.pi/extensions/kitchen-sink.ts'], skills: ['./skills'] },
-      keywords: ['fixture', 'pi-package'],
+  it('keeps package.json out of adapter files and contributes only its server export', () => {
+    expect(byPath['package.json']).toBeUndefined()
+    expect(result.packageContribution).toEqual({
+      owner: 'opencode',
+      exports: { './server': './.opencode/plugins/kitchen-sink.js' },
     })
   })
 

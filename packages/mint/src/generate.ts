@@ -4,7 +4,7 @@ import { buildModel } from './model.js'
 import { writeFileSet, type FileSet, type GeneratedFile } from './fileset.js'
 import { saveManifest, loadManifest, sha256, type GenerationManifest } from './manifest.js'
 import { adapters, type HarnessAdapter } from './adapters/index.js'
-import type { AdapterEmission } from './adapters/types.js'
+import type { AdapterEmission, AdapterPackageContribution } from './adapters/types.js'
 import { emitDocs } from './docs-emit.js'
 import { ConfigError, type MintConfig, type PluginTargetIntent } from './config.js'
 import { capabilityError, validateTargetEmission } from './platform/capabilities.js'
@@ -16,6 +16,7 @@ export interface GenerateResult {
   files: FileSet
   warnings: string[]
   emissions: Partial<Record<TargetId, AdapterEmission>>
+  packageContributions: readonly AdapterPackageContribution[]
   adaptersRun: string[]
   pruned: string[]
 }
@@ -29,6 +30,7 @@ export interface GenerationValidation {
   files: FileSet
   warnings: string[]
   emissions: Partial<Record<TargetId, AdapterEmission>>
+  packageContributions: readonly AdapterPackageContribution[]
   adaptersRun: string[]
   config: MintConfig
 }
@@ -113,6 +115,18 @@ function mergeFiles(
   }
 }
 
+function immutableValue<T>(value: T): T {
+  if (Array.isArray(value)) return Object.freeze(value.map(immutableValue)) as T
+  if (value !== null && typeof value === 'object') {
+    return Object.freeze(Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, immutableValue(entry)]))) as T
+  }
+  return value
+}
+
+function immutablePackageContribution(contribution: AdapterPackageContribution): AdapterPackageContribution {
+  return immutableValue({ ...contribution })
+}
+
 export function validateGeneration(
   root: string,
   adapterList: readonly HarnessAdapter[] = adapters,
@@ -134,11 +148,19 @@ export function validateGeneration(
 
   const warnings: string[] = []
   const emissions: Partial<Record<TargetId, AdapterEmission>> = {}
+  const packageContributions: AdapterPackageContribution[] = []
   const emittedByAdapter = new Map<HarnessAdapter, AdapterEmission>()
   const byPath = new Map<string, { owner: string; file: GeneratedFile }>()
   for (const adapter of active) {
-    const result = adapter.emit(model)
+    const rawResult = adapter.emit(model)
+    if (rawResult.files.some((file) => file.path === 'package.json')) {
+      throw new ConfigError(`adapter "${adapter.name}" must not emit package.json; return packageContribution instead`)
+    }
+    const result = rawResult.packageContribution === undefined
+      ? rawResult
+      : { ...rawResult, packageContribution: immutablePackageContribution(rawResult.packageContribution) }
     emittedByAdapter.set(adapter, result)
+    if (result.packageContribution !== undefined) packageContributions.push(result.packageContribution)
     if ('warnings' in result) {
       throw capabilityError(
         'CAPABILITY_ADAPTER_WARNING_UNRECOGNIZED', model.config.name, adapter.name as TargetId, model.config.source,
@@ -196,6 +218,7 @@ export function validateGeneration(
     files,
     warnings,
     emissions,
+    packageContributions: Object.freeze([...packageContributions]),
     adaptersRun: active.map((adapter) => adapter.name),
     config: model.config,
   }
@@ -315,7 +338,7 @@ export function generate(
   opts: GenerateOptions = {},
 ): GenerateResult {
   const validation = validateGeneration(root, adapterList, opts)
-  const { files, warnings, emissions, adaptersRun, config } = validation
+  const { files, warnings, emissions, packageContributions, adaptersRun, config } = validation
 
   // A corrupt manifest shouldn't dead-end generate the way it does validate:
   // recover by treating this run as if there were no prior manifest at all, and
@@ -386,16 +409,8 @@ export function generate(
     conflicts.push(file.path)
   }
   if (conflicts.length > 0 && !opts.force) {
-    // package.json is npm-standard, hand-authored territory for most
-    // projects, and moe-mint doesn't merge into it -- generate() only
-    // ever emits a full replacement (opencode/pi's nodePackageManifest).
-    // Point the user at the two actual ways out instead of leaving them to
-    // guess why --force means "lose your package.json".
-    const packageJsonNote = conflicts.includes('package.json')
-      ? ' — note: package.json merging is not yet supported; either exclude the opencode and pi adapters (harnesses.exclude) or move your package.json fields into the generated one manually. --force will REPLACE your package.json entirely.'
-      : ''
     throw new ConfigError(
-      `refusing to overwrite existing file(s) not created by moe-mint: ${conflicts.join(', ')} (re-run with --force to overwrite)${packageJsonNote}`,
+      `refusing to overwrite existing file(s) not created by moe-mint: ${conflicts.join(', ')} (re-run with --force to overwrite)`,
     )
   }
 
@@ -434,5 +449,5 @@ export function generate(
   writeFileSet(root, files)
   saveManifest(root, files, TOOL_VERSION)
 
-  return { files, warnings, emissions, adaptersRun, pruned }
+  return { files, warnings, emissions, packageContributions, adaptersRun, pruned }
 }
