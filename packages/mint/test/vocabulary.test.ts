@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { loadVocabulary, validateCoverage } from '../src/vocabulary.js'
 import { join } from 'node:path'
-import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs'
+import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 
 describe('loadVocabulary', () => {
