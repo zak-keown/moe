@@ -3,6 +3,7 @@ import { realpathSync } from "node:fs";
 import { Command, CommanderError } from "commander";
 import { planInit, specInit } from "./plan.js";
 import { commitReviewFix, reviewStamp } from "./review.js";
+import { iterationsInit } from "./scaffold.js";
 import { worktreeCreate, worktreeRemove, worktreeValidate } from "./worktree.js";
 
 const program = new Command()
@@ -96,6 +97,18 @@ commit
     const title = titleParts.join(" ");
     const sha = commitReviewFix(crId, title);
     console.log(sha);
+  });
+
+const iterations = program
+  .command("iterations")
+  .description("Scaffold and manage iteration state for iterative-development");
+
+iterations
+  .command("init")
+  .description("Create docs/moe/iterations/ with the iterative-development directory structure")
+  .action(() => {
+    const path = iterationsInit();
+    console.log(path);
   });
 
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
