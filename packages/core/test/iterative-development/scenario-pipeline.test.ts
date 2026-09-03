@@ -1,11 +1,15 @@
+import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { runHelper } from "./cli-harness.js";
 
 const AGGREGATOR = "skills/extracting-requirements/scripts/aggregate_scenarios.mjs";
 const BACKLINKER = "skills/extracting-requirements/scripts/backlink_scenarios.mjs";
+const CORE = resolve(import.meta.dirname, "..", "..");
+const AGGREGATOR_PATH = join(CORE, AGGREGATOR);
 const temporaryRoots: string[] = [];
 
 function tempDir(prefix: string): string {
@@ -201,7 +205,7 @@ describe("aggregate_scenarios", () => {
     expect(content.indexOf("same.md:1")).toBeLessThan(content.indexOf("new.md"));
   });
 
-  it("preserves large JSON integers and JSON structural equality without equating booleans to numbers", () => {
+  it("preserves large JSON integers and Python nested numeric and boolean equality", () => {
     const root = tempDir("scenario-lossless-numbers-");
     const stories = join(root, "requirements");
     mkdirSync(stories);
@@ -210,8 +214,8 @@ describe("aggregate_scenarios", () => {
       input,
       [
         "[",
-        '{"title":"Numbers","sources":[{"file":"large","lines":9007199254740992},{"file":"same","meta":{"a":1,"b":true}}]},',
-        '{"title":"Numbers","sources":[{"file":"large","lines":9007199254740993},{"meta":{"b":true,"a":1.0},"file":"same"},{"file":"same","meta":{"a":true,"b":true}}]}',
+        '{"title":"Numbers","sources":[{"file":"large","lines":9007199254740992},{"file":"same","meta":{"a":1,"b":[true,false]}}]},',
+        '{"title":"Numbers","sources":[{"file":"large","lines":9007199254740993},{"meta":{"b":[1,0.0],"a":1.0},"file":"same"}]}',
         "]",
       ].join(""),
     );
@@ -223,7 +227,45 @@ describe("aggregate_scenarios", () => {
     const content = readFileSync(output, "utf8");
     expect(content).toContain("- `large:9007199254740992`");
     expect(content).toContain("- `large:9007199254740993`");
-    expect(content.match(/^- `same`$/gm)).toHaveLength(2);
+    expect(content.match(/^- `same`$/gm)).toHaveLength(1);
+  });
+
+  it("keeps unsafe integers serializable without leaking wrappers into source formatting", () => {
+    const root = tempDir("scenario-lossless-source-shapes-");
+    const stories = join(root, "requirements");
+    mkdirSync(stories);
+    const input = join(root, "scenarios.json");
+    writeFileSync(
+      input,
+      '[{"title":"Leak","sources":[9007199254740993,-9007199254740993,[9007199254740993],{"file":9007199254740993},{"file":"nested","meta":{"value":-9007199254740993}},{"file":"exp","meta":1e3}]}]',
+    );
+    const output = join(root, "out.md");
+
+    const result = runAggregator(output, stories, [input]);
+
+    expect(result.status).toBe(0);
+    const content = readFileSync(output, "utf8");
+    expect(content).toContain("- `9007199254740993`");
+    expect(content).toContain("- `nested`");
+    expect(content).toContain("- `exp`");
+    expect(content).not.toContain("- ``");
+    expect(content.match(/^- `/gm)).toHaveLength(3);
+
+    const serialized = spawnSync(
+      process.execPath,
+      [
+        "--input-type=module",
+        "--eval",
+        `import { loadScenarios } from ${JSON.stringify(pathToFileURL(AGGREGATOR_PATH).href)}; process.stdout.write(JSON.stringify(loadScenarios([process.argv[1]])));`,
+        input,
+      ],
+      { encoding: "utf8" },
+    );
+    expect(serialized.status).toBe(0);
+    expect(serialized.stderr).toBe("");
+    expect(serialized.stdout).toBe(
+      '[{"title":"Leak","sources":[9007199254740993,-9007199254740993,[9007199254740993],{"file":9007199254740993},{"file":"nested","meta":{"value":-9007199254740993}},{"file":"exp","meta":1000}]}]',
+    );
   });
 
   it("writes the exact empty document and warning without creating a missing output parent", () => {
@@ -261,10 +303,30 @@ describe("aggregate_scenarios", () => {
   });
 
   it.each([
+    ["empty object", {}],
+    ["empty string", ""],
+    ["empty list", []],
+  ])("treats an %s scenarios wrapper as an empty iterable", (_label, scenariosValue) => {
+    const root = tempDir("scenario-empty-wrapper-");
+    const stories = join(root, "requirements");
+    mkdirSync(stories);
+    const input = writeJson(root, "wrapper.json", { scenarios: scenariosValue });
+    const output = join(root, "out.md");
+
+    const result = runAggregator(output, stories, [input]);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe("warning: no scenarios found in input files\n");
+    expect(readFileSync(output, "utf8")).toBe("# Behavior Scenarios\n\nNo scenarios extracted.\n");
+  });
+
+  it.each([
+    ["nonempty object", { key: 1 }],
+    ["nonempty string", "x"],
     ["null", null],
     ["number", 42],
-    ["string", "x"],
-  ])("fails for a non-list scenarios wrapper containing %s", (_label, scenariosValue) => {
+  ])("fails while processing a %s scenarios wrapper", (_label, scenariosValue) => {
     const root = tempDir("scenario-malformed-wrapper-");
     const stories = join(root, "requirements");
     mkdirSync(stories);
@@ -276,6 +338,7 @@ describe("aggregate_scenarios", () => {
     expect(result.status).toBe(1);
     expect(result.stdout).toBe("");
     expect(result.stderr).not.toBe("");
+    expect(result.stderr).not.toContain("invalid JSON");
     expect(existsSync(output)).toBe(false);
   });
 
@@ -412,6 +475,67 @@ describe("aggregate_scenarios", () => {
     expect(endOptions.stdout).toBe("");
     expect(endOptions.stderr).toBe("warning: no scenarios found in input files\n");
     expect(readFileSync(join(root, "end.md"), "utf8")).toContain("No scenarios extracted.");
+  });
+
+  it("accepts negative-number option values and positional inputs like argparse", () => {
+    const root = tempDir("scenario-negative-args-");
+    mkdirSync(join(root, "stories"));
+    mkdirSync(join(root, "-1"));
+    writeFileSync(join(root, "empty.json"), "[]");
+    writeFileSync(join(root, "-2"), "[]");
+
+    const positional = runHelper(
+      AGGREGATOR,
+      ["-o", "positional.md", "--stories-dir", "stories", "-2"],
+      root,
+    );
+    expect(positional.status).toBe(0);
+    expect(positional.stdout).toBe("");
+    expect(positional.stderr).toBe("warning: no scenarios found in input files\n");
+
+    for (const option of ["-o", "--output", "--out"]) {
+      const result = runHelper(
+        AGGREGATOR,
+        [option, "-3", "--stories-dir", "stories", "empty.json"],
+        root,
+      );
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe("warning: no scenarios found in input files\n");
+      expect(readFileSync(join(root, "-3"), "utf8")).toBe(
+        "# Behavior Scenarios\n\nNo scenarios extracted.\n",
+      );
+    }
+
+    for (const option of ["--stories-dir", "--stories-d"]) {
+      const result = runHelper(
+        AGGREGATOR,
+        ["-o", "negative-stories.md", option, "-1", "empty.json"],
+        root,
+      );
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe("warning: no scenarios found in input files\n");
+    }
+  });
+
+  it("rejects an empty long-option name as argparse-ambiguous", () => {
+    const result = runHelper(AGGREGATOR, [
+      "--=x",
+      "-o",
+      "out.md",
+      "--stories-dir",
+      "stories",
+      "input.json",
+    ]);
+
+    expect(result.status).toBe(2);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe(
+      "usage: aggregate_scenarios.mjs [-h] -o OUTPUT --stories-dir STORIES_DIR\n" +
+        "                               json_files [json_files ...]\n" +
+        "aggregate_scenarios.mjs: error: ambiguous option: --=x could match --help, --output, --stories-dir\n",
+    );
   });
 
   it("normalizes leading-dot path spellings in aggregate errors", () => {
@@ -587,7 +711,7 @@ describe("backlink_scenarios", () => {
     expect(invalid.status).toBe(2);
     expect(invalid.stdout).toBe("");
     expect(invalid.stderr).toBe(
-      `usage: ${join(resolve(import.meta.dirname, "..", ".."), BACKLINKER)} <scenarios-file> <requirements-dir>\n`,
+      `usage: ${join(CORE, BACKLINKER)} <scenarios-file> <requirements-dir>\n`,
     );
 
     const root = tempDir("scenario-backlink-errors-");
