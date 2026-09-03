@@ -1,0 +1,24 @@
+{
+  "name": "@example/composed-plugin",
+  "version": "1.2.3",
+  "type": "module",
+  "description": "Composed plugin fixture.",
+  "license": "MIT",
+  "author": {
+    "name": "Fixture Author"
+  },
+  "repository": "https://github.com/example/composed-plugin",
+  "homepage": "https://github.com/example/composed-plugin",
+  "keywords": ["fixture", "composition"],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "composed-plugin": "./dist/cli.js"
+  },
+  "scripts": {
+    "test": "never ship this"
+  },
+  "devDependencies": {
+    "vitest": "0.0.0"
+  }
+}

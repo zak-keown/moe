@@ -423,6 +423,19 @@ export function generate(
   opts: GenerateOptions = {},
 ): GenerateResult {
   const validation = validateGeneration(root, adapterList, opts)
+  return writeValidatedGeneration(root, validation, opts)
+}
+
+/**
+ * Writes one already validated generation without running adapters again.
+ * Artifact assembly uses this seam so its projection record and files share
+ * the exact same canonical validation object.
+ */
+export function writeValidatedGeneration(
+  root: string,
+  validation: GenerationValidation,
+  opts: Pick<GenerateOptions, 'force'> = {},
+): GenerateResult {
   const { files, warnings, emissions, packageContributions, adaptersRun, config } = validation
 
   // A corrupt manifest shouldn't dead-end generate the way it does validate:
