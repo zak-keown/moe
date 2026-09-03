@@ -5,9 +5,10 @@ import type { HarnessDriver } from "../harness/driver.js";
 
 export interface CommandContext {
   workerDir: string;
-  home: string; // $HOME; used for the consent file and driver transcript paths
+  home: string; // $HOME; used for driver-owned state and XDG fallback paths
+  environment?: NodeJS.ProcessEnv; // production CLI environment; omitted tests use fallback paths
   tmux: Tmux;
-  driver: HarnessDriver; // the per-worker harness driver (claude for now; resolved by CLI/meta)
+  driver: HarnessDriver; // per-worker harness driver, resolved by the CLI or persisted metadata
 }
 
 export interface CommandResult {

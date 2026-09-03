@@ -15,12 +15,18 @@ The shim path is deterministic: if you pick a memorable tmux name at launch, you
 
 ## Harnesses
 
-Pick a harness with `--harness` at launch (default `claude`):
+Pick a harness with `--harness` at launch:
 
 ```bash
 $SKILL/moe-crew launch --harness codex my-task /path/to/project
 $SKILL/moe-crew launch --harness pi    my-task /path/to/project
 ```
+
+Without `--harness`, `MOE_CREW_DEFAULT_HARNESS` wins; when it is unset,
+`moe-crew` selects the sole installed Claude Code, Codex, or Pi executable. It
+exits with usage code 2 and lists the installed choices when selection is
+ambiguous. Packs can declare `defaultHarness`, and each worker's `harness`
+still overrides every default.
 
 The controller-facing command surface is **identical across all three harnesses** — `launch`, `send`, `converse`, `wait-for-turn`, `read-turn`, `read-events`, `status`, `stop`, and `handoff` behave the same regardless of harness. A few things differ:
 
@@ -31,7 +37,7 @@ The controller-facing command surface is **identical across all three harnesses*
 ## Prerequisites
 
 - **tmux**
-- a harness CLI — at least the one you launch: **claude** (default), **codex**, or **pi**
+- a harness CLI — at least the one you launch: **claude**, **codex**, or **pi**
 
 (No `jq` and no bash hooks: `moe-crew` is a TypeScript/node tool and its hooks are node programs. `node` is required, but it's already present wherever Claude Code runs.)
 
@@ -39,7 +45,7 @@ The controller-facing command surface is **identical across all three harnesses*
 
 The CLI lives at `<skill>/scripts/moe-crew`. Top-level subcommands need the skill path:
 
-- `moe-crew launch [--harness <claude|codex|pi>] <tmux-name> <cwd> [-- harness-args...]` — bootstrap a worker (harness defaults to `claude`)
+- `moe-crew launch [--harness <claude|codex|pi>] <tmux-name> <cwd> [-- harness-args...]` — bootstrap a worker (default resolution is described under [Harnesses](#harnesses))
 - `moe-crew adopt <tmux-name> <cwd> <session-id> [-- claude-args...]` — re-adopt an existing Claude session as a worker (claude-only; see [Recovering workers](#recovering-workers-after-a-reboot))
 - `moe-crew list [--all]` — enumerate workers
 - `moe-crew grant-consent` — one-time consent for running workers with permissions bypassed
@@ -74,7 +80,7 @@ $SKILL/moe-crew launch my-task /path/to/project
 - Prints the shim path on stdout (one line)
 - Prints a "Worker launched" panel on stderr — the `reproduce:` line is the exact command to relaunch with the same args
 
-Pass harness CLI args after a `--` separator, or pick a non-default harness with `--harness`:
+Pass harness CLI args after a `--` separator, or pick an explicit harness with `--harness`:
 ```bash
 $SKILL/moe-crew launch my-task /path/to/project -- --model sonnet
 $SKILL/moe-crew launch --harness codex my-task /path/to/project
@@ -307,12 +313,15 @@ The `moe-crew` CLI honors a small set of env vars. All are optional.
 
 | Variable | Purpose |
 |---|---|
+| `MOE_CREW_DEFAULT_HARNESS` | Default harness after worker and command/pack selections. Must be `claude`, `codex`, or `pi`. |
+| `MOE_CREW_PLUGIN_ROOT` | Installed moe-crew plugin root. The launcher otherwise derives it from the running bundle. |
 | `MOE_CREW_CLAUDE_BIN` / `MOE_CREW_CODEX_BIN` / `MOE_CREW_PI_BIN` | Path to each harness binary. Default to `claude` / `codex` / `pi` (resolved via `PATH`). Set when a binary is not on `PATH` or you want to pin a specific version. |
 | `MOE_CREW_CODEX_MODEL` / `MOE_CREW_PI_MODEL` | Optional model override for codex / pi workers. Unset = the harness default (codex: `gpt-5.5`; pi: its configured default). |
 | `MOE_CREW_CONVERSE_DIAG_FILE` | When set, `moe-crew converse` writes a post-mortem diagnostic on timeout — `ps` tree, `tmux capture-pane`, last 30 lines of the worker's session JSONL, last 20 lines of the moe-crew events JSONL — to this path, then emits a `moe-crew-diagnostic: <path>` pointer to stderr. The file is overwritten on each timeout. Unset = no diagnostic file. Useful when wrapping moe-crew in a harness that can ship the file off-box before the worker is reaped. |
-| `MOE_CREW_WORKER_DIR` | Override the worker dir (default `/tmp/moe-crew-workers`). |
+| `MOE_CREW_WORKER_DIR` | Override the worker dir (default `$XDG_RUNTIME_DIR/moe-crew-workers`, or `~/.local/state/moe-crew/workers`). |
 | `MOE_CREW_SUBMIT_TIMEOUT` / `MOE_CREW_SUBMIT_RETRY_INTERVAL` | `send`: seconds to wait for the worker to confirm a pasted prompt (default `10`) and seconds between retry-Enter resends (default `2`). Raise the timeout if a slow tmux session drops the paste. |
 | `MOE_CREW_REGISTER_TIMEOUT` | Seconds the FIRST `send`/`converse` to a derive worker (codex/pi) waits for it to self-register its session id (default `15`). |
-| `HOME` | Used to locate `~/.claude/projects/<encoded-cwd>/<sid>.jsonl` (claude) and the one-time consent file (`~/.claude/.moe-crew-consent`). |
+| `XDG_STATE_HOME` | Durable Moe state root for one-time consent (`$XDG_STATE_HOME/moe/crew/consent`; fallback `~/.local/state/moe/crew/consent`). |
+| `HOME` | Harness-owned state root; Claude transcripts live under `~/.claude/projects/`. |
 
 `moe-crew help` shows the same surface.

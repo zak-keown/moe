@@ -6,75 +6,75 @@
       "sha256": "62aba2c2e869558795c37c0862f5ba5e1ae65d6ddb08efa99f8fc41c28ef1841"
     },
     ".claude-plugin/marketplace.json": {
-      "sha256": "23f2fd94d18a0aac57ad82ae7f537a64e1d0c719a5419162b4207c99acdf4cd9"
+      "sha256": "2acb8f7f378e4e5603278184dad32b1b9cc015a6040e9a3407aebdbf8748ac7b"
     },
     ".claude-plugin/plugin.json": {
-      "sha256": "300792f1ca20fe146ba96a8ef9b471d92164925f7722a7a6bfecd9d615a435b3"
+      "sha256": "e870185d6e87ecc961a60c8c1a284da0777c8dd26e4451b657ddfc02fc37ee90"
     },
     ".claude-plugin/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "bf5f5859e827ed2bfc12d5894659beabf51bf3cb967f06c148a5647bd5e85fb1",
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
       "mode": 420
     },
     ".claude-plugin/skills/driving-claude-code-sessions/scripts/moe-crew": {
-      "sha256": "df6c146000b13c65a11e97229654146e3500fa1c3cc0300c0d7bb5dd566eea00",
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
       "mode": 493
     },
     ".codex-plugin/plugin.json": {
-      "sha256": "f6d9ded98409007882981953d9c0b7ce2563ed6da26925e1133d8c5fea11dad7"
+      "sha256": "eb84413b7b76d68bce2e9617a56fe20674e33205bc466ed16bb74f89b7278e35"
     },
     ".codex-plugin/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "bf5f5859e827ed2bfc12d5894659beabf51bf3cb967f06c148a5647bd5e85fb1",
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
       "mode": 420
     },
     ".codex-plugin/skills/driving-claude-code-sessions/scripts/moe-crew": {
-      "sha256": "df6c146000b13c65a11e97229654146e3500fa1c3cc0300c0d7bb5dd566eea00",
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
       "mode": 493
     },
     ".cursor-plugin/marketplace.json": {
-      "sha256": "44e393308d8204f489fa442b107903a5e220b12be1a66382e0245e22fd2d7b65"
+      "sha256": "20b4cf2b58cf281f70738cc1f2baff5b17d80beee9f94189db3bf1d9b3b0fd03"
     },
     ".cursor-plugin/plugin.json": {
-      "sha256": "bb90ea79af2b923498747ac682f3930dac4d09b45440bf381732250d7e732384"
+      "sha256": "5d2ca98fc32346852b97184eac10a3b7283d96651093365205d20f619de0d313"
     },
     ".cursor-plugin/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "bf5f5859e827ed2bfc12d5894659beabf51bf3cb967f06c148a5647bd5e85fb1",
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
       "mode": 420
     },
     ".cursor-plugin/skills/driving-claude-code-sessions/scripts/moe-crew": {
-      "sha256": "df6c146000b13c65a11e97229654146e3500fa1c3cc0300c0d7bb5dd566eea00",
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
       "mode": 493
     },
     ".kimi-plugin/plugin.json": {
-      "sha256": "caf905125f0f77599be234189836e0be9e886062589511e2992b49fa4c604d5f"
+      "sha256": "b9f035141b6237319e9775f9bfd9a9ab905c5c46902894fcdb9816715da73633"
     },
     ".kimi-plugin/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "bf5f5859e827ed2bfc12d5894659beabf51bf3cb967f06c148a5647bd5e85fb1",
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
       "mode": 420
     },
     ".kimi-plugin/skills/driving-claude-code-sessions/scripts/moe-crew": {
-      "sha256": "df6c146000b13c65a11e97229654146e3500fa1c3cc0300c0d7bb5dd566eea00",
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
       "mode": 493
     },
     ".opencode/plugins/moe-crew.js": {
       "sha256": "75f9741bb89732c408fe86757c526516ceafedd392c593d99f35fe887b1e601c"
     },
     ".opencode/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "bf5f5859e827ed2bfc12d5894659beabf51bf3cb967f06c148a5647bd5e85fb1",
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
       "mode": 420
     },
     ".opencode/skills/driving-claude-code-sessions/scripts/moe-crew": {
-      "sha256": "df6c146000b13c65a11e97229654146e3500fa1c3cc0300c0d7bb5dd566eea00",
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
       "mode": 493
     },
     ".pi/extensions/moe-crew.ts": {
       "sha256": "11f3b2cf5ebe937208c9dc08f2510fe23240502363850699ab24a1db9ae3d298"
     },
     ".pi/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "bf5f5859e827ed2bfc12d5894659beabf51bf3cb967f06c148a5647bd5e85fb1",
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
       "mode": 420
     },
     ".pi/skills/driving-claude-code-sessions/scripts/moe-crew": {
-      "sha256": "df6c146000b13c65a11e97229654146e3500fa1c3cc0300c0d7bb5dd566eea00",
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
       "mode": 493
     },
     "docs/install/agent-plugins-1.0.md": {
@@ -105,10 +105,10 @@
       "sha256": "a64c284dc0acfd20a94ec9f712305c37fea879d2f6a278b0f4721fd94216ace9"
     },
     "package.json": {
-      "sha256": "457b4d8ad2d6311d3dc7d3e13f03e8b48ac53c6d389c3acc8e445ad24e9746ee"
+      "sha256": "ca1bf4474795d2b3efd93b4f41ee9f22bd8924776436bf225705610eb5b37a51"
     },
     "plugin.json": {
-      "sha256": "d98aaebf3beb3e8322775270c2d2d8fab6d02d44fd8f4d38bfd902b3aebc3c8c"
+      "sha256": "5fbea36dabb78fef02c24b20c1ae674085a914f66c59aad688f88a19d2a55201"
     }
   }
 }

@@ -2,10 +2,11 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { CommandContext } from "../src/commands/context.js";
+import { cmdPack, resolvePackHarnesses } from "../src/commands/pack.js";
 import { loadPack, parsePackYaml } from "../src/core/packs.js";
 import { makeTmux } from "../src/core/tmux.js";
 import { getDriver } from "../src/harness/registry.js";
-import type { CommandContext } from "../src/commands/context.js";
 
 function tmpDir(prefix: string): string {
   return mkdtempSync(join(tmpdir(), prefix));
@@ -96,6 +97,7 @@ describe("loadPack", () => {
       file,
       `name: my-pack
 description: Does things
+defaultHarness: pi
 workers:
   - namePrefix: alpha
     rolePrompt: |
@@ -109,6 +111,7 @@ workers:
     const pack = loadPack(file);
     expect(pack.name).toBe("my-pack");
     expect(pack.description).toBe("Does things");
+    expect(pack.defaultHarness).toBe("pi");
     expect(pack.workers).toHaveLength(2);
     expect(pack.workers[0]!.namePrefix).toBe("alpha");
     expect(pack.workers[0]!.rolePrompt).toBe("Do something important.\n");
@@ -321,6 +324,70 @@ describe("cmdPack logic", () => {
     expect(result.code).toBe(1);
     expect(result.stderr).toContain("Pack file not found");
   });
+
+  it("applies worker, command, pack, environment, and installed defaults in order", () => {
+    const pack = {
+      name: "mixed",
+      defaultHarness: "claude" as const,
+      workers: [
+        { namePrefix: "special", harness: "pi" as const, rolePrompt: "special" },
+        { namePrefix: "default", rolePrompt: "default" },
+      ],
+    };
+
+    expect(
+      resolvePackHarnesses(pack, {
+        command: "codex",
+        environment: "pi",
+        installed: ["claude"],
+      }),
+    ).toEqual({ ok: true, harnesses: ["pi", "codex"] });
+    expect(resolvePackHarnesses(pack, { environment: "pi", installed: ["codex"] })).toEqual({
+      ok: true,
+      harnesses: ["pi", "claude"],
+    });
+  });
+
+  it("returns code 2 before touching tmux when installed-harness selection is ambiguous", async () => {
+    const packFile = join(dir, "ambiguous.yaml");
+    writeFileSync(
+      packFile,
+      `name: ambiguous
+workers:
+  - namePrefix: worker
+    rolePrompt: hello
+`,
+    );
+    let tmuxCalls = 0;
+    const ctx: CommandContext = {
+      workerDir: dir,
+      home: dir,
+      tmux: makeTmux(async () => {
+        tmuxCalls++;
+        return { stdout: "", stderr: "", code: 1 };
+      }),
+      driver: getDriver("claude"),
+    };
+
+    const result = await cmdPack(
+      ctx,
+      {
+        packFile,
+        cwd: dir,
+        installedHarnesses: ["claude", "codex"],
+        environmentHarness: undefined,
+      },
+      {
+        pluginDir: "/fake/plugin",
+        moeCrewEntry: "/fake/moe-crew.cjs",
+        moeCrewPath: "/fake/moe-crew.cjs",
+      },
+    );
+
+    expect(result.code).toBe(2);
+    expect(result.stderr).toContain("multiple crew harnesses are installed");
+    expect(tmuxCalls).toBe(0);
+  });
 });
 
 describe("cmdPackStop logic", () => {
@@ -370,7 +437,7 @@ workers:
     expect(result.stderr).toContain("No workers found for pack 'test-pack'");
   });
 
-  it("stops workers whose tmux_name starts with the pack prefix", async () => {
+  it("stops a mixed pack with each persisted worker's own driver", async () => {
     const { cmdPackStop } = await import("../src/commands/pack.js");
     const { writeMeta } = await import("../src/core/worker-store.js");
     const { appendEvent } = await import("../src/core/event-log.js");
@@ -387,7 +454,7 @@ workers:
       tmux_name: "my-pack-beta-1",
       session_id: "sid-b",
       cwd: "/work",
-      harness: "claude",
+      harness: "codex",
     });
     // An unrelated worker.
     writeMeta(dir, {
@@ -407,6 +474,7 @@ workers:
     // session_end events, the stop poll exits immediately; then stop does
     // kill-session and we mark them gone so the second has-session returns false.
     const alive = new Set(["my-pack-alpha-0", "my-pack-beta-1"]);
+    const quitKeys: Array<{ name: string; text: string }> = [];
     const tmux = makeTmux(async (_cmd, args) => {
       if (args[0] === "has-session") {
         const name = args[args.indexOf("-t") + 1] ?? "";
@@ -415,6 +483,12 @@ workers:
       if (args[0] === "kill-session") {
         const name = args[args.indexOf("-t") + 1] ?? "";
         alive.delete(name);
+      }
+      if (args[0] === "send-keys" && args.includes("-l")) {
+        quitKeys.push({
+          name: args[args.indexOf("-t") + 1] ?? "",
+          text: args.at(-1) ?? "",
+        });
       }
       return { stdout: "", stderr: "", code: 0 };
     });
@@ -429,5 +503,9 @@ workers:
     const result = await cmdPackStop(ctx, { nameOrFile: "my-pack" });
     expect(result.stdout).toContain("Pack 'my-pack' stopped: 2 workers");
     expect(result.code).toBe(0);
+    expect(quitKeys).toEqual([
+      { name: "my-pack-alpha-0", text: "/exit" },
+      { name: "my-pack-beta-1", text: "/quit" },
+    ]);
   });
 });

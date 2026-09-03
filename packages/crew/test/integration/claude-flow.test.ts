@@ -76,6 +76,7 @@ describe.skipIf(!HAS_TMUX)("claude flow e2e (real tmux + bundled moe-crew)", () 
   }> {
     return runWithEnv(["node", moeCrewEntry, ...args], {
       MOE_CREW_WORKER_DIR: workerDir,
+      XDG_STATE_HOME: join(home, "state"),
       HOME: home,
     });
   }
@@ -91,9 +92,9 @@ describe.skipIf(!HAS_TMUX)("claude flow e2e (real tmux + bundled moe-crew)", () 
     cwd = mkdtempSync(join(tmpdir(), "moe-crew-it-cwd-"));
     tmuxName = uniqueName();
 
-    mkdirSync(join(home, ".claude"), { recursive: true });
+    mkdirSync(join(home, "state", "moe", "crew"), { recursive: true });
     // Pre-grant consent: launch refuses to run without it.
-    writeFileSync(join(home, ".claude", ".moe-crew-consent"), "");
+    writeFileSync(join(home, "state", "moe", "crew", "consent"), "");
 
     // Per-test wrapper bakes the temp paths the fixture needs (a fresh tmux
     // session won't inherit them) and execs the committed fake-claude.
@@ -128,12 +129,16 @@ describe.skipIf(!HAS_TMUX)("claude flow e2e (real tmux + bundled moe-crew)", () 
 
   /** Launch a worker via the bundled CLI; returns the printed shim path. */
   async function launch(): Promise<string> {
-    const result = await runWithEnv(["node", moeCrewEntry, "launch", tmuxName, cwd], {
-      MOE_CREW_CLAUDE_BIN: wrapper,
-      MOE_CREW_WORKER_DIR: workerDir,
-      HOME: home,
-      CLAUDE_PLUGIN_ROOT: repoRoot,
-    });
+    const result = await runWithEnv(
+      ["node", moeCrewEntry, "launch", "--harness", "claude", tmuxName, cwd],
+      {
+        MOE_CREW_CLAUDE_BIN: wrapper,
+        MOE_CREW_WORKER_DIR: workerDir,
+        XDG_STATE_HOME: join(home, "state"),
+        HOME: home,
+        MOE_CREW_PLUGIN_ROOT: repoRoot,
+      },
+    );
     expect(result.code, `launch failed:\n${result.stderr}`).toBe(0);
     return result.stdout.trim();
   }

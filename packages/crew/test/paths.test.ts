@@ -1,13 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  claudeTranscriptPath,
-  eventsPath,
-  metaPath,
-  shimPath,
-  workerDir,
-} from "../src/core/paths.js";
+import { eventsPath, metaPath, shimPath, workerDir } from "../src/core/paths.js";
 
 describe("workerDir", () => {
   // CR-019: the old fixed /tmp/moe-crew-workers default was predictable and
@@ -64,35 +58,5 @@ describe("path builders", () => {
 
   it("builds shim path", () => {
     expect(shimPath("/d", "my-worker")).toBe("/d/bin/my-worker");
-  });
-
-  it("encodes cwd slashes as dashes for the claude transcript path", () => {
-    expect(claudeTranscriptPath("/h", "/Users/x/p", "SID")).toBe(
-      "/h/.claude/projects/-Users-x-p/SID.jsonl",
-    );
-  });
-
-  it("encodes a dot in the cwd as a dash (real claude dir encoding)", () => {
-    expect(claudeTranscriptPath("/h", "/Users/x/.claude", "SID")).toBe(
-      "/h/.claude/projects/-Users-x--claude/SID.jsonl",
-    );
-  });
-
-  it("encodes an underscore in the cwd as a dash", () => {
-    expect(claudeTranscriptPath("/h", "/a/my_proj", "SID")).toBe(
-      "/h/.claude/projects/-a-my-proj/SID.jsonl",
-    );
-  });
-
-  it("encodes a /.worktrees segment as a double-dash", () => {
-    expect(claudeTranscriptPath("/h", "/u/lace/.worktrees/x", "SID")).toBe(
-      "/h/.claude/projects/-u-lace--worktrees-x/SID.jsonl",
-    );
-  });
-
-  it("encodes a colon in the cwd as a dash (real claude dir encoding)", () => {
-    expect(claudeTranscriptPath("/h", "/a/c:d", "SID")).toBe(
-      "/h/.claude/projects/-a-c-d/SID.jsonl",
-    );
   });
 });
