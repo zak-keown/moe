@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import type { JigExtensionCommand } from "@bubstack/moe-jig/extension";
 import { MoedexClient } from "./moedex.js";
 import { formatFindings } from "./report.js";
+import { seedPlanSkeleton } from "./seed.js";
 import { validatePlanAgainstGraph } from "./validate.js";
 
 const validate: JigExtensionCommand = {
@@ -56,4 +57,41 @@ const validate: JigExtensionCommand = {
   },
 };
 
-export const commands: JigExtensionCommand[] = [validate];
+const seed: JigExtensionCommand = {
+  namespace: "plan",
+  name: "seed",
+  description: "Generate a plan skeleton from the moedex code graph",
+  options: [{ flags: "--entry <file>", description: "Entry-point file or symbol" }],
+  async run(args, _ctx) {
+    const entryIdx = args.indexOf("--entry");
+    const entry = entryIdx >= 0 ? args[entryIdx + 1] : undefined;
+    const skipSet = new Set<string>();
+    if (entryIdx >= 0) {
+      skipSet.add("--entry");
+      if (entry) skipSet.add(entry);
+    }
+    const topic = args.filter((a) => !skipSet.has(a)).join(" ");
+
+    if (!topic) {
+      console.error("Usage: moe jig plan seed <topic> [--entry <file>]");
+      return 1;
+    }
+
+    const client = new MoedexClient();
+    const available = await client.isAvailable();
+    if (!available) {
+      console.error(
+        "moedex required for seed — cannot generate a graph-grounded skeleton without it.",
+      );
+      return 1;
+    }
+
+    const skeleton = await seedPlanSkeleton(topic, client, entry ? { entry } : {});
+    console.log(skeleton);
+
+    await client.disconnect();
+    return 0;
+  },
+};
+
+export const commands: JigExtensionCommand[] = [validate, seed];
