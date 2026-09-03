@@ -6,7 +6,6 @@ import { join } from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { buildModel } from '../../src/model.js'
 import { pi } from '../../src/adapters/pi.js'
-import { opencode } from '../../src/adapters/opencode.js'
 import { adapters, getAdapter } from '../../src/adapters/index.js'
 import { GENERATED_BOOTSTRAP_PATH } from '../../src/bootstrap/generated.js'
 
@@ -112,25 +111,15 @@ describe('pi adapter', () => {
     expect(result.emittedCapabilities).toEqual(['skill-discovery', 'bootstrap-routing'])
   })
 
-  it('emits package.json with the exact ground-truth shape', () => {
-    expect(JSON.parse(mustGet(byPath, 'package.json'))).toEqual({
-      name: 'kitchen-sink',
-      version: '0.1.0',
-      description: 'Fixture plugin exercising every component type',
-      author: { name: 'Bubstack', email: 'dev@bubstack.example' },
-      license: 'MIT',
-      repository: 'https://github.com/example/kitchen-sink',
-      type: 'module',
-      main: './.opencode/plugins/kitchen-sink.js',
-      pi: { extensions: ['./.pi/extensions/kitchen-sink.ts'], skills: ['./skills'] },
-      keywords: ['fixture', 'pi-package'],
+  it('keeps package.json out of adapter files and contributes complete Pi discovery metadata', () => {
+    expect(byPath['package.json']).toBeUndefined()
+    expect(result.packageContribution).toEqual({
+      owner: 'pi',
+      pi: {
+        extensions: ['./.pi/extensions/kitchen-sink.ts'],
+        skills: ['./skills'],
+      },
     })
-  })
-
-  it('emits a package.json byte-identical to the opencode adapter (Plan 2 dedupe contract)', () => {
-    const opencodeResult = opencode.emit(model)
-    const opencodePackageJson = opencodeResult.files.find((f) => f.path === 'package.json')!.content
-    expect(mustGet(byPath, 'package.json')).toBe(opencodePackageJson)
   })
 
   it('emits the extension TS with no leftover placeholders, the marker guard string, and skills-dir registration', () => {

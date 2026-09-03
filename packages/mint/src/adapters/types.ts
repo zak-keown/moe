@@ -19,11 +19,22 @@ export interface EmissionLimitation {
   message: string
 }
 
+/**
+ * Package metadata owned by one adapter. The artifact compositor combines
+ * these narrow additions with the source-authoritative root manifest.
+ */
+export interface AdapterPackageContribution {
+  owner: TargetId
+  pi?: Readonly<Record<string, unknown>>
+  exports?: Readonly<Record<string, unknown>>
+}
+
 export interface AdapterEmission {
   files: FileSet
   limitations: readonly EmissionLimitation[]
   emittedCapabilities: readonly CapabilityId[]
   projectionOwner?: TargetId
+  packageContribution?: AdapterPackageContribution
 }
 
 export interface HarnessAdapter {

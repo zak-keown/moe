@@ -102,8 +102,7 @@ describe('CLI end-to-end', () => {
     const yamlPath = join(dir, 'moe-mint.yaml')
     const yaml = readFileSync(yamlPath, 'utf8')
     // Excluding opencode drops its four uniquely-owned files (the plugin JS,
-    // the translated command/agent .md files, and the install doc); the shared
-    // package.json stays because pi still emits it byte-identically.
+    // the translated command/agent .md files, and the install doc).
     writeFileSync(yamlPath, yaml
       .replace('  opencode: { intent: preview, expected_capabilities: [skill-discovery, command-discovery, agent-discovery, bootstrap-routing], operating_systems: [macos] }', '  opencode: { intent: omit }')
       .replace('harnesses:\n', 'harnesses:\n  exclude: [opencode]\n'))
@@ -165,14 +164,14 @@ describe('CLI end-to-end', () => {
     expect(forced.stdout).toContain('Generated')
   })
 
-  it('bump <version> exits 0 and rewrites the version everywhere', () => {
+  it('bump <version> exits 0 without synthesizing a root package.json', () => {
     const dir = tmpPluginDir()
     runCli(['generate'], dir)
     const result = runCli(['bump', '9.9.9'], dir)
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('Bumping to 9.9.9')
     expect(result.stdout).toContain('All clear')
-    expect(JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).version).toBe('9.9.9')
+    expect(existsSync(join(dir, 'package.json'))).toBe(false)
     expect(JSON.parse(readFileSync(join(dir, '.claude-plugin', 'plugin.json'), 'utf8')).version).toBe('9.9.9')
   })
 

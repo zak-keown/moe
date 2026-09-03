@@ -360,17 +360,25 @@ describe('generate', () => {
     expect(existsSync(join(dir, MANIFEST_PATH))).toBe(false)
   })
 
-  it('appends an actionable note when the refused-overwrite list includes a pre-existing package.json', () => {
+  it('leaves a pre-existing package.json untouched because adapters contribute metadata instead', () => {
     const dir = freshFixture()
-    writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'hand-written', private: true }))
-    expect(() => generate(dir)).toThrowError(/REPLACE your package\.json/)
-    try {
-      generate(dir)
-    } catch (err) {
-      expect((err as Error).message).toContain('package.json merging is not yet supported')
-      expect((err as Error).message).toContain('harnesses.exclude')
-    }
-    expect(existsSync(join(dir, MANIFEST_PATH))).toBe(false)
+    const source = JSON.stringify({ name: 'hand-written', private: true })
+    writeFileSync(join(dir, 'package.json'), source)
+
+    const result = generate(dir)
+
+    expect(readFileSync(join(dir, 'package.json'), 'utf8')).toBe(source)
+    expect(result.files.some((file) => file.path === 'package.json')).toBe(false)
+    expect(result.packageContributions).toEqual([
+      { owner: 'opencode', exports: { './server': './.opencode/plugins/kitchen-sink.js' } },
+      {
+        owner: 'pi',
+        pi: {
+          extensions: ['./.pi/extensions/kitchen-sink.ts'],
+          skills: ['./skills'],
+        },
+      },
+    ])
   })
 
   it('reports a dangling symlink at a generated path as a conflict, not silently absent (CR-080)', () => {
