@@ -19,6 +19,13 @@ session** — a running one holds the hook registry it loaded at startup.
 
 `--dry-run` reports without writing. `--no-backup` skips the copy.
 
+Each run backs the install up first, then prunes to the **2 newest** backups —
+each is a full ~7MB copy and a run that goes wrong is caught the same day, so
+older ones are dead weight. `--keep N` changes the count; `--keep 0` disables
+pruning. Only directories this script made are ever removed: the name must carry
+the timestamp stamp *and* contain a `plugins/`, so the live install, a
+hand-named backup, and a half-written copy from an interrupted run all survive.
+
 ## The shape of the install
 
 Moe is sideloaded, not installed from a registry. None of the `@tc/*` packages
