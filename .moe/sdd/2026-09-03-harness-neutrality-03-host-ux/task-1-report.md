@@ -80,3 +80,62 @@ No behavior was changed in those files. Their covering tests and the full crew s
 ## Concerns
 
 No task-blocking concerns. The existing crew lint warnings and tsup's existing unused-import warnings for the generated Pi extension bundle remain non-failing baseline diagnostics.
+
+## Review round 1 fixes
+
+### Adopt persisted-state safety
+
+`cmdAdopt` now inspects both metadata relevant to the supplied session/tmux name and the tmux-name harness marker before any transcript or tmux mutation. Every present harness value is validated through `resolveHarness`. Valid non-Claude state is refused without replacement; empty/unreadable/unknown state and contradictory metadata/marker state return code 2. Genuinely absent state and consistently Claude state retain Claude adopt behavior.
+
+Focused regressions cover:
+
+- metadata-only Codex state with a live pane;
+- an empty/unreadable harness marker;
+- malformed JSON metadata at the supplied session id;
+- conflicting Claude metadata and Pi marker state;
+- genuinely absent persisted state continuing to a successful Claude adopt.
+
+### Marker-only pack-stop safety
+
+`cmdPackStop` now includes pack-prefixed names from `listOrphanNames()`. Valid marker-only workers are routed through their resolved driver, and `cmdStop` sends that driver's quit keys before applying the kill backstop and removing orphan state. If an orphan marker is invalid or unreadable, pack-stop cannot trust a driver, so it force-kills any live session, removes the orphan state, and returns the canonical resolver diagnostic with code 2.
+
+Focused regressions cover a live marker-only Codex worker left before first-send registration and a live worker with an invalid `cursor` marker that must not survive the diagnostic.
+
+### Round 1 RED evidence
+
+Command:
+
+```text
+mise exec -- pnpm --filter @bubstack/moe-crew exec vitest run test/adopt.test.ts test/packs.test.ts --reporter verbose
+```
+
+Result after correcting the test import itself: **RED** — 2 files failed; 6 tests failed and 31 passed. The four adopt regressions fell through to transcript/legacy marker behavior, the marker-only pack worker was reported as absent, and the invalid marker returned 0 while leaving the live session intact.
+
+### Round 1 GREEN evidence
+
+Command:
+
+```text
+mise exec -- pnpm --filter @bubstack/moe-crew exec vitest run test/adopt.test.ts test/packs.test.ts test/stop.test.ts --reporter verbose
+```
+
+Result: **GREEN** — 3 files and 46 tests passed. This includes the original absent-state adopt path and direct proof that an unregistered Codex worker receives `/quit` before cleanup.
+
+### Round 1 final verification
+
+- `mise exec -- pnpm --filter @bubstack/moe-crew build` — PASS before the full integration suite.
+- `mise exec -- pnpm --filter @bubstack/moe-crew test` — PASS: 46 files, 497 tests, including all 12 real-tmux Claude/Codex/Pi integration tests.
+- `mise exec -- pnpm --filter @bubstack/moe-crew typecheck` — PASS.
+- `mise exec -- pnpm --filter @bubstack/moe-crew lint` — PASS with the same 31 warning-level and 1 informational baseline diagnostics.
+- `mise exec -- pnpm mint:check` — PASS; forced regeneration produced no plugin changes. No canonical mint/skill source changed in this review round, so a separate `pnpm mint` artifact update was unnecessary.
+- `git diff --check` — PASS.
+
+### Round 1 self-review
+
+- Adopt state inspection de-duplicates metadata seen by direct session id and tmux-name enumeration, then rejects any distinct resolved harness set as conflicting.
+- Adopt evaluates persisted identity before transcript lookup and before writing metadata or invoking tmux, so a misleading/missing Claude transcript cannot mask foreign or corrupt worker state.
+- Pack-stop retains per-worker routing for registered mixed fleets and adds marker-only names without treating unrelated prefixes as pack members.
+- Valid marker-only workers get graceful driver-specific quit behavior; corrupt marker-only workers are never left live even though no driver can be trusted.
+- No reviewer-minor scope was taken, and no generated plugin file was hand-edited.
+
+Round 1 concerns: none blocking. The non-failing baseline lint/tsup warnings remain unchanged.

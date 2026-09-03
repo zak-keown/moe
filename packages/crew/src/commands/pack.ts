@@ -1,6 +1,13 @@
+import { existsSync } from "node:fs";
 import type { PackDefinition } from "../core/packs.js";
 import { loadPack } from "../core/packs.js";
-import { listWorkers } from "../core/worker-store.js";
+import { harnessMarkerPath } from "../core/paths.js";
+import {
+  listOrphanNames,
+  listWorkers,
+  readHarnessMarker,
+  removeOrphan,
+} from "../core/worker-store.js";
 import type { HarnessId } from "../harness/driver.js";
 import { detectInstalledHarnesses, getDriver } from "../harness/registry.js";
 import { type HarnessResolutionFailure, resolveHarness } from "../harness/resolver.js";
@@ -152,7 +159,9 @@ export interface PackStopArgs {
  * Stop all workers belonging to a pack. Identifies the pack by name: if the
  * argument looks like a file path, loads it to read the name; otherwise uses
  * the argument as a direct name. Finds all workers in the store whose
- * tmux_name starts with `<packName>-` and stops each one.
+ * tmux_name starts with `<packName>-` and stops each one. Marker-only derive
+ * workers are included because their first send may fail before metadata is
+ * registered.
  */
 export async function cmdPackStop(ctx: CommandContext, args: PackStopArgs): Promise<CommandResult> {
   let packName: string;
@@ -171,30 +180,60 @@ export async function cmdPackStop(ctx: CommandContext, args: PackStopArgs): Prom
   const prefix = `${packName}-`;
   const workers = listWorkers(ctx.workerDir);
   const matching = workers.filter((m) => m.tmux_name.startsWith(prefix));
+  const orphanNames = listOrphanNames(ctx.workerDir).filter((name) => name.startsWith(prefix));
 
-  if (matching.length === 0) {
+  if (matching.length === 0 && orphanNames.length === 0) {
     return { stderr: `No workers found for pack '${packName}'`, code: 0 };
   }
 
-  const routed = [];
+  const routed: Array<{ name: string; driver: ReturnType<typeof getDriver> }> = [];
   for (const meta of matching) {
     const resolution = resolveHarness({ worker: meta.harness, installed: [] });
     if (!resolution.ok) {
       return { stderr: `Error: ${resolution.diagnostic}`, code: resolution.code };
     }
-    routed.push({ meta, driver: getDriver(resolution.harness) });
+    routed.push({ name: meta.tmux_name, driver: getDriver(resolution.harness) });
+  }
+
+  const corruptOrphans: Array<{ name: string; diagnostic: string }> = [];
+  for (const name of orphanNames) {
+    const markerPath = harnessMarkerPath(ctx.workerDir, name);
+    const marker = readHarnessMarker(ctx.workerDir, name);
+    const value =
+      marker ??
+      (existsSync(markerPath)
+        ? "(empty or unreadable harness marker)"
+        : "(missing harness marker)");
+    const resolution = resolveHarness({ worker: value, installed: [] });
+    if (!resolution.ok) {
+      corruptOrphans.push({ name, diagnostic: resolution.diagnostic });
+      continue;
+    }
+    routed.push({ name, driver: getDriver(resolution.harness) });
   }
 
   let stopped = 0;
   const errors: string[] = [];
 
-  for (const { meta, driver } of routed) {
-    const result = await cmdStop({ ...ctx, driver }, meta.tmux_name);
+  for (const { name, driver } of routed) {
+    const result = await cmdStop({ ...ctx, driver }, name);
     if (result.code === 0) {
       stopped++;
     } else {
-      errors.push(`Failed to stop ${meta.tmux_name}: ${result.stderr ?? "unknown error"}`);
+      errors.push(`Failed to stop ${name}: ${result.stderr ?? "unknown error"}`);
     }
+  }
+
+  // A corrupt orphan has no trustworthy driver to ask for a graceful exit.
+  // Still kill and remove it so an invalid marker cannot leave a live bypassed
+  // worker behind, then surface the state corruption as the controlling code 2.
+  for (const orphan of corruptOrphans) {
+    if (await ctx.tmux.hasSession(orphan.name)) {
+      await ctx.tmux.killSession(orphan.name);
+    }
+    removeOrphan(ctx.workerDir, orphan.name);
+    stopped++;
+    errors.push(`Invalid state for ${orphan.name}: ${orphan.diagnostic}`);
   }
 
   const summary = [`Pack '${packName}' stopped: ${stopped} workers`];
@@ -207,6 +246,7 @@ export async function cmdPackStop(ctx: CommandContext, args: PackStopArgs): Prom
 
   return {
     stdout: summary.join("\n"),
-    code: errors.length > 0 ? 1 : 0,
+    ...(corruptOrphans.length > 0 ? { stderr: errors.join("\n") } : {}),
+    code: corruptOrphans.length > 0 ? 2 : errors.length > 0 ? 1 : 0,
   };
 }
