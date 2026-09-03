@@ -122,7 +122,7 @@ on that depth's list and complete them in order.
 3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
-6. **Write design doc** — save to `docs/moe/specs/YYYY-MM-DD-<topic>-design.md` and commit
+6. **Write design doc** — use `moe jig spec init <topic>` to create `docs/moe/specs/YYYY-MM-DD-<topic>-design.md`, then fill in the content and commit
 7. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope (see below)
 8. **User reviews written spec** — ask user to review the spec file before proceeding
 9. **Transition to implementation** — invoke writing-plans skill to create implementation plan
@@ -277,7 +277,9 @@ present the intent, get a nod, do the smallest thing.
 
 **Documentation:**
 
-- Write the validated design (spec) to `docs/moe/specs/YYYY-MM-DD-<topic>-design.md`
+- Create the spec file with `moe jig spec init <topic>` — it writes
+  `docs/moe/specs/YYYY-MM-DD-<topic>-design.md` with the correct naming and a
+  skeleton. Fill in the validated design and commit.
   - (User preferences for spec location override this default)
 - Use the `writing-clearly-and-concisely` skill (a sibling skill in this plugin)
 - Commit the design document to git

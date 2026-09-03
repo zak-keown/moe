@@ -243,12 +243,14 @@ branches from that same commit, per the divergent-tree rule in
 `dispatching-parallel-agents`. A worker branched from a stale base will cite the
 same file coordinates as its siblings but read different content there.
 
-Create and validate every worktree before dispatching any worker. For each
-worker cwd, resolve absolute `--git-dir` and `--git-common-dir`; they must differ,
-and the resolved `--git-dir` values must be pairwise unique. If creation or
-validation fails for even one worker, use the second rung for the whole wave:
-sequential dispatch from the controller's current validated tree. Never run an
-unisolated or partially isolated parallel wave.
+Create and validate every worktree before dispatching any worker. **In this
+repo, use `moe jig worktree create` per worker and `moe jig worktree validate`
+to check the complete set.** Without jig: for each worker cwd, resolve absolute
+`--git-dir` and `--git-common-dir`; they must differ, and the resolved
+`--git-dir` values must be pairwise unique. If creation or validation fails for
+even one worker, use the second rung for the whole wave: sequential dispatch
+from the controller's current validated tree. Never run an unisolated or
+partially isolated parallel wave.
 
 A plan of exactly one task is a wave of one, and the loop below still applies.
 Nothing about single-task plans changes — the wave step adds a shape, it does
