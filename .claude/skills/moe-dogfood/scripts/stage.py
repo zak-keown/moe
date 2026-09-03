@@ -10,6 +10,7 @@ resolution error with no plugin name attached.
 
 Usage:
     python3 .claude/skills/moe-dogfood/scripts/stage.py [--dry-run] [--no-backup]
+                                                        [--keep N]
 
 Run from the repo root. Requires `pnpm mint` and `pnpm build` to have run first;
 the script checks for their outputs rather than running them for you, because
@@ -29,6 +30,17 @@ from pathlib import Path
 from typing import NoReturn
 
 MARKETPLACE = Path.home() / ".moe" / "local-marketplace"
+
+# How many timestamped backups to keep after a stage, newest first. Each one is
+# a full copy of the install (~7MB and growing), and a run that goes wrong is
+# caught on the same day, so history past the last couple of runs is dead
+# weight. --keep overrides; --keep 0 disables pruning entirely.
+BACKUP_KEEP = 2
+
+# A backup directory this script made, and nothing else. The 14-digit stamp and
+# the plugins/ check together are what stop a prune from touching the live
+# install or a directory someone parked next to it under a similar name.
+BACKUP_NAME = re.compile(r"^local-marketplace\.bak-\d{8}-\d{6}$")
 
 # Plugins whose generated form references a build output or a package path that
 # the repo does not carry. Each entry says how to make the staged copy runnable.
@@ -107,6 +119,31 @@ def backup(dest: Path) -> Path | None:
     target = dest.parent / f"{dest.name}.bak-{stamp}"
     shutil.copytree(dest, target)
     return target
+
+
+def find_backups(parent: Path) -> list[Path]:
+    """Backups this script made, oldest first.
+
+    The name carries a zero-padded timestamp, so a lexical sort is a
+    chronological one and no stat() is needed. Requiring plugins/ inside means a
+    half-written copy from an interrupted run is left alone rather than counted
+    as history and then deleted as surplus.
+    """
+    return sorted(
+        d
+        for d in parent.iterdir()
+        if d.is_dir() and BACKUP_NAME.match(d.name) and (d / "plugins").is_dir()
+    )
+
+
+def prune_backups(parent: Path, keep: int) -> list[Path]:
+    """Delete all but the `keep` newest backups. Returns what was removed."""
+    if keep <= 0:
+        return []
+    surplus = find_backups(parent)[:-keep]
+    for d in surplus:
+        shutil.rmtree(d)
+    return surplus
 
 
 def apply_repoint(name: str, staged: Path, repo: Path) -> list[str]:
@@ -248,6 +285,13 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="report, change nothing")
     parser.add_argument("--no-backup", action="store_true", help="skip the backup copy")
+    parser.add_argument(
+        "--keep",
+        type=int,
+        default=BACKUP_KEEP,
+        metavar="N",
+        help=f"backups to keep after staging (default {BACKUP_KEEP}; 0 disables pruning)",
+    )
     args = parser.parse_args()
 
     repo = Path.cwd()
@@ -270,6 +314,13 @@ def main() -> int:
             "  running session keeps firing their hooks against a directory you deleted."
         )
     if args.dry_run:
+        if not args.no_backup and args.keep > 0 and MARKETPLACE.exists():
+            # A real run backs up first and prunes second, so the count here has
+            # to include the backup this run would have made. Reporting the
+            # current directory count instead undercounts by exactly one.
+            would_exist = len(find_backups(MARKETPLACE.parent)) + 1
+            if would_exist > args.keep:
+                print(f"prune:    would remove {would_exist - args.keep} older backup(s)")
         print("\n--dry-run: nothing written")
         return 0
 
@@ -277,6 +328,12 @@ def main() -> int:
         saved = backup(MARKETPLACE)
         if saved:
             print(f"backup:   {saved}")
+        # After, not before: the copy that just succeeded is the one worth
+        # keeping, and pruning first would drop a good backup to make room for
+        # one that might fail.
+        pruned = prune_backups(MARKETPLACE.parent, args.keep)
+        if pruned:
+            print(f"prune:    removed {len(pruned)} older backup(s), kept {args.keep}")
 
     (MARKETPLACE / "plugins").mkdir(parents=True, exist_ok=True)
 
