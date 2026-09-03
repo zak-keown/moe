@@ -2,30 +2,24 @@
   "name": "@bubstack/moe-core",
   "version": "0.1.4",
   "type": "module",
-  "description": "The house skills: TDD, debugging, collaboration, iterative methodology, writing, plugin authoring, and the stop-hook. Marketplace-published as the `moe` plugin.",
+  "description": "The Moe skill library — brainstorming, planning, TDD, systematic debugging, code review, worktrees, parallel dispatch, plugin authoring, and more.",
   "license": "MIT AND Apache-2.0",
   "author": {
     "name": "Zak Keown",
     "email": "zak.keown@outlook.com"
   },
-  "homepage": "https://gitlab.com/moe-ai/moe",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/zak-keown/moe.git"
-  },
+  "homepage": "https://github.com/zak-keown/moe",
+  "repository": "https://github.com/zak-keown/moe",
   "keywords": [
-    "claude-code",
-    "codex",
-    "cursor",
-    "kimi",
-    "opencode",
-    "pi",
-    "copilot",
     "skills",
     "brainstorming",
+    "planning",
     "tdd",
+    "debugging",
     "code-review",
-    "workflow"
+    "workflow",
+    "writing",
+    "plugin-authoring"
   ],
   "engines": {
     "node": ">=24"

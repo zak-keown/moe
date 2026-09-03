@@ -88,16 +88,7 @@ Save each output as `./duplicates/<category-name>.json`.
 
 Produces a prioritized markdown report grouped by confidence level. This is rung 4 (markdown) of the shared native-rendering ladder at `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` — the file on disk is what Phase 6 review consumes and is the source of truth. If your human partner wants a scannable version alongside it (a sortable table, colour-coded confidence bands), walk the ladder from the top:
 
-All four rungs defined at
-`${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` are
-available. Where the `Artifact` tool is present (Claude Code proper),
-rung 1 is the default for anything with an audience. Where it isn't
-(this same skill body also ships to Antigravity and Copilot CLI via
-this shared skills/ directory), the ladder self-detects and starts at
-rung 2 — the brainstorm browser companion — dropping further only when
-`node` isn't on PATH or the sandbox blocks the port. Announce which
-rung you took before the render lands.
-
+{render-ladder}
 
 The markdown report always ships regardless.
 

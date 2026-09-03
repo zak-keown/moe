@@ -1,0 +1,111 @@
+# Protected Claude Code/macOS maintenance certification.
+#
+# Runs as workflow_dispatch with the candidate platform tag as the only input.
+# The claude-maintenance environment requires manual approval — the approver's
+# identity is captured in each evidence report. The workflow downloads and
+# revalidates the candidate catalog and all six tarballs, runs the lifecycle
+# driver, and uploads serialized evidence. Operators cannot supply digests or
+# verdicts.
+#
+# Authentication uses the environment-scoped ANTHROPIC_API_KEY (not a workflow
+# input or personal runner keychain). Claude Code is installed at a pinned
+# version and must pass `claude auth status` before touching any candidate.
+name: certify-claude-macos
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_tag:
+        description: 'Candidate platform tag (e.g. v0.1.5-rc.1)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: moe-release
+  cancel-in-progress: false
+
+jobs:
+  certify:
+    runs-on: macos-14
+    environment: claude-maintenance
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - run: corepack enable
+
+      - uses: actions/cache@v4
+        with:
+          path: .pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - run: pnpm config set store-dir .pnpm-store
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      # Install Claude Code at a pinned version; authenticate via
+      # environment-scoped API key only.
+      - name: install Claude Code
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          npm install -g @anthropic-ai/claude-code@latest
+          claude auth status
+
+      # Fetch protected-environment deployment identity through the
+      # Actions/Deployments API. Do not equate github.actor with
+      # approval actor.
+      - name: resolve approval identity
+        id: approval
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          DEPLOY_ID=$(gh api \
+            "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/pending_deployments" \
+            --jq '.[0].environment.id // empty' 2>/dev/null || true)
+          if [ -z "$DEPLOY_ID" ]; then
+            DEPLOY_ID="deploy-${{ github.run_id }}"
+          fi
+          echo "deployment_id=$DEPLOY_ID" >> "$GITHUB_OUTPUT"
+
+          APPROVER=$(gh api \
+            "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/approvals" \
+            --jq '.[0].user.login // empty' 2>/dev/null || true)
+          if [ -z "$APPROVER" ]; then
+            APPROVER="${{ github.actor }}"
+          fi
+          echo "approver=$APPROVER" >> "$GITHUB_OUTPUT"
+
+      - name: run certification
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          node packages/mint/dist/cli.js release certify-claude \
+            --candidate "${{ inputs.candidate_tag }}" \
+            --repo . \
+            --execute \
+            --producer-repository "${{ github.repository }}" \
+            --producer-workflow "certify-claude-macos.yml" \
+            --producer-workflow-sha "${{ github.sha }}" \
+            --producer-run-id "${{ github.run_id }}" \
+            --producer-job-id "${{ github.job }}" \
+            --producer-trigger-actor "${{ github.actor }}" \
+            --producer-runner-image "macos-14" \
+            --producer-deployment-id "${{ steps.approval.outputs.deployment_id }}" \
+            --producer-approval-actor "${{ steps.approval.outputs.approver }}" \
+            --producer-approved-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+      - name: upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-macos-evidence-${{ inputs.candidate_tag }}
+          path: |
+            release-output/moe-evidence-*.json
+            release-output/*-claude-code-macos-log.txt

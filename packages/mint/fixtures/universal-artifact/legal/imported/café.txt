@@ -1,0 +1,1 @@
+NFC fixture path owned by fixture-source-mit.

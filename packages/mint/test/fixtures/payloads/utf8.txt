@@ -1,0 +1,2 @@
+This tracked UTF-8 fixture documents the ordinary-text payload counterpart to
+the raw binary bytes constructed by the integration test.

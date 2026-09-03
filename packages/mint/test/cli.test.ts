@@ -1,15 +1,153 @@
 import { describe, it, expect } from 'vitest'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, cpSync, writeFileSync, readFileSync } from 'node:fs'
+import { chmodSync, mkdirSync, mkdtempSync, cpSync, writeFileSync, readFileSync, existsSync, readdirSync, rmSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
+import { parse, stringify } from 'yaml'
 
 // The only test file allowed to shell out: it exercises the built dist/cli.js
 // binary directly (spawnSync) to prove the process-level exit-code contract,
 // which the in-process unit tests (generate.test.ts, validate.test.ts) can't
 // observe since they call the exported functions instead of the CLI.
 const REPO_ROOT = process.cwd()
+const WORKSPACE_ROOT = resolve(REPO_ROOT, '../..')
 const CLI = join(REPO_ROOT, 'dist', 'cli.js')
+
+type RecoveryState = 'unstarted' | 'backed-up' | 'committed' | 'clean'
+
+const RECOVERY_TARGETS = [
+  { kind: 'directory', current: 'plugins', next: 'plugins.next-recovery', backup: 'plugins.backup-recovery' },
+  { kind: 'file', current: '.claude-plugin/marketplace.json', next: '.claude-plugin/marketplace.next-recovery.json', backup: '.claude-plugin/marketplace.backup-recovery.json' },
+  { kind: 'file', current: 'docs/moe/generated/plugin-catalog.md', next: 'docs/moe/generated/plugin-catalog.next-recovery.md', backup: 'docs/moe/generated/plugin-catalog.backup-recovery.md' },
+] as const
+
+function writeGenerationPath(root: string, target: (typeof RECOVERY_TARGETS)[number], path: string, generation: 'old' | 'new'): void {
+  const absolute = join(root, path)
+  if (target.kind === 'directory') {
+    mkdirSync(absolute, { recursive: true })
+    writeFileSync(join(absolute, 'generation.txt'), `${generation}\n`)
+    return
+  }
+  mkdirSync(dirname(absolute), { recursive: true })
+  writeFileSync(absolute, `${generation}\n`)
+}
+
+function seedRecoveryFixture(states: readonly RecoveryState[], recovery?: 'old'): string {
+  const root = mkdtempSync(join(tmpdir(), 'mint-root-recovery-'))
+  mkdirSync(join(root, 'scripts', 'lib'), { recursive: true })
+  mkdirSync(join(root, 'bin'), { recursive: true })
+  cpSync(join(WORKSPACE_ROOT, 'scripts', 'clean-package-dist.mjs'), join(root, 'scripts', 'clean-package-dist.mjs'))
+  cpSync(join(WORKSPACE_ROOT, 'scripts', 'mint-prepare.mjs'), join(root, 'scripts', 'mint-prepare.mjs'))
+  cpSync(join(WORKSPACE_ROOT, 'scripts', 'mint-recover.mjs'), join(root, 'scripts', 'mint-recover.mjs'))
+  cpSync(join(WORKSPACE_ROOT, 'scripts', 'lib', 'mint-diagnostics.mjs'), join(root, 'scripts', 'lib', 'mint-diagnostics.mjs'))
+  cpSync(join(WORKSPACE_ROOT, 'scripts', 'lib', 'mint-host-contract.mjs'), join(root, 'scripts', 'lib', 'mint-host-contract.mjs'))
+  cpSync(join(WORKSPACE_ROOT, 'scripts', 'lib', 'mint-generation-transaction.mjs'), join(root, 'scripts', 'lib', 'mint-generation-transaction.mjs'))
+  const scripts = (JSON.parse(readFileSync(join(WORKSPACE_ROOT, 'package.json'), 'utf8')) as { scripts: Record<string, string> }).scripts
+  if (scripts.mint === undefined || scripts['mint:check'] === undefined) throw new Error('root Mint scripts missing')
+  writeFileSync(join(root, 'package.json'), `${JSON.stringify({
+    private: true,
+    type: 'module',
+    scripts: { mint: scripts.mint, 'mint:check': scripts['mint:check'] },
+  }, null, 2)}\n`)
+  const fakeTurbo = join(root, 'bin', 'turbo')
+  writeFileSync(fakeTurbo, `#!/usr/bin/env node
+import { existsSync, mkdirSync, writeFileSync } from "node:fs"
+const packages = ["memory", "glass", "crew", "statusline"]
+for (const packageName of packages) {
+  const dist = \`packages/\${packageName}/dist\`
+  for (const stale of ["stale.js.map", "stale.d.ts.map", "obsolete.js"]) {
+    if (existsSync(\`\${dist}/\${stale}\`)) throw new Error(\`stale output reached Turbo: \${dist}/\${stale}\`)
+  }
+  mkdirSync(dist, { recursive: true })
+  writeFileSync(\`\${dist}/index.js\`, "cache-restored\\n")
+}
+writeFileSync("turbo-ran", "yes\\n")
+`)
+  chmodSync(fakeTurbo, 0o755)
+
+  for (const packageName of ['memory', 'glass', 'crew', 'statusline']) {
+    const dist = join(root, 'packages', packageName, 'dist')
+    mkdirSync(dist, { recursive: true })
+    writeFileSync(join(dist, 'stale.js.map'), '{}\n')
+    writeFileSync(join(dist, 'stale.d.ts.map'), '{}\n')
+    writeFileSync(join(dist, 'obsolete.js'), 'obsolete\n')
+  }
+
+  for (const [index, target] of RECOVERY_TARGETS.entries()) {
+    const state = states[index]
+    if (state === undefined) throw new Error('missing recovery state')
+    if (state === 'unstarted') {
+      writeGenerationPath(root, target, target.current, 'old')
+      writeGenerationPath(root, target, target.next, 'new')
+    } else if (state === 'backed-up') {
+      writeGenerationPath(root, target, target.backup, 'old')
+      writeGenerationPath(root, target, target.next, 'new')
+    } else if (state === 'committed') {
+      writeGenerationPath(root, target, target.current, 'new')
+      writeGenerationPath(root, target, target.backup, 'old')
+    } else {
+      writeGenerationPath(root, target, target.current, recovery === 'old' ? 'old' : 'new')
+    }
+  }
+  writeFileSync(join(root, '.moe-mint-generation-recovery.json'), `${JSON.stringify({
+    schema: 1,
+    transactionId: 'recovery',
+    targets: RECOVERY_TARGETS,
+    ...(recovery === undefined ? {} : { recovery }),
+  })}\n`)
+  return root
+}
+
+function runRootMint(root: string) {
+  return spawnSync('pnpm', ['--ignore-workspace', 'run', 'mint'], {
+    cwd: root,
+    encoding: 'utf8',
+    env: { ...process.env, PATH: `${join(root, 'bin')}:${process.env.PATH ?? ''}` },
+  })
+}
+
+function runRootMintCheck(root: string) {
+  return spawnSync('pnpm', ['--ignore-workspace', 'run', 'mint:check'], {
+    cwd: root,
+    encoding: 'utf8',
+    env: { ...process.env, PATH: `${join(root, 'bin')}:${process.env.PATH ?? ''}` },
+  })
+}
+
+function sixPluginFailureFixture(): string {
+  const root = mkdtempSync(join(tmpdir(), 'mint-cli-six-'))
+  for (const legal of ['LICENSE', 'LICENSE-MIT', 'NOTICE']) cpSync(join(WORKSPACE_ROOT, legal), join(root, legal))
+  const registry = parse(readFileSync(join(WORKSPACE_ROOT, 'moe-platform.yaml'), 'utf8')) as Record<string, any>
+  const coreConfig = parse(readFileSync(join(WORKSPACE_ROOT, 'packages/core/mint/moe.yaml'), 'utf8')) as Record<string, any>
+  const corePackage = JSON.parse(readFileSync(join(WORKSPACE_ROOT, 'packages/core/package.json'), 'utf8')) as Record<string, any>
+  registry.plugins = []
+  registry.profiles = { fixtures: { default: true, plugins: ['fixture-1'] } }
+  for (let index = 1; index <= 6; index += 1) {
+    const id = `fixture-${index}`
+    const source = `packages/${id}`
+    const packageRoot = join(root, source)
+    cpSync(join(WORKSPACE_ROOT, 'packages/core'), packageRoot, { recursive: true })
+    rmSync(join(packageRoot, 'mint'), { recursive: true, force: true })
+    mkdirSync(join(packageRoot, 'mint'), { recursive: true })
+    const packageJson = structuredClone(corePackage)
+    packageJson.name = `@example/${id}`
+    writeFileSync(join(packageRoot, 'package.json'), `${JSON.stringify(packageJson, null, 2)}\n`)
+    const config = structuredClone(coreConfig)
+    config.name = id
+    config.distribution.npm = `@example/${id}`
+    config.marketplace.name = id
+    config.artifact.payloads = index === 6
+      ? [{ from: 'missing-runtime', to: 'dist', required: true }]
+      : []
+    const configPath = `${source}/mint/${id}.yaml`
+    writeFileSync(join(root, configPath), stringify(config))
+    registry.plugins.push({ id, source, config: configPath })
+  }
+  writeFileSync(join(root, 'moe-platform.yaml'), stringify(registry))
+  mkdirSync(join(root, 'plugins'))
+  writeFileSync(join(root, 'plugins', 'canonical.bin'), Buffer.from([0x00, 0xff, 0x41, 0x0a]))
+  return root
+}
 
 function tmpPluginDir(): string {
   const dir = mkdtempSync(join(tmpdir(), 'mint-cli-'))
@@ -39,11 +177,131 @@ describe('CLI end-to-end', () => {
     expect(result.stdout).toContain('harness(es)')
   })
 
-  it('prints "README.md install section updated" when the fixture README has install markers, and omits it on the idempotent second run', () => {
+  it.each([
+    { name: 'unstarted', states: ['unstarted', 'unstarted', 'unstarted'] as const, expected: 'old' },
+    { name: 'backed up', states: ['backed-up', 'backed-up', 'backed-up'] as const, expected: 'old' },
+    { name: 'partly committed', states: ['committed', 'backed-up', 'unstarted'] as const, expected: 'old' },
+    { name: 'fully committed', states: ['committed', 'committed', 'committed'] as const, expected: 'new' },
+    { name: 'stale complete', states: ['clean', 'clean', 'clean'] as const, expected: 'new' },
+    { name: 'interrupted old cleanup', states: ['clean', 'unstarted', 'unstarted'] as const, recovery: 'old' as const, expected: 'old' },
+  ])('root mint recovers a $name journal, cleans runtime dist, then permits a Turbo cache restore', ({ states, recovery, expected }) => {
+    const root = seedRecoveryFixture(states, recovery)
+
+    const result = runRootMint(root)
+
+    expect(result.status, result.stderr).toBe(0)
+    expect(readFileSync(join(root, 'turbo-ran'), 'utf8')).toBe('yes\n')
+    expect(existsSync(join(root, '.moe-mint-generation-recovery.json'))).toBe(false)
+    for (const target of RECOVERY_TARGETS) {
+      const canonical = target.kind === 'directory'
+        ? join(root, target.current, 'generation.txt')
+        : join(root, target.current)
+      expect(readFileSync(canonical, 'utf8')).toBe(`${expected}\n`)
+      expect(existsSync(join(root, target.next))).toBe(false)
+      expect(existsSync(join(root, target.backup))).toBe(false)
+    }
+    for (const packageName of ['memory', 'glass', 'crew', 'statusline']) {
+      const dist = join(root, 'packages', packageName, 'dist')
+      expect(readFileSync(join(dist, 'index.js'), 'utf8')).toBe('cache-restored\n')
+      expect(existsSync(join(dist, 'stale.js.map'))).toBe(false)
+      expect(existsSync(join(dist, 'stale.d.ts.map'))).toBe(false)
+      expect(existsSync(join(dist, 'obsolete.js'))).toBe(false)
+    }
+  })
+
+  it('root mint:check stops an invalid journal before Turbo without labeling it projection drift', () => {
+    const root = seedRecoveryFixture(['unstarted', 'unstarted', 'unstarted'])
+    writeFileSync(join(root, '.moe-mint-generation-recovery.json'), '{not json\n')
+
+    const result = runRootMintCheck(root)
+
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('Mint preparation failed')
+    expect(result.stderr).toContain('code: GENERATION_TRANSACTION_UNRECOVERABLE')
+    expect(result.stderr).toContain('paths: .moe-mint-generation-recovery.json')
+    expect(result.stderr).toContain('action: preserve the journal and outputs')
+    expect(result.stdout).not.toContain('Generated plugin projections are not reproducible')
+    expect(existsSync(join(root, 'turbo-ran'))).toBe(false)
+    for (const packageName of ['memory', 'glass', 'crew', 'statusline']) {
+      expect(existsSync(join(root, 'packages', packageName, 'dist', 'stale.js.map'))).toBe(true)
+      expect(existsSync(join(root, 'packages', packageName, 'dist', 'stale.d.ts.map'))).toBe(true)
+      expect(existsSync(join(root, 'packages', packageName, 'dist', 'obsolete.js'))).toBe(true)
+    }
+  })
+
+  it('assemble fails at plugin six without changing one byte of the canonical plugin tree', () => {
+    const root = sixPluginFailureFixture()
+    const canonical = readFileSync(join(root, 'plugins', 'canonical.bin'))
+
+    const result = runCli([
+      'assemble',
+      '--repo', root,
+      '--destination', join(root, 'plugins.next-sixfailure'),
+    ], REPO_ROOT)
+
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('missing-runtime')
+    expect(readFileSync(join(root, 'plugins', 'canonical.bin'))).toEqual(canonical)
+    expect(existsSync(join(root, 'plugins.next-sixfailure'))).toBe(false)
+  })
+
+  it('ships every core hook executable referenced by the canonical Claude hook manifest', () => {
+    const pluginRoot = join(WORKSPACE_ROOT, 'plugins', 'moe')
+    const hookManifest = readFileSync(join(pluginRoot, 'hooks', 'hooks.json'), 'utf8')
+    const referenced = [...hookManifest.matchAll(/\$\{CLAUDE_PLUGIN_ROOT\}\/([^\\" ]+)/g)]
+      .map((match) => match[1])
+
+    expect(referenced).not.toEqual([])
+    for (const path of referenced) {
+      const absolute = join(pluginRoot, path as string)
+      expect(existsSync(absolute)).toBe(true)
+      expect(statSync(absolute).mode & 0o111).not.toBe(0)
+    }
+    expect(readdirSync(join(pluginRoot, 'hooks')).sort()).toEqual([
+      'claude-judge-continuation',
+      'governance-marker-check',
+      'hooks.json',
+      'moe-completion-evidence',
+      'moe-mint',
+      'plan-set',
+      'plan-set-notice',
+      'run-hook.cmd',
+    ])
+  })
+
+  it('prints the ephemeral registry publish matrix as canonical JSON without writing a matrix file', () => {
+    const result = runCli(['publish-matrix', '--repo', join(REPO_ROOT, '../..')], REPO_ROOT)
+
+    expect(result.status).toBe(0)
+    expect(result.stderr).toBe('')
+    expect(JSON.parse(result.stdout)).toEqual([
+      { plugin: 'moe', package: '@bubstack/moe-core', version: '0.1.4', sourcePackagePath: 'packages/core', generatedArtifactPath: 'plugins/moe' },
+      { plugin: 'moe-backstory', package: '@bubstack/moe-backstory', version: '0.1.4', sourcePackagePath: 'packages/backstory', generatedArtifactPath: 'plugins/moe-backstory' },
+      { plugin: 'moe-memory', package: '@bubstack/moe-memory', version: '0.1.4', sourcePackagePath: 'packages/memory', generatedArtifactPath: 'plugins/moe-memory' },
+      { plugin: 'moe-glass', package: '@bubstack/moe-glass', version: '0.1.4', sourcePackagePath: 'packages/glass', generatedArtifactPath: 'plugins/moe-glass' },
+      { plugin: 'moe-crew', package: '@bubstack/moe-crew', version: '0.1.4', sourcePackagePath: 'packages/crew', generatedArtifactPath: 'plugins/moe-crew' },
+      { plugin: 'moe-statusline', package: '@bubstack/moe-statusline', version: '0.1.0', sourcePackagePath: 'packages/statusline', generatedArtifactPath: 'plugins/moe-statusline' },
+    ])
+    for (const sourcePackage of ['core', 'backstory', 'memory', 'glass', 'crew', 'statusline']) {
+      expect(existsSync(join(REPO_ROOT, '..', sourcePackage, '.claude-plugin', 'plugin.json'))).toBe(false)
+    }
+  })
+
+  it('formats registry MintError failures without exposing an object or stack', () => {
+    const missing = join(mkdtempSync(join(tmpdir(), 'mint-cli-missing-registry-')), 'missing')
+    const result = runCli(['publish-matrix', '--repo', missing], REPO_ROOT)
+
+    expect(result.status).toBe(1)
+    expect(result.stderr).toMatch(/^error: repository root /)
+    expect(result.stderr).not.toContain('MintError:')
+    expect(result.stderr).not.toContain('\n    at ')
+  })
+
+  it('does not claim to rewrite a human-authored README when the fixture has historical markers', () => {
     const dir = tmpPluginDir()
     const first = runCli(['generate'], dir)
     expect(first.status).toBe(0)
-    expect(first.stdout).toContain('README.md install section updated')
+    expect(first.stdout).not.toContain('README.md install section updated')
 
     const second = runCli(['generate'], dir)
     expect(second.status).toBe(0)
@@ -81,9 +339,10 @@ describe('CLI end-to-end', () => {
     const yamlPath = join(dir, 'moe-mint.yaml')
     const yaml = readFileSync(yamlPath, 'utf8')
     // Excluding opencode drops its four uniquely-owned files (the plugin JS,
-    // the translated command/agent .md files, and the install doc); the shared
-    // package.json stays because pi still emits it byte-identically.
-    writeFileSync(yamlPath, yaml.replace('harnesses:\n', 'harnesses:\n  exclude: [opencode]\n'))
+    // the translated command/agent .md files, and the install doc).
+    writeFileSync(yamlPath, yaml
+      .replace('  opencode: { intent: preview, expected_capabilities: [skill-discovery, command-discovery, agent-discovery, bootstrap-routing], operating_systems: [macos] }', '  opencode: { intent: omit }')
+      .replace('harnesses:\n', 'harnesses:\n  exclude: [opencode]\n'))
 
     const result = runCli(['generate'], dir)
 
@@ -142,14 +401,14 @@ describe('CLI end-to-end', () => {
     expect(forced.stdout).toContain('Generated')
   })
 
-  it('bump <version> exits 0 and rewrites the version everywhere', () => {
+  it('bump <version> exits 0 without synthesizing a root package.json', () => {
     const dir = tmpPluginDir()
     runCli(['generate'], dir)
     const result = runCli(['bump', '9.9.9'], dir)
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('Bumping to 9.9.9')
     expect(result.stdout).toContain('All clear')
-    expect(JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).version).toBe('9.9.9')
+    expect(existsSync(join(dir, 'package.json'))).toBe(false)
     expect(JSON.parse(readFileSync(join(dir, '.claude-plugin', 'plugin.json'), 'utf8')).version).toBe('9.9.9')
   })
 
@@ -189,6 +448,45 @@ describe('CLI end-to-end', () => {
     const result = runCli(['bump'], dir)
     expect(result.status).toBe(1)
     expect(result.stderr).toContain('exactly one')
+  })
+
+  it('release certify-claude exits 0 in plan mode with candidate tag', () => {
+    const result = runCli(['release', 'certify-claude', '--candidate', 'v0.1.5-rc.1', '--repo', '.'], REPO_ROOT)
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('certify-claude')
+    expect(result.stdout).toContain('v0.1.5-rc.1')
+  })
+
+  it('release candidate exits 0 in plan mode', () => {
+    const result = runCli(['release', 'candidate', '--tag', 'v0.1.5-rc.1', '--repo', '.'], REPO_ROOT)
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('candidate')
+    expect(result.stdout).toContain('v0.1.5-rc.1')
+  })
+
+  it('release preflight exits 0 with tag', () => {
+    const result = runCli(['release', 'preflight', '--tag', 'v0.1.5-rc.1', '--repo', '.'], REPO_ROOT)
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('preflight')
+  })
+
+  it('release verify exits 0 with catalog tag', () => {
+    const result = runCli(['release', 'verify', '--catalog-tag', 'v0.1.5', '--repo', '.'], REPO_ROOT)
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('verify')
+  })
+
+  it('release promote exits 0 in plan mode with stable tag', () => {
+    const result = runCli(['release', 'promote', '--tag', 'v0.1.5', '--repo', '.'], REPO_ROOT)
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('promote')
+    expect(result.stdout).toContain('v0.1.5')
+  })
+
+  it('release certify-claude exits 1 when --execute is missing producer identity', () => {
+    const result = runCli(['release', 'certify-claude', '--candidate', 'v0.1.5-rc.1', '--repo', '.', '--execute'], REPO_ROOT)
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('error:')
   })
 
   it('init → generate → validate happy path exits 0 at each step', () => {

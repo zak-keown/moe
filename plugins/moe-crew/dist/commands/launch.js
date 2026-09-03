@@ -1,0 +1,239 @@
+import { randomUUID } from "node:crypto";
+import { existsSync, mkdirSync, realpathSync, statSync } from "node:fs";
+import { join } from "node:path";
+import { hasConsent } from "../core/consent.js";
+import { eventsPath, workerHomePath } from "../core/paths.js";
+import { shellQuote } from "../core/shell.js";
+import { isoSecondsUtc } from "../core/time.js";
+import { ensureOwnedDir, removeWorker, resolveSession, writeHarnessMarker, writeMeta, writeShim, writeWorktreeMarker, } from "../core/worker-store.js";
+import { createWorktree, worktreePath } from "../core/worktree.js";
+import { getDriver } from "../harness/registry.js";
+import { awaitSessionStart } from "./await-start.js";
+import { awaitComposerReady, dismissCodexTrustGate } from "./codex-launch.js";
+import { awaitPiReady } from "./pi-launch.js";
+/** The one-time-consent error, matching the bash text. */
+export function consentError(moeCrewPath) {
+    return {
+        stderr: `Error: moe-crew requires one-time consent before launching workers.\nRun: ${moeCrewPath} grant-consent`,
+        code: 1,
+    };
+}
+/**
+ * Validate that cwd is an existing directory and resolve it to an absolute
+ * realpath (bash `pwd -P`). Returns the resolved path, or a code-1 result.
+ */
+export function resolveCwd(cwd) {
+    if (!existsSync(cwd) || !statSync(cwd).isDirectory()) {
+        return { stderr: `Error: cwd '${cwd}' does not exist`, code: 1 };
+    }
+    return realpathSync(cwd);
+}
+/** Render the status panel printed to stderr by launch/adopt. */
+export function renderPanel(opts) {
+    const reproduceArgs = opts.invocation.map(shellQuote).join(" ");
+    // The default moe-crew path is the bundle (`dist/moe-crew.cjs`) — a plain file with no
+    // shebang and not +x, so a bare path isn't runnable. Prefix `node` for a JS
+    // entry; a non-JS MOE_CREW_PATH wrapper override is used as-is (RE-2).
+    const runnableMoeCrew = /\.[cm]?js$/.test(opts.moeCrewPath)
+        ? `node ${shellQuote(opts.moeCrewPath)}`
+        : shellQuote(opts.moeCrewPath);
+    return [
+        opts.header,
+        `  tmux:       ${opts.tmuxName}`,
+        `  session_id: ${opts.sessionId}`,
+        `  cwd:        ${opts.cwd}`,
+        `  events:     ${opts.eventsFile}`,
+        `  reproduce: ${runnableMoeCrew} ${opts.verb} ${reproduceArgs}`,
+    ].join("\n");
+}
+/**
+ * The per-worker home dir for a derive harness (codex's CODEX_HOME). Deterministic
+ * from tmux_name so it can be re-derived without persisted state. Each worker gets
+ * its own config/auth/sessions dir under `<workerDir>/homes/<tmuxName>` — the same
+ * path `removeWorker` cleans up on stop (single source of truth in `paths.ts`).
+ */
+export function deriveWorkerHome(workerDir, tmuxName) {
+    return workerHomePath(workerDir, tmuxName);
+}
+/**
+ * Launch a fresh worker. Parity port of bash `cmd_launch` (upstream `csd` PR #21).
+ *
+ * The harness is chosen here, so launch resolves its OWN driver from `harness`
+ * (ignoring `ctx.driver`). Two id strategies branch after the shared setup
+ * (cwd validation, consent, collision, dir setup):
+ *
+ * - `assign` (claude): moe-crew generates the session id, pre-writes the meta keyed
+ *   by it (so the SessionStart hook can record events), and proof-of-life is a
+ *   `session_start` event (orchestrated by `awaitSessionStart`).
+ * - `derive` (codex): codex mints its OWN id at the first prompt, so moe-crew does
+ *   NOT generate an id or pre-write a meta — instead it writes a sidecar
+ *   `.harness` marker (so per-worker commands resolve the codex driver during
+ *   the pre-registration window) and the producer self-registers the meta on
+ *   the first prompt. There is no session_start at boot, so "proof-of-life" is
+ *   best-effort: dismiss the trust gate, then wait for the composer to be ready.
+ */
+export async function cmdLaunch(ctx, args, opts) {
+    const { tmuxName, extraArgs } = args;
+    const driver = getDriver(args.harness);
+    const resolved = resolveCwd(args.cwd);
+    if (typeof resolved !== "string")
+        return resolved;
+    const cwd = resolved;
+    if (!hasConsent(ctx.home))
+        return consentError(opts.moeCrewPath);
+    if (await ctx.tmux.hasSession(tmuxName)) {
+        return {
+            stderr: `Error: tmux session '${tmuxName}' already exists`,
+            code: 1,
+        };
+    }
+    // Worker dir + bin dir must exist before writing meta/shim. The root is
+    // created privately (0700) and refuses an existing root not owned by the
+    // current user (CR-019) — a co-resident local account could otherwise
+    // pre-plant it at this predictable path ahead of us.
+    ensureOwnedDir(ctx.workerDir);
+    mkdirSync(join(ctx.workerDir, "bin"), { recursive: true, mode: 0o700 });
+    // When --worktree is set, create a disposable git worktree and substitute the
+    // cwd BEFORE either launch path runs. Both launchAssign and launchDerive
+    // receive the worktree path as cwd; the original cwd is only used for the
+    // invocation reproduce line.
+    let effectiveCwd = cwd;
+    let worktreeDir;
+    if (args.worktree) {
+        worktreeDir = await createWorktree(undefined, cwd, tmuxName);
+        effectiveCwd = worktreeDir;
+        // Write the sidecar marker so stop can locate and remove the worktree even
+        // on the derive path where the meta is self-registered later.
+        writeWorktreeMarker(ctx.workerDir, tmuxName, worktreeDir);
+    }
+    const invocation = extraArgs.length > 0 ? [tmuxName, cwd, "--", ...extraArgs] : [tmuxName, cwd];
+    return driver.idStrategy === "derive"
+        ? launchDerive(ctx, { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir }, opts)
+        : launchAssign(ctx, { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir }, opts);
+}
+/**
+ * The assign-id launch (claude): generate the session id, pre-write the meta,
+ * start tmux, await `session_start` proof-of-life, write the shim. The driver's
+ * worker home is the controller HOME.
+ */
+async function launchAssign(ctx, { driver, tmuxName, cwd, extraArgs, invocation, worktreeDir }, opts) {
+    const sessionId = randomUUID();
+    // Pre-write the meta keyed by sessionId so the SessionStart hook can record
+    // events the moment the worker starts. The hook only appends events once a
+    // meta exists, so awaiting session_start would deadlock if the meta were
+    // written after the worker (and the timeout teardown removes it).
+    writeMeta(ctx.workerDir, {
+        tmux_name: tmuxName,
+        session_id: sessionId,
+        cwd,
+        harness: driver.id,
+        started_at: isoSecondsUtc(),
+        invocation,
+        ...(worktreeDir !== undefined ? { worktree: worktreeDir } : {}),
+    });
+    const env = driver.workerEnv(ctx.home, tmuxName, process.env);
+    await driver.prepare(tmuxName, cwd, ctx.home);
+    const argv = [
+        ...driver.launchArgv("launch", sessionId, cwd, opts.pluginDir, ctx.home),
+        ...extraArgs,
+    ];
+    await ctx.tmux.newSession(tmuxName, cwd, env, argv);
+    await driver.postLaunch(tmuxName);
+    const proof = await awaitSessionStart(ctx, tmuxName, sessionId, opts);
+    if (!proof.started) {
+        return { stderr: proof.failureMessage, code: 1 };
+    }
+    const shim = writeShim(ctx.workerDir, tmuxName, opts.moeCrewEntry);
+    const panel = renderPanel({
+        header: "Worker launched.",
+        verb: "launch",
+        tmuxName,
+        sessionId,
+        cwd,
+        eventsFile: eventsPath(ctx.workerDir, sessionId),
+        moeCrewPath: opts.moeCrewPath,
+        invocation,
+    });
+    return { stdout: shim, stderr: panel, code: 0 };
+}
+/**
+ * The derive-id launch (codex, pi): NO session id, NO pre-written meta. Write
+ * the sidecar `.harness` marker, prepare the per-worker home, start tmux, write
+ * the shim. The meta self-registers on the first prompt; the session id / events
+ * file are unknown at launch (shown as placeholders in the panel).
+ *
+ * Codex additionally runs the trust-gate dismissal and composer-ready wait. Pi
+ * has no trust gate, so it runs only a light status-bar/composer-ready wait
+ * (awaitPiReady) — enough to let the TUI come up before the first send; the meta
+ * still self-registers when pi fires its first event.
+ */
+async function launchDerive(ctx, { driver, tmuxName, cwd, extraArgs, invocation, worktreeDir }, opts) {
+    // Sidecar marker so per-worker commands load the codex or pi driver during
+    // the pre-registration window (before the extension self-registers the meta).
+    writeHarnessMarker(ctx.workerDir, tmuxName, driver.id);
+    const workerHome = deriveWorkerHome(ctx.workerDir, tmuxName);
+    const env = driver.workerEnv(workerHome, tmuxName, process.env);
+    await driver.prepare(tmuxName, cwd, workerHome);
+    const argv = [...driver.launchArgv("launch", "", cwd, opts.pluginDir, workerHome), ...extraArgs];
+    await ctx.tmux.newSession(tmuxName, cwd, env, argv);
+    // Per-harness launch-ready waits are handled here in the command layer (they
+    // need the tmux pane, which driver.postLaunch/awaitReady do not receive):
+    //   - codex: dismiss the "Hooks need review" trust gate, then wait for the
+    //     composer glyph.
+    //   - pi: no trust gate, so just a light status-bar/composer-ready wait so the
+    //     TUI is up before the first send (the meta self-registers on first event).
+    if (driver.id === "codex") {
+        await dismissCodexTrustGate(ctx, tmuxName, {
+            timeoutMs: opts.codexTrustTimeoutMs,
+            settleMs: opts.codexTrustSettleMs,
+            pollMs: opts.pollMs,
+        });
+        await awaitComposerReady(ctx, tmuxName, {
+            timeoutMs: opts.codexReadyTimeoutMs,
+            pollMs: opts.pollMs,
+        });
+    }
+    else if (driver.id === "pi") {
+        await awaitPiReady(ctx, tmuxName, {
+            timeoutMs: opts.piReadyTimeoutMs,
+            pollMs: opts.pollMs,
+        });
+    }
+    // newSession's result is void by contract (unlike launchAssign, which gates
+    // on awaitSessionStart's proof), and the trust-gate/ready waits above are
+    // documented best-effort — neither can fail. Without this check, a tmux
+    // that silently no-ops (absent, unreachable, rejects the session name)
+    // still gets a shim path and "Worker launched.", discovered only on the
+    // first `send`.
+    if (!(await ctx.tmux.hasSession(tmuxName))) {
+        // Mirror launchAssign's failure teardown: leave no orphaned harness
+        // marker or per-worker home behind for a worker that never started.
+        // There is no session id yet on the derive path (that's the id
+        // strategy's whole point), so removeWorker's sid-keyed cleanup
+        // (meta/events, which don't exist here) is a no-op; only the
+        // name-keyed cleanup (harness marker, home) does anything.
+        removeWorker(ctx.workerDir, "", tmuxName);
+        return {
+            stderr: `Error: tmux session '${tmuxName}' was not started (tmux missing, unreachable, or it rejected the session)`,
+            code: 1,
+        };
+    }
+    const shim = writeShim(ctx.workerDir, tmuxName, opts.moeCrewEntry);
+    // A launch-registering derive harness (pi) already has its real id by now; show
+    // it. Codex registers only on its first prompt, so it gets the placeholder
+    // (N-2 / RE-5b — the old "on first prompt" was wrong for pi).
+    const registeredSid = driver.registersIdAtLaunch ? resolveSession(ctx.workerDir, tmuxName) : null;
+    const panel = renderPanel({
+        header: "Worker launched.",
+        verb: "launch",
+        tmuxName,
+        sessionId: registeredSid ?? "(derive — minted by the harness on registration)",
+        cwd,
+        eventsFile: registeredSid
+            ? eventsPath(ctx.workerDir, registeredSid)
+            : "(available after the worker registers)",
+        moeCrewPath: opts.moeCrewPath,
+        invocation,
+    });
+    return { stdout: shim, stderr: panel, code: 0 };
+}

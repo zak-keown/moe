@@ -9,7 +9,7 @@ If you were dispatched as a subagent to execute a specific task, ignore this ski
 
 <ALREADY-LOADED>
 If you are reading this at session start, this skill is ALREADY LOADED and you
-are currently following it. Do NOT use the `Skill` tool to load `using-moe` again —
+are currently following it. Do NOT use {skill} to load `using-moe` again —
 that is redundant. Every OTHER skill you reach through the same mechanism.
 </ALREADY-LOADED>
 

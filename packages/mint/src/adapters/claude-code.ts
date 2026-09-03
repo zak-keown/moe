@@ -1,8 +1,9 @@
 import { deepMerge } from '../fileset.js'
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
-import type { MintConfig } from '../config.js'
-import type { HarnessAdapter, EmitResult } from './types.js'
+import { hooksManifestPath, type MintConfig } from '../config.js'
+import type { HarnessAdapter } from './types.js'
+import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { sessionStartScript, runHookCmd, mergedClaudeHooks } from '../bootstrap/shell-hook.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
 import { baseManifestFields, json, claudeMarketplaceTarget, marketplaceName, bootstrapEmitsHooks } from './shared.js'
@@ -27,6 +28,7 @@ const BOOTSTRAP_HOOKS_JSON_PATH = `${BOOTSTRAP_HOOKS_DIR}/hooks.json`
 
 function pluginManifest(model: PluginModel): Record<string, unknown> {
   const { config } = model
+  const sourceHooks = hooksManifestPath(config)
   const base = baseManifestFields(config)
   // license/repository/homepage are in the opposite sub-order from
   // baseManifestFields' own return value -- a historical artifact, not a
@@ -55,8 +57,8 @@ function pluginManifest(model: PluginModel): Record<string, unknown> {
     // (even with no user hooks), so this takes priority over the general
     // non-default-path rule below.
     manifest.hooks = `./${BOOTSTRAP_HOOKS_JSON_PATH}`
-  } else if (model.hooks !== undefined && config.components.hooks !== 'hooks/hooks.json') {
-    manifest.hooks = `./${config.components.hooks}`
+  } else if (model.hooks !== undefined && sourceHooks !== 'hooks/hooks.json') {
+    manifest.hooks = `./${sourceHooks}`
   }
   if (model.mcp !== undefined && config.components.mcp !== '.mcp.json') {
     manifest.mcpServers = `./${config.components.mcp}`
@@ -146,13 +148,13 @@ function installDoc(model: PluginModel): string {
       '',
       '## Caveats',
       '',
-      `- Hand-written entries in \`${config.components.hooks}\` are merged into the generated \`${BOOTSTRAP_HOOKS_JSON_PATH}\`; edit the source file, not the generated file.`,
+      `- Hand-written entries in \`${hooksManifestPath(config)}\` are merged into the generated \`${BOOTSTRAP_HOOKS_JSON_PATH}\`; edit the source file, not the generated file.`,
     )
   }
   return lines.join('\n')
 }
 
-export const claudeCode: HarnessAdapter = {
+export const claudeCode: HarnessAdapter = Object.freeze({
   name: 'claude-code',
   support: {
     skills: 'full',
@@ -166,9 +168,8 @@ export const claudeCode: HarnessAdapter = {
   },
   skillsOutputDir: undefined,
   installDoc,
-  emit(model: PluginModel): EmitResult {
+  emit(model: PluginModel) {
     const { config } = model
-    const warnings: string[] = []
     const files: GeneratedFile[] = [
       { path: '.claude-plugin/plugin.json', content: json(pluginManifest(model)) },
       { path: '.claude-plugin/marketplace.json', content: json(marketplaceManifest(model)) },
@@ -210,6 +211,6 @@ export const claudeCode: HarnessAdapter = {
         )
       }
     }
-    return { files, warnings }
+    return { files, limitations: [], emittedCapabilities: deriveEmittedCapabilities('claude-code', model, files) }
   },
-}
+})

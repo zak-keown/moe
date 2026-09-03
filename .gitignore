@@ -4,6 +4,12 @@
 
 node_modules/
 dist/
+/packages/*/.moe-build/
+# Complete generated plugin artifacts intentionally carry their runtime build
+# payloads. Keep package-local build output ignored while exposing only these
+# canonical, Mint-owned distribution trees to git and mint:check.
+!/plugins/*/dist/
+!/plugins/*/dist/**
 build/
 target/
 .turbo/
@@ -54,3 +60,18 @@ py/proof/examples/*/runs/
 # resolved inside the repo (a pnpm 11 default on some setups). Never source.
 .pnpm-store/
 .moe/concept-review/
+
+# Interrupted Mint generation state. These are the only nonce-bearing siblings
+# the swap protocol owns; do not broaden these patterns to arbitrary siblings.
+/plugins.next-*
+/plugins.backup-*
+/.claude-plugin/marketplace.next-*.json
+/.claude-plugin/marketplace.backup-*.json
+/docs/moe/generated/plugin-catalog.next-*.md
+/docs/moe/generated/plugin-catalog.backup-*.md
+/.moe-mint-generation-*.json
+/..moe-mint-generation-*.json.tmp-*
+/.claude-plugin/.marketplace.next-*.json.tmp-*
+/.claude-plugin/.marketplace.backup-*.json.tmp-*
+/docs/moe/generated/.plugin-catalog.next-*.md.tmp-*
+/docs/moe/generated/.plugin-catalog.backup-*.md.tmp-*

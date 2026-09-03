@@ -14,14 +14,16 @@ import { defineConfig } from "tsup";
 export default defineConfig([
   {
     entry: {
-      "moe-crew": "src/cli.ts",
-      "emit-event": "src/hooks/emit-event.ts",
+      "moe-crew": "packages/crew/src/cli.ts",
+      "emit-event": "packages/crew/src/hooks/emit-event.ts",
     },
-    outDir: "dist",
+    outDir: "packages/crew/dist",
+    tsconfig: "packages/crew/tsconfig.json",
     target: "node24",
     clean: false,
     splitting: false,
     format: ["cjs"],
+    metafile: true,
     outExtension: () => ({ js: ".cjs" }),
     // `moe-crew` is a declared bin (package.json `bin`), and src/cli.ts opens
     // with `import` rather than a shebang — so without this the bundle began
@@ -42,13 +44,15 @@ export default defineConfig([
   },
   {
     entry: {
-      "pi-extension": "src/pi-extension/index.ts",
+      "pi-extension": "packages/crew/src/pi-extension/index.ts",
     },
-    outDir: "dist",
+    outDir: "packages/crew/dist",
+    tsconfig: "packages/crew/tsconfig.json",
     target: "node24",
     clean: false,
     splitting: false,
     format: ["esm"],
+    metafile: true,
     outExtension: () => ({ js: ".mjs" }),
     treeshake: true,
   },

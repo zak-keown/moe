@@ -1,5 +1,5 @@
 {
-  "name": "moe-glass",
+  "name": "@bubstack/moe-glass",
   "version": "0.1.4",
   "description": "Direct Chrome DevTools Protocol access. Skill mode plus MCP mode, zero dependencies.",
   "author": {
@@ -7,10 +7,33 @@
     "email": "zak.keown@outlook.com"
   },
   "license": "MIT",
-  "repository": "https://gitlab.com/moe-ai/moe",
-  "homepage": "https://gitlab.com/moe-ai/moe",
+  "repository": "https://github.com/zak-keown/moe",
+  "homepage": "https://github.com/zak-keown/moe",
+  "keywords": [
+    "chrome",
+    "devtools-protocol",
+    "browser",
+    "automation",
+    "screenshots"
+  ],
   "type": "module",
-  "main": "./.opencode/plugins/moe-glass.js",
+  "main": "dist/index.js",
+  "bin": {
+    "moe-glass": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "zod": "^3.23.8"
+  },
+  "exports": {
+    ".": {
+      "default": "./dist/index.js"
+    },
+    "./server": "./.opencode/plugins/moe-glass.js"
+  },
   "pi": {
     "extensions": [
       "./.pi/extensions/moe-glass.ts"
@@ -19,12 +42,79 @@
       "./skills"
     ]
   },
-  "keywords": [
-    "chrome",
-    "devtools-protocol",
-    "browser",
-    "automation",
-    "screenshots",
-    "pi-package"
-  ]
+  "files": [
+    ".agents/plugins/marketplace.json",
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".cursor-plugin/marketplace.json",
+    ".cursor-plugin/plugin.json",
+    ".kimi-plugin/plugin.json",
+    ".moe-mint/manifest.json",
+    ".moe/artifact.json",
+    ".opencode/agent/browser-user.md",
+    ".opencode/plugins/moe-glass.js",
+    ".pi/extensions/moe-glass.ts",
+    "LICENSE",
+    "NOTICE",
+    "agents/browser-user.md",
+    "dist/index.d.ts",
+    "dist/index.js",
+    "dist/payload.d.ts",
+    "dist/payload.js",
+    "docs/install/agent-plugins-1.0.md",
+    "docs/install/claude-code.md",
+    "docs/install/codex.md",
+    "docs/install/copilot.md",
+    "docs/install/cursor.md",
+    "docs/install/kimi.md",
+    "docs/install/opencode.md",
+    "docs/install/pi.md",
+    "docs/support-matrix.md",
+    "plugin.json",
+    "skills/browsing/COMMANDLINE-USAGE.md",
+    "skills/browsing/EXAMPLES.md",
+    "skills/browsing/README.md",
+    "skills/browsing/SKILL.md",
+    "skills/browsing/chrome-ws",
+    "skills/browsing/chrome-ws-lib.js",
+    "skills/browsing/host-override.js",
+    "skills/browsing/lib/browser-bridge.js",
+    "skills/browsing/lib/browser-session.js",
+    "skills/browsing/lib/capture.js",
+    "skills/browsing/lib/cdp-router.js",
+    "skills/browsing/lib/cdp-utils.js",
+    "skills/browsing/lib/chrome-launcher-helpers.js",
+    "skills/browsing/lib/chrome-process.js",
+    "skills/browsing/lib/console-logging.js",
+    "skills/browsing/lib/cookies.js",
+    "skills/browsing/lib/dialogs-render.js",
+    "skills/browsing/lib/dialogs-router.js",
+    "skills/browsing/lib/dialogs.js",
+    "skills/browsing/lib/element-selector.js",
+    "skills/browsing/lib/evaluation.js",
+    "skills/browsing/lib/extraction.js",
+    "skills/browsing/lib/file-upload.js",
+    "skills/browsing/lib/html-diff.js",
+    "skills/browsing/lib/key-definitions.js",
+    "skills/browsing/lib/keyboard-input.js",
+    "skills/browsing/lib/mouse.js",
+    "skills/browsing/lib/navigation.js",
+    "skills/browsing/lib/page-scripts/dom-summary.js",
+    "skills/browsing/lib/page-scripts/markdown.js",
+    "skills/browsing/lib/page-scripts/permission-shim.js",
+    "skills/browsing/lib/page-session.js",
+    "skills/browsing/lib/profile-lock.js",
+    "skills/browsing/lib/screenshot.js",
+    "skills/browsing/lib/select-option.js",
+    "skills/browsing/lib/session-state.js",
+    "skills/browsing/lib/tabs.js",
+    "skills/browsing/lib/viewport.js",
+    "skills/browsing/lib/websocket-client.js",
+    "skills/browsing/package.json"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
 }

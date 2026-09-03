@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { mkdtempSync, writeFileSync, readFileSync, existsSync } from 'node:fs'
+import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { buildModel } from '../src/model.js'
-import { emitDocs, injectReadme } from '../src/docs-emit.js'
+import { emitDocs } from '../src/docs-emit.js'
 import { adapters } from '../src/adapters/index.js'
 import { claudeCode } from '../src/adapters/claude-code.js'
 import { opencode } from '../src/adapters/opencode.js'
@@ -12,12 +12,13 @@ import { agentPlugins } from '../src/adapters/agent-plugins.js'
 import { kimi } from '../src/adapters/kimi.js'
 import { opencodePluginPath } from '../src/bootstrap/node-package.js'
 import type { HarnessAdapter } from '../src/adapters/types.js'
+import { withV1Policy } from './helpers.js'
 
 const model = buildModel('fixtures/kitchen-sink')
 
 function tmpFixture(yaml: string): string {
   const dir = mkdtempSync(join(tmpdir(), 'mint-docs-emit-'))
-  writeFileSync(join(dir, 'moe-mint.yaml'), yaml)
+  writeFileSync(join(dir, 'moe-mint.yaml'), withV1Policy(yaml))
   return dir
 }
 
@@ -32,17 +33,17 @@ const fullSupport = {
   variables: 'none',
 } as const
 
+
 function adapterWithInstallDoc(name: string, body: string): HarnessAdapter {
   return {
     name,
-    support: fullSupport,
-    emit: () => ({ files: [], warnings: [] }),
+    emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }),
     installDoc: () => body,
   }
 }
 
 function adapterWithoutInstallDoc(name: string): HarnessAdapter {
-  return { name, support: fullSupport, emit: () => ({ files: [], warnings: [] }) }
+  return { name, emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }) }
 }
 
 describe('emitDocs install-doc files', () => {
@@ -55,7 +56,7 @@ describe('emitDocs install-doc files', () => {
   })
 
   it('wraps the installDoc body with a generated marker and a heading naming the plugin and the mapped display name', () => {
-    const withDoc = adapterWithInstallDoc('kimi', 'Body text for kimi.')
+    const withDoc = adapterWithInstallDoc('kimi', 'Body text for kimi.\n\n')
     const files = emitDocs(model, [withDoc])
     const file = files.find((f) => f.path === 'docs/install/kimi.md')!
     const lines = file.content.split('\n')
@@ -65,6 +66,7 @@ describe('emitDocs install-doc files', () => {
     expect(lines[3]).toBe('')
     expect(file.content).toContain('Body text for kimi.')
     expect(file.content.endsWith('\n')).toBe(true)
+    expect(file.content.endsWith('\n\n')).toBe(false)
   })
 
   it('falls back to the adapter name itself when it has no entry in the display-name map', () => {
@@ -104,21 +106,20 @@ describe('emitDocs support-matrix.md', () => {
         '',
         '# kitchen-sink harness support matrix',
         '',
-        '| Harness | skills | commands | agents | hooks | mcp | bootstrap | rules | variables |',
-        '|---|---|---|---|---|---|---|---|---|',
-        '| claude-code | full | full | full | full | full | full | none | none |',
-        '| cursor | full | full | full | partial | full | full | none | none |',
-        '| codex | full | none | none | none | none | partial | none | none |',
-        '| kimi | full | none | none | none | none | partial | none | none |',
-        '| opencode | full | full | partial | none | none | full | none | none |',
-        '| pi | full | none | none | none | none | full | none | none |',
-        '| agent-plugins-1.0 | full | none | none | none | full | none | none | none |',
-        '| copilot | full | full | full | full | full | full | none | none |',
+        '| Harness | Emitted capabilities |',
+        '|---|---|',
+        '| claude-code | generate a plugin to inspect |',
+        '| cursor | generate a plugin to inspect |',
+        '| codex | generate a plugin to inspect |',
+        '| kimi | generate a plugin to inspect |',
+        '| opencode | generate a plugin to inspect |',
+        '| pi | generate a plugin to inspect |',
+        '| agent-plugins-1.0 | generate a plugin to inspect |',
+        '| copilot | generate a plugin to inspect |',
         '',
         '## Notes',
         '',
         '- Copilot consumes the Claude Code layout through `.claude-plugin/marketplace.json`; keep the `claude-code` adapter enabled when targeting Copilot.',
-        "- codex's `bootstrap: partial` means native skill discovery only, with no active injection hook.",
         '- Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.',
         '',
       ].join('\n'),
@@ -177,7 +178,7 @@ describe('opencode installDoc (exact content, kitchen-sink model)', () => {
         '',
         '## What gets emitted',
         '',
-        '- `package.json` (shared with the pi adapter when both are active)',
+        "- a `./server` export contribution for the artifact's composed root `package.json`",
         `- \`${pluginPath}\`, the OpenCode plugin module that registers the plugin's skills directory and injects bootstrap context`,
         '- a `.opencode/command/<name>.md` file for each command (`ks-hello`)',
         '- a `.opencode/agent/<name>.md` file for each agent (`ks-reviewer`)',
@@ -191,10 +192,6 @@ describe('opencode installDoc (exact content, kitchen-sink model)', () => {
         '```',
         '',
         "OpenCode loads the plugin module on startup: it registers the skills directory through a config hook (no symlinks needed) and reads commands/agents translated under `.opencode/`. Consult the OpenCode plugin docs if this doesn't match your installed version.",
-        '',
-        '## Caveats',
-        '',
-        "- `package.json` is generated at the plugin root; if you maintain your own `package.json` for this plugin, exclude the opencode and pi adapters from generation (`harnesses.exclude`) or merge the fields by hand.",
         '',
       ].join('\n'),
     )
@@ -265,95 +262,5 @@ describe('kimi installDoc caveat conditionality (representative)', () => {
     const body = kimi.installDoc!(noneModel)
     expect(body).not.toContain('sessionStart')
     expect(body).not.toContain('## Caveats')
-  })
-})
-
-describe('injectReadme', () => {
-  const readmeAdapters = [adapterWithInstallDoc('claude-code', 'body'), adapterWithInstallDoc('kimi', 'body'), adapterWithoutInstallDoc('codex')]
-
-  function tmpReadmeDir(readmeContent?: string): string {
-    const dir = mkdtempSync(join(tmpdir(), 'mint-inject-readme-'))
-    if (readmeContent !== undefined) writeFileSync(join(dir, 'README.md'), readmeContent)
-    return dir
-  }
-
-  it('replaces the region between the markers with a harness/install table, one row per active adapter that implements installDoc', () => {
-    const dir = tmpReadmeDir(
-      ['# Test Plugin', '', '<!-- moe-mint:install:start -->', 'placeholder', '<!-- moe-mint:install:end -->', '', 'Footer line.', ''].join(
-        '\n',
-      ),
-    )
-    const result = injectReadme(dir, model, readmeAdapters)
-    expect(result).toEqual({ injected: true })
-    expect(readFileSync(join(dir, 'README.md'), 'utf8')).toBe(
-      [
-        '# Test Plugin',
-        '',
-        '<!-- moe-mint:install:start -->',
-        '',
-        '| Harness | Install |',
-        '|---|---|',
-        '| Claude Code | see docs/install/claude-code.md |',
-        '| Kimi Code | see docs/install/kimi.md |',
-        '',
-        '<!-- moe-mint:install:end -->',
-        '',
-        'Footer line.',
-        '',
-      ].join('\n'),
-    )
-  })
-
-  it('is idempotent: a second call reports {injected: false} and leaves the file byte-identical', () => {
-    const dir = tmpReadmeDir(
-      ['# Test Plugin', '', '<!-- moe-mint:install:start -->', 'placeholder', '<!-- moe-mint:install:end -->', ''].join('\n'),
-    )
-    injectReadme(dir, model, readmeAdapters)
-    const afterFirst = readFileSync(join(dir, 'README.md'), 'utf8')
-
-    const result = injectReadme(dir, model, readmeAdapters)
-
-    expect(result).toEqual({ injected: false })
-    expect(readFileSync(join(dir, 'README.md'), 'utf8')).toBe(afterFirst)
-  })
-
-  it('warns and leaves the file untouched when the markers are absent', () => {
-    const original = ['# Test Plugin', '', 'No markers here at all.', ''].join('\n')
-    const dir = tmpReadmeDir(original)
-
-    const result = injectReadme(dir, model, readmeAdapters)
-
-    expect(result.injected).toBe(false)
-    expect(result.warning).toBeDefined()
-    expect(result.warning).toContain('<!-- moe-mint:install:start -->')
-    expect(result.warning).toContain('<!-- moe-mint:install:end -->')
-    expect(readFileSync(join(dir, 'README.md'), 'utf8')).toBe(original)
-  })
-
-  it('returns no warning and does nothing when README.md does not exist', () => {
-    const dir = tmpReadmeDir()
-    const result = injectReadme(dir, model, readmeAdapters)
-    expect(result).toEqual({ injected: false })
-    expect(existsSync(join(dir, 'README.md'))).toBe(false)
-  })
-
-  it('treats markers in the wrong order (end before start) as absent, warning rather than injecting', () => {
-    const original = [
-      '# Test Plugin',
-      '',
-      '<!-- moe-mint:install:end -->',
-      'stuff',
-      '<!-- moe-mint:install:start -->',
-      '',
-    ].join('\n')
-    const dir = tmpReadmeDir(original)
-
-    const result = injectReadme(dir, model, readmeAdapters)
-
-    expect(result.injected).toBe(false)
-    expect(result.warning).toBeDefined()
-    expect(result.warning).toContain('<!-- moe-mint:install:start -->')
-    expect(result.warning).toContain('<!-- moe-mint:install:end -->')
-    expect(readFileSync(join(dir, 'README.md'), 'utf8')).toBe(original)
   })
 })

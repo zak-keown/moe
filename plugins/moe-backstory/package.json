@@ -1,5 +1,5 @@
 {
-  "name": "moe-backstory",
+  "name": "@bubstack/moe-backstory",
   "version": "0.1.4",
   "description": "Recover a behavioral spec from a codebase that never had one.",
   "author": {
@@ -7,10 +7,22 @@
     "email": "zak.keown@outlook.com"
   },
   "license": "Apache-2.0",
-  "repository": "https://gitlab.com/moe-ai/moe",
-  "homepage": "https://gitlab.com/moe-ai/moe",
+  "repository": "https://github.com/zak-keown/moe",
+  "homepage": "https://github.com/zak-keown/moe",
+  "keywords": [
+    "reverse-engineering",
+    "specification",
+    "analysis",
+    "archaeology",
+    "documentation"
+  ],
   "type": "module",
-  "main": "./.opencode/plugins/moe-backstory.js",
+  "engines": {
+    "node": ">=24"
+  },
+  "exports": {
+    "./server": "./.opencode/plugins/moe-backstory.js"
+  },
   "pi": {
     "extensions": [
       "./.pi/extensions/moe-backstory.ts"
@@ -19,12 +31,63 @@
       "./skills"
     ]
   },
-  "keywords": [
-    "reverse-engineering",
-    "specification",
-    "analysis",
-    "archaeology",
-    "documentation",
-    "pi-package"
-  ]
+  "files": [
+    ".agents/plugins/marketplace.json",
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".cursor-plugin/marketplace.json",
+    ".cursor-plugin/plugin.json",
+    ".kimi-plugin/plugin.json",
+    ".moe-mint/manifest.json",
+    ".moe/artifact.json",
+    ".opencode/agent/analyzer.md",
+    ".opencode/agent/sanitizer.md",
+    ".opencode/command/analyze.md",
+    ".opencode/command/sanitize.md",
+    ".opencode/plugins/moe-backstory.js",
+    ".pi/extensions/moe-backstory.ts",
+    "LICENSE",
+    "NOTICE",
+    "agents/analyzer.md",
+    "agents/sanitizer.md",
+    "commands/analyze.md",
+    "commands/sanitize.md",
+    "docs/install/agent-plugins-1.0.md",
+    "docs/install/claude-code.md",
+    "docs/install/codex.md",
+    "docs/install/copilot.md",
+    "docs/install/cursor.md",
+    "docs/install/kimi.md",
+    "docs/install/opencode.md",
+    "docs/install/pi.md",
+    "docs/support-matrix.md",
+    "plugin.json",
+    "skills/analysis-pipeline/SKILL.md",
+    "skills/autonomous-discovery/SKILL.md",
+    "skills/behavioral-spec-writing/SKILL.md",
+    "skills/binary-analysis/SKILL.md",
+    "skills/community-intelligence/SKILL.md",
+    "skills/container-execution/SKILL.md",
+    "skills/contract-detection/SKILL.md",
+    "skills/doc-research/SKILL.md",
+    "skills/ecosystem-analysis/SKILL.md",
+    "skills/fidelity-validation/SKILL.md",
+    "skills/git-archaeology/SKILL.md",
+    "skills/incremental-analysis/SKILL.md",
+    "skills/multi-source-synthesis/SKILL.md",
+    "skills/provenance-methodology/SKILL.md",
+    "skills/runtime-observation/SKILL.md",
+    "skills/second-pass-review/SKILL.md",
+    "skills/source-analysis/SKILL.md",
+    "skills/source-completeness/SKILL.md",
+    "skills/spec-sanitization/SKILL.md",
+    "skills/test-suite-analysis/SKILL.md",
+    "skills/validation-methodology/SKILL.md",
+    "skills/visual-exploration/SKILL.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  }
 }

@@ -272,23 +272,14 @@ When your human partner asks to review the plan visually — a browseable
 table of tasks, a rendered dependency diagram — walk the ladder from
 the top:
 
-All four rungs defined at
-`${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` are
-available. Where the `Artifact` tool is present (Claude Code proper),
-rung 1 is the default for anything with an audience. Where it isn't
-(this same skill body also ships to Antigravity and Copilot CLI via
-this shared skills/ directory), the ladder self-detects and starts at
-rung 2 — the brainstorm browser companion — dropping further only when
-`node` isn't on PATH or the sandbox blocks the port. Announce which
-rung you took before the render lands.
-
+{render-ladder}
 
 Never gate execution on the browseable form; the markdown
 file is the source of truth.
 
 ## Execution Handoff
 
-After saving the plan, use `AskUserQuestion` to offer the execution choice:
+After saving the plan, use {ask} to offer the execution choice:
 
 **"Plan complete and saved to `docs/moe/plans/<filename>.md`. Two execution options:**
 

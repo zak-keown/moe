@@ -1,0 +1,36 @@
+{
+  "name": "@fixture/universal-artifact",
+  "version": "1.2.3",
+  "type": "module",
+  "description": "Universal deterministic artifact fixture.",
+  "license": "MIT",
+  "author": { "name": "Fixture Author" },
+  "repository": "https://github.com/example/universal-artifact",
+  "homepage": "https://github.com/example/universal-artifact",
+  "keywords": ["fixture", "artifact", "determinism"],
+  "engines": { "node": ">=24" },
+  "main": "./runtime/index.js",
+  "types": "./types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./runtime/index.js"
+    }
+  },
+  "bin": {
+    "moe-universal-fixture": "./bin/moe-fixture"
+  },
+  "dependencies": {
+    "fixture-runtime-external": "^1.0.0"
+  },
+  "optionalDependencies": {
+    "fixture-optional-external": "^2.0.0"
+  },
+  "sideEffects": ["./runtime/register.js"],
+  "scripts": {
+    "test": "never ship source scripts"
+  },
+  "devDependencies": {
+    "vitest": "0.0.0"
+  }
+}

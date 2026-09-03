@@ -12,11 +12,11 @@
 Register the marketplace, then install the plugin:
 
 ```
-claude /plugin marketplace add https://gitlab.com/moe-ai/moe
+claude /plugin marketplace add zak-keown/moe
 ```
 
 ```
-/plugin install moe-memory@moe
+/plugin install moe-memory@core
 ```
 
 If the marketplace is already registered, only the install command is needed. Consult Claude Code's plugin docs if these commands don't match your installed version.

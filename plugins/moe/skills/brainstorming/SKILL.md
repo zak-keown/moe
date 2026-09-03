@@ -99,7 +99,7 @@ artifact, never the approval.
 
 ## Checklist
 
-Classify first, announce the depth, then use `TaskCreate`/`TaskUpdate` to manage each item
+Classify first, announce the depth, then use {todo} to manage each item
 on that depth's list and complete them in order.
 
 **Patch:**
@@ -197,7 +197,7 @@ questions plus a short in-chat design is the whole process.
 - Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
 - If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then brainstorm the first sub-project through the normal design flow. Each sub-project gets its own spec → plan → implementation cycle.
 - For appropriately-scoped projects, ask questions one at a time to refine the idea
-- Prefer multiple choice questions via `AskUserQuestion` when possible, but open-ended is fine too
+- Prefer multiple choice questions via {ask} when possible, but open-ended is fine too
 - Only one question per message *while the shape is still moving* - if a topic needs more exploration, break it into multiple questions. Once the shape is agreed and only decisions remain, switch to rounds (see **Sharpening an agreed shape** below)
 - Focus on understanding: purpose, constraints, success criteria
 
@@ -310,16 +310,7 @@ A browser-based companion for showing mockups, diagrams, and visual options duri
 
 The browser companion is rung 2 of the shared native-rendering ladder in `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md`.
 
-All four rungs defined at
-`${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` are
-available. Where the `Artifact` tool is present (Claude Code proper),
-rung 1 is the default for anything with an audience. Where it isn't
-(this same skill body also ships to Antigravity and Copilot CLI via
-this shared skills/ directory), the ladder self-detects and starts at
-rung 2 — the brainstorm browser companion — dropping further only when
-`node` isn't on PATH or the sandbox blocks the port. Announce which
-rung you took before the render lands.
-
+{render-ladder}
 
 **Opening the companion (just-in-time):** Do NOT start it upfront. Wait until a question would genuinely be clearer shown than told — a real mockup / layout / diagram question, not merely a UI *topic*. The first time that happens, generate the visual, start the server with `--open`, and present the question there immediately. Do not warn about the companion or ask for separate approval before opening it.
 

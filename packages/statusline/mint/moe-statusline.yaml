@@ -1,10 +1,10 @@
 # moe-mint config for moe-statusline.
 #
-# Built by `scripts/mint-plugins.mjs`, which stages this file plus the
-# package's hooks/ into `plugins/moe-statusline/` and runs `moe-mint generate`
-# there. The actual install payload (dist/ + hooks/ + vendor/) ships through
-# the npm package instead — see PLUGINS.distribution in mint-plugins.mjs and
-# how packages/crew's dist/ works the same way.
+# The platform registry resolves this source package and config. Compiled Mint
+# assembles hooks plus required dist/vendor payloads, the exact Claude adapter
+# output, legal files, and root package metadata into the shared
+# `plugins.next-<nonce>` sibling. This config remains source-only and is never
+# copied into the plugin.
 
 name: moe-statusline
 version: 0.1.0
@@ -13,19 +13,38 @@ author:
   name: Zak Keown
   email: zak.keown@outlook.com
 license: MIT
-repository: https://gitlab.com/moe-ai/moe
-homepage: https://gitlab.com/moe-ai/moe
+repository: https://github.com/zak-keown/moe
+homepage: https://github.com/zak-keown/moe
 keywords:
   - statusline
   - claude-code
   - terminal
+
+distribution:
+  npm: "@bubstack/moe-statusline"
+
+artifact:
+  payloads:
+    - {from: dist, to: dist, required: true}
+    - {from: vendor, to: vendor, required: true}
+
+targets:
+  claude-code: {intent: certify, expected_capabilities: [hook-execution], operating_systems: [macos, linux, wsl2, windows]}
+  cursor: {intent: omit}
+  codex: {intent: omit}
+  kimi: {intent: omit}
+  opencode: {intent: omit}
+  pi: {intent: omit}
+  agent-plugins-1.0: {intent: omit}
+  copilot: {intent: omit}
 
 # bootstrap: none. There is no skill to invoke — the SessionStart hook does
 # the entire job with no user action.
 bootstrap: none
 
 imported_works:
-  - ccstatusline
+  - name: ccstatusline
+    artifact_roots: [vendor/ccstatusline]
 
 # components: hooks/hooks.json is a default and present. No skills/,
 # commands/, agents/ or .mcp.json in this package.
@@ -45,11 +64,9 @@ harnesses:
     - copilot
 
 marketplace:
-  # The marketplace users actually install from is the hand-maintained root
-  # .claude-plugin/marketplace.json, whose name is `moe`. Without this, every
-  # generated install doc emits `<plugin>@<plugin>-dev` (the local-dev default
-  # in src/adapters/shared.ts, marketplaceName) — a marketplace that does not
-  # exist, in the one command a new user copies verbatim.
+  # Standalone generation uses this package-local name. Root minting overrides
+  # it with the default profile ID `core` and generates the npm-backed root
+  # marketplace from validated registry authority.
   name: moe
   source: local
   category: development

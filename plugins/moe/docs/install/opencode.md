@@ -4,7 +4,7 @@
 
 ## What gets emitted
 
-- `package.json` (shared with the pi adapter when both are active)
+- a `./server` export contribution for the artifact's composed root `package.json`
 - `.opencode/plugins/moe.js`, the OpenCode plugin module that registers the plugin's skills directory and injects bootstrap context
 - a `.opencode/agent/<name>.md` file for each agent (`review-shard`, `search-moedex`, `verify-finding`)
 
@@ -13,11 +13,7 @@
 Add the plugin to your project's `opencode.json`:
 
 ```json
-{ "plugin": ["moe@git+https://gitlab.com/moe-ai/moe.git"] }
+{ "plugin": ["moe@git+https://github.com/zak-keown/moe.git"] }
 ```
 
 OpenCode loads the plugin module on startup: it registers the skills directory through a config hook (no symlinks needed) and reads commands/agents translated under `.opencode/`. Consult the OpenCode plugin docs if this doesn't match your installed version.
-
-## Caveats
-
-- `package.json` is generated at the plugin root; if you maintain your own `package.json` for this plugin, exclude the opencode and pi adapters from generation (`harnesses.exclude`) or merge the fields by hand.

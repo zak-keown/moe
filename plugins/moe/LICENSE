@@ -1,9 +1,10 @@
 MIT License
 
-Copyright (c) 2025 Jesse Vincent
+Copyright 2026 Zak Keown
 Copyright (c) 2024 Anthropic
 Copyright (c) 2026 Matt Pocock
 Copyright (c) 2026 Open GSD
+Copyright (c) 2025 Jesse Vincent
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -226,9 +227,3 @@ Apache License
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-
----
-
-Public-domain material
-
-This distribution includes material identified as public domain in the root NOTICE.

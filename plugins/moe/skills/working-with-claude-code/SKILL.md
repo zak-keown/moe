@@ -39,7 +39,7 @@ under one predictable URL:
 https://docs.claude.com/en/docs/claude-code/<topic>.md
 ```
 
-Use `WebFetch` on that URL. One page, current, no cache to go stale.
+Use {web-fetch} on that URL. One page, current, no cache to go stale.
 
 | Question | Topic |
 |---|---|
@@ -64,7 +64,7 @@ in the table.
 ## Working Offline
 
 When you have no network, or you want to search across the whole corpus with
-`Grep`, populate a local cache first:
+{search}, populate a local cache first:
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/skills/working-with-claude-code/scripts/update_docs.cjs"
@@ -72,7 +72,7 @@ node "${CLAUDE_PLUGIN_ROOT}/skills/working-with-claude-code/scripts/update_docs.
 
 It reads `llms.txt`, extracts every `claude-code/*.md` URL, and writes each page
 into `${CLAUDE_PLUGIN_ROOT}/skills/working-with-claude-code/references/`. Then
-use `Read` or `Grep` on that directory as usual.
+use {read} or {search} on that directory as usual.
 
 Two things to know about the cache:
 

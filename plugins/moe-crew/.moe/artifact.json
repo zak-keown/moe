@@ -1,0 +1,758 @@
+{
+  "schema": 1,
+  "plugin": {
+    "id": "moe-crew",
+    "package": "@bubstack/moe-crew",
+    "version": "0.1.4"
+  },
+  "files": [
+    {
+      "path": ".agents/plugins/marketplace.json",
+      "size": 346,
+      "sha256": "62aba2c2e869558795c37c0862f5ba5e1ae65d6ddb08efa99f8fc41c28ef1841",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/marketplace.json",
+      "size": 548,
+      "sha256": "23deb36ce7b2e13177cc9d1e6b5b75e3b3041521f384b7b81286124a1902a367",
+      "mode": "0644"
+    },
+    {
+      "path": ".claude-plugin/plugin.json",
+      "size": 418,
+      "sha256": "9a984516d3dd49132f3739f3a5660657cf0e6f9659c337e823bee82517e4969f",
+      "mode": "0644"
+    },
+    {
+      "path": ".codex-plugin/plugin.json",
+      "size": 458,
+      "sha256": "c6b0941531e47c0a8d0c4eba63d74b3f58335a110f7bb9c6c5b5d4499e7057d5",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/marketplace.json",
+      "size": 370,
+      "sha256": "8a31962b89e81ebac2badb0c9f1ed929d063163a24d06dab7ab1e7463887cc33",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/plugin.json",
+      "size": 550,
+      "sha256": "91c9434c3d802dea9aff43f115f0baa43f11b15a074d792202c001d2a7121d4b",
+      "mode": "0644"
+    },
+    {
+      "path": ".kimi-plugin/plugin.json",
+      "size": 443,
+      "sha256": "80baabb3ca09848da225e9cf58596d22467630636c9e6bea4d7c7bc9de6a56b0",
+      "mode": "0644"
+    },
+    {
+      "path": ".moe-mint/manifest.json",
+      "size": 2434,
+      "sha256": "6a5da051e897b1fb1972dcb79bae8a6344a32a773109d98c15e5deb2139c78d9",
+      "mode": "0644"
+    },
+    {
+      "path": ".opencode/plugins/moe-crew.js",
+      "size": 783,
+      "sha256": "d354dd24922257722fd65cbc6e725ebe62344490d8bf30cfc7ff40dc48c9fb31",
+      "mode": "0644"
+    },
+    {
+      "path": ".pi/extensions/moe-crew.ts",
+      "size": 575,
+      "sha256": "d728a1b64b8677a242f4e3c24e119c3f5574d2e8a6c281e9a3d492fda8d6e5f4",
+      "mode": "0644"
+    },
+    {
+      "path": "LICENSE",
+      "size": 1095,
+      "sha256": "82b9468dd2f1c93d9d481fcb06555cb903326ed49f31f5a01b8bdc9cc3d52756",
+      "mode": "0644"
+    },
+    {
+      "path": "NOTICE",
+      "size": 226,
+      "sha256": "b968359a9b7b0454208975de45ec2b2fbb3f158b253f45347c979dcf4a6d3230",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/cli.d.ts",
+      "size": 2319,
+      "sha256": "f42de72ad21c6089135c77af91033fd62b788f9d765341c7985c1826707ccaf9",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/cli.js",
+      "size": 24429,
+      "sha256": "fb003a13053494f41297a63f81ec8e2f33107914e36b59bfdcccc23b785b8f36",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/adopt.d.ts",
+      "size": 1195,
+      "sha256": "1591163c92757a670178232dcc72426095974ed6a7c7a70890d3af272f93b008",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/adopt.js",
+      "size": 5042,
+      "sha256": "f91f51accd2a6b34a0d4670e0eb2767859d4773544c73d95676b2dc883c69b99",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/await-start.d.ts",
+      "size": 1460,
+      "sha256": "1e7ac2e098df0b9b28749a42601e616b0773e15359364632da7cc99cb12d553b",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/await-start.js",
+      "size": 3321,
+      "sha256": "123c35f9f0a706f4b4f8c1afd5b178ba304f9bae4b170e46f5959a6296ae8e30",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/codex-launch.d.ts",
+      "size": 2287,
+      "sha256": "6591425bcf55d429857f350cddd63eeeb7243d62f2e4bbda10e9c558e2c2e92c",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/codex-launch.js",
+      "size": 3376,
+      "sha256": "a71afac4f6c7af6acff55b83e1de2a965adf955505fb33882f4f34ed70d5e6cb",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/context.d.ts",
+      "size": 818,
+      "sha256": "086019f5e46817468f4b15f9d45d44ed77871e27190fe4288583f5d3e589bda5",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/context.js",
+      "size": 815,
+      "sha256": "57803f6a49187ec8df79fc2bdb1d5a6604c31f5aa15798c41f80d03b966c15dc",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/converse.d.ts",
+      "size": 1897,
+      "sha256": "ee1e2ddae2c871be1afd68706949ccab744a1c632b20a3385d54b6c4b107ab9f",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/converse.js",
+      "size": 5633,
+      "sha256": "1da98cbb67ae703c15cfd3c3e9ce763a768e659943c6e40b9f78f549272a84dd",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/events-file.d.ts",
+      "size": 167,
+      "sha256": "7a4b075635573e1ee405d42416ad4cc7068ae38cf3475cdca256aa1912cdef8d",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/events-file.js",
+      "size": 417,
+      "sha256": "2ea2a00970d49943e61faf341903003defaaa0082928fcb77abf12fa8b1355bb",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/grant-consent.d.ts",
+      "size": 632,
+      "sha256": "cc071c37149e3b714e4f1d5a34941e7b2b4a2d6f68d689a28f72c2df70fd349a",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/grant-consent.js",
+      "size": 906,
+      "sha256": "0960c05299ce4c09397f5d477a093dc0e8396e4b6497c9c664b4ee1640ee20b2",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/handoff.d.ts",
+      "size": 406,
+      "sha256": "d0af27f46bf092218a76f8905ce18a83179d97573e59cabeb9f9872bad2cdde9",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/handoff.js",
+      "size": 907,
+      "sha256": "4d532c11cd63b9f3a092ae5d75df5028de27690034a4ac9cc979b123fa92127a",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/launch.d.ts",
+      "size": 3894,
+      "sha256": "61416c1f137091a7a6616ea9300df8022b05633742357afc3f36940810ad65d1",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/launch.js",
+      "size": 11879,
+      "sha256": "a57c8b986a6389adc90caf739d072088b5b75a7ed9a365318fd5ba6152c99bc8",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/list.d.ts",
+      "size": 867,
+      "sha256": "bdcbf6a5391e6d3c31c388c0231218289dde2a2e1821d0ed80c2be0d3421b375",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/list.js",
+      "size": 2041,
+      "sha256": "d85151aafac68f3e3b2470f50a4a40b7448c8b97589c339aac72010de6f76d1d",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/pack.d.ts",
+      "size": 1203,
+      "sha256": "febd8e683bfe830dab83bb01bd497b1df818206a995fe9029a88455b39e23534",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/pack.js",
+      "size": 4211,
+      "sha256": "ec8ee6797821e0ae3463140a3f6245513626bea6f0d9c3b0da0041d5e6471c3c",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/pi-launch.d.ts",
+      "size": 1586,
+      "sha256": "263ad7aa618fc81b6ef9a3e56b0f2b22843c1e18b477151cc792768398646e66",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/pi-launch.js",
+      "size": 2437,
+      "sha256": "26aa4ea8deecb80a135907b44df755b811ad92fb3d37d5f33154d7fc27775b8c",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/prune.d.ts",
+      "size": 566,
+      "sha256": "343f541bccb008559b4c3dd7ac4c62d3f9c4b2bf276297dff0269729e4a37729",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/prune.js",
+      "size": 1388,
+      "sha256": "9465d961277e10e0d54a08a3b8d33b37cafc4f193a60397f19131bf8917fd542",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/read-events.d.ts",
+      "size": 1760,
+      "sha256": "7fab5df177947539d8120e5ab5f65912fc7dc0c156d629d1d734e208cd175363",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/read-events.js",
+      "size": 3729,
+      "sha256": "d4c3eb6958153bb147f6560b57c690acc3fbaf0da4972ada85ce8a3185463bb2",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/read-turn.d.ts",
+      "size": 529,
+      "sha256": "1fb800130aa58ae21d30d67dbdd7e8976ca3183164f63dc809fb8b3ecf244079",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/read-turn.js",
+      "size": 1287,
+      "sha256": "4ec10a2a2430b736978a910711c9c0cb88f321ec38a8089989ea00cbe530a5f7",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/send.d.ts",
+      "size": 2598,
+      "sha256": "2604a1709a82b62ff8ddb4960f49e6c1e02aa28c466eb2f63b0f003c1bd9ccc2",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/send.js",
+      "size": 7967,
+      "sha256": "867af106d3c63326eb46de816d81b807a24f07c9c8ed184af7ef75dc91583e55",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/session-id.d.ts",
+      "size": 166,
+      "sha256": "46c8fb173d4d9908d5384336dc563b032527829ac69c22c229e3bf09e5f1ca4c",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/session-id.js",
+      "size": 342,
+      "sha256": "93c7a75ea02280ae1361d023a5341ecf9a97ca00dc578b5ae43e01e3a81a4b08",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/status.d.ts",
+      "size": 479,
+      "sha256": "249f0f711356493748cf49bff822888d2473d8144b7f11348109502c8aba53ea",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/status.js",
+      "size": 1236,
+      "sha256": "ee2b2fb4aec278935b2920c743ad409f9230fb50cd5060ad385021e1b8356fcb",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/stop.d.ts",
+      "size": 857,
+      "sha256": "d7d1531f09f8ea8e341dbcfa63f3e0d7302278efd83a5fdf5acd6233d45f904e",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/stop.js",
+      "size": 4730,
+      "sha256": "127e6fdf6b5851d1ca60d8e093d60ec14d93a2a4ab4a475f01dc3174045fb2c5",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/wait-for-turn.d.ts",
+      "size": 1355,
+      "sha256": "921bae67bd625820544f8d24e99e74e4d64fc4e6c8a6cddd96d9bf5875e2a2d5",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/wait-for-turn.js",
+      "size": 2303,
+      "sha256": "db98313594657a4de245c7f7d39b1579067e0b3dae7f9f274fe76d83d3eef74a",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/assistant-text.d.ts",
+      "size": 618,
+      "sha256": "bb692c605e3e56ff492087f67bf08d1ad2c5b084a1eb5ee16df39fa92cb000f2",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/assistant-text.js",
+      "size": 1666,
+      "sha256": "f214404cf91d9564cf971152eddd9a5635fcfab85177eb4eef319767f97e3084",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/consent.d.ts",
+      "size": 176,
+      "sha256": "67f2af8b2b8cab345055f9b903628ed43af37ab0a5f00d98d2cb22bf60f11756",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/consent.js",
+      "size": 412,
+      "sha256": "36eab6b319ba824ec34548a2ce2e38feeb5f9eed6114292cedd91f00e2759400",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/diagnostics.d.ts",
+      "size": 1032,
+      "sha256": "b43ed7e1868be4bf04f517aef79c48b5b8296561ac11cffcb2f0928d97db727a",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/diagnostics.js",
+      "size": 3832,
+      "sha256": "e7ee5eab699ff5e9e5edd1051b1ac76bb2202ef82922b73f4ac33c46fdf2d920",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/event-log.d.ts",
+      "size": 1225,
+      "sha256": "4990c4736b1ce7a3bca0d24de628bdf7e73dc05c7470bf8be46bb73f45f586ef",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/event-log.js",
+      "size": 2608,
+      "sha256": "f4afea6b439494f60f4027f3408f9258e8b4763da4fb4daeeaa885858be2a478",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/packs.d.ts",
+      "size": 1602,
+      "sha256": "f0af7451a02af3ee5c31a9d335894c3655cf1faa6ee164814d6d35eccde81fe1",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/packs.js",
+      "size": 11335,
+      "sha256": "6658b12558a515ac0c4a94a885511446608a3ad88c6148382c1ac514bf122d7d",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/paths.d.ts",
+      "size": 1507,
+      "sha256": "42d9910df5a72a55e2f1c031912742406b0cf26af2ae4884330fa15adcb51238",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/paths.js",
+      "size": 3468,
+      "sha256": "be2a06adfed235ffe63c538d31dd9c28bd12d1332f9bbb628308b37252c8569a",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/proc.d.ts",
+      "size": 617,
+      "sha256": "edb69014af83945e3fdc4811a72e492475203540d3e483c741524e8ef0d17c8e",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/proc.js",
+      "size": 922,
+      "sha256": "3ca87695945f848bc3891bf55f34958fcf022dd4f209bac4cb44ff7d657e7a58",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/runs.d.ts",
+      "size": 1797,
+      "sha256": "5cc7ddb00710f22945886bf46a7657ba3f3ec3b568a51e9cf92969a09eb6dac7",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/runs.js",
+      "size": 4188,
+      "sha256": "988f370646bf9b07afcb021074bae67ed83875acecd5966df6967938f9683527",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/shell.d.ts",
+      "size": 2011,
+      "sha256": "b74c5c42653208ede2038a710cd55e08f0258488aa5598042563c0bd120fdbf8",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/shell.js",
+      "size": 2179,
+      "sha256": "15752d94a22413f1d8d0db51db2f40b0485e25f2bc9a2cc8e37de7bc5acd6ace",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/time.d.ts",
+      "size": 139,
+      "sha256": "82f5c1ac87fdaa3b09930288e8ec0d17df37f3b1244c2ecf6a6a576639c4fa5a",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/time.js",
+      "size": 189,
+      "sha256": "4e8452365dce4c88182bb00c2fce214af2b282915e40b24be45278502a2fac7c",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/tmux.d.ts",
+      "size": 2477,
+      "sha256": "5463b6b41a80e1cdde0f7aed469754de90182d6dbb8aa1d4a2b7149c9d298991",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/tmux.js",
+      "size": 2325,
+      "sha256": "21a7f878fbfb91eeb1219cb6dd4c8f4f9248e630f82b81767442dabf70a63025",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/tool-name.d.ts",
+      "size": 481,
+      "sha256": "a2b7006fdaa3de7312e41bc022fa2d20cf8e787edf7dacb9ec912ca85016bb7a",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/tool-name.js",
+      "size": 590,
+      "sha256": "7c660fa5cc850b2a3f1e5655e327c2ff144273de63da6d49c4c582170be85699",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/transcript.d.ts",
+      "size": 2429,
+      "sha256": "6e2fb9aec268aa7399227c1f28a01225a6909f1888f95949c8265e491542c8be",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/transcript.js",
+      "size": 16365,
+      "sha256": "f67cd09e3e9f0259d1c6efbdbb25174463335311321dd30b5633a04d9472319e",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/worker-store.d.ts",
+      "size": 3383,
+      "sha256": "616dba72ee3b09b4f06c32ea4e5bcfe54df0f2346e6554862407e5bf6a16f5fc",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/worker-store.js",
+      "size": 6940,
+      "sha256": "c028ea5e072b8372f9e0872fa68733b04de4019f48212956a6ddf164445abb12",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/worktree.d.ts",
+      "size": 1059,
+      "sha256": "aa30276bc83621d8aa93c4a57a44e3c0cbd2008b6a64d435647a87108b3a5acf",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/worktree.js",
+      "size": 2491,
+      "sha256": "9049f367ec3f397b043cafc805e85c607cafc7e775b03520972b0e354f7f3fa1",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/emit-event.cjs",
+      "size": 6487,
+      "sha256": "cf20a28d8723989521626a17e64423ddf491d1e3b49d14658a4c29361b5eb983",
+      "mode": "0755"
+    },
+    {
+      "path": "dist/events.d.ts",
+      "size": 781,
+      "sha256": "c614e3a38daebc0c74676c0e93c7140b859d10950d7773a73786aca6bba6154b",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/events.js",
+      "size": 579,
+      "sha256": "20801ae4cdf6d995bff0b1a84ac61f8d58dbdf5fad67bfc5dcc0fc44d424e41d",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/harness/claude.d.ts",
+      "size": 2005,
+      "sha256": "4e44742f64cf39ca8f845146290f7e4850bb812330db3bd45657ad49e9e7182b",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/harness/claude.js",
+      "size": 4720,
+      "sha256": "612a108d8173d5b6819a4b989e5b5b816a6b59efd3763edcaf3345810be26cb1",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/harness/codex.d.ts",
+      "size": 1844,
+      "sha256": "93885bfef5e6bba106afa163d1a19e86f4d3444d3ffc6947200d19708ce72169",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/harness/codex.js",
+      "size": 8214,
+      "sha256": "5dbeeac2d9b0fd295fa039b0e3d6f692834fd48a57825bc188686a985bc94e50",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/harness/driver.d.ts",
+      "size": 5129,
+      "sha256": "e4a195afd48ed1f0442900467aa60e0b40ba61647e361d8e2d9280916e89dd0f",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/harness/driver.js",
+      "size": 689,
+      "sha256": "35a8b7baace66262e5ef1ebc93153904a424d9e97ca3a5d91964a50789870c30",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/harness/pi.d.ts",
+      "size": 1961,
+      "sha256": "5b1bba0becfdee6cb7ad05c235c6089203f9d2951b8614e3a01aa925723f4b8d",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/harness/pi.js",
+      "size": 6575,
+      "sha256": "5e62a2d5ec028b3a96c5e9c8c240346216ab35aaa1b961c430b1a09663011d4d",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/harness/registry.d.ts",
+      "size": 232,
+      "sha256": "42f7be224588cb55f22154df19decc233a5c2b52eb138021a37d4756bdc0a4ba",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/harness/registry.js",
+      "size": 485,
+      "sha256": "19f41209d98f5718f78e890dc66224c4a7a1c471a374a337724ada7818977da1",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/hooks/emit-event.d.ts",
+      "size": 2348,
+      "sha256": "ebbd63bbd2893b8be788db53a61354af93603e6bd7e8cf10ee0c447e612f4d13",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/hooks/emit-event.js",
+      "size": 6773,
+      "sha256": "9b13f7a64a7e4b9592d9b72672fa6b63c3c951697d8a8f2e4127a115114d38df",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/moe-crew.cjs",
+      "size": 95436,
+      "sha256": "4b3dcf4ca15e9589f49fe7cf8f9dc75773e091f498236dba3b417cc398a6c51c",
+      "mode": "0755"
+    },
+    {
+      "path": "dist/pi-extension.mjs",
+      "size": 2806,
+      "sha256": "f126772532b20b55e7138da4d84a9ad3a00f8bfe76c39e52bd48d6bab5d898f0",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/pi-extension/index.d.ts",
+      "size": 15938,
+      "sha256": "8ec53b32327fff4646583c4f1c13237b2f693dca053a3828d162388b008c152c",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/pi-extension/index.js",
+      "size": 20139,
+      "sha256": "bc5d76c823bbab78e75e1d362dcd3d20282533f0e24ddec8acbaf30c8dcc8d9a",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/install/agent-plugins-1.0.md",
+      "size": 547,
+      "sha256": "982089a59356f529f7809154b5f79243015d8b911bdf5b27bea8635c810ec0f3",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/install/claude-code.md",
+      "size": 519,
+      "sha256": "480c82b531e9f2537af66a1f62d3d608085a4ba20a8e1fb68cd89ba01e0d4267",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/install/codex.md",
+      "size": 723,
+      "sha256": "95ef4be47a16f03a023fe6ae8496427bd0807a82147b19f5772e862c5e59de36",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/install/copilot.md",
+      "size": 600,
+      "sha256": "d0e268f8b21d1e0f35f6ee57f8caf58f5a2e7d2233b7152f5e47f9a1db361b30",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/install/cursor.md",
+      "size": 586,
+      "sha256": "b50c623063c3e8b409b873379bad33e83f7590d3607fceafe1233471223e145c",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/install/kimi.md",
+      "size": 352,
+      "sha256": "101ced56d6433ed6f969b84900d1292ba4855fa51fa3e087fc84e1dd66e78fd3",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/install/opencode.md",
+      "size": 716,
+      "sha256": "3ede3335ed0a9d4b1660624712c4c0b42687aeb4ebdc57e814ba9caa9b920083",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/install/pi.md",
+      "size": 540,
+      "sha256": "8d38e7ec54b7c8987c73378fbf81eac8f8e7bc15124fcf708e08c52e559f506b",
+      "mode": "0644"
+    },
+    {
+      "path": "docs/support-matrix.md",
+      "size": 742,
+      "sha256": "b65b317dd6d43fb1dfe0fe94697c90c4b0f2df7e9c176a9776beaa0a0292182c",
+      "mode": "0644"
+    },
+    {
+      "path": "hooks/hooks.json",
+      "size": 1157,
+      "sha256": "c7e50fb0a31ee5361c2dfbcd1e94ca2d43727839784c583a8f45082d26c61045",
+      "mode": "0644"
+    },
+    {
+      "path": "package.json",
+      "size": 4533,
+      "sha256": "b13143ab899ae0d5e9650b660d37f8682868351ef4e8dc9904e41e7448ed2c42",
+      "mode": "0644"
+    },
+    {
+      "path": "plugin.json",
+      "size": 493,
+      "sha256": "69486923cc9785d7f319a383a6773b38e406b2f05b13d71500061c8fd0d3d540",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/driving-claude-code-sessions/SKILL.md",
+      "size": 18995,
+      "sha256": "bf5f5859e827ed2bfc12d5894659beabf51bf3cb967f06c148a5647bd5e85fb1",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/driving-claude-code-sessions/scripts/moe-crew",
+      "size": 118,
+      "sha256": "df6c146000b13c65a11e97229654146e3500fa1c3cc0300c0d7bb5dd566eea00",
+      "mode": "0755"
+    }
+  ],
+  "tree_sha256": "ebd45136091371727020408c83d3462e2a8c03a2319ea5f0c762decdb53bc6cc",
+  "targets": {
+    "claude-code": {
+      "emitted_capabilities": [
+        "skill-discovery",
+        "hook-execution"
+      ]
+    },
+    "cursor": {
+      "emitted_capabilities": [
+        "skill-discovery"
+      ]
+    },
+    "codex": {
+      "emitted_capabilities": [
+        "skill-discovery"
+      ]
+    },
+    "kimi": {
+      "emitted_capabilities": [
+        "skill-discovery"
+      ]
+    },
+    "opencode": {
+      "emitted_capabilities": [
+        "skill-discovery"
+      ]
+    },
+    "pi": {
+      "emitted_capabilities": [
+        "skill-discovery"
+      ]
+    },
+    "agent-plugins-1.0": {
+      "emitted_capabilities": [
+        "skill-discovery",
+        "format-conformance"
+      ]
+    },
+    "copilot": {
+      "emitted_capabilities": [
+        "skill-discovery",
+        "hook-execution"
+      ]
+    }
+  }
+}

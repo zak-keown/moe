@@ -4,17 +4,13 @@
 
 ## What gets emitted
 
-- `package.json` (shared with the opencode adapter when both are active), declaring the extension and skills directory under its `pi` field
+- Pi discovery metadata contributed under the composed root `package.json`'s `pi` field
 - `.pi/extensions/moe-backstory.ts`, the Pi extension module that registers the plugin's skills directory
 
 ## Installing
 
 ```
-pi install git:gitlab.com/moe-ai/moe
+pi install git:github.com/zak-keown/moe
 ```
 
 Pi discovers the extension and skills directory through the `pi` field in `package.json`. Consult Pi's extension docs if this command doesn't match your installed version.
-
-## Caveats
-
-- `package.json` is generated at the plugin root; if you maintain your own `package.json` for this plugin, exclude the pi and opencode adapters from generation (`harnesses.exclude`) or merge the fields by hand.
