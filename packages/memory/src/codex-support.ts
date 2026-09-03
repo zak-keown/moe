@@ -1,4 +1,4 @@
-export const MIN_CODEX_VERSION = "0.130.0";
+export const MIN_CODEX_VERSION = "0.152.1";
 
 export function parseCodexCliVersion(output: string): string | undefined {
   return output.match(/\b(\d+\.\d+\.\d+)\b/)?.[1];

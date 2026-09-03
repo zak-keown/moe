@@ -5,7 +5,7 @@ import { buildCodexDoctorReport } from "../src/doctor.js";
 describe("Codex doctor report", () => {
   it("reports the production support floor, plugin hook state, MCP state, and log path", () => {
     const report = buildCodexDoctorReport({
-      codexVersionOutput: "codex-cli 0.130.0",
+      codexVersionOutput: "codex-cli 0.152.1",
       featuresOutput:
         "hooks stable true\nplugin_hooks under development true\nplugins stable true\n",
       mcpListOutput: "moe-memory  node  ./cli/mcp-server-wrapper.js  enabled",
@@ -17,7 +17,7 @@ describe("Codex doctor report", () => {
     });
 
     expect(report.ok).toBe(true);
-    expect(report.text).toContain("Codex version: codex-cli 0.130.0 (ok; minimum 0.130.0)");
+    expect(report.text).toContain("Codex version: codex-cli 0.152.1 (ok; minimum 0.152.1)");
     expect(report.text).toContain("Plugin hooks feature: enabled");
     expect(report.text).toContain("Moe Memory MCP: enabled");
     expect(report.text).toContain("Hook trust: trusted");
@@ -26,7 +26,7 @@ describe("Codex doctor report", () => {
 
   it("does not tell users to trust hooks when the Moe Memory hook is already trusted", () => {
     const report = buildCodexDoctorReport({
-      codexVersionOutput: "codex-cli 0.130.0",
+      codexVersionOutput: "codex-cli 0.152.1",
       featuresOutput:
         "hooks stable true\nplugin_hooks under development true\nplugins stable true\n",
       mcpListOutput: "moe-memory  node  ./cli/mcp-server-wrapper.js  enabled",
@@ -44,7 +44,7 @@ describe("Codex doctor report", () => {
 
   it("tells users to trust hooks when the Moe Memory hook is untrusted", () => {
     const report = buildCodexDoctorReport({
-      codexVersionOutput: "codex-cli 0.130.0",
+      codexVersionOutput: "codex-cli 0.152.1",
       featuresOutput:
         "hooks stable true\nplugin_hooks under development true\nplugins stable true\n",
       mcpListOutput: "moe-memory  node  ./cli/mcp-server-wrapper.js  enabled",
@@ -73,7 +73,7 @@ describe("Codex doctor report", () => {
     });
 
     expect(report.ok).toBe(false);
-    expect(report.text).toContain("minimum 0.130.0");
+    expect(report.text).toContain("minimum 0.152.1");
     expect(report.text).toContain("codex update");
   });
 
