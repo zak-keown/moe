@@ -230,11 +230,9 @@ export class JournalStore {
     mtimeMs: number,
   ): Promise<void> {
     const { text, sections } = extractSearchableText(content);
-    if (text.trim().length === 0) return; // Nothing to embed
+    if (text.trim().length === 0) return;
 
     const scope = this.scopeFor(root, sections);
-    // Frontmatter first (epoch ms), then the filename (second resolution), then
-    // the file's mtime. See timestampFromFrontmatter for why the order matters.
     const timestamp =
       timestampFromFrontmatter(content) ?? timestampFromEntryPath(entryPath)?.getTime() ?? mtimeMs;
 
@@ -248,7 +246,12 @@ export class JournalStore {
       sections,
     };
 
-    const embedding = await this.embed(text);
+    let embedding: number[] | null = null;
+    try {
+      embedding = await this.embed(text);
+    } catch {
+      // Embedding unavailable — persist text only (version 0)
+    }
     upsertJournalEntry(db, entry, mtimeMs, embedding);
   }
 

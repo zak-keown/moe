@@ -17,6 +17,13 @@ export {
   type DatabaseWriter,
 } from "./database-lease.js";
 export { withTransaction, withForeignKeysDisabled } from "./database-transaction.js";
+export {
+  pickPendingEnrichment,
+  commitEnrichment,
+  searchJournalText as searchJournalTextDb,
+  type PendingEnrichment,
+  type JournalTextResult,
+} from "./enrichment.js";
 export * from "./parser.js";
 export * from "./paths.js";
 export * from "./search.js";

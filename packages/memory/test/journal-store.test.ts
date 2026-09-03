@@ -332,9 +332,9 @@ describe("JournalStore", () => {
     });
 
     it("recovers an entry whose embedding failed at write time", async () => {
-      // Upstream this was a permanent loss: the sidecar index was the only
-      // enumeration path, so an entry written with a failed encode could never
-      // be found again by search, list_recent_entries or read_recent_entries.
+      // Text-first persistence: the entry is stored with embedding_version=0
+      // even when the encoder is unavailable. indexJournal then upgrades it
+      // once the encoder becomes available.
       let fail = true;
       const flaky = new JournalStore({
         projectPath: projectDir,
@@ -347,10 +347,16 @@ describe("JournalStore", () => {
 
       await flaky.writeThoughts({ reflections: "written while the encoder was down" }, db);
       expect((await entriesIn(userDir)).filter((f) => f.endsWith(".md"))).toHaveLength(1);
-      expect(countJournalEntries(db)).toBe(0);
+      // Text is persisted with version=0 (no vector)
+      expect(countJournalEntries(db)).toBe(1);
+      const row = db.prepare("SELECT embedding_version FROM journal_entries LIMIT 1").get() as {
+        embedding_version: number;
+      };
+      expect(row.embedding_version).toBe(0);
 
       fail = false;
       const result = await flaky.indexJournal(db);
+      // Re-indexes: version 0 is behind EMBEDDING_VERSION so it gets re-embedded
       expect(result.indexed).toBe(1);
       expect(countJournalEntries(db)).toBe(1);
     });
