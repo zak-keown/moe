@@ -8,15 +8,15 @@ export const PROJECT_SHELL_CATALOG = new Map([
   ],
   [
     "git diff",
-    { prefix: ["git", "diff"], suffixSafe: true, globalSafe: true },
+    { prefix: ["git", "diff"], suffixSafe: false, globalSafe: true },
   ],
   [
     "git log",
-    { prefix: ["git", "log"], suffixSafe: true, globalSafe: true },
+    { prefix: ["git", "log"], suffixSafe: false, globalSafe: true },
   ],
   [
     "git show",
-    { prefix: ["git", "show"], suffixSafe: true, globalSafe: true },
+    { prefix: ["git", "show"], suffixSafe: false, globalSafe: true },
   ],
   [
     "git add",
@@ -46,6 +46,46 @@ const WRAPPERS = new Set([
 ]);
 const FORBIDDEN = /[\n\r`$|&;<>()[\]{}*?#]/;
 const ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/;
+const CLAUDE_EXACT_READ_OPTIONS = new Map([
+  [
+    "git diff",
+    new Set([
+      "--cached",
+      "--name-only",
+      "--name-status",
+      "--no-color",
+      "--numstat",
+      "--shortstat",
+      "--staged",
+      "--stat",
+    ]),
+  ],
+  [
+    "git log",
+    new Set([
+      "--decorate",
+      "--first-parent",
+      "--name-only",
+      "--name-status",
+      "--no-color",
+      "--no-decorate",
+      "--oneline",
+      "--stat",
+    ]),
+  ],
+  [
+    "git show",
+    new Set([
+      "--decorate",
+      "--name-only",
+      "--name-status",
+      "--no-color",
+      "--no-decorate",
+      "--oneline",
+      "--stat",
+    ]),
+  ],
+]);
 
 /**
  * Tokenize only shell text whose meaning does not depend on expansion or shell
@@ -56,10 +96,8 @@ const ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/;
  */
 export function parseConservativeShell(command) {
   const argv = tokenize(command);
-  if (!argv || WRAPPERS.has(argv[0]) || argv.some((token) => ASSIGNMENT.test(token))) {
-    return null;
-  }
-  if (catalogEntry(argv) || isExactCopy(argv)) return argv;
+  if (!argv || !tokensAreConservative(argv)) return null;
+  if (catalogPrefix(argv) || isExactCopy(argv)) return argv;
   return null;
 }
 
@@ -80,6 +118,15 @@ export function classifyShell(operation, context) {
       reason: entry.globalSafe
         ? "command is in the global read-only catalog"
         : "command is in the project shell catalog",
+    };
+  }
+
+  if (context?.harness === "claude" && hasSafeExactReadSuffix(argv)) {
+    return {
+      eligible: true,
+      normalized: { argv: [...argv] },
+      globalSafe: false,
+      reason: "exact Claude command uses only allowlisted read arguments",
     };
   }
 
@@ -111,12 +158,20 @@ function operationArgv(operation) {
       (token) => typeof token === "string" && token.length > 0 && !token.includes("\0"),
     )
   ) {
-    return [...operation.argv];
+    const argv = [...operation.argv];
+    return tokensAreConservative(argv) ? argv : null;
   }
   if (keys.length === 1 && keys[0] === "command") {
     return parseConservativeShell(operation.command);
   }
   return null;
+}
+
+function tokensAreConservative(argv) {
+  return (
+    !WRAPPERS.has(argv[0]) &&
+    argv.every((token) => !FORBIDDEN.test(token) && !ASSIGNMENT.test(token))
+  );
 }
 
 function tokenize(command) {
@@ -169,11 +224,33 @@ function tokenize(command) {
 }
 
 function catalogEntry(argv) {
-  const entry = PROJECT_SHELL_CATALOG.get(argv.slice(0, 2).join(" "));
+  const entry = catalogPrefix(argv);
   if (!entry || argv.length < entry.prefix.length) return null;
-  if (!entry.prefix.every((token, index) => argv[index] === token)) return null;
   if (!entry.suffixSafe && argv.length !== entry.prefix.length) return null;
   return entry;
+}
+
+function catalogPrefix(argv) {
+  const entry = PROJECT_SHELL_CATALOG.get(argv.slice(0, 2).join(" "));
+  if (!entry || !entry.prefix.every((token, index) => argv[index] === token)) {
+    return null;
+  }
+  return entry;
+}
+
+function hasSafeExactReadSuffix(argv) {
+  const command = argv.slice(0, 2).join(" ");
+  const options = CLAUDE_EXACT_READ_OPTIONS.get(command);
+  if (!options || argv.length === 2) return false;
+  let operandsOnly = false;
+  return argv.slice(2).every((token) => {
+    if (token === "--") {
+      operandsOnly = true;
+      return true;
+    }
+    if (operandsOnly || !token.startsWith("-")) return true;
+    return options.has(token);
+  });
 }
 
 function isExactCopy(argv) {
