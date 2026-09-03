@@ -23,9 +23,10 @@ export interface SkillRuntimeReport {
   readonly ok: boolean
 }
 
-const CODE_EXTENSIONS = new Set(['.mjs', '.py', '.sh', '.bash', '.cjs', '.js', '.ts', '.cmd'])
+const CODE_EXTENSIONS = new Set(['.mjs', '.py', '.rb', '.sh', '.bash', '.zsh', '.fish', '.cjs', '.js', '.jsx', '.ts', '.mts', '.cts', '.tsx', '.ps1', '.cmd'])
+const NON_CODE_ASSET_EXTENSIONS = new Set(['.md', '.html', '.json'])
 const NODE_BUILTINS = new Set(builtinModules)
-const LEGACY_BACKEND_SUFFIX = /\.(?:py|sh|bash|cjs|js|ts|cmd)(?:\b|$)/
+const RUNTIME_BACKEND_SUFFIX = /\.(?:mjs|py|rb|sh|bash|zsh|fish|cjs|js|jsx|ts|mts|cts|tsx|ps1|cmd)(?:\b|$)/
 const SHELL_FENCE_LANGUAGES = new Set(['bash', 'console', 'fish', 'sh', 'shell', 'shellscript', 'zsh'])
 const RUNTIME_ACTION = 'Use dependency-free Node 24 ESM under the owning scripts/ directory.'
 
@@ -58,8 +59,10 @@ function extension(path: string): string {
   return index < 0 ? '' : basename.slice(index)
 }
 
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+function compareRawStrings(left: string, right: string): number {
+  if (left < right) return -1
+  if (left > right) return 1
+  return 0
 }
 
 function hasShebang(content: Uint8Array): boolean {
@@ -97,16 +100,18 @@ function literalString(node: AstNode | undefined): string | undefined {
 }
 
 function propertyName(node: AstNode): string | undefined {
-  if (node.type !== 'Property' || node.computed) return undefined
+  if (node.type !== 'Property') return undefined
   const key = node.key as AstNode
+  if (node.computed) return literalString(key)
   return key.type === 'Identifier' ? key.name as string : literalString(key)
 }
 
-function objectSetsShellTrue(node: AstNode | undefined): boolean {
+function objectEnablesShell(node: AstNode | undefined): boolean {
   return node?.type === 'ObjectExpression' && (node.properties as unknown[]).some((property) => {
     if (!isAstNode(property) || propertyName(property) !== 'shell') return false
     const value = property.value as AstNode
-    return value.type === 'Literal' && value.value === true
+    if (value.type === 'Literal') return value.value === true || typeof value.value === 'string'
+    return value.type === 'TemplateLiteral'
   })
 }
 
@@ -124,7 +129,7 @@ function resolveRelativeModule(file: SkillRuntimeFile, scriptRoot: string, sourc
 }
 
 function isAllowedModuleSource(source: string, file: SkillRuntimeFile, scriptRoot: string, filePaths: ReadonlySet<string>): boolean {
-  if (source.startsWith('node:')) return NODE_BUILTINS.has(source.slice('node:'.length))
+  if (source.startsWith('node:')) return NODE_BUILTINS.has(source) || NODE_BUILTINS.has(source.slice('node:'.length))
   const resolved = resolveRelativeModule(file, scriptRoot, source)
   return resolved !== undefined && filePaths.has(resolved)
 }
@@ -137,7 +142,7 @@ function importedName(specifier: AstNode): string | undefined {
 
 function localName(specifier: AstNode): string | undefined {
   const local = specifier.local as AstNode | undefined
-  return local?.type === 'Identifier' ? local.name as string : undefined
+  return local?.type === 'Identifier' ? local.name as string : literalString(local)
 }
 
 function memberName(node: AstNode): string | undefined {
@@ -157,7 +162,8 @@ function inspectModule(
   const diagnostics: MintDiagnostic[] = []
   const scriptRoot = `${input.skillsRoot}/${skill}/scripts`
   const childProcessNamespaces = new Set<string>()
-  const childProcessSpawns = new Set<string>()
+  const childProcessCalls = new Map<string, string>()
+  const nodeModuleNamespaces = new Set<string>()
 
   const add = (code: string, message: string, action: string) => {
     diagnostics.push(diagnostic(input, file, code, message, action))
@@ -177,15 +183,29 @@ function inspectModule(
   }
 
   walk(program, (node) => {
-    if (node.type !== 'ImportDeclaration' || literalString(node.source as AstNode) !== 'node:child_process') return
+    if (node.type !== 'ImportDeclaration') return
+    const moduleSource = literalString(node.source as AstNode)
     for (const specifier of node.specifiers as AstNode[]) {
       const imported = importedName(specifier)
       const local = localName(specifier)
-      if ((imported === 'exec' || imported === 'execSync') && local !== undefined) {
-        add('SKILL_RUNTIME_SHELL_EXEC', `runtime module "${file.path}" must not use child_process exec APIs`, 'Remove shell execution from the skill runtime module.')
+      const namespace = specifier.type === 'ImportNamespaceSpecifier' || specifier.type === 'ImportDefaultSpecifier'
+
+      if (moduleSource === 'node:child_process') {
+        if ((imported === 'exec' || imported === 'execSync') && local !== undefined) {
+          add('SKILL_RUNTIME_SHELL_EXEC', `runtime module "${file.path}" must not use child_process exec APIs`, 'Remove shell execution from the skill runtime module.')
+        }
+        if (imported !== undefined && local !== undefined && ['spawn', 'spawnSync', 'execFile', 'execFileSync'].includes(imported)) {
+          childProcessCalls.set(local, imported)
+        }
+        if (namespace && local !== undefined) childProcessNamespaces.add(local)
       }
-      if ((imported === 'spawn' || imported === 'spawnSync') && local !== undefined) childProcessSpawns.add(local)
-      if ((specifier.type === 'ImportNamespaceSpecifier' || specifier.type === 'ImportDefaultSpecifier') && local !== undefined) childProcessNamespaces.add(local)
+
+      if (moduleSource === 'node:module') {
+        if (imported === 'createRequire') {
+          add('SKILL_RUNTIME_COMMONJS', `runtime module "${file.path}" must not use createRequire`, 'Use static or literal dynamic ESM imports instead.')
+        }
+        if (namespace && local !== undefined) nodeModuleNamespaces.add(local)
+      }
     }
   })
 
@@ -198,14 +218,36 @@ function inspectModule(
 
     if (node.type === 'ExportNamedDeclaration' || node.type === 'ExportAllDeclaration') {
       const moduleSource = literalString(node.source as AstNode | undefined)
-      if (moduleSource !== undefined) inspectSource(moduleSource)
+      if (moduleSource !== undefined) {
+        inspectSource(moduleSource)
+        if (moduleSource === 'node:child_process') {
+          const exportsShellExec = node.type === 'ExportAllDeclaration'
+            || (node.specifiers as AstNode[]).some((specifier) => {
+              const exported = localName(specifier)
+              return exported === 'exec' || exported === 'execSync'
+            })
+          if (exportsShellExec) {
+            add('SKILL_RUNTIME_SHELL_EXEC', `runtime module "${file.path}" must not re-export child_process exec APIs`, 'Remove shell execution from the skill runtime module.')
+          }
+        }
+        if (moduleSource === 'node:module'
+          && node.type === 'ExportNamedDeclaration'
+          && (node.specifiers as AstNode[]).some((specifier) => localName(specifier) === 'createRequire')) {
+          add('SKILL_RUNTIME_COMMONJS', `runtime module "${file.path}" must not re-export createRequire`, 'Use static or literal dynamic ESM imports instead.')
+        }
+      }
     }
 
     if (node.type === 'ImportExpression') {
       const moduleSource = literalString(node.source as AstNode)
       if (moduleSource === undefined) {
         add('SKILL_RUNTIME_DYNAMIC_IMPORT', `runtime module "${file.path}" must use a literal dynamic import path`, 'Use a literal node: built-in or relative .mjs import path.')
-      } else inspectSource(moduleSource)
+      } else {
+        inspectSource(moduleSource)
+        if (moduleSource === 'node:child_process') {
+          add('SKILL_RUNTIME_SHELL_EXEC', `runtime module "${file.path}" must not dynamically import child_process APIs`, 'Use a static child_process import whose shell behavior can be validated.')
+        }
+      }
     }
 
     if (node.type === 'MemberExpression'
@@ -215,18 +257,29 @@ function inspectModule(
       add('SKILL_RUNTIME_SHELL_EXEC', `runtime module "${file.path}" must not use child_process exec APIs`, 'Remove shell execution from the skill runtime module.')
     }
 
+    if (node.type === 'MemberExpression'
+      && memberName(node) === 'createRequire'
+      && (node.object as AstNode).type === 'Identifier'
+      && nodeModuleNamespaces.has(((node.object as AstNode).name as string))) {
+      add('SKILL_RUNTIME_COMMONJS', `runtime module "${file.path}" must not use createRequire`, 'Use static or literal dynamic ESM imports instead.')
+    }
+
     if (node.type === 'CallExpression') {
       const callee = node.callee as AstNode
       if (callee.type === 'Identifier' && callee.name === 'require') {
         add('SKILL_RUNTIME_COMMONJS', `runtime module "${file.path}" must not use CommonJS require`, 'Use static or literal dynamic ESM imports instead.')
       }
 
-      const directSpawn = callee.type === 'Identifier' && childProcessSpawns.has(callee.name as string)
-      const namespaceSpawn = callee.type === 'MemberExpression'
-        && (memberName(callee) === 'spawn' || memberName(callee) === 'spawnSync')
+      const directApi = callee.type === 'Identifier' ? childProcessCalls.get(callee.name as string) : undefined
+      const namespaceApi = callee.type === 'MemberExpression'
+        && ['spawn', 'spawnSync', 'execFile', 'execFileSync'].includes(memberName(callee) ?? '')
         && (callee.object as AstNode).type === 'Identifier'
         && childProcessNamespaces.has(((callee.object as AstNode).name as string))
-      if ((directSpawn || namespaceSpawn) && objectSetsShellTrue((node.arguments as AstNode[])[2])) {
+        ? memberName(callee)
+        : undefined
+      const childProcessApi = directApi ?? namespaceApi
+      const callArguments = node.arguments as AstNode[]
+      if (childProcessApi !== undefined && [callArguments[1], callArguments[2]].some(objectEnablesShell)) {
         add('SKILL_RUNTIME_SHELL_EXEC', `runtime module "${file.path}" must not spawn a shell`, 'Remove shell: true from child_process spawn options.')
       }
     }
@@ -243,14 +296,27 @@ interface MarkdownCodeFragment {
 function markdownCodeFragments(source: string): MarkdownCodeFragment[] {
   const fragments: MarkdownCodeFragment[] = []
   const proseLines: string[] = []
-  let fence: { readonly marker: string; readonly command: boolean } | undefined
+  let fence: { readonly marker: string; readonly command: boolean; continuedCommand?: string } | undefined
 
   for (const line of source.split('\n')) {
     if (fence !== undefined) {
       if (line.trimStart().startsWith(fence.marker)) {
+        if (fence.continuedCommand !== undefined) {
+          fragments.push({ command: true, text: fence.continuedCommand })
+        }
         fence = undefined
-      } else if (fence.command && !line.trimStart().startsWith('#')) {
-        fragments.push({ command: true, text: line.trim() })
+      } else if (fence.command) {
+        const trimmed = line.trim()
+        if (!trimmed.startsWith('#') && (trimmed !== '' || fence.continuedCommand !== undefined)) {
+          const continued = /\\\s*$/.test(trimmed)
+          const part = continued ? trimmed.replace(/\\\s*$/, '').trimEnd() : trimmed
+          const command = fence.continuedCommand === undefined ? part : `${fence.continuedCommand} ${part.trimStart()}`
+          if (continued) fence.continuedCommand = command
+          else {
+            fragments.push({ command: true, text: command })
+            delete fence.continuedCommand
+          }
+        }
       }
       proseLines.push('')
       continue
@@ -283,14 +349,15 @@ function commandText(fragment: string): string {
 
 function mentionsBackendCode(command: string, scriptBasenames: ReadonlySet<string>): boolean {
   return command.includes('/scripts/')
-    || LEGACY_BACKEND_SUFFIX.test(command)
+    || RUNTIME_BACKEND_SUFFIX.test(command)
     || [...scriptBasenames].some((basename) => command.includes(basename))
 }
 
 function isInlineCommandCandidate(command: string): boolean {
-  return /^(?:node|python|python3|bash|sh)\b/.test(command)
-    || /^(?:\$\{[A-Z][A-Z0-9_]*\}|\$[A-Z][A-Z0-9_]*)/.test(command)
-    || /^(?:\.\/|\/)/.test(command)
+  const unquoted = command.replace(/^["']/, '')
+  return /^(?:node|python|python3|bash|sh)\b/.test(unquoted)
+    || /^(?:\$\{[A-Z][A-Z0-9_]*\}|\$[A-Z][A-Z0-9_]*)/.test(unquoted)
+    || /^(?:\.\/|\/)/.test(unquoted)
 }
 
 function resolveScriptReference(scriptRoot: string, reference: string): string | undefined {
@@ -308,9 +375,12 @@ function resolveScriptReference(scriptRoot: string, reference: string): string |
 }
 
 function canonicalInvocation(input: ValidateSkillRuntimeInput, skill: string, command: string): string | undefined {
-  const root = `${escapeRegExp(input.skillsRoot)}/${escapeRegExp(skill)}/scripts/`
-  const match = command.match(new RegExp(`^node\\s+(["'])?\\$\\{CLAUDE_PLUGIN_ROOT\\}/${root}([^"'\\s]+\\.mjs)\\1\\s*$`))
-  return match === null ? undefined : match[2] ?? undefined
+  const match = command.match(/^node[ \t]+(?:"([^"\r\n]+)"|'([^'\r\n]+)'|([^\s"'`]+))(?=$|[ \t])/)
+  const script = match?.[1] ?? match?.[2] ?? match?.[3]
+  const prefix = `\${CLAUDE_PLUGIN_ROOT}/${input.skillsRoot}/${skill}/scripts/`
+  if (script === undefined || !script.startsWith(prefix) || !script.endsWith('.mjs')) return undefined
+  const reference = script.slice(prefix.length)
+  return reference === '' ? undefined : reference
 }
 
 function inspectMarkdown(
@@ -391,7 +461,9 @@ export function validateSkillRuntime(input: ValidateSkillRuntimeInput): SkillRun
 
     const fileExtension = extension(relative)
     const inScripts = relative.startsWith('scripts/')
-    const code = CODE_EXTENSIONS.has(fileExtension) || (inScripts && fileExtension === '') || file.executable || hasShebang(file.content)
+    const code = (inScripts ? !NON_CODE_ASSET_EXTENSIONS.has(fileExtension) : CODE_EXTENSIONS.has(fileExtension))
+      || file.executable
+      || hasShebang(file.content)
     if (!code) continue
 
     modules += 1
@@ -417,7 +489,9 @@ export function validateSkillRuntime(input: ValidateSkillRuntimeInput): SkillRun
     diagnostics.push(...inspectMarkdown(input, file, skill, filePaths))
   }
 
-  diagnostics.sort((left, right) => compareArtifactPaths(left.path as ArtifactPath, right.path as ArtifactPath) || left.code.localeCompare(right.code) || left.message.localeCompare(right.message))
+  diagnostics.sort((left, right) => compareArtifactPaths(left.path as ArtifactPath, right.path as ArtifactPath)
+    || compareRawStrings(left.code, right.code)
+    || compareRawStrings(left.message, right.message))
   return { skills: skills.size, modules, diagnostics, ok: diagnostics.length === 0 }
 }
 

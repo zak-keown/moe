@@ -50,6 +50,10 @@ describe('skill runtime validation', () => {
     ['.js', 'skills/demo/scripts/test-unlinked.js', 'console.log("tool")\n', ['SKILL_RUNTIME_LANGUAGE']],
     ['.ts', 'skills/demo/scripts/tool.ts', 'export const tool: string = "tool"\n', ['SKILL_RUNTIME_LANGUAGE']],
     ['.cmd', 'skills/demo/scripts/tool.cmd', '@echo off\r\n', ['SKILL_RUNTIME_LANGUAGE']],
+    ['.ps1', 'skills/demo/scripts/tool.ps1', 'Write-Output "tool"\n', ['SKILL_RUNTIME_LANGUAGE']],
+    ['.rb', 'skills/demo/scripts/tool.rb', 'puts "tool"\n', ['SKILL_RUNTIME_LANGUAGE']],
+    ['.jsx', 'skills/demo/scripts/tool.jsx', 'export const tool = <div />\n', ['SKILL_RUNTIME_LANGUAGE']],
+    ['.mts', 'skills/demo/scripts/tool.mts', 'export const tool = "tool"\n', ['SKILL_RUNTIME_LANGUAGE']],
     ['extensionless code', 'skills/demo/scripts/tool', 'console.log("tool")\n', ['SKILL_RUNTIME_LANGUAGE']],
     ['mjs outside scripts', 'skills/demo/tool.mjs', 'console.log("tool")\n', ['SKILL_RUNTIME_LOCATION']],
   ] as const)('reports %s code as unsupported without inspecting invocation links', (_name, path, content, codes) => {
@@ -72,6 +76,14 @@ describe('skill runtime validation', () => {
     })
   })
 
+  it('accepts the closed set of non-code assets under scripts', () => {
+    expect(validateSkillRuntime(input([
+      ...valid,
+      file('skills/demo/scripts/template.html', '<main>prompt</main>\n'),
+      file('skills/demo/scripts/config.json', '{"enabled":true}\n'),
+    ]))).toMatchObject({ modules: 2, diagnostics: [], ok: true })
+  })
+
   it('reports executable script mode', () => {
     const report = validateSkillRuntime(input([...valid, file('skills/demo/scripts/executable.mjs', 'console.log("tool")\n', true)]))
 
@@ -91,6 +103,7 @@ describe('skill runtime validation', () => {
     ['parent imports', 'import value from "../other/scripts/value.mjs";', 'SKILL_RUNTIME_IMPORT'],
     ['computed dynamic imports', 'import("./" + name);', 'SKILL_RUNTIME_DYNAMIC_IMPORT'],
     ['CommonJS require calls', 'const value = require("./value.cjs");', 'SKILL_RUNTIME_COMMONJS'],
+    ['aliased createRequire loaders', 'import { createRequire as makeRequire } from "node:module"; const load = makeRequire(import.meta.url); load("left-pad");', 'SKILL_RUNTIME_COMMONJS'],
     ['child-process exec imports', 'import { execSync } from "node:child_process";', 'SKILL_RUNTIME_SHELL_EXEC'],
     ['child-process namespace exec calls', 'import * as childProcess from "node:child_process"; childProcess.exec("tool");', 'SKILL_RUNTIME_SHELL_EXEC'],
     ['literal computed namespace exec calls', 'import * as childProcess from "node:child_process"; childProcess["exec"]("tool");', 'SKILL_RUNTIME_SHELL_EXEC'],
@@ -98,6 +111,13 @@ describe('skill runtime validation', () => {
     ['extracted namespace exec calls', 'import * as childProcess from "node:child_process"; const run = childProcess.exec; run("tool");', 'SKILL_RUNTIME_SHELL_EXEC'],
     ['spawn calls with shell enabled', 'import { spawn } from "node:child_process"; spawn("tool", [], { shell: true });', 'SKILL_RUNTIME_SHELL_EXEC'],
     ['spawnSync calls with shell enabled', 'import { spawnSync } from "node:child_process"; spawnSync("tool", [], { shell: true });', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['spawn calls with second-position options', 'import { spawn } from "node:child_process"; spawn("tool", { shell: true });', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['spawnSync calls with a string shell', 'import { spawnSync } from "node:child_process"; spawnSync("tool", [], { shell: "/bin/sh" });', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['execFile calls with second-position options', 'import { execFile } from "node:child_process"; execFile("tool", { shell: true });', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['execFileSync calls with a string shell', 'import { execFileSync } from "node:child_process"; execFileSync("tool", [], { shell: "/bin/sh" });', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['namespace execFile calls with shell enabled', 'import * as childProcess from "node:child_process"; childProcess.execFile("tool", [], { shell: true });', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['dynamic child-process namespace imports', 'const childProcess = await import("node:child_process"); childProcess.exec("tool");', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['re-exported child-process exec APIs', 'export { exec } from "node:child_process";', 'SKILL_RUNTIME_SHELL_EXEC'],
     ['literal computed namespace spawn calls', 'import * as childProcess from "node:child_process"; childProcess["spawn"]("tool", [], { shell: true });', 'SKILL_RUNTIME_SHELL_EXEC'],
     ['spawn calls before their static imports', 'spawn("tool", [], { shell: true }); import { spawn } from "node:child_process";', 'SKILL_RUNTIME_SHELL_EXEC'],
     ['missing relative modules', 'import value from "./missing.mjs";', 'SKILL_RUNTIME_IMPORT'],
@@ -109,6 +129,15 @@ describe('skill runtime validation', () => {
     const report = validateSkillRuntime(input([...valid, file(path, source)]))
 
     expect(report.diagnostics).toContainEqual(expect.objectContaining({ code, path }))
+  })
+
+  it('accepts Node 24 built-ins that exist only with the node: prefix', () => {
+    const report = validateSkillRuntime(input([
+      ...valid,
+      file('skills/demo/scripts/sqlite.mjs', 'import { DatabaseSync } from "node:sqlite";\nexport const database = new DatabaseSync(":memory:");\n'),
+    ]))
+
+    expect(report).toMatchObject({ skills: 1, modules: 3, diagnostics: [], ok: true })
   })
 
   it('accepts literal dynamic imports and re-exports of same-skill mjs modules', () => {
@@ -138,6 +167,18 @@ describe('skill runtime validation', () => {
       { path: 'skills/demo/scripts/m-shell.mjs', code: 'SKILL_RUNTIME_SHELL_EXEC', message: 'runtime module "skills/demo/scripts/m-shell.mjs" must not use child_process exec APIs' },
       { path: 'skills/demo/scripts/z-import.mjs', code: 'SKILL_RUNTIME_IMPORT', message: 'runtime module "skills/demo/scripts/z-import.mjs" imports unsupported module "/tmp/value.mjs"' },
       { path: 'skills/demo/scripts/z-import.mjs', code: 'SKILL_RUNTIME_IMPORT', message: 'runtime module "skills/demo/scripts/z-import.mjs" imports unsupported module "left-pad"' },
+    ])
+  })
+
+  it('sorts diagnostic messages with locale-independent raw string ordering', () => {
+    const report = validateSkillRuntime(input([
+      ...valid,
+      file('skills/demo/scripts/non-ascii.mjs', 'import zed from "z-package"; import accented from "é-package";\n'),
+    ]))
+
+    expect(report.diagnostics.map(({ message }) => message)).toEqual([
+      'runtime module "skills/demo/scripts/non-ascii.mjs" imports unsupported module "z-package"',
+      'runtime module "skills/demo/scripts/non-ascii.mjs" imports unsupported module "é-package"',
     ])
   })
 
@@ -201,6 +242,40 @@ describe('skill runtime validation', () => {
     ])
   })
 
+  it('accepts canonical invocations with supported quoting, arguments, comments, and continuations', () => {
+    const report = validateSkillRuntime(input([
+      ...valid,
+      file('skills/demo/guide.md', [
+        'Run `node ${CLAUDE_PLUGIN_ROOT}/skills/demo/scripts/main.mjs`.',
+        'Run `node \'${CLAUDE_PLUGIN_ROOT}/skills/demo/scripts/main.mjs\' --format json`.',
+        '```shell',
+        'node "${CLAUDE_PLUGIN_ROOT}/skills/demo/scripts/main.mjs" --format json # render output',
+        'node "${CLAUDE_PLUGIN_ROOT}/skills/demo/scripts/main.mjs" \\',
+        '  --format json',
+        '```',
+      ].join('\n')),
+    ]))
+
+    expect(report.diagnostics).toEqual([])
+  })
+
+  it('rejects quoted direct calls and dangling noncanonical mjs invocations', () => {
+    const report = validateSkillRuntime(input([
+      ...valid,
+      file('skills/demo/guide.md', [
+        '`"${CLAUDE_PLUGIN_ROOT}/skills/demo/scripts/main.mjs"`',
+        '`node ./missing.mjs`',
+        '`node "$SKILL/missing.mjs"`',
+      ].join('\n')),
+    ]))
+
+    expect(report.diagnostics.map(({ code }) => code)).toEqual([
+      'SKILL_RUNTIME_INVOCATION',
+      'SKILL_RUNTIME_INVOCATION',
+      'SKILL_RUNTIME_INVOCATION',
+    ])
+  })
+
   it('throws an aggregate runtime error with every sorted diagnostic when assertion is requested', () => {
     const runtimeInput = input([
       ...valid,
@@ -224,7 +299,7 @@ describe('skill runtime validation', () => {
           expect.objectContaining({ code: 'SKILL_RUNTIME_LANGUAGE', path: 'skills/demo/scripts/z.js' }),
         ],
       })
-      expect((error as SkillRuntimeError).message).toContain('2')
+      expect((error as SkillRuntimeError).message).toBe('skill runtime validation found 2 violations')
     }
   })
 })
