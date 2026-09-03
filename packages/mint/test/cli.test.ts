@@ -259,6 +259,7 @@ describe('CLI end-to-end', () => {
     }
     expect(readdirSync(join(pluginRoot, 'hooks')).sort()).toEqual([
       'claude-judge-continuation',
+      'developing-for-moe-notice',
       'governance-marker-check',
       'hooks.json',
       'jig-review-format-guard',
