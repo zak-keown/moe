@@ -63,7 +63,7 @@
     {
       "path": ".moe-mint/manifest.json",
       "size": 3372,
-      "sha256": "f764a3a211d5b7f46b23edf000218b8374f4b191b9d397845a0c4b9662638f35",
+      "sha256": "c7c890ff2c65e6fd1ebe154338d6449cc38070391617665958f96581f0d46e40",
       "mode": "0644"
     },
     {
@@ -590,8 +590,8 @@
     },
     {
       "path": "hooks/hooks.json",
-      "size": 294,
-      "sha256": "565d8fad52c03c4123d9d51e31220275c55b81f70262a705f22f41def16d3fd4",
+      "size": 327,
+      "sha256": "3596f22ba73c5e7b6f5dd41d0aae2fecee176992fec9165525dee1fc54fc0b63",
       "mode": "0644"
     },
     {
@@ -602,8 +602,8 @@
     },
     {
       "path": "hooks/moe-mint/hooks.json",
-      "size": 589,
-      "sha256": "b0f328da4ee7464e7612866c25fca131709f2ee6f94c2c833e2842263ba60353",
+      "size": 622,
+      "sha256": "78e7becfee3177f6f757b824aa41441b1506c0e971ef01a3e1e35ad85b6ad0e7",
       "mode": "0644"
     },
     {
@@ -655,7 +655,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "61c3e5e25f183541c473290f29783bc9f038e3a48d48e77a30e5ebad4cee475c",
+  "tree_sha256": "d90be26b6bae896ccd775b8ae53cc45e2ece98875e60a255344e62b249831b00",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

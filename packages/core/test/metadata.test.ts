@@ -9,9 +9,10 @@
  * of those before this file existed.
  */
 
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import {
   accessSync,
+  chmodSync,
   constants,
   existsSync,
   mkdirSync,
@@ -1174,9 +1175,13 @@ describe("plan-set", () => {
   // assertion has one thing to say when it fires.
   const CLI = join(PKG, "hooks/plan-set");
   const FIXTURES = join(PKG, "test/fixtures/plan-set");
-  const run = (args: string[]): { status: number; stdout: string; stderr: string } => {
+  const run = (
+    args: string[],
+    cwd?: string,
+  ): { status: number; stdout: string; stderr: string } => {
     try {
       const stdout = execFileSync(process.execPath, [CLI, ...args], {
+        cwd,
         stdio: ["ignore", "pipe", "pipe"],
         encoding: "utf8",
       });
@@ -1210,6 +1215,13 @@ describe("plan-set", () => {
     expect(r.stderr).toMatch(/cycle detected among:.*C/);
   });
 
+  it("cycle diagnostics exclude an acyclic downstream plan", () => {
+    const r = run(["check", "--manifest", join(FIXTURES, "cycle-with-tail-MANIFEST.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/cycle detected among: A, B/);
+    expect(r.stderr).not.toMatch(/cycle detected among:.*C/);
+  });
+
   it("next skips a blocked node's transitive dependents", () => {
     // A is blocked; B depends on A; C depends on B. `next` must be empty:
     // the blocked-closure walk covers B and C, so neither is ready.
@@ -1219,6 +1231,12 @@ describe("plan-set", () => {
     const r = run(["next", "--manifest", join(FIXTURES, "blocked-MANIFEST.md")]);
     expect(r.status, r.stderr).toBe(0);
     expect(r.stdout).toBe("");
+  });
+
+  it("next still returns an independent plan in a set with a blocked branch", () => {
+    const r = run(["next", "--manifest", join(FIXTURES, "partially-blocked-MANIFEST.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout.trim()).toBe("C");
   });
 
   it("check fails on a duplicate id", () => {
@@ -1250,6 +1268,113 @@ describe("plan-set", () => {
     expect(r.status).not.toBe(0);
     expect(r.stderr).toMatch(/manifest not found/);
   });
+
+  it("keeps legacy single-manifest output bare and derives its set id from the filename", () => {
+    const manifest = join(FIXTURES, "diamond-MANIFEST.md");
+    const r = run(["next", "--manifest", manifest]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout.trim().split(/\n/)).toEqual(["B", "C"]);
+  });
+
+  it("discovers multiple manifests in sorted order and qualifies every ready plan", () => {
+    const root = join(FIXTURES, "aggregate-legacy");
+    const r = run(["next"], root);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout.trim().split(/\n/)).toEqual(["alpha/A", "zeta/Z"]);
+  });
+
+  it("withholds a dependent plan set until its prerequisite set is complete", () => {
+    const root = join(FIXTURES, "aggregate-prerequisite");
+    const r = run(["next"], root);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout.trim().split(/\n/)).toEqual(["foundation/F"]);
+  });
+
+  it("releases a dependent plan set after qualified done completes its prerequisite", () => {
+    const tmp = mkdtempSync(join(tmpdir(), "plan-set-qualified-done-"));
+    const root = join(tmp, "project");
+    try {
+      execFileSync("cp", ["-R", join(FIXTURES, "aggregate-prerequisite"), root]);
+      const done = run(["done", "foundation/F", "aaaaaaa..bbbbbbb"], root);
+      expect(done.status, done.stderr).toBe(0);
+      expect(done.stdout).toContain("marked foundation/F done");
+
+      const manifest = readFileSync(join(root, "docs/moe/plans/01-foundation-MANIFEST.md"), "utf8");
+      expect(manifest).toContain("plan_set_id: foundation");
+      expect(manifest).toContain("depends_on_plan_sets: []");
+      expect(manifest).toContain("status: done");
+      expect(manifest).toContain("commits: aaaaaaa..bbbbbbb");
+
+      const next = run(["next"], root);
+      expect(next.status, next.stderr).toBe(0);
+      expect(next.stdout.trim()).toBe("memory/M");
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("scoped commands enforce prerequisite sets without loading unrelated bad siblings", () => {
+    const root = join(FIXTURES, "scoped-closure");
+    const manifest = join(root, "docs/moe/plans/memory-MANIFEST.md");
+    const next = run(["next", "--manifest", manifest], root);
+    expect(next.status, next.stderr).toBe(0);
+    expect(next.stdout).toBe("");
+
+    const done = run(["done", "M", "aaaaaaa..bbbbbbb", "--manifest", manifest], root);
+    expect(done.status).not.toBe(0);
+    expect(done.stderr).toMatch(/prerequisite plan set "foundation" is incomplete/);
+    expect(done.stderr).not.toContain("unrelated-bad");
+  });
+
+  it("check rejects an unknown plan-set dependency", () => {
+    const r = run(["check"], join(FIXTURES, "invalid-set-dependency"));
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/depends_on_plan_sets "missing" — not a known plan-set id/);
+  });
+
+  it("check rejects a plan-set id that cannot round-trip through a qualified plan id", () => {
+    const r = run(["check", "--manifest", join(FIXTURES, "invalid-plan-set-id-MANIFEST.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/plan_set_id "bad\/id" must match \[A-Za-z0-9\]\[A-Za-z0-9\._-\]\*/);
+  });
+
+  it("check rejects an empty plan set", () => {
+    const r = run(["check", "--manifest", join(FIXTURES, "empty-plan-set-MANIFEST.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/plan set "empty-set" must contain at least one plan/);
+  });
+
+  it("check rejects duplicate plan-set ids", () => {
+    const r = run(["check"], join(FIXTURES, "duplicate-set-id"));
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/duplicate plan_set_id "same"/);
+  });
+
+  it("check rejects cycles across plan sets and names every set", () => {
+    const r = run(["check"], join(FIXTURES, "set-cycle"));
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/plan-set cycle detected among:.*alpha/);
+    expect(r.stderr).toMatch(/plan-set cycle detected among:.*beta/);
+  });
+
+  it("plan-set cycle diagnostics exclude an acyclic downstream set", () => {
+    const r = run(["check"], join(FIXTURES, "set-cycle-with-tail"));
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/plan-set cycle detected among: alpha, beta/);
+    expect(r.stderr).not.toMatch(/plan-set cycle detected among:.*gamma/);
+  });
+
+  it("next propagates a blocked prerequisite across plan sets", () => {
+    const r = run(["next"], join(FIXTURES, "blocked-set"));
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout).toBe("");
+  });
+
+  it("check rejects a plan path listed in two manifests", () => {
+    const r = run(["check"], join(FIXTURES, "duplicate-plan-path"));
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/plan file .*shared-plan\.md.*listed by both alpha\/A and beta\/B/);
+  });
 });
 
 describe("plan-set-notice", () => {
@@ -1261,30 +1386,61 @@ describe("plan-set-notice", () => {
   // testable.
   const HOOK = join(PKG, "hooks/plan-set-notice");
   const runHook = (input: string, env: Record<string, string> = {}) => {
-    try {
-      const stdout = execFileSync("bash", [HOOK], {
-        input,
-        env: { ...process.env, ...env },
-        stdio: ["pipe", "pipe", "pipe"],
-        encoding: "utf8",
-      });
-      return { status: 0, stdout };
-    } catch (err) {
-      const e = err as { status: number; stdout: string; stderr: string };
-      return { status: e.status ?? 1, stdout: e.stdout ?? "" };
+    const result = spawnSync("/bin/bash", [HOOK], {
+      input,
+      env: { ...process.env, ...env },
+      stdio: ["pipe", "pipe", "pipe"],
+      encoding: "utf8",
+    });
+    return {
+      status: result.status ?? 1,
+      stdout: result.stdout ?? "",
+      stderr: result.stderr ?? result.error?.message ?? "",
+    };
+  };
+
+  const expectSilentSuccess = (result: { status: number; stdout: string; stderr: string }) => {
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe("");
+  };
+
+  const copyManifestProject = (tmp: string, manifest: string) => {
+    const plansDir = join(tmp, "docs/moe/plans");
+    const planFiles = join(tmp, "plans");
+    mkdirSync(plansDir, { recursive: true });
+    mkdirSync(planFiles, { recursive: true });
+    const fixtureRoot = join(PKG, "test/fixtures/plan-set");
+    for (const f of ["A-plan.md", "B-plan.md", "C-plan.md", "D-plan.md"]) {
+      execFileSync("cp", [join(fixtureRoot, "plans", f), join(planFiles, f)]);
     }
+    execFileSync("cp", [join(fixtureRoot, manifest), join(plansDir, "test-MANIFEST.md")]);
+    return join(plansDir, "test-MANIFEST.md");
   };
 
   it("exits 0 with no output on empty stdin", () => {
-    const r = runHook("");
-    expect(r.status).toBe(0);
-    expect(r.stdout).toBe("");
+    expectSilentSuccess(runHook(""));
   });
 
   it("exits 0 with no output when cwd has no manifest", () => {
-    const r = runHook(JSON.stringify({ cwd: PKG, hook_event_name: "SessionStart" }));
-    expect(r.status).toBe(0);
-    expect(r.stdout).toBe("");
+    expectSilentSuccess(runHook(JSON.stringify({ cwd: PKG, hook_event_name: "SessionStart" })));
+  });
+
+  it("exits 0 silently when the payload cwd is invalid", () => {
+    expectSilentSuccess(
+      runHook(
+        JSON.stringify({
+          cwd: join(tmpdir(), "plan-set-notice-directory-that-does-not-exist"),
+          hook_event_name: "SessionStart",
+        }),
+      ),
+    );
+  });
+
+  it("exits 0 silently when Node is unavailable", () => {
+    expectSilentSuccess(
+      runHook(JSON.stringify({ cwd: PKG, hook_event_name: "SessionStart" }), { PATH: "" }),
+    );
   });
 
   it("prints additionalContext when the project has a runnable plan", () => {
@@ -1293,18 +1449,7 @@ describe("plan-set-notice", () => {
     // scratch dir, and rmSync in finally so a failure mid-test does not leak.
     const tmp = mkdtempSync(join(tmpdir(), "plan-set-notice-"));
     try {
-      const plansDir = join(tmp, "docs/moe/plans");
-      const planFiles = join(tmp, "plans");
-      execFileSync("mkdir", ["-p", plansDir]);
-      execFileSync("mkdir", ["-p", planFiles]);
-      const plansSrc = join(PKG, "test/fixtures/plan-set/plans");
-      for (const f of ["A-plan.md", "B-plan.md", "C-plan.md", "D-plan.md"]) {
-        execFileSync("cp", [join(plansSrc, f), join(planFiles, f)]);
-      }
-      execFileSync("cp", [
-        join(PKG, "test/fixtures/plan-set/diamond-MANIFEST.md"),
-        join(plansDir, "test-MANIFEST.md"),
-      ]);
+      copyManifestProject(tmp, "diamond-MANIFEST.md");
       const r = runHook(JSON.stringify({ cwd: tmp, hook_event_name: "SessionStart" }), {
         CLAUDE_PLUGIN_ROOT: "/fake",
       });
@@ -1312,6 +1457,79 @@ describe("plan-set-notice", () => {
       expect(r.stdout).toContain('"hookSpecificOutput"');
       expect(r.stdout).toContain("Next runnable plan(s): B,C");
       expect(r.stdout).toContain("docs/moe/plans/test-MANIFEST.md");
+      expect(r.stdout).toContain(
+        `Run \`node \\"${join(PKG, "hooks/plan-set")}\\" next --manifest \\"docs/moe/plans/test-MANIFEST.md\\"\``,
+      );
+      expect(r.stdout).toContain(
+        `\`node \\"${join(PKG, "hooks/plan-set")}\\" done <id> <base>..<head> --manifest \\"docs/moe/plans/test-MANIFEST.md\\"\``,
+      );
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("prints aggregate qualified next output when the project has multiple manifests", () => {
+    const root = join(PKG, "test/fixtures/plan-set/aggregate-legacy");
+    const r = runHook(JSON.stringify({ cwd: root, hook_event_name: "SessionStart" }), {
+      CLAUDE_PLUGIN_ROOT: "/fake",
+    });
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain("Next runnable plan(s): alpha/A,zeta/Z");
+    expect(r.stdout).toContain(`\`node \\"${join(PKG, "hooks/plan-set")}\\" next\``);
+    expect(r.stdout).toContain(
+      `\`node \\"${join(PKG, "hooks/plan-set")}\\" done <plan-set-id>/<plan-id> <base>..<head>\``,
+    );
+    expect(r.stdout).not.toContain("Pass --manifest");
+  });
+
+  it("exits 0 silently when the manifest is malformed", () => {
+    const tmp = mkdtempSync(join(tmpdir(), "plan-set-notice-malformed-"));
+    try {
+      const plansDir = join(tmp, "docs/moe/plans");
+      mkdirSync(plansDir, { recursive: true });
+      writeFileSync(join(plansDir, "broken-MANIFEST.md"), "# no yaml manifest block\n");
+      expectSilentSuccess(runHook(JSON.stringify({ cwd: tmp, hook_event_name: "SessionStart" })));
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("exits 0 silently when the plan-set CLI fails", () => {
+    const tmp = mkdtempSync(join(tmpdir(), "plan-set-notice-cli-failure-"));
+    try {
+      copyManifestProject(tmp, "diamond-MANIFEST.md");
+      const fakeBin = join(tmp, "bin");
+      mkdirSync(fakeBin);
+      const fakeNode = join(fakeBin, "node");
+      writeFileSync(fakeNode, "#!/bin/sh\nexit 19\n");
+      chmodSync(fakeNode, 0o755);
+      expectSilentSuccess(
+        runHook(JSON.stringify({ cwd: tmp, hook_event_name: "SessionStart" }), {
+          PATH: `${fakeBin}:${process.env.PATH ?? ""}`,
+        }),
+      );
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("exits 0 silently when every plan is done", () => {
+    const tmp = mkdtempSync(join(tmpdir(), "plan-set-notice-all-done-"));
+    try {
+      const manifest = copyManifestProject(tmp, "diamond-MANIFEST.md");
+      const allDone = readFileSync(manifest, "utf8").replaceAll("status: pending", "status: done");
+      writeFileSync(manifest, allDone);
+      expectSilentSuccess(runHook(JSON.stringify({ cwd: tmp, hook_event_name: "SessionStart" })));
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it("exits 0 silently when only a blocked branch remains", () => {
+    const tmp = mkdtempSync(join(tmpdir(), "plan-set-notice-blocked-"));
+    try {
+      copyManifestProject(tmp, "blocked-MANIFEST.md");
+      expectSilentSuccess(runHook(JSON.stringify({ cwd: tmp, hook_event_name: "SessionStart" })));
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

@@ -57,8 +57,15 @@ export function ensureStatusLine(opts: EnsureStatusLineOptions): EnsureStatusLin
   return { wrote: true, reason: "written" };
 }
 
-function defaultSettingsPath(): string {
-  return join(homedir(), ".claude", "settings.json");
+export function defaultSettingsPath(
+  env: NodeJS.ProcessEnv = process.env,
+  homeDir: string = homedir(),
+): string {
+  const configuredDir = env.CLAUDE_CONFIG_DIR;
+  if (configuredDir !== undefined && configuredDir.length > 0) {
+    return join(configuredDir, "settings.json");
+  }
+  return join(homeDir, ".claude", "settings.json");
 }
 
 /**

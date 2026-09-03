@@ -218,14 +218,14 @@
     },
     {
       "path": "hooks/plan-set",
-      "size": 16846,
-      "sha256": "aec867fb492a7be4ef3ba10371404ab38ef5dbed8208c072ea40defc6adb361a",
+      "size": 26253,
+      "sha256": "1352abf623ce3f2512fc2832c0f9259a54ab175a04aa03027cb6f5c4f1f7628f",
       "mode": "0755"
     },
     {
       "path": "hooks/plan-set-notice",
-      "size": 5983,
-      "sha256": "077ef800b5413efff33874e4292fd1bdb2318b6c846a6c247a822549ab39a1ad",
+      "size": 6782,
+      "sha256": "a49cd78c0f68d7ff6888d7c547db4f403d65f7e7a3385000e10a54c7f6f6d990",
       "mode": "0755"
     },
     {
@@ -842,8 +842,8 @@
     },
     {
       "path": "skills/sequencing-plans/SKILL.md",
-      "size": 8332,
-      "sha256": "8066f6e3481523b727783e9c512993fa9d0cf3ca19a52bd574fecb1e89f95a3d",
+      "size": 9558,
+      "sha256": "a7c0f075a6d7f93bbaf438cec04e0482f6d16b5542b13973433cfddff3d582f3",
       "mode": "0644"
     },
     {
@@ -1153,7 +1153,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "2223dfea8308e2b1907f1a0c9f0a32ff4827de7b8f970c5aa55372502cd4587f",
+  "tree_sha256": "da762ad2e3b1a698dd8fb1192c12b6dc6505a6ee56e1017841b709b649aaca57",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [
