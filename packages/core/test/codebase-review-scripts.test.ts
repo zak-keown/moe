@@ -18,6 +18,16 @@ const REVIEW_VERIFY_RECORD = join(
   "skills/reviewing-a-codebase/scripts/review-verify-record.mjs",
 );
 const STAMP_DISPOSITION = join(CORE, "skills/fixing-a-code-review/scripts/stamp-disposition.mjs");
+const COMPACT_RESOLVED = join(CORE, "skills/fixing-a-code-review/scripts/compact-resolved.mjs");
+const REVIEW_SCRIPTS = [
+  REVIEW_SCOPE,
+  REVIEW_MERGE,
+  REVIEW_CHECK,
+  REVIEW_VERIFY_SCOPE,
+  REVIEW_VERIFY_RECORD,
+  STAMP_DISPOSITION,
+  COMPACT_RESOLVED,
+];
 
 const sandboxes: string[] = [];
 
@@ -63,6 +73,36 @@ function run(script: string, args: string[], cwd: string) {
     timeout: 5_000,
   });
 }
+
+describe("review helper module boundaries", () => {
+  it.each(REVIEW_SCRIPTS)("imports %s without executing its CLI", (script) => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--input-type=module",
+        "--eval",
+        `await import(${JSON.stringify(new URL(`file://${script}`).href)})`,
+      ],
+      { cwd: sandbox("silent-import"), encoding: "utf8" },
+    );
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe("");
+  });
+
+  it("executes a CLI through a symlink", () => {
+    const { file, repo } = stampFixture();
+    const linked = join(repo, "stamp-linked.mjs");
+    symlinkSync(STAMP_DISPOSITION, linked);
+    const result = run(
+      linked,
+      ["--file", file, "--id", "CR-001", "--disposition", "fixed", "--commit", "abc1234"],
+      repo,
+    );
+    expect(result.status, result.stderr).toBe(0);
+    expect(readFileSync(file, "utf8")).toContain("**Disposition:** fixed");
+  });
+});
 
 interface ScopeShard {
   files: string[];
