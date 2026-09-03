@@ -1397,4 +1397,26 @@ describe("task-set", () => {
     expect(r.status, r.stderr).toBe(0);
     expect(r.stdout.trim().split(/\n/)).toEqual(["1", "2"]);
   });
+
+  it("check fails on duplicate task numbers", () => {
+    const r = run(["check", join(FIXTURES, "duplicate-num-plan.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/duplicate task number 1/);
+  });
+
+  it("check fails when a task has no Consumes entry", () => {
+    const r = run(["check", join(FIXTURES, "no-consumes-plan.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/task 1.*missing "Consumes:" entry/);
+  });
+
+  it("waves excludes blocked tasks with a stderr note", () => {
+    const { spawnSync } = require("node:child_process");
+    const r = spawnSync(process.execPath, [CLI, "waves", join(FIXTURES, "blocked-plan.md")], {
+      encoding: "utf8",
+    });
+    expect(r.status).toBe(0);
+    expect(r.stdout.trim()).toBe("wave 1: 1");
+    expect(r.stderr).toMatch(/task 2 excluded — blocked by: D1/);
+  });
 });
