@@ -94,10 +94,20 @@ function parseNpmOutput(output: string, expected: ExpectedArtifactContext): NpmP
   } catch (error) {
     throw packError('PACK_NPM_OUTPUT_INVALID', 'npm pack did not return JSON output', 'Run npm pack with --json and inspect its output.', undefined, error)
   }
-  if (!Array.isArray(parsed) || parsed.length !== 1) {
-    throw packError('PACK_NPM_OUTPUT_INVALID', 'npm pack must return exactly one JSON result', 'Ensure one artifact is packed into a fresh destination.')
+  // npm <12 returns [{…}]; npm 12+ returns {"pkg-name": {…}}.
+  let value: Record<string, unknown> | undefined
+  if (Array.isArray(parsed)) {
+    if (parsed.length !== 1) {
+      throw packError('PACK_NPM_OUTPUT_INVALID', 'npm pack must return exactly one JSON result', 'Ensure one artifact is packed into a fresh destination.')
+    }
+    value = record(parsed[0])
+  } else {
+    const entries = record(parsed) ? Object.values(parsed as Record<string, unknown>) : []
+    if (entries.length !== 1) {
+      throw packError('PACK_NPM_OUTPUT_INVALID', 'npm pack must return exactly one JSON result', 'Ensure one artifact is packed into a fresh destination.')
+    }
+    value = record(entries[0])
   }
-  const value = record(parsed[0])
   const filename = checkedFilename(value?.filename)
   const size = value?.size
   const integrity = value?.integrity
