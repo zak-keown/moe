@@ -67,18 +67,14 @@ describe("reviewStamp", () => {
     gitIn(repo, "commit", "-m", "on branch b");
     const bSha = gitIn(repo, "rev-parse", "HEAD");
     gitIn(repo, "checkout", "main");
-    expect(() => reviewStamp("CR-001", bSha, { cwd: repo })).toThrow(
-      /not reachable from HEAD/,
-    );
+    expect(() => reviewStamp("CR-001", bSha, { cwd: repo })).toThrow(/not reachable from HEAD/);
   });
 
   it("rejects when the working tree is dirty", async () => {
     const { reviewStamp } = await import("../src/review.js");
     const sha = gitIn(repo, "rev-parse", "HEAD");
     writeFileSync(join(repo, "file.txt"), "dirty\n");
-    expect(() => reviewStamp("CR-001", sha, { cwd: repo })).toThrow(
-      /Working tree is dirty/,
-    );
+    expect(() => reviewStamp("CR-001", sha, { cwd: repo })).toThrow(/Working tree is dirty/);
   });
 });
 
