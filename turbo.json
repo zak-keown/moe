@@ -33,6 +33,7 @@
       ],
       "inputs": [
         "scripts/mint-plugins.mjs",
+        "scripts/lib/mint-diagnostics.mjs",
         "scripts/lib/mint-generation-transaction.mjs",
         "moe-platform.yaml",
         "NOTICE",
@@ -48,9 +49,11 @@
         "packages/*/hooks/**",
         "packages/*/.mcp.json",
         "packages/memory/dist/**",
+        "packages/memory/prompts/**",
         "packages/glass/dist/**",
         "packages/crew/dist/**",
-        "packages/statusline/dist/**"
+        "packages/statusline/dist/**",
+        "packages/statusline/vendor/**"
       ],
       "outputs": [
         "plugins/**",
