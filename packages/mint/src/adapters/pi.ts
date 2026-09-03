@@ -222,6 +222,8 @@ export const pi: HarnessAdapter = {
     hooks: 'none',
     mcp: 'none',
     bootstrap: 'full',
+    rules: 'none',
+    variables: 'none',
   },
   skillsOutputDir: '.pi/skills',
   installDoc,

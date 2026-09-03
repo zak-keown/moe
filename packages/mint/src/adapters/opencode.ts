@@ -256,6 +256,8 @@ export const opencode: HarnessAdapter = {
     hooks: 'none',
     mcp: 'none',
     bootstrap: 'full',
+    rules: 'none',
+    variables: 'none',
   },
   skillsOutputDir: '.opencode/skills',
   installDoc,

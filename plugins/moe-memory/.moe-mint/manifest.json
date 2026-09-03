@@ -14,8 +14,14 @@
     ".codex-plugin/plugin.json": {
       "sha256": "45638cdb421ebe23702d9ceb01c0295811719520d519cbad9ad1fbf5db259afb"
     },
+    ".cursor-plugin/marketplace.json": {
+      "sha256": "8672a1a21ecbf8be916427a90e27ecc77f1ddaa987de7e54a104598e1a0ccbff"
+    },
+    ".cursor-plugin/mcp.json": {
+      "sha256": "e124142cbe932ed37ca08b900a7fddc4170b380768ff48c5a09bdf858dbdbbd4"
+    },
     ".cursor-plugin/plugin.json": {
-      "sha256": "758fb8ff778b0340f5ae65a6670e8852e3541eb7166236f1eb4813f7e7c92fc7"
+      "sha256": "90ca81639bfcc718e3ae3f2a700ad32d5475e32b8b3b47d0bd7e43db9c6ba91a"
     },
     ".kimi-plugin/plugin.json": {
       "sha256": "36c3b6ecc6b1d8740c9ca256b86197b6c52760aab6264372d950eca6b5e400a1"
@@ -42,7 +48,7 @@
       "sha256": "38a365f64e5aa4e5c610db0aa69b74b0b2421c9abb459884c757a1003f57fcc6"
     },
     "docs/install/cursor.md": {
-      "sha256": "ec869e378b4271ff02f2e0e5e481a74a1db0e4bfaa95559a6dc66f66fc8ab366"
+      "sha256": "2a574366b6848b020ee0e8e9c658345677343d246811753178f4944f4cea5cc8"
     },
     "docs/install/kimi.md": {
       "sha256": "6997ad2d19f4502577b7de48421c54bb232d7b9fcbff0753e1112a6a295f54d1"
@@ -54,7 +60,7 @@
       "sha256": "97a842de7f73681910a6136b4e4e78c096498fc712f94ecf3f8bb7c435bcfe5e"
     },
     "docs/support-matrix.md": {
-      "sha256": "a1cf9170a8af2aaeed7f54d5942119f709e816bf2005394ccdb7a7b4a073f412"
+      "sha256": "4b189915e8eee40cb12a89871929701e02ccd8efdb479a654da2d2ccac0ab978"
     },
     "hooks/moe-mint/hooks-cursor.json": {
       "sha256": "7653af3eca8918a0fa45c4d67c321723d3906b8d3d6966959461be208f67d8a5"

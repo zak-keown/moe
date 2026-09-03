@@ -215,6 +215,23 @@ Record the wave assignment in the ledger before dispatching Wave 1:
 `Waves: [W1: t1,t2,t3] [W2: t4] [W3: t5,t6]`, so recovery after compaction reads
 the same shape you dispatched from.
 
+When `task-set` is available (the plan has `depends_on:` fields), compute
+waves deterministically:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/hooks/task-set" waves "$PLAN_PATH"
+```
+
+The output replaces the manual scan table. Validate it against your own
+understanding (a sanity check, not a gate). If the plan lacks `depends_on:`
+fields, fall back to the manual scan table.
+
+On a context reset, recover the ready set:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/hooks/task-set" next "$PLAN_PATH"
+```
+
 Before dispatching a wave, record its BASE SHA once — every worker in the wave
 branches from that same commit, per the divergent-tree rule in
 `dispatching-parallel-agents`. A worker branched from a stale base will cite the

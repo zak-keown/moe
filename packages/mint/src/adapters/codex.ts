@@ -70,6 +70,8 @@ export const codex: HarnessAdapter = {
     hooks: 'none',
     mcp: 'none',
     bootstrap: 'partial',
+    rules: 'none',
+    variables: 'none',
   },
   skillsOutputDir: '.codex-plugin/skills',
   installDoc,

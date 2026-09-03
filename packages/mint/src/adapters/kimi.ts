@@ -61,6 +61,8 @@ export const kimi: HarnessAdapter = {
     hooks: 'none',
     mcp: 'none',
     bootstrap: 'partial', // sessionStart only supports a named bootstrap skill; bootstrap.generate is unsupported
+    rules: 'none',
+    variables: 'none',
   },
   skillsOutputDir: '.kimi-plugin/skills',
   installDoc,

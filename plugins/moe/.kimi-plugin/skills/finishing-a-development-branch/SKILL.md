@@ -45,10 +45,13 @@ This determines which menu to show and how cleanup works:
 
 ## Step 3: Determine Base Branch
 
-The base branch is whatever this work forked from — usually named in the
-plan, the conversation, or the branch's upstream. If it is not already
-known, ask: "This branch split from <your best guess> - is that correct?"
-Confirm before merging: merging into the wrong base is expensive to undo.
+Use the `BASE_BRANCH` and `BASE_SHA` recorded when the worktree was created.
+Verify that `BASE_SHA` is an ancestor of the feature branch before presenting
+integration options. If the lifecycle predates those fields, recover the base
+from the plan, conversation, or branch upstream and ask: "This branch split
+from <your best guess> - is that correct?" Record the confirmed values before
+merging. Never replace missing intent with whichever branch happens to be the
+current merge base.
 
 ## Step 4: Present Options
 
@@ -165,7 +168,7 @@ Step 2, from before that directory change.
 
 **If `GIT_DIR == GIT_COMMON`:** Normal repo, no worktree to clean up. Done.
 
-**If `WORKTREE_PATH` is under `.worktrees/` or `worktrees/`:** Moe
+**If `WORKTREE_PATH` is under `.moe/worktrees/`, `.worktrees/`, or `worktrees/`:** Moe
 created this worktree — we own cleanup:
 
 ```bash
@@ -217,7 +220,7 @@ place. If your platform provides a workspace-exit tool, use it.
 | "They seem done with this feature — I'll offer to discard it" | The menu is complete as written. Discard happens only when your human partner asks for it in so many words. |
 | "'Yeah, get rid of it' counts as confirmation" | Only the typed word `discard` authorizes deletion. |
 | "The MR is up, so the worktree is clutter now" | MR feedback gets fixed in that worktree. It stays until the work lands. |
-| "This other worktree looks stale — I'll clean it too" | Clean up only worktrees under `.worktrees/` or `worktrees/`. Everything else belongs to the host. |
+| "This other worktree looks stale — I'll clean it too" | Clean up only worktrees under `.moe/worktrees/`, `.worktrees/`, or `worktrees/`. Everything else belongs to the host. |
 | "Removal refused — `--force` is just finishing the cleanup" | The refusal means files exist only in that worktree. `--force` destroys them permanently. Show your human partner and ask. |
 | "The merged-result failure is probably flaky" | A failing merged result stops everything. Branch and worktree stay put while you investigate. |
 | "The base branch is obviously main" | Confirm the fork point or ask. Merging into the wrong base is expensive to undo. |

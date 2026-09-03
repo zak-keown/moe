@@ -10,6 +10,8 @@ export interface ComponentSupport {
   hooks: SupportLevel
   mcp: SupportLevel
   bootstrap: SupportLevel
+  rules: SupportLevel
+  variables: SupportLevel
 }
 
 export interface EmitResult {

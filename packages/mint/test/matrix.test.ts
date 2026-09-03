@@ -7,6 +7,6 @@ describe('renderMatrix', () => {
     expect(out).toContain('| Harness |')
     expect(out).toContain('| skills |')
     // header + separator + at least the claude-code row
-    expect(out).toMatch(/\| claude-code \|( full \|){6}/)
+    expect(out).toMatch(/\| claude-code \|( full \|){6}( none \|){2}/)
   })
 })

@@ -86,6 +86,37 @@ exports[`generate > snapshots the generated tree for the kitchen-sink fixture 1`
   "hooks": {}
 }
 
+=== .cursor-plugin/marketplace.json ===
+{
+  "name": "kitchen-sink-market",
+  "owner": {
+    "name": "Bubstack",
+    "email": "dev@bubstack.example"
+  },
+  "metadata": {
+    "description": "Fixture plugin exercising every component type"
+  },
+  "plugins": [
+    {
+      "name": "kitchen-sink",
+      "source": "./",
+      "description": "Fixture plugin exercising every component type"
+    }
+  ]
+}
+
+=== .cursor-plugin/mcp.json ===
+{
+  "mcpServers": {
+    "ks-demo": {
+      "command": "node",
+      "args": [
+        "./mcp-demo-server.js"
+      ]
+    }
+  }
+}
+
 === .cursor-plugin/plugin.json ===
 {
   "name": "kitchen-sink",
@@ -102,6 +133,14 @@ exports[`generate > snapshots the generated tree for the kitchen-sink fixture 1`
     "fixture"
   ],
   "skills": "./skills/",
+  "category": "Developer Tools",
+  "tags": [
+    "demo",
+    "fixture"
+  ],
+  "commands": "./commands/",
+  "agents": "./agents/",
+  "mcpServers": "./.cursor-plugin/mcp.json",
   "hooks": "./hooks/moe-mint/hooks-cursor.json"
 }
 
@@ -426,7 +465,9 @@ Copilot installs the plugin's Claude Code layout (skills/, commands/, agents/, h
 ## What gets emitted
 
 - \`.cursor-plugin/plugin.json\`
+- \`.cursor-plugin/marketplace.json\`
 - the \`hooks/moe-mint\` bootstrap hook and its \`hooks/moe-mint/hooks-cursor.json\`
+- \`.cursor-plugin/mcp.json\`, translated from the plugin's MCP server config
 
 ## Installing
 
@@ -513,16 +554,16 @@ Pi discovers the extension and skills directory through the \`pi\` field in \`pa
 
 # kitchen-sink harness support matrix
 
-| Harness | skills | commands | agents | hooks | mcp | bootstrap |
-|---|---|---|---|---|---|---|
-| claude-code | full | full | full | full | full | full |
-| cursor | full | none | none | partial | none | full |
-| codex | full | none | none | none | none | partial |
-| kimi | full | none | none | none | none | partial |
-| opencode | full | full | partial | none | none | full |
-| pi | full | none | none | none | none | full |
-| agent-plugins-1.0 | full | none | none | none | full | none |
-| copilot | full | full | full | full | full | full |
+| Harness | skills | commands | agents | hooks | mcp | bootstrap | rules | variables |
+|---|---|---|---|---|---|---|---|---|
+| claude-code | full | full | full | full | full | full | none | none |
+| cursor | full | full | full | partial | full | full | none | none |
+| codex | full | none | none | none | none | partial | none | none |
+| kimi | full | none | none | none | none | partial | none | none |
+| opencode | full | full | partial | none | none | full | none | none |
+| pi | full | none | none | none | none | full | none | none |
+| agent-plugins-1.0 | full | none | none | none | full | none | none | none |
+| copilot | full | full | full | full | full | full | none | none |
 
 ## Notes
 

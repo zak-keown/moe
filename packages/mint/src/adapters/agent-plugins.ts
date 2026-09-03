@@ -178,6 +178,8 @@ export const agentPlugins: HarnessAdapter = {
     hooks: 'none',
     mcp: 'full',
     bootstrap: 'none',
+    rules: 'none',
+    variables: 'none',
   },
   skillsOutputDir: undefined,
   installDoc,

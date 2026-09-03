@@ -69,6 +69,7 @@ function parsePlan(text) {
         num: parseInt(taskMatch[1], 10),
         title: taskMatch[2].trim(),
         dependsOn: [],
+        blockedBy: null,
         files: [],
         hasConsumes: false,
         hasProduces: false,
@@ -90,6 +91,13 @@ function parsePlan(text) {
           return n;
         });
       }
+      continue;
+    }
+
+    // Blocked by: decision id(s)
+    const blockedMatch = /^\*\*Blocked by:\*\*\s*(.+)/.exec(line);
+    if (blockedMatch) {
+      current.blockedBy = blockedMatch[1].trim();
       continue;
     }
 
@@ -190,6 +198,145 @@ function validate(tasks) {
 }
 
 // ---------------------------------------------------------------------------
+// Wave computation.
+//
+// A wave is a maximal set of tasks where:
+//   1. No task depends on another in the same wave (no depends_on edge).
+//   2. No two tasks share a file path (pairwise-disjoint Files blocks).
+//
+// Algorithm: topological order by Kahn's, then greedily assign each task to
+// the earliest wave whose constraints it satisfies. The topological order
+// guarantees a task's dependencies are assigned to earlier waves.
+
+function computeWaves(tasks) {
+  const byNum = new Map();
+  for (const t of tasks) byNum.set(t.num, t);
+
+  // Topological sort (Kahn's) to get a valid processing order.
+  const indeg = new Map();
+  const adj = new Map();
+  for (const t of tasks) {
+    indeg.set(t.num, 0);
+    adj.set(t.num, []);
+  }
+  for (const t of tasks) {
+    for (const d of t.dependsOn) {
+      indeg.set(t.num, (indeg.get(t.num) ?? 0) + 1);
+      adj.get(d).push(t.num);
+    }
+  }
+  const q = [];
+  for (const [n, deg] of indeg) if (deg === 0) q.push(n);
+  // Stable tie-break: sort by task number so output is deterministic.
+  q.sort((a, b) => a - b);
+  const order = [];
+  while (q.length) {
+    const n = q.shift();
+    order.push(n);
+    const neighbors = (adj.get(n) ?? []).slice().sort((a, b) => a - b);
+    for (const nb of neighbors) {
+      indeg.set(nb, indeg.get(nb) - 1);
+      if (indeg.get(nb) === 0) q.push(nb);
+    }
+    q.sort((a, b) => a - b);
+  }
+
+  // Assign each task in topological order to the earliest valid wave.
+  // A task can join wave W if:
+  //   - None of its depends_on targets are in wave W.
+  //   - No task already in wave W shares a file path.
+  const taskWave = new Map(); // task num -> wave index
+  const waves = []; // waves[i] = [task nums]
+  const waveFiles = []; // waveFiles[i] = Set of file paths
+
+  for (const num of order) {
+    const t = byNum.get(num);
+
+    // Earliest wave this task could join: one past the latest wave
+    // containing any of its dependencies.
+    let earliest = 0;
+    for (const d of t.dependsOn) {
+      const dw = taskWave.get(d);
+      if (dw !== undefined && dw + 1 > earliest) earliest = dw + 1;
+    }
+
+    // From earliest onward, find the first wave with no file overlap.
+    let assigned = -1;
+    for (let w = earliest; w < waves.length; w++) {
+      const wFiles = waveFiles[w];
+      const overlap = t.files.some((f) => wFiles.has(f));
+      if (!overlap) {
+        assigned = w;
+        break;
+      }
+    }
+
+    if (assigned === -1) {
+      // No existing wave works; create a new one.
+      assigned = waves.length;
+      waves.push([]);
+      waveFiles.push(new Set());
+    }
+
+    waves[assigned].push(num);
+    taskWave.set(num, assigned);
+    for (const f of t.files) waveFiles[assigned].add(f);
+  }
+
+  return waves;
+}
+
+function verbWaves(planPath) {
+  const text = readFileSync(planPath, "utf8");
+  const { tasks } = parsePlan(text);
+  if (tasks.length === 0) die(`${planPath}: no tasks found`);
+  const { errors } = validate(tasks);
+  if (errors.length > 0) {
+    for (const e of errors) process.stderr.write(`task-set: ${e}\n`);
+    process.exit(1);
+  }
+  const blocked = tasks.filter((t) => t.blockedBy !== null);
+  const schedulable = tasks.filter((t) => t.blockedBy === null);
+  for (const t of blocked) {
+    process.stderr.write(`task-set: task ${t.num} excluded — blocked by: ${t.blockedBy}\n`);
+  }
+  if (schedulable.length === 0) return;
+  const waves = computeWaves(schedulable);
+  for (let i = 0; i < waves.length; i++) {
+    process.stdout.write(`wave ${i + 1}: ${waves[i].join(", ")}\n`);
+  }
+}
+
+function verbNext(planPath) {
+  const text = readFileSync(planPath, "utf8");
+  const { tasks } = parsePlan(text);
+  if (tasks.length === 0) die(`${planPath}: no tasks found`);
+  const { errors } = validate(tasks);
+  if (errors.length > 0) {
+    for (const e of errors) process.stderr.write(`task-set: ${e}\n`);
+    process.exit(1);
+  }
+
+  // A task is complete when every checkbox is checked.
+  const complete = new Set();
+  for (const t of tasks) {
+    if (t.steps.every((s) => s.checked)) {
+      complete.add(t.num);
+    }
+  }
+
+  // A task is ready when all deps are complete and it is not complete itself.
+  const ready = [];
+  for (const t of tasks) {
+    if (complete.has(t.num)) continue;
+    const allDepsComplete = t.dependsOn.every((d) => complete.has(d));
+    if (allDepsComplete) ready.push(t.num);
+  }
+
+  for (const num of ready) process.stdout.write(num + "\n");
+}
+
+// ---------------------------------------------------------------------------
 // Verbs.
 
 function verbCheck(planPath) {
@@ -227,13 +374,13 @@ function main() {
   if (verb === "waves") {
     if (!planPath) die("usage: task-set waves <plan.md>");
     if (!existsSync(planPath)) die(`plan not found: ${planPath}`);
-    die(`waves: not yet implemented`);
+    verbWaves(resolve(planPath));
     return;
   }
   if (verb === "next") {
     if (!planPath) die("usage: task-set next <plan.md>");
     if (!existsSync(planPath)) die(`plan not found: ${planPath}`);
-    die(`next: not yet implemented`);
+    verbNext(resolve(planPath));
     return;
   }
   die(`unknown verb "${verb}"\n${USAGE}`);
