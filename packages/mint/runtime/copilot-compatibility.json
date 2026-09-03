@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "description": "Pinned Copilot CLI versions tested for custom plugin component path support.",
+  "candidates": [
+    {
+      "version": "0.8.0",
+      "integrity": "sha256-placeholder-minimum",
+      "role": "minimum",
+      "customPaths": true
+    },
+    {
+      "version": "0.10.2",
+      "integrity": "sha256-placeholder-current",
+      "role": "current",
+      "customPaths": true
+    }
+  ]
+}

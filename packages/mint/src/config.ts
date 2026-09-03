@@ -86,8 +86,11 @@ export type BootstrapMode =
 // A resolved harnesses.<name> block: the per-harness hook tier ('generated'
 // default | 'own') and an optional manifest patch (deep-merged into the
 // adapter's generated manifest; a null value is the delete-sentinel).
+export type CodexSourceHookPolicy = 'source' | 'disabled'
+
 export interface HarnessSettings {
   hooks: 'generated' | 'own'
+  sourceHooks?: CodexSourceHookPolicy
   manifest?: Record<string, unknown>
 }
 
@@ -432,8 +435,8 @@ function resolveHarnessSettings(raw: Record<string, unknown> | undefined, source
       throw configError(`harnesses.${key}: must be a mapping of hooks and/or manifest`, [], { source })
     }
     for (const settingKey of Object.keys(value)) {
-      if (settingKey !== 'hooks' && settingKey !== 'manifest') {
-        throw configError(`harnesses.${key}.${settingKey}: unknown key (expected hooks or manifest)`, [], { source })
+      if (settingKey !== 'hooks' && settingKey !== 'manifest' && settingKey !== 'source_hooks') {
+        throw configError(`harnesses.${key}.${settingKey}: unknown key (expected hooks, source_hooks, or manifest)`, [], { source })
       }
     }
     const entry: HarnessSettings = { hooks: 'generated' }
@@ -443,6 +446,16 @@ function resolveHarnessSettings(raw: Record<string, unknown> | undefined, source
         throw configError(`harnesses.${key}.hooks: must be "generated" or "own"`, [], { source })
       }
       entry.hooks = hooks
+    }
+    if ('source_hooks' in value) {
+      const sourceHooks = value.source_hooks
+      if (sourceHooks !== 'source' && sourceHooks !== 'disabled') {
+        throw configError(`harnesses.${key}.source_hooks: must be "source" or "disabled"`, [], { source })
+      }
+      if (key !== 'codex') {
+        throw configError(`harnesses.${key}.source_hooks: only valid on codex`, [], { source })
+      }
+      entry.sourceHooks = sourceHooks
     }
     if ('manifest' in value) {
       const manifest = value.manifest
