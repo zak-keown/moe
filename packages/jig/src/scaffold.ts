@@ -69,3 +69,31 @@ Ordered iteration plan produced by \`scoping-the-simplest-core\`.
 
   return resolve(iterDir);
 }
+
+export function contextInit(name?: string, opts?: { cwd?: string }): string {
+  const root = opts?.cwd ?? process.cwd();
+  const filepath = join(root, "CONTEXT.md");
+
+  if (existsSync(filepath)) {
+    throw new Error(`${resolve(filepath)} already exists — refusing to overwrite`);
+  }
+
+  const heading = name && name.trim().length > 0 ? name : "{Context Name}";
+
+  writeFileSync(
+    filepath,
+    `# ${heading}
+
+{One or two sentence description of what this context is and why it exists.}
+
+## Language
+
+**Term**:
+{Definition — one or two sentences. What it IS, not what it does.}
+_Avoid_: {synonym1, synonym2}
+`,
+    "utf-8",
+  );
+
+  return resolve(filepath);
+}

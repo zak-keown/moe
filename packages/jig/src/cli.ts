@@ -3,7 +3,7 @@ import { realpathSync } from "node:fs";
 import { Command, CommanderError } from "commander";
 import { planInit, specInit } from "./plan.js";
 import { commitReviewFix, reviewStamp } from "./review.js";
-import { iterationsInit } from "./scaffold.js";
+import { contextInit, iterationsInit } from "./scaffold.js";
 import { worktreeCreate, worktreeRemove, worktreeValidate } from "./worktree.js";
 
 const program = new Command()
@@ -108,6 +108,18 @@ iterations
   .description("Create docs/moe/iterations/ with the iterative-development directory structure")
   .action(() => {
     const path = iterationsInit();
+    console.log(path);
+  });
+
+const context = program.command("context").description("Domain-modeling scaffolding");
+
+context
+  .command("init")
+  .description("Create a CONTEXT.md with the domain-modeling skeleton")
+  .argument("[name]", "context name for the heading (default: placeholder)")
+  .action((name: string | undefined) => {
+    const resolved = name && name.length > 0 ? name : undefined;
+    const path = contextInit(resolved);
     console.log(path);
   });
 
