@@ -314,7 +314,7 @@ describe('substituteAllSkills full-tree rendering', () => {
       'Then `request_user_input`.\n',
     )
     expect(files.find((file) => file.path.endsWith('/scripts/run.sh'))).toMatchObject({
-      executable: true,
+      mode: 0o755,
     })
     expect(files.find((file) => file.path.endsWith('/scripts/run.sh'))?.content.toString()).toContain(
       '{ask} stays literal',

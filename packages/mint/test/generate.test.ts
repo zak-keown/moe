@@ -491,28 +491,70 @@ describe('vocabulary integration', () => {
 
   it('is idempotent with vocabulary active', () => {
     const dir = freshFixture()
-    writeFileSync(join(dir, 'moe-mint-vocab.yaml'), 'tokens: {}\nblocks: {}')
-    generate(dir)
-    generate(dir)
+    const skillPath = join(dir, 'skills/greeting/SKILL.md')
+    writeFileSync(skillPath, `${readFileSync(skillPath, 'utf8')}\nUse {ask}.\n`)
+    writeFileSync(
+      join(dir, 'moe-mint-vocab.yaml'),
+      [
+        'tokens:',
+        '  ask:',
+        '    claude-code: CLAUDE',
+        '    agent-plugins-1.0: AGENT_PLUGINS',
+        '    cursor: CURSOR',
+        '    codex: CODEX',
+        '    kimi: KIMI',
+        '    opencode: OPENCODE',
+        '    pi: PI',
+        'blocks: {}',
+      ].join('\n'),
+    )
+
+    const first = generate(dir)
+    const firstRootSkill = readFileSync(skillPath)
+    const firstManifest = readFileSync(join(dir, MANIFEST_PATH))
+    const firstTree = first.files.map((file) => ({
+      path: file.path,
+      content: Buffer.from(file.content),
+      executable: Boolean(file.executable),
+    }))
+    expect(firstRootSkill.toString()).toContain('AGENT_PLUGINS')
+    expect(Buffer.from(first.files.find(
+      (file) => file.path === '.codex-plugin/skills/greeting/SKILL.md',
+    )!.content).toString()).toContain('CODEX')
+    expect(Buffer.from(first.files.find(
+      (file) => file.path === '.cursor-plugin/skills/greeting/SKILL.md',
+    )!.content).toString()).toContain('CURSOR')
+
+    const second = generate(dir)
+
+    expect(second.files.map((file) => ({
+      path: file.path,
+      content: Buffer.from(file.content),
+      executable: Boolean(file.executable),
+    }))).toEqual(firstTree)
+    expect(readFileSync(skillPath)).toEqual(firstRootSkill)
+    expect(readFileSync(join(dir, MANIFEST_PATH))).toEqual(firstManifest)
     expect(checkDrift(dir).clean).toBe(true)
   })
 })
 
 describe('binary-safe full-tree generation', () => {
-  it('writes binary skill assets byte-for-byte and preserves executable modes', () => {
+  it('writes binary skill assets byte-for-byte and preserves exact permission modes', () => {
     const dir = freshFixture()
     mkdirSync(join(dir, 'skills/greeting/assets'), { recursive: true })
     mkdirSync(join(dir, 'skills/greeting/scripts'), { recursive: true })
     const binary = Buffer.from([0x00, 0xff, 0x81, 0x0a])
     writeFileSync(join(dir, 'skills/greeting/assets/logo.bin'), binary)
     writeFileSync(join(dir, 'skills/greeting/scripts/run.sh'), '#!/bin/sh\nexit 0\n')
-    chmodSync(join(dir, 'skills/greeting/scripts/run.sh'), 0o755)
+    chmodSync(join(dir, 'skills/greeting/assets/logo.bin'), 0o640)
+    chmodSync(join(dir, 'skills/greeting/scripts/run.sh'), 0o700)
     const adapter = testAdapter('binary', [], '.binary/skills')
 
     generate(dir, [adapter])
 
     expect(readFileSync(join(dir, '.binary/skills/greeting/assets/logo.bin'))).toEqual(binary)
-    expect(statSync(join(dir, '.binary/skills/greeting/scripts/run.sh')).mode & 0o111).not.toBe(0)
+    expect(statSync(join(dir, '.binary/skills/greeting/assets/logo.bin')).mode & 0o777).toBe(0o640)
+    expect(statSync(join(dir, '.binary/skills/greeting/scripts/run.sh')).mode & 0o777).toBe(0o700)
   })
 
   it('deduplicates equal byte content and rejects byte-different collisions', () => {

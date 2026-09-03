@@ -320,13 +320,24 @@ export function substituteAllSkills(
     const tree = model.skillFiles.map((file) => ({
       path: `${outputDir.replace(/\/$/, '')}/${file.path}`,
       content: transformedContent(file, profile, vocab),
-      executable: file.executable,
+      mode: file.mode,
     }))
     if (mode === 'in-place') {
       writeFileSet(root, tree)
     } else {
       generatedFiles.push(...tree)
     }
+  }
+
+  if (![...byOutputDir.values()].some(({ adapter }) => adapter.skillLayout.mode === 'in-place')) {
+    writeFileSet(
+      root,
+      model.skillFiles.map((file) => ({
+        path: `${srcDir.replace(/\/$/, '')}/${file.path}`,
+        content: file.content,
+        mode: file.mode,
+      })),
+    )
   }
 
   return generatedFiles.sort((left, right) =>

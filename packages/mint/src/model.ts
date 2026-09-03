@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { readFileSync, readdirSync, existsSync, lstatSync } from 'node:fs'
 import { join } from 'node:path'
 import { loadConfig, ConfigError, type MintConfig } from './config.js'
@@ -11,7 +12,13 @@ export interface SkillRef {
 export interface SkillTreeFile {
   path: string
   content: Uint8Array
-  executable: boolean
+  mode: number
+}
+export interface PersistedSkillSource {
+  contentBase64: string
+  mode: number
+  renderedSha256: string
+  renderedMode: number
 }
 // `description` and `tools` come from optional markdown frontmatter, and
 // buildModel always sets the key — with `undefined` when the field is absent.
@@ -42,7 +49,15 @@ export interface PluginModel {
   mcp?: unknown
 }
 
-function snapshotSkillTree(root: string, skillsDir: string): SkillTreeFile[] {
+function contentSha256(content: Uint8Array): string {
+  return createHash('sha256').update(content).digest('hex')
+}
+
+function snapshotSkillTree(
+  root: string,
+  skillsDir: string,
+  persistedSources: Record<string, PersistedSkillSource>,
+): SkillTreeFile[] {
   const abs = join(root, skillsDir)
   if (!existsSync(abs)) return []
   const rootStat = lstatSync(abs)
@@ -66,10 +81,25 @@ function snapshotSkillTree(root: string, skillsDir: string): SkillTreeFile[] {
       if (stat.isDirectory()) {
         walk(absolutePath, relativePath)
       } else if (stat.isFile()) {
+        const diskContent = readFileSync(absolutePath)
+        const diskMode = stat.mode & 0o777
+        const persisted = persistedSources[displayPath]
+        const recoverPersistedSource =
+          persisted !== undefined &&
+          typeof persisted.contentBase64 === 'string' &&
+          typeof persisted.renderedSha256 === 'string' &&
+          typeof persisted.mode === 'number' &&
+          typeof persisted.renderedMode === 'number' &&
+          contentSha256(diskContent) === persisted.renderedSha256
         files.push({
           path: relativePath,
-          content: readFileSync(absolutePath),
-          executable: (stat.mode & 0o111) !== 0,
+          content: recoverPersistedSource
+            ? Buffer.from(persisted.contentBase64, 'base64')
+            : diskContent,
+          mode:
+            recoverPersistedSource && diskMode === persisted.renderedMode
+              ? persisted.mode
+              : diskMode,
         })
       } else {
         throw new ConfigError(`unsupported node in skill tree: ${displayPath}`)
@@ -137,9 +167,12 @@ function readJsonIfPresent(root: string, rel: string): unknown {
   return parsed
 }
 
-export function buildModel(root: string): PluginModel {
+export function buildModel(
+  root: string,
+  persistedSources: Record<string, PersistedSkillSource> = {},
+): PluginModel {
   const config = loadConfig(root)
-  const skillFiles = snapshotSkillTree(root, config.components.skills)
+  const skillFiles = snapshotSkillTree(root, config.components.skills, persistedSources)
   const skills = readSkills(config.components.skills, skillFiles)
   const commands = readMarkdownComponents(root, config.components.commands).map((c) => ({
     name: c.name,
@@ -173,4 +206,28 @@ export function buildModel(root: string): PluginModel {
     }
   }
   return model
+}
+
+export function capturePersistedSkillSources(
+  root: string,
+  model: PluginModel,
+): Record<string, PersistedSkillSource> {
+  const skillsDir = model.config.components.skills.replace(/\/$/, '')
+  return Object.fromEntries(
+    model.skillFiles.flatMap((file): Array<[string, PersistedSkillSource]> => {
+      const path = `${skillsDir}/${file.path}`
+      const absolutePath = join(root, path)
+      const renderedContent = readFileSync(absolutePath)
+      if (Buffer.from(file.content).equals(renderedContent)) return []
+      return [[
+        path,
+        {
+          contentBase64: Buffer.from(file.content).toString('base64'),
+          mode: file.mode,
+          renderedSha256: contentSha256(renderedContent),
+          renderedMode: lstatSync(absolutePath).mode & 0o777,
+        },
+      ]]
+    }),
+  )
 }
