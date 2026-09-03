@@ -10,6 +10,7 @@ import { cmdHandoff } from "./commands/handoff.js";
 import type { BootstrapOpts } from "./commands/launch.js";
 import { cmdLaunch } from "./commands/launch.js";
 import { cmdList } from "./commands/list.js";
+import { cmdPack, cmdPackStop } from "./commands/pack.js";
 import { cmdPrune } from "./commands/prune.js";
 import { cmdReadEvents, followEvents } from "./commands/read-events.js";
 import { cmdReadTurn } from "./commands/read-turn.js";
@@ -19,12 +20,6 @@ import { cmdStatus } from "./commands/status.js";
 import { cmdStop } from "./commands/stop.js";
 import { cmdWaitForTurn } from "./commands/wait-for-turn.js";
 import { workerDir } from "./core/paths.js";
-import {
-  startRun,
-  endRun,
-  mergeRunEvents,
-  readRunMeta,
-} from "./core/runs.js";
 import { tmux } from "./core/tmux.js";
 import { readHarnessMarker, readMeta, resolveSession } from "./core/worker-store.js";
 import { getDriver } from "./harness/registry.js";
@@ -40,17 +35,7 @@ const realIo: Io = {
   err: (s) => process.stderr.write(s),
 };
 
-const TOP_LEVEL_SUBS = [
-  "launch",
-  "adopt",
-  "list",
-  "prune",
-  "grant-consent",
-  "run-start",
-  "run-end",
-  "run-events",
-  "help",
-];
+const TOP_LEVEL_SUBS = ["launch", "adopt", "list", "pack", "pack-stop", "prune", "grant-consent", "help"];
 const PER_WORKER_SUBS = [
   "converse",
   "send",
@@ -96,15 +81,17 @@ Top-level subcommands:
   list [--all] [<pattern>]
                        Enumerate workers (default: skip workers whose tmux is
                        gone). Optional pattern filters by tmux-name substring
+  pack <pack-file> [cwd]
+                       Launch a predefined team of workers from a YAML pack
+                       file. Each worker is launched and sent its role prompt.
+                       cwd defaults to the current directory
+  pack-stop <name-or-file>
+                       Stop all workers belonging to a pack. Accepts either
+                       a pack name or a pack YAML file path (reads the name)
   prune                Remove the runtime state of all \`gone\` workers (tmux
                        session dead); live workers are untouched
   grant-consent        One-time consent for running workers with permissions
                        bypassed (--dangerously-skip-permissions et al.)
-  run-start [--label <text>]
-                       Start a new run. Prints the run ID to stdout
-  run-end <run-id>     End a run. Stamps endedAt and prints a summary
-  run-events <run-id> [--follow]
-                       Merge per-worker events for a run into a JSONL timeline
   help                 Show this message
 
 Per-worker subcommands (require --worker, supplied by the shim):
@@ -154,9 +141,6 @@ Environment variables:
   MOE_CREW_REGISTER_TIMEOUT
                        Seconds the FIRST \`send\` to a derive worker (codex/pi) waits
                        for it to self-register its session id (default 15).
-  MOE_CREW_RUN_ID      When set, workers stamp this run id on emitted events.
-                       Set automatically by \`run-start\`; propagated via the
-                       worker env by the launch command
   HOME                 Used to locate ~/.claude/projects/<encoded-cwd>/<sid>.jsonl and
                        the one-time consent file (~/.claude/.moe-crew-consent).
 `;
@@ -426,61 +410,27 @@ export async function run(argv: string[], io: Io = realIo): Promise<number> {
       return emit(io, await cmdList(ctx, opts));
     }
 
-    case "prune":
-      return emit(io, await cmdPrune(ctx));
-
-    case "run-start": {
-      const rsOpts = parseRunStartArgs(args);
-      if ("code" in rsOpts) {
-        io.err(`${rsOpts.message}\n`);
-        return rsOpts.code;
-      }
-      const runId = startRun(ctx.workerDir, rsOpts.label);
-      // Export so subsequent launches in the same process pick it up.
-      process.env.MOE_CREW_RUN_ID = runId;
-      return emit(io, { stdout: runId, code: 0 });
-    }
-
-    case "run-end": {
-      const runId = args[0];
-      if (runId === undefined || runId.trim() === "") {
-        io.err("Usage: run-end <run-id>\n");
+    case "pack": {
+      const packFile = args[0];
+      if (packFile === undefined) {
+        io.err("Usage: pack <pack-file> [cwd]\n");
         return 2;
       }
-      const meta = endRun(ctx.workerDir, runId);
-      if (meta === null) {
-        io.err(`Error: no run found with id '${runId}'\n`);
-        return 1;
-      }
-      const summary = JSON.stringify({
-        id: meta.id,
-        workers: meta.workers.length,
-        startedAt: meta.startedAt,
-        endedAt: meta.endedAt,
-      });
-      return emit(io, { stdout: summary, code: 0 });
+      const packCwd = args[1] ?? process.cwd();
+      return emit(io, await cmdPack(ctx, { packFile, cwd: packCwd }, bootstrapOpts()));
     }
 
-    case "run-events": {
-      const reOpts = parseRunEventsArgs(args);
-      if ("code" in reOpts) {
-        io.err(`${reOpts.message}\n`);
-        return reOpts.code;
+    case "pack-stop": {
+      const nameOrFile = args[0];
+      if (nameOrFile === undefined) {
+        io.err("Usage: pack-stop <name-or-file>\n");
+        return 2;
       }
-      const meta = readRunMeta(ctx.workerDir, reOpts.runId);
-      if (meta === null) {
-        io.err(`Error: no run found with id '${reOpts.runId}'\n`);
-        return 1;
-      }
-      if (reOpts.follow) {
-        return followRunEvents(ctx, reOpts.runId, io);
-      }
-      const merged = mergeRunEvents(ctx.workerDir, reOpts.runId, resolveSession);
-      const lines = merged.map(
-        (m) => JSON.stringify({ ...m.event, _worker: m.worker }),
-      );
-      return emit(io, { stdout: lines.join("\n"), code: 0 });
+      return emit(io, await cmdPackStop(ctx, { nameOrFile }));
     }
+
+    case "prune":
+      return emit(io, await cmdPrune(ctx));
 
     case "converse": {
       let withTurn = false;
@@ -692,79 +642,6 @@ export async function grantConsentConfirm(
   io.out("Type 'yes' to grant consent:\n");
   const reply = await readLine(input);
   return reply === "yes";
-}
-
-/** Parse `run-start [--label <text>]`. */
-function parseRunStartArgs(
-  argv: string[],
-): { label?: string | undefined } | DispatchError {
-  let label: string | undefined;
-  let i = 0;
-  while (i < argv.length) {
-    const a = argv[i] ?? "";
-    if (a === "--label") {
-      const value = argv[i + 1];
-      if (value === undefined || value.startsWith("--")) {
-        return err("Error: --label expects a value for run-start");
-      }
-      label = value;
-      i += 2;
-    } else {
-      return err(`Error: unknown option '${a}' for run-start`);
-    }
-  }
-  return { label };
-}
-
-interface RunEventsArgs {
-  runId: string;
-  follow: boolean;
-}
-
-/** Parse `run-events <run-id> [--follow]`. */
-function parseRunEventsArgs(argv: string[]): RunEventsArgs | DispatchError {
-  let follow = false;
-  let runId: string | undefined;
-  for (const a of argv) {
-    if (a === "--follow") {
-      follow = true;
-    } else if (a.startsWith("--")) {
-      return err(`Error: unknown option '${a}' for run-events`);
-    } else if (runId !== undefined) {
-      return err("Error: run-events takes exactly one run-id argument");
-    } else {
-      runId = a;
-    }
-  }
-  if (runId === undefined) {
-    return err("Usage: run-events <run-id> [--follow]");
-  }
-  return { runId, follow };
-}
-
-/**
- * Poll-based follow for run events. Merges all workers' events and emits new
- * lines until SIGINT. Simple implementation: re-merge and diff.
- */
-function followRunEvents(ctx: CommandContext, runId: string, io: Io): Promise<number> {
-  const controller = new AbortController();
-  const onSigint = () => controller.abort();
-  process.on("SIGINT", onSigint);
-
-  return (async () => {
-    let emitted = 0;
-    const pollMs = 250;
-    for (;;) {
-      if (controller.signal.aborted) break;
-      const merged = mergeRunEvents(ctx.workerDir, runId, resolveSession);
-      for (const m of merged.slice(emitted)) {
-        io.out(`${JSON.stringify({ ...m.event, _worker: m.worker })}\n`);
-      }
-      emitted = merged.length;
-      await new Promise((r) => setTimeout(r, pollMs));
-    }
-    return 0;
-  })().finally(() => process.off("SIGINT", onSigint));
 }
 
 // Run the CLI only when executed as the bundled `node dist/moe-crew.cjs`. In the
