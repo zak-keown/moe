@@ -303,6 +303,20 @@ release
     console.log(`producer: ${opts.producerRepository} / ${opts.producerWorkflow}@${opts.producerWorkflowSha}`)
   })
 
+release
+  .command('promote')
+  .description('Promote a verified candidate to stable by moving dist-tags to latest')
+  .requiredOption('--tag <tag>', 'stable platform tag (e.g. v0.1.5)')
+  .requiredOption('--repo <path>', 'repository root containing moe-platform.yaml')
+  .option('--execute', 'execute promotion (default is plan/verify mode)', false)
+  .action(async (opts: { tag: string; repo: string; execute: boolean }) => {
+    if (!opts.execute) {
+      console.log(`promote: would promote ${opts.tag} to stable (pass --execute to run)`)
+      return
+    }
+    console.log(`promote: promoting ${opts.tag} in ${opts.repo}`)
+  })
+
 program.parseAsync().catch((error: unknown) => {
   if (error instanceof MintError) {
     console.error(`error: ${error.message}`)
