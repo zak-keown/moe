@@ -18,6 +18,7 @@ const ADAPTER_SKILLS = [
   ".opencode/skills/smoothing-the-experience",
   ".pi/skills/smoothing-the-experience",
 ] as const;
+const LOADER_SKILLS = [GENERATED_SKILL, ...ADAPTER_SKILLS] as const;
 
 function filesBelow(root: string): string[] {
   const files: string[] = [];
@@ -50,7 +51,7 @@ describe("smoothing-the-experience distribution contract", () => {
 
     for (const entrypoint of [
       join(SOURCE, "scripts/smooth.mjs"),
-      join(PLUGIN, GENERATED_SKILL, "scripts/smooth.mjs"),
+      ...LOADER_SKILLS.map((loaderSkill) => join(PLUGIN, loaderSkill, "scripts/smooth.mjs")),
     ]) {
       const result = spawnSync(process.execPath, [entrypoint, "unknown"], { encoding: "utf8" });
       expect(result.status, entrypoint).toBe(2);
@@ -58,22 +59,16 @@ describe("smoothing-the-experience distribution contract", () => {
     }
   });
 
-  it("ships the complete executable skill and exact adapter skill views", () => {
+  it("ships the complete executable skill through every loader-visible root", () => {
     const sourceFiles = filesBelow(SOURCE);
-    const generatedRoot = join(PLUGIN, GENERATED_SKILL);
-    expect(filesBelow(generatedRoot)).toEqual(sourceFiles);
-    for (const file of sourceFiles) {
-      expect(readFileSync(join(generatedRoot, file)), `${GENERATED_SKILL}/${file}`).toEqual(
-        readFileSync(join(SOURCE, file)),
-      );
-    }
-
-    const sourceSkill = readFileSync(join(SOURCE, "SKILL.md"));
-    for (const adapterSkill of ADAPTER_SKILLS) {
-      expect(filesBelow(join(PLUGIN, adapterSkill)), adapterSkill).toEqual(["SKILL.md"]);
-      expect(readFileSync(join(PLUGIN, adapterSkill, "SKILL.md")), adapterSkill).toEqual(
-        sourceSkill,
-      );
+    for (const loaderSkill of LOADER_SKILLS) {
+      const generatedRoot = join(PLUGIN, loaderSkill);
+      expect(filesBelow(generatedRoot), loaderSkill).toEqual(sourceFiles);
+      for (const file of sourceFiles) {
+        expect(readFileSync(join(generatedRoot, file)), `${loaderSkill}/${file}`).toEqual(
+          readFileSync(join(SOURCE, file)),
+        );
+      }
     }
   });
 

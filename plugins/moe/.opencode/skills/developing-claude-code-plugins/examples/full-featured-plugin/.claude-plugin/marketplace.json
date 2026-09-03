@@ -1,0 +1,19 @@
+{
+  "name": "full-featured-dev",
+  "description": "Development marketplace for full-featured example plugin",
+  "owner": {
+    "name": "Your Name",
+    "email": "you@example.com"
+  },
+  "plugins": [
+    {
+      "name": "full-featured-example",
+      "description": "Example plugin demonstrating all component types",
+      "version": "1.0.0",
+      "source": "./",
+      "author": {
+        "name": "Plugin Developer"
+      }
+    }
+  ]
+}
