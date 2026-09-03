@@ -58,6 +58,29 @@ describe("bound smoothing plans", () => {
     await expect(readBoundPlan(plan.path)).resolves.toEqual(plan);
   });
 
+  it("creates the plan exclusively instead of permitting truncation", async () => {
+    const planDir = await mkdtemp(join(tmpdir(), "moe-smoothing-plan-exclusive-"));
+    const planWrite = vi.fn(
+      async (path: string, contents: string, options: { flag: string; mode: number }) =>
+        writeFile(path, contents, options),
+    );
+
+    const plan = await createBoundPlan({
+      harness: "claude",
+      selected: [{ id: "claude-shell-a", rule: "Bash(git status:*)" }],
+      destination: join(planDir, "settings.json"),
+      sourceBytes: Buffer.from("{}\n"),
+      replacement: REPLACEMENT,
+      now: () => "2026-09-03T00:00:00.000Z",
+      planDir,
+      fsOps: { writeFile: planWrite },
+    });
+
+    expect(planWrite).toHaveBeenCalledOnce();
+    expect(planWrite.mock.calls[0]?.[2]).toEqual({ flag: "wx", mode: 0o600 });
+    expect((await stat(plan.path)).mode & 0o777).toBe(0o600);
+  });
+
   it("formats a deterministic full-replacement unified diff", () => {
     expect(
       formatUnifiedDiff({
@@ -176,7 +199,7 @@ describe("bound smoothing plans", () => {
 });
 
 describe("atomic smoothing mutation", () => {
-  it.each(["stale-source", "lock-held", "validator-failure", "rename-failure"] as const)(
+  it.each(["stale-source", "validator-failure", "rename-failure"] as const)(
     "leaves the original byte-identical on %s",
     async (failure) => {
       const fixture = await mutationFixture(failure);
@@ -192,7 +215,19 @@ describe("atomic smoothing mutation", () => {
     },
   );
 
-  it.each(["write-failure", "sync-failure", "rename-failure"] as const)(
+  it("preserves and never releases a held sentinel lock", async () => {
+    const fixture = await mutationFixture("lock-held");
+    const before = await readFile(fixture.destination);
+
+    await expect(applyBoundPlan(fixture.input)).rejects.toThrow(/config mutation lock is held/);
+
+    expect(await readFile(fixture.destination)).toEqual(before);
+    await expect(readFile(fixture.lockPath, "utf8")).resolves.toBe("held-by-another-writer\n");
+    expect(fixture.spies.remove).not.toHaveBeenCalledWith(fixture.lockPath);
+    expect(fixture.spies.remove).not.toHaveBeenCalled();
+  });
+
+  it.each(["write-failure", "sync-failure", "close-failure", "rename-failure"] as const)(
     "cleans only the known temporary on pre-rename %s",
     async (failure) => {
       const fixture = await mutationFixture(failure);
@@ -207,6 +242,7 @@ describe("atomic smoothing mutation", () => {
       });
       await expect(readFile(unrelated, "utf8")).resolves.toBe("keep\n");
       await expect(readFile(fixture.destination, "utf8")).resolves.toBe(ORIGINAL);
+      await expect(access(fixture.lockPath)).rejects.toMatchObject({ code: "ENOENT" });
     },
   );
 
@@ -241,6 +277,19 @@ describe("atomic smoothing mutation", () => {
       fixture.events.lastIndexOf("read:destination"),
     );
     await expect(readFile(fixture.destination, "utf8")).resolves.toBe(REPLACEMENT);
+    await expect(access(fixture.lockPath)).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("releases the lock without unlinking the renamed file when readback fails", async () => {
+    const fixture = await mutationFixture("readback-failure");
+
+    await expect(applyBoundPlan(fixture.input)).rejects.toThrow(/fixture readback failure/);
+
+    const temporaryPath = firstPath(fixture.temporaryPaths);
+    await expect(readFile(fixture.destination, "utf8")).resolves.toBe(REPLACEMENT);
+    await expect(access(fixture.lockPath)).rejects.toMatchObject({ code: "ENOENT" });
+    expect(fixture.spies.remove).not.toHaveBeenCalledWith(temporaryPath);
+    expect(fixture.spies.remove).not.toHaveBeenCalledWith(fixture.destination);
   });
 
   it("rechecks the source under the exclusive config lock", async () => {
@@ -305,14 +354,18 @@ type Failure =
   | "open-failure"
   | "write-failure"
   | "sync-failure"
-  | "rename-failure";
+  | "close-failure"
+  | "rename-failure"
+  | "readback-failure";
 
 async function mutationFixture(failure: Failure, { sourceMissing = false } = {}) {
   const directory = await mkdtemp(join(tmpdir(), "moe-smoothing-mutation-"));
   const planDir = join(directory, "plans");
   const destination = join(directory, "settings.json");
+  const lockPath = `${destination}.moe-smoothing.lock`;
   await (await import("node:fs/promises")).mkdir(planDir);
   if (!sourceMissing) await writeFile(destination, ORIGINAL);
+  if (failure === "lock-held") await writeFile(lockPath, "held-by-another-writer\n");
   const sourceBytes = sourceMissing ? null : Buffer.from(ORIGINAL);
   const plan = await createBoundPlan({
     harness: "claude",
@@ -328,6 +381,7 @@ async function mutationFixture(failure: Failure, { sourceMissing = false } = {})
   const events: string[] = [];
   const temporaryPaths: string[] = [];
   let destinationReads = 0;
+  let temporaryCloseAttempts = 0;
   const write = vi.fn(async (handle: Awaited<ReturnType<typeof openFile>>, contents, encoding) => {
     events.push("temp:write");
     if (failure === "write-failure") throw new Error("fixture write failure");
@@ -341,10 +395,6 @@ async function mutationFixture(failure: Failure, { sourceMissing = false } = {})
   const open = vi.fn(async (path: string, flags: string, mode: number) => {
     if (path.endsWith(".moe-smoothing.lock")) {
       events.push("open:lock");
-      if (failure === "lock-held") {
-        const error = Object.assign(new Error("fixture lock held"), { code: "EEXIST" });
-        throw error;
-      }
     } else {
       events.push("open:temporary");
       temporaryPaths.push(path);
@@ -359,8 +409,13 @@ async function mutationFixture(failure: Failure, { sourceMissing = false } = {})
       writeFile: (contents: unknown, encoding: unknown) => write(handle, contents, encoding),
       sync: () => sync(handle),
       close: async () => {
-        if (temporary) events.push("temp:close");
-        else events.push("lock:close");
+        if (temporary) {
+          events.push("temp:close");
+          temporaryCloseAttempts += 1;
+          if (failure === "close-failure" && temporaryCloseAttempts === 1) {
+            throw new Error("fixture close failure");
+          }
+        } else events.push("lock:close");
         return handle.close();
       },
     };
@@ -371,6 +426,9 @@ async function mutationFixture(failure: Failure, { sourceMissing = false } = {})
       destinationReads += 1;
       if (failure === "stale-under-lock" && destinationReads === 2) {
         return Buffer.from('{"raced":true}\n');
+      }
+      if (failure === "readback-failure" && destinationReads === 3) {
+        throw new Error("fixture readback failure");
       }
     } else if (path === plan.path) {
       events.push("read:plan");
@@ -403,7 +461,7 @@ async function mutationFixture(failure: Failure, { sourceMissing = false } = {})
       validateReplacement: validator,
       fsOps,
     },
-    lockPath: `${destination}.moe-smoothing.lock`,
+    lockPath,
     plan,
     spies: { open, read, rename, remove, sync, validator, write, planWrite },
     temporaryPaths,
