@@ -24,11 +24,13 @@ plans:
   - id: embeddings-migration
     plan: docs/moe/plans/2026-09-02-moe-memory-02-embeddings-migration.md
     depends_on: [storage-native]
-    status: pending
+    status: done
+    commits: 31dd9a3..67caf0e
   - id: process-mcp
     plan: docs/moe/plans/2026-09-02-moe-memory-03-process-mcp.md
     depends_on: [embeddings-migration]
-    status: pending
+    status: done
+    commits: c042d9d..e6c840a
   - id: artifact-integration
     plan: docs/moe/plans/2026-09-02-moe-memory-04-artifact-integration.md
     depends_on: [process-mcp]
