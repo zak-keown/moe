@@ -10,22 +10,25 @@ const PLAN_FIELDS = [
   "createdAt",
   "destination",
   "source",
-  "replacement",
-  "replacementSha256",
+  "mutation",
+  "intentSha256",
   "selected",
   "restartRequired",
 ];
+const MUTATIONS = Object.freeze({
+  claude: "append-permissions-allow",
+  codex: "append-managed-prefix-rules",
+});
 
 /**
- * Write the selected permission material and its complete replacement to a
- * restrictive, source-hash-bound plan.
+ * Write only selected permission material and source-bound mutation intent to
+ * a restrictive plan. Source and replacement contents never enter the plan.
  */
 export async function createBoundPlan({
   harness,
   selected,
   destination,
   sourceBytes,
-  replacement,
   now = () => new Date().toISOString(),
   planDir,
   fsOps = defaultFs,
@@ -34,22 +37,26 @@ export async function createBoundPlan({
   if (sourceBytes !== null && !ArrayBuffer.isView(sourceBytes)) {
     throw new TypeError("source bytes must be a byte array or null");
   }
-  if (typeof replacement !== "string") throw new TypeError("replacement must be a string");
   if (!isSafeAbsolutePath(planDir)) throw new TypeError("plan directory must be absolute");
 
-  const plan = {
-    version: 1,
+  const source = {
+    exists: sourceBytes !== null,
+    sha256: sourceBytes === null ? null : sha256(Buffer.from(sourceBytes.buffer, sourceBytes.byteOffset, sourceBytes.byteLength)),
+  };
+  const mutation = { operation: MUTATIONS[harness] };
+  const intent = {
+    version: 2,
     harness,
-    createdAt: now(),
     destination,
-    source: {
-      exists: sourceBytes !== null,
-      sha256: sourceBytes === null ? null : sha256(Buffer.from(sourceBytes.buffer, sourceBytes.byteOffset, sourceBytes.byteLength)),
-    },
-    replacement,
-    replacementSha256: sha256(Buffer.from(replacement, "utf8")),
+    source,
+    mutation,
     selected: selectedRules,
     restartRequired: harness === "codex",
+  };
+  const plan = {
+    ...intent,
+    createdAt: now(),
+    intentSha256: sha256(Buffer.from(JSON.stringify(intent), "utf8")),
   };
   assertBoundPlan(plan);
 
@@ -70,26 +77,18 @@ export async function readBoundPlan(path, fsOps = defaultFs) {
   return { ...parsed, path };
 }
 
-/** Render the exact old and replacement bytes as one deterministic full hunk. */
-export function formatUnifiedDiff({ destination, sourceBytes, replacement }) {
-  if (!isSafeAbsolutePath(destination)) throw new TypeError("destination must be absolute");
-  if (sourceBytes !== null && !ArrayBuffer.isView(sourceBytes)) {
-    throw new TypeError("source bytes must be a byte array or null");
-  }
-  if (typeof replacement !== "string") throw new TypeError("replacement must be a string");
-
-  const oldText = sourceBytes === null
-    ? ""
-    : new TextDecoder("utf-8", { fatal: true }).decode(
-      new Uint8Array(sourceBytes.buffer, sourceBytes.byteOffset, sourceBytes.byteLength),
-    );
-  const oldFile = splitFile(oldText);
-  const newFile = splitFile(replacement);
-  let diff = `--- ${sourceBytes === null ? "/dev/null" : destination}\n+++ ${destination}\n`;
-  diff += `@@ ${unifiedRange("-", oldFile.lines.length)} ${unifiedRange("+", newFile.lines.length)} @@\n`;
-  diff += prefixedLines("-", oldFile);
-  diff += prefixedLines("+", newFile);
-  return diff;
+/** Render only the selected semantic additions, never unrelated source bytes. */
+export function formatUnifiedDiff({ plan }) {
+  const stored = withoutPath(plan);
+  assertBoundPlan(stored);
+  const hunk = stored.harness === "claude"
+    ? "append permissions.allow"
+    : "append managed prefix_rule blocks";
+  const additions = stored.selected
+    .flatMap(({ rule }) => rule.trimEnd().split("\n"))
+    .map((line) => `+${line}\n`)
+    .join("");
+  return `--- ${stored.destination} (selected permissions)\n+++ ${stored.destination} (selected permissions)\n@@ ${hunk} @@\n${additions}`;
 }
 
 /** Apply exactly one confirmed harness plan under an exclusive config lock. */
@@ -97,33 +96,36 @@ export async function applyBoundPlan({
   planPath,
   expectedHarness,
   confirmToken,
+  deriveReplacement,
+  isAlreadyApplied,
+  validatePlan,
   validateReplacement,
   createParent = false,
   fsOps = defaultFs,
 }) {
   const plan = await readBoundPlan(planPath, fsOps);
-  const expectedToken = `apply:${plan.harness}:${plan.replacementSha256}`;
+  const expectedToken = `apply:${plan.harness}:${plan.intentSha256}`;
   if (plan.harness !== expectedHarness || confirmToken !== expectedToken) {
     throw new Error("explicit harness confirmation does not match plan");
   }
   if (typeof validateReplacement !== "function") {
     throw new TypeError("replacement validator is required");
   }
-
-  const current = await readOptional(plan.destination, fsOps);
-  if (sha256OrNull(current) === plan.replacementSha256) {
-    return { status: "already-applied", destination: plan.destination };
+  if (typeof deriveReplacement !== "function" || typeof isAlreadyApplied !== "function") {
+    throw new TypeError("replacement derivation and semantic idempotency checks are required");
   }
-  if (sha256OrNull(current) !== plan.source.sha256) throw new Error("stale source config");
-  const validation = await validateReplacement(plan.replacement);
-  if (validation === false) throw new Error("replacement validation failed");
+  if (typeof validatePlan !== "function") throw new TypeError("plan validator is required");
   const createdParents = [];
   try {
-    if (createParent && current === null) {
+    if (createParent && !plan.source.exists) {
       await createMissingParentDirectories(dirname(plan.destination), fsOps, createdParents);
     }
     return await withExclusiveLock(`${plan.destination}.moe-smoothing.lock`, fsOps, () =>
-      atomicReplace(plan, fsOps),
+      deriveValidateAndReplace(
+        plan,
+        { deriveReplacement, isAlreadyApplied, validatePlan, validateReplacement },
+        fsOps,
+      ),
     );
   } catch (error) {
     await rollbackEmptyDirectories(createdParents, fsOps);
@@ -181,7 +183,7 @@ function normalizeSelected(selected, harness) {
 function assertBoundPlan(plan) {
   try {
     if (!isPlainObject(plan) || !hasExactFields(plan, PLAN_FIELDS)) throw new Error();
-    if (plan.version !== 1 || !HARNESSES.has(plan.harness)) throw new Error();
+    if (plan.version !== 2 || !HARNESSES.has(plan.harness)) throw new Error();
     if (!isTimestamp(plan.createdAt) || !isSafeAbsolutePath(plan.destination)) throw new Error();
     if (!isPlainObject(plan.source) || !hasExactFields(plan.source, ["exists", "sha256"])) {
       throw new Error();
@@ -190,13 +192,27 @@ function assertBoundPlan(plan) {
     if (plan.source.exists ? !isSha256(plan.source.sha256) : plan.source.sha256 !== null) {
       throw new Error();
     }
-    if (typeof plan.replacement !== "string" || !isSha256(plan.replacementSha256)) {
+    if (
+      !isPlainObject(plan.mutation) ||
+      !hasExactFields(plan.mutation, ["operation"]) ||
+      plan.mutation.operation !== MUTATIONS[plan.harness] ||
+      !isSha256(plan.intentSha256)
+    ) {
       throw new Error();
     }
-    if (sha256(Buffer.from(plan.replacement, "utf8")) !== plan.replacementSha256) throw new Error();
     const selected = validateStoredSelected(plan.selected, plan.harness);
     if (selected.length !== plan.selected.length) throw new Error();
     if (plan.restartRequired !== (plan.harness === "codex")) throw new Error();
+    const intent = {
+      version: plan.version,
+      harness: plan.harness,
+      destination: plan.destination,
+      source: plan.source,
+      mutation: plan.mutation,
+      selected: plan.selected,
+      restartRequired: plan.restartRequired,
+    };
+    if (sha256(Buffer.from(JSON.stringify(intent), "utf8")) !== plan.intentSha256) throw new Error();
   } catch (error) {
     if (error?.message?.startsWith("invalid bound plan")) throw error;
     throw invalidPlan("schema validation failed", error);
@@ -258,12 +274,27 @@ async function releaseLock(lockHandle, lockPath, fsOps) {
   return releaseError;
 }
 
-async function atomicReplace(plan, fsOps) {
+async function deriveValidateAndReplace(plan, callbacks, fsOps) {
+  const observed = await readOptional(plan.destination, fsOps);
+  if (sha256OrNull(observed) !== plan.source.sha256) {
+    if (await callbacks.isAlreadyApplied(observed, plan)) {
+      return { status: "already-applied", destination: plan.destination };
+    }
+    throw new Error("stale source config");
+  }
+  const planValidation = await callbacks.validatePlan(plan);
+  if (planValidation === false) throw new Error("plan validation failed");
   const current = await readOptional(plan.destination, fsOps);
-  if (sha256OrNull(current) === plan.replacementSha256) {
+  if (sha256OrNull(current) !== plan.source.sha256) throw new Error("stale source config");
+  const replacement = await callbacks.deriveReplacement(current, plan);
+  if (typeof replacement !== "string") throw new TypeError("replacement derivation must return a string");
+  const replacementBytes = Buffer.from(replacement, "utf8");
+  if (current !== null && replacementBytes.equals(current)) {
     return { status: "already-applied", destination: plan.destination };
   }
-  if (sha256OrNull(current) !== plan.source.sha256) throw new Error("stale source config");
+  const validation = await callbacks.validateReplacement(replacement, current, plan);
+  if (validation === false) throw new Error("replacement validation failed");
+  const replacementSha256 = sha256(replacementBytes);
 
   const temporaryPath = join(
     dirname(plan.destination),
@@ -276,14 +307,14 @@ async function atomicReplace(plan, fsOps) {
   try {
     handle = await fsOps.open(temporaryPath, "wx", 0o600);
     temporaryOwned = true;
-    await handle.writeFile(plan.replacement, "utf8");
+    await handle.writeFile(replacement, "utf8");
     await handle.sync();
     await handle.close();
     handle = undefined;
     await fsOps.rename(temporaryPath, plan.destination);
     renamed = true;
     const applied = await readOptional(plan.destination, fsOps);
-    if (sha256OrNull(applied) !== plan.replacementSha256) {
+    if (sha256OrNull(applied) !== replacementSha256) {
       throw new Error("applied config hash verification failed");
     }
     return { status: "applied", destination: plan.destination };
@@ -341,31 +372,6 @@ function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
 }
 
-function splitFile(contents) {
-  if (contents === "") return { lines: [], endsWithNewline: true };
-  const endsWithNewline = contents.endsWith("\n");
-  const lines = contents.split("\n");
-  if (endsWithNewline) lines.pop();
-  return { lines, endsWithNewline };
-}
-
-function prefixedLines(prefix, file) {
-  return file.lines
-    .map((line, index) => {
-      const marker = index === file.lines.length - 1 && !file.endsWithNewline
-        ? "\\ No newline at end of file\n"
-        : "";
-      return `${prefix}${line}\n${marker}`;
-    })
-    .join("");
-}
-
-function unifiedRange(prefix, count) {
-  if (count === 0) return `${prefix}0,0`;
-  if (count === 1) return `${prefix}1`;
-  return `${prefix}1,${count}`;
-}
-
 function isTimestamp(value) {
   return typeof value === "string" && Number.isFinite(Date.parse(value));
 }
@@ -390,6 +396,12 @@ function hasExactFields(value, fields) {
   const actual = Object.keys(value).sort();
   const expected = [...fields].sort();
   return actual.length === expected.length && actual.every((field, index) => field === expected[index]);
+}
+
+function withoutPath(plan) {
+  if (!isPlainObject(plan)) return plan;
+  const { path: _path, ...stored } = plan;
+  return stored;
 }
 
 function invalidPlan(reason, cause) {
