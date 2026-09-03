@@ -1,0 +1,10 @@
+{
+  "//": "Runtime DAG: no workspace dependencies. jig shells out to git and writes files; it imports nothing from the workspace.",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*"],
+  "references": []
+}
