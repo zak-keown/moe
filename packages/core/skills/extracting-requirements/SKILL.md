@@ -86,7 +86,7 @@ This pass is required, not optional. Extraction subagents optimize for what they
 Run the story aggregation script on all extracted story JSONs (including any added by the omission review):
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_stories.py" -o docs/moe/iterations/requirements/ <json-file-1> <json-file-2> ...
+node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_stories.mjs" -o docs/moe/iterations/requirements/ <json-file-1> <json-file-2> ...
 ```
 
 The script combines, deduplicates by title, groups into epics, assigns stable STORY/EPIC IDs, and outputs per-epic files with proof obligations preserved.
