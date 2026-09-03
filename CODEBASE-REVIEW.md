@@ -3207,7 +3207,7 @@ The comment above the agents describe states the failure this guard exists to ca
 
 I reproduced this with a script transcribing `parseFrontmatter` verbatim. A block-sequence `tools:` containing `notarealtool` and `mcp_wrong_shape` produced `data.tools === ""`, `toBeDefined()` true, and an empty malformed list. A folded `description: >-` produced `data.description === ">-"`, which also satisfies the skills-side "every skill has a non-empty name and description".
 
-This is not hypothetical syntax. Three of the four files in `packages/core/agents/` already open with `description: >-`, and `search-codegraph.md` carries a comment explaining why the folded form is required there. The four agents pass today only because each happens to write `tools:` inline; the guard would not notice if one switched to the list form the same directory already uses for another key.
+This is not hypothetical syntax. The agent files in `packages/core/agents/` already open with `description: >-`. The agents pass today only because each happens to write `tools:` inline; the guard would not notice if one switched to the list form the same directory already uses for another key.
 
 Fix: parse the block with the `yaml` package that is already a devDependency of this package and is already imported in this file for `skill-tiers.yaml`, then normalise `tools` to an array whether it arrives as a string or a sequence.
 
@@ -10085,7 +10085,7 @@ The remaining nine scenarios in this shard label consistently against the judge 
 
 `tc-governance-check.test.ts` matches its hook exactly. The disable escape hatch, the two user-instruction file locations, and the fail-open path when neither `HOME` nor `USERPROFILE` is set all correspond to real branches, and the test's `delete env.MOE_TC_GOVERNANCE_DISABLED` hygiene means an ambient variable cannot make the nudge test pass vacuously. The hook's `-n` test means `metadata.test.ts` passing that variable as an empty string is also correct.
 
-`retrieving-context-contract.test.ts` asserts positional ordering (`codeGraph < sourceFallback < optionalMoedex`) rather than mere presence, which is the part that would rot silently under a reordering edit.
+`retrieving-context-contract.test.ts` asserts that CodeGraph references do not reappear (negative guard) and validates the moedex-optional routing structure, which is the part that would rot silently under a reordering edit.
 
 Both shell suites are honest. I ran `test-find-polluter.sh`: five assertions pass, all writes confined to `mktemp -d`, and the tree stayed clean. `test-render-graphs.sh` skipped its five rendering assertions on this machine because graphviz is absent, so I re-ran it with a stub `dot` on PATH that answers `-V` and emits SVG; all eight assertions pass, and `Rendered: fixture_graph.svg` matches the per-block branch of `render-graphs.mjs` rather than the `--combine` branch. The `var=$(cmd)` followed by `status=$?` idiom is correct in both files, and `set -e` exemption rules make the `&&` chains in `recover-workers.sh` safe. I checked the bash 3.2 empty-array trap that script explicitly targets: `"${arr[@]}"` under `set -u` does abort on this machine's `/bin/bash` 3.2.57, but every such expansion in the file is guarded by a `${#arr[@]}` count test first, and `A=("$@")` with no positional parameters is fine.
 
