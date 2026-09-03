@@ -4,8 +4,10 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { opencode } from '../src/adapters/opencode.js'
 import { pi } from '../src/adapters/pi.js'
-import type { HarnessAdapter } from '../src/adapters/types.js'
+import type { ComponentSupport, HarnessAdapter } from '../src/adapters/types.js'
 import { generate, validateGeneration } from '../src/generate.js'
+
+const fullSupport: ComponentSupport = { skills: 'full', commands: 'full', agents: 'full', hooks: 'full', mcp: 'full', bootstrap: 'full', rules: 'none', variables: 'none' }
 
 function freshFixture(): string {
   const dir = mkdtempSync(join(tmpdir(), 'mint-package-contributions-'))
@@ -55,6 +57,7 @@ describe('adapter package contributions', () => {
     (path) => {
       const adapter: HarnessAdapter = {
         name: 'codex',
+        support: fullSupport,
         emit: () => ({
           files: [{ path, content: '{"name":"replacement"}\n' }],
           limitations: [],
@@ -83,6 +86,7 @@ describe('adapter package contributions', () => {
   ])('allows %s when %s does not fully fold to the reserved filename', (path) => {
     const adapter: HarnessAdapter = {
       name: 'codex',
+      support: fullSupport,
       emit: () => ({
         files: [{ path, content: '{"name":"not-the-root-manifest"}\n' }],
         limitations: [],
@@ -101,6 +105,7 @@ describe('adapter package contributions', () => {
   ] as const)('rejects %s from claiming %s package metadata', (adapterName, declaredOwner, fields) => {
     const adapter: HarnessAdapter = {
       name: adapterName,
+      support: fullSupport,
       emit: () => ({
         files: [],
         limitations: [],
@@ -133,6 +138,7 @@ describe('adapter package contributions', () => {
   ] as const)('rejects %s package contribution with a stable owner diagnostic', (contribution, _description) => {
     const adapter: HarnessAdapter = {
       name: 'opencode',
+      support: fullSupport,
       emit: () => ({
         files: [],
         limitations: [],

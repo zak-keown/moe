@@ -1,11 +1,8 @@
 import fs from "node:fs";
 import type { MemoryDatabase } from "./db.js";
 import { EMBEDDING_VERSION } from "./embedding-migration.js";
-import { pickPendingEnrichment, commitEnrichment } from "./enrichment.js";
-import {
-  type VectorReadiness,
-  assessVectorReadiness,
-} from "./vector-readiness.js";
+import { commitEnrichment, pickPendingEnrichment } from "./enrichment.js";
+import { assessVectorReadiness, type VectorReadiness } from "./vector-readiness.js";
 
 export interface EmbeddingCoordinator {
   ensureReady(): Promise<VectorReadiness>;
@@ -24,8 +21,8 @@ export function createEmbeddingCoordinator(
   options: EmbeddingCoordinatorOptions,
 ): EmbeddingCoordinator {
   const { db, dbPath, embedFn } = options;
-  let snapshotTaken = options.snapshotTaken ?? false;
-  let capsuleVerified = options.capsuleVerified ?? false;
+  const snapshotTaken = options.snapshotTaken ?? false;
+  const capsuleVerified = options.capsuleVerified ?? false;
 
   return {
     async ensureReady(): Promise<VectorReadiness> {

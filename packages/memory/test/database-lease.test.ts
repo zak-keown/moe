@@ -2,12 +2,12 @@ import { execFile } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DatabaseSync } from "node:sqlite";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-  acquireSharedDatabaseLease,
   acquireDatabaseWriter,
   acquireExclusiveMaintenanceLease,
+  acquireSharedDatabaseLease,
   assertWritableEpoch,
   DatabaseBusyError,
   inspectLegacyDatabaseUsers,

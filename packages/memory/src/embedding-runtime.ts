@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import * as ort from "onnxruntime-web";
 import type { VerifiedModelSet } from "./model-cache.js";
-import { loadTokenizer, type LoadedTokenizer } from "./tokenizer.js";
+import { type LoadedTokenizer, loadTokenizer } from "./tokenizer.js";
 
 export interface EmbeddingBackend {
   embed(text: string): Promise<Float32Array>;

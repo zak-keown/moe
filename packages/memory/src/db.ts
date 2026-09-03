@@ -19,10 +19,10 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { EMBEDDING_DIMENSIONS } from "./constants.js";
 import { acquireSharedDatabaseLease, type DatabaseLease } from "./database-lease.js";
-import { withTransaction, withForeignKeysDisabled } from "./database-transaction.js";
+import { withForeignKeysDisabled, withTransaction } from "./database-transaction.js";
 import { EMBEDDING_VERSION } from "./embedding-migration.js";
-import { resolveNativeAsset } from "./native-assets.js";
 import type { InstalledPackageRoot } from "./installed-package-root.js";
+import { resolveNativeAsset } from "./native-assets.js";
 import { getDbPath } from "./paths.js";
 import { assertWritesAllowed } from "./rollback/fence.js";
 import type {
@@ -195,8 +195,9 @@ export function migrateToolCallsCascade(db: MemoryDatabase): void {
     console.log(`  Removing ${orphanCount} orphaned tool_calls row(s)`);
   }
 
-  withForeignKeysDisabled(db, () => withTransaction(db, () => {
-    db.exec(`
+  withForeignKeysDisabled(db, () =>
+    withTransaction(db, () => {
+      db.exec(`
       CREATE TABLE tool_calls_new (
         id TEXT PRIMARY KEY,
         exchange_id TEXT NOT NULL,
@@ -208,15 +209,16 @@ export function migrateToolCallsCascade(db: MemoryDatabase): void {
         FOREIGN KEY (exchange_id) REFERENCES exchanges(id) ON DELETE CASCADE
       )
     `);
-    db.exec(`
+      db.exec(`
       INSERT INTO tool_calls_new
       SELECT id, exchange_id, tool_name, tool_input, tool_result, is_error, timestamp
       FROM tool_calls
       WHERE exchange_id IN (SELECT id FROM exchanges)
     `);
-    db.exec(`DROP TABLE tool_calls`);
-    db.exec(`ALTER TABLE tool_calls_new RENAME TO tool_calls`);
-  }));
+      db.exec(`DROP TABLE tool_calls`);
+      db.exec(`ALTER TABLE tool_calls_new RENAME TO tool_calls`);
+    }),
+  );
 
   console.log("  tool_calls migration complete.");
 }
@@ -737,9 +739,9 @@ function nodeFromRow(row: MemoryNodeRow): MemoryNode {
 }
 
 export function getNode(db: MemoryDatabase, id: string): MemoryNode | null {
-  const row = db
-    .prepare("SELECT * FROM memory_nodes WHERE id = ?")
-    .get(id) as MemoryNodeRow | undefined;
+  const row = db.prepare("SELECT * FROM memory_nodes WHERE id = ?").get(id) as
+    | MemoryNodeRow
+    | undefined;
   return row ? nodeFromRow(row) : null;
 }
 
@@ -790,11 +792,7 @@ export function getEdgesFrom(
   return rows.map(edgeFromRow);
 }
 
-export function getEdgesTo(
-  db: MemoryDatabase,
-  targetType: string,
-  targetId: string,
-): MemoryEdge[] {
+export function getEdgesTo(db: MemoryDatabase, targetType: string, targetId: string): MemoryEdge[] {
   const rows = db
     .prepare("SELECT * FROM memory_edges WHERE target_type = ? AND target_id = ?")
     .all(targetType, targetId) as unknown as MemoryEdgeRow[];
@@ -831,9 +829,7 @@ export function traceProvenance(
       if (curDepth >= depth) continue;
 
       const edges =
-        direction === "causes"
-          ? getEdgesTo(db, curType, curId)
-          : getEdgesFrom(db, curType, curId);
+        direction === "causes" ? getEdgesTo(db, curType, curId) : getEdgesFrom(db, curType, curId);
 
       for (const edge of edges) {
         if (visited.has(edge.id)) continue;

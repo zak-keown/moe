@@ -1,17 +1,17 @@
 import type { DatabaseSync } from "node:sqlite";
 import { initDatabase } from "./db.js";
 import { JournalSearchService } from "./journal/search.js";
-import { JournalStore } from "./journal/store.js";
+import type { JournalStore } from "./journal/store.js";
 import type { SearchOptions } from "./search.js";
-import {
-  searchConversations,
-  searchMultipleConcepts,
-} from "./search.js";
+import { searchConversations, searchMultipleConcepts } from "./search.js";
 import type { MultiConceptResult, SearchResult } from "./types.js";
 
 export interface MemoryToolRuntime {
   searchConversations(query: string, options: SearchOptions): Promise<SearchResult[]>;
-  searchMultipleConcepts(query: string[], options: Omit<SearchOptions, "mode">): Promise<MultiConceptResult[]>;
+  searchMultipleConcepts(
+    query: string[],
+    options: Omit<SearchOptions, "mode">,
+  ): Promise<MultiConceptResult[]>;
   openDatabase(): DatabaseSync;
   createJournalSearch(store: JournalStore): JournalSearchService;
 }

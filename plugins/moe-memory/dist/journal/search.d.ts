@@ -23,7 +23,7 @@
  * are `JournalSearchResult` and `JournalSearchOptions`, so the barrel can export
  * all four.
  */
-import type Database from "better-sqlite3";
+import type { MemoryDatabase } from "../db.js";
 import { type EmbedFn } from "../embeddings.js";
 import type { JournalScope, JournalSearchResult } from "../types.js";
 /** `both` means "do not filter by scope", matching upstream's `type` parameter. */
@@ -72,7 +72,7 @@ export declare class JournalSearchService {
      * @param db    an open database from `initDatabase()`
      * @param roots the journal roots, already de-duplicated (see `JournalStore.roots`)
      */
-    constructor(db: Database.Database, roots: string[], options?: JournalSearchServiceOptions);
+    constructor(db: MemoryDatabase, roots: string[], options?: JournalSearchServiceOptions);
     search(query: string, options?: JournalSearchOptions): Promise<JournalSearchResult[]>;
     listRecent(options?: JournalRecentOptions): JournalSearchResult[];
     readRecentEntries(options?: {
@@ -88,3 +88,25 @@ export declare class JournalSearchService {
     readEntry(filePath: string): Promise<string | null>;
     private realRoots;
 }
+export interface JournalTextSearchOptions {
+    limit?: number | undefined;
+    scope?: JournalScopeFilter | undefined;
+    dateRange?: {
+        start?: Date | undefined;
+        end?: Date | undefined;
+    } | undefined;
+}
+export interface JournalTextSearchResult {
+    entry: {
+        id: string;
+        path: string;
+        root: string;
+        scope: JournalScope;
+        timestamp: number;
+        text: string;
+        sections: string[];
+    };
+    embeddingVersion: number;
+    excerpt: string;
+}
+export declare function searchJournalText(db: MemoryDatabase, query: string, roots: readonly string[], options?: JournalTextSearchOptions): JournalTextSearchResult[];

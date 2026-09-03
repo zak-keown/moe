@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * `moe-memory` — the package's single bin, compiled to dist/cli.js.
  *
@@ -22,8 +23,8 @@
  * does not load node:sqlite or transformers.js just to render a JSONL file.
  */
 
-import { resolveInstalledPackageRoot } from "./installed-package-root.js";
 import { setDefaultPackageRoot } from "./db.js";
+import { resolveInstalledPackageRoot } from "./installed-package-root.js";
 
 setDefaultPackageRoot(resolveInstalledPackageRoot(import.meta.url));
 

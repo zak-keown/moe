@@ -1,11 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { getMemoryDataDir } from "../paths.js";
-import {
-  clearRollbackState,
-  readRollbackState,
-  RollbackStateError,
-} from "./state.js";
+import { clearRollbackState, RollbackStateError, readRollbackState } from "./state.js";
 
 export interface AbortRollbackOptions {
   dataDir?: string;

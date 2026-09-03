@@ -2,15 +2,19 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { acquireFileLock, releaseFileLock, type FileLockHandle } from "../src/file-lock.js";
-import { acquireExclusiveMaintenanceLease, acquireSharedDatabaseLease, DatabaseBusyError } from "../src/database-lease.js";
+import {
+  acquireExclusiveMaintenanceLease,
+  acquireSharedDatabaseLease,
+  DatabaseBusyError,
+} from "../src/database-lease.js";
+import { acquireFileLock, type FileLockHandle, releaseFileLock } from "../src/file-lock.js";
+import { abortRollback } from "../src/rollback/abort.js";
+import { assertWritesAllowed, RollbackFencedError } from "../src/rollback/fence.js";
 import {
   advanceRollbackState,
   createRollbackState,
   readRollbackState,
 } from "../src/rollback/state.js";
-import { assertWritesAllowed, RollbackFencedError } from "../src/rollback/fence.js";
-import { abortRollback } from "../src/rollback/abort.js";
 
 const VALID_SHA = "a".repeat(64);
 

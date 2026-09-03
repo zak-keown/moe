@@ -22,25 +22,33 @@ describe("migration-race", () => {
 
   it("keeps vector search closed until exchanges and journals are current", async () => {
     const db = openTestDatabase(dbPath);
-    insertExchange(db, {
-      id: "ex-1",
-      project: "test",
-      timestamp: new Date().toISOString(),
-      userMessage: "atomic swap semantics",
-      assistantMessage: "explained here",
-      archivePath: "/fake/path.jsonl",
-      lineStart: 1,
-      lineEnd: 5,
-    }, null);
-    upsertJournalEntry(db, {
-      id: "je-1",
-      path: "/fake/journal.md",
-      root: "/fake",
-      scope: "project",
-      timestamp: Date.now(),
-      text: "notes on atomic swaps",
-      sections: ["notes"],
-    }, Date.now());
+    insertExchange(
+      db,
+      {
+        id: "ex-1",
+        project: "test",
+        timestamp: new Date().toISOString(),
+        userMessage: "atomic swap semantics",
+        assistantMessage: "explained here",
+        archivePath: "/fake/path.jsonl",
+        lineStart: 1,
+        lineEnd: 5,
+      },
+      null,
+    );
+    upsertJournalEntry(
+      db,
+      {
+        id: "je-1",
+        path: "/fake/journal.md",
+        root: "/fake",
+        scope: "project",
+        timestamp: Date.now(),
+        text: "notes on atomic swaps",
+        sections: ["notes"],
+      },
+      Date.now(),
+    );
 
     const embed = fakeEmbed();
     const coordinator = createEmbeddingCoordinator({
@@ -70,26 +78,34 @@ describe("migration-race", () => {
 
   it("handles partial resume — reprocesses only remaining items", async () => {
     const db = openTestDatabase(dbPath);
-    insertExchange(db, {
-      id: "ex-1",
-      project: "test",
-      timestamp: new Date().toISOString(),
-      userMessage: "first",
-      assistantMessage: "message",
-      archivePath: "/fake/a.jsonl",
-      lineStart: 1,
-      lineEnd: 5,
-    }, null);
-    insertExchange(db, {
-      id: "ex-2",
-      project: "test",
-      timestamp: new Date().toISOString(),
-      userMessage: "second",
-      assistantMessage: "message",
-      archivePath: "/fake/b.jsonl",
-      lineStart: 1,
-      lineEnd: 5,
-    }, null);
+    insertExchange(
+      db,
+      {
+        id: "ex-1",
+        project: "test",
+        timestamp: new Date().toISOString(),
+        userMessage: "first",
+        assistantMessage: "message",
+        archivePath: "/fake/a.jsonl",
+        lineStart: 1,
+        lineEnd: 5,
+      },
+      null,
+    );
+    insertExchange(
+      db,
+      {
+        id: "ex-2",
+        project: "test",
+        timestamp: new Date().toISOString(),
+        userMessage: "second",
+        assistantMessage: "message",
+        archivePath: "/fake/b.jsonl",
+        lineStart: 1,
+        lineEnd: 5,
+      },
+      null,
+    );
 
     const embed = fakeEmbed();
     const coordinator = createEmbeddingCoordinator({
@@ -115,16 +131,20 @@ describe("migration-race", () => {
 
   it("blocks when capsule is not verified", async () => {
     const db = openTestDatabase(dbPath);
-    insertExchange(db, {
-      id: "ex-1",
-      project: "test",
-      timestamp: new Date().toISOString(),
-      userMessage: "test",
-      assistantMessage: "test",
-      archivePath: "/fake/a.jsonl",
-      lineStart: 1,
-      lineEnd: 5,
-    }, null);
+    insertExchange(
+      db,
+      {
+        id: "ex-1",
+        project: "test",
+        timestamp: new Date().toISOString(),
+        userMessage: "test",
+        assistantMessage: "test",
+        archivePath: "/fake/a.jsonl",
+        lineStart: 1,
+        lineEnd: 5,
+      },
+      null,
+    );
 
     const embed = fakeEmbed();
     const coordinator = createEmbeddingCoordinator({
@@ -144,21 +164,25 @@ describe("migration-race", () => {
 
   it("reports blocked for future-version database", async () => {
     const db = openTestDatabase(dbPath);
-    insertExchange(db, {
-      id: "ex-future",
-      project: "test",
-      timestamp: new Date().toISOString(),
-      userMessage: "from future",
-      assistantMessage: "runtime",
-      archivePath: "/fake/a.jsonl",
-      lineStart: 1,
-      lineEnd: 5,
-    }, null);
+    insertExchange(
+      db,
+      {
+        id: "ex-future",
+        project: "test",
+        timestamp: new Date().toISOString(),
+        userMessage: "from future",
+        assistantMessage: "runtime",
+        archivePath: "/fake/a.jsonl",
+        lineStart: 1,
+        lineEnd: 5,
+      },
+      null,
+    );
     db.prepare("UPDATE exchanges SET embedding_version = 99 WHERE id = 'ex-future'").run();
 
     const readiness = assessVectorReadiness(db);
     expect(readiness.state).toBe("blocked");
-    expect(readiness.reason).toContain("newer runtime");
+    if (readiness.state === "blocked") expect(readiness.reason).toContain("newer runtime");
 
     closeDatabase(db);
   });
@@ -182,15 +206,19 @@ describe("migration-race", () => {
 
   it("processes journal-only stale corpus", async () => {
     const db = openTestDatabase(dbPath);
-    upsertJournalEntry(db, {
-      id: "je-1",
-      path: "/fake/a.md",
-      root: "/fake",
-      scope: "user",
-      timestamp: Date.now(),
-      text: "journal only",
-      sections: [],
-    }, Date.now());
+    upsertJournalEntry(
+      db,
+      {
+        id: "je-1",
+        path: "/fake/a.md",
+        root: "/fake",
+        scope: "user",
+        timestamp: Date.now(),
+        text: "journal only",
+        sections: [],
+      },
+      Date.now(),
+    );
 
     const embed = fakeEmbed();
     const coordinator = createEmbeddingCoordinator({

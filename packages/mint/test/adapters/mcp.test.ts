@@ -62,7 +62,7 @@ describe('emitCodexMcp', () => {
       args: ['./dist/cli.js', 'mcp-server'],
       cwd: '.',
     })
-    expect(entry['moe-memory'].env_vars).toBeUndefined()
-    expect(entry['moe-memory'].env).toBeUndefined()
+    expect(entry['moe-memory']!.env_vars).toBeUndefined()
+    expect(entry['moe-memory']!.env).toBeUndefined()
   })
 })

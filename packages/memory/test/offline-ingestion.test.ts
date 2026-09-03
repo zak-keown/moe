@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { insertExchange, upsertJournalEntry } from "../src/db.js";
-import { pickPendingEnrichment, commitEnrichment, searchJournalText } from "../src/enrichment.js";
+import { commitEnrichment, pickPendingEnrichment, searchJournalText } from "../src/enrichment.js";
 import type { ConversationExchange, JournalEntry } from "../src/types.js";
 import { openTestDatabase } from "./test-utils.js";
 
@@ -57,7 +57,9 @@ describe("offline ingestion — text-first persistence", () => {
     expect(row.embedding_version).toBe(0);
 
     // Verify no vec row was created
-    const vecRow = db.prepare("SELECT count(*) AS c FROM vec_exchanges WHERE id = ?").get("ex-1") as {
+    const vecRow = db
+      .prepare("SELECT count(*) AS c FROM vec_exchanges WHERE id = ?")
+      .get("ex-1") as {
       c: number;
     };
     expect(vecRow.c).toBe(0);
@@ -129,7 +131,9 @@ describe("offline ingestion — text-first persistence", () => {
     insertExchange(db, makeExchange("ex-1", "something to enrich"), null);
 
     // Verify version 0 initially
-    const before = db.prepare("SELECT embedding_version FROM exchanges WHERE id = ?").get("ex-1") as {
+    const before = db
+      .prepare("SELECT embedding_version FROM exchanges WHERE id = ?")
+      .get("ex-1") as {
       embedding_version: number;
     };
     expect(before.embedding_version).toBe(0);
@@ -141,13 +145,17 @@ describe("offline ingestion — text-first persistence", () => {
     commitEnrichment(db, pending[0]!, fakeVector);
 
     // Verify version bumped
-    const after = db.prepare("SELECT embedding_version FROM exchanges WHERE id = ?").get("ex-1") as {
+    const after = db
+      .prepare("SELECT embedding_version FROM exchanges WHERE id = ?")
+      .get("ex-1") as {
       embedding_version: number;
     };
     expect(after.embedding_version).toBeGreaterThan(0);
 
     // Verify vec row exists
-    const vecRow = db.prepare("SELECT count(*) AS c FROM vec_exchanges WHERE id = ?").get("ex-1") as {
+    const vecRow = db
+      .prepare("SELECT count(*) AS c FROM vec_exchanges WHERE id = ?")
+      .get("ex-1") as {
       c: number;
     };
     expect(vecRow.c).toBe(1);

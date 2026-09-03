@@ -31,7 +31,10 @@ export interface SearchOptions {
  * by the optional time and metadata filters. Bound parameters keep us
  * safe from SQL injection without regex-based input scrubbing.
  */
-function buildSearchFilters(options: SearchOptions): { sql: string; params: Array<string | number> } {
+function buildSearchFilters(options: SearchOptions): {
+  sql: string;
+  params: Array<string | number>;
+} {
   const parts: string[] = [];
   const params: Array<string | number> = [];
   if (options.after) {
@@ -77,7 +80,12 @@ function buildSearchFilters(options: SearchOptions): { sql: string; params: Arra
  */
 function hasMetadataFilters(options: SearchOptions): boolean {
   return Boolean(
-    options.project || options.session_id || options.git_branch || options.git_commit || options.after || options.before,
+    options.project ||
+      options.session_id ||
+      options.git_branch ||
+      options.git_commit ||
+      options.after ||
+      options.before,
   );
 }
 

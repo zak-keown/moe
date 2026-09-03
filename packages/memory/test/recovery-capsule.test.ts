@@ -4,22 +4,19 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-  RecoveryCapsuleError,
+  ensureRecoveryCapsule,
   loadCatalog,
+  RecoveryCapsuleError,
+  type RecoveryCapsuleManifest,
   validateManifest,
   verifyRecoveryCapsule,
-  ensureRecoveryCapsule,
-  type RecoveryCapsuleManifest,
 } from "../src/recovery-capsule.js";
 
 function sha256(data: string | Buffer): string {
   return createHash("sha256").update(data).digest("hex");
 }
 
-function writeCapsule(
-  root: string,
-  manifest: RecoveryCapsuleManifest,
-): void {
+function writeCapsule(root: string, manifest: RecoveryCapsuleManifest): void {
   fs.mkdirSync(root, { recursive: true });
 
   // Write the package tarball
@@ -49,10 +46,7 @@ function writeCapsule(
     file.bytes = content.length;
   }
 
-  fs.writeFileSync(
-    path.join(root, "manifest.json"),
-    JSON.stringify(manifest, null, 2),
-  );
+  fs.writeFileSync(path.join(root, "manifest.json"), JSON.stringify(manifest, null, 2));
 }
 
 function makeManifest(target: string): RecoveryCapsuleManifest {
@@ -66,12 +60,8 @@ function makeManifest(target: string): RecoveryCapsuleManifest {
       { path: "dist/index.js", sha256: "", bytes: 0 },
       { path: "dist/db.js", sha256: "", bytes: 0 },
     ],
-    dependencies: [
-      { name: "better-sqlite3", version: "12.4.1", integrity: "sha512-fake" },
-    ],
-    lifecyclePolicy: [
-      { package: "better-sqlite3", script: "install", executed: true },
-    ],
+    dependencies: [{ name: "better-sqlite3", version: "12.4.1", integrity: "sha512-fake" }],
+    lifecyclePolicy: [{ package: "better-sqlite3", script: "install", executed: true }],
     legalFiles: [{ path: "LICENSE", sha256: "", bytes: 0 }],
   };
 }
@@ -180,10 +170,7 @@ describe("recovery capsule validation", () => {
       fs.readFileSync(path.join(capsuleRoot, "manifest.json"), "utf8"),
     );
     rawManifest.installedFiles[0].bytes = 999;
-    fs.writeFileSync(
-      path.join(capsuleRoot, "manifest.json"),
-      JSON.stringify(rawManifest),
-    );
+    fs.writeFileSync(path.join(capsuleRoot, "manifest.json"), JSON.stringify(rawManifest));
 
     expect(() =>
       verifyRecoveryCapsule(capsuleRoot, {
@@ -298,7 +285,7 @@ describe("recovery catalog", () => {
 
     const catalog = loadCatalog(catalogPath);
     expect(catalog.targets).toHaveLength(1);
-    expect(catalog.targets[0].target).toBe("darwin-arm64");
+    expect(catalog.targets[0]!.target).toBe("darwin-arm64");
   });
 
   it("rejects invalid catalog schema", () => {

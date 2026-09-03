@@ -57,12 +57,7 @@ export interface RecoveryCatalogEntry {
   assetKey: string;
 }
 
-const SUPPORTED_TARGETS = new Set([
-  "darwin-arm64",
-  "darwin-x64",
-  "linux-arm64",
-  "linux-x64",
-]);
+const SUPPORTED_TARGETS = new Set(["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"]);
 
 export class RecoveryCapsuleError extends Error {
   constructor(
@@ -112,10 +107,7 @@ export function verifyRecoveryCapsule(
   const target = `${options.platform}-${options.arch}`;
 
   if (!SUPPORTED_TARGETS.has(target)) {
-    throw new RecoveryCapsuleError(
-      `unsupported target: ${target}`,
-      "UNSUPPORTED_TARGET",
-    );
+    throw new RecoveryCapsuleError(`unsupported target: ${target}`, "UNSUPPORTED_TARGET");
   }
 
   const nodeVersion = parseInt(process.versions.node, 10);
@@ -128,18 +120,12 @@ export function verifyRecoveryCapsule(
 
   const manifestPath = path.join(capsuleRoot, "manifest.json");
   if (!fs.existsSync(manifestPath)) {
-    throw new RecoveryCapsuleError(
-      "manifest.json not found in capsule root",
-      "MISSING_MANIFEST",
-    );
+    throw new RecoveryCapsuleError("manifest.json not found in capsule root", "MISSING_MANIFEST");
   }
 
   const raw = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
   if (!validateManifest(raw)) {
-    throw new RecoveryCapsuleError(
-      "invalid capsule manifest",
-      "INVALID_MANIFEST",
-    );
+    throw new RecoveryCapsuleError("invalid capsule manifest", "INVALID_MANIFEST");
   }
 
   const manifest = raw as RecoveryCapsuleManifest;
@@ -152,17 +138,10 @@ export function verifyRecoveryCapsule(
   }
 
   // Check for path escapes in all file paths
-  const allFiles = [
-    manifest.packageTarball,
-    ...manifest.installedFiles,
-    ...manifest.legalFiles,
-  ];
+  const allFiles = [manifest.packageTarball, ...manifest.installedFiles, ...manifest.legalFiles];
   for (const file of allFiles) {
     if (containsPathEscape(file.path)) {
-      throw new RecoveryCapsuleError(
-        `path escape detected: ${file.path}`,
-        "PATH_ESCAPE",
-      );
+      throw new RecoveryCapsuleError(`path escape detected: ${file.path}`, "PATH_ESCAPE");
     }
   }
 
@@ -170,10 +149,7 @@ export function verifyRecoveryCapsule(
   for (const file of allFiles) {
     const filePath = path.join(capsuleRoot, file.path);
     if (!fs.existsSync(filePath)) {
-      throw new RecoveryCapsuleError(
-        `declared file missing: ${file.path}`,
-        "MISSING_FILE",
-      );
+      throw new RecoveryCapsuleError(`declared file missing: ${file.path}`, "MISSING_FILE");
     }
     const stat = fs.statSync(filePath);
     if (stat.size !== file.bytes) {
@@ -197,10 +173,7 @@ export function verifyRecoveryCapsule(
   const actualFiles = walkDir(capsuleRoot, capsuleRoot);
   for (const actual of actualFiles) {
     if (!declaredPaths.has(actual)) {
-      throw new RecoveryCapsuleError(
-        `unknown file in capsule: ${actual}`,
-        "UNKNOWN_FILE",
-      );
+      throw new RecoveryCapsuleError(`unknown file in capsule: ${actual}`, "UNKNOWN_FILE");
     }
   }
 
@@ -245,10 +218,7 @@ export function ensureRecoveryCapsule(options: {
 
   const target = `${options.platform}-${options.arch}`;
   if (!SUPPORTED_TARGETS.has(target)) {
-    throw new RecoveryCapsuleError(
-      `unsupported target: ${target}`,
-      "UNSUPPORTED_TARGET",
-    );
+    throw new RecoveryCapsuleError(`unsupported target: ${target}`, "UNSUPPORTED_TARGET");
   }
 
   const catalogPath =
@@ -265,8 +235,7 @@ export function ensureRecoveryCapsule(options: {
   }
 
   const capsuleDir =
-    options.capsuleDir ??
-    path.join(import.meta.dirname, "..", "recovery", "0.1.5", target);
+    options.capsuleDir ?? path.join(import.meta.dirname, "..", "recovery", "0.1.5", target);
 
   return verifyRecoveryCapsule(capsuleDir, {
     platform: options.platform,

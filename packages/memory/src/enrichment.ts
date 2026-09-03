@@ -1,6 +1,6 @@
+import { withTransaction } from "./database-transaction.js";
 import type { MemoryDatabase } from "./db.js";
 import { EMBEDDING_VERSION } from "./embedding-migration.js";
-import { withTransaction } from "./database-transaction.js";
 import { assertWritesAllowed } from "./rollback/fence.js";
 
 export interface PendingEnrichment {
@@ -22,10 +22,7 @@ export interface JournalTextResult {
   excerpt: string;
 }
 
-export function pickPendingEnrichment(
-  db: MemoryDatabase,
-  limit = 50,
-): PendingEnrichment[] {
+export function pickPendingEnrichment(db: MemoryDatabase, limit = 50): PendingEnrichment[] {
   const results: PendingEnrichment[] = [];
 
   const exchanges = db
@@ -178,7 +175,8 @@ export function searchJournalText(
     let sections: string[] = [];
     try {
       const parsed: unknown = JSON.parse(row.sections);
-      if (Array.isArray(parsed)) sections = parsed.filter((s): s is string => typeof s === "string");
+      if (Array.isArray(parsed))
+        sections = parsed.filter((s): s is string => typeof s === "string");
     } catch {}
     return {
       id: row.id,

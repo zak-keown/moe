@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -104,7 +104,7 @@ describe("embedding model initialization", () => {
     await generateEmbedding("x".repeat(5000));
 
     expect(mockBackend.embed).toHaveBeenCalledTimes(1);
-    const calledText = mockBackend.embed.mock.calls[0]![0] as string;
+    const calledText = (mockBackend.embed.mock.calls as unknown as string[][])[0]![0]!;
     expect(calledText.length).toBeLessThanOrEqual(2000);
   });
 });

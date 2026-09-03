@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import type { MemoryDatabase } from "./db.js";
 import { acquireExclusiveMaintenanceLease, type DatabaseLease } from "./database-lease.js";
+import type { MemoryDatabase } from "./db.js";
 
 export interface SnapshotSourceRecord {
   family: "transcript" | "journal";
@@ -81,9 +81,10 @@ export function collectSnapshotSources(db: MemoryDatabase): SnapshotSourceRecord
     });
   }
 
-  const journals = db
-    .prepare("SELECT id, path FROM journal_entries ORDER BY id")
-    .all() as Array<{ id: string; path: string }>;
+  const journals = db.prepare("SELECT id, path FROM journal_entries ORDER BY id").all() as Array<{
+    id: string;
+    path: string;
+  }>;
 
   for (const row of journals) {
     let sha256 = "";

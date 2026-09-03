@@ -79,7 +79,8 @@ export function inspectModelCache(manifest: ModelManifest): ModelCacheStatus {
   const root = setDir(manifest);
   if (!fs.existsSync(root)) return { state: "missing" };
   const completePath = path.join(root, ".complete");
-  if (!fs.existsSync(completePath)) return { state: "incomplete", root, detail: "no .complete marker" };
+  if (!fs.existsSync(completePath))
+    return { state: "incomplete", root, detail: "no .complete marker" };
   try {
     const marker = fs.readFileSync(completePath, "utf-8");
     if (!marker.includes(manifest.revision)) {
@@ -92,13 +93,22 @@ export function inspectModelCache(manifest: ModelManifest): ModelCacheStatus {
     const filePath = path.join(root, f.name);
     if (!fs.existsSync(filePath)) return { state: "incomplete", root, detail: `missing ${f.name}` };
     const stat = fs.statSync(filePath);
-    if (stat.size !== f.bytes) return { state: "corrupted", root, detail: `${f.name}: size mismatch (${stat.size} != ${f.bytes})` };
-    if (sha256File(filePath) !== f.sha256) return { state: "corrupted", root, detail: `${f.name}: hash mismatch` };
+    if (stat.size !== f.bytes)
+      return {
+        state: "corrupted",
+        root,
+        detail: `${f.name}: size mismatch (${stat.size} != ${f.bytes})`,
+      };
+    if (sha256File(filePath) !== f.sha256)
+      return { state: "corrupted", root, detail: `${f.name}: hash mismatch` };
   }
   return { state: "ready", root };
 }
 
-async function stageVerifyAndActivate(manifest: ModelManifest, source: ModelSource): Promise<VerifiedModelSet> {
+async function stageVerifyAndActivate(
+  manifest: ModelManifest,
+  source: ModelSource,
+): Promise<VerifiedModelSet> {
   const target = setDir(manifest);
 
   if (isCompleteSet(target, manifest)) {
@@ -118,15 +128,22 @@ async function stageVerifyAndActivate(manifest: ModelManifest, source: ModelSour
 
       const stat = fs.statSync(dest);
       if (stat.size !== file.bytes) {
-        throw new Error(`model file "${file.name}": expected ${file.bytes} bytes, got ${stat.size}`);
+        throw new Error(
+          `model file "${file.name}": expected ${file.bytes} bytes, got ${stat.size}`,
+        );
       }
       const actualHash = sha256File(dest);
       if (actualHash !== file.sha256) {
-        throw new Error(`model file "${file.name}": hash mismatch (expected ${file.sha256}, got ${actualHash})`);
+        throw new Error(
+          `model file "${file.name}": hash mismatch (expected ${file.sha256}, got ${actualHash})`,
+        );
       }
     }
 
-    fs.writeFileSync(path.join(staging, ".complete"), `${manifest.revision}\n${new Date().toISOString()}\n`);
+    fs.writeFileSync(
+      path.join(staging, ".complete"),
+      `${manifest.revision}\n${new Date().toISOString()}\n`,
+    );
 
     if (fs.existsSync(target)) {
       fs.rmSync(target, { recursive: true, force: true });
@@ -172,7 +189,10 @@ async function withModelLock<T>(manifest: ModelManifest, body: () => Promise<T>)
   }
 }
 
-export async function ensureModelSet(manifest: ModelManifest, source: ModelSource): Promise<VerifiedModelSet> {
+export async function ensureModelSet(
+  manifest: ModelManifest,
+  source: ModelSource,
+): Promise<VerifiedModelSet> {
   return withModelLock(manifest, () => stageVerifyAndActivate(manifest, source));
 }
 
@@ -184,8 +204,14 @@ export function adoptLegacyCache(manifest: ModelManifest, legacyRoot: string): b
   let allPresent = true;
   for (const f of manifest.files) {
     const legacyPath = path.join(legacyRoot, f.name);
-    if (!fs.existsSync(legacyPath)) { allPresent = false; break; }
-    if (!verifyFile(legacyPath, f)) { allPresent = false; break; }
+    if (!fs.existsSync(legacyPath)) {
+      allPresent = false;
+      break;
+    }
+    if (!verifyFile(legacyPath, f)) {
+      allPresent = false;
+      break;
+    }
   }
   if (!allPresent) return false;
 
@@ -193,7 +219,10 @@ export function adoptLegacyCache(manifest: ModelManifest, legacyRoot: string): b
   for (const f of manifest.files) {
     fs.copyFileSync(path.join(legacyRoot, f.name), path.join(target, f.name));
   }
-  fs.writeFileSync(path.join(target, ".complete"), `${manifest.revision}\n${new Date().toISOString()}\nadopted from ${legacyRoot}\n`);
+  fs.writeFileSync(
+    path.join(target, ".complete"),
+    `${manifest.revision}\n${new Date().toISOString()}\nadopted from ${legacyRoot}\n`,
+  );
 
   for (const f of manifest.files) {
     if (!verifyFile(path.join(legacyRoot, f.name), f)) return false;

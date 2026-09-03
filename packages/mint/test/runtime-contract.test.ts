@@ -10,7 +10,7 @@ describe('runtime-contract schema', () => {
   it('validates the memory runtime contract against the JSON Schema', async () => {
     const schema = JSON.parse(readFileSync(SCHEMA_PATH, 'utf-8'))
     const contract = JSON.parse(readFileSync(join(MEMORY_SOURCE_ROOT, 'runtime-contract.json'), 'utf-8'))
-    const Ajv = (await import('ajv/dist/2020.js')).default
+    const Ajv = (await import('ajv/dist/2020.js')).default as unknown as new (opts: { strict: boolean }) => import('ajv').default
     const ajv = new Ajv({ strict: true })
     const validate = ajv.compile(schema)
     const valid = validate(contract)
@@ -20,7 +20,7 @@ describe('runtime-contract schema', () => {
 
   it('rejects unknown keys via additionalProperties: false', async () => {
     const schema = JSON.parse(readFileSync(SCHEMA_PATH, 'utf-8'))
-    const Ajv = (await import('ajv/dist/2020.js')).default
+    const Ajv = (await import('ajv/dist/2020.js')).default as unknown as new (opts: { strict: boolean }) => import('ajv').default
     const ajv = new Ajv({ strict: true })
     const validate = ajv.compile(schema)
     const bad = { schema: 1, server: { name: 'x', command: 'y', args: [], cwd: '.' }, forwardEnv: [], assets: { native: 'a', embedding: 'b', model: 'c', claudeCompatibility: 'd', codexCompatibility: 'e' }, extra: true }

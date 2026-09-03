@@ -1,21 +1,22 @@
 import { SUMMARIZER_CONTEXT_MARKER } from "./constants.js";
-import type { ConversationExchange } from "./types.js";
-import { createChildProcessAdapter } from "./summarizers/process.js";
 import {
-  buildClaudeSummarizerCommand,
-  buildSummarySystemPrompt,
-  buildSummaryPrompt,
   buildChunkPrompt,
+  buildClaudeSummarizerCommand,
+  buildSummaryPrompt,
+  buildSummarySystemPrompt,
   buildSynthesisPrompt,
   runClaudeCommand,
 } from "./summarizers/claude.js";
-import {
+import { buildCodexSummarizerCommand, getApiEnv, runCodexCommand } from "./summarizers/codex.js";
+import { createChildProcessAdapter } from "./summarizers/process.js";
+import type { ConversationExchange } from "./types.js";
+
+export {
   buildCodexSummarizerCommand,
+  type CodexSummarizerCommand,
   getApiEnv,
   runCodexCommand,
 } from "./summarizers/codex.js";
-
-export { type CodexSummarizerCommand, buildCodexSummarizerCommand, runCodexCommand, getApiEnv } from "./summarizers/codex.js";
 
 export class SummarizerSdkError extends Error {
   constructor(
@@ -63,9 +64,7 @@ export function buildSummarizerQueryOptions(args: {
     env: getApiEnv(),
     resume: sessionId,
     persistSession: false,
-    ...(sessionId
-      ? {}
-      : { systemPrompt: buildSummarySystemPrompt() }),
+    ...(sessionId ? {} : { systemPrompt: buildSummarySystemPrompt() }),
   };
 }
 
@@ -122,9 +121,7 @@ async function callClaude(
       error instanceof Error &&
       error.message.includes("thinking.budget_tokens")
     ) {
-      console.log(
-        `    ${primaryModel} hit thinking budget error, retrying with ${fallbackModel}`,
-      );
+      console.log(`    ${primaryModel} hit thinking budget error, retrying with ${fallbackModel}`);
       return await callClaude(prompt, sessionId, true, cwd);
     }
     throw error;
@@ -195,9 +192,7 @@ export async function summarizeConversation(
   if (exchanges.length <= 15) {
     const claudeSessionId = codexSessionId ? undefined : sessionId;
     const cwd = claudeSessionId ? exchanges.find((e) => e.cwd)?.cwd : undefined;
-    const conversationText = claudeSessionId
-      ? ""
-      : formatConversationText(exchanges);
+    const conversationText = claudeSessionId ? "" : formatConversationText(exchanges);
 
     const prompt = buildSummaryPrompt(conversationText, claudeSessionId);
 

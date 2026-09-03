@@ -23,20 +23,28 @@ describe("withTransaction", () => {
 
   it("commits on success", () => {
     withTransaction(db, () => {
-      db.exec("INSERT INTO exchanges(id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end) VALUES ('tx-ok', 'p', '2024-01-01', 'u', 'a', '/a', 0, 1)");
+      db.exec(
+        "INSERT INTO exchanges(id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end) VALUES ('tx-ok', 'p', '2024-01-01', 'u', 'a', '/a', 0, 1)",
+      );
     });
-    const row = db.prepare("SELECT id FROM exchanges WHERE id = 'tx-ok'").get() as { id: string } | undefined;
+    const row = db.prepare("SELECT id FROM exchanges WHERE id = 'tx-ok'").get() as
+      | { id: string }
+      | undefined;
     expect(row?.id).toBe("tx-ok");
   });
 
   it("rolls back on throw", () => {
     expect(() =>
       withTransaction(db, () => {
-        db.exec("INSERT INTO exchanges(id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end) VALUES ('tx-fail', 'p', '2024-01-01', 'u', 'a', '/a', 0, 1)");
+        db.exec(
+          "INSERT INTO exchanges(id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end) VALUES ('tx-fail', 'p', '2024-01-01', 'u', 'a', '/a', 0, 1)",
+        );
         throw new Error("boom");
       }),
     ).toThrow("boom");
-    const row = db.prepare("SELECT count(*) AS n FROM exchanges WHERE id = 'tx-fail'").get() as { n: number };
+    const row = db.prepare("SELECT count(*) AS n FROM exchanges WHERE id = 'tx-fail'").get() as {
+      n: number;
+    };
     expect(row.n).toBe(0);
   });
 
@@ -102,13 +110,17 @@ describe("composed withForeignKeysDisabled + withTransaction", () => {
     expect(() =>
       withForeignKeysDisabled(db, () =>
         withTransaction(db, () => {
-          db.exec("INSERT INTO exchanges(id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end) VALUES ('incomplete', 'p', '2024-01-01', 'u', 'a', '/a', 0, 1)");
+          db.exec(
+            "INSERT INTO exchanges(id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end) VALUES ('incomplete', 'p', '2024-01-01', 'u', 'a', '/a', 0, 1)",
+          );
           throw new Error("stop");
         }),
       ),
     ).toThrow("stop");
     expect(db.prepare("PRAGMA foreign_keys").get()).toEqual({ foreign_keys: 1 });
-    expect(db.prepare("SELECT count(*) AS n FROM exchanges WHERE id='incomplete'").get()).toEqual({ n: 0 });
+    expect(db.prepare("SELECT count(*) AS n FROM exchanges WHERE id='incomplete'").get()).toEqual({
+      n: 0,
+    });
   });
 });
 
@@ -133,10 +145,16 @@ describe("WAL contention", () => {
 
   it("two connections can read concurrently under WAL", () => {
     withTransaction(db1, () => {
-      db1.exec("INSERT INTO exchanges(id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end) VALUES ('wal-1', 'p', '2024-01-01', 'u', 'a', '/a', 0, 1)");
+      db1.exec(
+        "INSERT INTO exchanges(id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end) VALUES ('wal-1', 'p', '2024-01-01', 'u', 'a', '/a', 0, 1)",
+      );
     });
-    const row1 = db1.prepare("SELECT id FROM exchanges WHERE id = 'wal-1'").get() as { id: string } | undefined;
-    const row2 = db2.prepare("SELECT id FROM exchanges WHERE id = 'wal-1'").get() as Record<string, unknown> | undefined;
+    const row1 = db1.prepare("SELECT id FROM exchanges WHERE id = 'wal-1'").get() as
+      | { id: string }
+      | undefined;
+    const row2 = db2.prepare("SELECT id FROM exchanges WHERE id = 'wal-1'").get() as
+      | Record<string, unknown>
+      | undefined;
     expect(row1?.id).toBe("wal-1");
     expect(row2?.id).toBe("wal-1");
   });

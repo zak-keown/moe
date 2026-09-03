@@ -12,8 +12,8 @@ import {
   releaseMigrationLock,
   runMigrationBatch,
 } from "../src/embedding-migration.js";
-import { openTestDatabase, TEST_PACKAGE_ROOT } from "./test-utils.js";
 import { resolveNativeAsset } from "../src/native-assets.js";
+import { openTestDatabase, TEST_PACKAGE_ROOT } from "./test-utils.js";
 
 describe("embedding migration", () => {
   let testDir: string;

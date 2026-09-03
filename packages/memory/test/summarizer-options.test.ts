@@ -34,7 +34,6 @@ describe("buildSummarizerQueryOptions", () => {
     expect(opts.resume).toBe("abc-123");
     expect(opts.systemPrompt).toBeUndefined();
   });
-
 });
 
 describe("isResumeFailure", () => {

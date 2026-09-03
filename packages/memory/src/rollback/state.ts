@@ -44,10 +44,16 @@ function validateState(raw: unknown): raw is RollbackState {
   if (typeof s.stagedDatabase !== "string" || s.stagedDatabase.length === 0) return false;
   if (typeof s.retainedV3Database !== "string" || s.retainedV3Database.length === 0) return false;
 
-  if (path.normalize(s.stagedDatabase as string).startsWith("..") || path.isAbsolute(s.stagedDatabase as string)) {
+  if (
+    path.normalize(s.stagedDatabase as string).startsWith("..") ||
+    path.isAbsolute(s.stagedDatabase as string)
+  ) {
     return false;
   }
-  if (path.normalize(s.retainedV3Database as string).startsWith("..") || path.isAbsolute(s.retainedV3Database as string)) {
+  if (
+    path.normalize(s.retainedV3Database as string).startsWith("..") ||
+    path.isAbsolute(s.retainedV3Database as string)
+  ) {
     return false;
   }
 
@@ -64,13 +70,22 @@ function atomicWriteFile(filePath: string, content: string): void {
     fs.fsyncSync(fd);
     fs.closeSync(fd);
   } catch (err) {
-    try { fs.closeSync(fd); } catch {}
-    try { fs.unlinkSync(tmpPath); } catch {}
+    try {
+      fs.closeSync(fd);
+    } catch {}
+    try {
+      fs.unlinkSync(tmpPath);
+    } catch {}
     throw err;
   }
   fs.renameSync(tmpPath, filePath);
   const dirFd = fs.openSync(dir, "r");
-  try { fs.fsyncSync(dirFd); } catch {} finally { fs.closeSync(dirFd); }
+  try {
+    fs.fsyncSync(dirFd);
+  } catch {
+  } finally {
+    fs.closeSync(dirFd);
+  }
 }
 
 export function readRollbackState(dataDir: string): RollbackState | null {

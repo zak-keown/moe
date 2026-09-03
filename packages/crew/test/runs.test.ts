@@ -2,6 +2,8 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { appendEvent } from "../src/core/event-log.js";
+import { eventsPath } from "../src/core/paths.js";
 import {
   addWorkerToRun,
   endRun,
@@ -10,11 +12,9 @@ import {
   readRunMeta,
   startRun,
 } from "../src/core/runs.js";
-import { appendEvent } from "../src/core/event-log.js";
-import { eventsPath } from "../src/core/paths.js";
 import { writeMeta } from "../src/core/worker-store.js";
-import { EVENT_NAMES, parseEvent, serializeEvent } from "../src/events.js";
 import type { WorkerEvent } from "../src/events.js";
+import { EVENT_NAMES, parseEvent, serializeEvent } from "../src/events.js";
 
 describe("runs", () => {
   let dir: string;

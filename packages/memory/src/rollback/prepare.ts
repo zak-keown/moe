@@ -2,33 +2,24 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import {
-  acquireExclusiveMaintenanceLease,
-  inspectLegacyDatabaseUsers,
-} from "../database-lease.js";
-import {
-  verifySnapshot,
-  type SnapshotSidecar,
-} from "../database-snapshot.js";
+import { acquireExclusiveMaintenanceLease, inspectLegacyDatabaseUsers } from "../database-lease.js";
+import { type SnapshotSidecar, verifySnapshot } from "../database-snapshot.js";
 import { getDefaultPackageRoot } from "../db.js";
 import { resolveNativeAsset } from "../native-assets.js";
 import { getDbPath, getMemoryDataDir } from "../paths.js";
-import {
-  ensureRecoveryCapsule,
-  type VerifiedRecoveryCapsule,
-} from "../recovery-capsule.js";
-import {
-  advanceRollbackState,
-  createRollbackState,
-  readRollbackState,
-  RollbackStateError,
-  type RollbackState,
-} from "./state.js";
+import { ensureRecoveryCapsule, type VerifiedRecoveryCapsule } from "../recovery-capsule.js";
 import {
   applySourceReconciliation,
   planSourceReconciliation,
   type ReconciliationPlan,
 } from "./reconcile.js";
+import {
+  advanceRollbackState,
+  createRollbackState,
+  type RollbackState,
+  RollbackStateError,
+  readRollbackState,
+} from "./state.js";
 
 export interface PrepareRollbackOptions {
   to: string;
@@ -75,7 +66,10 @@ function preflightChecks(options: PrepareRollbackOptions): void {
   }
 }
 
-function findSnapshot(dbPath: string, fromVersion: number): { sidecarPath: string; sidecar: SnapshotSidecar } {
+function findSnapshot(
+  dbPath: string,
+  fromVersion: number,
+): { sidecarPath: string; sidecar: SnapshotSidecar } {
   const sidecarPath = `${dbPath}.snapshot-v${fromVersion}.json`;
   if (!fs.existsSync(sidecarPath)) {
     throw new RollbackStateError(
@@ -186,7 +180,10 @@ export function prepareRollback(options: PrepareRollbackOptions): PrepareRollbac
       retainedV3Database: retainedName,
     });
 
-    const currentSources = new Map<string, { family: "transcript" | "journal"; canonicalPath: string }>();
+    const currentSources = new Map<
+      string,
+      { family: "transcript" | "journal"; canonicalPath: string }
+    >();
     for (const src of sidecar.sources) {
       if (fs.existsSync(src.canonicalPath)) {
         currentSources.set(src.identity, {
@@ -233,10 +230,7 @@ function performSwap(
   const retainedPath = path.join(dataDir, state.retainedV3Database);
 
   if (!fs.existsSync(stagedPath)) {
-    throw new RollbackStateError(
-      `staged database missing at ${stagedPath}`,
-      "MISSING_STAGED_DB",
-    );
+    throw new RollbackStateError(`staged database missing at ${stagedPath}`, "MISSING_STAGED_DB");
   }
 
   // Rename active v3 database to retained path

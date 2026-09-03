@@ -16,28 +16,20 @@ import path from "node:path";
 const [, , command, ...args] = process.argv;
 
 async function holdLease(dbPath, durationMs) {
-  const { acquireExclusiveMaintenanceLease } = await import(
-    "../../dist/database-lease.js"
-  );
+  const { acquireExclusiveMaintenanceLease } = await import("../../dist/database-lease.js");
   try {
     const lease = acquireExclusiveMaintenanceLease(dbPath);
-    process.stdout.write(
-      JSON.stringify({ ok: true, epoch: lease.epoch }) + "\n",
-    );
+    process.stdout.write(JSON.stringify({ ok: true, epoch: lease.epoch }) + "\n");
     await new Promise((resolve) => setTimeout(resolve, parseInt(durationMs, 10)));
     lease.release();
   } catch (err) {
-    process.stdout.write(
-      JSON.stringify({ ok: false, error: err.message }) + "\n",
-    );
+    process.stdout.write(JSON.stringify({ ok: false, error: err.message }) + "\n");
     process.exit(1);
   }
 }
 
 async function createState(dataDir) {
-  const { createRollbackState } = await import(
-    "../../dist/rollback/state.js"
-  );
+  const { createRollbackState } = await import("../../dist/rollback/state.js");
   try {
     createRollbackState(dataDir, {
       phase: "staging",
@@ -49,9 +41,7 @@ async function createState(dataDir) {
     });
     process.stdout.write(JSON.stringify({ ok: true }) + "\n");
   } catch (err) {
-    process.stdout.write(
-      JSON.stringify({ ok: false, error: err.message }) + "\n",
-    );
+    process.stdout.write(JSON.stringify({ ok: false, error: err.message }) + "\n");
     process.exit(1);
   }
 }
@@ -65,9 +55,7 @@ async function checkFence(dataDir) {
     if (err.name === "RollbackFencedError") {
       process.stdout.write(JSON.stringify({ ok: true, fenced: true }) + "\n");
     } else {
-      process.stdout.write(
-        JSON.stringify({ ok: false, error: err.message }) + "\n",
-      );
+      process.stdout.write(JSON.stringify({ ok: false, error: err.message }) + "\n");
       process.exit(2);
     }
   }

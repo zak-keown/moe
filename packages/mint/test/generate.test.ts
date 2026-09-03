@@ -168,10 +168,12 @@ describe('generate', () => {
     const dir = freshFixture()
     const a: HarnessAdapter = {
       name: 'adapter-a',
+      support: fullSupport,
       emit: () => ({ files: [{ path: 'gen/collide.txt', content: 'a' }], limitations: [], emittedCapabilities: [] }),
     }
     const b: HarnessAdapter = {
       name: 'adapter-b',
+      support: fullSupport,
       emit: () => ({ files: [{ path: 'gen/collide.txt', content: 'b' }], limitations: [], emittedCapabilities: [] }),
     }
     expect(() => generate(dir, [a, b])).toThrowError(/both emit/)
@@ -188,6 +190,7 @@ describe('generate', () => {
     const dir = freshFixture()
     const synthetic: HarnessAdapter = {
       name: 'synthetic',
+      support: fullSupport,
       emit: () => ({
         files: [{ path: 'gen/x.txt', content: 'x' }],
         limitations: [],
@@ -209,6 +212,7 @@ describe('generate', () => {
     const dir = freshFixture()
     const synthetic: HarnessAdapter = {
       name: 'claude-code',
+      support: fullSupport,
       emit: () => ({
         files: [],
         limitations: [{ code: 'COMPONENT_OMITTED', component: 'skills', message: 'fixture contradiction' }],
@@ -229,6 +233,7 @@ describe('generate', () => {
     const dir = freshFixture()
     const owner: HarnessAdapter = {
       name: 'claude-code',
+      support: fullSupport,
       emit: () => ({
         files: [], limitations: [],
         emittedCapabilities: ['skill-discovery', 'command-discovery', 'agent-discovery', 'hook-execution', 'mcp-registration', 'bootstrap-routing'],
@@ -236,6 +241,7 @@ describe('generate', () => {
     }
     const projection: HarnessAdapter = {
       name: 'copilot',
+      support: fullSupport,
       emit: () => ({ files: [{ path: 'gen/unexpected.txt', content: 'x' }], limitations: [], emittedCapabilities: [], projectionOwner: 'claude-code' }),
     }
     try {
@@ -252,6 +258,7 @@ describe('generate', () => {
     const dir = freshFixture()
     const owner: HarnessAdapter = {
       name: 'claude-code',
+      support: fullSupport,
       emit: () => ({
         files: [], limitations: [],
         emittedCapabilities: ['skill-discovery', 'command-discovery', 'agent-discovery', 'hook-execution', 'mcp-registration', 'bootstrap-routing'],
@@ -259,6 +266,7 @@ describe('generate', () => {
     }
     const projection: HarnessAdapter = {
       name: 'copilot',
+      support: fullSupport,
       emit: () => ({
         files: [], limitations: [], emittedCapabilities: [], projectionOwner: 'claude-code',
         packageContribution: { owner: 'copilot', pi: { extensions: ['./foreign.ts'] } },
@@ -278,8 +286,8 @@ describe('generate', () => {
   it('dedupes identical-content collisions between adapters', () => {
     const dir = freshFixture()
     const file = { path: 'gen/shared.txt', content: 'same', executable: undefined }
-    const a = { name: 'adapter-a', emit: () => ({ files: [{ ...file }], limitations: [], emittedCapabilities: [] }) }
-    const b = { name: 'adapter-b', emit: () => ({ files: [{ ...file }], limitations: [], emittedCapabilities: [] }) }
+    const a = { name: 'adapter-a', support: fullSupport, emit: () => ({ files: [{ ...file }], limitations: [], emittedCapabilities: [] }) }
+    const b = { name: 'adapter-b', support: fullSupport, emit: () => ({ files: [{ ...file }], limitations: [], emittedCapabilities: [] }) }
     const result = generate(dir, [a, b])
     expect(result.files.filter((f) => f.path === 'gen/shared.txt')).toHaveLength(1)
     expect(result.warnings).toEqual([])
@@ -287,16 +295,16 @@ describe('generate', () => {
 
   it('still rejects differing-content collisions', () => {
     const dir = freshFixture()
-    const a = { name: 'adapter-a', emit: () => ({ files: [{ path: 'gen/x.txt', content: 'one' }], limitations: [], emittedCapabilities: [] }) }
-    const b = { name: 'adapter-b', emit: () => ({ files: [{ path: 'gen/x.txt', content: 'two' }], limitations: [], emittedCapabilities: [] }) }
+    const a = { name: 'adapter-a', support: fullSupport, emit: () => ({ files: [{ path: 'gen/x.txt', content: 'one' }], limitations: [], emittedCapabilities: [] }) }
+    const b = { name: 'adapter-b', support: fullSupport, emit: () => ({ files: [{ path: 'gen/x.txt', content: 'two' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [a, b])).toThrowError(/both emit/)
   })
 
   it('rejects an adapter emitting over a source component path', () => {
     const dir = freshFixture()
-    const evil = { name: 'evil', emit: () => ({ files: [{ path: 'moe-mint.yaml', content: 'gotcha' }], limitations: [], emittedCapabilities: [] }) }
+    const evil = { name: 'evil', support: fullSupport, emit: () => ({ files: [{ path: 'moe-mint.yaml', content: 'gotcha' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [evil])).toThrowError(/would overwrite source/)
-    const evil2 = { name: 'evil2', emit: () => ({ files: [{ path: 'skills/greeting/SKILL.md', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
+    const evil2 = { name: 'evil2', support: fullSupport, emit: () => ({ files: [{ path: 'skills/greeting/SKILL.md', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [evil2])).toThrowError(/would overwrite source/)
   })
 
@@ -312,27 +320,27 @@ describe('generate', () => {
     ].join('\n')))
     mkdirSync(join(dir, 'skills'))
     writeFileSync(join(dir, 'skills', 'demo.md'), '# Demo Skill\n')
-    const evilAdapter = { name: 'evil', emit: () => ({ files: [{ path: 'skills/demo.md', content: 'overwritten' }], limitations: [], emittedCapabilities: [] }) }
+    const evilAdapter = { name: 'evil', support: fullSupport, emit: () => ({ files: [{ path: 'skills/demo.md', content: 'overwritten' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [evilAdapter])).toThrowError(/would overwrite source/)
   })
 
   it('isSourcePath: allows non-.md siblings under commands/agents but still blocks .md and any skills path', () => {
     const dir = freshFixture()
-    const toml = { name: 'toml', emit: () => ({ files: [{ path: 'commands/x.toml', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
+    const toml = { name: 'toml', support: fullSupport, emit: () => ({ files: [{ path: 'commands/x.toml', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [toml])).not.toThrow()
 
-    const md = { name: 'md', emit: () => ({ files: [{ path: 'commands/x.md', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
+    const md = { name: 'md', support: fullSupport, emit: () => ({ files: [{ path: 'commands/x.md', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [md])).toThrowError(/would overwrite source/)
 
-    const skillFile = { name: 'skill-file', emit: () => ({ files: [{ path: 'skills/x/whatever.txt', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
+    const skillFile = { name: 'skill-file', support: fullSupport, emit: () => ({ files: [{ path: 'skills/x/whatever.txt', content: 'x' }], limitations: [], emittedCapabilities: [] }) }
     expect(() => generate(dir, [skillFile])).toThrowError(/would overwrite source/)
   })
 
   it('prunes files dropped from the new generation when unmodified', () => {
     const dir = freshFixture()
-    const a = { name: 'a', emit: () => ({ files: [{ path: 'gen/old.txt', content: 'v1' }], limitations: [], emittedCapabilities: [] }) }
+    const a = { name: 'a', support: fullSupport, emit: () => ({ files: [{ path: 'gen/old.txt', content: 'v1' }], limitations: [], emittedCapabilities: [] }) }
     generate(dir, [a])
-    const b = { name: 'a', emit: () => ({ files: [{ path: 'gen2/new.txt', content: 'v2' }], limitations: [], emittedCapabilities: [] }) }
+    const b = { name: 'a', support: fullSupport, emit: () => ({ files: [{ path: 'gen2/new.txt', content: 'v2' }], limitations: [], emittedCapabilities: [] }) }
     const result = generate(dir, [b])
     expect(result.pruned).toEqual(['gen/old.txt'])
     expect(existsSync(join(dir, 'gen/old.txt'))).toBe(false)
@@ -342,10 +350,10 @@ describe('generate', () => {
 
   it('leaves hand-modified stale files and warns', () => {
     const dir = freshFixture()
-    const a = { name: 'a', emit: () => ({ files: [{ path: 'gen/old.txt', content: 'v1' }], limitations: [], emittedCapabilities: [] }) }
+    const a = { name: 'a', support: fullSupport, emit: () => ({ files: [{ path: 'gen/old.txt', content: 'v1' }], limitations: [], emittedCapabilities: [] }) }
     generate(dir, [a])
     writeFileSync(join(dir, 'gen/old.txt'), 'edited')
-    const result = generate(dir, [{ name: 'a', emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }) }])
+    const result = generate(dir, [{ name: 'a', support: fullSupport, emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }) }])
     expect(result.pruned).toEqual([])
     expect(result.warnings.join('\n')).toMatch(/stale generated file gen\/old\.txt/)
     expect(existsSync(join(dir, 'gen/old.txt'))).toBe(true)
@@ -355,6 +363,7 @@ describe('generate', () => {
     const dir = freshFixture()
     const synthetic: HarnessAdapter = {
       name: 'synthetic',
+      support: fullSupport,
       emit: () => ({ files: [{ path: 'gen/file.txt', content: 'v1' }], limitations: [], emittedCapabilities: [] }),
     }
     generate(dir, [synthetic])
@@ -374,7 +383,7 @@ describe('generate', () => {
 
     try {
       // Regenerate with empty adapter — should skip the unsafe entry and warn
-      const result = generate(dir, [{ name: 'empty', emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }) }])
+      const result = generate(dir, [{ name: 'empty', support: fullSupport, emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }) }])
 
       expect(existsSync(outsideFile)).toBe(true)
       expect(result.pruned).not.toContain('../escape.txt')

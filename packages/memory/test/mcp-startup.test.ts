@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { createMemoryMcpServer } from "../src/mcp-server.js";
 
 describe("MCP server cold start", () => {
@@ -39,8 +39,12 @@ describe("MCP server cold start", () => {
         return {
           searchConversations: async () => [],
           searchMultipleConcepts: async () => [],
-          openDatabase: () => { throw new Error("not available"); },
-          createJournalSearch: () => { throw new Error("not available"); },
+          openDatabase: () => {
+            throw new Error("not available");
+          },
+          createJournalSearch: () => {
+            throw new Error("not available");
+          },
         };
       },
     });

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ensureModelSet, inspectModelCache, adoptLegacyCache } from "../src/model-cache.js";
+import { adoptLegacyCache, ensureModelSet, inspectModelCache } from "../src/model-cache.js";
 import type { ModelFile, ModelManifest } from "../src/model-manifest.js";
 import type { ModelSource } from "../src/model-source.js";
 
@@ -19,7 +19,12 @@ function fixtureFileContent(name: string): Buffer {
 
 function makeManifestFile(name: string): ModelFile {
   const content = fixtureFileContent(name);
-  return { name, url: `https://example.com/${name}`, bytes: content.length, sha256: sha256(content) };
+  return {
+    name,
+    url: `https://example.com/${name}`,
+    bytes: content.length,
+    sha256: sha256(content),
+  };
 }
 
 function makeManifest(override?: Partial<ModelManifest>): ModelManifest {
@@ -86,7 +91,9 @@ describe("model cache", () => {
       if (value === undefined) delete process.env[key];
       else process.env[key] = value;
     }
-    try { fs.rmSync(cacheDir, { recursive: true, force: true }); } catch {}
+    try {
+      fs.rmSync(cacheDir, { recursive: true, force: true });
+    } catch {}
   });
 
   it("activates only a complete hash-verified revision", async () => {

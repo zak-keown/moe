@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { readFileSync, readdirSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { readdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -24,8 +24,9 @@ if (dts.includes("DatabaseSync")) {
   problems.push("dist/index.d.ts exposes raw DatabaseSync type");
 }
 
-const dtsFiles = readdirSync(join(ROOT, "dist"), { recursive: true })
-  .filter((f) => f.endsWith(".d.ts") && f !== "index.d.ts");
+const dtsFiles = readdirSync(join(ROOT, "dist"), { recursive: true }).filter(
+  (f) => f.endsWith(".d.ts") && f !== "index.d.ts",
+);
 
 for (const f of dtsFiles) {
   const content = readFileSync(join(ROOT, "dist", f), "utf-8");

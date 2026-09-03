@@ -1,62 +1,62 @@
-import { resolveInstalledPackageRoot } from "./installed-package-root.js";
 import { setDefaultPackageRoot } from "./db.js";
+import { resolveInstalledPackageRoot } from "./installed-package-root.js";
 
 setDefaultPackageRoot(resolveInstalledPackageRoot(import.meta.url));
 
 export * from "./constants.js";
 export {
-  DatabaseBusyError,
-  acquireSharedDatabaseLease,
   acquireDatabaseWriter,
   acquireExclusiveMaintenanceLease,
+  acquireSharedDatabaseLease,
   assertWritableEpoch,
+  DatabaseBusyError,
+  type DatabaseLease,
+  type DatabaseWriter,
   inspectLegacyDatabaseUsers,
   readDatabaseEpoch,
   withDatabaseWriter,
-  type DatabaseLease,
-  type DatabaseWriter,
 } from "./database-lease.js";
-export { withTransaction, withForeignKeysDisabled } from "./database-transaction.js";
 export {
-  pickPendingEnrichment,
-  commitEnrichment,
-  searchJournalText as searchJournalTextDb,
-  type PendingEnrichment,
-  type JournalTextResult,
-} from "./enrichment.js";
-export {
-  RecoveryCapsuleError,
-  verifyRecoveryCapsule,
-  ensureRecoveryCapsule,
-  validateManifest as validateCapsuleManifest,
-  loadCatalog as loadRecoveryCatalog,
-  type RecoveryCapsuleManifest,
-  type VerifiedRecoveryCapsule,
-  type RecoveryCatalog,
-  type RecoveryCatalogEntry,
-  type IntegrityFile,
-} from "./recovery-capsule.js";
-export {
-  createDatabaseSnapshot,
-  verifySnapshot,
   collectSnapshotSources,
-  validateSnapshotSources,
-  type SnapshotSourceRecord,
-  type SnapshotSidecar,
+  createDatabaseSnapshot,
   type SnapshotResult,
+  type SnapshotSidecar,
+  type SnapshotSourceRecord,
+  validateSnapshotSources,
+  verifySnapshot,
 } from "./database-snapshot.js";
-export {
-  assessVectorReadiness,
-  isVectorQueryAuthorized,
-  vectorReadinessMessage,
-  type VectorReadiness,
-} from "./vector-readiness.js";
+export { withForeignKeysDisabled, withTransaction } from "./database-transaction.js";
 export {
   createEmbeddingCoordinator,
   type EmbeddingCoordinator,
   type EmbeddingCoordinatorOptions,
 } from "./embedding-coordinator.js";
+export {
+  commitEnrichment,
+  type JournalTextResult,
+  type PendingEnrichment,
+  pickPendingEnrichment,
+  searchJournalText as searchJournalTextDb,
+} from "./enrichment.js";
 export * from "./parser.js";
 export * from "./paths.js";
+export {
+  ensureRecoveryCapsule,
+  type IntegrityFile,
+  loadCatalog as loadRecoveryCatalog,
+  RecoveryCapsuleError,
+  type RecoveryCapsuleManifest,
+  type RecoveryCatalog,
+  type RecoveryCatalogEntry,
+  type VerifiedRecoveryCapsule,
+  validateManifest as validateCapsuleManifest,
+  verifyRecoveryCapsule,
+} from "./recovery-capsule.js";
 export * from "./search.js";
 export * from "./types.js";
+export {
+  assessVectorReadiness,
+  isVectorQueryAuthorized,
+  type VectorReadiness,
+  vectorReadinessMessage,
+} from "./vector-readiness.js";

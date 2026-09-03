@@ -1,38 +1,38 @@
 import {
-  SUMMARIZER_CONTEXT_MARKER,
+  type ConversationExchange,
   EMBEDDING_DIMENSIONS,
-  JOURNAL_DIR_NAME,
-  JOURNAL_SECTION_HEADINGS,
-  parseConversation,
-  parseConversationFile,
+  findJsonlFiles,
+  formatMultiConceptResults,
+  formatResults,
+  getArchiveDir,
   getClaudeDir,
   getCodexDir,
   getConversationSourceDirs,
-  findJsonlFiles,
-  getMemoryDataDir,
-  getArchiveDir,
-  getIndexDir,
-  getModelCacheDir,
   getDbPath,
   getExcludeConfigPath,
   getExcludedProjects,
-  resolveJournalPath,
-  resolveProjectJournalPath,
-  resolveUserJournalPath,
-  journalRoots,
-  l2DistanceToCosineSimilarity,
-  searchConversations,
-  formatResults,
-  searchMultipleConcepts,
-  formatMultiConceptResults,
-  type ConversationExchange,
-  type SearchResult,
-  type MultiConceptResult,
+  getIndexDir,
+  getMemoryDataDir,
+  getModelCacheDir,
+  JOURNAL_DIR_NAME,
+  JOURNAL_SECTION_HEADINGS,
   type JournalEntry,
   type JournalScope,
   type JournalSearchResult,
+  journalRoots,
+  l2DistanceToCosineSimilarity,
   type MemoryEdge,
   type MemoryNode,
+  type MultiConceptResult,
+  parseConversation,
+  parseConversationFile,
+  resolveJournalPath,
+  resolveProjectJournalPath,
+  resolveUserJournalPath,
+  type SearchResult,
+  SUMMARIZER_CONTEXT_MARKER,
+  searchConversations,
+  searchMultipleConcepts,
 } from "@bubstack/moe-memory";
 
 const _constants: [string, number] = [SUMMARIZER_CONTEXT_MARKER, EMBEDDING_DIMENSIONS];
@@ -66,5 +66,13 @@ void formatResults;
 void searchMultipleConcepts;
 void formatMultiConceptResults;
 
-type _AssertTypes = ConversationExchange | SearchResult | MultiConceptResult | JournalEntry | JournalScope | JournalSearchResult | MemoryEdge | MemoryNode;
+type _AssertTypes =
+  | ConversationExchange
+  | SearchResult
+  | MultiConceptResult
+  | JournalEntry
+  | JournalScope
+  | JournalSearchResult
+  | MemoryEdge
+  | MemoryNode;
 void (undefined as unknown as _AssertTypes);

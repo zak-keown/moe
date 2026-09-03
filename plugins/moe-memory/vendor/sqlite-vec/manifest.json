@@ -1,0 +1,61 @@
+{
+  "name": "sqlite-vec",
+  "version": "0.1.9",
+  "targets": {
+    "darwin-arm64": {
+      "target": "darwin-arm64",
+      "path": "darwin-arm64/vec0.dylib",
+      "bytes": 161896,
+      "sha256": "193e480c50b59a55977d166f4aaf0e1bc8832d6963516e5950f39e4d2ce0b793",
+      "minimumPlatform": "macOS 13.5",
+      "source": {
+        "package": "sqlite-vec-darwin-arm64@0.1.9",
+        "integrity": "sha512-sABBNR+v9TIe+KM1HgIKw3eJvAhBnNqzfpWPCcPcL7hD5wRPhPh2LiOdB9b+sGLHyGbwlSK2VPPxSHFbPkQQ=="
+      }
+    },
+    "darwin-x64": {
+      "target": "darwin-x64",
+      "path": "darwin-x64/vec0.dylib",
+      "bytes": 127632,
+      "sha256": "d39d33d16d302d57440d9a9cdbe3cc095e8324aa96b979b5171f545a6346996d",
+      "minimumPlatform": "macOS 13.5",
+      "source": {
+        "package": "sqlite-vec-darwin-x64@0.1.9",
+        "integrity": "sha512-KDlVyqQT7pnOhqvLlY9K+JIJALmcaXqc6PrXjk0WYkDELr2xf3nmcG06fXfiBYCBs6PlA=="
+      }
+    },
+    "linux-arm64": {
+      "target": "linux-arm64",
+      "path": "linux-arm64/vec0.so",
+      "bytes": 156520,
+      "sha256": "0b84cbd06418ca3040827deddd650539be05be0f657952426b926c8606217437",
+      "minimumPlatform": "glibc 2.31",
+      "source": {
+        "package": "sqlite-vec-linux-arm64@0.1.9",
+        "integrity": "sha512-5wXVJ9c9kR4CHLhbWlRUxKUE2Rr3RM6AQ9FLyqzMJR1SCEwpuUw=="
+      }
+    },
+    "linux-x64": {
+      "target": "linux-x64",
+      "path": "linux-x64/vec0.so",
+      "bytes": 159816,
+      "sha256": "5923730861b86c707cca5602b5f91092f9e52a46706dbc6e269fd4bb9c4498e8",
+      "minimumPlatform": "glibc 2.31",
+      "source": {
+        "package": "sqlite-vec-linux-x64@0.1.9",
+        "integrity": "sha512-w3tCH8xK2finWG11RBBbbFJPpJKb+wguvMOGI7T7JQA=="
+      }
+    },
+    "win32-x64": {
+      "target": "win32-x64",
+      "path": "win32-x64/vec0.dll",
+      "bytes": 289280,
+      "sha256": "fcf98662a7ad9dce394b96a88f91032047823831b951c76636787c312a6476e6",
+      "minimumPlatform": "Windows 10",
+      "source": {
+        "package": "sqlite-vec-windows-x64@0.1.9",
+        "integrity": "sha512-y3gEIyy/17bq2t1J6EXTcmN1Kq11IulUBUXdaq+46b0Q=="
+      }
+    }
+  }
+}

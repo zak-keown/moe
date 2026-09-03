@@ -1,5 +1,5 @@
 import { getMemoryDataDir } from "../paths.js";
-import { readRollbackState, RollbackStateError } from "./state.js";
+import { RollbackStateError, readRollbackState } from "./state.js";
 
 export class RollbackFencedError extends Error {
   constructor() {

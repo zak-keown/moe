@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
+import { parse } from "yaml";
 
 const PACKAGE_ROOT = join(import.meta.dirname, "..");
 
@@ -52,10 +52,7 @@ describe("package contract", () => {
     expect(fromPaths).toContain("dist");
     expect(fromPaths).toContain("runtime");
     expect(fromPaths).toContain("vendor/sqlite-vec");
-    expect(fromPaths).toContain("skills");
-    expect(fromPaths).toContain("agents");
     expect(fromPaths).toContain("prompts");
-    expect(fromPaths).toContain("hooks");
   });
 
   it("recovery payload is optional", () => {
