@@ -59,3 +59,8 @@ py/proof/examples/*/runs/
 /docs/moe/generated/plugin-catalog.next-*.md
 /docs/moe/generated/plugin-catalog.backup-*.md
 /.moe-mint-generation-*.json
+/..moe-mint-generation-*.json.tmp-*
+/.claude-plugin/.marketplace.next-*.json.tmp-*
+/.claude-plugin/.marketplace.backup-*.json.tmp-*
+/docs/moe/generated/.plugin-catalog.next-*.md.tmp-*
+/docs/moe/generated/.plugin-catalog.backup-*.md.tmp-*

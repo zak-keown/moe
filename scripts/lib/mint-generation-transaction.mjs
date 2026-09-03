@@ -3,7 +3,7 @@ import { lstat, open, readFile, rename, rm } from "node:fs/promises";
 import path from "node:path";
 
 const encoder = new TextEncoder();
-const decoder = new TextDecoder();
+const decoder = new TextDecoder("utf-8", { fatal: true });
 const NONCE = "[A-Za-z0-9][A-Za-z0-9_-]{0,127}";
 const JOURNAL_NAME = new RegExp(`^\\.moe-mint-generation-(${NONCE})\\.json$`);
 
@@ -110,11 +110,12 @@ function validateShape({ journalPath, journal }) {
     !isRecord(journal) ||
     journal.schema !== 1 ||
     journal.transactionId !== nonce ||
-    !Array.isArray(journal.targets)
+    !Array.isArray(journal.targets) ||
+    (journal.recovery !== undefined && journal.recovery !== "old")
   ) {
     throw transactionError(
       "GENERATION_TRANSACTION_INVALID",
-      "generation journal must have schema 1, matching transactionId, and targets",
+      "generation journal must have schema 1, matching transactionId, targets, and optional old recovery marker",
       { paths: [journalPath] },
     );
   }
@@ -156,7 +157,15 @@ function validateShape({ journalPath, journal }) {
       );
     }
   }
-  return { journalPath, journal: { schema: 1, transactionId: nonce, targets: expected } };
+  return {
+    journalPath,
+    journal: {
+      schema: 1,
+      transactionId: nonce,
+      targets: expected,
+      ...(journal.recovery === "old" ? { recovery: "old" } : {}),
+    },
+  };
 }
 
 function isRecord(value) {
@@ -281,7 +290,57 @@ export const nodeSwapFs = {
     await rm(filePath, { recursive: true, force: false });
   },
   fsyncDirectory,
+  async captureTrustedBoundary(paths) {
+    const directories = [...new Set(paths.map(parentOf))].sort();
+    const identities = new Map();
+    for (const directory of directories) {
+      const stat = await lstat(directory);
+      if (stat.isSymbolicLink() || !stat.isDirectory()) {
+        throw new Error(`trusted generation parent is not a directory: ${directory}`);
+      }
+      identities.set(directory, `${stat.dev}:${stat.ino}`);
+    }
+    return {
+      async assert() {
+        for (const [directory, identity] of identities) {
+          const stat = await lstat(directory);
+          if (
+            stat.isSymbolicLink() ||
+            !stat.isDirectory() ||
+            `${stat.dev}:${stat.ino}` !== identity
+          ) {
+            throw new Error(`trusted generation parent changed: ${directory}`);
+          }
+        }
+      },
+    };
+  },
 };
+
+async function trustedBoundary(fs, paths) {
+  if (typeof fs.captureTrustedBoundary !== "function") return { assert: async () => undefined };
+  try {
+    return await fs.captureTrustedBoundary(paths);
+  } catch (error) {
+    throw transactionError(
+      "GENERATION_TRANSACTION_UNSAFE_PATH",
+      `cannot establish trusted generation parent boundary: ${error.message}`,
+      {
+        paths,
+        action:
+          "preserve generated outputs and remove concurrent path replacements before retrying",
+        cause: error,
+      },
+    );
+  }
+}
+
+async function guarded(boundary, action) {
+  await boundary.assert();
+  const result = await action();
+  await boundary.assert();
+  return result;
+}
 
 async function syncParent(fs, relativePath) {
   await fs.fsyncDirectory(parentOf(relativePath));
@@ -298,23 +357,49 @@ async function removeAndSync(fs, relativePath) {
  * repository-relative grammar so its state remains portable and contained.
  */
 export async function replaceGeneratedOutputs(operation, fs = nodeSwapFs) {
+  const shape = validateShape(operation);
+  const boundary = await trustedBoundary(fs, [
+    shape.journalPath,
+    ...shape.journal.targets.flatMap((target) => [target.current, target.next, target.backup]),
+  ]);
   const validated = await assertInitialState(operation, fs);
   let journalDurable = false;
   try {
-    await fs.writeDurableFile(validated.journalPath, byteJournal(validated.journal));
+    await guarded(boundary, () =>
+      fs.writeDurableFile(validated.journalPath, byteJournal(validated.journal)),
+    );
     journalDurable = true;
     for (const target of validated.journal.targets) {
-      await fs.rename(target.current, target.backup);
-      await syncParent(fs, target.current);
-      await fs.rename(target.next, target.current);
-      await syncParent(fs, target.current);
+      await guarded(boundary, () => fs.rename(target.current, target.backup));
+      await guarded(boundary, () => syncParent(fs, target.current));
+      await guarded(boundary, () => fs.rename(target.next, target.current));
+      await guarded(boundary, () => syncParent(fs, target.current));
     }
     for (const target of validated.journal.targets) {
-      await removeAndSync(fs, target.backup);
+      await guarded(boundary, () => removeAndSync(fs, target.backup));
     }
-    await removeAndSync(fs, validated.journalPath);
+    await guarded(boundary, () => removeAndSync(fs, validated.journalPath));
   } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      error.code === "GENERATION_TRANSACTION_SIMULATED_CRASH"
+    ) {
+      throw error;
+    }
     if (!journalDurable) throw error;
+    if ((await fs.pathState(validated.journalPath)) === "missing") {
+      throw transactionError(
+        "GENERATION_TRANSACTION_NEW_INSTALLED_DURABILITY_UNCERTAIN",
+        `new generation is installed but final journal-parent durability is uncertain: ${error.message}`,
+        {
+          paths: validated.journal.targets.map((target) => target.current),
+          action:
+            "treat the new generation as installed; verify the output parents after filesystem recovery before another generation",
+          cause: error,
+        },
+      );
+    }
     try {
       await recoverGeneratedOutputs({ journalPath: validated.journalPath }, fs);
     } catch (recoveryError) {
@@ -335,17 +420,17 @@ export async function replaceGeneratedOutputs(operation, fs = nodeSwapFs) {
       {
         paths: [validated.journalPath],
         action:
-          "the previous complete generation was restored; fix the filesystem error and rerun Mint",
+          "recovery selected one complete generation; fix the filesystem error and rerun Mint",
         cause: error,
       },
     );
   }
 }
 
-async function readJournal(operation, fs) {
+async function readJournal(operation, fs, boundary) {
   let bytes;
   try {
-    bytes = await fs.readFile(operation.journalPath);
+    bytes = await guarded(boundary, () => fs.readFile(operation.journalPath));
   } catch (error) {
     throw transactionError(
       "GENERATION_TRANSACTION_UNRECOVERABLE",
@@ -418,32 +503,38 @@ async function stateFor(target, fs) {
   );
 }
 
-async function restoreOld(validated, states, fs) {
+async function restoreOld(validated, states, fs, boundary) {
   for (let index = 0; index < validated.journal.targets.length; index += 1) {
     const target = validated.journal.targets[index];
     const state = states[index];
     if (state === "committed") {
-      await fs.rename(target.current, target.next);
-      await syncParent(fs, target.current);
-      await fs.rename(target.backup, target.current);
-      await syncParent(fs, target.current);
+      await guarded(boundary, () => fs.rename(target.current, target.next));
+      await guarded(boundary, () => syncParent(fs, target.current));
+      await guarded(boundary, () => fs.rename(target.backup, target.current));
+      await guarded(boundary, () => syncParent(fs, target.current));
     } else if (state === "backed-up") {
-      await fs.rename(target.backup, target.current);
-      await syncParent(fs, target.current);
+      await guarded(boundary, () => fs.rename(target.backup, target.current));
+      await guarded(boundary, () => syncParent(fs, target.current));
     }
   }
   for (const target of validated.journal.targets) {
-    if ((await fs.pathState(target.next)) !== "missing") await removeAndSync(fs, target.next);
-    if ((await fs.pathState(target.backup)) !== "missing") await removeAndSync(fs, target.backup);
+    if ((await fs.pathState(target.next)) !== "missing") {
+      await guarded(boundary, () => removeAndSync(fs, target.next));
+    }
+    if ((await fs.pathState(target.backup)) !== "missing") {
+      await guarded(boundary, () => removeAndSync(fs, target.backup));
+    }
   }
-  await removeAndSync(fs, validated.journalPath);
+  await guarded(boundary, () => removeAndSync(fs, validated.journalPath));
 }
 
-async function finishNew(validated, fs) {
+async function finishNew(validated, fs, boundary) {
   for (const target of validated.journal.targets) {
-    if ((await fs.pathState(target.backup)) !== "missing") await removeAndSync(fs, target.backup);
+    if ((await fs.pathState(target.backup)) !== "missing") {
+      await guarded(boundary, () => removeAndSync(fs, target.backup));
+    }
   }
-  await removeAndSync(fs, validated.journalPath);
+  await guarded(boundary, () => removeAndSync(fs, validated.journalPath));
 }
 
 /**
@@ -459,8 +550,20 @@ export async function recoverGeneratedOutputs(operation, fs = nodeSwapFs) {
     );
   }
   validateJournalPath(operation.journalPath);
-  if ((await fs.pathState(operation.journalPath)) === "missing") return { generation: "none" };
-  const journal = await readJournal(operation, fs);
+  const journalBoundary = await trustedBoundary(fs, [operation.journalPath]);
+  const journalState = await guarded(journalBoundary, () => fs.pathState(operation.journalPath));
+  if (journalState === "missing") return { generation: "none" };
+  if (journalState === "symlink" || journalState !== "file") {
+    throw transactionError(
+      "GENERATION_TRANSACTION_UNSAFE_PATH",
+      "generation recovery refuses a journal that is not a regular file",
+      {
+        paths: [operation.journalPath],
+        action: "preserve the journal path and inspect its type before retrying recovery",
+      },
+    );
+  }
+  const journal = await readJournal(operation, fs, journalBoundary);
   let validated;
   try {
     validated = await validateSafePaths({ journalPath: operation.journalPath, journal }, fs);
@@ -478,16 +581,27 @@ export async function recoverGeneratedOutputs(operation, fs = nodeSwapFs) {
     validated.journalPath,
     ...validated.journal.targets.flatMap((target) => [target.current, target.next, target.backup]),
   ];
+  const boundary = await trustedBoundary(fs, paths);
   let generation;
   let operationToRun;
-  if (states.every((state) => state === "committed" || state === "clean")) {
+  if (
+    validated.journal.recovery !== "old" &&
+    states.every((state) => state === "committed" || state === "clean")
+  ) {
     generation = "new";
-    operationToRun = () => finishNew(validated, fs);
+    operationToRun = () => finishNew(validated, fs, boundary);
   } else if (
-    states.every((state) => state === "unstarted" || state === "backed-up" || state === "committed")
+    (states.includes("clean") &&
+      states.every((state) => state === "clean" || state === "unstarted") &&
+      (validated.journal.recovery === "old" || states.some((state) => state === "unstarted"))) ||
+    (!states.includes("clean") &&
+      states.some((state) => state === "unstarted" || state === "backed-up") &&
+      states.every(
+        (state) => state === "unstarted" || state === "backed-up" || state === "committed",
+      ))
   ) {
     generation = "old";
-    operationToRun = () => restoreOld(validated, states, fs);
+    operationToRun = () => restoreOld(validated, states, fs, boundary);
   } else {
     throw transactionError(
       "GENERATION_TRANSACTION_UNRECOVERABLE",
@@ -499,6 +613,14 @@ export async function recoverGeneratedOutputs(operation, fs = nodeSwapFs) {
     );
   }
   try {
+    if (generation === "old" && validated.journal.recovery !== "old") {
+      await guarded(boundary, () =>
+        fs.writeDurableFile(
+          validated.journalPath,
+          byteJournal({ ...validated.journal, recovery: "old" }),
+        ),
+      );
+    }
     await operationToRun();
   } catch (error) {
     throw transactionError(
