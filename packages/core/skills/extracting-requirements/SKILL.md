@@ -166,8 +166,8 @@ Set command to `TBD` — the implementing iterations will fill these in.
 ### 10. Validate
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_requirements_index.py" docs/moe/iterations/requirements/
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_scenarios.py" docs/moe/iterations/behavior-scenarios.md docs/moe/iterations/requirements/
+node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_requirements_index.mjs" docs/moe/iterations/requirements/
+node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_scenarios.mjs" docs/moe/iterations/behavior-scenarios.md docs/moe/iterations/requirements/
 ```
 
 If validation fails, inspect the output, fix formatting issues, and re-validate.
@@ -193,7 +193,7 @@ git commit -m "docs: add requirements with proof obligations, behavior scenarios
 | Back-link | `scripts/backlink_scenarios.py` | scenarios + stories | Updated AC lines with scenario refs |
 | Coverage ledger | Map chunks → story IDs + scenario IDs | chunk list, stories, scenarios | Gap/covered/story-only per chunk |
 | Init corpus | Write corpus index | scenario list | `behavior-corpus.md` |
-| Validate | `scripts/validate_requirements_index.py` + `scripts/validate_scenarios.py` | .md files | OK or errors |
+| Validate | `scripts/validate_requirements_index.mjs` + `scripts/validate_scenarios.mjs` | .md files | OK or errors |
 
 ## Deferred to later plans
 
