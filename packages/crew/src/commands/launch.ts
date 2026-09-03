@@ -201,6 +201,11 @@ async function launchAssign(
   });
 
   const env = driver.workerEnv(ctx.home, tmuxName, process.env);
+  // Propagate the active run id so the worker's emit-event hook stamps it on
+  // every event, correlating worker events to the run without a separate file.
+  if (process.env.MOE_CREW_RUN_ID) {
+    env.MOE_CREW_RUN_ID = process.env.MOE_CREW_RUN_ID;
+  }
   await driver.prepare(tmuxName, cwd, ctx.home);
 
   const argv = [
@@ -253,6 +258,9 @@ async function launchDerive(
 
   const workerHome = deriveWorkerHome(ctx.workerDir, tmuxName);
   const env = driver.workerEnv(workerHome, tmuxName, process.env);
+  if (process.env.MOE_CREW_RUN_ID) {
+    env.MOE_CREW_RUN_ID = process.env.MOE_CREW_RUN_ID;
+  }
   await driver.prepare(tmuxName, cwd, workerHome);
 
   const argv = [...driver.launchArgv("launch", "", cwd, opts.pluginDir, workerHome), ...extraArgs];
