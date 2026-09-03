@@ -6,10 +6,16 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const UNICODE_CASE_FOLDING_WORK = "Unicode Character Database CaseFolding";
-const UNICODE_LICENSE_V3_SHA256 = "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96";
+const UNICODE_LICENSE_V3_SHA256 =
+  "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96";
 const UNICODE_CASE_FOLDING_FIXTURE = "packages/mint/test/fixtures/casefold/CaseFolding-16.0.0.txt";
-const UNICODE_CASE_FOLDING_FIXTURE_SHA256 = "6f1f9c588eb4a5c718d9e8f93b782685e5c7fec872cf05e8e6878053599e09bb";
-const UNICODE_CASE_FOLDING_ROW = ["`16.0.0` (2024-04-30)", "Unicode Terms of Use", "© 2024 Unicode, Inc."];
+const UNICODE_CASE_FOLDING_FIXTURE_SHA256 =
+  "6f1f9c588eb4a5c718d9e8f93b782685e5c7fec872cf05e8e6878053599e09bb";
+const UNICODE_CASE_FOLDING_ROW = [
+  "`16.0.0` (2024-04-30)",
+  "Unicode Terms of Use",
+  "© 2024 Unicode, Inc.",
+];
 
 const SKIP_SEGMENTS = new Set([
   ".claude",
@@ -86,8 +92,13 @@ function countImportedWorks(root, problems) {
   if (notice.size === 0) problems.push("NOTICE has no imported-work rows");
   if (!notice.has(UNICODE_CASE_FOLDING_WORK)) {
     problems.push("NOTICE is missing required Unicode CaseFolding imported-work row");
-  } else if (JSON.stringify(notice.get(UNICODE_CASE_FOLDING_WORK)) !== JSON.stringify(UNICODE_CASE_FOLDING_ROW)) {
-    problems.push("NOTICE Unicode CaseFolding imported-work row does not match the pinned source, version, and license metadata");
+  } else if (
+    JSON.stringify(notice.get(UNICODE_CASE_FOLDING_WORK)) !==
+    JSON.stringify(UNICODE_CASE_FOLDING_ROW)
+  ) {
+    problems.push(
+      "NOTICE Unicode CaseFolding imported-work row does not match the pinned source, version, and license metadata",
+    );
   }
   const text = readFileSync(join(root, "NOTICE"), "utf8");
   const license = unicodeLicenseV3(text);
@@ -95,7 +106,10 @@ function countImportedWorks(root, problems) {
     problems.push("NOTICE Unicode License V3 payload does not match the pinned canonical digest");
   }
   try {
-    if (sha256(readFileSync(join(root, UNICODE_CASE_FOLDING_FIXTURE), "utf8")) !== UNICODE_CASE_FOLDING_FIXTURE_SHA256) {
+    if (
+      sha256(readFileSync(join(root, UNICODE_CASE_FOLDING_FIXTURE), "utf8")) !==
+      UNICODE_CASE_FOLDING_FIXTURE_SHA256
+    ) {
       problems.push("CaseFolding fixture does not match the pinned canonical digest");
     }
   } catch (err) {
