@@ -51,7 +51,7 @@ None.
 - Consumes: `assertValidSkillRuntime(input)` and `SkillRuntimeReport` from Plan 1; private `ComponentFile[]` from `collectComponentFiles`.
 - Produces: a collection result containing complete candidates plus staged files, exported `inspectSkillRuntime(plugin): Promise<SkillRuntimeReport>`, and a pre-filter/pre-write validation call in `stageComponents`.
 
-- [ ] **Step 1: Close the two carried validator bypasses**
+- [ ] **Step 1: Close the carried validator and Core-data parity gaps**
 
 Add failing adversarial cases to `skill-runtime.test.ts` for dynamic
 `import("node:module")` followed by `createRequire`, direct re-exports of
@@ -61,6 +61,14 @@ enabled. Preserve complete diagnostic reporting and fix the validator before
 adding either activation call below. Plan 1's final scoped re-review identified
 these as load-bearing carryovers; neither gate may activate while either case
 passes without a diagnostic.
+
+Also add a failing Core regression proving `chunk_spec.mjs` accepts Unicode
+decimal digits wherever Python `argparse(type=int)` accepted them (for example
+`--max-tokens ١`), then fix its token-count parser without regressing signed
+ASCII values or existing argparse-compatible errors. Plan 2's sole whole-plan
+fix wave closed every other final-review finding; its scoped re-review carried
+this bounded parity gap forward. The live repository gate must not activate
+until this accepted legacy CLI form passes.
 
 - [ ] **Step 2: Make the composed fixture conform**
 
