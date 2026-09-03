@@ -288,7 +288,9 @@ Wait for the user's response. If they request changes, make them and re-run the 
 
 A browser-based companion for showing mockups, diagrams, and visual options during brainstorming. Available as a tool — not a mode. Starting the companion does NOT mean every question goes through the browser.
 
-The browser companion is rung 2 of the shared native-rendering ladder in `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md`. When Claude Code is your harness AND a mockup would render more clearly as an inline artifact than as a page in a separate tab, you may skip straight to rung 1 and publish an artifact via the Artifact tool instead — the companion server never has to start. When neither is available (a headless CI, a sandbox with no `node`), drop to rung 3 (local HTML file) or rung 4 (markdown); the ladder describes what "drop" means at each step.
+The browser companion is rung 2 of the shared native-rendering ladder in `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md`.
+
+{render-ladder}
 
 **Opening the companion (just-in-time):** Do NOT start it upfront. Wait until a question would genuinely be clearer shown than told — a real mockup / layout / diagram question, not merely a UI *topic*. The first time that happens, generate the visual, start the server with `--open`, and present the question there immediately. Do not warn about the companion or ask for separate approval before opening it.
 

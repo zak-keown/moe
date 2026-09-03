@@ -31,7 +31,21 @@ HEAD_SHA=$(git rev-parse HEAD)
 
 **2. Dispatch code reviewer subagent:**
 
-Dispatch a `general-purpose` subagent, filling the template at [code-reviewer.md](code-reviewer.md)
+Requires `[features] multi_agent = true` in `~/.codex/config.toml`.
+Spawn children with `spawn_agent {fork_turns: "none"}` for a clean
+context — the default `"all"` copies your entire transcript in.
+Codex 0.145+ role files under `~/.codex/agents/` attach via
+`agent_type` on full-history forks; isolated forks are the default for
+context hygiene. Resume an implementer with `followup_task` rather
+than spawning a fresh one — it delivers your message and transparently
+reloads an evicted child. V2 has no `close_agent`; finished children
+are evicted automatically. Set `model` AND `reasoning_effort`
+explicitly on every spawn — `model` alone silently resets effort to
+that model's default. Never copy a model name into `spawn_agent`
+without checking it against your current spawn allowlist.
+
+
+Fill the template at [code-reviewer.md](code-reviewer.md) and dispatch it as the reviewer.
 
 **Placeholders:**
 - `{DESCRIPTION}` - Brief summary of what you built

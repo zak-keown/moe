@@ -65,7 +65,19 @@ Each agent gets:
 
 ### 3. Dispatch in Parallel
 
-Issue all three subagent dispatches in the same response — they run in parallel:
+Use Kimi Code's `Agent` tool with a Kimi subagent type — never pass
+`general-purpose` as `subagent_type`. For implementation, code
+review, spec review, or any filled prompt template this plugin ships,
+call `Agent` with `subagent_type: "coder"`, paste the fully filled
+prompt into `prompt`, and give a short `description`. For read-only
+codebase exploration use `subagent_type: "explore"`; for read-only
+planning or architecture design use `subagent_type: "plan"`. Keep
+dependent steps sequential; use multiple `Agent` calls, or
+`run_in_background: true` when the work is independent and background
+agents are available.
+
+
+For independent work like the three fixes above, issue every dispatch together so they run concurrently:
 
 ```text
 Subagent (general-purpose): "Fix agent-tool-abort.test.ts failures"
@@ -74,7 +86,7 @@ Subagent (general-purpose): "Fix tool-approval-race-conditions.test.ts failures"
 # All three run concurrently.
 ```
 
-Multiple dispatch calls in one response = parallel execution. One per response = sequential.
+Keep dependent steps sequential — one dispatch, then the next.
 
 ### 4. Review and Integrate
 

@@ -262,10 +262,17 @@ required for the workflow to work.
 
 When your human partner asks to review the plan visually — a browseable
 table of tasks, a rendered dependency diagram — walk the ladder from
-the top: on Claude Code, publish an artifact via the Artifact tool
-(rung 1) so they can scroll it in their client; otherwise fall to the
-brainstorm companion (rung 2) or a self-contained local HTML file
-(rung 3). Never gate execution on the browseable form; the markdown
+the top:
+
+The `Artifact` tool is not exposed in Cursor — start at rung 2 (the
+brainstorm browser companion) and drop to rung 3 (local HTML file) or
+rung 4 (markdown file) when `node` isn't on PATH or the sandbox blocks
+the port bind. See
+`${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` for the
+full ladder and the sharing default.
+
+
+Never gate execution on the browseable form; the markdown
 file is the source of truth.
 
 ## Execution Handoff

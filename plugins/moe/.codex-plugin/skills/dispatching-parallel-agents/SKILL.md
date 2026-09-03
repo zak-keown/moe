@@ -65,7 +65,21 @@ Each agent gets:
 
 ### 3. Dispatch in Parallel
 
-Issue all three subagent dispatches in the same response — they run in parallel:
+Requires `[features] multi_agent = true` in `~/.codex/config.toml`.
+Spawn children with `spawn_agent {fork_turns: "none"}` for a clean
+context — the default `"all"` copies your entire transcript in.
+Codex 0.145+ role files under `~/.codex/agents/` attach via
+`agent_type` on full-history forks; isolated forks are the default for
+context hygiene. Resume an implementer with `followup_task` rather
+than spawning a fresh one — it delivers your message and transparently
+reloads an evicted child. V2 has no `close_agent`; finished children
+are evicted automatically. Set `model` AND `reasoning_effort`
+explicitly on every spawn — `model` alone silently resets effort to
+that model's default. Never copy a model name into `spawn_agent`
+without checking it against your current spawn allowlist.
+
+
+For independent work like the three fixes above, issue every dispatch together so they run concurrently:
 
 ```text
 Subagent (general-purpose): "Fix agent-tool-abort.test.ts failures"
@@ -74,7 +88,7 @@ Subagent (general-purpose): "Fix tool-approval-race-conditions.test.ts failures"
 # All three run concurrently.
 ```
 
-Multiple dispatch calls in one response = parallel execution. One per response = sequential.
+Keep dependent steps sequential — one dispatch, then the next.
 
 ### 4. Review and Integrate
 

@@ -31,7 +31,16 @@ HEAD_SHA=$(git rev-parse HEAD)
 
 **2. Dispatch code reviewer subagent:**
 
-Dispatch a `general-purpose` subagent, filling the template at [code-reviewer.md](code-reviewer.md)
+Pi core ships no standard subagent tool. If the `pi-subagents`
+package is installed, use its `subagent` tool — it supports
+single-agent, chain, parallel, async, forked-context, and
+resume/status workflows. If no subagent tool is available, do not
+fabricate `Task` calls: execute the work sequentially in the current
+session, or tell the user the optional subagent capability is not
+installed.
+
+
+Fill the template at [code-reviewer.md](code-reviewer.md) and dispatch it as the reviewer.
 
 **Placeholders:**
 - `{DESCRIPTION}` - Brief summary of what you built

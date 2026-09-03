@@ -282,18 +282,30 @@ Everything you paste into a dispatch prompt — and everything a subagent
 prints back — stays resident in your context for the rest of the session
 and is re-read on every later turn. Hand artifacts over as files.
 
-**Waiting on dispatched subagents:** never poll a wait interface with
-short timeouts, and never sit in one silent, open-ended wait either.
+**Waiting on dispatched subagents:**
+
+If the `pi-subagents` package's `subagent` tool is installed, use its
+resume/status workflow to check on an async or forked dispatch rather
+than polling ad hoc — call its status action and act on the result.
+When no subagent tool is installed, there is nothing to wait on: the
+work happens sequentially in the current session.
+
+
 While you have local work — ledger updates, packaging the next review,
-reading reports — keep working; child results arrive on their own.
-When you are genuinely idle, wait in bounded stretches (five to ten
-minutes, where your platform allows), and between stretches post one
-line of status and reconcile your live children: list them, and chase
-any that finished without reporting. A bounded stretch keeps nearly
-all of a long wait's efficiency while guaranteeing a stuck or lost
-child is noticed within minutes, not at the end of the session.
+reading reports — keep working; child results arrive on their own. Between
+any bounded wait stretches, post one line of status and reconcile your live
+children: list them, and chase any that finished without reporting.
 
 ### 1. Dispatch the implementer
+
+Pi core ships no standard subagent tool. If the `pi-subagents`
+package is installed, use its `subagent` tool — it supports
+single-agent, chain, parallel, async, forked-context, and
+resume/status workflows. If no subagent tool is available, do not
+fabricate `Task` calls: execute the work sequentially in the current
+session, or tell the user the optional subagent capability is not
+installed.
+
 
 Record BASE (`git rev-parse HEAD`) before dispatching — the review package
 and fix-round diffs need it.

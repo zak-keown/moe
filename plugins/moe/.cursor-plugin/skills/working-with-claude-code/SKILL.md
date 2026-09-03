@@ -63,8 +63,8 @@ in the table.
 
 ## Working Offline
 
-When you have no network, or you want to `Grep` across the whole corpus, populate
-a local cache first:
+When you have no network, or you want to search across the whole corpus with
+`Grep`, populate a local cache first:
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/skills/working-with-claude-code/scripts/update_docs.cjs"
@@ -72,7 +72,7 @@ node "${CLAUDE_PLUGIN_ROOT}/skills/working-with-claude-code/scripts/update_docs.
 
 It reads `llms.txt`, extracts every `claude-code/*.md` URL, and writes each page
 into `${CLAUDE_PLUGIN_ROOT}/skills/working-with-claude-code/references/`. Then
-`Read` or `Grep` that directory as usual.
+use `Read` or `Grep` on that directory as usual.
 
 Two things to know about the cache:
 

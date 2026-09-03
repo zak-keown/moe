@@ -41,7 +41,7 @@ describe("retrieving-context contract", () => {
     // answer wrong.
     const firstRule = section(SKILL, "## The rule that fires first");
     expect(firstRule).toContain("A file in the working tree is read, never retrieved");
-    expect(firstRule).toMatch(/`Read` and `Grep`, every\s+time/);
+    expect(firstRule).toMatch(/\{read\} and \{search\}, every\s+time/);
   });
 
   it("names exactly two retrieval backends: moedex and moe-memory", () => {

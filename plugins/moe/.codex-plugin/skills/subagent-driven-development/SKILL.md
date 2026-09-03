@@ -282,18 +282,43 @@ Everything you paste into a dispatch prompt — and everything a subagent
 prints back — stays resident in your context for the rest of the session
 and is re-read on every later turn. Hand artifacts over as files.
 
-**Waiting on dispatched subagents:** never poll a wait interface with
-short timeouts, and never sit in one silent, open-ended wait either.
+**Waiting on dispatched subagents:**
+
+`wait_agent` is an event subscription, not a poll: a long wait wakes
+the instant a child produces mailbox activity, at the same latency as
+a short one. Short-timeout polls buy nothing and cost a tool call and
+a context rebill each time — in measured sessions roughly two-thirds
+of them timed out for nothing. While you still have local work, do not
+wait at all; a completed child's final answer is pushed into your
+mailbox and arrives with your next turn. When genuinely idle with
+children outstanding, wait in bounded stretches of 300000-600000ms
+(5-10 minutes); after each stretch, post one status line, run
+`list_agents`, and chase any child that finished without reporting.
+Never stack polls shorter than five minutes — completion mail cannot
+wake an idle controller on its own, so covering that idle window is
+`wait_agent`'s only job.
+
+
 While you have local work — ledger updates, packaging the next review,
-reading reports — keep working; child results arrive on their own.
-When you are genuinely idle, wait in bounded stretches (five to ten
-minutes, where your platform allows), and between stretches post one
-line of status and reconcile your live children: list them, and chase
-any that finished without reporting. A bounded stretch keeps nearly
-all of a long wait's efficiency while guaranteeing a stuck or lost
-child is noticed within minutes, not at the end of the session.
+reading reports — keep working; child results arrive on their own. Between
+any bounded wait stretches, post one line of status and reconcile your live
+children: list them, and chase any that finished without reporting.
 
 ### 1. Dispatch the implementer
+
+Requires `[features] multi_agent = true` in `~/.codex/config.toml`.
+Spawn children with `spawn_agent {fork_turns: "none"}` for a clean
+context — the default `"all"` copies your entire transcript in.
+Codex 0.145+ role files under `~/.codex/agents/` attach via
+`agent_type` on full-history forks; isolated forks are the default for
+context hygiene. Resume an implementer with `followup_task` rather
+than spawning a fresh one — it delivers your message and transparently
+reloads an evicted child. V2 has no `close_agent`; finished children
+are evicted automatically. Set `model` AND `reasoning_effort`
+explicitly on every spawn — `model` alone silently resets effort to
+that model's default. Never copy a model name into `spawn_agent`
+without checking it against your current spawn allowlist.
+
 
 Record BASE (`git rev-parse HEAD`) before dispatching — the review package
 and fix-round diffs need it.
