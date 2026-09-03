@@ -42,7 +42,14 @@ describe('adapter package contributions', () => {
     expect(Object.isFrozen(generated.packageContributions[1]!.pi!.skills)).toBe(true)
   })
 
-  it.each(['package.json', './package.json', 'nested/../package.json', 'nested/./../package.json'])(
+  it.each([
+    'package.json',
+    './package.json',
+    'nested/../package.json',
+    'nested/./../package.json',
+    'PACKAGE.JSON',
+    'pac\u212Aage.json',
+  ])(
     'rejects %s as a reserved root package manifest through a stable diagnostic',
     (path) => {
       const adapter: HarnessAdapter = {
@@ -96,6 +103,37 @@ describe('adapter package contributions', () => {
         source: 'moe-mint.yaml',
         field: `adapters.${adapterName}.packageContribution.owner`,
         message: expect.stringContaining(`declared owner "${declaredOwner}"`),
+      })
+    }
+  })
+
+  it.each([
+    [null, 'null'],
+    [[], 'an array'],
+    ['metadata', 'a scalar'],
+    [{}, 'a missing owner'],
+    [{ owner: 1 }, 'a non-string owner'],
+  ] as const)('rejects %s package contribution with a stable owner diagnostic', (contribution, _description) => {
+    const adapter: HarnessAdapter = {
+      name: 'opencode',
+      emit: () => ({
+        files: [],
+        limitations: [],
+        emittedCapabilities: [],
+        packageContribution: contribution as never,
+      }),
+    }
+
+    try {
+      validateGeneration(freshFixture(), [adapter])
+      expect.unreachable('malformed package contribution should have been rejected')
+    } catch (error) {
+      expect((error as { diagnostic?: unknown }).diagnostic).toMatchObject({
+        code: 'ADAPTER_PACKAGE_CONTRIBUTION_OWNER_INVALID',
+        plugin: 'kitchen-sink',
+        target: 'opencode',
+        source: 'moe-mint.yaml',
+        field: 'adapters.opencode.packageContribution.owner',
       })
     }
   })

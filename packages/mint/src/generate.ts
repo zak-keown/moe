@@ -127,8 +127,25 @@ function immutablePackageContribution(contribution: AdapterPackageContribution):
   return immutableValue({ ...contribution })
 }
 
+function artifactCollisionKey(path: string): string {
+  return path.normalize('NFC').toLowerCase()
+}
+
+function isReservedRootPackagePath(rootAbs: string, path: string): boolean {
+  const artifactRelative = relative(rootAbs, resolve(rootAbs, path)).split(sep).join('/')
+  return artifactCollisionKey(artifactRelative) === artifactCollisionKey('package.json')
+}
+
 function isTargetId(name: string): name is TargetId {
   return (TARGET_IDS as readonly string[]).includes(name)
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isPackageContribution(value: unknown): value is AdapterPackageContribution {
+  return isRecord(value) && typeof value.owner === 'string'
 }
 
 function adapterEmissionError(
@@ -176,11 +193,10 @@ export function validateGeneration(
   const emittedByAdapter = new Map<HarnessAdapter, AdapterEmission>()
   const byPath = new Map<string, { owner: string; file: GeneratedFile }>()
   const rootAbs = resolve(root)
-  const packageManifestAbs = resolve(rootAbs, 'package.json')
   for (const adapter of active) {
     const rawResult = adapter.emit(model)
     for (const [index, file] of rawResult.files.entries()) {
-      if (resolve(rootAbs, file.path) === packageManifestAbs) {
+      if (isReservedRootPackagePath(rootAbs, file.path)) {
         throw adapterEmissionError(
           'ADAPTER_PACKAGE_MANIFEST_EMITTED', model, adapter, `adapters.${adapter.name}.files.${index}.path`,
           `adapter "${adapter.name}" must not emit the root package.json; return packageContribution instead`,
@@ -188,23 +204,33 @@ export function validateGeneration(
         )
       }
     }
-    if (rawResult.projectionOwner !== undefined && rawResult.packageContribution !== undefined) {
-      throw adapterEmissionError(
-        'CAPABILITY_PROJECTION_OWNER_CONFLICT', model, adapter, `targets.${adapter.name}.projection_owner`,
-        `adapter "${adapter.name}" projection must not emit package metadata`,
-        'Remove the package contribution and use the projection owner emission.',
-      )
+    const contribution = rawResult.packageContribution
+    if (contribution !== undefined) {
+      if (!isPackageContribution(contribution)) {
+        throw adapterEmissionError(
+          'ADAPTER_PACKAGE_CONTRIBUTION_OWNER_INVALID', model, adapter, `adapters.${adapter.name}.packageContribution.owner`,
+          `adapter "${adapter.name}" returned an invalid package contribution owner`,
+          'Return a non-array package contribution object with a string owner matching the adapter name.',
+        )
+      }
+      if (rawResult.projectionOwner !== undefined) {
+        throw adapterEmissionError(
+          'CAPABILITY_PROJECTION_OWNER_CONFLICT', model, adapter, `targets.${adapter.name}.projection_owner`,
+          `adapter "${adapter.name}" projection must not emit package metadata`,
+          'Remove the package contribution and use the projection owner emission.',
+        )
+      }
+      if (!isTargetId(adapter.name) || contribution.owner !== adapter.name) {
+        throw adapterEmissionError(
+          'ADAPTER_PACKAGE_CONTRIBUTION_OWNER_INVALID', model, adapter, `adapters.${adapter.name}.packageContribution.owner`,
+          `adapter "${adapter.name}" declared owner "${contribution.owner}" for its package contribution`,
+          'Use a recognized adapter target and set packageContribution.owner to that adapter name.',
+        )
+      }
     }
-    if (rawResult.packageContribution !== undefined && (!isTargetId(adapter.name) || rawResult.packageContribution.owner !== adapter.name)) {
-      throw adapterEmissionError(
-        'ADAPTER_PACKAGE_CONTRIBUTION_OWNER_INVALID', model, adapter, `adapters.${adapter.name}.packageContribution.owner`,
-        `adapter "${adapter.name}" declared owner "${rawResult.packageContribution.owner}" for its package contribution`,
-        'Use a recognized adapter target and set packageContribution.owner to that adapter name.',
-      )
-    }
-    const result = rawResult.packageContribution === undefined
+    const result = contribution === undefined
       ? rawResult
-      : { ...rawResult, packageContribution: immutablePackageContribution(rawResult.packageContribution) }
+      : { ...rawResult, packageContribution: immutablePackageContribution(contribution) }
     emittedByAdapter.set(adapter, result)
     if (result.packageContribution !== undefined) packageContributions.push(result.packageContribution)
     if ('warnings' in result) {
