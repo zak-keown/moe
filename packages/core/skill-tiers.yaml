@@ -230,6 +230,13 @@ imported:
       a design question: a single-file HTML logic demo, or a set of UI
       variants switchable via `?variant=`.
 
+  resolving-merge-conflicts:
+    from: imported
+    why: >-
+      Fires when git status shows unmerged paths — during a merge, rebase, or
+      cherry-pick. No other skill covers conflict resolution; without this the
+      agent has no guidance at the moment discipline matters most.
+
 
 # ---------------------------------------------------------------------------
 # authored: skills this fork wrote. OPEN.
@@ -280,6 +287,21 @@ authored:
       exists, so it cannot fire unasked. A REQUIRED four-field disposition
       slot plus the script that fills it, so a fix run cannot forget to
       record which commit fixed which finding.
+
+  docs-update:
+    from: moe
+    why: >-
+      Subagent-driven documentation generation and verification against the
+      codebase. Dispatches one agent per doc type; each reads code before
+      writing prose. Invoked deliberately with /docs-update.
+
+  moe-discipline:
+    from: moe
+    why: >-
+      Shapes HOW the agent works during implementation — minimal changes,
+      edit-over-create, proportional responses, scope containment — rather
+      than WHAT it does. Complements `verification-before-completion`, which
+      fires at completion time, by firing alongside the task itself.
 
 
 # Not a skill: skills/_shared/ holds the three PAR reference documents the

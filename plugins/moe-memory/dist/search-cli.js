@@ -17,6 +17,7 @@ OPTIONS:
   --project NAME        Filter by project name (exact match)
   --session-id ID       Filter by session ID (exact match)
   --git-branch BRANCH   Filter by git branch name (exact match)
+  --git-commit SHA      Filter by git commit SHA (exact match)
   --limit N             Max results (default: 10)
   --help, -h            Show this help
 
@@ -36,6 +37,9 @@ EXAMPLES:
   # Filter to one git branch
   moe-memory search --git-branch feature/login "validation"
 
+  # Filter to one commit
+  moe-memory search --git-commit a1b2c3d "what changed"
+
   # Multi-concept search (AND - all concepts must match)
   moe-memory search "React Router" "authentication" "JWT"
 `;
@@ -46,6 +50,7 @@ export async function runSearch(args) {
     let project;
     let sessionId;
     let gitBranch;
+    let gitCommit;
     let limit = 10;
     const queries = [];
     for (let i = 0; i < args.length; i++) {
@@ -78,6 +83,9 @@ export async function runSearch(args) {
         else if (arg === "--git-branch") {
             gitBranch = args[++i];
         }
+        else if (arg === "--git-commit") {
+            gitCommit = args[++i];
+        }
         else if (arg === "--limit") {
             const raw = args[++i];
             const parsed = raw === undefined ? Number.NaN : Number.parseInt(raw, 10);
@@ -109,6 +117,7 @@ export async function runSearch(args) {
                 project,
                 session_id: sessionId,
                 git_branch: gitBranch,
+                git_commit: gitCommit,
             };
             const results = await searchMultipleConcepts(queries, options);
             console.log(await formatMultiConceptResults(results, queries));
@@ -122,6 +131,7 @@ export async function runSearch(args) {
             project,
             session_id: sessionId,
             git_branch: gitBranch,
+            git_commit: gitCommit,
         };
         const first = queries[0];
         if (first === undefined)

@@ -1,6 +1,12 @@
 ---
 name: writing-skills
 description: Use when creating new skills, editing existing skills, or verifying skills work before deployment
+triggers: >-
+  Load when creating, editing, or pressure-testing a SKILL.md file or
+  skill directory. Do NOT load for: discussing how skills work
+  conceptually, invoking or using an existing skill, editing non-skill
+  documentation (`writing-clearly-and-concisely`), or building a plugin
+  (`developing-claude-code-plugins`).
 ---
 
 # Writing Skills

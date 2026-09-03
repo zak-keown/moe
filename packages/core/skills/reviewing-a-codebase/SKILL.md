@@ -152,7 +152,23 @@ hand: it is the part that must be identical across runs, and reproducing it in
 prose costs tokens on every invocation to get a different answer each time.
 
 Then dispatch one `review-shard` agent per shard, in waves of at most 8
-concurrent. Each writes its own shard report; none of them commit.
+concurrent. Each writes its own shard report; none of them commit. The agent
+definition carries an off-limits list for the host it runs on; the dispatch
+prompt may add to it, never subtract.
+
+As reports land, validate each one before the merge ever sees it:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/skills/reviewing-a-codebase/scripts/review-check.mjs" \
+  --shards .moe/review-shards
+```
+
+It applies the merge's own grammar per report the moment the report exists,
+plus the lint the merge cannot see: a `###` inside a fenced block, a
+line-number citation in a body, a `**File:**` the tree does not contain. One
+malformed record fails the whole merge, so fix the report (or re-dispatch the
+shard) while that reviewer is still around. Pass `--require-all` for the final
+pass before merging; `--shard <id>` checks one report.
 
 **If parallel dispatch is unavailable** — session policy, runtime limits, a
 harness without subagents — run the shards yourself, serially, in manifest
@@ -181,31 +197,34 @@ happen. Findings that survive are marked `verified: confirmed`; those that fall
 are demoted or dropped, with the refutation kept.
 
 Run the ordinary merge first so the serious findings have their stable
-`CR-###` IDs. Record the challengers' returned verdicts in
-`.moe/review-shards/verifications.json`:
+`CR-###` IDs. Then split them out:
 
-```json
-{
-  "base_sha": "abc1234",
-  "results": [
-    {
-      "id": "CR-001",
-      "verdict": "confirmed",
-      "evidence": "Reproduced from the public route."
-    },
-    {
-      "id": "CR-002",
-      "verdict": "confirmed-lower",
-      "severity": "medium",
-      "evidence": "The path is local-only and needs an unusual precondition."
-    }
-  ]
-}
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/skills/reviewing-a-codebase/scripts/review-verify-scope.mjs" \
+  --shards .moe/review-shards --report CODEBASE-REVIEW.md
+```
+
+That writes one `.moe/review-shards/verify/CR-###.md` per critical and high
+finding, plus a manifest of the ID set. Dispatch one `verify-finding` agent per
+file, pointing it at its file. Every reply ends in a `VERDICT-JSON:` line;
+record each as it arrives, from the saved reply or the bare object:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/skills/reviewing-a-codebase/scripts/review-verify-record.mjs" \
+  --shards .moe/review-shards --from-file reply.txt
+node "${CLAUDE_PLUGIN_ROOT}/skills/reviewing-a-codebase/scripts/review-verify-record.mjs" \
+  --shards .moe/review-shards \
+  '{"id":"CR-001","verdict":"confirmed","evidence":"Reproduced from the public route."}'
 ```
 
 Valid verdicts are `confirmed`, `confirmed-lower`, `refuted`, and `unproven`.
 Only `confirmed-lower` carries a replacement severity, and it must be lower
-than the original. Evidence is REQUIRED for every result. Then finalize:
+than the original. Evidence is REQUIRED for every result. The recorder refuses
+an ID outside the manifest, a verdict outside those four, a `confirmed-lower`
+that does not lower, empty or over-long evidence, and a second verdict for an
+ID unless `--replace` is passed; it rewrites
+`.moe/review-shards/verifications.json` whole on every call. When its tally
+shows nothing missing, finalize:
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/skills/reviewing-a-codebase/scripts/review-merge.mjs" \
@@ -233,3 +252,7 @@ deliberately on a large tree.
 - A coverage number whose denominator is not stated next to it
 - Reporting only what you found, with no line naming what you did not open
 - Inventing a fifth severity rung, or filing a credential leak below critical
+- Merging a shard report that `review-check.mjs` has not passed
+- A verify reply with no `VERDICT-JSON:` line, or a verdict typed into the
+  ledger by hand
+- A worker that ran a repository script to prove the script touches `$HOME`

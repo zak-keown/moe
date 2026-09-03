@@ -5,7 +5,8 @@ import { hasConsent } from "../core/consent.js";
 import { eventsPath, workerHomePath } from "../core/paths.js";
 import { shellQuote } from "../core/shell.js";
 import { isoSecondsUtc } from "../core/time.js";
-import { ensureOwnedDir, removeWorker, resolveSession, writeHarnessMarker, writeMeta, writeShim, } from "../core/worker-store.js";
+import { ensureOwnedDir, removeWorker, resolveSession, writeHarnessMarker, writeMeta, writeShim, writeWorktreeMarker, } from "../core/worker-store.js";
+import { createWorktree, worktreePath } from "../core/worktree.js";
 import { getDriver } from "../harness/registry.js";
 import { awaitSessionStart } from "./await-start.js";
 import { awaitComposerReady, dismissCodexTrustGate } from "./codex-launch.js";
@@ -92,17 +93,30 @@ export async function cmdLaunch(ctx, args, opts) {
     // pre-plant it at this predictable path ahead of us.
     ensureOwnedDir(ctx.workerDir);
     mkdirSync(join(ctx.workerDir, "bin"), { recursive: true, mode: 0o700 });
+    // When --worktree is set, create a disposable git worktree and substitute the
+    // cwd BEFORE either launch path runs. Both launchAssign and launchDerive
+    // receive the worktree path as cwd; the original cwd is only used for the
+    // invocation reproduce line.
+    let effectiveCwd = cwd;
+    let worktreeDir;
+    if (args.worktree) {
+        worktreeDir = await createWorktree(undefined, cwd, tmuxName);
+        effectiveCwd = worktreeDir;
+        // Write the sidecar marker so stop can locate and remove the worktree even
+        // on the derive path where the meta is self-registered later.
+        writeWorktreeMarker(ctx.workerDir, tmuxName, worktreeDir);
+    }
     const invocation = extraArgs.length > 0 ? [tmuxName, cwd, "--", ...extraArgs] : [tmuxName, cwd];
     return driver.idStrategy === "derive"
-        ? launchDerive(ctx, { driver, tmuxName, cwd, extraArgs, invocation }, opts)
-        : launchAssign(ctx, { driver, tmuxName, cwd, extraArgs, invocation }, opts);
+        ? launchDerive(ctx, { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir }, opts)
+        : launchAssign(ctx, { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir }, opts);
 }
 /**
  * The assign-id launch (claude): generate the session id, pre-write the meta,
  * start tmux, await `session_start` proof-of-life, write the shim. The driver's
  * worker home is the controller HOME.
  */
-async function launchAssign(ctx, { driver, tmuxName, cwd, extraArgs, invocation }, opts) {
+async function launchAssign(ctx, { driver, tmuxName, cwd, extraArgs, invocation, worktreeDir }, opts) {
     const sessionId = randomUUID();
     // Pre-write the meta keyed by sessionId so the SessionStart hook can record
     // events the moment the worker starts. The hook only appends events once a
@@ -115,6 +129,7 @@ async function launchAssign(ctx, { driver, tmuxName, cwd, extraArgs, invocation 
         harness: driver.id,
         started_at: isoSecondsUtc(),
         invocation,
+        ...(worktreeDir !== undefined ? { worktree: worktreeDir } : {}),
     });
     const env = driver.workerEnv(ctx.home, tmuxName, process.env);
     await driver.prepare(tmuxName, cwd, ctx.home);
@@ -152,7 +167,7 @@ async function launchAssign(ctx, { driver, tmuxName, cwd, extraArgs, invocation 
  * (awaitPiReady) — enough to let the TUI come up before the first send; the meta
  * still self-registers when pi fires its first event.
  */
-async function launchDerive(ctx, { driver, tmuxName, cwd, extraArgs, invocation }, opts) {
+async function launchDerive(ctx, { driver, tmuxName, cwd, extraArgs, invocation, worktreeDir }, opts) {
     // Sidecar marker so per-worker commands load the codex or pi driver during
     // the pre-registration window (before the extension self-registers the meta).
     writeHarnessMarker(ctx.workerDir, tmuxName, driver.id);

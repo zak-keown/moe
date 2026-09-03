@@ -22,6 +22,18 @@ function tmpFixture(yaml: string): string {
   return dir
 }
 
+const fullSupport = {
+  skills: 'full',
+  commands: 'full',
+  agents: 'full',
+  hooks: 'full',
+  mcp: 'full',
+  bootstrap: 'full',
+  rules: 'none',
+  variables: 'none',
+} as const
+
+
 function adapterWithInstallDoc(name: string, body: string): HarnessAdapter {
   return {
     name,

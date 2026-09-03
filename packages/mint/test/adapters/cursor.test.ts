@@ -21,7 +21,7 @@ describe('cursor adapter', () => {
   const result = cursor.emit(model)
   const byPath = byPathMap(result.files)
 
-  it('emits .cursor-plugin/plugin.json with config fields (no homepage leak from claude-code override)', () => {
+  it('emits .cursor-plugin/plugin.json with config fields including category, tags, commands, agents, mcpServers (no homepage leak from claude-code override)', () => {
     const manifest = JSON.parse(mustGet(byPath, '.cursor-plugin/plugin.json'))
     expect(manifest).toEqual({
       name: 'kitchen-sink',
@@ -33,7 +33,40 @@ describe('cursor adapter', () => {
       repository: 'https://github.com/example/kitchen-sink',
       keywords: ['fixture'],
       skills: './skills/',
+      category: 'Developer Tools',
+      tags: ['demo', 'fixture'],
+      commands: './commands/',
+      agents: './agents/',
+      mcpServers: './.cursor-plugin/mcp.json',
       hooks: './hooks/moe-mint/hooks-cursor.json',
+    })
+  })
+
+  it('emits .cursor-plugin/marketplace.json with cursor multi-plugin format', () => {
+    const marketplace = JSON.parse(mustGet(byPath, '.cursor-plugin/marketplace.json'))
+    expect(marketplace).toEqual({
+      name: 'kitchen-sink-market',
+      owner: { name: 'Bubstack', email: 'dev@bubstack.example' },
+      metadata: { description: 'Fixture plugin exercising every component type' },
+      plugins: [
+        {
+          name: 'kitchen-sink',
+          source: './',
+          description: 'Fixture plugin exercising every component type',
+        },
+      ],
+    })
+  })
+
+  it('emits .cursor-plugin/mcp.json with the model mcp config', () => {
+    const mcp = JSON.parse(mustGet(byPath, '.cursor-plugin/mcp.json'))
+    expect(mcp).toEqual({
+      mcpServers: {
+        'ks-demo': {
+          command: 'node',
+          args: ['./mcp-demo-server.js'],
+        },
+      },
     })
   })
 
@@ -72,6 +105,19 @@ describe('cursor adapter', () => {
 
   it('derives capabilities from emitted Cursor projection files', () => {
     expect(result.emittedCapabilities).toEqual(['skill-discovery', 'hook-execution', 'bootstrap-routing'])
+  })
+
+  it('declares expected support levels', () => {
+    expect(cursor.support).toEqual({
+      skills: 'full',
+      commands: 'full',
+      agents: 'full',
+      hooks: 'partial',
+      mcp: 'full',
+      bootstrap: 'full',
+      rules: 'none',
+      variables: 'none',
+    })
   })
 })
 
@@ -233,5 +279,34 @@ describe('cursor adapter with bootstrap.generate', () => {
     expect(sessionStart?.content).toContain('hooks/moe-mint/bootstrap.md')
     const manifest = JSON.parse(result.files.find((f) => f.path === '.cursor-plugin/plugin.json')!.content)
     expect(manifest.hooks).toBe('./hooks/moe-mint/hooks-cursor.json')
+  })
+})
+
+describe('cursor adapter omits optional manifest fields when model is empty', () => {
+  it('does not include commands, agents, or mcpServers in manifest when model has none', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mint-cursor-empty-'))
+    writeFileSync(
+      join(dir, 'moe-mint.yaml'),
+      'name: empty-demo\nversion: 1.0.0\ndescription: empty fixture\nbootstrap: none\n',
+    )
+    const emptyModel = buildModel(dir)
+    const result = cursor.emit(emptyModel)
+    const manifest = JSON.parse(result.files.find((f) => f.path === '.cursor-plugin/plugin.json')!.content)
+    expect(manifest).not.toHaveProperty('commands')
+    expect(manifest).not.toHaveProperty('agents')
+    expect(manifest).not.toHaveProperty('mcpServers')
+    expect(manifest).not.toHaveProperty('category')
+    expect(manifest).not.toHaveProperty('tags')
+  })
+
+  it('does not emit .cursor-plugin/mcp.json when model has no mcp', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mint-cursor-no-mcp-'))
+    writeFileSync(
+      join(dir, 'moe-mint.yaml'),
+      'name: no-mcp-demo\nversion: 1.0.0\ndescription: no mcp fixture\nbootstrap: none\n',
+    )
+    const noMcpModel = buildModel(dir)
+    const result = cursor.emit(noMcpModel)
+    expect(result.files.find((f) => f.path === '.cursor-plugin/mcp.json')).toBeUndefined()
   })
 })

@@ -6,11 +6,15 @@ A shared reference for all skills that dispatch reviewers. Every evaluative gate
 
 When dispatching ANY reviewer (scope reviewer, spec-compliance reviewer, code-quality reviewer, auditor):
 
-1. **Dispatch TWO reviewer subagents simultaneously** with identical inputs. Use your platform's parallel dispatch mechanism. Neither reviewer sees the other's work.
+1. **Dispatch TWO reviewer subagents simultaneously** with identical inputs. Neither reviewer sees the other's work.
+
+   {subagent-dispatch}
 
 2. **Wrap each reviewer's prompt** with the competitive framing from `par-reviewer-wrapper.md` (in this directory). The wrapper adds the scoring incentive on top of the reviewer's domain-specific prompt.
 
 3. **Wait for both reviewers to return.**
+
+   {subagent-wait}
 
 4. **Aggregate findings:**
    - **Same issue found by both reviewers** → one finding, high confidence

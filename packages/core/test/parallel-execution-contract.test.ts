@@ -201,4 +201,43 @@ describe("parallel execution skill contract", () => {
     expect(chooseExecution(collision, worktrees)).toBe("sequential");
     expect(chooseExecution(dependency, worktrees)).toBe("sequential");
   });
+
+  it("pins every new top-level worktree to an explicit lifecycle base", () => {
+    const worktrees = skills.get("core/skills/using-git-worktrees/SKILL.md") as string;
+    const gitignore = readFileSync(resolve(ROOT, "../.gitignore"), "utf8");
+
+    expect(worktrees).toContain("WORKSPACE_ID");
+    expect(worktrees).toContain("BASE_BRANCH");
+    expect(worktrees).toContain("BASE_SHA");
+    expect(worktrees).toMatch(
+      /git -C "\$PRIMARY_ROOT" worktree add "\$path" -b "\$BRANCH_NAME" "\$BASE_SHA"/,
+    );
+    expect(worktrees).toContain("PRIMARY_ROOT");
+    expect(worktrees).toMatch(/explicit continuation/i);
+    expect(worktrees).toMatch(/unrelated linked worktree/i);
+    expect(gitignore).toContain(".moe/worktrees/");
+    expect(gitignore).toContain(".worktrees/");
+  });
+
+  it("integrates parallel iteration workers before the controller advances", () => {
+    const tasks = skills.get("core/skills/implementing-tasks/SKILL.md") as string;
+
+    expect(tasks).toContain("CONTROLLER_HEAD");
+    expect(tasks).toMatch(/Integrate the parallel wave/i);
+    expect(tasks).toMatch(/merge each worker branch/i);
+    expect(tasks).toMatch(/remove each owned worker worktree/i);
+    expect(tasks).toMatch(/before returning to\s+`running-an-iteration`/i);
+  });
+
+  it("finishes a greenfield project once after its final evidence audit", () => {
+    const iterative = readFileSync(
+      resolve(ROOT, "core/skills/iterative-development/SKILL.md"),
+      "utf8",
+    );
+
+    expect(iterative).toMatch(/one project workspace/i);
+    expect(iterative).toContain("using-git-worktrees");
+    expect(iterative).toContain("finishing-a-development-branch");
+    expect(iterative).toMatch(/exactly once,\s+after the final behavior-evidence audit/i);
+  });
 });

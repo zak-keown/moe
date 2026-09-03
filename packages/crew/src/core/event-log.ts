@@ -69,6 +69,12 @@ export function classifyStatus(last: WorkerEvent): WorkerStatus {
     case "stop":
     case "session_start":
       return "idle";
+    // Run-level envelope events do not change worker status. They should not
+    // normally appear as the last event in a per-worker JSONL, but handling
+    // them here satisfies the exhaustive switch.
+    case "run_start":
+    case "run_end":
+      return "unknown";
     default: {
       const _exhaustive: never = last;
       return _exhaustive;

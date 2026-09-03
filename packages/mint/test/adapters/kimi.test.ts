@@ -46,6 +46,21 @@ describe('kimi adapter', () => {
 
   it('derives skill discovery and named-skill bootstrap routing', () => {
     expect(result.emittedCapabilities).toEqual(['skill-discovery', 'bootstrap-routing'])
+
+  it('declares expected support levels', () => {
+    // bootstrap is 'partial', not 'full': kimi's sessionStart only supports a
+    // named bootstrap skill -- bootstrap.generate mode is not supported (see
+    // the bootstrap.generate warning test below).
+    expect(kimi.support).toEqual({
+      skills: 'full',
+      commands: 'none',
+      agents: 'none',
+      hooks: 'none',
+      mcp: 'none',
+      bootstrap: 'partial',
+      rules: 'none',
+      variables: 'none',
+    })
   })
 })
 

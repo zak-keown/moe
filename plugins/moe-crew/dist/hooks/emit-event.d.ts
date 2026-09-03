@@ -33,6 +33,8 @@ interface HookOptions {
         tmuxName: string;
         cwd: string;
     } | undefined;
+    /** Optional run id to stamp on every emitted event (from MOE_CREW_RUN_ID). */
+    runId?: string | undefined;
 }
 /**
  * Pure hook logic: parse the payload, append a WorkerEvent if this is a managed

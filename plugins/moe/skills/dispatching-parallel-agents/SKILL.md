@@ -1,6 +1,11 @@
 ---
 name: dispatching-parallel-agents
 description: Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies
+triggers: >-
+  Load when you need the low-level mechanics of dispatching 2+
+  independent agents in parallel outside of a plan. Do NOT load when:
+  executing a plan (`subagent-driven-development` includes dispatching),
+  tasks share state or must run sequentially, or only one task exists.
 ---
 
 # Dispatching Parallel Agents
@@ -65,7 +70,9 @@ Each agent gets:
 
 ### 3. Dispatch in Parallel
 
-Issue all three subagent dispatches in the same response — they run in parallel:
+{subagent-dispatch}
+
+For independent work like the three fixes above, issue every dispatch together so they run concurrently:
 
 ```text
 Subagent (general-purpose): "Fix agent-tool-abort.test.ts failures"
@@ -74,7 +81,7 @@ Subagent (general-purpose): "Fix tool-approval-race-conditions.test.ts failures"
 # All three run concurrently.
 ```
 
-Multiple dispatch calls in one response = parallel execution. One per response = sequential.
+Keep dependent steps sequential — one dispatch, then the next.
 
 ### 4. Review and Integrate
 

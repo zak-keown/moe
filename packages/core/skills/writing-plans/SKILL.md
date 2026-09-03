@@ -1,6 +1,12 @@
 ---
 name: writing-plans
 description: Use when you have a spec or requirements for a multi-step task, before touching code
+triggers: >-
+  Load when you have approved requirements or a design and need to
+  produce a multi-task implementation plan before coding. Do NOT load
+  for: initial exploration or design (use `brainstorming` first),
+  single-file changes, bug fixes, or when a plan document already
+  exists and needs execution (`subagent-driven-development`).
 ---
 
 # Writing Plans
@@ -120,6 +126,8 @@ graduates: if the Goal is redrawn, that is a fresh plan, not a resumption.]
 
 ````markdown
 ### Task N: [Component Name]
+
+**depends_on:** [task numbers this task depends on, or []]
 
 **Blocked by:** D1  *(omit this line entirely when no decision blocks the task)*
 
@@ -245,11 +253,11 @@ Decisions** with the tasks it blocks, never in a step as an invented answer.
 Then check the edges resolve: every `**Blocked by:**` id names a decision that
 exists, and every decision's **Blocks** list names tasks that exist.
 
-**5. Execution metadata:** Validate every task has a non-empty `Files:` block,
-an `Interfaces:` block, and explicit `Consumes:` and `Produces:` entries. Use
-`None` when an interface edge does not exist. A missing block or entry fails
-plan validation; do not hand the plan to an executor or infer the missing value
-from prose.
+**5. Execution metadata:** Validate every task has a `depends_on:` field (or
+omits it, meaning []), a non-empty `Files:` block, an `Interfaces:` block,
+and explicit `Consumes:` and `Produces:` entries. Run
+`node "${CLAUDE_PLUGIN_ROOT}/hooks/task-set" check <plan.md>` to validate
+structural integrity — cycles, unresolvable deps, missing blocks.
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task — unless the task cannot be written until something is decided, in which case add the decision.
 
@@ -262,15 +270,16 @@ required for the workflow to work.
 
 When your human partner asks to review the plan visually — a browseable
 table of tasks, a rendered dependency diagram — walk the ladder from
-the top: on Claude Code, publish an artifact via the Artifact tool
-(rung 1) so they can scroll it in their client; otherwise fall to the
-brainstorm companion (rung 2) or a self-contained local HTML file
-(rung 3). Never gate execution on the browseable form; the markdown
+the top:
+
+{render-ladder}
+
+Never gate execution on the browseable form; the markdown
 file is the source of truth.
 
 ## Execution Handoff
 
-After saving the plan, offer execution choice:
+After saving the plan, use {ask} to offer the execution choice:
 
 **"Plan complete and saved to `docs/moe/plans/<filename>.md`. Two execution options:**
 

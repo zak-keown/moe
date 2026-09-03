@@ -193,6 +193,17 @@ function installDoc(model: PluginModel): string {
 
 export const agentPlugins: HarnessAdapter = Object.freeze({
   name: 'agent-plugins-1.0',
+  support: {
+    skills: 'full',
+    commands: 'none',
+    agents: 'none',
+    hooks: 'none',
+    mcp: 'full',
+    bootstrap: 'none',
+    rules: 'none',
+    variables: 'none',
+  },
+  skillsOutputDir: undefined,
   installDoc,
   emit(model: PluginModel) {
     const { config } = model

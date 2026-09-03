@@ -31,9 +31,15 @@
       "mode": "0644"
     },
     {
+      "path": ".cursor-plugin/marketplace.json",
+      "size": 375,
+      "sha256": "894ffddb378f28f8d8b9e220230aa53b15e08c14f2c4d92854669b98f4c744c7",
+      "mode": "0644"
+    },
+    {
       "path": ".cursor-plugin/plugin.json",
-      "size": 527,
-      "sha256": "7c11ea0d7942319519402f45f9fea2aca14a8dae231d89be91eb9cc01f3eb657",
+      "size": 663,
+      "sha256": "cb74d50306174401f1613277dd34330210355e041923d522b4141d2494fa4e8d",
       "mode": "0644"
     },
     {
@@ -44,8 +50,8 @@
     },
     {
       "path": ".moe-mint/manifest.json",
-      "size": 2825,
-      "sha256": "b6bba074f5f635de4f16f05d64ffa6f5ea664a7e403451631f123bf31bbfd15d",
+      "size": 2956,
+      "sha256": "4a46faf299a662efa9e61ea31bf18e407d68619c720f738f269ad9788d35298c",
       "mode": "0644"
     },
     {
@@ -146,8 +152,8 @@
     },
     {
       "path": "docs/install/cursor.md",
-      "size": 433,
-      "sha256": "9543fd176f86f854eec3a3fd68c0c4cc66bfc8ee8d5dda6b95e74e7b91e3ea57",
+      "size": 469,
+      "sha256": "20f31ef1b16a0ba8b0e8e23c09efd7c8ec13ad2754cb920ad96872a2e90f5f21",
       "mode": "0644"
     },
     {
@@ -176,8 +182,8 @@
     },
     {
       "path": "package.json",
-      "size": 2716,
-      "sha256": "ff7e2cc2c0563afe83fb87c4d3148c77e0547546595a7bfb67827781ba2749f8",
+      "size": 2755,
+      "sha256": "5df6dc849ec8ff10dad6701b5fcd80b3d861c6f9832c8a1c6579f8c0c25f23b2",
       "mode": "0644"
     },
     {
@@ -319,7 +325,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "1b41c12a5a225dbdc4721f57b43ff4d7607755fc03c70875738381acfc202861",
+  "tree_sha256": "7e7a902219aff90dec0bde391d6fbb17c92b1b38074fe1d9fbdee5048713f664",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

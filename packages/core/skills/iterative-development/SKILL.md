@@ -1,6 +1,12 @@
 ---
 name: iterative-development
 description: Use when implementing a project with a large, comprehensive, or ambiguous spec — extracts requirements with proof obligations, defines a walking skeleton with its first journey scenario, then loops through audited sprints that continuously build a behavior evidence corpus. Completion means passing evidence, not just finished stories.
+triggers: >-
+  Load when the spec is large (10+ files, 100+ requirements), ambiguous,
+  and you need audited sprints with behavior evidence. Do NOT load for:
+  well-scoped features with clear requirements (`writing-plans` then
+  `subagent-driven-development`), single tasks, bug fixes, or projects
+  where upfront planning has not yet been attempted.
 ---
 
 # Iterative Development
@@ -24,14 +30,22 @@ Do NOT use for a `patch` or a `change` (see `brainstorming`) — the `writing-pl
 
 ### Bootstrap (first invocation)
 
-1. Check `docs/moe/iterations/` for existing state. If found, skip to **Resume** below.
-2. Invoke `extracting-requirements` on the human-provided spec path.
+1. Check `docs/moe/iterations/` for existing state. Existing state selects an
+   explicit continuation; no state selects new work.
+2. Establish one project workspace with `using-git-worktrees`. Record its
+   `WORKSPACE_ID`, `BASE_BRANCH`, `BASE_SHA`, and work branch in
+   `docs/moe/iterations/workspace.md`, and keep all ITER-NNNN iterations on
+   that project branch. For continuation, verify that record matches this
+   checkout and then skip to **Resume** below. Iterations do not create sibling
+   project branches; task workers may use temporary worktrees that
+   `implementing-tasks` integrates back into this workspace.
+3. Invoke `extracting-requirements` on the human-provided spec path.
    - Chunks the spec, classifies by taxonomy (journeys → E2E, domains → integration, etc.)
    - Dispatches parallel extraction subagents that produce stories with proof obligations AND behavior scenarios
    - Aggregates stories into per-epic files, scenarios into behavior-scenarios.md
    - Builds coverage ledger with both story AND scenario coverage
    - Produces `docs/moe/iterations/requirements/`, `docs/moe/iterations/behavior-scenarios.md`, `docs/moe/iterations/behavior-corpus.md`
-3. Invoke `scoping-the-simplest-core` on the resulting backlog.
+4. Invoke `scoping-the-simplest-core` on the resulting backlog.
    - Defines the walking skeleton iteration (ITER-0000) + ordered follow-on iterations
    - Runs citation check + PAR scope review
    - Produces `docs/moe/iterations/roadmap.md`
@@ -83,6 +97,11 @@ Before declaring the project complete, verify that the product has adequate beha
 
 The final question is: "Can the system point to passing behavior evidence for every externally observable requirement the spec describes?" Not: "Are the stories done?"
 
+When the answer is yes, invoke `finishing-a-development-branch` exactly once,
+after the final behavior-evidence audit. This is the project-level integration
+boundary: verify the full suite, present the normal merge/MR/keep decision, and
+perform the selected cleanup. Do not finish or rebranch between iterations.
+
 ### Resume (re-invocation with existing state)
 
 All process state lives in artifact files:
@@ -91,8 +110,13 @@ All process state lives in artifact files:
 - `docs/moe/iterations/behavior-corpus.md` (execution index)
 - `docs/moe/iterations/roadmap.md` (iteration plan with status)
 - `docs/moe/iterations/iteration-log.md` (completed iteration history)
+- `docs/moe/iterations/workspace.md` (project workspace identity, base branch/SHA, and work branch)
 
-On re-invocation: read `roadmap.md`, find the next pending iteration, and continue from there. There is no ephemeral in-memory state to recover. The command "continue iterative development with the existing plan" always works.
+On re-invocation: read `roadmap.md`, verify the recorded project workspace
+identity and base, find the next pending iteration, and continue from there.
+There is no ephemeral in-memory state to recover. The command "continue
+iterative development with the existing plan" always works from the matching
+project workspace; an unrelated linked worktree must not adopt it implicitly.
 
 If the orchestrator crashed mid-iteration, the partially-completed iteration's git commits are preserved. On resume, the next un-started iteration picks up. If the in-progress iteration left the code in a broken state, treat it as a gap — the audit will catch it and add corrective work.
 
@@ -174,6 +198,7 @@ All plugin artifacts live in `docs/moe/iterations/`. Never modify the human's sp
 | `roadmap.md` | Sprint plan: ordered iterations with impacted scenarios |
 | `iteration-log.md` | Sprint history: what each iteration delivered + scenarios added |
 | `progress.md` | Live snapshot: current phase, task, iteration counts, sentinel status |
+| `workspace.md` | Project workspace identity, immutable fork SHA, intended merge branch, and work branch |
 
 ## Quality Gates
 

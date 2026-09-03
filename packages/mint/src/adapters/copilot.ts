@@ -29,6 +29,17 @@ function installDoc(model: PluginModel): string {
 
 export const copilot: HarnessAdapter = Object.freeze({
   name: 'copilot',
+  support: {
+    skills: 'full',
+    commands: 'full',
+    agents: 'full',
+    hooks: 'full',
+    mcp: 'full',
+    bootstrap: 'full',
+    rules: 'none',
+    variables: 'none',
+  },
+  skillsOutputDir: undefined,
   installDoc,
   emit(_model: PluginModel) {
     // Copilot consumes Claude's validated marketplace layout. Generation

@@ -50,4 +50,8 @@ describe("classifyStatus", () => {
   it("terminated for session_end", () => {
     expect(classifyStatus(ev("session_end"))).toBe("terminated");
   });
+  it("unknown for run_start/run_end (envelope events)", () => {
+    expect(classifyStatus({ event: "run_start", ts: "T", runId: "r1" })).toBe("unknown");
+    expect(classifyStatus({ event: "run_end", ts: "T", runId: "r2" })).toBe("unknown");
+  });
 });

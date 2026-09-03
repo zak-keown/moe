@@ -37,6 +37,10 @@ __pycache__/
 # `git add -A` while a workflow is running would otherwise stage them as embedded repos.
 .claude/
 
+# Agent-created linked worktrees for isolated plan execution.
+.moe/worktrees/
+.worktrees/
+
 # Build artifacts from packages/tab's release and binding scripts. Root covers
 # target/, dist/, __pycache__ and *.egg-info; these seven it does not.
 packages/tab/bindings/typescript/native/
@@ -55,6 +59,7 @@ py/proof/examples/*/runs/
 # pnpm content-addressable store — created locally when the store path is
 # resolved inside the repo (a pnpm 11 default on some setups). Never source.
 .pnpm-store/
+.moe/concept-review/
 
 # Interrupted Mint generation state. These are the only nonce-bearing siblings
 # the swap protocol owns; do not broaden these patterns to arbitrary siblings.

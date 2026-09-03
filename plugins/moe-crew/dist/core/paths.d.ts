@@ -18,4 +18,10 @@ export declare function workerHomePath(dir: string, name: string): string;
  * carry the harness in the meta from launch and do not need this.
  */
 export declare function harnessMarkerPath(dir: string, name: string): string;
+/**
+ * The sidecar worktree marker keyed by tmux_name. Written at launch when
+ * `--worktree` is set; stores the absolute worktree path so `stop` can
+ * remove it. Parallels the `.harness` marker.
+ */
+export declare function worktreeMarkerPath(dir: string, name: string): string;
 export declare function claudeTranscriptPath(home: string, cwd: string, sid: string): string;

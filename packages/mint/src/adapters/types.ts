@@ -11,6 +11,8 @@ export interface ComponentSupport {
   hooks: SupportLevel
   mcp: SupportLevel
   bootstrap: SupportLevel
+  rules: SupportLevel
+  variables: SupportLevel
 }
 
 export interface EmissionLimitation {
@@ -39,6 +41,8 @@ export interface AdapterEmission {
 
 export interface HarnessAdapter {
   name: string
+  support: ComponentSupport
+  skillsOutputDir?: string | undefined
   emit(model: PluginModel): AdapterEmission
   // Optional: markdown BODY (no marker, no heading — docs-emit.ts adds
   // both) describing how to install the plugin on this harness. Adapters

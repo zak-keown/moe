@@ -14,7 +14,7 @@
  *
  */
 import Database from "better-sqlite3";
-import type { ConversationExchange, JournalEntry, JournalScope } from "./types.js";
+import type { ConversationExchange, JournalEntry, JournalScope, MemoryEdge, MemoryNode } from "./types.js";
 export declare function migrateSchema(db: Database.Database): void;
 /**
  * Add `journal_entries.root` and discard the journal index once.
@@ -99,4 +99,24 @@ export interface JournalIndexState {
  */
 export declare function getJournalIndexState(db: Database.Database, scope?: JournalScope): Map<string, JournalIndexState>;
 export declare function countJournalEntries(db: Database.Database, scope?: JournalScope): number;
+export declare function insertNode(db: Database.Database, node: MemoryNode): void;
+export declare function insertEdge(db: Database.Database, edge: MemoryEdge): void;
+export declare function getNode(db: Database.Database, id: string): MemoryNode | null;
+export declare function getEdgesFrom(db: Database.Database, sourceType: string, sourceId: string): MemoryEdge[];
+export declare function getEdgesTo(db: Database.Database, targetType: string, targetId: string): MemoryEdge[];
+/**
+ * Walk the edge graph from a starting record, collecting edges up to `depth`.
+ *
+ * `direction`:
+ *   - `"causes"` — follow edges where the current node is the **target**
+ *     (i.e. find what caused it), walking target→source.
+ *   - `"effects"` — follow edges where the current node is the **source**
+ *     (i.e. find what it caused), walking source→target.
+ *
+ * Uses an iterative BFS to avoid stack overflow on deep chains.
+ */
+export declare function traceProvenance(db: Database.Database, type: string, id: string, depth: number, direction: "causes" | "effects"): Array<{
+    depth: number;
+    edge: MemoryEdge;
+}>;
 export {};

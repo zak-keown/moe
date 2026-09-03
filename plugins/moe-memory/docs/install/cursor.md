@@ -5,7 +5,9 @@
 ## What gets emitted
 
 - `.cursor-plugin/plugin.json`
+- `.cursor-plugin/marketplace.json`
 - the `hooks/moe-mint` bootstrap hook and its `hooks/moe-mint/hooks-cursor.json`
+- `.cursor-plugin/mcp.json`, translated from the plugin's MCP server config
 
 ## Installing
 

@@ -14,20 +14,23 @@
     ".codex-plugin/plugin.json": {
       "sha256": "83b4f3f7210ab8ceeeaade13578f99b7b801af76370f2130fff83a1612b289cb"
     },
+    ".cursor-plugin/marketplace.json": {
+      "sha256": "4913eb681604fc3074c89aef2da69e0dc9ddcb072f46afeaabec4c8553595a21"
+    },
     ".cursor-plugin/plugin.json": {
-      "sha256": "bf4eb4e6efeb708faa4c5f2200206c032eb718ad849dddd229a5e624a22ced1a"
+      "sha256": "758ba32df3aea6df0df46a1de8b1b3d0f0cd94b4eeafeeb0e61454016dac9323"
     },
     ".kimi-plugin/plugin.json": {
       "sha256": "dcc64e5efb84d027b709121fc47afcf07ada24b763d716fdf2258f39044be9d5"
     },
     ".opencode/agent/review-shard.md": {
-      "sha256": "73145d45a6ee1e62dcba026cbf6e474986a24796bab2a38500424546a76b3e3c"
+      "sha256": "4276041d61ca3d0549841d39f6c1bf4ea3160dc761fb2f7ed73701aa9fa86954"
     },
     ".opencode/agent/search-moedex.md": {
       "sha256": "6e8f892fa41820a8e5529917df9099a99e73140c9f550f0ad6cf6a79d59e5b4d"
     },
     ".opencode/agent/verify-finding.md": {
-      "sha256": "cdd11cd4356887cffb9504549a8905e887653b205b97c7e436cd963e8f655a4f"
+      "sha256": "4d2d31dd0c3cc4f2159a5c3680fef5f3d3184e966607395e256515c996177979"
     },
     ".opencode/plugins/moe.js": {
       "sha256": "3299911a2a01eecdcadc9035e1594cc05c2165b0630698354a189cdbb9dc0152"
@@ -48,7 +51,7 @@
       "sha256": "ba365e169cc885366a3560501552db53be33ffddb6f03753fe68e98874c88080"
     },
     "docs/install/cursor.md": {
-      "sha256": "d0031e1f8b5b27973670f8a4248d505b69c7382633c4cdf04f465375328dff9d"
+      "sha256": "52ce051ddbe073641179b3385838ce16619bd022e1673c066293ac3b569aa71e"
     },
     "docs/install/kimi.md": {
       "sha256": "af5707d066d48cdca5ad0722f37ae0937e03a09f72f52098c0bf852854ad9388"

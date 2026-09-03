@@ -28,12 +28,12 @@ __export(cli_exports, {
 });
 module.exports = __toCommonJS(cli_exports);
 var import_node_os4 = require("os");
-var import_node_path9 = require("path");
+var import_node_path11 = require("path");
 var import_node_readline = require("readline");
 
 // packages/crew/src/commands/adopt.ts
 var import_node_fs6 = require("fs");
-var import_node_path7 = require("path");
+var import_node_path8 = require("path");
 
 // packages/crew/src/core/consent.ts
 var import_node_fs = require("fs");
@@ -85,6 +85,10 @@ function workerHomePath(dir, name) {
 function harnessMarkerPath(dir, name) {
   assertSafeSegment(name);
   return `${dir}/${name}.harness`;
+}
+function worktreeMarkerPath(dir, name) {
+  assertSafeSegment(name);
+  return `${dir}/${name}.worktree`;
 }
 function claudeTranscriptPath(home, cwd, sid) {
   return `${home}/.claude/projects/${cwd.replace(/[/._:]/g, "-")}/${sid}.jsonl`;
@@ -183,11 +187,25 @@ function readHarnessMarker(dir, name) {
     return null;
   }
 }
+function writeWorktreeMarker(dir, name, wtPath) {
+  (0, import_node_fs2.mkdirSync)(dir, { recursive: true });
+  (0, import_node_fs2.writeFileSync)(worktreeMarkerPath(dir, name), wtPath);
+}
+function readWorktreeMarker(dir, name) {
+  const p = worktreeMarkerPath(dir, name);
+  if (!(0, import_node_fs2.existsSync)(p)) return null;
+  try {
+    return (0, import_node_fs2.readFileSync)(p, "utf8").trim() || null;
+  } catch {
+    return null;
+  }
+}
 function removeWorker(dir, sid, name) {
   (0, import_node_fs2.rmSync)(metaPath(dir, sid), { force: true });
   (0, import_node_fs2.rmSync)(eventsPath(dir, sid), { force: true });
   (0, import_node_fs2.rmSync)(shimPath(dir, name), { force: true });
   (0, import_node_fs2.rmSync)(harnessMarkerPath(dir, name), { force: true });
+  (0, import_node_fs2.rmSync)(worktreeMarkerPath(dir, name), { force: true });
   (0, import_node_fs2.rmSync)(workerHomePath(dir, name), { recursive: true, force: true });
 }
 function listOrphanNames(dir) {
@@ -196,6 +214,7 @@ function listOrphanNames(dir) {
   if ((0, import_node_fs2.existsSync)(dir)) {
     for (const f of (0, import_node_fs2.readdirSync)(dir)) {
       if (f.endsWith(".harness")) names.add(f.slice(0, -".harness".length));
+      if (f.endsWith(".worktree")) names.add(f.slice(0, -".worktree".length));
     }
   }
   const bin = (0, import_node_path3.join)(dir, "bin");
@@ -207,6 +226,7 @@ function listOrphanNames(dir) {
 function removeOrphan(dir, name) {
   (0, import_node_fs2.rmSync)(shimPath(dir, name), { force: true });
   (0, import_node_fs2.rmSync)(harnessMarkerPath(dir, name), { force: true });
+  (0, import_node_fs2.rmSync)(worktreeMarkerPath(dir, name), { force: true });
   (0, import_node_fs2.rmSync)(workerHomePath(dir, name), { recursive: true, force: true });
 }
 
@@ -867,7 +887,9 @@ var EVENT_NAMES = [
   "pre_tool_use",
   "post_tool_use",
   "stop",
-  "session_end"
+  "session_end",
+  "run_start",
+  "run_end"
 ];
 function parseEvent(line) {
   let v;
@@ -903,6 +925,12 @@ function classifyStatus(last) {
     case "stop":
     case "session_start":
       return "idle";
+    // Run-level envelope events do not change worker status. They should not
+    // normally appear as the last event in a per-worker JSONL, but handling
+    // them here satisfies the exhaustive switch.
+    case "run_start":
+    case "run_end":
+      return "unknown";
     default: {
       const _exhaustive = last;
       return _exhaustive;
@@ -960,7 +988,73 @@ async function awaitSessionStart(ctx, tmuxName, sessionId, opts = {}) {
 // packages/crew/src/commands/launch.ts
 var import_node_crypto = require("crypto");
 var import_node_fs5 = require("fs");
+var import_node_path7 = require("path");
+
+// packages/crew/src/core/worktree.ts
 var import_node_path6 = require("path");
+
+// packages/crew/src/core/proc.ts
+var import_node_child_process = require("child_process");
+var run = (cmd, args) => new Promise((resolve2) => {
+  (0, import_node_child_process.execFile)(
+    cmd,
+    args,
+    { encoding: "utf8", maxBuffer: 10 * 1024 * 1024 },
+    (err2, stdout, stderr) => {
+      if (!err2) {
+        resolve2({ stdout, stderr, code: 0 });
+        return;
+      }
+      const errCode = err2.code;
+      const code = typeof errCode === "number" ? errCode : 1;
+      resolve2({ stdout: stdout ?? "", stderr: stderr || String(err2), code });
+    }
+  );
+});
+
+// packages/crew/src/core/worktree.ts
+var WORKTREE_DIR = ".moe-worktrees";
+function worktreePath(repoRoot, name) {
+  return (0, import_node_path6.join)(repoRoot, WORKTREE_DIR, name);
+}
+async function createWorktree(runner = run, repoRoot, name, ref = "HEAD") {
+  const wt = worktreePath(repoRoot, name);
+  const result = await runner("git", [
+    "-C",
+    repoRoot,
+    "worktree",
+    "add",
+    "--detach",
+    wt,
+    ref
+  ]);
+  if (result.code !== 0) {
+    throw new Error(
+      `git worktree add failed (code ${result.code}): ${result.stderr.trim()}`
+    );
+  }
+  return wt;
+}
+async function removeWorktree(runner = run, repoRoot, wtPath) {
+  const result = await runner("git", [
+    "-C",
+    repoRoot,
+    "worktree",
+    "remove",
+    "--force",
+    wtPath
+  ]);
+  if (result.code !== 0) {
+    const msg = result.stderr.toLowerCase();
+    if (msg.includes("not a working tree") || msg.includes("is not a valid")) {
+      return;
+    }
+    if (msg.includes("no such file") || msg.includes("does not exist")) {
+      return;
+    }
+    await runner("git", ["-C", repoRoot, "worktree", "prune"]);
+  }
+}
 
 // packages/crew/src/commands/codex-launch.ts
 var sleep2 = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -1071,11 +1165,18 @@ async function cmdLaunch(ctx, args, opts) {
     };
   }
   ensureOwnedDir(ctx.workerDir);
-  (0, import_node_fs5.mkdirSync)((0, import_node_path6.join)(ctx.workerDir, "bin"), { recursive: true, mode: 448 });
+  (0, import_node_fs5.mkdirSync)((0, import_node_path7.join)(ctx.workerDir, "bin"), { recursive: true, mode: 448 });
+  let effectiveCwd = cwd;
+  let worktreeDir;
+  if (args.worktree) {
+    worktreeDir = await createWorktree(void 0, cwd, tmuxName);
+    effectiveCwd = worktreeDir;
+    writeWorktreeMarker(ctx.workerDir, tmuxName, worktreeDir);
+  }
   const invocation = extraArgs.length > 0 ? [tmuxName, cwd, "--", ...extraArgs] : [tmuxName, cwd];
-  return driver.idStrategy === "derive" ? launchDerive(ctx, { driver, tmuxName, cwd, extraArgs, invocation }, opts) : launchAssign(ctx, { driver, tmuxName, cwd, extraArgs, invocation }, opts);
+  return driver.idStrategy === "derive" ? launchDerive(ctx, { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir }, opts) : launchAssign(ctx, { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir }, opts);
 }
-async function launchAssign(ctx, { driver, tmuxName, cwd, extraArgs, invocation }, opts) {
+async function launchAssign(ctx, { driver, tmuxName, cwd, extraArgs, invocation, worktreeDir }, opts) {
   const sessionId = (0, import_node_crypto.randomUUID)();
   writeMeta(ctx.workerDir, {
     tmux_name: tmuxName,
@@ -1083,7 +1184,8 @@ async function launchAssign(ctx, { driver, tmuxName, cwd, extraArgs, invocation 
     cwd,
     harness: driver.id,
     started_at: isoSecondsUtc(),
-    invocation
+    invocation,
+    ...worktreeDir !== void 0 ? { worktree: worktreeDir } : {}
   });
   const env = driver.workerEnv(ctx.home, tmuxName, process.env);
   await driver.prepare(tmuxName, cwd, ctx.home);
@@ -1110,7 +1212,7 @@ async function launchAssign(ctx, { driver, tmuxName, cwd, extraArgs, invocation 
   });
   return { stdout: shim, stderr: panel, code: 0 };
 }
-async function launchDerive(ctx, { driver, tmuxName, cwd, extraArgs, invocation }, opts) {
+async function launchDerive(ctx, { driver, tmuxName, cwd, extraArgs, invocation, worktreeDir }, opts) {
   writeHarnessMarker(ctx.workerDir, tmuxName, driver.id);
   const workerHome = deriveWorkerHome(ctx.workerDir, tmuxName);
   const env = driver.workerEnv(workerHome, tmuxName, process.env);
@@ -1185,7 +1287,7 @@ async function cmdAdopt(ctx, args, opts) {
     };
   }
   ensureOwnedDir(ctx.workerDir);
-  (0, import_node_fs6.mkdirSync)((0, import_node_path7.join)(ctx.workerDir, "bin"), { recursive: true, mode: 448 });
+  (0, import_node_fs6.mkdirSync)((0, import_node_path8.join)(ctx.workerDir, "bin"), { recursive: true, mode: 448 });
   const invocation = extraArgs.length > 0 ? [tmuxName, cwd, sessionId, "--", ...extraArgs] : [tmuxName, cwd, sessionId];
   writeMeta(ctx.workerDir, {
     tmux_name: tmuxName,
@@ -1233,28 +1335,7 @@ var import_node_fs9 = require("fs");
 
 // packages/crew/src/core/diagnostics.ts
 var import_node_fs7 = require("fs");
-var import_node_path8 = require("path");
-
-// packages/crew/src/core/proc.ts
-var import_node_child_process = require("child_process");
-var run = (cmd, args) => new Promise((resolve2) => {
-  (0, import_node_child_process.execFile)(
-    cmd,
-    args,
-    { encoding: "utf8", maxBuffer: 10 * 1024 * 1024 },
-    (err2, stdout, stderr) => {
-      if (!err2) {
-        resolve2({ stdout, stderr, code: 0 });
-        return;
-      }
-      const errCode = err2.code;
-      const code = typeof errCode === "number" ? errCode : 1;
-      resolve2({ stdout: stdout ?? "", stderr: stderr || String(err2), code });
-    }
-  );
-});
-
-// packages/crew/src/core/diagnostics.ts
+var import_node_path9 = require("path");
 function tailLines(text, n) {
   const trimmed = text.endsWith("\n") ? text.slice(0, -1) : text;
   if (trimmed.length === 0) return "";
@@ -1296,7 +1377,7 @@ function fileTail(file, n, missingNote) {
 async function dumpConverseDiag(opts) {
   const run3 = opts.run ?? run;
   try {
-    (0, import_node_fs7.mkdirSync)((0, import_node_path8.dirname)(opts.dest), { recursive: true });
+    (0, import_node_fs7.mkdirSync)((0, import_node_path9.dirname)(opts.dest), { recursive: true });
   } catch {
     return false;
   }
@@ -1708,6 +1789,413 @@ async function cmdList(ctx, opts) {
   return { stdout: [HEADER, ...rows].join("\n"), code: 0 };
 }
 
+// packages/crew/src/core/packs.ts
+var import_node_fs11 = require("fs");
+function parsePackYaml(text) {
+  const lines = text.split("\n");
+  const root = {};
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (/^\s*$/.test(line) || /^\s*#/.test(line)) {
+      i++;
+      continue;
+    }
+    const topMatch = line.match(/^([A-Za-z_][A-Za-z0-9_]*):\s*(.*)/);
+    if (!topMatch) {
+      i++;
+      continue;
+    }
+    const key = topMatch[1];
+    const inlineValue = topMatch[2].trim();
+    if (/^\|[+-]?\s*$/.test(inlineValue)) {
+      const { value, nextLine } = readBlockScalar(lines, i + 1, 2);
+      root[key] = value;
+      i = nextLine;
+      continue;
+    }
+    if (inlineValue.length > 0) {
+      root[key] = parseScalar(inlineValue);
+      i++;
+      continue;
+    }
+    const nextNonBlank = peekNonBlank(lines, i + 1);
+    if (nextNonBlank !== null && lines[nextNonBlank].match(/^\s+-\s/)) {
+      const { items, nextLine } = readSequence(lines, i + 1);
+      root[key] = items;
+      i = nextLine;
+    } else {
+      root[key] = "";
+      i++;
+    }
+  }
+  return root;
+}
+function readBlockScalar(lines, start, minIndent) {
+  const collected = [];
+  let i = start;
+  let bodyIndent = minIndent;
+  while (i < lines.length && /^\s*$/.test(lines[i])) {
+    collected.push("");
+    i++;
+  }
+  if (i < lines.length) {
+    const m = lines[i].match(/^(\s*)/);
+    bodyIndent = m ? m[1].length : minIndent;
+    if (bodyIndent < minIndent) bodyIndent = minIndent;
+  }
+  while (i < lines.length) {
+    const line = lines[i];
+    if (/^\s*$/.test(line)) {
+      collected.push("");
+      i++;
+      continue;
+    }
+    const indent = line.match(/^(\s*)/)[1].length;
+    if (indent < bodyIndent) break;
+    collected.push(line.slice(bodyIndent));
+    i++;
+  }
+  while (collected.length > 0 && collected[collected.length - 1] === "") {
+    collected.pop();
+  }
+  return { value: collected.join("\n") + (collected.length > 0 ? "\n" : ""), nextLine: i };
+}
+function readSequence(lines, start) {
+  const items = [];
+  let i = start;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (/^\s*$/.test(line) || /^\s*#/.test(line)) {
+      i++;
+      continue;
+    }
+    const dashMatch = line.match(/^(\s*)-\s+(.*)/);
+    if (!dashMatch) break;
+    const dashIndent = dashMatch[1].length;
+    const firstContent = dashMatch[2];
+    const item = {};
+    const kvMatch = firstContent.match(/^([A-Za-z_][A-Za-z0-9_]*):\s*(.*)/);
+    if (kvMatch) {
+      const k = kvMatch[1];
+      const v = kvMatch[2].trim();
+      if (/^\|[+-]?\s*$/.test(v)) {
+        const { value, nextLine } = readBlockScalar(lines, i + 1, dashIndent + 4);
+        item[k] = value;
+        i = nextLine;
+      } else if (v.length > 0) {
+        item[k] = parseScalar(v);
+        i++;
+      } else {
+        const peek = peekNonBlank(lines, i + 1);
+        if (peek !== null && lines[peek].match(/^\s+-\s/)) {
+          const { scalarItems, nextLine } = readScalarSequence(lines, i + 1, dashIndent + 4);
+          item[k] = scalarItems;
+          i = nextLine;
+        } else {
+          item[k] = "";
+          i++;
+        }
+      }
+    } else {
+      i++;
+      continue;
+    }
+    while (i < lines.length) {
+      const cLine = lines[i];
+      if (/^\s*$/.test(cLine) || /^\s*#/.test(cLine)) {
+        i++;
+        continue;
+      }
+      const cIndent = cLine.match(/^(\s*)/)[1].length;
+      if (cIndent <= dashIndent) break;
+      if (cIndent <= dashIndent + 1) break;
+      const ckMatch = cLine.match(/^\s+([A-Za-z_][A-Za-z0-9_]*):\s*(.*)/);
+      if (!ckMatch) break;
+      const ck = ckMatch[1];
+      const cv = ckMatch[2].trim();
+      if (/^\|[+-]?\s*$/.test(cv)) {
+        const { value, nextLine } = readBlockScalar(lines, i + 1, cIndent + 2);
+        item[ck] = value;
+        i = nextLine;
+      } else if (cv.length > 0) {
+        item[ck] = parseScalar(cv);
+        i++;
+      } else {
+        const peek = peekNonBlank(lines, i + 1);
+        if (peek !== null && lines[peek].match(/^\s+-\s/)) {
+          const { scalarItems, nextLine } = readScalarSequence(lines, i + 1, cIndent + 2);
+          item[ck] = scalarItems;
+          i = nextLine;
+        } else {
+          item[ck] = "";
+          i++;
+        }
+      }
+    }
+    items.push(item);
+  }
+  return { items, nextLine: i };
+}
+function readScalarSequence(lines, start, minIndent) {
+  const scalarItems = [];
+  let i = start;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (/^\s*$/.test(line) || /^\s*#/.test(line)) {
+      i++;
+      continue;
+    }
+    const dm = line.match(/^(\s*)-\s+(.*)/);
+    if (!dm || dm[1].length < minIndent) break;
+    scalarItems.push(parseScalar(dm[2].trim()));
+    i++;
+  }
+  return { scalarItems, nextLine: i };
+}
+function peekNonBlank(lines, start) {
+  for (let i = start; i < lines.length; i++) {
+    if (!/^\s*$/.test(lines[i]) && !/^\s*#/.test(lines[i])) return i;
+  }
+  return null;
+}
+function parseScalar(raw) {
+  const stripped = raw.replace(/\s+#.*$/, "").trim();
+  if (stripped === "true" || stripped === "True" || stripped === "TRUE") return true;
+  if (stripped === "false" || stripped === "False" || stripped === "FALSE") return false;
+  if (stripped === "null" || stripped === "Null" || stripped === "NULL" || stripped === "~")
+    return null;
+  if (stripped.startsWith('"') && stripped.endsWith('"') || stripped.startsWith("'") && stripped.endsWith("'")) {
+    return stripped.slice(1, -1);
+  }
+  const n = Number(stripped);
+  if (stripped.length > 0 && !Number.isNaN(n) && /^-?[0-9]/.test(stripped)) return n;
+  return stripped;
+}
+function validatePack(raw) {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+    throw new Error("Invalid pack file: expected a YAML mapping at the top level");
+  }
+  const obj = raw;
+  const name = obj.name;
+  if (typeof name !== "string" || name.trim().length === 0) {
+    throw new Error("Invalid pack file: 'name' is required and must be a non-empty string");
+  }
+  const description = obj.description;
+  if (description !== void 0 && typeof description !== "string") {
+    throw new Error("Invalid pack file: 'description' must be a string");
+  }
+  const workers = obj.workers;
+  if (!Array.isArray(workers) || workers.length === 0) {
+    throw new Error("Invalid pack file: 'workers' is required and must be a non-empty array");
+  }
+  const validated = [];
+  for (let i = 0; i < workers.length; i++) {
+    const w = workers[i];
+    if (typeof w !== "object" || w === null) {
+      throw new Error(`Invalid pack file: workers[${i}] must be a mapping`);
+    }
+    if (typeof w.namePrefix !== "string" || w.namePrefix.trim().length === 0) {
+      throw new Error(
+        `Invalid pack file: workers[${i}].namePrefix is required and must be a non-empty string`
+      );
+    }
+    if (typeof w.rolePrompt !== "string" || w.rolePrompt.trim().length === 0) {
+      throw new Error(
+        `Invalid pack file: workers[${i}].rolePrompt is required and must be a non-empty string`
+      );
+    }
+    const pw = {
+      namePrefix: w.namePrefix,
+      rolePrompt: w.rolePrompt
+    };
+    if (w.harness !== void 0) {
+      if (typeof w.harness !== "string") {
+        throw new Error(`Invalid pack file: workers[${i}].harness must be a string`);
+      }
+      pw.harness = w.harness;
+    }
+    if (w.harnessArgs !== void 0) {
+      if (!Array.isArray(w.harnessArgs)) {
+        throw new Error(`Invalid pack file: workers[${i}].harnessArgs must be an array`);
+      }
+      pw.harnessArgs = w.harnessArgs.map(String);
+    }
+    validated.push(pw);
+  }
+  return {
+    name: name.trim(),
+    description: description !== void 0 ? description : void 0,
+    workers: validated
+  };
+}
+function loadPack(path) {
+  if (!(0, import_node_fs11.existsSync)(path)) {
+    throw new Error(`Pack file not found: ${path}`);
+  }
+  const text = (0, import_node_fs11.readFileSync)(path, "utf8");
+  let parsed;
+  if (path.endsWith(".json")) {
+    parsed = JSON.parse(text);
+  } else {
+    parsed = parsePackYaml(text);
+  }
+  return validatePack(parsed);
+}
+
+// packages/crew/src/commands/stop.ts
+var import_node_path10 = require("path");
+var sleep7 = (ms) => new Promise((r) => setTimeout(r, ms));
+function sawSessionEnd(eventFile) {
+  return readRawLines(eventFile).some((line) => parseEvent(line)?.event === "session_end");
+}
+async function cmdStop(ctx, worker, opts = {}) {
+  const resolved = resolveWorker(ctx, worker);
+  if ("code" in resolved) {
+    const harness = readHarnessMarker(ctx.workerDir, worker);
+    if (harness !== null && await ctx.tmux.hasSession(worker)) {
+      const orphanWt = readWorktreeMarker(ctx.workerDir, worker);
+      await ctx.tmux.killSession(worker);
+      removeOrphan(ctx.workerDir, worker);
+      if (orphanWt) {
+        const repoRoot = (0, import_node_path10.dirname)((0, import_node_path10.dirname)(orphanWt));
+        await removeWorktree(void 0, repoRoot, orphanWt);
+      }
+      return {
+        stdout: `Worker ${worker} (unregistered \u2014 no session id yet) stopped. Shim removed.`,
+        code: 0
+      };
+    }
+    return resolved;
+  }
+  const { sid, meta } = resolved;
+  const tmuxName = meta.tmux_name;
+  const stopTimeout = opts.stopTimeout ?? ctx.driver.stopGraceSeconds;
+  const pollMs = opts.pollMs ?? 500;
+  const settleMs = opts.settleMs ?? 1e3;
+  const eventFile = eventsPath(ctx.workerDir, sid);
+  const wtPath = readWorktreeMarker(ctx.workerDir, tmuxName);
+  if (await ctx.tmux.hasSession(tmuxName)) {
+    await ctx.tmux.sendText(tmuxName, ctx.driver.quitKeys);
+    await ctx.tmux.sendEnter(tmuxName);
+    const deadline = Date.now() + stopTimeout * 1e3;
+    while (Date.now() < deadline) {
+      if (sawSessionEnd(eventFile)) {
+        await sleep7(settleMs);
+        break;
+      }
+      if (!await ctx.tmux.hasSession(tmuxName)) break;
+      await sleep7(pollMs);
+    }
+    if (await ctx.tmux.hasSession(tmuxName)) {
+      await ctx.tmux.killSession(tmuxName);
+    }
+  }
+  removeWorker(ctx.workerDir, sid, tmuxName);
+  const effectiveWt = wtPath ?? meta.worktree;
+  if (effectiveWt) {
+    const repoRoot = (0, import_node_path10.dirname)((0, import_node_path10.dirname)(effectiveWt));
+    await removeWorktree(void 0, repoRoot, effectiveWt);
+  }
+  return {
+    stdout: `Worker ${tmuxName} (${sid}) stopped. Shim removed.`,
+    code: 0
+  };
+}
+
+// packages/crew/src/commands/pack.ts
+function workerName(packName, prefix, index) {
+  return `${packName}-${prefix}-${index}`;
+}
+async function cmdPack(ctx, args, opts) {
+  let pack;
+  try {
+    pack = loadPack(args.packFile);
+  } catch (e) {
+    return { stderr: `Error: ${e.message}`, code: 1 };
+  }
+  const shims = [];
+  const errors = [];
+  for (let i = 0; i < pack.workers.length; i++) {
+    const w = pack.workers[i];
+    const name = workerName(pack.name, w.namePrefix, i);
+    const harness = w.harness ?? "claude";
+    const extraArgs = w.harnessArgs ?? [];
+    const launchResult = await cmdLaunch(
+      ctx,
+      { tmuxName: name, cwd: args.cwd, extraArgs, harness },
+      opts
+    );
+    if (launchResult.code !== 0) {
+      errors.push(`Failed to launch ${name}: ${launchResult.stderr ?? "unknown error"}`);
+      continue;
+    }
+    if (launchResult.stdout) {
+      shims.push(launchResult.stdout);
+    }
+    const sendResult = await cmdSend(ctx, name, w.rolePrompt.trim());
+    if (sendResult.code !== 0) {
+      errors.push(`Failed to send role prompt to ${name}: ${sendResult.stderr ?? "unknown error"}`);
+    }
+  }
+  if (errors.length > 0 && shims.length === 0) {
+    return { stderr: errors.join("\n"), code: 1 };
+  }
+  const summary = [`Pack '${pack.name}' launched: ${shims.length} workers`];
+  for (const s of shims) {
+    summary.push(`  ${s}`);
+  }
+  if (errors.length > 0) {
+    summary.push(`Errors (${errors.length}):`);
+    for (const e of errors) {
+      summary.push(`  ${e}`);
+    }
+  }
+  return { stdout: summary.join("\n"), code: errors.length > 0 ? 1 : 0 };
+}
+async function cmdPackStop(ctx, args) {
+  let packName;
+  if (/\.(ya?ml|json)$/.test(args.nameOrFile)) {
+    try {
+      const pack = loadPack(args.nameOrFile);
+      packName = pack.name;
+    } catch (e) {
+      return { stderr: `Error: ${e.message}`, code: 1 };
+    }
+  } else {
+    packName = args.nameOrFile;
+  }
+  const prefix = `${packName}-`;
+  const workers = listWorkers(ctx.workerDir);
+  const matching = workers.filter((m) => m.tmux_name.startsWith(prefix));
+  if (matching.length === 0) {
+    return { stderr: `No workers found for pack '${packName}'`, code: 0 };
+  }
+  let stopped = 0;
+  const errors = [];
+  for (const meta of matching) {
+    const result = await cmdStop(ctx, meta.tmux_name);
+    if (result.code === 0) {
+      stopped++;
+    } else {
+      errors.push(
+        `Failed to stop ${meta.tmux_name}: ${result.stderr ?? "unknown error"}`
+      );
+    }
+  }
+  const summary = [`Pack '${packName}' stopped: ${stopped} workers`];
+  if (errors.length > 0) {
+    summary.push(`Errors (${errors.length}):`);
+    for (const e of errors) {
+      summary.push(`  ${e}`);
+    }
+  }
+  return {
+    stdout: summary.join("\n"),
+    code: errors.length > 0 ? 1 : 0
+  };
+}
+
 // packages/crew/src/commands/prune.ts
 async function cmdPrune(ctx) {
   const removed = [];
@@ -1731,7 +2219,7 @@ async function cmdPrune(ctx) {
 }
 
 // packages/crew/src/commands/read-events.ts
-var import_node_fs11 = require("fs");
+var import_node_fs12 = require("fs");
 function filterByType(lines, type) {
   return lines.filter((line) => parseEvent(line)?.event === type);
 }
@@ -1750,7 +2238,7 @@ async function cmdReadEvents(ctx, worker, opts) {
     return { stderr: `Error: no worker known as '${worker}'`, code: 1 };
   }
   const eventFile = eventsPath(ctx.workerDir, sid);
-  if (!(0, import_node_fs11.existsSync)(eventFile)) {
+  if (!(0, import_node_fs12.existsSync)(eventFile)) {
     return { stderr: `Error: No event file for session ${sid}`, code: 1 };
   }
   let lines = readRawLines(eventFile);
@@ -1769,7 +2257,7 @@ async function followEvents(ctx, worker, opts, sink, signal) {
   const eventFile = eventsPath(ctx.workerDir, sid);
   const matches = (line) => opts.type === void 0 || parseEvent(line)?.event === opts.type;
   let emitted = 0;
-  if ((0, import_node_fs11.existsSync)(eventFile)) {
+  if ((0, import_node_fs12.existsSync)(eventFile)) {
     const lines = readRawLines(eventFile);
     let backlog = lines.filter(matches);
     if (opts.last !== void 0) {
@@ -1780,7 +2268,7 @@ async function followEvents(ctx, worker, opts, sink, signal) {
   }
   for (; ; ) {
     if (signal?.aborted) return;
-    if ((0, import_node_fs11.existsSync)(eventFile)) {
+    if ((0, import_node_fs12.existsSync)(eventFile)) {
       const lines = readRawLines(eventFile);
       for (const line of lines.slice(emitted)) {
         if (matches(line)) sink(line);
@@ -1792,7 +2280,7 @@ async function followEvents(ctx, worker, opts, sink, signal) {
 }
 
 // packages/crew/src/commands/read-turn.ts
-var import_node_fs12 = require("fs");
+var import_node_fs13 = require("fs");
 async function cmdReadTurn(ctx, worker, opts) {
   const resolved = resolveWorker(ctx, worker);
   if ("code" in resolved) return resolved;
@@ -1804,10 +2292,10 @@ async function cmdReadTurn(ctx, worker, opts) {
     };
   }
   const logFile = ctx.driver.transcriptPath(sid, meta.cwd, ctx.home);
-  if (!(0, import_node_fs12.existsSync)(logFile)) {
+  if (!(0, import_node_fs13.existsSync)(logFile)) {
     return { stderr: `Error: Session log not found at ${logFile}`, code: 1 };
   }
-  const turn = ctx.driver.parseTurn((0, import_node_fs12.readFileSync)(logFile, "utf8"));
+  const turn = ctx.driver.parseTurn((0, import_node_fs13.readFileSync)(logFile, "utf8"));
   if (turn.length === 0) {
     return { stderr: "No user prompt found in session log", code: 1 };
   }
@@ -1827,54 +2315,6 @@ async function cmdSessionId(ctx, worker) {
     };
   }
   return { stdout: sid, code: 0 };
-}
-
-// packages/crew/src/commands/stop.ts
-var sleep7 = (ms) => new Promise((r) => setTimeout(r, ms));
-function sawSessionEnd(eventFile) {
-  return readRawLines(eventFile).some((line) => parseEvent(line)?.event === "session_end");
-}
-async function cmdStop(ctx, worker, opts = {}) {
-  const resolved = resolveWorker(ctx, worker);
-  if ("code" in resolved) {
-    const harness = readHarnessMarker(ctx.workerDir, worker);
-    if (harness !== null && await ctx.tmux.hasSession(worker)) {
-      await ctx.tmux.killSession(worker);
-      removeOrphan(ctx.workerDir, worker);
-      return {
-        stdout: `Worker ${worker} (unregistered \u2014 no session id yet) stopped. Shim removed.`,
-        code: 0
-      };
-    }
-    return resolved;
-  }
-  const { sid, meta } = resolved;
-  const tmuxName = meta.tmux_name;
-  const stopTimeout = opts.stopTimeout ?? ctx.driver.stopGraceSeconds;
-  const pollMs = opts.pollMs ?? 500;
-  const settleMs = opts.settleMs ?? 1e3;
-  const eventFile = eventsPath(ctx.workerDir, sid);
-  if (await ctx.tmux.hasSession(tmuxName)) {
-    await ctx.tmux.sendText(tmuxName, ctx.driver.quitKeys);
-    await ctx.tmux.sendEnter(tmuxName);
-    const deadline = Date.now() + stopTimeout * 1e3;
-    while (Date.now() < deadline) {
-      if (sawSessionEnd(eventFile)) {
-        await sleep7(settleMs);
-        break;
-      }
-      if (!await ctx.tmux.hasSession(tmuxName)) break;
-      await sleep7(pollMs);
-    }
-    if (await ctx.tmux.hasSession(tmuxName)) {
-      await ctx.tmux.killSession(tmuxName);
-    }
-  }
-  removeWorker(ctx.workerDir, sid, tmuxName);
-  return {
-    stdout: `Worker ${tmuxName} (${sid}) stopped. Shim removed.`,
-    code: 0
-  };
 }
 
 // packages/crew/src/core/tmux.ts
@@ -1934,7 +2374,7 @@ var realIo = {
   out: (s) => process.stdout.write(s),
   err: (s) => process.stderr.write(s)
 };
-var TOP_LEVEL_SUBS = ["launch", "adopt", "list", "prune", "grant-consent", "help"];
+var TOP_LEVEL_SUBS = ["launch", "adopt", "list", "pack", "pack-stop", "prune", "grant-consent", "help"];
 var PER_WORKER_SUBS = [
   "converse",
   "send",
@@ -1958,9 +2398,11 @@ MOE_CREW_WORKER_DIR below) \u2014 run that shim for all per-worker subcommands.
 surface is identical across harnesses.
 
 Top-level subcommands:
-  launch [--harness <claude|codex|pi>] <tmux-name> <cwd> [-- harness-args...]
+  launch [--harness <claude|codex|pi>] [--worktree] <tmux-name> <cwd> [-- harness-args...]
                        Bootstrap a worker (harness defaults to claude); shim
-                       path on stdout, panel on stderr
+                       path on stdout, panel on stderr. --worktree creates a
+                       disposable git worktree per worker so parallel workers
+                       do not race on git state; stop removes it
   adopt <tmux-name> <cwd> <session-id> [-- claude-args...]
                        Re-adopt an existing Claude session as a driveable
                        worker via \`claude --resume <session-id>\` (claude-only;
@@ -1974,6 +2416,13 @@ Top-level subcommands:
   list [--all] [<pattern>]
                        Enumerate workers (default: skip workers whose tmux is
                        gone). Optional pattern filters by tmux-name substring
+  pack <pack-file> [cwd]
+                       Launch a predefined team of workers from a YAML pack
+                       file. Each worker is launched and sent its role prompt.
+                       cwd defaults to the current directory
+  pack-stop <name-or-file>
+                       Stop all workers belonging to a pack. Accepts either
+                       a pack name or a pack YAML file path (reads the name)
   prune                Remove the runtime state of all \`gone\` workers (tmux
                        session dead); live workers are untouched
   grant-consent        One-time consent for running workers with permissions
@@ -2072,9 +2521,9 @@ function buildContext(worker) {
   };
 }
 function bootstrapOpts() {
-  const moeCrewEntry = (0, import_node_path9.join)(__dirname, "moe-crew.cjs");
+  const moeCrewEntry = (0, import_node_path11.join)(__dirname, "moe-crew.cjs");
   return {
-    pluginDir: process.env.CLAUDE_PLUGIN_ROOT ?? (0, import_node_path9.resolve)(__dirname, ".."),
+    pluginDir: process.env.CLAUDE_PLUGIN_ROOT ?? (0, import_node_path11.resolve)(__dirname, ".."),
     moeCrewEntry,
     moeCrewPath: process.env.MOE_CREW_PATH ?? moeCrewEntry
   };
@@ -2094,6 +2543,7 @@ function parseLaunchArgs(argv) {
   const usage = "Usage: launch <tmux-name> <cwd> [-- claude-args...]";
   const positionals = [];
   let harness = "claude";
+  let worktree = false;
   let extraArgs = [];
   let i = 0;
   while (i < argv.length) {
@@ -2116,12 +2566,17 @@ function parseLaunchArgs(argv) {
       i += 2;
       continue;
     }
+    if (a === "--worktree") {
+      worktree = true;
+      i += 1;
+      continue;
+    }
     positionals.push(a);
     i += 1;
   }
   const [tmuxName, cwd] = positionals;
   if (tmuxName === void 0 || cwd === void 0) return err(usage);
-  return { tmuxName, cwd, extraArgs, harness };
+  return { tmuxName, cwd, extraArgs, harness, ...worktree ? { worktree: true } : {} };
 }
 function parseAdoptArgs(argv) {
   const usage = "Usage: adopt <tmux-name> <cwd> <session-id> [-- claude-args...]";
@@ -2223,6 +2678,23 @@ async function run2(argv, io = realIo) {
         return opts.code;
       }
       return emit(io, await cmdList(ctx, opts));
+    }
+    case "pack": {
+      const packFile = args[0];
+      if (packFile === void 0) {
+        io.err("Usage: pack <pack-file> [cwd]\n");
+        return 2;
+      }
+      const packCwd = args[1] ?? process.cwd();
+      return emit(io, await cmdPack(ctx, { packFile, cwd: packCwd }, bootstrapOpts()));
+    }
+    case "pack-stop": {
+      const nameOrFile = args[0];
+      if (nameOrFile === void 0) {
+        io.err("Usage: pack-stop <name-or-file>\n");
+        return 2;
+      }
+      return emit(io, await cmdPackStop(ctx, { nameOrFile }));
     }
     case "prune":
       return emit(io, await cmdPrune(ctx));

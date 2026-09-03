@@ -1,0 +1,15 @@
+name: review-pack
+description: Two parallel reviewers plus a verification pass
+workers:
+  - namePrefix: reviewer
+    rolePrompt: |
+      You are a code reviewer. Review the changes on the current branch
+      for correctness, security, and style. Write findings to review.md.
+  - namePrefix: reviewer
+    rolePrompt: |
+      You are a second code reviewer providing an independent perspective.
+      Review the changes on the current branch. Write findings to review-2.md.
+  - namePrefix: verifier
+    rolePrompt: |
+      You are a verification agent. Wait for review.md and review-2.md to
+      appear, then adversarially verify each finding. Write verdict.md.

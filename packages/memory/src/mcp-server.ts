@@ -24,13 +24,14 @@
  * misdiagnosed as that.
  */
 
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { initDatabase } from "./db.js";
+import { initDatabase, insertEdge, traceProvenance } from "./db.js";
 import { reportMissingDeps } from "./install-check.js";
 import { JournalSearchService } from "./journal/search.js";
 import { JournalStore } from "./journal/store.js";
@@ -42,7 +43,7 @@ import {
   searchMultipleConcepts,
 } from "./search.js";
 import { formatConversationAsMarkdown } from "./show.js";
-import type { JournalThoughts } from "./types.js";
+import type { JournalThoughts, MemoryEdge, RelationType, SourceType } from "./types.js";
 import { VERSION } from "./version.js";
 
 // Zod Schemas for Input Validation
@@ -87,6 +88,7 @@ const SearchInputSchema = z
     project: z.string().min(1).optional().describe("Filter by project name (exact match)"),
     session_id: z.string().min(1).optional().describe("Filter by session ID (exact match)"),
     git_branch: z.string().min(1).optional().describe("Filter by git branch name (exact match)"),
+    git_commit: z.string().min(1).optional().describe("Filter by git commit SHA (exact match)"),
     response_format: ResponseFormatEnum.default("markdown").describe(
       'Output format: "markdown" for human-readable or "json" for machine-readable (default: "markdown")',
     ),
@@ -155,6 +157,35 @@ const ReadRecentEntriesInputSchema = z
   })
   .strict();
 
+const RelationEnum = z.enum([
+  "caused_by",
+  "contradicts",
+  "supersedes",
+  "supports",
+  "implements",
+]);
+
+const LinkMemoriesInputSchema = z
+  .object({
+    source: z
+      .string()
+      .min(3, "Source must be type:id format (e.g. 'exchange:abc123')"),
+    target: z
+      .string()
+      .min(3, "Target must be type:id format (e.g. 'journal:def456')"),
+    relation: RelationEnum,
+    confidence: z.number().min(0).max(1).default(1.0),
+  })
+  .strict();
+
+const TraceProvenanceInputSchema = z
+  .object({
+    id: z.string().min(3, "Id must be type:id format (e.g. 'exchange:abc123')"),
+    depth: z.number().int().min(1).max(10).default(3),
+    direction: z.enum(["causes", "effects"]).default("causes"),
+  })
+  .strict();
+
 // Error Handling Utility
 
 function handleError(error: unknown): string {
@@ -212,6 +243,11 @@ function toolDefinitions() {
             type: "string",
             minLength: 1,
             description: "Filter by git branch name (exact match)",
+          },
+          git_commit: {
+            type: "string",
+            minLength: 1,
+            description: "Filter by git commit SHA (exact match)",
           },
           response_format: { type: "string", enum: ["markdown", "json"], default: "markdown" },
         },
@@ -407,6 +443,81 @@ function toolDefinitions() {
         openWorldHint: false,
       },
     },
+    {
+      name: "link_memories",
+      description:
+        "Create a typed relationship between two memory records. Source and target are type:id strings (e.g. 'exchange:abc123', 'journal:def456'). Relations: caused_by, contradicts, supersedes, supports, implements.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          source: {
+            type: "string",
+            description:
+              "Source record as type:id (e.g. 'exchange:abc123', 'journal:def456', 'decision:ghi789')",
+          },
+          target: {
+            type: "string",
+            description:
+              "Target record as type:id (e.g. 'exchange:abc123', 'journal:def456', 'finding:jkl012')",
+          },
+          relation: {
+            type: "string",
+            enum: ["caused_by", "contradicts", "supersedes", "supports", "implements"],
+            description: "The relationship type from source to target",
+          },
+          confidence: {
+            type: "number",
+            description: "Confidence in the relationship (0.0 to 1.0, default: 1.0)",
+            default: 1.0,
+          },
+        },
+        required: ["source", "target", "relation"],
+        additionalProperties: false,
+      },
+      annotations: {
+        title: "Link Memories",
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false,
+      },
+    },
+    {
+      name: "trace_provenance",
+      description:
+        "Walk the relationship graph from a memory record. Returns the chain of connected records up to the specified depth. Use 'causes' to find what led to a record, 'effects' to find what it influenced.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          id: {
+            type: "string",
+            description:
+              "Starting record as type:id (e.g. 'exchange:abc123', 'decision:def456')",
+          },
+          depth: {
+            type: "number",
+            description: "Maximum traversal depth (default: 3, max: 10)",
+            default: 3,
+          },
+          direction: {
+            type: "string",
+            enum: ["causes", "effects"],
+            description:
+              "Direction to walk: 'causes' finds what led to this record, 'effects' finds what it influenced (default: 'causes')",
+            default: "causes",
+          },
+        },
+        required: ["id"],
+        additionalProperties: false,
+      },
+      annotations: {
+        title: "Trace Provenance",
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
   ];
 }
 
@@ -453,6 +564,7 @@ export function createMemoryMcpServer(options: MemoryServerOptions = {}): Server
             project: params.project,
             session_id: params.session_id,
             git_branch: params.git_branch,
+            git_commit: params.git_commit,
           };
 
           const results = await searchMultipleConcepts(params.query, multiOptions);
@@ -470,6 +582,7 @@ export function createMemoryMcpServer(options: MemoryServerOptions = {}): Server
             project: params.project,
             session_id: params.session_id,
             git_branch: params.git_branch,
+            git_commit: params.git_commit,
           };
 
           const results = await searchConversations(params.query, singleOptions);
@@ -639,6 +752,65 @@ export function createMemoryMcpServer(options: MemoryServerOptions = {}): Server
               )
               .join("\n\n"),
           );
+        } finally {
+          db.close();
+        }
+      }
+
+      if (name === "link_memories") {
+        const params = LinkMemoriesInputSchema.parse(args);
+
+        const sourceColon = params.source.indexOf(":");
+        const targetColon = params.target.indexOf(":");
+        if (sourceColon < 1) throw new Error(`Invalid source format: expected type:id, got "${params.source}"`);
+        if (targetColon < 1) throw new Error(`Invalid target format: expected type:id, got "${params.target}"`);
+
+        const sourceType = params.source.slice(0, sourceColon) as SourceType;
+        const sourceId = params.source.slice(sourceColon + 1);
+        const targetType = params.target.slice(0, targetColon) as SourceType;
+        const targetId = params.target.slice(targetColon + 1);
+
+        const edgeId = crypto.randomUUID();
+        const edge: MemoryEdge = {
+          id: edgeId,
+          sourceType,
+          sourceId,
+          targetType,
+          targetId,
+          relation: params.relation as RelationType,
+          confidence: params.confidence,
+          createdAt: new Date().toISOString(),
+          createdBy: "model",
+        };
+
+        const db = initDatabase();
+        try {
+          insertEdge(db, edge);
+        } finally {
+          db.close();
+        }
+
+        return textResult(
+          `Linked ${params.source} --[${params.relation}]--> ${params.target} (edge ${edgeId}, confidence ${params.confidence})`,
+        );
+      }
+
+      if (name === "trace_provenance") {
+        const params = TraceProvenanceInputSchema.parse(args);
+
+        const colonIdx = params.id.indexOf(":");
+        if (colonIdx < 1) throw new Error(`Invalid id format: expected type:id, got "${params.id}"`);
+
+        const recordType = params.id.slice(0, colonIdx);
+        const recordId = params.id.slice(colonIdx + 1);
+
+        const db = initDatabase();
+        try {
+          const chain = traceProvenance(db, recordType, recordId, params.depth, params.direction);
+          if (chain.length === 0) {
+            return textResult(`No ${params.direction} found for ${params.id} within depth ${params.depth}.`);
+          }
+          return textResult(JSON.stringify({ start: params.id, direction: params.direction, depth: params.depth, chain }, null, 2));
         } finally {
           db.close();
         }

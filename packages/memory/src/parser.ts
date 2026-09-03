@@ -18,6 +18,7 @@ interface JSONLMessage {
   sessionId?: string;
   cwd?: string;
   gitBranch?: string;
+  gitCommit?: string;
   version?: string;
   thinkingMetadata?: {
     level?: string;
@@ -49,6 +50,7 @@ interface ExchangeBuilder {
   sessionId?: string | undefined;
   cwd?: string | undefined;
   gitBranch?: string | undefined;
+  gitCommit?: string | undefined;
   claudeVersion?: string | undefined;
   agentVersion?: string | undefined;
   model?: string | undefined;
@@ -142,6 +144,7 @@ async function parseClaudeConversation(
         sessionId: currentExchange.sessionId,
         cwd: currentExchange.cwd,
         gitBranch: currentExchange.gitBranch,
+        gitCommit: currentExchange.gitCommit,
         claudeVersion: currentExchange.claudeVersion,
         agentVersion: currentExchange.agentVersion,
         model: currentExchange.model,
@@ -235,6 +238,7 @@ async function parseClaudeConversation(
           sessionId: parsed.sessionId,
           cwd: parsed.cwd,
           gitBranch: parsed.gitBranch,
+          gitCommit: parsed.gitCommit,
           claudeVersion: parsed.version,
           agentVersion: parsed.version,
           model: parsed.message.model,
@@ -266,6 +270,7 @@ async function parseClaudeConversation(
         if (parsed.sessionId) currentExchange.sessionId = parsed.sessionId;
         if (parsed.cwd) currentExchange.cwd = parsed.cwd;
         if (parsed.gitBranch) currentExchange.gitBranch = parsed.gitBranch;
+        if (parsed.gitCommit) currentExchange.gitCommit = parsed.gitCommit;
         if (parsed.version) {
           currentExchange.claudeVersion = parsed.version;
           currentExchange.agentVersion = parsed.version;
@@ -345,6 +350,7 @@ async function parseCodexConversation(
   let sessionId: string | undefined;
   let cwd: string | undefined;
   let gitBranch: string | undefined;
+  let gitCommit: string | undefined;
   let agentVersion: string | undefined;
   let model: string | undefined;
   let modelProvider: string | undefined;
@@ -361,6 +367,7 @@ async function parseCodexConversation(
     currentExchange.sessionId = sessionId;
     currentExchange.cwd = cwd;
     currentExchange.gitBranch = gitBranch;
+    currentExchange.gitCommit = gitCommit;
     currentExchange.agentVersion = agentVersion;
     currentExchange.model = model;
     currentExchange.modelProvider = modelProvider;
@@ -392,6 +399,7 @@ async function parseCodexConversation(
         sessionId: currentExchange.sessionId,
         cwd: currentExchange.cwd,
         gitBranch: currentExchange.gitBranch,
+        gitCommit: currentExchange.gitCommit,
         agentVersion: currentExchange.agentVersion,
         model: currentExchange.model,
         modelProvider: currentExchange.modelProvider,
@@ -415,6 +423,7 @@ async function parseCodexConversation(
       sessionId,
       cwd,
       gitBranch,
+      gitCommit,
       agentVersion,
       model,
       modelProvider,
@@ -482,6 +491,7 @@ async function parseCodexConversation(
         sessionId = payload.id || sessionId;
         cwd = payload.cwd || cwd;
         gitBranch = payload.git?.branch || gitBranch;
+        gitCommit = payload.git?.commit || gitCommit;
         agentVersion = payload.cli_version || agentVersion;
         modelProvider = payload.model_provider || modelProvider;
         applyMetadataToCurrentExchange();

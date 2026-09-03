@@ -16,5 +16,10 @@
     "subagents",
     "sessions"
   ],
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "category": "development",
+  "tags": [
+    "orchestration",
+    "tmux"
+  ]
 }

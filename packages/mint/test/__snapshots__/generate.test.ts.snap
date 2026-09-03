@@ -86,6 +86,37 @@ exports[`generate > snapshots the generated tree for the kitchen-sink fixture 1`
   "hooks": {}
 }
 
+=== .cursor-plugin/marketplace.json ===
+{
+  "name": "kitchen-sink-market",
+  "owner": {
+    "name": "Bubstack",
+    "email": "dev@bubstack.example"
+  },
+  "metadata": {
+    "description": "Fixture plugin exercising every component type"
+  },
+  "plugins": [
+    {
+      "name": "kitchen-sink",
+      "source": "./",
+      "description": "Fixture plugin exercising every component type"
+    }
+  ]
+}
+
+=== .cursor-plugin/mcp.json ===
+{
+  "mcpServers": {
+    "ks-demo": {
+      "command": "node",
+      "args": [
+        "./mcp-demo-server.js"
+      ]
+    }
+  }
+}
+
 === .cursor-plugin/plugin.json ===
 {
   "name": "kitchen-sink",
@@ -102,6 +133,14 @@ exports[`generate > snapshots the generated tree for the kitchen-sink fixture 1`
     "fixture"
   ],
   "skills": "./skills/",
+  "category": "Developer Tools",
+  "tags": [
+    "demo",
+    "fixture"
+  ],
+  "commands": "./commands/",
+  "agents": "./agents/",
+  "mcpServers": "./.cursor-plugin/mcp.json",
   "hooks": "./hooks/moe-mint/hooks-cursor.json"
 }
 
@@ -426,7 +465,9 @@ Copilot installs the plugin's Claude Code layout (skills/, commands/, agents/, h
 ## What gets emitted
 
 - \`.cursor-plugin/plugin.json\`
+- \`.cursor-plugin/marketplace.json\`
 - the \`hooks/moe-mint\` bootstrap hook and its \`hooks/moe-mint/hooks-cursor.json\`
+- \`.cursor-plugin/mcp.json\`, translated from the plugin's MCP server config
 
 ## Installing
 

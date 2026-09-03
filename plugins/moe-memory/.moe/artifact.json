@@ -31,9 +31,21 @@
       "mode": "0644"
     },
     {
+      "path": ".cursor-plugin/marketplace.json",
+      "size": 360,
+      "sha256": "f7f2b50455815f9a84f4c672c6cdfc22d514adaff67a16176318776ee648f12f",
+      "mode": "0644"
+    },
+    {
+      "path": ".cursor-plugin/mcp.json",
+      "size": 428,
+      "sha256": "e124142cbe932ed37ca08b900a7fddc4170b380768ff48c5a09bdf858dbdbbd4",
+      "mode": "0644"
+    },
+    {
       "path": ".cursor-plugin/plugin.json",
-      "size": 525,
-      "sha256": "124eb656d70a0d4646544b534ab5e730bdfa434fdfebfb58f9472d809fab6e07",
+      "size": 669,
+      "sha256": "599ad596addc27feb1a7aba47f3ef6c3bba7dbcc8742a8df0e8024c6032d84ce",
       "mode": "0644"
     },
     {
@@ -50,8 +62,8 @@
     },
     {
       "path": ".moe-mint/manifest.json",
-      "size": 3118,
-      "sha256": "d124d754793ec086f98f3fc150aed0ac9535cd4ba103bc816e1ba6bb7f3eb95c",
+      "size": 3372,
+      "sha256": "f764a3a211d5b7f46b23edf000218b8374f4b191b9d397845a0c4b9662638f35",
       "mode": "0644"
     },
     {
@@ -140,14 +152,14 @@
     },
     {
       "path": "dist/db.d.ts",
-      "size": 5066,
-      "sha256": "0e23151c01784bdbac4285c8cbc207873e6b4a942e9b7a48d3e790e9056f941b",
+      "size": 6205,
+      "sha256": "2488511b1abfd7cb77adebf1068329a6f7ee4db64eb39f47a67c18ae3cf354ab",
       "mode": "0644"
     },
     {
       "path": "dist/db.js",
-      "size": 17927,
-      "sha256": "8326d1ec54e769a0cea29ef8d48e1a31ccf497263ce9774032a106534509c7f5",
+      "size": 23357,
+      "sha256": "e554128ba1b9f3cc4abff0a00f2599bedf26e315d8b531780fc4abd9437d1252",
       "mode": "0644"
     },
     {
@@ -338,8 +350,8 @@
     },
     {
       "path": "dist/mcp-server.js",
-      "size": 29304,
-      "sha256": "db910633f5e4d2dbbbe57901797ed90310ab43ee28e722176336b25ffcfc66f2",
+      "size": 36410,
+      "sha256": "dca1ffc13872d6b10ad44cd5f50ff35c7da135a72e8c41b48bcb786bd8b42422",
       "mode": "0644"
     },
     {
@@ -350,8 +362,8 @@
     },
     {
       "path": "dist/parser.js",
-      "size": 17092,
-      "sha256": "dceda9a7fa3a5df9d4d1278ab0b8d659a8c74b492d3aef30882de89e9d51d874",
+      "size": 17504,
+      "sha256": "01c0af438f77b4f4a1f036d2c20d45f25a464e9ca6e7af3eeb6b9f998bcd4dc0",
       "mode": "0644"
     },
     {
@@ -374,20 +386,20 @@
     },
     {
       "path": "dist/search-cli.js",
-      "size": 4370,
-      "sha256": "2980aeca0b31a63f1b45e9904e5f372fa04edc574b063bacfa0cf90549acad1c",
+      "size": 4696,
+      "sha256": "d4a5dd3cad9c85031f97ed16b28abc6a0c7ab1efb71a21786b7b6f9172bd6303",
       "mode": "0644"
     },
     {
       "path": "dist/search.d.ts",
-      "size": 1859,
-      "sha256": "b8a46ba27269ca450ab15790d058c5ce943a1831ba01915d92b38de6fb0de32e",
+      "size": 1896,
+      "sha256": "0e846939b064e0bed5460bd896d03926221ec2ccea1fca0e77a5bb5e160477b8",
       "mode": "0644"
     },
     {
       "path": "dist/search.js",
-      "size": 15547,
-      "sha256": "d3b7a164d05df65bdabdc9a339571a726f2493af919e26b1d92048e21b49f553",
+      "size": 15756,
+      "sha256": "7395f087157f3266ef24a982930508573aa2a8d1a9970ade85d22d6c2e9f900c",
       "mode": "0644"
     },
     {
@@ -410,8 +422,8 @@
     },
     {
       "path": "dist/show.js",
-      "size": 36290,
-      "sha256": "b3779ea2da48d4648b0bd7de3033fd098e2a2418e807cc64818ea951db3cc058",
+      "size": 36705,
+      "sha256": "88aa6eaeccd878848aafa9b0c367fc5fc92daff5ad98825f4e613997392f2c7e",
       "mode": "0644"
     },
     {
@@ -488,8 +500,8 @@
     },
     {
       "path": "dist/types.d.ts",
-      "size": 4720,
-      "sha256": "e229ef5d5351e39b950f3e31a1da068064d499deaafe975d2a3cc78363d9d72f",
+      "size": 5857,
+      "sha256": "b63fcf51d65b69ce939fd08ec2ac333fc3fd7bc722fd4ad7f515832adaf4f6e1",
       "mode": "0644"
     },
     {
@@ -548,8 +560,8 @@
     },
     {
       "path": "docs/install/cursor.md",
-      "size": 649,
-      "sha256": "ec869e378b4271ff02f2e0e5e481a74a1db0e4bfaa95559a6dc66f66fc8ab366",
+      "size": 761,
+      "sha256": "2a574366b6848b020ee0e8e9c658345677343d246811753178f4944f4cea5cc8",
       "mode": "0644"
     },
     {
@@ -614,8 +626,8 @@
     },
     {
       "path": "package.json",
-      "size": 4263,
-      "sha256": "5a262e2b0eec70207b78c8bd9307354515ca61e662fe7e99efe5f88a2559c06f",
+      "size": 4333,
+      "sha256": "3e8861d6cadce54dbf2b80eae8997ea447d90b87233840627a241c541d6dbee7",
       "mode": "0644"
     },
     {
@@ -643,7 +655,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "58e9cfdf9247462d07b8f66957f73a27513e93efb2105532b905cab34fba63e8",
+  "tree_sha256": "61c3e5e25f183541c473290f29783bc9f038e3a48d48e77a30e5ebad4cee475c",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

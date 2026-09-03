@@ -18,5 +18,12 @@
     "mcp"
   ],
   "skills": "./skills/",
+  "category": "productivity",
+  "tags": [
+    "memory",
+    "search"
+  ],
+  "agents": "./agents/",
+  "mcpServers": "./.cursor-plugin/mcp.json",
   "hooks": "./hooks/moe-mint/hooks-cursor.json"
 }

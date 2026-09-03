@@ -1,0 +1,11 @@
+tokens:
+  ask:
+    claude-code: "`AskUserQuestion`"
+    cursor: "`AskUserQuestion`"
+    codex: "ask in the terminal"
+    kimi: "`AskUserQuestion`"
+    opencode: "ask in the terminal"
+    pi: "ask in the terminal"
+    agent-plugins-1.0: "`AskUserQuestion`"
+    copilot: "`AskUserQuestion`"
+blocks: {}

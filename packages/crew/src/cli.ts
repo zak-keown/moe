@@ -10,6 +10,7 @@ import { cmdHandoff } from "./commands/handoff.js";
 import type { BootstrapOpts } from "./commands/launch.js";
 import { cmdLaunch } from "./commands/launch.js";
 import { cmdList } from "./commands/list.js";
+import { cmdPack, cmdPackStop } from "./commands/pack.js";
 import { cmdPrune } from "./commands/prune.js";
 import { cmdReadEvents, followEvents } from "./commands/read-events.js";
 import { cmdReadTurn } from "./commands/read-turn.js";
@@ -34,7 +35,7 @@ const realIo: Io = {
   err: (s) => process.stderr.write(s),
 };
 
-const TOP_LEVEL_SUBS = ["launch", "adopt", "list", "prune", "grant-consent", "help"];
+const TOP_LEVEL_SUBS = ["launch", "adopt", "list", "pack", "pack-stop", "prune", "grant-consent", "help"];
 const PER_WORKER_SUBS = [
   "converse",
   "send",
@@ -64,9 +65,11 @@ MOE_CREW_WORKER_DIR below) — run that shim for all per-worker subcommands.
 surface is identical across harnesses.
 
 Top-level subcommands:
-  launch [--harness <claude|codex|pi>] <tmux-name> <cwd> [-- harness-args...]
+  launch [--harness <claude|codex|pi>] [--worktree] <tmux-name> <cwd> [-- harness-args...]
                        Bootstrap a worker (harness defaults to claude); shim
-                       path on stdout, panel on stderr
+                       path on stdout, panel on stderr. --worktree creates a
+                       disposable git worktree per worker so parallel workers
+                       do not race on git state; stop removes it
   adopt <tmux-name> <cwd> <session-id> [-- claude-args...]
                        Re-adopt an existing Claude session as a driveable
                        worker via \`claude --resume <session-id>\` (claude-only;
@@ -80,6 +83,13 @@ Top-level subcommands:
   list [--all] [<pattern>]
                        Enumerate workers (default: skip workers whose tmux is
                        gone). Optional pattern filters by tmux-name substring
+  pack <pack-file> [cwd]
+                       Launch a predefined team of workers from a YAML pack
+                       file. Each worker is launched and sent its role prompt.
+                       cwd defaults to the current directory
+  pack-stop <name-or-file>
+                       Stop all workers belonging to a pack. Accepts either
+                       a pack name or a pack YAML file path (reads the name)
   prune                Remove the runtime state of all \`gone\` workers (tmux
                        session dead); live workers are untouched
   grant-consent        One-time consent for running workers with permissions
@@ -249,13 +259,16 @@ export function readLine(input: NodeJS.ReadableStream = process.stdin): Promise<
   });
 }
 
-/** Parse `launch [--harness <id>] <tmux-name> <cwd> [-- harness-args...]`. */
+/** Parse `launch [--harness <id>] [--worktree] <tmux-name> <cwd> [-- harness-args...]`. */
 function parseLaunchArgs(
   argv: string[],
-): { tmuxName: string; cwd: string; extraArgs: string[]; harness: string } | DispatchError {
+):
+  | { tmuxName: string; cwd: string; extraArgs: string[]; harness: string; worktree?: boolean }
+  | DispatchError {
   const usage = "Usage: launch <tmux-name> <cwd> [-- claude-args...]";
   const positionals: string[] = [];
   let harness = "claude";
+  let worktree = false;
   let extraArgs: string[] = [];
   let i = 0;
   while (i < argv.length) {
@@ -281,12 +294,17 @@ function parseLaunchArgs(
       i += 2;
       continue;
     }
+    if (a === "--worktree") {
+      worktree = true;
+      i += 1;
+      continue;
+    }
     positionals.push(a);
     i += 1;
   }
   const [tmuxName, cwd] = positionals;
   if (tmuxName === undefined || cwd === undefined) return err(usage);
-  return { tmuxName, cwd, extraArgs, harness };
+  return { tmuxName, cwd, extraArgs, harness, ...(worktree ? { worktree: true } : {}) };
 }
 
 /** Parse `adopt <tmux-name> <cwd> <session-id> [-- claude-args...]`. */
@@ -400,6 +418,25 @@ export async function run(argv: string[], io: Io = realIo): Promise<number> {
         return opts.code;
       }
       return emit(io, await cmdList(ctx, opts));
+    }
+
+    case "pack": {
+      const packFile = args[0];
+      if (packFile === undefined) {
+        io.err("Usage: pack <pack-file> [cwd]\n");
+        return 2;
+      }
+      const packCwd = args[1] ?? process.cwd();
+      return emit(io, await cmdPack(ctx, { packFile, cwd: packCwd }, bootstrapOpts()));
+    }
+
+    case "pack-stop": {
+      const nameOrFile = args[0];
+      if (nameOrFile === undefined) {
+        io.err("Usage: pack-stop <name-or-file>\n");
+        return 2;
+      }
+      return emit(io, await cmdPackStop(ctx, { nameOrFile }));
     }
 
     case "prune":

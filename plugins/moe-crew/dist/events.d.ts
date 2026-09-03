@@ -20,6 +20,15 @@ export type WorkerEvent = {
 } | {
     event: "session_end";
     ts: string;
+} | {
+    event: "run_start";
+    ts: string;
+    runId: string;
+    label?: string;
+} | {
+    event: "run_end";
+    ts: string;
+    runId: string;
 };
 export type EventName = WorkerEvent["event"];
 export declare const EVENT_NAMES: readonly EventName[];

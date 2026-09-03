@@ -55,6 +55,17 @@ function pluginManifest(model: PluginModel): Record<string, unknown> {
 
 export const kimi: HarnessAdapter = Object.freeze({
   name: 'kimi',
+  support: {
+    skills: 'full',
+    commands: 'none',
+    agents: 'none',
+    hooks: 'none',
+    mcp: 'none',
+    bootstrap: 'partial', // sessionStart only supports a named bootstrap skill; bootstrap.generate is unsupported
+    rules: 'none',
+    variables: 'none',
+  },
+  skillsOutputDir: '.kimi-plugin/skills',
   installDoc,
   emit(model: PluginModel) {
     const { config } = model

@@ -31,9 +31,15 @@
       "mode": "0644"
     },
     {
+      "path": ".cursor-plugin/marketplace.json",
+      "size": 539,
+      "sha256": "4913eb681604fc3074c89aef2da69e0dc9ddcb072f46afeaabec4c8553595a21",
+      "mode": "0644"
+    },
+    {
       "path": ".cursor-plugin/plugin.json",
-      "size": 700,
-      "sha256": "bf4eb4e6efeb708faa4c5f2200206c032eb718ad849dddd229a5e624a22ced1a",
+      "size": 800,
+      "sha256": "758ba32df3aea6df0df46a1de8b1b3d0f0cd94b4eeafeeb0e61454016dac9323",
       "mode": "0644"
     },
     {
@@ -44,14 +50,14 @@
     },
     {
       "path": ".moe-mint/manifest.json",
-      "size": 3253,
-      "sha256": "e18885a7f3ba84218c616edb8b246dd78aa7802312fb19c889adf97702237bcd",
+      "size": 3384,
+      "sha256": "e1056b2070f063eb73826bba32397f52d320ae2ee8a44a98e5663f8244abfa4c",
       "mode": "0644"
     },
     {
       "path": ".opencode/agent/review-shard.md",
-      "size": 3574,
-      "sha256": "73145d45a6ee1e62dcba026cbf6e474986a24796bab2a38500424546a76b3e3c",
+      "size": 6693,
+      "sha256": "4276041d61ca3d0549841d39f6c1bf4ea3160dc761fb2f7ed73701aa9fa86954",
       "mode": "0644"
     },
     {
@@ -62,8 +68,8 @@
     },
     {
       "path": ".opencode/agent/verify-finding.md",
-      "size": 2358,
-      "sha256": "cdd11cd4356887cffb9504549a8905e887653b205b97c7e436cd963e8f655a4f",
+      "size": 5553,
+      "sha256": "4d2d31dd0c3cc4f2159a5c3680fef5f3d3184e966607395e256515c996177979",
       "mode": "0644"
     },
     {
@@ -92,8 +98,8 @@
     },
     {
       "path": "agents/review-shard.md",
-      "size": 3631,
-      "sha256": "f13f2264945814b580952d9b61f21c1f0a65671a866f4ee878e9a1c72c69fea0",
+      "size": 6750,
+      "sha256": "b809be88325c583e0de0985a5e65a3b893443a0e93c1e7b55e4f764334bcbeae",
       "mode": "0644"
     },
     {
@@ -104,8 +110,8 @@
     },
     {
       "path": "agents/verify-finding.md",
-      "size": 2416,
-      "sha256": "b18e63a8acc5422fd1d6f7341854a8c64c8c6aceace741c6b4d881179eac9df6",
+      "size": 5611,
+      "sha256": "3508b72718f3d6dff3dcbd19ef3220e6143ba89ddc2d779aff96e914476e0bcb",
       "mode": "0644"
     },
     {
@@ -134,8 +140,8 @@
     },
     {
       "path": "docs/install/cursor.md",
-      "size": 642,
-      "sha256": "d0031e1f8b5b27973670f8a4248d505b69c7382633c4cdf04f465375328dff9d",
+      "size": 678,
+      "sha256": "52ce051ddbe073641179b3385838ce16619bd022e1673c066293ac3b569aa71e",
       "mode": "0644"
     },
     {
@@ -182,8 +188,8 @@
     },
     {
       "path": "hooks/moe-completion-evidence",
-      "size": 13507,
-      "sha256": "cbfdb2ab63a1d474654a1ec104b6476156fb667ff953eca1b4c0b4eb98594508",
+      "size": 14948,
+      "sha256": "53020b6ab60ad202166735ad1a6cd57fb3c7f3d067bc1ec0e7cb803f89959e45",
       "mode": "0755"
     },
     {
@@ -229,9 +235,15 @@
       "mode": "0755"
     },
     {
+      "path": "hooks/task-set",
+      "size": 18144,
+      "sha256": "ccea1e9e5e1a47ae822264884c970c80422c8da12764375743568d3b180ace67",
+      "mode": "0755"
+    },
+    {
       "path": "package.json",
-      "size": 10382,
-      "sha256": "5b1844cfa6f054ae32c469b249b8e42ede28aed4d3670bab84086ea15506def2",
+      "size": 11063,
+      "sha256": "68cc9e9d9c98e0b109619d50f3620f2f365bdeb482bbfac571e5500cdf8f61b7",
       "mode": "0644"
     },
     {
@@ -260,8 +272,14 @@
     },
     {
       "path": "skills/_shared/parallel-adversarial-review.md",
-      "size": 3310,
-      "sha256": "5d5524a5c27a343b317dd7e36b469cde2e6edea7d74c1bb0ff2e65945fa0acf7",
+      "size": 3305,
+      "sha256": "913ff941bd465ee44de71344b69732dea1985ba9c208c575c88c39f7518960b0",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/_shared/report-base.html",
+      "size": 7884,
+      "sha256": "ffd9d1921dad842a2747cae77cdbaf1943913b9b603e5eb08553bd8402cf5342",
       "mode": "0644"
     },
     {
@@ -278,8 +296,8 @@
     },
     {
       "path": "skills/brainstorming/SKILL.md",
-      "size": 19124,
-      "sha256": "9bd1d22a430abfba8e28ee9ff713e1cd2acf4512b6f8f222742a52c1839cca56",
+      "size": 19854,
+      "sha256": "aca4a4841739312cd49ee42beb7c238309ce0152b7309f226b41721d02b8ca34",
       "mode": "0644"
     },
     {
@@ -344,8 +362,8 @@
     },
     {
       "path": "skills/developing-claude-code-plugins/SKILL.md",
-      "size": 9104,
-      "sha256": "7b556d56a12895646af95d91db22c7e8d723f3711ee56c395ef793ad7f376be1",
+      "size": 9099,
+      "sha256": "8023e16fd8077148a293817e12df6b0ac35d46e47e41eb3576d9bde4eafa3e26",
       "mode": "0644"
     },
     {
@@ -452,8 +470,50 @@
     },
     {
       "path": "skills/dispatching-parallel-agents/SKILL.md",
-      "size": 11377,
-      "sha256": "065cad1dc85f9c7730699f0829c5c9f922b3850c4b9c130c1692b13d9aa0e193",
+      "size": 11682,
+      "sha256": "fb306e1d5ab0c3bf8be003852af0e9091915a5e70129bd6bbae7c45308d823a5",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/docs-update/SKILL.md",
+      "size": 9264,
+      "sha256": "f359b62b90ca86355cb3a91733d4992f0755978971d7578bc4afc933d41f0bb2",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/docs-update/doc-types/api.md",
+      "size": 3421,
+      "sha256": "ed934ff78b9ae06064f92cdd4b40a96d81b0d97209e1d3247f6b86c7315c84cc",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/docs-update/doc-types/architecture.md",
+      "size": 3333,
+      "sha256": "2069d673fbfd829c409cc47c9dc5d9951ff9cba7dbd54cb1af7e3d2932c8675e",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/docs-update/doc-types/changelog.md",
+      "size": 2915,
+      "sha256": "15a9e946659a01c50e359540096cbbe1961bf0aec5121d5c8658bac41f1c497f",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/docs-update/doc-types/contributing.md",
+      "size": 3124,
+      "sha256": "3111c84a4b7e061938a0b12df9e216965e84c8e9e6e3ab9f3e9b6f73f7d36b75",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/docs-update/doc-types/readme.md",
+      "size": 2385,
+      "sha256": "3c9a37a9bf3c21e767a561a45f9a7d3eebef182a00b64a1d608ffa104435ebea",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/docs-update/scripts/docs-verify-report.mjs",
+      "size": 2794,
+      "sha256": "384945326ef1e07dabf3379daf881aa99516d0b890749026d841790b020af7bc",
       "mode": "0644"
     },
     {
@@ -482,8 +542,8 @@
     },
     {
       "path": "skills/extracting-requirements/SKILL.md",
-      "size": 11033,
-      "sha256": "2491b5570212d967090933d6b2c55e9876222d47ae4fbb166895568d67bb31f8",
+      "size": 10974,
+      "sha256": "aab78aaa56185f780fc06e8be638d3a4ea99686fd5c6355b7108087acbc7e733",
       "mode": "0644"
     },
     {
@@ -530,14 +590,14 @@
     },
     {
       "path": "skills/finding-duplicate-functions/SKILL.md",
-      "size": 5627,
-      "sha256": "c628e04681eac2054637659922ea26e6b94328d0e4f50aaa5c7ca84b54dbb417",
+      "size": 5490,
+      "sha256": "6a1e075229e130fa6eed70c591723cc6f6d94fd5ba377d25471b9feb4ebf0ea4",
       "mode": "0644"
     },
     {
       "path": "skills/finding-duplicate-functions/scripts/categorize-prompt.md",
-      "size": 2773,
-      "sha256": "764fa94432965ce27cbdb0811250fa3514740b666db1a8d5c5cea33c5a6d36e9",
+      "size": 2759,
+      "sha256": "4b1eab22a5eb4caa1ed18d907e725ea2f59fd8664a589cd694ffb405e662ac3c",
       "mode": "0644"
     },
     {
@@ -566,8 +626,8 @@
     },
     {
       "path": "skills/finishing-a-development-branch/SKILL.md",
-      "size": 7682,
-      "sha256": "fcecedb5c09830ca9307872edce71ae811ead36bead7c1c9b78443adaa6c8931",
+      "size": 7913,
+      "sha256": "f1aa8d5e2275bb0311f78489731ffcdaf4a15f75b2154206a900919833620c53",
       "mode": "0644"
     },
     {
@@ -584,8 +644,8 @@
     },
     {
       "path": "skills/implementing-tasks/SKILL.md",
-      "size": 6611,
-      "sha256": "e893b75e3fe5d93ab345b8bdc438644471bfb84c502ba7141dfe9e1c403f0180",
+      "size": 8354,
+      "sha256": "57a01b42756a2f7b043d798f9df091b709523ed19b3395431d7fe94116858940",
       "mode": "0644"
     },
     {
@@ -608,26 +668,32 @@
     },
     {
       "path": "skills/improve-codebase-architecture/HTML-REPORT.md",
-      "size": 6641,
-      "sha256": "581e8bb5a521e46bbda8ca7e19b15948bed882187108092ebb90c62513b77528",
+      "size": 8050,
+      "sha256": "7c19f7a96ae96d05f510542d63be98ceb688bec1f3e02e82c1968bad6d96d578",
       "mode": "0644"
     },
     {
       "path": "skills/improve-codebase-architecture/SKILL.md",
-      "size": 5976,
-      "sha256": "fbac96beb5bf62eacb974588b5f8f11adbf9346a5e3a9b4d8c995705205d86c6",
+      "size": 6268,
+      "sha256": "334bbfff001b5f84e2852f1bd3d91c71956b8f26e3abef31a3747abc35bae46d",
       "mode": "0644"
     },
     {
       "path": "skills/iterative-development/SKILL.md",
-      "size": 10790,
-      "sha256": "bb3daa6cac0b8c868d4c44fc628f27f3f632d8b5808524db84d57edee138dd20",
+      "size": 12355,
+      "sha256": "637bec4452b00fc226adddbad0e7bcdff8e86a8c17438b104def57b833153886",
       "mode": "0644"
     },
     {
       "path": "skills/mcp-cli/SKILL.md",
       "size": 9217,
       "sha256": "f9cd31599575a0b4ada2481ffa817e8a8025759c32da49bacf2d8e2a6ed90efe",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/moe-discipline/SKILL.md",
+      "size": 3108,
+      "sha256": "3a768f289f245b8edae389a4efbc6c494237c2cf4e4f31ed38a4095e329299a0",
       "mode": "0644"
     },
     {
@@ -656,8 +722,8 @@
     },
     {
       "path": "skills/requesting-code-review/SKILL.md",
-      "size": 3529,
-      "sha256": "a96635d6c8daeb3c40f813086b51d79b34f180db956bd28c298b4e3c3ce0205e",
+      "size": 3541,
+      "sha256": "6ca6a91b4f4092ab1668ddcb111800f2a98c1a38525c9474982da9c27eef8748",
       "mode": "0644"
     },
     {
@@ -679,27 +745,57 @@
       "mode": "0644"
     },
     {
+      "path": "skills/resolving-merge-conflicts/SKILL.md",
+      "size": 3048,
+      "sha256": "9040be65af00b007509243c10d681792f2b7e6df7c9570591a026c2fbfc13712",
+      "mode": "0644"
+    },
+    {
       "path": "skills/retrieving-context/SKILL.md",
-      "size": 6841,
-      "sha256": "8a0bc12fd7b2b1ce0d140c8795fdda97fc2aab63756c7263dae83fd333b8d63d",
+      "size": 6853,
+      "sha256": "f8e87085e4955f1ea44f685853f0487811d4e2d87bece15e6fe7bce9fd4dc4e5",
       "mode": "0644"
     },
     {
       "path": "skills/reviewing-a-codebase/SKILL.md",
-      "size": 9931,
-      "sha256": "26e09b91dcd09dc33d151c345586adc5a85831755143cfbcbf9446d76e1c28a5",
+      "size": 11643,
+      "sha256": "c059e84c8011ea4a0816da9b576de058908dbc0b5d2c076ea904a7cc663ab33b",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/reviewing-a-codebase/scripts/review-check.mjs",
+      "size": 4627,
+      "sha256": "c31247b4d978d67ad17f1409d237257a2de3d6808cd87066261f2cf59a135716",
       "mode": "0644"
     },
     {
       "path": "skills/reviewing-a-codebase/scripts/review-merge.mjs",
-      "size": 12133,
-      "sha256": "7e2e8200de5ff460c5d220b877f7a7eac60e9dfde39eb0f4183ee9e31d9bfd1b",
+      "size": 11628,
+      "sha256": "b08d166fff003ea604119ee9a0828987925f9295c1be45f3255a911a6cb884f9",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/reviewing-a-codebase/scripts/review-report.mjs",
+      "size": 2746,
+      "sha256": "85d9f3ec8ac91084a6fe4741afa7192a0440041c7508e003d61ee36cfc4c204b",
       "mode": "0644"
     },
     {
       "path": "skills/reviewing-a-codebase/scripts/review-scope.mjs",
       "size": 9255,
       "sha256": "99228d7d6ced341788dd3d80ab18057e2178e67bf59a485e260e4071a0af8616",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/reviewing-a-codebase/scripts/review-verify-record.mjs",
+      "size": 4836,
+      "sha256": "2255ece7e52d325c786c4ef3d80f41ef6c0b83468dceb48e06f1642377e47a9d",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/reviewing-a-codebase/scripts/review-verify-scope.mjs",
+      "size": 3555,
+      "sha256": "576ea98c715e757d1182f76031b6f2e9661d737d65205b508233fb40c1588248",
       "mode": "0644"
     },
     {
@@ -752,8 +848,8 @@
     },
     {
       "path": "skills/subagent-driven-development/SKILL.md",
-      "size": 37970,
-      "sha256": "d688e82f728a685fa8ff8d2211508429396207a4fc39d5afe86b5ffce4d4d6e3",
+      "size": 38491,
+      "sha256": "41b453e0c85fa3b787b44424a7076662de20b19afcd600edd0617d5436422bb7",
       "mode": "0644"
     },
     {
@@ -890,8 +986,8 @@
     },
     {
       "path": "skills/test-driven-development/SKILL.md",
-      "size": 10254,
-      "sha256": "a410e8d1ee8a12eee63bfd2a91cb9d21be62921911875a2c799fbbc9f5c2eb00",
+      "size": 10249,
+      "sha256": "37a06b9827d10c6433180420708c2f9519d5fb6c7fcc9ff92c2fce8b5e064c5e",
       "mode": "0644"
     },
     {
@@ -902,56 +998,44 @@
     },
     {
       "path": "skills/using-git-worktrees/SKILL.md",
-      "size": 9637,
-      "sha256": "66b100015c912ea121677fc0077e58ee3d3a87c040852230ef1862a91d94bee7",
+      "size": 12382,
+      "sha256": "f5c2845b8d6da64dde34a6c57a8ed8463ae5a0a7d3dd9634dbb345021b6d7164",
       "mode": "0644"
     },
     {
       "path": "skills/using-moe/SKILL.md",
-      "size": 3849,
-      "sha256": "f02563cf53a4cb31bda041fef7bbaec265b2e8ef49eef57bd0841b46ec86f063",
+      "size": 5410,
+      "sha256": "541dd6a3b819486d925a6109dc301aedd7d16bf7780e5c7c90f005e9b1dbb4fd",
       "mode": "0644"
     },
     {
       "path": "skills/using-moe/references/antigravity-tools.md",
-      "size": 1931,
-      "sha256": "77021a952929a56251d320ed909a4a4aaa3373ee89937e7645163ec56a5da713",
+      "size": 1951,
+      "sha256": "f8643c8d06a3d19b34ba102b1fe98eafb21c73da3b60bbcbdf354cca69ed6d3e",
       "mode": "0644"
     },
     {
       "path": "skills/using-moe/references/codex-tools.md",
-      "size": 5139,
-      "sha256": "bdc9f5eb727fadfa1cadb59ebf96f9fce7c18d97df2da196e05486ff800cd9b6",
+      "size": 1101,
+      "sha256": "37e283d4d99605e4838268114c99ea28ed516791aa680bad8454b145342f3800",
       "mode": "0644"
     },
     {
       "path": "skills/using-moe/references/gemini-tools.md",
-      "size": 4947,
-      "sha256": "1d8bfcf577fe92b36204592c85e010617ce0d15ea899dc4d26ed0bf7a6bcb704",
-      "mode": "0644"
-    },
-    {
-      "path": "skills/using-moe/references/kimi-tools.md",
-      "size": 2762,
-      "sha256": "54eae82d2d6ddb479dc27958d5166dbc70ab651fcd110263b31a68afecdb02a3",
+      "size": 4574,
+      "sha256": "39f481983801763801f5e150e4e64d0ad42a9f96c15dd43c6064c37d1db89a75",
       "mode": "0644"
     },
     {
       "path": "skills/using-moe/references/opencode-tools.md",
-      "size": 1494,
-      "sha256": "0e00fbc86349f9b8fd8a4851fff142135144513b6c0fcbfcaa2109b4608a3fcc",
-      "mode": "0644"
-    },
-    {
-      "path": "skills/using-moe/references/pi-tools.md",
-      "size": 2179,
-      "sha256": "b43b591fbe1f1c1c8e25ba46356e97aa0bf827c17eee3e69a137124f37c0d5c8",
+      "size": 410,
+      "sha256": "970c6f23628c709048424883783ce67e8453d4e019af785277d275564a63e65b",
       "mode": "0644"
     },
     {
       "path": "skills/using-tmux-for-interactive-commands/SKILL.md",
-      "size": 5129,
-      "sha256": "0230a21817150b4e291045e5f15e62c767ffad9116066e2d082d5af9627e48f3",
+      "size": 5118,
+      "sha256": "97f4c6b8efa1b077cda5a1f14f0cb4c05d05dcf8eb88e9e2a99b0b3b47988b6f",
       "mode": "0644"
     },
     {
@@ -980,8 +1064,8 @@
     },
     {
       "path": "skills/working-with-claude-code/SKILL.md",
-      "size": 3850,
-      "sha256": "8cf7b5225b0925a6f82bcb87894b12bc6d097242953aecb6da337b692ef30542",
+      "size": 3874,
+      "sha256": "3c0c36e03a8979b23ac8b8dd7e51925a7bb8ffd5a6356cee633ccebe65b845c5",
       "mode": "0644"
     },
     {
@@ -1010,8 +1094,8 @@
     },
     {
       "path": "skills/writing-plans/SKILL.md",
-      "size": 13976,
-      "sha256": "7727076bfbdd29b9febbd000b730a008028a880723c374a537f373a88f2414be",
+      "size": 14233,
+      "sha256": "91492168f6e94ce269dec7cbdd39355a3ca10eabec22f245c52b370b02929ea3",
       "mode": "0644"
     },
     {
@@ -1022,8 +1106,8 @@
     },
     {
       "path": "skills/writing-skills/SKILL.md",
-      "size": 26960,
-      "sha256": "b9bccf64ead895bdd76146cdda095fb30d7b0b5058e6d0e4b02e76d05c9154c4",
+      "size": 27287,
+      "sha256": "b7b13a5f543fe7371f9c27c8b69182efd9225bebf57d2e89ef584851935ead5b",
       "mode": "0644"
     },
     {
@@ -1069,7 +1153,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "5b9878b6408907057cd36bf4f92fcef5515b308cb036760744a98aa2218217cc",
+  "tree_sha256": "2223dfea8308e2b1907f1a0c9f0a32ff4827de7b8f970c5aa55372502cd4587f",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

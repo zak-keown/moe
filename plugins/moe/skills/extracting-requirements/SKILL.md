@@ -62,7 +62,9 @@ Pass the chunk content inline — do NOT make the subagent read the file.
 **Dispatch strategy:**
 - Dispatch subagents in waves of 3-5 (runtime agent thread limits are typically 6; keep headroom). Do not fan out all chunks at once.
 - **Persist immediately:** as soon as each subagent returns, write its output to a temp file (e.g., a scratch directory under the project root) before dispatching more work. Subagent results that only exist in conversation state can be lost if the session fails.
-- **Wait semantics:** if your runtime's wait primitive returns on the first completed agent (not all), loop until every dispatched agent in the wave has reached a final state. Persist each result as it arrives.
+- **Wait semantics:** loop until every dispatched agent in the wave has reached a final state, persisting each result as it arrives.
+
+  {subagent-wait}
 - Close completed agents promptly to free thread slots for the next wave.
 - **Track completion:** maintain a checklist of chunk-to-agent mappings. After all waves finish, verify every chunk produced a persisted output file. Re-dispatch any missing chunks before proceeding.
 
