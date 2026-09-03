@@ -34,7 +34,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "build": "tsc -b && esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:fsevents && node ../../scripts/copy-license.mjs MIT dist/LICENSE",
+    "build": "node ../../scripts/clean-package-dist.mjs && tsc -b --force && esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:fsevents",
     "prepack": "pnpm run build",
     "typecheck": "tsc -b --pretty",
     "test": "vitest run --project unit",

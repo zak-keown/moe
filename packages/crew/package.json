@@ -35,7 +35,7 @@
     "moe-crew": "./dist/moe-crew.cjs"
   },
   "scripts": {
-    "build": "tsc -b && tsup",
+    "build": "node ../../scripts/clean-package-dist.mjs && tsc -b --force && tsup",
     "prepack": "pnpm run build",
     "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --pretty",
     "test": "vitest run",

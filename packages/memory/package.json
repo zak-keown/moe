@@ -38,7 +38,7 @@
     ".mcp.json"
   ],
   "scripts": {
-    "build": "tsc -b && node ../../scripts/copy-license.mjs MIT dist/LICENSE",
+    "build": "node ../../scripts/clean-package-dist.mjs && tsc -b --force",
     "prepack": "pnpm run build",
     "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --pretty",
     "test": "vitest run --project unit",
