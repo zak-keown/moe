@@ -22,7 +22,8 @@ plans:
   - id: core-data
     plan: docs/moe/plans/2026-09-03-skill-runtime-02-core-data.md
     depends_on: [runtime-validator]
-    status: pending
+    status: done
+    commits: 3e86cd2..952a747
   - id: core-process
     plan: docs/moe/plans/2026-09-03-skill-runtime-03-core-process.md
     depends_on: [core-data]
