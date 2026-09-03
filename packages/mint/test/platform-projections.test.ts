@@ -144,7 +144,7 @@ describe('registry projections', () => {
     }))
   })
 
-  it('keeps resolved configs, generated roots, marketplace entries, and catalog rows one-to-one', async () => {
+  it('keeps generated roots, marketplace entries, and catalog rows one-to-one with resolved plugins', async () => {
     const platform = await resolvePlatform(REPO_ROOT)
     const ids = platform.plugins.map((plugin) => plugin.id)
     const generatedIds = readdirSync(join(REPO_ROOT, 'plugins'), { withFileTypes: true })
@@ -160,11 +160,6 @@ describe('registry projections', () => {
       .filter((line) => line.startsWith('| `'))
       .map((line) => /^\| `([^`]+)`/.exec(line)?.[1])
     expect(catalogIds).toEqual(ids)
-    for (const plugin of platform.plugins) {
-      expect(readFileSync(join(REPO_ROOT, 'plugins', plugin.id, 'moe-mint.yaml'), 'utf8')).toBe(
-        readFileSync(plugin.configPath, 'utf8'),
-      )
-    }
   })
 
   it('writes only the two repository projection destinations', async () => {

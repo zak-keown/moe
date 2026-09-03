@@ -1,10 +1,10 @@
 # moe-mint config for moe-statusline.
 #
-# Built by `scripts/mint-plugins.mjs`, which stages this file plus the
-# package's hooks/ into `plugins/moe-statusline/` and runs `moe-mint generate`
-# there. The actual install payload (dist/ + hooks/ + vendor/) ships through
-# the npm package instead — see PLUGINS.distribution in mint-plugins.mjs and
-# how packages/crew's dist/ works the same way.
+# The platform registry resolves this source package and config. Compiled Mint
+# assembles hooks plus required dist/vendor payloads, the exact Claude adapter
+# output, legal files, and root package metadata into the shared
+# `plugins.next-<nonce>` sibling. This config remains source-only and is never
+# copied into the plugin.
 
 name: moe-statusline
 version: 0.1.0

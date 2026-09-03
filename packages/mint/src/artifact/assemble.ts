@@ -1,5 +1,5 @@
 import { constants } from 'node:fs'
-import { lstat, mkdir, open, readdir, readFile, rm } from 'node:fs/promises'
+import { lstat, mkdir, open, readdir, readFile, realpath, rm } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, join, posix, relative, resolve, sep } from 'node:path'
 import { MintError } from '../diagnostics.js'
 import {
@@ -75,36 +75,48 @@ function isOutside(root: string, candidate: string): boolean {
   return path === '..' || path.startsWith(`..${sep}`) || isAbsolute(path)
 }
 
+function foldedPath(value: string): string {
+  return artifactCollisionKey(artifactPath(value))
+}
+
+const FORBIDDEN_TREE_SEGMENTS = new Set([
+  'node_modules', '.git', '.github', '.svn', '.hg', '.planning', '.cache', '__pycache__',
+].map(foldedPath))
+const TEST_TREE_SEGMENTS = new Set(['test', 'tests', '__tests__', 'spec', 'specs'].map(foldedPath))
+const EXCLUDED_COMPONENT_NAMES = new Set([
+  '.gitignore', '.gitattributes', '.gitmodules', '.DS_Store', 'moe-mint.yaml', 'moe-mint.yml',
+].map(foldedPath))
+
 function forbiddenTreeSegment(segment: string): boolean {
-  return segment === 'node_modules'
-    || segment === '.git'
-    || segment === '.github'
-    || segment === '.svn'
-    || segment === '.hg'
-    || segment === '.planning'
-    || segment === '.cache'
-    || segment === '__pycache__'
+  return FORBIDDEN_TREE_SEGMENTS.has(foldedPath(segment))
 }
 
 function isDeveloperHarness(path: string): boolean {
   const segments = path.split('/')
-  const name = segments.at(-1) ?? ''
-  return segments.some((segment) => segment === 'test' || segment === 'tests' || segment === '__tests__')
-    || /(?:^|\.)test\.[^.]+$/i.test(name)
-    || /(?:^|\.)spec\.[^.]+$/i.test(name)
-    || name.toLowerCase().startsWith('test-')
+  const name = foldedPath(segments.at(-1) ?? '')
+  return segments.some((segment) => TEST_TREE_SEGMENTS.has(foldedPath(segment)))
+    || /(?:^|\.)test\.[^.]+$/.test(name)
+    || /(?:^|\.)spec\.[^.]+$/.test(name)
+    || name.startsWith('test-')
+    || (name.endsWith('.py') && (name.startsWith('test_') || /_test\.py$/.test(name)))
 }
 
-function isExcludedComponentPath(path: string): boolean {
+function isExcludedComponentPath(path: string, configKey: string | undefined): boolean {
   const segments = path.split('/')
-  const name = segments.at(-1) ?? ''
+  const name = foldedPath(segments.at(-1) ?? '')
   return segments.some(forbiddenTreeSegment)
-    || name === '.gitignore'
-    || name === '.gitattributes'
-    || name === '.gitmodules'
-    || name === '.DS_Store'
-    || name === 'moe-mint.yaml'
-    || name === 'moe-mint.yml'
+    || EXCLUDED_COMPONENT_NAMES.has(name)
+    || foldedPath(path) === configKey
+}
+
+function isSourceMap(path: ArtifactPath): boolean {
+  return foldedPath(basename(path)).endsWith('.map')
+}
+
+function configArtifactKey(plugin: ResolvedPlugin): string | undefined {
+  const relativeConfig = relative(plugin.sourcePath, plugin.configPath)
+  if (isOutside(plugin.sourcePath, plugin.configPath) || relativeConfig.length === 0) return undefined
+  return foldedPath(relativeConfig.split(sep).join('/'))
 }
 
 function markdownTargets(contents: string): readonly string[] {
@@ -136,9 +148,10 @@ async function collectComponentFiles(plugin: ResolvedPlugin): Promise<readonly C
   ]
   const candidates = new Map<string, ComponentFile>()
   const byCollision = new Map<string, ArtifactPath>()
+  const configKey = configArtifactKey(plugin)
 
   async function collect(sourceAbsolute: string, destination: ArtifactPath): Promise<void> {
-    if (isExcludedComponentPath(destination)) return
+    if (isExcludedComponentPath(destination, configKey)) return
     let stats
     try {
       stats = await lstat(sourceAbsolute)
@@ -161,7 +174,7 @@ async function collectComponentFiles(plugin: ResolvedPlugin): Promise<readonly C
     if (!stats.isFile() || stats.nlink > 1) {
       throw assemblyError('ARTIFACT_COMPONENT_UNSAFE_TYPE', plugin, plugin.config.source, `component "${destination}" is not an independent regular file`, 'Use regular files with one filesystem link.', destination)
     }
-    if (destination.endsWith('.map')) {
+    if (isSourceMap(destination)) {
       throw assemblyError('ARTIFACT_COMPONENT_FORBIDDEN', plugin, plugin.config.source, `component "${destination}" is forbidden in a generated artifact`, 'Remove source maps, caches, VCS/planning data, and Mint input from declared components.', destination)
     }
     const collision = artifactCollisionKey(destination)
@@ -225,9 +238,36 @@ async function stageComponents(plugin: ResolvedPlugin, artifactRoot: string): Pr
   }
 }
 
-async function artifactFiles(plugin: ResolvedPlugin, root: string): Promise<ReadonlySet<string>> {
+type ArtifactEntryKind = 'directory' | 'file'
+type ArtifactClaims = Map<string, { readonly path: ArtifactPath; readonly kind: ArtifactEntryKind }>
+
+function claimArtifactEntry(
+  plugin: ResolvedPlugin,
+  claims: ArtifactClaims,
+  path: ArtifactPath,
+  kind: ArtifactEntryKind,
+): void {
+  const key = artifactCollisionKey(path)
+  const previous = claims.get(key)
+  if (previous !== undefined && !(previous.kind === 'directory' && kind === 'directory' && previous.path === path)) {
+    throw assemblyError(
+      'ARTIFACT_PATH_COLLISION',
+      plugin,
+      plugin.config.source,
+      `artifact ${previous.kind} "${previous.path}" conflicts with ${kind} "${path}"`,
+      'Use unique NFC/case-fold artifact paths for every file and directory.',
+      path,
+    )
+  }
+  claims.set(key, { path, kind })
+}
+
+async function inspectArtifact(plugin: ResolvedPlugin, root: string): Promise<{
+  readonly files: ReadonlySet<string>
+  readonly claims: ArtifactClaims
+}> {
   const files = new Set<string>()
-  const collisions = new Map<string, ArtifactPath>()
+  const claims: ArtifactClaims = new Map()
   async function walk(absolute: string, relativePath: string): Promise<void> {
     const names = await readdir(absolute, { encoding: 'buffer' }) as Buffer[]
     names.sort(Buffer.compare)
@@ -239,23 +279,75 @@ async function artifactFiles(plugin: ResolvedPlugin, root: string): Promise<Read
         throw assemblyError('ARTIFACT_UNSAFE_FILE_TYPE', plugin, plugin.config.source, `artifact entry "${path}" is not a safe regular file or directory`, 'Use a fresh artifact tree containing only real directories and independent regular files.', path)
       }
       if (stats.isDirectory()) {
+        claimArtifactEntry(plugin, claims, path, 'directory')
         await walk(join(absolute, name), path)
         continue
       }
-      if (path.endsWith('.map')) {
+      if (isSourceMap(path)) {
         throw assemblyError('ARTIFACT_SOURCE_MAP', plugin, plugin.config.source, `artifact includes source map "${path}"`, 'Disable source and declaration maps and rebuild from a clean dist directory.', path)
       }
-      const key = artifactCollisionKey(path)
-      const previous = collisions.get(key)
-      if (previous !== undefined) {
-        throw assemblyError('ARTIFACT_PATH_COLLISION', plugin, plugin.config.source, `artifact paths "${previous}" and "${path}" collide`, 'Use unique NFC/case-fold artifact paths.', path)
-      }
-      collisions.set(key, path)
+      claimArtifactEntry(plugin, claims, path, 'file')
       files.add(path)
     }
   }
   await walk(root, '')
-  return files
+  return { files, claims }
+}
+
+async function assertGeneratedPathsCompatible(
+  plugin: ResolvedPlugin,
+  root: string,
+  generatedPaths: readonly string[],
+): Promise<void> {
+  const { claims } = await inspectArtifact(plugin, root)
+  for (const generatedPath of generatedPaths) {
+    const path = artifactPath(generatedPath)
+    const segments = path.split('/')
+    for (let length = 1; length < segments.length; length += 1) {
+      claimArtifactEntry(plugin, claims, artifactPath(segments.slice(0, length).join('/')), 'directory')
+    }
+    claimArtifactEntry(plugin, claims, path, 'file')
+  }
+}
+
+async function artifactFiles(plugin: ResolvedPlugin, root: string): Promise<ReadonlySet<string>> {
+  return (await inspectArtifact(plugin, root)).files
+}
+
+async function canonicalRepositoryRoot(
+  repoRoot: string,
+  platform: ResolvedPlatform,
+  plugin?: ResolvedPlugin,
+): Promise<string> {
+  let requested: string
+  let producing: string
+  try {
+    [requested, producing] = await Promise.all([
+      realpath(resolve(repoRoot)),
+      realpath(resolve(platform.repositoryRoot)),
+    ])
+  } catch (error) {
+    throw assemblyError(
+      'ARTIFACT_REPOSITORY_PROVENANCE',
+      plugin,
+      'artifact assembly',
+      'artifact repository authority could not be canonicalized',
+      'Use the accessible repository root that produced the supplied ResolvedPlatform.',
+      resolve(repoRoot),
+      error,
+    )
+  }
+  if (requested !== producing) {
+    throw assemblyError(
+      'ARTIFACT_REPOSITORY_PROVENANCE',
+      plugin,
+      'artifact assembly',
+      `repository root "${requested}" does not match producing platform root "${producing}"`,
+      'Use the exact repository root that produced the supplied ResolvedPlatform.',
+      requested,
+    )
+  }
+  return requested
 }
 
 function identity(plugin: ResolvedPlugin): CanonicalGenerationIdentity {
@@ -287,6 +379,7 @@ async function assertRealDestinationRoot(input: AssembleArtifactInput): Promise<
 }
 
 export async function assembleArtifact(input: AssembleArtifactInput): Promise<AssembledArtifact> {
+  const repoRoot = await canonicalRepositoryRoot(input.repoRoot, input.platform, input.plugin)
   if (!input.platform.plugins.includes(input.plugin)) {
     throw assemblyError('ARTIFACT_PLUGIN_PROVENANCE', input.plugin, input.plugin.config.source, 'plugin does not belong to the supplied resolved platform', 'Use the exact ResolvedPlugin object from the producing ResolvedPlatform.')
   }
@@ -301,9 +394,10 @@ export async function assembleArtifact(input: AssembleArtifactInput): Promise<As
   await stageComponents(input.plugin, root)
   const stagedPayloads = await stagePayloads(input.plugin.sourcePath, root, input.plugin.config.artifact.payloads)
   const validation = validateCanonicalGeneration(identity(input.plugin), { marketplaceName: defaultProfileId(input.platform) })
+  await assertGeneratedPathsCompatible(input.plugin, root, validation.files.map((file) => file.path))
   writeValidatedGeneration(root, validation)
   await writeLicensePayload({
-    repoRoot: input.repoRoot,
+    repoRoot,
     artifactRoot: root,
     pluginId: input.plugin.id,
     license: input.plugin.config.license,
@@ -331,10 +425,23 @@ export async function assembleArtifact(input: AssembleArtifactInput): Promise<As
   })
 }
 
-function assertNonceSibling(input: AssembleArtifactSetInput): string {
+async function assertNonceSibling(input: AssembleArtifactSetInput, repoRoot: string): Promise<string> {
   const destination = resolve(input.destinationRoot)
-  const canonical = resolve(input.repoRoot, 'plugins')
-  if (dirname(destination) !== dirname(canonical) || !/^plugins\.next-[A-Za-z0-9][A-Za-z0-9._-]*$/.test(basename(destination))) {
+  let parent: string
+  try {
+    parent = await realpath(dirname(destination))
+  } catch (error) {
+    throw assemblyError(
+      'ARTIFACT_STAGING_DESTINATION_INVALID',
+      undefined,
+      'artifact assembly',
+      `destination parent for "${destination}" cannot be canonicalized`,
+      'Use <repo>/plugins.next-<nonce> on the same filesystem as canonical plugins/.',
+      destination,
+      error,
+    )
+  }
+  if (parent !== repoRoot || !/^plugins\.next-[A-Za-z0-9][A-Za-z0-9._-]*$/.test(basename(destination))) {
     throw assemblyError(
       'ARTIFACT_STAGING_DESTINATION_INVALID',
       undefined,
@@ -344,18 +451,19 @@ function assertNonceSibling(input: AssembleArtifactSetInput): string {
       destination,
     )
   }
-  return destination
+  return join(parent, basename(destination))
 }
 
 export async function assembleArtifactSet(input: AssembleArtifactSetInput): Promise<readonly AssembledArtifact[]> {
-  const destinationRoot = assertNonceSibling(input)
+  const repoRoot = await canonicalRepositoryRoot(input.repoRoot, input.platform)
+  const destinationRoot = await assertNonceSibling(input, repoRoot)
   let ownsDestination = false
   try {
     await mkdir(destinationRoot)
     ownsDestination = true
     const artifacts: AssembledArtifact[] = []
     for (const plugin of input.platform.plugins) {
-      artifacts.push(await assembleArtifact({ ...input, plugin, destinationRoot }))
+      artifacts.push(await assembleArtifact({ ...input, repoRoot, plugin, destinationRoot }))
     }
     const records = artifacts.map((artifact) => artifact.projection)
     renderMarketplace(input.platform, records)

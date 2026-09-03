@@ -5,28 +5,23 @@
 # pipeline. Every field below was rewritten; the file's shape and its habit of
 # explaining each non-obvious choice in a comment are what survived.
 #
-# HOW THIS IS BUILT. moe-mint reads exactly `<root>/moe-mint.yaml` and uses one
-# root for both config-in and files-out. So `scripts/mint-plugins.mjs` STAGES:
-# it copies this file to `plugins/moe/moe-mint.yaml` along with every skill in
-# the tree, then runs `moe-mint generate --dir plugins/moe`. The plugin root is
-# therefore the staging directory, never `packages/core`.
+# HOW THIS IS BUILT. The platform registry resolves this file and its source
+# package without copying either into output. `scripts/mint-plugins.mjs` asks
+# compiled Mint to assemble declared components and payloads, run the exact
+# canonical adapter validation/write pass, compose legal and package metadata,
+# and preflight every plugin in one fresh `plugins.next-<nonce>` sibling.
 #
-# Two things fall out of that, and both were previously blockers:
+# One plugin now comes from this source tree:
 #
 #   - One plugin from one source tree. This used to be two — `moe-core` (a lean
 #     everyday set) and `moe-everything` (all of them). Consolidated 2026-09-01:
 #     the resident cost of shipping all 27 name+description pairs is roughly
 #     1.5k tokens a session (bodies load on demand), which is not a budget
 #     worth curating against, and having two plugins with a superset
-#     relationship was more confusion than value at install time. `skill-tiers.yaml`
-#     still records why each skill is here as a fidelity ledger; it no longer
-#     partitions them.
-#   - All 8 harness adapters can run. opencode and pi were excluded here
-#     because they emit a FULL-REPLACEMENT package.json into the plugin root —
-#     which used to be `packages/core`, whose package.json is the pnpm
-#     workspace manifest. Against a staging root that file is just another
-#     generated artifact, and `plugins/*` is not a pnpm workspace glob so
-#     nothing picks it up.
+#     relationship was more confusion than value at install time.
+#     `skill-tiers.yaml` still records why each skill is here as a fidelity
+#     ledger; it no longer partitions them. All 8 adapters now contribute only
+#     their owned files/package namespaces to the compositor's root manifest.
 
 name: moe
 version: 0.1.4
@@ -83,8 +78,8 @@ bootstrap:
 # hooks/hooks.json carries a Stop hook and a SessionStart hook, and mint
 # merges its own SessionStart entry into hooks/moe-mint/hooks.json.
 
-# harnesses: no exclusions. All 8 adapters run. opencode and pi used to be
-# excluded here (see the header) and the staging root removed the reason.
+# harnesses: no exclusions. All 8 adapters run; the composed root package
+# manifest keeps package ownership separate from adapter emission.
 
 marketplace:
   # Standalone generation uses this package-local name. Root minting overrides
@@ -111,12 +106,9 @@ imported_works:
 
 release:
   audit:
-    # `moe-mint bump --audit` sweeps the plugin root for stray copies of the
-    # current version string. It runs against the STAGING root, which holds only
-    # skills/ and hooks/ — so entries this list used to carry that named
-    # docs/history, licenses, or test/latte/scenarios are dropped as
-    # out-of-scope. This one still is: the example plugin inside
-    # developing-claude-code-plugins ships its own plugin.json with its own
-    # version, which is not this plugin's.
+    # `moe-mint bump --audit` sweeps the package source root for stray copies
+    # of the current version string. The developing-claude-code-plugins example
+    # remains exempt because its plugin.json carries that example's version,
+    # not this plugin's.
     exclude:
       - skills/developing-claude-code-plugins/examples
