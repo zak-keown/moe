@@ -7,6 +7,11 @@ import type { Finding } from "./report.js";
 
 export interface ValidateOpts {
   checkPhantoms?: boolean;
+  /** Run Checks 1-3 (uncovered / missing-edge / wave-conflict), which need a
+   * reachable moedex client. Defaults to true; callers on the offline path
+   * (moedex unavailable) should pass `false` to skip straight to the
+   * phantom-files check instead of calling into a client that will throw. */
+  graphChecks?: boolean;
   cwd?: string;
 }
 
@@ -25,83 +30,96 @@ export async function validatePlanAgainstGraph(
     for (const f of t.files) allClaimedFiles.add(f);
   }
 
-  // --- Check 1: Uncovered files ---
-  // Query the blast radius from the plan's goal, compare against claimed files.
-  const goalMatch = /^\*\*Goal:\*\*\s*(.+)/m.exec(planText);
-  if (goalMatch) {
-    const impact = await client.impactAnalysis(goalMatch[1]!.trim());
-    const blastFiles = impact.results.filter((r) => r.score >= 0.5).map((r) => r.rel_path);
+  // Checks 1-3 all need a reachable moedex client. Callers on the offline
+  // path (moedex unavailable) pass `graphChecks: false` to skip straight to
+  // the phantom-files check below instead of calling into a client that
+  // will throw.
+  if (opts.graphChecks !== false) {
+    // --- Check 1: Uncovered files ---
+    // Query the blast radius from the plan's goal, compare against claimed files.
+    const goalMatch = /^\*\*Goal:\*\*\s*(.+)/m.exec(planText);
+    if (goalMatch) {
+      const impact = await client.impactAnalysis(goalMatch[1]!.trim());
+      const blastFiles = impact.results.filter((r) => r.score >= 0.5).map((r) => r.rel_path);
 
-    const uncovered = blastFiles.filter((f) => !allClaimedFiles.has(f));
-    if (uncovered.length > 0) {
-      findings.push({
-        check: "uncovered",
-        severity: "warning",
-        tasks: [],
-        files: uncovered,
-        message: `${uncovered.length} file(s) in the blast radius are not covered by any task`,
-      });
-    }
-  }
-
-  // --- Check 2: Missing edges ---
-  // For each pair of tasks, check if their file sets are coupled in the
-  // call graph but have no depends_on edge.
-  const depSet = new Map<number, Set<number>>();
-  for (const t of tasks) {
-    depSet.set(t.num, new Set(t.dependsOn));
-  }
-
-  for (let i = 0; i < tasks.length; i++) {
-    for (let j = i + 1; j < tasks.length; j++) {
-      const a = tasks[i]!;
-      const b = tasks[j]!;
-
-      const aDepB = depSet.get(a.num)?.has(b.num) ?? false;
-      const bDepA = depSet.get(b.num)?.has(a.num) ?? false;
-      if (aDepB || bDepA) continue;
-
-      const consumers = await client.traceConsumers(a.files);
-      const coupled = consumers.results.some((r) => r.score >= 0.5 && b.files.includes(r.rel_path));
-
-      if (coupled) {
+      const uncovered = blastFiles.filter((f) => !allClaimedFiles.has(f));
+      if (uncovered.length > 0) {
         findings.push({
-          check: "missing-edge",
+          check: "uncovered",
           severity: "warning",
-          tasks: [a.num, b.num],
-          files: [],
-          message: `Tasks ${a.num} and ${b.num} are coupled in the call graph but have no depends_on edge`,
+          tasks: [],
+          files: uncovered,
+          message: `${uncovered.length} file(s) in the blast radius are not covered by any task`,
         });
       }
     }
-  }
 
-  // --- Check 3: Wave conflicts ---
-  const schedulable = tasks.filter((t) => t.blockedBy === null);
-  if (schedulable.length > 1) {
-    const waves = ctx.computeWaves(schedulable);
-    const taskByNum = new Map<number, PlanTask>();
-    for (const t of schedulable) taskByNum.set(t.num, t);
+    // --- Check 2: Missing edges ---
+    // For each pair of tasks, check if their file sets are coupled in the
+    // call graph but have no depends_on edge.
+    const depSet = new Map<number, Set<number>>();
+    for (const t of tasks) {
+      depSet.set(t.num, new Set(t.dependsOn));
+    }
 
-    for (const wave of waves) {
-      for (let i = 0; i < wave.length; i++) {
-        for (let j = i + 1; j < wave.length; j++) {
+    for (let i = 0; i < tasks.length; i++) {
+      const a = tasks[i]!;
+      // Hoisted out of the inner loop: depends only on `a`, so compute it
+      // once per `a` instead of once per (a, b) pair.
+      const consumers = await client.traceConsumers(a.files);
+
+      for (let j = i + 1; j < tasks.length; j++) {
+        const b = tasks[j]!;
+
+        const aDepB = depSet.get(a.num)?.has(b.num) ?? false;
+        const bDepA = depSet.get(b.num)?.has(a.num) ?? false;
+        if (aDepB || bDepA) continue;
+
+        const coupled = consumers.results.some(
+          (r) => r.score >= 0.5 && b.files.includes(r.rel_path),
+        );
+
+        if (coupled) {
+          findings.push({
+            check: "missing-edge",
+            severity: "warning",
+            tasks: [a.num, b.num],
+            files: [],
+            message: `Tasks ${a.num} and ${b.num} are coupled in the call graph but have no depends_on edge`,
+          });
+        }
+      }
+    }
+
+    // --- Check 3: Wave conflicts ---
+    const schedulable = tasks.filter((t) => t.blockedBy === null);
+    if (schedulable.length > 1) {
+      const waves = ctx.computeWaves(schedulable);
+      const taskByNum = new Map<number, PlanTask>();
+      for (const t of schedulable) taskByNum.set(t.num, t);
+
+      for (const wave of waves) {
+        for (let i = 0; i < wave.length; i++) {
           const a = taskByNum.get(wave[i]!)!;
-          const b = taskByNum.get(wave[j]!)!;
-
+          // Hoisted out of the inner loop: depends only on `a`.
           const consumers = await client.traceConsumers(a.files);
-          const coupled = consumers.results.some(
-            (r) => r.score >= 0.5 && b.files.includes(r.rel_path),
-          );
 
-          if (coupled) {
-            findings.push({
-              check: "wave-conflict",
-              severity: "warning",
-              tasks: [a.num, b.num],
-              files: [],
-              message: `Tasks ${a.num} and ${b.num} are in the same wave but coupled in the call graph`,
-            });
+          for (let j = i + 1; j < wave.length; j++) {
+            const b = taskByNum.get(wave[j]!)!;
+
+            const coupled = consumers.results.some(
+              (r) => r.score >= 0.5 && b.files.includes(r.rel_path),
+            );
+
+            if (coupled) {
+              findings.push({
+                check: "wave-conflict",
+                severity: "warning",
+                tasks: [a.num, b.num],
+                files: [],
+                message: `Tasks ${a.num} and ${b.num} are in the same wave but coupled in the call graph`,
+              });
+            }
           }
         }
       }
