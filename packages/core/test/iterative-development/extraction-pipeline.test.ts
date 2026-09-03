@@ -6,6 +6,7 @@ import { runHelper } from "./cli-harness.js";
 
 const CHUNKER = "skills/extracting-requirements/scripts/chunk_spec.mjs";
 const AGGREGATOR = "skills/extracting-requirements/scripts/aggregate_stories.mjs";
+const VALIDATOR = "skills/extracting-requirements/scripts/validate_requirements_index.mjs";
 const FIXTURES = resolve(import.meta.dirname, "fixtures");
 const temporaryRoots: string[] = [];
 
@@ -48,6 +49,11 @@ describe("extraction pipeline", () => {
     expect(epicFiles).toEqual(["EPIC-001.md", "EPIC-002.md"]);
     const contents = epicFiles.map((name) => readFileSync(join(output, name), "utf8"));
     expect(contents.join("\n").match(/^## STORY-\d+$/gm)).toHaveLength(5);
+
+    const validationResult = runHelper(VALIDATOR, [output]);
+    expect(validationResult.status).toBe(0);
+    expect(validationResult.stderr).toBe("");
+    expect(validationResult.stdout).toBe(`OK: ${output}\n`);
 
     for (const [fileIndex, content] of contents.entries()) {
       expect(content).toMatch(new RegExp(`^# EPIC-00${fileIndex + 1} — `));
