@@ -33,6 +33,15 @@ const RETAINED = new Set([
   "resolveProjectJournalPath",
   "resolveUserJournalPath",
   "journalRoots",
+  // database-lease.ts
+  "DatabaseBusyError",
+  "acquireSharedDatabaseLease",
+  "acquireDatabaseWriter",
+  "acquireExclusiveMaintenanceLease",
+  "assertWritableEpoch",
+  "inspectLegacyDatabaseUsers",
+  "readDatabaseEpoch",
+  "withDatabaseWriter",
   // database-transaction.ts
   "withTransaction",
   "withForeignKeysDisabled",

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { DatabaseSync } from "node:sqlite";
 import {
   acquireSharedDatabaseLease,
   acquireDatabaseWriter,
@@ -13,6 +14,7 @@ import {
   readDatabaseEpoch,
   withDatabaseWriter,
 } from "../src/database-lease.js";
+import { closeDatabase } from "../src/db.js";
 import { openTestDatabase } from "./test-utils.js";
 
 describe("database leases", () => {
@@ -22,8 +24,9 @@ describe("database leases", () => {
   beforeEach(async () => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "moe-lease-test-"));
     dbPath = path.join(tmpDir, "test.db");
-    // Create a real database so the file exists
-    const db = openTestDatabase(dbPath);
+    // Create a bare database file so it exists (no lease wired)
+    const db = new DatabaseSync(dbPath);
+    db.exec("PRAGMA journal_mode = WAL");
     db.close();
   });
 
@@ -154,7 +157,7 @@ describe("database leases", () => {
       const epoch = readDatabaseEpoch(dbPath);
       const result = withDatabaseWriter(db, epoch, () => 42);
       expect(result).toBe(42);
-      db.close();
+      closeDatabase(db);
     });
   });
 });
