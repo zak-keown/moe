@@ -286,6 +286,7 @@ function loadManifestSet(located) {
 // failure at once rather than the first.
 
 const VALID_STATUS = new Set(["pending", "running", "done", "blocked"]);
+const VALID_PLAN_SET_ID = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 function validate(doc, manifestPath) {
   const errors = [];
@@ -399,6 +400,13 @@ function validateManifestSet(records) {
   for (const record of records) {
     if (record.doc.has_plan_set_id && !record.doc.plan_set_id) {
       errors.push(`${record.path}: plan_set_id must not be empty`);
+    } else if (!VALID_PLAN_SET_ID.test(record.setId)) {
+      errors.push(
+        `plan_set_id "${record.setId}" must match [A-Za-z0-9][A-Za-z0-9._-]*`,
+      );
+    }
+    if (record.doc.plans.length === 0) {
+      errors.push(`plan set "${record.setId}" must contain at least one plan`);
     }
     if (setById.has(record.setId)) {
       errors.push(
