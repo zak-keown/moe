@@ -197,6 +197,28 @@ describe("skill inventory", () => {
     }
   });
 
+  it("every skill with a triggers frontmatter key appears in the using-moe trigger reference", () => {
+    const skillsWithTriggers = skills
+      .filter((s) => s.frontmatterKeys.includes("triggers"))
+      .map((s) => s.name)
+      .sort();
+    const usingMoe = readFileSync(join(SKILLS, "using-moe", "SKILL.md"), "utf8");
+    const triggerSection = usingMoe.split("## Skill Triggers")[1]?.split("## ")[0] ?? "";
+    for (const name of skillsWithTriggers) {
+      expect(
+        triggerSection.includes(`\`${name}\``),
+        `skill "${name}" has a triggers: frontmatter key but is missing from using-moe's Skill Triggers section`,
+      ).toBe(true);
+    }
+    const referencedNames = [...triggerSection.matchAll(/\*\*`([^`]+)`\*\*/g)].map((m) => m[1]);
+    for (const ref of referencedNames) {
+      expect(
+        skillsWithTriggers.includes(ref as string),
+        `using-moe references "${ref}" in Skill Triggers but that skill has no triggers: frontmatter key`,
+      ).toBe(true);
+    }
+  });
+
   it("accounts for every skill the six upstream sources shipped", () => {
     // Enumerated from the pinned snapshots at import time. A skill silently
     // dropped in a later edit fails here.

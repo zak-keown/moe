@@ -63,6 +63,20 @@ These thoughts mean STOP—you're rationalizing:
 | "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
 | "I know what that means" | Knowing the concept ≠ using the skill. Invoke it. |
 
+## Skill Triggers
+
+Match your current task against these triggers to decide which skill to load.
+Skills without triggers here are general-purpose — check their description in
+the skill listing.
+
+- **`brainstorming`** — New creative work needing design exploration (features, components, behavioral changes). *Skip for:* bug fixes, refactoring, test additions, docs, or tasks with an approved spec.
+- **`writing-plans`** — Approved requirements or design ready for a multi-task implementation plan. *Skip for:* initial exploration (use `brainstorming`), single-file changes, bug fixes, or when a plan already exists (use `subagent-driven-development`).
+- **`subagent-driven-development`** — Executing a multi-task plan with fresh-context isolation. *Skip for:* single tasks, debugging, initial planning, or low-level dispatch without a plan.
+- **`dispatching-parallel-agents`** — Low-level mechanics for 2+ independent parallel tasks outside a plan. *Skip for:* plan execution (SDD includes dispatching), sequential tasks, single tasks.
+- **`improve-codebase-architecture`** — Deliberate architectural review across modules. *Skip for:* known refactors, single-module fixes, code questions, debugging, initial design.
+- **`iterative-development`** — Large specs (10+ files, 100+ requirements) needing audited sprints with behavior evidence. *Skip for:* well-scoped features, single tasks, bug fixes, or projects without prior planning.
+- **`writing-skills`** — Creating, editing, or pressure-testing SKILL.md files. *Skip for:* discussing skills conceptually, invoking skills, editing non-skill docs, building plugins.
+
 ## Platform Adaptation
 
 If your harness appears here, read its reference file for special instructions:
