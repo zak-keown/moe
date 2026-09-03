@@ -17,10 +17,15 @@ import { suppressConsole } from "./test-utils.js";
  * "unit" project — indexUnprocessed's exclusion check runs long before any
  * embedding is generated, so the fix under test needs no real vectors.
  */
-const pipelineMock = vi.hoisted(() => vi.fn());
-vi.mock("@huggingface/transformers", () => ({
-  pipeline: pipelineMock,
-  env: {} as Record<string, unknown>,
+const createBackendMock = vi.hoisted(() => vi.fn());
+vi.mock("../src/embedding-runtime.js", () => ({
+  createEmbeddingBackend: createBackendMock,
+}));
+vi.mock("../src/model-cache.js", () => ({
+  ensureModelSet: vi.fn(async () => ({ root: "/fake", revision: "x", variant: "q8", files: new Map() })),
+}));
+vi.mock("../src/model-manifest.js", () => ({
+  loadModelManifest: vi.fn(() => ({ schema: 1, model: "test", revision: "x", variant: "q8", license: "MIT", dimensions: 384, maxTokens: 512, maxInputChars: 2000, queryPrefix: "", files: [] })),
 }));
 
 const { indexUnprocessed } = await import("../src/indexer.js");
@@ -86,10 +91,12 @@ describe("CR-069: project exclusion resolves the real (parsed) project for Codex
     // The value a user would actually type: the real project name, not "2026".
     process.env.CONVERSATION_SEARCH_EXCLUDE_PROJECTS = "secret-repo";
 
-    pipelineMock.mockReset();
-    pipelineMock.mockImplementation(async () =>
-      vi.fn(async () => ({ data: new Float32Array(384).fill(0.1) })),
-    );
+    createBackendMock.mockReset();
+    createBackendMock.mockResolvedValue({
+      embed: vi.fn(async () => new Float32Array(384).fill(0.1)),
+      embedQuery: vi.fn(async () => new Float32Array(384).fill(0.1)),
+      close: vi.fn(async () => {}),
+    });
     restoreConsole = suppressConsole();
 
     // Codex layout: <sessions>/<year>/<month>/<day>/rollout-*.jsonl — the only

@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "ort": {
+    "package": "onnxruntime-web",
+    "version": "1.26.0-dev.20260416-b7804b056c",
+    "file": "ort-wasm-simd-threaded.wasm",
+    "bytes": 12942611,
+    "sha256": "f4f290847a4df02d0b93cdbf39b4b0e71acefbe80573e7e6b9342a7abd7b290a"
+  }
+}

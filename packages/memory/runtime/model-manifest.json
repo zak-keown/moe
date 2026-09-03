@@ -12,26 +12,26 @@
     {
       "name": "config.json",
       "url": "https://huggingface.co/Xenova/bge-small-en-v1.5/resolve/main/config.json",
-      "bytes": 684,
-      "sha256": "82d6f6a20e62a75e33b3cb572c01d8b1e78e0d16b85dcbf0f4de51cfc07ef8b2"
+      "bytes": 683,
+      "sha256": "fa73f90bf92c8cace1fbcb709626306f2bdbc9ea3e5b5f94b440df9b6aa56350"
     },
     {
       "name": "tokenizer.json",
       "url": "https://huggingface.co/Xenova/bge-small-en-v1.5/resolve/main/tokenizer.json",
       "bytes": 711396,
-      "sha256": "d48ae8ca56f37a3dddc9adf30c8a3dc6ad47ebb03bab8a9f4ce8b9ef0a6ac7b3"
+      "sha256": "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66"
     },
     {
       "name": "tokenizer_config.json",
       "url": "https://huggingface.co/Xenova/bge-small-en-v1.5/resolve/main/tokenizer_config.json",
-      "bytes": 1261,
-      "sha256": "9b3f8e46f21ee5da7c95d3b9abd1e7d6d3318e33fba77ba8cb6839f5c1e5c0fa"
+      "bytes": 366,
+      "sha256": "9261e7d79b44c8195c1cada2b453e55b00aeb81e907a6664974b4d7776172ab3"
     },
     {
       "name": "model_quantized.onnx",
       "url": "https://huggingface.co/Xenova/bge-small-en-v1.5/resolve/main/onnx/model_quantized.onnx",
-      "bytes": 34589075,
-      "sha256": "a5da9c86cd9d6e51ef3ce79e4bc54f95a2019d04dd18d1424ebef7c9c21d61b0"
+      "bytes": 34014426,
+      "sha256": "6c9c6101a956d62dfb5e7190c538226c0c5bb9cb27b651234b6df063ee7dbfe4"
     }
   ]
 }
