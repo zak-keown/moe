@@ -11,7 +11,7 @@ import {
   rmSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, relative, resolve } from "node:path";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -60,7 +60,7 @@ function discoverPackages() {
       const hooksPath = join(packageRoot, "hooks", "hooks.json");
       if (!existsSync(manifestPath) || !existsSync(hooksPath)) return false;
       const manifest = readJson(manifestPath);
-      return manifest.private !== true && Array.isArray(manifest.files);
+      return manifest.private !== true;
     })
     .sort();
 }
@@ -104,10 +104,33 @@ function extractedPackage(tarball, extractDir) {
   if (!existsSync(join(packageRoot, "package.json"))) {
     fail(`tarball did not extract an npm package root: ${tarball}`);
   }
-  if (existsSync(join(packageRoot, "node_modules"))) {
-    fail(`packed package unexpectedly contains node_modules: ${packageRoot}`);
-  }
+  assertNoNodeModules(packageRoot);
   return packageRoot;
+}
+
+function assertNoNodeModules(packageRoot) {
+  const pending = [packageRoot];
+  while (pending.length > 0) {
+    const current = pending.pop();
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const child = join(current, entry.name);
+      if (entry.name === "node_modules") {
+        fail(`packed package unexpectedly contains node_modules: ${child}`);
+      }
+      pending.push(child);
+    }
+  }
+
+  let ancestor = packageRoot;
+  while (true) {
+    if (basename(ancestor) === "node_modules") {
+      fail(`packed package is executing beneath node_modules: ${ancestor}`);
+    }
+    const parent = dirname(ancestor);
+    if (parent === ancestor) break;
+    ancestor = parent;
+  }
 }
 
 function runHook(packageName, packageRoot, command, sandboxRoot) {
@@ -134,11 +157,10 @@ function runHook(packageName, packageRoot, command, sandboxRoot) {
   delete env.MOE_CREW_RUN_ID;
   delete env.MOE_CREW_TMUX_NAME;
 
-  const result = spawnSync(command, {
+  const result = spawnSync("bash", ["-c", command], {
     cwd,
     env,
     input: HOOK_PAYLOAD(cwd),
-    shell: "/bin/bash",
     encoding: "utf8",
     timeout: 15_000,
     maxBuffer: 10 * 1024 * 1024,
@@ -160,19 +182,27 @@ function runHook(packageName, packageRoot, command, sandboxRoot) {
 }
 
 const tempRoot = mkdtempSync(join(tmpdir(), "moe-session-start-hooks-"));
-const tempReal = realpathSync(tempRoot);
-const repoReal = realpathSync(REPO_ROOT);
-if (!relative(repoReal, tempReal).startsWith("..")) {
-  fail(`artifact workspace must be outside the repository: ${tempReal}`);
-}
 
 try {
+  const tempReal = realpathSync(tempRoot);
+  const repoReal = realpathSync(REPO_ROOT);
+  if (!relative(repoReal, tempReal).startsWith("..")) {
+    fail(`artifact workspace must be outside the repository: ${tempReal}`);
+  }
+
   const packages = discoverPackages();
   if (packages.length === 0) fail("no publishable packages with hooks/hooks.json found");
 
   let commandCount = 0;
   for (const [index, sourceRoot] of packages.entries()) {
     const sourceManifest = readJson(join(sourceRoot, "package.json"));
+    if (
+      !Array.isArray(sourceManifest.files) ||
+      sourceManifest.files.length === 0 ||
+      sourceManifest.files.some((entry) => typeof entry !== "string" || entry.length === 0)
+    ) {
+      fail(`${sourceManifest.name} package.json files must be a non-empty string array`);
+    }
     const commands = sessionStartCommands(sourceRoot);
     if (commands.length === 0) {
       fail(`${sourceManifest.name} has hooks/hooks.json but no SessionStart commands`);
