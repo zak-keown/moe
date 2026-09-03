@@ -135,6 +135,18 @@ describe('generate', () => {
     expect(matrix).toContain('| copilot | unsupported | none |')
   })
 
+  it('reports an excluded adapter as unsupported instead of falling back to its static capability', () => {
+    const dir = freshFixture()
+    const yaml = readFileSync(join(dir, 'moe-mint.yaml'), 'utf8')
+    writeFileSync(join(dir, 'moe-mint.yaml'), yaml.replace('harnesses:\n', 'harnesses:\n  exclude: [claude-code]\n'))
+
+    const result = generate(dir)
+
+    expect(result.skillDelivery['claude-code']).toBe('unsupported')
+    const matrix = readFileSync(join(dir, 'docs/support-matrix.md'), 'utf8')
+    expect(matrix).toContain('| claude-code | unsupported | none |')
+  })
+
   it('emits docs/support-matrix.md as a normal generated file, tracked in the manifest and drift-clean', () => {
     const dir = freshFixture()
     const result = generate(dir)

@@ -16,7 +16,9 @@ export function renderMatrix(achievedDelivery?: Record<string, SkillDelivery>): 
   const header = `| Harness | skill delivery | ${COLUMNS.join(' | ')} |`
   const separator = `|${'---|'.repeat(COLUMNS.length + 2)}`
   const rows = adapters.map((adapter) => {
-    const delivery = achievedDelivery?.[adapter.name] ?? adapter.skillDelivery
+    const delivery = achievedDelivery
+      ? (achievedDelivery[adapter.name] ?? 'unsupported')
+      : adapter.skillDelivery
     const support = {
       ...adapter.support,
       skills: delivery === 'unsupported' ? 'none' : adapter.support.skills,
