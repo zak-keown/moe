@@ -65,9 +65,11 @@ MOE_CREW_WORKER_DIR below) — run that shim for all per-worker subcommands.
 surface is identical across harnesses.
 
 Top-level subcommands:
-  launch [--harness <claude|codex|pi>] <tmux-name> <cwd> [-- harness-args...]
+  launch [--harness <claude|codex|pi>] [--worktree] <tmux-name> <cwd> [-- harness-args...]
                        Bootstrap a worker (harness defaults to claude); shim
-                       path on stdout, panel on stderr
+                       path on stdout, panel on stderr. --worktree creates a
+                       disposable git worktree per worker so parallel workers
+                       do not race on git state; stop removes it
   adopt <tmux-name> <cwd> <session-id> [-- claude-args...]
                        Re-adopt an existing Claude session as a driveable
                        worker via \`claude --resume <session-id>\` (claude-only;
@@ -257,13 +259,16 @@ export function readLine(input: NodeJS.ReadableStream = process.stdin): Promise<
   });
 }
 
-/** Parse `launch [--harness <id>] <tmux-name> <cwd> [-- harness-args...]`. */
+/** Parse `launch [--harness <id>] [--worktree] <tmux-name> <cwd> [-- harness-args...]`. */
 function parseLaunchArgs(
   argv: string[],
-): { tmuxName: string; cwd: string; extraArgs: string[]; harness: string } | DispatchError {
+):
+  | { tmuxName: string; cwd: string; extraArgs: string[]; harness: string; worktree?: boolean }
+  | DispatchError {
   const usage = "Usage: launch <tmux-name> <cwd> [-- claude-args...]";
   const positionals: string[] = [];
   let harness = "claude";
+  let worktree = false;
   let extraArgs: string[] = [];
   let i = 0;
   while (i < argv.length) {
@@ -289,12 +294,17 @@ function parseLaunchArgs(
       i += 2;
       continue;
     }
+    if (a === "--worktree") {
+      worktree = true;
+      i += 1;
+      continue;
+    }
     positionals.push(a);
     i += 1;
   }
   const [tmuxName, cwd] = positionals;
   if (tmuxName === undefined || cwd === undefined) return err(usage);
-  return { tmuxName, cwd, extraArgs, harness };
+  return { tmuxName, cwd, extraArgs, harness, ...(worktree ? { worktree: true } : {}) };
 }
 
 /** Parse `adopt <tmux-name> <cwd> <session-id> [-- claude-args...]`. */
