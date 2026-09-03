@@ -63,7 +63,7 @@ still needs a branch name; the git fallback below takes one directly. Do this
 before either.
 
 For repos on any other forge, use whatever convention that repo's `CONTRIBUTING`
-or `CODEOWNERS` documents; if there is none, `feature/{slug}` is a safe default.
+or `CODEOWNERS` documents; if there is none, `feature/<slug>` is a safe default.
 
 ### 1c. Git Worktree Fallback
 

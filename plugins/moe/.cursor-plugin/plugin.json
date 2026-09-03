@@ -21,6 +21,6 @@
     "writing",
     "plugin-authoring"
   ],
-  "skills": "./skills/",
+  "skills": "./.cursor-plugin/skills/",
   "hooks": "./hooks/moe-mint/hooks-cursor.json"
 }
