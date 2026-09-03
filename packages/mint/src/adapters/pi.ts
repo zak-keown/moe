@@ -225,7 +225,11 @@ export const pi: HarnessAdapter = {
     rules: 'none',
     variables: 'none',
   },
-  skillsOutputDir: '.pi/skills',
+  skillLayout: {
+    outputDir: '.pi/skills',
+    profile: 'pi',
+    mode: 'rendered',
+  },
   installDoc,
   emit(model: PluginModel): EmitResult {
     const warnings: string[] = []

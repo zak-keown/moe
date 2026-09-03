@@ -64,7 +64,11 @@ export const kimi: HarnessAdapter = {
     rules: 'none',
     variables: 'none',
   },
-  skillsOutputDir: '.kimi-plugin/skills',
+  skillLayout: {
+    outputDir: '.kimi-plugin/skills',
+    profile: 'kimi',
+    mode: 'rendered',
+  },
   installDoc,
   emit(model: PluginModel): EmitResult {
     const { config } = model

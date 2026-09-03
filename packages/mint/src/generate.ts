@@ -1,7 +1,13 @@
 import { rmSync, rmdirSync, readdirSync, readFileSync, existsSync, statSync, lstatSync } from 'node:fs'
 import { dirname, resolve, isAbsolute, sep } from 'node:path'
 import { buildModel } from './model.js'
-import { writeFileSet, type FileSet, type GeneratedFile } from './fileset.js'
+import {
+  contentEquals,
+  writeFileSet,
+  type FileContent,
+  type FileSet,
+  type GeneratedFile,
+} from './fileset.js'
 import { saveManifest, loadManifest, sha256, type GenerationManifest } from './manifest.js'
 import { adapters, type HarnessAdapter } from './adapters/index.js'
 import { emitDocs, injectReadme } from './docs-emit.js'
@@ -17,7 +23,7 @@ import {
 
 export const TOOL_VERSION = '0.0.0'
 
-// opencode and pi each have their own skillsOutputDir, but also both emit a
+// opencode and pi each have their own rendered skill layout, but also both emit a
 // single, intentionally byte-identical root package.json (see "Design
 // decision 3" in bootstrap/node-package.ts's nodePackageManifest doc
 // comment) whose `pi.skills` field is read straight from
@@ -34,7 +40,7 @@ export const TOOL_VERSION = '0.0.0'
 const SHARED_MANIFEST_ADAPTERS = new Set(['opencode', 'pi'])
 
 export interface GenerateResult {
-  files: FileSet
+  files: FileSet<FileContent>
   warnings: string[]
   adaptersRun: string[]
   pruned: string[]
@@ -61,9 +67,9 @@ function isSourcePath(path: string, config: MintConfig): boolean {
 // Shared by the adapter emission loop and the docs stage below so both go
 // through the exact same collision rules.
 function mergeFiles(
-  byPath: Map<string, { owner: string; file: GeneratedFile }>,
+  byPath: Map<string, { owner: string; file: GeneratedFile<FileContent> }>,
   owner: string,
-  files: GeneratedFile[],
+  files: GeneratedFile<FileContent>[],
   config: MintConfig,
 ): void {
   for (const file of files) {
@@ -73,7 +79,8 @@ function mergeFiles(
     const existing = byPath.get(file.path)
     if (existing) {
       const identical =
-        existing.file.content === file.content && Boolean(existing.file.executable) === Boolean(file.executable)
+        contentEquals(existing.file.content, file.content) &&
+        Boolean(existing.file.executable) === Boolean(file.executable)
       if (!identical) {
         throw new ConfigError(`adapters "${existing.owner}" and "${owner}" both emit ${file.path}`)
       }
@@ -92,41 +99,36 @@ export function generate(
   const excluded = new Set(model.config.harnesses.exclude)
   const active = adapterList.filter((a) => !excluded.has(a.name))
 
-  const vocab = loadVocabulary(root)
-  if (vocab) {
-    const activeNames = active.map((a) => a.name)
-    validateCoverage(vocab, activeNames)
+  const configuredVocab = loadVocabulary(root)
+  const vocab = configuredVocab ?? { tokens: new Map(), blocks: new Map() }
+  if (configuredVocab) {
+    const activeProfiles = [...new Set(active.map((a) => a.skillLayout.profile))]
+    validateCoverage(vocab, activeProfiles)
     scanForUnknownTokens(root, model.config.components.skills, vocab)
   }
 
-  // Substitute skills BEFORE the adapter emit loop: shared adapters
-  // (claude-code, agent-plugins-1.0, copilot — no skillsOutputDir) get their
-  // mapping overwritten onto the source skills/ directory in place here, so
-  // that when claude-code's adapter reads skills/ below during emit(), it
-  // sees already-substituted content. Non-shared adapters' substituted
-  // copies are collected for merging into the output fileset after the loop.
-  let vocabSkillFiles: GeneratedFile[] = []
-  if (vocab) {
-    vocabSkillFiles = substituteAllSkills(root, model, vocab, active)
-  }
+  // Snapshot-derived skill trees are prepared before adapter emission. An
+  // in-place layout updates the staged source tree; rendered layouts flow
+  // through the same collision, manifest, and writer pipeline as adapter files.
+  const renderedSkillFiles = substituteAllSkills(root, model, vocab, active)
 
   const warnings: string[] = []
-  const byPath = new Map<string, { owner: string; file: GeneratedFile }>()
+  const byPath = new Map<string, { owner: string; file: GeneratedFile<FileContent> }>()
   for (const adapter of active) {
     const adapterModel =
-      vocab && adapter.skillsOutputDir && !SHARED_MANIFEST_ADAPTERS.has(adapter.name)
-        ? adjustedModel(model, adapter.skillsOutputDir)
+      adapter.skillLayout.mode === 'rendered' && !SHARED_MANIFEST_ADAPTERS.has(adapter.name)
+        ? adjustedModel(model, adapter.skillLayout)
         : model
     const result = adapter.emit(adapterModel)
     mergeFiles(byPath, adapter.name, result.files, model.config)
     warnings.push(...result.warnings.map((w) => `[${adapter.name}] ${w}`))
   }
-  if (vocab) {
-    mergeFiles(byPath, 'vocabulary', vocabSkillFiles, model.config)
-    assertNoSurvivors(vocabSkillFiles)
+  mergeFiles(byPath, 'skill-renderer', renderedSkillFiles, model.config)
+  if (configuredVocab) {
+    assertNoSurvivors(renderedSkillFiles)
   }
   mergeFiles(byPath, 'docs', emitDocs(model, active), model.config)
-  const files: FileSet = [...byPath.values()].map((v) => v.file)
+  const files: FileSet<FileContent> = [...byPath.values()].map((v) => v.file)
 
   // A corrupt manifest shouldn't dead-end generate the way it does validate:
   // recover by treating this run as if there were no prior manifest at all, and
@@ -193,7 +195,7 @@ export function generate(
       continue
     }
     if (prior && Object.prototype.hasOwnProperty.call(prior.files, file.path)) continue
-    if (readFileSync(abs, 'utf8') === file.content) continue
+    if (contentEquals(readFileSync(abs), file.content)) continue
     conflicts.push(file.path)
   }
   if (conflicts.length > 0 && !opts.force) {
@@ -228,7 +230,7 @@ export function generate(
       }
 
       if (!existsSync(abs)) continue
-      if (sha256(readFileSync(abs, 'utf8')) === entry.sha256) {
+      if (sha256(readFileSync(abs)) === entry.sha256) {
         rmSync(abs)
         pruned.push(path)
         let parent = dirname(abs)

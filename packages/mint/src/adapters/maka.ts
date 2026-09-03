@@ -78,6 +78,7 @@ export const maka: HarnessAdapter = {
     rules: 'none',
     variables: 'none',
   },
+  skillLayout: { outputDir: 'skills', profile: 'maka', mode: 'in-place' },
   installDoc,
   emit(_model: PluginModel): EmitResult {
     return {

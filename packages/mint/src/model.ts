@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs'
+import { readFileSync, readdirSync, existsSync, lstatSync } from 'node:fs'
 import { join } from 'node:path'
 import { loadConfig, ConfigError, type MintConfig } from './config.js'
 import { parseFrontmatter } from './frontmatter.js'
@@ -7,6 +7,11 @@ export interface SkillRef {
   name: string
   dir: string
   description: string
+}
+export interface SkillTreeFile {
+  path: string
+  content: Uint8Array
+  executable: boolean
 }
 // `description` and `tools` come from optional markdown frontmatter, and
 // buildModel always sets the key — with `undefined` when the field is absent.
@@ -30,20 +35,57 @@ export interface PluginModel {
   root: string
   config: MintConfig
   skills: SkillRef[]
+  skillFiles: SkillTreeFile[]
   commands: CommandRef[]
   agents: AgentRef[]
   hooks?: unknown
   mcp?: unknown
 }
 
-function readSkills(root: string, skillsDir: string): SkillRef[] {
+function snapshotSkillTree(root: string, skillsDir: string): SkillTreeFile[] {
   const abs = join(root, skillsDir)
   if (!existsSync(abs)) return []
-  return readdirSync(abs)
-    .filter((entry) => statSync(join(abs, entry)).isDirectory())
-    .filter((entry) => existsSync(join(abs, entry, 'SKILL.md')))
-    .map((entry) => {
-      const { data } = parseFrontmatter(readFileSync(join(abs, entry, 'SKILL.md'), 'utf8'))
+  const rootStat = lstatSync(abs)
+  if (rootStat.isSymbolicLink()) {
+    throw new ConfigError(`symbolic link is not supported in skill tree: ${skillsDir}`)
+  }
+  if (!rootStat.isDirectory()) {
+    throw new ConfigError(`unsupported node in skill tree: ${skillsDir}`)
+  }
+
+  const files: SkillTreeFile[] = []
+  const walk = (directory: string, relativeDir: string): void => {
+    for (const entry of readdirSync(directory).sort()) {
+      const absolutePath = join(directory, entry)
+      const relativePath = relativeDir ? `${relativeDir}/${entry}` : entry
+      const stat = lstatSync(absolutePath)
+      const displayPath = `${skillsDir.replace(/\/$/, '')}/${relativePath}`
+      if (stat.isSymbolicLink()) {
+        throw new ConfigError(`symbolic link is not supported in skill tree: ${displayPath}`)
+      }
+      if (stat.isDirectory()) {
+        walk(absolutePath, relativePath)
+      } else if (stat.isFile()) {
+        files.push({
+          path: relativePath,
+          content: readFileSync(absolutePath),
+          executable: (stat.mode & 0o111) !== 0,
+        })
+      } else {
+        throw new ConfigError(`unsupported node in skill tree: ${displayPath}`)
+      }
+    }
+  }
+  walk(abs, '')
+  return files
+}
+
+function readSkills(skillsDir: string, skillFiles: SkillTreeFile[]): SkillRef[] {
+  return skillFiles
+    .filter((file) => /^[^/]+\/SKILL\.md$/.test(file.path))
+    .map((file) => {
+      const entry = file.path.slice(0, -'/SKILL.md'.length)
+      const { data } = parseFrontmatter(Buffer.from(file.content).toString('utf8'))
       return {
         name: typeof data.name === 'string' ? data.name : entry,
         dir: `${skillsDir}/${entry}`,
@@ -97,7 +139,8 @@ function readJsonIfPresent(root: string, rel: string): unknown {
 
 export function buildModel(root: string): PluginModel {
   const config = loadConfig(root)
-  const skills = readSkills(root, config.components.skills)
+  const skillFiles = snapshotSkillTree(root, config.components.skills)
+  const skills = readSkills(config.components.skills, skillFiles)
   const commands = readMarkdownComponents(root, config.components.commands).map((c) => ({
     name: c.name,
     path: c.path,
@@ -117,6 +160,7 @@ export function buildModel(root: string): PluginModel {
     root,
     config,
     skills,
+    skillFiles,
     commands,
     agents,
     hooks: readJsonIfPresent(root, config.components.hooks),

@@ -5,10 +5,22 @@ import {
   substituteContent,
   scanForUnknownTokens,
   assertNoSurvivors,
+  substituteAllSkills,
 } from '../src/vocabulary.js'
 import { join } from 'node:path'
-import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs'
+import {
+  chmodSync,
+  lstatSync,
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
+import { execFileSync } from 'node:child_process'
+import { buildModel } from '../src/model.js'
+import type { HarnessAdapter } from '../src/adapters/types.js'
 
 describe('loadVocabulary', () => {
   it('returns null when moe-mint-vocab.yaml is absent', () => {
@@ -226,5 +238,198 @@ describe('assertNoSurvivors', () => {
         { path: 'a.md', content: 'A literal \\{ask}.\n```\n{json}\n```' },
       ]),
     ).not.toThrow()
+  })
+})
+
+const noSupport = {
+  skills: 'none',
+  commands: 'none',
+  agents: 'none',
+  hooks: 'none',
+  mcp: 'none',
+  bootstrap: 'none',
+  rules: 'none',
+  variables: 'none',
+} as const
+
+function fullTreeFixture(): string {
+  const dir = mkdtempSync(join(tmpdir(), 'mint-vocab-tree-'))
+  writeFileSync(
+    join(dir, 'moe-mint.yaml'),
+    'name: tree-demo\nversion: 1.0.0\ndescription: full tree test\nbootstrap: none\n',
+  )
+  mkdirSync(join(dir, 'skills/demo/references'), { recursive: true })
+  mkdirSync(join(dir, 'skills/demo/scripts'), { recursive: true })
+  mkdirSync(join(dir, 'skills/demo/assets'), { recursive: true })
+  writeFileSync(
+    join(dir, 'skills/demo/SKILL.md'),
+    '---\nname: demo\ndescription: demo\n---\n\nUse {ask}.\n',
+  )
+  writeFileSync(join(dir, 'skills/demo/references/guide.md'), 'Then {ask}.\n')
+  writeFileSync(join(dir, 'skills/demo/scripts/run.sh'), '#!/bin/sh\nprintf "{ask} stays literal"\n')
+  chmodSync(join(dir, 'skills/demo/scripts/run.sh'), 0o755)
+  writeFileSync(join(dir, 'skills/demo/assets/pixel.bin'), Buffer.from([0x00, 0xff, 0x80, 0x41]))
+  return dir
+}
+
+function renderedAdapter(
+  name: string,
+  outputDir: string,
+  profile = name,
+): HarnessAdapter {
+  return {
+    name,
+    support: noSupport,
+    skillLayout: { outputDir, profile, mode: 'rendered' },
+    emit: () => ({ files: [], warnings: [] }),
+  }
+}
+
+describe('substituteAllSkills full-tree rendering', () => {
+  it('copies the complete skill closure, transforms only Markdown, and preserves executable files', () => {
+    const dir = fullTreeFixture()
+    const model = buildModel(dir)
+    const vocab = {
+      tokens: new Map([['ask', { codex: '`request_user_input`' }]]),
+      blocks: new Map(),
+    }
+
+    const files = substituteAllSkills(
+      dir,
+      model,
+      vocab,
+      [renderedAdapter('codex', '.codex-plugin/skills')],
+    )
+
+    expect(files.map((file) => file.path)).toEqual([
+      '.codex-plugin/skills/demo/SKILL.md',
+      '.codex-plugin/skills/demo/assets/pixel.bin',
+      '.codex-plugin/skills/demo/references/guide.md',
+      '.codex-plugin/skills/demo/scripts/run.sh',
+    ])
+    expect(files.find((file) => file.path.endsWith('/SKILL.md'))?.content.toString()).toContain(
+      '`request_user_input`',
+    )
+    expect(files.find((file) => file.path.endsWith('/references/guide.md'))?.content.toString()).toBe(
+      'Then `request_user_input`.\n',
+    )
+    expect(files.find((file) => file.path.endsWith('/scripts/run.sh'))).toMatchObject({
+      executable: true,
+    })
+    expect(files.find((file) => file.path.endsWith('/scripts/run.sh'))?.content.toString()).toContain(
+      '{ask} stays literal',
+    )
+    expect(files.find((file) => file.path.endsWith('/assets/pixel.bin'))?.content).toEqual(
+      Buffer.from([0x00, 0xff, 0x80, 0x41]),
+    )
+  })
+
+  it('renders reproducibly from one immutable source snapshot', () => {
+    const dir = fullTreeFixture()
+    const model = buildModel(dir)
+    const vocab = {
+      tokens: new Map([
+        ['ask', { codex: 'CODEX', cursor: 'CURSOR' }],
+      ]),
+      blocks: new Map(),
+    }
+    const active = [
+      renderedAdapter('cursor', '.cursor-plugin/skills'),
+      renderedAdapter('codex', '.codex-plugin/skills'),
+    ]
+
+    const first = substituteAllSkills(dir, model, vocab, active)
+    writeFileSync(join(dir, 'skills/demo/SKILL.md'), 'source changed after snapshot')
+    const second = substituteAllSkills(dir, model, vocab, active)
+
+    expect(second).toEqual(first)
+    expect(first.map((file) => file.path)).toEqual([...first.map((file) => file.path)].sort())
+  })
+
+  it('rejects shared output directories whose profiles differ', () => {
+    const dir = fullTreeFixture()
+    const model = buildModel(dir)
+    const vocab = {
+      tokens: new Map([['ask', { codex: 'CODEX', cursor: 'CURSOR' }]]),
+      blocks: new Map(),
+    }
+
+    expect(() =>
+      substituteAllSkills(dir, model, vocab, [
+        renderedAdapter('codex', '.shared/skills', 'codex'),
+        renderedAdapter('cursor', '.shared/skills', 'cursor'),
+      ]),
+    ).toThrow(/share.*\.shared\/skills.*profiles/i)
+  })
+
+  it('rejects a rendered output directory that traverses outside the plugin root', () => {
+    const dir = fullTreeFixture()
+    const model = buildModel(dir)
+    const vocab = {
+      tokens: new Map([['ask', { codex: 'CODEX' }]]),
+      blocks: new Map(),
+    }
+
+    expect(() =>
+      substituteAllSkills(dir, model, vocab, [renderedAdapter('codex', '../outside')]),
+    ).toThrow(/output directory.*(escapes plugin root|traversal)/i)
+  })
+
+  it('rejects traversal segments even when the normalized output stays inside the plugin root', () => {
+    const dir = fullTreeFixture()
+    const model = buildModel(dir)
+    const vocab = {
+      tokens: new Map([['ask', { codex: 'CODEX' }]]),
+      blocks: new Map(),
+    }
+
+    expect(() =>
+      substituteAllSkills(
+        dir,
+        model,
+        vocab,
+        [renderedAdapter('codex', '.private/../skills')],
+      ),
+    ).toThrow(/output directory.*traversal/i)
+  })
+
+  it('rejects symlinks anywhere in the source skill tree', () => {
+    const dir = fullTreeFixture()
+    symlinkSync(join(dir, 'skills/demo/assets/pixel.bin'), join(dir, 'skills/demo/assets/alias.bin'))
+
+    expect(() => buildModel(dir)).toThrow(/symbolic link.*skills\/demo\/assets\/alias\.bin/i)
+  })
+
+  it.skipIf(process.platform === 'win32')('rejects unsupported filesystem nodes in the source skill tree', () => {
+    const dir = fullTreeFixture()
+    execFileSync('mkfifo', [join(dir, 'skills/demo/assets/events')])
+
+    expect(() => buildModel(dir)).toThrow(/unsupported node.*skills\/demo\/assets\/events/i)
+  })
+
+  it('applies an in-place profile without altering binary assets or executable modes', () => {
+    const dir = fullTreeFixture()
+    const model = buildModel(dir)
+    const vocab = {
+      tokens: new Map([['ask', { 'agent-plugins-1.0': 'ASK' }]]),
+      blocks: new Map(),
+    }
+    const adapter: HarnessAdapter = {
+      name: 'agent-plugins-1.0',
+      support: noSupport,
+      skillLayout: {
+        outputDir: 'skills',
+        profile: 'agent-plugins-1.0',
+        mode: 'in-place',
+      },
+      emit: () => ({ files: [], warnings: [] }),
+    }
+
+    expect(substituteAllSkills(dir, model, vocab, [adapter])).toEqual([])
+    expect(readFileSync(join(dir, 'skills/demo/SKILL.md'), 'utf8')).toContain('Use ASK.')
+    expect(readFileSync(join(dir, 'skills/demo/assets/pixel.bin'))).toEqual(
+      Buffer.from([0x00, 0xff, 0x80, 0x41]),
+    )
+    expect(lstatSync(join(dir, 'skills/demo/scripts/run.sh')).mode & 0o111).not.toBe(0)
   })
 })

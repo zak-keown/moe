@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import { readFileSync, existsSync, mkdirSync, writeFileSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { ConfigError } from './config.js'
-import type { FileSet } from './fileset.js'
+import { contentBytes, type FileContent, type FileSet } from './fileset.js'
 
 export const MANIFEST_PATH = '.moe-mint/manifest.json'
 
@@ -17,8 +17,8 @@ export interface GenerationManifest {
   files: Record<string, ManifestEntry>
 }
 
-export function sha256(content: string): string {
-  return createHash('sha256').update(content).digest('hex')
+export function sha256(content: FileContent): string {
+  return createHash('sha256').update(contentBytes(content)).digest('hex')
 }
 
 function isExecutable(path: string): boolean {
@@ -41,7 +41,7 @@ export function loadManifest(root: string): GenerationManifest | undefined {
   return m
 }
 
-export function saveManifest(root: string, files: FileSet, toolVersion: string): void {
+export function saveManifest(root: string, files: FileSet<FileContent>, toolVersion: string): void {
   const manifest: GenerationManifest = {
     schema: 1,
     tool: `moe-mint@${toolVersion}`,
@@ -74,7 +74,7 @@ export function checkDrift(root: string, opts: { checkExecBit?: boolean } = {}):
     const filePath = join(root, path)
     if (!existsSync(filePath)) missing.push(path)
     else if (
-      sha256(readFileSync(filePath, 'utf8')) !== entry.sha256 ||
+      sha256(readFileSync(filePath)) !== entry.sha256 ||
       (checkExecBit && isExecutable(filePath) !== Boolean(entry.executable))
     )
       modified.push(path)

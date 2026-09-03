@@ -181,7 +181,11 @@ export const agentPlugins: HarnessAdapter = {
     rules: 'none',
     variables: 'none',
   },
-  skillsOutputDir: undefined,
+  skillLayout: {
+    outputDir: 'skills',
+    profile: 'agent-plugins-1.0',
+    mode: 'in-place',
+  },
   installDoc,
   emit(model: PluginModel): EmitResult {
     const { config } = model

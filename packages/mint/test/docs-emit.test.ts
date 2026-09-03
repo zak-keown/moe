@@ -36,13 +36,19 @@ function adapterWithInstallDoc(name: string, body: string): HarnessAdapter {
   return {
     name,
     support: fullSupport,
+    skillLayout: { outputDir: `.test-${name}/skills`, profile: name, mode: 'rendered' },
     emit: () => ({ files: [], warnings: [] }),
     installDoc: () => body,
   }
 }
 
 function adapterWithoutInstallDoc(name: string): HarnessAdapter {
-  return { name, support: fullSupport, emit: () => ({ files: [], warnings: [] }) }
+  return {
+    name,
+    support: fullSupport,
+    skillLayout: { outputDir: `.test-${name}/skills`, profile: name, mode: 'rendered' },
+    emit: () => ({ files: [], warnings: [] }),
+  }
 }
 
 describe('emitDocs install-doc files', () => {
