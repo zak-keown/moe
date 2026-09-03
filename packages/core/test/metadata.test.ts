@@ -424,6 +424,7 @@ const X_BIT_ALLOWLIST = [
   "hooks/run-hook.cmd",
   "hooks/governance-marker-check",
   "hooks/jig-worktree-guard",
+  "hooks/developing-for-moe-notice",
   "hooks/jig-review-format-guard",
   "skills/brainstorming/scripts/start-server.sh",
   "skills/brainstorming/scripts/stop-server.sh",

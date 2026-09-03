@@ -1,0 +1,42 @@
+#!/bin/bash
+# developing-for-moe-notice: SessionStart hook that injects the two development
+# tenets into agent sessions working on the Moe project itself.
+#
+# AGENT-ONLY. This hook exits silently for top-level sessions. The tenets are
+# a development constraint for subagents that may not load the full skill; the
+# human operator already knows the rules.
+#
+# Every failure path exits 0 with no context. A non-zero SessionStart hook can
+# block every session on the machine, which is worse than a missing notice.
+
+set -u
+
+# Claude Code sets CLAUDE_CODE_CHILD_SESSION=1 for subagent sessions.
+# If unset or empty, this is a top-level session — exit silently.
+if [ "${CLAUDE_CODE_CHILD_SESSION:-}" != "1" ]; then
+    exit 0
+fi
+
+CONTEXT="You are an agent working on the Moe project. Two non-negotiable development tenets apply to ALL work — planning, implementation, and review. (1) Integration is part of the feature: a feature is not done until it is wired into the project (registrations, entry points, mint output). Plans must include integration steps. A branch that adds a file but does not wire it in has not delivered a feature. (2) Multi-harness by default: Moe ships to 8 harnesses (claude-code, codex, cursor, kimi, opencode, pi, agent-plugins-1.0, copilot). Every design decision must work for all eight, not just the one you are running under. If an approach relies on a harness-specific capability, document the equivalent path for the others or explain why it is harness-scoped."
+
+escape_for_json() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//$'\n'/\\n}"
+    s="${s//$'\r'/\\r}"
+    s="${s//$'\t'/\\t}"
+    printf '%s' "$s"
+}
+
+CONTEXT_ESCAPED="$(escape_for_json "$CONTEXT")"
+
+if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
+    printf '{"additional_context":"%s"}\n' "$CONTEXT_ESCAPED"
+elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -z "${COPILOT_CLI:-}" ]; then
+    printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s"}}\n' "$CONTEXT_ESCAPED"
+else
+    printf '{"additionalContext":"%s"}\n' "$CONTEXT_ESCAPED"
+fi
+
+exit 0
