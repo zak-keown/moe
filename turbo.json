@@ -4,6 +4,11 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/scripts/write-bundle-inventory.mjs",
+        "$TURBO_ROOT$/packages/mint/src/artifact/bundle-inventory.ts"
+      ],
       "outputs": ["dist/**", ".moe-build/**"]
     },
     "typecheck": {

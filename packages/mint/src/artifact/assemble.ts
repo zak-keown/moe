@@ -82,6 +82,7 @@ function foldedPath(value: string): string {
 const FORBIDDEN_TREE_SEGMENTS = new Set([
   'node_modules', '.git', '.github', '.svn', '.hg', '.planning', '.cache', '__pycache__',
 ].map(foldedPath))
+const BUILD_EVIDENCE_SEGMENT = foldedPath('.moe-build')
 const TEST_TREE_SEGMENTS = new Set(['test', 'tests', '__tests__', 'spec', 'specs'].map(foldedPath))
 const EXCLUDED_COMPONENT_NAMES = new Set([
   '.gitignore', '.gitattributes', '.gitmodules', '.DS_Store', 'moe-mint.yaml', 'moe-mint.yml',
@@ -151,6 +152,9 @@ async function collectComponentFiles(plugin: ResolvedPlugin): Promise<readonly C
   const configKey = configArtifactKey(plugin)
 
   async function collect(sourceAbsolute: string, destination: ArtifactPath): Promise<void> {
+    if (destination.split('/').some((segment) => foldedPath(segment) === BUILD_EVIDENCE_SEGMENT)) {
+      throw assemblyError('ARTIFACT_COMPONENT_FORBIDDEN', plugin, plugin.config.source, `component "${destination}" is reserved build evidence`, 'Remove .moe-build from declared components.', destination)
+    }
     if (isExcludedComponentPath(destination, configKey)) return
     let stats
     try {
@@ -283,6 +287,9 @@ async function inspectArtifact(plugin: ResolvedPlugin, root: string): Promise<{
     for (const rawName of names) {
       const name = new TextDecoder('utf-8', { fatal: true }).decode(rawName)
       const path = artifactPath(relativePath === '' ? name : `${relativePath}/${name}`)
+      if (path.split('/').some((segment) => foldedPath(segment) === BUILD_EVIDENCE_SEGMENT)) {
+        throw assemblyError('ARTIFACT_COMPONENT_FORBIDDEN', plugin, plugin.config.source, `artifact entry "${path}" is reserved build evidence`, 'Remove .moe-build from the artifact tree.', path)
+      }
       const stats = await lstat(join(absolute, name))
       if (stats.isSymbolicLink() || (!stats.isDirectory() && (!stats.isFile() || stats.nlink > 1))) {
         throw assemblyError('ARTIFACT_UNSAFE_FILE_TYPE', plugin, plugin.config.source, `artifact entry "${path}" is not a safe regular file or directory`, 'Use a fresh artifact tree containing only real directories and independent regular files.', path)

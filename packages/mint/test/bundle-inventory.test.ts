@@ -1,7 +1,7 @@
 import { execFile as execFileCallback } from 'node:child_process'
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -35,35 +35,35 @@ describe('bundle inventory evidence', () => {
 
     expect(inputs).toEqual([
       {
-        output: 'source/dist/extension.mjs',
+        output: 'dist/extension.mjs',
         input: 'modules/outer/nested/index.js',
         packageName: '@fixture/nested',
         packageVersion: '3.1.0',
         packageManifest: 'modules/outer/nested/package.json',
       },
       {
-        output: 'source/dist/index.js',
+        output: 'dist/index.js',
         input: 'modules/outer/nested/index.js',
         packageName: '@fixture/nested',
         packageVersion: '3.1.0',
         packageManifest: 'modules/outer/nested/package.json',
       },
       {
-        output: 'source/dist/hook.cjs',
+        output: 'dist/hook.cjs',
         input: 'modules/plain/lib/a.js',
         packageName: 'plain-dependency',
         packageVersion: '2.0.0',
         packageManifest: 'modules/plain/package.json',
       },
       {
-        output: 'source/dist/index.js',
+        output: 'dist/index.js',
         input: 'modules/plain/lib/a.js',
         packageName: 'plain-dependency',
         packageVersion: '2.0.0',
         packageManifest: 'modules/plain/package.json',
       },
       {
-        output: 'source/dist/secondary.js',
+        output: 'dist/secondary.js',
         input: 'modules/plain/lib/a.js',
         packageName: 'plain-dependency',
         packageVersion: '2.0.0',
@@ -77,14 +77,14 @@ describe('bundle inventory evidence', () => {
         version: '3.1.0',
         package_manifest: 'modules/outer/nested/package.json',
         inputs: ['modules/outer/nested/index.js'],
-        outputs: ['source/dist/extension.mjs', 'source/dist/index.js'],
+        outputs: ['dist/extension.mjs', 'dist/index.js'],
       },
       {
         name: 'plain-dependency',
         version: '2.0.0',
         package_manifest: 'modules/plain/package.json',
         inputs: ['modules/plain/lib/a.js'],
-        outputs: ['source/dist/hook.cjs', 'source/dist/index.js', 'source/dist/secondary.js'],
+        outputs: ['dist/hook.cjs', 'dist/index.js', 'dist/secondary.js'],
       },
     ])
   })
@@ -117,6 +117,18 @@ describe('bundle inventory evidence', () => {
     expect(() => resolveBundledPackages(conflicting)).toThrow(/conflicting versions.*demo.*1\.0\.0.*2\.0\.0/i)
   })
 
+  it('keeps physical copies with the same name and version in separate provenance rows', () => {
+    const copies: BundleInput[] = [
+      { output: 'dist/a.js', input: 'node_modules/one/index.js', packageName: 'demo', packageVersion: '1.0.0', packageManifest: 'node_modules/one/package.json' },
+      { output: 'dist/b.js', input: 'node_modules/two/index.js', packageName: 'demo', packageVersion: '1.0.0', packageManifest: 'node_modules/two/package.json' },
+    ]
+
+    expect(resolveBundledPackages(copies)).toEqual([
+      { name: 'demo', version: '1.0.0', package_manifest: 'node_modules/one/package.json', inputs: ['node_modules/one/index.js'], outputs: ['dist/a.js'] },
+      { name: 'demo', version: '1.0.0', package_manifest: 'node_modules/two/package.json', inputs: ['node_modules/two/index.js'], outputs: ['dist/b.js'] },
+    ])
+  })
+
   it('sorts package identities, versions, inputs, and outputs by raw UTF-8 bytes', () => {
     const bmp = '\u{e000}'
     const nonBmp = '\u{1f600}'
@@ -136,6 +148,7 @@ describe('bundle inventory evidence', () => {
     const root = await mkdtemp(join(tmpdir(), 'moe-bundle-metafile-'))
     workspaces.push(root)
     await mkdir(join(root, 'source'))
+    await writeFile(join(root, 'source', 'package.json'), '{"name":"source","version":"1.0.0"}\n')
     await writeFile(join(root, 'bad.json'), '{"outputs":{"dist/a.js":{"inputs":[]}}}\n')
 
     await expect(readBundleMetafiles({
@@ -143,6 +156,31 @@ describe('bundle inventory evidence', () => {
       packageRoot: join(root, 'source'),
       metafiles: [join(root, 'bad.json')],
     })).rejects.toThrow(/invalid bundler metafile/i)
+  })
+
+  it('rejects symlinked and missing bundled inputs outside the physical repository', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'moe-bundle-physical-root-'))
+    workspaces.push(root)
+    const packageRoot = join(root, 'packages', 'demo')
+    const outside = await mkdtemp(join(tmpdir(), 'moe-bundle-outside-'))
+    workspaces.push(outside)
+    await mkdir(join(packageRoot, 'dist'), { recursive: true })
+    await writeFile(join(packageRoot, 'package.json'), '{"name":"demo","version":"1.0.0"}\n')
+    await writeFile(join(outside, 'package.json'), '{"name":"outside","version":"1.0.0"}\n')
+    await writeFile(join(outside, 'index.js'), 'export {}\n')
+    await symlink(outside, join(root, 'linked-dependency'))
+    const metafile = join(root, 'metafile.json')
+    await writeFile(metafile, JSON.stringify({
+      outputs: { 'dist/index.js': { inputs: { '../../linked-dependency/index.js': {} } } },
+    }))
+
+    await expect(readBundleMetafiles({ repositoryRoot: root, packageRoot, metafiles: [metafile] }))
+      .rejects.toThrow(/physical.*repository|outside repository/i)
+    await writeFile(metafile, JSON.stringify({
+      outputs: { 'dist/index.js': { inputs: { 'missing.js': {} } } },
+    }))
+    await expect(readBundleMetafiles({ repositoryRoot: root, packageRoot, metafiles: [metafile] }))
+      .rejects.toThrow(/cannot resolve|does not exist/i)
   })
 
   it('writes deterministic package evidence without absolute machine paths or dist metafiles', async () => {
@@ -155,7 +193,9 @@ describe('bundle inventory evidence', () => {
     await mkdir(join(packageRoot, 'dist'), { recursive: true })
     await mkdir(dependencyRoot, { recursive: true })
     await writeFile(join(packageRoot, 'package.json'), '{"name":"demo","version":"1.0.0"}\n')
+    await writeFile(join(packageRoot, 'src', 'index.ts'), 'export {}\n')
     await writeFile(join(dependencyRoot, 'package.json'), '{"name":"dependency","version":"2.0.0"}\n')
+    await writeFile(join(dependencyRoot, 'index.js'), 'export {}\n')
     const metafile = JSON.stringify({
       inputs: {
         'src/index.ts': { bytes: 1, imports: [] },
@@ -176,25 +216,55 @@ describe('bundle inventory evidence', () => {
       await execFile(process.execPath, ['--experimental-strip-types', inventoryScript, '--repository-root', root, '--prepare', packageRoot])
       await writeFile(rawMetafile, metafile)
       await execFile(process.execPath, ['--experimental-strip-types', inventoryScript, '--repository-root', root, packageRoot, rawMetafile])
-      return readFile(join(packageRoot, '.moe-build', 'bundle-inventory.json'))
+      return {
+        inventory: await readFile(join(packageRoot, '.moe-build', 'bundle-inventory.json')),
+        metafile: await readFile(join(packageRoot, '.moe-build', 'metafile-cjs.json')),
+      }
     }
 
     const first = await runWriter()
     const second = await runWriter()
-    expect(second).toEqual(first)
-    expect(JSON.parse(first.toString('utf8'))).toEqual([
+    expect(second.inventory).toEqual(first.inventory)
+    expect(second.metafile).toEqual(first.metafile)
+    expect(JSON.parse(first.inventory.toString('utf8'))).toEqual([
       {
         name: 'dependency',
         version: '2.0.0',
         package_manifest: 'node_modules/dependency/package.json',
         inputs: ['node_modules/dependency/index.js'],
-        outputs: ['packages/demo/dist/index.cjs'],
+        outputs: ['dist/index.cjs'],
       },
     ])
-    expect(first.toString('utf8')).not.toContain(root)
+    expect(first.inventory.toString('utf8')).not.toContain(root)
     await expect(readFile(rawMetafile)).rejects.toMatchObject({ code: 'ENOENT' })
-    const canonicalMetafile = await readFile(join(packageRoot, '.moe-build', 'metafile-cjs.json'), 'utf8')
-    expect(canonicalMetafile).not.toContain(root)
-    expect(dirname(rawMetafile)).toBe(join(packageRoot, 'dist'))
+    expect(first.metafile.toString('utf8')).not.toContain(root)
+  })
+
+  it('rejects external metafiles, symlinked package roots, and unsafe persisted metafile fields', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'moe-bundle-writer-safety-'))
+    workspaces.push(root)
+    const packageRoot = join(root, 'packages', 'demo')
+    const outside = await mkdtemp(join(tmpdir(), 'moe-bundle-writer-outside-'))
+    workspaces.push(outside)
+    await mkdir(join(packageRoot, 'dist'), { recursive: true })
+    await writeFile(join(packageRoot, 'package.json'), '{"name":"demo","version":"1.0.0"}\n')
+    await writeFile(join(outside, 'metafile-cjs.json'), '{"outputs":{}}\n')
+    const insideMetafile = join(packageRoot, 'dist', 'metafile-cjs.json')
+    await writeFile(insideMetafile, '{"timestamp":"2026-09-03T00:00:00Z","outputs":{}}\n')
+
+    await expect(execFile(process.execPath, ['--experimental-strip-types', inventoryScript, '--repository-root', root, packageRoot, join(outside, 'metafile-cjs.json')]))
+      .rejects.toThrow(/metafile.*safe package build location/i)
+    await expect(execFile(process.execPath, ['--experimental-strip-types', inventoryScript, '--repository-root', root, packageRoot, insideMetafile]))
+      .rejects.toThrow(/timestamp|unknown metafile field/i)
+    await writeFile(insideMetafile, '{"inputs":{"C:\\\\host\\\\input.js":{}},"outputs":{}}\n')
+    await expect(execFile(process.execPath, ['--experimental-strip-types', inventoryScript, '--repository-root', root, packageRoot, insideMetafile]))
+      .rejects.toThrow(/absolute machine path/i)
+    await writeFile(insideMetafile, '{"inputs":{"\\\\\\\\host\\\\share\\\\input.js":{}},"outputs":{}}\n')
+    await expect(execFile(process.execPath, ['--experimental-strip-types', inventoryScript, '--repository-root', root, packageRoot, insideMetafile]))
+      .rejects.toThrow(/absolute machine path/i)
+    const linkedRoot = join(root, 'linked-package')
+    await symlink(outside, linkedRoot)
+    await expect(execFile(process.execPath, ['--experimental-strip-types', inventoryScript, '--repository-root', root, '--prepare', linkedRoot]))
+      .rejects.toThrow(/package root.*inside repository/i)
   })
 })
