@@ -423,10 +423,13 @@ const X_BIT_ALLOWLIST = [
   "hooks/task-set",
   "hooks/run-hook.cmd",
   "hooks/governance-marker-check",
+  "hooks/jig-worktree-guard",
+  "hooks/jig-review-format-guard",
   "skills/brainstorming/scripts/start-server.sh",
   "skills/brainstorming/scripts/stop-server.sh",
   "skills/extracting-requirements/scripts/aggregate_stories.py",
   "skills/extracting-requirements/scripts/chunk_spec.py",
+  "skills/fixing-a-code-review/scripts/compact-resolved.mjs",
   "skills/finding-duplicate-functions/scripts/extract-functions.sh",
   "skills/finding-duplicate-functions/scripts/generate-report.sh",
   "skills/finding-duplicate-functions/scripts/prepare-category-analysis.sh",
@@ -644,11 +647,15 @@ describe("hooks", () => {
     // so declaring SessionStart here does NOT collide with the bootstrap:
     // the two entries have different commands and both fire.
     //
+    // PreToolUse contains enforcement hooks (jig-worktree-guard,
+    // jig-review-format-guard) that block raw commands and redirect to jig CLI
+    // commands.
+    //
     // Insertion order matters here: `Object.keys` returns keys in the order
     // they appear in the JSON, and the assertion is a `toEqual` for both
     // length and order, so a new event appearing between these two would
     // fail here regardless of alphabetical position.
-    expect(Object.keys(hooks.hooks)).toEqual(["SessionStart", "Stop"]);
+    expect(Object.keys(hooks.hooks)).toEqual(["SessionStart", "Stop", "PreToolUse"]);
   });
 
   it("dispatches the SessionStart plan-set-notice through run-hook.cmd", () => {
