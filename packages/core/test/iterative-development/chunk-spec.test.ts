@@ -1,6 +1,6 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, normalize } from "node:path";
+import { join, sep } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { runHelper } from "./cli-harness.js";
 
@@ -147,6 +147,23 @@ describe("chunk_spec", () => {
     );
   });
 
+  it.each(["--help", "--other"])(
+    "treats %s after --max-tokens as a missing token argument",
+    (followingOption) => {
+      const result = runHelper(HELPER, ["/tmp/example.md", "--max-tokens", followingOption]);
+
+      expect(result.status).toBe(2);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe(
+        [
+          `usage: ${PROGRAM} [-h] [--max-tokens MAX_TOKENS] path`,
+          `${PROGRAM}: error: argument --max-tokens: expected one argument`,
+          "",
+        ].join("\n"),
+      );
+    },
+  );
+
   it("normalizes CLI-relative paths before reporting the source file", () => {
     const root = tempDir("chunk-spec-relative-");
     writeFileSync(join(root, "spec.md"), "# Relative\n\nContent.\n");
@@ -155,7 +172,20 @@ describe("chunk_spec", () => {
 
     expect(result.status).toBe(0);
     const chunks = JSON.parse(result.stdout) as Array<{ source_file: string }>;
-    expect(chunks[0]?.source_file).toBe(normalize("./spec.md"));
+    expect(chunks[0]?.source_file).toBe("spec.md");
+  });
+
+  it("preserves parent segments in CLI source-file spelling", () => {
+    const root = tempDir("chunk-spec-parent-segment-");
+    mkdirSync(join(root, "a"));
+    writeFileSync(join(root, "b.md"), "# Parent segment\n\nContent.\n");
+    const spec = ["a", "..", "b.md"].join(sep);
+
+    const result = run(spec, [], root);
+
+    expect(result.status).toBe(0);
+    const chunks = JSON.parse(result.stdout) as Array<{ source_file: string }>;
+    expect(chunks[0]?.source_file).toBe(spec);
   });
 
   it("returns exit 2 and an error for a missing path", () => {
