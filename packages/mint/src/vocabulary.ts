@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { parse } from 'yaml'
 import { z } from 'zod'
@@ -87,5 +87,120 @@ export function validateCoverage(
   }
   if (missing.length > 0) {
     throw new ConfigError('incomplete vocabulary coverage', missing)
+  }
+}
+
+const TOKEN_PATTERN = /(?<!\\)\{([a-z][a-z0-9-]*)\}/g
+
+export function substituteContent(
+  content: string,
+  adapterName: string,
+  vocab: Vocabulary,
+): string {
+  const lines = content.split('\n')
+  const result: string[] = []
+
+  for (const line of lines) {
+    const blockMatch = /^(\s*)(?<!\\)\{([a-z][a-z0-9-]*)\}\s*$/.exec(line)
+    if (blockMatch) {
+      const indent = blockMatch[1]!
+      const tokenName = blockMatch[2]!
+      const blockEntry = vocab.blocks.get(tokenName)
+      if (blockEntry && adapterName in blockEntry) {
+        for (const blockLine of blockEntry[adapterName]!.split('\n')) {
+          result.push(blockLine ? indent + blockLine : '')
+        }
+        continue
+      }
+    }
+
+    let substituted = line.replace(TOKEN_PATTERN, (_match, tokenName: string) => {
+      const inlineEntry = vocab.tokens.get(tokenName)
+      if (inlineEntry && adapterName in inlineEntry) return inlineEntry[adapterName]!
+      const blockEntry = vocab.blocks.get(tokenName)
+      if (blockEntry && adapterName in blockEntry) return blockEntry[adapterName]!
+      return `{${tokenName}}`
+    })
+
+    substituted = substituted.replace(/\\(\{[a-z][a-z0-9-]*\})/g, '$1')
+    result.push(substituted)
+  }
+
+  return result.join('\n')
+}
+
+function collectMdFiles(root: string, dir: string): string[] {
+  const abs = join(root, dir)
+  if (!existsSync(abs)) return []
+  const result: string[] = []
+  const walk = (d: string, rel: string) => {
+    for (const entry of readdirSync(d).sort()) {
+      const full = join(d, entry)
+      const relPath = `${rel}/${entry}`
+      if (statSync(full).isDirectory()) {
+        walk(full, relPath)
+      } else if (entry.endsWith('.md')) {
+        result.push(relPath)
+      }
+    }
+  }
+  walk(abs, dir)
+  return result
+}
+
+function stripFencedBlocks(content: string): string {
+  return content.replace(/^```[^\n]*\n[\s\S]*?^```/gm, '')
+}
+
+export function scanForUnknownTokens(
+  root: string,
+  skillsDir: string,
+  vocab: Vocabulary,
+): void {
+  const allTokens = new Set([...vocab.tokens.keys(), ...vocab.blocks.keys()])
+  const problems: string[] = []
+
+  for (const relPath of collectMdFiles(root, skillsDir)) {
+    const content = readFileSync(join(root, relPath), 'utf8')
+    const stripped = stripFencedBlocks(content)
+    const lines: string[] = stripped.split('\n')
+    for (let i = 0; i < lines.length; i++) {
+      const line: string = lines[i]!
+      let match: RegExpExecArray | null
+      TOKEN_PATTERN.lastIndex = 0
+      while ((match = TOKEN_PATTERN.exec(line)) !== null) {
+        const tokenName = match[1] as string
+        if (!allTokens.has(tokenName)) {
+          problems.push(`unknown token {${tokenName}} in ${relPath} line ${i + 1}`)
+        }
+      }
+    }
+  }
+
+  if (problems.length > 0) {
+    throw new ConfigError('unknown tokens in skill files', problems)
+  }
+}
+
+export function assertNoSurvivors(
+  files: Array<{ path: string; content: string }>,
+): void {
+  const problems: string[] = []
+  for (const file of files) {
+    const stripped = stripFencedBlocks(file.content)
+    const lines: string[] = stripped.split('\n')
+    for (let i = 0; i < lines.length; i++) {
+      const line: string = lines[i]!
+      let match: RegExpExecArray | null
+      TOKEN_PATTERN.lastIndex = 0
+      while ((match = TOKEN_PATTERN.exec(line)) !== null) {
+        const tokenName = match[1] as string
+        problems.push(`surviving token {${tokenName}} in ${file.path} line ${i + 1}`)
+      }
+    }
+  }
+
+  if (problems.length > 0) {
+    throw new ConfigError('tokens survived substitution', problems)
   }
 }
