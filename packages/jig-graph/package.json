@@ -1,8 +1,8 @@
 {
-  "name": "@bubstack/moe-jig",
-  "version": "0.1.4",
+  "name": "@bubstack/moe-jig-graph",
+  "version": "0.1.0",
   "type": "module",
-  "description": "Deterministic enforcement tooling. Replaces prose-only skill conventions with CLI commands that produce correct output regardless of which model or harness runs them.",
+  "description": "Graph-grounded plan validation. Extends jig with moedex-powered validate and seed commands.",
   "license": "MIT",
   "author": {
     "name": "Zak Keown",
@@ -14,21 +14,14 @@
     "url": "git+https://github.com/zak-keown/moe.git"
   },
   "keywords": [
-    "claude-code",
-    "codex",
     "moe",
-    "enforcement",
-    "worktree",
-    "jig"
+    "jig",
+    "moedex",
+    "code-graph",
+    "plan-validation"
   ],
-  "main": "dist/cli.js",
   "exports": {
-    ".": "./dist/cli.js",
-    "./parser": "./dist/parser.js",
-    "./extension": "./dist/extension.js"
-  },
-  "bin": {
-    "moe-jig": "./dist/cli.js"
+    "./jig-extension": "./dist/jig-extension.js"
   },
   "publishConfig": {
     "access": "public",
@@ -47,7 +40,8 @@
     "lint": "biome check ."
   },
   "dependencies": {
-    "commander": "^14.0.0"
+    "@bubstack/moe-jig": "workspace:*",
+    "@modelcontextprotocol/sdk": "1.30.0"
   },
   "devDependencies": {
     "@types/node": "^24.7.0",

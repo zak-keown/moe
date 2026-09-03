@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { realpathSync } from "node:fs";
 import { Command, CommanderError } from "commander";
+import { discoverExtensionCommands, loadExtensions } from "./extension.js";
+import { computeWaves, parsePlan, validatePlan } from "./parser.js";
 import { planInit, specInit } from "./plan.js";
 import { progressUpdate } from "./progress.js";
 import { commitReviewFix, reviewStamp } from "./review.js";
@@ -159,6 +161,15 @@ progress
       console.log(path);
     },
   );
+
+// Merge in any commands from an installed extension package (e.g.
+// @bubstack/moe-jig-graph/jig-extension) after every static command group
+// above is registered, and before parseAsync runs below. ESM has no
+// synchronous dynamic import, so discovery is awaited once here at module
+// top level (supported natively by ESM) rather than inside loadExtensions
+// itself, which stays synchronous so it can be unit-tested directly.
+const extensionCommands = await discoverExtensionCommands();
+loadExtensions(program, { parsePlan, validatePlan, computeWaves }, () => extensionCommands);
 
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
   try {

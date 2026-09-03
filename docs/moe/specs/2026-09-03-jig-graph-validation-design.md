@@ -170,7 +170,9 @@ entry-point file or symbol to anchor the graph query.
    cannot generate a graph-grounded skeleton without it."
 2. Run `impact_analysis` on the entry point (or `search_context` on the topic
    if no entry point given) to identify the blast radius.
-3. Run `trace_calls` from the entry point to map the downstream call surface.
+3. Run `trace_consumers` for each high-scoring file to map coupling strength.
+   (`trace_calls` was originally specified here but `trace_consumers` better
+   captures the import-level coupling that determines task grouping.)
 4. Cluster results into candidate task groups by file proximity and coupling
    strength. Files that are tightly coupled in the call graph land in the same
    task; files with no coupling become separate tasks.
