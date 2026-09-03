@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import { execFile, spawn } from "node:child_process";
-import { createHash } from "node:crypto";
 import {
   mkdtemp,
   readFile,
@@ -70,12 +69,11 @@ async function planVerb(args) {
   const harness = selected[0].harness;
   const destination = selected[0].destination;
   let sourceBytes;
-  let replacement;
   let plan;
   try {
     sourceBytes = await readOptional(destination);
     const sourceText = sourceBytes === null ? (harness === "claude" ? "{}\n" : "") : decode(sourceBytes);
-    replacement = harness === "claude"
+    harness === "claude"
       ? renderClaudeSettings(sourceText, selected.map(({ rule }) => rule))
       : renderCodexRules(sourceText, selected.map(({ id, rule }) => ({ id, rule })));
     const planDir = await mkdtemp(join(tmpdir(), "moe-smoothing-"));
@@ -84,21 +82,20 @@ async function planVerb(args) {
       selected: selected.map(({ id, rule }) => ({ id, rule })),
       destination,
       sourceBytes,
-      replacement,
       planDir,
     });
   } catch {
     throw new CliError(5, "could not create the permission plan");
   }
-  const diff = formatUnifiedDiff({ destination, sourceBytes, replacement });
-  const confirmToken = `apply:${plan.harness}:${plan.replacementSha256}`;
+  const diff = formatUnifiedDiff({ plan });
+  const confirmToken = `apply:${plan.harness}:${plan.intentSha256}`;
   const output = {
     plan: {
       path: plan.path,
       mode: "0600",
       harness: plan.harness,
       destination: plan.destination,
-      replacementSha256: plan.replacementSha256,
+      intentSha256: plan.intentSha256,
       restartRequired: plan.restartRequired,
     },
     diff,
@@ -130,55 +127,31 @@ async function applyVerb(args) {
   } catch {
     throw new CliError(4, "the permission plan is missing or invalid");
   }
-  const expectedToken = `apply:${plan.harness}:${plan.replacementSha256}`;
+  const expectedToken = `apply:${plan.harness}:${plan.intentSha256}`;
   if (args.confirm !== expectedToken) {
     throw new CliError(4, "confirmation does not match the permission plan");
   }
 
-  let current;
-  try {
-    current = await readOptional(plan.destination);
-  } catch {
-    throw new CliError(5, `the ${plan.harness} permission file could not be read`);
-  }
-  const currentHash = current === null ? null : sha256(current);
-  if (currentHash === plan.replacementSha256) {
-    process.stdout.write(
-      `${JSON.stringify({
-        harness: plan.harness,
-        status: "already-applied",
-        destination: plan.destination,
-        restartRequired: plan.restartRequired,
-      })}\n`,
-    );
-    return;
-  }
-  if (currentHash !== plan.source.sha256) {
-    throw new CliError(4, "the permission plan is stale or invalid");
-  }
-  try {
-    await validateSelectablePlan(plan);
-  } catch (error) {
-    if (error instanceof InvalidPlanError) {
-      throw new CliError(4, "the permission plan is stale or invalid");
-    }
-    throw new CliError(5, `the ${plan.harness} permission adapter could not be validated`);
-  }
-
   const validateReplacement = plan.harness === "claude"
-    ? async (replacement) => validateClaudeReplacement(plan, replacement)
-    : async (replacement) => validateCodexReplacementForPlan(plan, replacement);
+    ? async (replacement, current) => validateClaudeReplacement(plan, replacement, current)
+    : async (replacement, current) => validateCodexReplacementForPlan(plan, replacement, current);
   let result;
   try {
     result = await applyBoundPlan({
       planPath: args.plan,
       expectedHarness: plan.harness,
       confirmToken: args.confirm,
+      deriveReplacement: (current) => deriveReplacementForPlan(plan, current),
+      isAlreadyApplied: (current) => isPlanAlreadyApplied(plan, current),
+      validatePlan: () => validateSelectablePlan(plan),
       validateReplacement,
       createParent: true,
     });
   } catch (error) {
-    if (error instanceof InvalidPlanError || /stale source config/.test(error?.message ?? "")) {
+    if (
+      error instanceof InvalidPlanError ||
+      /stale source config|plan validation failed/.test(error?.message ?? "")
+    ) {
       throw new CliError(4, "the permission plan is stale or invalid");
     }
     throw new CliError(5, `the ${plan.harness} permission file could not be written`);
@@ -291,7 +264,7 @@ async function scanClaude({ env, homeDir, cwd, cutoffMs, all }) {
       { class: record.class, ...record.operation },
       state,
     );
-    if (permission === "existing-rule") {
+    if (permission === "existing-rule" || permission === "ask") {
       return { ...record, approvalProvenance: "existing-rule" };
     }
     if (permission === "denied") return { ...record, outcome: "denied" };
@@ -554,18 +527,40 @@ function matchesAnyPrefix(operation, prefixes) {
   return argv && prefixes.some((prefix) => prefix.every((token, index) => argv[index] === token));
 }
 
-async function validateClaudeReplacement(plan, replacement) {
-  const sourceBytes = await readOptional(plan.destination);
+function deriveReplacementForPlan(plan, sourceBytes) {
   const sourceText = sourceBytes === null ? "{}\n" : decode(sourceBytes);
-  let expected;
   try {
-    expected = renderClaudeSettings(
-      sourceText,
-      plan.selected.map(({ rule }) => rule),
-    );
+    return plan.harness === "claude"
+      ? renderClaudeSettings(sourceText, plan.selected.map(({ rule }) => rule))
+      : renderCodexRules(sourceBytes === null ? "" : decode(sourceBytes), plan.selected);
   } catch {
     throw new InvalidPlanError();
   }
+}
+
+function isPlanAlreadyApplied(plan, sourceBytes) {
+  if (sourceBytes === null) return false;
+  const sourceText = decode(sourceBytes);
+  if (plan.harness === "codex") {
+    return plan.selected.every(({ id, rule }) => {
+      const marker = `# moe-smoothing:${id}\n`;
+      return sourceText.split(marker).length === 2 && sourceText.includes(rule.trimEnd());
+    });
+  }
+  let settings;
+  try {
+    settings = JSON.parse(sourceText);
+  } catch {
+    return false;
+  }
+  const allow = settings?.permissions?.allow;
+  return Array.isArray(allow) && plan.selected.every(({ rule }) =>
+    !rule.startsWith("Write(") && allow.filter((entry) => entry === rule).length === 1,
+  );
+}
+
+async function validateClaudeReplacement(plan, replacement, sourceBytes) {
+  const expected = deriveReplacementForPlan(plan, sourceBytes);
   if (replacement !== expected) throw new InvalidPlanError();
   let settings;
   try {
@@ -594,8 +589,7 @@ async function validateClaudeReplacement(plan, replacement) {
   return true;
 }
 
-async function validateCodexReplacementForPlan(plan, replacement) {
-  const sourceBytes = await readOptional(plan.destination);
+async function validateCodexReplacementForPlan(plan, replacement, sourceBytes) {
   const sourceText = sourceBytes === null ? "" : decode(sourceBytes);
   let expected;
   try {
@@ -718,10 +712,6 @@ async function readOptional(path) {
 
 function decode(bytes) {
   return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-}
-
-function sha256(bytes) {
-  return createHash("sha256").update(bytes).digest("hex");
 }
 
 function isPlainObject(value) {
