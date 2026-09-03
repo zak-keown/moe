@@ -118,7 +118,14 @@ export async function readClaudeSession(
       if (row.type === "assistant" && part.type === "tool_use") {
         tools.push({ row, tool: part });
       } else if (row.type === "user" && part.type === "tool_result") {
-        if (typeof part.tool_use_id === "string") results.set(part.tool_use_id, part);
+        const resultTimestamp = Date.parse(row.timestamp);
+        if (
+          typeof part.tool_use_id === "string" &&
+          Number.isFinite(resultTimestamp) &&
+          resultTimestamp >= cutoffMs
+        ) {
+          results.set(part.tool_use_id, part);
+        }
       }
     }
   }
@@ -172,7 +179,7 @@ async function canonicalProjectRoot(cwd, resolveProjectRoot, resolveRealpath) {
 function outcomeFor(result) {
   if (!result) return "unknown";
   if (DENIALS.has(result.toolDenialKind)) return "denied";
-  if (result.toolDenialKind) return "denied";
+  if (Object.hasOwn(result, "toolDenialKind")) return "denied";
   return result.is_error === true ? "failed" : "success";
 }
 
