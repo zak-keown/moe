@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { prepareCandidate, type CandidateInput, type CandidatePreparationDeps, type CandidateArtifactInput } from '../src/release/candidate.js'
 import { parsePlatformTag } from '../src/release/tag-policy.js'
 import { sha256, REGISTRY_PLUGIN_COUNT, type PlatformCatalogV1, type ReleasePreflightV1 } from '../src/release/catalog.js'
-import type { PackedArtifact } from '../src/release/../../artifact/pack.js'
+import type { PackedArtifact } from '../src/artifact/pack.js'
 import type { ResolvedPlugin } from '../src/platform/load.js'
 import { createFakeReleaseStore } from './release-github-store.test.js'
 
