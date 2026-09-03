@@ -46,9 +46,55 @@ excluded, and the fix.
 ```
 
 Do not number your headings. The merge owns final IDs and frontmatter.
-Never cite a line number: workers may read adjacent commits, and line offsets
-survive neither merge nor repair. The anchor must identify the cited code by
-symbol, test name, or quoted sentence.
+
+The three fields have a shape the merge checks, and `review-check.mjs` checks
+it the moment your report lands:
+
+- `**File:**` is the path exactly as `git ls-files` prints it from the
+  repository root: `packages/flight/src/qa/paths.ts`, never `src/qa/paths.ts`
+  and never with a `:line` suffix. The merge refuses a path it cannot find in
+  the tree, because the fix workflow could never address it.
+- `**Anchor:**` is one single-backtick span, a test name, or a short quoted
+  sentence. A double-backtick span does not parse and the finding is refused.
+- No line inside a fenced code block may start with `###`. The merge splits
+  findings on that line wherever it appears.
+
+Never cite a line number anywhere in a finding: workers may read adjacent
+commits, and line offsets survive neither merge nor repair. The anchor must
+identify the cited code by symbol, test name, or quoted sentence.
+
+## Off limits, even to reproduce a finding
+
+You are reviewing a tree, not operating the machine it sits on. A finding that
+a script mutates the operator's environment is proven by reading the script,
+never by running it.
+
+- Do not read or write anything under `$HOME` (`~/.claude`, `~/.codex`,
+  `~/.config`, `~/.moe`, `~/.cache`), or under `/tmp` outside a scratch
+  directory you created.
+- Before you run any script or command from the tree, read it, and grep it
+  and anything it sources for `$HOME`, `~`, `XDG_`, `/tmp`, `tmux`, and the
+  names of installed CLIs (`claude`, `codex`, `opencode`, `npm`, `pnpm`,
+  `npx`, `uv`, `cargo`). One hit means you do not run it, under any `HOME`, in
+  any sandbox: you trace the write target instead. Do not run `pnpm install`,
+  builds, or test suites that write into the tree.
+- Do not launch tmux sessions, browsers, or coding-agent processes; do not kill
+  a process you did not start; make no network calls.
+- Confine every reproduction to your scratch directory. If a reproduction
+  needs any of the above, write the finding from the trace and say what would
+  settle it.
+
+A legitimate reproduction exercises a function, a parser, or a pure script
+against inputs you created, inside your scratch directory, with no process,
+path, or tool outside it involved. Anything else is a trace.
+
+| Thought | Reality |
+|---|---|
+| "Running it is the only way to be sure" | A run on this host is a run on the operator's machine. Trace it, name what would settle it, and let the verify pass reproduce it in a sandbox. |
+| "I'll point it at a fixture, so it is safe" | The fixture is the input; `$HOME` is where it writes. A reproduction run this way truncated an operator's config file. |
+| "It's only a session name, not a real launch" | A tmux session with a `../` name is real, and the operator has to find and kill it by id. |
+| "I'll point `HOME` at a scratch directory, so it cannot touch anything" | `HOME` is one of several ways a script finds the operator's state: absolute paths, a CLI's own config discovery, keychains, tmux sockets under `/tmp`. The trace proves the write target; a sandboxed run proves only what the sandbox happened to catch. |
+| "The finding says it was reproduced by running the script, so that is the standard" | The reviewer's run is what put the operator's config at risk in the first place. Your job is to prove the trace, not repeat the run. |
 
 ## Severity
 

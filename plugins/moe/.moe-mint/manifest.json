@@ -21,13 +21,13 @@
       "sha256": "70e13f4005568e08bd42b192db9d7f5aac19f53bdb06a95d02264097b6e54e10"
     },
     ".opencode/agent/review-shard.md": {
-      "sha256": "73145d45a6ee1e62dcba026cbf6e474986a24796bab2a38500424546a76b3e3c"
+      "sha256": "4276041d61ca3d0549841d39f6c1bf4ea3160dc761fb2f7ed73701aa9fa86954"
     },
     ".opencode/agent/search-moedex.md": {
       "sha256": "6e8f892fa41820a8e5529917df9099a99e73140c9f550f0ad6cf6a79d59e5b4d"
     },
     ".opencode/agent/verify-finding.md": {
-      "sha256": "cdd11cd4356887cffb9504549a8905e887653b205b97c7e436cd963e8f655a4f"
+      "sha256": "4d2d31dd0c3cc4f2159a5c3680fef5f3d3184e966607395e256515c996177979"
     },
     ".opencode/plugins/moe.js": {
       "sha256": "3299911a2a01eecdcadc9035e1594cc05c2165b0630698354a189cdbb9dc0152"

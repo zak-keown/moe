@@ -1,0 +1,242 @@
+#!/usr/bin/env node
+// task-set: the deterministic intra-plan task scheduler.
+//
+// Companion to plan-set (which sequences plans in a project). This CLI
+// sequences tasks within a single plan: structural validation, wave
+// grouping, and ready-set computation from checkbox state.
+//
+// Verbs:
+//   check <plan.md>    Validate: task numbers unique, all depends_on resolve,
+//                      no cycle (Kahn), every task has Files/Consumes/Produces.
+//   waves <plan.md>    Print wave assignment (maximal parallel groups).
+//   next  <plan.md>    Print ready set (deps complete, own steps not all done).
+//
+// Same constraints as plan-set: Node built-ins only, ships as a plugin hook.
+
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+const USAGE = `task-set: compute the intra-plan task DAG.
+
+Usage:
+  task-set check <plan.md>
+  task-set waves <plan.md>
+  task-set next  <plan.md>`;
+
+function die(msg, code = 2) {
+  process.stderr.write(`task-set: ${msg}\n`);
+  process.exit(code);
+}
+
+// ---------------------------------------------------------------------------
+// Plan parser.
+//
+// Extracts tasks from plan markdown. A task starts at a heading matching
+// `### Task N:` and ends at the next such heading or EOF. Inside a task,
+// the parser looks for:
+//   - `**depends_on:** [1, 3]` — bracket-delimited integer list
+//   - `**Files:**` block — lines starting with `- Create:`, `- Modify:`, `- Test:`
+//   - `- Consumes:` and `- Produces:` lines (presence, not content)
+//   - `- [ ]` and `- [x]` checkboxes (step completion state)
+//
+// The parser must skip fenced code blocks to avoid false positives on
+// task-heading patterns inside code examples.
+
+function parsePlan(text) {
+  const lines = text.split(/\r?\n/);
+  const tasks = [];
+  let current = null;
+  let inFence = false;
+
+  const pushCurrent = () => {
+    if (current !== null) tasks.push(current);
+    current = null;
+  };
+
+  for (const line of lines) {
+    // Track fenced code blocks to avoid false positives.
+    if (/^(`{3,}|~{3,})/.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+
+    // Task heading: ### Task N: Title
+    const taskMatch = /^###\s+Task\s+(\d+)\s*:\s*(.*)$/.exec(line);
+    if (taskMatch) {
+      pushCurrent();
+      current = {
+        num: parseInt(taskMatch[1], 10),
+        title: taskMatch[2].trim(),
+        dependsOn: [],
+        files: [],
+        hasConsumes: false,
+        hasProduces: false,
+        steps: [],
+      };
+      continue;
+    }
+
+    if (!current) continue;
+
+    // depends_on: [1, 3] or []
+    const depMatch = /^\*\*depends_on:\*\*\s*\[([^\]]*)\]/.exec(line);
+    if (depMatch) {
+      const inner = depMatch[1].trim();
+      if (inner !== "") {
+        current.dependsOn = inner.split(",").map((s) => {
+          const n = parseInt(s.trim(), 10);
+          if (Number.isNaN(n)) die(`task ${current.num}: depends_on contains non-integer "${s.trim()}"`);
+          return n;
+        });
+      }
+      continue;
+    }
+
+    // Files: entries
+    const fileMatch = /^-\s+(?:Create|Modify|Test):\s*`([^`]+)`/.exec(line);
+    if (fileMatch) {
+      current.files.push(fileMatch[1]);
+      continue;
+    }
+
+    // Consumes / Produces presence
+    if (/^-\s+Consumes:/.test(line)) {
+      current.hasConsumes = true;
+      continue;
+    }
+    if (/^-\s+Produces:/.test(line)) {
+      current.hasProduces = true;
+      continue;
+    }
+
+    // Checkbox steps
+    const checkMatch = /^-\s+\[([ xX])\]/.exec(line);
+    if (checkMatch) {
+      current.steps.push({ checked: checkMatch[1] !== " " });
+      continue;
+    }
+  }
+  pushCurrent();
+  return { tasks };
+}
+
+// ---------------------------------------------------------------------------
+// Validation (shared by check and every other verb).
+
+function validate(tasks) {
+  const errors = [];
+  const nums = new Map();
+
+  for (const t of tasks) {
+    if (nums.has(t.num)) {
+      errors.push(`duplicate task number ${t.num}`);
+    } else {
+      nums.set(t.num, t);
+    }
+  }
+
+  const known = new Set(nums.keys());
+
+  for (const t of tasks) {
+    if (t.files.length === 0) {
+      errors.push(`task ${t.num} (${t.title}): missing "Files:" block`);
+    }
+    if (!t.hasConsumes) {
+      errors.push(`task ${t.num} (${t.title}): missing "Consumes:" entry`);
+    }
+    if (!t.hasProduces) {
+      errors.push(`task ${t.num} (${t.title}): missing "Produces:" entry`);
+    }
+    for (const d of t.dependsOn) {
+      if (!known.has(d)) {
+        errors.push(`task ${t.num}: depends_on ${d} — not a known task`);
+      }
+    }
+  }
+
+  // Cycle detection (Kahn).
+  const indeg = new Map();
+  const adj = new Map();
+  for (const n of known) {
+    indeg.set(n, 0);
+    adj.set(n, []);
+  }
+  for (const t of tasks) {
+    for (const d of t.dependsOn) {
+      if (!known.has(d)) continue;
+      indeg.set(t.num, (indeg.get(t.num) ?? 0) + 1);
+      adj.get(d).push(t.num);
+    }
+  }
+  const q = [];
+  const remaining = new Map(indeg);
+  for (const [n, deg] of remaining) if (deg === 0) q.push(n);
+  let seen = 0;
+  while (q.length) {
+    const n = q.shift();
+    seen++;
+    for (const nb of adj.get(n) ?? []) {
+      remaining.set(nb, remaining.get(nb) - 1);
+      if (remaining.get(nb) === 0) q.push(nb);
+    }
+  }
+  const inCycle = [...remaining.entries()].filter(([, d]) => d > 0).map(([n]) => n);
+  if (inCycle.length > 0) {
+    errors.push(`cycle detected among: ${inCycle.sort((a, b) => a - b).join(", ")}`);
+  }
+
+  return { errors };
+}
+
+// ---------------------------------------------------------------------------
+// Verbs.
+
+function verbCheck(planPath) {
+  const text = readFileSync(planPath, "utf8");
+  const { tasks } = parsePlan(text);
+
+  if (tasks.length === 0) die(`${planPath}: no tasks found`);
+
+  const { errors } = validate(tasks);
+  if (errors.length > 0) {
+    for (const e of errors) process.stderr.write(`task-set: ${e}\n`);
+    process.exit(1);
+  }
+  process.stdout.write(`task-set: ${planPath} ok — ${tasks.length} tasks\n`);
+}
+
+// ---------------------------------------------------------------------------
+// Main.
+
+function main() {
+  const argv = process.argv.slice(2);
+  if (argv.length === 0 || argv[0] === "--help" || argv[0] === "-h") {
+    process.stdout.write(USAGE + "\n");
+    process.exit(argv.length === 0 ? 2 : 0);
+  }
+  const verb = argv[0];
+  const planPath = argv[1];
+
+  if (verb === "check") {
+    if (!planPath) die("usage: task-set check <plan.md>");
+    if (!existsSync(planPath)) die(`plan not found: ${planPath}`);
+    verbCheck(resolve(planPath));
+    return;
+  }
+  if (verb === "waves") {
+    if (!planPath) die("usage: task-set waves <plan.md>");
+    if (!existsSync(planPath)) die(`plan not found: ${planPath}`);
+    die(`waves: not yet implemented`);
+    return;
+  }
+  if (verb === "next") {
+    if (!planPath) die("usage: task-set next <plan.md>");
+    if (!existsSync(planPath)) die(`plan not found: ${planPath}`);
+    die(`next: not yet implemented`);
+    return;
+  }
+  die(`unknown verb "${verb}"\n${USAGE}`);
+}
+
+main();
