@@ -142,15 +142,16 @@ describe("skill inventory", () => {
     expect(nonSkill).toEqual(["_shared"]);
   });
 
-  it("pins the IMPORTED skill set at exactly 31", () => {
+  it("pins the IMPORTED skill set at exactly 32", () => {
     // ARCHITECTURE.md section 4 and the root marketplace both said 28 originally.
     // The real count across the six original sources was 27: superpowers 14,
     // iterative-development 6, superpowers-lab 4,
     // superpowers-developing-for-claude-code 2, the-elements-of-style 1,
     // double-shot-latte 0 (hooks only). The 28th was `example-workflow`, a
     // pseudo-skill inside an example plugin. mattpocock-skills adds a seventh
-    // source, 4 skills (codebase-design, improve-codebase-architecture,
-    // domain-modeling, prototype), bringing imported to 31.
+    // source, 5 skills (codebase-design, improve-codebase-architecture,
+    // domain-modeling, prototype, resolving-merge-conflicts), bringing imported
+    // to 32.
     //
     // Counts `imported:`, not the directory. The GRAND total is deliberately no
     // longer asserted anywhere: it follows from the completeness equality below,
@@ -158,7 +159,7 @@ describe("skill inventory", () => {
     // impossible — a 32nd directory would fail this line and the pinned literal
     // at once, on two assertions whose real job is detecting an upstream DROP.
     // Adding a Moe-original skill is now a two-line manifest diff, not a wall.
-    expect(Object.keys(imported).length).toBe(31);
+    expect(Object.keys(imported).length).toBe(32);
   });
 
   it("every skill has a non-empty name and description", () => {
@@ -232,11 +233,12 @@ describe("skill inventory", () => {
       // superpowers-developing-for-claude-code @ 74afe93 (2)
       "developing-claude-code-plugins",
       "working-with-claude-code",
-      // mattpocock-skills @ 6654f6b (4)
+      // mattpocock-skills @ 6654f6b (5)
       "codebase-design",
       "domain-modeling",
       "improve-codebase-architecture",
       "prototype",
+      "resolving-merge-conflicts",
     ].sort();
     // Asserted against `imported:` rather than against the directory, and it
     // must stay `toEqual`. This is the drop-and-rename detector for the whole
