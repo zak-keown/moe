@@ -38,7 +38,7 @@
 // ──────────────────────────────────────────────────────────────────────
 
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmitResult } from './types.js'
+import type { HarnessAdapter, AdapterEmission } from './types.js'
 
 function installDoc(_model: PluginModel): string {
   return [
@@ -81,10 +81,11 @@ export const openclaude: HarnessAdapter = {
     variables: 'none',
   },
   installDoc,
-  emit(_model: PluginModel): EmitResult {
+  emit(_model: PluginModel): AdapterEmission {
     return {
       files: [],
-      warnings: ['openclaude adapter is a placeholder; no files emitted (OpenClaude plugin spec is not yet confirmed)'],
+      limitations: [{ code: 'COMPONENT_OMITTED', component: 'skills', message: 'openclaude adapter is a placeholder; no files emitted (OpenClaude plugin spec is not yet confirmed)' }],
+      emittedCapabilities: [],
     }
   },
 }

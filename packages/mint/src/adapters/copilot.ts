@@ -27,7 +27,7 @@ function installDoc(model: PluginModel): string {
   ].join('\n')
 }
 
-export const copilot: HarnessAdapter = Object.freeze({
+export const copilot = Object.freeze({
   name: 'copilot',
   support: {
     skills: 'full',
@@ -38,7 +38,7 @@ export const copilot: HarnessAdapter = Object.freeze({
     bootstrap: 'full',
     rules: 'none',
     variables: 'none',
-  },
+  } as const,
   skillsOutputDir: undefined,
   installDoc,
   emit(_model: PluginModel) {
@@ -46,4 +46,4 @@ export const copilot: HarnessAdapter = Object.freeze({
     // replaces the empty local set with its projection owner's capabilities.
     return { files: [], limitations: [], emittedCapabilities: [], projectionOwner: 'claude-code' as const }
   },
-})
+}) satisfies HarnessAdapter

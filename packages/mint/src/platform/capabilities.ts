@@ -5,14 +5,15 @@ import type { ComponentSupport, EmissionLimitation } from '../adapters/types.js'
 import { CAPABILITY_IDS, type CapabilityId, type TargetId, type TargetIntent } from '../vocabulary.js'
 import { conformsToGeneratedSchema } from '../validate.js'
 
-const componentCapability = {
+type MappedComponent = 'skills' | 'commands' | 'agents' | 'hooks' | 'mcp' | 'bootstrap'
+const componentCapability: Record<MappedComponent, CapabilityId> = {
   skills: 'skill-discovery',
   commands: 'command-discovery',
   agents: 'agent-discovery',
   hooks: 'hook-execution',
   mcp: 'mcp-registration',
   bootstrap: 'bootstrap-routing',
-} as const satisfies Record<keyof ComponentSupport, CapabilityId>
+}
 
 function paths(files: FileSet): ReadonlySet<string> {
   return new Set(files.map((file) => file.path))
@@ -87,7 +88,7 @@ export function mapLegacyComponentSupport(
 ): CapabilityId[] {
   const direct = deriveEmittedCapabilities(target, model, files)
   const allowed = new Set<CapabilityId>()
-  for (const [component, capability] of Object.entries(componentCapability) as Array<[keyof ComponentSupport, CapabilityId]>) {
+  for (const [component, capability] of Object.entries(componentCapability) as Array<[MappedComponent, CapabilityId]>) {
     if (support[component] !== 'none') allowed.add(capability)
   }
   return ordered(direct.filter((capability) => allowed.has(capability) || capability === 'format-conformance'))
@@ -204,7 +205,10 @@ export function validateEmissionLimitations(
   const actual = new Set(emitted)
   for (const limitation of limitations) {
     if (limitation.code === 'SETTING_DROPPED') continue
-    const capability = componentCapability[limitation.component]
+    const capability = limitation.component in componentCapability
+      ? componentCapability[limitation.component as MappedComponent]
+      : undefined
+    if (capability === undefined) continue
     if (limitation.code === 'COMPONENT_OMITTED' && actual.has(capability)) {
       throw capabilityError(
         'CAPABILITY_LIMITATION_CONTRADICTION', plugin, target, source, `targets.${target}.expected_capabilities`,
