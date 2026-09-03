@@ -93,7 +93,12 @@ or `CODEOWNERS` documents; if there is none, `feature/<slug>` is a safe default.
 
 ### 1b. Native Worktree Tools (preferred)
 
-The user has asked for an isolated workspace (Step 0 consent). Do you already have a way to create a worktree? It might be a tool with a name like `EnterWorktree`, `WorktreeCreate`, a `/worktree` command, or a `--worktree` flag. If you do, use it and skip to Step 2.
+The user has asked for an isolated workspace (Step 0 consent). Do you already
+have a way to create a worktree? It might be a tool with a name like
+`EnterWorktree`, `WorktreeCreate`, a `/worktree` command, or a `--worktree`
+flag. **In this repo, use `moe jig worktree create <branch> [--base <ref>]`** —
+it handles placement in `.moe/worktrees/`, gitignore, and lineage verification.
+If you have a native tool, use it and skip to Step 2.
 
 Native tools handle directory placement, branch creation, and cleanup
 automatically, but they do not get to choose lineage. Pass `BASE_SHA` when the
@@ -183,7 +188,9 @@ read different content there. Recording the base once, before the wave
 dispatches, is the safeguard.
 
 Create every worktree first, then validate the complete set before dispatching
-any worker:
+any worker. **In this repo, use `moe jig worktree create` per worker and
+`moe jig worktree validate <path1> <path2> ...` to check the set.** Without
+jig, verify manually:
 
 ```bash
 git -C "$worker_cwd" rev-parse --path-format=absolute --git-dir
