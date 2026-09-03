@@ -137,16 +137,6 @@ function installDoc(model: PluginModel): string {
 
 export const cursor: HarnessAdapter = Object.freeze({
   name: 'cursor',
-  support: {
-    skills: 'full',
-    commands: 'full',
-    agents: 'full',
-    hooks: 'partial',
-    mcp: 'full',
-    bootstrap: 'full',
-    rules: 'none',
-    variables: 'none',
-  },
   skillsOutputDir: '.cursor-plugin/skills',
   installDoc,
   emit(model: PluginModel) {

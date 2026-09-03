@@ -31,14 +31,12 @@
 //   - Bootstrap injection mechanism (system prompt? config? first-message?)
 //   - Whether skills are loaded as markdown or via a different mechanism
 //
-// Until the unknowns above are resolved, emit() returns no files and a
-// warning. The support matrix is conservatively set to 'none' for every
-// component except skills (set to 'partial' — directory-based loading is
-// a reasonable assumption, but unverified).
+// Until the unknowns above are resolved, emit() returns no files, limitations,
+// or capability claims.
 // ──────────────────────────────────────────────────────────────────────
 
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmitResult } from './types.js'
+import type { HarnessAdapter } from './types.js'
 
 function installDoc(_model: PluginModel): string {
   return [
@@ -70,21 +68,12 @@ function installDoc(_model: PluginModel): string {
 
 export const openclaude: HarnessAdapter = {
   name: 'openclaude',
-  support: {
-    skills: 'partial',
-    commands: 'none',
-    agents: 'none',
-    hooks: 'none',
-    mcp: 'none',
-    bootstrap: 'none',
-    rules: 'none',
-    variables: 'none',
-  },
   installDoc,
-  emit(_model: PluginModel): EmitResult {
+  emit(_model: PluginModel) {
     return {
       files: [],
-      warnings: ['openclaude adapter is a placeholder; no files emitted (OpenClaude plugin spec is not yet confirmed)'],
+      limitations: [],
+      emittedCapabilities: [],
     }
   },
 }

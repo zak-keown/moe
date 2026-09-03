@@ -62,18 +62,6 @@ describe('codex adapter', () => {
 
   it('derives only skill discovery from the Codex projection', () => {
     expect(result.emittedCapabilities).toEqual(['skill-discovery'])
-
-  it('declares expected support levels', () => {
-    expect(codex.support).toEqual({
-      skills: 'full',
-      commands: 'none',
-      agents: 'none',
-      hooks: 'none',
-      mcp: 'none',
-      bootstrap: 'partial',
-      rules: 'none',
-      variables: 'none',
-    })
   })
 })
 

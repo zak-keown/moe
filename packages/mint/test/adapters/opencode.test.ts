@@ -36,18 +36,6 @@ describe('opencode adapter', () => {
     expect(result.emittedCapabilities).toEqual([
       'skill-discovery', 'command-discovery', 'agent-discovery', 'bootstrap-routing',
     ])
-
-  it('declares expected support levels', () => {
-    expect(opencode.support).toEqual({
-      skills: 'full',
-      commands: 'full',
-      agents: 'partial',
-      hooks: 'none',
-      mcp: 'none',
-      bootstrap: 'full',
-      rules: 'none',
-      variables: 'none',
-    })
   })
 
   it('keeps package.json out of adapter files and contributes only its server export', () => {
