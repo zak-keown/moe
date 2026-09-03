@@ -66,6 +66,26 @@ The complete Apache License 2.0 is in root LICENSE. The complete MIT License and
 the retained MIT copyright notices are in root LICENSE-MIT. Generated
 installable artifacts carry the applicable terms with them.
 
+## Unicode License V3
+
+Unicode Character Database CaseFolding-16.0.0.txt is © 2024 Unicode, Inc.
+Its generated table is retained in this repository. Source and transformation
+are recorded in root PARITY.md.
+
+Copyright © 1991-2026 Unicode, Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of data files and associated documentation to deal in the Data Files without
+restriction, including use, copy, modify, merge, publish, distribute, and/or
+sell copies, and to permit recipients to do so, provided this copyright and
+permission notice appears with all copies or associated Documentation.
+
+THE DATA FILES AND SOFTWARE ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+KIND, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE, NONINFRINGEMENT OF THIRD PARTY RIGHTS, OR LIABILITY FOR CLAIMS OR
+DAMAGES ARISING FROM USE OR PERFORMANCE. Unicode names may not be used to
+promote dealings in the Data Files without prior written authorization.
+
 ## Unresolved
 
 The `superpowers-evals` row has no located grant of rights. Five derived files

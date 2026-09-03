@@ -63,6 +63,20 @@ function countImportedWorks(root, problems) {
     return 0;
   }
   if (notice.size === 0) problems.push("NOTICE has no imported-work rows");
+  if (notice.has("Unicode Character Database CaseFolding")) {
+    const text = readFileSync(join(root, "NOTICE"), "utf8");
+    if (!text.includes("Unicode License V3") || !text.includes("Permission is hereby granted, free of charge")) {
+      problems.push("NOTICE is missing the required Unicode permission notice");
+    }
+    try {
+      const parity = readFileSync(join(root, "PARITY.md"), "utf8");
+      if (!parity.includes("CaseFolding-16.0.0.txt") || !parity.includes("all and only")) {
+        problems.push("root PARITY.md is missing Unicode CaseFolding provenance");
+      }
+    } catch (err) {
+      problems.push(`could not read root PARITY.md: ${err.message}`);
+    }
+  }
   return notice.size;
 }
 
