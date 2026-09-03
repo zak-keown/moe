@@ -1,0 +1,9 @@
+[
+  {
+    "name": "fixture-bundle-apache",
+    "version": "2.0.0",
+    "package_manifest": "packages/universal-artifact/legal/bundled-apache/package.json",
+    "inputs": ["packages/universal-artifact/legal/bundled-apache/index.js"],
+    "outputs": ["runtime/index.js"]
+  }
+]

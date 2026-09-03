@@ -1,0 +1,4 @@
+#!/usr/bin/env node
+
+const command = process.argv[2] ?? "probe";
+process.stdout.write(`${JSON.stringify({ fixture: "universal-artifact", command, ok: true })}\n`);

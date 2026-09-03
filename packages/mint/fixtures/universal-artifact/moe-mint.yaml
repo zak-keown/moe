@@ -1,0 +1,53 @@
+name: universal-artifact
+version: 1.2.3
+description: Universal deterministic artifact fixture.
+author: {name: Fixture Author}
+license: MIT
+repository: https://github.com/example/universal-artifact
+homepage: https://github.com/example/universal-artifact
+keywords: [fixture, artifact, determinism]
+
+distribution:
+  npm: "@fixture/universal-artifact"
+
+artifact:
+  payloads:
+    - {from: runtime, to: runtime, required: true}
+    - {from: types, to: types, required: true}
+    - {from: bin, to: bin, required: true}
+    - {from: prompts, to: prompts, required: true}
+    - {from: mcp, to: mcp, required: true}
+    - {from: bootstrap, to: bootstrap, required: true}
+    - {from: legal/imported, to: legal/imported, required: true}
+
+components:
+  skills: skills
+  commands: commands
+  agents: agents
+  hooks: hooks/hooks.json
+  mcp: .mcp.json
+
+bootstrap:
+  skill: universal-fixture
+
+targets:
+  claude-code: {intent: preview, expected_capabilities: [skill-discovery, command-discovery, agent-discovery, hook-execution, mcp-registration, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
+  cursor: {intent: preview, expected_capabilities: [skill-discovery, hook-execution, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
+  codex: {intent: preview, expected_capabilities: [skill-discovery], operating_systems: [macos, linux, wsl2, windows]}
+  kimi: {intent: preview, expected_capabilities: [skill-discovery, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
+  opencode: {intent: preview, expected_capabilities: [skill-discovery, command-discovery, agent-discovery, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
+  pi: {intent: preview, expected_capabilities: [skill-discovery, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
+  agent-plugins-1.0: {intent: preview, expected_capabilities: [skill-discovery, mcp-registration, format-conformance]}
+  copilot: {intent: preview, expected_capabilities: [skill-discovery, command-discovery, agent-discovery, hook-execution, mcp-registration, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
+
+imported_works:
+  - name: fixture-source-mit
+    artifact_roots: [legal/imported]
+  - name: fixture-bundle-apache
+    artifact_roots: []
+
+marketplace:
+  name: universal-fixture-market
+  source: local
+  category: Developer Tools
+  tags: [fixture, artifact]
