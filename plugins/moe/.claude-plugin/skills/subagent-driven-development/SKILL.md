@@ -147,8 +147,9 @@ a ledger file, not only in todos.
 
 - Each plan owns a workspace: at skill start, resolve
   [skills/subagent-driven-development/scripts/sdd-workspace](scripts/sdd-workspace) relative
-  to this loaded document and invoke it with `PLAN_FILE` — it prints the plan's git-ignored
-  directory (`<repo-root>/.moe/sdd/<plan-basename>/`), home to
+  to this loaded document and invoke it as `"<resolved-sdd-workspace>" PLAN_FILE`
+  — it prints the plan's git-ignored directory
+  (`<repo-root>/.moe/sdd/<plan-basename>/`), home to
   every artifact for THIS plan: ledger, briefs, reports, review packages.
   Another plan's directory is never yours to read or write.
 - Check for this plan's ledger at `<workspace>/progress.md`. If its first
@@ -226,7 +227,7 @@ When `task-set` is available (the plan has `depends_on:` fields), compute
 waves deterministically. Resolve [skills/subagent-driven-development/scripts/task-set.mjs](scripts/task-set.mjs) relative to this loaded document, then invoke it as:
 
 ```bash
-node <resolved-task-set.mjs> waves "$PLAN_PATH"
+node "<resolved-task-set.mjs>" waves "$PLAN_PATH"
 ```
 
 The output replaces the manual scan table. Validate it against your own
@@ -236,7 +237,7 @@ fields, fall back to the manual scan table.
 On a context reset, recover the ready set with that same resolved resource:
 
 ```bash
-node <resolved-task-set.mjs> next "$PLAN_PATH"
+node "<resolved-task-set.mjs>" next "$PLAN_PATH"
 ```
 
 Before dispatching a wave, record its BASE SHA once — every worker in the wave
@@ -341,8 +342,9 @@ and fix-round diffs need it.
 
 - **Task brief:** before dispatching an implementer, resolve
   [skills/subagent-driven-development/scripts/task-brief](scripts/task-brief) relative to
-  this loaded document and invoke it with `PLAN_FILE N` — it extracts the task's full text to a
-  uniquely named file and prints the path. Compose the dispatch so the
+  this loaded document and invoke it as
+  `"<resolved-task-brief>" PLAN_FILE N` — it extracts the task's full text
+  to a uniquely named file and prints the path. Compose the dispatch so the
   brief stays the single source of
   requirements. Your dispatch should contain: (1) one line on where this
   task fits in the project; (2) the brief path, introduced as "read this
@@ -384,7 +386,7 @@ Template: [implementer-prompt.md](implementer-prompt.md)
 
 Implementer subagents report one of four statuses. Handle each appropriately:
 
-**DONE:** Resolve [skills/subagent-driven-development/scripts/review-package](scripts/review-package) relative to this loaded document and invoke it with `PLAN_FILE BASE HEAD`. It prints the unique file path it wrote; BASE is the commit you recorded before dispatching the implementer — never `HEAD~1`, which silently drops all but the last commit of a multi-commit task. Then dispatch the task reviewer with the printed path.
+**DONE:** Resolve [skills/subagent-driven-development/scripts/review-package](scripts/review-package) relative to this loaded document and invoke it as `"<resolved-review-package>" PLAN_FILE BASE HEAD`. It prints the unique file path it wrote; BASE is the commit you recorded before dispatching the implementer — never `HEAD~1`, which silently drops all but the last commit of a multi-commit task. Then dispatch the task reviewer with the printed path.
 
 **DONE_WITH_CONCERNS:** The implementer completed the work but flagged doubts. Read the concerns before proceeding. If the concerns are about correctness or scope, address them before review. If they're observations (e.g., "this file is getting large"), note them and proceed to review.
 

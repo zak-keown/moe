@@ -102,7 +102,7 @@ Resolve {resource:skills/systematic-debugging/find-polluter.sh} relative to this
 loaded document and use that bisection script:
 
 ```bash
-<resolved-find-polluter.sh> '.git' 'src/**/*.test.ts'
+"<resolved-find-polluter.sh>" '.git' 'src/**/*.test.ts'
 ```
 
 Runs tests one-by-one, stops at first polluter. See script for usage.
