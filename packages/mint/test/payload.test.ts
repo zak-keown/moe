@@ -120,6 +120,8 @@ describe('declared artifact payload staging', () => {
     ['artifact manifest root', { from: 'dist', to: '.moe/runtime', required: true }],
     ['adapter ledger root', { from: 'dist', to: '.moe-mint/files', required: true }],
     ['legal payload', { from: 'dist', to: 'LICENSE', required: true }],
+    ['NOTICE legal payload', { from: 'dist', to: 'NOTICE', required: true }],
+    ['third-party notice legal payload', { from: 'dist', to: 'THIRD_PARTY_NOTICES', required: true }],
     ['reserved case alias', { from: 'dist', to: 'PACKAGE.JSON/child', required: true }],
     ['reserved legal descendant', { from: 'dist', to: 'license/child', required: true }],
   ] as const)('rejects a declared %s before copying', async (_name, payload) => {
