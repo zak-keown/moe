@@ -282,18 +282,34 @@ Everything you paste into a dispatch prompt — and everything a subagent
 prints back — stays resident in your context for the rest of the session
 and is re-read on every later turn. Hand artifacts over as files.
 
-**Waiting on dispatched subagents:** never poll a wait interface with
-short timeouts, and never sit in one silent, open-ended wait either.
+**Waiting on dispatched subagents:**
+
+Kimi Code's `Agent` tool call blocks until the subagent finishes and
+its result is returned in the tool response — there is no separate
+wait step for a normal dispatch. For agents dispatched with
+`run_in_background: true`, check back on their status before
+proceeding. Read each subagent's returned result directly rather than
+re-deriving its findings.
+
+
 While you have local work — ledger updates, packaging the next review,
-reading reports — keep working; child results arrive on their own.
-When you are genuinely idle, wait in bounded stretches (five to ten
-minutes, where your platform allows), and between stretches post one
-line of status and reconcile your live children: list them, and chase
-any that finished without reporting. A bounded stretch keeps nearly
-all of a long wait's efficiency while guaranteeing a stuck or lost
-child is noticed within minutes, not at the end of the session.
+reading reports — keep working; child results arrive on their own. Between
+any bounded wait stretches, post one line of status and reconcile your live
+children: list them, and chase any that finished without reporting.
 
 ### 1. Dispatch the implementer
+
+Use Kimi Code's `Agent` tool with a Kimi subagent type — never pass
+`general-purpose` as `subagent_type`. For implementation, code
+review, spec review, or any filled prompt template this plugin ships,
+call `Agent` with `subagent_type: "coder"`, paste the fully filled
+prompt into `prompt`, and give a short `description`. For read-only
+codebase exploration use `subagent_type: "explore"`; for read-only
+planning or architecture design use `subagent_type: "plan"`. Keep
+dependent steps sequential; use multiple `Agent` calls, or
+`run_in_background: true` when the work is independent and background
+agents are available.
+
 
 Record BASE (`git rev-parse HEAD`) before dispatching — the review package
 and fix-round diffs need it.

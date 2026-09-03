@@ -31,7 +31,16 @@ HEAD_SHA=$(git rev-parse HEAD)
 
 **2. Dispatch code reviewer subagent:**
 
-Dispatch a `general-purpose` subagent, filling the template at [code-reviewer.md](code-reviewer.md)
+Use the `Agent` tool with `subagent_type: "general-purpose"` for
+full-capability work or `subagent_type: "Explore"` for read-only
+research — the same shape as Claude Code. Pass a fully filled `prompt`
+and a short `description`. Cursor does not load this plugin's custom
+`agents/` definitions, so name a built-in subagent type rather than a
+project-defined one. Dispatch independent work with multiple `Agent`
+calls in one turn; keep dependent steps sequential.
+
+
+Fill the template at [code-reviewer.md](code-reviewer.md) and dispatch it as the reviewer.
 
 **Placeholders:**
 - `{DESCRIPTION}` - Brief summary of what you built

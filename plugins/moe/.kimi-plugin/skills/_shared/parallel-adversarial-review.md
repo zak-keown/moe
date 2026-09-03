@@ -6,11 +6,31 @@ A shared reference for all skills that dispatch reviewers. Every evaluative gate
 
 When dispatching ANY reviewer (scope reviewer, spec-compliance reviewer, code-quality reviewer, auditor):
 
-1. **Dispatch TWO reviewer subagents simultaneously** with identical inputs. Use your platform's parallel dispatch mechanism. Neither reviewer sees the other's work.
+1. **Dispatch TWO reviewer subagents simultaneously** with identical inputs. Neither reviewer sees the other's work.
+
+   Use Kimi Code's `Agent` tool with a Kimi subagent type — never pass
+   `general-purpose` as `subagent_type`. For implementation, code
+   review, spec review, or any filled prompt template this plugin ships,
+   call `Agent` with `subagent_type: "coder"`, paste the fully filled
+   prompt into `prompt`, and give a short `description`. For read-only
+   codebase exploration use `subagent_type: "explore"`; for read-only
+   planning or architecture design use `subagent_type: "plan"`. Keep
+   dependent steps sequential; use multiple `Agent` calls, or
+   `run_in_background: true` when the work is independent and background
+   agents are available.
+
 
 2. **Wrap each reviewer's prompt** with the competitive framing from `par-reviewer-wrapper.md` (in this directory). The wrapper adds the scoring incentive on top of the reviewer's domain-specific prompt.
 
 3. **Wait for both reviewers to return.**
+
+   Kimi Code's `Agent` tool call blocks until the subagent finishes and
+   its result is returned in the tool response — there is no separate
+   wait step for a normal dispatch. For agents dispatched with
+   `run_in_background: true`, check back on their status before
+   proceeding. Read each subagent's returned result directly rather than
+   re-deriving its findings.
+
 
 4. **Aggregate findings:**
    - **Same issue found by both reviewers** → one finding, high confidence

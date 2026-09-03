@@ -262,10 +262,11 @@ required for the workflow to work.
 
 When your human partner asks to review the plan visually — a browseable
 table of tasks, a rendered dependency diagram — walk the ladder from
-the top: on Claude Code, publish an artifact via the Artifact tool
-(rung 1) so they can scroll it in their client; otherwise fall to the
-brainstorm companion (rung 2) or a self-contained local HTML file
-(rung 3). Never gate execution on the browseable form; the markdown
+the top:
+
+{render-ladder}
+
+Never gate execution on the browseable form; the markdown
 file is the source of truth.
 
 ## Execution Handoff

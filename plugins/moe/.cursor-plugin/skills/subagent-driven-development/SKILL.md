@@ -282,18 +282,30 @@ Everything you paste into a dispatch prompt — and everything a subagent
 prints back — stays resident in your context for the rest of the session
 and is re-read on every later turn. Hand artifacts over as files.
 
-**Waiting on dispatched subagents:** never poll a wait interface with
-short timeouts, and never sit in one silent, open-ended wait either.
+**Waiting on dispatched subagents:**
+
+Same as Claude Code: the `Agent` call blocks until the subagent
+returns its final report in the tool result — there is no separate
+wait step. Read the report directly rather than re-deriving its
+findings, but verify any load-bearing claim before treating it as
+final.
+
+
 While you have local work — ledger updates, packaging the next review,
-reading reports — keep working; child results arrive on their own.
-When you are genuinely idle, wait in bounded stretches (five to ten
-minutes, where your platform allows), and between stretches post one
-line of status and reconcile your live children: list them, and chase
-any that finished without reporting. A bounded stretch keeps nearly
-all of a long wait's efficiency while guaranteeing a stuck or lost
-child is noticed within minutes, not at the end of the session.
+reading reports — keep working; child results arrive on their own. Between
+any bounded wait stretches, post one line of status and reconcile your live
+children: list them, and chase any that finished without reporting.
 
 ### 1. Dispatch the implementer
+
+Use the `Agent` tool with `subagent_type: "general-purpose"` for
+full-capability work or `subagent_type: "Explore"` for read-only
+research — the same shape as Claude Code. Pass a fully filled `prompt`
+and a short `description`. Cursor does not load this plugin's custom
+`agents/` definitions, so name a built-in subagent type rather than a
+project-defined one. Dispatch independent work with multiple `Agent`
+calls in one turn; keep dependent steps sequential.
+
 
 Record BASE (`git rev-parse HEAD`) before dispatching — the review package
 and fix-round diffs need it.

@@ -6,11 +6,24 @@ A shared reference for all skills that dispatch reviewers. Every evaluative gate
 
 When dispatching ANY reviewer (scope reviewer, spec-compliance reviewer, code-quality reviewer, auditor):
 
-1. **Dispatch TWO reviewer subagents simultaneously** with identical inputs. Use your platform's parallel dispatch mechanism. Neither reviewer sees the other's work.
+1. **Dispatch TWO reviewer subagents simultaneously** with identical inputs. Neither reviewer sees the other's work.
+
+   Use the `task` tool with `subagent_type: "general"` for a
+   `Subagent (general-purpose):` dispatch. Pass the fully filled prompt
+   as the task description. Keep dependent steps sequential; issue
+   multiple `task` calls in one turn for independent work.
+
 
 2. **Wrap each reviewer's prompt** with the competitive framing from `par-reviewer-wrapper.md` (in this directory). The wrapper adds the scoring incentive on top of the reviewer's domain-specific prompt.
 
 3. **Wait for both reviewers to return.**
+
+   OpenCode's `task` tool call blocks until the subagent returns its
+   result in the tool response — there is no separate polling step. Read
+   the returned result directly; for multiple independent `task`
+   dispatches issued in one turn, each result arrives before you
+   continue.
+
 
 4. **Aggregate findings:**
    - **Same issue found by both reviewers** → one finding, high confidence

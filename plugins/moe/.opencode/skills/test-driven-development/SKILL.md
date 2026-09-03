@@ -226,8 +226,8 @@ the complex logic instead of on every edge case. A test at a seam nobody agreed
 to is how suites fill with tests that break on every refactor.
 
 When the shape of that interface is itself the question — how much behaviour
-sits behind it, where the seam belongs, what it should expose — call the Skill
-tool with "codebase-design" for the vocabulary: module, interface, depth, seam,
+sits behind it, where the seam belongs, what it should expose — use the `skill` tool to
+load `codebase-design` for the vocabulary: module, interface, depth, seam,
 adapter, leverage, locality. It is a reference to consult, not a session to run.
 
 ## Common Rationalizations

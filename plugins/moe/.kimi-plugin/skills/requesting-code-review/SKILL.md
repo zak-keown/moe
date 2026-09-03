@@ -31,7 +31,19 @@ HEAD_SHA=$(git rev-parse HEAD)
 
 **2. Dispatch code reviewer subagent:**
 
-Dispatch a `general-purpose` subagent, filling the template at [code-reviewer.md](code-reviewer.md)
+Use Kimi Code's `Agent` tool with a Kimi subagent type — never pass
+`general-purpose` as `subagent_type`. For implementation, code
+review, spec review, or any filled prompt template this plugin ships,
+call `Agent` with `subagent_type: "coder"`, paste the fully filled
+prompt into `prompt`, and give a short `description`. For read-only
+codebase exploration use `subagent_type: "explore"`; for read-only
+planning or architecture design use `subagent_type: "plan"`. Keep
+dependent steps sequential; use multiple `Agent` calls, or
+`run_in_background: true` when the work is independent and background
+agents are available.
+
+
+Fill the template at [code-reviewer.md](code-reviewer.md) and dispatch it as the reviewer.
 
 **Placeholders:**
 - `{DESCRIPTION}` - Brief summary of what you built

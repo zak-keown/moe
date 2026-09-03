@@ -65,7 +65,18 @@ Each agent gets:
 
 ### 3. Dispatch in Parallel
 
-Issue all three subagent dispatches in the same response — they run in parallel:
+Use the `Agent` tool. Pass a fully filled `prompt` and a short
+`description`; choose `subagent_type` deliberately — `general-purpose`
+for a task needing the full tool surface, `Explore` for read-only
+research, `fork` to hand a subagent a copy of this conversation so it
+shares your context and cache. A non-fork agent starts with zero
+context: brief it like a colleague who just walked in, never with
+"based on what we discussed." For independent work, send multiple
+`Agent` calls in a single message to dispatch them in parallel; keep
+dependent steps sequential.
+
+
+For independent work like the three fixes above, issue every dispatch together so they run concurrently:
 
 ```text
 Subagent (general-purpose): "Fix agent-tool-abort.test.ts failures"
@@ -74,7 +85,7 @@ Subagent (general-purpose): "Fix tool-approval-race-conditions.test.ts failures"
 # All three run concurrently.
 ```
 
-Multiple dispatch calls in one response = parallel execution. One per response = sequential.
+Keep dependent steps sequential — one dispatch, then the next.
 
 ### 4. Review and Integrate
 

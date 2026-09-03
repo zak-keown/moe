@@ -19,7 +19,7 @@ Interactive CLI tools (vim, interactive git rebase, REPLs, etc.) cannot be contr
 - Commands that require terminal control codes or readline
 
 **Don't use for:**
-- Simple non-interactive commands (use regular Bash tool)
+- Simple non-interactive commands (use `Bash`)
 - Commands that accept input via stdin redirection
 - One-shot commands that don't need interaction
 

@@ -17,12 +17,12 @@ stall waiting for an optional one.
 
 | Backend | Tools | Corpus | Optional? |
 |---|---|---|---|
-| **moedex** | `mcp__moedex__*` | the code corpus the *asking user* can see in GitLab | optional — degrade to `Read`/`Grep` when absent |
+| **moedex** | `mcp__moedex__*` | the code corpus the *asking user* can see in GitLab | optional — degrade to `shell` (cat)/`shell` (rg/grep) when absent |
 | **moe-memory** | `mcp__plugin_moe-memory_moe-memory__*` | this machine: conversation turns and journal entries | default memory store |
 
 ## The rule that fires first
 
-**A file in the working tree is read, never retrieved.** `Read` and `Grep`, every
+**A file in the working tree is read, never retrieved.** `shell` (cat) and `shell` (rg/grep), every
 time. This holds whether or not the repo is in the retrieval corpus, and it is
 not a preference about cost: retrieval returns the corpus's *snapshot* of a
 file, and your uncommitted edit is not in it. Reading is both cheaper and more
@@ -47,12 +47,12 @@ answer. Say you did not find it rather than reporting rank 1.
 ## Routing
 
 Route each question to its baseline: moedex for code-structure questions,
-moe-memory for anything about prior work, and `Read`/`Grep` for anything
+moe-memory for anything about prior work, and `shell` (cat)/`shell` (rg/grep) for anything
 already in the working tree.
 
 | Question | Baseline |
 |---|---|
-| A file in the working tree | `Read` / `Grep` — the corpus lags your edits |
+| A file in the working tree | `shell` (cat) / `shell` (rg/grep) — the corpus lags your edits |
 | "Where is this symbol in a repo you are not editing?" | `search_context` with `graph_depth: 1` — one budgeted, graph-annotated call |
 | "Blast radius of this change across repos?" | `impact_analysis` |
 | A prior decision, ownership, a convention, or anything discussed before | `search_journal` + `search_conversations` — search this before answering from code or from first principles |
@@ -112,9 +112,9 @@ changing — not at the moment you first believe it.
 - **moedex absent, or up but not answering.** It is a single local daemon with
   a large mmap to warm; a slow start is routine, not an incident. Do not retry
   in a loop and do not tell the user the work is blocked. Answer
-  code-structure questions from `Read`/`Grep` where the repo is in the working
+  code-structure questions from `shell` (cat)/`shell` (rg/grep) where the repo is in the working
   tree, and say plainly when a repo outside it is not checkable.
-- **Only the working tree.** `Read` and `Grep` answer more than you expect. Say
+- **Only the working tree.** `shell` (cat) and `shell` (rg/grep) answer more than you expect. Say
   what you could not check rather than guessing at it.
 
 ## Red flags

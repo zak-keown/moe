@@ -6,11 +6,40 @@ A shared reference for all skills that dispatch reviewers. Every evaluative gate
 
 When dispatching ANY reviewer (scope reviewer, spec-compliance reviewer, code-quality reviewer, auditor):
 
-1. **Dispatch TWO reviewer subagents simultaneously** with identical inputs. Use your platform's parallel dispatch mechanism. Neither reviewer sees the other's work.
+1. **Dispatch TWO reviewer subagents simultaneously** with identical inputs. Neither reviewer sees the other's work.
+
+   Requires `[features] multi_agent = true` in `~/.codex/config.toml`.
+   Spawn children with `spawn_agent {fork_turns: "none"}` for a clean
+   context — the default `"all"` copies your entire transcript in.
+   Codex 0.145+ role files under `~/.codex/agents/` attach via
+   `agent_type` on full-history forks; isolated forks are the default for
+   context hygiene. Resume an implementer with `followup_task` rather
+   than spawning a fresh one — it delivers your message and transparently
+   reloads an evicted child. V2 has no `close_agent`; finished children
+   are evicted automatically. Set `model` AND `reasoning_effort`
+   explicitly on every spawn — `model` alone silently resets effort to
+   that model's default. Never copy a model name into `spawn_agent`
+   without checking it against your current spawn allowlist.
+
 
 2. **Wrap each reviewer's prompt** with the competitive framing from `par-reviewer-wrapper.md` (in this directory). The wrapper adds the scoring incentive on top of the reviewer's domain-specific prompt.
 
 3. **Wait for both reviewers to return.**
+
+   `wait_agent` is an event subscription, not a poll: a long wait wakes
+   the instant a child produces mailbox activity, at the same latency as
+   a short one. Short-timeout polls buy nothing and cost a tool call and
+   a context rebill each time — in measured sessions roughly two-thirds
+   of them timed out for nothing. While you still have local work, do not
+   wait at all; a completed child's final answer is pushed into your
+   mailbox and arrives with your next turn. When genuinely idle with
+   children outstanding, wait in bounded stretches of 300000-600000ms
+   (5-10 minutes); after each stretch, post one status line, run
+   `list_agents`, and chase any child that finished without reporting.
+   Never stack polls shorter than five minutes — completion mail cannot
+   wake an idle controller on its own, so covering that idle window is
+   `wait_agent`'s only job.
+
 
 4. **Aggregate findings:**
    - **Same issue found by both reviewers** → one finding, high confidence

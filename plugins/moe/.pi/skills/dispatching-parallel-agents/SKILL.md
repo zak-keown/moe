@@ -65,7 +65,16 @@ Each agent gets:
 
 ### 3. Dispatch in Parallel
 
-Issue all three subagent dispatches in the same response — they run in parallel:
+Pi core ships no standard subagent tool. If the `pi-subagents`
+package is installed, use its `subagent` tool — it supports
+single-agent, chain, parallel, async, forked-context, and
+resume/status workflows. If no subagent tool is available, do not
+fabricate `Task` calls: execute the work sequentially in the current
+session, or tell the user the optional subagent capability is not
+installed.
+
+
+For independent work like the three fixes above, issue every dispatch together so they run concurrently:
 
 ```text
 Subagent (general-purpose): "Fix agent-tool-abort.test.ts failures"
@@ -74,7 +83,7 @@ Subagent (general-purpose): "Fix tool-approval-race-conditions.test.ts failures"
 # All three run concurrently.
 ```
 
-Multiple dispatch calls in one response = parallel execution. One per response = sequential.
+Keep dependent steps sequential — one dispatch, then the next.
 
 ### 4. Review and Integrate
 

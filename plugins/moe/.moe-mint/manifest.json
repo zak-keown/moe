@@ -24,7 +24,7 @@
       "sha256": "2a9b90a4daa7fb3c9df16eda2c8229b870e2ce4718896007aaf9e9b9cc57ee76"
     },
     ".codex-plugin/skills/_shared/parallel-adversarial-review.md": {
-      "sha256": "5d5524a5c27a343b317dd7e36b469cde2e6edea7d74c1bb0ff2e65945fa0acf7"
+      "sha256": "c333cfd7fbd62835462c8d0947e282f1277977d14b95e9bfe2b6e1572204de48"
     },
     ".codex-plugin/skills/auditing-progress/SKILL.md": {
       "sha256": "66c006970b8f2a27646594796e2f0576885ce22a7a1e8ddfb69c714744d84550"
@@ -33,7 +33,7 @@
       "sha256": "94039969871619a24adb14881355c86bbda305456498ad42a2da9d7cd5ea7496"
     },
     ".codex-plugin/skills/brainstorming/SKILL.md": {
-      "sha256": "6f4364761d9c3a6ac8c8fa984a74e1970898225d588c1765a76c0c0d0d3932dc"
+      "sha256": "d27aa585c5228dfe0b726c6d7179edf92f37d89d399a89de9fd382e5619bc950"
     },
     ".codex-plugin/skills/brainstorming/spec-document-reviewer-prompt.md": {
       "sha256": "51dfa7686560108235983c13fe7505811c9d79b872e22028065e95e063b615e1"
@@ -81,7 +81,7 @@
       "sha256": "0b07a0489c3b6356f2d1fbc27140d219c861cd893f8f39cbc5127bcf85b790ad"
     },
     ".codex-plugin/skills/dispatching-parallel-agents/SKILL.md": {
-      "sha256": "065cad1dc85f9c7730699f0829c5c9f922b3850c4b9c130c1692b13d9aa0e193"
+      "sha256": "edaa8d21fe98e930b7d95ce3eb2bd717ebf855aba2e0697dd43583d7b73fe923"
     },
     ".codex-plugin/skills/domain-modeling/ADR-FORMAT.md": {
       "sha256": "944c92aa790e8fbdc9199640b170979abb8a34ba8d0fe18c2a01a63bce140ca0"
@@ -96,16 +96,16 @@
       "sha256": "a61ce58b578bf5e1af4861ef6f6a01932a95d60b4db76f7e6dbe850220e19e7a"
     },
     ".codex-plugin/skills/extracting-requirements/SKILL.md": {
-      "sha256": "2491b5570212d967090933d6b2c55e9876222d47ae4fbb166895568d67bb31f8"
+      "sha256": "e3fbdfe4afed6da963771270a5affff50c0f20371fe6ed2e6246ce41b07bcd56"
     },
     ".codex-plugin/skills/extracting-requirements/extraction-subagent-prompt.md": {
       "sha256": "5436cac4b93340358198c5361a5217e3d1b2ec35074d42c9582f903dcda4aaa2"
     },
     ".codex-plugin/skills/finding-duplicate-functions/SKILL.md": {
-      "sha256": "d9a008aa28b4112153bd4dcd4102e04de8d03a9e52db6b669525b6d1e5f6bf9e"
+      "sha256": "4c61b3f0b47ef6f67a556e7e33be6de3492f3c2e477574187b2c92c76aace08d"
     },
     ".codex-plugin/skills/finding-duplicate-functions/scripts/categorize-prompt.md": {
-      "sha256": "764fa94432965ce27cbdb0811250fa3514740b666db1a8d5c5cea33c5a6d36e9"
+      "sha256": "ffc8b52b24071c69962adba91c1190ee9babeb33c3a139535abd614eacfb86fc"
     },
     ".codex-plugin/skills/finding-duplicate-functions/scripts/find-duplicates-prompt.md": {
       "sha256": "8e2e7de14fe29ca49118b68b63ab33ee42efb2dfb4acb1d7f2f19d256925ecc7"
@@ -132,7 +132,7 @@
       "sha256": "581e8bb5a521e46bbda8ca7e19b15948bed882187108092ebb90c62513b77528"
     },
     ".codex-plugin/skills/improve-codebase-architecture/SKILL.md": {
-      "sha256": "fbac96beb5bf62eacb974588b5f8f11adbf9346a5e3a9b4d8c995705205d86c6"
+      "sha256": "62f56aa1d967104615e005c88745c483b241a37689ae6240f5405c3c392f765b"
     },
     ".codex-plugin/skills/iterative-development/SKILL.md": {
       "sha256": "bb3daa6cac0b8c868d4c44fc628f27f3f632d8b5808524db84d57edee138dd20"
@@ -153,7 +153,7 @@
       "sha256": "ba8fbecfef5f2b42e841f69881b62f9bd67116a9e37fe99bf1a1db02a828fa86"
     },
     ".codex-plugin/skills/requesting-code-review/SKILL.md": {
-      "sha256": "a96635d6c8daeb3c40f813086b51d79b34f180db956bd28c298b4e3c3ce0205e"
+      "sha256": "785929cb05f9c76babddd912b6f88febafa84ffa7b1f9c2eb0760c5146a2dc35"
     },
     ".codex-plugin/skills/requesting-code-review/code-reviewer.md": {
       "sha256": "5eca5fcfd48a50e0a526ce5ffd64bf625d6b81bb46d11795274dae451fe6ffd4"
@@ -165,7 +165,7 @@
       "sha256": "e462c335f3932a7e6c00ce13136da05525a2c0d4fd7fe42a1db17aa11faf35b0"
     },
     ".codex-plugin/skills/retrieving-context/SKILL.md": {
-      "sha256": "8a0bc12fd7b2b1ce0d140c8795fdda97fc2aab63756c7263dae83fd333b8d63d"
+      "sha256": "9e908a85b8a119197bd831c038cf05c3c87aa264f9f3b91fead9953dbcd25c6f"
     },
     ".codex-plugin/skills/reviewing-a-codebase/SKILL.md": {
       "sha256": "c059e84c8011ea4a0816da9b576de058908dbc0b5d2c076ea904a7cc663ab33b"
@@ -183,7 +183,7 @@
       "sha256": "8066f6e3481523b727783e9c512993fa9d0cf3ca19a52bd574fecb1e89f95a3d"
     },
     ".codex-plugin/skills/subagent-driven-development/SKILL.md": {
-      "sha256": "d688e82f728a685fa8ff8d2211508429396207a4fc39d5afe86b5ffce4d4d6e3"
+      "sha256": "e016ba58dfb8bcfb70c28f1981854574419e7f1b611f68fbc623501ca43bc205"
     },
     ".codex-plugin/skills/subagent-driven-development/implementer-prompt.md": {
       "sha256": "81dd9d5a3fb0b09b96b5829f03b9796842f3199ef7591d1ba1c2db2a515f64d0"
@@ -249,7 +249,7 @@
       "sha256": "96b50a52e2c7989c9cf20fb752c47c1e9a3a70dc362f8f7989f8f5b64dac7708"
     },
     ".codex-plugin/skills/test-driven-development/SKILL.md": {
-      "sha256": "a410e8d1ee8a12eee63bfd2a91cb9d21be62921911875a2c799fbbc9f5c2eb00"
+      "sha256": "6bd9a29cdaa95ea6b207cc0e1c2e944da8b7273b531a512de19345052d8a10b6"
     },
     ".codex-plugin/skills/test-driven-development/writing-good-tests.md": {
       "sha256": "0900a835f7e34c62922dc687f299742fc0db9e1a96e4850913888173ba3d9c5f"
@@ -258,7 +258,7 @@
       "sha256": "f2550d5d18a2f39e46fb39b08013dbec643bdc35aca77390efd1eca76df66cc5"
     },
     ".codex-plugin/skills/using-moe/SKILL.md": {
-      "sha256": "f02563cf53a4cb31bda041fef7bbaec265b2e8ef49eef57bd0841b46ec86f063"
+      "sha256": "bb0a8ba63b0319b917ab9e00ddbda3f2cbe92a2c3238a887932502931b86f40f"
     },
     ".codex-plugin/skills/using-moe/references/antigravity-tools.md": {
       "sha256": "77021a952929a56251d320ed909a4a4aaa3373ee89937e7645163ec56a5da713"
@@ -279,7 +279,7 @@
       "sha256": "b43b591fbe1f1c1c8e25ba46356e97aa0bf827c17eee3e69a137124f37c0d5c8"
     },
     ".codex-plugin/skills/using-tmux-for-interactive-commands/SKILL.md": {
-      "sha256": "0230a21817150b4e291045e5f15e62c767ffad9116066e2d082d5af9627e48f3"
+      "sha256": "44068e8892016d7d2e8d80e0b251ef10865d8bcd67d5a91219e9bff669d615d7"
     },
     ".codex-plugin/skills/verification-before-completion/SKILL.md": {
       "sha256": "9c6c4a457208718a1f335bd9eb704bdb2d5d763c29a3e72826c1a776fca9b8af"
@@ -291,7 +291,7 @@
       "sha256": "7aa90971d3d049f0ddddc6972b40b219633c7bdbadde6572549638ab4adedfa4"
     },
     ".codex-plugin/skills/working-with-claude-code/SKILL.md": {
-      "sha256": "8cf7b5225b0925a6f82bcb87894b12bc6d097242953aecb6da337b692ef30542"
+      "sha256": "f102deaa11fc0a73493e64fa649968fcd21d7f8529184c36dabc6a25368d5354"
     },
     ".codex-plugin/skills/writing-clearly-and-concisely/SKILL.md": {
       "sha256": "bcfd8a8b22f08c1673ca6c033540be82ed25fd49792fce276e96dade3450d1b2"
@@ -303,7 +303,7 @@
       "sha256": "348ad0147792e162981f4c566f6d14026bcfb337d9b4820a3fd914e16aaf75df"
     },
     ".codex-plugin/skills/writing-plans/SKILL.md": {
-      "sha256": "dcb05887ece23721cbf1131889648c8ced87c0297ee099121b125d05b69dfac9"
+      "sha256": "e7ccd70e2702b9a88816a0c1c241f0da1ae9c2c84e232ec54a61a3a873d577e0"
     },
     ".codex-plugin/skills/writing-plans/plan-document-reviewer-prompt.md": {
       "sha256": "df5f1ab940ad6aa0ac7df42aeded53107a39fb6d2e1a19cafa5eb808ac5ac602"
@@ -342,7 +342,7 @@
       "sha256": "2a9b90a4daa7fb3c9df16eda2c8229b870e2ce4718896007aaf9e9b9cc57ee76"
     },
     ".cursor-plugin/skills/_shared/parallel-adversarial-review.md": {
-      "sha256": "5d5524a5c27a343b317dd7e36b469cde2e6edea7d74c1bb0ff2e65945fa0acf7"
+      "sha256": "8d1b3e6d66eed9a200b0891118dd76ee6a95591bdaaaa3e25de611ee2848c074"
     },
     ".cursor-plugin/skills/auditing-progress/SKILL.md": {
       "sha256": "66c006970b8f2a27646594796e2f0576885ce22a7a1e8ddfb69c714744d84550"
@@ -351,7 +351,7 @@
       "sha256": "94039969871619a24adb14881355c86bbda305456498ad42a2da9d7cd5ea7496"
     },
     ".cursor-plugin/skills/brainstorming/SKILL.md": {
-      "sha256": "ad8fef9b7c6a8eece27e6bd0a1a08f8b46849fea1693f12a295cad61e880933c"
+      "sha256": "752bc6dd4d9d70cb17b1da032771410d054a831cef89909018aa77b81bcb3b07"
     },
     ".cursor-plugin/skills/brainstorming/spec-document-reviewer-prompt.md": {
       "sha256": "51dfa7686560108235983c13fe7505811c9d79b872e22028065e95e063b615e1"
@@ -399,7 +399,7 @@
       "sha256": "0b07a0489c3b6356f2d1fbc27140d219c861cd893f8f39cbc5127bcf85b790ad"
     },
     ".cursor-plugin/skills/dispatching-parallel-agents/SKILL.md": {
-      "sha256": "065cad1dc85f9c7730699f0829c5c9f922b3850c4b9c130c1692b13d9aa0e193"
+      "sha256": "00f81ecc1478d308fb3ad5420ae18dfdb919b263f707e5e19fb118a99642f935"
     },
     ".cursor-plugin/skills/domain-modeling/ADR-FORMAT.md": {
       "sha256": "944c92aa790e8fbdc9199640b170979abb8a34ba8d0fe18c2a01a63bce140ca0"
@@ -414,16 +414,16 @@
       "sha256": "a61ce58b578bf5e1af4861ef6f6a01932a95d60b4db76f7e6dbe850220e19e7a"
     },
     ".cursor-plugin/skills/extracting-requirements/SKILL.md": {
-      "sha256": "2491b5570212d967090933d6b2c55e9876222d47ae4fbb166895568d67bb31f8"
+      "sha256": "2d304cb7f5135c99b67d53f77330fc8f01aa9b3a6974bc5a15b222f7ccccf534"
     },
     ".cursor-plugin/skills/extracting-requirements/extraction-subagent-prompt.md": {
       "sha256": "5436cac4b93340358198c5361a5217e3d1b2ec35074d42c9582f903dcda4aaa2"
     },
     ".cursor-plugin/skills/finding-duplicate-functions/SKILL.md": {
-      "sha256": "d9a008aa28b4112153bd4dcd4102e04de8d03a9e52db6b669525b6d1e5f6bf9e"
+      "sha256": "69058f0d4ed21f0672abfe18cc0d3ab89ad541a0a4df2ccefbdcc4482060729d"
     },
     ".cursor-plugin/skills/finding-duplicate-functions/scripts/categorize-prompt.md": {
-      "sha256": "764fa94432965ce27cbdb0811250fa3514740b666db1a8d5c5cea33c5a6d36e9"
+      "sha256": "7391dd0dc69b4a4484abfe85b0d1167cfd07aad4451b5e934913d980ef8d9207"
     },
     ".cursor-plugin/skills/finding-duplicate-functions/scripts/find-duplicates-prompt.md": {
       "sha256": "8e2e7de14fe29ca49118b68b63ab33ee42efb2dfb4acb1d7f2f19d256925ecc7"
@@ -450,7 +450,7 @@
       "sha256": "581e8bb5a521e46bbda8ca7e19b15948bed882187108092ebb90c62513b77528"
     },
     ".cursor-plugin/skills/improve-codebase-architecture/SKILL.md": {
-      "sha256": "fbac96beb5bf62eacb974588b5f8f11adbf9346a5e3a9b4d8c995705205d86c6"
+      "sha256": "7b3c57cb6e78d825ace54bee66819e67fe6ea2234c5072f88d3afa7f2a81e1d3"
     },
     ".cursor-plugin/skills/iterative-development/SKILL.md": {
       "sha256": "bb3daa6cac0b8c868d4c44fc628f27f3f632d8b5808524db84d57edee138dd20"
@@ -471,7 +471,7 @@
       "sha256": "ba8fbecfef5f2b42e841f69881b62f9bd67116a9e37fe99bf1a1db02a828fa86"
     },
     ".cursor-plugin/skills/requesting-code-review/SKILL.md": {
-      "sha256": "a96635d6c8daeb3c40f813086b51d79b34f180db956bd28c298b4e3c3ce0205e"
+      "sha256": "a39aa1a14cc1e7887024cb1200de426ad784fdbc99616ef3f52af6d55b3b36b2"
     },
     ".cursor-plugin/skills/requesting-code-review/code-reviewer.md": {
       "sha256": "5eca5fcfd48a50e0a526ce5ffd64bf625d6b81bb46d11795274dae451fe6ffd4"
@@ -501,7 +501,7 @@
       "sha256": "8066f6e3481523b727783e9c512993fa9d0cf3ca19a52bd574fecb1e89f95a3d"
     },
     ".cursor-plugin/skills/subagent-driven-development/SKILL.md": {
-      "sha256": "d688e82f728a685fa8ff8d2211508429396207a4fc39d5afe86b5ffce4d4d6e3"
+      "sha256": "be8dbb2457ee923b45caee6f8095aed385e5deb6c56a0b7a16b82130da8c1421"
     },
     ".cursor-plugin/skills/subagent-driven-development/implementer-prompt.md": {
       "sha256": "81dd9d5a3fb0b09b96b5829f03b9796842f3199ef7591d1ba1c2db2a515f64d0"
@@ -567,7 +567,7 @@
       "sha256": "96b50a52e2c7989c9cf20fb752c47c1e9a3a70dc362f8f7989f8f5b64dac7708"
     },
     ".cursor-plugin/skills/test-driven-development/SKILL.md": {
-      "sha256": "a410e8d1ee8a12eee63bfd2a91cb9d21be62921911875a2c799fbbc9f5c2eb00"
+      "sha256": "fa7cb799ddaba5a67bb6c0d4373c9c6b84955b39eb5b18a8706d7a5f570a3aa4"
     },
     ".cursor-plugin/skills/test-driven-development/writing-good-tests.md": {
       "sha256": "0900a835f7e34c62922dc687f299742fc0db9e1a96e4850913888173ba3d9c5f"
@@ -576,7 +576,7 @@
       "sha256": "f2550d5d18a2f39e46fb39b08013dbec643bdc35aca77390efd1eca76df66cc5"
     },
     ".cursor-plugin/skills/using-moe/SKILL.md": {
-      "sha256": "f02563cf53a4cb31bda041fef7bbaec265b2e8ef49eef57bd0841b46ec86f063"
+      "sha256": "9943b1dda2634c4fceb131dff8b04579397d008ae0621b52725d1d81f68fd8d6"
     },
     ".cursor-plugin/skills/using-moe/references/antigravity-tools.md": {
       "sha256": "77021a952929a56251d320ed909a4a4aaa3373ee89937e7645163ec56a5da713"
@@ -597,7 +597,7 @@
       "sha256": "b43b591fbe1f1c1c8e25ba46356e97aa0bf827c17eee3e69a137124f37c0d5c8"
     },
     ".cursor-plugin/skills/using-tmux-for-interactive-commands/SKILL.md": {
-      "sha256": "0230a21817150b4e291045e5f15e62c767ffad9116066e2d082d5af9627e48f3"
+      "sha256": "ba9fbb0f1ccbfb0213fdd3aa389b731e50d3aa68f0bf8c5a998e14b09837105d"
     },
     ".cursor-plugin/skills/verification-before-completion/SKILL.md": {
       "sha256": "9c6c4a457208718a1f335bd9eb704bdb2d5d763c29a3e72826c1a776fca9b8af"
@@ -609,7 +609,7 @@
       "sha256": "7aa90971d3d049f0ddddc6972b40b219633c7bdbadde6572549638ab4adedfa4"
     },
     ".cursor-plugin/skills/working-with-claude-code/SKILL.md": {
-      "sha256": "8cf7b5225b0925a6f82bcb87894b12bc6d097242953aecb6da337b692ef30542"
+      "sha256": "50ab11f40c210b43bdaba804726721c776753284ea0e660e1db7ba36963dfc30"
     },
     ".cursor-plugin/skills/writing-clearly-and-concisely/SKILL.md": {
       "sha256": "bcfd8a8b22f08c1673ca6c033540be82ed25fd49792fce276e96dade3450d1b2"
@@ -621,7 +621,7 @@
       "sha256": "348ad0147792e162981f4c566f6d14026bcfb337d9b4820a3fd914e16aaf75df"
     },
     ".cursor-plugin/skills/writing-plans/SKILL.md": {
-      "sha256": "47a0db45741199ec1b4edd0791f4a93cc00da269e004075ec393556e5d6a49a7"
+      "sha256": "13c7d9552db9fab2cad22f3475c9c9d47d41d88c397a85c570261c9df6f25c22"
     },
     ".cursor-plugin/skills/writing-plans/plan-document-reviewer-prompt.md": {
       "sha256": "df5f1ab940ad6aa0ac7df42aeded53107a39fb6d2e1a19cafa5eb808ac5ac602"
@@ -660,7 +660,7 @@
       "sha256": "2a9b90a4daa7fb3c9df16eda2c8229b870e2ce4718896007aaf9e9b9cc57ee76"
     },
     ".kimi-plugin/skills/_shared/parallel-adversarial-review.md": {
-      "sha256": "5d5524a5c27a343b317dd7e36b469cde2e6edea7d74c1bb0ff2e65945fa0acf7"
+      "sha256": "4a78021673c1466d6ee5d91a65ddd9f178d757ad28706656729911177651a3da"
     },
     ".kimi-plugin/skills/auditing-progress/SKILL.md": {
       "sha256": "66c006970b8f2a27646594796e2f0576885ce22a7a1e8ddfb69c714744d84550"
@@ -669,7 +669,7 @@
       "sha256": "94039969871619a24adb14881355c86bbda305456498ad42a2da9d7cd5ea7496"
     },
     ".kimi-plugin/skills/brainstorming/SKILL.md": {
-      "sha256": "c7a74e9e82e3edf9014e0de01b39d9c9b151c522139248b6f967d99521765ee7"
+      "sha256": "2e86b7386ba88161753f3e6d7385dc8bf146567d7a6372e7d73a321132f6b0a9"
     },
     ".kimi-plugin/skills/brainstorming/spec-document-reviewer-prompt.md": {
       "sha256": "51dfa7686560108235983c13fe7505811c9d79b872e22028065e95e063b615e1"
@@ -717,7 +717,7 @@
       "sha256": "0b07a0489c3b6356f2d1fbc27140d219c861cd893f8f39cbc5127bcf85b790ad"
     },
     ".kimi-plugin/skills/dispatching-parallel-agents/SKILL.md": {
-      "sha256": "065cad1dc85f9c7730699f0829c5c9f922b3850c4b9c130c1692b13d9aa0e193"
+      "sha256": "82e3f50e1d3f11670baf3152e93657479215a12095d0aada09ed317cdf60629e"
     },
     ".kimi-plugin/skills/domain-modeling/ADR-FORMAT.md": {
       "sha256": "944c92aa790e8fbdc9199640b170979abb8a34ba8d0fe18c2a01a63bce140ca0"
@@ -732,16 +732,16 @@
       "sha256": "a61ce58b578bf5e1af4861ef6f6a01932a95d60b4db76f7e6dbe850220e19e7a"
     },
     ".kimi-plugin/skills/extracting-requirements/SKILL.md": {
-      "sha256": "2491b5570212d967090933d6b2c55e9876222d47ae4fbb166895568d67bb31f8"
+      "sha256": "d60ebfbae944f2cf4f3e3259d7f19bc30b1af686021035a706c4c32e7a3b6e1a"
     },
     ".kimi-plugin/skills/extracting-requirements/extraction-subagent-prompt.md": {
       "sha256": "5436cac4b93340358198c5361a5217e3d1b2ec35074d42c9582f903dcda4aaa2"
     },
     ".kimi-plugin/skills/finding-duplicate-functions/SKILL.md": {
-      "sha256": "d9a008aa28b4112153bd4dcd4102e04de8d03a9e52db6b669525b6d1e5f6bf9e"
+      "sha256": "997030b78ff2f896ffa7c8d2b806f650f2f8f53dc40f3f3b3a77929a9d3a2c0b"
     },
     ".kimi-plugin/skills/finding-duplicate-functions/scripts/categorize-prompt.md": {
-      "sha256": "764fa94432965ce27cbdb0811250fa3514740b666db1a8d5c5cea33c5a6d36e9"
+      "sha256": "7391dd0dc69b4a4484abfe85b0d1167cfd07aad4451b5e934913d980ef8d9207"
     },
     ".kimi-plugin/skills/finding-duplicate-functions/scripts/find-duplicates-prompt.md": {
       "sha256": "8e2e7de14fe29ca49118b68b63ab33ee42efb2dfb4acb1d7f2f19d256925ecc7"
@@ -768,7 +768,7 @@
       "sha256": "581e8bb5a521e46bbda8ca7e19b15948bed882187108092ebb90c62513b77528"
     },
     ".kimi-plugin/skills/improve-codebase-architecture/SKILL.md": {
-      "sha256": "fbac96beb5bf62eacb974588b5f8f11adbf9346a5e3a9b4d8c995705205d86c6"
+      "sha256": "7b3c57cb6e78d825ace54bee66819e67fe6ea2234c5072f88d3afa7f2a81e1d3"
     },
     ".kimi-plugin/skills/iterative-development/SKILL.md": {
       "sha256": "bb3daa6cac0b8c868d4c44fc628f27f3f632d8b5808524db84d57edee138dd20"
@@ -789,7 +789,7 @@
       "sha256": "ba8fbecfef5f2b42e841f69881b62f9bd67116a9e37fe99bf1a1db02a828fa86"
     },
     ".kimi-plugin/skills/requesting-code-review/SKILL.md": {
-      "sha256": "a96635d6c8daeb3c40f813086b51d79b34f180db956bd28c298b4e3c3ce0205e"
+      "sha256": "8d2d41d0dff9ef9271c652d683f2a280039b600f358875f41f6209044c317518"
     },
     ".kimi-plugin/skills/requesting-code-review/code-reviewer.md": {
       "sha256": "5eca5fcfd48a50e0a526ce5ffd64bf625d6b81bb46d11795274dae451fe6ffd4"
@@ -819,7 +819,7 @@
       "sha256": "8066f6e3481523b727783e9c512993fa9d0cf3ca19a52bd574fecb1e89f95a3d"
     },
     ".kimi-plugin/skills/subagent-driven-development/SKILL.md": {
-      "sha256": "d688e82f728a685fa8ff8d2211508429396207a4fc39d5afe86b5ffce4d4d6e3"
+      "sha256": "bd1a7223ded77414d1fa5ea37fd39484294582dc899d116dbf8fbaccecc95fa0"
     },
     ".kimi-plugin/skills/subagent-driven-development/implementer-prompt.md": {
       "sha256": "81dd9d5a3fb0b09b96b5829f03b9796842f3199ef7591d1ba1c2db2a515f64d0"
@@ -885,7 +885,7 @@
       "sha256": "96b50a52e2c7989c9cf20fb752c47c1e9a3a70dc362f8f7989f8f5b64dac7708"
     },
     ".kimi-plugin/skills/test-driven-development/SKILL.md": {
-      "sha256": "a410e8d1ee8a12eee63bfd2a91cb9d21be62921911875a2c799fbbc9f5c2eb00"
+      "sha256": "fa7cb799ddaba5a67bb6c0d4373c9c6b84955b39eb5b18a8706d7a5f570a3aa4"
     },
     ".kimi-plugin/skills/test-driven-development/writing-good-tests.md": {
       "sha256": "0900a835f7e34c62922dc687f299742fc0db9e1a96e4850913888173ba3d9c5f"
@@ -894,7 +894,7 @@
       "sha256": "f2550d5d18a2f39e46fb39b08013dbec643bdc35aca77390efd1eca76df66cc5"
     },
     ".kimi-plugin/skills/using-moe/SKILL.md": {
-      "sha256": "f02563cf53a4cb31bda041fef7bbaec265b2e8ef49eef57bd0841b46ec86f063"
+      "sha256": "9943b1dda2634c4fceb131dff8b04579397d008ae0621b52725d1d81f68fd8d6"
     },
     ".kimi-plugin/skills/using-moe/references/antigravity-tools.md": {
       "sha256": "77021a952929a56251d320ed909a4a4aaa3373ee89937e7645163ec56a5da713"
@@ -915,7 +915,7 @@
       "sha256": "b43b591fbe1f1c1c8e25ba46356e97aa0bf827c17eee3e69a137124f37c0d5c8"
     },
     ".kimi-plugin/skills/using-tmux-for-interactive-commands/SKILL.md": {
-      "sha256": "0230a21817150b4e291045e5f15e62c767ffad9116066e2d082d5af9627e48f3"
+      "sha256": "ba9fbb0f1ccbfb0213fdd3aa389b731e50d3aa68f0bf8c5a998e14b09837105d"
     },
     ".kimi-plugin/skills/verification-before-completion/SKILL.md": {
       "sha256": "9c6c4a457208718a1f335bd9eb704bdb2d5d763c29a3e72826c1a776fca9b8af"
@@ -927,7 +927,7 @@
       "sha256": "7aa90971d3d049f0ddddc6972b40b219633c7bdbadde6572549638ab4adedfa4"
     },
     ".kimi-plugin/skills/working-with-claude-code/SKILL.md": {
-      "sha256": "8cf7b5225b0925a6f82bcb87894b12bc6d097242953aecb6da337b692ef30542"
+      "sha256": "79ae913d7ad615114fb781851fec3da3d20beaa52673e95399951411d466aa87"
     },
     ".kimi-plugin/skills/writing-clearly-and-concisely/SKILL.md": {
       "sha256": "bcfd8a8b22f08c1673ca6c033540be82ed25fd49792fce276e96dade3450d1b2"
@@ -939,7 +939,7 @@
       "sha256": "348ad0147792e162981f4c566f6d14026bcfb337d9b4820a3fd914e16aaf75df"
     },
     ".kimi-plugin/skills/writing-plans/SKILL.md": {
-      "sha256": "47a0db45741199ec1b4edd0791f4a93cc00da269e004075ec393556e5d6a49a7"
+      "sha256": "9ad4950bddb9df1cc8e098150486e65fad92c39f04c1b8e44499974bc02bc821"
     },
     ".kimi-plugin/skills/writing-plans/plan-document-reviewer-prompt.md": {
       "sha256": "df5f1ab940ad6aa0ac7df42aeded53107a39fb6d2e1a19cafa5eb808ac5ac602"
@@ -987,7 +987,7 @@
       "sha256": "2a9b90a4daa7fb3c9df16eda2c8229b870e2ce4718896007aaf9e9b9cc57ee76"
     },
     ".opencode/skills/_shared/parallel-adversarial-review.md": {
-      "sha256": "5d5524a5c27a343b317dd7e36b469cde2e6edea7d74c1bb0ff2e65945fa0acf7"
+      "sha256": "32403e7c33d3a3f553390a66a500f6e0af0d569d9ab69a168209c00aae78c2d9"
     },
     ".opencode/skills/auditing-progress/SKILL.md": {
       "sha256": "66c006970b8f2a27646594796e2f0576885ce22a7a1e8ddfb69c714744d84550"
@@ -996,7 +996,7 @@
       "sha256": "94039969871619a24adb14881355c86bbda305456498ad42a2da9d7cd5ea7496"
     },
     ".opencode/skills/brainstorming/SKILL.md": {
-      "sha256": "8751ccca8b4e1de031bd7cc977962d3e5ec53411207217f886339c826c3790e5"
+      "sha256": "c45bef890a00cd8da72ee7a8dea82c8dad63e109a1c7b4c8cba40482cf42e252"
     },
     ".opencode/skills/brainstorming/spec-document-reviewer-prompt.md": {
       "sha256": "51dfa7686560108235983c13fe7505811c9d79b872e22028065e95e063b615e1"
@@ -1044,7 +1044,7 @@
       "sha256": "0b07a0489c3b6356f2d1fbc27140d219c861cd893f8f39cbc5127bcf85b790ad"
     },
     ".opencode/skills/dispatching-parallel-agents/SKILL.md": {
-      "sha256": "065cad1dc85f9c7730699f0829c5c9f922b3850c4b9c130c1692b13d9aa0e193"
+      "sha256": "b58e991d973541589b4f2c7c080b3b984fa8acb54386302a13df7931dd026a3a"
     },
     ".opencode/skills/domain-modeling/ADR-FORMAT.md": {
       "sha256": "944c92aa790e8fbdc9199640b170979abb8a34ba8d0fe18c2a01a63bce140ca0"
@@ -1059,16 +1059,16 @@
       "sha256": "a61ce58b578bf5e1af4861ef6f6a01932a95d60b4db76f7e6dbe850220e19e7a"
     },
     ".opencode/skills/extracting-requirements/SKILL.md": {
-      "sha256": "2491b5570212d967090933d6b2c55e9876222d47ae4fbb166895568d67bb31f8"
+      "sha256": "72edf9137b2ab73b8d0654f0dd22a22e3c4f3460db1c9ced6351371577656466"
     },
     ".opencode/skills/extracting-requirements/extraction-subagent-prompt.md": {
       "sha256": "5436cac4b93340358198c5361a5217e3d1b2ec35074d42c9582f903dcda4aaa2"
     },
     ".opencode/skills/finding-duplicate-functions/SKILL.md": {
-      "sha256": "d9a008aa28b4112153bd4dcd4102e04de8d03a9e52db6b669525b6d1e5f6bf9e"
+      "sha256": "997030b78ff2f896ffa7c8d2b806f650f2f8f53dc40f3f3b3a77929a9d3a2c0b"
     },
     ".opencode/skills/finding-duplicate-functions/scripts/categorize-prompt.md": {
-      "sha256": "764fa94432965ce27cbdb0811250fa3514740b666db1a8d5c5cea33c5a6d36e9"
+      "sha256": "ffc8b52b24071c69962adba91c1190ee9babeb33c3a139535abd614eacfb86fc"
     },
     ".opencode/skills/finding-duplicate-functions/scripts/find-duplicates-prompt.md": {
       "sha256": "8e2e7de14fe29ca49118b68b63ab33ee42efb2dfb4acb1d7f2f19d256925ecc7"
@@ -1095,7 +1095,7 @@
       "sha256": "581e8bb5a521e46bbda8ca7e19b15948bed882187108092ebb90c62513b77528"
     },
     ".opencode/skills/improve-codebase-architecture/SKILL.md": {
-      "sha256": "fbac96beb5bf62eacb974588b5f8f11adbf9346a5e3a9b4d8c995705205d86c6"
+      "sha256": "bf98142799cbdde1c579f75472adff51643023a39a91b6116fe400125a6f928a"
     },
     ".opencode/skills/iterative-development/SKILL.md": {
       "sha256": "bb3daa6cac0b8c868d4c44fc628f27f3f632d8b5808524db84d57edee138dd20"
@@ -1116,7 +1116,7 @@
       "sha256": "ba8fbecfef5f2b42e841f69881b62f9bd67116a9e37fe99bf1a1db02a828fa86"
     },
     ".opencode/skills/requesting-code-review/SKILL.md": {
-      "sha256": "a96635d6c8daeb3c40f813086b51d79b34f180db956bd28c298b4e3c3ce0205e"
+      "sha256": "d03e66fe5e58b38cc30f5d82609acb62459c59225feeee0c94b493f15affeba1"
     },
     ".opencode/skills/requesting-code-review/code-reviewer.md": {
       "sha256": "5eca5fcfd48a50e0a526ce5ffd64bf625d6b81bb46d11795274dae451fe6ffd4"
@@ -1128,7 +1128,7 @@
       "sha256": "e462c335f3932a7e6c00ce13136da05525a2c0d4fd7fe42a1db17aa11faf35b0"
     },
     ".opencode/skills/retrieving-context/SKILL.md": {
-      "sha256": "8a0bc12fd7b2b1ce0d140c8795fdda97fc2aab63756c7263dae83fd333b8d63d"
+      "sha256": "fd469b4fd0f9d4076e4c660dabc3a3dd9ad1fcc2ffee76bc5a5bfbdb41ee3029"
     },
     ".opencode/skills/reviewing-a-codebase/SKILL.md": {
       "sha256": "c059e84c8011ea4a0816da9b576de058908dbc0b5d2c076ea904a7cc663ab33b"
@@ -1146,7 +1146,7 @@
       "sha256": "8066f6e3481523b727783e9c512993fa9d0cf3ca19a52bd574fecb1e89f95a3d"
     },
     ".opencode/skills/subagent-driven-development/SKILL.md": {
-      "sha256": "d688e82f728a685fa8ff8d2211508429396207a4fc39d5afe86b5ffce4d4d6e3"
+      "sha256": "0aeeb4c93cf59c3075b9cf81b217b523180211dc39d355e871ca3f75e74b01dd"
     },
     ".opencode/skills/subagent-driven-development/implementer-prompt.md": {
       "sha256": "81dd9d5a3fb0b09b96b5829f03b9796842f3199ef7591d1ba1c2db2a515f64d0"
@@ -1212,7 +1212,7 @@
       "sha256": "96b50a52e2c7989c9cf20fb752c47c1e9a3a70dc362f8f7989f8f5b64dac7708"
     },
     ".opencode/skills/test-driven-development/SKILL.md": {
-      "sha256": "a410e8d1ee8a12eee63bfd2a91cb9d21be62921911875a2c799fbbc9f5c2eb00"
+      "sha256": "8fd9790bbb8fe39b178a3f36d7f418f82227bb698ecb787fc48efe9b75c64146"
     },
     ".opencode/skills/test-driven-development/writing-good-tests.md": {
       "sha256": "0900a835f7e34c62922dc687f299742fc0db9e1a96e4850913888173ba3d9c5f"
@@ -1221,7 +1221,7 @@
       "sha256": "f2550d5d18a2f39e46fb39b08013dbec643bdc35aca77390efd1eca76df66cc5"
     },
     ".opencode/skills/using-moe/SKILL.md": {
-      "sha256": "f02563cf53a4cb31bda041fef7bbaec265b2e8ef49eef57bd0841b46ec86f063"
+      "sha256": "9e617814914b04f8406936664cfeb10f23826ee94ac8676232ef6f163c269ac7"
     },
     ".opencode/skills/using-moe/references/antigravity-tools.md": {
       "sha256": "77021a952929a56251d320ed909a4a4aaa3373ee89937e7645163ec56a5da713"
@@ -1242,7 +1242,7 @@
       "sha256": "b43b591fbe1f1c1c8e25ba46356e97aa0bf827c17eee3e69a137124f37c0d5c8"
     },
     ".opencode/skills/using-tmux-for-interactive-commands/SKILL.md": {
-      "sha256": "0230a21817150b4e291045e5f15e62c767ffad9116066e2d082d5af9627e48f3"
+      "sha256": "6626efef2e75626a8f3fd8e189cc659054e0beba4ab7d659ac92b21bbd4c724b"
     },
     ".opencode/skills/verification-before-completion/SKILL.md": {
       "sha256": "9c6c4a457208718a1f335bd9eb704bdb2d5d763c29a3e72826c1a776fca9b8af"
@@ -1254,7 +1254,7 @@
       "sha256": "7aa90971d3d049f0ddddc6972b40b219633c7bdbadde6572549638ab4adedfa4"
     },
     ".opencode/skills/working-with-claude-code/SKILL.md": {
-      "sha256": "8cf7b5225b0925a6f82bcb87894b12bc6d097242953aecb6da337b692ef30542"
+      "sha256": "b1b236db54397dc033d7e6984f20c539351944d20beb45bcf7cb3a9b5c1a44bb"
     },
     ".opencode/skills/writing-clearly-and-concisely/SKILL.md": {
       "sha256": "bcfd8a8b22f08c1673ca6c033540be82ed25fd49792fce276e96dade3450d1b2"
@@ -1266,7 +1266,7 @@
       "sha256": "348ad0147792e162981f4c566f6d14026bcfb337d9b4820a3fd914e16aaf75df"
     },
     ".opencode/skills/writing-plans/SKILL.md": {
-      "sha256": "dcb05887ece23721cbf1131889648c8ced87c0297ee099121b125d05b69dfac9"
+      "sha256": "73d21bc09781a24cfc4102a14842298ba6e4923e51b4bb5310389c08d6ebcefa"
     },
     ".opencode/skills/writing-plans/plan-document-reviewer-prompt.md": {
       "sha256": "df5f1ab940ad6aa0ac7df42aeded53107a39fb6d2e1a19cafa5eb808ac5ac602"
@@ -1305,7 +1305,7 @@
       "sha256": "2a9b90a4daa7fb3c9df16eda2c8229b870e2ce4718896007aaf9e9b9cc57ee76"
     },
     ".pi/skills/_shared/parallel-adversarial-review.md": {
-      "sha256": "5d5524a5c27a343b317dd7e36b469cde2e6edea7d74c1bb0ff2e65945fa0acf7"
+      "sha256": "87d58998f27c5c260ff7ffb3e77afa8b64b47fa0c97c7d24862403e591bcdac0"
     },
     ".pi/skills/auditing-progress/SKILL.md": {
       "sha256": "66c006970b8f2a27646594796e2f0576885ce22a7a1e8ddfb69c714744d84550"
@@ -1314,7 +1314,7 @@
       "sha256": "94039969871619a24adb14881355c86bbda305456498ad42a2da9d7cd5ea7496"
     },
     ".pi/skills/brainstorming/SKILL.md": {
-      "sha256": "1eb4b75f3bbded68d015bcd4c2e3f812081ff6bd74f89d784ae7a29433d071e6"
+      "sha256": "6c4f64986622f42424c0af4dcadf6ee732ef7dfd12070120779ce5e5e6752748"
     },
     ".pi/skills/brainstorming/spec-document-reviewer-prompt.md": {
       "sha256": "51dfa7686560108235983c13fe7505811c9d79b872e22028065e95e063b615e1"
@@ -1362,7 +1362,7 @@
       "sha256": "0b07a0489c3b6356f2d1fbc27140d219c861cd893f8f39cbc5127bcf85b790ad"
     },
     ".pi/skills/dispatching-parallel-agents/SKILL.md": {
-      "sha256": "065cad1dc85f9c7730699f0829c5c9f922b3850c4b9c130c1692b13d9aa0e193"
+      "sha256": "59ea43926fd6e2cb0d1aa2c88fead5aeec4828459a345dd24bc457e26704f1e6"
     },
     ".pi/skills/domain-modeling/ADR-FORMAT.md": {
       "sha256": "944c92aa790e8fbdc9199640b170979abb8a34ba8d0fe18c2a01a63bce140ca0"
@@ -1377,16 +1377,16 @@
       "sha256": "a61ce58b578bf5e1af4861ef6f6a01932a95d60b4db76f7e6dbe850220e19e7a"
     },
     ".pi/skills/extracting-requirements/SKILL.md": {
-      "sha256": "2491b5570212d967090933d6b2c55e9876222d47ae4fbb166895568d67bb31f8"
+      "sha256": "b8b2db109397f45330de5ee4834c559b58f1557f2f9a58ee92f725c2fe7650c5"
     },
     ".pi/skills/extracting-requirements/extraction-subagent-prompt.md": {
       "sha256": "5436cac4b93340358198c5361a5217e3d1b2ec35074d42c9582f903dcda4aaa2"
     },
     ".pi/skills/finding-duplicate-functions/SKILL.md": {
-      "sha256": "d9a008aa28b4112153bd4dcd4102e04de8d03a9e52db6b669525b6d1e5f6bf9e"
+      "sha256": "997030b78ff2f896ffa7c8d2b806f650f2f8f53dc40f3f3b3a77929a9d3a2c0b"
     },
     ".pi/skills/finding-duplicate-functions/scripts/categorize-prompt.md": {
-      "sha256": "764fa94432965ce27cbdb0811250fa3514740b666db1a8d5c5cea33c5a6d36e9"
+      "sha256": "01f648c3b53a24148ea021a12d8d351c832093917c132b8c89fa706f1173ca42"
     },
     ".pi/skills/finding-duplicate-functions/scripts/find-duplicates-prompt.md": {
       "sha256": "8e2e7de14fe29ca49118b68b63ab33ee42efb2dfb4acb1d7f2f19d256925ecc7"
@@ -1413,7 +1413,7 @@
       "sha256": "581e8bb5a521e46bbda8ca7e19b15948bed882187108092ebb90c62513b77528"
     },
     ".pi/skills/improve-codebase-architecture/SKILL.md": {
-      "sha256": "fbac96beb5bf62eacb974588b5f8f11adbf9346a5e3a9b4d8c995705205d86c6"
+      "sha256": "e3970f942c0f781b3c6ab959a5d88746a8a91db5e59325fa2d27d429de3ee9d3"
     },
     ".pi/skills/iterative-development/SKILL.md": {
       "sha256": "bb3daa6cac0b8c868d4c44fc628f27f3f632d8b5808524db84d57edee138dd20"
@@ -1434,7 +1434,7 @@
       "sha256": "ba8fbecfef5f2b42e841f69881b62f9bd67116a9e37fe99bf1a1db02a828fa86"
     },
     ".pi/skills/requesting-code-review/SKILL.md": {
-      "sha256": "a96635d6c8daeb3c40f813086b51d79b34f180db956bd28c298b4e3c3ce0205e"
+      "sha256": "6176d51fedbc8db307306274fa05efd3bd704c7bbe1b537dfe0af49b05abd657"
     },
     ".pi/skills/requesting-code-review/code-reviewer.md": {
       "sha256": "5eca5fcfd48a50e0a526ce5ffd64bf625d6b81bb46d11795274dae451fe6ffd4"
@@ -1446,7 +1446,7 @@
       "sha256": "e462c335f3932a7e6c00ce13136da05525a2c0d4fd7fe42a1db17aa11faf35b0"
     },
     ".pi/skills/retrieving-context/SKILL.md": {
-      "sha256": "8a0bc12fd7b2b1ce0d140c8795fdda97fc2aab63756c7263dae83fd333b8d63d"
+      "sha256": "fd469b4fd0f9d4076e4c660dabc3a3dd9ad1fcc2ffee76bc5a5bfbdb41ee3029"
     },
     ".pi/skills/reviewing-a-codebase/SKILL.md": {
       "sha256": "c059e84c8011ea4a0816da9b576de058908dbc0b5d2c076ea904a7cc663ab33b"
@@ -1464,7 +1464,7 @@
       "sha256": "8066f6e3481523b727783e9c512993fa9d0cf3ca19a52bd574fecb1e89f95a3d"
     },
     ".pi/skills/subagent-driven-development/SKILL.md": {
-      "sha256": "d688e82f728a685fa8ff8d2211508429396207a4fc39d5afe86b5ffce4d4d6e3"
+      "sha256": "d88a176c59bed1e78eda9a402257f495986f4f3391878c2908f72b0439060175"
     },
     ".pi/skills/subagent-driven-development/implementer-prompt.md": {
       "sha256": "81dd9d5a3fb0b09b96b5829f03b9796842f3199ef7591d1ba1c2db2a515f64d0"
@@ -1530,7 +1530,7 @@
       "sha256": "96b50a52e2c7989c9cf20fb752c47c1e9a3a70dc362f8f7989f8f5b64dac7708"
     },
     ".pi/skills/test-driven-development/SKILL.md": {
-      "sha256": "a410e8d1ee8a12eee63bfd2a91cb9d21be62921911875a2c799fbbc9f5c2eb00"
+      "sha256": "f987b1463c045430644ace8be7741a4b05b972f916b7d0ee90a6dfce5a5e3021"
     },
     ".pi/skills/test-driven-development/writing-good-tests.md": {
       "sha256": "0900a835f7e34c62922dc687f299742fc0db9e1a96e4850913888173ba3d9c5f"
@@ -1539,7 +1539,7 @@
       "sha256": "f2550d5d18a2f39e46fb39b08013dbec643bdc35aca77390efd1eca76df66cc5"
     },
     ".pi/skills/using-moe/SKILL.md": {
-      "sha256": "f02563cf53a4cb31bda041fef7bbaec265b2e8ef49eef57bd0841b46ec86f063"
+      "sha256": "a22ec7a011656937930c731beb8df8f572289c09148de0e2877dd90b2822903b"
     },
     ".pi/skills/using-moe/references/antigravity-tools.md": {
       "sha256": "77021a952929a56251d320ed909a4a4aaa3373ee89937e7645163ec56a5da713"
@@ -1560,7 +1560,7 @@
       "sha256": "b43b591fbe1f1c1c8e25ba46356e97aa0bf827c17eee3e69a137124f37c0d5c8"
     },
     ".pi/skills/using-tmux-for-interactive-commands/SKILL.md": {
-      "sha256": "0230a21817150b4e291045e5f15e62c767ffad9116066e2d082d5af9627e48f3"
+      "sha256": "6626efef2e75626a8f3fd8e189cc659054e0beba4ab7d659ac92b21bbd4c724b"
     },
     ".pi/skills/verification-before-completion/SKILL.md": {
       "sha256": "9c6c4a457208718a1f335bd9eb704bdb2d5d763c29a3e72826c1a776fca9b8af"
@@ -1572,7 +1572,7 @@
       "sha256": "7aa90971d3d049f0ddddc6972b40b219633c7bdbadde6572549638ab4adedfa4"
     },
     ".pi/skills/working-with-claude-code/SKILL.md": {
-      "sha256": "8cf7b5225b0925a6f82bcb87894b12bc6d097242953aecb6da337b692ef30542"
+      "sha256": "9c58b8425bd5aa360b6f6770b17660c7016f37c93ac1efa75ac013bfab0578a8"
     },
     ".pi/skills/writing-clearly-and-concisely/SKILL.md": {
       "sha256": "bcfd8a8b22f08c1673ca6c033540be82ed25fd49792fce276e96dade3450d1b2"
@@ -1584,7 +1584,7 @@
       "sha256": "348ad0147792e162981f4c566f6d14026bcfb337d9b4820a3fd914e16aaf75df"
     },
     ".pi/skills/writing-plans/SKILL.md": {
-      "sha256": "dcb05887ece23721cbf1131889648c8ced87c0297ee099121b125d05b69dfac9"
+      "sha256": "73d21bc09781a24cfc4102a14842298ba6e4923e51b4bb5310389c08d6ebcefa"
     },
     ".pi/skills/writing-plans/plan-document-reviewer-prompt.md": {
       "sha256": "df5f1ab940ad6aa0ac7df42aeded53107a39fb6d2e1a19cafa5eb808ac5ac602"

@@ -86,7 +86,17 @@ Save each output as `./duplicates/<category-name>.json`.
 "${CLAUDE_PLUGIN_ROOT}/skills/finding-duplicate-functions/scripts/generate-report.sh" ./duplicates ./duplicates-report.md
 ```
 
-Produces a prioritized markdown report grouped by confidence level. This is rung 4 (markdown) of the shared native-rendering ladder at `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` — the file on disk is what Phase 6 review consumes and is the source of truth. If your human partner wants a scannable version alongside it (a sortable table, colour-coded confidence bands), walk the ladder from the top: on Claude Code, publish an artifact via the Artifact tool (rung 1); on other harnesses drop to the brainstorm companion (rung 2) or a local HTML file (rung 3). The markdown report always ships regardless.
+Produces a prioritized markdown report grouped by confidence level. This is rung 4 (markdown) of the shared native-rendering ladder at `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` — the file on disk is what Phase 6 review consumes and is the source of truth. If your human partner wants a scannable version alongside it (a sortable table, colour-coded confidence bands), walk the ladder from the top:
+
+The `Artifact` tool is not exposed in Cursor — start at rung 2 (the
+brainstorm browser companion) and drop to rung 3 (local HTML file) or
+rung 4 (markdown file) when `node` isn't on PATH or the sandbox blocks
+the port bind. See
+`${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` for the
+full ladder and the sharing default.
+
+
+The markdown report always ships regardless.
 
 ### Phase 6: Human Review
 
