@@ -608,11 +608,26 @@ if (process.argv[2] === "app-server") {
       const request = JSON.parse(buffer.slice(0, newline));
       buffer = buffer.slice(newline + 1);
       if (request.id === 1) {
-        process.stdout.write(JSON.stringify({ id: 1, result: { protocolVersion: "1" } }) + "\\n");
+        process.stdout.write(JSON.stringify({ id: 1, result: {
+          userAgent: "codex_cli_rs/0.1.0",
+          codexHome: process.env.CODEX_HOME,
+          platformFamily: "unix",
+          platformOs: "macos"
+        } }) + "\\n");
+      } else if (request.method === "initialized") {
+        continue;
       } else if (request.id === 2) {
-        process.stdout.write(JSON.stringify({ id: 2, result: { layers: [
-          { scope: "user", enabled: true },
-          { scope: "project", root: process.cwd(), enabled: true, trusted: true }
+        process.stdout.write(JSON.stringify({ id: 2, result: { config: {}, origins: {}, layers: [
+          {
+            name: { type: "user", file: process.env.CODEX_HOME + "/config.toml", profile: null },
+            version: "sha256:${"a".repeat(64)}",
+            config: {}
+          },
+          {
+            name: { type: "project", dotCodexFolder: process.cwd() + "/.codex" },
+            version: "sha256:${"b".repeat(64)}",
+            config: {}
+          }
         ] } }) + "\\n");
       }
     }

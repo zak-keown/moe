@@ -53,12 +53,15 @@ const fixtureContext = {
     layerState: {
       status: "available",
       layers: [
-        { scope: "user", enabled: true },
         {
-          scope: "project",
-          enabled: true,
-          trusted: true,
-          root: "/fixture/repo-a",
+          name: { type: "user", file: "/fixture/codex/config.toml", profile: null },
+          version: `sha256:${"a".repeat(64)}`,
+          config: {},
+        },
+        {
+          name: { type: "project", dotCodexFolder: "/fixture/repo-a/.codex" },
+          version: `sha256:${"b".repeat(64)}`,
+          config: {},
         },
       ],
     },
