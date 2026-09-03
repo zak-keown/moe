@@ -158,6 +158,44 @@ describe('complete artifact assembly', () => {
     await expect(readFile(join(destinationRoot, plugin.id, '.moe-mint/manifest.json'))).rejects.toMatchObject({ code: 'ENOENT' })
   })
 
+  it('rejects a component file that aliases the compositor-owned package manifest', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'moe-assemble-package-alias-'))
+    workspaces.push(root)
+    await Promise.all([
+      cp(join(repoRoot, 'LICENSE'), join(root, 'LICENSE')),
+      cp(join(repoRoot, 'LICENSE-MIT'), join(root, 'LICENSE-MIT')),
+      cp(join(repoRoot, 'NOTICE'), join(root, 'NOTICE')),
+    ])
+    const plugin = await fixturePlugin(root)
+    plugin.config.components.agents = 'PACKAGE.JSON'
+    await rm(join(plugin.sourcePath, 'package.json'))
+    await writeFile(join(plugin.sourcePath, 'PACKAGE.JSON'), '{}\n')
+    const destinationRoot = join(root, 'plugins.next-package-alias')
+    await mkdir(destinationRoot)
+
+    await expect(assembleArtifact({ repoRoot: root, platform: platform(root, [plugin]), plugin, destinationRoot }))
+      .rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_PATH_COLLISION' } })
+  })
+
+  it('rejects a component directory that aliases reserved artifact metadata', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'moe-assemble-metadata-alias-'))
+    workspaces.push(root)
+    await Promise.all([
+      cp(join(repoRoot, 'LICENSE'), join(root, 'LICENSE')),
+      cp(join(repoRoot, 'LICENSE-MIT'), join(root, 'LICENSE-MIT')),
+      cp(join(repoRoot, 'NOTICE'), join(root, 'NOTICE')),
+    ])
+    const plugin = await fixturePlugin(root)
+    plugin.config.components.agents = '.MOE'
+    await mkdir(join(plugin.sourcePath, '.MOE'))
+    await writeFile(join(plugin.sourcePath, '.MOE/component.md'), 'component\n')
+    const destinationRoot = join(root, 'plugins.next-metadata-alias')
+    await mkdir(destinationRoot)
+
+    await expect(assembleArtifact({ repoRoot: root, platform: platform(root, [plugin]), plugin, destinationRoot }))
+      .rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_PATH_COLLISION' } })
+  })
+
   it('folds component deny names and excludes the exact nonstandard Mint config path', async () => {
     const root = await mkdtemp(join(tmpdir(), 'moe-assemble-deny-'))
     workspaces.push(root)
