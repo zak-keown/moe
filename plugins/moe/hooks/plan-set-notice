@@ -64,13 +64,6 @@ MANIFESTS=("$CWD"/docs/moe/plans/*-MANIFEST.md)
 if [ "${#MANIFESTS[@]}" -eq 0 ] || [ ! -f "${MANIFESTS[0]}" ]; then
     exit 0
 fi
-if [ "${#MANIFESTS[@]}" -gt 1 ]; then
-    # More than one manifest under docs/moe/plans/ is a policy call, not this
-    # hook's problem — the CLI itself refuses to guess. Say something helpful,
-    # still exit 0.
-    printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"plan-set-notice: %d MANIFEST files under docs/moe/plans/. Pass --manifest to plan-set to pick one."}}\n' "${#MANIFESTS[@]}"
-    exit 0
-fi
 MANIFEST="${MANIFESTS[0]}"
 
 # Need node on PATH to run the CLI. If not present, say nothing — the plugin
@@ -82,7 +75,11 @@ fi
 # Ask the CLI which plan is next. Redirect stderr away so a validation error
 # in the manifest does not spam the transcript — `check` would report it, and
 # a broken manifest is not this hook's job to fix.
-NEXT_OUT="$(node "$PLAN_SET" next --manifest "$MANIFEST" 2>/dev/null || true)"
+if [ "${#MANIFESTS[@]}" -gt 1 ]; then
+    NEXT_OUT="$(cd "$CWD" && node "$PLAN_SET" next 2>/dev/null || true)"
+else
+    NEXT_OUT="$(node "$PLAN_SET" next --manifest "$MANIFEST" 2>/dev/null || true)"
+fi
 # Trim trailing whitespace.
 NEXT_OUT="${NEXT_OUT%$'\n'}"
 
@@ -101,11 +98,16 @@ compose_context() {
     # can copy it verbatim.
     local ids
     ids="$(printf '%s' "$NEXT_OUT" | tr '\n' ' ' | sed 's/ *$//' | tr ' ' ',')"
-    # Manifest path relative to CWD if possible, absolute otherwise, so the
-    # command works when pasted.
-    local rel="${MANIFEST#$CWD/}"
-    printf 'A plan set exists at %s. Next runnable plan(s): %s. Run `plan-set next --manifest %s` to re-check, and `plan-set done <id> <base>..<head>` after each plan finishes.' \
-        "$rel" "$ids" "$rel"
+    if [ "${#MANIFESTS[@]}" -gt 1 ]; then
+        printf '%d plan sets exist under docs/moe/plans/. Next runnable plan(s): %s. Run `plan-set next` to re-check, and `plan-set done <plan-set-id>/<plan-id> <base>..<head>` after each plan finishes.' \
+            "${#MANIFESTS[@]}" "$ids"
+    else
+        # Manifest path relative to CWD if possible, absolute otherwise, so the
+        # command works when pasted.
+        local rel="${MANIFEST#$CWD/}"
+        printf 'A plan set exists at %s. Next runnable plan(s): %s. Run `plan-set next --manifest %s` to re-check, and `plan-set done <id> <base>..<head>` after each plan finishes.' \
+            "$rel" "$ids" "$rel"
+    fi
 }
 
 escape_for_json() {

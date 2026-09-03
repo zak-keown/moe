@@ -5,16 +5,19 @@ consumes the registry, compositor, artifact-manifest, pack, provenance, and
 release-catalog interfaces produced by
 `docs/moe/plans/moe-artifact-registry-foundation-MANIFEST.md`; that entire plan
 set is a hard prerequisite and must be `done` before this manifest is
-dispatched. Foundation `OD-R1` is resolved: Statusline may record a
+dispatched. The cross-manifest plan DAG enforces that boundary. Foundation
+`OD-R1` is resolved: Statusline may record a
 registry-confirmed `NO_PREDECESSOR` result and remain preview while the five
 predecessor-backed Claude/macOS tuples certify. The prerequisite still includes
 publishing the stable composed Memory 0.1.5 predecessor; Memory's API diff and
-recovery capsules intentionally bind to that version. A `plan-set next` result
-from this manifest is not dispatch permission while the prerequisite manifest
-remains unfinished. Run one Memory plan at a time through `sequencing-plans`;
-do not infer completion from generated files alone.
+recovery capsules intentionally bind to that version. `plan-set next` with or
+without `--manifest` withholds Memory plans while the prerequisite manifest is
+unfinished. Run one Memory plan at a time through `sequencing-plans`; do not
+infer completion from generated files alone.
 
 ```yaml
+plan_set_id: moe-memory-self-contained-plugin
+depends_on_plan_sets: [moe-artifact-registry-foundation]
 plans:
   - id: storage-native
     plan: docs/moe/plans/2026-09-02-moe-memory-01-storage-native.md
