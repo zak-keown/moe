@@ -32,6 +32,14 @@ Moe contains code and documentation derived from the frozen works below.
 | `superpowers-marketplace` | `1ab7b8e` | MIT | Copyright (c) 2025 Jesse Vincent |
 | `prime-radiant-marketplace` | `49a45ef` | Apache-2.0 | Prime Radiant, Inc. |
 | `Unicode Character Database CaseFolding` | `16.0.0` (2024-04-30) | Unicode Terms of Use | © 2024 Unicode, Inc. |
+| `@modelcontextprotocol/sdk` | `1.30.0` | MIT | Copyright (c) 2024 Anthropic, PBC |
+| `ajv` | `8.20.0` | MIT | Copyright (c) 2015-2021 Evgeny Poberezkin |
+| `ajv-formats` | `3.0.1` | MIT | Copyright (c) 2020 Evgeny Poberezkin |
+| `fast-deep-equal` | `3.1.3` | MIT | Copyright (c) 2017 Evgeny Poberezkin |
+| `fast-uri` | `3.1.6` | BSD-3-Clause | Copyright (c) 2011-2021, Gary Court; Copyright (c) 2021-present The Fastify team |
+| `json-schema-traverse` | `1.0.0` | MIT | Copyright (c) 2017 Evgeny Poberezkin |
+| `zod` | `3.25.76` | MIT | Copyright (c) 2025 Colin McDonnell |
+| `zod-to-json-schema` | `3.25.2` | ISC | Copyright (c) 2020, Stefan Terdell |
 
 ## Statement of changes
 
@@ -63,8 +71,9 @@ transcript formats informed obol's implementations.
 ## Legal texts
 
 The complete Apache License 2.0 is in root LICENSE. The complete MIT License and
-the retained MIT copyright notices are in root LICENSE-MIT. Generated
-installable artifacts carry the applicable terms with them.
+the retained MIT copyright notices are in root LICENSE-MIT. Canonical bundled
+BSD-3-Clause and ISC grants are in root LICENSE-BSD-3-CLAUSE and LICENSE-ISC.
+Generated installable artifacts carry the applicable terms with them.
 
 ## Unicode License V3
 

@@ -97,13 +97,21 @@ marketplace:
 
 imported_works:
   - name: superpowers
+    artifact_roots: [skills/brainstorming, skills/dispatching-parallel-agents, skills/executing-plans, skills/finishing-a-development-branch, skills/receiving-code-review, skills/requesting-code-review/code-reviewer.md, skills/subagent-driven-development, skills/systematic-debugging/CREATION-LOG.md, skills/systematic-debugging/condition-based-waiting-example.ts, skills/systematic-debugging/condition-based-waiting.md, skills/systematic-debugging/defense-in-depth.md, skills/systematic-debugging/find-polluter.sh, skills/systematic-debugging/root-cause-tracing.md, skills/test-driven-development, skills/using-git-worktrees, skills/using-moe, skills/verification-before-completion, skills/writing-plans, skills/writing-skills/SKILL.md, skills/writing-skills/examples, skills/writing-skills/graphviz-conventions.dot, skills/writing-skills/persuasion-principles.md, skills/writing-skills/render-graphs.mjs, skills/writing-skills/testing-skills-with-subagents.md]
   - name: superpowers-lab
+    artifact_roots: [skills/finding-duplicate-functions, skills/mcp-cli, skills/using-tmux-for-interactive-commands, skills/windows-vm]
   - name: superpowers-developing-for-claude-code
+    artifact_roots: [skills/developing-claude-code-plugins, skills/working-with-claude-code]
   - name: iterative-development
+    artifact_roots: [skills/_shared/behavior-evidence-formats.md, skills/_shared/par-reviewer-wrapper.md, skills/_shared/parallel-adversarial-review.md, skills/auditing-progress, skills/extracting-requirements, skills/implementing-tasks, skills/iterative-development, skills/running-an-iteration, skills/scoping-the-simplest-core]
   - name: the-elements-of-style
+    artifact_roots: [skills/writing-clearly-and-concisely/SKILL.md, skills/writing-clearly-and-concisely/elements-of-style.md]
   - name: double-shot-latte
+    artifact_roots: [hooks/claude-judge-continuation, hooks/run-hook.cmd]
   - name: mattpocock-skills
+    artifact_roots: [skills/codebase-design, skills/domain-modeling, skills/improve-codebase-architecture, skills/prototype, skills/requesting-code-review/references/fowler-smells.md, skills/writing-skills/references/skill-mechanics.md, skills/writing-skills/references/skill-typography.md]
   - name: open-gsd/gsd-core
+    artifact_roots: [skills/requesting-code-review/references/security-asvs-levels.md, skills/systematic-debugging/debugger-bug-taxonomy.md, skills/systematic-debugging/debugger-fix-acceptance.md, skills/systematic-debugging/debugger-philosophy.md, skills/systematic-debugging/debugger-prevention.md, skills/systematic-debugging/debugger-rca-branching.md, skills/systematic-debugging/debugger-repro-hardening.md, skills/systematic-debugging/debugger-sbfl.md, skills/systematic-debugging/debugger-semantic-recall.md, skills/systematic-debugging/debugger-techniques.md]
 
 release:
   audit:

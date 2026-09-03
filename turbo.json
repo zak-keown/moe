@@ -48,6 +48,8 @@
         "NOTICE",
         "LICENSE",
         "LICENSE-MIT",
+        "LICENSE-BSD-3-CLAUSE",
+        "LICENSE-ISC",
         "packages/*/package.json",
         "packages/*/tsup.config.ts",
         "packages/core/skill-tiers.yaml",

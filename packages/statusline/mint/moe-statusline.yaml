@@ -44,6 +44,7 @@ bootstrap: none
 
 imported_works:
   - name: ccstatusline
+    artifact_roots: [vendor/ccstatusline]
 
 # components: hooks/hooks.json is a default and present. No skills/,
 # commands/, agents/ or .mcp.json in this package.

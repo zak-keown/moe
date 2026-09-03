@@ -320,6 +320,35 @@ describe('complete artifact assembly', () => {
 
     expect(await inventory(canonical)).toEqual(before)
     await expect(readdir(destinationRoot)).rejects.toMatchObject({ code: 'ENOENT' })
+
+    sixth.config.artifact.payloads = []
+    sixth.config.importedWorks = [{ name: 'superpowers', artifactRoots: [] }]
+    const legalDestination = join(root, 'plugins.next-legal-six')
+    await expect(assembleArtifactSet({ repoRoot: root, platform: platform(root, plugins), destinationRoot: legalDestination }))
+      .rejects.toMatchObject({ diagnostic: { code: 'LEGAL_IMPORT_UNREPRESENTED' } })
+    expect(await inventory(canonical)).toEqual(before)
+    await expect(readdir(legalDestination)).rejects.toMatchObject({ code: 'ENOENT' })
+  })
+
+  it('rejects a mutated canonical bundled-license template before writing an artifact manifest', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'moe-assemble-legal-template-'))
+    workspaces.push(root)
+    await Promise.all([
+      cp(join(repoRoot, 'LICENSE'), join(root, 'LICENSE')),
+      cp(join(repoRoot, 'LICENSE-MIT'), join(root, 'LICENSE-MIT')),
+      cp(join(repoRoot, 'LICENSE-BSD-3-CLAUSE'), join(root, 'LICENSE-BSD-3-CLAUSE')),
+      cp(join(repoRoot, 'LICENSE-ISC'), join(root, 'LICENSE-ISC')),
+      cp(join(repoRoot, 'NOTICE'), join(root, 'NOTICE')),
+    ])
+    await writeFile(join(root, 'LICENSE-BSD-3-CLAUSE'), 'mutated grant\n')
+    const plugin = await fixturePlugin(root)
+    plugin.config.importedWorks = [{ name: 'fast-uri', artifactRoots: ['skills'] }]
+    const destinationRoot = join(root, 'plugins.next-legal-template')
+    await mkdir(destinationRoot)
+
+    await expect(assembleArtifact({ repoRoot: root, platform: platform(root, [plugin]), plugin, destinationRoot }))
+      .rejects.toMatchObject({ diagnostic: { code: 'LEGAL_TEMPLATE_DRIFT' } })
+    await expect(readFile(join(destinationRoot, plugin.id, '.moe/artifact.json'))).rejects.toMatchObject({ code: 'ENOENT' })
   })
 
   it('refuses to assemble through a symbolic-link destination root', async () => {
