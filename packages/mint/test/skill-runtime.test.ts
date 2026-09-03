@@ -93,8 +93,12 @@ describe('skill runtime validation', () => {
     ['CommonJS require calls', 'const value = require("./value.cjs");', 'SKILL_RUNTIME_COMMONJS'],
     ['child-process exec imports', 'import { execSync } from "node:child_process";', 'SKILL_RUNTIME_SHELL_EXEC'],
     ['child-process namespace exec calls', 'import * as childProcess from "node:child_process"; childProcess.exec("tool");', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['literal computed namespace exec calls', 'import * as childProcess from "node:child_process"; childProcess["exec"]("tool");', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['default child-process namespace exec calls', 'import childProcess from "node:child_process"; childProcess.exec("tool");', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['extracted namespace exec calls', 'import * as childProcess from "node:child_process"; const run = childProcess.exec; run("tool");', 'SKILL_RUNTIME_SHELL_EXEC'],
     ['spawn calls with shell enabled', 'import { spawn } from "node:child_process"; spawn("tool", [], { shell: true });', 'SKILL_RUNTIME_SHELL_EXEC'],
     ['spawnSync calls with shell enabled', 'import { spawnSync } from "node:child_process"; spawnSync("tool", [], { shell: true });', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['literal computed namespace spawn calls', 'import * as childProcess from "node:child_process"; childProcess["spawn"]("tool", [], { shell: true });', 'SKILL_RUNTIME_SHELL_EXEC'],
     ['spawn calls before their static imports', 'spawn("tool", [], { shell: true }); import { spawn } from "node:child_process";', 'SKILL_RUNTIME_SHELL_EXEC'],
     ['missing relative modules', 'import value from "./missing.mjs";', 'SKILL_RUNTIME_IMPORT'],
     ['relative modules without the mjs extension', 'import value from "./lib.js";', 'SKILL_RUNTIME_IMPORT'],
@@ -120,18 +124,20 @@ describe('skill runtime validation', () => {
   it('reports every import-policy violation in stable order regardless of file order', () => {
     const files = [
       ...valid,
-      file('skills/demo/scripts/z-import.mjs', 'import value from "left-pad";'),
+      file('skills/demo/scripts/z-import.mjs', 'import first from "left-pad"; import second from "/tmp/value.mjs";'),
       file('skills/demo/scripts/a-syntax.mjs', 'import {'),
-      file('skills/demo/scripts/m-shell.mjs', 'import { exec } from "node:child_process";'),
+      file('skills/demo/scripts/m-shell.mjs', 'import { exec, execSync } from "node:child_process";'),
     ]
 
     expect(validateSkillRuntime(input(files)).diagnostics).toEqual(
       validateSkillRuntime(input([...files].reverse())).diagnostics,
     )
-    expect(validateSkillRuntime(input(files)).diagnostics.map(({ path, code }) => ({ path, code }))).toEqual([
-      { path: 'skills/demo/scripts/a-syntax.mjs', code: 'SKILL_RUNTIME_SYNTAX' },
-      { path: 'skills/demo/scripts/m-shell.mjs', code: 'SKILL_RUNTIME_SHELL_EXEC' },
-      { path: 'skills/demo/scripts/z-import.mjs', code: 'SKILL_RUNTIME_IMPORT' },
+    expect(validateSkillRuntime(input(files)).diagnostics.map(({ path, code, message }) => ({ path, code, message }))).toEqual([
+      { path: 'skills/demo/scripts/a-syntax.mjs', code: 'SKILL_RUNTIME_SYNTAX', message: 'runtime module "skills/demo/scripts/a-syntax.mjs" must contain valid ECMAScript module syntax' },
+      { path: 'skills/demo/scripts/m-shell.mjs', code: 'SKILL_RUNTIME_SHELL_EXEC', message: 'runtime module "skills/demo/scripts/m-shell.mjs" must not use child_process exec APIs' },
+      { path: 'skills/demo/scripts/m-shell.mjs', code: 'SKILL_RUNTIME_SHELL_EXEC', message: 'runtime module "skills/demo/scripts/m-shell.mjs" must not use child_process exec APIs' },
+      { path: 'skills/demo/scripts/z-import.mjs', code: 'SKILL_RUNTIME_IMPORT', message: 'runtime module "skills/demo/scripts/z-import.mjs" imports unsupported module "/tmp/value.mjs"' },
+      { path: 'skills/demo/scripts/z-import.mjs', code: 'SKILL_RUNTIME_IMPORT', message: 'runtime module "skills/demo/scripts/z-import.mjs" imports unsupported module "left-pad"' },
     ])
   })
 
