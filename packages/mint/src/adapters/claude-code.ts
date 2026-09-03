@@ -162,6 +162,7 @@ export const claudeCode: HarnessAdapter = {
     mcp: 'full',
     bootstrap: 'full',
   },
+  skillsOutputDir: undefined,
   installDoc,
   emit(model: PluginModel): EmitResult {
     const { config } = model

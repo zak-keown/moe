@@ -96,6 +96,7 @@ export const cursor: HarnessAdapter = {
     mcp: 'none',
     bootstrap: 'full',
   },
+  skillsOutputDir: '.cursor-plugin/skills',
   installDoc,
   emit(model: PluginModel): EmitResult {
     const { config } = model
