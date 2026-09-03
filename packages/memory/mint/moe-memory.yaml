@@ -6,7 +6,7 @@
 # sibling. This config remains source-only and is never copied into the plugin.
 
 name: moe-memory
-version: 0.1.4
+version: 0.2.0
 description: Semantic recall over past sessions and journal entries.
 author:
   name: Zak Keown
@@ -25,9 +25,17 @@ distribution:
   npm: "@bubstack/moe-memory"
 
 artifact:
+  node_package:
+    dependencies: bundled
   payloads:
     - {from: dist, to: dist, required: true}
+    - {from: runtime, to: runtime, required: true}
+    - {from: vendor/sqlite-vec, to: vendor/sqlite-vec, required: true}
+    - {from: recovery, to: recovery, required: false}
+    - {from: skills, to: skills, required: true}
+    - {from: agents, to: agents, required: true}
     - {from: prompts, to: prompts, required: true}
+    - {from: hooks, to: hooks, required: true}
 
 targets:
   claude-code: {intent: certify, expected_capabilities: [skill-discovery, agent-discovery, hook-execution, mcp-registration, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}

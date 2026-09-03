@@ -720,6 +720,9 @@ export function composePackageManifest(input: ComposePackageManifestInput): Comp
         break
       case 'dependencies':
       case 'optionalDependencies':
+        if (input.config.artifact.nodePackage?.dependencies === 'bundled') break
+        runtime[field] = dependencyRecord(value, field, input.releaseVersions)
+        break
       case 'peerDependencies':
         runtime[field] = dependencyRecord(value, field, input.releaseVersions)
         break

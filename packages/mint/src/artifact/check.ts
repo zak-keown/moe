@@ -13,6 +13,7 @@ export interface ArtifactCheckResult {
   readonly plugin: string
   readonly package: string
   readonly version: string
+  readonly dependencyPolicy: 'preserve' | 'bundled'
   readonly files: number
   readonly treeDigest: string
   readonly tarballBytes: number
@@ -117,6 +118,7 @@ export async function checkArtifactSet(
         plugin: plugin.id,
         package: plugin.npmPackage,
         version: plugin.version,
+        dependencyPolicy: plugin.config.artifact.nodePackage?.dependencies ?? 'preserve',
         files: entries.length,
         treeDigest: manifest?.tree_sha256 ?? 'unavailable',
         tarballBytes: packed.bytes,

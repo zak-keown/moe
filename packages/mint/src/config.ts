@@ -265,13 +265,24 @@ const rawSchema = z.object({
   marketplace: marketplaceSchema,
   release: releaseSchema,
   distribution: z.object({ npm: npmPackageSchema }).strict(),
-  artifact: z.object({ payloads: z.array(artifactPayloadSchema) }).strict(),
+  artifact: z.object({
+    node_package: z.object({
+      dependencies: z.enum(['preserve', 'bundled']),
+    }).strict().optional(),
+    payloads: z.array(artifactPayloadSchema),
+  }).strict(),
   targets: targetsSchema,
   imported_works: z.array(importedWorkSchema),
 }).strict()
 
 export interface DistributionConfig {
   npm: string
+}
+
+export type RuntimeDependencyPolicy = 'preserve' | 'bundled'
+
+export interface NodePackagePolicy {
+  dependencies: RuntimeDependencyPolicy
 }
 
 export interface ArtifactPayload {
@@ -308,7 +319,7 @@ export interface MintConfig {
   components: { skills: string; commands: string; agents: string; hooks: string; mcp: string }
   harnesses: { exclude: string[]; settings: Record<string, HarnessSettings> }
   distribution: DistributionConfig
-  artifact: { payloads: readonly ArtifactPayload[] }
+  artifact: { nodePackage?: NodePackagePolicy | undefined; payloads: readonly ArtifactPayload[] }
   targets: Readonly<Record<TargetId, PluginTargetIntent>>
   importedWorks: readonly ImportedWorkRef[]
   // Inferred from the schemas rather than restated: a hand-written copy drifts,
@@ -618,7 +629,12 @@ export function loadConfig(root: string, configFile = 'moe-mint.yaml', source = 
     },
     harnesses: { exclude, settings },
     distribution: raw.distribution,
-    artifact: { payloads: raw.artifact.payloads },
+    artifact: {
+      nodePackage: raw.artifact.node_package
+        ? { dependencies: raw.artifact.node_package.dependencies }
+        : undefined,
+      payloads: raw.artifact.payloads,
+    },
     targets,
     importedWorks,
     marketplace: raw.marketplace,
