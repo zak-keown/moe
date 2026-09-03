@@ -1,5 +1,6 @@
 import { readFile, readdir, realpath } from "node:fs/promises";
-import { isAbsolute, join, relative, resolve } from "node:path";
+import { homedir } from "node:os";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { makeEvidence } from "../evidence.mjs";
 import { classifyMcp } from "../safety/mcp.mjs";
 import { classifyNetwork } from "../safety/network.mjs";
@@ -147,12 +148,14 @@ export async function readClaudeSession(
       continue;
     }
     const projectRoot = await canonicalProjectRoot(row.cwd, resolveProjectRoot, resolveRealpath);
-    if (!projectRoot) {
+    const canonicalCwd = await canonicalPath(row.cwd, resolveRealpath);
+    if (!projectRoot || !canonicalCwd) {
       diagnostics.unknownShapes += 1;
       continue;
     }
     const result = results.get(tool.id);
-    const operation = { class: projected.class, ...projected.operation };
+    const normalizedOperation = normalizeObservedOperation(projected, canonicalCwd, projectRoot);
+    const operation = { class: projected.class, ...normalizedOperation };
     const permission = classifyClaudePermission(operation, effectivePermissions);
     evidence.push(
       makeEvidence({
@@ -161,7 +164,7 @@ export async function readClaudeSession(
         projectRoot,
         observedAt: new Date(observedMs).toISOString(),
         class: projected.class,
-        operation: projected.operation,
+        operation: normalizedOperation,
         outcome: outcomeFor(result),
         approvalProvenance: approvalFor(row, result, permission),
         sourceSchema: "claude-jsonl-tool-use-v1",
@@ -169,6 +172,16 @@ export async function readClaudeSession(
     );
   }
   return { evidence, diagnostics };
+}
+
+function normalizeObservedOperation(projected, cwd, projectRoot) {
+  if (projected.class !== "filesystem") return projected.operation;
+  const observedPath = projected.operation.path;
+  const absolutePath = isAbsolute(observedPath) ? resolve(observedPath) : resolve(cwd, observedPath);
+  return {
+    ...projected.operation,
+    path: relative(projectRoot, absolutePath).split(sep).join("/"),
+  };
 }
 
 async function canonicalProjectRoot(cwd, resolveProjectRoot, resolveRealpath) {
@@ -179,11 +192,21 @@ async function canonicalProjectRoot(cwd, resolveProjectRoot, resolveRealpath) {
   }
 }
 
+async function canonicalPath(path, resolveRealpath) {
+  try {
+    return await resolveRealpath(path);
+  } catch {
+    return undefined;
+  }
+}
+
 function outcomeFor(result) {
   if (!result) return "unknown";
   if (DENIALS.has(result.toolDenialKind)) return "denied";
   if (Object.hasOwn(result, "toolDenialKind")) return "denied";
-  return result.is_error === true ? "failed" : "success";
+  if (result.is_error === true) return "failed";
+  if (result.is_error === false) return "success";
+  return "unknown";
 }
 
 function approvalFor(row, result, permission) {
@@ -243,7 +266,7 @@ function isEvidenceHostname(value) {
  * @typedef {object} ClaudePermissionEntry
  * @property {"user" | "project" | "local"} scope
  * @property {string} rule
- * @property {{ projectRoot: string, primaryCwd: string, anchorProven: boolean }} context
+ * @property {{ projectRoot: string, primaryCwd: string, homeDir: string, anchorProven: boolean, observationCwdProven: boolean }} context
  */
 
 /**
@@ -262,20 +285,32 @@ function isEvidenceHostname(value) {
  * @param {string} options.configDir
  * @param {string} options.projectRoot
  * @param {string} options.primaryCwd
+ * @param {string} [options.homeDir]
+ * @param {boolean} [options.observationCwdProven]
  * @param {{ readFile: typeof readFile, realpath: typeof realpath }} options.fsOps
  * @returns {Promise<ClaudePermissionState>}
  */
-export async function loadClaudePermissions({ configDir, projectRoot, primaryCwd, fsOps }) {
-  const [canonicalConfigDir, canonicalProjectRoot, canonicalPrimaryCwd] = await Promise.all([
+export async function loadClaudePermissions({
+  configDir,
+  projectRoot,
+  primaryCwd,
+  homeDir = homedir(),
+  observationCwdProven = false,
+  fsOps,
+}) {
+  const [canonicalConfigDir, canonicalProjectRoot, canonicalPrimaryCwd, canonicalHomeDir] = await Promise.all([
     fsOps.realpath(configDir),
     fsOps.realpath(projectRoot),
     fsOps.realpath(primaryCwd),
+    fsOps.realpath(homeDir),
   ]);
-  const anchorProven = primaryCwd === canonicalProjectRoot;
+  const anchorProven = canonicalPrimaryCwd === canonicalProjectRoot;
   const context = {
     projectRoot: canonicalProjectRoot,
     primaryCwd: canonicalPrimaryCwd,
+    homeDir: canonicalHomeDir,
     anchorProven,
+    observationCwdProven,
   };
   const state = {
     deny: [],
@@ -286,7 +321,7 @@ export async function loadClaudePermissions({ configDir, projectRoot, primaryCwd
     canonicalPrimaryCwd,
     anchorProven,
   };
-  for (const setting of settingsPaths({ configDir, primaryCwd })) {
+  for (const setting of settingsPaths({ configDir, projectRoot })) {
     const parsed = await readSettings(setting.path, fsOps.readFile);
     if (!parsed) continue;
     for (const kind of PERMISSION_KINDS) {
@@ -298,11 +333,11 @@ export async function loadClaudePermissions({ configDir, projectRoot, primaryCwd
   return state;
 }
 
-function settingsPaths({ configDir, primaryCwd }) {
+function settingsPaths({ configDir, projectRoot }) {
   return [
     { scope: "user", path: join(configDir, "settings.json") },
-    { scope: "project", path: join(primaryCwd, ".claude", "settings.json") },
-    { scope: "local", path: join(primaryCwd, ".claude", "settings.local.json") },
+    { scope: "project", path: join(projectRoot, ".claude", "settings.json") },
+    { scope: "local", path: join(projectRoot, ".claude", "settings.local.json") },
   ];
 }
 
@@ -351,7 +386,7 @@ export function classifyClaudePermission(operation, state) {
 /**
  * @param {string} rule
  * @param {ClaudeOperation} operation
- * @param {{ projectRoot?: string, primaryCwd?: string }} context
+ * @param {{ projectRoot?: string, primaryCwd?: string, homeDir?: string, observationCwdProven?: boolean }} context
  */
 export function matchClaudePermission(rule, operation, context = {}) {
   if (!isNonEmptyString(rule) || !isPlainObject(operation)) return false;
@@ -394,10 +429,53 @@ function shellText(operation) {
 
 function matchesPath(path, pattern, context) {
   if (!isNonEmptyString(path) || !isNonEmptyString(pattern)) return false;
-  const anchor = context.primaryCwd || context.projectRoot;
-  const operationPath = isAbsolute(path) ? resolve(path) : anchor ? resolve(anchor, path) : path;
-  const rulePath = isAbsolute(pattern) ? resolve(pattern) : anchor ? resolve(anchor, pattern) : pattern;
-  return matchesPattern(operationPath, rulePath);
+  const operationPath = isAbsolute(path)
+    ? resolve(path)
+    : context.projectRoot
+      ? resolve(context.projectRoot, path)
+      : undefined;
+  const rulePath = resolveClaudeRulePath(pattern, context);
+  if (!operationPath || !rulePath) return false;
+  return matchesPathPattern(toPosixPath(operationPath), toPosixPath(rulePath));
+}
+
+function resolveClaudeRulePath(pattern, context) {
+  if (pattern.startsWith("//")) return resolve(pattern.slice(1));
+  if (pattern.startsWith("/")) {
+    return context.projectRoot ? resolve(context.projectRoot, pattern.slice(1)) : undefined;
+  }
+  if (pattern.startsWith("~/")) {
+    return context.homeDir ? resolve(context.homeDir, pattern.slice(2)) : undefined;
+  }
+  if (context.observationCwdProven !== true || !context.primaryCwd) return undefined;
+  return resolve(context.primaryCwd, pattern);
+}
+
+function toPosixPath(path) {
+  return path.split(sep).join("/");
+}
+
+function matchesPathPattern(value, pattern) {
+  let expression = "";
+  for (let index = 0; index < pattern.length; index += 1) {
+    const character = pattern[index];
+    if (character !== "*") {
+      expression += character.replace(/[|\\{}()[\]^$+?.]/g, "\\$&");
+      continue;
+    }
+    if (pattern[index + 1] !== "*") {
+      expression += "[^/]*";
+      continue;
+    }
+    index += 1;
+    if (pattern[index + 1] === "/") {
+      expression += "(?:.*/)?";
+      index += 1;
+    } else {
+      expression += ".*";
+    }
+  }
+  return new RegExp(`^${expression}$`).test(value);
 }
 
 function matchesShellPattern(value, pattern) {
@@ -425,8 +503,8 @@ function isNonEmptyString(value) {
 }
 
 const CLAUDE_RULE = {
-  read: (path) => `Read(${path})`,
-  modify: (path) => `Edit(${path})`,
+  read: (path) => `Read(/${path})`,
+  modify: (path) => `Edit(/${path})`,
   network: (hostname) => `WebFetch(domain:${hostname})`,
   mcp: (toolId) => toolId,
 };
@@ -464,6 +542,8 @@ export function renderClaudeCandidate(candidate, context = {}) {
       !["read", "modify"].includes(action) ||
       !isNonEmptyString(path) ||
       isAbsolute(path) ||
+      path.includes("*") ||
+      path.includes("\\") ||
       path.split(/[\\/]/).includes("..")
     ) {
       return null;
