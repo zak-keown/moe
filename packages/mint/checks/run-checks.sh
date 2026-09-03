@@ -104,12 +104,21 @@ all_skills_present() {
   return 0
 }
 
-# True (0) if ANY of the plugin's skills appears in the blob — used for
-# opencode's --pure control run, which must surface none of them.
-any_skill_present() {
-  local out="$1" name
+# File-backed variants for harness CLIs whose inventory output can exceed a
+# pipe's reliable capture size. OpenCode 1.18.1, for example, stops a large
+# `debug skill` response at 64 KiB when stdout is a command-substitution pipe.
+all_skills_present_file() {
+  local file="$1" name
   for name in "${SKILL_NAMES[@]}"; do
-    grep -qF -- "$name" <<<"$out" && return 0
+    grep -qF -- "$name" "$file" || return 1
+  done
+  return 0
+}
+
+any_skill_present_file() {
+  local file="$1" name
+  for name in "${SKILL_NAMES[@]}"; do
+    grep -qF -- "$name" "$file" && return 0
   done
   return 1
 }
@@ -318,15 +327,18 @@ deep_opencode() {
   fi
   mkdir -p "$HOME/.config/opencode"
   printf '{"plugin":["%s"]}' "$WORK" > "$HOME/.config/opencode/opencode.json"
-  local withp pure
-  withp=$(cd "$NEUTRAL" && opencode debug skill 2>&1)
-  pure=$(cd "$NEUTRAL" && opencode debug skill --pure 2>&1)
-  if all_skills_present "$withp" && ! any_skill_present "$pure"; then
+  local withp_file="$DEEP_TMP/opencode-skills.json"
+  local pure_file="$DEEP_TMP/opencode-skills-pure.json"
+  (cd "$NEUTRAL" && opencode debug skill >"$withp_file" 2>&1)
+  (cd "$NEUTRAL" && opencode debug skill --pure >"$pure_file" 2>&1)
+  if all_skills_present_file "$withp_file" && ! any_skill_present_file "$pure_file"; then
     ok "$harness" "opencode debug skill lists every skill via the plugin (and none with --pure)"
-  elif all_skills_present "$withp"; then
+  elif all_skills_present_file "$withp_file"; then
     not_ok "$harness" "skills also appear with --pure; discovery is not coming from the plugin"
   else
-    not_ok "$harness" "opencode debug skill did not list every skill: $(oneline "$withp")"
+    local preview
+    preview=$(head -c 300 "$withp_file")
+    not_ok "$harness" "opencode debug skill did not list every skill: $(oneline "$preview")"
   fi
 }
 
