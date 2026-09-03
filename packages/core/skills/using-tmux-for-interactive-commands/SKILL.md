@@ -87,10 +87,10 @@ tmux new-session -d -s git_session -c /path/to/repo git rebase -i HEAD~3
 
 ### Helper Wrapper
 
-This skill ships `tmux-wrapper.sh` beside its `SKILL.md`. Declare the path once,
-then use it:
+Resolve {resource:skills/using-tmux-for-interactive-commands/tmux-wrapper.sh}
+relative to this loaded document. Declare that resolved path once, then use it:
 ```bash
-WRAPPER="${CLAUDE_PLUGIN_ROOT}/skills/using-tmux-for-interactive-commands/tmux-wrapper.sh"
+WRAPPER="<resolved-tmux-wrapper.sh>"
 
 # Start session
 "$WRAPPER" start <session-name> <command> [args...]

@@ -255,8 +255,9 @@ exists, and every decision's **Blocks** list names tasks that exist.
 
 **5. Execution metadata:** Validate every task has a `depends_on:` field (or
 omits it, meaning []), a non-empty `Files:` block, an `Interfaces:` block,
-and explicit `Consumes:` and `Produces:` entries. Run
-`node "${CLAUDE_PLUGIN_ROOT}/hooks/task-set" check <plan.md>` to validate
+and explicit `Consumes:` and `Produces:` entries. Resolve
+[skills/subagent-driven-development/scripts/task-set.mjs](../subagent-driven-development/scripts/task-set.mjs) relative to
+this loaded document and invoke it as `node <resolved-task-set.mjs> check <plan.md>` to validate
 structural integrity — cycles, unresolvable deps, missing blocks.
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task — unless the task cannot be written until something is decided, in which case add the decision.
@@ -264,7 +265,8 @@ If you find issues, fix them inline. No need to re-review — just fix and move 
 ## Presenting the plan
 
 The plan file on disk is already rung 4 (markdown) of the shared
-native-rendering ladder at `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md`.
+native-rendering ladder in [skills/_shared/native-rendering.md](../_shared/native-rendering.md),
+resolved relative to this loaded document.
 Every executor path ends up reading that file, so no other rung is
 required for the workflow to work.
 
@@ -272,15 +274,10 @@ When your human partner asks to review the plan visually — a browseable
 table of tasks, a rendered dependency diagram — walk the ladder from
 the top:
 
-All four rungs defined at
-`${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` are
-available. Where the `Artifact` tool is present (Claude Code proper),
-rung 1 is the default for anything with an audience. Where it isn't
-(this same skill body also ships to Antigravity and Copilot CLI via
-this shared skills/ directory), the ladder self-detects and starts at
-rung 2 — the brainstorm browser companion — dropping further only when
-`node` isn't on PATH or the sandbox blocks the port. Announce which
-rung you took before the render lands.
+All four rungs are available. Where the `Artifact` tool is present,
+rung 1 is the default for anything with an audience. Otherwise start at
+rung 2 and drop further only when `node` is unavailable or the sandbox
+blocks the port. Announce which rung you took before the render lands.
 
 
 Never gate execution on the browseable form; the markdown

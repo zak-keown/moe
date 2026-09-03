@@ -280,7 +280,7 @@ export function generate(
 
   // README.md is a user file (never a GeneratedFile, never manifest-tracked),
   // so its injection runs after everything else is written and on its own path.
-  const readme = injectReadme(root, model, active)
+  const readme = injectReadme(root, active)
   if (readme.warning) warnings.push(readme.warning)
 
   return {

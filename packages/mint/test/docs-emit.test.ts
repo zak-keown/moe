@@ -104,6 +104,20 @@ describe('emitDocs support-matrix.md', () => {
     expect(lines[2]).toBe('# kitchen-sink harness support matrix')
   })
 
+  it('describes bootstrap behavior from the configured mode instead of claiming universal injection', () => {
+    const noBootstrapDir = tmpFixture(
+      'name: no-bootstrap\nversion: 1.0.0\ndescription: no bootstrap fixture\n',
+    )
+    const noBootstrapModel = buildModel(noBootstrapDir)
+    const content = emitDocs(noBootstrapModel, adapters)
+      .find((f) => f.path === 'docs/support-matrix.md')!.content
+
+    expect(content).toContain('- This plugin configures no bootstrap content; no adapter injects or activates one.')
+    expect(content).toContain('- Codex still provides native skill discovery, without active bootstrap injection.')
+    expect(content).toContain('- Agent Plugins 1.0 provides skill discovery but no bootstrap mechanism.')
+    expect(content).not.toContain('Active bootstrap injection is emitted')
+  })
+
   it('has exact content for the full 8-adapter registry: all rows plus the Notes section', () => {
     const content = emitDocs(model, adapters).find((f) => f.path === 'docs/support-matrix.md')!.content
     expect(content).toBe(
@@ -126,9 +140,9 @@ describe('emitDocs support-matrix.md', () => {
         '## Notes',
         '',
         '- Copilot consumes the Claude Code layout through `.claude-plugin/marketplace.json`; keep the `claude-code` adapter enabled when targeting Copilot.',
-        "- Active bootstrap injection is emitted for Claude Code, Cursor, OpenCode, and Pi; Kimi activates only a named bootstrap skill, and Copilot consumes Claude Code's injection hook.",
-        '- Codex uses native skill discovery as its bootstrap behavior; it has no active injection hook.',
-        '- Agent Plugins 1.0 has no bootstrap mechanism; loading the skill tree does not inject a bootstrap.',
+        "- This plugin's named bootstrap skill is actively injected at session start by Claude Code, Cursor, OpenCode, and Pi; Kimi activates the named bootstrap skill, and Copilot consumes Claude Code's injection hook.",
+        '- Codex provides native skill discovery only; it has no active bootstrap injection.',
+        '- Agent Plugins 1.0 provides skill discovery but no bootstrap mechanism.',
         '- Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` and `.cursor-plugin/hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.',
         '',
       ].join('\n'),
@@ -293,7 +307,7 @@ describe('injectReadme', () => {
         '\n',
       ),
     )
-    const result = injectReadme(dir, model, readmeAdapters)
+    const result = injectReadme(dir, readmeAdapters)
     expect(result).toEqual({ injected: true })
     expect(readFileSync(join(dir, 'README.md'), 'utf8')).toBe(
       [
@@ -318,10 +332,10 @@ describe('injectReadme', () => {
     const dir = tmpReadmeDir(
       ['# Test Plugin', '', '<!-- moe-mint:install:start -->', 'placeholder', '<!-- moe-mint:install:end -->', ''].join('\n'),
     )
-    injectReadme(dir, model, readmeAdapters)
+    injectReadme(dir, readmeAdapters)
     const afterFirst = readFileSync(join(dir, 'README.md'), 'utf8')
 
-    const result = injectReadme(dir, model, readmeAdapters)
+    const result = injectReadme(dir, readmeAdapters)
 
     expect(result).toEqual({ injected: false })
     expect(readFileSync(join(dir, 'README.md'), 'utf8')).toBe(afterFirst)
@@ -331,7 +345,7 @@ describe('injectReadme', () => {
     const original = ['# Test Plugin', '', 'No markers here at all.', ''].join('\n')
     const dir = tmpReadmeDir(original)
 
-    const result = injectReadme(dir, model, readmeAdapters)
+    const result = injectReadme(dir, readmeAdapters)
 
     expect(result.injected).toBe(false)
     expect(result.warning).toBeDefined()
@@ -342,7 +356,7 @@ describe('injectReadme', () => {
 
   it('returns no warning and does nothing when README.md does not exist', () => {
     const dir = tmpReadmeDir()
-    const result = injectReadme(dir, model, readmeAdapters)
+    const result = injectReadme(dir, readmeAdapters)
     expect(result).toEqual({ injected: false })
     expect(existsSync(join(dir, 'README.md'))).toBe(false)
   })
@@ -358,7 +372,7 @@ describe('injectReadme', () => {
     ].join('\n')
     const dir = tmpReadmeDir(original)
 
-    const result = injectReadme(dir, model, readmeAdapters)
+    const result = injectReadme(dir, readmeAdapters)
 
     expect(result.injected).toBe(false)
     expect(result.warning).toBeDefined()

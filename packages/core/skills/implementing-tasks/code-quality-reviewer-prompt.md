@@ -1,9 +1,9 @@
 # Code-Quality Reviewer Prompt Template
 
-Use this template INSIDE the PAR wrapper when dispatching code-quality reviewers. This is Stage 2 of the two-stage review — it runs AFTER spec-compliance review passes.
+Use this template INSIDE the PAR wrapper when dispatching code-quality reviewers. Resolve {resource:skills/_shared/par-reviewer-wrapper.md} relative to this loaded document and insert that wrapper where marked. This is Stage 2 of the two-stage review — it runs AFTER spec-compliance review passes.
 
 ~~~
-[REVIEWER INSTRUCTIONS — insert inside PAR wrapper from ${CLAUDE_PLUGIN_ROOT}/skills/_shared/par-reviewer-wrapper.md]
+[REVIEWER INSTRUCTIONS — insert the resolved PAR wrapper here]
 
 You are reviewing code quality, architectural soundness, and behavior
 corpus contribution quality.

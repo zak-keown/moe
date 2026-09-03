@@ -7,6 +7,8 @@ new breakage. It is not a fresh review — the full review already happened.
 **Purpose:** Verify each finding from the previous review was addressed, and
 that the fix itself broke nothing.
 
+Resolve [skills/subagent-driven-development/scripts/review-package](scripts/review-package) relative to this loaded document before filling `[DIFF_FILE]` below.
+
 ```
 Subagent (general-purpose):
   description: "Re-review Task N fix round R"
@@ -109,7 +111,8 @@ Subagent (general-purpose):
 - `[REPORT_FILE]` — the implementer's report file (fix reports appended)
 - `[FIX_BASE_SHA]` — the head the previous review saw
 - `[HEAD_SHA]` — current commit
-- `[DIFF_FILE]` — the path `"${CLAUDE_PLUGIN_ROOT}/skills/subagent-driven-development/scripts/review-package" PLAN_FILE FIX_BASE HEAD` printed
+- `[DIFF_FILE]` — the path printed by invoking the resolved `review-package`
+  resource with `PLAN_FILE FIX_BASE HEAD`
 
 **Re-reviewer returns:** per-finding verdicts (ADDRESSED / NOT ADDRESSED),
 new breakage in the fix diff, out-of-scope observations, and a round verdict.

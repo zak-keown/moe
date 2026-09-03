@@ -1,9 +1,9 @@
 # Spec-Compliance Reviewer Prompt Template
 
-Use this template INSIDE the PAR wrapper when dispatching spec-compliance reviewers. This is Stage 1 of the two-stage review — it runs BEFORE code-quality review.
+Use this template INSIDE the PAR wrapper when dispatching spec-compliance reviewers. Resolve [skills/_shared/par-reviewer-wrapper.md](../_shared/par-reviewer-wrapper.md) relative to this loaded document and insert that wrapper where marked. This is Stage 1 of the two-stage review — it runs BEFORE code-quality review.
 
 ~~~
-[REVIEWER INSTRUCTIONS — insert inside PAR wrapper from ${CLAUDE_PLUGIN_ROOT}/skills/_shared/par-reviewer-wrapper.md]
+[REVIEWER INSTRUCTIONS — insert the resolved PAR wrapper here]
 
 You are reviewing whether an implementation matches its specification AND
 whether behavior evidence exists at the correct seam.

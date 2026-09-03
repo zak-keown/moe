@@ -23,7 +23,7 @@ All scripts referenced below live in this skill's `scripts/` directory, next to 
 
 ## Key Concept: Spec Taxonomy
 
-The spec directory structure drives proof seam classification. See `${CLAUDE_PLUGIN_ROOT}/skills/_shared/behavior-evidence-formats.md` for the full taxonomy. Summary:
+The spec directory structure drives proof seam classification. Resolve [skills/_shared/behavior-evidence-formats.md](../_shared/behavior-evidence-formats.md) relative to this loaded document for the full taxonomy. Summary:
 
 | Spec directory | Default proof seam |
 |---|---|
@@ -40,9 +40,7 @@ Extraction subagents use the appropriate prompt variant based on source file loc
 
 Enumerate the spec files without reading full contents:
 
-```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/chunk_spec.py" <spec-path>
-```
+Resolve [skills/extracting-requirements/scripts/chunk_spec.py](scripts/chunk_spec.py) relative to this loaded document, then invoke it with `python3` and argument `<spec-path>`.
 
 This produces a JSON array of chunks. Each chunk has `source_file`, `heading`, `start_line`, `end_line`, `content`, and `estimated_tokens`. Small files (< 4K tokens) are kept whole. Larger files are split by `##` headings, or `###` if sections are still too large.
 
@@ -77,7 +75,7 @@ Pass the chunk content inline — do NOT make the subagent read the file.
 
 Before aggregation, run a PAR omission review. The sole job of this review is to find requirements AND scenarios that the extraction subagents dropped.
 
-For each chunk (or batch of chunks), dispatch two reviewers in parallel following `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md`:
+For each chunk (or batch of chunks), dispatch two reviewers in parallel following [skills/_shared/parallel-adversarial-review.md](../_shared/parallel-adversarial-review.md), resolved relative to this loaded document:
 
 1. Give each reviewer the **original chunk text** and the **extracted stories + scenarios** for that chunk
 2. Prompt: "Compare the source text against the extracted stories and scenarios. Find every requirement, acceptance criterion, behavioral constraint, or observable behavior in the source that is NOT represented by any extracted story or scenario. Score 5 points for each omission found. Pay special attention to: (a) ACs missing proof obligations, (b) observable behavior with no scenario, (c) journey steps that were summarized or skipped."
@@ -90,9 +88,7 @@ This pass is required, not optional. Extraction subagents optimize for what they
 
 Run the story aggregation script on all extracted story JSONs (including any added by the omission review):
 
-```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_stories.py" -o docs/moe/iterations/requirements/ <json-file-1> <json-file-2> ...
-```
+Resolve [skills/extracting-requirements/scripts/aggregate_stories.py](scripts/aggregate_stories.py) relative to this loaded document, then invoke it with `python3` and arguments `-o docs/moe/iterations/requirements/ <json-file-1> <json-file-2> ...`.
 
 The script combines, deduplicates by title, groups into epics, assigns stable STORY/EPIC IDs, and outputs per-epic files with proof obligations preserved.
 
@@ -100,12 +96,7 @@ The script combines, deduplicates by title, groups into epics, assigns stable ST
 
 Run the scenario aggregation script:
 
-```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_scenarios.py" \
-  -o docs/moe/iterations/behavior-scenarios.md \
-  --stories-dir docs/moe/iterations/requirements/ \
-  <json-file-1> <json-file-2> ...
-```
+Resolve [skills/extracting-requirements/scripts/aggregate_scenarios.py](scripts/aggregate_scenarios.py) relative to this loaded document, then invoke it with `python3` and arguments `-o docs/moe/iterations/behavior-scenarios.md --stories-dir docs/moe/iterations/requirements/ <json-file-1> <json-file-2> ...`.
 
 The script combines, deduplicates by title, assigns stable SCENARIO/JOURNEY IDs, resolves story title references to STORY-IDs, and outputs `behavior-scenarios.md`.
 
@@ -119,11 +110,7 @@ Same as before: review the epic list, merge near-duplicates, re-run aggregation.
 
 After both aggregations complete, run the back-linking script to update per-epic story files with scenario references:
 
-```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/backlink_scenarios.py" \
-  docs/moe/iterations/behavior-scenarios.md \
-  docs/moe/iterations/requirements/
-```
+Resolve [skills/extracting-requirements/scripts/backlink_scenarios.py](scripts/backlink_scenarios.py) relative to this loaded document, then invoke it with `python3` and arguments `docs/moe/iterations/behavior-scenarios.md docs/moe/iterations/requirements/`.
 
 The script reads scenario → owning-story mappings from `behavior-scenarios.md` and appends `scenario:SCENARIO-NNNN` or `scenario:JOURNEY-NNNN` to AC lines in the epic files that have observable behavioral impact. AC lines that already have scenario refs are skipped.
 
@@ -170,10 +157,7 @@ Set command to `TBD` — the implementing iterations will fill these in.
 
 ### 10. Validate
 
-```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_requirements_index.py" docs/moe/iterations/requirements/
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_scenarios.py" docs/moe/iterations/behavior-scenarios.md docs/moe/iterations/requirements/
-```
+Resolve [skills/extracting-requirements/scripts/validate_requirements_index.py](scripts/validate_requirements_index.py) and [skills/extracting-requirements/scripts/validate_scenarios.py](scripts/validate_scenarios.py) relative to this loaded document. Invoke the first with `python3 docs/moe/iterations/requirements/`, then invoke the second with `python3 docs/moe/iterations/behavior-scenarios.md docs/moe/iterations/requirements/`.
 
 If validation fails, inspect the output, fix formatting issues, and re-validate.
 

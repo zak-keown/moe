@@ -27,13 +27,13 @@ Read the per-epic requirement files in `docs/moe/iterations/requirements/`, `doc
 
 ### 2. Dispatch paired auditor subagents (PAR)
 
-Following the PAR methodology in `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md`:
+Following the PAR methodology in [skills/_shared/parallel-adversarial-review.md](../_shared/parallel-adversarial-review.md), resolved relative to this loaded document:
 
 1. Build the auditor prompt using `auditor-subagent-prompt.md`. Include ALL THREE tiers:
    - Tier 1: full story cards with proof obligations + new/changed scenario cards
    - Tier 2: impacted scenario cards + their current test results
    - Tier 3: sentinel scenario IDs + baseline results + current results
-2. Wrap in competitive framing from `${CLAUDE_PLUGIN_ROOT}/skills/_shared/par-reviewer-wrapper.md`
+2. Resolve [skills/_shared/par-reviewer-wrapper.md](../_shared/par-reviewer-wrapper.md) relative to this loaded document and wrap in its competitive framing
 3. Dispatch TWO auditor subagents in parallel
 4. Wait for both to return
 
@@ -73,7 +73,7 @@ Return the audit result (clean or gaps) to the orchestrator. The orchestrator de
 
 ## References
 
-- `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md` — PAR methodology
-- `${CLAUDE_PLUGIN_ROOT}/skills/_shared/par-reviewer-wrapper.md` — competitive framing wrapper
-- `${CLAUDE_PLUGIN_ROOT}/skills/_shared/behavior-evidence-formats.md` — scenario and proof obligation formats
+- [skills/_shared/parallel-adversarial-review.md](../_shared/parallel-adversarial-review.md) — PAR methodology; resolve relative to this loaded document
+- [skills/_shared/par-reviewer-wrapper.md](../_shared/par-reviewer-wrapper.md) — competitive framing wrapper; resolve relative to this loaded document
+- [skills/_shared/behavior-evidence-formats.md](../_shared/behavior-evidence-formats.md) — scenario and proof obligation formats; resolve relative to this loaded document
 - `auditor-subagent-prompt.md` — auditor-specific prompt template

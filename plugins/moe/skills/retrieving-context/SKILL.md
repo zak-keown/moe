@@ -17,12 +17,12 @@ stall waiting for an optional one.
 
 | Backend | Tools | Corpus | Optional? |
 |---|---|---|---|
-| **moedex** | `mcp__moedex__*` | the code corpus the *asking user* can see in GitLab | optional — degrade to `Read`/`Grep` when absent |
+| **moedex** | `mcp__moedex__*` | the code corpus the *asking user* can see in GitLab | optional — degrade to the client's native file reader/the client's native text search when absent |
 | **moe-memory** | `mcp__plugin_moe-memory_moe-memory__*` | this machine: conversation turns and journal entries | default memory store |
 
 ## The rule that fires first
 
-**A file in the working tree is read, never retrieved.** `Read` and `Grep`, every
+**A file in the working tree is read, never retrieved.** the client's native file reader and the client's native text search, every
 time. This holds whether or not the repo is in the retrieval corpus, and it is
 not a preference about cost: retrieval returns the corpus's *snapshot* of a
 file, and your uncommitted edit is not in it. Reading is both cheaper and more
@@ -47,12 +47,12 @@ answer. Say you did not find it rather than reporting rank 1.
 ## Routing
 
 Route each question to its baseline: moedex for code-structure questions,
-moe-memory for anything about prior work, and `Read`/`Grep` for anything
+moe-memory for anything about prior work, and the client's native file reader/the client's native text search for anything
 already in the working tree.
 
 | Question | Baseline |
 |---|---|
-| A file in the working tree | `Read` / `Grep` — the corpus lags your edits |
+| A file in the working tree | the client's native file reader / the client's native text search — the corpus lags your edits |
 | "Where is this symbol in a repo you are not editing?" | `search_context` with `graph_depth: 1` — one budgeted, graph-annotated call |
 | "Blast radius of this change across repos?" | `impact_analysis` |
 | A prior decision, ownership, a convention, or anything discussed before | `search_journal` + `search_conversations` — search this before answering from code or from first principles |
@@ -75,7 +75,7 @@ Defaults are generous and you inherit them by saying nothing.
   question, not by truncating the answer afterwards.
 
 **Delegate the retrieval, not the conclusion.** The cheapest budget is a
-subagent's context instead of yours: dispatch `search-moedex` (`model: haiku`,
+subagent's context instead of yours: dispatch `search-moedex` (`model: the configured fast model`,
 a narrow tool allowlist, a hard word cap) and the raw blocks never enter this
 window. `remembering-conversations` (in the memory plugin, when installed)
 does the same for transcripts, and its skill text measures the saving at
@@ -112,9 +112,9 @@ changing — not at the moment you first believe it.
 - **moedex absent, or up but not answering.** It is a single local daemon with
   a large mmap to warm; a slow start is routine, not an incident. Do not retry
   in a loop and do not tell the user the work is blocked. Answer
-  code-structure questions from `Read`/`Grep` where the repo is in the working
+  code-structure questions from the client's native file reader/the client's native text search where the repo is in the working
   tree, and say plainly when a repo outside it is not checkable.
-- **Only the working tree.** `Read` and `Grep` answer more than you expect. Say
+- **Only the working tree.** the client's native file reader and the client's native text search answer more than you expect. Say
   what you could not check rather than guessing at it.
 
 ## Red flags
