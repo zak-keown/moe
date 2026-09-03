@@ -210,4 +210,4 @@ Every evaluative gate uses parallel adversarial review (PAR):
 - Post-iteration impacted + sentinel scenario runs
 - Per-sprint audit (deep evidence + impacted behavior + sentinel corpus)
 
-See `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md` for PAR methodology.
+Resolve [skills/_shared/parallel-adversarial-review.md](../_shared/parallel-adversarial-review.md) relative to this loaded document for the PAR methodology.

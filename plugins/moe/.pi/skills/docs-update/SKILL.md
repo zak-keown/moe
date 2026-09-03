@@ -98,11 +98,13 @@ single response so they run in parallel. If parallel dispatch is unavailable
 agents serially, in the order `readme, architecture, api, contributing,
 changelog`. The output is identical either way; only wall clock changes.
 
-Before dispatching, the coordinator reads each relevant doc type's template —
-for example `${CLAUDE_PLUGIN_ROOT}/skills/docs-update/doc-types/readme.md`,
-swapping the file name for `architecture.md`, `api.md`, `contributing.md`, or
-`changelog.md` as appropriate — plus the project's existing doc file, if one
-exists. Each agent's prompt carries:
+Before dispatching, the coordinator resolves the relevant templates relative to
+this loaded document — [skills/docs-update/doc-types/readme.md](doc-types/readme.md),
+[skills/docs-update/doc-types/architecture.md](doc-types/architecture.md),
+[skills/docs-update/doc-types/api.md](doc-types/api.md),
+[skills/docs-update/doc-types/contributing.md](doc-types/contributing.md), or
+[skills/docs-update/doc-types/changelog.md](doc-types/changelog.md) — and reads each one plus
+the project's existing doc file, if one exists. Each agent's prompt carries:
 
 - The full template text for its doc type.
 - The project root.
@@ -141,10 +143,12 @@ instead.
    `.moe/docs-verify/<type>.json` — the same four content fields plus
    `severity`, dropping the template's `id` placeholder (the script assigns
    real IDs).
-4. Once every dispatched agent has staged its findings, run:
+4. Once every dispatched agent has staged its findings, resolve
+   [skills/docs-update/scripts/docs-verify-report.mjs](scripts/docs-verify-report.mjs) relative to
+   this loaded document and run:
 
    ```bash
-   node "${CLAUDE_PLUGIN_ROOT}/skills/docs-update/scripts/docs-verify-report.mjs" \
+   node <resolved-docs-verify-report.mjs> \
      --staging .moe/docs-verify --out DOCS-VERIFY-REPORT.md
    ```
 

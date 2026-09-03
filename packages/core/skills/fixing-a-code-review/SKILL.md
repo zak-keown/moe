@@ -85,11 +85,13 @@ A `stale` finding still earns a record. It is the only one that produces no
 commit, so dropping it silently leaves a report claiming eleven findings against
 a log showing ten fixes, and the next reader cannot tell which.
 
-Stamp it with the script rather than by hand — it also updates the frontmatter
-counts, which is the half that gets forgotten:
+Resolve {resource:skills/fixing-a-code-review/scripts/stamp-disposition.mjs}
+relative to this loaded document and stamp with that script rather than by
+hand — it also updates the frontmatter counts, which is the half that gets
+forgotten:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/fixing-a-code-review/scripts/stamp-disposition.mjs" \
+node <resolved-stamp-disposition.mjs> \
   --id CR-004 --disposition fixed --commit abc1234
 ```
 

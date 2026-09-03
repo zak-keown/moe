@@ -67,11 +67,11 @@ The implementer MUST complete a pre-flight mapping (AC → proof seam → scenar
 
 ### 3. PAR spec-compliance review (Stage 1)
 
-Following `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md`:
+Following [skills/_shared/parallel-adversarial-review.md](../_shared/parallel-adversarial-review.md), resolved relative to this loaded document:
 
 1. Build spec-compliance prompt using `spec-compliance-reviewer-prompt.md`
    - Include the proof obligations and the implementer's evidence claims
-2. Wrap in PAR competitive framing from `${CLAUDE_PLUGIN_ROOT}/skills/_shared/par-reviewer-wrapper.md`
+2. Resolve [skills/_shared/par-reviewer-wrapper.md](../_shared/par-reviewer-wrapper.md) relative to this loaded document and wrap in its competitive framing
 3. Dispatch TWO spec-compliance reviewers in parallel
 4. Aggregate findings (PAR rules: union of findings, severity = take worst)
 5. If ❌ issues found:
@@ -83,7 +83,7 @@ Following `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md`:
 
 ### 4. PAR code-quality review (Stage 2)
 
-Following `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md`:
+Following [skills/_shared/parallel-adversarial-review.md](../_shared/parallel-adversarial-review.md), resolved relative to this loaded document:
 
 1. Build code-quality prompt using `code-quality-reviewer-prompt.md`
    - Include the next 3 pending roadmap iterations for the boxing-in check
@@ -169,5 +169,5 @@ Use the least powerful model that can handle each role:
 - `implementer-subagent-prompt.md` — implementer dispatch template
 - `spec-compliance-reviewer-prompt.md` — Stage 1 review template
 - `code-quality-reviewer-prompt.md` — Stage 2 review template (includes boxing-in)
-- `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md` — PAR methodology
-- `${CLAUDE_PLUGIN_ROOT}/skills/_shared/par-reviewer-wrapper.md` — competitive framing wrapper
+- [skills/_shared/parallel-adversarial-review.md](../_shared/parallel-adversarial-review.md) — PAR methodology; resolve relative to this loaded document
+- [skills/_shared/par-reviewer-wrapper.md](../_shared/par-reviewer-wrapper.md) — competitive framing wrapper; resolve relative to this loaded document

@@ -1,6 +1,6 @@
 # Duplicate Detection Prompt
 
-Use this prompt with an **opus** subagent for thorough semantic analysis.
+Use this prompt with a **the configured deep-reasoning model** subagent for thorough semantic analysis.
 
 Run this prompt **once per category** that has 3+ functions.
 
@@ -87,6 +87,6 @@ Return a JSON array of duplicate groups:
    ```
 3. Replace `{CATEGORY}` with the category name
 4. Replace `<INSERT_CATEGORY_FUNCTIONS_HERE>` with the filtered JSON
-5. Dispatch opus subagent with the prompt
+5. Dispatch a the configured deep-reasoning model subagent with the prompt
 6. Repeat for each category with 3+ functions
 7. Combine outputs into final report

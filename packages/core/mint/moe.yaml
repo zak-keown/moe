@@ -54,9 +54,11 @@ keywords:
   - writing
   - plugin-authoring
 
-# The bootstrap skill is what makes the rest fire without being asked for; every
-# harness reads it at session start. moe-mint wraps it in
-# `<plugin-bootstrap plugin="moe">` and marks it as already loaded.
+# The bootstrap skill gives adapters content to inject or activate when their
+# native contract supports it. Claude Code, Cursor, OpenCode, and Pi actively
+# inject it; Kimi activates the named skill; Codex provides native discovery
+# without injection; Agent Plugins 1.0 has no bootstrap mechanism. Copilot
+# consumes Claude Code's verified-compatible layout and injection hook.
 bootstrap:
   skill: using-moe
 

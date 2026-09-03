@@ -46,13 +46,28 @@ function installDocFile(model: PluginModel, adapter: HarnessAdapter): GeneratedF
 // support-level table can't: Copilot consumes the Claude Code layout rather
 // than its own files, and the CRLF/.gitattributes caveat applies to anyone
 // consuming the emitted shell hooks (Design decision 2).
-const NOTES = [
-  '- Copilot consumes the Claude Code layout through `.claude-plugin/marketplace.json`; keep the `claude-code` adapter enabled when targeting Copilot.',
-  '- Active bootstrap injection is emitted for Claude Code, Cursor, OpenCode, and Pi; Kimi activates only a named bootstrap skill, and Copilot consumes Claude Code\'s injection hook.',
-  '- Codex uses native skill discovery as its bootstrap behavior; it has no active injection hook.',
-  '- Agent Plugins 1.0 has no bootstrap mechanism; loading the skill tree does not inject a bootstrap.',
-  '- Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` and `.cursor-plugin/hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.',
-]
+function notes(model: PluginModel): string[] {
+  let bootstrap: string
+  if (model.config.bootstrap.kind === 'none') {
+    bootstrap = '- This plugin configures no bootstrap content; no adapter injects or activates one.'
+  } else if (model.config.bootstrap.kind === 'skill') {
+    bootstrap =
+      "- This plugin's named bootstrap skill is actively injected at session start by Claude Code, Cursor, OpenCode, and Pi; Kimi activates the named bootstrap skill, and Copilot consumes Claude Code's injection hook."
+  } else {
+    bootstrap =
+      "- This plugin's generated bootstrap is actively injected at session start by Claude Code, Cursor, OpenCode, and Pi; Kimi cannot activate generated bootstrap content, and Copilot consumes Claude Code's injection hook."
+  }
+
+  return [
+    '- Copilot consumes the Claude Code layout through `.claude-plugin/marketplace.json`; keep the `claude-code` adapter enabled when targeting Copilot.',
+    bootstrap,
+    model.config.bootstrap.kind === 'none'
+      ? '- Codex still provides native skill discovery, without active bootstrap injection.'
+      : '- Codex provides native skill discovery only; it has no active bootstrap injection.',
+    '- Agent Plugins 1.0 provides skill discovery but no bootstrap mechanism.',
+    '- Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` and `.cursor-plugin/hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.',
+  ]
+}
 
 function supportMatrixFile(
   model: PluginModel,
@@ -68,7 +83,7 @@ function supportMatrixFile(
       '',
       '## Notes',
       '',
-      ...NOTES,
+      ...notes(model),
     ].join('\n') + '\n'
   return { path: 'docs/support-matrix.md', content }
 }
@@ -111,12 +126,9 @@ function installMatrixTable(activeAdapters: HarnessAdapter[]): string {
 // warning) since most component-only plugins won't have one; a README.md
 // that exists but lacks either marker (or has them in the wrong order) DOES
 // warn — that's a plugin author who has a README but hasn't opted into
-// install-matrix injection yet, worth flagging. `model` is threaded through
-// for parity with emitDocs's signature; the table itself doesn't need it
-// yet.
+// install-matrix injection yet, worth flagging.
 export function injectReadme(
   root: string,
-  model: PluginModel,
   activeAdapters: HarnessAdapter[],
 ): { injected: boolean; warning?: string } {
   const path = join(root, 'README.md')

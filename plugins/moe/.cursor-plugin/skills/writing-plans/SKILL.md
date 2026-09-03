@@ -255,8 +255,9 @@ exists, and every decision's **Blocks** list names tasks that exist.
 
 **5. Execution metadata:** Validate every task has a `depends_on:` field (or
 omits it, meaning []), a non-empty `Files:` block, an `Interfaces:` block,
-and explicit `Consumes:` and `Produces:` entries. Run
-`node "${CLAUDE_PLUGIN_ROOT}/hooks/task-set" check <plan.md>` to validate
+and explicit `Consumes:` and `Produces:` entries. Resolve
+[skills/subagent-driven-development/scripts/task-set.mjs](../subagent-driven-development/scripts/task-set.mjs) relative to
+this loaded document and invoke it as `node <resolved-task-set.mjs> check <plan.md>` to validate
 structural integrity — cycles, unresolvable deps, missing blocks.
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task — unless the task cannot be written until something is decided, in which case add the decision.
@@ -264,7 +265,8 @@ If you find issues, fix them inline. No need to re-review — just fix and move 
 ## Presenting the plan
 
 The plan file on disk is already rung 4 (markdown) of the shared
-native-rendering ladder at `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md`.
+native-rendering ladder in [skills/_shared/native-rendering.md](../_shared/native-rendering.md),
+resolved relative to this loaded document.
 Every executor path ends up reading that file, so no other rung is
 required for the workflow to work.
 
@@ -275,9 +277,7 @@ the top:
 The `Artifact` tool is not exposed in Cursor — start at rung 2 (the
 brainstorm browser companion) and drop to rung 3 (local HTML file) or
 rung 4 (markdown file) when `node` isn't on PATH or the sandbox blocks
-the port bind. See
-`${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` for the
-full ladder and the sharing default.
+the port bind. Use the shared ladder's sharing default.
 
 
 Never gate execution on the browseable form; the markdown
@@ -285,7 +285,7 @@ file is the source of truth.
 
 ## Execution Handoff
 
-After saving the plan, use `AskUserQuestion` to offer the execution choice:
+After saving the plan, use ask the user in chat to offer the execution choice:
 
 **"Plan complete and saved to `docs/moe/plans/<filename>.md`. Two execution options:**
 

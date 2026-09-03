@@ -94,7 +94,7 @@ Before writing code:
 
 ### Phase 3: Add Components
 
-Use `TaskCreate`/`TaskUpdate` to log component creation:
+Use maintain a markdown checklist to log component creation:
 
 **Example:**
 ```

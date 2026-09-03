@@ -323,23 +323,10 @@ function assertNoExpressions(
   }
 }
 
-// Points config.components.skills at an adapter's own generated skills
-// copy, so anything the adapter derives purely from that config field (its
-// own plugin manifest's `skills` path, its own in-process template's
-// skills-dir placeholder) resolves to the location substituteAllSkills
-// actually populated for it, instead of the shared source skills/.
-//
-// Deliberately leaves model.skills[].dir (each skill's own directory)
-// untouched: some adapters emit a file that is intentionally byte-identical
-// across multiple active adapters (claude-code and cursor share one
-// hooks/moe-mint/session-start bootstrap script; opencode and pi share one
-// package.json) precisely so mergeFiles' collision check dedupes it as a
-// single file instead of raising a "both adapters emit this path" conflict.
-// Those cross-adapter-shared computations read model.skills[].dir for the
-// bootstrap skill's path; adjusting it per adapter would make that shared
-// output diverge by adapter and break the dedupe. config.components.skills
-// only feeds each adapter's own, uniquely-named manifest/template output,
-// so adjusting only that field is what those adapters actually need.
+// Points both config.components.skills and each captured skill directory at
+// an adapter's generated skill tree. Adapter manifests and bootstrap loaders
+// therefore resolve the same profile-rendered files; leaving skill.dir at the
+// source path would make a loader bypass semantic substitution.
 export function adjustedModel(
   model: PluginModel,
   layout: SkillLayout,

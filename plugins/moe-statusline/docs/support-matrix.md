@@ -16,7 +16,7 @@
 ## Notes
 
 - Copilot consumes the Claude Code layout through `.claude-plugin/marketplace.json`; keep the `claude-code` adapter enabled when targeting Copilot.
-- Active bootstrap injection is emitted for Claude Code, Cursor, OpenCode, and Pi; Kimi activates only a named bootstrap skill, and Copilot consumes Claude Code's injection hook.
-- Codex uses native skill discovery as its bootstrap behavior; it has no active injection hook.
-- Agent Plugins 1.0 has no bootstrap mechanism; loading the skill tree does not inject a bootstrap.
+- This plugin configures no bootstrap content; no adapter injects or activates one.
+- Codex still provides native skill discovery, without active bootstrap injection.
+- Agent Plugins 1.0 provides skill discovery but no bootstrap mechanism.
 - Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` and `.cursor-plugin/hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.

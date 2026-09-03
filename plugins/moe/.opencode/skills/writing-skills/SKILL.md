@@ -23,7 +23,11 @@ You write test cases (pressure scenarios with subagents), watch them fail (basel
 
 **REQUIRED BACKGROUND:** You MUST understand `test-driven-development` before using this skill. That skill defines the fundamental RED-GREEN-REFACTOR cycle. This skill adapts TDD to documentation.
 
-**Official guidance:** For Anthropic's official skill authoring best practices, see anthropic-best-practices.md. This document provides additional patterns and guidelines that complement the TDD-focused approach in this skill.
+**Official guidance:** For Anthropic's official skill authoring best practices,
+resolve [skills/developing-claude-code-plugins/references/anthropic-best-practices.md](../developing-claude-code-plugins/references/anthropic-best-practices.md)
+relative to this loaded document. That Claude-specific reference provides
+additional patterns and guidelines that complement this skill's TDD-focused
+approach.
 
 ## What is a Skill?
 
@@ -327,10 +331,10 @@ digraph when_flowchart {
 
 See `graphviz-conventions.dot` in this directory for graphviz style rules.
 
-**Visualizing for your human partner:** Use the `render-graphs.mjs` this skill ships to render a skill's flowcharts to SVG:
+**Visualizing for your human partner:** Resolve [skills/writing-skills/render-graphs.mjs](render-graphs.mjs) relative to this loaded document and use it to render a skill's flowcharts to SVG:
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/skills/writing-skills/render-graphs.mjs" ../some-skill           # Each diagram separately
-"${CLAUDE_PLUGIN_ROOT}/skills/writing-skills/render-graphs.mjs" ../some-skill --combine # All diagrams in one SVG
+<resolved-render-graphs.mjs> ../some-skill           # Each diagram separately
+<resolved-render-graphs.mjs> ../some-skill --combine # All diagrams in one SVG
 ```
 
 ## Code Examples
