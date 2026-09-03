@@ -57,6 +57,9 @@ export async function validatePlanAgainstGraph(
     // --- Check 2: Missing edges ---
     // For each pair of tasks, check if their file sets are coupled in the
     // call graph but have no depends_on edge.
+    // NOTE: asymmetric — traceConsumers(a.files) detects "b consumes a" but
+    // not "a consumes b". The j > i loop means the reverse is never checked.
+    // A bidirectional check is deferred to a follow-up.
     const depSet = new Map<number, Set<number>>();
     for (const t of tasks) {
       depSet.set(t.num, new Set(t.dependsOn));
@@ -91,7 +94,7 @@ export async function validatePlanAgainstGraph(
       }
     }
 
-    // --- Check 3: Wave conflicts ---
+    // --- Check 3: Wave conflicts (same asymmetry as Check 2) ---
     const schedulable = tasks.filter((t) => t.blockedBy === null);
     if (schedulable.length > 1) {
       const waves = ctx.computeWaves(schedulable);

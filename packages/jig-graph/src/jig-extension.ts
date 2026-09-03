@@ -17,6 +17,11 @@ const validate: JigExtensionCommand = {
     },
   ],
   async run(args, ctx) {
+    if (args.includes("--manifest")) {
+      console.error("--manifest is not yet implemented");
+      return 1;
+    }
+
     const jsonFlag = args.includes("--json");
     const planArgs = args.filter((a) => !a.startsWith("--") && a !== "validate");
     const planPath = planArgs[0];
