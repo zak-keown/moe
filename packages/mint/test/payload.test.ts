@@ -1,4 +1,4 @@
-import { chmod, lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile, link } from 'node:fs/promises'
+import { chmod, lstat, mkdir, mkdtemp, readFile, rm, symlink, writeFile, link, rename } from 'node:fs/promises'
 import { execFile as execFileCallback } from 'node:child_process'
 import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
@@ -7,6 +7,7 @@ import { promisify } from 'node:util'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { ArtifactPayload } from '../src/config.js'
 import { inspectPayloads, stagePayloads } from '../src/artifact/payload.js'
+import { artifactCollisionKey, artifactPath } from '../src/artifact/paths.js'
 
 const workspaces: string[] = []
 const execFile = promisify(execFileCallback)
@@ -116,11 +117,20 @@ describe('declared artifact payload staging', () => {
     ['artifact manifest root', { from: 'dist', to: '.moe/runtime', required: true }],
     ['adapter ledger root', { from: 'dist', to: '.moe-mint/files', required: true }],
     ['legal payload', { from: 'dist', to: 'LICENSE', required: true }],
+    ['reserved case alias', { from: 'dist', to: 'PACKAGE.JSON/child', required: true }],
+    ['reserved legal descendant', { from: 'dist', to: 'license/child', required: true }],
   ] as const)('rejects a declared %s before copying', async (_name, payload) => {
     const { source } = await workspace()
     await mkdir(join(source, 'dist'))
 
     await expect(inspectPayloads(source, [payload])).rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_PATH_INVALID' } })
+  })
+
+  it('uses pinned full Unicode case folding with post-fold NFC normalization', () => {
+    expect(artifactCollisionKey(artifactPath('Straße'))).toBe(artifactCollisionKey(artifactPath('STRAẞE')))
+    expect(artifactCollisionKey(artifactPath('ı'))).not.toBe(artifactCollisionKey(artifactPath('i')))
+    expect(artifactCollisionKey(artifactPath('ŉ'))).toBe(artifactCollisionKey(artifactPath('ʼn')))
+    expect(artifactCollisionKey(artifactPath('ǰ'))).toBe(artifactCollisionKey(artifactPath('ǰ')))
   })
 
   it('rejects source maps rather than silently filtering a declared root', async () => {
@@ -203,6 +213,21 @@ describe('declared artifact payload staging', () => {
     await expect((await import('node:fs/promises')).readdir(join(artifact, 'runtime'))).resolves.toEqual(['file'])
   })
 
+  it('leaves the artifact byte-identical when a later empty directory conflicts with an existing file', async () => {
+    const { source, artifact } = await workspace()
+    await mkdir(join(source, 'first'))
+    await writeFile(join(source, 'first', 'file'), 'first')
+    await mkdir(join(source, 'later', 'nested'), { recursive: true })
+    await mkdir(join(artifact, 'later'))
+    await writeFile(join(artifact, 'later', 'nested'), 'existing')
+    const before = await stagedTree(artifact)
+    await expect(stagePayloads(source, artifact, [
+      { from: 'first', to: 'first', required: true },
+      { from: 'later', to: 'later', required: true },
+    ])).rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_PATH_COLLISION' } })
+    expect(await stagedTree(artifact)).toEqual(before)
+  })
+
   it.skipIf(process.platform === 'win32')('rejects FIFO and socket entries where the host supports them', async () => {
     const { source } = await workspace()
     const fifoRoot = join(source, 'fifo')
@@ -240,5 +265,26 @@ describe('declared artifact payload staging', () => {
       { from: 'unsafe', to: 'unsafe', required: true },
     ])).rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_UNSAFE_FILE_TYPE' } })
     await expect((await import('node:fs/promises')).readdir(artifact)).resolves.toEqual([])
+  })
+
+  it('uses preflight byte snapshots and rejects a swapped artifact parent before writing through it', async () => {
+    const { source, artifact } = await workspace()
+    await mkdir(join(source, 'dist'))
+    await writeFile(join(source, 'dist', 'file'), 'before')
+    await mkdir(join(artifact, 'runtime'))
+    await stagePayloads(source, artifact, [{ from: 'dist', to: 'stable', required: true }], {
+      afterPreflight: async () => { await writeFile(join(source, 'dist', 'file'), 'after') },
+    })
+    await expect(readFile(join(artifact, 'stable', 'file'), 'utf8')).resolves.toBe('before')
+
+    const outside = join(source, 'outside')
+    await mkdir(outside)
+    await expect(stagePayloads(source, artifact, [{ from: 'dist', to: 'runtime', required: true }], {
+      afterPreflight: async () => {
+        await rename(join(artifact, 'runtime'), join(artifact, 'runtime-saved'))
+        await symlink(outside, join(artifact, 'runtime'))
+      },
+    })).rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_UNSAFE_DESTINATION' } })
+    await expect((await import('node:fs/promises')).readdir(outside)).resolves.toEqual([])
   })
 })
