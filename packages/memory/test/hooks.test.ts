@@ -14,7 +14,7 @@ describe("plugin hook configuration", () => {
     // upstream bins and their extensionless shim layer collapsed into one
     // dispatcher — `cli/episodic-memory.js` no longer exists.
     expect(command).toBe(
-      'node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/dist/cli.js" sync --background',
+      'node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/dist/cli.js" sync --hook',
     );
   });
 
