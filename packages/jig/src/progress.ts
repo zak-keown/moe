@@ -10,6 +10,9 @@ function validateFraction(value: string, flagName: string): { done: number; tota
   const parts = value.split("/");
   const done = Number.parseInt(parts[0] ?? "0", 10);
   const total = Number.parseInt(parts[1] ?? "0", 10);
+  if (done > total) {
+    throw new Error(`${flagName}: done (${done}) exceeds total (${total})`);
+  }
   return { done, total };
 }
 

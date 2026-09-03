@@ -73,7 +73,15 @@ export function commitReviewFix(crId: string, title: string, opts?: CommitReview
     if (err instanceof Error && err.message.includes("Nothing staged")) {
       throw err;
     }
-    // Exit code 1 from git diff = there ARE staged changes, which is what we want
+    // Exit code 1 = staged changes exist (what we want). Any other exit
+    // code is an unexpected git error — re-throw it.
+    const status =
+      err != null && typeof err === "object" && "status" in err
+        ? (err as { status: unknown }).status
+        : undefined;
+    if (status !== 1) {
+      throw err;
+    }
   }
 
   const message = `fix(review): ${crId} — ${title.trim()}`;
