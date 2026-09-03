@@ -1376,4 +1376,25 @@ describe("task-set", () => {
     const lines = r.stdout.trim().split(/\n/);
     expect(lines).toEqual(["wave 1: 1", "wave 2: 2"]);
   });
+
+  it("next returns ready tasks on a partially-completed diamond", () => {
+    // diamond-plan.md has Task 1 fully checked. Tasks 2 and 3 depend on
+    // Task 1, so both should be ready. Task 4 depends on 2 and 3.
+    const r = run(["next", join(FIXTURES, "diamond-plan.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout.trim().split(/\n/)).toEqual(["2", "3"]);
+  });
+
+  it("next returns empty when all tasks are done", () => {
+    const r = run(["next", join(FIXTURES, "all-done-plan.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout).toBe("");
+  });
+
+  it("next returns all tasks when none have dependencies", () => {
+    // valid-no-deps-plan.md has two tasks, both unchecked, no deps.
+    const r = run(["next", join(FIXTURES, "valid-no-deps-plan.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout.trim().split(/\n/)).toEqual(["1", "2"]);
+  });
 });
