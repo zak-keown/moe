@@ -33,6 +33,9 @@ const RETAINED = new Set([
   "resolveProjectJournalPath",
   "resolveUserJournalPath",
   "journalRoots",
+  // database-transaction.ts
+  "withTransaction",
+  "withForeignKeysDisabled",
   // search.ts
   "l2DistanceToCosineSimilarity",
   "searchConversations",

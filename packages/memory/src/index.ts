@@ -4,6 +4,19 @@ import { setDefaultPackageRoot } from "./db.js";
 setDefaultPackageRoot(resolveInstalledPackageRoot(import.meta.url));
 
 export * from "./constants.js";
+export {
+  DatabaseBusyError,
+  acquireSharedDatabaseLease,
+  acquireDatabaseWriter,
+  acquireExclusiveMaintenanceLease,
+  assertWritableEpoch,
+  inspectLegacyDatabaseUsers,
+  readDatabaseEpoch,
+  withDatabaseWriter,
+  type DatabaseLease,
+  type DatabaseWriter,
+} from "./database-lease.js";
+export { withTransaction, withForeignKeysDisabled } from "./database-transaction.js";
 export * from "./parser.js";
 export * from "./paths.js";
 export * from "./search.js";
