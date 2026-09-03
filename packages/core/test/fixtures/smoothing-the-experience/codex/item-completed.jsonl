@@ -1,0 +1,3 @@
+{"timestamp":"2026-09-01T12:00:00.000Z","type":"session_meta","payload":{"id":"codex-root-a","cwd":"/fixture/repo-a","cli_version":"0.153.0"}}
+{"timestamp":"2026-09-01T12:00:01.000Z","type":"event_msg","payload":{"type":"item_completed","item":{"type":"CommandExecution","command":["zsh","-lc","git status"],"cwd":"/fixture/repo-a","status":"completed","exit_code":0,"parsed_cmd":[{"cmd":"git status"}],"aggregated_output":"discard"}}}
+{"timestamp":"2026-09-01T12:00:02.000Z","type":"world_state","payload":{"state":{"permissions":{"approved_command_prefixes":[["git","status"]]}}}}
