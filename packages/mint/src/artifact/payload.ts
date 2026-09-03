@@ -307,6 +307,23 @@ function assertNoCollisions(payloads: readonly PreflightPayload[], existing?: Ex
     }
   }
   if (existing === undefined) return
+  const existingClaims = new Map<string, { path: ArtifactPath; kind: 'file' | 'directory' }>()
+  const claimExisting = (path: ArtifactPath, kind: 'file' | 'directory'): void => {
+    const key = artifactCollisionKey(path)
+    const previous = existingClaims.get(key)
+    if (previous !== undefined) {
+      throw payloadError(
+        'ARTIFACT_PATH_COLLISION',
+        `existing artifact ${previous.kind} "${previous.path}" conflicts with ${kind} "${path}"`,
+        'Use an artifact staging root with unique NFC/case-fold paths.',
+        'artifact root',
+        path,
+      )
+    }
+    existingClaims.set(key, { path, kind })
+  }
+  for (const directory of existing.directories) claimExisting(directory, 'directory')
+  for (const file of existing.files) claimExisting(file, 'file')
   for (const file of existing.files) {
     const key = artifactCollisionKey(file)
     const payloadFile = files.get(key)
