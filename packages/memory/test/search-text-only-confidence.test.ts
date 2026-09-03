@@ -18,10 +18,15 @@ import { suppressConsole } from "./test-utils.js";
  * embeddings are inserted directly via `insertExchange`, same pattern as
  * test/codex-transcripts.test.ts's `new Array(384).fill(0.1)`.
  */
-const pipelineMock = vi.hoisted(() => vi.fn());
-vi.mock("@huggingface/transformers", () => ({
-  pipeline: pipelineMock,
-  env: {} as Record<string, unknown>,
+const createBackendMock = vi.hoisted(() => vi.fn());
+vi.mock("../src/embedding-runtime.js", () => ({
+  createEmbeddingBackend: createBackendMock,
+}));
+vi.mock("../src/model-cache.js", () => ({
+  ensureModelSet: vi.fn(async () => ({ root: "/fake", revision: "x", variant: "q8", files: new Map() })),
+}));
+vi.mock("../src/model-manifest.js", () => ({
+  loadModelManifest: vi.fn(() => ({ schema: 1, model: "test", revision: "x", variant: "q8", license: "MIT", dimensions: 384, maxTokens: 512, maxInputChars: 2000, queryPrefix: "", files: [] })),
 }));
 
 const { insertExchange } = await import("../src/db.js");
@@ -53,11 +58,14 @@ describe("CR-073: text-only hits are not scored as vector matches in mode: both"
     dbPath = join(testDir, "test.db");
     process.env.TEST_DB_PATH = dbPath;
 
-    pipelineMock.mockReset();
+    createBackendMock.mockReset();
     resetEmbeddings();
-    pipelineMock.mockImplementation(async () =>
-      vi.fn(async () => ({ data: new Float32Array(queryVector()) })),
-    );
+    const qv = new Float32Array(queryVector());
+    createBackendMock.mockResolvedValue({
+      embed: vi.fn(async () => qv),
+      embedQuery: vi.fn(async () => qv),
+      close: vi.fn(async () => {}),
+    });
     restoreConsole = suppressConsole();
   });
 

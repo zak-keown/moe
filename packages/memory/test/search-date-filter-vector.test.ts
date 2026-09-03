@@ -19,10 +19,15 @@ import { suppressConsole } from "./test-utils.js";
  * document embeddings are inserted directly via insertExchange, matching
  * test/codex-transcripts.test.ts's convention, so no real model is needed.
  */
-const pipelineMock = vi.hoisted(() => vi.fn());
-vi.mock("@huggingface/transformers", () => ({
-  pipeline: pipelineMock,
-  env: {} as Record<string, unknown>,
+const createBackendMock = vi.hoisted(() => vi.fn());
+vi.mock("../src/embedding-runtime.js", () => ({
+  createEmbeddingBackend: createBackendMock,
+}));
+vi.mock("../src/model-cache.js", () => ({
+  ensureModelSet: vi.fn(async () => ({ root: "/fake", revision: "x", variant: "q8", files: new Map() })),
+}));
+vi.mock("../src/model-manifest.js", () => ({
+  loadModelManifest: vi.fn(() => ({ schema: 1, model: "test", revision: "x", variant: "q8", license: "MIT", dimensions: 384, maxTokens: 512, maxInputChars: 2000, queryPrefix: "", files: [] })),
 }));
 
 const { insertExchange } = await import("../src/db.js");
@@ -50,11 +55,14 @@ describe("CR-074: a date filter on a vector search does not lose in-window match
     dbPath = join(testDir, "test.db");
     process.env.TEST_DB_PATH = dbPath;
 
-    pipelineMock.mockReset();
+    createBackendMock.mockReset();
     resetEmbeddings();
-    pipelineMock.mockImplementation(async () =>
-      vi.fn(async () => ({ data: new Float32Array([1, ...new Array(383).fill(0)]) })),
-    );
+    const queryVec = new Float32Array([1, ...new Array(383).fill(0)]);
+    createBackendMock.mockResolvedValue({
+      embed: vi.fn(async () => queryVec),
+      embedQuery: vi.fn(async () => queryVec),
+      close: vi.fn(async () => {}),
+    });
     restoreConsole = suppressConsole();
   });
 
