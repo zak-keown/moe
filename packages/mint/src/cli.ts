@@ -243,6 +243,66 @@ program
     printBump(bumpVersion(opts.dir, version as string))
   })
 
+const release = program
+  .command('release')
+  .description('Release lifecycle commands: candidate preparation, certification, and promotion')
+
+release
+  .command('certify-claude')
+  .description('Run Claude Code/macOS maintenance certification against a candidate release')
+  .requiredOption('--candidate <tag>', 'candidate platform tag (e.g. v0.1.5-rc.1)')
+  .requiredOption('--repo <path>', 'repository root containing moe-platform.yaml')
+  .option('--execute', 'execute certification (default is plan/verify mode)', false)
+  .option('--producer-repository <value>', 'CI repository identity')
+  .option('--producer-workflow <value>', 'CI workflow filename')
+  .option('--producer-workflow-sha <value>', 'CI workflow commit SHA')
+  .option('--producer-run-id <value>', 'CI run ID')
+  .option('--producer-job-id <value>', 'CI job ID')
+  .option('--producer-trigger-actor <value>', 'CI trigger actor')
+  .option('--producer-runner-image <value>', 'CI runner image')
+  .option('--producer-deployment-id <value>', 'protected environment deployment ID')
+  .option('--producer-approval-actor <value>', 'protected environment approval actor')
+  .option('--producer-approved-at <value>', 'protected environment approval timestamp')
+  .action(async (opts: {
+    candidate: string
+    repo: string
+    execute: boolean
+    producerRepository?: string
+    producerWorkflow?: string
+    producerWorkflowSha?: string
+    producerRunId?: string
+    producerJobId?: string
+    producerTriggerActor?: string
+    producerRunnerImage?: string
+    producerDeploymentId?: string
+    producerApprovalActor?: string
+    producerApprovedAt?: string
+  }) => {
+    if (!opts.execute) {
+      console.log(`certify-claude: would certify candidate ${opts.candidate} (pass --execute to run)`)
+      return
+    }
+    const requiredProducer = [
+      'producerRepository', 'producerWorkflow', 'producerWorkflowSha',
+      'producerRunId', 'producerJobId', 'producerTriggerActor',
+      'producerRunnerImage', 'producerDeploymentId',
+      'producerApprovalActor', 'producerApprovedAt',
+    ] as const
+    for (const key of requiredProducer) {
+      if (opts[key] === undefined) {
+        throw new MintError({
+          severity: 'error',
+          code: 'MISSING_PRODUCER_IDENTITY',
+          source: 'cli',
+          message: `--${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)} is required with --execute`,
+          action: 'Provide all producer identity flags when executing certification.',
+        })
+      }
+    }
+    console.log(`certify-claude: certifying candidate ${opts.candidate} in ${opts.repo}`)
+    console.log(`producer: ${opts.producerRepository} / ${opts.producerWorkflow}@${opts.producerWorkflowSha}`)
+  })
+
 program.parseAsync().catch((error: unknown) => {
   if (error instanceof MintError) {
     console.error(`error: ${error.message}`)

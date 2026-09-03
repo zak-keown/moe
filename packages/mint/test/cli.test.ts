@@ -443,6 +443,19 @@ describe('CLI end-to-end', () => {
     expect(result.stderr).toContain('exactly one')
   })
 
+  it('release certify-claude exits 0 in plan mode with candidate tag', () => {
+    const result = runCli(['release', 'certify-claude', '--candidate', 'v0.1.5-rc.1', '--repo', '.'], REPO_ROOT)
+    expect(result.status).toBe(0)
+    expect(result.stdout).toContain('certify-claude')
+    expect(result.stdout).toContain('v0.1.5-rc.1')
+  })
+
+  it('release certify-claude exits 1 when --execute is missing producer identity', () => {
+    const result = runCli(['release', 'certify-claude', '--candidate', 'v0.1.5-rc.1', '--repo', '.', '--execute'], REPO_ROOT)
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('error:')
+  })
+
   it('init → generate → validate happy path exits 0 at each step', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-cli-e2e-'))
 
