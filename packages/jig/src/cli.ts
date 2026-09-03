@@ -73,9 +73,7 @@ spec
     console.log(path);
   });
 
-const review = program
-  .command("review")
-  .description("Review-fix stamps and commit formatting");
+const review = program.command("review").description("Review-fix stamps and commit formatting");
 
 review
   .command("stamp")
@@ -87,9 +85,7 @@ review
     console.log(sha);
   });
 
-const commit = program
-  .command("commit")
-  .description("Structured commits with validated formats");
+const commit = program.command("commit").description("Structured commits with validated formats");
 
 commit
   .command("review-fix")

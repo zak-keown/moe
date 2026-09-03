@@ -4,9 +4,7 @@ const CR_ID_PATTERN = /^CR-\d{3}$/;
 
 function validateCrId(crId: string): void {
   if (!CR_ID_PATTERN.test(crId)) {
-    throw new Error(
-      `Invalid CR-ID "${crId}". Expected format: CR-### (e.g. CR-012).`,
-    );
+    throw new Error(`Invalid CR-ID "${crId}". Expected format: CR-### (e.g. CR-012).`);
   }
 }
 
@@ -14,11 +12,7 @@ export interface ReviewStampOpts {
   cwd?: string;
 }
 
-export function reviewStamp(
-  crId: string,
-  fixingSha: string,
-  opts?: ReviewStampOpts,
-): string {
+export function reviewStamp(crId: string, fixingSha: string, opts?: ReviewStampOpts): string {
   validateCrId(crId);
 
   const cwd = opts?.cwd ?? process.cwd();
@@ -29,9 +23,7 @@ export function reviewStamp(
   try {
     resolvedSha = gitIn(root, "rev-parse", "--verify", `${fixingSha}^{commit}`);
   } catch {
-    throw new Error(
-      `"${fixingSha}" does not resolve to a commit in this repository.`,
-    );
+    throw new Error(`"${fixingSha}" does not resolve to a commit in this repository.`);
   }
 
   // Verify the fixing SHA is an ancestor of HEAD
@@ -47,9 +39,7 @@ export function reviewStamp(
   try {
     gitIn(root, "diff-index", "--quiet", "HEAD", "--");
   } catch {
-    throw new Error(
-      "Working tree is dirty. Commit or stash changes before creating a stamp.",
-    );
+    throw new Error("Working tree is dirty. Commit or stash changes before creating a stamp.");
   }
 
   // Create the stamp commit
@@ -63,17 +53,11 @@ export interface CommitReviewFixOpts {
   cwd?: string;
 }
 
-export function commitReviewFix(
-  crId: string,
-  title: string,
-  opts?: CommitReviewFixOpts,
-): string {
+export function commitReviewFix(crId: string, title: string, opts?: CommitReviewFixOpts): string {
   validateCrId(crId);
 
   if (!title.trim()) {
-    throw new Error(
-      "Title is required. Usage: moe jig commit review-fix <CR-ID> <title>",
-    );
+    throw new Error("Title is required. Usage: moe jig commit review-fix <CR-ID> <title>");
   }
 
   const cwd = opts?.cwd ?? process.cwd();
