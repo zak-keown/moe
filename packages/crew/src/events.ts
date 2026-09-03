@@ -4,7 +4,9 @@ export type WorkerEvent =
   | { event: "pre_tool_use"; ts: string; tool: string; tool_input: unknown }
   | { event: "post_tool_use"; ts: string; tool: string }
   | { event: "stop"; ts: string }
-  | { event: "session_end"; ts: string };
+  | { event: "session_end"; ts: string }
+  | { event: "run_start"; ts: string; runId: string; label?: string }
+  | { event: "run_end"; ts: string; runId: string };
 
 export type EventName = WorkerEvent["event"];
 
@@ -15,6 +17,8 @@ export const EVENT_NAMES: readonly EventName[] = [
   "post_tool_use",
   "stop",
   "session_end",
+  "run_start",
+  "run_end",
 ];
 
 export function serializeEvent(e: WorkerEvent): string {
