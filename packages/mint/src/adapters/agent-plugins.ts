@@ -179,6 +179,7 @@ export const agentPlugins: HarnessAdapter = {
     mcp: 'full',
     bootstrap: 'none',
   },
+  skillsOutputDir: undefined,
   installDoc,
   emit(model: PluginModel): EmitResult {
     const { config } = model

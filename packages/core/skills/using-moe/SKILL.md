@@ -9,8 +9,8 @@ If you were dispatched as a subagent to execute a specific task, ignore this ski
 
 <ALREADY-LOADED>
 If you are reading this at session start, this skill is ALREADY LOADED and you
-are currently following it. Do NOT use the Skill tool to load `using-moe` again —
-that is redundant. Every OTHER skill you reach through the Skill tool.
+are currently following it. Do NOT use {skill} to load `using-moe` again —
+that is redundant. Every OTHER skill you reach through the same mechanism.
 </ALREADY-LOADED>
 
 <EXTREMELY-IMPORTANT>
@@ -70,9 +70,7 @@ If your harness appears here, read its reference file for special instructions:
 - Antigravity: `references/antigravity-tools.md`
 - Codex: `references/codex-tools.md`
 - Gemini CLI: `references/gemini-tools.md`
-- Kimi Code: `references/kimi-tools.md`
 - OpenCode: `references/opencode-tools.md`
-- Pi: `references/pi-tools.md`
 
 ## User Instructions
 

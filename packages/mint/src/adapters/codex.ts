@@ -71,6 +71,7 @@ export const codex: HarnessAdapter = {
     mcp: 'none',
     bootstrap: 'partial',
   },
+  skillsOutputDir: '.codex-plugin/skills',
   installDoc,
   emit(model: PluginModel): EmitResult {
     const warnings: string[] = []

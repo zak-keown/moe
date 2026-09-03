@@ -268,6 +268,17 @@ function stage(plugin) {
   // moe-mint requires the config at this exact name in the plugin root.
   fs.copyFileSync(configSrc, path.join(dest, "moe-mint.yaml"));
 
+  // Stage the vocabulary file alongside the config, if one exists. The
+  // vocabulary file lives next to the mint config in the package tree and
+  // is copied to moe-mint-vocab.yaml (the name loadVocabulary() expects).
+  const vocabSrc = path.join(
+    path.dirname(configSrc),
+    path.basename(plugin.config).replace(/\.yaml$/, "-vocab.yaml"),
+  );
+  if (fs.existsSync(vocabSrc)) {
+    fs.copyFileSync(vocabSrc, path.join(dest, "moe-mint-vocab.yaml"));
+  }
+
   let staged = 0;
 
   for (const component of COMPONENTS) {

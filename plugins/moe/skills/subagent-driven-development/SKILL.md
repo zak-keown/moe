@@ -282,18 +282,35 @@ Everything you paste into a dispatch prompt — and everything a subagent
 prints back — stays resident in your context for the rest of the session
 and is re-read on every later turn. Hand artifacts over as files.
 
-**Waiting on dispatched subagents:** never poll a wait interface with
-short timeouts, and never sit in one silent, open-ended wait either.
+**Waiting on dispatched subagents:**
+
+The `Agent` tool call itself blocks until the subagent finishes and
+returns its final report in the tool result — there is no separate
+polling step for a normal dispatch. For a background task, use the
+`Monitor` tool to stream progress rather than a manual poll loop; you
+are notified when the task completes. Read the subagent's report
+directly rather than re-deriving what it found, but verify any
+load-bearing claim (a bug fixed, a test passing) before treating it as
+final — a summary describes intent, not always fact.
+
+
 While you have local work — ledger updates, packaging the next review,
-reading reports — keep working; child results arrive on their own.
-When you are genuinely idle, wait in bounded stretches (five to ten
-minutes, where your platform allows), and between stretches post one
-line of status and reconcile your live children: list them, and chase
-any that finished without reporting. A bounded stretch keeps nearly
-all of a long wait's efficiency while guaranteeing a stuck or lost
-child is noticed within minutes, not at the end of the session.
+reading reports — keep working; child results arrive on their own. Between
+any bounded wait stretches, post one line of status and reconcile your live
+children: list them, and chase any that finished without reporting.
 
 ### 1. Dispatch the implementer
+
+Use the `Agent` tool. Pass a fully filled `prompt` and a short
+`description`; choose `subagent_type` deliberately — `general-purpose`
+for a task needing the full tool surface, `Explore` for read-only
+research, `fork` to hand a subagent a copy of this conversation so it
+shares your context and cache. A non-fork agent starts with zero
+context: brief it like a colleague who just walked in, never with
+"based on what we discussed." For independent work, send multiple
+`Agent` calls in a single message to dispatch them in parallel; keep
+dependent steps sequential.
+
 
 Record BASE (`git rev-parse HEAD`) before dispatching — the review package
 and fix-round diffs need it.

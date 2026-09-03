@@ -257,6 +257,7 @@ export const opencode: HarnessAdapter = {
     mcp: 'none',
     bootstrap: 'full',
   },
+  skillsOutputDir: '.opencode/skills',
   installDoc,
   emit(model: PluginModel): EmitResult {
     const warnings: string[] = []
