@@ -6,22 +6,39 @@
 // grouping, and ready-set computation from checkbox state.
 //
 // Verbs:
-//   check <plan.md>    Validate: task numbers unique, all depends_on resolve,
-//                      no cycle (Kahn), every task has Files/Consumes/Produces.
-//   waves <plan.md>    Print wave assignment (maximal parallel groups).
-//   next  <plan.md>    Print ready set (deps complete, own steps not all done).
+//   check  <plan.md>           Validate: task numbers unique, all depends_on
+//                              resolve, no cycle (Kahn), every task has
+//                              Files/Consumes/Produces.
+//   waves  <plan.md>           Print wave assignment (maximal parallel groups).
+//   next   <plan.md>           Print ready set (deps complete, own steps not
+//                              all done). When a governance sidecar exists,
+//                              also excludes quota-exhausted and wave-gated
+//                              tasks (advisory — the harness does not enforce).
+//   status <plan.md>           Print per-task quota usage and per-wave gate
+//                              state from the governance sidecar. Exits 0 even
+//                              when no sidecar exists.
+//   gate   <plan.md> <wave>    Record human approval for a wave transition.
+//                              Creates or updates the governance sidecar.
+//
+// Governance sidecar: <plan.md>.governance.json — optional JSON file that
+// sits alongside the plan. Schema:
+//   { quotas, gates, spend } — see verbStatus/verbGate for structure.
+// Advisory only ("nudge, not gate"): the scheduler stops dispatching, the
+// harness does not enforce. Matches the precedent in governance-marker-check.
 //
 // Same constraints as plan-set: Node built-ins only, ships as a plugin hook.
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const USAGE = `task-set: compute the intra-plan task DAG.
 
 Usage:
-  task-set check <plan.md>
-  task-set waves <plan.md>
-  task-set next  <plan.md>`;
+  task-set check  <plan.md>
+  task-set waves  <plan.md>
+  task-set next   <plan.md>
+  task-set status <plan.md>
+  task-set gate   <plan.md> <wave>`;
 
 function die(msg, code = 2) {
   process.stderr.write(`task-set: ${msg}\n`);
@@ -307,6 +324,102 @@ function verbWaves(planPath) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Governance sidecar.
+//
+// Optional JSON file at <planPath>.governance.json. Advisory only — the
+// scheduler stops dispatching, the harness does not enforce.
+
+function sidecarPath(planPath) {
+  return planPath + ".governance.json";
+}
+
+function readSidecar(planPath) {
+  const p = sidecarPath(planPath);
+  if (!existsSync(p)) return null;
+  try {
+    const raw = JSON.parse(readFileSync(p, "utf8"));
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) return raw;
+  } catch (_e) {
+    // Malformed sidecar is treated as absent — fail open.
+  }
+  return null;
+}
+
+function writeSidecar(planPath, data) {
+  writeFileSync(sidecarPath(planPath), JSON.stringify(data, null, 2) + "\n");
+}
+
+// ---------------------------------------------------------------------------
+// status verb: print quota usage and gate state from the governance sidecar.
+
+function verbStatus(planPath) {
+  const sidecar = readSidecar(planPath);
+  if (!sidecar) {
+    process.stdout.write("No governance sidecar found.\n");
+    return;
+  }
+
+  const text = readFileSync(planPath, "utf8");
+  const { tasks } = parsePlan(text);
+  const waves = tasks.length > 0 ? computeWaves(tasks.filter((t) => t.blockedBy === null)) : [];
+
+  // Per-task quota usage.
+  const quotas = sidecar.quotas && typeof sidecar.quotas === "object" ? sidecar.quotas : {};
+  const spend = sidecar.spend && typeof sidecar.spend === "object" ? sidecar.spend : {};
+
+  process.stdout.write("## Task quotas\n");
+  for (const t of tasks) {
+    const q = quotas[String(t.num)];
+    const s = spend[String(t.num)];
+    if (!q && !s) continue;
+    const tc = s ? s.toolCalls || 0 : 0;
+    const te = s ? s.tokenEstimate || 0 : 0;
+    const maxTc = q ? q.maxToolCalls : "-";
+    const maxTe = q ? q.maxTokenEstimate : "-";
+    process.stdout.write(`task ${t.num}: toolCalls ${tc}/${maxTc}, tokenEstimate ${te}/${maxTe}\n`);
+  }
+
+  // Per-wave gate state.
+  const gates = sidecar.gates && typeof sidecar.gates === "object" ? sidecar.gates : {};
+
+  process.stdout.write("## Wave gates\n");
+  for (let i = 0; i < waves.length; i++) {
+    const waveNum = String(i + 1);
+    const g = gates[waveNum];
+    if (g && g.approved) {
+      process.stdout.write(`wave ${waveNum}: approved (${g.approvedAt || "unknown"} by ${g.approvedBy || "unknown"})\n`);
+    } else if (g) {
+      process.stdout.write(`wave ${waveNum}: pending\n`);
+    } else {
+      process.stdout.write(`wave ${waveNum}: no gate\n`);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// gate verb: record human approval for a wave transition.
+
+function verbGate(planPath, waveArg) {
+  const waveNum = parseInt(waveArg, 10);
+  if (Number.isNaN(waveNum) || waveNum < 1) die(`invalid wave number: ${waveArg}`);
+
+  const sidecar = readSidecar(planPath) || { quotas: {}, gates: {}, spend: {} };
+  if (!sidecar.gates || typeof sidecar.gates !== "object") sidecar.gates = {};
+
+  sidecar.gates[String(waveNum)] = {
+    approved: true,
+    approvedAt: new Date().toISOString(),
+    approvedBy: "human",
+  };
+
+  writeSidecar(planPath, sidecar);
+  process.stdout.write(`task-set: wave ${waveNum} approved.\n`);
+}
+
+// ---------------------------------------------------------------------------
+// next verb (governance-aware).
+
 function verbNext(planPath) {
   const text = readFileSync(planPath, "utf8");
   const { tasks } = parsePlan(text);
@@ -333,7 +446,49 @@ function verbNext(planPath) {
     if (allDepsComplete) ready.push(t.num);
   }
 
-  for (const num of ready) process.stdout.write(num + "\n");
+  // Governance filtering (advisory — nudge, not gate).
+  const sidecar = readSidecar(planPath);
+  let filtered = ready;
+  if (sidecar) {
+    const quotas = sidecar.quotas && typeof sidecar.quotas === "object" ? sidecar.quotas : {};
+    const spend = sidecar.spend && typeof sidecar.spend === "object" ? sidecar.spend : {};
+    const gates = sidecar.gates && typeof sidecar.gates === "object" ? sidecar.gates : {};
+
+    // Build task-to-wave map for gate lookups.
+    const schedulable = tasks.filter((t) => t.blockedBy === null);
+    const waves = schedulable.length > 0 ? computeWaves(schedulable) : [];
+    const taskWaveMap = new Map();
+    for (let i = 0; i < waves.length; i++) {
+      for (const num of waves[i]) taskWaveMap.set(num, i + 1);
+    }
+
+    filtered = ready.filter((num) => {
+      const key = String(num);
+
+      // Quota exhaustion check.
+      const q = quotas[key];
+      const s = spend[key];
+      if (q && s) {
+        if (typeof q.maxToolCalls === "number" && typeof s.toolCalls === "number" && s.toolCalls >= q.maxToolCalls) {
+          return false;
+        }
+        if (typeof q.maxTokenEstimate === "number" && typeof s.tokenEstimate === "number" && s.tokenEstimate >= q.maxTokenEstimate) {
+          return false;
+        }
+      }
+
+      // Wave gate check.
+      const waveNum = taskWaveMap.get(num);
+      if (waveNum !== undefined) {
+        const g = gates[String(waveNum)];
+        if (g && !g.approved) return false;
+      }
+
+      return true;
+    });
+  }
+
+  for (const num of filtered) process.stdout.write(num + "\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -381,6 +536,20 @@ function main() {
     if (!planPath) die("usage: task-set next <plan.md>");
     if (!existsSync(planPath)) die(`plan not found: ${planPath}`);
     verbNext(resolve(planPath));
+    return;
+  }
+  if (verb === "status") {
+    if (!planPath) die("usage: task-set status <plan.md>");
+    if (!existsSync(planPath)) die(`plan not found: ${planPath}`);
+    verbStatus(resolve(planPath));
+    return;
+  }
+  if (verb === "gate") {
+    if (!planPath) die("usage: task-set gate <plan.md> <wave>");
+    if (!existsSync(planPath)) die(`plan not found: ${planPath}`);
+    const waveArg = argv[2];
+    if (!waveArg) die("usage: task-set gate <plan.md> <wave>");
+    verbGate(resolve(planPath), waveArg);
     return;
   }
   die(`unknown verb "${verb}"\n${USAGE}`);

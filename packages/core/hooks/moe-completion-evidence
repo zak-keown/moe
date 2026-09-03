@@ -219,6 +219,7 @@ for (let i = 0; i < transcriptLines.length; i++) {
 const evidence = [];
 const skillsFired = [];
 let lastAssistantText = '';
+let turnToolUseCount = 0;
 
 // Per-turn window: only assistant entries after the last human-user boundary
 // count toward evidence, skill-firings, and the completion-claim text
@@ -241,6 +242,7 @@ for (let i = lastHumanUserIndex + 1; i < transcriptLines.length; i++) {
     if (item.type === 'text' && typeof item.text === 'string') {
       lastAssistantText = item.text;
     } else if (item.type === 'tool_use') {
+      turnToolUseCount++;
       if (item.name === 'Skill') {
         const name = item.input && typeof item.input.skill === 'string' ? item.input.skill : '';
         if (typeof item.id === 'string') skillsFired.push({ id: item.id, name });
@@ -324,6 +326,36 @@ try {
 // claude-judge-continuation). Warning-only; the stop is never blocked.
 if (payload.warning) {
   process.stderr.write(`moe-completion-evidence: ${payload.warning}\n`);
+}
+
+// ------------------------------------------------- governance spend counter
+// When MOE_CURRENT_PLAN and MOE_CURRENT_TASK are set, increment the
+// governance sidecar's spend counters for the active task. Advisory only —
+// the sidecar is optional and a write failure is swallowed.
+{
+  const currentPlan = process.env.MOE_CURRENT_PLAN;
+  const currentTask = process.env.MOE_CURRENT_TASK;
+  if (currentPlan && currentTask) {
+    const sidecarFile = currentPlan + '.governance.json';
+    try {
+      if (fs.existsSync(sidecarFile)) {
+        const raw = JSON.parse(fs.readFileSync(sidecarFile, 'utf8'));
+        if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+          if (!raw.spend || typeof raw.spend !== 'object') raw.spend = {};
+          const key = String(currentTask);
+          const prior = raw.spend[key] && typeof raw.spend[key] === 'object' ? raw.spend[key] : {};
+          raw.spend[key] = {
+            toolCalls: (typeof prior.toolCalls === 'number' ? prior.toolCalls : 0) + turnToolUseCount,
+            tokenEstimate: typeof prior.tokenEstimate === 'number' ? prior.tokenEstimate : 0,
+            lastUpdatedAt: new Date().toISOString(),
+          };
+          fs.writeFileSync(sidecarFile, JSON.stringify(raw, null, 2) + '\n');
+        }
+      }
+    } catch (_e) {
+      // Best-effort. Never block the stop over a governance write failure.
+    }
+  }
 }
 
 process.exit(0);
