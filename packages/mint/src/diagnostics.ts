@@ -6,6 +6,7 @@ export interface MintDiagnostic {
   source: string
   field?: string
   path?: string
+  owners?: readonly string[]
   message: string
   action: string
 }
