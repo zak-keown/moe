@@ -1356,4 +1356,24 @@ describe("task-set", () => {
     expect(r.status).toBe(0);
     expect(r.stdout).toMatch(/task-set: compute the intra-plan task DAG/);
   });
+
+  it("waves groups independent disjoint tasks into one wave", () => {
+    const r = run(["waves", join(FIXTURES, "valid-no-deps-plan.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout.trim()).toBe("wave 1: 1, 2");
+  });
+
+  it("waves computes a diamond into three waves", () => {
+    const r = run(["waves", join(FIXTURES, "diamond-plan.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    const lines = r.stdout.trim().split(/\n/);
+    expect(lines).toEqual(["wave 1: 1", "wave 2: 2, 3", "wave 3: 4"]);
+  });
+
+  it("waves splits tasks that share a file into separate waves", () => {
+    const r = run(["waves", join(FIXTURES, "overlap-plan.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    const lines = r.stdout.trim().split(/\n/);
+    expect(lines).toEqual(["wave 1: 1", "wave 2: 2"]);
+  });
 });
