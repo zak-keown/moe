@@ -121,3 +121,47 @@ Plain English, concise, but the architectural nouns and verbs come straight from
 **Wins bullets** name the gain in glossary terms: *"locality: bugs concentrate in one module"*, *"leverage: one interface, N call sites"*, *"interface shrinks; implementation absorbs the wrappers"*. Don't write *"easier to maintain"* or *"cleaner code"*, because those terms aren't in the glossary and don't earn their place.
 
 No hedging, no throat-clearing, no "it's worth noting that…". If a sentence could be a bullet, make it a bullet. If a bullet could be cut, cut it. If a term isn't in the `/codebase-design` glossary, reach for one that is before inventing a new one.
+
+## Using the shared report template
+
+The scaffold above works, but for new reports the recommended starting point
+is `skills/_shared/report-base.html`. It provides:
+
+- Dark/light theme toggle with `data-theme` attribute and `prefers-color-scheme` support.
+- CSS custom properties for consistent theming.
+- Responsive grid layout with a sidebar nav.
+- Print stylesheet.
+- Mermaid from `cdnjs.cloudflare.com` (not the ESM import above).
+- Four named slots: `{{TITLE}}`, `{{NAV}}`, `{{CONTENT}}`, `{{SCRIPTS}}`.
+
+### Assembling a report with render-html.cjs
+
+Create a JSON file with the slot values:
+
+```json
+{
+  "title": "Architecture review for my-repo",
+  "nav": "<a href=\"#candidates\">Candidates</a><a href=\"#top-recommendation\">Top pick</a>",
+  "content": "<header>...</header><section id=\"candidates\">...</section>",
+  "scripts": ""
+}
+```
+
+Render:
+
+```sh
+node scripts/render-html.cjs --input data.json --output /tmp/review.html
+```
+
+Override the base template if needed:
+
+```sh
+node scripts/render-html.cjs --input data.json --output /tmp/review.html --template my-template.html
+```
+
+The `nav` and `scripts` slots are optional. Missing optional slots are replaced
+with empty strings. `title` and `content` are required.
+
+Mermaid diagrams work in the `{{CONTENT}}` slot as `<pre class="mermaid">`
+blocks, just like the Mermaid graph pattern described above. The template
+initializes Mermaid on load.

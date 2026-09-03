@@ -1,6 +1,12 @@
 ---
 name: writing-plans
 description: Use when you have a spec or requirements for a multi-step task, before touching code
+triggers: >-
+  Load when you have approved requirements or a design and need to
+  produce a multi-task implementation plan before coding. Do NOT load
+  for: initial exploration or design (use `brainstorming` first),
+  single-file changes, bug fixes, or when a plan document already
+  exists and needs execution (`subagent-driven-development`).
 ---
 
 # Writing Plans

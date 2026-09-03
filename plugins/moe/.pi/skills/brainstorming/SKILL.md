@@ -1,6 +1,12 @@
 ---
 name: brainstorming
 description: "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation."
+triggers: >-
+  Load when starting new creative work that needs design exploration
+  before implementation — new features, components, or behavioral
+  changes. Do NOT load for: bug fixes, refactoring existing code, test
+  additions, documentation edits, or tasks with an approved spec already
+  in hand (use `writing-plans` directly).
 ---
 
 # Brainstorming Ideas Into Designs

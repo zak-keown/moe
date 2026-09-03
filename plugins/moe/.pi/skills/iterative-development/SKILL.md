@@ -1,6 +1,12 @@
 ---
 name: iterative-development
 description: Use when implementing a project with a large, comprehensive, or ambiguous spec — extracts requirements with proof obligations, defines a walking skeleton with its first journey scenario, then loops through audited sprints that continuously build a behavior evidence corpus. Completion means passing evidence, not just finished stories.
+triggers: >-
+  Load when the spec is large (10+ files, 100+ requirements), ambiguous,
+  and you need audited sprints with behavior evidence. Do NOT load for:
+  well-scoped features with clear requirements (`writing-plans` then
+  `subagent-driven-development`), single tasks, bug fixes, or projects
+  where upfront planning has not yet been attempted.
 ---
 
 # Iterative Development
