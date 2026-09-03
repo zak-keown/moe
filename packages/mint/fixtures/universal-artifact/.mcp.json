@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "universal-fixture": {
+      "command": "node",
+      "args": ["./mcp/server.js"]
+    }
+  }
+}
