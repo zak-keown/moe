@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import type { JigContext } from "@bubstack/moe-jig/extension";
 import type { PlanTask } from "@bubstack/moe-jig/parser";
-import type { MoedexClient } from "./moedex.js";
+import type { ConsumerResult, MoedexClient } from "./moedex.js";
 import type { Finding } from "./report.js";
 
 export interface ValidateOpts {
@@ -54,12 +54,18 @@ export async function validatePlanAgainstGraph(
       }
     }
 
+    // Pre-compute consumers for every task — one MCP call per task, reused
+    // across Checks 2 and 3, checked bidirectionally.
+    const consumerCache = new Map<number, ConsumerResult>();
+    for (const t of tasks) {
+      if (t.files.length > 0) {
+        consumerCache.set(t.num, await client.traceConsumers(t.files));
+      }
+    }
+
     // --- Check 2: Missing edges ---
     // For each pair of tasks, check if their file sets are coupled in the
-    // call graph but have no depends_on edge.
-    // NOTE: asymmetric — traceConsumers(a.files) detects "b consumes a" but
-    // not "a consumes b". The j > i loop means the reverse is never checked.
-    // A bidirectional check is deferred to a follow-up.
+    // call graph in either direction but have no depends_on edge.
     const depSet = new Map<number, Set<number>>();
     for (const t of tasks) {
       depSet.set(t.num, new Set(t.dependsOn));
@@ -67,9 +73,6 @@ export async function validatePlanAgainstGraph(
 
     for (let i = 0; i < tasks.length; i++) {
       const a = tasks[i]!;
-      // Hoisted out of the inner loop: depends only on `a`, so compute it
-      // once per `a` instead of once per (a, b) pair.
-      const consumers = await client.traceConsumers(a.files);
 
       for (let j = i + 1; j < tasks.length; j++) {
         const b = tasks[j]!;
@@ -78,11 +81,16 @@ export async function validatePlanAgainstGraph(
         const bDepA = depSet.get(b.num)?.has(a.num) ?? false;
         if (aDepB || bDepA) continue;
 
-        const coupled = consumers.results.some(
-          (r) => r.score >= 0.5 && b.files.includes(r.rel_path),
-        );
+        const bConsumesA =
+          consumerCache
+            .get(a.num)
+            ?.results.some((r) => r.score >= 0.5 && b.files.includes(r.rel_path)) ?? false;
+        const aConsumesB =
+          consumerCache
+            .get(b.num)
+            ?.results.some((r) => r.score >= 0.5 && a.files.includes(r.rel_path)) ?? false;
 
-        if (coupled) {
+        if (bConsumesA || aConsumesB) {
           findings.push({
             check: "missing-edge",
             severity: "warning",
@@ -94,7 +102,7 @@ export async function validatePlanAgainstGraph(
       }
     }
 
-    // --- Check 3: Wave conflicts (same asymmetry as Check 2) ---
+    // --- Check 3: Wave conflicts ---
     const schedulable = tasks.filter((t) => t.blockedBy === null);
     if (schedulable.length > 1) {
       const waves = ctx.computeWaves(schedulable);
@@ -104,17 +112,20 @@ export async function validatePlanAgainstGraph(
       for (const wave of waves) {
         for (let i = 0; i < wave.length; i++) {
           const a = taskByNum.get(wave[i]!)!;
-          // Hoisted out of the inner loop: depends only on `a`.
-          const consumers = await client.traceConsumers(a.files);
 
           for (let j = i + 1; j < wave.length; j++) {
             const b = taskByNum.get(wave[j]!)!;
 
-            const coupled = consumers.results.some(
-              (r) => r.score >= 0.5 && b.files.includes(r.rel_path),
-            );
+            const bConsumesA =
+              consumerCache
+                .get(a.num)
+                ?.results.some((r) => r.score >= 0.5 && b.files.includes(r.rel_path)) ?? false;
+            const aConsumesB =
+              consumerCache
+                .get(b.num)
+                ?.results.some((r) => r.score >= 0.5 && a.files.includes(r.rel_path)) ?? false;
 
-            if (coupled) {
+            if (bConsumesA || aConsumesB) {
               findings.push({
                 check: "wave-conflict",
                 severity: "warning",
