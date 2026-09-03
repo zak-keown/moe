@@ -253,6 +253,43 @@ describe("aggregate_stories", () => {
     );
   });
 
+  it("prints argparse-compatible help", () => {
+    const result = runHelper(HELPER, ["--help"]);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe(
+      [
+        `usage: ${PROGRAM} [-h] -o OUTPUT_DIR json_files [json_files ...]`,
+        "",
+        "Aggregate stories into per-epic files",
+        "",
+        "positional arguments:",
+        "  json_files            Extracted story JSON files",
+        "",
+        "options:",
+        "  -h, --help            show this help message and exit",
+        "  -o, --output-dir OUTPUT_DIR",
+        "                        Directory to write per-epic files (created if needed)",
+        "",
+      ].join("\n"),
+    );
+  });
+
+  it.each(["-o", "--output-dir"])(
+    "reports an argparse-compatible missing value for %s",
+    (option) => {
+      const result = runHelper(HELPER, [option, "--help"]);
+
+      expect(result.status).toBe(2);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toBe(
+        `usage: ${PROGRAM} [-h] -o OUTPUT_DIR json_files [json_files ...]\n` +
+          `${PROGRAM}: error: argument -o/--output-dir: expected one argument\n`,
+      );
+    },
+  );
+
   it("returns exit 2 when an input file is missing", () => {
     const root = tempDir("aggregate-stories-missing-");
     const output = join(root, "requirements");
