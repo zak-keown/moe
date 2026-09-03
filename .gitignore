@@ -49,3 +49,13 @@ py/proof/examples/*/runs/
 # pnpm content-addressable store — created locally when the store path is
 # resolved inside the repo (a pnpm 11 default on some setups). Never source.
 .pnpm-store/
+
+# Interrupted Mint generation state. These are the only nonce-bearing siblings
+# the swap protocol owns; do not broaden these patterns to arbitrary siblings.
+/plugins.next-*
+/plugins.backup-*
+/.claude-plugin/marketplace.next-*.json
+/.claude-plugin/marketplace.backup-*.json
+/docs/moe/generated/plugin-catalog.next-*.md
+/docs/moe/generated/plugin-catalog.backup-*.md
+/.moe-mint-generation-*.json
