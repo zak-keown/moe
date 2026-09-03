@@ -58,3 +58,38 @@ describe('jig-worktree-guard', () => {
     expect(result.code).toBe(0)
   })
 })
+
+describe('jig-review-format-guard', () => {
+  it('blocks a malformed fix(review) commit message', () => {
+    const result = runHook('jig-review-format-guard', {
+      tool_name: 'Bash',
+      tool_input: { command: 'git commit -m "fix(review): bad format"' },
+    })
+    expect(result.code).not.toBe(0)
+    expect(result.stderr).toContain('CR-')
+  })
+
+  it('passes a correctly formatted fix(review) commit', () => {
+    const result = runHook('jig-review-format-guard', {
+      tool_name: 'Bash',
+      tool_input: { command: 'git commit -m "fix(review): CR-001 — handle nil pointer"' },
+    })
+    expect(result.code).toBe(0)
+  })
+
+  it('passes non-commit commands through', () => {
+    const result = runHook('jig-review-format-guard', {
+      tool_name: 'Bash',
+      tool_input: { command: 'git push origin main' },
+    })
+    expect(result.code).toBe(0)
+  })
+
+  it('passes commits without fix(review) through', () => {
+    const result = runHook('jig-review-format-guard', {
+      tool_name: 'Bash',
+      tool_input: { command: 'git commit -m "feat: add new feature"' },
+    })
+    expect(result.code).toBe(0)
+  })
+})
