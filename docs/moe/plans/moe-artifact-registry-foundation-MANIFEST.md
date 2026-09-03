@@ -11,15 +11,15 @@ plans:
   - id: platform-registry
     plan: docs/moe/plans/2026-09-02-moe-platform-registry.md
     depends_on: []
-    status: pending
+    status: done
   - id: artifact-composition
     plan: docs/moe/plans/2026-09-02-moe-artifact-composition.md
     depends_on: [platform-registry]
-    status: pending
+    status: done
   - id: artifact-verification
     plan: docs/moe/plans/2026-09-02-moe-artifact-verification.md
     depends_on: [artifact-composition]
-    status: pending
+    status: done
   - id: release-catalog-and-promotion
     plan: docs/moe/plans/2026-09-02-moe-release-catalog-and-promotion.md
     depends_on: [artifact-verification]
