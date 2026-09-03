@@ -70,6 +70,8 @@ describe('agent-plugins-1.0 adapter', () => {
       hooks: 'none',
       mcp: 'full',
       bootstrap: 'none',
+      rules: 'none',
+      variables: 'none',
     })
   })
 })

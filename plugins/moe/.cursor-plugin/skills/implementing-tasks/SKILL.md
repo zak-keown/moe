@@ -33,6 +33,18 @@ There is no unisolated-parallel rung. Create and validate every worktree before
 dispatching any worker so a failed setup cannot produce a partially parallel
 group.
 
+Before creating a parallel group, record the controller state:
+
+```bash
+CONTROLLER_BRANCH=$(git branch --show-current)
+CONTROLLER_HEAD=$(git rev-parse HEAD)
+```
+
+Every worker in that group must branch from exactly `CONTROLLER_HEAD`. Record
+each owned worker path and branch before dispatch. A later group cannot start
+until the current group's reviewed commits have been integrated into the
+controller.
+
 ## Per-Task Cycle
 
 For each task in the provided list:
@@ -85,11 +97,34 @@ Following `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md`:
    - Re-dispatch fresh PAR code-quality pair
    - Repeat until ✅ approved
 
-### 5. Mark task complete
+### 5. Mark task reviewed
 
-Record the task as done. Move to the next task.
+Record the task as reviewed. In sequential mode it is also integrated and may
+be marked complete immediately. In parallel mode it remains pending integration
+until every worker in its group passes both review stages.
 
-After all tasks complete, return a per-task result list to the caller, including:
+## Integrate the Parallel Wave
+
+After every worker in a parallel group is reviewed:
+
+1. Return to the controller workspace and verify its branch and HEAD still
+   equal `CONTROLLER_BRANCH` and `CONTROLLER_HEAD`. If either moved, stop; a
+   concurrent change invalidated the recorded merge target.
+2. Merge each worker branch into the controller, one at a time. Stop on the
+   first conflict and preserve every worktree for investigation.
+3. Run the iteration's complete test set on the integrated controller HEAD.
+   Per-task evidence from separate branches does not prove the combined tree.
+4. When the integrated tests pass, remove each owned worker worktree, prune
+   stale registrations, and delete its merged worker branch. Never remove a
+   host-owned worktree or force removal of an unclean worktree.
+5. Mark the group's tasks complete and record the new controller HEAD. Use that
+   integrated HEAD as the base for the next group.
+
+The controller must contain every completed task before returning to
+`running-an-iteration`. Returning only per-task reports while commits remain on
+worker branches is a failed iteration, not successful parallel execution.
+
+After all tasks are integrated, return a per-task result list to the caller, including:
 - Per-task status
 - Scenarios added or updated per task
 - Evidence commands per task

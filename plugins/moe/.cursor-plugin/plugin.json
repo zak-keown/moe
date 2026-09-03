@@ -22,5 +22,11 @@
     "plugin-authoring"
   ],
   "skills": "./.cursor-plugin/skills/",
+  "category": "development",
+  "tags": [
+    "skills",
+    "workflow"
+  ],
+  "agents": "./agents/",
   "hooks": "./hooks/moe-mint/hooks-cursor.json"
 }

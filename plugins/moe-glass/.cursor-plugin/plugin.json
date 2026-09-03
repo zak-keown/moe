@@ -17,5 +17,11 @@
     "automation",
     "screenshots"
   ],
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "category": "development",
+  "tags": [
+    "browser",
+    "automation"
+  ],
+  "agents": "./agents/"
 }

@@ -1,0 +1,17 @@
+{
+  "name": "moe",
+  "owner": {
+    "name": "Zak Keown",
+    "email": "zak.keown@outlook.com"
+  },
+  "metadata": {
+    "description": "Recover a behavioral spec from a codebase that never had one."
+  },
+  "plugins": [
+    {
+      "name": "moe-backstory",
+      "source": "./",
+      "description": "Recover a behavioral spec from a codebase that never had one."
+    }
+  ]
+}

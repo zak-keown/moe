@@ -15,6 +15,8 @@ const fullSupport = {
   hooks: 'full',
   mcp: 'full',
   bootstrap: 'full',
+  rules: 'none',
+  variables: 'none',
 } as const
 
 function freshFixture(): string {

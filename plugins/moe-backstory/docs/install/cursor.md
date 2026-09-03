@@ -5,6 +5,7 @@
 ## What gets emitted
 
 - `.cursor-plugin/plugin.json`
+- `.cursor-plugin/marketplace.json`
 
 ## Installing
 

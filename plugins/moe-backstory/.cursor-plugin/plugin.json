@@ -17,5 +17,12 @@
     "archaeology",
     "documentation"
   ],
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "category": "development",
+  "tags": [
+    "analysis",
+    "documentation"
+  ],
+  "commands": "./commands/",
+  "agents": "./agents/"
 }

@@ -5,6 +5,7 @@
 ## What gets emitted
 
 - `.cursor-plugin/plugin.json`
+- `.cursor-plugin/marketplace.json`
 - the `hooks/moe-mint` bootstrap hook and its `hooks/moe-mint/hooks-cursor.json`
 
 ## Installing

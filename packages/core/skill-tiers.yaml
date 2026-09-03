@@ -295,6 +295,14 @@ authored:
       codebase. Dispatches one agent per doc type; each reads code before
       writing prose. Invoked deliberately with /docs-update.
 
+  moe-discipline:
+    from: moe
+    why: >-
+      Shapes HOW the agent works during implementation — minimal changes,
+      edit-over-create, proportional responses, scope containment — rather
+      than WHAT it does. Complements `verification-before-completion`, which
+      fires at completion time, by firing alongside the task itself.
+
 
 # Not a skill: skills/_shared/ holds the three PAR reference documents the
 # iterative-development cluster reads at runtime. It carries no SKILL.md, so

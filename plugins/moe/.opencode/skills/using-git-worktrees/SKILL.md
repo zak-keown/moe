@@ -9,9 +9,36 @@ description: Use when starting feature work that needs isolation from current wo
 
 Ensure work happens in an isolated workspace. Prefer your platform's native worktree tools. Fall back to manual git worktrees only when no native tool is available.
 
-**Core principle:** Detect existing isolation first. Then use native tools. Then fall back to git. Never fight the harness.
+**Core principle:** Identify the work lifecycle and pin its base first. Then
+detect existing isolation, use native tools, or fall back to git. Never let the
+caller's current `HEAD` choose a new branch's base implicitly.
 
 **Announce at start:** "I'm using the using-git-worktrees skill to set up an isolated workspace."
+
+## Lifecycle Gate (before Step 0)
+
+Before inspecting the checkout, establish four values:
+
+- `WORKSPACE_ID` — stable identity for this project, feature, or plan;
+- `WORK_MODE` — `new` or `continue`;
+- `BASE_BRANCH` — the branch this work must eventually merge into; and
+- `BASE_SHA` — the verified commit from which a new worktree must fork.
+
+The plan or calling workflow should provide these values. For new work with no
+declared base, resolve the repository's configured default branch and confirm it
+with your human partner before creating anything. Then resolve the commit:
+
+```bash
+BASE_SHA=$(git rev-parse "${BASE_BRANCH}^{commit}")
+```
+
+Record `WORKSPACE_ID`, `BASE_BRANCH`, and `BASE_SHA` in the plan ledger or other
+durable workflow state. A branch name alone can move; a SHA alone does not
+preserve merge intent.
+
+`WORK_MODE=continue` is an explicit continuation declaration. It must name the
+expected existing work branch or detached workspace. Never infer continuation
+merely because the current directory is a linked worktree.
 
 ## Step 0: Detect Existing Isolation
 
@@ -30,7 +57,15 @@ BRANCH=$(git branch --show-current)
 git rev-parse --show-superproject-working-tree 2>/dev/null
 ```
 
-**If `GIT_DIR != GIT_COMMON` (and not a submodule):** You are already in a linked worktree. Skip to Step 2 (Project Setup). Do NOT create another worktree.
+**If `GIT_DIR != GIT_COMMON` (and not a submodule):** You are already in a
+linked worktree. Reuse it only when `WORK_MODE=continue` and its branch/workspace
+matches `WORKSPACE_ID`'s recorded state. Verify that `BASE_SHA` is the recorded
+base (or an ancestor when the base branch has advanced).
+
+For `WORK_MODE=new`, or when the recorded identity does not match, this is an
+unrelated linked worktree. Do not reuse it and do not branch from its `HEAD`.
+Create the new workspace from the repository's main checkout using the pinned
+`BASE_SHA` in Step 1.
 
 Report with branch state:
 - On a branch: "Already in isolated workspace at `<path>` on branch `<name>`."
@@ -46,50 +81,66 @@ Honor any existing declared preference without asking. If the user declines cons
 
 ## Step 1: Create Isolated Workspace
 
-**You have two mechanisms plus a branch-name step. Try them in this order.**
+**Choose the branch name first, then try the two creation mechanisms in order.**
 
-### 1a. Native Worktree Tools (preferred)
+### 1a. Branch Name
 
-The user has asked for an isolated workspace (Step 0 consent). Do you already have a way to create a worktree? It might be a tool with a name like `EnterWorktree`, `WorktreeCreate`, a `/worktree` command, or a `--worktree` flag. If you do, use it and skip to Step 2.
-
-Native tools handle directory placement, branch creation, and cleanup automatically. Using `git worktree add` when you have a native tool creates phantom state your harness can't see or manage.
-
-Only proceed to Step 1c if you have no native worktree tool available.
-
-### 1b. Branch Name
-
-**Runs whether Step 1a took over or Step 1c is next.** A native worktree tool
-still needs a branch name; the git fallback below takes one directly. Do this
-before either.
+A native worktree tool and the git fallback both need the work branch name.
+Derive it before creating either workspace.
 
 For repos on any other forge, use whatever convention that repo's `CONTRIBUTING`
 or `CODEOWNERS` documents; if there is none, `feature/<slug>` is a safe default.
 
+### 1b. Native Worktree Tools (preferred)
+
+The user has asked for an isolated workspace (Step 0 consent). Do you already have a way to create a worktree? It might be a tool with a name like `EnterWorktree`, `WorktreeCreate`, a `/worktree` command, or a `--worktree` flag. If you do, use it and skip to Step 2.
+
+Native tools handle directory placement, branch creation, and cleanup
+automatically, but they do not get to choose lineage. Pass `BASE_SHA` when the
+tool accepts a base. If it only branches from the caller's `HEAD`, invoke it
+only from a checkout whose `HEAD` equals `BASE_SHA`, then verify the created
+workspace's merge base. If neither is possible, do not silently stack the new
+work on the current branch; use the git fallback or report that the harness
+cannot create the requested workspace safely.
+
+Only proceed to Step 1c if you have no usable native worktree tool available.
+
 ### 1c. Git Worktree Fallback
 
-**Only use this if Step 1a does not apply** — you have no native worktree tool available. Create a worktree manually using git.
+**Only use this if Step 1b does not apply** — you have no native worktree tool available. Create a worktree manually using git.
 
 #### Directory Selection
 
-Follow this priority order. Explicit user preference always beats observed filesystem state.
+Resolve the primary checkout from the common Git directory so directory
+selection does not happen inside an unrelated linked worktree:
+
+```bash
+PRIMARY_ROOT=$(git -C "$GIT_COMMON/.." rev-parse --show-toplevel)
+```
+
+Follow this priority order under `PRIMARY_ROOT`. Explicit user preference
+always beats observed filesystem state.
 
 1. **Check your instructions for a declared worktree directory preference.** If the user has already specified one, use it without asking.
 
 2. **Check for an existing project-local worktree directory:**
    ```bash
-   ls -d .worktrees 2>/dev/null     # Preferred (hidden)
-   ls -d worktrees 2>/dev/null      # Alternative
+   ls -d "$PRIMARY_ROOT/.moe/worktrees" 2>/dev/null # Preferred
+   ls -d "$PRIMARY_ROOT/.worktrees" 2>/dev/null     # Legacy
+   ls -d "$PRIMARY_ROOT/worktrees" 2>/dev/null      # Alternative
    ```
-   If found, use it. If both exist, `.worktrees` wins.
+   If found, use the first match. `.moe/worktrees` wins over `.worktrees` wins over `worktrees`.
 
-3. **If there is no other guidance available**, default to `.worktrees/` at the project root.
+3. **If there is no other guidance available**, default to `.moe/worktrees/` at the project root.
 
 #### Safety Verification (project-local directories only)
 
 **MUST verify directory is ignored before creating worktree:**
 
 ```bash
-git check-ignore -q .worktrees 2>/dev/null || git check-ignore -q worktrees 2>/dev/null
+git -C "$PRIMARY_ROOT" check-ignore -q .moe/worktrees 2>/dev/null ||
+  git -C "$PRIMARY_ROOT" check-ignore -q .worktrees 2>/dev/null ||
+  git -C "$PRIMARY_ROOT" check-ignore -q worktrees 2>/dev/null
 ```
 
 **If NOT ignored:** Add to .gitignore, commit the change, then proceed.
@@ -102,8 +153,10 @@ git check-ignore -q .worktrees 2>/dev/null || git check-ignore -q worktrees 2>/d
 # Determine path based on chosen location
 path="$LOCATION/$BRANCH_NAME"
 
-git worktree add "$path" -b "$BRANCH_NAME"
+git -C "$PRIMARY_ROOT" worktree add "$path" -b "$BRANCH_NAME" "$BASE_SHA"
 cd "$path"
+
+test "$(git merge-base HEAD "$BASE_SHA")" = "$BASE_SHA"
 ```
 
 **Sandbox fallback:** If `git worktree add` fails with a permission error (sandbox denial), tell the user the sandbox blocked worktree creation and you're working in the current directory instead. Then run setup and baseline tests in place.
@@ -116,7 +169,7 @@ OWN linked worktree. Two workers writing into one checkout defeats the
 isolation the gate is built on and reintroduces the exact `(conflicts)`
 hazard the parallel-implementation ban was rooted in.
 
-For each worker, follow Step 1a first — use the harness's native worktree tool
+For each worker, follow Step 1b first — use the harness's native worktree tool
 when one is available, per the "never fight the harness" rule. Only fall back
 to `git worktree add` (Step 1c) when no native tool is offered. Whichever path
 you take, create the worktree BEFORE dispatch: the worker's brief hands it a
@@ -194,17 +247,20 @@ Ready to implement <feature-name>
 
 | Situation | Action |
 |-----------|--------|
-| Already in linked worktree | Skip creation (Step 0) |
+| New work | Record `WORKSPACE_ID`, `BASE_BRANCH`, and `BASE_SHA` before inspecting isolation |
+| Matching linked worktree + explicit continuation | Reuse it after verifying recorded identity and base |
+| Unrelated linked worktree | Never reuse its branch or implicit `HEAD` |
 | In a submodule | Treat as normal repo (Step 0 guard) |
-| Native worktree tool available | Use it (Step 1a) |
-| Branch name needed (any path) | Derive per Step 1b |
-| No native tool | Git worktree fallback (Step 1c) |
+| Branch name needed (any path) | Derive per Step 1a |
+| Native worktree tool available | Use it with the pinned base (Step 1b) |
+| No usable native tool | Git worktree fallback (Step 1c) |
 | Parallel worker dispatch | Validate pairwise-unique linked Git dirs for every worker (Step 1d) |
 | Any parallel worktree setup failure | Dispatch the entire wave sequentially (Step 1d) |
-| `.worktrees/` exists | Use it (verify ignored) |
+| `.moe/worktrees/` exists | Use it (verify ignored) |
+| `.worktrees/` exists | Use it — legacy (verify ignored) |
 | `worktrees/` exists | Use it (verify ignored) |
-| Both exist | Use `.worktrees/` |
-| Neither exists | Check instruction file, then default `.worktrees/` |
+| Multiple exist | `.moe/worktrees/` wins over `.worktrees/` wins over `worktrees/` |
+| None exists | Check instruction file, then default `.moe/worktrees/` |
 | Directory not ignored | Add to .gitignore + commit |
 | Permission error on create | Sandbox fallback, work in place |
 | Tests fail during baseline | Report failures + ask |
@@ -217,5 +273,5 @@ Ready to implement <feature-name>
 | "I'm obviously not in a worktree — no need to check" | Run Step 0. Harness-created isolation and submodules both fool eyeballing; the detection commands settle it. |
 | "`git worktree add` is quicker than hunting for a native tool" | A native tool (e.g. `EnterWorktree`) owns placement, branching, and cleanup. Bypassing it is the #1 mistake — it creates phantom state your harness can't see or manage. |
 | "The worktree directory is surely ignored already" | Run `git check-ignore`. An unignored worktree directory commits the whole tree into the repo. |
-| "Any directory name works" | Explicit instructions beat an existing project-local directory, which beats the `.worktrees/` default. |
+| "Any directory name works" | Explicit instructions beat an existing project-local directory, which beats the `.moe/worktrees/` default. |
 | "The workspace is fresh — baseline tests can wait" | A dirty baseline makes every later failure ambiguous. Run the tests now; proceeding past failures is your human partner's call. |

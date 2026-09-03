@@ -161,6 +161,8 @@ export const claudeCode: HarnessAdapter = {
     hooks: 'full',
     mcp: 'full',
     bootstrap: 'full',
+    rules: 'none',
+    variables: 'none',
   },
   skillsOutputDir: undefined,
   installDoc,
