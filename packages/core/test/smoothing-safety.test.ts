@@ -35,6 +35,26 @@ describe("shell safety", () => {
   });
 
   it.each([
+    "git diff --ext-diff",
+    "git diff --textconv",
+    "git log --ext-diff",
+    "git show --textconv",
+    "git diff --output=status.txt",
+    "git log --unsupported-option",
+  ])("does not emit parser output for unsafe catalog arguments in %s", (command) => {
+    expect(parseConservativeShell(command)).toBeNull();
+  });
+
+  it("emits parser output for an allowlisted exact Claude read form", () => {
+    expect(parseConservativeShell("git diff --stat HEAD")).toEqual([
+      "git",
+      "diff",
+      "--stat",
+      "HEAD",
+    ]);
+  });
+
+  it.each([
     [["git", "status"], true, true],
     [["git", "add", "src/index.ts"], true, false],
     [["git", "push"], false, false],
