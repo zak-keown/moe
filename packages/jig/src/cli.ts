@@ -2,7 +2,7 @@
 import { realpathSync } from "node:fs";
 import { Command, CommanderError } from "commander";
 import { planInit, specInit } from "./plan.js";
-import { reviewStamp } from "./review.js";
+import { commitReviewFix, reviewStamp } from "./review.js";
 import { worktreeCreate, worktreeRemove, worktreeValidate } from "./worktree.js";
 
 const program = new Command()
@@ -84,6 +84,21 @@ review
   .argument("<fixing-sha>", "SHA of the commit that addressed the finding")
   .action((crId: string, fixingSha: string) => {
     const sha = reviewStamp(crId, fixingSha);
+    console.log(sha);
+  });
+
+const commit = program
+  .command("commit")
+  .description("Structured commits with validated formats");
+
+commit
+  .command("review-fix")
+  .description("Commit staged changes as a review fix: fix(review): CR-### — <title>")
+  .argument("<cr-id>", "code-review identifier (CR-###)")
+  .argument("<title...>", "one-line description of the fix")
+  .action((crId: string, titleParts: string[]) => {
+    const title = titleParts.join(" ");
+    const sha = commitReviewFix(crId, title);
     console.log(sha);
   });
 
