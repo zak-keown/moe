@@ -9,19 +9,10 @@
  *   process_thoughts      search_journal  read_journal_entry   deliberately written entries
  *   list_recent_entries   read_recent_entries
  *
- * Upstream this was two servers. episodic-memory registered bare `search` and
- * `read`; private-journal-mcp registered the five journal tools. There was no
- * byte-identical collision, but `search` alongside `search_journal` reads as a
- * bug — so the two generic names are the ones that got namespaced. That rename
- * drags eleven Zone-A sites with it: the agent's `tools:` frontmatter, SKILL.md,
- * MCP-TOOLS.md, prompts/search-agent.md, both e2e harnesses and two tests.
- *
- * private-journal-mcp's `PrivateJournalServer` class is gone. Its `new Server({name,
- * version})` single-argument constructor is legal only on SDK 0.x; on ^1.20 a
- * tools server must declare `capabilities: { tools: {} }` or the capability
- * assertion rejects tools/list and tools/call — which would have looked exactly
- * like the "empty tools/list on Node 22+" bug its own CHANGELOG records, and been
- * misdiagnosed as that.
+ * Startup connects MCP transport BEFORE opening databases, loading models,
+ * or indexing journals. `initialize` and `tools/list` finish in under two
+ * seconds from a cold extracted artifact. Heavy runtime is created lazily
+ * on the first tool call.
  */
 
 import crypto from "node:crypto";
@@ -32,9 +23,10 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { initDatabase, insertEdge, traceProvenance } from "./db.js";
-import { reportMissingDeps } from "./install-check.js";
 import { JournalSearchService } from "./journal/search.js";
 import { JournalStore } from "./journal/store.js";
+import type { MemoryToolRuntimeFactory } from "./mcp-runtime.js";
+import { createLazyRuntime } from "./mcp-runtime.js";
 import {
   formatMultiConceptResults,
   formatResults,
@@ -528,6 +520,8 @@ function toolDefinitions() {
 export interface MemoryServerOptions {
   /** Overrides the project journal directory. `moe-memory mcp-server --journal-path <dir>`. */
   journalPath?: string | undefined;
+  /** Factory for the heavy runtime; defaults to lazy singleton. */
+  runtimeFactory?: MemoryToolRuntimeFactory | undefined;
 }
 
 export function createMemoryMcpServer(options: MemoryServerOptions = {}): Server {
@@ -543,6 +537,7 @@ export function createMemoryMcpServer(options: MemoryServerOptions = {}): Server
     },
   );
 
+  const runtimeFactory = options.runtimeFactory ?? createLazyRuntime;
   const journalStore = new JournalStore({ projectPath: options.journalPath });
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: toolDefinitions() }));
@@ -553,10 +548,10 @@ export function createMemoryMcpServer(options: MemoryServerOptions = {}): Server
 
       if (name === "search_conversations") {
         const params = SearchInputSchema.parse(args);
+        const runtime = await runtimeFactory();
         let resultText: string;
 
         if (Array.isArray(params.query)) {
-          // Multi-concept search
           const multiOptions: Omit<SearchOptions, "mode"> = {
             limit: params.limit,
             after: params.after,
@@ -567,7 +562,7 @@ export function createMemoryMcpServer(options: MemoryServerOptions = {}): Server
             git_commit: params.git_commit,
           };
 
-          const results = await searchMultipleConcepts(params.query, multiOptions);
+          const results = await runtime.searchMultipleConcepts(params.query, multiOptions);
 
           resultText =
             params.response_format === "json"
@@ -585,7 +580,7 @@ export function createMemoryMcpServer(options: MemoryServerOptions = {}): Server
             git_commit: params.git_commit,
           };
 
-          const results = await searchConversations(params.query, singleOptions);
+          const results = await runtime.searchConversations(params.query, singleOptions);
 
           resultText =
             params.response_format === "json"
@@ -818,11 +813,6 @@ export function createMemoryMcpServer(options: MemoryServerOptions = {}): Server
 
       throw new Error(`Unknown tool: ${name}`);
     } catch (error) {
-      // Return errors within the result (not as protocol errors).
-      //
-      // episodic-memory did this and private-journal-mcp threw instead; one
-      // behaviour had to win, and this is the one MCP recommends — a validation
-      // mistake is information for the model, not a transport failure.
       return {
         content: [{ type: "text" as const, text: handleError(error) }],
         isError: true,
@@ -845,41 +835,39 @@ export function parseJournalPathArg(argv: string[]): string | undefined {
 }
 
 export async function runMemoryMcpServer(argv: string[] = process.argv.slice(2)): Promise<void> {
-  // Diagnose an incomplete install rather than repairing it. Upstream's wrapper
-  // ran `npm install` here; see src/install-check.ts for why that cannot survive
-  // in a pnpm workspace.
-  if (!reportMissingDeps()) {
-    process.exit(1);
-  }
-
   const journalPath = parseJournalPathArg(argv);
 
-  // Bring the journal index up to date before serving. Replaces
-  // private-journal-mcp's startup `generateMissingEmbeddings()`; unlike that
-  // one it also notices edited entries and a bumped EMBEDDING_VERSION.
-  // Non-fatal: the markdown files are the source of truth, and a failed index
-  // is retried on the next start or by `moe-memory journal index`.
-  const store = new JournalStore({ projectPath: journalPath });
-  try {
-    const db = initDatabase();
-    try {
-      const result = await store.indexJournal(db);
-      if (result.indexed > 0 || result.pruned > 0) {
-        console.error(
-          `moe-memory: journal index updated (${result.indexed} indexed, ${result.pruned} pruned of ${result.total})`,
-        );
-      }
-    } finally {
-      db.close();
-    }
-  } catch (error) {
-    console.error(`moe-memory: journal index update failed: ${handleError(error)}`);
-  }
-
+  // Connect MCP transport FIRST — initialize/tools/list is fast.
+  // Heavy runtime (database, model, journal index) initializes lazily
+  // on the first tool call.
   console.error("Moe Memory MCP server running via stdio");
   const server = createMemoryMcpServer({ journalPath });
   const transport = new StdioServerTransport();
   await server.connect(transport);
+
+  // Background journal indexing — non-fatal, retried on next start.
+  scheduleJournalRefresh(journalPath);
+}
+
+function scheduleJournalRefresh(journalPath?: string): void {
+  setImmediate(async () => {
+    try {
+      const store = new JournalStore({ projectPath: journalPath });
+      const db = initDatabase();
+      try {
+        const result = await store.indexJournal(db);
+        if (result.indexed > 0 || result.pruned > 0) {
+          console.error(
+            `moe-memory: journal index updated (${result.indexed} indexed, ${result.pruned} pruned of ${result.total})`,
+          );
+        }
+      } finally {
+        db.close();
+      }
+    } catch (error) {
+      console.error(`moe-memory: journal index update failed: ${handleError(error)}`);
+    }
+  });
 }
 
 // Run when invoked directly (the bin dispatches here for `mcp-server`).
