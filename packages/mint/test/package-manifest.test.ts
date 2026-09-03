@@ -1,8 +1,10 @@
 import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { MintError, type MintDiagnostic } from '../src/diagnostics.js'
 import type { MintConfig } from '../src/config.js'
+import { loadConfig } from '../src/config.js'
 import type { AdapterPackageContribution } from '../src/adapters/types.js'
 import {
   composePackageManifest,
@@ -60,6 +62,7 @@ function compose(
   sourcePatch: Readonly<Record<string, unknown>> = {},
   contributions: readonly AdapterPackageContribution[] = [],
   artifactPaths: ReadonlySet<string> = completeArtifactPaths,
+  releaseVersions: Readonly<Record<string, string>> = {},
 ): Readonly<Record<string, unknown>> {
   return composePackageManifest({
     source: { ...metadataSource, ...sourcePatch },
@@ -67,6 +70,7 @@ function compose(
     contributions,
     artifactPaths,
     registryUrl: 'https://registry.npmjs.org/publish?ignored=true',
+    releaseVersions,
   })
 }
 
@@ -381,17 +385,25 @@ describe('composePackageManifest', () => {
     ['packageManager', 'pnpm@11.23.0'],
     ['overrides', { dependency: '0.0.0' }],
     ['pnpm', { onlyBuiltDependencies: ['dependency'] }],
-  ])('omits source-owned development field %s', (field, value) => {
+  ])('does not inherit source field %s', (field, value) => {
     const manifest = compose({ [field]: value, main: './dist/index.js' })
     expect(manifest).not.toHaveProperty(field)
+  })
+
+  it('replaces source files and publishConfig with compositor and platform authority', () => {
+    expect(compose({
+      files: ['source-only'],
+      publishConfig: { access: 'restricted', registry: 'https://untrusted.example' },
+    })).toMatchObject({
+      files: expect.not.arrayContaining(['source-only']),
+      publishConfig: { access: 'public', registry: 'https://registry.npmjs.org' },
+    })
   })
 
   it.each([
     ['bundledDependencies', ['dependency']],
     ['bundleDependencies', ['dependency']],
     ['unclassifiedField', { smuggled: true }],
-    ['files', ['dist']],
-    ['publishConfig', { access: 'restricted' }],
     ['pi', { extensions: ['./foreign.ts'] }],
   ])('rejects source field %s because it has no source authority', (field, value) => {
     expectFailure(() => compose({ [field]: value }), {
@@ -422,6 +434,78 @@ describe('composePackageManifest', () => {
     expect(compose({}, [], new Set(['package.json', 'dist/index.js']))).toMatchObject({
       files: ['.moe/artifact.json', 'dist/index.js'],
     })
+  })
+
+  it.each([
+    ['dependencies', 'workspace:*', '2.3.4'],
+    ['dependencies', 'workspace:^', '^2.3.4'],
+    ['dependencies', 'workspace:~', '~2.3.4'],
+    ['optionalDependencies', 'workspace:*', '2.3.4'],
+    ['optionalDependencies', 'workspace:^', '^2.3.4'],
+    ['optionalDependencies', 'workspace:~', '~2.3.4'],
+    ['peerDependencies', 'workspace:*', '2.3.4'],
+    ['peerDependencies', 'workspace:^', '^2.3.4'],
+    ['peerDependencies', 'workspace:~', '~2.3.4'],
+  ] as const)('resolves %s %s from the release version map', (field, protocol, expected) => {
+    expect(compose(
+      { [field]: { '@bubstack/runtime': protocol } },
+      [],
+      completeArtifactPaths,
+      { '@bubstack/runtime': '2.3.4' },
+    )).toHaveProperty(`${field}.@bubstack/runtime`, expected)
+  })
+
+  it.each([
+    ['missing release version', 'workspace:*', {}, 'PACKAGE_WORKSPACE_VERSION_MISSING'],
+    ['invalid release version', 'workspace:*', { '@bubstack/runtime': 'next' }, 'PACKAGE_WORKSPACE_VERSION_INVALID'],
+    ['unsupported relative form', 'workspace:../runtime', { '@bubstack/runtime': '2.3.4' }, 'PACKAGE_WORKSPACE_PROTOCOL_UNSUPPORTED'],
+    ['unsupported explicit range', 'workspace:>=2', { '@bubstack/runtime': '2.3.4' }, 'PACKAGE_WORKSPACE_PROTOCOL_UNSUPPORTED'],
+  ])('rejects %s', (_name, protocol, releaseVersions, code) => {
+    expectFailure(() => compose(
+      { dependencies: { '@bubstack/runtime': protocol } },
+      [],
+      completeArtifactPaths,
+      releaseVersions,
+    ), { code, field: 'dependencies.@bubstack/runtime' })
+  })
+
+  it('composes all six real platform source manifests while replacing their files and publishConfig', () => {
+    const repoRoot = resolve(fileURLToPath(new URL('../../../', import.meta.url)))
+    const packages = [
+      ['backstory', 'moe-backstory.yaml'],
+      ['core', 'moe.yaml'],
+      ['crew', 'moe-crew.yaml'],
+      ['glass', 'moe-glass.yaml'],
+      ['memory', 'moe-memory.yaml'],
+      ['statusline', 'moe-statusline.yaml'],
+    ] as const
+
+    for (const [packageName, configFile] of packages) {
+      const packageRoot = resolve(repoRoot, 'packages', packageName)
+      const source = JSON.parse(readFileSync(resolve(packageRoot, 'package.json'), 'utf8')) as Record<string, unknown>
+      const config = loadConfig(packageRoot, `mint/${configFile}`)
+      const referencedFiles = new Set<string>(['README.md'])
+      for (const field of ['main', 'types'] as const) {
+        if (typeof source[field] === 'string') referencedFiles.add(source[field].replace(/^\.\//, ''))
+      }
+      if (typeof source.bin === 'string') referencedFiles.add(source.bin.replace(/^\.\//, ''))
+      else if (source.bin && typeof source.bin === 'object') {
+        for (const target of Object.values(source.bin)) {
+          if (typeof target === 'string') referencedFiles.add(target.replace(/^\.\//, ''))
+        }
+      }
+
+      const manifest = composePackageManifest({
+        source,
+        config,
+        contributions: [],
+        artifactPaths: referencedFiles,
+        registryUrl: 'https://registry.npmjs.org',
+        releaseVersions: {},
+      })
+      expect(manifest.files).toEqual(['.moe/artifact.json', ...referencedFiles].sort())
+      expect(manifest.publishConfig).toEqual({ access: 'public', registry: 'https://registry.npmjs.org' })
+    }
   })
 })
 
@@ -459,5 +543,49 @@ describe('validateManifestReferences', () => {
     expectFailure(() => validateManifestReferences({ main: './.moe/other.json' }, new Set()), {
       code: 'PACKAGE_REFERENCE_MISSING', field: 'main',
     })
+  })
+
+  it.each([
+    ['main directory', { main: './dist' }, 'main'],
+    ['types directory', { types: './dist' }, 'types'],
+    ['bin directory', { bin: './dist' }, 'bin'],
+    ['OpenCode server directory', { exports: { './server': './dist' } }, 'exports../server'],
+  ])('rejects a descendant-only match for %s', (_name, manifest, field) => {
+    expectFailure(() => validateManifestReferences(manifest, new Set(['dist/index.js'])), {
+      code: 'PACKAGE_REFERENCE_MISSING', field,
+    })
+  })
+
+  it.each([
+    ['main', { main: './dist/*.js' }, 'main'],
+    ['types', { types: './dist/*.d.ts' }, 'types'],
+    ['bin', { bin: './dist/*.js' }, 'bin'],
+    ['non-pattern export', { exports: { '.': './dist/*.js' } }, 'exports..'],
+  ])('rejects wildcard syntax in non-pattern %s', (_name, manifest, field) => {
+    expectFailure(() => validateManifestReferences(manifest, new Set(['dist/index.js', 'dist/index.d.ts'])), {
+      code: 'PACKAGE_REFERENCE_PATTERN_INVALID', field,
+    })
+  })
+
+  it.each([
+    ['missing side-effect file', { sideEffects: ['./dist/missing.js'] }, 'PACKAGE_REFERENCE_MISSING'],
+    ['escaping side-effect file', { sideEffects: ['../outside.js'] }, 'PACKAGE_REFERENCE_ESCAPE'],
+    ['unmatched side-effect pattern', { sideEffects: ['./dist/*.css'] }, 'PACKAGE_REFERENCE_MISSING'],
+  ])('rejects %s', (_name, manifest, code) => {
+    expectFailure(() => validateManifestReferences(manifest, completeArtifactPaths), {
+      code, field: 'sideEffects[0]',
+    })
+  })
+
+  it('matches export, import, and side-effect patterns only against staged files', () => {
+    expect(() => validateManifestReferences({
+      exports: { './feature/*': './dist/features/*.js' },
+      imports: { '#internal/*': './dist/internal/*.js' },
+      sideEffects: ['./dist/**/*.css'],
+    }, new Set([
+      'dist/features/one.js',
+      'dist/internal/two.js',
+      'dist/styles/nested/theme.css',
+    ]))).not.toThrow()
   })
 })

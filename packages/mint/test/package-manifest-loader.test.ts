@@ -55,6 +55,7 @@ describe('composed package loader contract', () => {
       contributions,
       artifactPaths,
       registryUrl: 'https://registry.npmjs.org',
+      releaseVersions: {},
     })
     const consumerRoot = mkdtempSync(join(tmpdir(), 'mint-package-consumer-'))
     const packageRoot = join(consumerRoot, 'node_modules', '@bubstack', 'package-consumer')
