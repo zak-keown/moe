@@ -1,6 +1,10 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+const PYTHON_WHITESPACE =
+  "\\t\\n\\v\\f\\r\\x1c-\\x1f \\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000";
+const NUMBERED_STEP_PATTERN = new RegExp(`^[${PYTHON_WHITESPACE}]*\\p{Nd}+\\.`, "u");
 
 function pathParts(path, separatorPattern) {
   return path.split(separatorPattern).filter((part) => part && part !== ".");
@@ -119,7 +123,7 @@ export function validateScenarios(scenariosPath, requirementsDirectory) {
           errors.push(`${currentId}: has ${match[0]}`);
         }
       }
-      if (/^\p{Nd}+\./u.test(line.trim())) hasSteps = true;
+      if (NUMBERED_STEP_PATTERN.test(line)) hasSteps = true;
     }
   }
 
@@ -158,5 +162,16 @@ export function main(args = process.argv.slice(2)) {
   return 0;
 }
 
-const isDirect = process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
+function isDirectEntry() {
+  if (!process.argv[1]) return false;
+  try {
+    return (
+      realpathSync(resolve(process.argv[1])) === realpathSync(fileURLToPath(import.meta.url))
+    );
+  } catch {
+    return pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
+  }
+}
+
+const isDirect = isDirectEntry();
 if (isDirect) process.exitCode = main();
