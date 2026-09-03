@@ -121,6 +121,8 @@ graduates: if the Goal is redrawn, that is a fresh plan, not a resumption.]
 ````markdown
 ### Task N: [Component Name]
 
+**depends_on:** [task numbers this task depends on, or []]
+
 **Blocked by:** D1  *(omit this line entirely when no decision blocks the task)*
 
 **Files:**
@@ -245,11 +247,11 @@ Decisions** with the tasks it blocks, never in a step as an invented answer.
 Then check the edges resolve: every `**Blocked by:**` id names a decision that
 exists, and every decision's **Blocks** list names tasks that exist.
 
-**5. Execution metadata:** Validate every task has a non-empty `Files:` block,
-an `Interfaces:` block, and explicit `Consumes:` and `Produces:` entries. Use
-`None` when an interface edge does not exist. A missing block or entry fails
-plan validation; do not hand the plan to an executor or infer the missing value
-from prose.
+**5. Execution metadata:** Validate every task has a `depends_on:` field (or
+omits it, meaning []), a non-empty `Files:` block, an `Interfaces:` block,
+and explicit `Consumes:` and `Produces:` entries. Run
+`node "${CLAUDE_PLUGIN_ROOT}/hooks/task-set" check <plan.md>` to validate
+structural integrity — cycles, unresolvable deps, missing blocks.
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task — unless the task cannot be written until something is decided, in which case add the decision.
 
