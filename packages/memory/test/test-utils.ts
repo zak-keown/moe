@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { initDatabase, setDefaultPackageRoot, type MemoryDatabase } from "../src/db.js";
+import { initDatabase, type MemoryDatabase, setDefaultPackageRoot } from "../src/db.js";
 import type { InstalledPackageRoot } from "../src/installed-package-root.js";
 
 /**
@@ -48,10 +48,7 @@ export function countLines(filePath: string): number {
   return content.trim().split("\n").length;
 }
 
-export const TEST_PACKAGE_ROOT = path.resolve(
-  import.meta.dirname,
-  "..",
-) as InstalledPackageRoot;
+export const TEST_PACKAGE_ROOT = path.resolve(import.meta.dirname, "..") as InstalledPackageRoot;
 
 setDefaultPackageRoot(TEST_PACKAGE_ROOT);
 

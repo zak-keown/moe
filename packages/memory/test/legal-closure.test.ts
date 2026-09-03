@@ -1,7 +1,7 @@
-import { readFileSync, existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
+import { parse } from "yaml";
 
 const REPO_ROOT = join(import.meta.dirname, "../../..");
 const PACKAGE_ROOT = join(import.meta.dirname, "..");
@@ -41,12 +41,8 @@ describe("legal closure for redistributed Memory runtime", () => {
 
   it("every bundled work is listed in mint imported_works", () => {
     const mint = readMintYaml();
-    const importedWorks = (mint.imported_works as Array<{ name: string }>).map(
-      (w) => w.name,
-    );
-    const missing = BUNDLED_WORKS.filter(
-      (work) => !importedWorks.includes(work),
-    );
+    const importedWorks = (mint.imported_works as Array<{ name: string }>).map((w) => w.name);
+    const missing = BUNDLED_WORKS.filter((work) => !importedWorks.includes(work));
     expect(missing).toEqual([]);
   });
 
@@ -65,11 +61,7 @@ describe("legal closure for redistributed Memory runtime", () => {
     const pkg = readPackageJson();
     const deps = Object.keys(pkg.dependencies as Record<string, string>);
     const notice = readNotice();
-    const allowed = new Set([
-      ...BUNDLED_WORKS,
-      "@modelcontextprotocol/sdk",
-      "zod",
-    ]);
+    const allowed = new Set([...BUNDLED_WORKS, "@modelcontextprotocol/sdk", "zod"]);
     const unaccounted: string[] = [];
     for (const dep of deps) {
       if (allowed.has(dep)) continue;

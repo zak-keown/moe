@@ -33,10 +33,7 @@ artifact:
     - {from: runtime, to: runtime, required: true}
     - {from: vendor/sqlite-vec, to: vendor/sqlite-vec, required: true}
     - {from: recovery, to: recovery, required: false}
-    - {from: skills, to: skills, required: true}
-    - {from: agents, to: agents, required: true}
     - {from: prompts, to: prompts, required: true}
-    - {from: hooks, to: hooks, required: true}
 
 targets:
   claude-code: {intent: certify, expected_capabilities: [skill-discovery, agent-discovery, hook-execution, mcp-registration, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}

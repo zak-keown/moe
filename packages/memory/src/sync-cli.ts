@@ -237,9 +237,8 @@ const MAX_HOOK_STDERR_BYTES = 512;
 
 function writeBoundedHookDiagnostic(error: unknown): void {
   const msg = error instanceof Error ? error.message : String(error);
-  const bounded = msg.length > MAX_HOOK_STDERR_BYTES
-    ? `${msg.slice(0, MAX_HOOK_STDERR_BYTES)}…`
-    : msg;
+  const bounded =
+    msg.length > MAX_HOOK_STDERR_BYTES ? `${msg.slice(0, MAX_HOOK_STDERR_BYTES)}…` : msg;
   process.stderr.write(`moe-memory: hook sync failed: ${bounded}\n`);
 }
 

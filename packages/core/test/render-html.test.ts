@@ -7,14 +7,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -97,9 +90,7 @@ describe("renderTemplate", () => {
   });
 
   it("throws when required slot 'content' is missing", () => {
-    expect(() => renderTemplate(MINI_TEMPLATE, { title: "T" })).toThrow(
-      /required slot "content"/,
-    );
+    expect(() => renderTemplate(MINI_TEMPLATE, { title: "T" })).toThrow(/required slot "content"/);
   });
 });
 
@@ -212,10 +203,7 @@ describe("CLI (render-html.cjs)", () => {
       customTemplate,
       "<!doctype html><html><head><title>{{TITLE}}</title></head><body>{{CONTENT}}</body></html>",
     );
-    writeFileSync(
-      inputPath,
-      JSON.stringify({ title: "Custom", content: "<p>Custom body</p>" }),
-    );
+    writeFileSync(inputPath, JSON.stringify({ title: "Custom", content: "<p>Custom body</p>" }));
 
     execFileSync("node", [
       SCRIPT,
@@ -254,10 +242,7 @@ describe("CLI (render-html.cjs)", () => {
     const inputPath = join(dir, "data.json");
     const outputPath = join(nested, "report.html");
 
-    writeFileSync(
-      inputPath,
-      JSON.stringify({ title: "Nested", content: "<p>Nested</p>" }),
-    );
+    writeFileSync(inputPath, JSON.stringify({ title: "Nested", content: "<p>Nested</p>" }));
 
     execFileSync("node", [SCRIPT, "--input", inputPath, "--output", outputPath]);
     expect(existsSync(outputPath)).toBe(true);

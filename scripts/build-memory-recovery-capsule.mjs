@@ -10,7 +10,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { parseArgs } from "node:util";
 
@@ -25,7 +25,9 @@ const { values } = parseArgs({
 });
 
 if (!values.target || !SUPPORTED_TARGETS.includes(values.target)) {
-  console.error(`Usage: --target <${SUPPORTED_TARGETS.join("|")}> --output <dir> --package-dir <dir>`);
+  console.error(
+    `Usage: --target <${SUPPORTED_TARGETS.join("|")}> --output <dir> --package-dir <dir>`,
+  );
   process.exit(1);
 }
 
@@ -75,8 +77,8 @@ if (pkg.version !== "0.1.5") {
 }
 
 const installedFiles = walk(packageDir);
-const legalFiles = installedFiles.filter(
-  (f) => /^(LICENSE|NOTICE|COPYING|THIRD.PARTY)/i.test(f.path),
+const legalFiles = installedFiles.filter((f) =>
+  /^(LICENSE|NOTICE|COPYING|THIRD.PARTY)/i.test(f.path),
 );
 
 if (legalFiles.length === 0) {
@@ -110,4 +112,6 @@ console.log(`  Target: ${target}`);
 console.log(`  Installed files: ${installedFiles.length}`);
 console.log(`  Legal files: ${legalFiles.length}`);
 console.log(`  Dependencies: ${manifest.dependencies.length}`);
-console.log("\nNote: packageTarball.sha256/bytes and dependency integrity must be filled by the release workflow.");
+console.log(
+  "\nNote: packageTarball.sha256/bytes and dependency integrity must be filled by the release workflow.",
+);

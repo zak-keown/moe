@@ -2,15 +2,15 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { abortRollback } from "../src/rollback/abort.js";
+import { assertWritesAllowed, RollbackFencedError } from "../src/rollback/fence.js";
+import type { RollbackState } from "../src/rollback/state.js";
 import {
   advanceRollbackState,
   clearRollbackState,
   createRollbackState,
   readRollbackState,
 } from "../src/rollback/state.js";
-import type { RollbackState } from "../src/rollback/state.js";
-import { assertWritesAllowed, RollbackFencedError } from "../src/rollback/fence.js";
-import { abortRollback } from "../src/rollback/abort.js";
 
 const VALID_SHA = "a".repeat(64);
 
@@ -104,7 +104,15 @@ describe("crash recovery at each boundary", () => {
   });
 
   it("handles state file with wrong schema version", () => {
-    const state = { schema: 99, phase: "staging", databaseId: "x", snapshotSha256: VALID_SHA, capsuleSha256: "b".repeat(64), stagedDatabase: "s.db", retainedV3Database: "r.db" };
+    const state = {
+      schema: 99,
+      phase: "staging",
+      databaseId: "x",
+      snapshotSha256: VALID_SHA,
+      capsuleSha256: "b".repeat(64),
+      stagedDatabase: "s.db",
+      retainedV3Database: "r.db",
+    };
     fs.writeFileSync(path.join(dataDir, "rollback-state.json"), JSON.stringify(state));
     expect(() => readRollbackState(dataDir)).toThrow(/malformed/);
   });

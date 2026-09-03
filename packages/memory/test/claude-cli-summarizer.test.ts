@@ -1,10 +1,7 @@
-import { describe, it, expect } from "vitest";
-import type { ProcessAdapter, ProcessResult, ProcessSpec } from "../src/summarizers/process.js";
-import {
-  buildClaudeSummarizerCommand,
-  runClaudeCommand,
-} from "../src/summarizers/claude.js";
+import { describe, expect, it } from "vitest";
 import { SummarizerSdkError } from "../src/summarizer.js";
+import { buildClaudeSummarizerCommand, runClaudeCommand } from "../src/summarizers/claude.js";
+import type { ProcessAdapter, ProcessResult, ProcessSpec } from "../src/summarizers/process.js";
 
 function scriptedProcess(result: Partial<ProcessResult>): ProcessAdapter {
   return {
@@ -32,10 +29,13 @@ describe("buildClaudeSummarizerCommand", () => {
     const spec = command();
     expect(spec.args).toEqual([
       "-p",
-      "--input-format", "text",
-      "--output-format", "json",
+      "--input-format",
+      "text",
+      "--output-format",
+      "json",
       "--no-session-persistence",
-      "--model", "haiku",
+      "--model",
+      "haiku",
     ]);
   });
 

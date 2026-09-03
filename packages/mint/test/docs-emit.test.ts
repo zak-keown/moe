@@ -37,13 +37,14 @@ const fullSupport = {
 function adapterWithInstallDoc(name: string, body: string): HarnessAdapter {
   return {
     name,
+    support: fullSupport,
     emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }),
     installDoc: () => body,
   }
 }
 
 function adapterWithoutInstallDoc(name: string): HarnessAdapter {
-  return { name, emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }) }
+  return { name, support: fullSupport, emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }) }
 }
 
 describe('emitDocs install-doc files', () => {

@@ -9,7 +9,7 @@
 
 import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join, normalize, relative, isAbsolute } from "node:path";
+import { isAbsolute, join, normalize, relative } from "node:path";
 import { parseArgs } from "node:util";
 
 const { values } = parseArgs({
@@ -69,7 +69,8 @@ if (!existsSync(manifestPath)) {
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
 
 if (manifest.schema !== 1) fail(`schema must be 1, got ${manifest.schema}`);
-if (manifest.memoryVersion !== "0.1.5") fail(`memoryVersion must be 0.1.5, got ${manifest.memoryVersion}`);
+if (manifest.memoryVersion !== "0.1.5")
+  fail(`memoryVersion must be 0.1.5, got ${manifest.memoryVersion}`);
 if (manifest.nodeRange !== ">=24") fail(`nodeRange must be >=24, got ${manifest.nodeRange}`);
 
 const expectedTarget = `${platform}-${arch}`;

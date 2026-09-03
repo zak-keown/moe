@@ -3,17 +3,17 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { prepareRollback } from "../src/rollback/prepare.js";
-import { abortRollback } from "../src/rollback/abort.js";
-import {
-  createRollbackState,
-  readRollbackState,
-  advanceRollbackState,
-  RollbackStateError,
-} from "../src/rollback/state.js";
 import type { MemoryDatabase } from "../src/db.js";
 import { insertExchange } from "../src/db.js";
-import { openTestDatabase, fakeEmbed } from "./test-utils.js";
+import { abortRollback } from "../src/rollback/abort.js";
+import { prepareRollback } from "../src/rollback/prepare.js";
+import {
+  advanceRollbackState,
+  createRollbackState,
+  RollbackStateError,
+  readRollbackState,
+} from "../src/rollback/state.js";
+import { fakeEmbed, openTestDatabase } from "./test-utils.js";
 
 const VALID_SHA = "a".repeat(64);
 
@@ -30,9 +30,7 @@ function makeInit() {
 
 describe("rollback prepare preflight", () => {
   it("rejects unsupported target version", () => {
-    expect(() =>
-      prepareRollback({ to: "0.1.4" }),
-    ).toThrow(/only rollback to 0.1.5 is supported/);
+    expect(() => prepareRollback({ to: "0.1.4" })).toThrow(/only rollback to 0.1.5 is supported/);
   });
 
   it("rejects native Windows", () => {
@@ -92,9 +90,7 @@ describe("rollback abort", () => {
     advanceRollbackState(dataDir, "staging", "fenced");
     advanceRollbackState(dataDir, "fenced", "swapped");
 
-    expect(() => abortRollback({ dataDir })).toThrow(
-      /cannot abort after swap/,
-    );
+    expect(() => abortRollback({ dataDir })).toThrow(/cannot abort after swap/);
   });
 });
 

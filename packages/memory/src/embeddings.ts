@@ -14,9 +14,13 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { getDefaultPackageRoot } from "./db.js";
-import { loadModelManifest } from "./model-manifest.js";
+import {
+  createEmbeddingBackend,
+  type EmbeddingBackend,
+  type VerifiedRuntimeAsset,
+} from "./embedding-runtime.js";
 import { ensureModelSet, type VerifiedModelSet } from "./model-cache.js";
-import { createEmbeddingBackend, type EmbeddingBackend, type VerifiedRuntimeAsset } from "./embedding-runtime.js";
+import { loadModelManifest } from "./model-manifest.js";
 import { getModelCacheDir } from "./paths.js";
 
 export { EMBEDDING_DIMENSIONS } from "./constants.js";

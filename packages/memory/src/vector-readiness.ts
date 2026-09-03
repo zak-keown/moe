@@ -3,12 +3,18 @@ import type { MemoryDatabase } from "./db.js";
 export type VectorReadiness =
   | { state: "ready"; total: number; remaining: 0; fromVersion: 2; toVersion: 3 }
   | { state: "upgrading"; total: number; remaining: number; fromVersion: 2; toVersion: 3 }
-  | { state: "blocked"; reason: string; total: number; remaining: number; fromVersion: 2; toVersion: 3 };
+  | {
+      state: "blocked";
+      reason: string;
+      total: number;
+      remaining: number;
+      fromVersion: 2;
+      toVersion: 3;
+    };
 
 export function assessVectorReadiness(db: MemoryDatabase): VectorReadiness {
-  const exchangeTotal = (
-    db.prepare("SELECT COUNT(*) AS c FROM exchanges").get() as { c: number }
-  ).c;
+  const exchangeTotal = (db.prepare("SELECT COUNT(*) AS c FROM exchanges").get() as { c: number })
+    .c;
   const journalTotal = (
     db.prepare("SELECT COUNT(*) AS c FROM journal_entries").get() as { c: number }
   ).c;

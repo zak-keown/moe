@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
-import { join } from "node:path";
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
 
 const PACKAGE_ROOT = join(import.meta.dirname, "..");
 
@@ -148,11 +148,15 @@ describe("public API contract", () => {
 
   it("typechecks the retained package-owned API", () => {
     const consumerDir = join(PACKAGE_ROOT, "test/fixtures/public-consumer");
-    const result = execFileSync("npx", ["tsc", "-p", join(consumerDir, "tsconfig.json"), "--noEmit"], {
-      cwd: PACKAGE_ROOT,
-      encoding: "utf-8",
-      stdio: ["pipe", "pipe", "pipe"],
-    });
+    const result = execFileSync(
+      "npx",
+      ["tsc", "-p", join(consumerDir, "tsconfig.json"), "--noEmit"],
+      {
+        cwd: PACKAGE_ROOT,
+        encoding: "utf-8",
+        stdio: ["pipe", "pipe", "pipe"],
+      },
+    );
     expect(result).toBe("");
   });
 });

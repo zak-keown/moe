@@ -5,9 +5,9 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   collectSnapshotSources,
   createDatabaseSnapshot,
+  type SnapshotSourceRecord,
   validateSnapshotSources,
   verifySnapshot,
-  type SnapshotSourceRecord,
 } from "../src/database-snapshot.js";
 import { closeDatabase, getDatabaseLease, insertExchange } from "../src/db.js";
 import { openTestDatabase } from "./test-utils.js";
@@ -28,7 +28,12 @@ describe("database-snapshot", () => {
   describe("validateSnapshotSources", () => {
     it("accepts valid unique sources", () => {
       const sources: SnapshotSourceRecord[] = [
-        { family: "transcript", identity: "a", canonicalPath: "/data/a.jsonl", sha256: "a".repeat(64) },
+        {
+          family: "transcript",
+          identity: "a",
+          canonicalPath: "/data/a.jsonl",
+          sha256: "a".repeat(64),
+        },
         { family: "journal", identity: "b", canonicalPath: "/data/b.md", sha256: "b".repeat(64) },
       ];
       expect(() => validateSnapshotSources(sources)).not.toThrow();
@@ -36,15 +41,30 @@ describe("database-snapshot", () => {
 
     it("rejects duplicate identities", () => {
       const sources: SnapshotSourceRecord[] = [
-        { family: "transcript", identity: "a", canonicalPath: "/data/a.jsonl", sha256: "a".repeat(64) },
-        { family: "transcript", identity: "a", canonicalPath: "/data/b.jsonl", sha256: "b".repeat(64) },
+        {
+          family: "transcript",
+          identity: "a",
+          canonicalPath: "/data/a.jsonl",
+          sha256: "a".repeat(64),
+        },
+        {
+          family: "transcript",
+          identity: "a",
+          canonicalPath: "/data/b.jsonl",
+          sha256: "b".repeat(64),
+        },
       ];
       expect(() => validateSnapshotSources(sources)).toThrow(/Duplicate/);
     });
 
     it("rejects path escapes", () => {
       const sources: SnapshotSourceRecord[] = [
-        { family: "transcript", identity: "a", canonicalPath: "/data/../etc/passwd", sha256: "a".repeat(64) },
+        {
+          family: "transcript",
+          identity: "a",
+          canonicalPath: "/data/../etc/passwd",
+          sha256: "a".repeat(64),
+        },
       ];
       expect(() => validateSnapshotSources(sources)).toThrow(/escape/);
     });
@@ -60,16 +80,20 @@ describe("database-snapshot", () => {
   describe("collectSnapshotSources", () => {
     it("collects exchanges and journals sorted by identity", () => {
       const db = openTestDatabase(dbPath);
-      insertExchange(db, {
-        id: "z-exchange",
-        project: "test",
-        timestamp: new Date().toISOString(),
-        userMessage: "hello",
-        assistantMessage: "hi",
-        archivePath: path.join(tmpDir, "archive.jsonl"),
-        lineStart: 1,
-        lineEnd: 10,
-      }, null);
+      insertExchange(
+        db,
+        {
+          id: "z-exchange",
+          project: "test",
+          timestamp: new Date().toISOString(),
+          userMessage: "hello",
+          assistantMessage: "hi",
+          archivePath: path.join(tmpDir, "archive.jsonl"),
+          lineStart: 1,
+          lineEnd: 10,
+        },
+        null,
+      );
       fs.writeFileSync(path.join(tmpDir, "archive.jsonl"), "test content");
 
       const sources = collectSnapshotSources(db);
@@ -84,22 +108,27 @@ describe("database-snapshot", () => {
   describe("createDatabaseSnapshot", () => {
     it("creates snapshot and sidecar with valid integrity", () => {
       const db = openTestDatabase(dbPath);
-      insertExchange(db, {
-        id: "test-ex",
-        project: "test",
-        timestamp: new Date().toISOString(),
-        userMessage: "hello",
-        assistantMessage: "world",
-        archivePath: path.join(tmpDir, "a.jsonl"),
-        lineStart: 1,
-        lineEnd: 5,
-      }, null);
+      insertExchange(
+        db,
+        {
+          id: "test-ex",
+          project: "test",
+          timestamp: new Date().toISOString(),
+          userMessage: "hello",
+          assistantMessage: "world",
+          archivePath: path.join(tmpDir, "a.jsonl"),
+          lineStart: 1,
+          lineEnd: 5,
+        },
+        null,
+      );
       fs.writeFileSync(path.join(tmpDir, "a.jsonl"), "data");
 
+      const lease = getDatabaseLease(db);
       const result = createDatabaseSnapshot(db, dbPath, {
         fromVersion: 2,
         toVersion: 3,
-        callerLease: getDatabaseLease(db),
+        ...(lease !== undefined ? { callerLease: lease } : {}),
       });
 
       expect(fs.existsSync(result.snapshotPath)).toBe(true);
@@ -119,10 +148,11 @@ describe("database-snapshot", () => {
   describe("verifySnapshot", () => {
     it("verifies a valid snapshot", () => {
       const db = openTestDatabase(dbPath);
+      const lease = getDatabaseLease(db);
       const result = createDatabaseSnapshot(db, dbPath, {
         fromVersion: 2,
         toVersion: 3,
-        callerLease: getDatabaseLease(db),
+        ...(lease !== undefined ? { callerLease: lease } : {}),
       });
       result.lease.release();
 
@@ -134,10 +164,11 @@ describe("database-snapshot", () => {
 
     it("rejects tampered snapshot database", () => {
       const db = openTestDatabase(dbPath);
+      const lease = getDatabaseLease(db);
       const result = createDatabaseSnapshot(db, dbPath, {
         fromVersion: 2,
         toVersion: 3,
-        callerLease: getDatabaseLease(db),
+        ...(lease !== undefined ? { callerLease: lease } : {}),
       });
       result.lease.release();
 

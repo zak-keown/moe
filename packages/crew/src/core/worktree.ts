@@ -30,19 +30,9 @@ export async function createWorktree(
   ref = "HEAD",
 ): Promise<string> {
   const wt = worktreePath(repoRoot, name);
-  const result = await runner("git", [
-    "-C",
-    repoRoot,
-    "worktree",
-    "add",
-    "--detach",
-    wt,
-    ref,
-  ]);
+  const result = await runner("git", ["-C", repoRoot, "worktree", "add", "--detach", wt, ref]);
   if (result.code !== 0) {
-    throw new Error(
-      `git worktree add failed (code ${result.code}): ${result.stderr.trim()}`,
-    );
+    throw new Error(`git worktree add failed (code ${result.code}): ${result.stderr.trim()}`);
   }
   return wt;
 }
@@ -59,14 +49,7 @@ export async function removeWorktree(
   repoRoot: string,
   wtPath: string,
 ): Promise<void> {
-  const result = await runner("git", [
-    "-C",
-    repoRoot,
-    "worktree",
-    "remove",
-    "--force",
-    wtPath,
-  ]);
+  const result = await runner("git", ["-C", repoRoot, "worktree", "remove", "--force", wtPath]);
   // Swallow "not a working tree" / path-doesn't-exist errors gracefully.
   if (result.code !== 0) {
     const msg = result.stderr.toLowerCase();

@@ -6,13 +6,13 @@
       "sha256": "3a40f5c114e437170d305866599132f4d1efd33f101237f0a227e1cdf44ce5e1"
     },
     ".claude-plugin/marketplace.json": {
-      "sha256": "095d673c586c176c792716445ea6946e14629f64c2c6d041f5c4a971ffd20cc9"
+      "sha256": "2d9b35caa763c8dfb5f6262f07087638691876894d9ed99ef11f40848af2ae72"
     },
     ".claude-plugin/plugin.json": {
-      "sha256": "e078221946915088270429d9320fc40c56dd4a0bb05b3302dfa0ef3b910485d2"
+      "sha256": "3abee1fd88dcc1160a6a299d35cb9afc08e8f08a8fdabbc43e4375219d184b3c"
     },
     ".codex-plugin/plugin.json": {
-      "sha256": "ec7524d5a0876c2f23bcbd786902f04541ef80c5f0ce58f836a92ab2aa868e73"
+      "sha256": "7782411c5d128c4049b4fb55fb0ad347a77763fff33cbad81ce7acba191b9e2a"
     },
     ".cursor-plugin/marketplace.json": {
       "sha256": "f7f2b50455815f9a84f4c672c6cdfc22d514adaff67a16176318776ee648f12f"
@@ -21,10 +21,10 @@
       "sha256": "e124142cbe932ed37ca08b900a7fddc4170b380768ff48c5a09bdf858dbdbbd4"
     },
     ".cursor-plugin/plugin.json": {
-      "sha256": "599ad596addc27feb1a7aba47f3ef6c3bba7dbcc8742a8df0e8024c6032d84ce"
+      "sha256": "c7cba225d2d78d2bbeb4f4c73c6b92ade56a249ee999f8aed71bda4ead367d6b"
     },
     ".kimi-plugin/plugin.json": {
-      "sha256": "12dfacfa4e847909d1279cd6bc4ce860a52a4acdf657f8ed41a55fe7d195780a"
+      "sha256": "b1d5b0b69e513c512c8b46924e33798ac079c1cf38eb470fb01f4751b900f3d0"
     },
     ".opencode/agent/search-conversations.md": {
       "sha256": "0e14728af44751ed7de24a6df18a44164c1ab023730ee5ec376621ef62542eb9"
@@ -66,7 +66,7 @@
       "sha256": "7653af3eca8918a0fa45c4d67c321723d3906b8d3d6966959461be208f67d8a5"
     },
     "hooks/moe-mint/hooks.json": {
-      "sha256": "b0f328da4ee7464e7612866c25fca131709f2ee6f94c2c833e2842263ba60353"
+      "sha256": "f84190fe43a1e6074468bd6ae91f87c3b9b4c0a7e8c2fcaa927f707fba8600c6"
     },
     "hooks/moe-mint/run-hook.cmd": {
       "sha256": "1091dc12af883e19c6f322221281ad7e1a9816d0e266ca60088dfbc278a50db8",
@@ -80,7 +80,7 @@
       "sha256": "b5f7747065d44d77b4412ce197952f1dab0d5d6d773dd0a4c227217f94959275"
     },
     "plugin.json": {
-      "sha256": "f3b2c1c4f8bd373680ae64be3ac6b3d11d608875baf57b7cbf16a51e078177fa"
+      "sha256": "f6a8db7fb390f4c3f85a2e0a29f81b90adc97833774bdf2865f50281a2a92347"
     }
   }
 }

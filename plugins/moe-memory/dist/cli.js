@@ -1,27 +1,20 @@
 #!/usr/bin/env node
-/**
- * `moe-memory` — the package's single bin, compiled to dist/cli.js.
- *
- * Replaces FIVE upstream entry points:
- *
- *   episodic-memory              -> moe-memory
- *   episodic-memory-index        -> moe-memory index
- *   episodic-memory-search       -> moe-memory search
- *   episodic-memory-mcp-server   -> moe-memory mcp-server
- *   private-journal-mcp          -> moe-memory mcp-server  (one server now)
- *
- * and, with them, an entire layer of shims. episodic-memory shipped four
- * extensionless files that spawned four `.js` dispatchers that spawned the
- * compiled `dist/*-cli.js` scripts — `join(__dirname, '../dist')`, three times,
- * two of them resolving `__dirname` through `realpathSync` and two not, so half
- * of them broke under a symlinked bin. All of that is gone: this file imports
- * the command modules and calls them in-process. There is no `../dist/` prefix
- * left in the package.
- *
- * Subcommands are dispatched through dynamic import so that `moe-memory show`
- * does not load better-sqlite3 or transformers.js just to render a JSONL file.
- */
-const HELP = `moe-memory - semantic recall over past sessions and journal entries
+// @generated — do not edit; see scripts/build-runtime.mjs
+import { createRequire as __createRequire } from 'module';
+const require = __createRequire(import.meta.url);
+import {
+  resolveInstalledPackageRoot
+} from "./chunks/chunk-RO2MBIC5.js";
+import {
+  setDefaultPackageRoot
+} from "./chunks/chunk-LUAEQ7DI.js";
+import "./chunks/chunk-YFLZKW2J.js";
+import "./chunks/chunk-NH4NDHAK.js";
+import "./chunks/chunk-XRZM5UX2.js";
+
+// src/cli.ts
+setDefaultPackageRoot(resolveInstalledPackageRoot(import.meta.url));
+var HELP = `moe-memory - semantic recall over past sessions and journal entries
 
 USAGE:
   moe-memory <command> [options]
@@ -34,6 +27,7 @@ COMMANDS:
   stats        Show index statistics for both record types
   journal      Index and search deliberately-written journal entries
   doctor       Diagnose Claude Code or Codex integration issues
+  rollback     Prepare or abort a rollback to a previous version
   mcp-server   Run the moe-memory MCP server on stdio
 
 Run 'moe-memory <command> --help' for command-specific help.
@@ -52,73 +46,74 @@ EXAMPLES:
   moe-memory show path/to/conversation.jsonl
 `;
 async function dispatch(command, args) {
-    switch (command) {
-        case "sync": {
-            const { runSync } = await import("./sync-cli.js");
-            return runSync(args);
-        }
-        case "index": {
-            const { runIndex } = await import("./index-cli.js");
-            return runIndex(args);
-        }
-        case "search": {
-            const { runSearch } = await import("./search-cli.js");
-            return runSearch(args);
-        }
-        case "show": {
-            const { runShow } = await import("./show-cli.js");
-            return runShow(args);
-        }
-        case "stats": {
-            const { runStats } = await import("./stats-cli.js");
-            return runStats(args);
-        }
-        case "journal": {
-            const { runJournal } = await import("./journal-cli.js");
-            return runJournal(args);
-        }
-        case "doctor": {
-            const { runDoctor } = await import("./doctor-cli.js");
-            return runDoctor(args);
-        }
-        case "mcp-server": {
-            const { runMemoryMcpServer } = await import("./mcp-server.js");
-            await runMemoryMcpServer(args);
-            // The stdio transport owns the process from here.
-            return 0;
-        }
-        case "--help":
-        case "-h":
-        case "help":
-        case undefined:
-            console.log(HELP);
-            return 0;
-        case "--version":
-        case "-v": {
-            const { VERSION } = await import("./version.js");
-            console.log(VERSION);
-            return 0;
-        }
-        default:
-            console.error(`Unknown command: ${command}`);
-            console.error("Try: moe-memory --help");
-            return 1;
+  switch (command) {
+    case "sync": {
+      const { runSync } = await import("./chunks/sync-cli-6ML6IFE5.js");
+      return runSync(args);
     }
+    case "index": {
+      const { runIndex } = await import("./chunks/index-cli-ZDZFDSAF.js");
+      return runIndex(args);
+    }
+    case "search": {
+      const { runSearch } = await import("./chunks/search-cli-GIDO42TR.js");
+      return runSearch(args);
+    }
+    case "show": {
+      const { runShow } = await import("./chunks/show-cli-2E7W7RTI.js");
+      return runShow(args);
+    }
+    case "stats": {
+      const { runStats } = await import("./chunks/stats-cli-2UYEULHA.js");
+      return runStats(args);
+    }
+    case "journal": {
+      const { runJournal } = await import("./chunks/journal-cli-33KCO5K6.js");
+      return runJournal(args);
+    }
+    case "doctor": {
+      const { runDoctor } = await import("./chunks/doctor-cli-MMNFWTX4.js");
+      return runDoctor(args);
+    }
+    case "rollback": {
+      const { runRollback } = await import("./chunks/rollback-cli-DPPYDCDB.js");
+      return runRollback(args);
+    }
+    case "mcp-server": {
+      const { runMemoryMcpServer } = await import("./chunks/mcp-server-UC7ZYGQU.js");
+      await runMemoryMcpServer(args);
+      return 0;
+    }
+    case "--help":
+    case "-h":
+    case "help":
+    case void 0:
+      console.log(HELP);
+      return 0;
+    case "--version":
+    case "-v": {
+      const { VERSION } = await import("./chunks/version-K4ISJPNE.js");
+      console.log(VERSION);
+      return 0;
+    }
+    default:
+      console.error(`Unknown command: ${command}`);
+      console.error("Try: moe-memory --help");
+      return 1;
+  }
 }
-export async function main(argv = process.argv.slice(2)) {
-    const [command, ...args] = argv;
-    try {
-        return await dispatch(command, args);
-    }
-    catch (error) {
-        console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
-        return 1;
-    }
+async function main(argv = process.argv.slice(2)) {
+  const [command, ...args] = argv;
+  try {
+    return await dispatch(command, args);
+  } catch (error) {
+    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    return 1;
+  }
 }
 main().then((code) => {
-    // `mcp-server` keeps the event loop alive through its transport; every other
-    // command has finished by the time we get here, so an explicit exit is only
-    // needed for a non-zero status.
-    if (code !== 0)
-        process.exit(code);
+  if (code !== 0) process.exit(code);
 });
+export {
+  main
+};

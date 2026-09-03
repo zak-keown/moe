@@ -39,16 +39,20 @@ describe("vector-readiness", () => {
 
   it("reports upgrading when exchanges have version < 3", () => {
     const db = openTestDatabase(dbPath);
-    insertExchange(db, {
-      id: "ex-1",
-      project: "test",
-      timestamp: new Date().toISOString(),
-      userMessage: "hello",
-      assistantMessage: "world",
-      archivePath: "/fake/path.jsonl",
-      lineStart: 1,
-      lineEnd: 5,
-    }, null);
+    insertExchange(
+      db,
+      {
+        id: "ex-1",
+        project: "test",
+        timestamp: new Date().toISOString(),
+        userMessage: "hello",
+        assistantMessage: "world",
+        archivePath: "/fake/path.jsonl",
+        lineStart: 1,
+        lineEnd: 5,
+      },
+      null,
+    );
 
     const readiness = assessVectorReadiness(db);
     expect(readiness.state).toBe("upgrading");
@@ -60,15 +64,19 @@ describe("vector-readiness", () => {
 
   it("reports upgrading when journals have version < 3", () => {
     const db = openTestDatabase(dbPath);
-    upsertJournalEntry(db, {
-      id: "je-1",
-      path: "/fake/journal.md",
-      root: "/fake",
-      scope: "project",
-      timestamp: Date.now(),
-      text: "some notes",
-      sections: ["notes"],
-    }, Date.now());
+    upsertJournalEntry(
+      db,
+      {
+        id: "je-1",
+        path: "/fake/journal.md",
+        root: "/fake",
+        scope: "project",
+        timestamp: Date.now(),
+        text: "some notes",
+        sections: ["notes"],
+      },
+      Date.now(),
+    );
 
     const readiness = assessVectorReadiness(db);
     expect(readiness.state).toBe("upgrading");
@@ -78,25 +86,33 @@ describe("vector-readiness", () => {
 
   it("keeps vector search closed until both families are current", () => {
     const db = openTestDatabase(dbPath);
-    insertExchange(db, {
-      id: "ex-1",
-      project: "test",
-      timestamp: new Date().toISOString(),
-      userMessage: "hello",
-      assistantMessage: "world",
-      archivePath: "/fake/path.jsonl",
-      lineStart: 1,
-      lineEnd: 5,
-    }, null);
-    upsertJournalEntry(db, {
-      id: "je-1",
-      path: "/fake/journal.md",
-      root: "/fake",
-      scope: "project",
-      timestamp: Date.now(),
-      text: "some notes",
-      sections: ["notes"],
-    }, Date.now());
+    insertExchange(
+      db,
+      {
+        id: "ex-1",
+        project: "test",
+        timestamp: new Date().toISOString(),
+        userMessage: "hello",
+        assistantMessage: "world",
+        archivePath: "/fake/path.jsonl",
+        lineStart: 1,
+        lineEnd: 5,
+      },
+      null,
+    );
+    upsertJournalEntry(
+      db,
+      {
+        id: "je-1",
+        path: "/fake/journal.md",
+        root: "/fake",
+        scope: "project",
+        timestamp: Date.now(),
+        text: "some notes",
+        sections: ["notes"],
+      },
+      Date.now(),
+    );
 
     const readiness = assessVectorReadiness(db);
     expect(readiness.state).toBe("upgrading");
@@ -124,30 +140,56 @@ describe("vector-readiness", () => {
 
   it("blocks on future-version records", () => {
     const db = openTestDatabase(dbPath);
-    insertExchange(db, {
-      id: "ex-future",
-      project: "test",
-      timestamp: new Date().toISOString(),
-      userMessage: "from the future",
-      assistantMessage: "indeed",
-      archivePath: "/fake/path.jsonl",
-      lineStart: 1,
-      lineEnd: 5,
-    }, null);
+    insertExchange(
+      db,
+      {
+        id: "ex-future",
+        project: "test",
+        timestamp: new Date().toISOString(),
+        userMessage: "from the future",
+        assistantMessage: "indeed",
+        archivePath: "/fake/path.jsonl",
+        lineStart: 1,
+        lineEnd: 5,
+      },
+      null,
+    );
     db.prepare("UPDATE exchanges SET embedding_version = 99 WHERE id = 'ex-future'").run();
 
     const readiness = assessVectorReadiness(db);
     expect(readiness.state).toBe("blocked");
-    expect(readiness.reason).toContain("newer runtime");
+    if (readiness.state === "blocked") expect(readiness.reason).toContain("newer runtime");
     closeDatabase(db);
   });
 
   it("generates human-readable messages", () => {
-    expect(vectorReadinessMessage({ state: "ready", total: 10, remaining: 0, fromVersion: 2, toVersion: 3 }))
-      .toContain("ready");
-    expect(vectorReadinessMessage({ state: "upgrading", total: 10, remaining: 5, fromVersion: 2, toVersion: 3 }))
-      .toContain("5/10");
-    expect(vectorReadinessMessage({ state: "blocked", reason: "test", total: 1, remaining: 1, fromVersion: 2, toVersion: 3 }))
-      .toContain("test");
+    expect(
+      vectorReadinessMessage({
+        state: "ready",
+        total: 10,
+        remaining: 0,
+        fromVersion: 2,
+        toVersion: 3,
+      }),
+    ).toContain("ready");
+    expect(
+      vectorReadinessMessage({
+        state: "upgrading",
+        total: 10,
+        remaining: 5,
+        fromVersion: 2,
+        toVersion: 3,
+      }),
+    ).toContain("5/10");
+    expect(
+      vectorReadinessMessage({
+        state: "blocked",
+        reason: "test",
+        total: 1,
+        remaining: 1,
+        fromVersion: 2,
+        toVersion: 3,
+      }),
+    ).toContain("test");
   });
 });

@@ -23,15 +23,32 @@ vi.mock("../src/embedding-runtime.js", () => ({
   createEmbeddingBackend: createBackendMock,
 }));
 vi.mock("../src/model-cache.js", () => ({
-  ensureModelSet: vi.fn(async () => ({ root: "/fake", revision: "x", variant: "q8", files: new Map() })),
+  ensureModelSet: vi.fn(async () => ({
+    root: "/fake",
+    revision: "x",
+    variant: "q8",
+    files: new Map(),
+  })),
 }));
 vi.mock("../src/model-manifest.js", () => ({
-  loadModelManifest: vi.fn(() => ({ schema: 1, model: "test", revision: "x", variant: "q8", license: "MIT", dimensions: 384, maxTokens: 512, maxInputChars: 2000, queryPrefix: "", files: [] })),
+  loadModelManifest: vi.fn(() => ({
+    schema: 1,
+    model: "test",
+    revision: "x",
+    variant: "q8",
+    license: "MIT",
+    dimensions: 384,
+    maxTokens: 512,
+    maxInputChars: 2000,
+    queryPrefix: "",
+    files: [],
+  })),
 }));
 
 const { insertExchange } = await import("../src/db.js");
 const { searchConversations } = await import("../src/search.js");
 const { resetEmbeddings } = await import("../src/embeddings.js");
+
 import { openTestDatabase } from "./test-utils.js";
 
 function queryVector(): number[] {

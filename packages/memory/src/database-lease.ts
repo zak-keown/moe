@@ -1,7 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
-import { acquireFileLock, readLockHolder, releaseFileLock, type FileLockHandle } from "./file-lock.js";
 import type { MemoryDatabase } from "./db.js";
+import {
+  acquireFileLock,
+  type FileLockHandle,
+  readLockHolder,
+  releaseFileLock,
+} from "./file-lock.js";
 
 export class DatabaseBusyError extends Error {
   constructor(message: string) {
@@ -234,8 +239,12 @@ export function acquireExclusiveMaintenanceLease(dbPath: string): DatabaseLease 
     // All remaining are stale — clean them up
     for (const file of activeLeases) {
       const lockPath = path.join(dir, file);
-      try { fs.unlinkSync(lockPath); } catch {}
-      try { fs.rmSync(lockPath + ".lock", { recursive: true, force: true }); } catch {}
+      try {
+        fs.unlinkSync(lockPath);
+      } catch {}
+      try {
+        fs.rmSync(lockPath + ".lock", { recursive: true, force: true });
+      } catch {}
     }
   }
 
@@ -252,9 +261,7 @@ export function acquireExclusiveMaintenanceLease(dbPath: string): DatabaseLease 
   // Acquire the writer lock to ensure no concurrent writers
   const writerHandle = acquireFileLock(writerLockPath(dbPath));
   if (!writerHandle) {
-    throw new DatabaseBusyError(
-      `Cannot acquire exclusive maintenance lease: writer lock is held`,
-    );
+    throw new DatabaseBusyError(`Cannot acquire exclusive maintenance lease: writer lock is held`);
   }
 
   // Bump the epoch

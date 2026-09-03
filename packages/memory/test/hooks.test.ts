@@ -13,9 +13,7 @@ describe("plugin hook configuration", () => {
     // sets CLAUDE_PLUGIN_ROOT. The path is `dist/cli.js` because the four
     // upstream bins and their extensionless shim layer collapsed into one
     // dispatcher — `cli/episodic-memory.js` no longer exists.
-    expect(command).toBe(
-      'node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/dist/cli.js" sync --hook',
-    );
+    expect(command).toBe('node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/dist/cli.js" sync --hook');
   });
 
   it("does not mark the hook async because Codex plugin hooks do not support async handlers yet", () => {

@@ -1,13 +1,10 @@
-import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
+import { describe, expect, it } from "vitest";
 import { MIN_CLAUDE_VERSION } from "../src/summarizers/claude.js";
 
 describe("claude-compatibility manifest", () => {
-  const manifestPath = path.resolve(
-    import.meta.dirname,
-    "../runtime/claude-compatibility.json",
-  );
+  const manifestPath = path.resolve(import.meta.dirname, "../runtime/claude-compatibility.json");
 
   it("manifest exists and parses", () => {
     const raw = fs.readFileSync(manifestPath, "utf8");

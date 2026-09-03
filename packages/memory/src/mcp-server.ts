@@ -149,22 +149,12 @@ const ReadRecentEntriesInputSchema = z
   })
   .strict();
 
-const RelationEnum = z.enum([
-  "caused_by",
-  "contradicts",
-  "supersedes",
-  "supports",
-  "implements",
-]);
+const RelationEnum = z.enum(["caused_by", "contradicts", "supersedes", "supports", "implements"]);
 
 const LinkMemoriesInputSchema = z
   .object({
-    source: z
-      .string()
-      .min(3, "Source must be type:id format (e.g. 'exchange:abc123')"),
-    target: z
-      .string()
-      .min(3, "Target must be type:id format (e.g. 'journal:def456')"),
+    source: z.string().min(3, "Source must be type:id format (e.g. 'exchange:abc123')"),
+    target: z.string().min(3, "Target must be type:id format (e.g. 'journal:def456')"),
     relation: RelationEnum,
     confidence: z.number().min(0).max(1).default(1.0),
   })
@@ -483,8 +473,7 @@ function toolDefinitions() {
         properties: {
           id: {
             type: "string",
-            description:
-              "Starting record as type:id (e.g. 'exchange:abc123', 'decision:def456')",
+            description: "Starting record as type:id (e.g. 'exchange:abc123', 'decision:def456')",
           },
           depth: {
             type: "number",
@@ -757,8 +746,10 @@ export function createMemoryMcpServer(options: MemoryServerOptions = {}): Server
 
         const sourceColon = params.source.indexOf(":");
         const targetColon = params.target.indexOf(":");
-        if (sourceColon < 1) throw new Error(`Invalid source format: expected type:id, got "${params.source}"`);
-        if (targetColon < 1) throw new Error(`Invalid target format: expected type:id, got "${params.target}"`);
+        if (sourceColon < 1)
+          throw new Error(`Invalid source format: expected type:id, got "${params.source}"`);
+        if (targetColon < 1)
+          throw new Error(`Invalid target format: expected type:id, got "${params.target}"`);
 
         const sourceType = params.source.slice(0, sourceColon) as SourceType;
         const sourceId = params.source.slice(sourceColon + 1);
@@ -794,7 +785,8 @@ export function createMemoryMcpServer(options: MemoryServerOptions = {}): Server
         const params = TraceProvenanceInputSchema.parse(args);
 
         const colonIdx = params.id.indexOf(":");
-        if (colonIdx < 1) throw new Error(`Invalid id format: expected type:id, got "${params.id}"`);
+        if (colonIdx < 1)
+          throw new Error(`Invalid id format: expected type:id, got "${params.id}"`);
 
         const recordType = params.id.slice(0, colonIdx);
         const recordId = params.id.slice(colonIdx + 1);
@@ -803,9 +795,17 @@ export function createMemoryMcpServer(options: MemoryServerOptions = {}): Server
         try {
           const chain = traceProvenance(db, recordType, recordId, params.depth, params.direction);
           if (chain.length === 0) {
-            return textResult(`No ${params.direction} found for ${params.id} within depth ${params.depth}.`);
+            return textResult(
+              `No ${params.direction} found for ${params.id} within depth ${params.depth}.`,
+            );
           }
-          return textResult(JSON.stringify({ start: params.id, direction: params.direction, depth: params.depth, chain }, null, 2));
+          return textResult(
+            JSON.stringify(
+              { start: params.id, direction: params.direction, depth: params.depth, chain },
+              null,
+              2,
+            ),
+          );
         } finally {
           db.close();
         }

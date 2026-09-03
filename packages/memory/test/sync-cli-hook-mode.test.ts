@@ -1,10 +1,13 @@
-import { describe, it, expect } from "vitest";
-import path from "node:path";
 import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { describe, expect, it } from "vitest";
 
 const CLI_PATH = path.resolve(import.meta.dirname, "../dist/cli.js");
 
-function runHook(extraArgs: string[] = [], env: Record<string, string> = {}): {
+function runHook(
+  extraArgs: string[] = [],
+  env: Record<string, string> = {},
+): {
   status: number | null;
   stdout: string;
   stderr: string;

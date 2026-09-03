@@ -1019,31 +1019,14 @@ function worktreePath(repoRoot, name) {
 }
 async function createWorktree(runner = run, repoRoot, name, ref = "HEAD") {
   const wt = worktreePath(repoRoot, name);
-  const result = await runner("git", [
-    "-C",
-    repoRoot,
-    "worktree",
-    "add",
-    "--detach",
-    wt,
-    ref
-  ]);
+  const result = await runner("git", ["-C", repoRoot, "worktree", "add", "--detach", wt, ref]);
   if (result.code !== 0) {
-    throw new Error(
-      `git worktree add failed (code ${result.code}): ${result.stderr.trim()}`
-    );
+    throw new Error(`git worktree add failed (code ${result.code}): ${result.stderr.trim()}`);
   }
   return wt;
 }
 async function removeWorktree(runner = run, repoRoot, wtPath) {
-  const result = await runner("git", [
-    "-C",
-    repoRoot,
-    "worktree",
-    "remove",
-    "--force",
-    wtPath
-  ]);
+  const result = await runner("git", ["-C", repoRoot, "worktree", "remove", "--force", wtPath]);
   if (result.code !== 0) {
     const msg = result.stderr.toLowerCase();
     if (msg.includes("not a working tree") || msg.includes("is not a valid")) {
@@ -1174,7 +1157,15 @@ async function cmdLaunch(ctx, args, opts) {
     writeWorktreeMarker(ctx.workerDir, tmuxName, worktreeDir);
   }
   const invocation = extraArgs.length > 0 ? [tmuxName, cwd, "--", ...extraArgs] : [tmuxName, cwd];
-  return driver.idStrategy === "derive" ? launchDerive(ctx, { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir }, opts) : launchAssign(ctx, { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir }, opts);
+  return driver.idStrategy === "derive" ? launchDerive(
+    ctx,
+    { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir },
+    opts
+  ) : launchAssign(
+    ctx,
+    { driver, tmuxName, cwd: effectiveCwd, extraArgs, invocation, worktreeDir },
+    opts
+  );
 }
 async function launchAssign(ctx, { driver, tmuxName, cwd, extraArgs, invocation, worktreeDir }, opts) {
   const sessionId = (0, import_node_crypto.randomUUID)();
@@ -2178,9 +2169,7 @@ async function cmdPackStop(ctx, args) {
     if (result.code === 0) {
       stopped++;
     } else {
-      errors.push(
-        `Failed to stop ${meta.tmux_name}: ${result.stderr ?? "unknown error"}`
-      );
+      errors.push(`Failed to stop ${meta.tmux_name}: ${result.stderr ?? "unknown error"}`);
     }
   }
   const summary = [`Pack '${packName}' stopped: ${stopped} workers`];
@@ -2374,7 +2363,16 @@ var realIo = {
   out: (s) => process.stdout.write(s),
   err: (s) => process.stderr.write(s)
 };
-var TOP_LEVEL_SUBS = ["launch", "adopt", "list", "pack", "pack-stop", "prune", "grant-consent", "help"];
+var TOP_LEVEL_SUBS = [
+  "launch",
+  "adopt",
+  "list",
+  "pack",
+  "pack-stop",
+  "prune",
+  "grant-consent",
+  "help"
+];
 var PER_WORKER_SUBS = [
   "converse",
   "send",

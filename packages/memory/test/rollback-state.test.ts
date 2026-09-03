@@ -2,17 +2,17 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { MemoryDatabase } from "../src/db.js";
+import { insertExchange, upsertJournalEntry } from "../src/db.js";
+import { commitEnrichment } from "../src/enrichment.js";
+import { assertWritesAllowed, RollbackFencedError } from "../src/rollback/fence.js";
 import {
   advanceRollbackState,
   clearRollbackState,
   createRollbackState,
-  readRollbackState,
   RollbackStateError,
+  readRollbackState,
 } from "../src/rollback/state.js";
-import { assertWritesAllowed, RollbackFencedError } from "../src/rollback/fence.js";
-import type { MemoryDatabase } from "../src/db.js";
-import { insertExchange, upsertJournalEntry } from "../src/db.js";
-import { commitEnrichment } from "../src/enrichment.js";
 import { openTestDatabase } from "./test-utils.js";
 
 const VALID_SHA = "a".repeat(64);
@@ -59,9 +59,9 @@ describe("rollback state machine", () => {
   });
 
   it("rejects non-staging initial phase", () => {
-    expect(() =>
-      createRollbackState(dataDir, { ...makeInit(), phase: "fenced" as any }),
-    ).toThrow(/initial rollback state must be "staging"/);
+    expect(() => createRollbackState(dataDir, { ...makeInit(), phase: "fenced" as any })).toThrow(
+      /initial rollback state must be "staging"/,
+    );
   });
 
   it("advances staging -> fenced", () => {
@@ -80,9 +80,7 @@ describe("rollback state machine", () => {
 
   it("rejects skipping phases", () => {
     createRollbackState(dataDir, makeInit());
-    expect(() => advanceRollbackState(dataDir, "staging", "swapped")).toThrow(
-      /invalid transition/,
-    );
+    expect(() => advanceRollbackState(dataDir, "staging", "swapped")).toThrow(/invalid transition/);
   });
 
   it("rejects backward transitions", () => {
@@ -123,9 +121,7 @@ describe("rollback state machine", () => {
     createRollbackState(dataDir, makeInit());
     advanceRollbackState(dataDir, "staging", "fenced");
     advanceRollbackState(dataDir, "fenced", "swapped");
-    expect(() => clearRollbackState(dataDir)).toThrow(
-      /cannot clear rollback state after swap/,
-    );
+    expect(() => clearRollbackState(dataDir)).toThrow(/cannot clear rollback state after swap/);
   });
 
   it("is idempotent on clearing when no state exists", () => {

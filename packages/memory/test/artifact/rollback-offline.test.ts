@@ -8,14 +8,14 @@ import {
   RecoveryCapsuleError,
   type RecoveryCapsuleManifest,
 } from "../../src/recovery-capsule.js";
-import {
-  createRollbackState,
-  advanceRollbackState,
-  readRollbackState,
-  RollbackStateError,
-} from "../../src/rollback/state.js";
-import { assertWritesAllowed, RollbackFencedError } from "../../src/rollback/fence.js";
 import { abortRollback } from "../../src/rollback/abort.js";
+import { assertWritesAllowed, RollbackFencedError } from "../../src/rollback/fence.js";
+import {
+  advanceRollbackState,
+  createRollbackState,
+  RollbackStateError,
+  readRollbackState,
+} from "../../src/rollback/state.js";
 
 function sha256(data: string | Buffer): string {
   return createHash("sha256").update(data).digest("hex");
@@ -51,12 +51,8 @@ function buildFixtureCapsule(root: string, target: string): RecoveryCapsuleManif
         bytes: cliContent.length,
       },
     ],
-    dependencies: [
-      { name: "better-sqlite3", version: "12.4.1", integrity: "sha512-abc" },
-    ],
-    lifecyclePolicy: [
-      { package: "better-sqlite3", script: "install", executed: true },
-    ],
+    dependencies: [{ name: "better-sqlite3", version: "12.4.1", integrity: "sha512-abc" }],
+    lifecyclePolicy: [{ package: "better-sqlite3", script: "install", executed: true }],
     legalFiles: [
       {
         path: "LICENSE",
@@ -66,10 +62,7 @@ function buildFixtureCapsule(root: string, target: string): RecoveryCapsuleManif
     ],
   };
 
-  fs.writeFileSync(
-    path.join(root, "manifest.json"),
-    JSON.stringify(manifest, null, 2),
-  );
+  fs.writeFileSync(path.join(root, "manifest.json"), JSON.stringify(manifest, null, 2));
 
   return manifest;
 }
@@ -102,9 +95,7 @@ describe("offline rollback integration", () => {
   const target = `${process.platform}-${process.arch}`;
 
   beforeEach(async () => {
-    tmpDir = await fs.promises.mkdtemp(
-      path.join(os.tmpdir(), "rollback-offline-"),
-    );
+    tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "rollback-offline-"));
   });
 
   afterEach(async () => {
@@ -180,9 +171,7 @@ describe("offline rollback integration", () => {
     const dataDir = path.join(tmpDir, "data");
     fs.mkdirSync(dataDir, { recursive: true });
 
-    const manifestHash = sha256(
-      fs.readFileSync(path.join(capsuleRoot, "manifest.json")),
-    );
+    const manifestHash = sha256(fs.readFileSync(path.join(capsuleRoot, "manifest.json")));
     createRollbackState(dataDir, {
       phase: "staging",
       databaseId: "offline-test",

@@ -41,7 +41,7 @@ const composeConfig = {
   components: { skills: 'skills', commands: 'commands', agents: 'agents', hooks: 'hooks/hooks.json', mcp: '.mcp.json' },
   harnesses: { exclude: [], settings: {} },
   distribution: { npm: metadataMint.npm },
-  artifact: { payloads: [] },
+  artifact: { runtimeDependencyPolicy: 'preserve', payloads: [] },
   targets: {} as MintConfig['targets'],
   importedWorks: [],
 } satisfies MintConfig

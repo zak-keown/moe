@@ -3,10 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  verifyRecoveryCapsule,
-  type RecoveryCapsuleManifest,
-} from "../../src/recovery-capsule.js";
+import { type RecoveryCapsuleManifest, verifyRecoveryCapsule } from "../../src/recovery-capsule.js";
 
 function sha256(data: string | Buffer): string {
   return createHash("sha256").update(data).digest("hex");
@@ -42,12 +39,8 @@ function buildFixtureCapsule(root: string, target: string): RecoveryCapsuleManif
         bytes: cliContent.length,
       },
     ],
-    dependencies: [
-      { name: "better-sqlite3", version: "12.4.1", integrity: "sha512-abc" },
-    ],
-    lifecyclePolicy: [
-      { package: "better-sqlite3", script: "install", executed: true },
-    ],
+    dependencies: [{ name: "better-sqlite3", version: "12.4.1", integrity: "sha512-abc" }],
+    lifecyclePolicy: [{ package: "better-sqlite3", script: "install", executed: true }],
     legalFiles: [
       {
         path: "LICENSE",
@@ -57,10 +50,7 @@ function buildFixtureCapsule(root: string, target: string): RecoveryCapsuleManif
     ],
   };
 
-  fs.writeFileSync(
-    path.join(root, "manifest.json"),
-    JSON.stringify(manifest, null, 2),
-  );
+  fs.writeFileSync(path.join(root, "manifest.json"), JSON.stringify(manifest, null, 2));
 
   return manifest;
 }
@@ -69,9 +59,7 @@ describe("recovery capsule offline verification", () => {
   let tmpDir: string;
 
   beforeEach(async () => {
-    tmpDir = await fs.promises.mkdtemp(
-      path.join(os.tmpdir(), "recovery-offline-"),
-    );
+    tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "recovery-offline-"));
   });
 
   afterEach(async () => {
@@ -91,9 +79,7 @@ describe("recovery capsule offline verification", () => {
     expect(result.manifest.memoryVersion).toBe("0.1.5");
     expect(result.manifest.target).toBe("darwin-arm64");
     expect(result.manifest.dependencies).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ name: "better-sqlite3" }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ name: "better-sqlite3" })]),
     );
   });
 

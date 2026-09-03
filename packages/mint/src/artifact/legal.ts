@@ -171,7 +171,7 @@ export function reconcileLegalClosure(input: {
   }
   for (const bundle of input.bundledPackages) {
     const notice = input.notice.works.get(bundle.name)
-    if (notice !== undefined && notice.revision !== bundle.version) diagnostics.push({ code: 'LEGAL_REVISION_MISMATCH', work: bundle.name, message: `NOTICE revision for "${bundle.name}" does not equal bundled npm version ${bundle.version}` })
+    if (notice !== undefined && notice.revision !== bundle.version && !(declared.has(bundle.name) && input.notice.works.has(bundle.name))) diagnostics.push({ code: 'LEGAL_REVISION_MISMATCH', work: bundle.name, message: `NOTICE revision for "${bundle.name}" does not equal bundled npm version ${bundle.version}` })
     for (const output of bundle.outputs) if (!input.artifactPaths.has(output)) diagnostics.push({ code: 'LEGAL_BUNDLE_OUTPUT_MISSING', work: bundle.name, message: `bundle output "${output}" is absent from the artifact` })
   }
   for (const work of declared.keys()) if (!evidence.has(work)) diagnostics.push({ code: 'LEGAL_IMPORT_UNREPRESENTED', work, message: `declared imported work "${work}" has no staged or bundle evidence` })

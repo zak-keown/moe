@@ -3,9 +3,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { SnapshotSidecar, SnapshotSourceRecord } from "../src/database-snapshot.js";
 import type { MemoryDatabase } from "../src/db.js";
 import { insertExchange } from "../src/db.js";
-import type { SnapshotSidecar, SnapshotSourceRecord } from "../src/database-snapshot.js";
 import {
   applySourceReconciliation,
   planSourceReconciliation,
@@ -51,9 +51,7 @@ describe("source reconciliation", () => {
       { family: "transcript", identity: "e-1", canonicalPath: filePath, sha256: sha256(content) },
     ]);
 
-    const current = new Map([
-      ["e-1", { family: "transcript" as const, canonicalPath: filePath }],
-    ]);
+    const current = new Map([["e-1", { family: "transcript" as const, canonicalPath: filePath }]]);
 
     const plan = planSourceReconciliation(sidecar, current);
     expect(plan.unchanged).toHaveLength(1);
@@ -77,9 +75,7 @@ describe("source reconciliation", () => {
       },
     ]);
 
-    const current = new Map([
-      ["e-1", { family: "transcript" as const, canonicalPath: filePath }],
-    ]);
+    const current = new Map([["e-1", { family: "transcript" as const, canonicalPath: filePath }]]);
 
     const plan = planSourceReconciliation(sidecar, current);
     expect(plan.modified).toHaveLength(1);
@@ -259,9 +255,9 @@ describe("apply reconciliation to staged database", () => {
 
     applySourceReconciliation(db, plan);
 
-    const row = db
-      .prepare("SELECT embedding_version FROM exchanges WHERE id = ?")
-      .get("e-mod") as { embedding_version: number };
+    const row = db.prepare("SELECT embedding_version FROM exchanges WHERE id = ?").get("e-mod") as {
+      embedding_version: number;
+    };
     expect(row.embedding_version).toBeGreaterThan(0);
   });
 });

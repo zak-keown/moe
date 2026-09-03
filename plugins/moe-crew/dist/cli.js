@@ -25,7 +25,16 @@ const realIo = {
     out: (s) => process.stdout.write(s),
     err: (s) => process.stderr.write(s),
 };
-const TOP_LEVEL_SUBS = ["launch", "adopt", "list", "pack", "pack-stop", "prune", "grant-consent", "help"];
+const TOP_LEVEL_SUBS = [
+    "launch",
+    "adopt",
+    "list",
+    "pack",
+    "pack-stop",
+    "prune",
+    "grant-consent",
+    "help",
+];
 const PER_WORKER_SUBS = [
     "converse",
     "send",

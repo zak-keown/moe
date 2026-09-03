@@ -1,7 +1,7 @@
 import fs from "node:fs";
-import type { ProcessAdapter, ProcessSpec } from "./process.js";
-import { SummarizerSdkError } from "../summarizer.js";
 import { SUMMARIZER_CONTEXT_MARKER } from "../constants.js";
+import { SummarizerSdkError } from "../summarizer.js";
+import type { ProcessAdapter, ProcessSpec } from "./process.js";
 
 export const MIN_CLAUDE_VERSION = "2.1.141";
 
@@ -17,10 +17,13 @@ export function buildClaudeSummarizerCommand(options: ClaudeCommandOptions): Pro
   const claudeBin = process.env.MOE_MEMORY_CLAUDE_BIN || "claude";
   const args: string[] = [
     "-p",
-    "--input-format", "text",
-    "--output-format", "json",
+    "--input-format",
+    "text",
+    "--output-format",
+    "json",
     "--no-session-persistence",
-    "--model", options.model,
+    "--model",
+    options.model,
   ];
 
   if (options.sessionId) {
@@ -72,15 +75,11 @@ export async function runClaudeCommand(
 
   if (!result.stdout.trim()) {
     if (result.code !== 0) {
-      const stderrMatch = result.stderr.match(
-        /No conversation found with session ID: (.+)/,
-      );
+      const stderrMatch = result.stderr.match(/No conversation found with session ID: (.+)/);
       if (stderrMatch) {
         throw new SummarizerSdkError("error_during_execution", stderrMatch[1]?.trim());
       }
-      throw new Error(
-        `Claude exited with code ${result.code}: ${result.stderr.trim()}`,
-      );
+      throw new Error(`Claude exited with code ${result.code}: ${result.stderr.trim()}`);
     }
     return "";
   }
@@ -93,10 +92,7 @@ export async function runClaudeCommand(
   }
 
   if (parsed.is_error) {
-    throw new SummarizerSdkError(
-      parsed.subtype || "unknown",
-      parsed.session_id,
-    );
+    throw new SummarizerSdkError(parsed.subtype || "unknown", parsed.session_id);
   }
 
   if (typeof parsed.result !== "string") {
@@ -107,7 +103,7 @@ export async function runClaudeCommand(
 }
 
 export function buildSummarySystemPrompt(): string {
-  return "Write concise, factual summaries. Output ONLY the summary - no preamble, no \"Here is\", no \"I will\". Your output will be indexed directly.";
+  return 'Write concise, factual summaries. Output ONLY the summary - no preamble, no "Here is", no "I will". Your output will be indexed directly.';
 }
 
 export function buildSummaryPrompt(conversationText: string, sessionId?: string): string {

@@ -42,7 +42,11 @@ export function getApiEnv(): Record<string, string | undefined> {
   };
 }
 
-function readCommandOutput(command: string, args: string[], env: Record<string, string | undefined>): Promise<string> {
+function readCommandOutput(
+  command: string,
+  args: string[],
+  env: Record<string, string | undefined>,
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       env: env as NodeJS.ProcessEnv,
@@ -85,12 +89,19 @@ function requireTurnId(result: any, method: string): string {
   return turnId;
 }
 
-async function assertSupportedCodexVersion(command: CodexSummarizerCommand, env: Record<string, string | undefined>): Promise<void> {
+async function assertSupportedCodexVersion(
+  command: CodexSummarizerCommand,
+  env: Record<string, string | undefined>,
+): Promise<void> {
   if (command.skipVersionCheck) {
     return;
   }
 
-  const output = await readCommandOutput(command.command, command.versionArgs || ["--version"], env);
+  const output = await readCommandOutput(
+    command.command,
+    command.versionArgs || ["--version"],
+    env,
+  );
   const version = parseCodexCliVersion(output);
   if (!version || !versionMeetsMinimum(version)) {
     throw new Error(codexVersionRequirementMessage(output));

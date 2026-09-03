@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import type { DatabaseSync } from "node:sqlite";
-import { withTransaction } from "../database-transaction.js";
 import type { SnapshotSidecar, SnapshotSourceRecord } from "../database-snapshot.js";
+import { withTransaction } from "../database-transaction.js";
 
 export interface SourceChange {
   family: "transcript" | "journal";
@@ -86,10 +86,7 @@ export function planSourceReconciliation(
   return { created, modified, deleted, unchanged };
 }
 
-export function applySourceReconciliation(
-  stagedDb: DatabaseSync,
-  plan: ReconciliationPlan,
-): void {
+export function applySourceReconciliation(stagedDb: DatabaseSync, plan: ReconciliationPlan): void {
   withTransaction(stagedDb, () => {
     // Delete removed sources
     for (const change of plan.deleted) {

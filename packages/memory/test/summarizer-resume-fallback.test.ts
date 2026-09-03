@@ -8,8 +8,8 @@ vi.mock("../src/summarizers/process.js", () => ({
   createChildProcessAdapter: vi.fn(),
 }));
 
-import { createChildProcessAdapter } from "../src/summarizers/process.js";
 import { SummarizerSdkError, summarizeConversation } from "../src/summarizer.js";
+import { createChildProcessAdapter } from "../src/summarizers/process.js";
 
 function makeExchange(overrides: Partial<ConversationExchange> = {}): ConversationExchange {
   return {

@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -15,11 +15,7 @@ function loadContract(): {
 
 const INTERNAL_VARS = new Set(["MOE_MEMORY_SUMMARIZER_GUARD"]);
 
-const TEST_ONLY_VARS = new Set([
-  "TEST_ARCHIVE_DIR",
-  "TEST_DB_PATH",
-  "TEST_PROJECTS_DIR",
-]);
+const TEST_ONLY_VARS = new Set(["TEST_ARCHIVE_DIR", "TEST_DB_PATH", "TEST_PROJECTS_DIR"]);
 
 const PLATFORM_VARS = new Set([
   "HOME",

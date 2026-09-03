@@ -16,7 +16,7 @@
  * stamp at all, and its startup scan keyed purely on the ABSENCE of a sidecar,
  * so it would never have re-embedded a stale one.
  */
-import type Database from "better-sqlite3";
+import type { MemoryDatabase } from "./db.js";
 import { acquireFileLock, type FileLockHandle, releaseFileLock } from "./file-lock.js";
 /**
  * Bump when anything in the embedding pipeline changes (model, dtype, prefix).
@@ -27,7 +27,7 @@ import { acquireFileLock, type FileLockHandle, releaseFileLock } from "./file-lo
  * column accepts either vector without complaint and a mixed corpus ranks
  * wrongly with no error — which is exactly the event this constant exists for.
  */
-export declare const EMBEDDING_VERSION = 2;
+export declare const EMBEDDING_VERSION = 3;
 /**
  * Lock primitives for the migration are the same as for sync (#97) and any
  * other once-per-machine background task — see src/file-lock.ts for the shape.
@@ -47,19 +47,19 @@ export interface StaleRow {
  * EMBEDDING_VERSION, joined with their tool names so the caller can
  * reproduce the production exchange-text format.
  */
-export declare function pickStaleBatch(db: Database.Database, limit: number): StaleRow[];
+export declare function pickStaleBatch(db: MemoryDatabase, limit: number): StaleRow[];
 /**
  * Replace a row's vec_exchanges embedding and stamp its embedding_version
  * atomically. Wrap each batch's calls in a single transaction at the caller
  * for durability; this function executes its statements in order without
  * starting its own transaction.
  */
-export declare function recordReembedded(db: Database.Database, id: string, embedding: number[]): void;
+export declare function recordReembedded(db: MemoryDatabase, id: string, embedding: number[]): void;
 /**
  * Count rows whose embedding is older than the current version.
  * Used to decide whether migration is needed and to report progress.
  */
-export declare function countStale(db: Database.Database): number;
+export declare function countStale(db: MemoryDatabase): number;
 /** Path of the migration lock under the index directory. */
 export declare function getMigrationLockPath(indexDir: string): string;
 /**
@@ -69,4 +69,4 @@ export declare function getMigrationLockPath(indexDir: string): string;
  *
  * Returns the number of rows re-embedded (0 if nothing to do or locked out).
  */
-export declare function runMigrationBatch(db: Database.Database, indexDir: string, batchSize: number, embedFn: (user: string, assistant: string, toolNames?: string[]) => Promise<number[]>): Promise<number>;
+export declare function runMigrationBatch(db: MemoryDatabase, indexDir: string, batchSize: number, embedFn: (user: string, assistant: string, toolNames?: string[]) => Promise<number[]>): Promise<number>;

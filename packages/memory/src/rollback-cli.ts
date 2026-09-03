@@ -1,7 +1,7 @@
-import { prepareRollback } from "./rollback/prepare.js";
-import { abortRollback } from "./rollback/abort.js";
-import { readRollbackState, RollbackStateError } from "./rollback/state.js";
 import { getMemoryDataDir } from "./paths.js";
+import { abortRollback } from "./rollback/abort.js";
+import { prepareRollback } from "./rollback/prepare.js";
+import { RollbackStateError, readRollbackState } from "./rollback/state.js";
 
 const HELP = `moe-memory rollback - manage rollback to a previous version
 
@@ -45,9 +45,7 @@ export async function runRollback(args: string[]): Promise<number> {
         if (error instanceof RollbackStateError) {
           console.error(`Rollback error [${error.code}]: ${error.message}`);
         } else {
-          console.error(
-            `Error: ${error instanceof Error ? error.message : String(error)}`,
-          );
+          console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
         }
         return 1;
       }
@@ -62,9 +60,7 @@ export async function runRollback(args: string[]): Promise<number> {
         if (error instanceof RollbackStateError) {
           console.error(`Abort error [${error.code}]: ${error.message}`);
         } else {
-          console.error(
-            `Error: ${error instanceof Error ? error.message : String(error)}`,
-          );
+          console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
         }
         return 1;
       }

@@ -86,8 +86,8 @@
     },
     {
       "path": "dist/cli.js",
-      "size": 24429,
-      "sha256": "fb003a13053494f41297a63f81ec8e2f33107914e36b59bfdcccc23b785b8f36",
+      "size": 24464,
+      "sha256": "50b33cc69ea91cbc52e50faf08db92ede9e516d0f9b477a02df557d286cc1318",
       "mode": "0644"
     },
     {
@@ -213,7 +213,7 @@
     {
       "path": "dist/commands/pack.d.ts",
       "size": 1203,
-      "sha256": "febd8e683bfe830dab83bb01bd497b1df818206a995fe9029a88455b39e23534",
+      "sha256": "b02e720ca7fbe974490da06e65c6d68f553a8e6255adf397960abba50c9b5691",
       "mode": "0644"
     },
     {
@@ -315,7 +315,7 @@
     {
       "path": "dist/commands/stop.js",
       "size": 4730,
-      "sha256": "127e6fdf6b5851d1ca60d8e093d60ec14d93a2a4ab4a475f01dc3174045fb2c5",
+      "sha256": "515ff778ca1a47ad5c00f0cb121602a09955f731700bc5f47622bbfabefa07d3",
       "mode": "0644"
     },
     {
@@ -422,8 +422,8 @@
     },
     {
       "path": "dist/core/runs.js",
-      "size": 4188,
-      "sha256": "988f370646bf9b07afcb021074bae67ed83875acecd5966df6967938f9683527",
+      "size": 4187,
+      "sha256": "d31d846ea000241e34e6850c3fce406352a80e24e49d6099e95bd33a1072cc87",
       "mode": "0644"
     },
     {
@@ -506,8 +506,8 @@
     },
     {
       "path": "dist/core/worktree.js",
-      "size": 2491,
-      "sha256": "9049f367ec3f397b043cafc805e85c607cafc7e775b03520972b0e354f7f3fa1",
+      "size": 2373,
+      "sha256": "e7d260789dc440e8383ea7c1f54ba040a023b8efbeb2d1688ae483557211a8aa",
       "mode": "0644"
     },
     {
@@ -602,8 +602,8 @@
     },
     {
       "path": "dist/moe-crew.cjs",
-      "size": 95436,
-      "sha256": "4b3dcf4ca15e9589f49fe7cf8f9dc75773e091f498236dba3b417cc398a6c51c",
+      "size": 95398,
+      "sha256": "ae94957f8e781d1b0c445ceaa118767091ecb3b897a82a37adb05b02878c7105",
       "mode": "0755"
     },
     {
@@ -709,7 +709,7 @@
       "mode": "0755"
     }
   ],
-  "tree_sha256": "ebd45136091371727020408c83d3462e2a8c03a2319ea5f0c762decdb53bc6cc",
+  "tree_sha256": "1df5417fcfae00e610a05fbc6e3ab4bf08f2cf050a0fef609277b9d371e9646a",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [
