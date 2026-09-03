@@ -260,8 +260,8 @@
     },
     {
       "path": "package.json",
-      "size": 11335,
-      "sha256": "b9739fcf9c66f28913dc8014776ea223907357a51aa4e68bed0f89ffb0c7d819",
+      "size": 12114,
+      "sha256": "4c3a4199109065466ee01d662f921de88c598ca61c6c27d293154309cc81c411",
       "mode": "0644"
     },
     {
@@ -877,6 +877,78 @@
       "mode": "0644"
     },
     {
+      "path": "skills/smoothing-the-experience/SKILL.md",
+      "size": 1730,
+      "sha256": "08c1149b9428ffd17142521dd837739f9102882adbdb0bef4f4ecf5566e2ab2d",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/smoothing-the-experience/scripts/lib/discovery.mjs",
+      "size": 3340,
+      "sha256": "088003f04576e34034354558444379545104c6dffe349492bc2d69d97a18166b",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/smoothing-the-experience/scripts/lib/evidence.mjs",
+      "size": 5441,
+      "sha256": "d8fefa7e4bfd1ad6e9fe0d6d276e80dd887884bc8644c1f1f74008caeec9171b",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/smoothing-the-experience/scripts/lib/harnesses/claude.mjs",
+      "size": 21884,
+      "sha256": "3ac457e2698582a30df13bd85e494769387a6871dd8c26d16ac71dc4ee4d09f1",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/smoothing-the-experience/scripts/lib/harnesses/codex.mjs",
+      "size": 36038,
+      "sha256": "2a793f2c875b67d75789f544a8cc32f51d24619bd0feba12d1e2209252d49749",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/smoothing-the-experience/scripts/lib/mutation.mjs",
+      "size": 13514,
+      "sha256": "708105bc31ebcde6af621962bdb5a1b23382fbbfdc2589541449d43f18b68fa6",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/smoothing-the-experience/scripts/lib/rank.mjs",
+      "size": 10493,
+      "sha256": "4f27a9d91b0f3cbffebbeafc56c9db5ca4e1c8be8926a9db6e87915ef78deec8",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/smoothing-the-experience/scripts/lib/safety/filesystem.mjs",
+      "size": 2811,
+      "sha256": "31a3c12405d586897d442901082d3c1c59febff8dd63079a56c41f665da07466",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/smoothing-the-experience/scripts/lib/safety/mcp.mjs",
+      "size": 830,
+      "sha256": "1ecec57ae3325aa7b3e8b4d65cab0bf9342056c040f156a908b01c02fee52dbb",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/smoothing-the-experience/scripts/lib/safety/network.mjs",
+      "size": 1722,
+      "sha256": "f3c184bf8066c092a98a11f6356ef0d2863eb41875886551069d600d15d21716",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/smoothing-the-experience/scripts/lib/safety/shell.mjs",
+      "size": 7467,
+      "sha256": "0fb536e30099e47135f7d1e5add822643df46f2d754f3ce8968841692b56405a",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/smoothing-the-experience/scripts/smooth.mjs",
+      "size": 24700,
+      "sha256": "3abf826b4960b31aab650a9ea8d266a8a988f650045b03e82c50613a4ac86e12",
+      "mode": "0644"
+    },
+    {
       "path": "skills/subagent-driven-development/SKILL.md",
       "size": 38622,
       "sha256": "7b1ce0561ce04658f44461de6e5c8116130a1f65c907a79eb18ceb20fc0e9ff1",
@@ -1183,7 +1255,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "b0128ff3f33a0216716c315f99e048bd5d3becd89e7f4e41969399b269c1aa92",
+  "tree_sha256": "ca5d5f4b662455fd6991059e9ec42c4458308214ea34a1d1cc4b3a4312b1c0c4",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [
