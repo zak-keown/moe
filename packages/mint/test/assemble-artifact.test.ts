@@ -116,7 +116,7 @@ describe('complete artifact assembly', () => {
     expect(paths).not.toContain('skills/demo/test-unlinked.js')
     expect(paths).not.toContain('skills/demo/.gitignore')
     expect(paths).not.toContain('moe-mint.yaml')
-    expect(paths).not.toContain('.moe/artifact.json')
+    expect(paths).toContain('.moe/artifact.json')
     expect(paths).toContain('.moe-mint/manifest.json')
     expect(paths).toContain('LICENSE')
     expect(paths).toContain('NOTICE')
@@ -133,7 +133,7 @@ describe('complete artifact assembly', () => {
     expect(await readFile(join(artifact.root, 'dist/data.bin'))).toEqual(Buffer.from([0x00, 0xff, 0xfe, 0x41]))
     expect((await stat(join(artifact.root, 'dist/cli.js'))).mode & 0o777).toBe(0o755)
     expect((await stat(join(artifact.root, 'dist/data.bin'))).mode & 0o777).toBe(0o644)
-    expect(manifest.files).toEqual([...paths.filter((path) => path !== 'package.json'), '.moe/artifact.json'].sort())
+    expect(manifest.files).toEqual([...paths.filter((path) => path !== 'package.json' && path !== '.moe/artifact.json'), '.moe/artifact.json'].sort())
   })
 
   it('rejects a post-payload component directory that aliases an adapter directory', async () => {
