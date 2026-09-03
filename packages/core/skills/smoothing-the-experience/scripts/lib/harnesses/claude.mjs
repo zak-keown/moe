@@ -359,7 +359,7 @@ export function matchClaudePermission(rule, operation, context = {}) {
   if (!parsed) return false;
   if (operation.class === "shell") {
     if (parsed.tool !== "Bash") return false;
-    return parsed.argument === undefined || matchesPattern(shellText(operation), parsed.argument);
+    return parsed.argument === undefined || matchesShellPattern(shellText(operation), parsed.argument);
   }
   if (operation.class === "filesystem") {
     const tool = operation.action === "read" ? "Read" : undefined;
@@ -398,6 +398,14 @@ function matchesPath(path, pattern, context) {
   const operationPath = isAbsolute(path) ? resolve(path) : anchor ? resolve(anchor, path) : path;
   const rulePath = isAbsolute(pattern) ? resolve(pattern) : anchor ? resolve(anchor, pattern) : pattern;
   return matchesPattern(operationPath, rulePath);
+}
+
+function matchesShellPattern(value, pattern) {
+  if (pattern.endsWith(":*")) {
+    const command = pattern.slice(0, -2);
+    return value === command || value.startsWith(`${command} `);
+  }
+  return matchesPattern(value, pattern);
 }
 
 function matchesPattern(value, pattern) {

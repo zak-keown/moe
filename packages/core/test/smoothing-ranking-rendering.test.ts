@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 // biome-ignore format: TypeScript's next-line suppression must cover this import.
 // @ts-expect-error — plain ESM production helper.
-import { renderClaudeCandidate, renderClaudeSettings } from "../skills/smoothing-the-experience/scripts/lib/harnesses/claude.mjs";
+import { matchClaudePermission, renderClaudeCandidate, renderClaudeSettings } from "../skills/smoothing-the-experience/scripts/lib/harnesses/claude.mjs";
 // biome-ignore format: TypeScript's next-line suppression must cover this import.
 // @ts-expect-error — plain ESM production helper.
 import { inspectCodexDecision, renderCodexPermission, renderCodexRules, validateCodexReplacement } from "../skills/smoothing-the-experience/scripts/lib/harnesses/codex.mjs";
@@ -297,6 +297,26 @@ describe("candidate eligibility and ranking", () => {
 });
 
 describe("Claude rendering", () => {
+  it("matches a rendered Bash suffix rule against both bare and argument-bearing commands", () => {
+    expect(
+      matchClaudePermission("Bash(git status:*)", { class: "shell", command: "git status" }, {}),
+    ).toBe(true);
+    expect(
+      matchClaudePermission(
+        "Bash(git status:*)",
+        { class: "shell", command: "git status --short" },
+        {},
+      ),
+    ).toBe(true);
+    expect(
+      matchClaudePermission(
+        "Bash(git status:*)",
+        { class: "shell", command: "git status-unsafe" },
+        {},
+      ),
+    ).toBe(false);
+  });
+
   it.each([
     [
       { class: "filesystem", operation: { action: "read", path: "src/index.ts" } },
