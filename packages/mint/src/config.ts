@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from 'node:fs'
 import { join, posix } from 'node:path'
 import { parse } from 'yaml'
 import { z } from 'zod'
+import { artifactPath, isReservedArtifactDestination } from './artifact/paths.js'
 import { MintError } from './diagnostics.js'
 import {
   CAPABILITY_IDS,
@@ -199,18 +200,13 @@ function normalizePayloadPath(value: string, ctx: z.RefinementCtx): string {
 }
 
 const payloadPathSchema = z.string().transform(normalizePayloadPath)
-const RESERVED_PAYLOAD_DESTINATIONS = new Set(['package.json', 'LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES'])
-const RESERVED_PAYLOAD_ROOTS = ['.moe', '.moe-mint']
 
 const artifactPayloadSchema = z.object({
   from: payloadPathSchema,
   to: payloadPathSchema,
   required: z.boolean(),
 }).strict().superRefine((payload, ctx) => {
-  if (
-    RESERVED_PAYLOAD_DESTINATIONS.has(payload.to)
-    || RESERVED_PAYLOAD_ROOTS.some((root) => payload.to === root || payload.to.startsWith(`${root}/`))
-  ) {
+  if (isReservedArtifactDestination(artifactPath(payload.to))) {
     ctx.addIssue({ code: 'custom', path: ['to'], message: 'destination is reserved for compositor output' })
   }
 })

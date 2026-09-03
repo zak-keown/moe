@@ -109,6 +109,7 @@ describe('loadConfig', () => {
       ['a glob payload source', '  payloads: [{ from: "dist/*", to: dist, required: true }]', /artifact\.payloads/],
       ['a traversal payload destination', '  payloads: [{ from: dist, to: "../dist", required: true }]', /artifact\.payloads/],
       ['a reserved payload destination', '  payloads: [{ from: dist, to: package.json, required: true }]', /artifact\.payloads/],
+      ['the bundle evidence destination', '  payloads: [{ from: dist, to: .moe-build/runtime, required: true }]', /artifact\.payloads/],
       ['the NOTICE legal output destination', '  payloads: [{ from: dist, to: NOTICE, required: true }]', /artifact\.payloads/],
       ['the THIRD_PARTY_NOTICES legal output destination', '  payloads: [{ from: dist, to: THIRD_PARTY_NOTICES, required: true }]', /artifact\.payloads/],
       ['a missing payload required boolean', '  payloads: [{ from: dist, to: dist }]', /required/],

@@ -1,0 +1,15 @@
+{
+  "inputs": {
+    "../modules/missing/index.js": { "bytes": 10, "imports": [] }
+  },
+  "outputs": {
+    "dist/index.js": {
+      "imports": [],
+      "exports": [],
+      "inputs": {
+        "../modules/missing/index.js": { "bytesInOutput": 10 }
+      },
+      "bytes": 10
+    }
+  }
+}

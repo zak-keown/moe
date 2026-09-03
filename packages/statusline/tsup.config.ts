@@ -14,6 +14,7 @@ export default defineConfig({
   clean: false,
   splitting: false,
   format: ["cjs"],
+  metafile: true,
   outExtension: () => ({ js: ".cjs" }),
   banner: { js: "#!/usr/bin/env node" },
 });
