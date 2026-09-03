@@ -192,7 +192,6 @@ describe('registry projections', () => {
     const isolated = {
       ...platform,
       repositoryRoot: root,
-      plugins: platform.plugins.map((plugin) => ({ ...plugin, sourcePath: join(root, 'untrusted', plugin.id) })),
     }
     expect(process.cwd()).not.toBe(root)
     await writeRegistryProjections(isolated, recordsFor(platform), {

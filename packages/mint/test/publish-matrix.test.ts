@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { adapters, type HarnessAdapter } from '../src/adapters/index.js'
 import { claudeCode } from '../src/adapters/claude-code.js'
 import { validateCanonicalGeneration, validateGeneration } from '../src/generate.js'
-import { resolvePlatform } from '../src/platform/load.js'
+import { resolvePlatform, type ResolvedPlatform } from '../src/platform/load.js'
 import {
   currentProjectionRecords,
   projectionRecordForCurrentGeneration,
@@ -75,6 +75,80 @@ describe('publish matrix', () => {
         plugin: second.id,
         source: second.config.source,
         field: 'generation',
+      }),
+    }))
+  })
+
+  it.each([
+    ['marketplace', renderMarketplace],
+    ['catalog', renderPublicCatalog],
+    ['publish matrix', resolvePublishMatrix],
+  ] as const)('rejects producer-platform records against a second config authority in the %s', async (_name, render) => {
+    const [producerPlatform, currentPlatform] = await Promise.all([
+      resolvePlatform(REPO_ROOT),
+      resolvePlatform(REPO_ROOT),
+    ])
+    const records = currentProjectionRecords(producerPlatform)
+    const replacedConfig = 'packages/core/mint/replaced.yaml'
+    const rebound: ResolvedPlatform = {
+      ...currentPlatform,
+      registry: {
+        ...currentPlatform.registry,
+        plugins: currentPlatform.registry.plugins.map((declaration, index) => index === 0
+          ? { ...declaration, config: replacedConfig, configPath: join(REPO_ROOT, replacedConfig) }
+          : declaration),
+      },
+      plugins: currentPlatform.plugins.map((plugin, index) => index === 0
+        ? {
+          ...plugin,
+          configPath: join(REPO_ROOT, replacedConfig),
+          config: { ...plugin.config, source: replacedConfig },
+        }
+        : plugin),
+    }
+
+    expect(() => render(rebound, records)).toThrowError(expect.objectContaining({
+      diagnostic: expect.objectContaining({
+        code: 'PROJECTION_RECORD_PROVENANCE',
+        plugin: 'moe',
+        source: replacedConfig,
+        field: 'artifacts',
+      }),
+    }))
+  })
+
+  it.each([
+    ['declared config source', (platform: ResolvedPlatform) => {
+      const declaration = platform.registry.plugins[0]
+      const plugin = platform.plugins[0]
+      if (declaration === undefined || plugin === undefined) throw new Error('expected the core plugin')
+      declaration.config = 'packages/core/mint/replaced.yaml'
+      plugin.config.source = declaration.config
+    }],
+    ['resolved config path', (platform: ResolvedPlatform) => {
+      const declaration = platform.registry.plugins[0]
+      const plugin = platform.plugins[0]
+      if (declaration === undefined || plugin === undefined) throw new Error('expected the core plugin')
+      declaration.configPath = join(REPO_ROOT, 'packages/core/mint/replaced.yaml')
+      plugin.configPath = declaration.configPath
+    }],
+    ['resolved source path', (platform: ResolvedPlatform) => {
+      const declaration = platform.registry.plugins[0]
+      const plugin = platform.plugins[0]
+      if (declaration === undefined || plugin === undefined) throw new Error('expected the core plugin')
+      declaration.sourcePath = join(REPO_ROOT, 'packages/core-replaced')
+      plugin.sourcePath = declaration.sourcePath
+    }],
+  ] as const)('rejects a record after its producing platform changes the %s identity', async (_name, changeIdentity) => {
+    const platform = await resolvePlatform(REPO_ROOT)
+    const records = currentProjectionRecords(platform)
+    changeIdentity(platform)
+
+    expect(() => resolvePublishMatrix(platform, records)).toThrowError(expect.objectContaining({
+      diagnostic: expect.objectContaining({
+        code: 'PROJECTION_RECORD_PROVENANCE',
+        plugin: 'moe',
+        field: 'artifacts',
       }),
     }))
   })
