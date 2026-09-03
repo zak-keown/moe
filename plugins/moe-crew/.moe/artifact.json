@@ -31,9 +31,15 @@
       "mode": "0644"
     },
     {
+      "path": ".cursor-plugin/marketplace.json",
+      "size": 370,
+      "sha256": "8a31962b89e81ebac2badb0c9f1ed929d063163a24d06dab7ab1e7463887cc33",
+      "mode": "0644"
+    },
+    {
       "path": ".cursor-plugin/plugin.json",
-      "size": 472,
-      "sha256": "aabcd30994862a2ce2c8b45e6884123d1dfeb387293dc954751ab57b710c668e",
+      "size": 550,
+      "sha256": "91c9434c3d802dea9aff43f115f0baa43f11b15a074d792202c001d2a7121d4b",
       "mode": "0644"
     },
     {
@@ -44,8 +50,8 @@
     },
     {
       "path": ".moe-mint/manifest.json",
-      "size": 2303,
-      "sha256": "75681a2e78daab9c3eba2bcf89efd80f7b92ff88c83eab0875c449e8f5d4352e",
+      "size": 2434,
+      "sha256": "6a5da051e897b1fb1972dcb79bae8a6344a32a773109d98c15e5deb2139c78d9",
       "mode": "0644"
     },
     {
@@ -80,8 +86,8 @@
     },
     {
       "path": "dist/cli.js",
-      "size": 22903,
-      "sha256": "91953a530ab5b71581ce7a37ba25fe774311a49fcd2211810085bd1383f5181f",
+      "size": 24429,
+      "sha256": "fb003a13053494f41297a63f81ec8e2f33107914e36b59bfdcccc23b785b8f36",
       "mode": "0644"
     },
     {
@@ -182,14 +188,14 @@
     },
     {
       "path": "dist/commands/launch.d.ts",
-      "size": 3670,
-      "sha256": "c57a67c0338575afe855cb72377f8b47c20dcf345a7e6016f8106d2a34a9ce6d",
+      "size": 3894,
+      "sha256": "61416c1f137091a7a6616ea9300df8022b05633742357afc3f36940810ad65d1",
       "mode": "0644"
     },
     {
       "path": "dist/commands/launch.js",
-      "size": 10955,
-      "sha256": "4557d3deb440b3deac4b4fdbec269a84d109bd0ea30262b43c9a3f9174727cf5",
+      "size": 11879,
+      "sha256": "a57c8b986a6389adc90caf739d072088b5b75a7ed9a365318fd5ba6152c99bc8",
       "mode": "0644"
     },
     {
@@ -202,6 +208,18 @@
       "path": "dist/commands/list.js",
       "size": 2041,
       "sha256": "d85151aafac68f3e3b2470f50a4a40b7448c8b97589c339aac72010de6f76d1d",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/pack.d.ts",
+      "size": 1203,
+      "sha256": "febd8e683bfe830dab83bb01bd497b1df818206a995fe9029a88455b39e23534",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/commands/pack.js",
+      "size": 4211,
+      "sha256": "ec8ee6797821e0ae3463140a3f6245513626bea6f0d9c3b0da0041d5e6471c3c",
       "mode": "0644"
     },
     {
@@ -296,8 +314,8 @@
     },
     {
       "path": "dist/commands/stop.js",
-      "size": 3479,
-      "sha256": "fb290a8e20cfbad4fb3c62c4f8ab565038eb262c3595a82fd2f614b7c2e4add5",
+      "size": 4730,
+      "sha256": "127e6fdf6b5851d1ca60d8e093d60ec14d93a2a4ab4a475f01dc3174045fb2c5",
       "mode": "0644"
     },
     {
@@ -356,20 +374,32 @@
     },
     {
       "path": "dist/core/event-log.js",
-      "size": 2311,
-      "sha256": "fa7dfee2a56445d6551d45cea11fddc39e9453d9435cc29ecdd4d2c9efd80f59",
+      "size": 2608,
+      "sha256": "f4afea6b439494f60f4027f3408f9258e8b4763da4fb4daeeaa885858be2a478",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/packs.d.ts",
+      "size": 1602,
+      "sha256": "f0af7451a02af3ee5c31a9d335894c3655cf1faa6ee164814d6d35eccde81fe1",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/packs.js",
+      "size": 11335,
+      "sha256": "6658b12558a515ac0c4a94a885511446608a3ad88c6148382c1ac514bf122d7d",
       "mode": "0644"
     },
     {
       "path": "dist/core/paths.d.ts",
-      "size": 1227,
-      "sha256": "3bd95bb283333d1eab4e862e7188403de25acdea2adbe589454e3c6bc5f872fe",
+      "size": 1507,
+      "sha256": "42d9910df5a72a55e2f1c031912742406b0cf26af2ae4884330fa15adcb51238",
       "mode": "0644"
     },
     {
       "path": "dist/core/paths.js",
-      "size": 3150,
-      "sha256": "c624ce1608aa8ed3bec4608f63672c5dec88d5b6e10652894c424d7e39d5bdb0",
+      "size": 3468,
+      "sha256": "be2a06adfed235ffe63c538d31dd9c28bd12d1332f9bbb628308b37252c8569a",
       "mode": "0644"
     },
     {
@@ -382,6 +412,18 @@
       "path": "dist/core/proc.js",
       "size": 922,
       "sha256": "3ca87695945f848bc3891bf55f34958fcf022dd4f209bac4cb44ff7d657e7a58",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/runs.d.ts",
+      "size": 1797,
+      "sha256": "5cc7ddb00710f22945886bf46a7657ba3f3ec3b568a51e9cf92969a09eb6dac7",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/runs.js",
+      "size": 4188,
+      "sha256": "988f370646bf9b07afcb021074bae67ed83875acecd5966df6967938f9683527",
       "mode": "0644"
     },
     {
@@ -446,32 +488,44 @@
     },
     {
       "path": "dist/core/worker-store.d.ts",
-      "size": 2999,
-      "sha256": "5530840edcd0aa513f929adf10b5fd2201d46da12c97c44290c99869f63f0e43",
+      "size": 3383,
+      "sha256": "616dba72ee3b09b4f06c32ea4e5bcfe54df0f2346e6554862407e5bf6a16f5fc",
       "mode": "0644"
     },
     {
       "path": "dist/core/worker-store.js",
-      "size": 6086,
-      "sha256": "63f1a93f676177b571b81d7931cf1076f82b18283f50dcfa029c42e8649f1a37",
+      "size": 6940,
+      "sha256": "c028ea5e072b8372f9e0872fa68733b04de4019f48212956a6ddf164445abb12",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/worktree.d.ts",
+      "size": 1059,
+      "sha256": "aa30276bc83621d8aa93c4a57a44e3c0cbd2008b6a64d435647a87108b3a5acf",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/core/worktree.js",
+      "size": 2491,
+      "sha256": "9049f367ec3f397b043cafc805e85c607cafc7e775b03520972b0e354f7f3fa1",
       "mode": "0644"
     },
     {
       "path": "dist/emit-event.cjs",
-      "size": 5957,
-      "sha256": "1327007687cb1bea4dded55ae649a883cad1ec6fcce405aca96f44f530e5c0bc",
+      "size": 6487,
+      "sha256": "cf20a28d8723989521626a17e64423ddf491d1e3b49d14658a4c29361b5eb983",
       "mode": "0755"
     },
     {
       "path": "dist/events.d.ts",
-      "size": 633,
-      "sha256": "056c751f321cf7071587c667ba2e49ebb64d610ad39b0e8fd3355b54a646bead",
+      "size": 781,
+      "sha256": "c614e3a38daebc0c74676c0e93c7140b859d10950d7773a73786aca6bba6154b",
       "mode": "0644"
     },
     {
       "path": "dist/events.js",
-      "size": 547,
-      "sha256": "651c181cbdea8b1907e31223558fd8fb4fb5408292d9910a52aabf0dbb8262a4",
+      "size": 579,
+      "sha256": "20801ae4cdf6d995bff0b1a84ac61f8d58dbdf5fad67bfc5dcc0fc44d424e41d",
       "mode": "0644"
     },
     {
@@ -536,20 +590,20 @@
     },
     {
       "path": "dist/hooks/emit-event.d.ts",
-      "size": 2233,
-      "sha256": "31e63a4de3d89eca9c5c0254ac045a75c8f9ea381be1592dd5b4c5027d00b1c9",
+      "size": 2348,
+      "sha256": "ebbd63bbd2893b8be788db53a61354af93603e6bd7e8cf10ee0c447e612f4d13",
       "mode": "0644"
     },
     {
       "path": "dist/hooks/emit-event.js",
-      "size": 6042,
-      "sha256": "ba61824f73d28094fb48d92c23f613ec8b7c61cff742f68f0aca85cf519d7172",
+      "size": 6773,
+      "sha256": "9b13f7a64a7e4b9592d9b72672fa6b63c3c951697d8a8f2e4127a115114d38df",
       "mode": "0644"
     },
     {
       "path": "dist/moe-crew.cjs",
-      "size": 80112,
-      "sha256": "d9765f8c963f78e82dfdfc964cec8b3c11667c7906073782a3956ce5b3a782a9",
+      "size": 95436,
+      "sha256": "4b3dcf4ca15e9589f49fe7cf8f9dc75773e091f498236dba3b417cc398a6c51c",
       "mode": "0755"
     },
     {
@@ -596,8 +650,8 @@
     },
     {
       "path": "docs/install/cursor.md",
-      "size": 550,
-      "sha256": "173d1cea0339f4dab36508df2c438dc17033f1b629c71d2e92375a3763c11387",
+      "size": 586,
+      "sha256": "b50c623063c3e8b409b873379bad33e83f7590d3607fceafe1233471223e145c",
       "mode": "0644"
     },
     {
@@ -632,8 +686,8 @@
     },
     {
       "path": "package.json",
-      "size": 4268,
-      "sha256": "5e8ab7cf1e2c84f6b176fa26dc0e7564c8c3c763dae0a8187ae8061903fa315a",
+      "size": 4533,
+      "sha256": "b13143ab899ae0d5e9650b660d37f8682868351ef4e8dc9904e41e7448ed2c42",
       "mode": "0644"
     },
     {
@@ -655,7 +709,7 @@
       "mode": "0755"
     }
   ],
-  "tree_sha256": "864c5a83a00670c3910e08489ac8041a8e63800d14a7cf7e0c80066ced231ad8",
+  "tree_sha256": "ebd45136091371727020408c83d3462e2a8c03a2319ea5f0c762decdb53bc6cc",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

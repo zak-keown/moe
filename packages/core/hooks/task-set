@@ -1,0 +1,558 @@
+#!/usr/bin/env node
+// task-set: the deterministic intra-plan task scheduler.
+//
+// Companion to plan-set (which sequences plans in a project). This CLI
+// sequences tasks within a single plan: structural validation, wave
+// grouping, and ready-set computation from checkbox state.
+//
+// Verbs:
+//   check  <plan.md>           Validate: task numbers unique, all depends_on
+//                              resolve, no cycle (Kahn), every task has
+//                              Files/Consumes/Produces.
+//   waves  <plan.md>           Print wave assignment (maximal parallel groups).
+//   next   <plan.md>           Print ready set (deps complete, own steps not
+//                              all done). When a governance sidecar exists,
+//                              also excludes quota-exhausted and wave-gated
+//                              tasks (advisory — the harness does not enforce).
+//   status <plan.md>           Print per-task quota usage and per-wave gate
+//                              state from the governance sidecar. Exits 0 even
+//                              when no sidecar exists.
+//   gate   <plan.md> <wave>    Record human approval for a wave transition.
+//                              Creates or updates the governance sidecar.
+//
+// Governance sidecar: <plan.md>.governance.json — optional JSON file that
+// sits alongside the plan. Schema:
+//   { quotas, gates, spend } — see verbStatus/verbGate for structure.
+// Advisory only ("nudge, not gate"): the scheduler stops dispatching, the
+// harness does not enforce. Matches the precedent in governance-marker-check.
+//
+// Same constraints as plan-set: Node built-ins only, ships as a plugin hook.
+
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+const USAGE = `task-set: compute the intra-plan task DAG.
+
+Usage:
+  task-set check  <plan.md>
+  task-set waves  <plan.md>
+  task-set next   <plan.md>
+  task-set status <plan.md>
+  task-set gate   <plan.md> <wave>`;
+
+function die(msg, code = 2) {
+  process.stderr.write(`task-set: ${msg}\n`);
+  process.exit(code);
+}
+
+// ---------------------------------------------------------------------------
+// Plan parser.
+//
+// Extracts tasks from plan markdown. A task starts at a heading matching
+// `### Task N:` and ends at the next such heading or EOF. Inside a task,
+// the parser looks for:
+//   - `**depends_on:** [1, 3]` — bracket-delimited integer list
+//   - `**Files:**` block — lines starting with `- Create:`, `- Modify:`, `- Test:`
+//   - `- Consumes:` and `- Produces:` lines (presence, not content)
+//   - `- [ ]` and `- [x]` checkboxes (step completion state)
+//
+// The parser must skip fenced code blocks to avoid false positives on
+// task-heading patterns inside code examples.
+
+function parsePlan(text) {
+  const lines = text.split(/\r?\n/);
+  const tasks = [];
+  let current = null;
+  let inFence = false;
+
+  const pushCurrent = () => {
+    if (current !== null) tasks.push(current);
+    current = null;
+  };
+
+  for (const line of lines) {
+    // Track fenced code blocks to avoid false positives.
+    if (/^(`{3,}|~{3,})/.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+
+    // Task heading: ### Task N: Title
+    const taskMatch = /^###\s+Task\s+(\d+)\s*:\s*(.*)$/.exec(line);
+    if (taskMatch) {
+      pushCurrent();
+      current = {
+        num: parseInt(taskMatch[1], 10),
+        title: taskMatch[2].trim(),
+        dependsOn: [],
+        blockedBy: null,
+        files: [],
+        hasConsumes: false,
+        hasProduces: false,
+        steps: [],
+      };
+      continue;
+    }
+
+    if (!current) continue;
+
+    // depends_on: [1, 3] or []
+    const depMatch = /^\*\*depends_on:\*\*\s*\[([^\]]*)\]/.exec(line);
+    if (depMatch) {
+      const inner = depMatch[1].trim();
+      if (inner !== "") {
+        current.dependsOn = inner.split(",").map((s) => {
+          const n = parseInt(s.trim(), 10);
+          if (Number.isNaN(n)) die(`task ${current.num}: depends_on contains non-integer "${s.trim()}"`);
+          return n;
+        });
+      }
+      continue;
+    }
+
+    // Blocked by: decision id(s)
+    const blockedMatch = /^\*\*Blocked by:\*\*\s*(.+)/.exec(line);
+    if (blockedMatch) {
+      current.blockedBy = blockedMatch[1].trim();
+      continue;
+    }
+
+    // Files: entries
+    const fileMatch = /^-\s+(?:Create|Modify|Test):\s*`([^`]+)`/.exec(line);
+    if (fileMatch) {
+      current.files.push(fileMatch[1]);
+      continue;
+    }
+
+    // Consumes / Produces presence
+    if (/^-\s+Consumes:/.test(line)) {
+      current.hasConsumes = true;
+      continue;
+    }
+    if (/^-\s+Produces:/.test(line)) {
+      current.hasProduces = true;
+      continue;
+    }
+
+    // Checkbox steps
+    const checkMatch = /^-\s+\[([ xX])\]/.exec(line);
+    if (checkMatch) {
+      current.steps.push({ checked: checkMatch[1] !== " " });
+      continue;
+    }
+  }
+  pushCurrent();
+  return { tasks };
+}
+
+// ---------------------------------------------------------------------------
+// Validation (shared by check and every other verb).
+
+function validate(tasks) {
+  const errors = [];
+  const nums = new Map();
+
+  for (const t of tasks) {
+    if (nums.has(t.num)) {
+      errors.push(`duplicate task number ${t.num}`);
+    } else {
+      nums.set(t.num, t);
+    }
+  }
+
+  const known = new Set(nums.keys());
+
+  for (const t of tasks) {
+    if (t.files.length === 0) {
+      errors.push(`task ${t.num} (${t.title}): missing "Files:" block`);
+    }
+    if (!t.hasConsumes) {
+      errors.push(`task ${t.num} (${t.title}): missing "Consumes:" entry`);
+    }
+    if (!t.hasProduces) {
+      errors.push(`task ${t.num} (${t.title}): missing "Produces:" entry`);
+    }
+    for (const d of t.dependsOn) {
+      if (!known.has(d)) {
+        errors.push(`task ${t.num}: depends_on ${d} — not a known task`);
+      }
+    }
+  }
+
+  // Cycle detection (Kahn).
+  const indeg = new Map();
+  const adj = new Map();
+  for (const n of known) {
+    indeg.set(n, 0);
+    adj.set(n, []);
+  }
+  for (const t of tasks) {
+    for (const d of t.dependsOn) {
+      if (!known.has(d)) continue;
+      indeg.set(t.num, (indeg.get(t.num) ?? 0) + 1);
+      adj.get(d).push(t.num);
+    }
+  }
+  const q = [];
+  const remaining = new Map(indeg);
+  for (const [n, deg] of remaining) if (deg === 0) q.push(n);
+  let seen = 0;
+  while (q.length) {
+    const n = q.shift();
+    seen++;
+    for (const nb of adj.get(n) ?? []) {
+      remaining.set(nb, remaining.get(nb) - 1);
+      if (remaining.get(nb) === 0) q.push(nb);
+    }
+  }
+  const inCycle = [...remaining.entries()].filter(([, d]) => d > 0).map(([n]) => n);
+  if (inCycle.length > 0) {
+    errors.push(`cycle detected among: ${inCycle.sort((a, b) => a - b).join(", ")}`);
+  }
+
+  return { errors };
+}
+
+// ---------------------------------------------------------------------------
+// Wave computation.
+//
+// A wave is a maximal set of tasks where:
+//   1. No task depends on another in the same wave (no depends_on edge).
+//   2. No two tasks share a file path (pairwise-disjoint Files blocks).
+//
+// Algorithm: topological order by Kahn's, then greedily assign each task to
+// the earliest wave whose constraints it satisfies. The topological order
+// guarantees a task's dependencies are assigned to earlier waves.
+
+function computeWaves(tasks) {
+  const byNum = new Map();
+  for (const t of tasks) byNum.set(t.num, t);
+
+  // Topological sort (Kahn's) to get a valid processing order.
+  const indeg = new Map();
+  const adj = new Map();
+  for (const t of tasks) {
+    indeg.set(t.num, 0);
+    adj.set(t.num, []);
+  }
+  for (const t of tasks) {
+    for (const d of t.dependsOn) {
+      indeg.set(t.num, (indeg.get(t.num) ?? 0) + 1);
+      adj.get(d).push(t.num);
+    }
+  }
+  const q = [];
+  for (const [n, deg] of indeg) if (deg === 0) q.push(n);
+  // Stable tie-break: sort by task number so output is deterministic.
+  q.sort((a, b) => a - b);
+  const order = [];
+  while (q.length) {
+    const n = q.shift();
+    order.push(n);
+    const neighbors = (adj.get(n) ?? []).slice().sort((a, b) => a - b);
+    for (const nb of neighbors) {
+      indeg.set(nb, indeg.get(nb) - 1);
+      if (indeg.get(nb) === 0) q.push(nb);
+    }
+    q.sort((a, b) => a - b);
+  }
+
+  // Assign each task in topological order to the earliest valid wave.
+  // A task can join wave W if:
+  //   - None of its depends_on targets are in wave W.
+  //   - No task already in wave W shares a file path.
+  const taskWave = new Map(); // task num -> wave index
+  const waves = []; // waves[i] = [task nums]
+  const waveFiles = []; // waveFiles[i] = Set of file paths
+
+  for (const num of order) {
+    const t = byNum.get(num);
+
+    // Earliest wave this task could join: one past the latest wave
+    // containing any of its dependencies.
+    let earliest = 0;
+    for (const d of t.dependsOn) {
+      const dw = taskWave.get(d);
+      if (dw !== undefined && dw + 1 > earliest) earliest = dw + 1;
+    }
+
+    // From earliest onward, find the first wave with no file overlap.
+    let assigned = -1;
+    for (let w = earliest; w < waves.length; w++) {
+      const wFiles = waveFiles[w];
+      const overlap = t.files.some((f) => wFiles.has(f));
+      if (!overlap) {
+        assigned = w;
+        break;
+      }
+    }
+
+    if (assigned === -1) {
+      // No existing wave works; create a new one.
+      assigned = waves.length;
+      waves.push([]);
+      waveFiles.push(new Set());
+    }
+
+    waves[assigned].push(num);
+    taskWave.set(num, assigned);
+    for (const f of t.files) waveFiles[assigned].add(f);
+  }
+
+  return waves;
+}
+
+function verbWaves(planPath) {
+  const text = readFileSync(planPath, "utf8");
+  const { tasks } = parsePlan(text);
+  if (tasks.length === 0) die(`${planPath}: no tasks found`);
+  const { errors } = validate(tasks);
+  if (errors.length > 0) {
+    for (const e of errors) process.stderr.write(`task-set: ${e}\n`);
+    process.exit(1);
+  }
+  const blocked = tasks.filter((t) => t.blockedBy !== null);
+  const schedulable = tasks.filter((t) => t.blockedBy === null);
+  for (const t of blocked) {
+    process.stderr.write(`task-set: task ${t.num} excluded — blocked by: ${t.blockedBy}\n`);
+  }
+  if (schedulable.length === 0) return;
+  const waves = computeWaves(schedulable);
+  for (let i = 0; i < waves.length; i++) {
+    process.stdout.write(`wave ${i + 1}: ${waves[i].join(", ")}\n`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Governance sidecar.
+//
+// Optional JSON file at <planPath>.governance.json. Advisory only — the
+// scheduler stops dispatching, the harness does not enforce.
+
+function sidecarPath(planPath) {
+  return planPath + ".governance.json";
+}
+
+function readSidecar(planPath) {
+  const p = sidecarPath(planPath);
+  if (!existsSync(p)) return null;
+  try {
+    const raw = JSON.parse(readFileSync(p, "utf8"));
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) return raw;
+  } catch (_e) {
+    // Malformed sidecar is treated as absent — fail open.
+  }
+  return null;
+}
+
+function writeSidecar(planPath, data) {
+  writeFileSync(sidecarPath(planPath), JSON.stringify(data, null, 2) + "\n");
+}
+
+// ---------------------------------------------------------------------------
+// status verb: print quota usage and gate state from the governance sidecar.
+
+function verbStatus(planPath) {
+  const sidecar = readSidecar(planPath);
+  if (!sidecar) {
+    process.stdout.write("No governance sidecar found.\n");
+    return;
+  }
+
+  const text = readFileSync(planPath, "utf8");
+  const { tasks } = parsePlan(text);
+  const waves = tasks.length > 0 ? computeWaves(tasks.filter((t) => t.blockedBy === null)) : [];
+
+  // Per-task quota usage.
+  const quotas = sidecar.quotas && typeof sidecar.quotas === "object" ? sidecar.quotas : {};
+  const spend = sidecar.spend && typeof sidecar.spend === "object" ? sidecar.spend : {};
+
+  process.stdout.write("## Task quotas\n");
+  for (const t of tasks) {
+    const q = quotas[String(t.num)];
+    const s = spend[String(t.num)];
+    if (!q && !s) continue;
+    const tc = s ? s.toolCalls || 0 : 0;
+    const te = s ? s.tokenEstimate || 0 : 0;
+    const maxTc = q ? q.maxToolCalls : "-";
+    const maxTe = q ? q.maxTokenEstimate : "-";
+    process.stdout.write(`task ${t.num}: toolCalls ${tc}/${maxTc}, tokenEstimate ${te}/${maxTe}\n`);
+  }
+
+  // Per-wave gate state.
+  const gates = sidecar.gates && typeof sidecar.gates === "object" ? sidecar.gates : {};
+
+  process.stdout.write("## Wave gates\n");
+  for (let i = 0; i < waves.length; i++) {
+    const waveNum = String(i + 1);
+    const g = gates[waveNum];
+    if (g && g.approved) {
+      process.stdout.write(`wave ${waveNum}: approved (${g.approvedAt || "unknown"} by ${g.approvedBy || "unknown"})\n`);
+    } else if (g) {
+      process.stdout.write(`wave ${waveNum}: pending\n`);
+    } else {
+      process.stdout.write(`wave ${waveNum}: no gate\n`);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// gate verb: record human approval for a wave transition.
+
+function verbGate(planPath, waveArg) {
+  const waveNum = parseInt(waveArg, 10);
+  if (Number.isNaN(waveNum) || waveNum < 1) die(`invalid wave number: ${waveArg}`);
+
+  const sidecar = readSidecar(planPath) || { quotas: {}, gates: {}, spend: {} };
+  if (!sidecar.gates || typeof sidecar.gates !== "object") sidecar.gates = {};
+
+  sidecar.gates[String(waveNum)] = {
+    approved: true,
+    approvedAt: new Date().toISOString(),
+    approvedBy: "human",
+  };
+
+  writeSidecar(planPath, sidecar);
+  process.stdout.write(`task-set: wave ${waveNum} approved.\n`);
+}
+
+// ---------------------------------------------------------------------------
+// next verb (governance-aware).
+
+function verbNext(planPath) {
+  const text = readFileSync(planPath, "utf8");
+  const { tasks } = parsePlan(text);
+  if (tasks.length === 0) die(`${planPath}: no tasks found`);
+  const { errors } = validate(tasks);
+  if (errors.length > 0) {
+    for (const e of errors) process.stderr.write(`task-set: ${e}\n`);
+    process.exit(1);
+  }
+
+  // A task is complete when every checkbox is checked.
+  const complete = new Set();
+  for (const t of tasks) {
+    if (t.steps.every((s) => s.checked)) {
+      complete.add(t.num);
+    }
+  }
+
+  // A task is ready when all deps are complete and it is not complete itself.
+  const ready = [];
+  for (const t of tasks) {
+    if (complete.has(t.num)) continue;
+    const allDepsComplete = t.dependsOn.every((d) => complete.has(d));
+    if (allDepsComplete) ready.push(t.num);
+  }
+
+  // Governance filtering (advisory — nudge, not gate).
+  const sidecar = readSidecar(planPath);
+  let filtered = ready;
+  if (sidecar) {
+    const quotas = sidecar.quotas && typeof sidecar.quotas === "object" ? sidecar.quotas : {};
+    const spend = sidecar.spend && typeof sidecar.spend === "object" ? sidecar.spend : {};
+    const gates = sidecar.gates && typeof sidecar.gates === "object" ? sidecar.gates : {};
+
+    // Build task-to-wave map for gate lookups.
+    const schedulable = tasks.filter((t) => t.blockedBy === null);
+    const waves = schedulable.length > 0 ? computeWaves(schedulable) : [];
+    const taskWaveMap = new Map();
+    for (let i = 0; i < waves.length; i++) {
+      for (const num of waves[i]) taskWaveMap.set(num, i + 1);
+    }
+
+    filtered = ready.filter((num) => {
+      const key = String(num);
+
+      // Quota exhaustion check.
+      const q = quotas[key];
+      const s = spend[key];
+      if (q && s) {
+        if (typeof q.maxToolCalls === "number" && typeof s.toolCalls === "number" && s.toolCalls >= q.maxToolCalls) {
+          return false;
+        }
+        if (typeof q.maxTokenEstimate === "number" && typeof s.tokenEstimate === "number" && s.tokenEstimate >= q.maxTokenEstimate) {
+          return false;
+        }
+      }
+
+      // Wave gate check.
+      const waveNum = taskWaveMap.get(num);
+      if (waveNum !== undefined) {
+        const g = gates[String(waveNum)];
+        if (g && !g.approved) return false;
+      }
+
+      return true;
+    });
+  }
+
+  for (const num of filtered) process.stdout.write(num + "\n");
+}
+
+// ---------------------------------------------------------------------------
+// Verbs.
+
+function verbCheck(planPath) {
+  const text = readFileSync(planPath, "utf8");
+  const { tasks } = parsePlan(text);
+
+  if (tasks.length === 0) die(`${planPath}: no tasks found`);
+
+  const { errors } = validate(tasks);
+  if (errors.length > 0) {
+    for (const e of errors) process.stderr.write(`task-set: ${e}\n`);
+    process.exit(1);
+  }
+  process.stdout.write(`task-set: ${planPath} ok — ${tasks.length} tasks\n`);
+}
+
+// ---------------------------------------------------------------------------
+// Main.
+
+function main() {
+  const argv = process.argv.slice(2);
+  if (argv.length === 0 || argv[0] === "--help" || argv[0] === "-h") {
+    process.stdout.write(USAGE + "\n");
+    process.exit(argv.length === 0 ? 2 : 0);
+  }
+  const verb = argv[0];
+  const planPath = argv[1];
+
+  if (verb === "check") {
+    if (!planPath) die("usage: task-set check <plan.md>");
+    if (!existsSync(planPath)) die(`plan not found: ${planPath}`);
+    verbCheck(resolve(planPath));
+    return;
+  }
+  if (verb === "waves") {
+    if (!planPath) die("usage: task-set waves <plan.md>");
+    if (!existsSync(planPath)) die(`plan not found: ${planPath}`);
+    verbWaves(resolve(planPath));
+    return;
+  }
+  if (verb === "next") {
+    if (!planPath) die("usage: task-set next <plan.md>");
+    if (!existsSync(planPath)) die(`plan not found: ${planPath}`);
+    verbNext(resolve(planPath));
+    return;
+  }
+  if (verb === "status") {
+    if (!planPath) die("usage: task-set status <plan.md>");
+    if (!existsSync(planPath)) die(`plan not found: ${planPath}`);
+    verbStatus(resolve(planPath));
+    return;
+  }
+  if (verb === "gate") {
+    if (!planPath) die("usage: task-set gate <plan.md> <wave>");
+    if (!existsSync(planPath)) die(`plan not found: ${planPath}`);
+    const waveArg = argv[2];
+    if (!waveArg) die("usage: task-set gate <plan.md> <wave>");
+    verbGate(resolve(planPath), waveArg);
+    return;
+  }
+  die(`unknown verb "${verb}"\n${USAGE}`);
+}
+
+main();

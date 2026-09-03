@@ -8,9 +8,34 @@ import type { AdapterEmission, AdapterPackageContribution } from './adapters/typ
 import { emitDocs } from './docs-emit.js'
 import { ConfigError, hooksManifestPath, type MintConfig, type PluginTargetIntent } from './config.js'
 import { capabilityError, validateTargetEmission } from './platform/capabilities.js'
-import { TARGET_IDS, type TargetId } from './vocabulary.js'
+import {
+  loadVocabulary,
+  validateCoverage,
+  scanForUnknownTokens,
+  assertNoSurvivors,
+  substituteAllSkills,
+  adjustedModel,
+  TARGET_IDS,
+  type TargetId,
+} from './vocabulary.js'
 
 export const TOOL_VERSION = '0.0.0'
+
+// opencode and pi each have their own skillsOutputDir, but also both emit a
+// single, intentionally byte-identical root package.json (see "Design
+// decision 3" in bootstrap/node-package.ts's nodePackageManifest doc
+// comment) whose `pi.skills` field is read straight from
+// model.config.components.skills. Handing each of them its own
+// adjustedModel would make that one shared field diverge by adapter and
+// turn their dedupe into a "both adapters emit package.json" ConfigError.
+// Until node-package.ts is taught to resolve pi's own skills directory
+// independently of whichever of the two adapters happens to compute the
+// manifest, these two keep emitting from the un-adjusted model: their own
+// per-adapter skills copies still land in .opencode/skills/ and .pi/skills/
+// (substituteAllSkills doesn't go through adjustedModel at all), but their
+// package.json and in-process templates keep pointing at the shared source
+// skills/ path rather than their own output directory.
+const SHARED_MANIFEST_ADAPTERS = new Set(['opencode', 'pi'])
 
 export interface GenerateResult {
   files: FileSet
@@ -200,6 +225,24 @@ export function validateGeneration(
   const excluded = new Set(model.config.harnesses.exclude)
   const active = adapterList.filter((a) => !excluded.has(a.name))
 
+  const vocab = loadVocabulary(root)
+  if (vocab) {
+    const activeNames = active.map((a) => a.name)
+    validateCoverage(vocab, activeNames)
+    scanForUnknownTokens(root, model.config.components.skills, vocab)
+  }
+
+  // Substitute skills BEFORE the adapter emit loop: shared adapters
+  // (claude-code, agent-plugins-1.0, copilot — no skillsOutputDir) get their
+  // mapping overwritten onto the source skills/ directory in place here, so
+  // that when claude-code's adapter reads skills/ below during emit(), it
+  // sees already-substituted content. Non-shared adapters' substituted
+  // copies are collected for merging into the output fileset after the loop.
+  let vocabSkillFiles: GeneratedFile[] = []
+  if (vocab) {
+    vocabSkillFiles = substituteAllSkills(root, model, vocab, active)
+  }
+
   const warnings: string[] = []
   const emissions: Partial<Record<TargetId, AdapterEmission>> = {}
   const packageContributions: AdapterPackageContribution[] = []
@@ -207,7 +250,11 @@ export function validateGeneration(
   const byPath = new Map<string, { owner: string; file: GeneratedFile }>()
   const rootAbs = resolve(root)
   for (const adapter of active) {
-    const rawResult = adapter.emit(model)
+    const adapterModel =
+      vocab && adapter.skillsOutputDir && !SHARED_MANIFEST_ADAPTERS.has(adapter.name)
+        ? adjustedModel(model, adapter.skillsOutputDir)
+        : model
+    const rawResult = adapter.emit(adapterModel)
     for (const [index, file] of rawResult.files.entries()) {
       if (isReservedRootPackagePath(rootAbs, file.path)) {
         throw adapterEmissionError(
@@ -295,6 +342,10 @@ export function validateGeneration(
         model.config.source,
       ),
     }
+  }
+  if (vocab) {
+    mergeFiles(byPath, 'vocabulary', vocabSkillFiles, model.config)
+    assertNoSurvivors(vocabSkillFiles)
   }
   mergeFiles(byPath, 'docs', emitDocs(model, active, emissions), model.config)
   const files: FileSet = [...byPath.values()].map((v) => v.file)

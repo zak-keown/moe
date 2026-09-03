@@ -78,7 +78,7 @@ Creates one JSON file per category. Only categories with 3+ functions are worth 
 
 For each category file in `./categories/`, dispatch an **opus** subagent using the prompt in `${CLAUDE_PLUGIN_ROOT}/skills/finding-duplicate-functions/scripts/find-duplicates-prompt.md`.
 
-Save each output as `./duplicates/{category}.json`.
+Save each output as `./duplicates/<category-name>.json`.
 
 ### Phase 5: Generate Report
 
@@ -86,7 +86,11 @@ Save each output as `./duplicates/{category}.json`.
 "${CLAUDE_PLUGIN_ROOT}/skills/finding-duplicate-functions/scripts/generate-report.sh" ./duplicates ./duplicates-report.md
 ```
 
-Produces a prioritized markdown report grouped by confidence level. This is rung 4 (markdown) of the shared native-rendering ladder at `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` — the file on disk is what Phase 6 review consumes and is the source of truth. If your human partner wants a scannable version alongside it (a sortable table, colour-coded confidence bands), walk the ladder from the top: on Claude Code, publish an artifact via the Artifact tool (rung 1); on other harnesses drop to the brainstorm companion (rung 2) or a local HTML file (rung 3). The markdown report always ships regardless.
+Produces a prioritized markdown report grouped by confidence level. This is rung 4 (markdown) of the shared native-rendering ladder at `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` — the file on disk is what Phase 6 review consumes and is the source of truth. If your human partner wants a scannable version alongside it (a sortable table, colour-coded confidence bands), walk the ladder from the top:
+
+{render-ladder}
+
+The markdown report always ships regardless.
 
 ### Phase 6: Human Review
 

@@ -39,6 +39,10 @@ function buildSearchFilters(options) {
         parts.push("e.git_branch = ?");
         params.push(options.git_branch);
     }
+    if (options.git_commit) {
+        parts.push("e.git_commit = ?");
+        params.push(options.git_commit);
+    }
     return {
         sql: parts.length ? `AND ${parts.join(" AND ")}` : "",
         params,
@@ -56,7 +60,7 @@ function buildSearchFilters(options) {
  * `e.timestamp >= ?` / `<= ?` for them.
  */
 function hasMetadataFilters(options) {
-    return Boolean(options.project || options.session_id || options.git_branch || options.after || options.before);
+    return Boolean(options.project || options.session_id || options.git_branch || options.git_commit || options.after || options.before);
 }
 const EXCHANGE_SELECT_COLUMNS = `
         e.id,
@@ -73,6 +77,7 @@ const EXCHANGE_SELECT_COLUMNS = `
         e.session_id,
         e.cwd,
         e.git_branch,
+        e.git_commit,
         e.claude_version,
         e.agent_version,
         e.model,
@@ -96,6 +101,7 @@ function exchangeFromRow(row) {
         sessionId: row.session_id || undefined,
         cwd: row.cwd || undefined,
         gitBranch: row.git_branch || undefined,
+        gitCommit: row.git_commit || undefined,
         claudeVersion: row.claude_version || undefined,
         agentVersion: row.agent_version || undefined,
         model: row.model || undefined,

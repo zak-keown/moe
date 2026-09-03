@@ -15,6 +15,7 @@ export interface SearchOptions {
     project?: string | undefined;
     session_id?: string | undefined;
     git_branch?: string | undefined;
+    git_commit?: string | undefined;
 }
 /**
  * Convert an L2 (Euclidean) distance between two unit-normalized vectors

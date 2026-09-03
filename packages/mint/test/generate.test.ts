@@ -11,9 +11,28 @@ import { withV1Policy } from './helpers.js'
 import { parse, stringify } from 'yaml'
 import { TARGET_IDS, type CapabilityId, type TargetId } from '../src/vocabulary.js'
 
+const fullSupport = {
+  skills: 'full',
+  commands: 'full',
+  agents: 'full',
+  hooks: 'full',
+  mcp: 'full',
+  bootstrap: 'full',
+  rules: 'none',
+  variables: 'none',
+} as const
+
 function freshFixture(): string {
   const dir = mkdtempSync(join(tmpdir(), 'mint-gen-'))
-  cpSync('fixtures/kitchen-sink', dir, { recursive: true })
+  // Exclude the fixture's own moe-mint-vocab.yaml: most tests in this file
+  // exercise generate() with vocabulary inactive, and the "vocabulary
+  // integration" tests below opt in explicitly with their own
+  // writeFileSync. Copying it unconditionally would make every freshFixture()
+  // caller vocab-active by accident.
+  cpSync('fixtures/kitchen-sink', dir, {
+    recursive: true,
+    filter: (src) => !src.endsWith('moe-mint-vocab.yaml'),
+  })
   return dir
 }
 
@@ -546,5 +565,54 @@ describe('generate', () => {
     writeFileSync(join(dir, 'plugin.json'), generatedPluginJsonContent)
     expect(() => generate(dir)).not.toThrow()
     expect(existsSync(join(dir, MANIFEST_PATH))).toBe(true)
+  })
+})
+
+describe('vocabulary integration', () => {
+  it('emits per-adapter skill directories when moe-mint-vocab.yaml exists', () => {
+    const dir = freshFixture()
+    writeFileSync(join(dir, 'moe-mint-vocab.yaml'), 'tokens: {}\nblocks: {}')
+    const result = generate(dir)
+    expect(result.files.some((f) => f.path.startsWith('.codex-plugin/skills/'))).toBe(true)
+    expect(result.files.some((f) => f.path.startsWith('.cursor-plugin/skills/'))).toBe(true)
+    expect(result.files.some((f) => f.path.startsWith('.kimi-plugin/skills/'))).toBe(true)
+    expect(result.files.some((f) => f.path.startsWith('.opencode/skills/'))).toBe(true)
+    expect(result.files.some((f) => f.path.startsWith('.pi/skills/'))).toBe(true)
+  })
+
+  it('per-adapter skill content is byte-identical to source with zero tokens', () => {
+    const dir = freshFixture()
+    writeFileSync(join(dir, 'moe-mint-vocab.yaml'), 'tokens: {}\nblocks: {}')
+    const result = generate(dir)
+    const sourceSkill = readFileSync(join(dir, 'skills/greeting/SKILL.md'), 'utf8')
+    const codexSkill = result.files.find(
+      (f) => f.path === '.codex-plugin/skills/greeting/SKILL.md',
+    )
+    expect(codexSkill).toBeDefined()
+    expect(codexSkill!.content).toBe(sourceSkill)
+  })
+
+  it('does not emit per-adapter skill directories when vocab file is absent', () => {
+    const dir = freshFixture()
+    const result = generate(dir)
+    expect(result.files.some((f) => f.path.startsWith('.codex-plugin/skills/'))).toBe(false)
+  })
+
+  it('adapter manifests reference their own skill directories when vocab is active', () => {
+    const dir = freshFixture()
+    writeFileSync(join(dir, 'moe-mint-vocab.yaml'), 'tokens: {}\nblocks: {}')
+    const result = generate(dir)
+    const codexManifest = JSON.parse(
+      result.files.find((f) => f.path === '.codex-plugin/plugin.json')!.content,
+    )
+    expect(codexManifest.skills).toBe('./.codex-plugin/skills/')
+  })
+
+  it('is idempotent with vocabulary active', () => {
+    const dir = freshFixture()
+    writeFileSync(join(dir, 'moe-mint-vocab.yaml'), 'tokens: {}\nblocks: {}')
+    generate(dir)
+    generate(dir)
+    expect(checkDrift(dir).clean).toBe(true)
   })
 })

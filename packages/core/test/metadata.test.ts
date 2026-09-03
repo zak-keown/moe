@@ -135,15 +135,16 @@ describe("skill inventory", () => {
     expect(nonSkill).toEqual(["_shared"]);
   });
 
-  it("pins the IMPORTED skill set at exactly 31", () => {
+  it("pins the IMPORTED skill set at exactly 32", () => {
     // ARCHITECTURE.md section 4 and the root marketplace both said 28 originally.
     // The real count across the six original sources was 27: superpowers 14,
     // iterative-development 6, superpowers-lab 4,
     // superpowers-developing-for-claude-code 2, the-elements-of-style 1,
     // double-shot-latte 0 (hooks only). The 28th was `example-workflow`, a
     // pseudo-skill inside an example plugin. mattpocock-skills adds a seventh
-    // source, 4 skills (codebase-design, improve-codebase-architecture,
-    // domain-modeling, prototype), bringing imported to 31.
+    // source, 5 skills (codebase-design, improve-codebase-architecture,
+    // domain-modeling, prototype, resolving-merge-conflicts), bringing imported
+    // to 32.
     //
     // Counts `imported:`, not the directory. The GRAND total is deliberately no
     // longer asserted anywhere: it follows from the completeness equality below,
@@ -151,7 +152,7 @@ describe("skill inventory", () => {
     // impossible — a 32nd directory would fail this line and the pinned literal
     // at once, on two assertions whose real job is detecting an upstream DROP.
     // Adding a Moe-original skill is now a two-line manifest diff, not a wall.
-    expect(Object.keys(imported).length).toBe(31);
+    expect(Object.keys(imported).length).toBe(32);
   });
 
   it("every skill has a non-empty name and description", () => {
@@ -181,11 +182,33 @@ describe("skill inventory", () => {
     // `argument-hint` is a COMMAND property in the vendored manifest schema and
     // is inert on a skill; windows-vm carries it because it is written as a
     // slash command. Recorded, not silently dropped.
-    const allowed = new Set(["name", "description", "allowed-tools", "argument-hint"]);
+    const allowed = new Set(["name", "description", "allowed-tools", "argument-hint", "triggers"]);
     for (const s of skills) {
       for (const k of s.frontmatterKeys) {
         expect(allowed.has(k), `skills/${s.dir}: unexpected frontmatter key "${k}"`).toBe(true);
       }
+    }
+  });
+
+  it("every skill with a triggers frontmatter key appears in the using-moe trigger reference", () => {
+    const skillsWithTriggers = skills
+      .filter((s) => s.frontmatterKeys.includes("triggers"))
+      .map((s) => s.name)
+      .sort();
+    const usingMoe = readFileSync(join(SKILLS, "using-moe", "SKILL.md"), "utf8");
+    const triggerSection = usingMoe.split("## Skill Triggers")[1]?.split("## ")[0] ?? "";
+    for (const name of skillsWithTriggers) {
+      expect(
+        triggerSection.includes(`\`${name}\``),
+        `skill "${name}" has a triggers: frontmatter key but is missing from using-moe's Skill Triggers section`,
+      ).toBe(true);
+    }
+    const referencedNames = [...triggerSection.matchAll(/\*\*`([^`]+)`\*\*/g)].map((m) => m[1]);
+    for (const ref of referencedNames) {
+      expect(
+        skillsWithTriggers.includes(ref as string),
+        `using-moe references "${ref}" in Skill Triggers but that skill has no triggers: frontmatter key`,
+      ).toBe(true);
     }
   });
 
@@ -225,11 +248,12 @@ describe("skill inventory", () => {
       // superpowers-developing-for-claude-code @ 74afe93 (2)
       "developing-claude-code-plugins",
       "working-with-claude-code",
-      // mattpocock-skills @ 6654f6b (4)
+      // mattpocock-skills @ 6654f6b (5)
       "codebase-design",
       "domain-modeling",
       "improve-codebase-architecture",
       "prototype",
+      "resolving-merge-conflicts",
     ].sort();
     // Asserted against `imported:` rather than against the directory, and it
     // must stay `toEqual`. This is the drop-and-rename detector for the whole
@@ -395,6 +419,7 @@ const X_BIT_ALLOWLIST = [
   "hooks/moe-completion-evidence",
   "hooks/plan-set",
   "hooks/plan-set-notice",
+  "hooks/task-set",
   "hooks/run-hook.cmd",
   "hooks/governance-marker-check",
   "skills/brainstorming/scripts/start-server.sh",
@@ -547,11 +572,12 @@ describe("runtime paths", () => {
 
     // Floors. A walk that stopped finding anything — a moved directory, a
     // tightened filter — would otherwise satisfy every assertion below by
-    // iterating zero times. Node floor is 6 now, not 5: the four .cjs/.mjs
-    // scripts plus the two extensionless Node hooks (`hooks/plan-set` and
-    // `hooks/moe-completion-evidence`) with node shebangs.
+    // iterating zero times. Node floor is 7 now, not 6: the four .cjs/.mjs
+    // scripts plus the three extensionless Node hooks (`hooks/plan-set`,
+    // `hooks/moe-completion-evidence`, and `hooks/task-set`) with node
+    // shebangs.
     expect(bash.length, "bash targets discovered").toBeGreaterThanOrEqual(11);
-    expect(node.length, "node targets discovered").toBeGreaterThanOrEqual(6);
+    expect(node.length, "node targets discovered").toBeGreaterThanOrEqual(7);
     for (const rel of [
       "hooks/claude-judge-continuation",
       "hooks/plan-set-notice",
@@ -567,9 +593,10 @@ describe("runtime paths", () => {
     // Extensionless node script(s). Same regression concern in the mirror
     // direction: if the node-shebang branch above is removed, these fall
     // through and node's floor could still be met by the .cjs/.mjs four.
-    // Both plan-set (deterministic-task-dag) and moe-completion-evidence
-    // (verification-split-and-firing-rate) are extensionless Node hooks.
-    for (const rel of ["hooks/plan-set", "hooks/moe-completion-evidence"]) {
+    // plan-set (deterministic-task-dag), moe-completion-evidence
+    // (verification-split-and-firing-rate), and task-set are all
+    // extensionless Node hooks.
+    for (const rel of ["hooks/plan-set", "hooks/moe-completion-evidence", "hooks/task-set"]) {
       expect(node, `extensionless script ${rel} not routed to node --check`).toContain(rel);
     }
     expect(bash).not.toContain("hooks/run-hook.cmd");
@@ -1288,5 +1315,123 @@ describe("plan-set-notice", () => {
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
+  });
+});
+
+describe("task-set", () => {
+  const CLI = join(PKG, "hooks/task-set");
+  const FIXTURES = join(PKG, "test/fixtures/task-set");
+  const run = (args: string[]): { status: number; stdout: string; stderr: string } => {
+    try {
+      const stdout = execFileSync(process.execPath, [CLI, ...args], {
+        stdio: ["ignore", "pipe", "pipe"],
+        encoding: "utf8",
+      });
+      return { status: 0, stdout, stderr: "" };
+    } catch (err) {
+      const e = err as { status: number; stdout: string; stderr: string };
+      return { status: e.status ?? 1, stdout: e.stdout ?? "", stderr: e.stderr ?? "" };
+    }
+  };
+
+  it("check passes on a diamond plan and reports the task count", () => {
+    const r = run(["check", join(FIXTURES, "diamond-plan.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout).toContain("ok — 4 tasks");
+  });
+
+  it("check passes on a plan without depends_on fields", () => {
+    const r = run(["check", join(FIXTURES, "valid-no-deps-plan.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout).toContain("ok — 2 tasks");
+  });
+
+  it("check fails on a cycle and names every task on stderr", () => {
+    const r = run(["check", join(FIXTURES, "cycle-plan.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/cycle detected among:.*1/);
+    expect(r.stderr).toMatch(/cycle detected among:.*2/);
+    expect(r.stderr).toMatch(/cycle detected among:.*3/);
+  });
+
+  it("check fails on an unresolvable dependency", () => {
+    const r = run(["check", join(FIXTURES, "missing-dep-plan.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/task 1: depends_on 99 — not a known task/);
+  });
+
+  it("check fails when a task has no Files block", () => {
+    const r = run(["check", join(FIXTURES, "no-files-plan.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/task 1.*missing "Files:" block/);
+  });
+
+  it("--help prints usage and exits 0", () => {
+    const r = run(["--help"]);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toMatch(/task-set: compute the intra-plan task DAG/);
+  });
+
+  it("waves groups independent disjoint tasks into one wave", () => {
+    const r = run(["waves", join(FIXTURES, "valid-no-deps-plan.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout.trim()).toBe("wave 1: 1, 2");
+  });
+
+  it("waves computes a diamond into three waves", () => {
+    const r = run(["waves", join(FIXTURES, "diamond-plan.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    const lines = r.stdout.trim().split(/\n/);
+    expect(lines).toEqual(["wave 1: 1", "wave 2: 2, 3", "wave 3: 4"]);
+  });
+
+  it("waves splits tasks that share a file into separate waves", () => {
+    const r = run(["waves", join(FIXTURES, "overlap-plan.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    const lines = r.stdout.trim().split(/\n/);
+    expect(lines).toEqual(["wave 1: 1", "wave 2: 2"]);
+  });
+
+  it("next returns ready tasks on a partially-completed diamond", () => {
+    // diamond-plan.md has Task 1 fully checked. Tasks 2 and 3 depend on
+    // Task 1, so both should be ready. Task 4 depends on 2 and 3.
+    const r = run(["next", join(FIXTURES, "diamond-plan.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout.trim().split(/\n/)).toEqual(["2", "3"]);
+  });
+
+  it("next returns empty when all tasks are done", () => {
+    const r = run(["next", join(FIXTURES, "all-done-plan.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout).toBe("");
+  });
+
+  it("next returns all tasks when none have dependencies", () => {
+    // valid-no-deps-plan.md has two tasks, both unchecked, no deps.
+    const r = run(["next", join(FIXTURES, "valid-no-deps-plan.md")]);
+    expect(r.status, r.stderr).toBe(0);
+    expect(r.stdout.trim().split(/\n/)).toEqual(["1", "2"]);
+  });
+
+  it("check fails on duplicate task numbers", () => {
+    const r = run(["check", join(FIXTURES, "duplicate-num-plan.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/duplicate task number 1/);
+  });
+
+  it("check fails when a task has no Consumes entry", () => {
+    const r = run(["check", join(FIXTURES, "no-consumes-plan.md")]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toMatch(/task 1.*missing "Consumes:" entry/);
+  });
+
+  it("waves excludes blocked tasks with a stderr note", () => {
+    const { spawnSync } = require("node:child_process");
+    const r = spawnSync(process.execPath, [CLI, "waves", join(FIXTURES, "blocked-plan.md")], {
+      encoding: "utf8",
+    });
+    expect(r.status).toBe(0);
+    expect(r.stdout.trim()).toBe("wave 1: 1");
+    expect(r.stderr).toMatch(/task 2 excluded — blocked by: D1/);
   });
 });

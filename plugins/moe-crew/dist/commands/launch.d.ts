@@ -34,6 +34,12 @@ export interface LaunchArgs {
      * getDriver, which validates the id (the CLI also validates it at parse time).
      */
     harness: string;
+    /**
+     * When true, create a disposable git worktree for this worker and use it as
+     * the tmux session's cwd. The worktree path is stored in the meta so `stop`
+     * can remove it.
+     */
+    worktree?: boolean;
 }
 /** The one-time-consent error, matching the bash text. */
 export declare function consentError(moeCrewPath: string): CommandResult;

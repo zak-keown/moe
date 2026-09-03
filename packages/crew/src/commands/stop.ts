@@ -1,6 +1,13 @@
+import { dirname } from "node:path";
 import { readRawLines } from "../core/event-log.js";
 import { eventsPath } from "../core/paths.js";
-import { readHarnessMarker, removeOrphan, removeWorker } from "../core/worker-store.js";
+import { removeWorktree } from "../core/worktree.js";
+import {
+  readHarnessMarker,
+  readWorktreeMarker,
+  removeOrphan,
+  removeWorker,
+} from "../core/worker-store.js";
 import { parseEvent } from "../events.js";
 import type { CommandContext, CommandResult } from "./context.js";
 import { resolveWorker } from "./context.js";
@@ -46,8 +53,15 @@ export async function cmdStop(
     // enough to identify and tear down an unregistered worker by name.
     const harness = readHarnessMarker(ctx.workerDir, worker);
     if (harness !== null && (await ctx.tmux.hasSession(worker))) {
+      // Read worktree marker before removeOrphan deletes it.
+      const orphanWt = readWorktreeMarker(ctx.workerDir, worker);
       await ctx.tmux.killSession(worker);
       removeOrphan(ctx.workerDir, worker);
+      // Clean up the disposable worktree if one was created at launch.
+      if (orphanWt) {
+        const repoRoot = dirname(dirname(orphanWt));
+        await removeWorktree(undefined, repoRoot, orphanWt);
+      }
       return {
         stdout: `Worker ${worker} (unregistered — no session id yet) stopped. Shim removed.`,
         code: 0,
@@ -62,6 +76,9 @@ export async function cmdStop(
   const pollMs = opts.pollMs ?? 500;
   const settleMs = opts.settleMs ?? 1000;
   const eventFile = eventsPath(ctx.workerDir, sid);
+
+  // Read the worktree marker BEFORE removeWorker (which deletes it).
+  const wtPath = readWorktreeMarker(ctx.workerDir, tmuxName);
 
   if (await ctx.tmux.hasSession(tmuxName)) {
     await ctx.tmux.sendText(tmuxName, ctx.driver.quitKeys);
@@ -87,6 +104,18 @@ export async function cmdStop(
   }
 
   removeWorker(ctx.workerDir, sid, tmuxName);
+
+  // Clean up the disposable git worktree (if one was created at launch).
+  // The worktree marker was read above; the meta's `worktree` field is a
+  // fallback for workers whose marker was lost. Swallows errors when the
+  // worktree was already removed manually.
+  const effectiveWt = wtPath ?? (meta.worktree as string | undefined);
+  if (effectiveWt) {
+    // The worktree lives at <repoRoot>/.moe-worktrees/<name>, so the repo
+    // root is two directories up from the worktree path.
+    const repoRoot = dirname(dirname(effectiveWt));
+    await removeWorktree(undefined, repoRoot, effectiveWt);
+  }
 
   return {
     stdout: `Worker ${tmuxName} (${sid}) stopped. Shim removed.`,

@@ -213,6 +213,17 @@ function installDoc(model: PluginModel): string {
 
 export const pi: HarnessAdapter = Object.freeze({
   name: 'pi',
+  support: {
+    skills: 'full',
+    commands: 'none',
+    agents: 'none',
+    hooks: 'none',
+    mcp: 'none',
+    bootstrap: 'full',
+    rules: 'none',
+    variables: 'none',
+  },
+  skillsOutputDir: '.pi/skills',
   installDoc,
   emit(model: PluginModel) {
     const limitations: EmissionLimitation[] = []

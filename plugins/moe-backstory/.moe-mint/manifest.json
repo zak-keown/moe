@@ -14,8 +14,11 @@
     ".codex-plugin/plugin.json": {
       "sha256": "d96deac0f9ed93e30d929f095b8796a86220ec708d9b6b8c537fd20723c6ccf0"
     },
+    ".cursor-plugin/marketplace.json": {
+      "sha256": "894ffddb378f28f8d8b9e220230aa53b15e08c14f2c4d92854669b98f4c744c7"
+    },
     ".cursor-plugin/plugin.json": {
-      "sha256": "7c11ea0d7942319519402f45f9fea2aca14a8dae231d89be91eb9cc01f3eb657"
+      "sha256": "cb74d50306174401f1613277dd34330210355e041923d522b4141d2494fa4e8d"
     },
     ".kimi-plugin/plugin.json": {
       "sha256": "f4c8f7616db7a90304f1a47ed04b6e7e35bbeff6c82827f24fa715d1dd500852"
@@ -51,7 +54,7 @@
       "sha256": "d4cf22763688befb600be6c5816e67850bb93baf969b8bb2da59450dacce998c"
     },
     "docs/install/cursor.md": {
-      "sha256": "9543fd176f86f854eec3a3fd68c0c4cc66bfc8ee8d5dda6b95e74e7b91e3ea57"
+      "sha256": "20f31ef1b16a0ba8b0e8e23c09efd7c8ec13ad2754cb920ad96872a2e90f5f21"
     },
     "docs/install/kimi.md": {
       "sha256": "3401c8df1cc23a7d7434ec8458d90c502ebbdbe4d6ce5822462a77d769655c43"

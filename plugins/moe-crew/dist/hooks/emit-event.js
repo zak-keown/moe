@@ -67,6 +67,12 @@ export function runHook(opts) {
         return empty;
     const ts = opts.now();
     const worker = buildEvent(event, ts, payload);
+    // When the worker is part of a run, stamp the runId on the event so
+    // downstream consumers can correlate events to runs without reading run.json.
+    const runId = opts.runId ?? process.env.MOE_CREW_RUN_ID;
+    if (runId !== undefined && runId.length > 0) {
+        worker.runId = runId;
+    }
     appendEvent(eventsPath(opts.workerDir, sessionId), worker);
     // Stop must approve so the hook never blocks the agent.
     const stdout = hookEventName === "Stop" ? '{"decision":"approve"}' : "";
@@ -89,6 +95,13 @@ function buildEvent(event, ts, payload) {
         }
         case "post_tool_use":
             return { event, ts, tool: asString(payload.tool_name) };
+        // run_start/run_end are envelope events created by the runs module, never
+        // by the harness hook (they are not in EVENT_MAP). Handle them here only
+        // to satisfy the exhaustive type — the runId comes from the payload.
+        case "run_start":
+            return { event, ts, runId: asString(payload.runId) };
+        case "run_end":
+            return { event, ts, runId: asString(payload.runId) };
         default:
             return { event, ts };
     }

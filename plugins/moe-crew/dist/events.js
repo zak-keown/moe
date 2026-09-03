@@ -5,6 +5,8 @@ export const EVENT_NAMES = [
     "post_tool_use",
     "stop",
     "session_end",
+    "run_start",
+    "run_end",
 ];
 export function serializeEvent(e) {
     return JSON.stringify(e);

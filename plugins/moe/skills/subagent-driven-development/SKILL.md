@@ -1,6 +1,12 @@
 ---
 name: subagent-driven-development
 description: Use when executing implementation plans with independent tasks in the current session
+triggers: >-
+  Load when executing a multi-task implementation plan whose tasks need
+  fresh-context isolation via subagents. Do NOT load for: single-task
+  implementation (just code directly), debugging (`systematic-debugging`),
+  initial planning (`writing-plans`), or low-level dispatch mechanics
+  without a plan (`dispatching-parallel-agents`).
 ---
 
 # Subagent-Driven Development
@@ -215,6 +221,23 @@ Record the wave assignment in the ledger before dispatching Wave 1:
 `Waves: [W1: t1,t2,t3] [W2: t4] [W3: t5,t6]`, so recovery after compaction reads
 the same shape you dispatched from.
 
+When `task-set` is available (the plan has `depends_on:` fields), compute
+waves deterministically:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/hooks/task-set" waves "$PLAN_PATH"
+```
+
+The output replaces the manual scan table. Validate it against your own
+understanding (a sanity check, not a gate). If the plan lacks `depends_on:`
+fields, fall back to the manual scan table.
+
+On a context reset, recover the ready set:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/hooks/task-set" next "$PLAN_PATH"
+```
+
 Before dispatching a wave, record its BASE SHA once — every worker in the wave
 branches from that same commit, per the divergent-tree rule in
 `dispatching-parallel-agents`. A worker branched from a stale base will cite the
@@ -282,18 +305,18 @@ Everything you paste into a dispatch prompt — and everything a subagent
 prints back — stays resident in your context for the rest of the session
 and is re-read on every later turn. Hand artifacts over as files.
 
-**Waiting on dispatched subagents:** never poll a wait interface with
-short timeouts, and never sit in one silent, open-ended wait either.
+**Waiting on dispatched subagents:**
+
+{subagent-wait}
+
 While you have local work — ledger updates, packaging the next review,
-reading reports — keep working; child results arrive on their own.
-When you are genuinely idle, wait in bounded stretches (five to ten
-minutes, where your platform allows), and between stretches post one
-line of status and reconcile your live children: list them, and chase
-any that finished without reporting. A bounded stretch keeps nearly
-all of a long wait's efficiency while guaranteeing a stuck or lost
-child is noticed within minutes, not at the end of the session.
+reading reports — keep working; child results arrive on their own. Between
+any bounded wait stretches, post one line of status and reconcile your live
+children: list them, and chase any that finished without reporting.
 
 ### 1. Dispatch the implementer
+
+{subagent-dispatch}
 
 Record BASE (`git rev-parse HEAD`) before dispatching — the review package
 and fix-round diffs need it.

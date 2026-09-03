@@ -8,6 +8,15 @@ import { afterEach, describe, expect, it } from "vitest";
 const CORE = fileURLToPath(new URL("..", import.meta.url));
 const REVIEW_SCOPE = join(CORE, "skills/reviewing-a-codebase/scripts/review-scope.mjs");
 const REVIEW_MERGE = join(CORE, "skills/reviewing-a-codebase/scripts/review-merge.mjs");
+const REVIEW_CHECK = join(CORE, "skills/reviewing-a-codebase/scripts/review-check.mjs");
+const REVIEW_VERIFY_SCOPE = join(
+  CORE,
+  "skills/reviewing-a-codebase/scripts/review-verify-scope.mjs",
+);
+const REVIEW_VERIFY_RECORD = join(
+  CORE,
+  "skills/reviewing-a-codebase/scripts/review-verify-record.mjs",
+);
 const STAMP_DISPOSITION = join(CORE, "skills/fixing-a-code-review/scripts/stamp-disposition.mjs");
 
 const sandboxes: string[] = [];
@@ -259,8 +268,15 @@ function mergeFixture(reports: Array<string | null>): MergeFixture {
   git(repo, "init", "--quiet");
   git(repo, "config", "user.name", "Moe Test");
   git(repo, "config", "user.email", "moe-test@example.invalid");
-  writeFiles(repo, { "src/base.ts": "export {};\n" });
-  git(repo, "add", "src/base.ts");
+  // Every path a fixture report cites must exist: the merge refuses a File it
+  // cannot find in the tree, because the fix workflow could never address it.
+  writeFiles(repo, {
+    "src/base.ts": "export {};\n",
+    ...Object.fromEntries(
+      ["a", "c", "h", "l", "m", "sound", "z"].map((name) => [`src/${name}.ts`, "export {};\n"]),
+    ),
+  });
+  git(repo, "add", "--", "src");
   git(repo, "commit", "--quiet", "-m", "fixture");
   const baseSha = git(repo, "rev-parse", "HEAD").trim();
   const reportsDir = join(repo, ".review-shards");
@@ -586,6 +602,19 @@ describe("review-merge behavior", () => {
     expect(() => readFileSync(join(repo, "out.md"))).toThrow();
   });
 
+  it("refuses a finding whose File path does not exist in the tree", () => {
+    const { repo } = mergeFixture([
+      "### Phantom\n**File:** `src/missing.ts`\n**Anchor:** `aSymbol`\n**Severity:** high\nbody\n",
+    ]);
+
+    const result = run(REVIEW_MERGE, ["--shards", ".review-shards", "--out", "out.md"], repo);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("malformed finding record");
+    expect(result.stderr).toContain("does not exist");
+    expect(() => readFileSync(join(repo, "out.md"))).toThrow();
+  });
+
   it.each([
     ["a fieldless heading", "### Broken\nbody\n"],
     ["a file without severity", "### Broken\n**File:** `src/a.ts`\n**Anchor:** `aSymbol`\nbody\n"],
@@ -752,5 +781,306 @@ describe("stamp-disposition behavior", () => {
     expect(result.status).toBe(2);
     expect(result.stderr).toContain(message);
     expect(readFileSync(file, "utf8")).toBe(before);
+  });
+});
+
+const VALID_REPORT =
+  "### Valid\n**File:** `src/a.ts`\n**Anchor:** `aSymbol`\n**Severity:** low\nbody\n";
+
+describe("review-check behavior", () => {
+  it("passes finished reports and counts unfinished shards without failing", () => {
+    const { repo } = mergeFixture([VALID_REPORT, null]);
+
+    const result = run(REVIEW_CHECK, ["--shards", ".review-shards"], repo);
+
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain("ok shard-001 0C/0H/0M/1L");
+    expect(result.stdout).toContain("1/2 reports");
+  });
+
+  it("fails when --require-all finds an unfinished shard", () => {
+    const { repo } = mergeFixture([VALID_REPORT, null]);
+
+    const result = run(REVIEW_CHECK, ["--shards", ".review-shards", "--require-all"], repo);
+
+    expect(result.status).toBe(1);
+    expect(result.stdout + result.stderr).toContain("missing");
+  });
+
+  it.each([
+    [
+      "a heading inside a fenced block",
+      "### Valid\n**File:** `src/a.ts`\n**Anchor:** `aSymbol`\n**Severity:** low\n```\n### not a heading\n```\n",
+      "inside a fenced",
+    ],
+    [
+      "a double-backtick anchor",
+      "### Valid\n**File:** `src/a.ts`\n**Anchor:** `` `x` in `y` ``\n**Severity:** low\nbody\n",
+      "anchor",
+    ],
+    [
+      "a File path missing from the tree",
+      "### Valid\n**File:** `src/missing.ts`\n**Anchor:** `aSymbol`\n**Severity:** low\nbody\n",
+      "does not exist",
+    ],
+    [
+      "a line-number citation in the body",
+      "### Valid\n**File:** `src/a.ts`\n**Anchor:** `aSymbol`\n**Severity:** low\nsee `src/a.ts:12` for details\n",
+      "line-number",
+    ],
+    [
+      "an invented severity",
+      "### Valid\n**File:** `src/a.ts`\n**Anchor:** `aSymbol`\n**Severity:** policy\nbody\n",
+      "severity",
+    ],
+  ])("flags %s", (_label, report, expected) => {
+    const { repo } = mergeFixture([report]);
+
+    const result = run(REVIEW_CHECK, ["--shards", ".review-shards"], repo);
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("PROBLEM shard-001");
+    expect(result.stdout).toContain(expected);
+  });
+
+  it("flags a files_opened count that does not match the shard assignment", () => {
+    const { baseSha, repo } = mergeFixture([VALID_REPORT]);
+    writeFileSync(
+      join(repo, ".review-shards/shard-1-REVIEW.md"),
+      `<!-- moe-review-shard\nbase_sha: ${baseSha}\nfiles_opened: 7\n-->\n${VALID_REPORT}`,
+    );
+
+    const result = run(REVIEW_CHECK, ["--shards", ".review-shards"], repo);
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("files_opened");
+  });
+});
+
+function seriousFixture(): MergeFixture {
+  const fixture = mergeFixture([
+    [
+      "### Critical one",
+      "**File:** `src/c.ts`",
+      "**Anchor:** `cSymbol`",
+      "**Severity:** critical",
+      "critical body",
+      "",
+      "### High one",
+      "**File:** `src/h.ts`",
+      "**Anchor:** `hSymbol`",
+      "**Severity:** high",
+      "high body",
+      "",
+      "### Medium one",
+      "**File:** `src/m.ts`",
+      "**Anchor:** `mSymbol`",
+      "**Severity:** medium",
+      "medium body",
+      "",
+    ].join("\n"),
+  ]);
+  const merged = run(
+    REVIEW_MERGE,
+    ["--shards", ".review-shards", "--out", "CODEBASE-REVIEW.md"],
+    fixture.repo,
+  );
+  expect(merged.status, merged.stderr).toBe(0);
+  return fixture;
+}
+
+const SCOPE_ARGS = ["--shards", ".review-shards", "--report", "CODEBASE-REVIEW.md"];
+
+interface VerifyManifest {
+  base_sha: string;
+  findings: Array<{ id: string; severity: string; file: string; title: string; path: string }>;
+}
+
+describe("review-verify-scope behavior", () => {
+  it("extracts only critical and high findings into per-finding files with a manifest", () => {
+    const { baseSha, repo } = seriousFixture();
+
+    const result = run(REVIEW_VERIFY_SCOPE, SCOPE_ARGS, repo);
+
+    expect(result.status, result.stderr).toBe(0);
+    const manifest = JSON.parse(
+      readFileSync(join(repo, ".review-shards/verify/manifest.json"), "utf8"),
+    ) as VerifyManifest;
+    expect(manifest.base_sha).toBe(baseSha);
+    expect(manifest.findings.map((finding) => finding.id)).toEqual(["CR-001", "CR-002"]);
+    expect(manifest.findings[0]?.severity).toBe("critical");
+    expect(manifest.findings[1]?.file).toBe("src/h.ts");
+    expect(readFileSync(join(repo, ".review-shards/verify/CR-001.md"), "utf8")).toContain(
+      "### CR-001: Critical one",
+    );
+    expect(readFileSync(join(repo, ".review-shards/verify/CR-002.md"), "utf8")).toContain(
+      "**Severity:** high",
+    );
+    expect(() => readFileSync(join(repo, ".review-shards/verify/CR-003.md"))).toThrow();
+    expect(result.stdout).toContain("2 serious finding(s)");
+  });
+
+  it("refuses a report whose base does not match the shard manifest", () => {
+    const { repo } = seriousFixture();
+    const report = readFileSync(join(repo, "CODEBASE-REVIEW.md"), "utf8").replace(
+      /^base_sha: .*$/m,
+      "base_sha: 0000000000000000000000000000000000000000",
+    );
+    writeFileSync(join(repo, "CODEBASE-REVIEW.md"), report);
+
+    const result = run(REVIEW_VERIFY_SCOPE, SCOPE_ARGS, repo);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("base_sha");
+    expect(() => readFileSync(join(repo, ".review-shards/verify/manifest.json"))).toThrow();
+  });
+});
+
+function scopedFixture(): MergeFixture {
+  const fixture = seriousFixture();
+  const scoped = run(REVIEW_VERIFY_SCOPE, SCOPE_ARGS, fixture.repo);
+  expect(scoped.status, scoped.stderr).toBe(0);
+  return fixture;
+}
+
+const RECORD_ARGS = ["--shards", ".review-shards"];
+
+function ledgerOf(repo: string): { base_sha: string; results: Array<Record<string, string>> } {
+  return JSON.parse(readFileSync(join(repo, ".review-shards/verifications.json"), "utf8"));
+}
+
+describe("review-verify-record behavior", () => {
+  it("records raw verdicts and verdict lines pulled from a full reply, then feeds the merge", () => {
+    const { baseSha, repo } = scopedFixture();
+    writeFileSync(
+      join(repo, "reply.txt"),
+      'Reasoning paragraph.\n\nVERDICT-JSON: {"id":"CR-002","verdict":"confirmed-lower","severity":"medium","evidence":"Only a warm cache is affected."}\n',
+    );
+
+    const first = run(
+      REVIEW_VERIFY_RECORD,
+      [
+        ...RECORD_ARGS,
+        JSON.stringify({ id: "CR-001", verdict: "confirmed", evidence: "Reproduced." }),
+      ],
+      repo,
+    );
+    expect(first.status, first.stderr).toBe(0);
+    expect(first.stdout).toContain("recorded CR-001 confirmed");
+    expect(first.stdout).toContain("1/2 recorded");
+
+    const second = run(REVIEW_VERIFY_RECORD, [...RECORD_ARGS, "--from-file", "reply.txt"], repo);
+    expect(second.status, second.stderr).toBe(0);
+    expect(second.stdout).toContain("recorded CR-002 confirmed-lower -> medium");
+    expect(second.stdout).toContain("2/2 recorded");
+
+    const ledger = ledgerOf(repo);
+    expect(ledger.base_sha).toBe(baseSha);
+    expect(ledger.results).toEqual([
+      { id: "CR-001", verdict: "confirmed", evidence: "Reproduced." },
+      {
+        id: "CR-002",
+        verdict: "confirmed-lower",
+        severity: "medium",
+        evidence: "Only a warm cache is affected.",
+      },
+    ]);
+
+    const merged = run(
+      REVIEW_MERGE,
+      [
+        "--shards",
+        ".review-shards",
+        "--out",
+        "CODEBASE-REVIEW.md",
+        "--verification-results",
+        ".review-shards/verifications.json",
+      ],
+      repo,
+    );
+    expect(merged.status, merged.stderr).toBe(0);
+    const report = readFileSync(join(repo, "CODEBASE-REVIEW.md"), "utf8");
+    expect(report).toContain("verified: true");
+    expect(report).toContain("confirmed_lower: 1");
+  });
+
+  it("drops a severity that merely restates the original on a confirmed verdict", () => {
+    const { repo } = scopedFixture();
+
+    const result = run(
+      REVIEW_VERIFY_RECORD,
+      [
+        ...RECORD_ARGS,
+        JSON.stringify({ id: "CR-001", verdict: "confirmed", severity: "critical", evidence: "x" }),
+      ],
+      repo,
+    );
+
+    expect(result.status, result.stderr).toBe(0);
+    expect(ledgerOf(repo).results[0]).toEqual({
+      id: "CR-001",
+      verdict: "confirmed",
+      evidence: "x",
+    });
+  });
+
+  it.each([
+    [
+      "an unknown id",
+      { id: "CR-009", verdict: "confirmed", evidence: "x" },
+      "not a serious finding",
+    ],
+    ["an invalid verdict", { id: "CR-001", verdict: "maybe", evidence: "x" }, "verdict"],
+    [
+      "a confirmed-lower that does not lower",
+      { id: "CR-001", verdict: "confirmed-lower", severity: "critical", evidence: "x" },
+      "below",
+    ],
+    ["empty evidence", { id: "CR-001", verdict: "confirmed", evidence: "  " }, "evidence"],
+    [
+      "a severity that contradicts a non-lowering verdict",
+      { id: "CR-001", verdict: "confirmed", severity: "low", evidence: "x" },
+      "severity",
+    ],
+    [
+      "evidence past the length cap",
+      { id: "CR-001", verdict: "confirmed", evidence: "x".repeat(1001) },
+      "1000",
+    ],
+  ])("rejects %s without writing the ledger", (_label, verdict, expected) => {
+    const { repo } = scopedFixture();
+
+    const result = run(REVIEW_VERIFY_RECORD, [...RECORD_ARGS, JSON.stringify(verdict)], repo);
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain(expected);
+    expect(() => readFileSync(join(repo, ".review-shards/verifications.json"))).toThrow();
+  });
+
+  it("refuses to overwrite an existing verdict unless told to replace it", () => {
+    const { repo } = scopedFixture();
+    const first = JSON.stringify({ id: "CR-001", verdict: "confirmed", evidence: "first" });
+    const second = JSON.stringify({ id: "CR-001", verdict: "refuted", evidence: "second" });
+    expect(run(REVIEW_VERIFY_RECORD, [...RECORD_ARGS, first], repo).status).toBe(0);
+
+    const again = run(REVIEW_VERIFY_RECORD, [...RECORD_ARGS, second], repo);
+    expect(again.status).toBe(2);
+    expect(again.stderr).toContain("--replace");
+    expect(ledgerOf(repo).results[0]?.verdict).toBe("confirmed");
+
+    const replaced = run(REVIEW_VERIFY_RECORD, [...RECORD_ARGS, "--replace", second], repo);
+    expect(replaced.status, replaced.stderr).toBe(0);
+    expect(ledgerOf(repo).results[0]?.verdict).toBe("refuted");
+  });
+
+  it("refuses a reply with no verdict line", () => {
+    const { repo } = scopedFixture();
+    writeFileSync(join(repo, "reply.txt"), "I could not decide.\n");
+
+    const result = run(REVIEW_VERIFY_RECORD, [...RECORD_ARGS, "--from-file", "reply.txt"], repo);
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("VERDICT-JSON");
+    expect(() => readFileSync(join(repo, ".review-shards/verifications.json"))).toThrow();
   });
 });

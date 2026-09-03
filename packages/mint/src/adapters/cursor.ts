@@ -5,7 +5,7 @@ import type { HarnessAdapter, EmissionLimitation } from './types.js'
 import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { sessionStartScript, runHookCmd } from '../bootstrap/shell-hook.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
-import { baseManifestFields, json, bootstrapEmitsHooks } from './shared.js'
+import { baseManifestFields, json, bootstrapEmitsHooks, marketplaceName } from './shared.js'
 import { hooksManifestPath } from '../config.js'
 
 // Where the cursor adapter emits the bootstrap SessionStart hook and its
@@ -14,6 +14,11 @@ import { hooksManifestPath } from '../config.js'
 // with claude-code so the two adapters can coexist without duplication.
 const BOOTSTRAP_HOOKS_DIR = 'hooks/moe-mint'
 const BOOTSTRAP_HOOKS_JSON_PATH = `${BOOTSTRAP_HOOKS_DIR}/hooks-cursor.json`
+
+// Cursor's MCP config is emitted inside .cursor-plugin/ to avoid colliding
+// with agent-plugins.ts's root-level mcp.json. The manifest's mcpServers
+// field points at this relative path.
+const CURSOR_MCP_PATH = '.cursor-plugin/mcp.json'
 
 function pluginManifest(model: PluginModel): Record<string, unknown> {
   const { config } = model
@@ -30,6 +35,18 @@ function pluginManifest(model: PluginModel): Record<string, unknown> {
     ...rest,
   }
   manifest.skills = `./${config.components.skills}/`
+
+  // Emit category and tags from marketplace config when present.
+  if (config.marketplace?.category) manifest.category = config.marketplace.category
+  if (config.marketplace?.tags?.length) manifest.tags = config.marketplace.tags
+
+  // Point at commands/ and agents/ source directories when the model has entries.
+  if (model.commands.length) manifest.commands = `./${config.components.commands}/`
+  if (model.agents.length) manifest.agents = `./${config.components.agents}/`
+
+  // Point at the translated MCP config when present.
+  if (model.mcp !== undefined) manifest.mcpServers = `./${CURSOR_MCP_PATH}`
+
   if (bootstrapEmitsHooks(config, cursor.name)) {
     manifest.hooks = `./${BOOTSTRAP_HOOKS_JSON_PATH}`
   }
@@ -46,15 +63,44 @@ function hooksManifest(): Record<string, unknown> {
   }
 }
 
+// Cursor's marketplace.json format: { name, owner, metadata, plugins }.
+// Emitted into .cursor-plugin/marketplace.json, parallel to claude-code's
+// .claude-plugin/marketplace.json but using Cursor's multi-plugin format.
+function cursorMarketplaceManifest(model: PluginModel): Record<string, unknown> {
+  const { config } = model
+  const name = marketplaceName(config)
+  const manifest: Record<string, unknown> = {
+    name,
+    owner: {
+      name: config.author?.name ?? config.name,
+      ...(config.author?.email ? { email: config.author.email } : {}),
+    },
+  }
+  if (config.description) {
+    manifest.metadata = { description: config.description }
+  }
+  manifest.plugins = [
+    {
+      name: config.name,
+      source: './',
+      description: config.description,
+    },
+  ]
+  return manifest
+}
+
 // Ground truth per Design decision 4: `/add-plugin` in Cursor Agent chat, or
 // marketplace search once listed there — no fabricated marketplace listing.
 function installDoc(model: PluginModel): string {
   const { config } = model
   const bootstrapActive = bootstrapEmitsHooks(config, cursor.name)
 
-  const emitted = ['`.cursor-plugin/plugin.json`']
+  const emitted = ['`.cursor-plugin/plugin.json`', '`.cursor-plugin/marketplace.json`']
   if (bootstrapActive) {
     emitted.push(`the \`${BOOTSTRAP_HOOKS_DIR}\` bootstrap hook and its \`${BOOTSTRAP_HOOKS_JSON_PATH}\``)
+  }
+  if (model.mcp !== undefined) {
+    emitted.push('`.cursor-plugin/mcp.json`, translated from the plugin\'s MCP server config')
   }
 
   const lines = [
@@ -72,29 +118,50 @@ function installDoc(model: PluginModel): string {
     '',
     "Point it at this plugin's directory (or search the plugin marketplace once it's listed there). Cursor reads `.cursor-plugin/plugin.json`. Consult Cursor's plugin docs if this doesn't match your installed version.",
   ]
+  const caveats: string[] = []
   if (model.hooks !== undefined) {
     // Cursor never translates hand-written hook entries, in either bootstrap
     // mode; only which (if any) bootstrap hook is emitted varies.
     const bootstrapHookNote = bootstrapActive
       ? 'only the bootstrap sessionStart hook is emitted'
       : 'no hooks are emitted for Cursor'
-    lines.push(
-      '',
-      '## Caveats',
-      '',
+    caveats.push(
       `- Hand-written entries in \`${hooksManifestPath(config)}\` are not translated for Cursor; ${bootstrapHookNote}.`,
     )
+  }
+  if (caveats.length) {
+    lines.push('', '## Caveats', '', ...caveats)
   }
   return lines.join('\n')
 }
 
 export const cursor: HarnessAdapter = Object.freeze({
   name: 'cursor',
+  support: {
+    skills: 'full',
+    commands: 'full',
+    agents: 'full',
+    hooks: 'partial',
+    mcp: 'full',
+    bootstrap: 'full',
+    rules: 'none',
+    variables: 'none',
+  },
+  skillsOutputDir: '.cursor-plugin/skills',
   installDoc,
   emit(model: PluginModel) {
     const { config } = model
     const limitations: EmissionLimitation[] = []
     const files: GeneratedFile[] = [{ path: '.cursor-plugin/plugin.json', content: json(pluginManifest(model)) }]
+
+    // Emit Cursor marketplace.json.
+    files.push({ path: '.cursor-plugin/marketplace.json', content: json(cursorMarketplaceManifest(model)) })
+
+    // Emit MCP config when present. Placed inside .cursor-plugin/ to avoid
+    // colliding with agent-plugins.ts's root-level mcp.json.
+    if (model.mcp !== undefined) {
+      files.push({ path: CURSOR_MCP_PATH, content: json(model.mcp) })
+    }
 
     const emitHooks = bootstrapEmitsHooks(config, cursor.name)
     if (config.bootstrap.kind === 'skill') {

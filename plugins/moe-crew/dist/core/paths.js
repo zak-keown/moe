@@ -67,6 +67,15 @@ export function harnessMarkerPath(dir, name) {
     assertSafeSegment(name);
     return `${dir}/${name}.harness`;
 }
+/**
+ * The sidecar worktree marker keyed by tmux_name. Written at launch when
+ * `--worktree` is set; stores the absolute worktree path so `stop` can
+ * remove it. Parallels the `.harness` marker.
+ */
+export function worktreeMarkerPath(dir, name) {
+    assertSafeSegment(name);
+    return `${dir}/${name}.worktree`;
+}
 export function claudeTranscriptPath(home, cwd, sid) {
     return `${home}/.claude/projects/${cwd.replace(/[/._:]/g, "-")}/${sid}.jsonl`;
 }

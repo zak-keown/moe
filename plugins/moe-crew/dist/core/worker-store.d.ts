@@ -39,6 +39,13 @@ export declare function writeShim(dir: string, name: string, moeCrewEntry: strin
 export declare function writeHarnessMarker(dir: string, name: string, harness: string): void;
 /** Read the sidecar harness marker for `name`, or null if it does not exist. */
 export declare function readHarnessMarker(dir: string, name: string): string | null;
+/**
+ * Write the sidecar worktree marker for a worker, storing the absolute
+ * worktree path so `stop` can remove it.
+ */
+export declare function writeWorktreeMarker(dir: string, name: string, wtPath: string): void;
+/** Read the sidecar worktree marker for `name`, or null if it does not exist. */
+export declare function readWorktreeMarker(dir: string, name: string): string | null;
 export declare function removeWorker(dir: string, sid: string, name: string): void;
 /**
  * tmux-names that have a leftover `.harness` sidecar or shim but NO registered

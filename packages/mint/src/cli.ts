@@ -2,7 +2,7 @@
 import { Command } from 'commander'
 import { generate, TOOL_VERSION } from './generate.js'
 import { validate } from './validate.js'
-import { renderMatrix } from './matrix.js'
+import { renderSupportMatrix } from './matrix.js'
 import { init } from './init.js'
 import { importPlugin } from './import.js'
 import { runTest, DEFAULT_IMAGE } from './test-command.js'
@@ -145,7 +145,7 @@ program
   .command('matrix')
   .description('Show which components each harness supports')
   .action(() => {
-    process.stdout.write(renderMatrix())
+    process.stdout.write(renderSupportMatrix())
   })
 
 program

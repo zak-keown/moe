@@ -36,6 +36,7 @@
     ".claude-plugin/marketplace.json",
     ".claude-plugin/plugin.json",
     ".codex-plugin/plugin.json",
+    ".cursor-plugin/marketplace.json",
     ".cursor-plugin/plugin.json",
     ".kimi-plugin/plugin.json",
     ".moe-mint/manifest.json",

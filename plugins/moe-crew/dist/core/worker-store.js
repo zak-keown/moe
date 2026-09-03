@@ -1,6 +1,6 @@
 import { chmodSync, closeSync, constants, existsSync, lstatSync, mkdirSync, openSync, readdirSync, readFileSync, rmSync, unlinkSync, writeFileSync, writeSync, } from "node:fs";
 import { dirname, join } from "node:path";
-import { eventsPath, harnessMarkerPath, metaPath, shimPath, workerHomePath } from "./paths.js";
+import { eventsPath, harnessMarkerPath, metaPath, shimPath, workerHomePath, worktreeMarkerPath, } from "./paths.js";
 /**
  * Create `dir` privately (mode 0700) if nothing exists there, or verify an
  * existing path is already a real directory owned by the current user.
@@ -117,11 +117,32 @@ export function readHarnessMarker(dir, name) {
         return null;
     }
 }
+/**
+ * Write the sidecar worktree marker for a worker, storing the absolute
+ * worktree path so `stop` can remove it.
+ */
+export function writeWorktreeMarker(dir, name, wtPath) {
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(worktreeMarkerPath(dir, name), wtPath);
+}
+/** Read the sidecar worktree marker for `name`, or null if it does not exist. */
+export function readWorktreeMarker(dir, name) {
+    const p = worktreeMarkerPath(dir, name);
+    if (!existsSync(p))
+        return null;
+    try {
+        return readFileSync(p, "utf8").trim() || null;
+    }
+    catch {
+        return null;
+    }
+}
 export function removeWorker(dir, sid, name) {
     rmSync(metaPath(dir, sid), { force: true });
     rmSync(eventsPath(dir, sid), { force: true });
     rmSync(shimPath(dir, name), { force: true });
     rmSync(harnessMarkerPath(dir, name), { force: true });
+    rmSync(worktreeMarkerPath(dir, name), { force: true });
     // The per-worker home (codex/pi staged the operator's auth.json here during
     // prepare); remove it recursively so stop leaves no staged credentials behind.
     rmSync(workerHomePath(dir, name), { recursive: true, force: true });
@@ -141,6 +162,8 @@ export function listOrphanNames(dir) {
         for (const f of readdirSync(dir)) {
             if (f.endsWith(".harness"))
                 names.add(f.slice(0, -".harness".length));
+            if (f.endsWith(".worktree"))
+                names.add(f.slice(0, -".worktree".length));
         }
     }
     const bin = join(dir, "bin");
@@ -154,5 +177,6 @@ export function listOrphanNames(dir) {
 export function removeOrphan(dir, name) {
     rmSync(shimPath(dir, name), { force: true });
     rmSync(harnessMarkerPath(dir, name), { force: true });
+    rmSync(worktreeMarkerPath(dir, name), { force: true });
     rmSync(workerHomePath(dir, name), { recursive: true, force: true });
 }

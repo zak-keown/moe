@@ -64,6 +64,17 @@ function installDoc(_model: PluginModel): string {
 
 export const codex: HarnessAdapter = Object.freeze({
   name: 'codex',
+  support: {
+    skills: 'full',
+    commands: 'none',
+    agents: 'none',
+    hooks: 'none',
+    mcp: 'none',
+    bootstrap: 'partial',
+    rules: 'none',
+    variables: 'none',
+  },
+  skillsOutputDir: '.codex-plugin/skills',
   installDoc,
   emit(model: PluginModel) {
     const limitations: EmissionLimitation[] = []

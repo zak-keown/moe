@@ -69,6 +69,7 @@ async function parseClaudeConversation(filePath, projectName, archivePath) {
                 sessionId: currentExchange.sessionId,
                 cwd: currentExchange.cwd,
                 gitBranch: currentExchange.gitBranch,
+                gitCommit: currentExchange.gitCommit,
                 claudeVersion: currentExchange.claudeVersion,
                 agentVersion: currentExchange.agentVersion,
                 model: currentExchange.model,
@@ -152,6 +153,7 @@ async function parseClaudeConversation(filePath, projectName, archivePath) {
                     sessionId: parsed.sessionId,
                     cwd: parsed.cwd,
                     gitBranch: parsed.gitBranch,
+                    gitCommit: parsed.gitCommit,
                     claudeVersion: parsed.version,
                     agentVersion: parsed.version,
                     model: parsed.message.model,
@@ -184,6 +186,8 @@ async function parseClaudeConversation(filePath, projectName, archivePath) {
                     currentExchange.cwd = parsed.cwd;
                 if (parsed.gitBranch)
                     currentExchange.gitBranch = parsed.gitBranch;
+                if (parsed.gitCommit)
+                    currentExchange.gitCommit = parsed.gitCommit;
                 if (parsed.version) {
                     currentExchange.claudeVersion = parsed.version;
                     currentExchange.agentVersion = parsed.version;
@@ -249,6 +253,7 @@ async function parseCodexConversation(filePath, projectName, archivePath) {
     let sessionId;
     let cwd;
     let gitBranch;
+    let gitCommit;
     let agentVersion;
     let model;
     let modelProvider;
@@ -263,6 +268,7 @@ async function parseCodexConversation(filePath, projectName, archivePath) {
         currentExchange.sessionId = sessionId;
         currentExchange.cwd = cwd;
         currentExchange.gitBranch = gitBranch;
+        currentExchange.gitCommit = gitCommit;
         currentExchange.agentVersion = agentVersion;
         currentExchange.model = model;
         currentExchange.modelProvider = modelProvider;
@@ -291,6 +297,7 @@ async function parseCodexConversation(filePath, projectName, archivePath) {
                 sessionId: currentExchange.sessionId,
                 cwd: currentExchange.cwd,
                 gitBranch: currentExchange.gitBranch,
+                gitCommit: currentExchange.gitCommit,
                 agentVersion: currentExchange.agentVersion,
                 model: currentExchange.model,
                 modelProvider: currentExchange.modelProvider,
@@ -313,6 +320,7 @@ async function parseCodexConversation(filePath, projectName, archivePath) {
             sessionId,
             cwd,
             gitBranch,
+            gitCommit,
             agentVersion,
             model,
             modelProvider,
@@ -374,6 +382,7 @@ async function parseCodexConversation(filePath, projectName, archivePath) {
                 sessionId = payload.id || sessionId;
                 cwd = payload.cwd || cwd;
                 gitBranch = payload.git?.branch || gitBranch;
+                gitCommit = payload.git?.commit || gitCommit;
                 agentVersion = payload.cli_version || agentVersion;
                 modelProvider = payload.model_provider || modelProvider;
                 applyMetadataToCurrentExchange();

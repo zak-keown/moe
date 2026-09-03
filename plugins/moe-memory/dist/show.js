@@ -46,6 +46,9 @@ export function formatConversationAsMarkdown(jsonl, startLine, endLine) {
     if (firstMessage.gitBranch) {
         output += `**Git Branch:** ${firstMessage.gitBranch}\n\n`;
     }
+    if (firstMessage.gitCommit) {
+        output += `**Git Commit:** ${firstMessage.gitCommit}\n\n`;
+    }
     if (firstMessage.cwd) {
         output += `**Working Directory:** ${firstMessage.cwd}\n\n`;
     }
@@ -249,6 +252,9 @@ export function formatConversationAsHTML(jsonl) {
     }
     if (firstMessage.gitBranch) {
         bodyContent += `<tr><th>Git Branch</th><td>${escapeHtml(firstMessage.gitBranch)}</td></tr>`;
+    }
+    if (firstMessage.gitCommit) {
+        bodyContent += `<tr><th>Git Commit</th><td>${escapeHtml(firstMessage.gitCommit)}</td></tr>`;
     }
     if (firstMessage.cwd) {
         bodyContent += `<tr><th>Working Directory</th><td>${escapeHtml(firstMessage.cwd)}</td></tr>`;
@@ -828,6 +834,7 @@ function formatCodexConversationAsMarkdown(lines) {
             metadata.sessionId = payload.id || metadata.sessionId;
             metadata.cwd = payload.cwd || metadata.cwd;
             metadata.gitBranch = payload.git?.branch || metadata.gitBranch;
+            metadata.gitCommit = payload.git?.commit || metadata.gitCommit;
             metadata.cliVersion = payload.cli_version || metadata.cliVersion;
             metadata.modelProvider = payload.model_provider || metadata.modelProvider;
         }
@@ -843,6 +850,8 @@ function formatCodexConversationAsMarkdown(lines) {
         output += `**Session ID:** ${metadata.sessionId}\n\n`;
     if (metadata.gitBranch)
         output += `**Git Branch:** ${metadata.gitBranch}\n\n`;
+    if (metadata.gitCommit)
+        output += `**Git Commit:** ${metadata.gitCommit}\n\n`;
     if (metadata.cwd)
         output += `**Working Directory:** ${metadata.cwd}\n\n`;
     if (metadata.cliVersion)

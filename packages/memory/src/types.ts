@@ -52,6 +52,7 @@ export interface ConversationExchange {
   sessionId?: string | undefined;
   cwd?: string | undefined;
   gitBranch?: string | undefined;
+  gitCommit?: string | undefined;
   claudeVersion?: string | undefined;
   agentVersion?: string | undefined;
   model?: string | undefined;
@@ -150,4 +151,42 @@ export interface JournalSearchResult {
   /** Cosine similarity in [-1, 1]. 1 for `list_recent_entries`, which does not rank. */
   score: number;
   excerpt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Graph memory (Phase 0 + 1)
+// ---------------------------------------------------------------------------
+
+/** The five relationship types an edge can carry. */
+export type RelationType = "caused_by" | "contradicts" | "supersedes" | "supports" | "implements";
+
+/** Semantic type of a first-class memory node. */
+export type NodeType = "decision" | "finding" | "belief" | "constraint";
+
+/** The record type an edge endpoint refers to. */
+export type SourceType = "exchange" | "journal" | "decision" | "finding" | "moedex_symbol";
+
+/** A typed, directed relationship between two memory records. */
+export interface MemoryEdge {
+  id: string;
+  sourceType: SourceType;
+  sourceId: string;
+  targetType: SourceType;
+  targetId: string;
+  relation: RelationType;
+  confidence: number;
+  createdAt: string;
+  createdBy: "model" | "user" | "system";
+  metadata?: Record<string, unknown> | undefined;
+}
+
+/** A first-class memory node (decision, finding, belief, or constraint). */
+export interface MemoryNode {
+  id: string;
+  nodeType: NodeType;
+  project?: string | undefined;
+  content: string;
+  createdAt: string;
+  supersededAt?: string | undefined;
+  embeddingVersion: number;
 }
