@@ -509,6 +509,7 @@ function isNonEmptyString(value) {
  * @param {object} [context]
  */
 export function renderCodexPermission(candidate, context = {}) {
+  if (!isNonEmptyString(candidate?.id)) return null;
   const canonical = codexPermissionBody(candidate, context);
   if (!canonical) return null;
   const projectRoot = candidate.projectRoot ?? context.projectRoot;
@@ -707,34 +708,64 @@ export async function validateCodexReplacement({
     throw new TypeError("Codex replacement contents and temporary directory are required");
   }
   const normalizedWitnesses = normalizeWitnesses(witnesses);
+  const byRule = Map.groupBy(normalizedWitnesses, ({ ruleId }) => ruleId);
+  const validationPaths = [];
+  try {
+    for (const [ruleId, ruleWitnesses] of [...byRule].sort(([left], [right]) => compareCodeUnits(left, right))) {
+      const validationPath = temporaryRulePath(tempDir);
+      validationPaths.push(validationPath);
+      await fsOps.writeFile(validationPath, extractSelectedRule(contents, ruleId), {
+        flag: "wx",
+        mode: 0o600,
+      });
+      await validateWitnessSet({
+        ruleFiles: [validationPath],
+        witnesses: ruleWitnesses,
+        codexBin,
+        runExecpolicy,
+      });
+    }
+
+    const replacementPath = temporaryRulePath(tempDir);
+    validationPaths.push(replacementPath);
+    await fsOps.writeFile(replacementPath, contents, { flag: "wx", mode: 0o600 });
+    await validateWitnessSet({
+      ruleFiles: [...ruleFiles, replacementPath],
+      witnesses: normalizedWitnesses,
+      codexBin,
+      runExecpolicy,
+    });
+  } finally {
+    for (const validationPath of validationPaths.reverse()) {
+      try {
+        await fsOps.unlink(validationPath);
+      } catch (error) {
+        if (error?.code !== "ENOENT") throw error;
+      }
+    }
+  }
+}
+
+function temporaryRulePath(tempDir) {
   const validationPath = resolve(tempDir, `moe-smoothing-${randomUUID()}.rules`);
   const relativePath = relative(resolve(tempDir), validationPath);
   if (relativePath.startsWith("..") || relativePath.startsWith("/")) {
     throw new Error("Codex validation path escaped its temporary directory");
   }
-  try {
-    await fsOps.writeFile(validationPath, contents, { flag: "wx", mode: 0o600 });
-    await validateWitnessSet({
-      ruleFiles: [validationPath],
-      witnesses: normalizedWitnesses,
-      codexBin,
-      runExecpolicy,
-    });
-    if (ruleFiles.length > 0) {
-      await validateWitnessSet({
-        ruleFiles: [...ruleFiles, validationPath],
-        witnesses: normalizedWitnesses,
-        codexBin,
-        runExecpolicy,
-      });
-    }
-  } finally {
-    try {
-      await fsOps.unlink(validationPath);
-    } catch (error) {
-      if (error?.code !== "ENOENT") throw error;
-    }
+  return validationPath;
+}
+
+const RENDERED_PREFIX_RULE = /^prefix_rule\(\n    pattern = \["(?:\\.|[^"\\])*"(?:, "(?:\\.|[^"\\])*")*\],\n    decision = "allow",\n    justification = "Moe smoothing: repeated safe use",\n\)\n/;
+
+function extractSelectedRule(contents, ruleId) {
+  const marker = `# moe-smoothing:${ruleId}\n`;
+  const markerIndex = contents.indexOf(marker);
+  if (markerIndex < 0 || contents.indexOf(marker, markerIndex + marker.length) >= 0) {
+    throw new Error(`selected Codex rule ${ruleId} is missing or duplicated`);
   }
+  const body = RENDERED_PREFIX_RULE.exec(contents.slice(markerIndex + marker.length))?.[0];
+  if (!body) throw new Error(`selected Codex rule ${ruleId} is malformed`);
+  return `${marker}${body}`;
 }
 
 function normalizeWitnesses(witnesses) {
@@ -744,6 +775,7 @@ function normalizeWitnesses(witnesses) {
   const normalized = witnesses.map((witness) => {
     if (
       !isObject(witness) ||
+      !isNonEmptyString(witness.ruleId) ||
       !Array.isArray(witness.argv) ||
       witness.argv.length === 0 ||
       !witness.argv.every(isNonEmptyString) ||
@@ -751,23 +783,29 @@ function normalizeWitnesses(witnesses) {
     ) {
       throw new TypeError("invalid Codex validation witness");
     }
-    return { argv: [...witness.argv], expectation: witness.expectation };
+    return {
+      ruleId: witness.ruleId,
+      argv: [...witness.argv],
+      expectation: witness.expectation,
+    };
   });
-  const positives = normalized.filter(({ expectation }) => expectation === "match");
-  const negatives = normalized.filter(({ expectation }) => expectation === "not_match");
-  if (
-    positives.length === 0 ||
-    negatives.length === 0 ||
-    !negatives.some((negative) =>
-      positives.some(
-        (positive) =>
-          positive.argv[0] === negative.argv[0] &&
-          (positive.argv.length !== negative.argv.length ||
-            positive.argv.some((token, index) => token !== negative.argv[index])),
-      ),
-    )
-  ) {
-    throw new TypeError("Codex validation requires positive and adjacent negative witnesses");
+  for (const ruleWitnesses of Map.groupBy(normalized, ({ ruleId }) => ruleId).values()) {
+    const positives = ruleWitnesses.filter(({ expectation }) => expectation === "match");
+    const negatives = ruleWitnesses.filter(({ expectation }) => expectation === "not_match");
+    if (
+      positives.length === 0 ||
+      negatives.length === 0 ||
+      !negatives.some((negative) =>
+        positives.some(
+          (positive) =>
+            positive.argv[0] === negative.argv[0] &&
+            (positive.argv.length !== negative.argv.length ||
+              positive.argv.some((token, index) => token !== negative.argv[index])),
+        ),
+      )
+    ) {
+      throw new TypeError("Codex validation requires positive and adjacent negative witnesses");
+    }
   }
   return normalized;
 }

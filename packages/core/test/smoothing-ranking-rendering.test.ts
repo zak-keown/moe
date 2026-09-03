@@ -415,6 +415,20 @@ prefix_rule(
     ).toBe(validRule);
   });
 
+  it("declines a destination-bound rule without a stable candidate ID", () => {
+    expect(
+      renderCodexPermission(
+        {
+          class: "shell",
+          operation: { argv: ["git", "status"] },
+          scope: "project",
+          projectRoot: "/fixture/repo-a",
+        },
+        fixtureContext.codex,
+      ),
+    ).toBeNull();
+  });
+
   it("declines missing or unproven project layers, global git add, and unsupported classes", () => {
     expect(
       renderCodexPermission({
@@ -481,8 +495,8 @@ prefix_rule(
         contents: validRule,
         ruleFiles: [],
         witnesses: [
-          { argv: ["git", "status"], expectation: "match" },
-          { argv: ["git", "push"], expectation: "not_match" },
+          { ruleId: "shell-abc", argv: ["git", "status"], expectation: "match" },
+          { ruleId: "shell-abc", argv: ["git", "push"], expectation: "not_match" },
         ],
         codexBin: "codex",
         tempDir: directory,
@@ -499,8 +513,8 @@ prefix_rule(
       contents: validRule,
       ruleFiles: ["/fixture/existing.rules"],
       witnesses: [
-        { argv: ["git", "status"], expectation: "match" },
-        { argv: ["git", "push"], expectation: "not_match" },
+        { ruleId: "shell-abc", argv: ["git", "status"], expectation: "match" },
+        { ruleId: "shell-abc", argv: ["git", "push"], expectation: "not_match" },
       ],
       codexBin: "codex",
       tempDir: directory,
@@ -550,13 +564,13 @@ prefix_rule(
   });
 
   it.each([
-    ["positive-only", [{ argv: ["git", "status"], expectation: "match" }]],
-    ["negative-only", [{ argv: ["git", "push"], expectation: "not_match" }]],
+    ["positive-only", [{ ruleId: "shell-abc", argv: ["git", "status"], expectation: "match" }]],
+    ["negative-only", [{ ruleId: "shell-abc", argv: ["git", "push"], expectation: "not_match" }]],
     [
       "unrelated-negative",
       [
-        { argv: ["git", "status"], expectation: "match" },
-        { argv: ["npm", "publish"], expectation: "not_match" },
+        { ruleId: "shell-abc", argv: ["git", "status"], expectation: "match" },
+        { ruleId: "shell-abc", argv: ["npm", "publish"], expectation: "not_match" },
       ],
     ],
   ])("rejects an incomplete %s witness set", async (_label, witnesses) => {
@@ -583,8 +597,8 @@ prefix_rule(
         contents: validRule,
         ruleFiles: ["/fixture/broad-existing.rules"],
         witnesses: [
-          { argv: ["git", "diff"], expectation: "match" },
-          { argv: ["git", "push"], expectation: "not_match" },
+          { ruleId: "shell-abc", argv: ["git", "diff"], expectation: "match" },
+          { ruleId: "shell-abc", argv: ["git", "push"], expectation: "not_match" },
         ],
         codexBin: "codex",
         tempDir: directory,
@@ -603,6 +617,47 @@ prefix_rule(
                 decision: "allow",
               }
             : { matchedRules: [] },
+      }),
+    ).rejects.toThrow(/positive witness did not match the proposed rule/);
+    expect(await readdir(directory)).toEqual([]);
+  });
+
+  it("does not let a pre-existing allow inside the complete replacement mask the selected block", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "moe-smoothing-render-"));
+    const preExistingRule = `prefix_rule(
+    pattern = ["git", "diff"],
+    decision = "allow",
+    justification = "pre-existing rule",
+)
+`;
+    await expect(
+      validateCodexReplacement({
+        contents: `${preExistingRule}\n${validRule}`,
+        ruleFiles: [],
+        witnesses: [
+          { ruleId: "shell-abc", argv: ["git", "diff"], expectation: "match" },
+          { ruleId: "shell-abc", argv: ["git", "push"], expectation: "not_match" },
+        ],
+        codexBin: "codex",
+        tempDir: directory,
+        runExecpolicy: async (_bin: string, args: string[]) => {
+          const rulePath = args[args.lastIndexOf("--rules") + 1];
+          const testedRules = await readFile(rulePath as string, "utf8");
+          return args.at(-1) === "diff" && testedRules.includes('pattern = ["git", "diff"]')
+            ? {
+                matchedRules: [
+                  {
+                    prefixRuleMatch: {
+                      matchedPrefix: ["git", "diff"],
+                      decision: "allow",
+                      justification: "pre-existing rule",
+                    },
+                  },
+                ],
+                decision: "allow",
+              }
+            : { matchedRules: [] };
+        },
       }),
     ).rejects.toThrow(/positive witness did not match the proposed rule/);
     expect(await readdir(directory)).toEqual([]);
