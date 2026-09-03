@@ -49,6 +49,14 @@ Before defining tasks, map out which files will be created or modified and what 
 - Files that change together should live together. Split by responsibility, not by technical layer.
 - In existing codebases, follow established patterns. If the codebase uses large files, don't unilaterally restructure - but if a file you're modifying has grown unwieldy, including a split in the plan is reasonable.
 
+**Graph-grounded decomposition:** If moedex is available (via the
+`retrieving-context` skill or the `moe:search-moedex` agent), query
+`impact_analysis` on the change target before decomposing tasks. Use the blast
+radius to populate `Files:` blocks from the actual call graph rather than from
+your reading alone. After writing the plan, run `moe jig plan validate` to
+check for uncovered files, missing dependency edges, and wave conflicts. If
+moedex is unavailable, proceed from your own analysis as before.
+
 This structure informs the task decomposition. Each task should produce self-contained changes that make sense independently.
 
 ## Task Right-Sizing
