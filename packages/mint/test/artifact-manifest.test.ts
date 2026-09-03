@@ -1,11 +1,12 @@
 import { execFile as execFileCallback } from 'node:child_process'
-import { chmod, cp, link, mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
+import { promises as fs } from 'node:fs'
+import { chmod, cp, link, mkdir, mkdtemp, rename, rm, symlink, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { promisify } from 'node:util'
 import { fileURLToPath } from 'node:url'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   computeTreeDigest,
   scanArtifact,
@@ -50,8 +51,12 @@ describe('artifact tree manifest', () => {
     await chmod(join(root, '.moe', 'artifact.json.bak'), 0o644)
     await writeFile(join(root, '\u{e000}'), 'bmp')
     await writeFile(join(root, '\u{1f600}'), 'non-bmp')
+    await writeFile(join(root, 'z'), 'ascii')
+    await writeFile(join(root, 'ä'), 'latin')
     await chmod(join(root, '\u{e000}'), 0o644)
     await chmod(join(root, '\u{1f600}'), 0o644)
+    await chmod(join(root, 'z'), 0o644)
+    await chmod(join(root, 'ä'), 0o644)
 
     const entries = await scanArtifact(root)
 
@@ -60,6 +65,8 @@ describe('artifact tree manifest', () => {
       'opaque.bin',
       'run.sh',
       'text.txt',
+      'z',
+      'ä',
       '\u{e000}',
       '\u{1f600}',
     ])
@@ -121,6 +128,15 @@ describe('artifact tree manifest', () => {
       .toThrow(message)
   })
 
+  it.each([
+    ['the NUL row delimiter', 'safe\0forged', /NUL row delimiter/],
+    ['a lone UTF-16 surrogate', 'safe\ud800forged', /unpaired UTF-16 surrogate/],
+  ])('rejects a path containing %s at both canonical row boundaries', (_name, path, message) => {
+    const entry: ArtifactEntry = { path, mode: '0644', size: 0, sha256: zeroHash }
+    expect(() => serializeTreeRow(entry)).toThrow(message)
+    expect(() => computeTreeDigest([entry])).toThrow(message)
+  })
+
   it('exports the task-1 manifest shape with partial target coverage', () => {
     const manifest: ArtifactManifestV1 = {
       schema: 1,
@@ -150,6 +166,31 @@ describe('artifact tree manifest', () => {
     await symlink(root, linkedRoot)
 
     await expect(scanArtifact(linkedRoot)).rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_UNSAFE_FILE_TYPE' } })
+  })
+
+  it.runIf(process.platform !== 'win32')('rejects a device artifact root where supported', async () => {
+    await expect(scanArtifact('/dev/null')).rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_UNSAFE_FILE_TYPE' } })
+  })
+
+  it('rejects a file whose identity changes between inspection and no-follow open', async () => {
+    const root = await fixture()
+    const target = join(root, 'text.txt')
+    let replaced = false
+    const realOpen = fs.open.bind(fs)
+    const open = vi.spyOn(fs, 'open').mockImplementation(async (path, flags, mode) => {
+      if (path === target && !replaced) {
+        replaced = true
+        await rename(target, join(root, 'original.txt'))
+        await writeFile(target, 'replacement\n', { mode: 0o644 })
+      }
+      return realOpen(path, flags, mode)
+    })
+
+    try {
+      await expect(scanArtifact(root)).rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_FILE_CHANGED', path: 'text.txt' } })
+    } finally {
+      open.mockRestore()
+    }
   })
 
   it('rejects modes outside 0644 and 0755 instead of normalizing during the scan', async () => {
