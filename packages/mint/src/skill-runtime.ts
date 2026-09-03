@@ -134,8 +134,9 @@ function localName(specifier: AstNode): string | undefined {
 }
 
 function memberName(node: AstNode): string | undefined {
-  if (node.type !== 'MemberExpression' || node.computed) return undefined
+  if (node.type !== 'MemberExpression') return undefined
   const property = node.property as AstNode
+  if (node.computed) return literalString(property)
   return property.type === 'Identifier' ? property.name as string : undefined
 }
 
@@ -147,14 +148,12 @@ function inspectModule(
 ): MintDiagnostic[] {
   const source = Buffer.from(file.content).toString('utf8')
   const diagnostics: MintDiagnostic[] = []
-  const codes = new Set<string>()
   const scriptRoot = `${input.skillsRoot}/${skill}/scripts`
   const childProcessNamespaces = new Set<string>()
   const childProcessSpawns = new Set<string>()
 
   const add = (code: string, message: string, action: string) => {
-    if (!codes.has(code)) diagnostics.push(diagnostic(input, file, code, message, action))
-    codes.add(code)
+    diagnostics.push(diagnostic(input, file, code, message, action))
   }
   const inspectSource = (moduleSource: string) => {
     if (!isAllowedModuleSource(moduleSource, file, scriptRoot, filePaths)) {
@@ -179,7 +178,7 @@ function inspectModule(
         add('SKILL_RUNTIME_SHELL_EXEC', `runtime module "${file.path}" must not use child_process exec APIs`, 'Remove shell execution from the skill runtime module.')
       }
       if ((imported === 'spawn' || imported === 'spawnSync') && local !== undefined) childProcessSpawns.add(local)
-      if (specifier.type === 'ImportNamespaceSpecifier' && local !== undefined) childProcessNamespaces.add(local)
+      if ((specifier.type === 'ImportNamespaceSpecifier' || specifier.type === 'ImportDefaultSpecifier') && local !== undefined) childProcessNamespaces.add(local)
     }
   })
 
@@ -202,18 +201,17 @@ function inspectModule(
       } else inspectSource(moduleSource)
     }
 
+    if (node.type === 'MemberExpression'
+      && (memberName(node) === 'exec' || memberName(node) === 'execSync')
+      && (node.object as AstNode).type === 'Identifier'
+      && childProcessNamespaces.has(((node.object as AstNode).name as string))) {
+      add('SKILL_RUNTIME_SHELL_EXEC', `runtime module "${file.path}" must not use child_process exec APIs`, 'Remove shell execution from the skill runtime module.')
+    }
+
     if (node.type === 'CallExpression') {
       const callee = node.callee as AstNode
       if (callee.type === 'Identifier' && callee.name === 'require') {
         add('SKILL_RUNTIME_COMMONJS', `runtime module "${file.path}" must not use CommonJS require`, 'Use static or literal dynamic ESM imports instead.')
-      }
-
-      const namespaceExec = callee.type === 'MemberExpression'
-        && (memberName(callee) === 'exec' || memberName(callee) === 'execSync')
-        && (callee.object as AstNode).type === 'Identifier'
-        && childProcessNamespaces.has(((callee.object as AstNode).name as string))
-      if (namespaceExec) {
-        add('SKILL_RUNTIME_SHELL_EXEC', `runtime module "${file.path}" must not use child_process exec APIs`, 'Remove shell execution from the skill runtime module.')
       }
 
       const directSpawn = callee.type === 'Identifier' && childProcessSpawns.has(callee.name as string)
@@ -262,7 +260,7 @@ export function validateSkillRuntime(input: ValidateSkillRuntimeInput): SkillRun
     if (fileExtension === '.mjs') diagnostics.push(...inspectModule(input, file, skill, filePaths))
   }
 
-  diagnostics.sort((left, right) => compareArtifactPaths(left.path as ArtifactPath, right.path as ArtifactPath) || left.code.localeCompare(right.code))
+  diagnostics.sort((left, right) => compareArtifactPaths(left.path as ArtifactPath, right.path as ArtifactPath) || left.code.localeCompare(right.code) || left.message.localeCompare(right.message))
   return { skills: skills.size, modules, diagnostics, ok: diagnostics.length === 0 }
 }
 
