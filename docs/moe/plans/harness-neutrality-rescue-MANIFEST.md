@@ -13,7 +13,7 @@ plans:
   - id: renderer-and-adapter-correctness
     plan: docs/moe/plans/2026-09-03-harness-neutrality-01-renderer.md
     depends_on: []
-    status: pending
+    status: done
   - id: semantic-vocabulary-and-core-migration
     plan: docs/moe/plans/2026-09-03-harness-neutrality-02-semantics.md
     depends_on: [renderer-and-adapter-correctness]
