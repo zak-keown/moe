@@ -2,11 +2,14 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { MintError, type MintDiagnostic } from '../src/diagnostics.js'
+import type { MintConfig } from '../src/config.js'
+import type { AdapterPackageContribution } from '../src/adapters/types.js'
 import {
-  type AdapterPackageContributionInput,
+  composePackageManifest,
   mergeAdapterPackageContributions,
   normalizeExports,
   normalizeMetadata,
+  validateManifestReferences,
 } from '../src/package-manifest.js'
 
 const fixturePath = fileURLToPath(new URL('./fixtures/manifests/metadata-source.json', import.meta.url))
@@ -20,6 +23,51 @@ const metadataMint = {
   repository: 'https://github.com/example/moe-example',
   homepage: 'https://example.com/moe-example',
   keywords: ['Mint', 'mint', 'plugin'],
+}
+
+const composeConfig = {
+  source: 'packages/example/mint/example.yaml',
+  name: 'moe-example',
+  version: metadataMint.version,
+  description: metadataMint.description,
+  author: metadataMint.author,
+  license: metadataMint.license,
+  repository: metadataMint.repository,
+  homepage: metadataMint.homepage,
+  keywords: metadataMint.keywords,
+  bootstrap: { kind: 'none' },
+  components: { skills: 'skills', commands: 'commands', agents: 'agents', hooks: 'hooks/hooks.json', mcp: '.mcp.json' },
+  harnesses: { exclude: [], settings: {} },
+  distribution: { npm: metadataMint.npm },
+  artifact: { payloads: [] },
+  targets: {} as MintConfig['targets'],
+  importedWorks: [],
+} satisfies MintConfig
+
+const completeArtifactPaths = new Set([
+  '.codex-plugin/plugin.json',
+  '.opencode/plugins/moe-example.js',
+  '.pi/extensions/moe-example.ts',
+  'bin/cli.js',
+  'dist/index.d.ts',
+  'dist/index.js',
+  'dist/internal.js',
+  'dist/register.js',
+  'skills/remember/SKILL.md',
+])
+
+function compose(
+  sourcePatch: Readonly<Record<string, unknown>> = {},
+  contributions: readonly AdapterPackageContribution[] = [],
+  artifactPaths: ReadonlySet<string> = completeArtifactPaths,
+): Readonly<Record<string, unknown>> {
+  return composePackageManifest({
+    source: { ...metadataSource, ...sourcePatch },
+    config: composeConfig,
+    contributions,
+    artifactPaths,
+    registryUrl: 'https://registry.npmjs.org/publish?ignored=true',
+  })
 }
 
 function expectFailure(run: () => unknown, diagnostic: Record<string, unknown>): MintDiagnostic {
@@ -230,7 +278,7 @@ describe('mergeAdapterPackageContributions', () => {
     ['an unauthorized export key', {}, [{ owner: 'opencode', exports: { '.': './index.js' } }], ['opencode', 'exports']],
     ['an unclassified field', {}, [{ owner: 'pi', pi: {}, unexpected: true }], ['pi', 'field-policy']],
   ])('reports complete collision owners for %s', (_name, exports, contributions, owners) => {
-    const error = expectFailure(() => mergeAdapterPackageContributions(exports, contributions), {
+    const error = expectFailure(() => mergeAdapterPackageContributions(exports, contributions as readonly AdapterPackageContribution[]), {
       code: 'PACKAGE_MANIFEST_COLLISION', source: 'package-manifest', field: expect.any(String),
     })
     expect(error.owners).toEqual(owners)
@@ -253,7 +301,7 @@ describe('mergeAdapterPackageContributions', () => {
     ['missing owner', { pi: {} }],
     ['non-string owner', { owner: 42, pi: {} }],
   ])('rejects a malformed contribution entry: %s', (_name, contribution) => {
-    const error = expectFailure(() => mergeAdapterPackageContributions({}, [contribution] as unknown as readonly AdapterPackageContributionInput[]), {
+    const error = expectFailure(() => mergeAdapterPackageContributions({}, [contribution] as unknown as readonly AdapterPackageContribution[]), {
       code: 'PACKAGE_MANIFEST_COLLISION', source: 'package-manifest', field: expect.any(String),
     })
     expect(error.owners).toEqual(['invalid-contribution', 'field-policy'])
@@ -274,6 +322,142 @@ describe('mergeAdapterPackageContributions', () => {
     expect(result).toEqual({
       exports: { '.': { import: { node: './node.js' }, default: './index.js' } },
       pi: { extensions: ['./.pi/extensions/moe.ts'], nested: { enabled: true } },
+    })
+  })
+})
+
+describe('composePackageManifest', () => {
+  it('preserves every version-1 runtime field and emits compositor-owned fields', () => {
+    const sourceRuntime = {
+      type: 'module',
+      main: './dist/index.js',
+      exports: { '.': { types: './dist/index.d.ts', import: './dist/index.js', default: 'dependency/entry' } },
+      imports: { '#internal': './dist/internal.js', '#external': 'dependency/subpath' },
+      types: './dist/index.d.ts',
+      bin: { 'moe-example': './bin/cli.js' },
+      engines: { node: '>=24' },
+      os: ['darwin', 'linux'],
+      cpu: ['arm64', 'x64'],
+      sideEffects: ['./dist/register.js'],
+      dependencies: { dependency: '^1.0.0' },
+      optionalDependencies: { optional: '^2.0.0' },
+      peerDependencies: { peer: '^3.0.0' },
+      peerDependenciesMeta: { peer: { optional: true } },
+    }
+
+    const manifest = compose(sourceRuntime)
+
+    expect(manifest).toEqual({
+      name: '@bubstack/moe-example',
+      version: '1.2.3',
+      description: 'Café plugin\n  keeps intentional spacing',
+      author: { name: 'Ada Lovelace', email: 'ada@example.com', url: 'https://example.com/ada' },
+      license: 'MIT',
+      repository: 'https://github.com/example/moe-example',
+      homepage: 'https://example.com/moe-example',
+      keywords: ['Mint', 'mint', 'plugin'],
+      ...sourceRuntime,
+      files: [
+        '.codex-plugin/plugin.json',
+        '.moe/artifact.json',
+        '.opencode/plugins/moe-example.js',
+        '.pi/extensions/moe-example.ts',
+        'bin/cli.js',
+        'dist/index.d.ts',
+        'dist/index.js',
+        'dist/internal.js',
+        'dist/register.js',
+        'skills/remember/SKILL.md',
+      ],
+      publishConfig: { access: 'public', registry: 'https://registry.npmjs.org' },
+    })
+  })
+
+  it.each([
+    ['scripts', { prepack: 'exfiltrate' }],
+    ['devDependencies', { secret: '1.0.0' }],
+    ['private', true],
+    ['workspaces', ['packages/*']],
+    ['packageManager', 'pnpm@11.23.0'],
+    ['overrides', { dependency: '0.0.0' }],
+    ['pnpm', { onlyBuiltDependencies: ['dependency'] }],
+  ])('omits source-owned development field %s', (field, value) => {
+    const manifest = compose({ [field]: value, main: './dist/index.js' })
+    expect(manifest).not.toHaveProperty(field)
+  })
+
+  it.each([
+    ['bundledDependencies', ['dependency']],
+    ['bundleDependencies', ['dependency']],
+    ['unclassifiedField', { smuggled: true }],
+    ['files', ['dist']],
+    ['publishConfig', { access: 'restricted' }],
+    ['pi', { extensions: ['./foreign.ts'] }],
+  ])('rejects source field %s because it has no source authority', (field, value) => {
+    expectFailure(() => compose({ [field]: value }), {
+      code: field === 'bundledDependencies' || field === 'bundleDependencies'
+        ? 'PACKAGE_BUNDLED_DEPENDENCIES_FORBIDDEN'
+        : 'PACKAGE_MANIFEST_FIELD_UNCLASSIFIED',
+      field,
+    })
+  })
+
+  it('composes normalized exports with Pi and OpenCode contributions', () => {
+    expect(compose(
+      { main: './dist/index.js', types: './dist/index.d.ts', bin: './bin/cli.js' },
+      [
+        { owner: 'pi', pi: { extensions: ['./.pi/extensions/moe-example.ts'], skills: ['./skills'] } },
+        { owner: 'opencode', exports: { './server': './.opencode/plugins/moe-example.js' } },
+      ],
+    )).toMatchObject({
+      exports: {
+        '.': { types: './dist/index.d.ts', default: './dist/index.js' },
+        './server': './.opencode/plugins/moe-example.js',
+      },
+      pi: { extensions: ['./.pi/extensions/moe-example.ts'], skills: ['./skills'] },
+    })
+  })
+
+  it('keeps package.json outside the exhaustive files allowlist', () => {
+    expect(compose({}, [], new Set(['package.json', 'dist/index.js']))).toMatchObject({
+      files: ['.moe/artifact.json', 'dist/index.js'],
+    })
+  })
+})
+
+describe('validateManifestReferences', () => {
+  it.each([
+    ['missing main', { main: './missing.js' }, completeArtifactPaths, 'main', 'PACKAGE_REFERENCE_MISSING'],
+    ['escaping main', { main: '../outside.js' }, completeArtifactPaths, 'main', 'PACKAGE_REFERENCE_ESCAPE'],
+    ['missing types', { types: './missing.d.ts' }, completeArtifactPaths, 'types', 'PACKAGE_REFERENCE_MISSING'],
+    ['escaping types', { types: '/outside.d.ts' }, completeArtifactPaths, 'types', 'PACKAGE_REFERENCE_ESCAPE'],
+    ['missing bin', { bin: { demo: './missing.js' } }, completeArtifactPaths, 'bin.demo', 'PACKAGE_REFERENCE_MISSING'],
+    ['escaping bin', { bin: '../outside.js' }, completeArtifactPaths, 'bin', 'PACKAGE_REFERENCE_ESCAPE'],
+    ['missing local export', { exports: { '.': './missing.js' } }, completeArtifactPaths, 'exports..', 'PACKAGE_REFERENCE_MISSING'],
+    ['escaping local export', { exports: { '.': '../outside.js' } }, completeArtifactPaths, 'exports..', 'PACKAGE_REFERENCE_ESCAPE'],
+    ['missing local import', { imports: { '#internal': './missing.js' } }, completeArtifactPaths, 'imports.#internal', 'PACKAGE_REFERENCE_MISSING'],
+    ['escaping local import', { imports: { '#internal': '../outside.js' } }, completeArtifactPaths, 'imports.#internal', 'PACKAGE_REFERENCE_ESCAPE'],
+    ['missing Pi extension', { pi: { extensions: ['./.pi/extensions/missing.ts'] } }, completeArtifactPaths, 'pi.extensions[0]', 'PACKAGE_REFERENCE_MISSING'],
+    ['escaping Pi skills', { pi: { skills: ['../skills'] } }, completeArtifactPaths, 'pi.skills[0]', 'PACKAGE_REFERENCE_ESCAPE'],
+    ['missing OpenCode server', { exports: { './server': './.opencode/plugins/missing.js' } }, completeArtifactPaths, 'exports../server', 'PACKAGE_REFERENCE_MISSING'],
+    ['escaping OpenCode server', { exports: { './server': '../server.js' } }, completeArtifactPaths, 'exports../server', 'PACKAGE_REFERENCE_ESCAPE'],
+    ['URL OpenCode server', { exports: { './server': 'https://example.com/server.js' } }, completeArtifactPaths, 'exports../server', 'PACKAGE_REFERENCE_ESCAPE'],
+  ] as const)('rejects %s', (_name, manifest, paths, field, code) => {
+    expectFailure(() => validateManifestReferences(manifest, paths), { code, field })
+  })
+
+  it('treats bare package targets as dependencies and accepts staged directories', () => {
+    expect(() => validateManifestReferences({
+      exports: { '.': { import: 'dependency/entry', default: './dist/index.js' } },
+      imports: { '#external': '@scope/dependency/server', '#builtin': 'node:path' },
+      pi: { skills: ['./skills'] },
+    }, completeArtifactPaths)).not.toThrow()
+  })
+
+  it('allows only the reserved artifact manifest to remain pending', () => {
+    expect(() => validateManifestReferences({ main: './.moe/artifact.json' }, new Set())).not.toThrow()
+    expectFailure(() => validateManifestReferences({ main: './.moe/other.json' }, new Set()), {
+      code: 'PACKAGE_REFERENCE_MISSING', field: 'main',
     })
   })
 })
