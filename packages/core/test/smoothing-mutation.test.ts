@@ -21,6 +21,40 @@ const ORIGINAL = '{"untouched":true}\n';
 const REPLACEMENT = '{"permissions":{"allow":["Bash(git status:*)"]}}\n';
 
 describe("bound smoothing plans", () => {
+  it("persists only a source hash and secret-free semantic mutation intent", async () => {
+    const planDir = await mkdtemp(join(tmpdir(), "moe-smoothing-plan-secret-free-"));
+    const destination = join(planDir, "settings.json");
+    const sourceBytes = Buffer.from(
+      '{"env":{"API_TOKEN":"private-plan-sentinel"},"permissions":{"allow":[]}}\n',
+    );
+    const plan = await createBoundPlan({
+      harness: "claude",
+      selected: [{ id: "claude-shell-a", rule: "Bash(git status:*)" }],
+      destination,
+      sourceBytes,
+      now: () => "2026-09-03T00:00:00.000Z",
+      planDir,
+    });
+
+    const storedText = await readFile(plan.path, "utf8");
+    const stored = JSON.parse(storedText);
+    expect(stored).toMatchObject({
+      version: 2,
+      harness: "claude",
+      destination,
+      mutation: { operation: "append-permissions-allow" },
+      selected: [{ id: "claude-shell-a", rule: "Bash(git status:*)" }],
+    });
+    expect(stored).not.toHaveProperty("replacement");
+    expect(stored).not.toHaveProperty("replacementSha256");
+    expect(storedText).not.toContain("private-plan-sentinel");
+    expect(formatUnifiedDiff({ plan })).toBe(`--- ${destination} (selected permissions)
++++ ${destination} (selected permissions)
+@@ append permissions.allow @@
++Bash(git status:*)
+`);
+  });
+
   it("writes a closed mode-0600 plan containing only selected rule material", async () => {
     const planDir = await mkdtemp(join(tmpdir(), "moe-smoothing-plan-"));
     const destination = join(planDir, "settings.json");
@@ -36,14 +70,13 @@ describe("bound smoothing plans", () => {
       ],
       destination,
       sourceBytes: Buffer.from("{}\n"),
-      replacement: REPLACEMENT,
       now: () => "2026-09-03T00:00:00.000Z",
       planDir,
     });
 
     expect((await stat(plan.path)).mode & 0o777).toBe(0o600);
     expect(JSON.parse(await readFile(plan.path, "utf8"))).toEqual({
-      version: 1,
+      version: 2,
       harness: "claude",
       createdAt: "2026-09-03T00:00:00.000Z",
       destination,
@@ -51,8 +84,8 @@ describe("bound smoothing plans", () => {
         exists: true,
         sha256: "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
       },
-      replacement: REPLACEMENT,
-      replacementSha256: "6da14282e3d8df59a15464f99d89369a0980de702070493cc69723fffaf6b0d1",
+      mutation: { operation: "append-permissions-allow" },
+      intentSha256: expect.stringMatching(/^[0-9a-f]{64}$/),
       selected: [{ id: "claude-shell-a", rule: "Bash(git status:*)" }],
       restartRequired: false,
     });
@@ -72,7 +105,6 @@ describe("bound smoothing plans", () => {
       selected: [{ id: "claude-shell-a", rule: "Bash(git status:*)" }],
       destination: join(planDir, "settings.json"),
       sourceBytes: Buffer.from("{}\n"),
-      replacement: REPLACEMENT,
       now: () => "2026-09-03T00:00:00.000Z",
       planDir,
       fsOps: { writeFile: planWrite },
@@ -83,34 +115,35 @@ describe("bound smoothing plans", () => {
     expect((await stat(plan.path)).mode & 0o777).toBe(0o600);
   });
 
-  it("formats a deterministic full-replacement unified diff", () => {
-    expect(
-      formatUnifiedDiff({
-        destination: "/fixture/settings.json",
-        sourceBytes: Buffer.from("{}\n"),
-        replacement: REPLACEMENT,
-      }),
-    ).toBe(`--- /fixture/settings.json
-+++ /fixture/settings.json
-@@ -1 +1 @@
--{}
-+{"permissions":{"allow":["Bash(git status:*)"]}}
+  it("formats a deterministic Claude semantic diff without source content", async () => {
+    const planDir = await mkdtemp(join(tmpdir(), "moe-smoothing-plan-diff-"));
+    const plan = await createBoundPlan({
+      harness: "claude",
+      selected: [{ id: "claude-shell-a", rule: "Bash(git status:*)" }],
+      destination: "/fixture/settings.json",
+      sourceBytes: Buffer.from('{"secret":"never-render"}\n'),
+      planDir,
+    });
+    expect(formatUnifiedDiff({ plan })).toBe(`--- /fixture/settings.json (selected permissions)
++++ /fixture/settings.json (selected permissions)
+@@ append permissions.allow @@
++Bash(git status:*)
 `);
   });
 
-  it("marks a missing source as /dev/null without inventing old content", () => {
-    expect(
-      formatUnifiedDiff({
-        destination: "/fixture/rules/default.rules",
-        sourceBytes: null,
-        replacement: "allow()",
-      }),
-    ).toBe(`--- /dev/null
-+++ /fixture/rules/default.rules
-@@ -0,0 +1 @@
-+allow()
-\\ No newline at end of file
-`);
+  it("formats only selected Codex blocks for a missing source", async () => {
+    const planDir = await mkdtemp(join(tmpdir(), "moe-smoothing-plan-codex-diff-"));
+    const rule = "# moe-smoothing:codex-shell-a\nprefix_rule()\n";
+    const plan = await createBoundPlan({
+      harness: "codex",
+      selected: [{ id: "codex-shell-a", rule }],
+      destination: "/fixture/rules/default.rules",
+      sourceBytes: null,
+      planDir,
+    });
+    expect(formatUnifiedDiff({ plan })).toBe(
+      `--- /fixture/rules/default.rules (selected permissions)\n+++ /fixture/rules/default.rules (selected permissions)\n@@ append managed prefix_rule blocks @@\n+# moe-smoothing:codex-shell-a\n+prefix_rule()\n`,
+    );
   });
 
   it.each([
@@ -148,8 +181,8 @@ describe("bound smoothing plans", () => {
       }),
     ],
     [
-      "a replacement hash that does not bind its bytes",
-      (value: Record<string, unknown>) => ({ ...value, replacementSha256: "0".repeat(64) }),
+      "an intent hash that does not bind its semantics",
+      (value: Record<string, unknown>) => ({ ...value, intentSha256: "0".repeat(64) }),
     ],
   ])("rejects a stored plan containing %s", async (_label, mutate) => {
     const planDir = await mkdtemp(join(tmpdir(), "moe-smoothing-plan-invalid-"));
@@ -158,7 +191,6 @@ describe("bound smoothing plans", () => {
       selected: [{ id: "claude-shell-a", rule: "Bash(git status:*)" }],
       destination: join(planDir, "settings.json"),
       sourceBytes: Buffer.from("{}\n"),
-      replacement: REPLACEMENT,
       now: () => "2026-09-03T00:00:00.000Z",
       planDir,
     });
@@ -174,7 +206,6 @@ describe("bound smoothing plans", () => {
       harness: "claude",
       destination: join(planDir, "settings.json"),
       sourceBytes: Buffer.from("{}\n"),
-      replacement: REPLACEMENT,
       planDir,
     };
 
@@ -273,6 +304,17 @@ describe("atomic smoothing mutation", () => {
     expect(fixture.spies.write.mock.calls[0]?.slice(1)).toEqual([REPLACEMENT, "utf8"]);
     expect(fixture.spies.sync).toHaveBeenCalledOnce();
     expect(fixture.spies.rename).toHaveBeenCalledWith(temporaryPath, fixture.destination);
+    expect(fixture.events.indexOf("open:lock")).toBeLessThan(
+      fixture.events.indexOf("read:destination"),
+    );
+    expect(fixture.events.indexOf("read:destination")).toBeLessThan(
+      fixture.events.indexOf("derive"),
+    );
+    expect(
+      fixture.events
+        .slice(0, fixture.events.indexOf("derive"))
+        .filter((event) => event === "read:destination"),
+    ).toHaveLength(2);
     expect(fixture.events.indexOf("temp:sync")).toBeLessThan(fixture.events.indexOf("temp:close"));
     expect(fixture.events.indexOf("temp:close")).toBeLessThan(fixture.events.indexOf("rename"));
     expect(fixture.events.indexOf("rename")).toBeLessThan(
@@ -313,7 +355,8 @@ describe("atomic smoothing mutation", () => {
 
     await expect(applyBoundPlan(fixture.input)).rejects.toThrow(/stale source config/);
 
-    expect(fixture.spies.validator).toHaveBeenCalledOnce();
+    expect(fixture.spies.validator).not.toHaveBeenCalled();
+    expect(fixture.spies.deriveReplacement).not.toHaveBeenCalled();
     expect(fixture.events).toContain("open:lock");
     expect(fixture.temporaryPaths).toEqual([]);
     await expect(access(fixture.lockPath)).rejects.toMatchObject({ code: "ENOENT" });
@@ -332,13 +375,15 @@ describe("atomic smoothing mutation", () => {
     await expect(readFile(fixture.destination, "utf8")).resolves.toBe(ORIGINAL);
   });
 
-  it("is idempotent after a successful application without revalidating or relocking", async () => {
+  it("is idempotent after a successful application without deriving or revalidating", async () => {
     const fixture = await mutationFixture("none");
     expect(await applyBoundPlan(fixture.input)).toEqual({
       status: "applied",
       destination: fixture.destination,
     });
     fixture.spies.validator.mockClear();
+    fixture.spies.deriveReplacement.mockClear();
+    fixture.spies.planValidator.mockClear();
     fixture.events.length = 0;
 
     expect(await applyBoundPlan(fixture.input)).toEqual({
@@ -347,7 +392,9 @@ describe("atomic smoothing mutation", () => {
     });
 
     expect(fixture.spies.validator).not.toHaveBeenCalled();
-    expect(fixture.events).not.toContain("open:lock");
+    expect(fixture.spies.deriveReplacement).not.toHaveBeenCalled();
+    expect(fixture.spies.planValidator).not.toHaveBeenCalled();
+    expect(fixture.events).toContain("open:lock");
   });
 
   it("atomically creates a previously absent destination and is idempotent", async () => {
@@ -370,7 +417,6 @@ describe("atomic smoothing mutation", () => {
       selected: [{ id: "claude-shell-a", rule: "Bash(git status:*)" }],
       destination,
       sourceBytes: null,
-      replacement: REPLACEMENT,
       now: () => "2026-09-03T00:00:00.000Z",
       planDir,
     });
@@ -379,7 +425,11 @@ describe("atomic smoothing mutation", () => {
       applyBoundPlan({
         planPath: plan.path,
         expectedHarness: "claude",
-        confirmToken: `apply:claude:${plan.replacementSha256}`,
+        confirmToken: `apply:claude:${plan.intentSha256}`,
+        deriveReplacement: async () => REPLACEMENT,
+        isAlreadyApplied: async (current: Buffer | null) =>
+          current?.equals(Buffer.from(REPLACEMENT)) ?? false,
+        validatePlan: async () => true,
         validateReplacement: async () => true,
         createParent: true,
       }),
@@ -483,7 +533,6 @@ async function mutationFixture(
     selected: [{ id: "claude-shell-a", rule: "Bash(git status:*)" }],
     destination,
     sourceBytes,
-    replacement: REPLACEMENT,
     now: () => "2026-09-03T00:00:00.000Z",
     planDir,
   });
@@ -568,6 +617,17 @@ async function mutationFixture(
     events.push("validate");
     if (failure === "validator-failure") throw new Error("fixture validator failure");
   });
+  const deriveReplacement = vi.fn(async () => {
+    events.push("derive");
+    return REPLACEMENT;
+  });
+  const isAlreadyApplied = vi.fn(async (current: Buffer | null) => {
+    events.push("check:already-applied");
+    return current?.equals(Buffer.from(REPLACEMENT)) ?? false;
+  });
+  const planValidator = vi.fn(async () => {
+    events.push("validate:plan");
+  });
   const fsOps = {
     mkdir,
     open,
@@ -584,14 +644,29 @@ async function mutationFixture(
     input: {
       planPath: plan.path,
       expectedHarness: "claude",
-      confirmToken: `apply:claude:${plan.replacementSha256}`,
+      confirmToken: `apply:claude:${plan.intentSha256}`,
+      deriveReplacement,
+      isAlreadyApplied,
+      validatePlan: planValidator,
       validateReplacement: validator,
       createParent,
       fsOps,
     },
     lockPath,
     plan,
-    spies: { open, read, rename, remove, sync, validator, write, planWrite },
+    spies: {
+      deriveReplacement,
+      isAlreadyApplied,
+      open,
+      planValidator,
+      read,
+      rename,
+      remove,
+      sync,
+      validator,
+      write,
+      planWrite,
+    },
     temporaryPaths,
   };
 }

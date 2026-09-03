@@ -116,6 +116,70 @@ describe("smoothing helper CLI", () => {
     );
   });
 
+  it("never persists or prints unrelated Claude settings secrets", async () => {
+    const fixture = await isolatedHome({ duplicateClaudeSessions: true });
+    const scan = await scanReport(fixture);
+    const selected = scan.harnesses.find(({ harness }) => harness === "claude")?.suggestions[0];
+    expect(selected).toBeDefined();
+    await mkdir(join(fixture.repo, ".claude"), { recursive: true });
+    await writeFile(
+      join(fixture.repo, ".claude", "settings.local.json"),
+      `${JSON.stringify({ env: { API_TOKEN: "private-cli-sentinel" }, permissions: { allow: [] } })}\n`,
+    );
+
+    const humanPlan = await runCli(fixture, ["plan", "--select", selected?.id ?? "missing"]);
+    expect(`${humanPlan.stdout}${humanPlan.stderr}`).not.toContain("private-cli-sentinel");
+    expect(humanPlan.stdout).toContain("@@ append permissions.allow @@");
+
+    const plannedOutput = await runCli(fixture, [
+      "plan",
+      "--select",
+      selected?.id ?? "missing",
+      "--json",
+    ]);
+    const planned = JSON.parse(plannedOutput.stdout) as {
+      confirmToken: string;
+      diff: string;
+      plan: { path: string; destination: string };
+    };
+    const storedPlan = await readFile(planned.plan.path, "utf8");
+    expect(`${plannedOutput.stdout}${plannedOutput.stderr}${storedPlan}`).not.toContain(
+      "private-cli-sentinel",
+    );
+    expect(JSON.parse(storedPlan)).not.toHaveProperty("replacement");
+    expect(planned.diff).toContain(selected?.rule);
+
+    const applied = await runCli(fixture, [
+      "apply",
+      "--plan",
+      planned.plan.path,
+      "--confirm",
+      planned.confirmToken,
+    ]);
+    expect(applied.stdout).not.toContain("private-cli-sentinel");
+    expect(JSON.parse(await readFile(planned.plan.destination, "utf8"))).toMatchObject({
+      env: { API_TOKEN: "private-cli-sentinel" },
+      permissions: { allow: expect.arrayContaining([selected?.rule]) },
+    });
+  });
+
+  it("suppresses a Claude candidate when an effective ask rule also matches allow", async () => {
+    const fixture = await isolatedHome({ duplicateClaudeSessions: true });
+    const initial = await scanReport(fixture);
+    const selected = initial.harnesses.find(({ harness }) => harness === "claude")?.suggestions[0];
+    expect(selected).toBeDefined();
+    await mkdir(join(fixture.repo, ".claude"), { recursive: true });
+    await writeFile(
+      join(fixture.repo, ".claude", "settings.local.json"),
+      `${JSON.stringify({ permissions: { ask: [selected?.rule], allow: [selected?.rule] } })}\n`,
+    );
+
+    const rescanned = await scanReport(fixture);
+    expect(
+      rescanned.harnesses.find(({ harness }) => harness === "claude")?.suggestions,
+    ).not.toContainEqual(expect.objectContaining({ id: selected?.id }));
+  });
+
   it("rejects unknown, duplicate, select-all, and cross-harness selections", async () => {
     const fixture = await isolatedHome({ duplicateClaudeSessions: true });
     const scan = await scanReport(fixture);
@@ -229,10 +293,6 @@ prefix_rule(
         if (!selection) throw new Error("fixture plan has no selection");
         const rule = maliciousRule.replace("ID", selection.id);
         selection.rule = rule;
-        stored.replacement =
-          harness === "claude"
-            ? `${JSON.stringify({ permissions: { allow: [rule] } }, null, 2)}\n`
-            : rule;
         return stored;
       });
 
@@ -637,21 +697,38 @@ async function planCandidate(fixture: IsolatedFixture, id: string | undefined) {
 async function forgePlan(
   path: string,
   mutate: (stored: {
+    version: number;
     harness: string;
+    destination: string;
+    source: { exists: boolean; sha256: string | null };
+    mutation: { operation: string };
     selected: Array<{ id: string; rule: string }>;
-    replacement: string;
-    replacementSha256: string;
+    restartRequired: boolean;
+    intentSha256: string;
   }) => {
+    version: number;
     harness: string;
+    destination: string;
+    source: { exists: boolean; sha256: string | null };
+    mutation: { operation: string };
     selected: Array<{ id: string; rule: string }>;
-    replacement: string;
-    replacementSha256: string;
+    restartRequired: boolean;
+    intentSha256: string;
   },
 ) {
   const stored = mutate(JSON.parse(await readFile(path, "utf8")));
-  stored.replacementSha256 = createHash("sha256").update(stored.replacement).digest("hex");
+  const intent = {
+    version: stored.version,
+    harness: stored.harness,
+    destination: stored.destination,
+    source: stored.source,
+    mutation: stored.mutation,
+    selected: stored.selected,
+    restartRequired: stored.restartRequired,
+  };
+  stored.intentSha256 = createHash("sha256").update(JSON.stringify(intent)).digest("hex");
   await writeFile(path, `${JSON.stringify(stored, null, 2)}\n`);
-  return { confirmToken: `apply:${stored.harness}:${stored.replacementSha256}` };
+  return { confirmToken: `apply:${stored.harness}:${stored.intentSha256}` };
 }
 
 async function snapshotTree(root: string) {
