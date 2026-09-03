@@ -12,28 +12,1603 @@
       "sha256": "d762e59a9b1f2766f219c54378550e1b32e010fbebea296c798cb254fd9536a5"
     },
     ".codex-plugin/plugin.json": {
-      "sha256": "3332c74028a9ff527ed9e21a75ed66bfdf9096b7cd46d9607019e9bb29ededaf"
+      "sha256": "aee49b52362264d6ce62a374a8ba361387371e096f1987c5f047edd00ede0c55"
+    },
+    ".codex-plugin/skills/_shared/behavior-evidence-formats.md": {
+      "sha256": "2b47ceb87e03958e00022e5ae57cd9fd1fecb1478a89b272909ca2f9fab0a243"
+    },
+    ".codex-plugin/skills/_shared/native-rendering.md": {
+      "sha256": "84b6cacdf525053ee958c519d805b02c352b105a412d0502cb68bd003e851903"
+    },
+    ".codex-plugin/skills/_shared/par-reviewer-wrapper.md": {
+      "sha256": "2a9b90a4daa7fb3c9df16eda2c8229b870e2ce4718896007aaf9e9b9cc57ee76"
+    },
+    ".codex-plugin/skills/_shared/parallel-adversarial-review.md": {
+      "sha256": "5d5524a5c27a343b317dd7e36b469cde2e6edea7d74c1bb0ff2e65945fa0acf7"
+    },
+    ".codex-plugin/skills/auditing-progress/SKILL.md": {
+      "sha256": "66c006970b8f2a27646594796e2f0576885ce22a7a1e8ddfb69c714744d84550"
+    },
+    ".codex-plugin/skills/auditing-progress/auditor-subagent-prompt.md": {
+      "sha256": "94039969871619a24adb14881355c86bbda305456498ad42a2da9d7cd5ea7496"
+    },
+    ".codex-plugin/skills/brainstorming/SKILL.md": {
+      "sha256": "9bd1d22a430abfba8e28ee9ff713e1cd2acf4512b6f8f222742a52c1839cca56"
+    },
+    ".codex-plugin/skills/brainstorming/spec-document-reviewer-prompt.md": {
+      "sha256": "51dfa7686560108235983c13fe7505811c9d79b872e22028065e95e063b615e1"
+    },
+    ".codex-plugin/skills/brainstorming/visual-companion.md": {
+      "sha256": "01fbc9188465e370f1d8891119a90b3a1dba440896890f85285930c0619d1a3a"
+    },
+    ".codex-plugin/skills/codebase-design/DEEPENING.md": {
+      "sha256": "f3dd099ce99289bd213914d8ee3e2429b78309c3957ca4583f7659551b1d53c1"
+    },
+    ".codex-plugin/skills/codebase-design/DESIGN-IT-TWICE.md": {
+      "sha256": "8e740bf98446dbd4dfdc132ac4346d9a7eedaf93de6a495889171cf7f99f16bd"
+    },
+    ".codex-plugin/skills/codebase-design/SKILL.md": {
+      "sha256": "2c20617f87ec8af6a434859f381b2f061a69b530444e74eb39e78bb016a6d1e2"
+    },
+    ".codex-plugin/skills/developing-claude-code-plugins/SKILL.md": {
+      "sha256": "7b556d56a12895646af95d91db22c7e8d723f3711ee56c395ef793ad7f376be1"
+    },
+    ".codex-plugin/skills/developing-claude-code-plugins/examples/full-featured-plugin/README.md": {
+      "sha256": "ff58cae1ec3a97e47346a3e41b88a2870dae9debe4c8fa609a75f850b02a747f"
+    },
+    ".codex-plugin/skills/developing-claude-code-plugins/examples/full-featured-plugin/commands/hello.md": {
+      "sha256": "4c2b0de75aae4c6d233451bca0d3afd6e63f7ed34c94d5aa98a31c92613708c5"
+    },
+    ".codex-plugin/skills/developing-claude-code-plugins/examples/full-featured-plugin/skills/workflow/SKILL.md": {
+      "sha256": "6901e8809d2042f279b33254237f63a449ea6363acbefa3d5603e507264cc8cb"
+    },
+    ".codex-plugin/skills/developing-claude-code-plugins/examples/simple-greeter-plugin/README.md": {
+      "sha256": "d8d79b8851d077849af4659861e02a58e274a54b6fb8d16202fa29f1ad83aed7"
+    },
+    ".codex-plugin/skills/developing-claude-code-plugins/examples/simple-greeter-plugin/skills/professional-greeting/SKILL.md": {
+      "sha256": "d825df59897682e51efe511c9f2ef2330d1309323c84203849afe0cd477f8d08"
+    },
+    ".codex-plugin/skills/developing-claude-code-plugins/references/common-patterns.md": {
+      "sha256": "6af505fe0edcb7b4aa7973b1957297197a5561ec0ac7ee01284fe8b86396fed1"
+    },
+    ".codex-plugin/skills/developing-claude-code-plugins/references/plugin-structure.md": {
+      "sha256": "2094ecbef0177746389e581bd3646908f11d1168e8ebd6ee8ed06edff6c2e4c7"
+    },
+    ".codex-plugin/skills/developing-claude-code-plugins/references/polyglot-hooks.md": {
+      "sha256": "6633b7c27b4b91767c290fd4a9d7f089e2222e45bcce6b987a9c5a5f2abbc4ea"
+    },
+    ".codex-plugin/skills/developing-claude-code-plugins/references/troubleshooting.md": {
+      "sha256": "0b07a0489c3b6356f2d1fbc27140d219c861cd893f8f39cbc5127bcf85b790ad"
+    },
+    ".codex-plugin/skills/dispatching-parallel-agents/SKILL.md": {
+      "sha256": "065cad1dc85f9c7730699f0829c5c9f922b3850c4b9c130c1692b13d9aa0e193"
+    },
+    ".codex-plugin/skills/domain-modeling/ADR-FORMAT.md": {
+      "sha256": "944c92aa790e8fbdc9199640b170979abb8a34ba8d0fe18c2a01a63bce140ca0"
+    },
+    ".codex-plugin/skills/domain-modeling/CONTEXT-FORMAT.md": {
+      "sha256": "220680ba6b16e1a2a4a7f4bb84a6cf59953ed7291d8521399b93cc44d58f4f2f"
+    },
+    ".codex-plugin/skills/domain-modeling/SKILL.md": {
+      "sha256": "327a2b50620e2fd70abc6893cd6965e76b20f8d0adb0dc2c8d5eb3845efb643e"
+    },
+    ".codex-plugin/skills/executing-plans/SKILL.md": {
+      "sha256": "a61ce58b578bf5e1af4861ef6f6a01932a95d60b4db76f7e6dbe850220e19e7a"
+    },
+    ".codex-plugin/skills/extracting-requirements/SKILL.md": {
+      "sha256": "2491b5570212d967090933d6b2c55e9876222d47ae4fbb166895568d67bb31f8"
+    },
+    ".codex-plugin/skills/extracting-requirements/extraction-subagent-prompt.md": {
+      "sha256": "5436cac4b93340358198c5361a5217e3d1b2ec35074d42c9582f903dcda4aaa2"
+    },
+    ".codex-plugin/skills/finding-duplicate-functions/SKILL.md": {
+      "sha256": "d9a008aa28b4112153bd4dcd4102e04de8d03a9e52db6b669525b6d1e5f6bf9e"
+    },
+    ".codex-plugin/skills/finding-duplicate-functions/scripts/categorize-prompt.md": {
+      "sha256": "764fa94432965ce27cbdb0811250fa3514740b666db1a8d5c5cea33c5a6d36e9"
+    },
+    ".codex-plugin/skills/finding-duplicate-functions/scripts/find-duplicates-prompt.md": {
+      "sha256": "8e2e7de14fe29ca49118b68b63ab33ee42efb2dfb4acb1d7f2f19d256925ecc7"
+    },
+    ".codex-plugin/skills/finishing-a-development-branch/SKILL.md": {
+      "sha256": "fcecedb5c09830ca9307872edce71ae811ead36bead7c1c9b78443adaa6c8931"
+    },
+    ".codex-plugin/skills/fixing-a-code-review/SKILL.md": {
+      "sha256": "f0ac15b849fecec6fe130c219881972c70eb1aa6c1eef0ae663b1ae8e290302a"
+    },
+    ".codex-plugin/skills/implementing-tasks/SKILL.md": {
+      "sha256": "e893b75e3fe5d93ab345b8bdc438644471bfb84c502ba7141dfe9e1c403f0180"
+    },
+    ".codex-plugin/skills/implementing-tasks/code-quality-reviewer-prompt.md": {
+      "sha256": "951ff6aaef49b62386e3ad2525c3c5b2fbb8305d67e6c948a2b1d1a92360714e"
+    },
+    ".codex-plugin/skills/implementing-tasks/implementer-subagent-prompt.md": {
+      "sha256": "7b3fa71b3af679175b977b383f42694c3719cbe15e75a0ffefda7db7a4d8e4c9"
+    },
+    ".codex-plugin/skills/implementing-tasks/spec-compliance-reviewer-prompt.md": {
+      "sha256": "14eddbb4f60376d08a2a38391cc895a91c900985344f8da3e76270bfd91f017f"
+    },
+    ".codex-plugin/skills/improve-codebase-architecture/HTML-REPORT.md": {
+      "sha256": "581e8bb5a521e46bbda8ca7e19b15948bed882187108092ebb90c62513b77528"
+    },
+    ".codex-plugin/skills/improve-codebase-architecture/SKILL.md": {
+      "sha256": "fbac96beb5bf62eacb974588b5f8f11adbf9346a5e3a9b4d8c995705205d86c6"
+    },
+    ".codex-plugin/skills/iterative-development/SKILL.md": {
+      "sha256": "bb3daa6cac0b8c868d4c44fc628f27f3f632d8b5808524db84d57edee138dd20"
+    },
+    ".codex-plugin/skills/mcp-cli/SKILL.md": {
+      "sha256": "f9cd31599575a0b4ada2481ffa817e8a8025759c32da49bacf2d8e2a6ed90efe"
+    },
+    ".codex-plugin/skills/prototype/LOGIC.md": {
+      "sha256": "f61c7d249e786a79ef289018901c348271e1798dd0b0bc5607b5c6f4d4a01ab9"
+    },
+    ".codex-plugin/skills/prototype/SKILL.md": {
+      "sha256": "714de632d116bb73f65cdb5a882db15b9369a6713b9a47c0fad827848f0bfbe3"
+    },
+    ".codex-plugin/skills/prototype/UI.md": {
+      "sha256": "723211e878acbc7b6ff09755263f3295cde724ba902ff0064da41eed51d45ad3"
+    },
+    ".codex-plugin/skills/receiving-code-review/SKILL.md": {
+      "sha256": "ba8fbecfef5f2b42e841f69881b62f9bd67116a9e37fe99bf1a1db02a828fa86"
+    },
+    ".codex-plugin/skills/requesting-code-review/SKILL.md": {
+      "sha256": "a96635d6c8daeb3c40f813086b51d79b34f180db956bd28c298b4e3c3ce0205e"
+    },
+    ".codex-plugin/skills/requesting-code-review/code-reviewer.md": {
+      "sha256": "5eca5fcfd48a50e0a526ce5ffd64bf625d6b81bb46d11795274dae451fe6ffd4"
+    },
+    ".codex-plugin/skills/requesting-code-review/references/fowler-smells.md": {
+      "sha256": "30ab68d2835343afced5a6f50b46cdc7e0e8c0027b34dcf5e1efc6fc88f2fd95"
+    },
+    ".codex-plugin/skills/requesting-code-review/references/security-asvs-levels.md": {
+      "sha256": "e462c335f3932a7e6c00ce13136da05525a2c0d4fd7fe42a1db17aa11faf35b0"
+    },
+    ".codex-plugin/skills/retrieving-context/SKILL.md": {
+      "sha256": "8a0bc12fd7b2b1ce0d140c8795fdda97fc2aab63756c7263dae83fd333b8d63d"
+    },
+    ".codex-plugin/skills/reviewing-a-codebase/SKILL.md": {
+      "sha256": "c059e84c8011ea4a0816da9b576de058908dbc0b5d2c076ea904a7cc663ab33b"
+    },
+    ".codex-plugin/skills/running-an-iteration/SKILL.md": {
+      "sha256": "37c416da41ace0be06152b6e39e8f893af361c065b2183a952908ef5f8a781bc"
+    },
+    ".codex-plugin/skills/running-an-iteration/scope-reviewer-prompt.md": {
+      "sha256": "cfb072171c98f60124da9b9543f1e82aa4113b775f3b9e472c2279d5b0357140"
+    },
+    ".codex-plugin/skills/scoping-the-simplest-core/SKILL.md": {
+      "sha256": "fdb5b720603105528a15c25204ad77b664f122fe4c706517451d9f677c2de847"
+    },
+    ".codex-plugin/skills/sequencing-plans/SKILL.md": {
+      "sha256": "8066f6e3481523b727783e9c512993fa9d0cf3ca19a52bd574fecb1e89f95a3d"
+    },
+    ".codex-plugin/skills/subagent-driven-development/SKILL.md": {
+      "sha256": "d688e82f728a685fa8ff8d2211508429396207a4fc39d5afe86b5ffce4d4d6e3"
+    },
+    ".codex-plugin/skills/subagent-driven-development/implementer-prompt.md": {
+      "sha256": "81dd9d5a3fb0b09b96b5829f03b9796842f3199ef7591d1ba1c2db2a515f64d0"
+    },
+    ".codex-plugin/skills/subagent-driven-development/re-review-prompt.md": {
+      "sha256": "2ba125e6c61d62ef8db41a93f9000e0998d9984fdc442033c6c228c78dcc5922"
+    },
+    ".codex-plugin/skills/subagent-driven-development/task-reviewer-prompt.md": {
+      "sha256": "6aebeaae41cde02548fc331d5d0482eb5c0820780f90dd08676cdba74d73cbdc"
+    },
+    ".codex-plugin/skills/systematic-debugging/CREATION-LOG.md": {
+      "sha256": "c24733a5b1821bd6bed1fc950261f0b9f4e90097e0bbb96459d8179713730789"
+    },
+    ".codex-plugin/skills/systematic-debugging/SKILL.md": {
+      "sha256": "68b9f203378a3f9fe045579b461ab889e7a51596c151f320c39ebb24300c2990"
+    },
+    ".codex-plugin/skills/systematic-debugging/condition-based-waiting.md": {
+      "sha256": "e89fec8400d6cd50f43407cec9fab50976ba4d55d0ec2eb51c0bd68036b54c26"
+    },
+    ".codex-plugin/skills/systematic-debugging/debugger-bug-taxonomy.md": {
+      "sha256": "195e791ee30d87a378d7212d2cb083aab2a521f97ea5753aa6974a9191480ee9"
+    },
+    ".codex-plugin/skills/systematic-debugging/debugger-fix-acceptance.md": {
+      "sha256": "2b0460af797d7578ae2bf9e9748bb6fe45cdfe849a981b5120064a43fb2252be"
+    },
+    ".codex-plugin/skills/systematic-debugging/debugger-philosophy.md": {
+      "sha256": "e78775106c50f94165219f642dfaf13464ccc09516bfd2372df9d4bea0bcc7c5"
+    },
+    ".codex-plugin/skills/systematic-debugging/debugger-prevention.md": {
+      "sha256": "c3c0ef687876ae815527e1db919184ac8f34433b19b0c8772e49901643853aca"
+    },
+    ".codex-plugin/skills/systematic-debugging/debugger-rca-branching.md": {
+      "sha256": "a31dd350a4b3f652256196908f14f5e8be7f91929e73f03594bf2889e3a46f93"
+    },
+    ".codex-plugin/skills/systematic-debugging/debugger-repro-hardening.md": {
+      "sha256": "5c0921dcd1c4a00c62cd4b42acba7fb9868b7956deeb7ca8055fbc1c7ca7d33d"
+    },
+    ".codex-plugin/skills/systematic-debugging/debugger-sbfl.md": {
+      "sha256": "ec44332947e3913db24e1423388ae924641008eb80bad39f15106b4ba57e516f"
+    },
+    ".codex-plugin/skills/systematic-debugging/debugger-semantic-recall.md": {
+      "sha256": "310d918a39a437e88e66a57d17946fb65d0378c12e7bfe3103c4b8144ee96051"
+    },
+    ".codex-plugin/skills/systematic-debugging/debugger-techniques.md": {
+      "sha256": "808e865d291e297181c14e6bfdca40a64e6e867b0532cf6941dc0d39300b590e"
+    },
+    ".codex-plugin/skills/systematic-debugging/defense-in-depth.md": {
+      "sha256": "1e175fb86fc357e58c6aebf5441e481e1b7868b4380c0456b63a17eefbd18ba7"
+    },
+    ".codex-plugin/skills/systematic-debugging/root-cause-tracing.md": {
+      "sha256": "66b98741ae2fa3151d093d81826706fb37602e89b5038caa0b337b71e471aa42"
+    },
+    ".codex-plugin/skills/systematic-debugging/test-academic.md": {
+      "sha256": "fe2ba480d78ac0d686dc025f41c2a32a43d642bf533f91b0c6053a04d35d6486"
+    },
+    ".codex-plugin/skills/systematic-debugging/test-pressure-1.md": {
+      "sha256": "0b6a915db0054577819834c79be9eb614e97bddba10d73768e1fbe91cfed048a"
+    },
+    ".codex-plugin/skills/systematic-debugging/test-pressure-2.md": {
+      "sha256": "b2030aeffba07050e8ad573ddf87486457c4a016a786bb326235bebd856f2016"
+    },
+    ".codex-plugin/skills/systematic-debugging/test-pressure-3.md": {
+      "sha256": "96b50a52e2c7989c9cf20fb752c47c1e9a3a70dc362f8f7989f8f5b64dac7708"
+    },
+    ".codex-plugin/skills/test-driven-development/SKILL.md": {
+      "sha256": "a410e8d1ee8a12eee63bfd2a91cb9d21be62921911875a2c799fbbc9f5c2eb00"
+    },
+    ".codex-plugin/skills/test-driven-development/writing-good-tests.md": {
+      "sha256": "0900a835f7e34c62922dc687f299742fc0db9e1a96e4850913888173ba3d9c5f"
+    },
+    ".codex-plugin/skills/using-git-worktrees/SKILL.md": {
+      "sha256": "f2550d5d18a2f39e46fb39b08013dbec643bdc35aca77390efd1eca76df66cc5"
+    },
+    ".codex-plugin/skills/using-moe/SKILL.md": {
+      "sha256": "f02563cf53a4cb31bda041fef7bbaec265b2e8ef49eef57bd0841b46ec86f063"
+    },
+    ".codex-plugin/skills/using-moe/references/antigravity-tools.md": {
+      "sha256": "77021a952929a56251d320ed909a4a4aaa3373ee89937e7645163ec56a5da713"
+    },
+    ".codex-plugin/skills/using-moe/references/codex-tools.md": {
+      "sha256": "bdc9f5eb727fadfa1cadb59ebf96f9fce7c18d97df2da196e05486ff800cd9b6"
+    },
+    ".codex-plugin/skills/using-moe/references/gemini-tools.md": {
+      "sha256": "1d8bfcf577fe92b36204592c85e010617ce0d15ea899dc4d26ed0bf7a6bcb704"
+    },
+    ".codex-plugin/skills/using-moe/references/kimi-tools.md": {
+      "sha256": "54eae82d2d6ddb479dc27958d5166dbc70ab651fcd110263b31a68afecdb02a3"
+    },
+    ".codex-plugin/skills/using-moe/references/opencode-tools.md": {
+      "sha256": "0e00fbc86349f9b8fd8a4851fff142135144513b6c0fcbfcaa2109b4608a3fcc"
+    },
+    ".codex-plugin/skills/using-moe/references/pi-tools.md": {
+      "sha256": "b43b591fbe1f1c1c8e25ba46356e97aa0bf827c17eee3e69a137124f37c0d5c8"
+    },
+    ".codex-plugin/skills/using-tmux-for-interactive-commands/SKILL.md": {
+      "sha256": "0230a21817150b4e291045e5f15e62c767ffad9116066e2d082d5af9627e48f3"
+    },
+    ".codex-plugin/skills/verification-before-completion/SKILL.md": {
+      "sha256": "9c6c4a457208718a1f335bd9eb704bdb2d5d763c29a3e72826c1a776fca9b8af"
+    },
+    ".codex-plugin/skills/verification-before-completion/tests/goal-backward-scenario.md": {
+      "sha256": "4ecff9fd94a702219413403b27eb116a5b0abeb83e44e042e36f7485fbd7f5fe"
+    },
+    ".codex-plugin/skills/windows-vm/SKILL.md": {
+      "sha256": "7aa90971d3d049f0ddddc6972b40b219633c7bdbadde6572549638ab4adedfa4"
+    },
+    ".codex-plugin/skills/working-with-claude-code/SKILL.md": {
+      "sha256": "8cf7b5225b0925a6f82bcb87894b12bc6d097242953aecb6da337b692ef30542"
+    },
+    ".codex-plugin/skills/writing-clearly-and-concisely/SKILL.md": {
+      "sha256": "bcfd8a8b22f08c1673ca6c033540be82ed25fd49792fce276e96dade3450d1b2"
+    },
+    ".codex-plugin/skills/writing-clearly-and-concisely/elements-of-style.md": {
+      "sha256": "d0edf854b5d39e22da68793603830e5bbdddb9266d272007993bcb821ba2799d"
+    },
+    ".codex-plugin/skills/writing-clearly-and-concisely/house-voice.md": {
+      "sha256": "348ad0147792e162981f4c566f6d14026bcfb337d9b4820a3fd914e16aaf75df"
+    },
+    ".codex-plugin/skills/writing-plans/SKILL.md": {
+      "sha256": "7727076bfbdd29b9febbd000b730a008028a880723c374a537f373a88f2414be"
+    },
+    ".codex-plugin/skills/writing-plans/plan-document-reviewer-prompt.md": {
+      "sha256": "df5f1ab940ad6aa0ac7df42aeded53107a39fb6d2e1a19cafa5eb808ac5ac602"
+    },
+    ".codex-plugin/skills/writing-skills/SKILL.md": {
+      "sha256": "290164014421876c2b018acfab2f85cb48b9f196fac02615d40260ac8b198886"
+    },
+    ".codex-plugin/skills/writing-skills/anthropic-best-practices.md": {
+      "sha256": "217629b356c09c9bd11017c9788e8fc654ca1b32c92d4a51cd490e16dd65e59a"
+    },
+    ".codex-plugin/skills/writing-skills/examples/CLAUDE_MD_TESTING.md": {
+      "sha256": "0b379a3415e185d3c434b3ad283d8aa132f3022c2a4f210f168865b5986bcef0"
+    },
+    ".codex-plugin/skills/writing-skills/persuasion-principles.md": {
+      "sha256": "a51bc9bf75189ea73a27b3fb504a2fdfdb966fb1f7f1cdf03203230a216ccc03"
+    },
+    ".codex-plugin/skills/writing-skills/references/skill-mechanics.md": {
+      "sha256": "6e8be5fbf42c4ab3d06e1d14256ccc66760dc6a63fcbecf24ba312f515cb9b24"
+    },
+    ".codex-plugin/skills/writing-skills/references/skill-typography.md": {
+      "sha256": "31f8b83351ffef4eb36b976ba63c837b6cc526708bcb6d779cfb087ff8495879"
+    },
+    ".codex-plugin/skills/writing-skills/testing-skills-with-subagents.md": {
+      "sha256": "1935c915e98c4da5f6940a2b18b747313876288c03f5c8749853f512015b6789"
     },
     ".cursor-plugin/plugin.json": {
-      "sha256": "1a54178ead0717f01617064fc55628e87849be84c5e72913819fb13317f8de02"
+      "sha256": "7fead1aa83650ad2e6dad20f60880ebc3dc7983af36fec6f9f8ced89f5721602"
+    },
+    ".cursor-plugin/skills/_shared/behavior-evidence-formats.md": {
+      "sha256": "2b47ceb87e03958e00022e5ae57cd9fd1fecb1478a89b272909ca2f9fab0a243"
+    },
+    ".cursor-plugin/skills/_shared/native-rendering.md": {
+      "sha256": "84b6cacdf525053ee958c519d805b02c352b105a412d0502cb68bd003e851903"
+    },
+    ".cursor-plugin/skills/_shared/par-reviewer-wrapper.md": {
+      "sha256": "2a9b90a4daa7fb3c9df16eda2c8229b870e2ce4718896007aaf9e9b9cc57ee76"
+    },
+    ".cursor-plugin/skills/_shared/parallel-adversarial-review.md": {
+      "sha256": "5d5524a5c27a343b317dd7e36b469cde2e6edea7d74c1bb0ff2e65945fa0acf7"
+    },
+    ".cursor-plugin/skills/auditing-progress/SKILL.md": {
+      "sha256": "66c006970b8f2a27646594796e2f0576885ce22a7a1e8ddfb69c714744d84550"
+    },
+    ".cursor-plugin/skills/auditing-progress/auditor-subagent-prompt.md": {
+      "sha256": "94039969871619a24adb14881355c86bbda305456498ad42a2da9d7cd5ea7496"
+    },
+    ".cursor-plugin/skills/brainstorming/SKILL.md": {
+      "sha256": "9bd1d22a430abfba8e28ee9ff713e1cd2acf4512b6f8f222742a52c1839cca56"
+    },
+    ".cursor-plugin/skills/brainstorming/spec-document-reviewer-prompt.md": {
+      "sha256": "51dfa7686560108235983c13fe7505811c9d79b872e22028065e95e063b615e1"
+    },
+    ".cursor-plugin/skills/brainstorming/visual-companion.md": {
+      "sha256": "01fbc9188465e370f1d8891119a90b3a1dba440896890f85285930c0619d1a3a"
+    },
+    ".cursor-plugin/skills/codebase-design/DEEPENING.md": {
+      "sha256": "f3dd099ce99289bd213914d8ee3e2429b78309c3957ca4583f7659551b1d53c1"
+    },
+    ".cursor-plugin/skills/codebase-design/DESIGN-IT-TWICE.md": {
+      "sha256": "8e740bf98446dbd4dfdc132ac4346d9a7eedaf93de6a495889171cf7f99f16bd"
+    },
+    ".cursor-plugin/skills/codebase-design/SKILL.md": {
+      "sha256": "2c20617f87ec8af6a434859f381b2f061a69b530444e74eb39e78bb016a6d1e2"
+    },
+    ".cursor-plugin/skills/developing-claude-code-plugins/SKILL.md": {
+      "sha256": "7b556d56a12895646af95d91db22c7e8d723f3711ee56c395ef793ad7f376be1"
+    },
+    ".cursor-plugin/skills/developing-claude-code-plugins/examples/full-featured-plugin/README.md": {
+      "sha256": "ff58cae1ec3a97e47346a3e41b88a2870dae9debe4c8fa609a75f850b02a747f"
+    },
+    ".cursor-plugin/skills/developing-claude-code-plugins/examples/full-featured-plugin/commands/hello.md": {
+      "sha256": "4c2b0de75aae4c6d233451bca0d3afd6e63f7ed34c94d5aa98a31c92613708c5"
+    },
+    ".cursor-plugin/skills/developing-claude-code-plugins/examples/full-featured-plugin/skills/workflow/SKILL.md": {
+      "sha256": "6901e8809d2042f279b33254237f63a449ea6363acbefa3d5603e507264cc8cb"
+    },
+    ".cursor-plugin/skills/developing-claude-code-plugins/examples/simple-greeter-plugin/README.md": {
+      "sha256": "d8d79b8851d077849af4659861e02a58e274a54b6fb8d16202fa29f1ad83aed7"
+    },
+    ".cursor-plugin/skills/developing-claude-code-plugins/examples/simple-greeter-plugin/skills/professional-greeting/SKILL.md": {
+      "sha256": "d825df59897682e51efe511c9f2ef2330d1309323c84203849afe0cd477f8d08"
+    },
+    ".cursor-plugin/skills/developing-claude-code-plugins/references/common-patterns.md": {
+      "sha256": "6af505fe0edcb7b4aa7973b1957297197a5561ec0ac7ee01284fe8b86396fed1"
+    },
+    ".cursor-plugin/skills/developing-claude-code-plugins/references/plugin-structure.md": {
+      "sha256": "2094ecbef0177746389e581bd3646908f11d1168e8ebd6ee8ed06edff6c2e4c7"
+    },
+    ".cursor-plugin/skills/developing-claude-code-plugins/references/polyglot-hooks.md": {
+      "sha256": "6633b7c27b4b91767c290fd4a9d7f089e2222e45bcce6b987a9c5a5f2abbc4ea"
+    },
+    ".cursor-plugin/skills/developing-claude-code-plugins/references/troubleshooting.md": {
+      "sha256": "0b07a0489c3b6356f2d1fbc27140d219c861cd893f8f39cbc5127bcf85b790ad"
+    },
+    ".cursor-plugin/skills/dispatching-parallel-agents/SKILL.md": {
+      "sha256": "065cad1dc85f9c7730699f0829c5c9f922b3850c4b9c130c1692b13d9aa0e193"
+    },
+    ".cursor-plugin/skills/domain-modeling/ADR-FORMAT.md": {
+      "sha256": "944c92aa790e8fbdc9199640b170979abb8a34ba8d0fe18c2a01a63bce140ca0"
+    },
+    ".cursor-plugin/skills/domain-modeling/CONTEXT-FORMAT.md": {
+      "sha256": "220680ba6b16e1a2a4a7f4bb84a6cf59953ed7291d8521399b93cc44d58f4f2f"
+    },
+    ".cursor-plugin/skills/domain-modeling/SKILL.md": {
+      "sha256": "327a2b50620e2fd70abc6893cd6965e76b20f8d0adb0dc2c8d5eb3845efb643e"
+    },
+    ".cursor-plugin/skills/executing-plans/SKILL.md": {
+      "sha256": "a61ce58b578bf5e1af4861ef6f6a01932a95d60b4db76f7e6dbe850220e19e7a"
+    },
+    ".cursor-plugin/skills/extracting-requirements/SKILL.md": {
+      "sha256": "2491b5570212d967090933d6b2c55e9876222d47ae4fbb166895568d67bb31f8"
+    },
+    ".cursor-plugin/skills/extracting-requirements/extraction-subagent-prompt.md": {
+      "sha256": "5436cac4b93340358198c5361a5217e3d1b2ec35074d42c9582f903dcda4aaa2"
+    },
+    ".cursor-plugin/skills/finding-duplicate-functions/SKILL.md": {
+      "sha256": "d9a008aa28b4112153bd4dcd4102e04de8d03a9e52db6b669525b6d1e5f6bf9e"
+    },
+    ".cursor-plugin/skills/finding-duplicate-functions/scripts/categorize-prompt.md": {
+      "sha256": "764fa94432965ce27cbdb0811250fa3514740b666db1a8d5c5cea33c5a6d36e9"
+    },
+    ".cursor-plugin/skills/finding-duplicate-functions/scripts/find-duplicates-prompt.md": {
+      "sha256": "8e2e7de14fe29ca49118b68b63ab33ee42efb2dfb4acb1d7f2f19d256925ecc7"
+    },
+    ".cursor-plugin/skills/finishing-a-development-branch/SKILL.md": {
+      "sha256": "fcecedb5c09830ca9307872edce71ae811ead36bead7c1c9b78443adaa6c8931"
+    },
+    ".cursor-plugin/skills/fixing-a-code-review/SKILL.md": {
+      "sha256": "f0ac15b849fecec6fe130c219881972c70eb1aa6c1eef0ae663b1ae8e290302a"
+    },
+    ".cursor-plugin/skills/implementing-tasks/SKILL.md": {
+      "sha256": "e893b75e3fe5d93ab345b8bdc438644471bfb84c502ba7141dfe9e1c403f0180"
+    },
+    ".cursor-plugin/skills/implementing-tasks/code-quality-reviewer-prompt.md": {
+      "sha256": "951ff6aaef49b62386e3ad2525c3c5b2fbb8305d67e6c948a2b1d1a92360714e"
+    },
+    ".cursor-plugin/skills/implementing-tasks/implementer-subagent-prompt.md": {
+      "sha256": "7b3fa71b3af679175b977b383f42694c3719cbe15e75a0ffefda7db7a4d8e4c9"
+    },
+    ".cursor-plugin/skills/implementing-tasks/spec-compliance-reviewer-prompt.md": {
+      "sha256": "14eddbb4f60376d08a2a38391cc895a91c900985344f8da3e76270bfd91f017f"
+    },
+    ".cursor-plugin/skills/improve-codebase-architecture/HTML-REPORT.md": {
+      "sha256": "581e8bb5a521e46bbda8ca7e19b15948bed882187108092ebb90c62513b77528"
+    },
+    ".cursor-plugin/skills/improve-codebase-architecture/SKILL.md": {
+      "sha256": "fbac96beb5bf62eacb974588b5f8f11adbf9346a5e3a9b4d8c995705205d86c6"
+    },
+    ".cursor-plugin/skills/iterative-development/SKILL.md": {
+      "sha256": "bb3daa6cac0b8c868d4c44fc628f27f3f632d8b5808524db84d57edee138dd20"
+    },
+    ".cursor-plugin/skills/mcp-cli/SKILL.md": {
+      "sha256": "f9cd31599575a0b4ada2481ffa817e8a8025759c32da49bacf2d8e2a6ed90efe"
+    },
+    ".cursor-plugin/skills/prototype/LOGIC.md": {
+      "sha256": "f61c7d249e786a79ef289018901c348271e1798dd0b0bc5607b5c6f4d4a01ab9"
+    },
+    ".cursor-plugin/skills/prototype/SKILL.md": {
+      "sha256": "714de632d116bb73f65cdb5a882db15b9369a6713b9a47c0fad827848f0bfbe3"
+    },
+    ".cursor-plugin/skills/prototype/UI.md": {
+      "sha256": "723211e878acbc7b6ff09755263f3295cde724ba902ff0064da41eed51d45ad3"
+    },
+    ".cursor-plugin/skills/receiving-code-review/SKILL.md": {
+      "sha256": "ba8fbecfef5f2b42e841f69881b62f9bd67116a9e37fe99bf1a1db02a828fa86"
+    },
+    ".cursor-plugin/skills/requesting-code-review/SKILL.md": {
+      "sha256": "a96635d6c8daeb3c40f813086b51d79b34f180db956bd28c298b4e3c3ce0205e"
+    },
+    ".cursor-plugin/skills/requesting-code-review/code-reviewer.md": {
+      "sha256": "5eca5fcfd48a50e0a526ce5ffd64bf625d6b81bb46d11795274dae451fe6ffd4"
+    },
+    ".cursor-plugin/skills/requesting-code-review/references/fowler-smells.md": {
+      "sha256": "30ab68d2835343afced5a6f50b46cdc7e0e8c0027b34dcf5e1efc6fc88f2fd95"
+    },
+    ".cursor-plugin/skills/requesting-code-review/references/security-asvs-levels.md": {
+      "sha256": "e462c335f3932a7e6c00ce13136da05525a2c0d4fd7fe42a1db17aa11faf35b0"
+    },
+    ".cursor-plugin/skills/retrieving-context/SKILL.md": {
+      "sha256": "8a0bc12fd7b2b1ce0d140c8795fdda97fc2aab63756c7263dae83fd333b8d63d"
+    },
+    ".cursor-plugin/skills/reviewing-a-codebase/SKILL.md": {
+      "sha256": "c059e84c8011ea4a0816da9b576de058908dbc0b5d2c076ea904a7cc663ab33b"
+    },
+    ".cursor-plugin/skills/running-an-iteration/SKILL.md": {
+      "sha256": "37c416da41ace0be06152b6e39e8f893af361c065b2183a952908ef5f8a781bc"
+    },
+    ".cursor-plugin/skills/running-an-iteration/scope-reviewer-prompt.md": {
+      "sha256": "cfb072171c98f60124da9b9543f1e82aa4113b775f3b9e472c2279d5b0357140"
+    },
+    ".cursor-plugin/skills/scoping-the-simplest-core/SKILL.md": {
+      "sha256": "fdb5b720603105528a15c25204ad77b664f122fe4c706517451d9f677c2de847"
+    },
+    ".cursor-plugin/skills/sequencing-plans/SKILL.md": {
+      "sha256": "8066f6e3481523b727783e9c512993fa9d0cf3ca19a52bd574fecb1e89f95a3d"
+    },
+    ".cursor-plugin/skills/subagent-driven-development/SKILL.md": {
+      "sha256": "d688e82f728a685fa8ff8d2211508429396207a4fc39d5afe86b5ffce4d4d6e3"
+    },
+    ".cursor-plugin/skills/subagent-driven-development/implementer-prompt.md": {
+      "sha256": "81dd9d5a3fb0b09b96b5829f03b9796842f3199ef7591d1ba1c2db2a515f64d0"
+    },
+    ".cursor-plugin/skills/subagent-driven-development/re-review-prompt.md": {
+      "sha256": "2ba125e6c61d62ef8db41a93f9000e0998d9984fdc442033c6c228c78dcc5922"
+    },
+    ".cursor-plugin/skills/subagent-driven-development/task-reviewer-prompt.md": {
+      "sha256": "6aebeaae41cde02548fc331d5d0482eb5c0820780f90dd08676cdba74d73cbdc"
+    },
+    ".cursor-plugin/skills/systematic-debugging/CREATION-LOG.md": {
+      "sha256": "c24733a5b1821bd6bed1fc950261f0b9f4e90097e0bbb96459d8179713730789"
+    },
+    ".cursor-plugin/skills/systematic-debugging/SKILL.md": {
+      "sha256": "68b9f203378a3f9fe045579b461ab889e7a51596c151f320c39ebb24300c2990"
+    },
+    ".cursor-plugin/skills/systematic-debugging/condition-based-waiting.md": {
+      "sha256": "e89fec8400d6cd50f43407cec9fab50976ba4d55d0ec2eb51c0bd68036b54c26"
+    },
+    ".cursor-plugin/skills/systematic-debugging/debugger-bug-taxonomy.md": {
+      "sha256": "195e791ee30d87a378d7212d2cb083aab2a521f97ea5753aa6974a9191480ee9"
+    },
+    ".cursor-plugin/skills/systematic-debugging/debugger-fix-acceptance.md": {
+      "sha256": "2b0460af797d7578ae2bf9e9748bb6fe45cdfe849a981b5120064a43fb2252be"
+    },
+    ".cursor-plugin/skills/systematic-debugging/debugger-philosophy.md": {
+      "sha256": "e78775106c50f94165219f642dfaf13464ccc09516bfd2372df9d4bea0bcc7c5"
+    },
+    ".cursor-plugin/skills/systematic-debugging/debugger-prevention.md": {
+      "sha256": "c3c0ef687876ae815527e1db919184ac8f34433b19b0c8772e49901643853aca"
+    },
+    ".cursor-plugin/skills/systematic-debugging/debugger-rca-branching.md": {
+      "sha256": "a31dd350a4b3f652256196908f14f5e8be7f91929e73f03594bf2889e3a46f93"
+    },
+    ".cursor-plugin/skills/systematic-debugging/debugger-repro-hardening.md": {
+      "sha256": "5c0921dcd1c4a00c62cd4b42acba7fb9868b7956deeb7ca8055fbc1c7ca7d33d"
+    },
+    ".cursor-plugin/skills/systematic-debugging/debugger-sbfl.md": {
+      "sha256": "ec44332947e3913db24e1423388ae924641008eb80bad39f15106b4ba57e516f"
+    },
+    ".cursor-plugin/skills/systematic-debugging/debugger-semantic-recall.md": {
+      "sha256": "310d918a39a437e88e66a57d17946fb65d0378c12e7bfe3103c4b8144ee96051"
+    },
+    ".cursor-plugin/skills/systematic-debugging/debugger-techniques.md": {
+      "sha256": "808e865d291e297181c14e6bfdca40a64e6e867b0532cf6941dc0d39300b590e"
+    },
+    ".cursor-plugin/skills/systematic-debugging/defense-in-depth.md": {
+      "sha256": "1e175fb86fc357e58c6aebf5441e481e1b7868b4380c0456b63a17eefbd18ba7"
+    },
+    ".cursor-plugin/skills/systematic-debugging/root-cause-tracing.md": {
+      "sha256": "66b98741ae2fa3151d093d81826706fb37602e89b5038caa0b337b71e471aa42"
+    },
+    ".cursor-plugin/skills/systematic-debugging/test-academic.md": {
+      "sha256": "fe2ba480d78ac0d686dc025f41c2a32a43d642bf533f91b0c6053a04d35d6486"
+    },
+    ".cursor-plugin/skills/systematic-debugging/test-pressure-1.md": {
+      "sha256": "0b6a915db0054577819834c79be9eb614e97bddba10d73768e1fbe91cfed048a"
+    },
+    ".cursor-plugin/skills/systematic-debugging/test-pressure-2.md": {
+      "sha256": "b2030aeffba07050e8ad573ddf87486457c4a016a786bb326235bebd856f2016"
+    },
+    ".cursor-plugin/skills/systematic-debugging/test-pressure-3.md": {
+      "sha256": "96b50a52e2c7989c9cf20fb752c47c1e9a3a70dc362f8f7989f8f5b64dac7708"
+    },
+    ".cursor-plugin/skills/test-driven-development/SKILL.md": {
+      "sha256": "a410e8d1ee8a12eee63bfd2a91cb9d21be62921911875a2c799fbbc9f5c2eb00"
+    },
+    ".cursor-plugin/skills/test-driven-development/writing-good-tests.md": {
+      "sha256": "0900a835f7e34c62922dc687f299742fc0db9e1a96e4850913888173ba3d9c5f"
+    },
+    ".cursor-plugin/skills/using-git-worktrees/SKILL.md": {
+      "sha256": "f2550d5d18a2f39e46fb39b08013dbec643bdc35aca77390efd1eca76df66cc5"
+    },
+    ".cursor-plugin/skills/using-moe/SKILL.md": {
+      "sha256": "f02563cf53a4cb31bda041fef7bbaec265b2e8ef49eef57bd0841b46ec86f063"
+    },
+    ".cursor-plugin/skills/using-moe/references/antigravity-tools.md": {
+      "sha256": "77021a952929a56251d320ed909a4a4aaa3373ee89937e7645163ec56a5da713"
+    },
+    ".cursor-plugin/skills/using-moe/references/codex-tools.md": {
+      "sha256": "bdc9f5eb727fadfa1cadb59ebf96f9fce7c18d97df2da196e05486ff800cd9b6"
+    },
+    ".cursor-plugin/skills/using-moe/references/gemini-tools.md": {
+      "sha256": "1d8bfcf577fe92b36204592c85e010617ce0d15ea899dc4d26ed0bf7a6bcb704"
+    },
+    ".cursor-plugin/skills/using-moe/references/kimi-tools.md": {
+      "sha256": "54eae82d2d6ddb479dc27958d5166dbc70ab651fcd110263b31a68afecdb02a3"
+    },
+    ".cursor-plugin/skills/using-moe/references/opencode-tools.md": {
+      "sha256": "0e00fbc86349f9b8fd8a4851fff142135144513b6c0fcbfcaa2109b4608a3fcc"
+    },
+    ".cursor-plugin/skills/using-moe/references/pi-tools.md": {
+      "sha256": "b43b591fbe1f1c1c8e25ba46356e97aa0bf827c17eee3e69a137124f37c0d5c8"
+    },
+    ".cursor-plugin/skills/using-tmux-for-interactive-commands/SKILL.md": {
+      "sha256": "0230a21817150b4e291045e5f15e62c767ffad9116066e2d082d5af9627e48f3"
+    },
+    ".cursor-plugin/skills/verification-before-completion/SKILL.md": {
+      "sha256": "9c6c4a457208718a1f335bd9eb704bdb2d5d763c29a3e72826c1a776fca9b8af"
+    },
+    ".cursor-plugin/skills/verification-before-completion/tests/goal-backward-scenario.md": {
+      "sha256": "4ecff9fd94a702219413403b27eb116a5b0abeb83e44e042e36f7485fbd7f5fe"
+    },
+    ".cursor-plugin/skills/windows-vm/SKILL.md": {
+      "sha256": "7aa90971d3d049f0ddddc6972b40b219633c7bdbadde6572549638ab4adedfa4"
+    },
+    ".cursor-plugin/skills/working-with-claude-code/SKILL.md": {
+      "sha256": "8cf7b5225b0925a6f82bcb87894b12bc6d097242953aecb6da337b692ef30542"
+    },
+    ".cursor-plugin/skills/writing-clearly-and-concisely/SKILL.md": {
+      "sha256": "bcfd8a8b22f08c1673ca6c033540be82ed25fd49792fce276e96dade3450d1b2"
+    },
+    ".cursor-plugin/skills/writing-clearly-and-concisely/elements-of-style.md": {
+      "sha256": "d0edf854b5d39e22da68793603830e5bbdddb9266d272007993bcb821ba2799d"
+    },
+    ".cursor-plugin/skills/writing-clearly-and-concisely/house-voice.md": {
+      "sha256": "348ad0147792e162981f4c566f6d14026bcfb337d9b4820a3fd914e16aaf75df"
+    },
+    ".cursor-plugin/skills/writing-plans/SKILL.md": {
+      "sha256": "7727076bfbdd29b9febbd000b730a008028a880723c374a537f373a88f2414be"
+    },
+    ".cursor-plugin/skills/writing-plans/plan-document-reviewer-prompt.md": {
+      "sha256": "df5f1ab940ad6aa0ac7df42aeded53107a39fb6d2e1a19cafa5eb808ac5ac602"
+    },
+    ".cursor-plugin/skills/writing-skills/SKILL.md": {
+      "sha256": "290164014421876c2b018acfab2f85cb48b9f196fac02615d40260ac8b198886"
+    },
+    ".cursor-plugin/skills/writing-skills/anthropic-best-practices.md": {
+      "sha256": "217629b356c09c9bd11017c9788e8fc654ca1b32c92d4a51cd490e16dd65e59a"
+    },
+    ".cursor-plugin/skills/writing-skills/examples/CLAUDE_MD_TESTING.md": {
+      "sha256": "0b379a3415e185d3c434b3ad283d8aa132f3022c2a4f210f168865b5986bcef0"
+    },
+    ".cursor-plugin/skills/writing-skills/persuasion-principles.md": {
+      "sha256": "a51bc9bf75189ea73a27b3fb504a2fdfdb966fb1f7f1cdf03203230a216ccc03"
+    },
+    ".cursor-plugin/skills/writing-skills/references/skill-mechanics.md": {
+      "sha256": "6e8be5fbf42c4ab3d06e1d14256ccc66760dc6a63fcbecf24ba312f515cb9b24"
+    },
+    ".cursor-plugin/skills/writing-skills/references/skill-typography.md": {
+      "sha256": "31f8b83351ffef4eb36b976ba63c837b6cc526708bcb6d779cfb087ff8495879"
+    },
+    ".cursor-plugin/skills/writing-skills/testing-skills-with-subagents.md": {
+      "sha256": "1935c915e98c4da5f6940a2b18b747313876288c03f5c8749853f512015b6789"
     },
     ".kimi-plugin/plugin.json": {
-      "sha256": "70e13f4005568e08bd42b192db9d7f5aac19f53bdb06a95d02264097b6e54e10"
+      "sha256": "0a80c1b25bd150a7f7e6dbf0fffc29b4c57e4645b29b35f6145799981b59d9ac"
+    },
+    ".kimi-plugin/skills/_shared/behavior-evidence-formats.md": {
+      "sha256": "2b47ceb87e03958e00022e5ae57cd9fd1fecb1478a89b272909ca2f9fab0a243"
+    },
+    ".kimi-plugin/skills/_shared/native-rendering.md": {
+      "sha256": "84b6cacdf525053ee958c519d805b02c352b105a412d0502cb68bd003e851903"
+    },
+    ".kimi-plugin/skills/_shared/par-reviewer-wrapper.md": {
+      "sha256": "2a9b90a4daa7fb3c9df16eda2c8229b870e2ce4718896007aaf9e9b9cc57ee76"
+    },
+    ".kimi-plugin/skills/_shared/parallel-adversarial-review.md": {
+      "sha256": "5d5524a5c27a343b317dd7e36b469cde2e6edea7d74c1bb0ff2e65945fa0acf7"
+    },
+    ".kimi-plugin/skills/auditing-progress/SKILL.md": {
+      "sha256": "66c006970b8f2a27646594796e2f0576885ce22a7a1e8ddfb69c714744d84550"
+    },
+    ".kimi-plugin/skills/auditing-progress/auditor-subagent-prompt.md": {
+      "sha256": "94039969871619a24adb14881355c86bbda305456498ad42a2da9d7cd5ea7496"
+    },
+    ".kimi-plugin/skills/brainstorming/SKILL.md": {
+      "sha256": "9bd1d22a430abfba8e28ee9ff713e1cd2acf4512b6f8f222742a52c1839cca56"
+    },
+    ".kimi-plugin/skills/brainstorming/spec-document-reviewer-prompt.md": {
+      "sha256": "51dfa7686560108235983c13fe7505811c9d79b872e22028065e95e063b615e1"
+    },
+    ".kimi-plugin/skills/brainstorming/visual-companion.md": {
+      "sha256": "01fbc9188465e370f1d8891119a90b3a1dba440896890f85285930c0619d1a3a"
+    },
+    ".kimi-plugin/skills/codebase-design/DEEPENING.md": {
+      "sha256": "f3dd099ce99289bd213914d8ee3e2429b78309c3957ca4583f7659551b1d53c1"
+    },
+    ".kimi-plugin/skills/codebase-design/DESIGN-IT-TWICE.md": {
+      "sha256": "8e740bf98446dbd4dfdc132ac4346d9a7eedaf93de6a495889171cf7f99f16bd"
+    },
+    ".kimi-plugin/skills/codebase-design/SKILL.md": {
+      "sha256": "2c20617f87ec8af6a434859f381b2f061a69b530444e74eb39e78bb016a6d1e2"
+    },
+    ".kimi-plugin/skills/developing-claude-code-plugins/SKILL.md": {
+      "sha256": "7b556d56a12895646af95d91db22c7e8d723f3711ee56c395ef793ad7f376be1"
+    },
+    ".kimi-plugin/skills/developing-claude-code-plugins/examples/full-featured-plugin/README.md": {
+      "sha256": "ff58cae1ec3a97e47346a3e41b88a2870dae9debe4c8fa609a75f850b02a747f"
+    },
+    ".kimi-plugin/skills/developing-claude-code-plugins/examples/full-featured-plugin/commands/hello.md": {
+      "sha256": "4c2b0de75aae4c6d233451bca0d3afd6e63f7ed34c94d5aa98a31c92613708c5"
+    },
+    ".kimi-plugin/skills/developing-claude-code-plugins/examples/full-featured-plugin/skills/workflow/SKILL.md": {
+      "sha256": "6901e8809d2042f279b33254237f63a449ea6363acbefa3d5603e507264cc8cb"
+    },
+    ".kimi-plugin/skills/developing-claude-code-plugins/examples/simple-greeter-plugin/README.md": {
+      "sha256": "d8d79b8851d077849af4659861e02a58e274a54b6fb8d16202fa29f1ad83aed7"
+    },
+    ".kimi-plugin/skills/developing-claude-code-plugins/examples/simple-greeter-plugin/skills/professional-greeting/SKILL.md": {
+      "sha256": "d825df59897682e51efe511c9f2ef2330d1309323c84203849afe0cd477f8d08"
+    },
+    ".kimi-plugin/skills/developing-claude-code-plugins/references/common-patterns.md": {
+      "sha256": "6af505fe0edcb7b4aa7973b1957297197a5561ec0ac7ee01284fe8b86396fed1"
+    },
+    ".kimi-plugin/skills/developing-claude-code-plugins/references/plugin-structure.md": {
+      "sha256": "2094ecbef0177746389e581bd3646908f11d1168e8ebd6ee8ed06edff6c2e4c7"
+    },
+    ".kimi-plugin/skills/developing-claude-code-plugins/references/polyglot-hooks.md": {
+      "sha256": "6633b7c27b4b91767c290fd4a9d7f089e2222e45bcce6b987a9c5a5f2abbc4ea"
+    },
+    ".kimi-plugin/skills/developing-claude-code-plugins/references/troubleshooting.md": {
+      "sha256": "0b07a0489c3b6356f2d1fbc27140d219c861cd893f8f39cbc5127bcf85b790ad"
+    },
+    ".kimi-plugin/skills/dispatching-parallel-agents/SKILL.md": {
+      "sha256": "065cad1dc85f9c7730699f0829c5c9f922b3850c4b9c130c1692b13d9aa0e193"
+    },
+    ".kimi-plugin/skills/domain-modeling/ADR-FORMAT.md": {
+      "sha256": "944c92aa790e8fbdc9199640b170979abb8a34ba8d0fe18c2a01a63bce140ca0"
+    },
+    ".kimi-plugin/skills/domain-modeling/CONTEXT-FORMAT.md": {
+      "sha256": "220680ba6b16e1a2a4a7f4bb84a6cf59953ed7291d8521399b93cc44d58f4f2f"
+    },
+    ".kimi-plugin/skills/domain-modeling/SKILL.md": {
+      "sha256": "327a2b50620e2fd70abc6893cd6965e76b20f8d0adb0dc2c8d5eb3845efb643e"
+    },
+    ".kimi-plugin/skills/executing-plans/SKILL.md": {
+      "sha256": "a61ce58b578bf5e1af4861ef6f6a01932a95d60b4db76f7e6dbe850220e19e7a"
+    },
+    ".kimi-plugin/skills/extracting-requirements/SKILL.md": {
+      "sha256": "2491b5570212d967090933d6b2c55e9876222d47ae4fbb166895568d67bb31f8"
+    },
+    ".kimi-plugin/skills/extracting-requirements/extraction-subagent-prompt.md": {
+      "sha256": "5436cac4b93340358198c5361a5217e3d1b2ec35074d42c9582f903dcda4aaa2"
+    },
+    ".kimi-plugin/skills/finding-duplicate-functions/SKILL.md": {
+      "sha256": "d9a008aa28b4112153bd4dcd4102e04de8d03a9e52db6b669525b6d1e5f6bf9e"
+    },
+    ".kimi-plugin/skills/finding-duplicate-functions/scripts/categorize-prompt.md": {
+      "sha256": "764fa94432965ce27cbdb0811250fa3514740b666db1a8d5c5cea33c5a6d36e9"
+    },
+    ".kimi-plugin/skills/finding-duplicate-functions/scripts/find-duplicates-prompt.md": {
+      "sha256": "8e2e7de14fe29ca49118b68b63ab33ee42efb2dfb4acb1d7f2f19d256925ecc7"
+    },
+    ".kimi-plugin/skills/finishing-a-development-branch/SKILL.md": {
+      "sha256": "fcecedb5c09830ca9307872edce71ae811ead36bead7c1c9b78443adaa6c8931"
+    },
+    ".kimi-plugin/skills/fixing-a-code-review/SKILL.md": {
+      "sha256": "f0ac15b849fecec6fe130c219881972c70eb1aa6c1eef0ae663b1ae8e290302a"
+    },
+    ".kimi-plugin/skills/implementing-tasks/SKILL.md": {
+      "sha256": "e893b75e3fe5d93ab345b8bdc438644471bfb84c502ba7141dfe9e1c403f0180"
+    },
+    ".kimi-plugin/skills/implementing-tasks/code-quality-reviewer-prompt.md": {
+      "sha256": "951ff6aaef49b62386e3ad2525c3c5b2fbb8305d67e6c948a2b1d1a92360714e"
+    },
+    ".kimi-plugin/skills/implementing-tasks/implementer-subagent-prompt.md": {
+      "sha256": "7b3fa71b3af679175b977b383f42694c3719cbe15e75a0ffefda7db7a4d8e4c9"
+    },
+    ".kimi-plugin/skills/implementing-tasks/spec-compliance-reviewer-prompt.md": {
+      "sha256": "14eddbb4f60376d08a2a38391cc895a91c900985344f8da3e76270bfd91f017f"
+    },
+    ".kimi-plugin/skills/improve-codebase-architecture/HTML-REPORT.md": {
+      "sha256": "581e8bb5a521e46bbda8ca7e19b15948bed882187108092ebb90c62513b77528"
+    },
+    ".kimi-plugin/skills/improve-codebase-architecture/SKILL.md": {
+      "sha256": "fbac96beb5bf62eacb974588b5f8f11adbf9346a5e3a9b4d8c995705205d86c6"
+    },
+    ".kimi-plugin/skills/iterative-development/SKILL.md": {
+      "sha256": "bb3daa6cac0b8c868d4c44fc628f27f3f632d8b5808524db84d57edee138dd20"
+    },
+    ".kimi-plugin/skills/mcp-cli/SKILL.md": {
+      "sha256": "f9cd31599575a0b4ada2481ffa817e8a8025759c32da49bacf2d8e2a6ed90efe"
+    },
+    ".kimi-plugin/skills/prototype/LOGIC.md": {
+      "sha256": "f61c7d249e786a79ef289018901c348271e1798dd0b0bc5607b5c6f4d4a01ab9"
+    },
+    ".kimi-plugin/skills/prototype/SKILL.md": {
+      "sha256": "714de632d116bb73f65cdb5a882db15b9369a6713b9a47c0fad827848f0bfbe3"
+    },
+    ".kimi-plugin/skills/prototype/UI.md": {
+      "sha256": "723211e878acbc7b6ff09755263f3295cde724ba902ff0064da41eed51d45ad3"
+    },
+    ".kimi-plugin/skills/receiving-code-review/SKILL.md": {
+      "sha256": "ba8fbecfef5f2b42e841f69881b62f9bd67116a9e37fe99bf1a1db02a828fa86"
+    },
+    ".kimi-plugin/skills/requesting-code-review/SKILL.md": {
+      "sha256": "a96635d6c8daeb3c40f813086b51d79b34f180db956bd28c298b4e3c3ce0205e"
+    },
+    ".kimi-plugin/skills/requesting-code-review/code-reviewer.md": {
+      "sha256": "5eca5fcfd48a50e0a526ce5ffd64bf625d6b81bb46d11795274dae451fe6ffd4"
+    },
+    ".kimi-plugin/skills/requesting-code-review/references/fowler-smells.md": {
+      "sha256": "30ab68d2835343afced5a6f50b46cdc7e0e8c0027b34dcf5e1efc6fc88f2fd95"
+    },
+    ".kimi-plugin/skills/requesting-code-review/references/security-asvs-levels.md": {
+      "sha256": "e462c335f3932a7e6c00ce13136da05525a2c0d4fd7fe42a1db17aa11faf35b0"
+    },
+    ".kimi-plugin/skills/retrieving-context/SKILL.md": {
+      "sha256": "8a0bc12fd7b2b1ce0d140c8795fdda97fc2aab63756c7263dae83fd333b8d63d"
+    },
+    ".kimi-plugin/skills/reviewing-a-codebase/SKILL.md": {
+      "sha256": "c059e84c8011ea4a0816da9b576de058908dbc0b5d2c076ea904a7cc663ab33b"
+    },
+    ".kimi-plugin/skills/running-an-iteration/SKILL.md": {
+      "sha256": "37c416da41ace0be06152b6e39e8f893af361c065b2183a952908ef5f8a781bc"
+    },
+    ".kimi-plugin/skills/running-an-iteration/scope-reviewer-prompt.md": {
+      "sha256": "cfb072171c98f60124da9b9543f1e82aa4113b775f3b9e472c2279d5b0357140"
+    },
+    ".kimi-plugin/skills/scoping-the-simplest-core/SKILL.md": {
+      "sha256": "fdb5b720603105528a15c25204ad77b664f122fe4c706517451d9f677c2de847"
+    },
+    ".kimi-plugin/skills/sequencing-plans/SKILL.md": {
+      "sha256": "8066f6e3481523b727783e9c512993fa9d0cf3ca19a52bd574fecb1e89f95a3d"
+    },
+    ".kimi-plugin/skills/subagent-driven-development/SKILL.md": {
+      "sha256": "d688e82f728a685fa8ff8d2211508429396207a4fc39d5afe86b5ffce4d4d6e3"
+    },
+    ".kimi-plugin/skills/subagent-driven-development/implementer-prompt.md": {
+      "sha256": "81dd9d5a3fb0b09b96b5829f03b9796842f3199ef7591d1ba1c2db2a515f64d0"
+    },
+    ".kimi-plugin/skills/subagent-driven-development/re-review-prompt.md": {
+      "sha256": "2ba125e6c61d62ef8db41a93f9000e0998d9984fdc442033c6c228c78dcc5922"
+    },
+    ".kimi-plugin/skills/subagent-driven-development/task-reviewer-prompt.md": {
+      "sha256": "6aebeaae41cde02548fc331d5d0482eb5c0820780f90dd08676cdba74d73cbdc"
+    },
+    ".kimi-plugin/skills/systematic-debugging/CREATION-LOG.md": {
+      "sha256": "c24733a5b1821bd6bed1fc950261f0b9f4e90097e0bbb96459d8179713730789"
+    },
+    ".kimi-plugin/skills/systematic-debugging/SKILL.md": {
+      "sha256": "68b9f203378a3f9fe045579b461ab889e7a51596c151f320c39ebb24300c2990"
+    },
+    ".kimi-plugin/skills/systematic-debugging/condition-based-waiting.md": {
+      "sha256": "e89fec8400d6cd50f43407cec9fab50976ba4d55d0ec2eb51c0bd68036b54c26"
+    },
+    ".kimi-plugin/skills/systematic-debugging/debugger-bug-taxonomy.md": {
+      "sha256": "195e791ee30d87a378d7212d2cb083aab2a521f97ea5753aa6974a9191480ee9"
+    },
+    ".kimi-plugin/skills/systematic-debugging/debugger-fix-acceptance.md": {
+      "sha256": "2b0460af797d7578ae2bf9e9748bb6fe45cdfe849a981b5120064a43fb2252be"
+    },
+    ".kimi-plugin/skills/systematic-debugging/debugger-philosophy.md": {
+      "sha256": "e78775106c50f94165219f642dfaf13464ccc09516bfd2372df9d4bea0bcc7c5"
+    },
+    ".kimi-plugin/skills/systematic-debugging/debugger-prevention.md": {
+      "sha256": "c3c0ef687876ae815527e1db919184ac8f34433b19b0c8772e49901643853aca"
+    },
+    ".kimi-plugin/skills/systematic-debugging/debugger-rca-branching.md": {
+      "sha256": "a31dd350a4b3f652256196908f14f5e8be7f91929e73f03594bf2889e3a46f93"
+    },
+    ".kimi-plugin/skills/systematic-debugging/debugger-repro-hardening.md": {
+      "sha256": "5c0921dcd1c4a00c62cd4b42acba7fb9868b7956deeb7ca8055fbc1c7ca7d33d"
+    },
+    ".kimi-plugin/skills/systematic-debugging/debugger-sbfl.md": {
+      "sha256": "ec44332947e3913db24e1423388ae924641008eb80bad39f15106b4ba57e516f"
+    },
+    ".kimi-plugin/skills/systematic-debugging/debugger-semantic-recall.md": {
+      "sha256": "310d918a39a437e88e66a57d17946fb65d0378c12e7bfe3103c4b8144ee96051"
+    },
+    ".kimi-plugin/skills/systematic-debugging/debugger-techniques.md": {
+      "sha256": "808e865d291e297181c14e6bfdca40a64e6e867b0532cf6941dc0d39300b590e"
+    },
+    ".kimi-plugin/skills/systematic-debugging/defense-in-depth.md": {
+      "sha256": "1e175fb86fc357e58c6aebf5441e481e1b7868b4380c0456b63a17eefbd18ba7"
+    },
+    ".kimi-plugin/skills/systematic-debugging/root-cause-tracing.md": {
+      "sha256": "66b98741ae2fa3151d093d81826706fb37602e89b5038caa0b337b71e471aa42"
+    },
+    ".kimi-plugin/skills/systematic-debugging/test-academic.md": {
+      "sha256": "fe2ba480d78ac0d686dc025f41c2a32a43d642bf533f91b0c6053a04d35d6486"
+    },
+    ".kimi-plugin/skills/systematic-debugging/test-pressure-1.md": {
+      "sha256": "0b6a915db0054577819834c79be9eb614e97bddba10d73768e1fbe91cfed048a"
+    },
+    ".kimi-plugin/skills/systematic-debugging/test-pressure-2.md": {
+      "sha256": "b2030aeffba07050e8ad573ddf87486457c4a016a786bb326235bebd856f2016"
+    },
+    ".kimi-plugin/skills/systematic-debugging/test-pressure-3.md": {
+      "sha256": "96b50a52e2c7989c9cf20fb752c47c1e9a3a70dc362f8f7989f8f5b64dac7708"
+    },
+    ".kimi-plugin/skills/test-driven-development/SKILL.md": {
+      "sha256": "a410e8d1ee8a12eee63bfd2a91cb9d21be62921911875a2c799fbbc9f5c2eb00"
+    },
+    ".kimi-plugin/skills/test-driven-development/writing-good-tests.md": {
+      "sha256": "0900a835f7e34c62922dc687f299742fc0db9e1a96e4850913888173ba3d9c5f"
+    },
+    ".kimi-plugin/skills/using-git-worktrees/SKILL.md": {
+      "sha256": "f2550d5d18a2f39e46fb39b08013dbec643bdc35aca77390efd1eca76df66cc5"
+    },
+    ".kimi-plugin/skills/using-moe/SKILL.md": {
+      "sha256": "f02563cf53a4cb31bda041fef7bbaec265b2e8ef49eef57bd0841b46ec86f063"
+    },
+    ".kimi-plugin/skills/using-moe/references/antigravity-tools.md": {
+      "sha256": "77021a952929a56251d320ed909a4a4aaa3373ee89937e7645163ec56a5da713"
+    },
+    ".kimi-plugin/skills/using-moe/references/codex-tools.md": {
+      "sha256": "bdc9f5eb727fadfa1cadb59ebf96f9fce7c18d97df2da196e05486ff800cd9b6"
+    },
+    ".kimi-plugin/skills/using-moe/references/gemini-tools.md": {
+      "sha256": "1d8bfcf577fe92b36204592c85e010617ce0d15ea899dc4d26ed0bf7a6bcb704"
+    },
+    ".kimi-plugin/skills/using-moe/references/kimi-tools.md": {
+      "sha256": "54eae82d2d6ddb479dc27958d5166dbc70ab651fcd110263b31a68afecdb02a3"
+    },
+    ".kimi-plugin/skills/using-moe/references/opencode-tools.md": {
+      "sha256": "0e00fbc86349f9b8fd8a4851fff142135144513b6c0fcbfcaa2109b4608a3fcc"
+    },
+    ".kimi-plugin/skills/using-moe/references/pi-tools.md": {
+      "sha256": "b43b591fbe1f1c1c8e25ba46356e97aa0bf827c17eee3e69a137124f37c0d5c8"
+    },
+    ".kimi-plugin/skills/using-tmux-for-interactive-commands/SKILL.md": {
+      "sha256": "0230a21817150b4e291045e5f15e62c767ffad9116066e2d082d5af9627e48f3"
+    },
+    ".kimi-plugin/skills/verification-before-completion/SKILL.md": {
+      "sha256": "9c6c4a457208718a1f335bd9eb704bdb2d5d763c29a3e72826c1a776fca9b8af"
+    },
+    ".kimi-plugin/skills/verification-before-completion/tests/goal-backward-scenario.md": {
+      "sha256": "4ecff9fd94a702219413403b27eb116a5b0abeb83e44e042e36f7485fbd7f5fe"
+    },
+    ".kimi-plugin/skills/windows-vm/SKILL.md": {
+      "sha256": "7aa90971d3d049f0ddddc6972b40b219633c7bdbadde6572549638ab4adedfa4"
+    },
+    ".kimi-plugin/skills/working-with-claude-code/SKILL.md": {
+      "sha256": "8cf7b5225b0925a6f82bcb87894b12bc6d097242953aecb6da337b692ef30542"
+    },
+    ".kimi-plugin/skills/writing-clearly-and-concisely/SKILL.md": {
+      "sha256": "bcfd8a8b22f08c1673ca6c033540be82ed25fd49792fce276e96dade3450d1b2"
+    },
+    ".kimi-plugin/skills/writing-clearly-and-concisely/elements-of-style.md": {
+      "sha256": "d0edf854b5d39e22da68793603830e5bbdddb9266d272007993bcb821ba2799d"
+    },
+    ".kimi-plugin/skills/writing-clearly-and-concisely/house-voice.md": {
+      "sha256": "348ad0147792e162981f4c566f6d14026bcfb337d9b4820a3fd914e16aaf75df"
+    },
+    ".kimi-plugin/skills/writing-plans/SKILL.md": {
+      "sha256": "7727076bfbdd29b9febbd000b730a008028a880723c374a537f373a88f2414be"
+    },
+    ".kimi-plugin/skills/writing-plans/plan-document-reviewer-prompt.md": {
+      "sha256": "df5f1ab940ad6aa0ac7df42aeded53107a39fb6d2e1a19cafa5eb808ac5ac602"
+    },
+    ".kimi-plugin/skills/writing-skills/SKILL.md": {
+      "sha256": "290164014421876c2b018acfab2f85cb48b9f196fac02615d40260ac8b198886"
+    },
+    ".kimi-plugin/skills/writing-skills/anthropic-best-practices.md": {
+      "sha256": "217629b356c09c9bd11017c9788e8fc654ca1b32c92d4a51cd490e16dd65e59a"
+    },
+    ".kimi-plugin/skills/writing-skills/examples/CLAUDE_MD_TESTING.md": {
+      "sha256": "0b379a3415e185d3c434b3ad283d8aa132f3022c2a4f210f168865b5986bcef0"
+    },
+    ".kimi-plugin/skills/writing-skills/persuasion-principles.md": {
+      "sha256": "a51bc9bf75189ea73a27b3fb504a2fdfdb966fb1f7f1cdf03203230a216ccc03"
+    },
+    ".kimi-plugin/skills/writing-skills/references/skill-mechanics.md": {
+      "sha256": "6e8be5fbf42c4ab3d06e1d14256ccc66760dc6a63fcbecf24ba312f515cb9b24"
+    },
+    ".kimi-plugin/skills/writing-skills/references/skill-typography.md": {
+      "sha256": "31f8b83351ffef4eb36b976ba63c837b6cc526708bcb6d779cfb087ff8495879"
+    },
+    ".kimi-plugin/skills/writing-skills/testing-skills-with-subagents.md": {
+      "sha256": "1935c915e98c4da5f6940a2b18b747313876288c03f5c8749853f512015b6789"
     },
     ".opencode/agent/review-shard.md": {
-      "sha256": "73145d45a6ee1e62dcba026cbf6e474986a24796bab2a38500424546a76b3e3c"
+      "sha256": "4276041d61ca3d0549841d39f6c1bf4ea3160dc761fb2f7ed73701aa9fa86954"
     },
     ".opencode/agent/search-moedex.md": {
       "sha256": "6e8f892fa41820a8e5529917df9099a99e73140c9f550f0ad6cf6a79d59e5b4d"
     },
     ".opencode/agent/verify-finding.md": {
-      "sha256": "cdd11cd4356887cffb9504549a8905e887653b205b97c7e436cd963e8f655a4f"
+      "sha256": "4d2d31dd0c3cc4f2159a5c3680fef5f3d3184e966607395e256515c996177979"
     },
     ".opencode/plugins/moe.js": {
       "sha256": "3299911a2a01eecdcadc9035e1594cc05c2165b0630698354a189cdbb9dc0152"
     },
+    ".opencode/skills/_shared/behavior-evidence-formats.md": {
+      "sha256": "2b47ceb87e03958e00022e5ae57cd9fd1fecb1478a89b272909ca2f9fab0a243"
+    },
+    ".opencode/skills/_shared/native-rendering.md": {
+      "sha256": "84b6cacdf525053ee958c519d805b02c352b105a412d0502cb68bd003e851903"
+    },
+    ".opencode/skills/_shared/par-reviewer-wrapper.md": {
+      "sha256": "2a9b90a4daa7fb3c9df16eda2c8229b870e2ce4718896007aaf9e9b9cc57ee76"
+    },
+    ".opencode/skills/_shared/parallel-adversarial-review.md": {
+      "sha256": "5d5524a5c27a343b317dd7e36b469cde2e6edea7d74c1bb0ff2e65945fa0acf7"
+    },
+    ".opencode/skills/auditing-progress/SKILL.md": {
+      "sha256": "66c006970b8f2a27646594796e2f0576885ce22a7a1e8ddfb69c714744d84550"
+    },
+    ".opencode/skills/auditing-progress/auditor-subagent-prompt.md": {
+      "sha256": "94039969871619a24adb14881355c86bbda305456498ad42a2da9d7cd5ea7496"
+    },
+    ".opencode/skills/brainstorming/SKILL.md": {
+      "sha256": "9bd1d22a430abfba8e28ee9ff713e1cd2acf4512b6f8f222742a52c1839cca56"
+    },
+    ".opencode/skills/brainstorming/spec-document-reviewer-prompt.md": {
+      "sha256": "51dfa7686560108235983c13fe7505811c9d79b872e22028065e95e063b615e1"
+    },
+    ".opencode/skills/brainstorming/visual-companion.md": {
+      "sha256": "01fbc9188465e370f1d8891119a90b3a1dba440896890f85285930c0619d1a3a"
+    },
+    ".opencode/skills/codebase-design/DEEPENING.md": {
+      "sha256": "f3dd099ce99289bd213914d8ee3e2429b78309c3957ca4583f7659551b1d53c1"
+    },
+    ".opencode/skills/codebase-design/DESIGN-IT-TWICE.md": {
+      "sha256": "8e740bf98446dbd4dfdc132ac4346d9a7eedaf93de6a495889171cf7f99f16bd"
+    },
+    ".opencode/skills/codebase-design/SKILL.md": {
+      "sha256": "2c20617f87ec8af6a434859f381b2f061a69b530444e74eb39e78bb016a6d1e2"
+    },
+    ".opencode/skills/developing-claude-code-plugins/SKILL.md": {
+      "sha256": "7b556d56a12895646af95d91db22c7e8d723f3711ee56c395ef793ad7f376be1"
+    },
+    ".opencode/skills/developing-claude-code-plugins/examples/full-featured-plugin/README.md": {
+      "sha256": "ff58cae1ec3a97e47346a3e41b88a2870dae9debe4c8fa609a75f850b02a747f"
+    },
+    ".opencode/skills/developing-claude-code-plugins/examples/full-featured-plugin/commands/hello.md": {
+      "sha256": "4c2b0de75aae4c6d233451bca0d3afd6e63f7ed34c94d5aa98a31c92613708c5"
+    },
+    ".opencode/skills/developing-claude-code-plugins/examples/full-featured-plugin/skills/workflow/SKILL.md": {
+      "sha256": "6901e8809d2042f279b33254237f63a449ea6363acbefa3d5603e507264cc8cb"
+    },
+    ".opencode/skills/developing-claude-code-plugins/examples/simple-greeter-plugin/README.md": {
+      "sha256": "d8d79b8851d077849af4659861e02a58e274a54b6fb8d16202fa29f1ad83aed7"
+    },
+    ".opencode/skills/developing-claude-code-plugins/examples/simple-greeter-plugin/skills/professional-greeting/SKILL.md": {
+      "sha256": "d825df59897682e51efe511c9f2ef2330d1309323c84203849afe0cd477f8d08"
+    },
+    ".opencode/skills/developing-claude-code-plugins/references/common-patterns.md": {
+      "sha256": "6af505fe0edcb7b4aa7973b1957297197a5561ec0ac7ee01284fe8b86396fed1"
+    },
+    ".opencode/skills/developing-claude-code-plugins/references/plugin-structure.md": {
+      "sha256": "2094ecbef0177746389e581bd3646908f11d1168e8ebd6ee8ed06edff6c2e4c7"
+    },
+    ".opencode/skills/developing-claude-code-plugins/references/polyglot-hooks.md": {
+      "sha256": "6633b7c27b4b91767c290fd4a9d7f089e2222e45bcce6b987a9c5a5f2abbc4ea"
+    },
+    ".opencode/skills/developing-claude-code-plugins/references/troubleshooting.md": {
+      "sha256": "0b07a0489c3b6356f2d1fbc27140d219c861cd893f8f39cbc5127bcf85b790ad"
+    },
+    ".opencode/skills/dispatching-parallel-agents/SKILL.md": {
+      "sha256": "065cad1dc85f9c7730699f0829c5c9f922b3850c4b9c130c1692b13d9aa0e193"
+    },
+    ".opencode/skills/domain-modeling/ADR-FORMAT.md": {
+      "sha256": "944c92aa790e8fbdc9199640b170979abb8a34ba8d0fe18c2a01a63bce140ca0"
+    },
+    ".opencode/skills/domain-modeling/CONTEXT-FORMAT.md": {
+      "sha256": "220680ba6b16e1a2a4a7f4bb84a6cf59953ed7291d8521399b93cc44d58f4f2f"
+    },
+    ".opencode/skills/domain-modeling/SKILL.md": {
+      "sha256": "327a2b50620e2fd70abc6893cd6965e76b20f8d0adb0dc2c8d5eb3845efb643e"
+    },
+    ".opencode/skills/executing-plans/SKILL.md": {
+      "sha256": "a61ce58b578bf5e1af4861ef6f6a01932a95d60b4db76f7e6dbe850220e19e7a"
+    },
+    ".opencode/skills/extracting-requirements/SKILL.md": {
+      "sha256": "2491b5570212d967090933d6b2c55e9876222d47ae4fbb166895568d67bb31f8"
+    },
+    ".opencode/skills/extracting-requirements/extraction-subagent-prompt.md": {
+      "sha256": "5436cac4b93340358198c5361a5217e3d1b2ec35074d42c9582f903dcda4aaa2"
+    },
+    ".opencode/skills/finding-duplicate-functions/SKILL.md": {
+      "sha256": "d9a008aa28b4112153bd4dcd4102e04de8d03a9e52db6b669525b6d1e5f6bf9e"
+    },
+    ".opencode/skills/finding-duplicate-functions/scripts/categorize-prompt.md": {
+      "sha256": "764fa94432965ce27cbdb0811250fa3514740b666db1a8d5c5cea33c5a6d36e9"
+    },
+    ".opencode/skills/finding-duplicate-functions/scripts/find-duplicates-prompt.md": {
+      "sha256": "8e2e7de14fe29ca49118b68b63ab33ee42efb2dfb4acb1d7f2f19d256925ecc7"
+    },
+    ".opencode/skills/finishing-a-development-branch/SKILL.md": {
+      "sha256": "fcecedb5c09830ca9307872edce71ae811ead36bead7c1c9b78443adaa6c8931"
+    },
+    ".opencode/skills/fixing-a-code-review/SKILL.md": {
+      "sha256": "f0ac15b849fecec6fe130c219881972c70eb1aa6c1eef0ae663b1ae8e290302a"
+    },
+    ".opencode/skills/implementing-tasks/SKILL.md": {
+      "sha256": "e893b75e3fe5d93ab345b8bdc438644471bfb84c502ba7141dfe9e1c403f0180"
+    },
+    ".opencode/skills/implementing-tasks/code-quality-reviewer-prompt.md": {
+      "sha256": "951ff6aaef49b62386e3ad2525c3c5b2fbb8305d67e6c948a2b1d1a92360714e"
+    },
+    ".opencode/skills/implementing-tasks/implementer-subagent-prompt.md": {
+      "sha256": "7b3fa71b3af679175b977b383f42694c3719cbe15e75a0ffefda7db7a4d8e4c9"
+    },
+    ".opencode/skills/implementing-tasks/spec-compliance-reviewer-prompt.md": {
+      "sha256": "14eddbb4f60376d08a2a38391cc895a91c900985344f8da3e76270bfd91f017f"
+    },
+    ".opencode/skills/improve-codebase-architecture/HTML-REPORT.md": {
+      "sha256": "581e8bb5a521e46bbda8ca7e19b15948bed882187108092ebb90c62513b77528"
+    },
+    ".opencode/skills/improve-codebase-architecture/SKILL.md": {
+      "sha256": "fbac96beb5bf62eacb974588b5f8f11adbf9346a5e3a9b4d8c995705205d86c6"
+    },
+    ".opencode/skills/iterative-development/SKILL.md": {
+      "sha256": "bb3daa6cac0b8c868d4c44fc628f27f3f632d8b5808524db84d57edee138dd20"
+    },
+    ".opencode/skills/mcp-cli/SKILL.md": {
+      "sha256": "f9cd31599575a0b4ada2481ffa817e8a8025759c32da49bacf2d8e2a6ed90efe"
+    },
+    ".opencode/skills/prototype/LOGIC.md": {
+      "sha256": "f61c7d249e786a79ef289018901c348271e1798dd0b0bc5607b5c6f4d4a01ab9"
+    },
+    ".opencode/skills/prototype/SKILL.md": {
+      "sha256": "714de632d116bb73f65cdb5a882db15b9369a6713b9a47c0fad827848f0bfbe3"
+    },
+    ".opencode/skills/prototype/UI.md": {
+      "sha256": "723211e878acbc7b6ff09755263f3295cde724ba902ff0064da41eed51d45ad3"
+    },
+    ".opencode/skills/receiving-code-review/SKILL.md": {
+      "sha256": "ba8fbecfef5f2b42e841f69881b62f9bd67116a9e37fe99bf1a1db02a828fa86"
+    },
+    ".opencode/skills/requesting-code-review/SKILL.md": {
+      "sha256": "a96635d6c8daeb3c40f813086b51d79b34f180db956bd28c298b4e3c3ce0205e"
+    },
+    ".opencode/skills/requesting-code-review/code-reviewer.md": {
+      "sha256": "5eca5fcfd48a50e0a526ce5ffd64bf625d6b81bb46d11795274dae451fe6ffd4"
+    },
+    ".opencode/skills/requesting-code-review/references/fowler-smells.md": {
+      "sha256": "30ab68d2835343afced5a6f50b46cdc7e0e8c0027b34dcf5e1efc6fc88f2fd95"
+    },
+    ".opencode/skills/requesting-code-review/references/security-asvs-levels.md": {
+      "sha256": "e462c335f3932a7e6c00ce13136da05525a2c0d4fd7fe42a1db17aa11faf35b0"
+    },
+    ".opencode/skills/retrieving-context/SKILL.md": {
+      "sha256": "8a0bc12fd7b2b1ce0d140c8795fdda97fc2aab63756c7263dae83fd333b8d63d"
+    },
+    ".opencode/skills/reviewing-a-codebase/SKILL.md": {
+      "sha256": "c059e84c8011ea4a0816da9b576de058908dbc0b5d2c076ea904a7cc663ab33b"
+    },
+    ".opencode/skills/running-an-iteration/SKILL.md": {
+      "sha256": "37c416da41ace0be06152b6e39e8f893af361c065b2183a952908ef5f8a781bc"
+    },
+    ".opencode/skills/running-an-iteration/scope-reviewer-prompt.md": {
+      "sha256": "cfb072171c98f60124da9b9543f1e82aa4113b775f3b9e472c2279d5b0357140"
+    },
+    ".opencode/skills/scoping-the-simplest-core/SKILL.md": {
+      "sha256": "fdb5b720603105528a15c25204ad77b664f122fe4c706517451d9f677c2de847"
+    },
+    ".opencode/skills/sequencing-plans/SKILL.md": {
+      "sha256": "8066f6e3481523b727783e9c512993fa9d0cf3ca19a52bd574fecb1e89f95a3d"
+    },
+    ".opencode/skills/subagent-driven-development/SKILL.md": {
+      "sha256": "d688e82f728a685fa8ff8d2211508429396207a4fc39d5afe86b5ffce4d4d6e3"
+    },
+    ".opencode/skills/subagent-driven-development/implementer-prompt.md": {
+      "sha256": "81dd9d5a3fb0b09b96b5829f03b9796842f3199ef7591d1ba1c2db2a515f64d0"
+    },
+    ".opencode/skills/subagent-driven-development/re-review-prompt.md": {
+      "sha256": "2ba125e6c61d62ef8db41a93f9000e0998d9984fdc442033c6c228c78dcc5922"
+    },
+    ".opencode/skills/subagent-driven-development/task-reviewer-prompt.md": {
+      "sha256": "6aebeaae41cde02548fc331d5d0482eb5c0820780f90dd08676cdba74d73cbdc"
+    },
+    ".opencode/skills/systematic-debugging/CREATION-LOG.md": {
+      "sha256": "c24733a5b1821bd6bed1fc950261f0b9f4e90097e0bbb96459d8179713730789"
+    },
+    ".opencode/skills/systematic-debugging/SKILL.md": {
+      "sha256": "68b9f203378a3f9fe045579b461ab889e7a51596c151f320c39ebb24300c2990"
+    },
+    ".opencode/skills/systematic-debugging/condition-based-waiting.md": {
+      "sha256": "e89fec8400d6cd50f43407cec9fab50976ba4d55d0ec2eb51c0bd68036b54c26"
+    },
+    ".opencode/skills/systematic-debugging/debugger-bug-taxonomy.md": {
+      "sha256": "195e791ee30d87a378d7212d2cb083aab2a521f97ea5753aa6974a9191480ee9"
+    },
+    ".opencode/skills/systematic-debugging/debugger-fix-acceptance.md": {
+      "sha256": "2b0460af797d7578ae2bf9e9748bb6fe45cdfe849a981b5120064a43fb2252be"
+    },
+    ".opencode/skills/systematic-debugging/debugger-philosophy.md": {
+      "sha256": "e78775106c50f94165219f642dfaf13464ccc09516bfd2372df9d4bea0bcc7c5"
+    },
+    ".opencode/skills/systematic-debugging/debugger-prevention.md": {
+      "sha256": "c3c0ef687876ae815527e1db919184ac8f34433b19b0c8772e49901643853aca"
+    },
+    ".opencode/skills/systematic-debugging/debugger-rca-branching.md": {
+      "sha256": "a31dd350a4b3f652256196908f14f5e8be7f91929e73f03594bf2889e3a46f93"
+    },
+    ".opencode/skills/systematic-debugging/debugger-repro-hardening.md": {
+      "sha256": "5c0921dcd1c4a00c62cd4b42acba7fb9868b7956deeb7ca8055fbc1c7ca7d33d"
+    },
+    ".opencode/skills/systematic-debugging/debugger-sbfl.md": {
+      "sha256": "ec44332947e3913db24e1423388ae924641008eb80bad39f15106b4ba57e516f"
+    },
+    ".opencode/skills/systematic-debugging/debugger-semantic-recall.md": {
+      "sha256": "310d918a39a437e88e66a57d17946fb65d0378c12e7bfe3103c4b8144ee96051"
+    },
+    ".opencode/skills/systematic-debugging/debugger-techniques.md": {
+      "sha256": "808e865d291e297181c14e6bfdca40a64e6e867b0532cf6941dc0d39300b590e"
+    },
+    ".opencode/skills/systematic-debugging/defense-in-depth.md": {
+      "sha256": "1e175fb86fc357e58c6aebf5441e481e1b7868b4380c0456b63a17eefbd18ba7"
+    },
+    ".opencode/skills/systematic-debugging/root-cause-tracing.md": {
+      "sha256": "66b98741ae2fa3151d093d81826706fb37602e89b5038caa0b337b71e471aa42"
+    },
+    ".opencode/skills/systematic-debugging/test-academic.md": {
+      "sha256": "fe2ba480d78ac0d686dc025f41c2a32a43d642bf533f91b0c6053a04d35d6486"
+    },
+    ".opencode/skills/systematic-debugging/test-pressure-1.md": {
+      "sha256": "0b6a915db0054577819834c79be9eb614e97bddba10d73768e1fbe91cfed048a"
+    },
+    ".opencode/skills/systematic-debugging/test-pressure-2.md": {
+      "sha256": "b2030aeffba07050e8ad573ddf87486457c4a016a786bb326235bebd856f2016"
+    },
+    ".opencode/skills/systematic-debugging/test-pressure-3.md": {
+      "sha256": "96b50a52e2c7989c9cf20fb752c47c1e9a3a70dc362f8f7989f8f5b64dac7708"
+    },
+    ".opencode/skills/test-driven-development/SKILL.md": {
+      "sha256": "a410e8d1ee8a12eee63bfd2a91cb9d21be62921911875a2c799fbbc9f5c2eb00"
+    },
+    ".opencode/skills/test-driven-development/writing-good-tests.md": {
+      "sha256": "0900a835f7e34c62922dc687f299742fc0db9e1a96e4850913888173ba3d9c5f"
+    },
+    ".opencode/skills/using-git-worktrees/SKILL.md": {
+      "sha256": "f2550d5d18a2f39e46fb39b08013dbec643bdc35aca77390efd1eca76df66cc5"
+    },
+    ".opencode/skills/using-moe/SKILL.md": {
+      "sha256": "f02563cf53a4cb31bda041fef7bbaec265b2e8ef49eef57bd0841b46ec86f063"
+    },
+    ".opencode/skills/using-moe/references/antigravity-tools.md": {
+      "sha256": "77021a952929a56251d320ed909a4a4aaa3373ee89937e7645163ec56a5da713"
+    },
+    ".opencode/skills/using-moe/references/codex-tools.md": {
+      "sha256": "bdc9f5eb727fadfa1cadb59ebf96f9fce7c18d97df2da196e05486ff800cd9b6"
+    },
+    ".opencode/skills/using-moe/references/gemini-tools.md": {
+      "sha256": "1d8bfcf577fe92b36204592c85e010617ce0d15ea899dc4d26ed0bf7a6bcb704"
+    },
+    ".opencode/skills/using-moe/references/kimi-tools.md": {
+      "sha256": "54eae82d2d6ddb479dc27958d5166dbc70ab651fcd110263b31a68afecdb02a3"
+    },
+    ".opencode/skills/using-moe/references/opencode-tools.md": {
+      "sha256": "0e00fbc86349f9b8fd8a4851fff142135144513b6c0fcbfcaa2109b4608a3fcc"
+    },
+    ".opencode/skills/using-moe/references/pi-tools.md": {
+      "sha256": "b43b591fbe1f1c1c8e25ba46356e97aa0bf827c17eee3e69a137124f37c0d5c8"
+    },
+    ".opencode/skills/using-tmux-for-interactive-commands/SKILL.md": {
+      "sha256": "0230a21817150b4e291045e5f15e62c767ffad9116066e2d082d5af9627e48f3"
+    },
+    ".opencode/skills/verification-before-completion/SKILL.md": {
+      "sha256": "9c6c4a457208718a1f335bd9eb704bdb2d5d763c29a3e72826c1a776fca9b8af"
+    },
+    ".opencode/skills/verification-before-completion/tests/goal-backward-scenario.md": {
+      "sha256": "4ecff9fd94a702219413403b27eb116a5b0abeb83e44e042e36f7485fbd7f5fe"
+    },
+    ".opencode/skills/windows-vm/SKILL.md": {
+      "sha256": "7aa90971d3d049f0ddddc6972b40b219633c7bdbadde6572549638ab4adedfa4"
+    },
+    ".opencode/skills/working-with-claude-code/SKILL.md": {
+      "sha256": "8cf7b5225b0925a6f82bcb87894b12bc6d097242953aecb6da337b692ef30542"
+    },
+    ".opencode/skills/writing-clearly-and-concisely/SKILL.md": {
+      "sha256": "bcfd8a8b22f08c1673ca6c033540be82ed25fd49792fce276e96dade3450d1b2"
+    },
+    ".opencode/skills/writing-clearly-and-concisely/elements-of-style.md": {
+      "sha256": "d0edf854b5d39e22da68793603830e5bbdddb9266d272007993bcb821ba2799d"
+    },
+    ".opencode/skills/writing-clearly-and-concisely/house-voice.md": {
+      "sha256": "348ad0147792e162981f4c566f6d14026bcfb337d9b4820a3fd914e16aaf75df"
+    },
+    ".opencode/skills/writing-plans/SKILL.md": {
+      "sha256": "7727076bfbdd29b9febbd000b730a008028a880723c374a537f373a88f2414be"
+    },
+    ".opencode/skills/writing-plans/plan-document-reviewer-prompt.md": {
+      "sha256": "df5f1ab940ad6aa0ac7df42aeded53107a39fb6d2e1a19cafa5eb808ac5ac602"
+    },
+    ".opencode/skills/writing-skills/SKILL.md": {
+      "sha256": "290164014421876c2b018acfab2f85cb48b9f196fac02615d40260ac8b198886"
+    },
+    ".opencode/skills/writing-skills/anthropic-best-practices.md": {
+      "sha256": "217629b356c09c9bd11017c9788e8fc654ca1b32c92d4a51cd490e16dd65e59a"
+    },
+    ".opencode/skills/writing-skills/examples/CLAUDE_MD_TESTING.md": {
+      "sha256": "0b379a3415e185d3c434b3ad283d8aa132f3022c2a4f210f168865b5986bcef0"
+    },
+    ".opencode/skills/writing-skills/persuasion-principles.md": {
+      "sha256": "a51bc9bf75189ea73a27b3fb504a2fdfdb966fb1f7f1cdf03203230a216ccc03"
+    },
+    ".opencode/skills/writing-skills/references/skill-mechanics.md": {
+      "sha256": "6e8be5fbf42c4ab3d06e1d14256ccc66760dc6a63fcbecf24ba312f515cb9b24"
+    },
+    ".opencode/skills/writing-skills/references/skill-typography.md": {
+      "sha256": "31f8b83351ffef4eb36b976ba63c837b6cc526708bcb6d779cfb087ff8495879"
+    },
+    ".opencode/skills/writing-skills/testing-skills-with-subagents.md": {
+      "sha256": "1935c915e98c4da5f6940a2b18b747313876288c03f5c8749853f512015b6789"
+    },
     ".pi/extensions/moe.ts": {
       "sha256": "708ba7095e0523531076ac9c11b94418050fafbbc4fe541e1f6728362be938c8"
+    },
+    ".pi/skills/_shared/behavior-evidence-formats.md": {
+      "sha256": "2b47ceb87e03958e00022e5ae57cd9fd1fecb1478a89b272909ca2f9fab0a243"
+    },
+    ".pi/skills/_shared/native-rendering.md": {
+      "sha256": "84b6cacdf525053ee958c519d805b02c352b105a412d0502cb68bd003e851903"
+    },
+    ".pi/skills/_shared/par-reviewer-wrapper.md": {
+      "sha256": "2a9b90a4daa7fb3c9df16eda2c8229b870e2ce4718896007aaf9e9b9cc57ee76"
+    },
+    ".pi/skills/_shared/parallel-adversarial-review.md": {
+      "sha256": "5d5524a5c27a343b317dd7e36b469cde2e6edea7d74c1bb0ff2e65945fa0acf7"
+    },
+    ".pi/skills/auditing-progress/SKILL.md": {
+      "sha256": "66c006970b8f2a27646594796e2f0576885ce22a7a1e8ddfb69c714744d84550"
+    },
+    ".pi/skills/auditing-progress/auditor-subagent-prompt.md": {
+      "sha256": "94039969871619a24adb14881355c86bbda305456498ad42a2da9d7cd5ea7496"
+    },
+    ".pi/skills/brainstorming/SKILL.md": {
+      "sha256": "9bd1d22a430abfba8e28ee9ff713e1cd2acf4512b6f8f222742a52c1839cca56"
+    },
+    ".pi/skills/brainstorming/spec-document-reviewer-prompt.md": {
+      "sha256": "51dfa7686560108235983c13fe7505811c9d79b872e22028065e95e063b615e1"
+    },
+    ".pi/skills/brainstorming/visual-companion.md": {
+      "sha256": "01fbc9188465e370f1d8891119a90b3a1dba440896890f85285930c0619d1a3a"
+    },
+    ".pi/skills/codebase-design/DEEPENING.md": {
+      "sha256": "f3dd099ce99289bd213914d8ee3e2429b78309c3957ca4583f7659551b1d53c1"
+    },
+    ".pi/skills/codebase-design/DESIGN-IT-TWICE.md": {
+      "sha256": "8e740bf98446dbd4dfdc132ac4346d9a7eedaf93de6a495889171cf7f99f16bd"
+    },
+    ".pi/skills/codebase-design/SKILL.md": {
+      "sha256": "2c20617f87ec8af6a434859f381b2f061a69b530444e74eb39e78bb016a6d1e2"
+    },
+    ".pi/skills/developing-claude-code-plugins/SKILL.md": {
+      "sha256": "7b556d56a12895646af95d91db22c7e8d723f3711ee56c395ef793ad7f376be1"
+    },
+    ".pi/skills/developing-claude-code-plugins/examples/full-featured-plugin/README.md": {
+      "sha256": "ff58cae1ec3a97e47346a3e41b88a2870dae9debe4c8fa609a75f850b02a747f"
+    },
+    ".pi/skills/developing-claude-code-plugins/examples/full-featured-plugin/commands/hello.md": {
+      "sha256": "4c2b0de75aae4c6d233451bca0d3afd6e63f7ed34c94d5aa98a31c92613708c5"
+    },
+    ".pi/skills/developing-claude-code-plugins/examples/full-featured-plugin/skills/workflow/SKILL.md": {
+      "sha256": "6901e8809d2042f279b33254237f63a449ea6363acbefa3d5603e507264cc8cb"
+    },
+    ".pi/skills/developing-claude-code-plugins/examples/simple-greeter-plugin/README.md": {
+      "sha256": "d8d79b8851d077849af4659861e02a58e274a54b6fb8d16202fa29f1ad83aed7"
+    },
+    ".pi/skills/developing-claude-code-plugins/examples/simple-greeter-plugin/skills/professional-greeting/SKILL.md": {
+      "sha256": "d825df59897682e51efe511c9f2ef2330d1309323c84203849afe0cd477f8d08"
+    },
+    ".pi/skills/developing-claude-code-plugins/references/common-patterns.md": {
+      "sha256": "6af505fe0edcb7b4aa7973b1957297197a5561ec0ac7ee01284fe8b86396fed1"
+    },
+    ".pi/skills/developing-claude-code-plugins/references/plugin-structure.md": {
+      "sha256": "2094ecbef0177746389e581bd3646908f11d1168e8ebd6ee8ed06edff6c2e4c7"
+    },
+    ".pi/skills/developing-claude-code-plugins/references/polyglot-hooks.md": {
+      "sha256": "6633b7c27b4b91767c290fd4a9d7f089e2222e45bcce6b987a9c5a5f2abbc4ea"
+    },
+    ".pi/skills/developing-claude-code-plugins/references/troubleshooting.md": {
+      "sha256": "0b07a0489c3b6356f2d1fbc27140d219c861cd893f8f39cbc5127bcf85b790ad"
+    },
+    ".pi/skills/dispatching-parallel-agents/SKILL.md": {
+      "sha256": "065cad1dc85f9c7730699f0829c5c9f922b3850c4b9c130c1692b13d9aa0e193"
+    },
+    ".pi/skills/domain-modeling/ADR-FORMAT.md": {
+      "sha256": "944c92aa790e8fbdc9199640b170979abb8a34ba8d0fe18c2a01a63bce140ca0"
+    },
+    ".pi/skills/domain-modeling/CONTEXT-FORMAT.md": {
+      "sha256": "220680ba6b16e1a2a4a7f4bb84a6cf59953ed7291d8521399b93cc44d58f4f2f"
+    },
+    ".pi/skills/domain-modeling/SKILL.md": {
+      "sha256": "327a2b50620e2fd70abc6893cd6965e76b20f8d0adb0dc2c8d5eb3845efb643e"
+    },
+    ".pi/skills/executing-plans/SKILL.md": {
+      "sha256": "a61ce58b578bf5e1af4861ef6f6a01932a95d60b4db76f7e6dbe850220e19e7a"
+    },
+    ".pi/skills/extracting-requirements/SKILL.md": {
+      "sha256": "2491b5570212d967090933d6b2c55e9876222d47ae4fbb166895568d67bb31f8"
+    },
+    ".pi/skills/extracting-requirements/extraction-subagent-prompt.md": {
+      "sha256": "5436cac4b93340358198c5361a5217e3d1b2ec35074d42c9582f903dcda4aaa2"
+    },
+    ".pi/skills/finding-duplicate-functions/SKILL.md": {
+      "sha256": "d9a008aa28b4112153bd4dcd4102e04de8d03a9e52db6b669525b6d1e5f6bf9e"
+    },
+    ".pi/skills/finding-duplicate-functions/scripts/categorize-prompt.md": {
+      "sha256": "764fa94432965ce27cbdb0811250fa3514740b666db1a8d5c5cea33c5a6d36e9"
+    },
+    ".pi/skills/finding-duplicate-functions/scripts/find-duplicates-prompt.md": {
+      "sha256": "8e2e7de14fe29ca49118b68b63ab33ee42efb2dfb4acb1d7f2f19d256925ecc7"
+    },
+    ".pi/skills/finishing-a-development-branch/SKILL.md": {
+      "sha256": "fcecedb5c09830ca9307872edce71ae811ead36bead7c1c9b78443adaa6c8931"
+    },
+    ".pi/skills/fixing-a-code-review/SKILL.md": {
+      "sha256": "f0ac15b849fecec6fe130c219881972c70eb1aa6c1eef0ae663b1ae8e290302a"
+    },
+    ".pi/skills/implementing-tasks/SKILL.md": {
+      "sha256": "e893b75e3fe5d93ab345b8bdc438644471bfb84c502ba7141dfe9e1c403f0180"
+    },
+    ".pi/skills/implementing-tasks/code-quality-reviewer-prompt.md": {
+      "sha256": "951ff6aaef49b62386e3ad2525c3c5b2fbb8305d67e6c948a2b1d1a92360714e"
+    },
+    ".pi/skills/implementing-tasks/implementer-subagent-prompt.md": {
+      "sha256": "7b3fa71b3af679175b977b383f42694c3719cbe15e75a0ffefda7db7a4d8e4c9"
+    },
+    ".pi/skills/implementing-tasks/spec-compliance-reviewer-prompt.md": {
+      "sha256": "14eddbb4f60376d08a2a38391cc895a91c900985344f8da3e76270bfd91f017f"
+    },
+    ".pi/skills/improve-codebase-architecture/HTML-REPORT.md": {
+      "sha256": "581e8bb5a521e46bbda8ca7e19b15948bed882187108092ebb90c62513b77528"
+    },
+    ".pi/skills/improve-codebase-architecture/SKILL.md": {
+      "sha256": "fbac96beb5bf62eacb974588b5f8f11adbf9346a5e3a9b4d8c995705205d86c6"
+    },
+    ".pi/skills/iterative-development/SKILL.md": {
+      "sha256": "bb3daa6cac0b8c868d4c44fc628f27f3f632d8b5808524db84d57edee138dd20"
+    },
+    ".pi/skills/mcp-cli/SKILL.md": {
+      "sha256": "f9cd31599575a0b4ada2481ffa817e8a8025759c32da49bacf2d8e2a6ed90efe"
+    },
+    ".pi/skills/prototype/LOGIC.md": {
+      "sha256": "f61c7d249e786a79ef289018901c348271e1798dd0b0bc5607b5c6f4d4a01ab9"
+    },
+    ".pi/skills/prototype/SKILL.md": {
+      "sha256": "714de632d116bb73f65cdb5a882db15b9369a6713b9a47c0fad827848f0bfbe3"
+    },
+    ".pi/skills/prototype/UI.md": {
+      "sha256": "723211e878acbc7b6ff09755263f3295cde724ba902ff0064da41eed51d45ad3"
+    },
+    ".pi/skills/receiving-code-review/SKILL.md": {
+      "sha256": "ba8fbecfef5f2b42e841f69881b62f9bd67116a9e37fe99bf1a1db02a828fa86"
+    },
+    ".pi/skills/requesting-code-review/SKILL.md": {
+      "sha256": "a96635d6c8daeb3c40f813086b51d79b34f180db956bd28c298b4e3c3ce0205e"
+    },
+    ".pi/skills/requesting-code-review/code-reviewer.md": {
+      "sha256": "5eca5fcfd48a50e0a526ce5ffd64bf625d6b81bb46d11795274dae451fe6ffd4"
+    },
+    ".pi/skills/requesting-code-review/references/fowler-smells.md": {
+      "sha256": "30ab68d2835343afced5a6f50b46cdc7e0e8c0027b34dcf5e1efc6fc88f2fd95"
+    },
+    ".pi/skills/requesting-code-review/references/security-asvs-levels.md": {
+      "sha256": "e462c335f3932a7e6c00ce13136da05525a2c0d4fd7fe42a1db17aa11faf35b0"
+    },
+    ".pi/skills/retrieving-context/SKILL.md": {
+      "sha256": "8a0bc12fd7b2b1ce0d140c8795fdda97fc2aab63756c7263dae83fd333b8d63d"
+    },
+    ".pi/skills/reviewing-a-codebase/SKILL.md": {
+      "sha256": "c059e84c8011ea4a0816da9b576de058908dbc0b5d2c076ea904a7cc663ab33b"
+    },
+    ".pi/skills/running-an-iteration/SKILL.md": {
+      "sha256": "37c416da41ace0be06152b6e39e8f893af361c065b2183a952908ef5f8a781bc"
+    },
+    ".pi/skills/running-an-iteration/scope-reviewer-prompt.md": {
+      "sha256": "cfb072171c98f60124da9b9543f1e82aa4113b775f3b9e472c2279d5b0357140"
+    },
+    ".pi/skills/scoping-the-simplest-core/SKILL.md": {
+      "sha256": "fdb5b720603105528a15c25204ad77b664f122fe4c706517451d9f677c2de847"
+    },
+    ".pi/skills/sequencing-plans/SKILL.md": {
+      "sha256": "8066f6e3481523b727783e9c512993fa9d0cf3ca19a52bd574fecb1e89f95a3d"
+    },
+    ".pi/skills/subagent-driven-development/SKILL.md": {
+      "sha256": "d688e82f728a685fa8ff8d2211508429396207a4fc39d5afe86b5ffce4d4d6e3"
+    },
+    ".pi/skills/subagent-driven-development/implementer-prompt.md": {
+      "sha256": "81dd9d5a3fb0b09b96b5829f03b9796842f3199ef7591d1ba1c2db2a515f64d0"
+    },
+    ".pi/skills/subagent-driven-development/re-review-prompt.md": {
+      "sha256": "2ba125e6c61d62ef8db41a93f9000e0998d9984fdc442033c6c228c78dcc5922"
+    },
+    ".pi/skills/subagent-driven-development/task-reviewer-prompt.md": {
+      "sha256": "6aebeaae41cde02548fc331d5d0482eb5c0820780f90dd08676cdba74d73cbdc"
+    },
+    ".pi/skills/systematic-debugging/CREATION-LOG.md": {
+      "sha256": "c24733a5b1821bd6bed1fc950261f0b9f4e90097e0bbb96459d8179713730789"
+    },
+    ".pi/skills/systematic-debugging/SKILL.md": {
+      "sha256": "68b9f203378a3f9fe045579b461ab889e7a51596c151f320c39ebb24300c2990"
+    },
+    ".pi/skills/systematic-debugging/condition-based-waiting.md": {
+      "sha256": "e89fec8400d6cd50f43407cec9fab50976ba4d55d0ec2eb51c0bd68036b54c26"
+    },
+    ".pi/skills/systematic-debugging/debugger-bug-taxonomy.md": {
+      "sha256": "195e791ee30d87a378d7212d2cb083aab2a521f97ea5753aa6974a9191480ee9"
+    },
+    ".pi/skills/systematic-debugging/debugger-fix-acceptance.md": {
+      "sha256": "2b0460af797d7578ae2bf9e9748bb6fe45cdfe849a981b5120064a43fb2252be"
+    },
+    ".pi/skills/systematic-debugging/debugger-philosophy.md": {
+      "sha256": "e78775106c50f94165219f642dfaf13464ccc09516bfd2372df9d4bea0bcc7c5"
+    },
+    ".pi/skills/systematic-debugging/debugger-prevention.md": {
+      "sha256": "c3c0ef687876ae815527e1db919184ac8f34433b19b0c8772e49901643853aca"
+    },
+    ".pi/skills/systematic-debugging/debugger-rca-branching.md": {
+      "sha256": "a31dd350a4b3f652256196908f14f5e8be7f91929e73f03594bf2889e3a46f93"
+    },
+    ".pi/skills/systematic-debugging/debugger-repro-hardening.md": {
+      "sha256": "5c0921dcd1c4a00c62cd4b42acba7fb9868b7956deeb7ca8055fbc1c7ca7d33d"
+    },
+    ".pi/skills/systematic-debugging/debugger-sbfl.md": {
+      "sha256": "ec44332947e3913db24e1423388ae924641008eb80bad39f15106b4ba57e516f"
+    },
+    ".pi/skills/systematic-debugging/debugger-semantic-recall.md": {
+      "sha256": "310d918a39a437e88e66a57d17946fb65d0378c12e7bfe3103c4b8144ee96051"
+    },
+    ".pi/skills/systematic-debugging/debugger-techniques.md": {
+      "sha256": "808e865d291e297181c14e6bfdca40a64e6e867b0532cf6941dc0d39300b590e"
+    },
+    ".pi/skills/systematic-debugging/defense-in-depth.md": {
+      "sha256": "1e175fb86fc357e58c6aebf5441e481e1b7868b4380c0456b63a17eefbd18ba7"
+    },
+    ".pi/skills/systematic-debugging/root-cause-tracing.md": {
+      "sha256": "66b98741ae2fa3151d093d81826706fb37602e89b5038caa0b337b71e471aa42"
+    },
+    ".pi/skills/systematic-debugging/test-academic.md": {
+      "sha256": "fe2ba480d78ac0d686dc025f41c2a32a43d642bf533f91b0c6053a04d35d6486"
+    },
+    ".pi/skills/systematic-debugging/test-pressure-1.md": {
+      "sha256": "0b6a915db0054577819834c79be9eb614e97bddba10d73768e1fbe91cfed048a"
+    },
+    ".pi/skills/systematic-debugging/test-pressure-2.md": {
+      "sha256": "b2030aeffba07050e8ad573ddf87486457c4a016a786bb326235bebd856f2016"
+    },
+    ".pi/skills/systematic-debugging/test-pressure-3.md": {
+      "sha256": "96b50a52e2c7989c9cf20fb752c47c1e9a3a70dc362f8f7989f8f5b64dac7708"
+    },
+    ".pi/skills/test-driven-development/SKILL.md": {
+      "sha256": "a410e8d1ee8a12eee63bfd2a91cb9d21be62921911875a2c799fbbc9f5c2eb00"
+    },
+    ".pi/skills/test-driven-development/writing-good-tests.md": {
+      "sha256": "0900a835f7e34c62922dc687f299742fc0db9e1a96e4850913888173ba3d9c5f"
+    },
+    ".pi/skills/using-git-worktrees/SKILL.md": {
+      "sha256": "f2550d5d18a2f39e46fb39b08013dbec643bdc35aca77390efd1eca76df66cc5"
+    },
+    ".pi/skills/using-moe/SKILL.md": {
+      "sha256": "f02563cf53a4cb31bda041fef7bbaec265b2e8ef49eef57bd0841b46ec86f063"
+    },
+    ".pi/skills/using-moe/references/antigravity-tools.md": {
+      "sha256": "77021a952929a56251d320ed909a4a4aaa3373ee89937e7645163ec56a5da713"
+    },
+    ".pi/skills/using-moe/references/codex-tools.md": {
+      "sha256": "bdc9f5eb727fadfa1cadb59ebf96f9fce7c18d97df2da196e05486ff800cd9b6"
+    },
+    ".pi/skills/using-moe/references/gemini-tools.md": {
+      "sha256": "1d8bfcf577fe92b36204592c85e010617ce0d15ea899dc4d26ed0bf7a6bcb704"
+    },
+    ".pi/skills/using-moe/references/kimi-tools.md": {
+      "sha256": "54eae82d2d6ddb479dc27958d5166dbc70ab651fcd110263b31a68afecdb02a3"
+    },
+    ".pi/skills/using-moe/references/opencode-tools.md": {
+      "sha256": "0e00fbc86349f9b8fd8a4851fff142135144513b6c0fcbfcaa2109b4608a3fcc"
+    },
+    ".pi/skills/using-moe/references/pi-tools.md": {
+      "sha256": "b43b591fbe1f1c1c8e25ba46356e97aa0bf827c17eee3e69a137124f37c0d5c8"
+    },
+    ".pi/skills/using-tmux-for-interactive-commands/SKILL.md": {
+      "sha256": "0230a21817150b4e291045e5f15e62c767ffad9116066e2d082d5af9627e48f3"
+    },
+    ".pi/skills/verification-before-completion/SKILL.md": {
+      "sha256": "9c6c4a457208718a1f335bd9eb704bdb2d5d763c29a3e72826c1a776fca9b8af"
+    },
+    ".pi/skills/verification-before-completion/tests/goal-backward-scenario.md": {
+      "sha256": "4ecff9fd94a702219413403b27eb116a5b0abeb83e44e042e36f7485fbd7f5fe"
+    },
+    ".pi/skills/windows-vm/SKILL.md": {
+      "sha256": "7aa90971d3d049f0ddddc6972b40b219633c7bdbadde6572549638ab4adedfa4"
+    },
+    ".pi/skills/working-with-claude-code/SKILL.md": {
+      "sha256": "8cf7b5225b0925a6f82bcb87894b12bc6d097242953aecb6da337b692ef30542"
+    },
+    ".pi/skills/writing-clearly-and-concisely/SKILL.md": {
+      "sha256": "bcfd8a8b22f08c1673ca6c033540be82ed25fd49792fce276e96dade3450d1b2"
+    },
+    ".pi/skills/writing-clearly-and-concisely/elements-of-style.md": {
+      "sha256": "d0edf854b5d39e22da68793603830e5bbdddb9266d272007993bcb821ba2799d"
+    },
+    ".pi/skills/writing-clearly-and-concisely/house-voice.md": {
+      "sha256": "348ad0147792e162981f4c566f6d14026bcfb337d9b4820a3fd914e16aaf75df"
+    },
+    ".pi/skills/writing-plans/SKILL.md": {
+      "sha256": "7727076bfbdd29b9febbd000b730a008028a880723c374a537f373a88f2414be"
+    },
+    ".pi/skills/writing-plans/plan-document-reviewer-prompt.md": {
+      "sha256": "df5f1ab940ad6aa0ac7df42aeded53107a39fb6d2e1a19cafa5eb808ac5ac602"
+    },
+    ".pi/skills/writing-skills/SKILL.md": {
+      "sha256": "290164014421876c2b018acfab2f85cb48b9f196fac02615d40260ac8b198886"
+    },
+    ".pi/skills/writing-skills/anthropic-best-practices.md": {
+      "sha256": "217629b356c09c9bd11017c9788e8fc654ca1b32c92d4a51cd490e16dd65e59a"
+    },
+    ".pi/skills/writing-skills/examples/CLAUDE_MD_TESTING.md": {
+      "sha256": "0b379a3415e185d3c434b3ad283d8aa132f3022c2a4f210f168865b5986bcef0"
+    },
+    ".pi/skills/writing-skills/persuasion-principles.md": {
+      "sha256": "a51bc9bf75189ea73a27b3fb504a2fdfdb966fb1f7f1cdf03203230a216ccc03"
+    },
+    ".pi/skills/writing-skills/references/skill-mechanics.md": {
+      "sha256": "6e8be5fbf42c4ab3d06e1d14256ccc66760dc6a63fcbecf24ba312f515cb9b24"
+    },
+    ".pi/skills/writing-skills/references/skill-typography.md": {
+      "sha256": "31f8b83351ffef4eb36b976ba63c837b6cc526708bcb6d779cfb087ff8495879"
+    },
+    ".pi/skills/writing-skills/testing-skills-with-subagents.md": {
+      "sha256": "1935c915e98c4da5f6940a2b18b747313876288c03f5c8749853f512015b6789"
     },
     "docs/install/agent-plugins-1.0.md": {
       "sha256": "591cd3fe9915144fe777b52dfda59ce93407a3070ef57198734f6f21f03802d2"

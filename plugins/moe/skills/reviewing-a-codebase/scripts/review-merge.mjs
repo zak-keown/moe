@@ -8,6 +8,15 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import {
+  FRONTMATTER_RE,
+  RANK,
+  VERDICTS,
+  findingFields,
+  findingProblems,
+  parseProvenance,
+  splitSections,
+} from "./review-report.mjs";
 
 const arg = (name, fallback) => {
   const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
@@ -45,7 +54,6 @@ if (dirty) {
   process.exit(1);
 }
 
-const RANK = { critical: 0, high: 1, medium: 2, low: 3 };
 const found = [];
 const missing = [];
 const malformed = [];
@@ -64,54 +72,44 @@ for (const shard of manifest.shards) {
     continue;
   }
   const raw = readFileSync(p, "utf8").replace(/\r\n/g, "\n");
-  const provenance = raw.match(
-    /^<!-- moe-review-shard\nbase_sha: ([0-9a-f]{40})\nfiles_opened: (\d+)\n-->\n?/,
-  );
+  const provenance = parseProvenance(raw);
   if (!provenance) {
     provenanceFailures.push(`${shard.report_path}: missing shard provenance header`);
     continue;
   }
-  if (provenance[1] !== manifest.base_sha) {
+  if (provenance.base_sha !== manifest.base_sha) {
     provenanceFailures.push(
-      `${shard.report_path}: base_sha ${provenance[1]} does not match ${manifest.base_sha}`,
+      `${shard.report_path}: base_sha ${provenance.base_sha} does not match ${manifest.base_sha}`,
     );
     continue;
   }
-  if (Number(provenance[2]) !== shard.files.length) {
+  if (provenance.files_opened !== shard.files.length) {
     provenanceFailures.push(
-      `${shard.report_path}: files_opened ${provenance[2]} does not match assigned ${shard.files.length}`,
+      `${shard.report_path}: files_opened ${provenance.files_opened} does not match assigned ${shard.files.length}`,
     );
     continue;
   }
-  const body = raw
-    .slice(provenance[0].length)
-    .replace(/^---\n[\s\S]*?\n---\n?/, "");
-  const heads = [...body.matchAll(/^###\s+(.+)$/gm)];
-  for (let i = 0; i < heads.length; i++) {
-    const start = heads[i].index;
-    const end = i + 1 < heads.length ? heads[i + 1].index : body.length;
-    const block = body.slice(start, end).trim();
-    const severityField = (block.match(/^\*\*Severity:\*\*\s*([^\n]+)/im) || [])[1]?.trim();
-    const fileField = (block.match(/^\*\*File:\*\*\s*`?([^`\n]+)`?/im) || [])[1]?.trim();
-    const anchorField = (block.match(/^\*\*Anchor:\*\*\s*`?([^`\n]+)`?/im) || [])[1]?.trim();
-    if (/^checked and found sound/i.test(heads[i][1])) {
-      sound.push(block.replace(/^###\s+.+$/m, "").trim());
+  const body = raw.slice(provenance.length).replace(FRONTMATTER_RE, "");
+  for (const section of splitSections(body)) {
+    if (section.sound) {
+      sound.push(section.block.replace(/^###\s+.+$/m, "").trim());
       continue;
     }
     // The checked-sound heading above is the only allowed non-finding. Any
     // other fieldless heading could be a real finding the merge would silently
     // erase, turning a shard with issues into a clean report.
-    const sev = severityField?.toLowerCase();
-    if (!fileField || /:\d+$/.test(fileField) || !anchorField || !Object.hasOwn(RANK, sev)) {
-      malformed.push({ report_path: shard.report_path, title: heads[i][1] });
+    const problems = findingProblems(section.block, repo);
+    if (problems.length) {
+      malformed.push({ report_path: shard.report_path, title: section.title, problems });
       continue;
     }
+    const { sev, file } = findingFields(section.block);
     found.push({
       sev,
-      file: fileField,
+      file,
       group: shard.group,
-      title: heads[i][1].replace(/^(?:CR-\d+|\d+)[.:]\s*/, "").trim(),
-      block,
+      title: section.title.replace(/^(?:CR-\d+|\d+)[.:]\s*/, "").trim(),
+      block: section.block,
     });
   }
 }
@@ -128,8 +126,8 @@ if (provenanceFailures.length) {
 if (malformed.length) {
   process.stderr.write(
     `review-merge: ${malformed.length} malformed finding record(s) — refusing to omit them:\n` +
-      malformed.map((f) => `  ${f.report_path}: ${f.title}`).join("\n") +
-      "\nEach finding needs a path-only **File:** field, a stable **Anchor:** field, and a critical|high|medium|low **Severity:** field.\n",
+      malformed.map((f) => `  ${f.report_path}: ${f.title} (${f.problems.join("; ")})`).join("\n") +
+      "\nEach finding needs a repository-relative **File:** that exists, a stable **Anchor:** field, and a critical|high|medium|low **Severity:** field.\n",
   );
   process.exit(1);
 }
@@ -150,7 +148,6 @@ found.forEach((f, i) => {
   f.id = `CR-${String(i + 1).padStart(3, "0")}`;
 });
 
-const VERDICTS = ["confirmed", "confirmed-lower", "refuted", "unproven"];
 let verificationCounts = null;
 if (verificationResultsPath) {
   let ledger;

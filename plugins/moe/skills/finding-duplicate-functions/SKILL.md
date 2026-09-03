@@ -78,7 +78,7 @@ Creates one JSON file per category. Only categories with 3+ functions are worth 
 
 For each category file in `./categories/`, dispatch an **opus** subagent using the prompt in `${CLAUDE_PLUGIN_ROOT}/skills/finding-duplicate-functions/scripts/find-duplicates-prompt.md`.
 
-Save each output as `./duplicates/{category}.json`.
+Save each output as `./duplicates/<category-name>.json`.
 
 ### Phase 5: Generate Report
 
