@@ -1,4 +1,5 @@
 import { isAbsolute, posix } from 'node:path'
+import { FULL_CASE_FOLD } from './unicode-casefold.js'
 
 /** A slash-separated, artifact-root-relative path that has passed lexical validation. */
 export type ArtifactPath = string & { readonly __artifactPath: unique symbol }
@@ -15,16 +16,8 @@ export const RESERVED_ARTIFACT_FILES = new Set([
 ])
 export const RESERVED_ARTIFACT_ROOTS = ['.moe', '.moe-mint'] as const
 
-// Pinned exceptional full-fold mappings (Unicode 16.0); the ordinary simple
-// folds are supplied by ECMAScript's locale-independent default conversion.
-const CASE_FOLD_OVERRIDES: Readonly<Record<string, string>> = {
-  'µ': 'μ', 'ß': 'ss', 'ŉ': 'ʼn', 'ſ': 's', 'ǰ': 'ǰ', 'ͅ': 'ι',
-  'ΐ': 'ΐ', 'ΰ': 'ΰ', 'ς': 'σ', 'ϐ': 'β', 'ϑ': 'θ', 'ϕ': 'φ',
-  'ϖ': 'π', 'ϰ': 'κ', 'ϱ': 'ρ', 'ϵ': 'ε', 'և': 'եւ',
-}
-
 function fullCaseFold(value: string): string {
-  return [...value.toLowerCase()].map((character) => CASE_FOLD_OVERRIDES[character] ?? character).join('').normalize('NFC')
+  return [...value].map((character) => FULL_CASE_FOLD.get(character.codePointAt(0)!) ?? character).join('').normalize('NFC')
 }
 
 export class ArtifactPathError extends Error {

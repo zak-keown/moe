@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import type { ArtifactPayload } from '../src/config.js'
 import { inspectPayloads, stagePayloads } from '../src/artifact/payload.js'
 import { artifactCollisionKey, artifactPath } from '../src/artifact/paths.js'
+import { FULL_CASE_FOLD, UNICODE_CASE_FOLD_VERSION } from '../src/artifact/unicode-casefold.js'
 
 const workspaces: string[] = []
 const execFile = promisify(execFileCallback)
@@ -131,6 +132,13 @@ describe('declared artifact payload staging', () => {
     expect(artifactCollisionKey(artifactPath('ı'))).not.toBe(artifactCollisionKey(artifactPath('i')))
     expect(artifactCollisionKey(artifactPath('ŉ'))).toBe(artifactCollisionKey(artifactPath('ʼn')))
     expect(artifactCollisionKey(artifactPath('ǰ'))).toBe(artifactCollisionKey(artifactPath('ǰ')))
+  })
+
+  it('conforms to every pinned Unicode common/full CaseFolding mapping', () => {
+    expect(UNICODE_CASE_FOLD_VERSION).toBe('16.0.0')
+    for (const [codePoint, folded] of FULL_CASE_FOLD) {
+      expect(artifactCollisionKey(artifactPath(String.fromCodePoint(codePoint)))).toBe(folded.normalize('NFC'))
+    }
   })
 
   it('rejects source maps rather than silently filtering a declared root', async () => {
