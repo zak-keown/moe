@@ -2,7 +2,12 @@ import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
 import type { HarnessAdapter, EmitResult } from './types.js'
 import { json, parseRepo } from './shared.js'
-import { nodePackageManifest, piExtensionPath, bootstrapContentPath } from '../bootstrap/node-package.js'
+import {
+  nodePackageManifest,
+  piExtensionPath,
+  bootstrapContentPath,
+  NODE_PACKAGE_SKILL_DIRS,
+} from '../bootstrap/node-package.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
 
 // Pi's extension loader (`.pi/extensions/<name>.ts`) uses `resources_discover`
@@ -230,11 +235,12 @@ export const pi: HarnessAdapter = {
     profile: 'pi',
     mode: 'rendered',
   },
+  skillDelivery: 'rendered',
   installDoc,
   emit(model: PluginModel): EmitResult {
     const warnings: string[] = []
     const files: GeneratedFile[] = [
-      { path: 'package.json', content: json(nodePackageManifest(model)) },
+      { path: 'package.json', content: json(nodePackageManifest(model, NODE_PACKAGE_SKILL_DIRS)) },
       extensionFile(model),
     ]
     // pi's extension module reads GENERATED_BOOTSTRAP_PATH at runtime (via

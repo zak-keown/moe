@@ -14,5 +14,6 @@
     "orchestration",
     "subagents",
     "sessions"
-  ]
+  ],
+  "skills": "./.claude-plugin/skills"
 }

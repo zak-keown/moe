@@ -2,6 +2,7 @@ import type { PluginModel } from '../model.js'
 import type { FileSet } from '../fileset.js'
 
 export type SupportLevel = 'full' | 'partial' | 'none'
+export type SkillDelivery = 'rendered' | 'shared-compatible' | 'native-discovery' | 'unsupported'
 
 export interface ComponentSupport {
   skills: SupportLevel
@@ -29,6 +30,7 @@ export interface HarnessAdapter {
   name: string
   support: ComponentSupport
   skillLayout: SkillLayout
+  skillDelivery: SkillDelivery
   emit(model: PluginModel): EmitResult
   // Optional: markdown BODY (no marker, no heading — docs-emit.ts adds
   // both) describing how to install the plugin on this harness. Adapters

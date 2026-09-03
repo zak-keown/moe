@@ -78,6 +78,7 @@ export const codex: HarnessAdapter = {
     profile: 'codex',
     mode: 'rendered',
   },
+  skillDelivery: 'rendered',
   installDoc,
   emit(model: PluginModel): EmitResult {
     const warnings: string[] = []

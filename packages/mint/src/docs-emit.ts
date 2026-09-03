@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { PluginModel } from './model.js'
-import type { HarnessAdapter } from './adapters/types.js'
+import type { HarnessAdapter, SkillDelivery } from './adapters/types.js'
 import type { FileSet, GeneratedFile } from './fileset.js'
 import { renderMatrix } from './matrix.js'
 
@@ -48,18 +48,23 @@ function installDocFile(model: PluginModel, adapter: HarnessAdapter): GeneratedF
 // consuming the emitted shell hooks (Design decision 2).
 const NOTES = [
   '- Copilot consumes the Claude Code layout through `.claude-plugin/marketplace.json`; keep the `claude-code` adapter enabled when targeting Copilot.',
-  "- codex's `bootstrap: partial` means native skill discovery only, with no active injection hook.",
-  '- Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.',
+  '- Active bootstrap injection is emitted for Claude Code, Cursor, OpenCode, and Pi; Kimi activates only a named bootstrap skill, and Copilot consumes Claude Code\'s injection hook.',
+  '- Codex uses native skill discovery as its bootstrap behavior; it has no active injection hook.',
+  '- Agent Plugins 1.0 has no bootstrap mechanism; loading the skill tree does not inject a bootstrap.',
+  '- Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` and `.cursor-plugin/hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.',
 ]
 
-function supportMatrixFile(model: PluginModel): GeneratedFile {
+function supportMatrixFile(
+  model: PluginModel,
+  achievedDelivery?: Record<string, SkillDelivery>,
+): GeneratedFile {
   const content =
     [
       GENERATED_MARKER,
       '',
       `# ${model.config.name} harness support matrix`,
       '',
-      renderMatrix().trimEnd(),
+      renderMatrix(achievedDelivery).trimEnd(),
       '',
       '## Notes',
       '',
@@ -74,13 +79,17 @@ function supportMatrixFile(model: PluginModel): GeneratedFile {
 // as `moe-mint matrix`). Called by generate() after adapter emission;
 // the returned files go through the same collision/manifest path as any
 // adapter's output.
-export function emitDocs(model: PluginModel, activeAdapters: HarnessAdapter[]): FileSet {
+export function emitDocs(
+  model: PluginModel,
+  activeAdapters: HarnessAdapter[],
+  achievedDelivery?: Record<string, SkillDelivery>,
+): FileSet {
   const files: FileSet = []
   for (const adapter of activeAdapters) {
     const file = installDocFile(model, adapter)
     if (file) files.push(file)
   }
-  files.push(supportMatrixFile(model))
+  files.push(supportMatrixFile(model, achievedDelivery))
   return files
 }
 

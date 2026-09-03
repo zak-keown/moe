@@ -15,5 +15,6 @@
     "analysis",
     "archaeology",
     "documentation"
-  ]
+  ],
+  "skills": "./.claude-plugin/skills"
 }

@@ -15,5 +15,6 @@
     "browser",
     "automation",
     "screenshots"
-  ]
+  ],
+  "skills": "./.claude-plugin/skills"
 }

@@ -4,8 +4,10 @@ Build-time template substitution in mint so skills ship with
 harness-native tool names instead of relying on prose translation at
 runtime.
 
-**Status:** spec written, not yet planned. Replaces the prose-only
-delivery of W01P02.
+**Status:** superseded in part and implemented by Harness Neutrality 1 on
+2026-09-03. The shared-Claude-baseline layout below is no longer authoritative:
+each adapter now emits or consumes the explicit profile-correct tree recorded in
+section 5.3, and support is reported only after full-tree closure validation.
 
 ## 1  Problem
 
@@ -148,18 +150,20 @@ staging script (byte-copy skills) → buildModel() → loadVocabulary()
 has a mapping for every active adapter. Hard error on missing
 mappings.
 
-`substituteSkills()`: for each adapter, reads each skill's SKILL.md
-and every `.md` file under the skill directory. Replaces `{token}`
-with the adapter's value. Inline tokens: string replacement.
-Block tokens: the token line is replaced with the block content,
-indentation-aware. Writes the result into the adapter's skill
-output directory.
+`substituteSkills()`: snapshots the complete skill tree once. It replaces
+`{token}` in Markdown files, copies every other regular file byte-for-byte,
+preserves exact file modes, and rejects symlinks and unsupported nodes. Inline
+tokens use string replacement; block tokens replace the token line with the
+configured indentation-aware content. Each adapter receives a model rooted at
+the directory that was actually emitted for it.
 
 ### 5.3  Adapter output
 
 ```
 plugins/moe/
-  skills/              ← claude-code (default path, manifest omits it)
+  skills/              ← Agent Plugins 1.0 in-place profile
+  .claude-plugin/
+    skills/            ← Claude Code profile; Copilot consumes this compatible tree
   .codex-plugin/
     plugin.json
     skills/            ← codex-substituted
@@ -169,18 +173,23 @@ plugins/moe/
   .cursor-plugin/
     plugin.json
     skills/            ← cursor-substituted
-  .opencode-plugin/
-    plugin.json
+    hooks/              ← Cursor-private bootstrap loader
+  .opencode/
+    plugins/
     skills/
-  .pi-plugin/
-    plugin.json
+  .pi/
+    extensions/
     skills/
-  ...
 ```
 
-Each adapter's manifest sets `skills` to point at its own directory.
-The root `skills/` is Claude Code's output (baseline harness, default
-path).
+Claude Code, Cursor, Codex, Kimi, OpenCode, and Pi consume private rendered
+trees. Copilot is `shared-compatible` with the Claude Code profile and directory.
+Agent Plugins 1.0 uses `native-discovery` at the spec-mandated root `skills/`
+location. The other delivery states are `rendered` and `unsupported`; a generated
+support matrix may claim `skills: full` only after every expected file exists in
+the achieved tree. OpenCode and Pi retain one byte-identical root `package.json`,
+but its Pi skill declaration and both runtime loaders name their canonical
+private directories explicitly.
 
 ## 6  What happens to references files
 
@@ -203,7 +212,7 @@ launch requirement.
 
 ## 7  Testing
 
-Three new assertions, all enforceable by `pnpm mint`:
+The original three vocabulary assertions remain enforceable by `pnpm mint`:
 
 1. **Complete coverage.** Every token in `moe-mint-vocab.yaml` has a
    mapping for every active adapter. Missing mapping → build error.
@@ -216,6 +225,10 @@ Three new assertions, all enforceable by `pnpm mint`:
 These compose with `mint:check`: `pnpm mint` runs substitutions,
 `mint:check` asserts the output is byte-identical to what is
 committed.
+
+Harness Neutrality 1 adds full-tree closure, binary fidelity, mode preservation,
+adapter-native loader paths, compatible-sharing, and achieved-delivery reporting
+to those vocabulary checks.
 
 ## 8  Migration
 

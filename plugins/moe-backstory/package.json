@@ -16,7 +16,7 @@
       "./.pi/extensions/moe-backstory.ts"
     ],
     "skills": [
-      "./skills"
+      "./.pi/skills"
     ]
   },
   "keywords": [

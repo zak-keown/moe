@@ -10,7 +10,7 @@ import {
   type GeneratedFile,
 } from './fileset.js'
 import { saveManifest, loadManifest, sha256, type GenerationManifest } from './manifest.js'
-import { adapters, type HarnessAdapter } from './adapters/index.js'
+import { adapters, type HarnessAdapter, type SkillDelivery } from './adapters/index.js'
 import { emitDocs, injectReadme } from './docs-emit.js'
 import { ConfigError, type MintConfig } from './config.js'
 import {
@@ -24,28 +24,57 @@ import {
 
 export const TOOL_VERSION = '0.0.0'
 
-// opencode and pi each have their own rendered skill layout, but also both emit a
-// single, intentionally byte-identical root package.json (see "Design
-// decision 3" in bootstrap/node-package.ts's nodePackageManifest doc
-// comment) whose `pi.skills` field is read straight from
-// model.config.components.skills. Handing each of them its own
-// adjustedModel would make that one shared field diverge by adapter and
-// turn their dedupe into a "both adapters emit package.json" ConfigError.
-// Until node-package.ts is taught to resolve pi's own skills directory
-// independently of whichever of the two adapters happens to compute the
-// manifest, these two keep emitting from the un-adjusted model: their own
-// per-adapter skills copies still land in .opencode/skills/ and .pi/skills/
-// (substituteAllSkills doesn't go through adjustedModel at all), but their
-// package.json and in-process templates keep pointing at the shared source
-// skills/ path rather than their own output directory.
-const SHARED_MANIFEST_ADAPTERS = new Set(['opencode', 'pi'])
-
 export interface GenerateResult {
   files: FileSet<FileContent>
   warnings: string[]
   adaptersRun: string[]
   pruned: string[]
   readmeInjected: boolean
+  skillDelivery: Record<string, SkillDelivery>
+}
+
+function validateSkillClosure(
+  root: string,
+  model: ReturnType<typeof buildModel>,
+  active: HarnessAdapter[],
+  renderedSkillFiles: GeneratedFile<FileContent>[],
+): Record<string, SkillDelivery> {
+  const renderedPaths = new Set(renderedSkillFiles.map((file) => file.path))
+  const delivery: Record<string, SkillDelivery> = {}
+
+  for (const adapter of active) {
+    let state = adapter.skillDelivery
+    if (state === 'shared-compatible') {
+      const provider = active.find(
+        (candidate) =>
+          candidate !== adapter &&
+          candidate.skillDelivery !== 'shared-compatible' &&
+          candidate.skillDelivery !== 'unsupported' &&
+          candidate.skillLayout.outputDir === adapter.skillLayout.outputDir &&
+          candidate.skillLayout.profile === adapter.skillLayout.profile,
+      )
+      if (!provider) state = 'unsupported'
+    }
+
+    if (state === 'rendered' || state === 'shared-compatible') {
+      for (const file of model.skillFiles) {
+        const path = `${adapter.skillLayout.outputDir}/${file.path}`
+        if (!renderedPaths.has(path)) {
+          throw new ConfigError(`adapter "${adapter.name}" skill delivery is incomplete: missing ${path}`)
+        }
+      }
+    } else if (state === 'native-discovery') {
+      for (const file of model.skillFiles) {
+        const path = `${adapter.skillLayout.outputDir}/${file.path}`
+        if (!existsSync(resolve(root, path))) {
+          throw new ConfigError(`adapter "${adapter.name}" skill delivery is incomplete: missing ${path}`)
+        }
+      }
+    }
+    delivery[adapter.name] = state
+  }
+
+  return delivery
 }
 
 function isSourcePath(path: string, config: MintConfig): boolean {
@@ -122,13 +151,11 @@ export function generate(
   // in-place layout updates the staged source tree; rendered layouts flow
   // through the same collision, manifest, and writer pipeline as adapter files.
   const renderedSkillFiles = substituteAllSkills(root, model, vocab, active)
+  const skillDelivery = validateSkillClosure(root, model, active, renderedSkillFiles)
 
   const byPath = new Map<string, { owner: string; file: GeneratedFile<FileContent> }>()
   for (const adapter of active) {
-    const adapterModel =
-      adapter.skillLayout.mode === 'rendered' && !SHARED_MANIFEST_ADAPTERS.has(adapter.name)
-        ? adjustedModel(model, adapter.skillLayout)
-        : model
+    const adapterModel = adjustedModel(model, adapter.skillLayout)
     const result = adapter.emit(adapterModel)
     mergeFiles(byPath, adapter.name, result.files, model.config)
     warnings.push(...result.warnings.map((w) => `[${adapter.name}] ${w}`))
@@ -137,7 +164,7 @@ export function generate(
   if (configuredVocab) {
     assertNoSurvivors(renderedSkillFiles)
   }
-  mergeFiles(byPath, 'docs', emitDocs(model, active), model.config)
+  mergeFiles(byPath, 'docs', emitDocs(model, active, skillDelivery), model.config)
   const files: FileSet<FileContent> = [...byPath.values()].map((v) => v.file)
 
   // A corrupt manifest shouldn't dead-end generate the way it does validate:
@@ -254,5 +281,12 @@ export function generate(
   const readme = injectReadme(root, model, active)
   if (readme.warning) warnings.push(readme.warning)
 
-  return { files, warnings, adaptersRun: active.map((a) => a.name), pruned, readmeInjected: readme.injected }
+  return {
+    files,
+    warnings,
+    adaptersRun: active.map((a) => a.name),
+    pruned,
+    readmeInjected: readme.injected,
+    skillDelivery,
+  }
 }

@@ -3,7 +3,12 @@ import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel, CommandRef, AgentRef } from '../model.js'
 import type { HarnessAdapter, EmitResult } from './types.js'
 import { json } from './shared.js'
-import { nodePackageManifest, opencodePluginPath, bootstrapContentPath } from '../bootstrap/node-package.js'
+import {
+  nodePackageManifest,
+  opencodePluginPath,
+  bootstrapContentPath,
+  NODE_PACKAGE_SKILL_DIRS,
+} from '../bootstrap/node-package.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
 
 // Marker text for command/agent files, placed as a `#` YAML comment inside
@@ -264,11 +269,12 @@ export const opencode: HarnessAdapter = {
     profile: 'opencode',
     mode: 'rendered',
   },
+  skillDelivery: 'rendered',
   installDoc,
   emit(model: PluginModel): EmitResult {
     const warnings: string[] = []
     const files: GeneratedFile[] = [
-      { path: 'package.json', content: json(nodePackageManifest(model)) },
+      { path: 'package.json', content: json(nodePackageManifest(model, NODE_PACKAGE_SKILL_DIRS)) },
       { path: opencodePluginPath(model.config.name), content: pluginModule(model) },
       ...model.commands.map(commandFile),
       ...model.agents.map(agentFile),

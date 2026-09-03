@@ -281,6 +281,7 @@ function renderedAdapter(
     name,
     support: noSupport,
     skillLayout: { outputDir, profile, mode: 'rendered' },
+    skillDelivery: 'rendered',
     emit: () => ({ files: [], warnings: [] }),
   }
 }
@@ -422,6 +423,7 @@ describe('substituteAllSkills full-tree rendering', () => {
         profile: 'agent-plugins-1.0',
         mode: 'in-place',
       },
+      skillDelivery: 'native-discovery',
       emit: () => ({ files: [], warnings: [] }),
     }
 

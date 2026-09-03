@@ -45,7 +45,8 @@ function testAdapter(
   return {
     name,
     support: fullSupport,
-    skillLayout: { outputDir, profile: name, mode: 'rendered' },
+    skillLayout: { outputDir, profile: 'test-adapter', mode: 'rendered' },
+    skillDelivery: 'rendered',
     emit: () => ({ files, warnings: [] }),
   }
 }
@@ -72,6 +73,66 @@ describe('generate', () => {
     expect(existsSync(join(dir, '.claude-plugin/plugin.json'))).toBe(true)
     expect(existsSync(join(dir, MANIFEST_PATH))).toBe(true)
     expect(checkDrift(dir).clean).toBe(true)
+  })
+
+  it('binds every emitted manifest and bootstrap loader to the profile-correct skill tree', () => {
+    const dir = freshFixture()
+    const result = generate(dir)
+    const content = (path: string) => String(result.files.find((file) => file.path === path)!.content)
+
+    expect(JSON.parse(content('.claude-plugin/plugin.json')).skills).toBe('./.claude-plugin/skills')
+    expect(JSON.parse(content('.cursor-plugin/plugin.json')).skills).toBe('./.cursor-plugin/skills/')
+    expect(JSON.parse(content('.codex-plugin/plugin.json')).skills).toBe('./.codex-plugin/skills/')
+    expect(JSON.parse(content('.kimi-plugin/plugin.json')).skills).toBe('./.kimi-plugin/skills/')
+    expect(JSON.parse(content('package.json')).pi.skills).toEqual(['./.pi/skills'])
+
+    expect(content('.opencode/plugins/kitchen-sink.js')).toContain("../../.opencode/skills")
+    expect(content('.opencode/plugins/kitchen-sink.js')).toContain(
+      "../../.opencode/skills/using-kitchen-sink/SKILL.md",
+    )
+    expect(content('.pi/extensions/kitchen-sink.ts')).toContain("resolve(packageRoot, '.pi/skills')")
+    expect(content('.pi/extensions/kitchen-sink.ts')).toContain(
+      "resolve(packageRoot, '.pi/skills/using-kitchen-sink/SKILL.md')",
+    )
+    expect(content('hooks/moe-mint/session-start')).toContain(
+      '.claude-plugin/skills/using-kitchen-sink/SKILL.md',
+    )
+    expect(content('.cursor-plugin/hooks/moe-mint/session-start')).toContain(
+      '.cursor-plugin/skills/using-kitchen-sink/SKILL.md',
+    )
+  })
+
+  it('reports achieved skill delivery only after every adapter skill tree closes', () => {
+    const dir = freshFixture()
+    const result = generate(dir)
+
+    expect(result.skillDelivery).toEqual({
+      'claude-code': 'rendered',
+      cursor: 'rendered',
+      codex: 'rendered',
+      kimi: 'rendered',
+      opencode: 'rendered',
+      pi: 'rendered',
+      'agent-plugins-1.0': 'native-discovery',
+      copilot: 'shared-compatible',
+    })
+    const matrix = readFileSync(join(dir, 'docs/support-matrix.md'), 'utf8')
+    expect(matrix).toContain('| Harness | skill delivery | skills |')
+    expect(matrix).toContain('| claude-code | rendered | full |')
+    expect(matrix).toContain('| agent-plugins-1.0 | native-discovery | full |')
+    expect(matrix).toContain('| copilot | shared-compatible | full |')
+  })
+
+  it('downgrades a shared-compatible adapter to unsupported when its provider is excluded', () => {
+    const dir = freshFixture()
+    const yaml = readFileSync(join(dir, 'moe-mint.yaml'), 'utf8')
+    writeFileSync(join(dir, 'moe-mint.yaml'), yaml.replace('harnesses:\n', 'harnesses:\n  exclude: [claude-code]\n'))
+
+    const result = generate(dir)
+
+    expect(result.skillDelivery.copilot).toBe('unsupported')
+    const matrix = readFileSync(join(dir, 'docs/support-matrix.md'), 'utf8')
+    expect(matrix).toContain('| copilot | unsupported | none |')
   })
 
   it('emits docs/support-matrix.md as a normal generated file, tracked in the manifest and drift-clean', () => {
@@ -162,12 +223,14 @@ describe('generate', () => {
       name: 'adapter-a',
       support: fullSupport,
       skillLayout: defaultTestSkillLayout,
+      skillDelivery: 'rendered',
       emit: () => ({ files: [{ path: 'gen/collide.txt', content: 'a' }], warnings: [] }),
     }
     const b: HarnessAdapter = {
       name: 'adapter-b',
       support: fullSupport,
       skillLayout: defaultTestSkillLayout,
+      skillDelivery: 'rendered',
       emit: () => ({ files: [{ path: 'gen/collide.txt', content: 'b' }], warnings: [] }),
     }
     expect(() => generate(dir, [a, b])).toThrowError(/both emit/)
@@ -186,6 +249,7 @@ describe('generate', () => {
       name: 'synthetic',
       support: fullSupport,
       skillLayout: defaultTestSkillLayout,
+      skillDelivery: 'rendered',
       emit: () => ({
         files: [{ path: 'gen/x.txt', content: 'x' }],
         warnings: ['thing not supported'],
@@ -198,8 +262,8 @@ describe('generate', () => {
   it('dedupes identical-content collisions between adapters', () => {
     const dir = freshFixture()
     const file = { path: 'gen/shared.txt', content: 'same', executable: undefined }
-    const a = { name: 'adapter-a', support: fullSupport, skillLayout: defaultTestSkillLayout, emit: () => ({ files: [{ ...file }], warnings: [] }) }
-    const b = { name: 'adapter-b', support: fullSupport, skillLayout: defaultTestSkillLayout, emit: () => ({ files: [{ ...file }], warnings: [] }) }
+    const a = testAdapter('adapter-a', [{ ...file }], defaultTestSkillLayout.outputDir)
+    const b = testAdapter('adapter-b', [{ ...file }], defaultTestSkillLayout.outputDir)
     const result = generate(dir, [a, b])
     expect(result.files.filter((f) => f.path === 'gen/shared.txt')).toHaveLength(1)
     expect(result.warnings).toEqual([])
@@ -207,16 +271,16 @@ describe('generate', () => {
 
   it('still rejects differing-content collisions', () => {
     const dir = freshFixture()
-    const a = { name: 'adapter-a', support: fullSupport, skillLayout: defaultTestSkillLayout, emit: () => ({ files: [{ path: 'gen/x.txt', content: 'one' }], warnings: [] }) }
-    const b = { name: 'adapter-b', support: fullSupport, skillLayout: defaultTestSkillLayout, emit: () => ({ files: [{ path: 'gen/x.txt', content: 'two' }], warnings: [] }) }
+    const a = testAdapter('adapter-a', [{ path: 'gen/x.txt', content: 'one' }], defaultTestSkillLayout.outputDir)
+    const b = testAdapter('adapter-b', [{ path: 'gen/x.txt', content: 'two' }], defaultTestSkillLayout.outputDir)
     expect(() => generate(dir, [a, b])).toThrowError(/both emit/)
   })
 
   it('rejects an adapter emitting over a source component path', () => {
     const dir = freshFixture()
-    const evil = { name: 'evil', support: fullSupport, skillLayout: defaultTestSkillLayout, emit: () => ({ files: [{ path: 'moe-mint.yaml', content: 'gotcha' }], warnings: [] }) }
+    const evil = testAdapter('evil', [{ path: 'moe-mint.yaml', content: 'gotcha' }], defaultTestSkillLayout.outputDir)
     expect(() => generate(dir, [evil])).toThrowError(/would overwrite source/)
-    const evil2 = { name: 'evil2', support: fullSupport, skillLayout: defaultTestSkillLayout, emit: () => ({ files: [{ path: 'skills/greeting/SKILL.md', content: 'x' }], warnings: [] }) }
+    const evil2 = testAdapter('evil2', [{ path: 'skills/greeting/SKILL.md', content: 'x' }], defaultTestSkillLayout.outputDir)
     expect(() => generate(dir, [evil2])).toThrowError(/would overwrite source/)
   })
 
@@ -232,27 +296,27 @@ describe('generate', () => {
     ].join('\n'))
     mkdirSync(join(dir, 'skills'))
     writeFileSync(join(dir, 'skills', 'demo.md'), '# Demo Skill\n')
-    const evilAdapter = { name: 'evil', support: fullSupport, skillLayout: defaultTestSkillLayout, emit: () => ({ files: [{ path: 'skills/demo.md', content: 'overwritten' }], warnings: [] }) }
+    const evilAdapter = testAdapter('evil', [{ path: 'skills/demo.md', content: 'overwritten' }], defaultTestSkillLayout.outputDir)
     expect(() => generate(dir, [evilAdapter])).toThrowError(/would overwrite source/)
   })
 
   it('isSourcePath: allows non-.md siblings under commands/agents but still blocks .md and any skills path', () => {
     const dir = freshFixture()
-    const toml = { name: 'toml', support: fullSupport, skillLayout: defaultTestSkillLayout, emit: () => ({ files: [{ path: 'commands/x.toml', content: 'x' }], warnings: [] }) }
+    const toml = testAdapter('toml', [{ path: 'commands/x.toml', content: 'x' }], defaultTestSkillLayout.outputDir)
     expect(() => generate(dir, [toml])).not.toThrow()
 
-    const md = { name: 'md', support: fullSupport, skillLayout: defaultTestSkillLayout, emit: () => ({ files: [{ path: 'commands/x.md', content: 'x' }], warnings: [] }) }
+    const md = testAdapter('md', [{ path: 'commands/x.md', content: 'x' }], defaultTestSkillLayout.outputDir)
     expect(() => generate(dir, [md])).toThrowError(/would overwrite source/)
 
-    const skillFile = { name: 'skill-file', support: fullSupport, skillLayout: defaultTestSkillLayout, emit: () => ({ files: [{ path: 'skills/x/whatever.txt', content: 'x' }], warnings: [] }) }
+    const skillFile = testAdapter('skill-file', [{ path: 'skills/x/whatever.txt', content: 'x' }], defaultTestSkillLayout.outputDir)
     expect(() => generate(dir, [skillFile])).toThrowError(/would overwrite source/)
   })
 
   it('prunes files dropped from the new generation when unmodified', () => {
     const dir = freshFixture()
-    const a = { name: 'a', support: fullSupport, skillLayout: defaultTestSkillLayout, emit: () => ({ files: [{ path: 'gen/old.txt', content: 'v1' }], warnings: [] }) }
+    const a = testAdapter('a', [{ path: 'gen/old.txt', content: 'v1' }], defaultTestSkillLayout.outputDir)
     generate(dir, [a])
-    const b = { name: 'a', support: fullSupport, skillLayout: defaultTestSkillLayout, emit: () => ({ files: [{ path: 'gen2/new.txt', content: 'v2' }], warnings: [] }) }
+    const b = testAdapter('a', [{ path: 'gen2/new.txt', content: 'v2' }], defaultTestSkillLayout.outputDir)
     const result = generate(dir, [b])
     expect(result.pruned).toEqual(['gen/old.txt'])
     expect(existsSync(join(dir, 'gen/old.txt'))).toBe(false)
@@ -262,10 +326,10 @@ describe('generate', () => {
 
   it('leaves hand-modified stale files and warns', () => {
     const dir = freshFixture()
-    const a = { name: 'a', support: fullSupport, skillLayout: defaultTestSkillLayout, emit: () => ({ files: [{ path: 'gen/old.txt', content: 'v1' }], warnings: [] }) }
+    const a = testAdapter('a', [{ path: 'gen/old.txt', content: 'v1' }], defaultTestSkillLayout.outputDir)
     generate(dir, [a])
     writeFileSync(join(dir, 'gen/old.txt'), 'edited')
-    const result = generate(dir, [{ name: 'a', support: fullSupport, skillLayout: defaultTestSkillLayout, emit: () => ({ files: [], warnings: [] }) }])
+    const result = generate(dir, [testAdapter('a', [], defaultTestSkillLayout.outputDir)])
     expect(result.pruned).toEqual([])
     expect(result.warnings.join('\n')).toMatch(/stale generated file gen\/old\.txt/)
     expect(existsSync(join(dir, 'gen/old.txt'))).toBe(true)
@@ -277,6 +341,7 @@ describe('generate', () => {
       name: 'synthetic',
       support: fullSupport,
       skillLayout: defaultTestSkillLayout,
+      skillDelivery: 'rendered',
       emit: () => ({ files: [{ path: 'gen/file.txt', content: 'v1' }], warnings: [] }),
     }
     generate(dir, [synthetic])
@@ -296,7 +361,7 @@ describe('generate', () => {
 
     try {
       // Regenerate with empty adapter — should skip the unsafe entry and warn
-      const result = generate(dir, [{ name: 'empty', support: fullSupport, skillLayout: defaultTestSkillLayout, emit: () => ({ files: [], warnings: [] }) }])
+      const result = generate(dir, [testAdapter('empty', [], defaultTestSkillLayout.outputDir)])
 
       expect(existsSync(outsideFile)).toBe(true)
       expect(result.pruned).not.toContain('../escape.txt')

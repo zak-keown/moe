@@ -2,19 +2,21 @@
 
 # moe-crew harness support matrix
 
-| Harness | skills | commands | agents | hooks | mcp | bootstrap | rules | variables |
-|---|---|---|---|---|---|---|---|---|
-| claude-code | full | full | full | full | full | full | none | none |
-| cursor | full | full | full | partial | full | full | none | none |
-| codex | full | none | none | none | none | partial | none | none |
-| kimi | full | none | none | none | none | partial | none | none |
-| opencode | full | full | partial | none | none | full | none | none |
-| pi | full | none | none | none | none | full | none | none |
-| agent-plugins-1.0 | full | none | none | none | full | none | none | none |
-| copilot | full | full | full | full | full | full | none | none |
+| Harness | skill delivery | skills | commands | agents | hooks | mcp | bootstrap | rules | variables |
+|---|---|---|---|---|---|---|---|---|---|
+| claude-code | rendered | full | full | full | full | full | full | none | none |
+| cursor | rendered | full | full | full | partial | full | full | none | none |
+| codex | rendered | full | none | none | none | none | partial | none | none |
+| kimi | rendered | full | none | none | none | none | partial | none | none |
+| opencode | rendered | full | full | partial | none | none | full | none | none |
+| pi | rendered | full | none | none | none | none | full | none | none |
+| agent-plugins-1.0 | native-discovery | full | none | none | none | full | none | none | none |
+| copilot | shared-compatible | full | full | full | full | full | full | none | none |
 
 ## Notes
 
 - Copilot consumes the Claude Code layout through `.claude-plugin/marketplace.json`; keep the `claude-code` adapter enabled when targeting Copilot.
-- codex's `bootstrap: partial` means native skill discovery only, with no active injection hook.
-- Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.
+- Active bootstrap injection is emitted for Claude Code, Cursor, OpenCode, and Pi; Kimi activates only a named bootstrap skill, and Copilot consumes Claude Code's injection hook.
+- Codex uses native skill discovery as its bootstrap behavior; it has no active injection hook.
+- Agent Plugins 1.0 has no bootstrap mechanism; loading the skill tree does not inject a bootstrap.
+- Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` and `.cursor-plugin/hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.
