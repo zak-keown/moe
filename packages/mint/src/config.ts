@@ -199,7 +199,7 @@ function normalizePayloadPath(value: string, ctx: z.RefinementCtx): string {
 }
 
 const payloadPathSchema = z.string().transform(normalizePayloadPath)
-const RESERVED_PAYLOAD_DESTINATIONS = new Set(['package.json', 'LICENSE'])
+const RESERVED_PAYLOAD_DESTINATIONS = new Set(['package.json', 'LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES'])
 const RESERVED_PAYLOAD_ROOTS = ['.moe', '.moe-mint']
 
 const artifactPayloadSchema = z.object({

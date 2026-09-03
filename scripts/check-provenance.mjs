@@ -1,8 +1,15 @@
 #!/usr/bin/env node
 /** Verify centralized legal metadata and generated distribution payloads. */
 
+import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
+
+const UNICODE_CASE_FOLDING_WORK = "Unicode Character Database CaseFolding";
+const UNICODE_LICENSE_V3_SHA256 = "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96";
+const UNICODE_CASE_FOLDING_FIXTURE = "packages/mint/test/fixtures/casefold/CaseFolding-16.0.0.txt";
+const UNICODE_CASE_FOLDING_FIXTURE_SHA256 = "6f1f9c588eb4a5c718d9e8f93b782685e5c7fec872cf05e8e6878053599e09bb";
+const UNICODE_CASE_FOLDING_ROW = ["`16.0.0` (2024-04-30)", "Unicode Terms of Use", "© 2024 Unicode, Inc."];
 
 const SKIP_SEGMENTS = new Set([
   ".claude",
@@ -22,8 +29,8 @@ function cells(line) {
     .map((cell) => cell.trim());
 }
 
-function tableNames(file, heading) {
-  const names = new Set();
+function tableRows(file, heading) {
+  const rows = new Map();
   let active = false;
   for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
     if (line === heading) {
@@ -32,10 +39,11 @@ function tableNames(file, heading) {
     }
     if (active && /^#{2,3}\s/.test(line)) break;
     if (!active || !line.startsWith("| `")) continue;
-    const name = /^`([^`]+)`$/.exec(cells(line)[0] ?? "")?.[1];
-    if (name) names.add(name);
+    const row = cells(line);
+    const name = /^`([^`]+)`$/.exec(row[0] ?? "")?.[1];
+    if (name) rows.set(name, row.slice(1));
   }
-  return names;
+  return rows;
 }
 
 function walk(root, current = root) {
@@ -54,28 +62,44 @@ function walk(root, current = root) {
   return files;
 }
 
+function unicodeLicenseV3(notice) {
+  const heading = "## Unicode License V3\n\n";
+  const start = notice.indexOf(heading);
+  if (start === -1) return undefined;
+  const contentStart = start + heading.length;
+  const nextHeading = notice.indexOf("\n## ", contentStart);
+  return `${notice.slice(contentStart, nextHeading === -1 ? notice.length : nextHeading).trimEnd()}\n`;
+}
+
+function sha256(text) {
+  return createHash("sha256").update(text).digest("hex");
+}
+
 function countImportedWorks(root, problems) {
   let notice;
   try {
-    notice = tableNames(join(root, "NOTICE"), "## Imported works");
+    notice = tableRows(join(root, "NOTICE"), "## Imported works");
   } catch (err) {
     problems.push(`could not read NOTICE: ${err.message}`);
     return 0;
   }
   if (notice.size === 0) problems.push("NOTICE has no imported-work rows");
-  if (notice.has("Unicode Character Database CaseFolding")) {
-    const text = readFileSync(join(root, "NOTICE"), "utf8");
-    if (!text.includes("Unicode License V3") || !text.includes("Permission is hereby granted, free of charge")) {
-      problems.push("NOTICE is missing the required Unicode permission notice");
+  if (!notice.has(UNICODE_CASE_FOLDING_WORK)) {
+    problems.push("NOTICE is missing required Unicode CaseFolding imported-work row");
+  } else if (JSON.stringify(notice.get(UNICODE_CASE_FOLDING_WORK)) !== JSON.stringify(UNICODE_CASE_FOLDING_ROW)) {
+    problems.push("NOTICE Unicode CaseFolding imported-work row does not match the pinned source, version, and license metadata");
+  }
+  const text = readFileSync(join(root, "NOTICE"), "utf8");
+  const license = unicodeLicenseV3(text);
+  if (license === undefined || sha256(license) !== UNICODE_LICENSE_V3_SHA256) {
+    problems.push("NOTICE Unicode License V3 payload does not match the pinned canonical digest");
+  }
+  try {
+    if (sha256(readFileSync(join(root, UNICODE_CASE_FOLDING_FIXTURE), "utf8")) !== UNICODE_CASE_FOLDING_FIXTURE_SHA256) {
+      problems.push("CaseFolding fixture does not match the pinned canonical digest");
     }
-    try {
-      const parity = readFileSync(join(root, "PARITY.md"), "utf8");
-      if (!parity.includes("CaseFolding-16.0.0.txt") || !parity.includes("all and only")) {
-        problems.push("root PARITY.md is missing Unicode CaseFolding provenance");
-      }
-    } catch (err) {
-      problems.push(`could not read root PARITY.md: ${err.message}`);
-    }
+  } catch (err) {
+    problems.push(`could not read ${UNICODE_CASE_FOLDING_FIXTURE}: ${err.message}`);
   }
   return notice.size;
 }
