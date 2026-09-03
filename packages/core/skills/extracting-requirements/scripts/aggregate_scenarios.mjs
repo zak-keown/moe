@@ -1,15 +1,44 @@
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { basename, join, resolve } from "node:path";
+import { basename, join, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 
-function pythonEqual(left, right) {
-  if (left === right) return true;
-  if (
-    (typeof left === "boolean" && typeof right === "number") ||
-    (typeof left === "number" && typeof right === "boolean")
-  ) {
-    return Number(left) === Number(right);
+class JsonInteger {
+  constructor(source) {
+    this.value = BigInt(source);
   }
+
+  toString() {
+    return this.value.toString();
+  }
+}
+
+function parseJsonLosslessly(text) {
+  return JSON.parse(text, (_key, value, context) => {
+    if (
+      typeof value === "number" &&
+      context?.source &&
+      !context.source.includes(".") &&
+      !context.source.includes("e") &&
+      !context.source.includes("E") &&
+      !Number.isSafeInteger(value)
+    ) {
+      return new JsonInteger(context.source);
+    }
+    return value;
+  });
+}
+
+function pythonEqual(left, right) {
+  if (left instanceof JsonInteger || right instanceof JsonInteger) {
+    if (left instanceof JsonInteger && right instanceof JsonInteger) {
+      return left.value === right.value;
+    }
+    const integer = left instanceof JsonInteger ? left : right;
+    const number = left instanceof JsonInteger ? right : left;
+    return typeof number === "number" && Number.isInteger(number) && integer.value === BigInt(number);
+  }
+  if (typeof left === "boolean" || typeof right === "boolean") return left === right;
+  if (left === right) return true;
   if (Array.isArray(left) || Array.isArray(right)) {
     return (
       Array.isArray(left) &&
@@ -31,13 +60,67 @@ function pythonEqual(left, right) {
   return false;
 }
 
+function pathParts(path, separatorPattern) {
+  return path.split(separatorPattern).filter((part) => part && part !== ".");
+}
+
+function normalizeWindowsPathSpelling(path) {
+  const windowsPath = path.replaceAll("/", "\\");
+  const unc = windowsPath.match(/^\\\\([^\\]+)\\([^\\]+)(?:\\|$)/);
+  if (unc) {
+    const root = `\\\\${unc[1]}\\${unc[2]}\\`;
+    const parts = pathParts(windowsPath.slice(unc[0].length), /\\+/);
+    return parts.length > 0 ? `${root}${parts.join("\\")}` : root;
+  }
+  const drive = windowsPath.match(/^([A-Za-z]:)(\\?)/);
+  if (drive) {
+    const rooted = drive[2] === "\\";
+    const parts = pathParts(windowsPath.slice(drive[1].length + (rooted ? 1 : 0)), /\\+/);
+    if (rooted) return parts.length > 0 ? `${drive[1]}\\${parts.join("\\")}` : `${drive[1]}\\`;
+    return parts.length > 0 ? `${drive[1]}${parts.join("\\")}` : drive[1];
+  }
+  const rooted = windowsPath.startsWith("\\");
+  const parts = pathParts(windowsPath.slice(rooted ? 1 : 0), /\\+/);
+  if (rooted) return parts.length > 0 ? `\\${parts.join("\\")}` : "\\";
+  return parts.length > 0 ? parts.join("\\") : ".";
+}
+
+function normalizePathSpelling(path) {
+  if (sep === "\\") return normalizeWindowsPathSpelling(path);
+  const doubleSlashRoot = path.startsWith("//") && !path.startsWith("///");
+  const root = doubleSlashRoot ? "//" : path.startsWith("/") ? "/" : "";
+  const parts = pathParts(path, /\/+/);
+  if (root) return parts.length > 0 ? `${root}${parts.join("/")}` : root;
+  return parts.length > 0 ? parts.join("/") : ".";
+}
+
+function compareCodePoints(left, right) {
+  const leftPoints = Array.from(left, (character) => character.codePointAt(0));
+  const rightPoints = Array.from(right, (character) => character.codePointAt(0));
+  const length = Math.min(leftPoints.length, rightPoints.length);
+  for (let index = 0; index < length; index += 1) {
+    if (leftPoints[index] !== rightPoints[index]) return leftPoints[index] - rightPoints[index];
+  }
+  return leftPoints.length - rightPoints.length;
+}
+
 export function loadScenarios(paths) {
   const scenarios = [];
   for (const path of paths) {
-    const data = JSON.parse(readFileSync(path, "utf8"));
+    let data;
+    try {
+      data = parseJsonLosslessly(readFileSync(path, "utf8"));
+    } catch (error) {
+      error.invalidJsonPath = path;
+      throw error;
+    }
     if (Array.isArray(data)) scenarios.push(...data);
-    else if (data && typeof data === "object" && Array.isArray(data.scenarios)) {
-      scenarios.push(...data.scenarios);
+    else if (data && typeof data === "object" && Object.hasOwn(data, "scenarios")) {
+      if (Array.isArray(data.scenarios) || typeof data.scenarios === "string") {
+        scenarios.push(...data.scenarios);
+      } else {
+        throw new TypeError("scenarios is not iterable");
+      }
     }
   }
   return scenarios;
@@ -47,12 +130,12 @@ export function loadStoryTitleToId(storiesDirectory) {
   const titleMap = new Map();
   const epicFiles = readdirSync(storiesDirectory)
     .filter((name) => /^EPIC-.*\.md$/.test(name))
-    .sort();
+    .sort(compareCodePoints);
 
   for (const name of epicFiles) {
     let currentId;
     for (const line of readFileSync(join(storiesDirectory, name), "utf8").split(/\r?\n/)) {
-      const idMatch = line.match(/^## (STORY-\d+)/);
+      const idMatch = line.match(/^## (STORY-\p{Nd}+)/u);
       if (idMatch) currentId = idMatch[1];
       const titleMatch = line.match(/^\*\*Title:\*\* (.+)/);
       if (titleMatch && currentId) {
@@ -67,6 +150,9 @@ export function loadStoryTitleToId(storiesDirectory) {
 export function dedupScenarios(scenarios) {
   const seen = new Map();
   for (const scenario of scenarios) {
+    if (!scenario || typeof scenario !== "object" || Array.isArray(scenario)) {
+      throw new TypeError("scenario is not an object");
+    }
     const title = (scenario.title ?? "").trim();
     const existing = seen.get(title);
     if (!existing) {
@@ -176,6 +262,13 @@ export function formatScenario(scenario) {
 export function formatScenarioDocument(scenarios) {
   const journeys = scenarios.filter((scenario) => scenario.kind === "journey");
   const surfaces = scenarios.filter((scenario) => scenario.kind !== "journey");
+  if (journeys.length === 0 && surfaces.length === 0) {
+    return {
+      content: "# Behavior Scenarios\n\nNo scenarios extracted.\n",
+      journeys: 0,
+      surfaces: 0,
+    };
+  }
   const lines = ["# Behavior Scenarios", ""];
   if (journeys.length > 0) {
     lines.push("## Journey Scenarios", "");
@@ -227,26 +320,41 @@ function parseArgs(args) {
     }
     if (arg === "--") {
       optionsEnded = true;
-    } else if (arg === "-h" || arg === "--help") {
+    } else if (arg === "-h" || (arg.startsWith("--") && "--help".startsWith(arg))) {
       return { help: true };
-    } else if (arg === "-o" || arg === "--output") {
+    } else if (
+      arg === "-o" ||
+      (arg.startsWith("--") && !arg.includes("=") && "--output".startsWith(arg))
+    ) {
       const value = args[++index];
-      if (value === undefined || value.startsWith("-")) {
+      if (value === undefined || (value !== "-" && value.startsWith("-"))) {
         return { error: "argument -o/--output: expected one argument" };
       }
       output = value;
-    } else if (arg.startsWith("--output=")) {
-      output = arg.slice("--output=".length);
+    } else if (
+      arg.startsWith("--") &&
+      arg.includes("=") &&
+      "--output".startsWith(arg.slice(0, arg.indexOf("=")))
+    ) {
+      output = arg.slice(arg.indexOf("=") + 1);
     } else if (arg.startsWith("-o") && arg.length > 2) {
       output = arg.slice(2);
-    } else if (arg === "--stories-dir") {
+    } else if (
+      arg.startsWith("--") &&
+      !arg.includes("=") &&
+      "--stories-dir".startsWith(arg)
+    ) {
       const value = args[++index];
-      if (value === undefined || value.startsWith("-")) {
+      if (value === undefined || (value !== "-" && value.startsWith("-"))) {
         return { error: "argument --stories-dir: expected one argument" };
       }
       storiesDirectory = value;
-    } else if (arg.startsWith("--stories-dir=")) {
-      storiesDirectory = arg.slice("--stories-dir=".length);
+    } else if (
+      arg.startsWith("--") &&
+      arg.includes("=") &&
+      "--stories-dir".startsWith(arg.slice(0, arg.indexOf("=")))
+    ) {
+      storiesDirectory = arg.slice(arg.indexOf("=") + 1);
     } else if (arg.startsWith("-")) {
       unrecognized.push(arg);
     } else {
@@ -275,43 +383,41 @@ export async function main(args) {
     process.stderr.write(`${usage(program)}${program}: error: ${options.error}\n`);
     return 2;
   }
-  for (const path of options.jsonFiles) {
+  const jsonFiles = options.jsonFiles.map(normalizePathSpelling);
+  const storiesDirectory = normalizePathSpelling(options.storiesDirectory);
+  const output = normalizePathSpelling(options.output);
+  for (const path of jsonFiles) {
     if (!existsSync(path)) {
       process.stderr.write(`error: file not found: ${path}\n`);
       return 2;
     }
   }
-  if (!existsSync(options.storiesDirectory) || !statSync(options.storiesDirectory).isDirectory()) {
-    process.stderr.write(`error: stories directory not found: ${options.storiesDirectory}\n`);
+  if (!existsSync(storiesDirectory) || !statSync(storiesDirectory).isDirectory()) {
+    process.stderr.write(`error: stories directory not found: ${storiesDirectory}\n`);
     return 2;
   }
 
   let scenarios;
   try {
-    scenarios = loadScenarios(options.jsonFiles);
+    scenarios = loadScenarios(jsonFiles);
   } catch (error) {
-    const path = options.jsonFiles.find((candidate) => {
-      try {
-        JSON.parse(readFileSync(candidate, "utf8"));
-        return false;
-      } catch {
-        return true;
-      }
-    });
-    process.stderr.write(`error: invalid JSON in ${path}: ${error.message}\n`);
-    return 1;
+    if (error.invalidJsonPath) {
+      process.stderr.write(`error: invalid JSON in ${error.invalidJsonPath}: ${error.message}\n`);
+      return 1;
+    }
+    throw error;
   }
   if (scenarios.length === 0) {
     process.stderr.write("warning: no scenarios found in input files\n");
-    writeFileSync(options.output, "# Behavior Scenarios\n\nNo scenarios extracted.\n");
+    writeFileSync(output, formatScenarioDocument([]).content);
     return 0;
   }
 
   const deduped = dedupScenarios(scenarios);
   assignIds(deduped);
-  resolveStoryRefs(deduped, loadStoryTitleToId(options.storiesDirectory));
+  resolveStoryRefs(deduped, loadStoryTitleToId(storiesDirectory));
   const document = formatScenarioDocument(deduped);
-  writeFileSync(options.output, document.content);
+  writeFileSync(output, document.content);
   process.stdout.write(
     `OK: ${document.journeys} journey scenarios, ${document.surfaces} surface scenarios\n`,
   );

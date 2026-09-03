@@ -1,6 +1,6 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { runHelper } from "./cli-harness.js";
 
@@ -201,6 +201,31 @@ describe("aggregate_scenarios", () => {
     expect(content.indexOf("same.md:1")).toBeLessThan(content.indexOf("new.md"));
   });
 
+  it("preserves large JSON integers and JSON structural equality without equating booleans to numbers", () => {
+    const root = tempDir("scenario-lossless-numbers-");
+    const stories = join(root, "requirements");
+    mkdirSync(stories);
+    const input = join(root, "scenarios.json");
+    writeFileSync(
+      input,
+      [
+        "[",
+        '{"title":"Numbers","sources":[{"file":"large","lines":9007199254740992},{"file":"same","meta":{"a":1,"b":true}}]},',
+        '{"title":"Numbers","sources":[{"file":"large","lines":9007199254740993},{"meta":{"b":true,"a":1.0},"file":"same"},{"file":"same","meta":{"a":true,"b":true}}]}',
+        "]",
+      ].join(""),
+    );
+    const output = join(root, "behavior-scenarios.md");
+
+    const result = runAggregator(output, stories, [input]);
+
+    expect(result.status).toBe(0);
+    const content = readFileSync(output, "utf8");
+    expect(content).toContain("- `large:9007199254740992`");
+    expect(content).toContain("- `large:9007199254740993`");
+    expect(content.match(/^- `same`$/gm)).toHaveLength(2);
+  });
+
   it("writes the exact empty document and warning without creating a missing output parent", () => {
     const root = tempDir("scenario-empty-");
     const stories = join(root, "requirements");
@@ -233,6 +258,45 @@ describe("aggregate_scenarios", () => {
     expect(result.status).toBe(1);
     expect(result.stdout).toBe("");
     expect(result.stderr).toContain(input);
+  });
+
+  it.each([
+    ["null", null],
+    ["number", 42],
+    ["string", "x"],
+  ])("fails for a non-list scenarios wrapper containing %s", (_label, scenariosValue) => {
+    const root = tempDir("scenario-malformed-wrapper-");
+    const stories = join(root, "requirements");
+    mkdirSync(stories);
+    const input = writeJson(root, "bad-wrapper.json", { scenarios: scenariosValue });
+    const output = join(root, "out.md");
+
+    const result = runAggregator(output, stories, [input]);
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).not.toBe("");
+    expect(existsSync(output)).toBe(false);
+  });
+
+  it("uses Python code-point filename order and Unicode decimal digits in story IDs", () => {
+    const root = tempDir("scenario-unicode-stories-");
+    const stories = join(root, "requirements");
+    mkdirSync(stories);
+    writeFileSync(
+      join(stories, "EPIC-\uE000.md"),
+      "## STORY-1111\n**Title:** Duplicate\n\n## STORY-١\n**Title:** Arabic\n",
+    );
+    writeFileSync(join(stories, "EPIC-\u{10000}.md"), "## STORY-2222\n**Title:** Duplicate\n");
+    const input = writeJson(root, "scenarios.json", [
+      { title: "Check", owning_story_titles: ["Duplicate", "Arabic"] },
+    ]);
+    const output = join(root, "out.md");
+
+    const result = runAggregator(output, stories, [input]);
+
+    expect(result.status).toBe(0);
+    expect(readFileSync(output, "utf8")).toContain("**Owning stories:** STORY-2222, STORY-١");
   });
 
   it("preserves argparse-compatible help, errors, option spellings, and path spelling", () => {
@@ -294,6 +358,82 @@ describe("aggregate_scenarios", () => {
     expect(missingStoriesResult.stderr).toBe(
       `error: stories directory not found: ${missingStories}\n`,
     );
+  });
+
+  it("accepts argparse long abbreviations, dash values, and end-of-options", () => {
+    const root = tempDir("scenario-argparse-edges-");
+    mkdirSync(join(root, "stories"));
+    writeFileSync(join(root, "empty.json"), "[]");
+    writeFileSync(join(root, "-input.json"), "[]");
+
+    const abbreviated = runHelper(
+      AGGREGATOR,
+      ["--out", "abbreviated.md", "--stories-d", "stories", "empty.json"],
+      root,
+    );
+    expect(abbreviated.status).toBe(0);
+    expect(abbreviated.stdout).toBe("");
+    expect(abbreviated.stderr).toBe("warning: no scenarios found in input files\n");
+    expect(readFileSync(join(root, "abbreviated.md"), "utf8")).toBe(
+      "# Behavior Scenarios\n\nNo scenarios extracted.\n",
+    );
+
+    const dashOutput = runHelper(
+      AGGREGATOR,
+      ["-o", "-", "--stories-dir", "stories", "empty.json"],
+      root,
+    );
+    expect(dashOutput.status).toBe(0);
+    expect(dashOutput.stdout).toBe("");
+    expect(dashOutput.stderr).toBe("warning: no scenarios found in input files\n");
+    expect(readFileSync(join(root, "-"), "utf8")).toBe(
+      "# Behavior Scenarios\n\nNo scenarios extracted.\n",
+    );
+
+    const dashRoot = join(root, "dash-stories");
+    mkdirSync(join(dashRoot, "-"), { recursive: true });
+    writeFileSync(join(dashRoot, "empty.json"), "[]");
+    const dashStories = runHelper(
+      AGGREGATOR,
+      ["-o", "out.md", "--stories-dir", "-", "empty.json"],
+      dashRoot,
+    );
+    expect(dashStories.status).toBe(0);
+    expect(dashStories.stdout).toBe("");
+    expect(dashStories.stderr).toBe("warning: no scenarios found in input files\n");
+    expect(readFileSync(join(dashRoot, "out.md"), "utf8")).toContain("No scenarios extracted.");
+
+    const endOptions = runHelper(
+      AGGREGATOR,
+      ["-o", "end.md", "--stories-dir", "stories", "--", "-input.json"],
+      root,
+    );
+    expect(endOptions.status).toBe(0);
+    expect(endOptions.stdout).toBe("");
+    expect(endOptions.stderr).toBe("warning: no scenarios found in input files\n");
+    expect(readFileSync(join(root, "end.md"), "utf8")).toContain("No scenarios extracted.");
+  });
+
+  it("normalizes leading-dot path spellings in aggregate errors", () => {
+    const root = tempDir("scenario-relative-errors-");
+    mkdirSync(join(root, "stories"));
+
+    const missingInput = runHelper(
+      AGGREGATOR,
+      ["-o", "out.md", "--stories-dir", "stories", "./missing.json"],
+      root,
+    );
+    expect(missingInput.status).toBe(2);
+    expect(missingInput.stderr).toBe("error: file not found: missing.json\n");
+
+    writeFileSync(join(root, "empty.json"), "[]");
+    const missingStories = runHelper(
+      AGGREGATOR,
+      ["-o", "out.md", "--stories-dir", "./missing-stories", "empty.json"],
+      root,
+    );
+    expect(missingStories.status).toBe(2);
+    expect(missingStories.stderr).toBe("error: stories directory not found: missing-stories\n");
   });
 });
 
@@ -400,12 +540,54 @@ describe("backlink_scenarios", () => {
     expect(readFileSync(epic, "utf8")).toBe(original);
   });
 
+  it("recognizes Unicode decimal digits in scenario, story, and AC identifiers", () => {
+    const root = tempDir("scenario-backlink-unicode-");
+    const requirements = join(root, "requirements");
+    mkdirSync(requirements);
+    const epic = join(requirements, "EPIC-001.md");
+    writeFileSync(epic, "## STORY-١\n- AC-١: observable\n");
+    const scenarios = join(root, "scenarios.md");
+    writeFileSync(scenarios, "## SCENARIO-١ — Arabic\n**Owning stories:** STORY-١\n");
+
+    const result = runHelper(BACKLINKER, [scenarios, requirements]);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe(
+      "EPIC-001.md: 1 AC(s) linked\nOK: 1 AC(s) linked, 0 already linked\n",
+    );
+    expect(readFileSync(epic, "utf8")).toBe(
+      "## STORY-١\n- AC-١: observable · scenario:`SCENARIO-١`",
+    );
+  });
+
+  it("processes epic filenames in Python code-point order", () => {
+    const root = tempDir("scenario-backlink-unicode-order-");
+    const requirements = join(root, "requirements");
+    mkdirSync(requirements);
+    writeFileSync(join(requirements, "EPIC-\uE000.md"), "## STORY-0001\n- AC-1: first\n");
+    writeFileSync(join(requirements, "EPIC-\u{10000}.md"), "## STORY-0002\n- AC-1: second\n");
+    const scenarios = join(root, "scenarios.md");
+    writeFileSync(
+      scenarios,
+      "## SCENARIO-0001 — Both\n**Owning stories:** STORY-0001, STORY-0002\n",
+    );
+
+    const result = runHelper(BACKLINKER, [scenarios, requirements]);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe(
+      "EPIC-\uE000.md: 1 AC(s) linked\n" +
+        "EPIC-\u{10000}.md: 1 AC(s) linked\n" +
+        "OK: 2 AC(s) linked, 0 already linked\n",
+    );
+  });
+
   it("returns exit 2 for invalid invocation and missing inputs with exact path spelling", () => {
     const invalid = runHelper(BACKLINKER, []);
     expect(invalid.status).toBe(2);
     expect(invalid.stdout).toBe("");
     expect(invalid.stderr).toBe(
-      "usage: backlink_scenarios.mjs <scenarios-file> <requirements-dir>\n",
+      `usage: ${join(resolve(import.meta.dirname, "..", ".."), BACKLINKER)} <scenarios-file> <requirements-dir>\n`,
     );
 
     const root = tempDir("scenario-backlink-errors-");
@@ -422,5 +604,26 @@ describe("backlink_scenarios", () => {
     const missingDir = runHelper(BACKLINKER, [scenarios, missingDirectory]);
     expect(missingDir.status).toBe(2);
     expect(missingDir.stderr).toBe(`error: directory not found: ${missingDirectory}\n`);
+  });
+
+  it("normalizes leading-dot path spellings in backlink errors", () => {
+    const root = tempDir("scenario-backlink-relative-");
+    mkdirSync(join(root, "requirements"));
+
+    const missingFile = runHelper(BACKLINKER, ["./missing.md", "requirements"], root);
+
+    expect(missingFile.status).toBe(2);
+    expect(missingFile.stdout).toBe("");
+    expect(missingFile.stderr).toBe("error: file not found: missing.md\n");
+
+    writeFileSync(join(root, "scenarios.md"), "");
+    const missingDirectory = runHelper(
+      BACKLINKER,
+      ["scenarios.md", "./missing-requirements"],
+      root,
+    );
+    expect(missingDirectory.status).toBe(2);
+    expect(missingDirectory.stdout).toBe("");
+    expect(missingDirectory.stderr).toBe("error: directory not found: missing-requirements\n");
   });
 });
