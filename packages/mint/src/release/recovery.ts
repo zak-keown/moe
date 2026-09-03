@@ -1,4 +1,4 @@
-import { MintError } from '../diagnostics.js'
+
 import type { CandidateLockV1 } from './catalog.js'
 
 export type ResumeAction =

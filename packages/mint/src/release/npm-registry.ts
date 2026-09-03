@@ -33,7 +33,7 @@ export class ProductionNpmRegistry implements NpmRegistryPort {
     this.runner = runner
   }
 
-  async preflight(packageName: string): Promise<void> {
+  async preflight(_packageName: string): Promise<void> {
     const result = await this.runner.run(['whoami'])
     if (result.exitCode !== 0) {
       registryError('NPM_AUTH_FAILED', 'npm authentication check failed', 'Configure npm credentials before publication.')

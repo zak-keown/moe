@@ -5,7 +5,6 @@ import {
   type CertificationEvidenceV1,
   type EvidenceExpectation,
 } from '../src/release/evidence.js'
-import type { PluginCatalogRecordV1, ReleasePreflightV1 } from '../src/release/catalog.js'
 
 function fakeEvidence(overrides: Partial<CertificationEvidenceV1> = {}): CertificationEvidenceV1 {
   return {

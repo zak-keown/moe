@@ -60,7 +60,7 @@ export interface BaselineSelection {
 export function selectBaseline(
   candidate: PlatformTag,
   priorTags: readonly PlatformTag[],
-  sourceSha?: string,
+  _sourceSha?: string,
 ): BaselineSelection {
   if (candidate.channel !== 'prerelease') {
     tagError('TAG_STABLE_CANDIDATE', 'cannot prepare a candidate from a stable tag', 'Use a prerelease tag for candidate preparation.')
@@ -83,7 +83,7 @@ export function selectBaseline(
 export function selectStableCandidate(
   stableTag: PlatformTag,
   priorTags: readonly PlatformTag[],
-  sourceSha: string,
+  _sourceSha: string,
 ): PlatformTag {
   if (stableTag.channel !== 'stable') {
     tagError('TAG_NOT_STABLE', 'promotion requires a stable tag', 'Use a stable tag for promotion.')

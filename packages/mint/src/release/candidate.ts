@@ -1,13 +1,12 @@
 import { createHash } from 'node:crypto'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { join, basename } from 'node:path'
+import { mkdir, writeFile } from 'node:fs/promises'
+import { join, } from 'node:path'
 import { MintError } from '../diagnostics.js'
 import type { PlatformTag } from './tag-policy.js'
 import type { PublishMatrixEntry } from '../platform/projections.js'
 import {
   canonicalJson,
   sha256,
-  sha512Integrity,
   buildPrereleaseCatalog,
   detectChangedPlugins,
   requireVersionChangeForArtifactChange,
@@ -21,7 +20,6 @@ import {
 import {
   buildReleaseAssetRecords,
   renderChecksumFile,
-  type ReleaseAssetRecord,
 } from './assets.js'
 import type { ReleaseStorePort, ReleaseRef } from './github-release.js'
 import type { PackedArtifact } from '../artifact/pack.js'
@@ -138,7 +136,7 @@ export async function prepareCandidate(
       await mkdir(downloadDir, { recursive: true })
 
       const priorTag = `v${input.previous!.platform_version}`
-      let release = await deps.releases.findByTag(priorTag)
+      const release = await deps.releases.findByTag(priorTag)
       if (release === undefined) {
         candidateError('CANDIDATE_PRIOR_RELEASE_MISSING', `prior release "${priorTag}" not found`, 'Verify the prior catalog references a published release.')
       }
@@ -182,7 +180,7 @@ export async function prepareCandidate(
     })
   }
 
-  const pluginHashes = new Map(
+  const _pluginHashes = new Map(
     tarballMeta.map((t) => {
       const sha512 = createHash('sha512').update('').digest('hex')
       return [t.filename, { sha256: t.sha256, sha512 }] as const
@@ -261,7 +259,7 @@ export async function prepareCandidate(
       }
       continue
     }
-    const tarballPath = pluginRecords.find((p) => p.artifact.mirror.asset === tarball.filename)
+    const _tarballPath = pluginRecords.find((p) => p.artifact.mirror.asset === tarball.filename)
     const dir = changedMap.get(pluginRecords.find((p) => p.artifact.mirror.asset === tarball.filename)!.plugin) ? join(packOutputDir, pluginRecords.find((p) => p.artifact.mirror.asset === tarball.filename)!.plugin) : join(input.outputDir, 'downloads')
     await deps.releases.uploadExact(release, join(dir, tarball.filename), tarball.sha256)
   }

@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { checkArtifactSet, type ArtifactCheckResult } from '../src/artifact/check.js'
+import { checkArtifactSet, } from '../src/artifact/check.js'
 import { resolvePlatform } from '../src/platform/load.js'
 
 const REPO_ROOT = join(import.meta.dirname, '..', '..', '..')
