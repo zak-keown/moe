@@ -45,6 +45,10 @@ function normalizePathSpelling(path) {
   return parts.length > 0 ? parts.join("/") : ".";
 }
 
+function readText(path) {
+  return readFileSync(path, "utf8").replace(/\r\n?/g, "\n");
+}
+
 export function validateRoadmap(content) {
   const errors = [];
   if (!content.includes(WALKING_SKELETON_HEADING)) {
@@ -83,7 +87,7 @@ export function main(args = process.argv.slice(2)) {
     return 2;
   }
 
-  const errors = validateRoadmap(readFileSync(path, "utf8"));
+  const errors = validateRoadmap(readText(path));
   if (errors.length > 0) {
     for (const error of errors) process.stderr.write(`error: ${error}\n`);
     return 1;

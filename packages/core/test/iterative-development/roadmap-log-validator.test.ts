@@ -91,6 +91,33 @@ describe("validate_roadmap", () => {
     );
   });
 
+  it("normalizes bare CR before isolating the walking-skeleton section", () => {
+    const root = tempDir("roadmap-cr-");
+    const path = write(
+      root,
+      "roadmap.md",
+      [
+        "## Walking skeleton (ITER-0000)",
+        "**Intent:** present",
+        "## Other",
+        "**Status:** outside",
+        "**Stories committed:** outside",
+        "**Journey scenario:** outside",
+        "## Iteration list",
+      ].join("\r"),
+    );
+
+    const result = runHelper(ROADMAP_VALIDATOR, [path]);
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe(
+      "error: walking skeleton: missing required field **Status:**\n" +
+        "error: walking skeleton: missing required field **Stories committed:**\n" +
+        "error: walking skeleton: missing required field **Journey scenario:**\n",
+    );
+  });
+
   it("preserves exact usage and normalized missing-path errors", () => {
     const usage = runHelper(ROADMAP_VALIDATOR, []);
     expect(usage.status).toBe(2);
@@ -175,6 +202,52 @@ describe("validate_iteration_log", () => {
       "ITER-1: missing required field **Summary:**",
     ]);
   });
+
+  it("normalizes CRLF and bare CR before parsing iteration sections", () => {
+    const root = tempDir("iteration-log-newlines-");
+    const path = write(
+      root,
+      "iteration-log.md",
+      ["## ITER-1", "**Completed:** today"].join("\r\n") +
+        `\r${[
+          "**Stories delivered:** STORY-1",
+          "**Tasks executed:** 1",
+          "**Scenarios:** none",
+          "**Summary:** complete",
+        ].join("\r")}`,
+    );
+
+    const result = runHelper(LOG_VALIDATOR, [path]);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe(`OK: ${path}\n`);
+  });
+
+  it.each(["\u2028", "\u2029"])(
+    "does not treat Unicode separator %j as an iteration-header line boundary",
+    (separator) => {
+      const root = tempDir("iteration-log-unicode-separator-");
+      const path = write(
+        root,
+        "iteration-log.md",
+        `${[
+          "## ITER-1",
+          "**Completed:** today",
+          "**Stories delivered:** STORY-1",
+          "**Tasks executed:** 1",
+          "**Scenarios:** none",
+          "**Summary:** complete",
+        ].join("\n")}${separator}## ITER-2`,
+      );
+
+      const result = runHelper(LOG_VALIDATOR, [path]);
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe("");
+      expect(result.stdout).toBe(`OK: ${path}\n`);
+    },
+  );
 
   it("preserves exact invalid-fixture, usage, and normalized missing-path streams", () => {
     const invalid = runHelper(LOG_VALIDATOR, [join(FIXTURES, "iteration-log.invalid.md")]);

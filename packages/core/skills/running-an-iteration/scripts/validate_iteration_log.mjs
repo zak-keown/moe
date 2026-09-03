@@ -2,7 +2,7 @@ import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-const ITERATION_PATTERN = /^## ITER-(\p{Nd}+)/gmu;
+const ITERATION_PATTERN = /(?:^|\n)## ITER-(\p{Nd}+)/gu;
 const REQUIRED_FIELDS = [
   "**Completed:**",
   "**Stories delivered:**",
@@ -45,6 +45,10 @@ function normalizePathSpelling(path) {
   return parts.length > 0 ? parts.join("/") : ".";
 }
 
+function readText(path) {
+  return readFileSync(path, "utf8").replace(/\r\n?/g, "\n");
+}
+
 export function validateIterationLog(content) {
   const errors = [];
   const iterations = [...content.matchAll(ITERATION_PATTERN)];
@@ -77,7 +81,7 @@ export function main(args = process.argv.slice(2)) {
     return 2;
   }
 
-  const errors = validateIterationLog(readFileSync(path, "utf8"));
+  const errors = validateIterationLog(readText(path));
   if (errors.length > 0) {
     for (const error of errors) process.stderr.write(`error: ${error}\n`);
     return 1;
