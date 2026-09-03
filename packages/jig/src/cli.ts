@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { realpathSync } from "node:fs";
 import { Command, CommanderError } from "commander";
+import { planInit, specInit } from "./plan.js";
 import { worktreeCreate, worktreeRemove, worktreeValidate } from "./worktree.js";
 
 const program = new Command()
@@ -45,11 +46,31 @@ wt.command("validate")
     }
   });
 
-program.command("plan").description("Initialize plan files with correct naming and placement");
+const plan = program
+  .command("plan")
+  .description("Initialize plan files with correct naming and placement");
 
-program
+plan
+  .command("init")
+  .description("Create a new plan file in docs/moe/plans/")
+  .argument("<name>", "feature name (used in the filename slug)")
+  .action((name: string) => {
+    const path = planInit(name);
+    console.log(path);
+  });
+
+const spec = program
   .command("spec")
   .description("Initialize spec/design files with correct naming and placement");
+
+spec
+  .command("init")
+  .description("Create a new spec file in docs/moe/specs/")
+  .argument("<name>", "topic name (used in the filename slug)")
+  .action((name: string) => {
+    const path = specInit(name);
+    console.log(path);
+  });
 
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
   try {
