@@ -114,6 +114,7 @@ This step is a hard gate. An iteration that leaves its own TODO markers in the c
   - Scenarios added or updated
   - Sentinel corpus results
 - Validate: `python3 "${CLAUDE_PLUGIN_ROOT}/skills/running-an-iteration/scripts/validate_iteration_log.py" docs/moe/iterations/iteration-log.md`
+- After each task commit, update the progress snapshot with `moe jig progress update --phase ... --task ... --iterations ... --event ...`. If `moe-jig` is not on PATH, overwrite `docs/moe/iterations/progress.md` manually.
 - Return control to orchestrator (do NOT invoke `auditing-progress` — that's the orchestrator's job)
 
 ## Quick Reference
