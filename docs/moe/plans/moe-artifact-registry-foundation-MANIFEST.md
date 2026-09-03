@@ -11,7 +11,8 @@ plans:
   - id: platform-registry
     plan: docs/moe/plans/2026-09-02-moe-platform-registry.md
     depends_on: []
-    status: pending
+    status: done
+    commits: 9103fa5..f809e51
   - id: artifact-composition
     plan: docs/moe/plans/2026-09-02-moe-artifact-composition.md
     depends_on: [platform-registry]
