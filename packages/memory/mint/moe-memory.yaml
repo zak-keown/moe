@@ -40,7 +40,7 @@ artifact:
 targets:
   claude-code: {intent: certify, expected_capabilities: [skill-discovery, agent-discovery, hook-execution, mcp-registration, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
   cursor: {intent: preview, expected_capabilities: [skill-discovery, hook-execution, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
-  codex: {intent: preview, expected_capabilities: [skill-discovery], operating_systems: [macos, linux, wsl2, windows]}
+  codex: {intent: preview, expected_capabilities: [skill-discovery, hook-execution, mcp-registration], operating_systems: [macos, linux, wsl2, windows]}
   kimi: {intent: preview, expected_capabilities: [skill-discovery, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
   opencode: {intent: preview, expected_capabilities: [skill-discovery, agent-discovery, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
   pi: {intent: preview, expected_capabilities: [skill-discovery, bootstrap-routing], operating_systems: [macos, linux, wsl2, windows]}
@@ -75,7 +75,11 @@ imported_works:
   - name: proper-lockfile
   - name: marked
 
-# harnesses: no exclusions. All 8 adapters run.
+harnesses:
+  codex:
+    source_hooks: source
+
+# All 8 adapters run (no exclusions).
 
 marketplace:
   # Standalone generation uses this package-local name. Root minting overrides
