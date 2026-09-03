@@ -51,7 +51,7 @@
     {
       "path": ".moe-mint/manifest.json",
       "size": 3384,
-      "sha256": "e1056b2070f063eb73826bba32397f52d320ae2ee8a44a98e5663f8244abfa4c",
+      "sha256": "66e04fee89586ca260ac905d459abd82833933c532aeff3c343e4e4a4d46211a",
       "mode": "0644"
     },
     {
@@ -175,6 +175,12 @@
       "mode": "0755"
     },
     {
+      "path": "hooks/developing-for-moe-notice",
+      "size": 2093,
+      "sha256": "ee3d5cb17e12fadb24d33d6429b13219e6ec8fb0120f6242d119e830caec31e1",
+      "mode": "0755"
+    },
+    {
       "path": "hooks/governance-marker-check",
       "size": 2528,
       "sha256": "36a49b9cd7cbaae636cb4e571190bd04068842e0ef7eb2dae736a9d10116e19b",
@@ -182,9 +188,21 @@
     },
     {
       "path": "hooks/hooks.json",
-      "size": 1016,
-      "sha256": "d8820e5592089dc74678793194b738b64043e779fad507060b7b9dd580dfff26",
+      "size": 1676,
+      "sha256": "2f3ef718345656c60698b7adaf080b56349f959d5a996f2e7d5b4579330a3730",
       "mode": "0644"
+    },
+    {
+      "path": "hooks/jig-review-format-guard",
+      "size": 1279,
+      "sha256": "3b3608098895d5e665bef2c323ab542f2d5a7c36ec986244c185d108ee40bd7e",
+      "mode": "0755"
+    },
+    {
+      "path": "hooks/jig-worktree-guard",
+      "size": 1004,
+      "sha256": "ec98b30d2e4dfc9b21990fc57227b35f52702597725e13bbe92f4ab2395f45c3",
+      "mode": "0755"
     },
     {
       "path": "hooks/moe-completion-evidence",
@@ -200,8 +218,8 @@
     },
     {
       "path": "hooks/moe-mint/hooks.json",
-      "size": 1311,
-      "sha256": "fc8bd0df72b9b9695a5adab194d407858067a9072810ba43083cc56189545118",
+      "size": 1971,
+      "sha256": "8652d28d87f8f2ff92731ee36ab4929d7cf2f4402aac7cddf888c64194163d0e",
       "mode": "0644"
     },
     {
@@ -242,8 +260,8 @@
     },
     {
       "path": "package.json",
-      "size": 11063,
-      "sha256": "68cc9e9d9c98e0b109619d50f3620f2f365bdeb482bbfac571e5500cdf8f61b7",
+      "size": 11277,
+      "sha256": "7417941745dd597166534a17d31b1684345d643b75b5d5ae01d2e4cdd5ff7496",
       "mode": "0644"
     },
     {
@@ -296,8 +314,8 @@
     },
     {
       "path": "skills/brainstorming/SKILL.md",
-      "size": 19854,
-      "sha256": "aca4a4841739312cd49ee42beb7c238309ce0152b7309f226b41721d02b8ca34",
+      "size": 20030,
+      "sha256": "8c82b7247fd2388540bd0ff53c88e8d64276980137a9ef6716b71575d58fe592",
       "mode": "0644"
     },
     {
@@ -469,6 +487,12 @@
       "mode": "0644"
     },
     {
+      "path": "skills/developing-for-moe/SKILL.md",
+      "size": 2904,
+      "sha256": "6f5d04077d701773c24102ed525f4f47980bd6dc713202d118d7172bcb834083",
+      "mode": "0644"
+    },
+    {
       "path": "skills/dispatching-parallel-agents/SKILL.md",
       "size": 11682,
       "sha256": "fb306e1d5ab0c3bf8be003852af0e9091915a5e70129bd6bbae7c45308d823a5",
@@ -530,8 +554,8 @@
     },
     {
       "path": "skills/domain-modeling/SKILL.md",
-      "size": 3331,
-      "sha256": "327a2b50620e2fd70abc6893cd6965e76b20f8d0adb0dc2c8d5eb3845efb643e",
+      "size": 3595,
+      "sha256": "f1bada809d7aeab1fd503ea2e16ad58d7b957b286222ae10e90d52bae5fdda9b",
       "mode": "0644"
     },
     {
@@ -632,9 +656,15 @@
     },
     {
       "path": "skills/fixing-a-code-review/SKILL.md",
-      "size": 5857,
-      "sha256": "f0ac15b849fecec6fe130c219881972c70eb1aa6c1eef0ae663b1ae8e290302a",
+      "size": 9093,
+      "sha256": "09373a5d4a140b019cc08a35c01863ca67a1dc8e9c2acaa85d259938a0b0654e",
       "mode": "0644"
+    },
+    {
+      "path": "skills/fixing-a-code-review/scripts/compact-resolved.mjs",
+      "size": 2932,
+      "sha256": "c409ad442d0afe072940e1c160094a81de035d06504b5c68e5d556af561f9886",
+      "mode": "0755"
     },
     {
       "path": "skills/fixing-a-code-review/scripts/stamp-disposition.mjs",
@@ -674,14 +704,14 @@
     },
     {
       "path": "skills/improve-codebase-architecture/SKILL.md",
-      "size": 6268,
-      "sha256": "334bbfff001b5f84e2852f1bd3d91c71956b8f26e3abef31a3747abc35bae46d",
+      "size": 6376,
+      "sha256": "f976ff6913b07d77c00ac4e86b9527cd765a99018293494e995a6827217bdeaf",
       "mode": "0644"
     },
     {
       "path": "skills/iterative-development/SKILL.md",
-      "size": 12355,
-      "sha256": "637bec4452b00fc226adddbad0e7bcdff8e86a8c17438b104def57b833153886",
+      "size": 12789,
+      "sha256": "4aa6e4a7579f3d9477a357df291037003e080ac89ffddcde25eedd193b5d4ead",
       "mode": "0644"
     },
     {
@@ -800,8 +830,8 @@
     },
     {
       "path": "skills/running-an-iteration/SKILL.md",
-      "size": 7825,
-      "sha256": "37c416da41ace0be06152b6e39e8f893af361c065b2183a952908ef5f8a781bc",
+      "size": 8047,
+      "sha256": "f710ced0d250373a5a60706003b9654367ae4efd7564615b42d566a38aa22283",
       "mode": "0644"
     },
     {
@@ -848,8 +878,8 @@
     },
     {
       "path": "skills/subagent-driven-development/SKILL.md",
-      "size": 38491,
-      "sha256": "41b453e0c85fa3b787b44424a7076662de20b19afcd600edd0617d5436422bb7",
+      "size": 38622,
+      "sha256": "7b1ce0561ce04658f44461de6e5c8116130a1f65c907a79eb18ceb20fc0e9ff1",
       "mode": "0644"
     },
     {
@@ -998,8 +1028,8 @@
     },
     {
       "path": "skills/using-git-worktrees/SKILL.md",
-      "size": 12382,
-      "sha256": "f5c2845b8d6da64dde34a6c57a8ed8463ae5a0a7d3dd9634dbb345021b6d7164",
+      "size": 12713,
+      "sha256": "ba0e7b090e10471c9923253991522b2df633951ca740b858ebe891ef12c2aacc",
       "mode": "0644"
     },
     {
@@ -1094,8 +1124,8 @@
     },
     {
       "path": "skills/writing-plans/SKILL.md",
-      "size": 14233,
-      "sha256": "91492168f6e94ce269dec7cbdd39355a3ca10eabec22f245c52b370b02929ea3",
+      "size": 14362,
+      "sha256": "50e0403295986d3a1209d1b238e1f7ed5b077949ba9af302e83adcd64b03b517",
       "mode": "0644"
     },
     {
@@ -1153,7 +1183,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "da762ad2e3b1a698dd8fb1192c12b6dc6505a6ee56e1017841b709b649aaca57",
+  "tree_sha256": "afffd9b9416a998268d7ce1f4dc85ac94844b5d5e583b92af2a31060ed6491c0",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [
