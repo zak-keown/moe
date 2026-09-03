@@ -1,10 +1,11 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, normalize } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { runHelper } from "./cli-harness.js";
 
 const HELPER = "skills/extracting-requirements/scripts/chunk_spec.mjs";
+const PROGRAM = "chunk_spec.mjs";
 const temporaryRoots: string[] = [];
 
 function tempDir(prefix: string): string {
@@ -13,8 +14,8 @@ function tempDir(prefix: string): string {
   return dir;
 }
 
-function run(path: string, args: readonly string[] = []) {
-  return runHelper(HELPER, [path, ...args]);
+function run(path: string, args: readonly string[] = [], cwd?: string) {
+  return runHelper(HELPER, [path, ...args], cwd);
 }
 
 afterEach(() => {
@@ -50,7 +51,7 @@ describe("chunk_spec", () => {
         "\n",
     );
 
-    const result = run(spec, ["--max-tokens", "3000"]);
+    const result = run(spec, ["--max-tokens=3000"]);
 
     expect(result.status).toBe(0);
     const chunks = JSON.parse(result.stdout) as Array<{ heading: string | null }>;
@@ -76,6 +77,85 @@ describe("chunk_spec", () => {
       join(root, "z.md"),
     ]);
     expect(chunks.every((chunk) => chunk.content.includes("Content"))).toBe(true);
+  });
+
+  it("recursively discovers Markdown files in depth-first path-component order", () => {
+    const root = tempDir("chunk-spec-component-order-");
+    const directory = join(root, "a");
+    mkdirSync(directory);
+    writeFileSync(join(root, "a-.md"), "# Dash\n\nContent dash.\n");
+    writeFileSync(join(directory, "inner.md"), "# Inner\n\nContent inner.\n");
+
+    const result = run(root);
+
+    expect(result.status).toBe(0);
+    const chunks = JSON.parse(result.stdout) as Array<{ source_file: string }>;
+    expect(chunks.map((chunk) => chunk.source_file)).toEqual([
+      join(root, "a", "inner.md"),
+      join(root, "a-.md"),
+    ]);
+  });
+
+  it("prints argparse-compatible help and exits successfully", () => {
+    const result = runHelper(HELPER, ["--help"]);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe(
+      [
+        `usage: ${PROGRAM} [-h] [--max-tokens MAX_TOKENS] path`,
+        "",
+        "Chunk spec files for extraction",
+        "",
+        "positional arguments:",
+        "  path                  File or directory to chunk",
+        "",
+        "options:",
+        "  -h, --help            show this help message and exit",
+        "  --max-tokens MAX_TOKENS",
+        "                        Max tokens per chunk (default 4000)",
+        "",
+      ].join("\n"),
+    );
+  });
+
+  it("prints argparse-compatible missing-path errors", () => {
+    const result = runHelper(HELPER, []);
+
+    expect(result.status).toBe(2);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe(
+      [
+        `usage: ${PROGRAM} [-h] [--max-tokens MAX_TOKENS] path`,
+        `${PROGRAM}: error: the following arguments are required: path`,
+        "",
+      ].join("\n"),
+    );
+  });
+
+  it("prints argparse-compatible malformed-option errors", () => {
+    const result = runHelper(HELPER, ["/tmp/example.md", "--max-tokens", "not-an-int"]);
+
+    expect(result.status).toBe(2);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe(
+      [
+        `usage: ${PROGRAM} [-h] [--max-tokens MAX_TOKENS] path`,
+        `${PROGRAM}: error: argument --max-tokens: invalid int value: 'not-an-int'`,
+        "",
+      ].join("\n"),
+    );
+  });
+
+  it("normalizes CLI-relative paths before reporting the source file", () => {
+    const root = tempDir("chunk-spec-relative-");
+    writeFileSync(join(root, "spec.md"), "# Relative\n\nContent.\n");
+
+    const result = run("./spec.md", [], root);
+
+    expect(result.status).toBe(0);
+    const chunks = JSON.parse(result.stdout) as Array<{ source_file: string }>;
+    expect(chunks[0]?.source_file).toBe(normalize("./spec.md"));
   });
 
   it("returns exit 2 and an error for a missing path", () => {

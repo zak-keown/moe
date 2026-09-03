@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { basename, join, normalize, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export function estimateTokens(text) {
@@ -101,12 +101,17 @@ export function chunkFile(path, maxTokens) {
 
 function markdownFiles(path) {
   const files = [];
-  for (const entry of readdirSync(path, { withFileTypes: true })) {
+  const entries = readdirSync(path, { withFileTypes: true }).sort((left, right) => {
+    if (left.name < right.name) return -1;
+    if (left.name > right.name) return 1;
+    return 0;
+  });
+  for (const entry of entries) {
     const candidate = join(path, entry.name);
     if (entry.isDirectory()) files.push(...markdownFiles(candidate));
     else if (entry.isFile() && entry.name.endsWith(".md")) files.push(candidate);
   }
-  return files.sort();
+  return files;
 }
 
 export function chunkPath(path, maxTokens) {
@@ -115,41 +120,80 @@ export function chunkPath(path, maxTokens) {
   return [];
 }
 
+function usage(program) {
+  return `usage: ${program} [-h] [--max-tokens MAX_TOKENS] path\n`;
+}
+
+function help(program) {
+  return [
+    usage(program).trimEnd(),
+    "",
+    "Chunk spec files for extraction",
+    "",
+    "positional arguments:",
+    "  path                  File or directory to chunk",
+    "",
+    "options:",
+    "  -h, --help            show this help message and exit",
+    "  --max-tokens MAX_TOKENS",
+    "                        Max tokens per chunk (default 4000)",
+    "",
+  ].join("\n");
+}
+
+function parseTokenCount(value) {
+  if (!/^[-+]?\d+$/.test(value)) return null;
+  return Number(value);
+}
+
 function parseArgs(args) {
   let path;
   let maxTokens = 4000;
+  const unrecognized = [];
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
-    if (arg === "--max-tokens") {
-      const value = args[++index];
-      if (!value || !/^[-+]?\d+$/.test(value)) return null;
-      maxTokens = Number(value);
+    if (arg === "-h" || arg === "--help") return { help: true };
+    if (arg === "--max-tokens" || arg.startsWith("--max-tokens=")) {
+      const value = arg === "--max-tokens" ? args[++index] : arg.slice("--max-tokens=".length);
+      if (value === undefined) return { error: "argument --max-tokens: expected one argument" };
+      const parsed = parseTokenCount(value);
+      if (parsed === null) return { error: `argument --max-tokens: invalid int value: '${value}'` };
+      maxTokens = parsed;
     } else if (!path && !arg.startsWith("-")) {
       path = arg;
     } else {
-      return null;
+      unrecognized.push(arg);
     }
   }
 
-  return path ? { path, maxTokens } : null;
+  if (!path) return { error: "the following arguments are required: path" };
+  if (unrecognized.length > 0) return { error: `unrecognized arguments: ${unrecognized.join(" ")}` };
+  return { path, maxTokens };
 }
 
 export async function main(args) {
+  const program = basename(process.argv[1] ?? "chunk_spec.mjs");
   const options = parseArgs(args);
-  if (!options) {
-    process.stderr.write("error: expected <path> [--max-tokens 4000]\n");
+  if (options.help) {
+    process.stdout.write(help(program));
+    return 0;
+  }
+  if (options.error) {
+    process.stderr.write(`${usage(program)}${program}: error: ${options.error}\n`);
     return 2;
   }
+
+  const path = normalize(options.path);
 
   try {
-    statSync(options.path);
+    statSync(path);
   } catch {
-    process.stderr.write(`error: path not found: ${options.path}\n`);
+    process.stderr.write(`error: path not found: ${path}\n`);
     return 2;
   }
 
-  process.stdout.write(`${JSON.stringify(chunkPath(options.path, options.maxTokens), null, 2)}\n`);
+  process.stdout.write(`${JSON.stringify(chunkPath(path, options.maxTokens), null, 2)}\n`);
   return 0;
 }
 
