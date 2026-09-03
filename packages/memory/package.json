@@ -54,7 +54,8 @@
     "test:model": "vitest run --project model",
     "test:claude-e2e": "node test/manual/claude-e2e.js",
     "test:codex-e2e": "node test/manual/codex-e2e.js",
-    "lint": "biome check ."
+    "lint": "biome check .",
+    "runtime:smoke": "node scripts/smoke-runtime.mjs"
   },
   "dependencies": {
     "@huggingface/tokenizers": "0.1.3",
