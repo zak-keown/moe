@@ -38,10 +38,8 @@ export const REQUIRED_PACKAGES = [
   "@anthropic-ai/claude-agent-sdk",
   "@huggingface/transformers",
   "@modelcontextprotocol/sdk",
-  "better-sqlite3",
   "marked",
   "proper-lockfile",
-  "sqlite-vec",
   "zod",
 ] as const;
 

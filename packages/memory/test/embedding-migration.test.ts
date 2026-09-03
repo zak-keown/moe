@@ -1,9 +1,9 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import Database from "better-sqlite3";
-import * as sqliteVec from "sqlite-vec";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { MemoryDatabase } from "../src/db.js";
 import {
   acquireMigrationLock,
   EMBEDDING_VERSION,
@@ -12,6 +12,8 @@ import {
   releaseMigrationLock,
   runMigrationBatch,
 } from "../src/embedding-migration.js";
+import { openTestDatabase, TEST_PACKAGE_ROOT } from "./test-utils.js";
+import { resolveNativeAsset } from "../src/native-assets.js";
 
 describe("embedding migration", () => {
   let testDir: string;
@@ -34,13 +36,21 @@ describe("embedding migration", () => {
     } catch {}
   });
 
-  function openDb(): Database.Database {
-    const db = new Database(dbPath);
-    sqliteVec.load(db);
+  function openDb(): MemoryDatabase {
+    return openTestDatabase(dbPath);
+  }
+
+  function openRawDb(): MemoryDatabase {
+    const db = new DatabaseSync(dbPath, { allowExtension: true });
+    const asset = resolveNativeAsset(TEST_PACKAGE_ROOT);
+    db.loadExtension(asset.absolutePath);
+    db.enableLoadExtension(false);
+    db.exec("PRAGMA journal_mode = WAL");
+    db.exec("PRAGMA foreign_keys = ON");
     return db;
   }
 
-  function seedExchanges(db: Database.Database, n: number, version: number = 0): string[] {
+  function seedExchanges(db: MemoryDatabase, n: number, version: number = 0): string[] {
     db.exec(`
       CREATE TABLE IF NOT EXISTS exchanges (
         id TEXT PRIMARY KEY,
@@ -67,7 +77,7 @@ describe("embedding migration", () => {
       for (let k = 0; k < 384; k++) dummy[k] = Math.random();
       db.prepare(`INSERT INTO vec_exchanges (id, embedding) VALUES (?, ?)`).run(
         id,
-        Buffer.from(dummy.buffer),
+        new Uint8Array(dummy.buffer),
       );
     }
     return ids;
@@ -101,7 +111,7 @@ describe("embedding migration", () => {
   });
 
   it("pickStaleBatch returns rows whose embedding_version is less than the current version, capped by limit", () => {
-    const db = openDb();
+    const db = openRawDb();
     db.exec(`
       CREATE TABLE exchanges (
         id TEXT PRIMARY KEY,
@@ -135,7 +145,7 @@ describe("embedding migration", () => {
   });
 
   it("runMigrationBatch is a no-op when another process already holds the lock", async () => {
-    const db = openDb();
+    const db = openRawDb();
     db.exec(`
       CREATE TABLE exchanges (
         id TEXT PRIMARY KEY,

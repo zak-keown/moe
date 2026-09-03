@@ -1,12 +1,11 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { initDatabase } from "../src/db.js";
+import type { MemoryDatabase } from "../src/db.js";
 import { JournalSearchService } from "../src/journal/search.js";
 import { JournalStore } from "../src/journal/store.js";
-import { fakeEmbed } from "./test-utils.js";
+import { fakeEmbed, openTestDatabase } from "./test-utils.js";
 
 /**
  * Ported from private-journal-mcp's tests/embeddings.test.ts.
@@ -30,7 +29,7 @@ describe("journal retrieval", () => {
   let dataDir: string;
   let store: JournalStore;
   let search: JournalSearchService;
-  let db: Database.Database;
+  let db: MemoryDatabase;
 
   beforeEach(async () => {
     projectDir = await fs.mkdtemp(path.join(os.tmpdir(), "journal-project-test-"));
@@ -44,7 +43,7 @@ describe("journal retrieval", () => {
       userPath: userDir,
       embed: fakeEmbed(),
     });
-    db = initDatabase();
+    db = openTestDatabase(path.join(dataDir, "test.db"));
     // The query encoder is injected too, so the whole retrieval path runs
     // offline. In production it defaults to generateQueryEmbedding, which
     // prepends the BGE retrieval prefix.

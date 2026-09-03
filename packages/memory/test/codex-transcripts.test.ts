@@ -2,10 +2,11 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { initDatabase, insertExchange } from "../src/db.js";
+import { insertExchange } from "../src/db.js";
 import { parseConversation } from "../src/parser.js";
 import { getConversationSourceDirs } from "../src/paths.js";
 import type { ConversationExchange } from "../src/types.js";
+import { openTestDatabase } from "./test-utils.js";
 
 function writeJsonl(path: string, lines: unknown[]): void {
   writeFileSync(path, `${lines.map((line) => JSON.stringify(line)).join("\n")}\n`, "utf-8");
@@ -248,8 +249,7 @@ describe("Codex transcript support", () => {
   });
 
   it("stores harness and model metadata on indexed exchanges", () => {
-    process.env.TEST_DB_PATH = join(testDir, "index.sqlite");
-    const db = initDatabase();
+    const db = openTestDatabase(join(testDir, "index.sqlite"));
 
     const exchange: ConversationExchange = {
       id: "codex-exchange-1",

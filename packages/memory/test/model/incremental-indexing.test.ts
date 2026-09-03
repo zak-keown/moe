@@ -1,7 +1,7 @@
 import { appendFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { indexUnprocessed } from "../../src/indexer.js";
 import { suppressConsole } from "../test-utils.js";
@@ -82,7 +82,7 @@ describe("indexer: incremental indexing", () => {
   });
 
   function countExchanges(): number {
-    const db = new Database(dbPath);
+    const db = new DatabaseSync(dbPath);
     const row = db.prepare("SELECT COUNT(*) AS c FROM exchanges").get() as { c: number };
     db.close();
     return row.c;

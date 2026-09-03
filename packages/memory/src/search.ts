@@ -30,9 +30,9 @@ export interface SearchOptions {
  * by the optional time and metadata filters. Bound parameters keep us
  * safe from SQL injection without regex-based input scrubbing.
  */
-function buildSearchFilters(options: SearchOptions): { sql: string; params: unknown[] } {
+function buildSearchFilters(options: SearchOptions): { sql: string; params: Array<string | number> } {
   const parts: string[] = [];
-  const params: unknown[] = [];
+  const params: Array<string | number> = [];
   if (options.after) {
     parts.push("e.timestamp >= ?");
     params.push(options.after);
@@ -235,10 +235,10 @@ export async function searchConversations(
     `);
 
     results = stmt.all(
-      Buffer.from(new Float32Array(queryEmbedding).buffer),
+      new Uint8Array(new Float32Array(queryEmbedding).buffer),
       k,
       ...filterParams,
-    ) as ExchangeRow[];
+    ) as unknown as ExchangeRow[];
     if (results.length > limit) {
       results = results.slice(0, limit);
     }
@@ -263,7 +263,7 @@ export async function searchConversations(
       `%${query}%`,
       ...filterParams,
       limit,
-    ) as ExchangeRow[];
+    ) as unknown as ExchangeRow[];
 
     if (mode === "both") {
       // Merge and deduplicate by ID
