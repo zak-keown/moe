@@ -185,15 +185,15 @@ git commit -m "docs: add requirements with proof obligations, behavior scenarios
 
 | Step | Tool | Input | Output |
 |---|---|---|---|
-| Chunk | `scripts/chunk_spec.py` | spec path | JSON chunks (stdout) |
+| Chunk | `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/chunk_spec.mjs" <spec-path>` | spec path | JSON chunks (stdout) |
 | Extract | Subagent + `extraction-subagent-prompt.md` | chunk content | JSON stories + scenarios (per subagent) |
 | Omission review | PAR (source text vs. stories + scenarios) | chunks + stories + scenarios | Missing requirements and scenarios |
-| Aggregate stories | `scripts/aggregate_stories.py -o <dir>` | JSON files | Per-epic .md files with proof obligations |
-| Aggregate scenarios | `scripts/aggregate_scenarios.py -o <file>` | JSON files + stories dir | `behavior-scenarios.md` |
-| Back-link | `scripts/backlink_scenarios.py` | scenarios + stories | Updated AC lines with scenario refs |
+| Aggregate stories | `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_stories.mjs" -o <dir> <json-files...>` | JSON files | Per-epic .md files with proof obligations |
+| Aggregate scenarios | `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_scenarios.mjs" -o <file> --stories-dir <dir> <json-files...>` | JSON files + stories dir | `behavior-scenarios.md` |
+| Back-link | `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/backlink_scenarios.mjs" <scenarios-file> <stories-dir>` | scenarios + stories | Updated AC lines with scenario refs |
 | Coverage ledger | Map chunks → story IDs + scenario IDs | chunk list, stories, scenarios | Gap/covered/story-only per chunk |
 | Init corpus | Write corpus index | scenario list | `behavior-corpus.md` |
-| Validate | `scripts/validate_requirements_index.mjs` + `scripts/validate_scenarios.mjs` | .md files | OK or errors |
+| Validate | `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_requirements_index.mjs" <requirements-dir>` + `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_scenarios.mjs" <scenarios-file> <requirements-dir>` | .md files | OK or errors |
 
 ## Deferred to later plans
 

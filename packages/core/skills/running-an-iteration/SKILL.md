@@ -122,16 +122,16 @@ This step is a hard gate. An iteration that leaves its own TODO markers in the c
 | Step | Tool/Skill | Purpose |
 |---|---|---|
 | Sentinel baseline | Run sentinel scenarios | Establish pre-iteration regression state |
-| Citation check | `scripts/check_citations.py` | Mechanical: cited stories exist |
+| Citation check | `node "${CLAUDE_PLUGIN_ROOT}/skills/running-an-iteration/scripts/check_citations.mjs" <roadmap> <requirements-dir>` | Mechanical: cited stories exist |
 | Scope review | PAR + `scope-reviewer-prompt.md` | Semantic: scope, scenarios, splitting, boxing-in |
 | Task execution | `implementing-tasks` | TDD code + evidence implementation |
 | Post-iteration runs | Run impacted + sentinel scenarios | Catch regressions |
 | TODO resolution | `grep -rn 'TODO(ITER-<current>)'` | Cross-iteration stubs resolved |
-| Wrap up | `scripts/validate_iteration_log.py` | Artifact validation |
+| Wrap up | `node "${CLAUDE_PLUGIN_ROOT}/skills/running-an-iteration/scripts/validate_iteration_log.mjs" <iteration-log>` | Artifact validation |
 
 ## References
 
 - `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md` — PAR methodology
 - `${CLAUDE_PLUGIN_ROOT}/skills/_shared/behavior-evidence-formats.md` — scenario and proof obligation formats
 - `scope-reviewer-prompt.md` — scope reviewer prompt template
-- `scripts/check_citations.py` — mechanical citation check
+- `${CLAUDE_PLUGIN_ROOT}/skills/running-an-iteration/scripts/check_citations.mjs` — mechanical citation check
