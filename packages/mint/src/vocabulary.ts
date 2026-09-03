@@ -110,7 +110,12 @@ export function substituteContent(
 
   for (const line of lines) {
     const fenceLine = /^```/.test(line)
-    const resourceIsLiteral = inFence || fenceLine
+    const lineIsLiteral = inFence || fenceLine
+    if (lineIsLiteral) {
+      result.push(line)
+      if (fenceLine) inFence = !inFence
+      continue
+    }
 
     const blockMatch = /^(\s*)(?<!\\)\{([a-z][a-z0-9-]*)\}\s*$/.exec(line)
     if (blockMatch) {
@@ -126,7 +131,7 @@ export function substituteContent(
     }
 
     let substituted = line.replace(RESOURCE_PATTERN, (expression, resourcePath: string) => {
-      return !resourceIsLiteral && renderResource ? renderResource(resourcePath) : expression
+      return renderResource ? renderResource(resourcePath) : expression
     })
 
     substituted = substituted.replace(TOKEN_PATTERN, (_match, tokenName: string) => {
@@ -138,11 +143,8 @@ export function substituteContent(
     })
 
     substituted = substituted.replace(/\\(\{[a-z][a-z0-9-]*\})/g, '$1')
-    if (!resourceIsLiteral) {
-      substituted = substituted.replace(/\\(\{resource:[^{}\n]*\})/g, '$1')
-    }
+    substituted = substituted.replace(/\\(\{resource:[^{}\n]*\})/g, '$1')
     result.push(substituted)
-    if (fenceLine) inFence = !inFence
   }
 
   return result.join('\n')
@@ -360,7 +362,9 @@ function transformedContent(
         const relativeTarget = posix.relative(posix.dirname(currentDocument), generatedTarget)
         const encodedTarget = relativeTarget
           .split('/')
-          .map((segment) => segment === '..' ? segment : encodeURIComponent(segment))
+          .map((segment) => segment === '..'
+            ? segment
+            : encodeURIComponent(segment).replaceAll('(', '%28').replaceAll(')', '%29'))
           .join('/')
         const label = resourcePath.replaceAll('\\', '\\\\').replaceAll('[', '\\[').replaceAll(']', '\\]')
         return `[${label}](${encodedTarget})`
