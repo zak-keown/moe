@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises'
+import { readFile, realpath } from 'node:fs/promises'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 
 export interface BundleInput {
@@ -45,8 +45,25 @@ function compareBytes(left: string, right: string): number {
 function compareBundleInputs(left: BundleInput, right: BundleInput): number {
   return compareBytes(left.packageName, right.packageName)
     || compareBytes(left.packageVersion, right.packageVersion)
+    || compareBytes(left.packageManifest, right.packageManifest)
     || compareBytes(left.output, right.output)
     || compareBytes(left.input, right.input)
+}
+
+async function physicalPath(path: string, label: string): Promise<string> {
+  try {
+    return await realpath(path)
+  } catch (error) {
+    throw new Error(`${label} "${path}" does not exist or cannot be resolved`, { cause: error })
+  }
+}
+
+async function physicalContainedPath(root: string, path: string, label: string): Promise<string> {
+  const physical = await physicalPath(path, label)
+  if (containedRelative(root, physical) === undefined) {
+    throw new Error(`${label} "${path}" is outside the physical repository root`)
+  }
+  return physical
 }
 
 function slashPath(path: string): string {
@@ -80,9 +97,19 @@ function parseMetafile(value: unknown, path: string): Metafile {
 }
 
 async function readPackageIdentity(manifestPath: string, repositoryRoot: string): Promise<PackageIdentity | undefined> {
+  let physicalManifest: string
+  try {
+    physicalManifest = await realpath(manifestPath)
+  } catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return undefined
+    throw new Error(`cannot resolve package manifest "${manifestPath}"`, { cause: error })
+  }
+  if (containedRelative(repositoryRoot, physicalManifest) === undefined) {
+    throw new Error(`package manifest "${manifestPath}" is outside the physical repository root`)
+  }
   let bytes: string
   try {
-    bytes = await readFile(manifestPath, 'utf8')
+    bytes = await readFile(physicalManifest, 'utf8')
   } catch (error) {
     if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return undefined
     throw error
@@ -92,20 +119,20 @@ async function readPackageIdentity(manifestPath: string, repositoryRoot: string)
   try {
     manifest = JSON.parse(bytes)
   } catch (error) {
-    throw new Error(`invalid package manifest "${slashPath(relative(repositoryRoot, manifestPath))}": expected JSON`, { cause: error })
+    throw new Error(`invalid package manifest "${slashPath(relative(repositoryRoot, physicalManifest))}": expected JSON`, { cause: error })
   }
   if (!isObject(manifest)) {
-    throw new Error(`invalid package manifest "${slashPath(relative(repositoryRoot, manifestPath))}": expected an object`)
+    throw new Error(`invalid package manifest "${slashPath(relative(repositoryRoot, physicalManifest))}": expected an object`)
   }
   if (manifest.name === undefined && manifest.version === undefined) return undefined
   if (typeof manifest.name !== 'string' || manifest.name.length === 0
     || typeof manifest.version !== 'string' || manifest.version.length === 0) {
-    throw new Error(`invalid package manifest "${slashPath(relative(repositoryRoot, manifestPath))}": name and version must be non-empty strings`)
+    throw new Error(`invalid package manifest "${slashPath(relative(repositoryRoot, physicalManifest))}": name and version must be non-empty strings`)
   }
   return {
     name: manifest.name,
     version: manifest.version,
-    manifest: slashPath(relative(repositoryRoot, manifestPath)),
+    manifest: slashPath(relative(repositoryRoot, physicalManifest)),
   }
 }
 
@@ -131,32 +158,41 @@ function resolveMetafilePath(path: string, packageRoot: string): string {
  * identifies every third-party input by its nearest package manifest.
  */
 export async function readBundleMetafiles(options: ReadBundleMetafilesOptions): Promise<readonly BundleInput[]> {
-  const repositoryRoot = resolve(options.repositoryRoot)
-  const packageRoot = resolve(options.packageRoot)
+  const repositoryRoot = await physicalPath(resolve(options.repositoryRoot), 'repository root')
+  const packageRoot = await physicalPath(resolve(options.packageRoot), 'package root')
   if (containedRelative(repositoryRoot, packageRoot) === undefined) {
     throw new Error(`package root "${options.packageRoot}" is outside repository root "${options.repositoryRoot}"`)
   }
-  const sourceManifest = slashPath(relative(repositoryRoot, join(packageRoot, 'package.json')))
+  const sourceManifest = slashPath(relative(repositoryRoot, await physicalContainedPath(repositoryRoot, join(packageRoot, 'package.json'), 'source package manifest')))
 
   const inputs = new Map<string, BundleInput>()
   for (const metafilePath of options.metafiles) {
+    const physicalMetafile = await physicalContainedPath(repositoryRoot, metafilePath, 'bundler metafile')
     let parsed: unknown
     try {
-      parsed = JSON.parse(await readFile(metafilePath, 'utf8'))
+      parsed = JSON.parse(await readFile(physicalMetafile, 'utf8'))
     } catch (error) {
       throw new Error(`invalid bundler metafile "${metafilePath}": expected JSON`, { cause: error })
     }
-    const metafile = parseMetafile(parsed, metafilePath)
+    const metafile = parseMetafile(parsed, physicalMetafile)
     for (const [rawOutput, output] of Object.entries(metafile.outputs)) {
       const outputAbsolute = resolveMetafilePath(rawOutput, packageRoot)
-      const outputRelative = containedRelative(repositoryRoot, outputAbsolute)
-      if (outputRelative === undefined) throw new Error(`bundler output "${rawOutput}" is outside the repository`)
+      const outputRelative = containedRelative(packageRoot, outputAbsolute)
+      if (outputRelative === undefined || outputRelative === '') throw new Error(`bundler output "${rawOutput}" is outside the artifact package`)
+
+      const externalInputs = new Set(
+        (output.imports ?? [])
+          .filter((entry) => entry.external === true && typeof entry.path === 'string')
+          .map((entry) => entry.path as string),
+      )
 
       for (const rawInput of Object.keys(output.inputs)) {
+        if (externalInputs.has(rawInput)) continue
         const inputAbsolute = resolveMetafilePath(rawInput, packageRoot)
-        const inputRelative = containedRelative(repositoryRoot, inputAbsolute)
+        const physicalInput = await physicalContainedPath(repositoryRoot, inputAbsolute, 'bundled input')
+        const inputRelative = containedRelative(repositoryRoot, physicalInput)
         if (inputRelative === undefined) throw new Error(`bundled input "${rawInput}" is outside the repository`)
-        const identity = await nearestPackageIdentity(inputAbsolute, repositoryRoot)
+        const identity = await nearestPackageIdentity(physicalInput, repositoryRoot)
         if (!identity) {
           throw new Error(`cannot resolve bundled input "${inputRelative}" to a nearest package.json`)
         }
@@ -193,31 +229,30 @@ export function resolveBundledPackages(inputs: readonly BundleInput[]): readonly
   const grouped = new Map<string, {
     name: string
     version: string
-    manifests: Set<string>
+    manifest: string
     inputs: Set<string>
     outputs: Set<string>
   }>()
   for (const input of inputs) {
-    const key = `${input.packageName}\0${input.packageVersion}`
+    const key = `${input.packageName}\0${input.packageVersion}\0${input.packageManifest}`
     const group = grouped.get(key) ?? {
       name: input.packageName,
       version: input.packageVersion,
-      manifests: new Set<string>(),
+      manifest: input.packageManifest,
       inputs: new Set<string>(),
       outputs: new Set<string>(),
     }
-    group.manifests.add(input.packageManifest)
     group.inputs.add(input.input)
     group.outputs.add(input.output)
     grouped.set(key, group)
   }
 
   return [...grouped.values()]
-    .sort((left, right) => compareBytes(left.name, right.name) || compareBytes(left.version, right.version))
+    .sort((left, right) => compareBytes(left.name, right.name) || compareBytes(left.version, right.version) || compareBytes(left.manifest, right.manifest))
     .map((group) => ({
       name: group.name,
       version: group.version,
-      package_manifest: [...group.manifests].sort(compareBytes)[0]!,
+      package_manifest: group.manifest,
       inputs: [...group.inputs].sort(compareBytes),
       outputs: [...group.outputs].sort(compareBytes),
     }))

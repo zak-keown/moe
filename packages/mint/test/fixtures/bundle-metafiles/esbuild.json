@@ -1,16 +1,18 @@
 {
   "inputs": {
     "source/index.ts": { "bytes": 40, "imports": [] },
+    "../modules/external-only/index.js": { "bytes": 20, "imports": [] },
     "../modules/plain/lib/a.js": { "bytes": 20, "imports": [] },
     "../modules/outer/nested/index.js": { "bytes": 30, "imports": [] }
   },
   "outputs": {
     "dist/index.js": {
-      "imports": [{ "path": "external-only", "kind": "import-statement", "external": true }],
+      "imports": [{ "path": "../modules/external-only/index.js", "kind": "import-statement", "external": true }],
       "exports": [],
       "entryPoint": "source/index.ts",
       "inputs": {
         "source/index.ts": { "bytesInOutput": 35 },
+        "../modules/external-only/index.js": { "bytesInOutput": 15 },
         "../modules/plain/lib/a.js": { "bytesInOutput": 15 },
         "../modules/outer/nested/index.js": { "bytesInOutput": 25 }
       },

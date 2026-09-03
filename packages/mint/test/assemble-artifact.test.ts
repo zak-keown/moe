@@ -251,6 +251,20 @@ describe('complete artifact assembly', () => {
       .rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_COMPONENT_FORBIDDEN' } })
   })
 
+  it('rejects component and final-tree aliases of the reserved build-evidence root', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'moe-assemble-build-evidence-'))
+    workspaces.push(root)
+    const plugin = await fixturePlugin(root)
+    plugin.config.components.agents = '.MOE-BUILD'
+    await mkdir(join(plugin.sourcePath, '.MOE-BUILD'))
+    await writeFile(join(plugin.sourcePath, '.MOE-BUILD', 'bundle-inventory.json'), '[]\n')
+    const destinationRoot = join(root, 'plugins.next-build-evidence')
+    await mkdir(destinationRoot)
+
+    await expect(assembleArtifact({ repoRoot: root, platform: platform(root, [plugin]), plugin, destinationRoot }))
+      .rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_COMPONENT_FORBIDDEN' } })
+  })
+
   it('rejects mismatched repository authority before either entry point creates output', async () => {
     const sourceRoot = await mkdtemp(join(tmpdir(), 'moe-assemble-authority-source-'))
     const foreignRoot = await mkdtemp(join(tmpdir(), 'moe-assemble-authority-foreign-'))
