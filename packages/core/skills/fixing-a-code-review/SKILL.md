@@ -69,8 +69,16 @@ severity order.
 4. **Green.** The smallest change that passes it.
 5. **Commit**, source and test together, one finding per commit:
    `fix(review): CR-### — <title>`
+   Use `moe jig commit review-fix <CR-ID> <title>` to commit staged changes
+   with the correct format. If `moe-jig` is not on PATH, format the commit
+   manually as `git commit -m "fix(review): CR-### — <title>"`.
 6. **Stamp the disposition** into the report, as its own commit, before
-   starting the next finding.
+   starting the next finding. Create the stamp commit with
+   `moe jig review stamp <CR-ID> <fixing-sha>`. The command validates the
+   CR-ID format, confirms the fixing commit is on the current branch, and
+   produces the correctly formatted empty commit. If `moe-jig` is not on PATH,
+   create the stamp manually:
+   `git commit --allow-empty -m "fix(review): CR-### — addressed by <sha>"`.
 
 **The stamp is always a separate commit, and it is always per finding.** It
 records the sha of the commit that fixed the finding, and no commit can contain
