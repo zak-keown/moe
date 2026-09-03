@@ -419,6 +419,7 @@ describe("Claude permissions", () => {
       configDir: "/fixture/claude",
       projectRoot: "/fixture/repo-a",
       primaryCwd: "/fixture/repo-a",
+      observationCwdProven: true,
       fsOps: fixtureFs,
     });
 
@@ -469,6 +470,7 @@ describe("Claude permissions", () => {
       projectRoot: "/fixture/repo-a",
       primaryCwd: "/fixture/repo-a/packages/core",
       homeDir: "/fixture/home",
+      observationCwdProven: true,
       fsOps: makeFixtureFs(
         JSON.stringify({
           permissions: {
@@ -482,7 +484,7 @@ describe("Claude permissions", () => {
 
     expect(
       classifyClaudePermission(
-        { class: "filesystem", action: "read", path: "src/index.ts" },
+        { class: "filesystem", action: "read", path: "packages/core/src/index.ts" },
         state,
       ),
     ).toBe("ask");

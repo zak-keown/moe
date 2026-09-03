@@ -342,7 +342,10 @@ describe("Claude rendering", () => {
     };
     const read = (path: string) => ({ class: "filesystem", action: "read", path }) as const;
 
-    expect(matchClaudePermission("Read(/src/index.ts)", read("src/index.ts"), context)).toBe(true);
+    expect(matchClaudePermission("Read(/src/index.ts)", read("src/index.ts"), context)).toBe(false);
+    expect(
+      matchClaudePermission("Read(/src/index.ts)", read("packages/core/src/index.ts"), context),
+    ).toBe(true);
     expect(
       matchClaudePermission("Read(src/index.ts)", read("packages/core/src/index.ts"), context),
     ).toBe(true);
@@ -365,7 +368,11 @@ describe("Claude rendering", () => {
   });
 
   it("keeps a single star inside one path segment and lets a double star cross separators", () => {
-    const context = { projectRoot: "/fixture/repo-a" };
+    const context = {
+      projectRoot: "/fixture/repo-a",
+      primaryCwd: "/fixture/repo-a",
+      observationCwdProven: true,
+    };
     const nested = { class: "filesystem", action: "read", path: "src/nested/index.ts" } as const;
 
     expect(matchClaudePermission("Read(/src/*.ts)", nested, context)).toBe(false);
@@ -375,11 +382,11 @@ describe("Claude rendering", () => {
   it.each([
     [
       { class: "filesystem", operation: { action: "read", path: "src/index.ts" } },
-      "Read(/src/index.ts)",
+      "Read(//fixture/repo-a/src/index.ts)",
     ],
     [
       { class: "filesystem", operation: { action: "modify", path: "src/index.ts" } },
-      "Edit(/src/index.ts)",
+      "Edit(//fixture/repo-a/src/index.ts)",
     ],
     [
       { class: "network", operation: { hostname: "docs.example.invalid" } },
@@ -411,7 +418,7 @@ describe("Claude rendering", () => {
     });
   });
 
-  it("never emits Write, declines an unproven filesystem anchor, and uses the user destination globally", () => {
+  it("never emits Write, uses canonical absolute paths without a cwd anchor, and uses the user destination globally", () => {
     const modifyCandidate = {
       harness: "claude",
       class: "filesystem",
@@ -419,7 +426,9 @@ describe("Claude rendering", () => {
       scope: "project",
       projectRoot: "/fixture/repo-a",
     };
-    expect(renderClaudeCandidate(modifyCandidate, { anchorProven: false })).toBeNull();
+    expect(renderClaudeCandidate(modifyCandidate, { anchorProven: false })).toMatchObject({
+      rule: "Edit(//fixture/repo-a/src/index.ts)",
+    });
     expect(
       renderClaudeCandidate(
         {
@@ -438,20 +447,22 @@ describe("Claude rendering", () => {
     ).not.toContain("Write(");
   });
 
-  it("declines an exact filesystem candidate whose filename would become a glob", () => {
-    expect(
-      renderClaudeCandidate(
-        {
-          harness: "claude",
-          class: "filesystem",
-          operation: { action: "read", path: "src/*.ts" },
-          scope: "project",
-          projectRoot: "/fixture/repo-a",
-        },
-        { anchorProven: true },
-      ),
-    ).toBeNull();
-  });
+  it.each(["src/*.ts", "src/key?.txt", "src/key[0].txt", "src/key\\name.txt"])(
+    "declines an exact filesystem candidate whose path %s would become a pattern",
+    (path) =>
+      expect(
+        renderClaudeCandidate(
+          {
+            harness: "claude",
+            class: "filesystem",
+            operation: { action: "read", path },
+            scope: "project",
+            projectRoot: "/fixture/repo-a",
+          },
+          { anchorProven: true },
+        ),
+      ).toBeNull(),
+  );
 
   it("preserves unrelated settings and deduplicates existing semantic rules", () => {
     const rendered = renderClaudeSettings(

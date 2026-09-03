@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
 import { readFile, readdir, realpath, stat, unlink, writeFile } from "node:fs/promises";
-import { join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { makeEvidence } from "../evidence.mjs";
 import { GLOBAL_SHELL_CATALOG, PROJECT_SHELL_CATALOG, classifyShell } from "../safety/shell.mjs";
 
@@ -269,8 +269,9 @@ export async function readCodexSessions({ files, cutoffMs, resolveProjectRoot, e
   const roots = collapseCodexRoots(state.headers);
   const configuredPrefixes = existingPrefixes.filter(validPrefix);
   const evidence = [];
+  const contexts = new Map();
   for (const event of decoded) {
-    if (!event.cwd) {
+    if (!event.cwd || !isAbsolute(event.cwd)) {
       diagnostics.push({ kind: "missing-working-directory" });
       continue;
     }
@@ -282,6 +283,7 @@ export async function readCodexSessions({ files, cutoffMs, resolveProjectRoot, e
       continue;
     }
     try {
+      contexts.set(`${projectRoot}\0${event.cwd}`, { projectRoot, cwd: resolve(event.cwd) });
       const rootSessionId = roots.get(event.sessionId) ?? event.sessionId;
       evidence.push(makeEvidence({
         harness: "codex",
@@ -306,7 +308,7 @@ export async function readCodexSessions({ files, cutoffMs, resolveProjectRoot, e
   for (const header of state.headers) {
     if (header.cliVersion) diagnostics.push({ cliVersion: header.cliVersion });
   }
-  return { evidence, diagnostics };
+  return { evidence, diagnostics, contexts: [...contexts.values()] };
 }
 
 function capturedPrefixesFor(event, rootSessionId, roots, capturedStates) {
@@ -571,6 +573,22 @@ function hasEnabledUserLayer(layers) {
     const parsed = parseConfigLayer(layer);
     return parsed?.name.type === "user" && parsed.disabledReason == null;
   });
+}
+
+/** Return every enabled native rules directory named by a protocol-validated layer. */
+export function codexRuleDirectories(layerState) {
+  if (layerState?.status !== "available" || !Array.isArray(layerState.layers)) return [];
+  const directories = [];
+  for (const layer of layerState.layers) {
+    const parsed = parseConfigLayer(layer);
+    if (!parsed || parsed.disabledReason != null) continue;
+    if (parsed.name.type === "project") {
+      directories.push(join(parsed.name.dotCodexFolder, "rules"));
+    } else if (isNonEmptyString(parsed.name.file)) {
+      directories.push(join(dirname(parsed.name.file), "rules"));
+    }
+  }
+  return [...new Set(directories)];
 }
 
 function matchesPrefix(operation, prefixes) {

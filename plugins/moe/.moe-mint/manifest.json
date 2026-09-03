@@ -337,10 +337,10 @@
       "sha256": "d8fefa7e4bfd1ad6e9fe0d6d276e80dd887884bc8644c1f1f74008caeec9171b"
     },
     ".codex-plugin/skills/smoothing-the-experience/scripts/lib/harnesses/claude.mjs": {
-      "sha256": "d6bff6840542c22744b1feb468cf87dc6765d9f3bcf156d4c88dedbbb9390da8"
+      "sha256": "3ac457e2698582a30df13bd85e494769387a6871dd8c26d16ac71dc4ee4d09f1"
     },
     ".codex-plugin/skills/smoothing-the-experience/scripts/lib/harnesses/codex.mjs": {
-      "sha256": "44097967671c084691724d5117eb0e57b53cd1fe7e1ab1221ed80d7bdda643f1"
+      "sha256": "2a793f2c875b67d75789f544a8cc32f51d24619bd0feba12d1e2209252d49749"
     },
     ".codex-plugin/skills/smoothing-the-experience/scripts/lib/mutation.mjs": {
       "sha256": "708105bc31ebcde6af621962bdb5a1b23382fbbfdc2589541449d43f18b68fa6"
@@ -361,7 +361,7 @@
       "sha256": "0fb536e30099e47135f7d1e5add822643df46f2d754f3ce8968841692b56405a"
     },
     ".codex-plugin/skills/smoothing-the-experience/scripts/smooth.mjs": {
-      "sha256": "e06107fc8ac074d162324ebd94e6ef851ff88fa80469a07125aba04a3d63698f"
+      "sha256": "3abf826b4960b31aab650a9ea8d266a8a988f650045b03e82c50613a4ac86e12"
     },
     ".codex-plugin/skills/subagent-driven-development/SKILL.md": {
       "sha256": "3b219e14cb00f0c6c034f60d9648ecddfec5fea6f9795d2696b827938e459673"
@@ -867,10 +867,10 @@
       "sha256": "d8fefa7e4bfd1ad6e9fe0d6d276e80dd887884bc8644c1f1f74008caeec9171b"
     },
     ".cursor-plugin/skills/smoothing-the-experience/scripts/lib/harnesses/claude.mjs": {
-      "sha256": "d6bff6840542c22744b1feb468cf87dc6765d9f3bcf156d4c88dedbbb9390da8"
+      "sha256": "3ac457e2698582a30df13bd85e494769387a6871dd8c26d16ac71dc4ee4d09f1"
     },
     ".cursor-plugin/skills/smoothing-the-experience/scripts/lib/harnesses/codex.mjs": {
-      "sha256": "44097967671c084691724d5117eb0e57b53cd1fe7e1ab1221ed80d7bdda643f1"
+      "sha256": "2a793f2c875b67d75789f544a8cc32f51d24619bd0feba12d1e2209252d49749"
     },
     ".cursor-plugin/skills/smoothing-the-experience/scripts/lib/mutation.mjs": {
       "sha256": "708105bc31ebcde6af621962bdb5a1b23382fbbfdc2589541449d43f18b68fa6"
@@ -891,7 +891,7 @@
       "sha256": "0fb536e30099e47135f7d1e5add822643df46f2d754f3ce8968841692b56405a"
     },
     ".cursor-plugin/skills/smoothing-the-experience/scripts/smooth.mjs": {
-      "sha256": "e06107fc8ac074d162324ebd94e6ef851ff88fa80469a07125aba04a3d63698f"
+      "sha256": "3abf826b4960b31aab650a9ea8d266a8a988f650045b03e82c50613a4ac86e12"
     },
     ".cursor-plugin/skills/subagent-driven-development/SKILL.md": {
       "sha256": "30fa496c969d55fa67755798b22a01e70681d3f2404e25fd12747458cf815b26"
@@ -1394,10 +1394,10 @@
       "sha256": "d8fefa7e4bfd1ad6e9fe0d6d276e80dd887884bc8644c1f1f74008caeec9171b"
     },
     ".kimi-plugin/skills/smoothing-the-experience/scripts/lib/harnesses/claude.mjs": {
-      "sha256": "d6bff6840542c22744b1feb468cf87dc6765d9f3bcf156d4c88dedbbb9390da8"
+      "sha256": "3ac457e2698582a30df13bd85e494769387a6871dd8c26d16ac71dc4ee4d09f1"
     },
     ".kimi-plugin/skills/smoothing-the-experience/scripts/lib/harnesses/codex.mjs": {
-      "sha256": "44097967671c084691724d5117eb0e57b53cd1fe7e1ab1221ed80d7bdda643f1"
+      "sha256": "2a793f2c875b67d75789f544a8cc32f51d24619bd0feba12d1e2209252d49749"
     },
     ".kimi-plugin/skills/smoothing-the-experience/scripts/lib/mutation.mjs": {
       "sha256": "708105bc31ebcde6af621962bdb5a1b23382fbbfdc2589541449d43f18b68fa6"
@@ -1418,7 +1418,7 @@
       "sha256": "0fb536e30099e47135f7d1e5add822643df46f2d754f3ce8968841692b56405a"
     },
     ".kimi-plugin/skills/smoothing-the-experience/scripts/smooth.mjs": {
-      "sha256": "e06107fc8ac074d162324ebd94e6ef851ff88fa80469a07125aba04a3d63698f"
+      "sha256": "3abf826b4960b31aab650a9ea8d266a8a988f650045b03e82c50613a4ac86e12"
     },
     ".kimi-plugin/skills/subagent-driven-development/SKILL.md": {
       "sha256": "00396c3de76404087ce21801f0c5f15bb2be14027910d305ca1e8856d6e6da66"
@@ -1930,10 +1930,10 @@
       "sha256": "d8fefa7e4bfd1ad6e9fe0d6d276e80dd887884bc8644c1f1f74008caeec9171b"
     },
     ".opencode/skills/smoothing-the-experience/scripts/lib/harnesses/claude.mjs": {
-      "sha256": "d6bff6840542c22744b1feb468cf87dc6765d9f3bcf156d4c88dedbbb9390da8"
+      "sha256": "3ac457e2698582a30df13bd85e494769387a6871dd8c26d16ac71dc4ee4d09f1"
     },
     ".opencode/skills/smoothing-the-experience/scripts/lib/harnesses/codex.mjs": {
-      "sha256": "44097967671c084691724d5117eb0e57b53cd1fe7e1ab1221ed80d7bdda643f1"
+      "sha256": "2a793f2c875b67d75789f544a8cc32f51d24619bd0feba12d1e2209252d49749"
     },
     ".opencode/skills/smoothing-the-experience/scripts/lib/mutation.mjs": {
       "sha256": "708105bc31ebcde6af621962bdb5a1b23382fbbfdc2589541449d43f18b68fa6"
@@ -1954,7 +1954,7 @@
       "sha256": "0fb536e30099e47135f7d1e5add822643df46f2d754f3ce8968841692b56405a"
     },
     ".opencode/skills/smoothing-the-experience/scripts/smooth.mjs": {
-      "sha256": "e06107fc8ac074d162324ebd94e6ef851ff88fa80469a07125aba04a3d63698f"
+      "sha256": "3abf826b4960b31aab650a9ea8d266a8a988f650045b03e82c50613a4ac86e12"
     },
     ".opencode/skills/subagent-driven-development/SKILL.md": {
       "sha256": "f91cc1e63d02979282581502ef5810fceec5b11cb815d2520658ccbf42701522"
@@ -2457,10 +2457,10 @@
       "sha256": "d8fefa7e4bfd1ad6e9fe0d6d276e80dd887884bc8644c1f1f74008caeec9171b"
     },
     ".pi/skills/smoothing-the-experience/scripts/lib/harnesses/claude.mjs": {
-      "sha256": "d6bff6840542c22744b1feb468cf87dc6765d9f3bcf156d4c88dedbbb9390da8"
+      "sha256": "3ac457e2698582a30df13bd85e494769387a6871dd8c26d16ac71dc4ee4d09f1"
     },
     ".pi/skills/smoothing-the-experience/scripts/lib/harnesses/codex.mjs": {
-      "sha256": "44097967671c084691724d5117eb0e57b53cd1fe7e1ab1221ed80d7bdda643f1"
+      "sha256": "2a793f2c875b67d75789f544a8cc32f51d24619bd0feba12d1e2209252d49749"
     },
     ".pi/skills/smoothing-the-experience/scripts/lib/mutation.mjs": {
       "sha256": "708105bc31ebcde6af621962bdb5a1b23382fbbfdc2589541449d43f18b68fa6"
@@ -2481,7 +2481,7 @@
       "sha256": "0fb536e30099e47135f7d1e5add822643df46f2d754f3ce8968841692b56405a"
     },
     ".pi/skills/smoothing-the-experience/scripts/smooth.mjs": {
-      "sha256": "e06107fc8ac074d162324ebd94e6ef851ff88fa80469a07125aba04a3d63698f"
+      "sha256": "3abf826b4960b31aab650a9ea8d266a8a988f650045b03e82c50613a4ac86e12"
     },
     ".pi/skills/subagent-driven-development/SKILL.md": {
       "sha256": "ce8bb3f8e524b0026e5aa572168769992d06073518126178d518d2eb80544128"

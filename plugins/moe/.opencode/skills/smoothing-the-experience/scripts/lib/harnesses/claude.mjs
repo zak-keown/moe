@@ -442,7 +442,8 @@ function matchesPath(path, pattern, context) {
 function resolveClaudeRulePath(pattern, context) {
   if (pattern.startsWith("//")) return resolve(pattern.slice(1));
   if (pattern.startsWith("/")) {
-    return context.projectRoot ? resolve(context.projectRoot, pattern.slice(1)) : undefined;
+    if (context.observationCwdProven !== true || !context.primaryCwd) return undefined;
+    return resolve(context.primaryCwd, pattern.slice(1));
   }
   if (pattern.startsWith("~/")) {
     return context.homeDir ? resolve(context.homeDir, pattern.slice(2)) : undefined;
@@ -536,19 +537,22 @@ export function renderClaudeCandidate(candidate, context = {}) {
     rule = renderClaudeShell(classified.normalized);
     if (!rule) return null;
   } else if (candidate.class === "filesystem") {
-    if (scope !== "project" || context.anchorProven !== true) return null;
+    if (scope !== "project") return null;
     const { action, path } = candidate.operation ?? {};
+    const projectRoot = candidate.projectRoot ?? context.projectRoot;
     if (
       !["read", "modify"].includes(action) ||
       !isNonEmptyString(path) ||
+      !isNonEmptyString(projectRoot) ||
+      !isAbsolute(projectRoot) ||
       isAbsolute(path) ||
-      path.includes("*") ||
-      path.includes("\\") ||
+      /[*?[\]\\\0\r\n]/.test(path) ||
+      /(?:^|\/)\s*$/.test(path) ||
       path.split(/[\\/]/).includes("..")
     ) {
       return null;
     }
-    rule = CLAUDE_RULE[action](path);
+    rule = CLAUDE_RULE[action](resolve(projectRoot, path));
   } else if (candidate.class === "network") {
     const classified = classifyNetwork(candidate.operation);
     if (!classified.eligible) return null;

@@ -20,6 +20,7 @@ import {
 } from "./lib/harnesses/claude.mjs";
 import {
   classifyCodexActiveRules,
+  codexRuleDirectories,
   discoverCodex,
   readCodexConfigLayers,
   readCodexSessions,
@@ -289,32 +290,47 @@ async function scanCodex({ env, homeDir, cwd, cutoffMs, all, requireLayerState =
   const codexHome = resolve(env.CODEX_HOME || join(homeDir, ".codex"));
   const discovery = await discoverCodex({ env, homeDir, cutoffMs });
   if (discovery.status !== "ready") throw new Error("Codex sessions are unavailable");
-  const layerState = await readCodexConfigLayers({
-    codexBin: "codex",
-    cwd,
-    spawnProcess: spawn,
-  });
-  if (requireLayerState && layerState.status !== "available") {
-    throw new Error("Codex active layers are unavailable");
-  }
   const reader = await readCodexSessions({
     files: discovery.files,
     cutoffMs,
     resolveProjectRoot,
     existingPrefixes: [],
   });
-  const globalRuleFiles = await listRuleFiles(join(codexHome, "rules"));
+  const contexts = reader.contexts.length > 0
+    ? reader.contexts
+    : [{ cwd, projectRoot: await resolveProjectRoot(cwd) }];
+  const layerStates = [];
+  for (const context of contexts) {
+    const state = await readCodexConfigLayers({
+      codexBin: "codex",
+      cwd: context.cwd,
+      spawnProcess: spawn,
+    });
+    if (requireLayerState && state.status !== "available") {
+      throw new Error("Codex active layers are unavailable");
+    }
+    layerStates.push({ ...context, state });
+  }
+  const availableLayers = layerStates
+    .filter(({ state }) => state.status === "available")
+    .flatMap(({ state }) => state.layers);
+  const layerState = availableLayers.length > 0
+    ? { status: "available", layers: deduplicateLayers(availableLayers) }
+    : { status: "unavailable", layers: [] };
   const byProject = Map.groupBy(reader.evidence, ({ projectRoot }) => projectRoot);
   const evidence = [];
   for (const projectRoot of [...byProject.keys()].sort(compareCodeUnits)) {
-    const projectRuleFiles = await listRuleFiles(join(projectRoot, ".codex", "rules"));
-    const ruleFiles = [...new Set([...globalRuleFiles, ...projectRuleFiles])].sort(
-      compareCodeUnits,
-    );
+    const directories = new Set([join(codexHome, "rules")]);
+    for (const entry of layerStates) {
+      if (entry.projectRoot !== projectRoot) continue;
+      for (const directory of codexRuleDirectories(entry.state)) directories.add(directory);
+    }
+    const ruleFiles = [];
+    for (const directory of directories) ruleFiles.push(...(await listRuleFiles(directory)));
     evidence.push(
       ...(await classifyCodexActiveRules({
         evidence: byProject.get(projectRoot),
-        ruleFiles,
+        ruleFiles: [...new Set(ruleFiles)].sort(compareCodeUnits),
         codexBin: "codex",
         runExecpolicy: runCodexExecpolicy,
       })),
@@ -326,6 +342,12 @@ async function scanCodex({ env, homeDir, cwd, cutoffMs, all, requireLayerState =
     codex: { codexHome, layerState },
   });
   return harnessReport("codex", evidence, candidateReport);
+}
+
+function deduplicateLayers(layers) {
+  const byIdentity = new Map();
+  for (const layer of layers) byIdentity.set(JSON.stringify(layer), layer);
+  return [...byIdentity.values()];
 }
 
 function harnessReport(harness, evidence, candidateReport) {
@@ -631,11 +653,15 @@ function isCodexPlanValidationError(error) {
 async function activeCodexRuleFiles(destination) {
   const homeDir = process.env.HOME || homedir();
   const codexHome = resolve(process.env.CODEX_HOME || join(homeDir, ".codex"));
-  const projectRoot = await resolveProjectRoot(process.cwd());
+  const cwd = await realpath(process.cwd());
+  const projectRoot = await resolveProjectRoot(cwd);
+  const layerState = await readCodexConfigLayers({ codexBin: "codex", cwd, spawnProcess: spawn });
+  if (layerState.status !== "available") throw new Error("Codex active layers are unavailable");
   const directories = new Set([
     dirname(destination),
     join(codexHome, "rules"),
     join(projectRoot, ".codex", "rules"),
+    ...codexRuleDirectories(layerState),
   ]);
   const paths = [];
   for (const directory of directories) paths.push(...(await listRuleFiles(directory)));
