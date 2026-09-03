@@ -258,25 +258,19 @@
       "sha256": "f2550d5d18a2f39e46fb39b08013dbec643bdc35aca77390efd1eca76df66cc5"
     },
     ".codex-plugin/skills/using-moe/SKILL.md": {
-      "sha256": "bb0a8ba63b0319b917ab9e00ddbda3f2cbe92a2c3238a887932502931b86f40f"
+      "sha256": "f9d0104fe5a50cc8521ba5a1e27e48bdbd39eaf9dad63edcaab19bd8dd4ae70d"
     },
     ".codex-plugin/skills/using-moe/references/antigravity-tools.md": {
-      "sha256": "77021a952929a56251d320ed909a4a4aaa3373ee89937e7645163ec56a5da713"
+      "sha256": "f8643c8d06a3d19b34ba102b1fe98eafb21c73da3b60bbcbdf354cca69ed6d3e"
     },
     ".codex-plugin/skills/using-moe/references/codex-tools.md": {
-      "sha256": "bdc9f5eb727fadfa1cadb59ebf96f9fce7c18d97df2da196e05486ff800cd9b6"
+      "sha256": "37e283d4d99605e4838268114c99ea28ed516791aa680bad8454b145342f3800"
     },
     ".codex-plugin/skills/using-moe/references/gemini-tools.md": {
-      "sha256": "1d8bfcf577fe92b36204592c85e010617ce0d15ea899dc4d26ed0bf7a6bcb704"
-    },
-    ".codex-plugin/skills/using-moe/references/kimi-tools.md": {
-      "sha256": "54eae82d2d6ddb479dc27958d5166dbc70ab651fcd110263b31a68afecdb02a3"
+      "sha256": "39f481983801763801f5e150e4e64d0ad42a9f96c15dd43c6064c37d1db89a75"
     },
     ".codex-plugin/skills/using-moe/references/opencode-tools.md": {
-      "sha256": "0e00fbc86349f9b8fd8a4851fff142135144513b6c0fcbfcaa2109b4608a3fcc"
-    },
-    ".codex-plugin/skills/using-moe/references/pi-tools.md": {
-      "sha256": "b43b591fbe1f1c1c8e25ba46356e97aa0bf827c17eee3e69a137124f37c0d5c8"
+      "sha256": "970c6f23628c709048424883783ce67e8453d4e019af785277d275564a63e65b"
     },
     ".codex-plugin/skills/using-tmux-for-interactive-commands/SKILL.md": {
       "sha256": "44068e8892016d7d2e8d80e0b251ef10865d8bcd67d5a91219e9bff669d615d7"
@@ -576,25 +570,19 @@
       "sha256": "f2550d5d18a2f39e46fb39b08013dbec643bdc35aca77390efd1eca76df66cc5"
     },
     ".cursor-plugin/skills/using-moe/SKILL.md": {
-      "sha256": "9943b1dda2634c4fceb131dff8b04579397d008ae0621b52725d1d81f68fd8d6"
+      "sha256": "f601560c32675c5e1d50179daabe4c6fbf3ba567f9c801dffce61f6a68cfc58c"
     },
     ".cursor-plugin/skills/using-moe/references/antigravity-tools.md": {
-      "sha256": "77021a952929a56251d320ed909a4a4aaa3373ee89937e7645163ec56a5da713"
+      "sha256": "f8643c8d06a3d19b34ba102b1fe98eafb21c73da3b60bbcbdf354cca69ed6d3e"
     },
     ".cursor-plugin/skills/using-moe/references/codex-tools.md": {
-      "sha256": "bdc9f5eb727fadfa1cadb59ebf96f9fce7c18d97df2da196e05486ff800cd9b6"
+      "sha256": "37e283d4d99605e4838268114c99ea28ed516791aa680bad8454b145342f3800"
     },
     ".cursor-plugin/skills/using-moe/references/gemini-tools.md": {
-      "sha256": "1d8bfcf577fe92b36204592c85e010617ce0d15ea899dc4d26ed0bf7a6bcb704"
-    },
-    ".cursor-plugin/skills/using-moe/references/kimi-tools.md": {
-      "sha256": "54eae82d2d6ddb479dc27958d5166dbc70ab651fcd110263b31a68afecdb02a3"
+      "sha256": "39f481983801763801f5e150e4e64d0ad42a9f96c15dd43c6064c37d1db89a75"
     },
     ".cursor-plugin/skills/using-moe/references/opencode-tools.md": {
-      "sha256": "0e00fbc86349f9b8fd8a4851fff142135144513b6c0fcbfcaa2109b4608a3fcc"
-    },
-    ".cursor-plugin/skills/using-moe/references/pi-tools.md": {
-      "sha256": "b43b591fbe1f1c1c8e25ba46356e97aa0bf827c17eee3e69a137124f37c0d5c8"
+      "sha256": "970c6f23628c709048424883783ce67e8453d4e019af785277d275564a63e65b"
     },
     ".cursor-plugin/skills/using-tmux-for-interactive-commands/SKILL.md": {
       "sha256": "ba9fbb0f1ccbfb0213fdd3aa389b731e50d3aa68f0bf8c5a998e14b09837105d"
@@ -894,25 +882,19 @@
       "sha256": "f2550d5d18a2f39e46fb39b08013dbec643bdc35aca77390efd1eca76df66cc5"
     },
     ".kimi-plugin/skills/using-moe/SKILL.md": {
-      "sha256": "9943b1dda2634c4fceb131dff8b04579397d008ae0621b52725d1d81f68fd8d6"
+      "sha256": "f601560c32675c5e1d50179daabe4c6fbf3ba567f9c801dffce61f6a68cfc58c"
     },
     ".kimi-plugin/skills/using-moe/references/antigravity-tools.md": {
-      "sha256": "77021a952929a56251d320ed909a4a4aaa3373ee89937e7645163ec56a5da713"
+      "sha256": "f8643c8d06a3d19b34ba102b1fe98eafb21c73da3b60bbcbdf354cca69ed6d3e"
     },
     ".kimi-plugin/skills/using-moe/references/codex-tools.md": {
-      "sha256": "bdc9f5eb727fadfa1cadb59ebf96f9fce7c18d97df2da196e05486ff800cd9b6"
+      "sha256": "37e283d4d99605e4838268114c99ea28ed516791aa680bad8454b145342f3800"
     },
     ".kimi-plugin/skills/using-moe/references/gemini-tools.md": {
-      "sha256": "1d8bfcf577fe92b36204592c85e010617ce0d15ea899dc4d26ed0bf7a6bcb704"
-    },
-    ".kimi-plugin/skills/using-moe/references/kimi-tools.md": {
-      "sha256": "54eae82d2d6ddb479dc27958d5166dbc70ab651fcd110263b31a68afecdb02a3"
+      "sha256": "39f481983801763801f5e150e4e64d0ad42a9f96c15dd43c6064c37d1db89a75"
     },
     ".kimi-plugin/skills/using-moe/references/opencode-tools.md": {
-      "sha256": "0e00fbc86349f9b8fd8a4851fff142135144513b6c0fcbfcaa2109b4608a3fcc"
-    },
-    ".kimi-plugin/skills/using-moe/references/pi-tools.md": {
-      "sha256": "b43b591fbe1f1c1c8e25ba46356e97aa0bf827c17eee3e69a137124f37c0d5c8"
+      "sha256": "970c6f23628c709048424883783ce67e8453d4e019af785277d275564a63e65b"
     },
     ".kimi-plugin/skills/using-tmux-for-interactive-commands/SKILL.md": {
       "sha256": "ba9fbb0f1ccbfb0213fdd3aa389b731e50d3aa68f0bf8c5a998e14b09837105d"
@@ -1221,25 +1203,19 @@
       "sha256": "f2550d5d18a2f39e46fb39b08013dbec643bdc35aca77390efd1eca76df66cc5"
     },
     ".opencode/skills/using-moe/SKILL.md": {
-      "sha256": "9e617814914b04f8406936664cfeb10f23826ee94ac8676232ef6f163c269ac7"
+      "sha256": "b6a38c5e86059cea8ce29ff3abd6f168c7ea245ca08f43e9ba19b5bcdaaf3257"
     },
     ".opencode/skills/using-moe/references/antigravity-tools.md": {
-      "sha256": "77021a952929a56251d320ed909a4a4aaa3373ee89937e7645163ec56a5da713"
+      "sha256": "f8643c8d06a3d19b34ba102b1fe98eafb21c73da3b60bbcbdf354cca69ed6d3e"
     },
     ".opencode/skills/using-moe/references/codex-tools.md": {
-      "sha256": "bdc9f5eb727fadfa1cadb59ebf96f9fce7c18d97df2da196e05486ff800cd9b6"
+      "sha256": "37e283d4d99605e4838268114c99ea28ed516791aa680bad8454b145342f3800"
     },
     ".opencode/skills/using-moe/references/gemini-tools.md": {
-      "sha256": "1d8bfcf577fe92b36204592c85e010617ce0d15ea899dc4d26ed0bf7a6bcb704"
-    },
-    ".opencode/skills/using-moe/references/kimi-tools.md": {
-      "sha256": "54eae82d2d6ddb479dc27958d5166dbc70ab651fcd110263b31a68afecdb02a3"
+      "sha256": "39f481983801763801f5e150e4e64d0ad42a9f96c15dd43c6064c37d1db89a75"
     },
     ".opencode/skills/using-moe/references/opencode-tools.md": {
-      "sha256": "0e00fbc86349f9b8fd8a4851fff142135144513b6c0fcbfcaa2109b4608a3fcc"
-    },
-    ".opencode/skills/using-moe/references/pi-tools.md": {
-      "sha256": "b43b591fbe1f1c1c8e25ba46356e97aa0bf827c17eee3e69a137124f37c0d5c8"
+      "sha256": "970c6f23628c709048424883783ce67e8453d4e019af785277d275564a63e65b"
     },
     ".opencode/skills/using-tmux-for-interactive-commands/SKILL.md": {
       "sha256": "6626efef2e75626a8f3fd8e189cc659054e0beba4ab7d659ac92b21bbd4c724b"
@@ -1539,25 +1515,19 @@
       "sha256": "f2550d5d18a2f39e46fb39b08013dbec643bdc35aca77390efd1eca76df66cc5"
     },
     ".pi/skills/using-moe/SKILL.md": {
-      "sha256": "a22ec7a011656937930c731beb8df8f572289c09148de0e2877dd90b2822903b"
+      "sha256": "1cfced31b83b2d42e22d3cb661fcff7069e9232f7f62d7f14cd41c9dacbb5418"
     },
     ".pi/skills/using-moe/references/antigravity-tools.md": {
-      "sha256": "77021a952929a56251d320ed909a4a4aaa3373ee89937e7645163ec56a5da713"
+      "sha256": "f8643c8d06a3d19b34ba102b1fe98eafb21c73da3b60bbcbdf354cca69ed6d3e"
     },
     ".pi/skills/using-moe/references/codex-tools.md": {
-      "sha256": "bdc9f5eb727fadfa1cadb59ebf96f9fce7c18d97df2da196e05486ff800cd9b6"
+      "sha256": "37e283d4d99605e4838268114c99ea28ed516791aa680bad8454b145342f3800"
     },
     ".pi/skills/using-moe/references/gemini-tools.md": {
-      "sha256": "1d8bfcf577fe92b36204592c85e010617ce0d15ea899dc4d26ed0bf7a6bcb704"
-    },
-    ".pi/skills/using-moe/references/kimi-tools.md": {
-      "sha256": "54eae82d2d6ddb479dc27958d5166dbc70ab651fcd110263b31a68afecdb02a3"
+      "sha256": "39f481983801763801f5e150e4e64d0ad42a9f96c15dd43c6064c37d1db89a75"
     },
     ".pi/skills/using-moe/references/opencode-tools.md": {
-      "sha256": "0e00fbc86349f9b8fd8a4851fff142135144513b6c0fcbfcaa2109b4608a3fcc"
-    },
-    ".pi/skills/using-moe/references/pi-tools.md": {
-      "sha256": "b43b591fbe1f1c1c8e25ba46356e97aa0bf827c17eee3e69a137124f37c0d5c8"
+      "sha256": "970c6f23628c709048424883783ce67e8453d4e019af785277d275564a63e65b"
     },
     ".pi/skills/using-tmux-for-interactive-commands/SKILL.md": {
       "sha256": "6626efef2e75626a8f3fd8e189cc659054e0beba4ab7d659ac92b21bbd4c724b"

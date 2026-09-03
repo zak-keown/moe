@@ -9,7 +9,7 @@ Skills speak in actions ("dispatch a subagent", "create a todo", "read a file").
 
 ## Native rendering ladder
 
-The shared native-rendering ladder lives at `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md`. On Antigravity, rung 1 (the Claude Code Artifact tool) is not exposed — skills that render should start at rung 2 (the brainstorm browser companion) or fall to rung 4 (markdown file). Antigravity's `write_to_file` with `IsArtifact: true` is a task-artifact concept and is not a substitute for rung 1.
+On Antigravity, rung 1 of the shared ladder (`${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md`, the Claude Code Artifact tool) is not exposed — skills that render should start at rung 2 (the brainstorm browser companion) or fall to rung 4 (markdown file); rung 3 is not a reliable middle step here. Antigravity's `write_to_file` with `IsArtifact: true` is a task-artifact concept and is not a substitute for rung 1.
 
 ## Task tracking
 
