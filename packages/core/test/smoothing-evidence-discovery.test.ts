@@ -46,6 +46,48 @@ describe("smoothing evidence contract", () => {
     );
     expect(JSON.stringify(redactedEvidenceSummary([row]))).not.toContain("root-1");
   });
+
+  it.each([
+    ["tool output", "mcp", { toolId: "mcp__fixture__search", toolOutput: "secret" }],
+    ["URL paths and queries", "network", { url: "https://x.invalid/?token=secret" }],
+    ["arbitrary command arguments", "shell", { command: "git status", args: ["--porcelain"] }],
+  ])("rejects nested %s", (_label, evidenceClass, operation) => {
+    expect(() =>
+      makeEvidence({
+        harness: "claude",
+        rootSessionId: "root-1",
+        projectRoot: "/fixture/repo-a",
+        observedAt: "2026-09-01T00:00:00.000Z",
+        class: evidenceClass,
+        operation,
+        outcome: "success",
+        approvalProvenance: "unknown",
+        sourceSchema: "claude-jsonl-tool-use-v1",
+      }),
+    ).toThrow(/invalid operation|unknown .* operation field/);
+  });
+
+  it.each([
+    ["missing", undefined],
+    ["null", null],
+    ["an array", []],
+    ["an empty object", {}],
+    ["a string", "git status"],
+  ])("rejects %s operations", (_label, operation) => {
+    expect(() =>
+      makeEvidence({
+        harness: "claude",
+        rootSessionId: "root-1",
+        projectRoot: "/fixture/repo-a",
+        observedAt: "2026-09-01T00:00:00.000Z",
+        class: "shell",
+        operation,
+        outcome: "success",
+        approvalProvenance: "unknown",
+        sourceSchema: "claude-jsonl-tool-use-v1",
+      }),
+    ).toThrow(/invalid operation/);
+  });
 });
 
 it("honors config roots and reports unsupported installed harnesses", async () => {
