@@ -1,8 +1,5 @@
 /**
- * @typedef {object} Operation
- * @property {string} [action]
- * @property {string} [path]
- * @property {string} [hostname]
+ * @typedef {{ command: string } | { argv: string[] } | { action: "read" | "modify", path: string } | { hostname: string } | { toolId: string }} Operation
  */
 
 /**
@@ -65,7 +62,89 @@ export function makeEvidence(input) {
   ) {
     throw new TypeError("incomplete evidence record");
   }
-  return Object.freeze({ ...input, operation: Object.freeze({ ...input.operation }) });
+  return Object.freeze({
+    ...input,
+    operation: Object.freeze(validateOperation(input.class, input.operation)),
+  });
+}
+
+function validateOperation(evidenceClass, operation) {
+  if (!isPlainObject(operation) || Object.keys(operation).length === 0) {
+    throw new TypeError("invalid operation");
+  }
+  if (evidenceClass === "shell") return validateShellOperation(operation);
+  if (evidenceClass === "filesystem") return validateFilesystemOperation(operation);
+  if (evidenceClass === "network") return validateNetworkOperation(operation);
+  return validateMcpOperation(operation);
+}
+
+function validateShellOperation(operation) {
+  rejectUnknownOperationFields("shell", operation, new Set(["command", "argv"]));
+  if (Object.hasOwn(operation, "command") && hasExactly(operation, ["command"])) {
+    if (isNonEmptyString(operation.command)) return { command: operation.command };
+  }
+  if (Object.hasOwn(operation, "argv") && hasExactly(operation, ["argv"])) {
+    if (
+      Array.isArray(operation.argv) &&
+      operation.argv.length > 0 &&
+      operation.argv.every(isNonEmptyString)
+    ) {
+      return { argv: Object.freeze([...operation.argv]) };
+    }
+  }
+  throw new TypeError("invalid operation");
+}
+
+function validateFilesystemOperation(operation) {
+  rejectUnknownOperationFields("filesystem", operation, new Set(["action", "path"]));
+  if (
+    hasExactly(operation, ["action", "path"]) &&
+    ["read", "modify"].includes(operation.action) &&
+    isNonEmptyString(operation.path)
+  ) {
+    return { action: operation.action, path: operation.path };
+  }
+  throw new TypeError("invalid operation");
+}
+
+function validateNetworkOperation(operation) {
+  rejectUnknownOperationFields("network", operation, new Set(["hostname"]));
+  if (hasExactly(operation, ["hostname"]) && isHostname(operation.hostname)) {
+    return { hostname: operation.hostname };
+  }
+  throw new TypeError("invalid operation");
+}
+
+function validateMcpOperation(operation) {
+  rejectUnknownOperationFields("mcp", operation, new Set(["toolId"]));
+  if (hasExactly(operation, ["toolId"]) && isNonEmptyString(operation.toolId)) {
+    return { toolId: operation.toolId };
+  }
+  throw new TypeError("invalid operation");
+}
+
+function isPlainObject(value) {
+  return value !== null && typeof value === "object" && Object.getPrototypeOf(value) === Object.prototype;
+}
+
+function rejectUnknownOperationFields(evidenceClass, operation, fields) {
+  for (const key of Object.keys(operation)) {
+    if (!fields.has(key)) {
+      throw new TypeError(`unknown ${evidenceClass} operation field: ${key}`);
+    }
+  }
+}
+
+function hasExactly(operation, fields) {
+  return Object.keys(operation).length === fields.length && fields.every((field) => Object.hasOwn(operation, field));
+}
+
+function isNonEmptyString(value) {
+  return typeof value === "string" && value.length > 0;
+}
+
+function isHostname(value) {
+  return isNonEmptyString(value) && /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/i.test(value);
 }
 
 /**
