@@ -8,7 +8,7 @@ import { classifyNetwork } from "../skills/smoothing-the-experience/scripts/lib/
 // @ts-expect-error — the production helper is intentionally plain ESM.
 import * as shellSafety from "../skills/smoothing-the-experience/scripts/lib/safety/shell.mjs";
 
-const { classifyShell, parseConservativeShell } = shellSafety;
+const { classifyShell, parseConservativeShell, PROJECT_SHELL_CATALOG } = shellSafety;
 
 describe("shell safety", () => {
   it.each([
@@ -42,6 +42,69 @@ describe("shell safety", () => {
     expect(
       classifyShell({ argv }, { projectRoot: "/fixture/repo-a", harness: "claude" }),
     ).toMatchObject({ eligible, globalSafe });
+  });
+
+  it.each([
+    ["chain", ["git", "status", "&&", "git", "push"]],
+    ["pipe", ["git", "status", "|", "cat"]],
+    ["redirection", ["git", "status", ">", "status.txt"]],
+    ["command substitution", ["git", "status", "$(echo status)"]],
+    ["variable expansion", ["git", "status", "$HOME"]],
+    ["glob", ["git", "status", "src/*"]],
+    ["assignment", ["git", "status", "PAGER=cat"]],
+    ["wrapper", ["bash", "-lc", "git status"]],
+  ])("rejects native argv containing %s syntax", (_label, argv) => {
+    expect(
+      classifyShell({ argv }, { projectRoot: "/fixture/repo-a", harness: "claude" }).eligible,
+    ).toBe(false);
+  });
+
+  it.each([
+    ["git", "diff", "--ext-diff"],
+    ["git", "diff", "--textconv"],
+    ["git", "log", "--ext-diff"],
+    ["git", "show", "--textconv"],
+  ])("rejects external-execution Git arguments %j", (...argv) => {
+    expect(
+      classifyShell({ argv }, { projectRoot: "/fixture/repo-a", harness: "claude" }).eligible,
+    ).toBe(false);
+  });
+
+  it.each(["git diff", "git log", "git show"])(
+    "does not expose %s as a suffix-safe renderer prefix",
+    (command) => {
+      expect(PROJECT_SHELL_CATALOG.get(command)?.suffixSafe).toBe(false);
+    },
+  );
+
+  it.each([
+    ["git", "diff"],
+    ["git", "log"],
+    ["git", "show"],
+  ])("keeps exact Claude read command %j selectable", (...argv) => {
+    expect(
+      classifyShell({ argv }, { projectRoot: "/fixture/repo-a", harness: "claude" }),
+    ).toMatchObject({ eligible: true, normalized: { argv }, globalSafe: true });
+  });
+
+  it("keeps allowlisted read options exact for Claude and declines them for Codex", () => {
+    const operation = { argv: ["git", "diff", "--stat", "HEAD"] };
+    expect(
+      classifyShell(operation, {
+        projectRoot: "/fixture/repo-a",
+        harness: "claude",
+      }),
+    ).toMatchObject({
+      eligible: true,
+      normalized: operation,
+      globalSafe: false,
+    });
+    expect(
+      classifyShell(operation, {
+        projectRoot: "/fixture/repo-a",
+        harness: "codex",
+      }).eligible,
+    ).toBe(false);
   });
 
   it("permits exact contained cp -n evidence for Claude only", () => {
