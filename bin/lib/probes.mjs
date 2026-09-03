@@ -73,6 +73,18 @@ export function executableOnPath(executable, options = {}) {
   return false;
 }
 
+/** True when a direct executable candidate is a regular accessible file. */
+export function executableFile(candidate, options = {}) {
+  const targetPlatform = options.platform ?? platform;
+  try {
+    if (!statSync(candidate).isFile()) return false;
+    accessSync(candidate, targetPlatform === "win32" ? constants.F_OK : constants.X_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Adapter IDs whose unique host executable is installed. Agent Plugins 1.0
  * deliberately has no executable and therefore can only be selected
  * explicitly or through MOE_DEFAULT_HARNESS. */
@@ -203,14 +215,16 @@ export function probeGit() {
 export function probeBashOnWindows(harnessId, options = {}) {
   const targetPlatform = options.platform ?? platform;
   const environment = options.env ?? process.env;
-  const exists = options.exists ?? existsSync;
+  const isExecutableFile =
+    options.isExecutableFile ??
+    ((candidate) => executableFile(candidate, { platform: targetPlatform }));
   const resolvesOnPath =
     options.executableOnPath ??
     ((executable) => executableOnPath(executable, { platform: targetPlatform, env: environment }));
   const harness = getHarness(harnessId);
   if (targetPlatform !== "win32" || !harness?.requiresWindowsBash) return undefined;
   const envPath = environment.CLAUDE_CODE_GIT_BASH_PATH;
-  if (harnessId === "claude-code" && envPath && exists(envPath)) {
+  if (harnessId === "claude-code" && envPath && isExecutableFile(envPath)) {
     return result({
       name: "bash (win32)",
       tier: "hard",
@@ -224,7 +238,7 @@ export function probeBashOnWindows(harnessId, options = {}) {
     "C:\\Program Files (x86)\\Git\\bin\\bash.exe",
   ];
   for (const candidate of stdCandidates) {
-    if (exists(candidate)) {
+    if (isExecutableFile(candidate)) {
       return result({ name: "bash (win32)", tier: "hard", ok: true, version: candidate });
     }
   }

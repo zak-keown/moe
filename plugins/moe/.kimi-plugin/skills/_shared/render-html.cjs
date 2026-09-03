@@ -25,9 +25,10 @@ const path = require("node:path");
 
 const SLOTS = /** @type {const} */ (["TITLE", "NAV", "CONTENT", "SCRIPTS"]);
 const REQUIRED = new Set(["TITLE", "CONTENT"]);
+const SENTINELS = Object.fromEntries(SLOTS.map((slot) => [slot, `<!-- MOE:SLOT:${slot} -->`]));
 
 /**
- * Replace `{{SLOT}}` markers in the template with values from `data`.
+ * Replace parser-safe HTML comment sentinels in the template with values from `data`.
  * Missing optional slots become empty strings. Missing required slots
  * throw.
  *
@@ -44,9 +45,9 @@ function renderTemplate(template, data) {
       if (REQUIRED.has(slot)) {
         throw new Error(`render-html: required slot "${key}" is missing from input`);
       }
-      html = html.replace(new RegExp(`\\{\\{${slot}\\}\\}`, "g"), "");
+      html = html.replaceAll(SENTINELS[slot], "");
     } else {
-      html = html.replace(new RegExp(`\\{\\{${slot}\\}\\}`, "g"), String(value));
+      html = html.replaceAll(SENTINELS[slot], String(value));
     }
   }
   return html;
@@ -119,4 +120,4 @@ if (require.main === module) {
 }
 
 // Export internals for testing.
-module.exports = { renderTemplate, parseArgs, SLOTS };
+module.exports = { renderTemplate, parseArgs, SLOTS, SENTINELS };

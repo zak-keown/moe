@@ -23,7 +23,21 @@ import { describe, expect, it } from "vitest";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = resolve(HERE, "..");
 const SKILL = readFileSync(join(PKG, "skills/retrieving-context/SKILL.md"), "utf8");
+const REVIEWING_SKILL = readFileSync(join(PKG, "skills/reviewing-a-codebase/SKILL.md"), "utf8");
 const MOEDEX_AGENT = readFileSync(join(PKG, "agents/search-moedex.md"), "utf8");
+const GENERATED_SKILLS = [
+  "skills",
+  ".claude-plugin/skills",
+  ".cursor-plugin/skills",
+  ".codex-plugin/skills",
+  ".kimi-plugin/skills",
+  ".opencode/skills",
+  ".pi/skills",
+].flatMap((root) =>
+  ["retrieving-context", "reviewing-a-codebase"].map((skill) =>
+    readFileSync(join(PKG, "../../plugins/moe", root, skill, "SKILL.md"), "utf8"),
+  ),
+);
 
 function section(text: string, heading: string): string {
   const start = text.indexOf(heading);
@@ -82,6 +96,25 @@ describe("retrieving-context contract", () => {
     expect(MOEDEX_AGENT).not.toMatch(/^tools:.*\*/m);
     // Word-cap is what keeps the delegated context small.
     expect(MOEDEX_AGENT).toContain("200-1000 words total");
+  });
+
+  it("keeps model-role substitutions outside enclosing code spans in source and generated skills", () => {
+    expect(SKILL).not.toMatch(/`model: \{model-(?:fast|deep|default)\}`/);
+    expect(REVIEWING_SKILL).not.toMatch(/`model: \{model-(?:fast|deep|default)\}`/);
+    for (const generated of GENERATED_SKILLS) {
+      expect(generated).not.toMatch(/`model:\s*`[^`]+``/);
+    }
+  });
+
+  it("quotes every resolved review helper path used as a node executable argument", () => {
+    const documents = [
+      REVIEWING_SKILL,
+      ...GENERATED_SKILLS.filter((text) => text.includes("review-scope.mjs")),
+    ];
+    for (const document of documents) {
+      expect(document).not.toMatch(/^node <resolved-/m);
+      expect(document.match(/^node "<resolved-[^"]+>"/gm)).toHaveLength(7);
+    }
   });
 
   it("warns that moedex answers are not reproducible for shared artifacts", () => {

@@ -3,7 +3,7 @@
  * registers here as it lands.
  */
 
-import { accessSync, constants } from "node:fs";
+import { accessSync, constants, statSync } from "node:fs";
 import { delimiter, join } from "node:path";
 import { claude } from "./claude.js";
 import { codex } from "./codex.js";
@@ -45,6 +45,7 @@ function isExecutableOnPath(executable: string, environment: NodeJS.ProcessEnv):
         .map((dir) => join(dir, executable));
   return candidates.some((candidate) => {
     try {
+      if (!statSync(candidate).isFile()) return false;
       accessSync(candidate, constants.X_OK);
       return true;
     } catch {

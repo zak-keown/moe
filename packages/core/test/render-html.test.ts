@@ -26,6 +26,12 @@ const { renderTemplate, parseArgs } = require(SCRIPT) as {
 };
 
 const temporaryRoots: string[] = [];
+const SENTINELS = {
+  TITLE: "<!-- MOE:SLOT:TITLE -->",
+  NAV: "<!-- MOE:SLOT:NAV -->",
+  CONTENT: "<!-- MOE:SLOT:CONTENT -->",
+  SCRIPTS: "<!-- MOE:SLOT:SCRIPTS -->",
+} as const;
 
 function tempDir(prefix: string): string {
   const dir = mkdtempSync(join(tmpdir(), prefix));
@@ -44,11 +50,11 @@ afterEach(() => {
 // don't depend on the real report-base.html layout.
 const MINI_TEMPLATE = [
   "<!doctype html>",
-  "<html><head><title>{{TITLE}}</title></head>",
+  `<html><head><title>${SENTINELS.TITLE}</title></head>`,
   "<body>",
-  "<nav>{{NAV}}</nav>",
-  "<main>{{CONTENT}}</main>",
-  "{{SCRIPTS}}",
+  `<nav>${SENTINELS.NAV}</nav>`,
+  `<main>${SENTINELS.CONTENT}</main>`,
+  SENTINELS.SCRIPTS,
   "</body></html>",
 ].join("\n");
 
@@ -67,8 +73,7 @@ describe("renderTemplate", () => {
     expect(result).toContain("<h1>Hello</h1>");
     expect(result).toContain("console.log('ok')");
     // No leftover slot markers.
-    expect(result).not.toContain("{{");
-    expect(result).not.toContain("}}");
+    expect(result).not.toContain("<!-- MOE:SLOT:");
   });
 
   it("produces clean output when optional slots are missing", () => {
@@ -79,8 +84,8 @@ describe("renderTemplate", () => {
     expect(result).toContain("<title>Minimal</title>");
     expect(result).toContain("<p>Body</p>");
     // NAV and SCRIPTS markers are gone, replaced with empty strings.
-    expect(result).not.toContain("{{NAV}}");
-    expect(result).not.toContain("{{SCRIPTS}}");
+    expect(result).not.toContain(SENTINELS.NAV);
+    expect(result).not.toContain(SENTINELS.SCRIPTS);
     expect(result).toContain("<nav></nav>");
   });
 
@@ -136,10 +141,7 @@ describe("report-base.html template", () => {
 
   it("contains all four slot markers", () => {
     const html = readFileSync(DEFAULT_TEMPLATE, "utf-8");
-    expect(html).toContain("{{TITLE}}");
-    expect(html).toContain("{{NAV}}");
-    expect(html).toContain("{{CONTENT}}");
-    expect(html).toContain("{{SCRIPTS}}");
+    for (const sentinel of Object.values(SENTINELS)) expect(html).toContain(sentinel);
   });
 
   it("produces valid portable HTML with the documented Mermaid CDN when slots are filled", () => {
@@ -213,7 +215,7 @@ describe("CLI (render-html.cjs)", () => {
 
     writeFileSync(
       customTemplate,
-      "<!doctype html><html><head><title>{{TITLE}}</title></head><body>{{CONTENT}}</body></html>",
+      `<!doctype html><html><head><title>${SENTINELS.TITLE}</title></head><body>${SENTINELS.CONTENT}</body></html>`,
     );
     writeFileSync(inputPath, JSON.stringify({ title: "Custom", content: "<p>Custom body</p>" }));
 

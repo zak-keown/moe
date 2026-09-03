@@ -348,7 +348,11 @@ export function adjustedModel(
   }
 }
 
-function validateLayout(root: string, sourceDir: string, adapter: HarnessAdapter): void {
+function validateLayout(
+  root: string,
+  sourceDir: string,
+  adapter: HarnessAdapter,
+): 'rendered' | 'in-place' {
   const { outputDir, mode } = adapter.skillLayout
   const rootAbs = resolve(root)
   if (outputDir.length === 0 || outputDir.includes('\\') || outputDir.split('/').includes('')) {
@@ -373,6 +377,11 @@ function validateLayout(root: string, sourceDir: string, adapter: HarnessAdapter
       `adapter "${adapter.name}" in-place skill output directory must equal ${sourceDir}: ${outputDir}`,
     )
   }
+  return mode === 'source-or-rendered'
+    ? outputAbs === resolve(root, sourceDir)
+      ? 'in-place'
+      : 'rendered'
+    : mode
 }
 
 function transformedContent(
@@ -419,14 +428,17 @@ export function substituteAllSkills(
 ): GeneratedFile<Uint8Array>[] {
   const srcDir = model.config.components.skills
   const generatedFiles: GeneratedFile<Uint8Array>[] = []
-  const byOutputDir = new Map<string, { adapter: HarnessAdapter; names: string[] }>()
+  const byOutputDir = new Map<
+    string,
+    { adapter: HarnessAdapter; names: string[]; mode: 'rendered' | 'in-place' }
+  >()
 
   for (const adapter of activeAdapters) {
-    validateLayout(root, srcDir, adapter)
+    const mode = validateLayout(root, srcDir, adapter)
     const existing = byOutputDir.get(adapter.skillLayout.outputDir)
     if (existing) {
       const sameProfile = existing.adapter.skillLayout.profile === adapter.skillLayout.profile
-      const sameMode = existing.adapter.skillLayout.mode === adapter.skillLayout.mode
+      const sameMode = existing.mode === mode
       if (!sameProfile || !sameMode) {
         throw new ConfigError(
           `adapters "${existing.names.join(', ')}" and "${adapter.name}" share skill output directory ` +
@@ -435,12 +447,12 @@ export function substituteAllSkills(
       }
       existing.names.push(adapter.name)
     } else {
-      byOutputDir.set(adapter.skillLayout.outputDir, { adapter, names: [adapter.name] })
+      byOutputDir.set(adapter.skillLayout.outputDir, { adapter, names: [adapter.name], mode })
     }
   }
 
-  for (const { adapter } of byOutputDir.values()) {
-    const { outputDir, profile, mode } = adapter.skillLayout
+  for (const { adapter, mode } of byOutputDir.values()) {
+    const { outputDir, profile } = adapter.skillLayout
     const tree = model.skillFiles.map((file) => ({
       path: `${outputDir.replace(/\/$/, '')}/${file.path}`,
       content: transformedContent(file, profile, outputDir, model, vocab),
@@ -458,7 +470,7 @@ export function substituteAllSkills(
     }
   }
 
-  if (![...byOutputDir.values()].some(({ adapter }) => adapter.skillLayout.mode === 'in-place')) {
+  if (![...byOutputDir.values()].some(({ mode }) => mode === 'in-place')) {
     writeFileSet(
       root,
       model.skillFiles.map((file) => ({

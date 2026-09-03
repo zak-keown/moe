@@ -275,7 +275,7 @@ export function resolvePluginRoot(
   bundleDir: string,
   environment: NodeJS.ProcessEnv = process.env,
 ): string {
-  return environment.MOE_CREW_PLUGIN_ROOT ?? resolve(bundleDir, "..");
+  return environment.MOE_CREW_PLUGIN_ROOT || resolve(bundleDir, "..");
 }
 
 function bootstrapOpts(): BootstrapOpts {
@@ -283,7 +283,7 @@ function bootstrapOpts(): BootstrapOpts {
   return {
     pluginDir: resolvePluginRoot(__dirname),
     moeCrewEntry,
-    moeCrewPath: process.env.MOE_CREW_PATH ?? moeCrewEntry,
+    moeCrewPath: process.env.MOE_CREW_PATH || moeCrewEntry,
   };
 }
 

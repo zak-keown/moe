@@ -105,16 +105,33 @@ function fail(message) {
   process.exit(1);
 }
 
+function sourceNodeExists(source) {
+  try {
+    fs.lstatSync(source);
+    return true;
+  } catch (error) {
+    if (error?.code === "ENOENT") return false;
+    throw error;
+  }
+}
+
 /** Recursive copy with sorted directory reads, so output order is stable. */
 function copyInto(from, to) {
-  const stat = fs.statSync(from);
-  if (!stat.isDirectory()) {
+  const stat = fs.lstatSync(from);
+  const display = path.relative(ROOT, from) || ".";
+  if (stat.isSymbolicLink()) {
+    fail(`refusing to stage symbolic link ${display}`);
+  }
+  if (stat.isFile()) {
     fs.mkdirSync(path.dirname(to), { recursive: true });
     fs.copyFileSync(from, to);
     // Preserve the execute bit: hook scripts need it, and moe-mint's own
     // manifest records executability per file.
     if (stat.mode & 0o111) fs.chmodSync(to, stat.mode & 0o777);
     return;
+  }
+  if (!stat.isDirectory()) {
+    fail(`refusing to stage unsupported filesystem node ${display}`);
   }
   fs.mkdirSync(to, { recursive: true });
   for (const entry of fs.readdirSync(from).sort()) {
@@ -221,7 +238,7 @@ function stage(plugin) {
   const pkgDir = path.join(ROOT, "packages", plugin.pkg);
   const dest = path.join(OUT, plugin.name);
   const configSrc = path.join(pkgDir, plugin.config);
-  if (!fs.existsSync(configSrc)) fail(`missing config ${path.relative(ROOT, configSrc)}`);
+  if (!sourceNodeExists(configSrc)) fail(`missing config ${path.relative(ROOT, configSrc)}`);
 
   // Wipe first. A staging root is generated output in its entirety, so an
   // incremental copy would let a file deleted from source survive here — and
@@ -230,7 +247,7 @@ function stage(plugin) {
   fs.mkdirSync(dest, { recursive: true });
 
   // moe-mint requires the config at this exact name in the plugin root.
-  fs.copyFileSync(configSrc, path.join(dest, "moe-mint.yaml"));
+  copyInto(configSrc, path.join(dest, "moe-mint.yaml"));
 
   // Stage the vocabulary file alongside the config, if one exists. The
   // vocabulary file lives next to the mint config in the package tree and
@@ -239,15 +256,15 @@ function stage(plugin) {
     path.dirname(configSrc),
     path.basename(plugin.config).replace(/\.yaml$/, "-vocab.yaml"),
   );
-  if (fs.existsSync(vocabSrc)) {
-    fs.copyFileSync(vocabSrc, path.join(dest, "moe-mint-vocab.yaml"));
+  if (sourceNodeExists(vocabSrc)) {
+    copyInto(vocabSrc, path.join(dest, "moe-mint-vocab.yaml"));
   }
 
   let staged = 0;
 
   for (const component of COMPONENTS) {
     const src = path.join(pkgDir, component);
-    if (!fs.existsSync(src)) continue;
+    if (!sourceNodeExists(src)) continue;
     copyInto(src, path.join(dest, component));
     if (component === "skills") {
       staged += fs.readdirSync(src).filter((entry) => !NON_SKILL_ENTRIES.has(entry)).length;

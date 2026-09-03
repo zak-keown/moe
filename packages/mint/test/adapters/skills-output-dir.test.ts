@@ -17,7 +17,7 @@ describe('skillLayout', () => {
       'agent-plugins-1.0': {
         outputDir: 'skills',
         profile: 'agent-plugins-1.0',
-        mode: 'in-place',
+        mode: 'source-or-rendered',
       },
       cursor: {
         outputDir: '.cursor-plugin/skills',

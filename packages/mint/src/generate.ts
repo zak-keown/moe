@@ -39,6 +39,7 @@ function validateSkillClosure(
   model: ReturnType<typeof buildModel>,
   active: HarnessAdapter[],
   renderedSkillFiles: GeneratedFile<FileContent>[],
+  achieved: Record<string, SkillDelivery>,
 ): Record<string, SkillDelivery> {
   const renderedPaths = new Set(renderedSkillFiles.map((file) => file.path))
   const delivery: Record<string, SkillDelivery> = Object.fromEntries(
@@ -46,18 +47,7 @@ function validateSkillClosure(
   )
 
   for (const adapter of active) {
-    let state = adapter.skillDelivery
-    if (state === 'shared-compatible') {
-      const provider = active.find(
-        (candidate) =>
-          candidate !== adapter &&
-          candidate.skillDelivery !== 'shared-compatible' &&
-          candidate.skillDelivery !== 'unsupported' &&
-          candidate.skillLayout.outputDir === adapter.skillLayout.outputDir &&
-          candidate.skillLayout.profile === adapter.skillLayout.profile,
-      )
-      if (!provider) state = 'unsupported'
-    }
+    const state = achieved[adapter.name] ?? 'unsupported'
 
     if (state === 'rendered' || state === 'shared-compatible') {
       for (const file of model.skillFiles) {
@@ -69,12 +59,48 @@ function validateSkillClosure(
     } else if (state === 'native-discovery') {
       for (const file of model.skillFiles) {
         const path = `${adapter.skillLayout.outputDir}/${file.path}`
-        if (!existsSync(resolve(root, path))) {
+        if (!renderedPaths.has(path) && !existsSync(resolve(root, path))) {
           throw new ConfigError(`adapter "${adapter.name}" skill delivery is incomplete: missing ${path}`)
         }
       }
     }
     delivery[adapter.name] = state
+  }
+
+  return delivery
+}
+
+function classifySkillDelivery(
+  active: HarnessAdapter[],
+  emittedByAdapter: Map<string, GeneratedFile<FileContent>[]>,
+): Record<string, SkillDelivery> {
+  const delivery: Record<string, SkillDelivery> = Object.fromEntries(
+    adapters.map((adapter) => [adapter.name, 'unsupported' as const]),
+  )
+
+  for (const adapter of active) {
+    let state = adapter.skillDelivery
+    if (
+      state === 'native-discovery' &&
+      adapter.nativeDiscoveryFile !== undefined &&
+      !emittedByAdapter.get(adapter.name)?.some((file) => file.path === adapter.nativeDiscoveryFile)
+    ) {
+      state = 'unsupported'
+    }
+    delivery[adapter.name] = state
+  }
+
+  for (const adapter of active) {
+    if (delivery[adapter.name] !== 'shared-compatible') continue
+    const provider = active.find(
+      (candidate) =>
+        candidate !== adapter &&
+        delivery[candidate.name] !== 'shared-compatible' &&
+        delivery[candidate.name] !== 'unsupported' &&
+        candidate.skillLayout.outputDir === adapter.skillLayout.outputDir &&
+        candidate.skillLayout.profile === adapter.skillLayout.profile,
+    )
+    if (!provider) delivery[adapter.name] = 'unsupported'
   }
 
   return delivery
@@ -142,26 +168,42 @@ export function generate(
   const excluded = new Set(model.config.harnesses.exclude)
   const active = adapterList.filter((a) => !excluded.has(a.name))
 
+  const emittedByAdapter = new Map<string, GeneratedFile<FileContent>[]>()
+  const adapterWarnings = new Map<string, string[]>()
+  for (const adapter of active) {
+    const adapterModel = adjustedModel(model, adapter.skillLayout)
+    const result = adapter.emit(adapterModel)
+    emittedByAdapter.set(adapter.name, result.files)
+    adapterWarnings.set(adapter.name, result.warnings)
+  }
+  const classifiedDelivery = classifySkillDelivery(active, emittedByAdapter)
+  const skillAdapters = active.filter((adapter) => classifiedDelivery[adapter.name] !== 'unsupported')
+
   const configuredVocab = loadVocabulary(root)
   const vocab = configuredVocab ?? { tokens: new Map(), blocks: new Map() }
   if (configuredVocab) {
-    const activeProfiles = [...new Set(active.map((a) => a.skillLayout.profile))]
+    const activeProfiles = [...new Set(skillAdapters.map((a) => a.skillLayout.profile))]
     validateCoverage(vocab, activeProfiles)
     scanForUnknownTokens(root, model.config.components.skills, vocab)
   }
 
-  // Snapshot-derived skill trees are prepared before adapter emission. An
-  // in-place layout updates the staged source tree; rendered layouts flow
-  // through the same collision, manifest, and writer pipeline as adapter files.
-  const renderedSkillFiles = substituteAllSkills(root, model, vocab, active)
-  const skillDelivery = validateSkillClosure(root, model, active, renderedSkillFiles)
+  // Adapter emission determines whether each host is actually discoverable
+  // before its skill tree is prepared. An in-place layout updates the staged
+  // source tree; rendered layouts flow through the same collision, manifest,
+  // and writer pipeline as adapter files.
+  const renderedSkillFiles = substituteAllSkills(root, model, vocab, skillAdapters)
+  const skillDelivery = validateSkillClosure(
+    root,
+    model,
+    active,
+    renderedSkillFiles,
+    classifiedDelivery,
+  )
 
   const byPath = new Map<string, { owner: string; file: GeneratedFile<FileContent> }>()
   for (const adapter of active) {
-    const adapterModel = adjustedModel(model, adapter.skillLayout)
-    const result = adapter.emit(adapterModel)
-    mergeFiles(byPath, adapter.name, result.files, model.config)
-    warnings.push(...result.warnings.map((w) => `[${adapter.name}] ${w}`))
+    mergeFiles(byPath, adapter.name, emittedByAdapter.get(adapter.name) ?? [], model.config)
+    warnings.push(...(adapterWarnings.get(adapter.name) ?? []).map((w) => `[${adapter.name}] ${w}`))
   }
   mergeFiles(byPath, 'skill-renderer', renderedSkillFiles, model.config)
   if (configuredVocab) assertNoSurvivors(renderedSkillFiles, model.skillFiles)

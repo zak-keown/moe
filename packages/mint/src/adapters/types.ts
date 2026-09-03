@@ -23,7 +23,7 @@ export interface EmitResult {
 export interface SkillLayout {
   outputDir: string
   profile: string
-  mode: 'rendered' | 'in-place'
+  mode: 'rendered' | 'in-place' | 'source-or-rendered'
 }
 
 export interface HarnessAdapter {
@@ -31,6 +31,8 @@ export interface HarnessAdapter {
   support: ComponentSupport
   skillLayout: SkillLayout
   skillDelivery: SkillDelivery
+  /** A native-discovery adapter is reachable only when this file was emitted. */
+  nativeDiscoveryFile?: string
   emit(model: PluginModel): EmitResult
   // Optional: markdown BODY (no marker, no heading — docs-emit.ts adds
   // both) describing how to install the plugin on this harness. Adapters

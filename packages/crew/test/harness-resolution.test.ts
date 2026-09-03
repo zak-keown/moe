@@ -1,5 +1,8 @@
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { detectInstalledHarnesses } from "../src/harness/registry.js";
+import { detectInstalledHarnesses, getDriver } from "../src/harness/registry.js";
 import { resolveHarness } from "../src/harness/resolver.js";
 
 describe("resolveHarness", () => {
@@ -97,5 +100,41 @@ describe("detectInstalledHarnesses", () => {
       "/opt/agents/pi-custom",
     ]);
     expect(installed).toEqual(["claude", "pi"]);
+  });
+
+  it("normalizes empty binary overrides to each harness default", () => {
+    const environment = {
+      MOE_CREW_CLAUDE_BIN: "",
+      MOE_CREW_CODEX_BIN: "",
+      MOE_CREW_PI_BIN: "",
+      PATH: "",
+    };
+
+    expect(["claude", "codex", "pi"].map((id) => getDriver(id).bin(environment))).toEqual([
+      "claude",
+      "codex",
+      "pi",
+    ]);
+  });
+
+  it("does not treat executable directories on PATH or in overrides as harness binaries", () => {
+    const pathDir = mkdtempSync(join(tmpdir(), "moe-crew-bin-dir-"));
+    const explicitDir = mkdtempSync(join(tmpdir(), "moe-crew-explicit-dir-"));
+    try {
+      mkdirSync(join(pathDir, "claude"));
+      mkdirSync(join(pathDir, "pi"));
+
+      expect(
+        detectInstalledHarnesses({
+          environment: {
+            PATH: pathDir,
+            MOE_CREW_CODEX_BIN: explicitDir,
+          },
+        }),
+      ).toEqual([]);
+    } finally {
+      rmSync(pathDir, { recursive: true, force: true });
+      rmSync(explicitDir, { recursive: true, force: true });
+    }
   });
 });

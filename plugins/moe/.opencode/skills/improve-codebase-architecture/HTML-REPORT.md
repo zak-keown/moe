@@ -132,7 +132,9 @@ is `skills/_shared/report-base.html`. It provides:
 - Responsive grid layout with a sidebar nav.
 - Print stylesheet.
 - Mermaid from `cdnjs.cloudflare.com` (not the ESM import above).
-- Four named slots: `{{TITLE}}`, `{{NAV}}`, `{{CONTENT}}`, `{{SCRIPTS}}`.
+- Four parser-safe HTML comment sentinels: `<!-- MOE:SLOT:TITLE -->`,
+  `<!-- MOE:SLOT:NAV -->`, `<!-- MOE:SLOT:CONTENT -->`, and
+  `<!-- MOE:SLOT:SCRIPTS -->`.
 
 ### Assembling a report with the installed renderer
 
@@ -176,6 +178,6 @@ node <adapter-skill-directory>/_shared/render-html.cjs --input data.json --outpu
 The `nav` and `scripts` slots are optional. Missing optional slots are replaced
 with empty strings. `title` and `content` are required.
 
-Mermaid diagrams work in the `{{CONTENT}}` slot as `<pre class="mermaid">`
+Mermaid diagrams work in the `<!-- MOE:SLOT:CONTENT -->` slot as `<pre class="mermaid">`
 blocks, just like the Mermaid graph pattern described above. The template
 initializes Mermaid on load.

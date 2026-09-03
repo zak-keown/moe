@@ -178,21 +178,6 @@ describe('agent-plugins-1.0 with malformed mcpServers', () => {
   })
 })
 
-describe('agent-plugins-1.0 with a non-default skills path', () => {
-  it('warns that the custom skills directory will not be discovered', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'mint-ap-skills-'))
-    writeFileSync(
-      join(dir, 'moe-mint.yaml'),
-      'name: custom-skills\nversion: 1.0.0\ndescription: custom skills path fixture\ncomponents:\n  skills: my-skills\nbootstrap: none\n',
-    )
-    const customModel = buildModel(dir)
-    const result = agentPlugins.emit(customModel)
-    expect(result.warnings).toContain(
-      'agent-plugins-1.0 requires skills/ at the plugin root; my-skills will not be discovered',
-    )
-  })
-})
-
 describe('agent-plugins-1.0 mcp.json collision with the source MCP config', () => {
   it('skips mcp.json emission and warns, but still emits plugin.json, when components.mcp is mcp.json', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-ap-mcp-collision-'))
