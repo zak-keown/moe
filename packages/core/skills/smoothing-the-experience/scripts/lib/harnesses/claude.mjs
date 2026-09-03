@@ -35,7 +35,7 @@ export async function discoverClaude({
   const sessionRoot = join(env.CLAUDE_CONFIG_DIR || join(homeDir, ".claude"), "projects");
   const files = [];
   await collectJsonl(sessionRoot, sessionRoot, files, fsOps);
-  files.sort((left, right) => left.localeCompare(right));
+  files.sort(compareCodeUnits);
   return { sessionRoot, cwd, cutoffMs, files };
 }
 
@@ -535,10 +535,13 @@ export function renderClaudeSettings(sourceJson, selectedRules) {
 
   const permissions = settings.permissions === undefined ? {} : settings.permissions;
   if (!isPlainObject(permissions)) throw new TypeError("permissions must contain an object");
-  const existing = permissions.allow === undefined ? [] : permissions.allow;
-  if (!Array.isArray(existing) || !existing.every(isNonEmptyString)) {
-    throw new TypeError("permissions.allow must contain strings");
+  for (const kind of PERMISSION_KINDS) {
+    const rules = permissions[kind];
+    if (rules !== undefined && (!Array.isArray(rules) || !rules.every((rule) => typeof rule === "string"))) {
+      throw new TypeError(`permissions.${kind} must contain strings`);
+    }
   }
+  const existing = permissions.allow ?? [];
   const replacement = {
     ...settings,
     permissions: {
@@ -547,4 +550,8 @@ export function renderClaudeSettings(sourceJson, selectedRules) {
     },
   };
   return `${JSON.stringify(replacement, null, 2)}\n`;
+}
+
+function compareCodeUnits(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
 }

@@ -94,6 +94,39 @@ describe("candidate eligibility and ranking", () => {
     });
   });
 
+  it("unions successful suffix variants that render to one shared authority", async () => {
+    const report = await buildCandidates(
+      [
+        evidence("root-a", "success", "unknown", ["git", "status", "--short"]),
+        evidence("root-b", "success", "explicit", ["git", "status", "--branch"]),
+      ],
+      fixtureContext,
+    );
+
+    expect(report.suggestions).toHaveLength(1);
+    expect(report.suggestions[0]).toMatchObject({
+      rule: "Bash(git status:*)",
+      rootSessionCount: 2,
+      successfulObservationCount: 2,
+    });
+    expect(new Set(report.suggestions.map((candidate: { id: string }) => candidate.id)).size).toBe(
+      1,
+    );
+  });
+
+  it("lets a denied suffix suppress the complete shared rendered authority", async () => {
+    const report = await buildCandidates(
+      [
+        evidence("root-a", "success", "unknown", ["git", "status", "--short"]),
+        evidence("root-b", "success", "explicit", ["git", "status", "--branch"]),
+        evidence("root-c", "denied", "unknown", ["git", "status", "--porcelain"]),
+      ],
+      fixtureContext,
+    );
+
+    expect(report.suggestions).toEqual([]);
+  });
+
   it("requires two projects for a global candidate and lets project scope win", async () => {
     const globalRecords = [
       evidence("root-a", "success", "unknown", ["git", "status"], {
@@ -155,6 +188,40 @@ describe("candidate eligibility and ranking", () => {
     expect(ranked.map((candidate: { id: string }) => candidate.id)).toEqual(["shell-z", "shell-a"]);
   });
 
+  it("uses locale-independent code-unit order before applying the per-class cap", () => {
+    const rules = [
+      "permission-a",
+      "permission-b",
+      "permission-c",
+      "permission-d",
+      "permission-ä",
+      "permission-z",
+    ];
+    const ranked = rankCandidates(
+      rules.map((rule) => ({
+        id: rule,
+        harness: "claude",
+        class: "shell",
+        scope: "project",
+        rule,
+        confidence: "medium",
+        rootSessionCount: 2,
+        projectCount: 1,
+        successfulObservationCount: 2,
+        lastSeen: "2026-09-01T12:00:00.000Z",
+      })),
+      { all: false },
+    );
+
+    expect(ranked.map((candidate: { rule: string }) => candidate.rule)).toEqual([
+      "permission-a",
+      "permission-b",
+      "permission-c",
+      "permission-d",
+      "permission-z",
+    ]);
+  });
+
   it("is deterministic across evidence order and never embeds session IDs or raw paths in IDs", async () => {
     const records = [
       evidence("root-a"),
@@ -203,6 +270,29 @@ describe("candidate eligibility and ranking", () => {
       },
     ]);
     expect(JSON.stringify(report.dispositions)).not.toContain("src/index.ts");
+  });
+
+  it("does not build a Codex suggestion without explicit proven layer state", async () => {
+    const records = [
+      evidence("root-a", "success", "unknown", ["git", "status"], { harness: "codex" }),
+      evidence("root-b", "success", "unknown", ["git", "status", "--short"], {
+        harness: "codex",
+      }),
+    ];
+    const report = await buildCandidates(records, {
+      ...fixtureContext,
+      codex: { codexHome: "/fixture/codex" },
+    });
+
+    expect(report.suggestions).toEqual([]);
+    expect(report.dispositions).toEqual([
+      {
+        harness: "codex",
+        class: "shell",
+        scope: "project",
+        disposition: "no narrow renderer",
+      },
+    ]);
   });
 });
 
@@ -291,6 +381,14 @@ describe("Claude rendering", () => {
       /invalid Claude settings JSON/,
     );
   });
+
+  it.each(["allow", "deny", "ask"])("fails closed on malformed permissions.%s", (kind) => {
+    expect(() =>
+      renderClaudeSettings(JSON.stringify({ permissions: { [kind]: "not-an-array" } }), [
+        "Read(src/index.ts)",
+      ]),
+    ).toThrow(new RegExp(`permissions\\.${kind} must contain strings`));
+  });
 });
 
 describe("Codex rendering and execpolicy validation", () => {
@@ -304,16 +402,30 @@ prefix_rule(
 
   it("renders one lexical literal-only prefix block", () => {
     expect(
-      renderCodexPermission({
-        id: "shell-abc",
-        class: "shell",
-        operation: { argv: ["git", "status"] },
-        scope: "project",
-      })?.rule,
+      renderCodexPermission(
+        {
+          id: "shell-abc",
+          class: "shell",
+          operation: { argv: ["git", "status"] },
+          scope: "project",
+          projectRoot: "/fixture/repo-a",
+        },
+        fixtureContext.codex,
+      )?.rule,
     ).toBe(validRule);
   });
 
-  it("declines unproven project layers, global git add, and unsupported classes", () => {
+  it("declines missing or unproven project layers, global git add, and unsupported classes", () => {
+    expect(
+      renderCodexPermission({
+        id: "shell-missing",
+        harness: "codex",
+        class: "shell",
+        operation: { argv: ["git", "status"] },
+        scope: "project",
+        projectRoot: "/fixture/repo-a",
+      }),
+    ).toBeNull();
     expect(
       renderCodexPermission({
         id: "shell-abc",
@@ -354,13 +466,24 @@ prefix_rule(
     );
   });
 
+  it("sorts Unicode stable IDs with locale-independent code-unit order", () => {
+    const rendered = renderCodexRules("", [
+      { id: "shell-ä", rule: validRule.replaceAll("shell-abc", "shell-ä") },
+      { id: "shell-z", rule: validRule.replaceAll("shell-abc", "shell-z") },
+    ]);
+    expect(rendered.indexOf("shell-z")).toBeLessThan(rendered.indexOf("shell-ä"));
+  });
+
   it("fails closed when execpolicy output shape drifts", async () => {
     const directory = await mkdtemp(join(tmpdir(), "moe-smoothing-render-"));
     await expect(
       validateCodexReplacement({
         contents: validRule,
         ruleFiles: [],
-        witnesses: [["git", "status"]],
+        witnesses: [
+          { argv: ["git", "status"], expectation: "match" },
+          { argv: ["git", "push"], expectation: "not_match" },
+        ],
         codexBin: "codex",
         tempDir: directory,
         runExecpolicy: async () => ({ novel: true }),
@@ -402,8 +525,17 @@ prefix_rule(
           : { matchedRules: [] };
       },
     });
-    expect(invocations).toHaveLength(2);
+    expect(invocations).toHaveLength(4);
     expect(invocations[0]).toEqual([
+      "execpolicy",
+      "check",
+      "--rules",
+      expect.stringMatching(/^.+\.rules$/),
+      "--",
+      "git",
+      "status",
+    ]);
+    expect(invocations[2]).toEqual([
       "execpolicy",
       "check",
       "--rules",
@@ -414,6 +546,65 @@ prefix_rule(
       "git",
       "status",
     ]);
+    expect(await readdir(directory)).toEqual([]);
+  });
+
+  it.each([
+    ["positive-only", [{ argv: ["git", "status"], expectation: "match" }]],
+    ["negative-only", [{ argv: ["git", "push"], expectation: "not_match" }]],
+    [
+      "unrelated-negative",
+      [
+        { argv: ["git", "status"], expectation: "match" },
+        { argv: ["npm", "publish"], expectation: "not_match" },
+      ],
+    ],
+  ])("rejects an incomplete %s witness set", async (_label, witnesses) => {
+    const directory = await mkdtemp(join(tmpdir(), "moe-smoothing-render-"));
+    await expect(
+      validateCodexReplacement({
+        contents: validRule,
+        ruleFiles: [],
+        witnesses,
+        codexBin: "codex",
+        tempDir: directory,
+        runExecpolicy: async () => {
+          throw new Error("must not run");
+        },
+      }),
+    ).rejects.toThrow(/positive and adjacent negative witnesses/);
+    expect(await readdir(directory)).toEqual([]);
+  });
+
+  it("does not let a broad existing allow mask a non-matching proposed rule", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "moe-smoothing-render-"));
+    await expect(
+      validateCodexReplacement({
+        contents: validRule,
+        ruleFiles: ["/fixture/broad-existing.rules"],
+        witnesses: [
+          { argv: ["git", "diff"], expectation: "match" },
+          { argv: ["git", "push"], expectation: "not_match" },
+        ],
+        codexBin: "codex",
+        tempDir: directory,
+        runExecpolicy: async (_bin: string, args: string[]) =>
+          args.includes("/fixture/broad-existing.rules")
+            ? {
+                matchedRules: [
+                  {
+                    prefixRuleMatch: {
+                      matchedPrefix: ["git"],
+                      decision: "allow",
+                      justification: "broad existing rule",
+                    },
+                  },
+                ],
+                decision: "allow",
+              }
+            : { matchedRules: [] },
+      }),
+    ).rejects.toThrow(/positive witness did not match the proposed rule/);
     expect(await readdir(directory)).toEqual([]);
   });
 
