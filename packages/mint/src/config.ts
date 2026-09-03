@@ -3,7 +3,7 @@ import { join, posix } from 'node:path'
 import { parse } from 'yaml'
 import { z } from 'zod'
 import { artifactCollisionKey, artifactPath, compareArtifactPaths, isReservedArtifactDestination, type ArtifactPath } from './artifact/paths.js'
-import { MintError } from './diagnostics.js'
+import { ConfigError, configError, type ConfigErrorDiagnostic, type ConfigErrorOptions } from './diagnostics.js'
 import {
   CAPABILITY_IDS,
   OPERATING_SYSTEM_IDS,
@@ -14,46 +14,7 @@ import {
   type TargetIntent,
 } from './vocabulary.js'
 
-export type ConfigErrorDiagnostic = Omit<MintError['diagnostic'], 'severity' | 'message'>
-
-export interface ConfigErrorOptions {
-  cause?: unknown
-  diagnostic?: ConfigErrorDiagnostic
-  source?: string
-}
-
-const OPERATION_DIAGNOSTIC: ConfigErrorDiagnostic = {
-  code: 'MINT_OPERATION_INVALID',
-  source: 'moe-mint',
-  action: 'Resolve the reported operational issue and retry.',
-}
-
-const CONFIG_DIAGNOSTIC: ConfigErrorDiagnostic = {
-  code: 'CONFIG_INVALID',
-  source: 'moe-mint.yaml',
-  action: 'Correct the configuration and run the command again.',
-}
-
-export class ConfigError extends MintError {
-  details: string[]
-  constructor(message: string, details: string[] = [], opts: ConfigErrorOptions = {}) {
-    const diagnostic = opts.diagnostic ?? OPERATION_DIAGNOSTIC
-    super({
-      severity: 'error',
-      ...diagnostic,
-      message: details.length ? `${message}\n  - ${details.join('\n  - ')}` : message,
-    }, { cause: opts.cause })
-    this.name = 'ConfigError'
-    this.details = details
-  }
-}
-
-function configError(message: string, details: string[] = [], opts: ConfigErrorOptions = {}): ConfigError {
-  return new ConfigError(message, details, {
-    ...opts,
-    diagnostic: opts.diagnostic ?? { ...CONFIG_DIAGNOSTIC, source: opts.source ?? CONFIG_DIAGNOSTIC.source },
-  })
-}
+export { ConfigError, configError, type ConfigErrorDiagnostic, type ConfigErrorOptions }
 
 function migrationError(
   source: string,
@@ -323,11 +284,7 @@ export interface MintConfig {
   components: { skills: string; commands: string; agents: string; hooks: string; mcp: string }
   harnesses: { exclude: string[]; settings: Record<string, HarnessSettings> }
   distribution: DistributionConfig
-<<<<<<< HEAD
   artifact: { nodePackage?: NodePackagePolicy | undefined; runtimeDependencyPolicy: RuntimeDependencyPolicy; payloads: readonly ArtifactPayload[] }
-=======
-  artifact: { payloads: readonly ArtifactPayload[]; runtimeDependencyPolicy: RuntimeDependencyPolicy }
->>>>>>> 2d6a235 (feat(memory): artifact integration — runtime contract, dependency-free payload, legal closure, tarball gate)
   targets: Readonly<Record<TargetId, PluginTargetIntent>>
   importedWorks: readonly ImportedWorkRef[]
   // Inferred from the schemas rather than restated: a hand-written copy drifts,

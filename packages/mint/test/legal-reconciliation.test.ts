@@ -36,7 +36,7 @@ describe('legal closure reconciliation', () => {
     ['bundle missing imported work', (input: ReturnType<typeof base>) => ({ ...input, importedWorks: input.importedWorks.filter((work) => work.name !== 'pkg') }), 'LEGAL_IMPORT_MISSING'],
     ['bundle output absent', (input: ReturnType<typeof base>) => ({ ...input, artifactPaths: new Set(['skills/source/SKILL.md']) }), 'LEGAL_BUNDLE_OUTPUT_MISSING'],
     ['npm version conflict', (input: ReturnType<typeof base>) => ({ ...input, bundledPackages: [{ ...input.bundledPackages[0]!, version: '9.0.0' }] }), 'LEGAL_REVISION_MISMATCH'],
-    ['bundle license missing', (input: ReturnType<typeof base>) => ({ ...input, bundledLicenses: [] }), 'LEGAL_LICENSE_MISSING'],
+    ['bundle license missing', (input: ReturnType<typeof base>) => ({ ...input, bundledLicenses: [], importedWorks: [] }), 'LEGAL_LICENSE_MISSING'],
     ['license family conflict', (input: ReturnType<typeof base>) => ({ ...input, bundledLicenses: [{ ...input.bundledLicenses[0]!, declaredLicense: 'Apache-2.0' }] }), 'LEGAL_LICENSE_MISMATCH'],
     ['license bytes conflict', (input: ReturnType<typeof base>) => ({ ...input, bundledLicenses: [{ ...input.bundledLicenses[0]!, license: Buffer.from('wrong family') }] }), 'LEGAL_LICENSE_CONTENT_MISMATCH'],
     ['staged license drift', (input: ReturnType<typeof base>) => ({ ...input, artifactLicenses: input.artifactLicenses.map((row) => row.path === 'LICENSE' ? { ...row, bytes: Buffer.from('changed') } : row) }), 'LEGAL_PAYLOAD_DRIFT'],

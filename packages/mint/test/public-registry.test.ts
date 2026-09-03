@@ -85,11 +85,11 @@ const PUBLIC_PLUGINS: readonly PublicPluginExpectation[] = [
     npmPackage: '@bubstack/moe-memory',
     source: 'packages/memory',
     config: 'packages/memory/mint/moe-memory.yaml',
-    version: '0.1.4',
+    version: '0.2.0',
     license: 'MIT',
     description: 'Semantic recall over past sessions and journal entries.',
     keywords: ['memory', 'search', 'embeddings', 'journal', 'mcp'],
-    payloads: [{ from: 'dist', to: 'dist', required: true }, { from: 'prompts', to: 'prompts', required: true }],
+    payloads: [{ from: 'dist', to: 'dist', required: true }, { from: 'runtime', to: 'runtime', required: true }, { from: 'vendor/sqlite-vec', to: 'vendor/sqlite-vec', required: true }, { from: 'recovery', to: 'recovery', required: false }, { from: 'prompts', to: 'prompts', required: true }],
     targets: {
       'claude-code': target(['skill-discovery', 'agent-discovery', 'hook-execution', 'mcp-registration', 'bootstrap-routing'], HOST_OPERATING_SYSTEMS, 'certify'),
       cursor: target(['skill-discovery', 'hook-execution', 'bootstrap-routing']),

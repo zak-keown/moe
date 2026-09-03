@@ -64,6 +64,7 @@ describe('agent-plugins-1.0 adapter', () => {
 
   it('derives format conformance and source-backed capabilities', () => {
     expect(result.emittedCapabilities).toEqual(['skill-discovery', 'mcp-registration', 'format-conformance'])
+  })
 
   it('declares expected support levels', () => {
     expect(agentPlugins.support).toEqual({

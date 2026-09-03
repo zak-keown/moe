@@ -7,11 +7,11 @@ import {
   searchConversations,
   searchMultipleConcepts,
 } from "./search.js";
-import type { SearchResult } from "./types.js";
+import type { MultiConceptResult, SearchResult } from "./types.js";
 
 export interface MemoryToolRuntime {
   searchConversations(query: string, options: SearchOptions): Promise<SearchResult[]>;
-  searchMultipleConcepts(query: string[], options: Omit<SearchOptions, "mode">): Promise<SearchResult[]>;
+  searchMultipleConcepts(query: string[], options: Omit<SearchOptions, "mode">): Promise<MultiConceptResult[]>;
   openDatabase(): DatabaseSync;
   createJournalSearch(store: JournalStore): JournalSearchService;
 }
