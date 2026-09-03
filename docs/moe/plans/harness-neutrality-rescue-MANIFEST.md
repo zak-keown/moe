@@ -21,7 +21,7 @@ plans:
   - id: crew-installer-and-host-ux
     plan: docs/moe/plans/2026-09-03-harness-neutrality-03-host-ux.md
     depends_on: [semantic-vocabulary-and-core-migration]
-    status: pending
+    status: done
 ```
 
 ## Acceptance Boundary
