@@ -1,9 +1,11 @@
-import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs'
+import { readFileSync, existsSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parse } from 'yaml'
 import { z } from 'zod'
 import { ConfigError } from './config.js'
 import type { PluginModel } from './model.js'
+import type { GeneratedFile } from './fileset.js'
+import type { HarnessAdapter } from './adapters/types.js'
 
 export const TOKEN_NAME_RE = /^[a-z][a-z0-9-]*$/
 
@@ -206,11 +208,27 @@ export function assertNoSurvivors(
   }
 }
 
+// Points config.components.skills at an adapter's own generated skills
+// copy, so anything the adapter derives purely from that config field (its
+// own plugin manifest's `skills` path, its own in-process template's
+// skills-dir placeholder) resolves to the location substituteAllSkills
+// actually populated for it, instead of the shared source skills/.
+//
+// Deliberately leaves model.skills[].dir (each skill's own directory)
+// untouched: some adapters emit a file that is intentionally byte-identical
+// across multiple active adapters (claude-code and cursor share one
+// hooks/moe-mint/session-start bootstrap script; opencode and pi share one
+// package.json) precisely so mergeFiles' collision check dedupes it as a
+// single file instead of raising a "both adapters emit this path" conflict.
+// Those cross-adapter-shared computations read model.skills[].dir for the
+// bootstrap skill's path; adjusting it per adapter would make that shared
+// output diverge by adapter and break the dedupe. config.components.skills
+// only feeds each adapter's own, uniquely-named manifest/template output,
+// so adjusting only that field is what those adapters actually need.
 export function adjustedModel(
   model: PluginModel,
   skillsOutputDir: string,
 ): PluginModel {
-  const srcDir = model.config.components.skills
   return {
     ...model,
     config: {
@@ -220,13 +238,83 @@ export function adjustedModel(
         skills: skillsOutputDir,
       },
     },
-    skills: model.skills.map((s) => ({
-      ...s,
-      dir: s.dir.startsWith(srcDir + '/')
-        ? skillsOutputDir + s.dir.slice(srcDir.length)
-        : s.dir.startsWith(srcDir)
-          ? skillsOutputDir
-          : s.dir,
-    })),
   }
+}
+
+// Substitutes every skill .md file per active adapter's vocabulary mapping.
+// Adapters with their own skillsOutputDir get a full copy of the skills tree
+// (substituted) returned as GeneratedFile[] for the caller to merge into the
+// output fileset. Adapters that share the source skills/ directory (no
+// skillsOutputDir — claude-code, agent-plugins-1.0, copilot) get their
+// mapping applied in place, overwriting the source files on disk, since
+// those adapters read skills/ directly rather than from a generated copy.
+//
+// All shared adapters MUST agree on every token/block mapping — there's only
+// one skills/ directory to overwrite, so divergent mappings between them are
+// unrepresentable and rejected up front.
+export function substituteAllSkills(
+  root: string,
+  model: PluginModel,
+  vocab: Vocabulary,
+  activeAdapters: HarnessAdapter[],
+): GeneratedFile[] {
+  const srcDir = model.config.components.skills
+  const mdFiles = collectMdFiles(root, srcDir)
+  const generatedFiles: GeneratedFile[] = []
+
+  // Read every source file's original content exactly once, up front. Both
+  // branches below derive their substitutions from this snapshot rather than
+  // re-reading from disk — the shared-adapter branch overwrites the source
+  // files in place, and a later disk read for a non-shared adapter would
+  // otherwise pick up that already-substituted content instead of the
+  // original {token} markers.
+  const originalContent = new Map<string, string>()
+  for (const relPath of mdFiles) {
+    originalContent.set(relPath, readFileSync(join(root, relPath), 'utf8'))
+  }
+
+  const sharedAdapters = activeAdapters.filter((a) => !a.skillsOutputDir)
+  if (sharedAdapters.length > 0) {
+    // All shared adapters must produce identical substitution — validate by
+    // checking that their mappings agree for every token.
+    const baseline = sharedAdapters[0]!.name
+    for (const other of sharedAdapters.slice(1)) {
+      for (const [name, entry] of vocab.tokens) {
+        if (entry[baseline] !== entry[other.name]) {
+          throw new ConfigError(
+            `adapters "${baseline}" and "${other.name}" share skills/ but differ on token "${name}": ` +
+              `"${entry[baseline]}" vs "${entry[other.name]}"`,
+          )
+        }
+      }
+      for (const [name, entry] of vocab.blocks) {
+        if (entry[baseline] !== entry[other.name]) {
+          throw new ConfigError(
+            `adapters "${baseline}" and "${other.name}" share skills/ but differ on block "${name}"`,
+          )
+        }
+      }
+    }
+
+    // Overwrite source in place once, using the baseline adapter's mappings.
+    for (const relPath of mdFiles) {
+      const substituted = substituteContent(originalContent.get(relPath)!, baseline, vocab)
+      writeFileSync(join(root, relPath), substituted)
+    }
+  }
+
+  for (const adapter of activeAdapters) {
+    const outputDir = adapter.skillsOutputDir
+    if (!outputDir) continue // handled above via in-place overwrite
+
+    for (const relPath of mdFiles) {
+      const substituted = substituteContent(originalContent.get(relPath)!, adapter.name, vocab)
+      const outputPath = relPath.startsWith(srcDir + '/')
+        ? outputDir + relPath.slice(srcDir.length)
+        : relPath
+      generatedFiles.push({ path: outputPath, content: substituted })
+    }
+  }
+
+  return generatedFiles
 }
