@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "minimumVersion": "0.152.1",
+  "currentLane": "0.154.0",
+  "candidates": [
+    { "version": "0.152.1", "status": "baseline" },
+    { "version": "0.154.0", "status": "current" }
+  ],
+  "requiredFeatures": [
+    "plugins",
+    "app-server"
+  ],
+  "requiredFlags": [
+    "app-server"
+  ]
+}

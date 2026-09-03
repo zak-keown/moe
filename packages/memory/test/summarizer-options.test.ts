@@ -128,7 +128,7 @@ describe("runCodexCommand", () => {
         sessionId: "session-123",
         prompt: "Summarize this conversation.",
       }),
-    ).rejects.toThrow(/requires codex-cli >= 0\.130\.0; found 0\.129\.9/);
+    ).rejects.toThrow(/requires codex-cli >= 0\.152\.1; found 0\.129\.9/);
   });
 
   it("reports malformed app-server fork responses clearly", async () => {
