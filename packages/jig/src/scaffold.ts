@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { today } from "./util.js";
 
 export function iterationsInit(opts?: { cwd?: string }): string {
   const root = opts?.cwd ?? process.cwd();
@@ -91,6 +92,73 @@ export function contextInit(name?: string, opts?: { cwd?: string }): string {
 **Term**:
 {Definition — one or two sentences. What it IS, not what it does.}
 _Avoid_: {synonym1, synonym2}
+`,
+    "utf-8",
+  );
+
+  return resolve(filepath);
+}
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+export interface AdrCreateOpts {
+  cwd?: string;
+}
+
+export function adrCreate(title: string, opts?: AdrCreateOpts): string {
+  if (!title.trim()) {
+    throw new Error("title is required — provide a short description of the decision");
+  }
+
+  const slug = slugify(title);
+  if (slug.length === 0) {
+    throw new Error("title must contain at least one alphanumeric character");
+  }
+
+  const root = opts?.cwd ?? process.cwd();
+  const adrDir = join(root, "docs", "adr");
+  mkdirSync(adrDir, { recursive: true });
+
+  const existing = readdirSync(adrDir);
+  const numbers: number[] = [];
+  const numPattern = /^(\d{4})-.*\.md$/;
+  for (const entry of existing) {
+    const m = numPattern.exec(entry);
+    if (m !== null && m[1] !== undefined) {
+      numbers.push(Number.parseInt(m[1], 10));
+    }
+  }
+  const nextNumber = numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
+  const padded = String(nextNumber).padStart(4, "0");
+
+  const filename = `${padded}-${slug}.md`;
+  const filepath = join(adrDir, filename);
+
+  if (existsSync(filepath)) {
+    throw new Error(`${resolve(filepath)} already exists — refusing to overwrite`);
+  }
+
+  writeFileSync(
+    filepath,
+    `# ${padded}. ${title.trim()}
+
+Date: ${today()}
+
+## Status
+
+Proposed
+
+## Context
+
+## Decision
+
+## Consequences
 `,
     "utf-8",
   );

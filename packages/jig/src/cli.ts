@@ -3,7 +3,7 @@ import { realpathSync } from "node:fs";
 import { Command, CommanderError } from "commander";
 import { planInit, specInit } from "./plan.js";
 import { commitReviewFix, reviewStamp } from "./review.js";
-import { contextInit, iterationsInit } from "./scaffold.js";
+import { adrCreate, contextInit, iterationsInit } from "./scaffold.js";
 import { worktreeCreate, worktreeRemove, worktreeValidate } from "./worktree.js";
 
 const program = new Command()
@@ -120,6 +120,17 @@ context
   .action((name: string | undefined) => {
     const resolved = name && name.length > 0 ? name : undefined;
     const path = contextInit(resolved);
+    console.log(path);
+  });
+
+const adr = program.command("adr").description("Architecture Decision Records");
+
+adr
+  .command("create")
+  .description("Create the next-numbered ADR in docs/adr/")
+  .argument("<title>", "short description of the decision")
+  .action((title: string) => {
+    const path = adrCreate(title);
     console.log(path);
   });
 

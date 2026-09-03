@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -104,5 +104,59 @@ describe("contextInit", () => {
     contextInit("", { cwd: dir });
     const content = readFileSync(join(dir, "CONTEXT.md"), "utf-8");
     expect(content).toContain("# {Context Name}");
+  });
+});
+
+describe("adrCreate", () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "jig-adr-"));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("creates the first ADR as 0001 when docs/adr/ is empty", async () => {
+    const { adrCreate } = await import("../src/scaffold.js");
+    const result = adrCreate("Use SQLite for local state", { cwd: dir });
+    expect(result).toMatch(/docs\/adr\/0001-use-sqlite-for-local-state\.md$/);
+    expect(existsSync(result)).toBe(true);
+  });
+
+  it("auto-detects the next number from existing ADR files", async () => {
+    const { adrCreate } = await import("../src/scaffold.js");
+    // Pre-create files to simulate existing ADRs
+    const adrDir = join(dir, "docs", "adr");
+    mkdirSync(adrDir, { recursive: true });
+    writeFileSync(join(adrDir, "0001-first.md"), "# 0001. First\n");
+    writeFileSync(join(adrDir, "0003-third.md"), "# 0003. Third\n");
+    const result = adrCreate("fourth decision", { cwd: dir });
+    expect(result).toMatch(/0004-fourth-decision\.md$/);
+  });
+
+  it("writes the ADR skeleton with correct number, title, and date", async () => {
+    const { adrCreate } = await import("../src/scaffold.js");
+    const result = adrCreate("Adopt TypeScript", { cwd: dir });
+    const content = readFileSync(result, "utf-8");
+    expect(content).toContain("# 0001. Adopt TypeScript");
+    expect(content).toMatch(/Date: \d{4}-\d{2}-\d{2}/);
+    expect(content).toContain("## Status");
+    expect(content).toContain("Proposed");
+    expect(content).toContain("## Context");
+    expect(content).toContain("## Decision");
+    expect(content).toContain("## Consequences");
+  });
+
+  it("rejects an empty title", async () => {
+    const { adrCreate } = await import("../src/scaffold.js");
+    expect(() => adrCreate("   ", { cwd: dir })).toThrow(/title is required/);
+  });
+
+  it("slugifies titles with special characters and whitespace", async () => {
+    const { adrCreate } = await import("../src/scaffold.js");
+    const result = adrCreate("Use C++ & Rust!  For Speed", { cwd: dir });
+    expect(result).toMatch(/0001-use-c-rust-for-speed\.md$/);
   });
 });
