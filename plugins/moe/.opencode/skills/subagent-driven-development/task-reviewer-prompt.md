@@ -9,11 +9,15 @@ more, nothing less) and is well-built (clean, tested, maintainable)
 
 Resolve [skills/subagent-driven-development/scripts/task-brief](scripts/task-brief) and [skills/subagent-driven-development/scripts/review-package](scripts/review-package) relative to this loaded document before filling the resource-backed placeholders below.
 
+**Dispatch model selection:** OpenCode's `task` surface used here does
+not expose a call-level model override. Route the selected role through
+the configured `general` agent, or use its configured default. Do not
+invent a `model` field.
+
+
 ```
 Subagent (general-purpose):
   description: "Review Task N (spec + quality)"
-  model: [MODEL — REQUIRED: choose per SKILL.md Model Selection; an omitted
-         model silently inherits the session's most expensive one]
   prompt: |
     You are reviewing one task's implementation: first whether it matches its
     requirements, then whether it is well-built. This is a task-scoped gate,
@@ -190,7 +194,6 @@ Subagent (general-purpose):
 ```
 
 **Placeholders:**
-- `[MODEL]` — REQUIRED: reviewer model per SKILL.md Model Selection
 - `[BRIEF_FILE]` — REQUIRED: the path printed by invoking the resolved
   `task-brief` resource with `PLAN N`; same file the implementer worked from
 - `[GLOBAL_CONSTRAINTS]` — the binding requirements copied verbatim from

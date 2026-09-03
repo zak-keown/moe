@@ -102,6 +102,76 @@ describe('core semantic generation', () => {
     }
   })
 
+  it('keeps both requirement validators in explicit generated commands', () => {
+    const rel = 'extracting-requirements/SKILL.md'
+    const canonical = readFileSync(join(CORE, 'skills', rel), 'utf8')
+    const expected = [
+      {
+        resource: 'skills/extracting-requirements/scripts/validate_requirements_index.py',
+        command:
+          'python3 "<resolved-validate-requirements-index.py>" docs/moe/iterations/requirements/',
+      },
+      {
+        resource: 'skills/extracting-requirements/scripts/validate_scenarios.py',
+        command:
+          'python3 "<resolved-validate-scenarios.py>" docs/moe/iterations/behavior-scenarios.md docs/moe/iterations/requirements/',
+      },
+    ] as const
+
+    for (const item of expected) {
+      expect(canonical).toContain(`{resource:${item.resource}}`)
+      expect(canonical).toContain(item.command)
+    }
+
+    for (const [profile, relRoot] of Object.entries(PROFILE_DIRS)) {
+      const generated = readFileSync(join(root, relRoot, rel), 'utf8')
+      for (const item of expected) {
+        expect(generated, `${profile}: ${item.resource}`).toContain(`[${item.resource}](`)
+        expect(generated, `${profile}: ${item.command}`).toContain(item.command)
+      }
+    }
+  })
+
+  it('renders profile-specific call-level model override guidance', () => {
+    const documents = [
+      'subagent-driven-development/SKILL.md',
+      'subagent-driven-development/implementer-prompt.md',
+      'subagent-driven-development/re-review-prompt.md',
+      'subagent-driven-development/task-reviewer-prompt.md',
+    ] as const
+    for (const rel of documents) {
+      expect(readFileSync(join(CORE, 'skills', rel), 'utf8'), rel).toContain(
+        '{model-dispatch-guidance}',
+      )
+    }
+
+    const expected = {
+      'claude-code': 'Every dispatch must set its `model` field explicitly',
+      cursor: 'when the installed `Agent` schema exposes a `model` field',
+      codex: 'Every `spawn_agent` call must set `model` and `reasoning_effort`',
+      kimi: 'does not expose a portable call-level model override',
+      opencode: 'does not expose a call-level model override',
+      pi: 'only when the installed subagent tool documents that field',
+      'agent-plugins-1.0': '`invoke_subagent` does not define a call-level model override',
+      copilot: 'Every dispatch must set its `model` field explicitly',
+    } as const
+
+    for (const [profile, relRoot] of Object.entries(PROFILE_DIRS)) {
+      const rendered = documents.map((rel) => readFileSync(join(root, relRoot, rel), 'utf8'))
+      for (const content of rendered) {
+        expect(content.replace(/\s+/g, ' '), profile).toContain(
+          expected[profile as keyof typeof expected],
+        )
+        expect(content, profile).not.toContain('Always specify the model explicitly')
+      }
+      if (profile === 'agent-plugins-1.0') {
+        for (const content of rendered.slice(1)) {
+          expect(content, `${profile}: prompt must not invent model:`).not.toMatch(/^\s*model:/m)
+        }
+      }
+    }
+  })
+
   it('keeps non-Claude profiles free of Claude-only operational residue', () => {
     const denied = [
       ['AskUserQuestion', /\bAskUserQuestion\b/g],

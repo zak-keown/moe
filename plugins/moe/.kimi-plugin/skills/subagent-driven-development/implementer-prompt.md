@@ -2,11 +2,16 @@
 
 Use this template when dispatching an implementer subagent.
 
+**Dispatch model selection:** Kimi's `Agent` surface used here does not
+expose a portable call-level model override. Route the selected role
+through the model configured for the chosen Kimi subagent type, or use
+the configured default when no role-specific choice exists. Do not
+invent a `model` field.
+
+
 ```
 Subagent (general-purpose):
   description: "Implement Task N: [task name]"
-  model: [MODEL — REQUIRED: choose per SKILL.md Model Selection; an omitted
-         model silently inherits the session's most expensive one]
   prompt: |
     You are implementing Task N: [task name]
 

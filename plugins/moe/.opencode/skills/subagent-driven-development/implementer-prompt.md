@@ -2,11 +2,15 @@
 
 Use this template when dispatching an implementer subagent.
 
+**Dispatch model selection:** OpenCode's `task` surface used here does
+not expose a call-level model override. Route the selected role through
+the configured `general` agent, or use its configured default. Do not
+invent a `model` field.
+
+
 ```
 Subagent (general-purpose):
   description: "Implement Task N: [task name]"
-  model: [MODEL — REQUIRED: choose per SKILL.md Model Selection; an omitted
-         model silently inherits the session's most expensive one]
   prompt: |
     You are implementing Task N: [task name]
 

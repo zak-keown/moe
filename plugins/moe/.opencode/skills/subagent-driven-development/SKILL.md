@@ -274,9 +274,11 @@ re-reviews of small mechanical fix diffs may use the configured fast model.
 **Fix-loop escalation (rounds 4-5)**: use the configured deep-reasoning model after the earlier
 implementer gets stuck.
 
-**Always specify the model explicitly when dispatching a subagent.** An
-omitted model inherits your session's model — often the most capable and
-most expensive — which silently defeats this section.
+**Dispatch model selection:** OpenCode's `task` surface used here does
+not expose a call-level model override. Route the selected role through
+the configured `general` agent, or use its configured default. Do not
+invent a `model` field.
+
 
 **Turn count beats token price.** Wall-clock and context cost scale with how
 many turns a subagent takes, and the cheapest models routinely take 2-3× the

@@ -274,9 +274,10 @@ re-reviews of small mechanical fix diffs may use `haiku`.
 **Fix-loop escalation (rounds 4-5)**: use `opus` after the earlier
 implementer gets stuck.
 
-**Always specify the model explicitly when dispatching a subagent.** An
-omitted model inherits your session's model — often the most capable and
-most expensive — which silently defeats this section.
+**Dispatch model selection:** The `Agent` tool supports a call-level
+`model` field. Every dispatch must set its `model` field explicitly to
+the model assigned by the selected role in Model Selection.
+
 
 **Turn count beats token price.** Wall-clock and context cost scale with how
 many turns a subagent takes, and the cheapest models routinely take 2-3× the
