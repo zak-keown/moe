@@ -16,6 +16,6 @@
     "archaeology",
     "documentation"
   ],
-  "skills": "./skills/",
+  "skills": "./.codex-plugin/skills/",
   "hooks": {}
 }

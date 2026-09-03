@@ -4,10 +4,11 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { buildModel } from '../../src/model.js'
+import { adjustedModel } from '../../src/vocabulary.js'
 import { codex } from '../../src/adapters/codex.js'
 import { adapters, getAdapter } from '../../src/adapters/index.js'
 
-const model = buildModel('fixtures/kitchen-sink')
+const model = adjustedModel(buildModel('fixtures/kitchen-sink'), codex.skillLayout)
 
 describe('adapter registry', () => {
   it('registers codex', () => {
@@ -30,7 +31,7 @@ describe('codex adapter', () => {
       license: 'MIT',
       repository: 'https://github.com/example/kitchen-sink',
       keywords: ['fixture'],
-      skills: './skills/',
+      skills: './.codex-plugin/skills/',
       hooks: {},
     })
   })

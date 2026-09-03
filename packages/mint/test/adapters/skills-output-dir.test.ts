@@ -46,4 +46,17 @@ describe('skillLayout', () => {
       },
     })
   })
+
+  it('declares how each adapter delivers its skill tree', () => {
+    expect(Object.fromEntries(adapters.map((adapter) => [adapter.name, adapter.skillDelivery]))).toEqual({
+      'claude-code': 'rendered',
+      cursor: 'rendered',
+      codex: 'rendered',
+      kimi: 'rendered',
+      opencode: 'rendered',
+      pi: 'rendered',
+      'agent-plugins-1.0': 'native-discovery',
+      copilot: 'shared-compatible',
+    })
+  })
 })

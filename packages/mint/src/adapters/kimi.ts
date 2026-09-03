@@ -69,6 +69,7 @@ export const kimi: HarnessAdapter = {
     profile: 'kimi',
     mode: 'rendered',
   },
+  skillDelivery: 'rendered',
   installDoc,
   emit(model: PluginModel): EmitResult {
     const { config } = model

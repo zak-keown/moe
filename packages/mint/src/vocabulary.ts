@@ -232,8 +232,13 @@ export function adjustedModel(
   model: PluginModel,
   layout: SkillLayout,
 ): PluginModel {
+  const sourcePrefix = model.config.components.skills.replace(/\/+$/, '')
   return {
     ...model,
+    skills: model.skills.map((skill) => ({
+      ...skill,
+      dir: `${layout.outputDir}/${skill.dir.slice(sourcePrefix.length).replace(/^\/+/, '')}`,
+    })),
     config: {
       ...model.config,
       components: {

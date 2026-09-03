@@ -7,14 +7,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,7 +15,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = resolve(HERE, "..");
-const SCRIPT = join(PKG, "scripts", "render-html.cjs");
+const SCRIPT = join(PKG, "skills", "_shared", "render-html.cjs");
 const DEFAULT_TEMPLATE = join(PKG, "skills", "_shared", "report-base.html");
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -97,9 +90,7 @@ describe("renderTemplate", () => {
   });
 
   it("throws when required slot 'content' is missing", () => {
-    expect(() => renderTemplate(MINI_TEMPLATE, { title: "T" })).toThrow(
-      /required slot "content"/,
-    );
+    expect(() => renderTemplate(MINI_TEMPLATE, { title: "T" })).toThrow(/required slot "content"/);
   });
 });
 
@@ -150,7 +141,7 @@ describe("report-base.html template", () => {
     expect(html).toContain("{{SCRIPTS}}");
   });
 
-  it("produces valid self-contained HTML when slots are filled", () => {
+  it("produces valid portable HTML with the documented Mermaid CDN when slots are filled", () => {
     const template = readFileSync(DEFAULT_TEMPLATE, "utf-8");
     const html = renderTemplate(template, {
       title: "Architecture Review",
@@ -212,10 +203,7 @@ describe("CLI (render-html.cjs)", () => {
       customTemplate,
       "<!doctype html><html><head><title>{{TITLE}}</title></head><body>{{CONTENT}}</body></html>",
     );
-    writeFileSync(
-      inputPath,
-      JSON.stringify({ title: "Custom", content: "<p>Custom body</p>" }),
-    );
+    writeFileSync(inputPath, JSON.stringify({ title: "Custom", content: "<p>Custom body</p>" }));
 
     execFileSync("node", [
       SCRIPT,
@@ -254,12 +242,24 @@ describe("CLI (render-html.cjs)", () => {
     const inputPath = join(dir, "data.json");
     const outputPath = join(nested, "report.html");
 
-    writeFileSync(
-      inputPath,
-      JSON.stringify({ title: "Nested", content: "<p>Nested</p>" }),
-    );
+    writeFileSync(inputPath, JSON.stringify({ title: "Nested", content: "<p>Nested</p>" }));
 
     execFileSync("node", [SCRIPT, "--input", inputPath, "--output", outputPath]);
     expect(existsSync(outputPath)).toBe(true);
+  });
+
+  it("uses its adjacent installed template when invoked from an unrelated project cwd", () => {
+    const dir = tempDir("moe-render-installed-");
+    const project = join(dir, "project");
+    mkdirSync(project);
+    const inputPath = join(project, "data.json");
+    const outputPath = join(project, "report.html");
+    writeFileSync(inputPath, JSON.stringify({ title: "Installed", content: "<p>Portable</p>" }));
+
+    execFileSync("node", [SCRIPT, "--input", inputPath, "--output", outputPath], { cwd: project });
+
+    const html = readFileSync(outputPath, "utf-8");
+    expect(html).toContain("<title>Installed</title>");
+    expect(html).toContain("cdnjs.cloudflare.com");
   });
 });

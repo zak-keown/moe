@@ -16,7 +16,7 @@
     "subagents",
     "sessions"
   ],
-  "skills": "./skills/",
+  "skills": "./.cursor-plugin/skills/",
   "category": "development",
   "tags": [
     "orchestration",

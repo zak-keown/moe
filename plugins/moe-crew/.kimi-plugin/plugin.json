@@ -15,5 +15,5 @@
     "subagents",
     "sessions"
   ],
-  "skills": "./skills/"
+  "skills": "./.kimi-plugin/skills/"
 }

@@ -186,6 +186,7 @@ export const agentPlugins: HarnessAdapter = {
     profile: 'agent-plugins-1.0',
     mode: 'in-place',
   },
+  skillDelivery: 'native-discovery',
   installDoc,
   emit(model: PluginModel): EmitResult {
     const { config } = model

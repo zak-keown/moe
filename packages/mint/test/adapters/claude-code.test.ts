@@ -4,10 +4,11 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { buildModel } from '../../src/model.js'
+import { adjustedModel } from '../../src/vocabulary.js'
 import { claudeCode } from '../../src/adapters/claude-code.js'
 import { adapters, getAdapter } from '../../src/adapters/index.js'
 
-const model = buildModel('fixtures/kitchen-sink')
+const model = adjustedModel(buildModel('fixtures/kitchen-sink'), claudeCode.skillLayout)
 
 describe('adapter registry', () => {
   it('registers claude-code', () => {
@@ -32,6 +33,7 @@ describe('claude-code adapter', () => {
       repository: 'https://github.com/example/kitchen-sink',
       keywords: ['fixture'],
       homepage: 'https://example.com/kitchen-sink',
+      skills: './.claude-plugin/skills',
       hooks: './hooks/moe-mint/hooks.json',
     })
   })
@@ -67,7 +69,7 @@ describe('claude-code adapter', () => {
   it('emits an executable bootstrap session-start hook', () => {
     const file = result.files.find((f) => f.path === 'hooks/moe-mint/session-start')
     expect(file?.executable).toBe(true)
-    expect(file?.content).toContain('skills/using-kitchen-sink/SKILL.md')
+    expect(file?.content).toContain('.claude-plugin/skills/using-kitchen-sink/SKILL.md')
   })
 
   it('emits an executable run-hook.cmd polyglot', () => {

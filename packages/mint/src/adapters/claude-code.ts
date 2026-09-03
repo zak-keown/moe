@@ -169,6 +169,7 @@ export const claudeCode: HarnessAdapter = {
     profile: 'claude-code',
     mode: 'rendered',
   },
+  skillDelivery: 'rendered',
   installDoc,
   emit(model: PluginModel): EmitResult {
     const { config } = model

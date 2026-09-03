@@ -9,19 +9,371 @@
       "sha256": "f639d2c2c65256e1d50ddccb07d466749ddbd24104b974fbd5b7303486fae191"
     },
     ".claude-plugin/plugin.json": {
-      "sha256": "a7ff5cbc572d310518d53a71d70d01aee94f2a1f28b6372fad4dc222abb6b2e7"
+      "sha256": "5511f4fd8f8d701f85bff5eb3e8ad99d6d3a78806833cc34141f518cf3110728"
+    },
+    ".claude-plugin/skills/analysis-pipeline/SKILL.md": {
+      "sha256": "a6d6c278879125f7bca7a837f4a4ee0abe75d35385b7be2ffc26039bc862fe48",
+      "mode": 420
+    },
+    ".claude-plugin/skills/autonomous-discovery/SKILL.md": {
+      "sha256": "cfae7bb92ac46d8023eaff7a888c481d6be493beb89fe66ac2bc1f49f4e3dcc9",
+      "mode": 420
+    },
+    ".claude-plugin/skills/behavioral-spec-writing/SKILL.md": {
+      "sha256": "f5dcbcb4c55536fd3bb78cc2523b96d18f01847fc31f308b3739ad58b9343fe4",
+      "mode": 420
+    },
+    ".claude-plugin/skills/binary-analysis/SKILL.md": {
+      "sha256": "abf3fb2b474fcdb00486bbde66f5c2f6f755f747c56b5f8f7f6b782b2d9be5fb",
+      "mode": 420
+    },
+    ".claude-plugin/skills/community-intelligence/SKILL.md": {
+      "sha256": "783f12f91d62b0474a09a49f759e574560f1e08d64721c9b6e090d6ec994873a",
+      "mode": 420
+    },
+    ".claude-plugin/skills/container-execution/SKILL.md": {
+      "sha256": "bb6436c729b9804ccac02b30b0d685ab4da2c4371edef5a666d3c070e22dcf2a",
+      "mode": 420
+    },
+    ".claude-plugin/skills/contract-detection/SKILL.md": {
+      "sha256": "77a9f98064f60dd29d2cd3bedfeb3107f4d92f1f7f52852ba922b7647d82e9af",
+      "mode": 420
+    },
+    ".claude-plugin/skills/doc-research/SKILL.md": {
+      "sha256": "98425b2d3f8bb60ee10722dfde4a0eb29bb926ca497684580690ac71384765c7",
+      "mode": 420
+    },
+    ".claude-plugin/skills/ecosystem-analysis/SKILL.md": {
+      "sha256": "1eaece7c427c61261fa4230666a5d3c2f7ddb1887c948154757fb6338804937e",
+      "mode": 420
+    },
+    ".claude-plugin/skills/fidelity-validation/SKILL.md": {
+      "sha256": "f1ad935f849e5d846217a83943a96e8ab2574dbdb14020e402b6eb1fd03c5f9f",
+      "mode": 420
+    },
+    ".claude-plugin/skills/git-archaeology/SKILL.md": {
+      "sha256": "903280b930284773a4870c649ac19b68f943001f4b5e8b78d1e073d82934b3ac",
+      "mode": 420
+    },
+    ".claude-plugin/skills/incremental-analysis/SKILL.md": {
+      "sha256": "b85c0f8f1635159c2c804d4c5441df76227387a4df3db1f3d33bdf47414dc7fb",
+      "mode": 420
+    },
+    ".claude-plugin/skills/multi-source-synthesis/SKILL.md": {
+      "sha256": "ae7d65733801b1770cbcfdd4def01e90833f272389a44452969ee5d59f111cc2",
+      "mode": 420
+    },
+    ".claude-plugin/skills/provenance-methodology/SKILL.md": {
+      "sha256": "1d1251bb7d249ca064432ac2c3de8188c2cd14cefb0ea483246cbb4f4851cdea",
+      "mode": 420
+    },
+    ".claude-plugin/skills/runtime-observation/SKILL.md": {
+      "sha256": "f0a407384d6d9846805d843d24a6965b92c38336df88f03169d1e5d3f47743be",
+      "mode": 420
+    },
+    ".claude-plugin/skills/second-pass-review/SKILL.md": {
+      "sha256": "59d66fe0ccbad8604ea78341e46dafa126a25382a390fd2de7054fc0e78f661d",
+      "mode": 420
+    },
+    ".claude-plugin/skills/source-analysis/SKILL.md": {
+      "sha256": "6dbb3abafc4b47e8368fd41d4a5c0895e06b0ecf69ea29f22ddc683844096e68",
+      "mode": 420
+    },
+    ".claude-plugin/skills/source-completeness/SKILL.md": {
+      "sha256": "ef244131ead051f6db8cd61bdab3985de978dafe0aa091fee37cd4c15e29eef1",
+      "mode": 420
+    },
+    ".claude-plugin/skills/spec-sanitization/SKILL.md": {
+      "sha256": "6aacb5056beba92b7a5bd271c93445b6215c98c88542237326b3e0f9ce001323",
+      "mode": 420
+    },
+    ".claude-plugin/skills/test-suite-analysis/SKILL.md": {
+      "sha256": "4d998b19aee6945f1ec49b821ac18ea820fd6a53038a950ab9313ae49608bcb3",
+      "mode": 420
+    },
+    ".claude-plugin/skills/validation-methodology/SKILL.md": {
+      "sha256": "673fb08b5ecfc2bb00279360e5fb383eeb83f877453be58726678dc56b69b677",
+      "mode": 420
+    },
+    ".claude-plugin/skills/visual-exploration/SKILL.md": {
+      "sha256": "a917ca2049cd4fcd40a07a2ca2ce5ff5a22db8814b8d73b8b1a0fa0043f50265",
+      "mode": 420
     },
     ".codex-plugin/plugin.json": {
-      "sha256": "fdc78cab394ae699145479a921985cb7af8fb21975bb087546f1d1ff103db7a4"
+      "sha256": "9928983f39966f65ebabf37f93c9ac6b85fd3df69b5fa07c63512b3b54d93103"
+    },
+    ".codex-plugin/skills/analysis-pipeline/SKILL.md": {
+      "sha256": "a6d6c278879125f7bca7a837f4a4ee0abe75d35385b7be2ffc26039bc862fe48",
+      "mode": 420
+    },
+    ".codex-plugin/skills/autonomous-discovery/SKILL.md": {
+      "sha256": "cfae7bb92ac46d8023eaff7a888c481d6be493beb89fe66ac2bc1f49f4e3dcc9",
+      "mode": 420
+    },
+    ".codex-plugin/skills/behavioral-spec-writing/SKILL.md": {
+      "sha256": "f5dcbcb4c55536fd3bb78cc2523b96d18f01847fc31f308b3739ad58b9343fe4",
+      "mode": 420
+    },
+    ".codex-plugin/skills/binary-analysis/SKILL.md": {
+      "sha256": "abf3fb2b474fcdb00486bbde66f5c2f6f755f747c56b5f8f7f6b782b2d9be5fb",
+      "mode": 420
+    },
+    ".codex-plugin/skills/community-intelligence/SKILL.md": {
+      "sha256": "783f12f91d62b0474a09a49f759e574560f1e08d64721c9b6e090d6ec994873a",
+      "mode": 420
+    },
+    ".codex-plugin/skills/container-execution/SKILL.md": {
+      "sha256": "bb6436c729b9804ccac02b30b0d685ab4da2c4371edef5a666d3c070e22dcf2a",
+      "mode": 420
+    },
+    ".codex-plugin/skills/contract-detection/SKILL.md": {
+      "sha256": "77a9f98064f60dd29d2cd3bedfeb3107f4d92f1f7f52852ba922b7647d82e9af",
+      "mode": 420
+    },
+    ".codex-plugin/skills/doc-research/SKILL.md": {
+      "sha256": "98425b2d3f8bb60ee10722dfde4a0eb29bb926ca497684580690ac71384765c7",
+      "mode": 420
+    },
+    ".codex-plugin/skills/ecosystem-analysis/SKILL.md": {
+      "sha256": "1eaece7c427c61261fa4230666a5d3c2f7ddb1887c948154757fb6338804937e",
+      "mode": 420
+    },
+    ".codex-plugin/skills/fidelity-validation/SKILL.md": {
+      "sha256": "f1ad935f849e5d846217a83943a96e8ab2574dbdb14020e402b6eb1fd03c5f9f",
+      "mode": 420
+    },
+    ".codex-plugin/skills/git-archaeology/SKILL.md": {
+      "sha256": "903280b930284773a4870c649ac19b68f943001f4b5e8b78d1e073d82934b3ac",
+      "mode": 420
+    },
+    ".codex-plugin/skills/incremental-analysis/SKILL.md": {
+      "sha256": "b85c0f8f1635159c2c804d4c5441df76227387a4df3db1f3d33bdf47414dc7fb",
+      "mode": 420
+    },
+    ".codex-plugin/skills/multi-source-synthesis/SKILL.md": {
+      "sha256": "ae7d65733801b1770cbcfdd4def01e90833f272389a44452969ee5d59f111cc2",
+      "mode": 420
+    },
+    ".codex-plugin/skills/provenance-methodology/SKILL.md": {
+      "sha256": "1d1251bb7d249ca064432ac2c3de8188c2cd14cefb0ea483246cbb4f4851cdea",
+      "mode": 420
+    },
+    ".codex-plugin/skills/runtime-observation/SKILL.md": {
+      "sha256": "f0a407384d6d9846805d843d24a6965b92c38336df88f03169d1e5d3f47743be",
+      "mode": 420
+    },
+    ".codex-plugin/skills/second-pass-review/SKILL.md": {
+      "sha256": "59d66fe0ccbad8604ea78341e46dafa126a25382a390fd2de7054fc0e78f661d",
+      "mode": 420
+    },
+    ".codex-plugin/skills/source-analysis/SKILL.md": {
+      "sha256": "6dbb3abafc4b47e8368fd41d4a5c0895e06b0ecf69ea29f22ddc683844096e68",
+      "mode": 420
+    },
+    ".codex-plugin/skills/source-completeness/SKILL.md": {
+      "sha256": "ef244131ead051f6db8cd61bdab3985de978dafe0aa091fee37cd4c15e29eef1",
+      "mode": 420
+    },
+    ".codex-plugin/skills/spec-sanitization/SKILL.md": {
+      "sha256": "6aacb5056beba92b7a5bd271c93445b6215c98c88542237326b3e0f9ce001323",
+      "mode": 420
+    },
+    ".codex-plugin/skills/test-suite-analysis/SKILL.md": {
+      "sha256": "4d998b19aee6945f1ec49b821ac18ea820fd6a53038a950ab9313ae49608bcb3",
+      "mode": 420
+    },
+    ".codex-plugin/skills/validation-methodology/SKILL.md": {
+      "sha256": "673fb08b5ecfc2bb00279360e5fb383eeb83f877453be58726678dc56b69b677",
+      "mode": 420
+    },
+    ".codex-plugin/skills/visual-exploration/SKILL.md": {
+      "sha256": "a917ca2049cd4fcd40a07a2ca2ce5ff5a22db8814b8d73b8b1a0fa0043f50265",
+      "mode": 420
     },
     ".cursor-plugin/marketplace.json": {
       "sha256": "4939d6b7b3b44050f76bb453898263f5375e6ae9dcc522ffcaa1eb8228912a47"
     },
     ".cursor-plugin/plugin.json": {
-      "sha256": "7f71dfa94d120cf3056825736caa3535cd04d0bc7423af248c2138cfec71e11c"
+      "sha256": "6249afc3c78bc5dd038ed398f80aed6ab3c9f4600e21ac6059f6bcab94c0a51d"
+    },
+    ".cursor-plugin/skills/analysis-pipeline/SKILL.md": {
+      "sha256": "a6d6c278879125f7bca7a837f4a4ee0abe75d35385b7be2ffc26039bc862fe48",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/autonomous-discovery/SKILL.md": {
+      "sha256": "cfae7bb92ac46d8023eaff7a888c481d6be493beb89fe66ac2bc1f49f4e3dcc9",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/behavioral-spec-writing/SKILL.md": {
+      "sha256": "f5dcbcb4c55536fd3bb78cc2523b96d18f01847fc31f308b3739ad58b9343fe4",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/binary-analysis/SKILL.md": {
+      "sha256": "abf3fb2b474fcdb00486bbde66f5c2f6f755f747c56b5f8f7f6b782b2d9be5fb",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/community-intelligence/SKILL.md": {
+      "sha256": "783f12f91d62b0474a09a49f759e574560f1e08d64721c9b6e090d6ec994873a",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/container-execution/SKILL.md": {
+      "sha256": "bb6436c729b9804ccac02b30b0d685ab4da2c4371edef5a666d3c070e22dcf2a",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/contract-detection/SKILL.md": {
+      "sha256": "77a9f98064f60dd29d2cd3bedfeb3107f4d92f1f7f52852ba922b7647d82e9af",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/doc-research/SKILL.md": {
+      "sha256": "98425b2d3f8bb60ee10722dfde4a0eb29bb926ca497684580690ac71384765c7",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/ecosystem-analysis/SKILL.md": {
+      "sha256": "1eaece7c427c61261fa4230666a5d3c2f7ddb1887c948154757fb6338804937e",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/fidelity-validation/SKILL.md": {
+      "sha256": "f1ad935f849e5d846217a83943a96e8ab2574dbdb14020e402b6eb1fd03c5f9f",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/git-archaeology/SKILL.md": {
+      "sha256": "903280b930284773a4870c649ac19b68f943001f4b5e8b78d1e073d82934b3ac",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/incremental-analysis/SKILL.md": {
+      "sha256": "b85c0f8f1635159c2c804d4c5441df76227387a4df3db1f3d33bdf47414dc7fb",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/multi-source-synthesis/SKILL.md": {
+      "sha256": "ae7d65733801b1770cbcfdd4def01e90833f272389a44452969ee5d59f111cc2",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/provenance-methodology/SKILL.md": {
+      "sha256": "1d1251bb7d249ca064432ac2c3de8188c2cd14cefb0ea483246cbb4f4851cdea",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/runtime-observation/SKILL.md": {
+      "sha256": "f0a407384d6d9846805d843d24a6965b92c38336df88f03169d1e5d3f47743be",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/second-pass-review/SKILL.md": {
+      "sha256": "59d66fe0ccbad8604ea78341e46dafa126a25382a390fd2de7054fc0e78f661d",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/source-analysis/SKILL.md": {
+      "sha256": "6dbb3abafc4b47e8368fd41d4a5c0895e06b0ecf69ea29f22ddc683844096e68",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/source-completeness/SKILL.md": {
+      "sha256": "ef244131ead051f6db8cd61bdab3985de978dafe0aa091fee37cd4c15e29eef1",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/spec-sanitization/SKILL.md": {
+      "sha256": "6aacb5056beba92b7a5bd271c93445b6215c98c88542237326b3e0f9ce001323",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/test-suite-analysis/SKILL.md": {
+      "sha256": "4d998b19aee6945f1ec49b821ac18ea820fd6a53038a950ab9313ae49608bcb3",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/validation-methodology/SKILL.md": {
+      "sha256": "673fb08b5ecfc2bb00279360e5fb383eeb83f877453be58726678dc56b69b677",
+      "mode": 420
+    },
+    ".cursor-plugin/skills/visual-exploration/SKILL.md": {
+      "sha256": "a917ca2049cd4fcd40a07a2ca2ce5ff5a22db8814b8d73b8b1a0fa0043f50265",
+      "mode": 420
     },
     ".kimi-plugin/plugin.json": {
-      "sha256": "8ddec8273f3cf9a2187c6a1ddb2740394b22a1e167ad40cd3ae48ebfc92da834"
+      "sha256": "5dffcb36a0cb1316e63ada5f228b3cc774d7d807e3abe91776eb09085003f812"
+    },
+    ".kimi-plugin/skills/analysis-pipeline/SKILL.md": {
+      "sha256": "a6d6c278879125f7bca7a837f4a4ee0abe75d35385b7be2ffc26039bc862fe48",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/autonomous-discovery/SKILL.md": {
+      "sha256": "cfae7bb92ac46d8023eaff7a888c481d6be493beb89fe66ac2bc1f49f4e3dcc9",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/behavioral-spec-writing/SKILL.md": {
+      "sha256": "f5dcbcb4c55536fd3bb78cc2523b96d18f01847fc31f308b3739ad58b9343fe4",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/binary-analysis/SKILL.md": {
+      "sha256": "abf3fb2b474fcdb00486bbde66f5c2f6f755f747c56b5f8f7f6b782b2d9be5fb",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/community-intelligence/SKILL.md": {
+      "sha256": "783f12f91d62b0474a09a49f759e574560f1e08d64721c9b6e090d6ec994873a",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/container-execution/SKILL.md": {
+      "sha256": "bb6436c729b9804ccac02b30b0d685ab4da2c4371edef5a666d3c070e22dcf2a",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/contract-detection/SKILL.md": {
+      "sha256": "77a9f98064f60dd29d2cd3bedfeb3107f4d92f1f7f52852ba922b7647d82e9af",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/doc-research/SKILL.md": {
+      "sha256": "98425b2d3f8bb60ee10722dfde4a0eb29bb926ca497684580690ac71384765c7",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/ecosystem-analysis/SKILL.md": {
+      "sha256": "1eaece7c427c61261fa4230666a5d3c2f7ddb1887c948154757fb6338804937e",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/fidelity-validation/SKILL.md": {
+      "sha256": "f1ad935f849e5d846217a83943a96e8ab2574dbdb14020e402b6eb1fd03c5f9f",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/git-archaeology/SKILL.md": {
+      "sha256": "903280b930284773a4870c649ac19b68f943001f4b5e8b78d1e073d82934b3ac",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/incremental-analysis/SKILL.md": {
+      "sha256": "b85c0f8f1635159c2c804d4c5441df76227387a4df3db1f3d33bdf47414dc7fb",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/multi-source-synthesis/SKILL.md": {
+      "sha256": "ae7d65733801b1770cbcfdd4def01e90833f272389a44452969ee5d59f111cc2",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/provenance-methodology/SKILL.md": {
+      "sha256": "1d1251bb7d249ca064432ac2c3de8188c2cd14cefb0ea483246cbb4f4851cdea",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/runtime-observation/SKILL.md": {
+      "sha256": "f0a407384d6d9846805d843d24a6965b92c38336df88f03169d1e5d3f47743be",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/second-pass-review/SKILL.md": {
+      "sha256": "59d66fe0ccbad8604ea78341e46dafa126a25382a390fd2de7054fc0e78f661d",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/source-analysis/SKILL.md": {
+      "sha256": "6dbb3abafc4b47e8368fd41d4a5c0895e06b0ecf69ea29f22ddc683844096e68",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/source-completeness/SKILL.md": {
+      "sha256": "ef244131ead051f6db8cd61bdab3985de978dafe0aa091fee37cd4c15e29eef1",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/spec-sanitization/SKILL.md": {
+      "sha256": "6aacb5056beba92b7a5bd271c93445b6215c98c88542237326b3e0f9ce001323",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/test-suite-analysis/SKILL.md": {
+      "sha256": "4d998b19aee6945f1ec49b821ac18ea820fd6a53038a950ab9313ae49608bcb3",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/validation-methodology/SKILL.md": {
+      "sha256": "673fb08b5ecfc2bb00279360e5fb383eeb83f877453be58726678dc56b69b677",
+      "mode": 420
+    },
+    ".kimi-plugin/skills/visual-exploration/SKILL.md": {
+      "sha256": "a917ca2049cd4fcd40a07a2ca2ce5ff5a22db8814b8d73b8b1a0fa0043f50265",
+      "mode": 420
     },
     ".opencode/agent/analyzer.md": {
       "sha256": "dcc48cb7960f39cfebea82fe2b0eddd094d2b3d3f58aeb0f7792f16c3403a5ef"
@@ -36,10 +388,186 @@
       "sha256": "dede7b453c711cd649253b53d284456216edc2ab26652c5cdfe2723e22d9e74f"
     },
     ".opencode/plugins/moe-backstory.js": {
-      "sha256": "2aaa9ae7555266f0233fd73b678aba3b0fd3b2cc72fb1f2f278dfe2121203054"
+      "sha256": "a8a05ed1a78359012e4a74020911cca9f83edee05201acf2aee05945a955515a"
+    },
+    ".opencode/skills/analysis-pipeline/SKILL.md": {
+      "sha256": "a6d6c278879125f7bca7a837f4a4ee0abe75d35385b7be2ffc26039bc862fe48",
+      "mode": 420
+    },
+    ".opencode/skills/autonomous-discovery/SKILL.md": {
+      "sha256": "cfae7bb92ac46d8023eaff7a888c481d6be493beb89fe66ac2bc1f49f4e3dcc9",
+      "mode": 420
+    },
+    ".opencode/skills/behavioral-spec-writing/SKILL.md": {
+      "sha256": "f5dcbcb4c55536fd3bb78cc2523b96d18f01847fc31f308b3739ad58b9343fe4",
+      "mode": 420
+    },
+    ".opencode/skills/binary-analysis/SKILL.md": {
+      "sha256": "abf3fb2b474fcdb00486bbde66f5c2f6f755f747c56b5f8f7f6b782b2d9be5fb",
+      "mode": 420
+    },
+    ".opencode/skills/community-intelligence/SKILL.md": {
+      "sha256": "783f12f91d62b0474a09a49f759e574560f1e08d64721c9b6e090d6ec994873a",
+      "mode": 420
+    },
+    ".opencode/skills/container-execution/SKILL.md": {
+      "sha256": "bb6436c729b9804ccac02b30b0d685ab4da2c4371edef5a666d3c070e22dcf2a",
+      "mode": 420
+    },
+    ".opencode/skills/contract-detection/SKILL.md": {
+      "sha256": "77a9f98064f60dd29d2cd3bedfeb3107f4d92f1f7f52852ba922b7647d82e9af",
+      "mode": 420
+    },
+    ".opencode/skills/doc-research/SKILL.md": {
+      "sha256": "98425b2d3f8bb60ee10722dfde4a0eb29bb926ca497684580690ac71384765c7",
+      "mode": 420
+    },
+    ".opencode/skills/ecosystem-analysis/SKILL.md": {
+      "sha256": "1eaece7c427c61261fa4230666a5d3c2f7ddb1887c948154757fb6338804937e",
+      "mode": 420
+    },
+    ".opencode/skills/fidelity-validation/SKILL.md": {
+      "sha256": "f1ad935f849e5d846217a83943a96e8ab2574dbdb14020e402b6eb1fd03c5f9f",
+      "mode": 420
+    },
+    ".opencode/skills/git-archaeology/SKILL.md": {
+      "sha256": "903280b930284773a4870c649ac19b68f943001f4b5e8b78d1e073d82934b3ac",
+      "mode": 420
+    },
+    ".opencode/skills/incremental-analysis/SKILL.md": {
+      "sha256": "b85c0f8f1635159c2c804d4c5441df76227387a4df3db1f3d33bdf47414dc7fb",
+      "mode": 420
+    },
+    ".opencode/skills/multi-source-synthesis/SKILL.md": {
+      "sha256": "ae7d65733801b1770cbcfdd4def01e90833f272389a44452969ee5d59f111cc2",
+      "mode": 420
+    },
+    ".opencode/skills/provenance-methodology/SKILL.md": {
+      "sha256": "1d1251bb7d249ca064432ac2c3de8188c2cd14cefb0ea483246cbb4f4851cdea",
+      "mode": 420
+    },
+    ".opencode/skills/runtime-observation/SKILL.md": {
+      "sha256": "f0a407384d6d9846805d843d24a6965b92c38336df88f03169d1e5d3f47743be",
+      "mode": 420
+    },
+    ".opencode/skills/second-pass-review/SKILL.md": {
+      "sha256": "59d66fe0ccbad8604ea78341e46dafa126a25382a390fd2de7054fc0e78f661d",
+      "mode": 420
+    },
+    ".opencode/skills/source-analysis/SKILL.md": {
+      "sha256": "6dbb3abafc4b47e8368fd41d4a5c0895e06b0ecf69ea29f22ddc683844096e68",
+      "mode": 420
+    },
+    ".opencode/skills/source-completeness/SKILL.md": {
+      "sha256": "ef244131ead051f6db8cd61bdab3985de978dafe0aa091fee37cd4c15e29eef1",
+      "mode": 420
+    },
+    ".opencode/skills/spec-sanitization/SKILL.md": {
+      "sha256": "6aacb5056beba92b7a5bd271c93445b6215c98c88542237326b3e0f9ce001323",
+      "mode": 420
+    },
+    ".opencode/skills/test-suite-analysis/SKILL.md": {
+      "sha256": "4d998b19aee6945f1ec49b821ac18ea820fd6a53038a950ab9313ae49608bcb3",
+      "mode": 420
+    },
+    ".opencode/skills/validation-methodology/SKILL.md": {
+      "sha256": "673fb08b5ecfc2bb00279360e5fb383eeb83f877453be58726678dc56b69b677",
+      "mode": 420
+    },
+    ".opencode/skills/visual-exploration/SKILL.md": {
+      "sha256": "a917ca2049cd4fcd40a07a2ca2ce5ff5a22db8814b8d73b8b1a0fa0043f50265",
+      "mode": 420
     },
     ".pi/extensions/moe-backstory.ts": {
-      "sha256": "e57f02c707342a6c3b6088f8791bdc57e5e69db2a4291f0f0ff7a74d60ad9b67"
+      "sha256": "d28a63d172f4c3d8ce0925e69a1765a13922fc229ce84e41b6028f063e8b9b3d"
+    },
+    ".pi/skills/analysis-pipeline/SKILL.md": {
+      "sha256": "a6d6c278879125f7bca7a837f4a4ee0abe75d35385b7be2ffc26039bc862fe48",
+      "mode": 420
+    },
+    ".pi/skills/autonomous-discovery/SKILL.md": {
+      "sha256": "cfae7bb92ac46d8023eaff7a888c481d6be493beb89fe66ac2bc1f49f4e3dcc9",
+      "mode": 420
+    },
+    ".pi/skills/behavioral-spec-writing/SKILL.md": {
+      "sha256": "f5dcbcb4c55536fd3bb78cc2523b96d18f01847fc31f308b3739ad58b9343fe4",
+      "mode": 420
+    },
+    ".pi/skills/binary-analysis/SKILL.md": {
+      "sha256": "abf3fb2b474fcdb00486bbde66f5c2f6f755f747c56b5f8f7f6b782b2d9be5fb",
+      "mode": 420
+    },
+    ".pi/skills/community-intelligence/SKILL.md": {
+      "sha256": "783f12f91d62b0474a09a49f759e574560f1e08d64721c9b6e090d6ec994873a",
+      "mode": 420
+    },
+    ".pi/skills/container-execution/SKILL.md": {
+      "sha256": "bb6436c729b9804ccac02b30b0d685ab4da2c4371edef5a666d3c070e22dcf2a",
+      "mode": 420
+    },
+    ".pi/skills/contract-detection/SKILL.md": {
+      "sha256": "77a9f98064f60dd29d2cd3bedfeb3107f4d92f1f7f52852ba922b7647d82e9af",
+      "mode": 420
+    },
+    ".pi/skills/doc-research/SKILL.md": {
+      "sha256": "98425b2d3f8bb60ee10722dfde4a0eb29bb926ca497684580690ac71384765c7",
+      "mode": 420
+    },
+    ".pi/skills/ecosystem-analysis/SKILL.md": {
+      "sha256": "1eaece7c427c61261fa4230666a5d3c2f7ddb1887c948154757fb6338804937e",
+      "mode": 420
+    },
+    ".pi/skills/fidelity-validation/SKILL.md": {
+      "sha256": "f1ad935f849e5d846217a83943a96e8ab2574dbdb14020e402b6eb1fd03c5f9f",
+      "mode": 420
+    },
+    ".pi/skills/git-archaeology/SKILL.md": {
+      "sha256": "903280b930284773a4870c649ac19b68f943001f4b5e8b78d1e073d82934b3ac",
+      "mode": 420
+    },
+    ".pi/skills/incremental-analysis/SKILL.md": {
+      "sha256": "b85c0f8f1635159c2c804d4c5441df76227387a4df3db1f3d33bdf47414dc7fb",
+      "mode": 420
+    },
+    ".pi/skills/multi-source-synthesis/SKILL.md": {
+      "sha256": "ae7d65733801b1770cbcfdd4def01e90833f272389a44452969ee5d59f111cc2",
+      "mode": 420
+    },
+    ".pi/skills/provenance-methodology/SKILL.md": {
+      "sha256": "1d1251bb7d249ca064432ac2c3de8188c2cd14cefb0ea483246cbb4f4851cdea",
+      "mode": 420
+    },
+    ".pi/skills/runtime-observation/SKILL.md": {
+      "sha256": "f0a407384d6d9846805d843d24a6965b92c38336df88f03169d1e5d3f47743be",
+      "mode": 420
+    },
+    ".pi/skills/second-pass-review/SKILL.md": {
+      "sha256": "59d66fe0ccbad8604ea78341e46dafa126a25382a390fd2de7054fc0e78f661d",
+      "mode": 420
+    },
+    ".pi/skills/source-analysis/SKILL.md": {
+      "sha256": "6dbb3abafc4b47e8368fd41d4a5c0895e06b0ecf69ea29f22ddc683844096e68",
+      "mode": 420
+    },
+    ".pi/skills/source-completeness/SKILL.md": {
+      "sha256": "ef244131ead051f6db8cd61bdab3985de978dafe0aa091fee37cd4c15e29eef1",
+      "mode": 420
+    },
+    ".pi/skills/spec-sanitization/SKILL.md": {
+      "sha256": "6aacb5056beba92b7a5bd271c93445b6215c98c88542237326b3e0f9ce001323",
+      "mode": 420
+    },
+    ".pi/skills/test-suite-analysis/SKILL.md": {
+      "sha256": "4d998b19aee6945f1ec49b821ac18ea820fd6a53038a950ab9313ae49608bcb3",
+      "mode": 420
+    },
+    ".pi/skills/validation-methodology/SKILL.md": {
+      "sha256": "673fb08b5ecfc2bb00279360e5fb383eeb83f877453be58726678dc56b69b677",
+      "mode": 420
+    },
+    ".pi/skills/visual-exploration/SKILL.md": {
+      "sha256": "a917ca2049cd4fcd40a07a2ca2ce5ff5a22db8814b8d73b8b1a0fa0043f50265",
+      "mode": 420
     },
     "docs/install/agent-plugins-1.0.md": {
       "sha256": "58e2d23574934d6074a980aaa894059d925a4a33ce71cd9fe440f60f293a44c8"
@@ -66,10 +594,10 @@
       "sha256": "8a26f88f7cf60a66406940eca660bd43d90d01abb406aea4e17f22ff7b4e1000"
     },
     "docs/support-matrix.md": {
-      "sha256": "0fa878b8329720a3c8a03aca708e24d54943e46af6c95b785cc22654570dc098"
+      "sha256": "60b0243f6abf9e8e995f38a9bf4b7220a177edc9cd90b0d840591c81c8314f48"
     },
     "package.json": {
-      "sha256": "4bb30307872be5872f2dee413b3464fe6a4b24f729a83b1b83d9fc8716cb7fff"
+      "sha256": "0f7dd7842bf47044ebb6f731c598c904aff5678312a4b9f2558135427b492a34"
     },
     "plugin.json": {
       "sha256": "050d6d1727e97918d29335fde7359426ed0196c7153dc47bdd861ef4f5894b8e"

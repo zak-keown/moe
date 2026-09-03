@@ -16,5 +16,6 @@
     "journal",
     "mcp"
   ],
+  "skills": "./.claude-plugin/skills",
   "hooks": "./hooks/moe-mint/hooks.json"
 }

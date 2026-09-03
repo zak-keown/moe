@@ -7,11 +7,11 @@ import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/gener
 import { baseManifestFields, json, bootstrapEmitsHooks, marketplaceName } from './shared.js'
 
 // Where the cursor adapter emits the bootstrap SessionStart hook and its
-// hooks-cursor.json, when config.bootstrap.kind === 'skill'. Shares the
-// hooks/moe-mint directory (and the session-start/run-hook.cmd files)
-// with claude-code so the two adapters can coexist without duplication.
-const BOOTSTRAP_HOOKS_DIR = 'hooks/moe-mint'
-const BOOTSTRAP_HOOKS_JSON_PATH = `${BOOTSTRAP_HOOKS_DIR}/hooks-cursor.json`
+// hooks.json, when config.bootstrap.kind === 'skill'. Cursor owns this tree:
+// its session-start loader points at Cursor's rendered skills and therefore
+// cannot share Claude Code's otherwise similar hook bytes.
+const BOOTSTRAP_HOOKS_DIR = '.cursor-plugin/hooks/moe-mint'
+const BOOTSTRAP_HOOKS_JSON_PATH = `${BOOTSTRAP_HOOKS_DIR}/hooks.json`
 
 // Cursor's MCP config is emitted inside .cursor-plugin/ to avoid colliding
 // with agent-plugins.ts's root-level mcp.json. The manifest's mcpServers
@@ -150,6 +150,7 @@ export const cursor: HarnessAdapter = {
     profile: 'cursor',
     mode: 'rendered',
   },
+  skillDelivery: 'rendered',
   installDoc,
   emit(model: PluginModel): EmitResult {
     const { config } = model
@@ -177,7 +178,11 @@ export const cursor: HarnessAdapter = {
         files.push(
           {
             path: `${BOOTSTRAP_HOOKS_DIR}/session-start`,
-            content: sessionStartScript({ pluginName: config.name, bootstrapContentPath: `${skill.dir}/SKILL.md` }),
+            content: sessionStartScript({
+              pluginName: config.name,
+              bootstrapContentPath: `${skill.dir}/SKILL.md`,
+              pluginRootRelative: '../../..',
+            }),
             executable: true,
           },
           { path: `${BOOTSTRAP_HOOKS_DIR}/run-hook.cmd`, content: runHookCmd(), executable: true },
@@ -194,7 +199,11 @@ export const cursor: HarnessAdapter = {
         files.push(
           {
             path: `${BOOTSTRAP_HOOKS_DIR}/session-start`,
-            content: sessionStartScript({ pluginName: config.name, bootstrapContentPath: GENERATED_BOOTSTRAP_PATH }),
+            content: sessionStartScript({
+              pluginName: config.name,
+              bootstrapContentPath: GENERATED_BOOTSTRAP_PATH,
+              pluginRootRelative: '../../..',
+            }),
             executable: true,
           },
           { path: `${BOOTSTRAP_HOOKS_DIR}/run-hook.cmd`, content: runHookCmd(), executable: true },

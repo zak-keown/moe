@@ -1,6 +1,6 @@
 # HTML Report Format
 
-The architectural review is rendered as a single self-contained HTML file in the OS temp directory. Tailwind and Mermaid both come from CDNs. Mermaid handles graph-shaped diagrams reliably; hand-built divs and inline SVG handle the more editorial visuals (mass diagrams, cross-sections). Mix the two: don't lean on Mermaid for everything, it'll start to look generic.
+The architectural review is rendered as a single portable HTML file in the OS temp directory. Tailwind and Mermaid come from CDNs, so their presentation requires network access when the file opens. Mermaid handles graph-shaped diagrams reliably; hand-built divs and inline SVG handle the more editorial visuals (mass diagrams, cross-sections). Mix the two: don't lean on Mermaid for everything, it'll start to look generic.
 
 ## Scaffold
 
@@ -134,7 +134,21 @@ is `skills/_shared/report-base.html`. It provides:
 - Mermaid from `cdnjs.cloudflare.com` (not the ESM import above).
 - Four named slots: `{{TITLE}}`, `{{NAV}}`, `{{CONTENT}}`, `{{SCRIPTS}}`.
 
-### Assembling a report with render-html.cjs
+### Assembling a report with the installed renderer
+
+The helper ships beside the template in every rendered skill tree. From the
+installed plugin root, select the path for the active harness:
+
+- Claude Code and Copilot: `.claude-plugin/skills/_shared/render-html.cjs`
+- Cursor: `.cursor-plugin/skills/_shared/render-html.cjs`
+- Codex: `.codex-plugin/skills/_shared/render-html.cjs`
+- Kimi Code: `.kimi-plugin/skills/_shared/render-html.cjs`
+- OpenCode: `.opencode/skills/_shared/render-html.cjs`
+- Pi: `.pi/skills/_shared/render-html.cjs`
+- Agent Plugins 1.0: `skills/_shared/render-html.cjs`
+
+The generated HTML is portable as one file, but Mermaid is loaded from cdnjs
+when the report opens, so diagrams require network access.
 
 Create a JSON file with the slot values:
 
@@ -150,13 +164,13 @@ Create a JSON file with the slot values:
 Render:
 
 ```sh
-node scripts/render-html.cjs --input data.json --output /tmp/review.html
+node <adapter-skill-directory>/_shared/render-html.cjs --input data.json --output /tmp/review.html
 ```
 
 Override the base template if needed:
 
 ```sh
-node scripts/render-html.cjs --input data.json --output /tmp/review.html --template my-template.html
+node <adapter-skill-directory>/_shared/render-html.cjs --input data.json --output /tmp/review.html --template my-template.html
 ```
 
 The `nav` and `scripts` slots are optional. Missing optional slots are replaced

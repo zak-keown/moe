@@ -16,7 +16,7 @@
       "./.pi/extensions/moe-memory.ts"
     ],
     "skills": [
-      "./skills"
+      "./.pi/skills"
     ]
   },
   "keywords": [

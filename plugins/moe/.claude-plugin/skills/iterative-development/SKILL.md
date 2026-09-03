@@ -1,0 +1,213 @@
+---
+name: iterative-development
+description: Use when implementing a project with a large, comprehensive, or ambiguous spec — extracts requirements with proof obligations, defines a walking skeleton with its first journey scenario, then loops through audited sprints that continuously build a behavior evidence corpus. Completion means passing evidence, not just finished stories.
+triggers: >-
+  Load when the spec is large (10+ files, 100+ requirements), ambiguous,
+  and you need audited sprints with behavior evidence. Do NOT load for:
+  well-scoped features with clear requirements (`writing-plans` then
+  `subagent-driven-development`), single tasks, bug fixes, or projects
+  where upfront planning has not yet been attempted.
+---
+
+# Iterative Development
+
+## Overview
+
+Orchestrator for the iterative-development plugin. Drives the full autonomous lifecycle: extract requirements with proof obligations and behavior scenarios from human spec collateral, define a walking skeleton that passes its first journey scenario, then loop through audited sprints that continuously build a reusable behavior evidence corpus. Completion means the product has passing behavior evidence at the correct seam for every externally observable requirement — not just that stories are marked done. Every evaluative gate uses parallel adversarial review (PAR).
+
+This is an alternative to the `writing-plans` → `subagent-driven-development` flow for projects where the upfront-planning approach would lose the plot.
+
+## When to Use
+
+- Spec is large, comprehensive, or ambiguous (10+ files, 100+ requirements)
+- You need the product to be in a working, testable state at every iteration boundary
+- You want an autonomous audited loop rather than a single upfront plan
+- The writing-plans flow has lost the plot on this project before
+
+Do NOT use for a `patch` or a `change` (see `brainstorming`) — the `writing-plans` → `subagent-driven-development` flow is simpler and more appropriate for those depths.
+
+## The Autonomous Loop
+
+### Bootstrap (first invocation)
+
+1. Check `docs/moe/iterations/` for existing state. Existing state selects an
+   explicit continuation; no state selects new work.
+2. Establish one project workspace with `using-git-worktrees`. Record its
+   `WORKSPACE_ID`, `BASE_BRANCH`, `BASE_SHA`, and work branch in
+   `docs/moe/iterations/workspace.md`, and keep all ITER-NNNN iterations on
+   that project branch. For continuation, verify that record matches this
+   checkout and then skip to **Resume** below. Iterations do not create sibling
+   project branches; task workers may use temporary worktrees that
+   `implementing-tasks` integrates back into this workspace.
+3. Invoke `extracting-requirements` on the human-provided spec path.
+   - Chunks the spec, classifies by taxonomy (journeys → E2E, domains → integration, etc.)
+   - Dispatches parallel extraction subagents that produce stories with proof obligations AND behavior scenarios
+   - Aggregates stories into per-epic files, scenarios into behavior-scenarios.md
+   - Builds coverage ledger with both story AND scenario coverage
+   - Produces `docs/moe/iterations/requirements/`, `docs/moe/iterations/behavior-scenarios.md`, `docs/moe/iterations/behavior-corpus.md`
+4. Invoke `scoping-the-simplest-core` on the resulting backlog.
+   - Defines the walking skeleton iteration (ITER-0000) + ordered follow-on iterations
+   - Runs citation check + PAR scope review
+   - Produces `docs/moe/iterations/roadmap.md`
+   - Walking skeleton must close at least one journey scenario (not just compile)
+   - Applies story splitting when stories have heterogeneous-dependency ACs
+
+### Main loop
+
+```
+while True:
+    check_for_human_interrupt()
+
+    if not roadmap has pending iterations:
+        if last audit was clean:
+            run final behavior-evidence audit (see below)
+            if behavior audit clean:
+                break  # done
+            # else: audit found uncovered surfaces or weak evidence, new iterations added
+        # else: audit found gaps, new iterations were added, continue
+
+    run next iteration:
+        - running-an-iteration (sentinel baseline → scope review → decompose code + evidence tasks → implementing-tasks → impacted + sentinel scenario runs → wrap up)
+    
+    audit:
+        - auditing-progress (PAR paired auditors, three-tier: deep evidence + impacted behavior + sentinel corpus)
+        - if gaps: append to backlog, revise roadmap, continue
+        - if clean: mark last_audit_clean, continue
+```
+
+### Final behavior-evidence audit
+
+Before declaring the project complete, verify that the product has adequate behavior evidence — not just that all stories are marked done:
+
+1. List every major user-facing surface from the original spec (settings panes, UI flows, CLI commands, journeys, etc.)
+2. For each surface, verify that:
+   - Corresponding stories exist AND are implemented
+   - Corresponding scenarios exist AND have passing evidence at the correct seam
+   - Journey scenarios that cross multiple surfaces are passing E2E
+3. Check the behavior corpus index for completeness:
+   - Every journey spec file has at least one JOURNEY-NNNN scenario
+   - Every scenario has a non-TBD execution command
+   - All sentinel scenarios pass
+4. Flag any surface with:
+   - No corresponding story (extraction under-scoped)
+   - No corresponding scenario (evidence gap)
+   - Evidence at a weaker seam than the requirement demands
+   - Manual-residual scenarios that could be automated
+5. If gaps found: create new stories/scenarios/iterations, continue the loop
+
+The final question is: "Can the system point to passing behavior evidence for every externally observable requirement the spec describes?" Not: "Are the stories done?"
+
+When the answer is yes, invoke `finishing-a-development-branch` exactly once,
+after the final behavior-evidence audit. This is the project-level integration
+boundary: verify the full suite, present the normal merge/MR/keep decision, and
+perform the selected cleanup. Do not finish or rebranch between iterations.
+
+### Resume (re-invocation with existing state)
+
+All process state lives in artifact files:
+- `docs/moe/iterations/requirements/` (backlog with story status and proof obligations)
+- `docs/moe/iterations/behavior-scenarios.md` (scenario cards with stable IDs)
+- `docs/moe/iterations/behavior-corpus.md` (execution index)
+- `docs/moe/iterations/roadmap.md` (iteration plan with status)
+- `docs/moe/iterations/iteration-log.md` (completed iteration history)
+- `docs/moe/iterations/workspace.md` (project workspace identity, base branch/SHA, and work branch)
+
+On re-invocation: read `roadmap.md`, verify the recorded project workspace
+identity and base, find the next pending iteration, and continue from there.
+There is no ephemeral in-memory state to recover. The command "continue
+iterative development with the existing plan" always works from the matching
+project workspace; an unrelated linked worktree must not adopt it implicitly.
+
+If the orchestrator crashed mid-iteration, the partially-completed iteration's git commits are preserved. On resume, the next un-started iteration picks up. If the in-progress iteration left the code in a broken state, treat it as a gap — the audit will catch it and add corrective work.
+
+## Human Interrupt Protocol
+
+The loop runs without human intervention. The only way the human injects new information mid-run is by interrupting between iterations.
+
+**How it works:**
+- The human types the update into the chat session ("we dropped feature X", "the spec changed, re-read specs/foo.md", "add a new requirement for Y")
+- The orchestrator notices the interrupt at the **next iteration boundary** — after the current iteration's audit completes, before the next iteration starts
+- At the boundary: invoke `extracting-requirements` in incremental mode on the changed spec files, merge new/revised story cards into the backlog, revise the roadmap if changes invalidate downstream iterations, then resume
+
+**Guarantees:**
+- Changes during mid-iteration do NOT disrupt in-progress work. The current iteration completes first.
+- The orchestrator never silently drops an interrupt. If ambiguous, ask for clarification before resuming.
+- Existing story IDs are preserved across re-extraction. Removed stories flip to `deferred`, not deleted.
+
+**What does NOT trigger interrupt processing:**
+- The orchestrator does not poll the filesystem for spec changes
+- The orchestrator does not ask "anything to change?" between iterations
+- Human presence is not required at iteration boundaries
+
+## Progress Reporting
+
+The autonomous loop may run for hours. Two progress mechanisms ensure visibility without requiring interruption:
+
+**1. Progress file:** Write `docs/moe/iterations/progress.md` at each phase transition:
+
+```markdown
+# Progress
+
+**Phase:** implementing ITER-0003
+**Task:** 4/7 (CleanupPipeline integration)
+**Iterations:** 3/18 done, 15 pending
+**Sentinel corpus:** 10/10 passing
+**Last event:** 2026-04-11T14:23:00Z — Task 3 committed
+```
+
+Update this file at: iteration start, each task completion, iteration wrap-up, audit start/end. Overwrite (not append) — it's a snapshot of current state, not a log.
+
+**2. Git log:** Every task produces a commit. The commit history is a detailed progress trail. A human can check `git log --oneline` for fine-grained status without interrupting the loop.
+
+## Skill Precedence
+
+When running autonomously, this orchestrator takes precedence over interactive-gate skills (e.g., `brainstorming` which requires design approval before implementation). The iterative-development process has its own design gates (scope review, PAR) that replace interactive approval. Do not block on skills that assume a human is present to approve each step.
+
+## Escalation Policy
+
+**Catastrophe-only.** The loop is autonomous. Human escalation is reserved for total failure — the plugin cannot make any forward progress at all.
+
+These do NOT trigger escalation:
+- A reviewer finding issues (those become fix work)
+- An audit finding gaps (those become new iterations)
+- An implementer reporting BLOCKED on a task (try: more context, more capable model, smaller task)
+- Ambiguity in the spec (make a reasonable judgment call, document it in the iteration log)
+- Difficulty or slow progress (keep going)
+
+The orchestrator does NOT prompt "should I continue?" between iterations.
+
+## Skill Invocation Reference
+
+| Phase | Skill | What it does |
+|---|---|---|
+| Extract | `extracting-requirements` | Chunk → parallel extract → aggregate → `requirements/` |
+| Scope | `scoping-the-simplest-core` | Walking skeleton + iterations → `roadmap.md` (with PAR scope review) |
+| Implement | `running-an-iteration` | Scope review → decompose → `implementing-tasks` → wrap up |
+| Task execution | `implementing-tasks` | Per-task: implementer → PAR spec review → PAR quality review |
+| Audit | `auditing-progress` | PAR paired auditors, two-tier (deep + sweep) |
+
+## Artifact Location
+
+All plugin artifacts live in `docs/moe/iterations/`. Never modify the human's spec collateral.
+
+| File | Purpose |
+|---|---|
+| `requirements/` | Backlog: story cards + epics with stable IDs and proof obligations |
+| `behavior-scenarios.md` | Behavior contracts: reusable scenario cards with stable IDs |
+| `behavior-corpus.md` | Execution index: scenario → seam → cadence → command |
+| `roadmap.md` | Sprint plan: ordered iterations with impacted scenarios |
+| `iteration-log.md` | Sprint history: what each iteration delivered + scenarios added |
+| `progress.md` | Live snapshot: current phase, task, iteration counts, sentinel status |
+| `workspace.md` | Project workspace identity, immutable fork SHA, intended merge branch, and work branch |
+
+## Quality Gates
+
+Every evaluative gate uses parallel adversarial review (PAR):
+- Pre-iteration scope review (citation + scope-creep + boxing-in + scenario coverage + story splitting)
+- Pre-iteration sentinel corpus baseline
+- Per-task spec-compliance review with evidence quality check
+- Per-task code-quality review with boxing-in + corpus contribution check
+- Post-iteration impacted + sentinel scenario runs
+- Per-sprint audit (deep evidence + impacted behavior + sentinel corpus)
+
+See `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md` for PAR methodology.

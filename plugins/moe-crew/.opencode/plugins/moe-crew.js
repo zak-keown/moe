@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const skillsDir = path.resolve(__dirname, '../../skills')
+const skillsDir = path.resolve(__dirname, '../../.opencode/skills')
 
 export const MoeCrewPlugin = async ({ client, directory }) => {
   return {
