@@ -1,5 +1,5 @@
-import { createReadStream } from 'node:fs'
-import { readFile, stat } from 'node:fs/promises'
+
+import { readFile, } from 'node:fs/promises'
 import { basename, join } from 'node:path'
 import { createHash } from 'node:crypto'
 import { MintError } from '../diagnostics.js'

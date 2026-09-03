@@ -1,13 +1,13 @@
 import { describe, it, expect, vi } from 'vitest'
-import { mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises'
+import { mkdtemp, rm, writeFile, } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { prepareCandidate, type CandidateInput, type CandidatePreparationDeps, type CandidateArtifactInput } from '../src/release/candidate.js'
 import { parsePlatformTag } from '../src/release/tag-policy.js'
-import { sha256, REGISTRY_PLUGIN_COUNT, type PlatformCatalogV1, type ReleasePreflightV1 } from '../src/release/catalog.js'
+import { sha256, REGISTRY_PLUGIN_COUNT, type ReleasePreflightV1 } from '../src/release/catalog.js'
 import type { PackedArtifact } from '../src/artifact/pack.js'
 import type { ResolvedPlugin } from '../src/platform/load.js'
-import { createFakeReleaseStore } from './release-github-store.test.js'
+import { createFakeReleaseStore } from './helpers/fake-release-store.js'
 
 const PLUGINS = [
   { id: 'moe', pkg: '@bubstack/moe-core', version: '0.1.5' },
@@ -67,7 +67,7 @@ function makeFakePack(): {
   calls: string[]
 } {
   const calls: string[] = []
-  const fn = async (artifactRoot: string, outputDir: string, expected: any): Promise<PackedArtifact> => {
+  const fn = async (_artifactRoot: string, outputDir: string, expected: any): Promise<PackedArtifact> => {
     calls.push(expected.plugin.id)
     const filename = `${expected.plugin.package.replace('@bubstack/', 'bubstack-').replace('/', '-')}-${expected.plugin.version}.tgz`
     const content = Buffer.from(`fake-tarball-${expected.plugin.id}`)

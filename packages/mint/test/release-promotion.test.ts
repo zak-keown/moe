@@ -13,8 +13,8 @@ import {
 import type { PlatformCatalogV1, PluginCatalogRecordV1, CandidateLockV1 } from '../src/release/catalog.js'
 import type { CertificationEvidenceV1, EvidenceExpectation, EvidenceProducer } from '../src/release/evidence.js'
 import type { PlatformTag } from '../src/release/tag-policy.js'
-import { createFakeReleaseStore } from './release-github-store.test.js'
-import { createFakeNpmRegistry } from './release-npm-registry.test.js'
+import { createFakeReleaseStore } from './helpers/fake-release-store.js'
+import { createFakeNpmRegistry } from './helpers/fake-npm-registry.js'
 
 function fakePlugin(name: string, version = '0.1.5'): PluginCatalogRecordV1 {
   return {

@@ -1,12 +1,9 @@
-import { createHash } from 'node:crypto'
-import { readFile } from 'node:fs/promises'
+
 import { MintError } from '../diagnostics.js'
 import {
-  canonicalJson,
   sha256,
   REGISTRY_PLUGIN_COUNT,
   type CandidateLockV1,
-  type PlatformCatalogV1,
 } from './catalog.js'
 
 function assetError(code: string, message: string, action: string, cause?: unknown): never {

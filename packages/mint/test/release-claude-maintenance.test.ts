@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, } from 'vitest'
 import { join } from 'node:path'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -9,7 +9,7 @@ import {
   type PluginSmokeContext,
   type TargetLifecycleDriver,
 } from '../src/release/claude-maintenance.js'
-import type { PluginCatalogRecordV1, ReleasePreflightV1 } from '../src/release/catalog.js'
+import type { PluginCatalogRecordV1, } from '../src/release/catalog.js'
 import type { EvidenceProducer } from '../src/release/evidence.js'
 import type { CapabilityId } from '../src/vocabulary.js'
 
@@ -386,7 +386,7 @@ describe('runClaudeMaintenance', () => {
           calls.push('install')
           throw new Error('boom')
         },
-        async uninstall(ctx) {
+        async uninstall(_ctx) {
           calls.push('cleanup-uninstall')
           return pass()
         },

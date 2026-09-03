@@ -1,10 +1,9 @@
 import { compare } from 'semver'
 import { MintError } from '../diagnostics.js'
-import type { ReleaseStorePort, ReleaseRef, StableReleaseInput } from './github-release.js'
+import type { ReleaseStorePort, ReleaseRef, } from './github-release.js'
 import type { NpmRegistryPort } from './npm-registry.js'
 import type {
   PlatformCatalogV1,
-  PluginCatalogRecordV1,
   CertificationTupleV1,
   CandidateLockV1,
 } from './catalog.js'
@@ -12,7 +11,6 @@ import { buildStableCatalog, canonicalJson, sha256, REGISTRY_PLUGIN_COUNT } from
 import type { CertificationEvidenceV1, EvidenceExpectation } from './evidence.js'
 import { evaluateEvidence } from './evidence.js'
 import type { PlatformTag } from './tag-policy.js'
-import { selectStableCandidate } from './tag-policy.js'
 
 function promotionError(code: string, message: string, action: string, cause?: unknown): never {
   throw new MintError({

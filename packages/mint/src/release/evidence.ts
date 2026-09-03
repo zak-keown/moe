@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { CAPABILITY_IDS, TARGET_IDS, OPERATING_SYSTEM_IDS, type CapabilityId, type TargetId, type OperatingSystemId } from '../vocabulary.js'
+import { TARGET_IDS, OPERATING_SYSTEM_IDS, type CapabilityId, type TargetId, type OperatingSystemId } from '../vocabulary.js'
 import { MintError } from '../diagnostics.js'
 import type { PluginCatalogRecordV1, ReleasePreflightV1 } from './catalog.js'
 
