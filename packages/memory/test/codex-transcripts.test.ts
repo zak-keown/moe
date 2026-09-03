@@ -26,6 +26,7 @@ function codexRolloutLines() {
         model_provider: "openai",
         git: {
           branch: "codex-support",
+          commit: "abc1234def5678",
         },
       },
     },
@@ -205,6 +206,7 @@ describe("Codex transcript support", () => {
       sessionId: "019e4c75-d5bf-7c71-9df7-77f5fb86b711",
       cwd: "/Users/jesse/Documents/GitHub/example-org/example-project",
       gitBranch: "codex-support",
+      gitCommit: "abc1234def5678",
       agentVersion: "0.130.0",
       model: "gpt-5.2",
       modelProvider: "openai",

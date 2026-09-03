@@ -52,6 +52,7 @@ export interface ConversationExchange {
   sessionId?: string | undefined;
   cwd?: string | undefined;
   gitBranch?: string | undefined;
+  gitCommit?: string | undefined;
   claudeVersion?: string | undefined;
   agentVersion?: string | undefined;
   model?: string | undefined;
