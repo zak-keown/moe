@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { artifactPath } from '../src/artifact/paths.js'
-import { assertValidSkillRuntime, validateSkillRuntime, type SkillRuntimeFile } from '../src/skill-runtime.js'
+import { SkillRuntimeError, assertValidSkillRuntime, validateSkillRuntime, type SkillRuntimeFile } from '../src/skill-runtime.js'
 
 const file = (path: string, content: string, executable = false): SkillRuntimeFile => ({
   path: artifactPath(path),
@@ -171,11 +171,60 @@ describe('skill runtime validation', () => {
     ])
   })
 
-  it('throws its first stable diagnostic when assertion is requested', () => {
-    expect(() => assertValidSkillRuntime(input([
+  it('rejects noncanonical documented invocations and unresolved canonical references in Markdown', () => {
+    const report = validateSkillRuntime(input([
+      ...valid,
+      file('skills/demo/guide.md', [
+        '`${CLAUDE_PLUGIN_ROOT}/skills/demo/scripts/main.mjs`',
+        '`python3 "${CLAUDE_PLUGIN_ROOT}/skills/demo/scripts/main.py"`',
+        '`node ./scripts/main.mjs`',
+        '',
+        'The helper is `scripts/main.mjs`.',
+        '| Helper | Path |',
+        '| --- | --- |',
+        '| main | `scripts/main.mjs` |',
+      ].join('\n')),
+      file('skills/demo/scripts/prompt.md', [
+        '```console',
+        'node "$SKILL/main.mjs"',
+        'node "${CLAUDE_PLUGIN_ROOT}/skills/demo/scripts/missing.mjs"',
+        '```',
+      ].join('\n')),
+    ]))
+
+    expect(report.diagnostics.map(({ path, code }) => ({ path, code }))).toEqual([
+      { path: 'skills/demo/guide.md', code: 'SKILL_RUNTIME_INVOCATION' },
+      { path: 'skills/demo/guide.md', code: 'SKILL_RUNTIME_INVOCATION' },
+      { path: 'skills/demo/guide.md', code: 'SKILL_RUNTIME_INVOCATION' },
+      { path: 'skills/demo/scripts/prompt.md', code: 'SKILL_RUNTIME_INVOCATION' },
+      { path: 'skills/demo/scripts/prompt.md', code: 'SKILL_RUNTIME_REFERENCE' },
+    ])
+  })
+
+  it('throws an aggregate runtime error with every sorted diagnostic when assertion is requested', () => {
+    const runtimeInput = input([
       ...valid,
       file('skills/demo/scripts/z.js', 'console.log("z")\n'),
       file('skills/demo/scripts/a.py', "print('a')\n"),
-    ]))).toThrow(expect.objectContaining({ diagnostic: expect.objectContaining({ code: 'SKILL_RUNTIME_LANGUAGE', path: 'skills/demo/scripts/a.py' }) }))
+    ])
+
+    try {
+      assertValidSkillRuntime(runtimeInput)
+      throw new Error('expected assertValidSkillRuntime to throw')
+    } catch (error) {
+      expect(error).toBeInstanceOf(SkillRuntimeError)
+      expect(error).toMatchObject({
+        diagnostic: expect.objectContaining({
+          code: 'SKILL_RUNTIME_INVALID',
+          path: 'skills/demo/scripts/a.py',
+          action: 'Use dependency-free Node 24 ESM under the owning scripts/ directory.',
+        }),
+        diagnostics: [
+          expect.objectContaining({ code: 'SKILL_RUNTIME_LANGUAGE', path: 'skills/demo/scripts/a.py' }),
+          expect.objectContaining({ code: 'SKILL_RUNTIME_LANGUAGE', path: 'skills/demo/scripts/z.js' }),
+        ],
+      })
+      expect((error as SkillRuntimeError).message).toContain('2')
+    }
   })
 })
