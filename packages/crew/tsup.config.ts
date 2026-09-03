@@ -14,10 +14,11 @@ import { defineConfig } from "tsup";
 export default defineConfig([
   {
     entry: {
-      "moe-crew": "src/cli.ts",
-      "emit-event": "src/hooks/emit-event.ts",
+      "moe-crew": "packages/crew/src/cli.ts",
+      "emit-event": "packages/crew/src/hooks/emit-event.ts",
     },
-    outDir: "dist",
+    outDir: "packages/crew/dist",
+    tsconfig: "packages/crew/tsconfig.json",
     target: "node24",
     clean: false,
     splitting: false,
@@ -43,9 +44,10 @@ export default defineConfig([
   },
   {
     entry: {
-      "pi-extension": "src/pi-extension/index.ts",
+      "pi-extension": "packages/crew/src/pi-extension/index.ts",
     },
-    outDir: "dist",
+    outDir: "packages/crew/dist",
+    tsconfig: "packages/crew/tsconfig.json",
     target: "node24",
     clean: false,
     splitting: false,

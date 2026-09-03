@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { afterEach, describe, expect, it } from 'vitest'
 import { loadConfig } from '../src/config.js'
-import { assembleArtifact, assembleArtifactSet } from '../src/artifact/assemble.js'
+import { assembleArtifact, assembleArtifactSet, inspectArtifact } from '../src/artifact/assemble.js'
 import type { ResolvedPlatform, ResolvedPlugin } from '../src/platform/load.js'
 import type { PlatformRegistryV1 } from '../src/platform/schema.js'
 
@@ -262,6 +262,18 @@ describe('complete artifact assembly', () => {
     await mkdir(destinationRoot)
 
     await expect(assembleArtifact({ repoRoot: root, platform: platform(root, [plugin]), plugin, destinationRoot }))
+      .rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_COMPONENT_FORBIDDEN' } })
+  })
+
+  it('directly rejects reserved build evidence during final artifact inspection', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'moe-inspect-build-evidence-'))
+    workspaces.push(root)
+    const plugin = await fixturePlugin(root)
+    const artifactRoot = join(root, 'untrusted-artifact')
+    await mkdir(join(artifactRoot, '.MOE-BUILD'), { recursive: true })
+    await writeFile(join(artifactRoot, '.MOE-BUILD', 'bundle-inventory.json'), '[]\n')
+
+    await expect(inspectArtifact(plugin, artifactRoot))
       .rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_COMPONENT_FORBIDDEN' } })
   })
 

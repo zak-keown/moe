@@ -149,8 +149,8 @@ async function nearestPackageIdentity(inputPath: string, repositoryRoot: string)
   return undefined
 }
 
-function resolveMetafilePath(path: string, packageRoot: string): string {
-  return resolve(packageRoot, path)
+function resolveMetafilePath(path: string, repositoryRoot: string): string {
+  return resolve(repositoryRoot, path)
 }
 
 /**
@@ -176,7 +176,7 @@ export async function readBundleMetafiles(options: ReadBundleMetafilesOptions): 
     }
     const metafile = parseMetafile(parsed, physicalMetafile)
     for (const [rawOutput, output] of Object.entries(metafile.outputs)) {
-      const outputAbsolute = resolveMetafilePath(rawOutput, packageRoot)
+      const outputAbsolute = resolveMetafilePath(rawOutput, repositoryRoot)
       const outputRelative = containedRelative(packageRoot, outputAbsolute)
       if (outputRelative === undefined || outputRelative === '') throw new Error(`bundler output "${rawOutput}" is outside the artifact package`)
 
@@ -188,7 +188,7 @@ export async function readBundleMetafiles(options: ReadBundleMetafilesOptions): 
 
       for (const rawInput of Object.keys(output.inputs)) {
         if (externalInputs.has(rawInput)) continue
-        const inputAbsolute = resolveMetafilePath(rawInput, packageRoot)
+        const inputAbsolute = resolveMetafilePath(rawInput, repositoryRoot)
         const physicalInput = await physicalContainedPath(repositoryRoot, inputAbsolute, 'bundled input')
         const inputRelative = containedRelative(repositoryRoot, physicalInput)
         if (inputRelative === undefined) throw new Error(`bundled input "${rawInput}" is outside the repository`)

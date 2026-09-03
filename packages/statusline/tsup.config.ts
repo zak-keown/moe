@@ -7,9 +7,10 @@ import { defineConfig } from "tsup";
 // this package is modeled on.
 export default defineConfig({
   entry: {
-    "ensure-statusline": "src/hooks/ensure-statusline.ts",
+    "ensure-statusline": "packages/statusline/src/hooks/ensure-statusline.ts",
   },
-  outDir: "dist",
+  outDir: "packages/statusline/dist",
+  tsconfig: "packages/statusline/tsconfig.json",
   target: "node24",
   clean: false,
   splitting: false,

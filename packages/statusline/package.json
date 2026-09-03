@@ -29,7 +29,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "node ../../scripts/clean-package-dist.mjs && node --experimental-strip-types ../../scripts/write-bundle-inventory.mjs --prepare . && tsc -b --force && tsup && node --experimental-strip-types ../../scripts/write-bundle-inventory.mjs . dist/metafile-cjs.json",
+    "build": "node ../../scripts/clean-package-dist.mjs && cd ../.. && node --experimental-strip-types scripts/write-bundle-inventory.mjs --prepare packages/statusline && tsc -b packages/statusline/tsconfig.json --force && packages/statusline/node_modules/.bin/tsup --config packages/statusline/tsup.config.ts && node --experimental-strip-types scripts/write-bundle-inventory.mjs packages/statusline packages/statusline/dist/metafile-cjs.json",
     "prepack": "pnpm run build",
     "typecheck": "tsc -b --pretty && tsc -p tsconfig.tests.json --pretty",
     "test": "vitest run",
