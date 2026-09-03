@@ -6,11 +6,32 @@ A shared reference for all skills that dispatch reviewers. Every evaluative gate
 
 When dispatching ANY reviewer (scope reviewer, spec-compliance reviewer, code-quality reviewer, auditor):
 
-1. **Dispatch TWO reviewer subagents simultaneously** with identical inputs. Use your platform's parallel dispatch mechanism. Neither reviewer sees the other's work.
+1. **Dispatch TWO reviewer subagents simultaneously** with identical inputs. Neither reviewer sees the other's work.
+
+   Use the `Agent` tool. Pass a fully filled `prompt` and a short
+   `description`; choose `subagent_type` deliberately — `general-purpose`
+   for a task needing the full tool surface, `Explore` for read-only
+   research, `fork` to hand a subagent a copy of this conversation so it
+   shares your context and cache. A non-fork agent starts with zero
+   context: brief it like a colleague who just walked in, never with
+   "based on what we discussed." For independent work, send multiple
+   `Agent` calls in a single message to dispatch them in parallel; keep
+   dependent steps sequential.
+
 
 2. **Wrap each reviewer's prompt** with the competitive framing from `par-reviewer-wrapper.md` (in this directory). The wrapper adds the scoring incentive on top of the reviewer's domain-specific prompt.
 
 3. **Wait for both reviewers to return.**
+
+   The `Agent` tool call itself blocks until the subagent finishes and
+   returns its final report in the tool result — there is no separate
+   polling step for a normal dispatch. For a background task, use the
+   `Monitor` tool to stream progress rather than a manual poll loop; you
+   are notified when the task completes. Read the subagent's report
+   directly rather than re-deriving what it found, but verify any
+   load-bearing claim (a bug fixed, a test passing) before treating it as
+   final — a summary describes intent, not always fact.
+
 
 4. **Aggregate findings:**
    - **Same issue found by both reviewers** → one finding, high confidence

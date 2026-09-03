@@ -89,7 +89,7 @@ A native worktree tool and the git fallback both need the work branch name.
 Derive it before creating either workspace.
 
 For repos on any other forge, use whatever convention that repo's `CONTRIBUTING`
-or `CODEOWNERS` documents; if there is none, `feature/{slug}` is a safe default.
+or `CODEOWNERS` documents; if there is none, `feature/<slug>` is a safe default.
 
 ### 1b. Native Worktree Tools (preferred)
 

@@ -47,7 +47,7 @@ For each function, output:
 
 ## IMPORTANT
 
-Use the Write tool to save the complete JSON array to <OUTPUT_PATH>.
+Use {write} to save the complete JSON array to <OUTPUT_PATH>.
 Do NOT truncate or summarize - write ALL entries.
 ```
 
@@ -59,4 +59,4 @@ Do NOT truncate or summarize - write ALL entries.
    - `<OUTPUT_PATH>` with desired output path (e.g., `categorized.json`)
 3. Verify output file was created with all entries
 
-**Critical:** The subagent must use the Write tool to save output. If it only returns a summary, re-prompt with explicit file write instructions.
+**Critical:** The subagent must use {write} to save output. If it only returns a summary, re-prompt with explicit file write instructions.

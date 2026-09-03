@@ -13,7 +13,14 @@ const CLI = join(REPO_ROOT, 'dist', 'cli.js')
 
 function tmpPluginDir(): string {
   const dir = mkdtempSync(join(tmpdir(), 'mint-cli-'))
-  cpSync(join(REPO_ROOT, 'fixtures', 'kitchen-sink'), dir, { recursive: true })
+  // Exclude the fixture's own moe-mint-vocab.yaml: none of these end-to-end
+  // CLI tests exercise the vocabulary pipeline, and copying it unconditionally
+  // would make every generate() call here vocab-active by accident (see
+  // generate.test.ts's freshFixture for the same exclusion).
+  cpSync(join(REPO_ROOT, 'fixtures', 'kitchen-sink'), dir, {
+    recursive: true,
+    filter: (src) => !src.endsWith('moe-mint-vocab.yaml'),
+  })
   return dir
 }
 

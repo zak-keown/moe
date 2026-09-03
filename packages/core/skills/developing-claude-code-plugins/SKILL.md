@@ -20,7 +20,7 @@ Use this skill when:
 - Releasing a plugin (versioning, tagging, marketplace distribution)
 - Publishing updates or maintaining existing plugins
 
-**For comprehensive official documentation**, use the `working-with-claude-code` skill to access full docs.
+**For comprehensive official documentation**, use {skill} to load `working-with-claude-code` for full docs.
 
 ## Quick Reference
 
@@ -94,7 +94,7 @@ Before writing code:
 
 ### Phase 3: Add Components
 
-Use TodoWrite to track component creation:
+Use {todo} to log component creation:
 
 **Example:**
 ```

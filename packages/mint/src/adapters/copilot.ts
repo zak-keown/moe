@@ -37,6 +37,7 @@ export const copilot: HarnessAdapter = {
     mcp: 'full',
     bootstrap: 'full',
   },
+  skillsOutputDir: undefined,
   installDoc,
   emit(model: PluginModel): EmitResult {
     const warnings = model.config.harnesses.exclude.includes('claude-code')

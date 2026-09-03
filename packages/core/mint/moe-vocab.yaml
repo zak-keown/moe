@@ -1,0 +1,316 @@
+tokens:
+  ask:
+    claude-code: "`AskUserQuestion`"
+    cursor: "`AskUserQuestion`"
+    codex: "ask in the terminal"
+    kimi: "`AskUserQuestion`"
+    opencode: "ask in the terminal"
+    pi: "ask in the terminal"
+    agent-plugins-1.0: "`AskUserQuestion`"
+    copilot: "`AskUserQuestion`"
+  todo:
+    claude-code: "`TaskCreate`/`TaskUpdate`"
+    cursor: "`TaskCreate`/`TaskUpdate`"
+    codex: "track in a checklist file"
+    kimi: "`TodoList`"
+    opencode: "`todowrite`"
+    pi: "`TODO.md`"
+    agent-plugins-1.0: "`TaskCreate`/`TaskUpdate`"
+    copilot: "`TaskCreate`/`TaskUpdate`"
+  skill:
+    claude-code: "the `Skill` tool"
+    cursor: "the `Skill` tool"
+    codex: "native skill discovery"
+    kimi: "the `Skill` tool"
+    opencode: "the `skill` tool"
+    pi: "read the skill's `SKILL.md`"
+    agent-plugins-1.0: "the `Skill` tool"
+    copilot: "the `Skill` tool"
+  # claude-code, agent-plugins-1.0 (Antigravity), and copilot share ONE
+  # generated skills/ directory (see substituteAllSkills in
+  # packages/mint/src/vocabulary.ts) — mint hard-errors if these three
+  # disagree on any token or block. Antigravity's and Copilot's real tool
+  # surfaces differ from Claude Code's (see references/antigravity-tools.md);
+  # that divergence stays documented in the reference files, not here.
+  artifact:
+    claude-code: "the `Artifact` tool"
+    cursor: "a self-contained local HTML file"
+    codex: "a self-contained local HTML file"
+    kimi: "a self-contained local HTML file"
+    opencode: "a self-contained local HTML file"
+    pi: "a self-contained local HTML file"
+    agent-plugins-1.0: "the `Artifact` tool"
+    copilot: "the `Artifact` tool"
+  read:
+    claude-code: "`Read`"
+    cursor: "`Read`"
+    codex: "`shell` (cat)"
+    kimi: "`Read`"
+    opencode: "`read`"
+    pi: "`read`"
+    agent-plugins-1.0: "`Read`"
+    copilot: "`Read`"
+  write:
+    claude-code: "`Write`"
+    cursor: "`Write`"
+    codex: "`apply_patch`"
+    kimi: "`Write`"
+    opencode: "`apply_patch`"
+    pi: "`write`"
+    agent-plugins-1.0: "`Write`"
+    copilot: "`Write`"
+  edit:
+    claude-code: "`Edit`"
+    cursor: "`Edit`"
+    codex: "`apply_patch`"
+    kimi: "`Edit`"
+    opencode: "`apply_patch`"
+    pi: "`edit`"
+    agent-plugins-1.0: "`Edit`"
+    copilot: "`Edit`"
+  search:
+    claude-code: "`Grep`"
+    cursor: "`Grep`"
+    codex: "`shell` (rg/grep)"
+    kimi: "`Grep`"
+    opencode: "`grep`"
+    pi: "`grep`"
+    agent-plugins-1.0: "`Grep`"
+    copilot: "`Grep`"
+  find:
+    claude-code: "`Glob`"
+    cursor: "`Glob`"
+    codex: "`shell` (find)"
+    kimi: "`Glob`"
+    opencode: "`glob`"
+    pi: "`find`"
+    agent-plugins-1.0: "`Glob`"
+    copilot: "`Glob`"
+  bash:
+    claude-code: "`Bash`"
+    cursor: "`Bash`"
+    codex: "`shell`"
+    kimi: "`Bash`"
+    opencode: "`bash`"
+    pi: "`bash`"
+    agent-plugins-1.0: "`Bash`"
+    copilot: "`Bash`"
+  web-fetch:
+    claude-code: "`WebFetch`"
+    cursor: "`WebFetch`"
+    codex: "`shell` (curl)"
+    kimi: "`FetchURL`"
+    opencode: "`webfetch`"
+    pi: "`bash` (curl)"
+    agent-plugins-1.0: "`WebFetch`"
+    copilot: "`WebFetch`"
+blocks:
+  # Same shared-directory constraint as above applies to every block below:
+  # claude-code, agent-plugins-1.0, and copilot must be byte-identical.
+  subagent-dispatch:
+    claude-code: |
+      Use the `Agent` tool. Pass a fully filled `prompt` and a short
+      `description`; choose `subagent_type` deliberately — `general-purpose`
+      for a task needing the full tool surface, `Explore` for read-only
+      research, `fork` to hand a subagent a copy of this conversation so it
+      shares your context and cache. A non-fork agent starts with zero
+      context: brief it like a colleague who just walked in, never with
+      "based on what we discussed." For independent work, send multiple
+      `Agent` calls in a single message to dispatch them in parallel; keep
+      dependent steps sequential.
+    cursor: |
+      Use the `Agent` tool with `subagent_type: "general-purpose"` for
+      full-capability work or `subagent_type: "Explore"` for read-only
+      research — the same shape as Claude Code. Pass a fully filled `prompt`
+      and a short `description`. Cursor does not load this plugin's custom
+      `agents/` definitions, so name a built-in subagent type rather than a
+      project-defined one. Dispatch independent work with multiple `Agent`
+      calls in one turn; keep dependent steps sequential.
+    codex: |
+      Requires `[features] multi_agent = true` in `~/.codex/config.toml`.
+      Spawn children with `spawn_agent {fork_turns: "none"}` for a clean
+      context — the default `"all"` copies your entire transcript in.
+      Codex 0.145+ role files under `~/.codex/agents/` attach via
+      `agent_type` on full-history forks; isolated forks are the default for
+      context hygiene. Resume an implementer with `followup_task` rather
+      than spawning a fresh one — it delivers your message and transparently
+      reloads an evicted child. V2 has no `close_agent`; finished children
+      are evicted automatically. Set `model` AND `reasoning_effort`
+      explicitly on every spawn — `model` alone silently resets effort to
+      that model's default. Never copy a model name into `spawn_agent`
+      without checking it against your current spawn allowlist.
+    kimi: |
+      Use Kimi Code's `Agent` tool with a Kimi subagent type — never pass
+      `general-purpose` as `subagent_type`. For implementation, code
+      review, spec review, or any filled prompt template this plugin ships,
+      call `Agent` with `subagent_type: "coder"`, paste the fully filled
+      prompt into `prompt`, and give a short `description`. For read-only
+      codebase exploration use `subagent_type: "explore"`; for read-only
+      planning or architecture design use `subagent_type: "plan"`. Keep
+      dependent steps sequential; use multiple `Agent` calls, or
+      `run_in_background: true` when the work is independent and background
+      agents are available.
+    opencode: |
+      Use the `task` tool with `subagent_type: "general"` for a
+      `Subagent (general-purpose):` dispatch. Pass the fully filled prompt
+      as the task description. Keep dependent steps sequential; issue
+      multiple `task` calls in one turn for independent work.
+    pi: |
+      Pi core ships no standard subagent tool. If the `pi-subagents`
+      package is installed, use its `subagent` tool — it supports
+      single-agent, chain, parallel, async, forked-context, and
+      resume/status workflows. If no subagent tool is available, do not
+      fabricate `Task` calls: execute the work sequentially in the current
+      session, or tell the user the optional subagent capability is not
+      installed.
+    agent-plugins-1.0: |
+      Use the `Agent` tool. Pass a fully filled `prompt` and a short
+      `description`; choose `subagent_type` deliberately — `general-purpose`
+      for a task needing the full tool surface, `Explore` for read-only
+      research, `fork` to hand a subagent a copy of this conversation so it
+      shares your context and cache. A non-fork agent starts with zero
+      context: brief it like a colleague who just walked in, never with
+      "based on what we discussed." For independent work, send multiple
+      `Agent` calls in a single message to dispatch them in parallel; keep
+      dependent steps sequential.
+    copilot: |
+      Use the `Agent` tool. Pass a fully filled `prompt` and a short
+      `description`; choose `subagent_type` deliberately — `general-purpose`
+      for a task needing the full tool surface, `Explore` for read-only
+      research, `fork` to hand a subagent a copy of this conversation so it
+      shares your context and cache. A non-fork agent starts with zero
+      context: brief it like a colleague who just walked in, never with
+      "based on what we discussed." For independent work, send multiple
+      `Agent` calls in a single message to dispatch them in parallel; keep
+      dependent steps sequential.
+  subagent-wait:
+    claude-code: |
+      The `Agent` tool call itself blocks until the subagent finishes and
+      returns its final report in the tool result — there is no separate
+      polling step for a normal dispatch. For a background task, use the
+      `Monitor` tool to stream progress rather than a manual poll loop; you
+      are notified when the task completes. Read the subagent's report
+      directly rather than re-deriving what it found, but verify any
+      load-bearing claim (a bug fixed, a test passing) before treating it as
+      final — a summary describes intent, not always fact.
+    cursor: |
+      Same as Claude Code: the `Agent` call blocks until the subagent
+      returns its final report in the tool result — there is no separate
+      wait step. Read the report directly rather than re-deriving its
+      findings, but verify any load-bearing claim before treating it as
+      final.
+    codex: |
+      `wait_agent` is an event subscription, not a poll: a long wait wakes
+      the instant a child produces mailbox activity, at the same latency as
+      a short one. Short-timeout polls buy nothing and cost a tool call and
+      a context rebill each time — in measured sessions roughly two-thirds
+      of them timed out for nothing. While you still have local work, do not
+      wait at all; a completed child's final answer is pushed into your
+      mailbox and arrives with your next turn. When genuinely idle with
+      children outstanding, wait in bounded stretches of 300000-600000ms
+      (5-10 minutes); after each stretch, post one status line, run
+      `list_agents`, and chase any child that finished without reporting.
+      Never stack polls shorter than five minutes — completion mail cannot
+      wake an idle controller on its own, so covering that idle window is
+      `wait_agent`'s only job.
+    kimi: |
+      Kimi Code's `Agent` tool call blocks until the subagent finishes and
+      its result is returned in the tool response — there is no separate
+      wait step for a normal dispatch. For agents dispatched with
+      `run_in_background: true`, check back on their status before
+      proceeding. Read each subagent's returned result directly rather than
+      re-deriving its findings.
+    opencode: |
+      OpenCode's `task` tool call blocks until the subagent returns its
+      result in the tool response — there is no separate polling step. Read
+      the returned result directly; for multiple independent `task`
+      dispatches issued in one turn, each result arrives before you
+      continue.
+    pi: |
+      If the `pi-subagents` package's `subagent` tool is installed, use its
+      resume/status workflow to check on an async or forked dispatch rather
+      than polling ad hoc — call its status action and act on the result.
+      When no subagent tool is installed, there is nothing to wait on: the
+      work happens sequentially in the current session.
+    agent-plugins-1.0: |
+      The `Agent` tool call itself blocks until the subagent finishes and
+      returns its final report in the tool result — there is no separate
+      polling step for a normal dispatch. For a background task, use the
+      `Monitor` tool to stream progress rather than a manual poll loop; you
+      are notified when the task completes. Read the subagent's report
+      directly rather than re-deriving what it found, but verify any
+      load-bearing claim (a bug fixed, a test passing) before treating it as
+      final — a summary describes intent, not always fact.
+    copilot: |
+      The `Agent` tool call itself blocks until the subagent finishes and
+      returns its final report in the tool result — there is no separate
+      polling step for a normal dispatch. For a background task, use the
+      `Monitor` tool to stream progress rather than a manual poll loop; you
+      are notified when the task completes. Read the subagent's report
+      directly rather than re-deriving what it found, but verify any
+      load-bearing claim (a bug fixed, a test passing) before treating it as
+      final — a summary describes intent, not always fact.
+  render-ladder:
+    claude-code: |
+      All four rungs defined at
+      `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` are
+      available. Where the `Artifact` tool is present (Claude Code proper),
+      rung 1 is the default for anything with an audience. Where it isn't
+      (this same skill body also ships to Antigravity and Copilot CLI via
+      this shared skills/ directory), the ladder self-detects and starts at
+      rung 2 — the brainstorm browser companion — dropping further only when
+      `node` isn't on PATH or the sandbox blocks the port. Announce which
+      rung you took before the render lands.
+    cursor: |
+      The `Artifact` tool is not exposed in Cursor — start at rung 2 (the
+      brainstorm browser companion) and drop to rung 3 (local HTML file) or
+      rung 4 (markdown file) when `node` isn't on PATH or the sandbox blocks
+      the port bind. See
+      `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` for the
+      full ladder and the sharing default.
+    codex: |
+      Rung 1 (the Claude Code `Artifact` tool) is not exposed — start at
+      rung 2 (the brainstorm browser companion,
+      `${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/scripts/start-server.sh`)
+      and fall through to rung 3 (local HTML file) or rung 4 (markdown file)
+      when the sandbox blocks a port bind. See
+      `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` for the
+      full ladder and the sharing default.
+    kimi: |
+      Rung 1 (the Claude Code `Artifact` tool) is not exposed — start at
+      rung 2 (the brainstorm browser companion) and drop to rung 3 (local
+      HTML file) or rung 4 (markdown file) when a browser is unavailable.
+      See `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` for the
+      full ladder.
+    opencode: |
+      Rung 1 (the Claude Code `Artifact` tool) is not exposed — start at
+      rung 2 (the brainstorm browser companion) and drop to rung 3 (local
+      HTML file) or rung 4 (markdown file) when a browser is unavailable.
+      See `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` for the
+      full ladder.
+    pi: |
+      Rung 1 (the Claude Code `Artifact` tool) is not exposed — start at
+      rung 2 (the brainstorm browser companion) and drop to rung 3 (local
+      HTML file) or rung 4 (markdown file) when a browser is unavailable.
+      See `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` for the
+      full ladder.
+    agent-plugins-1.0: |
+      All four rungs defined at
+      `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` are
+      available. Where the `Artifact` tool is present (Claude Code proper),
+      rung 1 is the default for anything with an audience. Where it isn't
+      (this same skill body also ships to Antigravity and Copilot CLI via
+      this shared skills/ directory), the ladder self-detects and starts at
+      rung 2 — the brainstorm browser companion — dropping further only when
+      `node` isn't on PATH or the sandbox blocks the port. Announce which
+      rung you took before the render lands.
+    copilot: |
+      All four rungs defined at
+      `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` are
+      available. Where the `Artifact` tool is present (Claude Code proper),
+      rung 1 is the default for anything with an audience. Where it isn't
+      (this same skill body also ships to Antigravity and Copilot CLI via
+      this shared skills/ directory), the ladder self-detects and starts at
+      rung 2 — the brainstorm browser companion — dropping further only when
+      `node` isn't on PATH or the sandbox blocks the port. Announce which
+      rung you took before the render lands.

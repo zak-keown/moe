@@ -20,6 +20,7 @@ export interface EmitResult {
 export interface HarnessAdapter {
   name: string
   support: ComponentSupport
+  skillsOutputDir?: string | undefined
   emit(model: PluginModel): EmitResult
   // Optional: markdown BODY (no marker, no heading — docs-emit.ts adds
   // both) describing how to install the plugin on this harness. Adapters
