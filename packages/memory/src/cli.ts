@@ -40,6 +40,7 @@ COMMANDS:
   stats        Show index statistics for both record types
   journal      Index and search deliberately-written journal entries
   doctor       Diagnose Claude Code or Codex integration issues
+  rollback     Prepare or abort a rollback to a previous version
   mcp-server   Run the moe-memory MCP server on stdio
 
 Run 'moe-memory <command> --help' for command-specific help.
@@ -87,6 +88,10 @@ async function dispatch(command: string | undefined, args: string[]): Promise<nu
     case "doctor": {
       const { runDoctor } = await import("./doctor-cli.js");
       return runDoctor(args);
+    }
+    case "rollback": {
+      const { runRollback } = await import("./rollback-cli.js");
+      return runRollback(args);
     }
     case "mcp-server": {
       const { runMemoryMcpServer } = await import("./mcp-server.js");
