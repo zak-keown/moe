@@ -8,6 +8,7 @@ interface ConversationMessage {
   isSidechain: boolean;
   sessionId?: string;
   gitBranch?: string;
+  gitCommit?: string;
   cwd?: string;
   version?: string;
   message: {
@@ -82,6 +83,9 @@ export function formatConversationAsMarkdown(
   }
   if (firstMessage.gitBranch) {
     output += `**Git Branch:** ${firstMessage.gitBranch}\n\n`;
+  }
+  if (firstMessage.gitCommit) {
+    output += `**Git Commit:** ${firstMessage.gitCommit}\n\n`;
   }
   if (firstMessage.cwd) {
     output += `**Working Directory:** ${firstMessage.cwd}\n\n`;
@@ -296,6 +300,9 @@ export function formatConversationAsHTML(jsonl: string): string {
   }
   if (firstMessage.gitBranch) {
     bodyContent += `<tr><th>Git Branch</th><td>${escapeHtml(firstMessage.gitBranch)}</td></tr>`;
+  }
+  if (firstMessage.gitCommit) {
+    bodyContent += `<tr><th>Git Commit</th><td>${escapeHtml(firstMessage.gitCommit)}</td></tr>`;
   }
   if (firstMessage.cwd) {
     bodyContent += `<tr><th>Working Directory</th><td>${escapeHtml(firstMessage.cwd)}</td></tr>`;
@@ -888,6 +895,7 @@ function formatCodexConversationAsMarkdown(lines: string[]): string {
     sessionId?: string;
     cwd?: string;
     gitBranch?: string;
+    gitCommit?: string;
     cliVersion?: string;
     model?: string;
     modelProvider?: string;
@@ -899,6 +907,7 @@ function formatCodexConversationAsMarkdown(lines: string[]): string {
       metadata.sessionId = payload.id || metadata.sessionId;
       metadata.cwd = payload.cwd || metadata.cwd;
       metadata.gitBranch = payload.git?.branch || metadata.gitBranch;
+      metadata.gitCommit = payload.git?.commit || metadata.gitCommit;
       metadata.cliVersion = payload.cli_version || metadata.cliVersion;
       metadata.modelProvider = payload.model_provider || metadata.modelProvider;
     } else if (entry.type === "turn_context" && payload) {
@@ -912,6 +921,7 @@ function formatCodexConversationAsMarkdown(lines: string[]): string {
   output += "**Harness:** Codex\n\n";
   if (metadata.sessionId) output += `**Session ID:** ${metadata.sessionId}\n\n`;
   if (metadata.gitBranch) output += `**Git Branch:** ${metadata.gitBranch}\n\n`;
+  if (metadata.gitCommit) output += `**Git Commit:** ${metadata.gitCommit}\n\n`;
   if (metadata.cwd) output += `**Working Directory:** ${metadata.cwd}\n\n`;
   if (metadata.cliVersion) output += `**Codex Version:** ${metadata.cliVersion}\n\n`;
   if (metadata.model) output += `**Model:** ${metadata.model}\n\n`;

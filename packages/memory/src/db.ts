@@ -49,6 +49,7 @@ export function migrateSchema(db: Database.Database): void {
     { name: "session_id", sql: "ALTER TABLE exchanges ADD COLUMN session_id TEXT" },
     { name: "cwd", sql: "ALTER TABLE exchanges ADD COLUMN cwd TEXT" },
     { name: "git_branch", sql: "ALTER TABLE exchanges ADD COLUMN git_branch TEXT" },
+    { name: "git_commit", sql: "ALTER TABLE exchanges ADD COLUMN git_commit TEXT" },
     { name: "claude_version", sql: "ALTER TABLE exchanges ADD COLUMN claude_version TEXT" },
     { name: "agent_version", sql: "ALTER TABLE exchanges ADD COLUMN agent_version TEXT" },
     { name: "model", sql: "ALTER TABLE exchanges ADD COLUMN model TEXT" },
@@ -226,6 +227,7 @@ export function initDatabase(): Database.Database {
       session_id TEXT,
       cwd TEXT,
       git_branch TEXT,
+      git_commit TEXT,
       claude_version TEXT,
       agent_version TEXT,
       model TEXT,
@@ -387,9 +389,9 @@ export function insertExchange(
   const stmt = db.prepare(`
     INSERT OR REPLACE INTO exchanges
     (id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end, last_indexed,
-     parent_uuid, is_sidechain, harness, session_id, cwd, git_branch, claude_version, agent_version, model, model_provider,
+     parent_uuid, is_sidechain, harness, session_id, cwd, git_branch, git_commit, claude_version, agent_version, model, model_provider,
      thinking_level, thinking_disabled, thinking_triggers, embedding_version)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   stmt.run(
@@ -408,6 +410,7 @@ export function insertExchange(
     exchange.sessionId || null,
     exchange.cwd || null,
     exchange.gitBranch || null,
+    exchange.gitCommit || null,
     exchange.claudeVersion || null,
     exchange.agentVersion || exchange.claudeVersion || null,
     exchange.model || null,

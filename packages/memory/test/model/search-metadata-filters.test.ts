@@ -15,6 +15,7 @@ function makeExchangeLines(opts: {
   seq: number;
   sessionId: string;
   gitBranch: string;
+  gitCommit?: string;
   topic: string;
 }): string {
   const { seq, sessionId, gitBranch, topic } = opts;
@@ -29,6 +30,7 @@ function makeExchangeLines(opts: {
     sessionId,
     version: "2.0.9",
     gitBranch,
+    gitCommit: opts.gitCommit,
     type: "user",
     message: { role: "user", content: `Question about ${topic}` },
     uuid: userUuid,
@@ -42,6 +44,7 @@ function makeExchangeLines(opts: {
     sessionId,
     version: "2.0.9",
     gitBranch,
+    gitCommit: opts.gitCommit,
     type: "assistant",
     message: {
       model: "claude-sonnet-4-5",
@@ -100,6 +103,7 @@ describe("search metadata filters", () => {
         seq: 2,
         sessionId: "session-2",
         gitBranch: "feature-x",
+        gitCommit: "deadbeef1234",
         topic: "authentication",
       }),
       "utf-8",
@@ -175,6 +179,27 @@ describe("search metadata filters", () => {
     for (const r of results) {
       expect(r.exchange.archivePath).toContain("session-2");
     }
+  });
+
+  it("filters by git_commit (exact match)", async () => {
+    const results = await searchConversations("authentication", {
+      git_commit: "deadbeef1234",
+      mode: "text",
+      limit: 10,
+    });
+    expect(results.length).toBeGreaterThan(0);
+    for (const r of results) {
+      expect(r.exchange.archivePath).toContain("session-2");
+    }
+  });
+
+  it("returns no results when git_commit filter matches nothing", async () => {
+    const results = await searchConversations("authentication", {
+      git_commit: "0000000nonexistent",
+      mode: "text",
+      limit: 10,
+    });
+    expect(results).toEqual([]);
   });
 
   it("combines metadata filters with AND semantics", async () => {

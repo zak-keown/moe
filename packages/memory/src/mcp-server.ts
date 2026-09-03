@@ -88,6 +88,7 @@ const SearchInputSchema = z
     project: z.string().min(1).optional().describe("Filter by project name (exact match)"),
     session_id: z.string().min(1).optional().describe("Filter by session ID (exact match)"),
     git_branch: z.string().min(1).optional().describe("Filter by git branch name (exact match)"),
+    git_commit: z.string().min(1).optional().describe("Filter by git commit SHA (exact match)"),
     response_format: ResponseFormatEnum.default("markdown").describe(
       'Output format: "markdown" for human-readable or "json" for machine-readable (default: "markdown")',
     ),
@@ -242,6 +243,11 @@ function toolDefinitions() {
             type: "string",
             minLength: 1,
             description: "Filter by git branch name (exact match)",
+          },
+          git_commit: {
+            type: "string",
+            minLength: 1,
+            description: "Filter by git commit SHA (exact match)",
           },
           response_format: { type: "string", enum: ["markdown", "json"], default: "markdown" },
         },
@@ -558,6 +564,7 @@ export function createMemoryMcpServer(options: MemoryServerOptions = {}): Server
             project: params.project,
             session_id: params.session_id,
             git_branch: params.git_branch,
+            git_commit: params.git_commit,
           };
 
           const results = await searchMultipleConcepts(params.query, multiOptions);
@@ -575,6 +582,7 @@ export function createMemoryMcpServer(options: MemoryServerOptions = {}): Server
             project: params.project,
             session_id: params.session_id,
             git_branch: params.git_branch,
+            git_commit: params.git_commit,
           };
 
           const results = await searchConversations(params.query, singleOptions);

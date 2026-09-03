@@ -22,6 +22,7 @@ export interface SearchOptions {
   project?: string | undefined; // exact match against e.project
   session_id?: string | undefined; // exact match against e.session_id
   git_branch?: string | undefined; // exact match against e.git_branch
+  git_commit?: string | undefined; // exact match against e.git_commit
 }
 
 /**
@@ -52,6 +53,10 @@ function buildSearchFilters(options: SearchOptions): { sql: string; params: unkn
     parts.push("e.git_branch = ?");
     params.push(options.git_branch);
   }
+  if (options.git_commit) {
+    parts.push("e.git_commit = ?");
+    params.push(options.git_commit);
+  }
   return {
     sql: parts.length ? `AND ${parts.join(" AND ")}` : "",
     params,
@@ -71,7 +76,7 @@ function buildSearchFilters(options: SearchOptions): { sql: string; params: unkn
  */
 function hasMetadataFilters(options: SearchOptions): boolean {
   return Boolean(
-    options.project || options.session_id || options.git_branch || options.after || options.before,
+    options.project || options.session_id || options.git_branch || options.git_commit || options.after || options.before,
   );
 }
 
@@ -90,6 +95,7 @@ const EXCHANGE_SELECT_COLUMNS = `
         e.session_id,
         e.cwd,
         e.git_branch,
+        e.git_commit,
         e.claude_version,
         e.agent_version,
         e.model,
@@ -122,6 +128,7 @@ interface ExchangeRow {
   session_id: string | null;
   cwd: string | null;
   git_branch: string | null;
+  git_commit: string | null;
   claude_version: string | null;
   agent_version: string | null;
   model: string | null;
@@ -148,6 +155,7 @@ function exchangeFromRow(row: ExchangeRow): ConversationExchange {
     sessionId: row.session_id || undefined,
     cwd: row.cwd || undefined,
     gitBranch: row.git_branch || undefined,
+    gitCommit: row.git_commit || undefined,
     claudeVersion: row.claude_version || undefined,
     agentVersion: row.agent_version || undefined,
     model: row.model || undefined,
