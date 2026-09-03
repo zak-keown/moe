@@ -17,7 +17,8 @@ plans:
   - id: runtime-validator
     plan: docs/moe/plans/2026-09-03-skill-runtime-01-validator.md
     depends_on: []
-    status: pending
+    status: done
+    commits: dee3ed9..6221ce1
   - id: core-data
     plan: docs/moe/plans/2026-09-03-skill-runtime-02-core-data.md
     depends_on: [runtime-validator]
