@@ -4,6 +4,7 @@ import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { promisify } from 'node:util'
+import { fileURLToPath } from 'node:url'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { ArtifactPayload } from '../src/config.js'
 import { inspectPayloads, stagePayloads } from '../src/artifact/payload.js'
@@ -12,6 +13,7 @@ import { FULL_CASE_FOLD, UNICODE_CASE_FOLD_VERSION } from '../src/artifact/unico
 
 const workspaces: string[] = []
 const execFile = promisify(execFileCallback)
+const caseFoldingFixture = fileURLToPath(new URL('./fixtures/casefold/CaseFolding-16.0.0.txt', import.meta.url))
 
 afterEach(async () => {
   await Promise.all(workspaces.splice(0).map((workspace) => rm(workspace, { recursive: true, force: true })))
@@ -134,9 +136,17 @@ describe('declared artifact payload staging', () => {
     expect(artifactCollisionKey(artifactPath('ǰ'))).toBe(artifactCollisionKey(artifactPath('ǰ')))
   })
 
-  it('conforms to every pinned Unicode common/full CaseFolding mapping', () => {
+  it('conforms to the independent pinned Unicode common/full CaseFolding fixture', async () => {
     expect(UNICODE_CASE_FOLD_VERSION).toBe('16.0.0')
-    for (const [codePoint, folded] of FULL_CASE_FOLD) {
+    const expected = new Map<number, string>()
+    for (const line of (await readFile(caseFoldingFixture, 'utf8')).split(/\r?\n/)) {
+      const fields = line.split('#', 1)[0]?.split(';').map((field) => field.trim())
+      if (fields === undefined || fields.length < 3 || !['C', 'F'].includes(fields[1] ?? '')) continue
+      expected.set(Number.parseInt(fields[0]!, 16), (fields[2] ?? '').split(' ').map((part) => String.fromCodePoint(Number.parseInt(part, 16))).join(''))
+    }
+    expect(expected.size).toBe(1557)
+    expect([...FULL_CASE_FOLD]).toEqual([...expected])
+    for (const [codePoint, folded] of expected) {
       expect(artifactCollisionKey(artifactPath(String.fromCodePoint(codePoint)))).toBe(folded.normalize('NFC'))
     }
   })
@@ -233,6 +243,17 @@ describe('declared artifact payload staging', () => {
       { from: 'first', to: 'first', required: true },
       { from: 'later', to: 'later', required: true },
     ])).rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_PATH_COLLISION' } })
+    expect(await stagedTree(artifact)).toEqual(before)
+  })
+
+  it('rejects payload directories that case-fold or NFC-alias existing directories', async () => {
+    const { source, artifact } = await workspace()
+    await mkdir(join(source, 'dist'))
+    await writeFile(join(source, 'dist', 'new'), 'payload')
+    await mkdir(join(artifact, 'Runtime'))
+    const before = await stagedTree(artifact)
+    await expect(stagePayloads(source, artifact, [{ from: 'dist', to: 'runtime', required: true }]))
+      .rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_PATH_COLLISION' } })
     expect(await stagedTree(artifact)).toEqual(before)
   })
 

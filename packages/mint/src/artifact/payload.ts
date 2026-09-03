@@ -339,6 +339,16 @@ function assertNoCollisions(payloads: readonly PreflightPayload[], existing?: Ex
   }
   for (const payload of payloads) {
     for (const directory of payload.directories) {
+      const existingDirectory = [...existing.directories].find((candidate) => artifactCollisionKey(candidate) === artifactCollisionKey(directory))
+      if (existingDirectory !== undefined && existingDirectory !== directory) {
+        throw payloadError(
+          'ARTIFACT_PATH_COLLISION',
+          `payload directory "${directory}" aliases existing artifact directory "${existingDirectory}"`,
+          'Use the exact existing directory spelling or choose a distinct destination.',
+          'artifact.payloads',
+          directory,
+        )
+      }
       if (existing.files.some((file) => artifactCollisionKey(file) === artifactCollisionKey(directory))) {
         throw payloadError(
           'ARTIFACT_PATH_COLLISION',
