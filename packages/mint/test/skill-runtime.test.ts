@@ -84,6 +84,57 @@ describe('skill runtime validation', () => {
     expect(report.diagnostics).toEqual([expect.objectContaining({ code: 'SKILL_RUNTIME_SHEBANG', path: 'skills/demo/scripts/shebang.mjs' })])
   })
 
+  it.each([
+    ['bare built-in imports', 'import fs from "fs";', 'SKILL_RUNTIME_IMPORT'],
+    ['package imports', 'import value from "left-pad";', 'SKILL_RUNTIME_IMPORT'],
+    ['absolute imports', 'import value from "/tmp/value.mjs";', 'SKILL_RUNTIME_IMPORT'],
+    ['parent imports', 'import value from "../other/scripts/value.mjs";', 'SKILL_RUNTIME_IMPORT'],
+    ['computed dynamic imports', 'import("./" + name);', 'SKILL_RUNTIME_DYNAMIC_IMPORT'],
+    ['CommonJS require calls', 'const value = require("./value.cjs");', 'SKILL_RUNTIME_COMMONJS'],
+    ['child-process exec imports', 'import { execSync } from "node:child_process";', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['child-process namespace exec calls', 'import * as childProcess from "node:child_process"; childProcess.exec("tool");', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['spawn calls with shell enabled', 'import { spawn } from "node:child_process"; spawn("tool", [], { shell: true });', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['spawnSync calls with shell enabled', 'import { spawnSync } from "node:child_process"; spawnSync("tool", [], { shell: true });', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['spawn calls before their static imports', 'spawn("tool", [], { shell: true }); import { spawn } from "node:child_process";', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['missing relative modules', 'import value from "./missing.mjs";', 'SKILL_RUNTIME_IMPORT'],
+    ['relative modules without the mjs extension', 'import value from "./lib.js";', 'SKILL_RUNTIME_IMPORT'],
+    ['unknown node built-ins', 'import value from "node:not-a-real-built-in";', 'SKILL_RUNTIME_IMPORT'],
+    ['malformed module syntax', 'import {', 'SKILL_RUNTIME_SYNTAX'],
+  ] as const)('rejects %s', (_name, source, code) => {
+    const path = 'skills/demo/scripts/policy.mjs'
+    const report = validateSkillRuntime(input([...valid, file(path, source)]))
+
+    expect(report.diagnostics).toContainEqual(expect.objectContaining({ code, path }))
+  })
+
+  it('accepts literal dynamic imports and re-exports of same-skill mjs modules', () => {
+    const report = validateSkillRuntime(input([
+      ...valid,
+      file('skills/demo/scripts/reexport.mjs', 'export { value } from "./lib.mjs";\n'),
+      file('skills/demo/scripts/dynamic.mjs', 'const module = await import("./lib.mjs");\nconsole.log(module.value);\n'),
+    ]))
+
+    expect(report).toMatchObject({ skills: 1, modules: 4, diagnostics: [], ok: true })
+  })
+
+  it('reports every import-policy violation in stable order regardless of file order', () => {
+    const files = [
+      ...valid,
+      file('skills/demo/scripts/z-import.mjs', 'import value from "left-pad";'),
+      file('skills/demo/scripts/a-syntax.mjs', 'import {'),
+      file('skills/demo/scripts/m-shell.mjs', 'import { exec } from "node:child_process";'),
+    ]
+
+    expect(validateSkillRuntime(input(files)).diagnostics).toEqual(
+      validateSkillRuntime(input([...files].reverse())).diagnostics,
+    )
+    expect(validateSkillRuntime(input(files)).diagnostics.map(({ path, code }) => ({ path, code }))).toEqual([
+      { path: 'skills/demo/scripts/a-syntax.mjs', code: 'SKILL_RUNTIME_SYNTAX' },
+      { path: 'skills/demo/scripts/m-shell.mjs', code: 'SKILL_RUNTIME_SHELL_EXEC' },
+      { path: 'skills/demo/scripts/z-import.mjs', code: 'SKILL_RUNTIME_IMPORT' },
+    ])
+  })
+
   it('reports every violation for an executable shebang JavaScript module outside scripts in stable order', () => {
     const report = validateSkillRuntime(input([
       ...valid,
