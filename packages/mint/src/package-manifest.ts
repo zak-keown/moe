@@ -49,7 +49,7 @@ function diagnostic(
   action: string,
   owners?: readonly string[],
 ): never {
-  const value: MintDiagnostic & { owners?: readonly string[] } = {
+  const value: MintDiagnostic = {
     severity: 'error',
     code,
     source: 'package-manifest',
@@ -212,10 +212,18 @@ function cloneExportTarget(value: unknown, field: string): ExportTarget {
 }
 
 function canonicalSynthesizedTarget(value: unknown, field: string): string {
-  if (typeof value !== 'string' || value.length === 0) {
-    diagnostic('PACKAGE_EXPORTS_INVALID_SHAPE', field, `${field} must be a non-empty string when synthesizing exports`, `Set ${field} to a local export target.`)
+  if (
+    typeof value !== 'string'
+    || value.trim().length === 0
+    || value.includes('\\')
+    || value.startsWith('/')
+    || /^[A-Za-z][A-Za-z\d+.-]*:/.test(value)
+    || value.split('/').includes('..')
+  ) {
+    diagnostic('PACKAGE_EXPORTS_INVALID_SHAPE', field, `${field} must be a non-empty package-relative POSIX local path when synthesizing exports`, `Set ${field} to a non-traversing local export target.`)
   }
-  if (value === '.' || value.startsWith('./')) return value
+  if (value === '.' || value === './') return './'
+  if (value.startsWith('./')) return value
   return `./${value}`
 }
 
@@ -260,7 +268,30 @@ function contributionObject(value: unknown, owner: string, field: 'pi' | 'export
   if (!isRecord(value)) {
     diagnostic('PACKAGE_MANIFEST_COLLISION', field, `adapter "${owner}" must contribute ${field} as an object`, `Have adapter "${owner}" emit only its approved ${field} object.`, [owner, field])
   }
-  return value
+  return cloneData(value) as Readonly<Record<string, unknown>>
+}
+
+function cloneData(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map((entry) => cloneData(entry))
+  if (!isRecord(value)) return value
+  const result: Record<string, unknown> = {}
+  for (const [key, entry] of Object.entries(value)) result[key] = cloneData(entry)
+  return result
+}
+
+type ContributionRecord = Readonly<Record<string, unknown>> & { readonly owner: 'pi' | 'opencode' }
+
+function contributionRecord(value: unknown): ContributionRecord {
+  if (!isRecord(value)) {
+    diagnostic('PACKAGE_MANIFEST_COLLISION', 'contribution', 'adapter package contribution must be a non-array object', 'Emit an object with an approved string owner and namespace.', ['invalid-contribution', 'field-policy'])
+  }
+  if (typeof value.owner !== 'string') {
+    diagnostic('PACKAGE_MANIFEST_COLLISION', 'owner', 'adapter package contribution must declare a string owner', 'Emit an approved string adapter owner.', ['invalid-contribution', 'field-policy'])
+  }
+  if (value.owner !== 'pi' && value.owner !== 'opencode') {
+    diagnostic('PACKAGE_MANIFEST_COLLISION', 'owner', `adapter "${value.owner}" is not allowed to contribute package metadata`, 'Only Pi and OpenCode may contribute their approved package namespaces.', [value.owner, 'field-policy'])
+  }
+  return value as ContributionRecord
 }
 
 /**
@@ -270,50 +301,49 @@ function contributionObject(value: unknown, owner: string, field: 'pi' | 'export
  */
 export function mergeAdapterPackageContributions(
   sourceExports: NormalizedExports,
-  contributions: readonly AdapterPackageContributionInput[],
+  contributions: readonly unknown[],
 ): MergedAdapterPackageContributions {
-  const exports: Record<string, ExportTarget> = { ...sourceExports }
+  const exports: Record<string, ExportTarget> = {}
+  for (const [key, target] of Object.entries(sourceExports)) exports[key] = cloneExportTarget(target, `exports.${key}`)
   let pi: Readonly<Record<string, unknown>> | undefined
   let piOwner: string | undefined
   let serverOwner: string | undefined = Object.hasOwn(sourceExports, './server') ? 'source' : undefined
 
-  for (const contribution of contributions) {
+  for (const rawContribution of contributions) {
+    const contribution = contributionRecord(rawContribution)
+    const owner = contribution.owner
     const keys = Object.keys(contribution)
     if (keys.some((key) => key !== 'owner' && key !== 'pi' && key !== 'exports')) {
-      diagnostic('PACKAGE_MANIFEST_COLLISION', 'contribution', `adapter "${contribution.owner}" contributed an unclassified package field`, 'Add an explicit package field policy before contributing this field.', [contribution.owner, 'field-policy'])
+      diagnostic('PACKAGE_MANIFEST_COLLISION', 'contribution', `adapter "${owner}" contributed an unclassified package field`, 'Add an explicit package field policy before contributing this field.', [owner, 'field-policy'])
     }
-    if (contribution.owner !== 'pi' && contribution.owner !== 'opencode') {
-      diagnostic('PACKAGE_MANIFEST_COLLISION', 'owner', `adapter "${contribution.owner}" is not allowed to contribute package metadata`, 'Only Pi and OpenCode may contribute their approved package namespaces.', [contribution.owner, 'field-policy'])
-    }
-
     if (contribution.pi !== undefined) {
-      if (contribution.owner !== 'pi' || contribution.exports !== undefined) {
-        diagnostic('PACKAGE_MANIFEST_COLLISION', 'pi', `adapter "${contribution.owner}" may not contribute the Pi namespace`, 'Only the Pi adapter may contribute pi.', [contribution.owner, 'pi'])
+      if (owner !== 'pi' || contribution.exports !== undefined) {
+        diagnostic('PACKAGE_MANIFEST_COLLISION', 'pi', `adapter "${owner}" may not contribute the Pi namespace`, 'Only the Pi adapter may contribute pi.', [owner, 'pi'])
       }
-      const next = contributionObject(contribution.pi, contribution.owner, 'pi')
+      const next = contributionObject(contribution.pi, owner, 'pi')
       if (pi !== undefined && !sameValue(pi, next)) {
-        diagnostic('PACKAGE_MANIFEST_COLLISION', 'pi', 'Pi package contributions disagree', 'Make duplicate Pi contributions byte-for-byte equivalent or emit one contribution.', [piOwner ?? 'pi', contribution.owner])
+        diagnostic('PACKAGE_MANIFEST_COLLISION', 'pi', 'Pi package contributions disagree', 'Make duplicate Pi contributions byte-for-byte equivalent or emit one contribution.', [piOwner ?? 'pi', owner])
       }
       pi = pi ?? next
-      piOwner ??= contribution.owner
+      piOwner ??= owner
     }
 
     if (contribution.exports !== undefined) {
-      if (contribution.owner !== 'opencode' || contribution.pi !== undefined) {
-        diagnostic('PACKAGE_MANIFEST_COLLISION', 'exports', `adapter "${contribution.owner}" may not contribute exports`, 'Only the OpenCode adapter may contribute exports["./server"].', [contribution.owner, 'exports'])
+      if (owner !== 'opencode' || contribution.pi !== undefined) {
+        diagnostic('PACKAGE_MANIFEST_COLLISION', 'exports', `adapter "${owner}" may not contribute exports`, 'Only the OpenCode adapter may contribute exports["./server"].', [owner, 'exports'])
       }
-      const next = contributionObject(contribution.exports, contribution.owner, 'exports')
+      const next = contributionObject(contribution.exports, owner, 'exports')
       const exportKeys = Object.keys(next)
       if (exportKeys.length !== 1 || exportKeys[0] !== './server' || typeof next['./server'] !== 'string') {
-        diagnostic('PACKAGE_MANIFEST_COLLISION', 'exports', 'OpenCode may contribute only exports["./server"] as a string target', 'Emit exactly { "./server": "./local-target" } from OpenCode.', [contribution.owner, 'exports'])
+        diagnostic('PACKAGE_MANIFEST_COLLISION', 'exports', 'OpenCode may contribute only exports["./server"] as a string target', 'Emit exactly { "./server": "./local-target" } from OpenCode.', [owner, 'exports'])
       }
       const server = next['./server']
       const existing = exports['./server']
       if (existing !== undefined && !sameValue(existing, server)) {
-        diagnostic('PACKAGE_MANIFEST_COLLISION', 'exports./server', 'source and OpenCode server exports disagree', 'Make source exports["./server"] equal OpenCode\'s contribution or remove the source-owned subpath.', [serverOwner ?? 'source', contribution.owner])
+        diagnostic('PACKAGE_MANIFEST_COLLISION', 'exports./server', 'source and OpenCode server exports disagree', 'Make source exports["./server"] equal OpenCode\'s contribution or remove the source-owned subpath.', [serverOwner ?? 'source', owner])
       }
       exports['./server'] = existing ?? server
-      serverOwner ??= contribution.owner
+      serverOwner ??= owner
     }
   }
   return { exports, ...(pi === undefined ? {} : { pi }) }

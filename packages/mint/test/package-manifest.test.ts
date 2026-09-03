@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { MintError, type MintDiagnostic } from '../src/diagnostics.js'
 import {
   mergeAdapterPackageContributions,
   normalizeExports,
@@ -20,13 +21,16 @@ const metadataMint = {
   keywords: ['Mint', 'mint', 'plugin'],
 }
 
-function expectFailure(run: () => unknown, diagnostic: Record<string, unknown>): void {
+function expectFailure(run: () => unknown, diagnostic: Record<string, unknown>): MintDiagnostic {
   try {
     run()
     expect.unreachable('expected package-manifest validation to fail')
   } catch (error) {
+    if (!(error instanceof MintError)) throw error
     expect(error).toMatchObject({ diagnostic })
+    return error.diagnostic
   }
+  throw new Error('unreachable')
 }
 
 describe('normalizeMetadata', () => {
@@ -87,6 +91,31 @@ describe('normalizeExports', () => {
     })
   })
 
+  it('canonicalizes the package root target to ./', () => {
+    expect(normalizeExports({ main: '.', types: '.' })).toEqual({
+      '.': { types: './', default: './' },
+    })
+  })
+
+  it.each([
+    ['whitespace-only', '   '],
+    ['parent traversal', '../outside.js'],
+    ['nested parent traversal', 'dist/../outside.js'],
+    ['absolute path', '/outside.js'],
+    ['URL-like target', 'https://example.com/index.js'],
+    ['backslash path', 'dist\\index.js'],
+  ])('rejects an invalid synthesized main target: %s', (_name, main) => {
+    expectFailure(() => normalizeExports({ main }), {
+      code: 'PACKAGE_EXPORTS_INVALID_SHAPE', field: 'main',
+    })
+  })
+
+  it('rejects an invalid synthesized types target with the field context', () => {
+    expectFailure(() => normalizeExports({ main: './index.js', types: '../outside.d.ts' }), {
+      code: 'PACKAGE_EXPORTS_INVALID_SHAPE', field: 'types',
+    })
+  })
+
   it('leaves absent exports absent when main is absent', () => {
     expect(normalizeExports({ types: './types/index.d.ts' })).toEqual({})
   })
@@ -140,24 +169,67 @@ describe('mergeAdapterPackageContributions', () => {
   })
 
   it('identifies both OpenCode emissions when their server targets disagree', () => {
-    expectFailure(() => mergeAdapterPackageContributions({}, [
+    const error = expectFailure(() => mergeAdapterPackageContributions({}, [
       { owner: 'opencode', exports: { './server': './first.js' } },
       { owner: 'opencode', exports: { './server': './second.js' } },
     ]), {
       code: 'PACKAGE_MANIFEST_COLLISION',
       owners: ['opencode', 'opencode'],
     })
+    expect(error.owners).toEqual(['opencode', 'opencode'])
   })
 
   it.each([
-    ['an unequal source-owned server', normalizeExports({ exports: { './server': './other.js' } }), [{ owner: 'opencode', exports: { './server': './.opencode/plugins/moe.js' } }]],
-    ['an unauthorized owner', {}, [{ owner: 'cursor', pi: {} }]],
-    ['an unauthorized namespace', {}, [{ owner: 'pi', exports: { './server': './server.js' } }]],
-    ['an unauthorized export key', {}, [{ owner: 'opencode', exports: { '.': './index.js' } }]],
-    ['an unclassified field', {}, [{ owner: 'pi', pi: {}, unexpected: true }]],
-  ])('reports both owners for %s', (_name, exports, contributions) => {
-    expectFailure(() => mergeAdapterPackageContributions(exports, contributions), {
+    ['an unequal source-owned server', normalizeExports({ exports: { './server': './other.js' } }), [{ owner: 'opencode', exports: { './server': './.opencode/plugins/moe.js' } }], ['source', 'opencode']],
+    ['an unauthorized owner', {}, [{ owner: 'cursor', pi: {} }], ['cursor', 'field-policy']],
+    ['an unauthorized namespace', {}, [{ owner: 'pi', exports: { './server': './server.js' } }], ['pi', 'exports']],
+    ['an unauthorized export key', {}, [{ owner: 'opencode', exports: { '.': './index.js' } }], ['opencode', 'exports']],
+    ['an unclassified field', {}, [{ owner: 'pi', pi: {}, unexpected: true }], ['pi', 'field-policy']],
+  ])('reports complete collision owners for %s', (_name, exports, contributions, owners) => {
+    const error = expectFailure(() => mergeAdapterPackageContributions(exports, contributions), {
       code: 'PACKAGE_MANIFEST_COLLISION', source: 'package-manifest', field: expect.any(String),
+    })
+    expect(error.owners).toEqual(owners)
+  })
+
+  it('identifies both Pi emissions when their metadata disagrees', () => {
+    const error = expectFailure(() => mergeAdapterPackageContributions({}, [
+      { owner: 'pi', pi: { extensions: ['./first.ts'] } },
+      { owner: 'pi', pi: { extensions: ['./second.ts'] } },
+    ]), {
+      code: 'PACKAGE_MANIFEST_COLLISION', owners: ['pi', 'pi'],
+    })
+    expect(error.owners).toEqual(['pi', 'pi'])
+  })
+
+  it.each([
+    ['null', null],
+    ['array', []],
+    ['scalar', 'pi'],
+    ['missing owner', { pi: {} }],
+    ['non-string owner', { owner: 42, pi: {} }],
+  ])('rejects a malformed contribution entry: %s', (_name, contribution) => {
+    const error = expectFailure(() => mergeAdapterPackageContributions({}, [contribution]), {
+      code: 'PACKAGE_MANIFEST_COLLISION', source: 'package-manifest', field: expect.any(String),
+    })
+    expect(error.owners).toEqual(['invalid-contribution', 'field-policy'])
+  })
+
+  it('deep-clones nested source exports and Pi metadata before returning', () => {
+    const sourceExports = {
+      '.': { import: { node: './node.js' }, default: './index.js' },
+    }
+    const pi = { extensions: ['./.pi/extensions/moe.ts'], nested: { enabled: true } }
+    const result = mergeAdapterPackageContributions(sourceExports, [{ owner: 'pi', pi }])
+
+    const sourceRoot = sourceExports['.'] as { import: { node: string } }
+    sourceRoot.import.node = './mutated.js'
+    pi.extensions[0] = './mutated.ts'
+    pi.nested.enabled = false
+
+    expect(result).toEqual({
+      exports: { '.': { import: { node: './node.js' }, default: './index.js' } },
+      pi: { extensions: ['./.pi/extensions/moe.ts'], nested: { enabled: true } },
     })
   })
 })
