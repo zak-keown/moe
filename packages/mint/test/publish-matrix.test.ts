@@ -16,6 +16,23 @@ import { TARGET_IDS } from '../src/vocabulary.js'
 
 const REPO_ROOT = join(import.meta.dirname, '../../..')
 
+function alteredRegistry(platform: ResolvedPlatform): ResolvedPlatform['registry'] {
+  return {
+    ...platform.registry,
+    targets: {
+      ...platform.registry.targets,
+      cursor: { ...platform.registry.targets.cursor, display_name: 'Rebound Cursor' },
+    },
+    profiles: {
+      ...Object.fromEntries(Object.entries(platform.registry.profiles).map(([id, profile]) => [
+        id,
+        { ...profile, default: false },
+      ])),
+      alternate: { default: true, plugins: [platform.plugins[0]?.id ?? 'moe'] },
+    },
+  }
+}
+
 describe('publish matrix', () => {
   it('resolves one deterministic publish entry for every registry plugin', async () => {
     const platform = await resolvePlatform(REPO_ROOT)
@@ -69,7 +86,7 @@ describe('publish matrix', () => {
       configSource: first.config.source,
     })
 
-    expect(() => projectionRecordForCurrentGeneration(second, validation)).toThrowError(expect.objectContaining({
+    expect(() => projectionRecordForCurrentGeneration(platform, second, validation)).toThrowError(expect.objectContaining({
       diagnostic: expect.objectContaining({
         code: 'PROJECTION_GENERATION_PROVENANCE',
         plugin: second.id,
@@ -112,6 +129,47 @@ describe('publish matrix', () => {
         code: 'PROJECTION_RECORD_PROVENANCE',
         plugin: 'moe',
         source: replacedConfig,
+        field: 'artifacts',
+      }),
+    }))
+  })
+
+  it.each([
+    ['marketplace', renderMarketplace],
+    ['catalog', renderPublicCatalog],
+    ['publish matrix', resolvePublishMatrix],
+  ] as const)('rejects producer-platform records against altered registry state in the %s', async (_name, render) => {
+    const platform = await resolvePlatform(REPO_ROOT)
+    const records = currentProjectionRecords(platform)
+    const rebound: ResolvedPlatform = {
+      ...platform,
+      registry: alteredRegistry(platform),
+    }
+
+    expect(() => render(rebound, records)).toThrowError(expect.objectContaining({
+      diagnostic: expect.objectContaining({
+        code: 'PROJECTION_RECORD_PROVENANCE',
+        plugin: 'moe',
+        source: 'packages/core/mint/moe.yaml',
+        field: 'artifacts',
+      }),
+    }))
+  })
+
+  it.each([
+    ['marketplace', renderMarketplace],
+    ['catalog', renderPublicCatalog],
+    ['publish matrix', resolvePublishMatrix],
+  ] as const)('rejects records after the producing registry is mutated before %s rendering', async (_name, render) => {
+    const platform = await resolvePlatform(REPO_ROOT)
+    const records = currentProjectionRecords(platform)
+    platform.registry = alteredRegistry(platform)
+
+    expect(() => render(platform, records)).toThrowError(expect.objectContaining({
+      diagnostic: expect.objectContaining({
+        code: 'PROJECTION_RECORD_PROVENANCE',
+        plugin: 'moe',
+        source: 'packages/core/mint/moe.yaml',
         field: 'artifacts',
       }),
     }))
@@ -162,7 +220,7 @@ describe('publish matrix', () => {
       configSource: plugin.config.source,
     })
 
-    expect(() => projectionRecordForCurrentGeneration(plugin, validation)).toThrowError(expect.objectContaining({
+    expect(() => projectionRecordForCurrentGeneration(platform, plugin, validation)).toThrowError(expect.objectContaining({
       diagnostic: expect.objectContaining({
         code: 'PROJECTION_GENERATION_PROVENANCE',
         plugin: plugin.id,
@@ -182,7 +240,7 @@ describe('publish matrix', () => {
       configSource: plugin.config.source,
     })
 
-    expect(() => projectionRecordForCurrentGeneration(plugin, validation)).toThrowError(expect.objectContaining({
+    expect(() => projectionRecordForCurrentGeneration(platform, plugin, validation)).toThrowError(expect.objectContaining({
       diagnostic: expect.objectContaining({
         code: 'PROJECTION_GENERATION_PROVENANCE',
         plugin: plugin.id,
@@ -292,7 +350,7 @@ describe('publish matrix', () => {
     const records = platform.plugins.map((plugin, index) => {
       const validation = validations[index]
       if (validation === undefined) throw new Error('expected a canonical validation for every plugin')
-      return projectionRecordForCurrentGeneration(plugin, validation)
+      return projectionRecordForCurrentGeneration(platform, plugin, validation)
     })
     const firstRecord = records[0]
     if (firstRecord === undefined) throw new Error('expected a projection record')

@@ -24,9 +24,21 @@ interface ProjectionProvenance {
   evidence: CanonicalProjectionEvidence
   identity: CanonicalGenerationIdentity
   producer: ResolvedPlugin
+  platform: PlatformProjectionEvidence
 }
 
 const projectionProvenance = new WeakMap<PluginProjectionRecord, ProjectionProvenance>()
+
+interface PlatformProjectionEvidence {
+  producer: ResolvedPlatform
+  registry: ResolvedPlatform['registry']
+  fingerprint: string
+}
+
+interface AuthorizedProjectionRecords {
+  records: readonly PluginProjectionRecord[]
+  registry: ResolvedPlatform['registry']
+}
 
 export interface PublishMatrixEntry {
   plugin: string
@@ -54,9 +66,33 @@ function projectionError(
 function projectionRecords(
   platform: ResolvedPlatform,
   artifacts: readonly PluginProjectionRecord[],
-): readonly PluginProjectionRecord[] {
+): AuthorizedProjectionRecords {
+  const firstRecord = artifacts[0]
+  const firstProvenance = firstRecord === undefined ? undefined : projectionProvenance.get(firstRecord)
+  if (
+    firstRecord !== undefined
+    && firstProvenance !== undefined
+    && (
+      firstProvenance.platform.producer !== platform
+      || firstProvenance.platform.fingerprint !== registryFingerprint(platform.registry)
+    )
+  ) {
+    const declaration = platform.registry.plugins.find((plugin) => plugin.id === firstRecord.plugin.id)
+    throw projectionError(
+      'PROJECTION_RECORD_PROVENANCE',
+      `projection record for ${firstRecord.plugin.id} lacks a current validated generation`,
+      'Create the record from the current canonical adapter validation pass.',
+      {
+        source: declaration?.config ?? firstRecord.plugin.configSource,
+        plugin: firstRecord.plugin.id,
+        field: 'artifacts',
+      },
+    )
+  }
+  const registry = firstProvenance?.platform.registry ?? platform.registry
+  const fingerprint = firstProvenance?.platform.fingerprint
   const byPlugin = new Map(artifacts.map((artifact) => [artifact.plugin.id, artifact]))
-  if (byPlugin.size !== artifacts.length || artifacts.length !== platform.registry.plugins.length) {
+  if (byPlugin.size !== artifacts.length || artifacts.length !== registry.plugins.length) {
     throw projectionError(
       'PROJECTION_RECORD_CARDINALITY',
       'projection records must contain exactly one current generation for every registry plugin',
@@ -64,7 +100,7 @@ function projectionRecords(
       { source: 'moe-platform.yaml', field: 'plugins' },
     )
   }
-  return platform.registry.plugins.map((declaration) => {
+  const records = registry.plugins.map((declaration) => {
     const record = byPlugin.get(declaration.id)
     if (record === undefined) {
       throw projectionError(
@@ -79,6 +115,8 @@ function projectionRecords(
     const currentIdentity = currentPlugin === undefined ? undefined : generationIdentity(currentPlugin)
     if (
       provenance === undefined
+      || provenance.platform.producer !== platform
+      || provenance.platform.fingerprint !== fingerprint
       || currentPlugin === undefined
       || currentIdentity === undefined
       || provenance.producer !== currentPlugin
@@ -103,6 +141,26 @@ function projectionRecords(
     }
     return record
   })
+  return { records, registry }
+}
+
+function deepFreeze<T>(value: T): T {
+  if (typeof value !== 'object' || value === null || Object.isFrozen(value)) return value
+  for (const nested of Object.values(value)) deepFreeze(nested)
+  return Object.freeze(value)
+}
+
+function registryFingerprint(registry: ResolvedPlatform['registry']): string {
+  return JSON.stringify(registry)
+}
+
+function platformProjectionEvidence(platform: ResolvedPlatform): PlatformProjectionEvidence {
+  const registry = deepFreeze(structuredClone(platform.registry))
+  return Object.freeze({
+    producer: platform,
+    registry,
+    fingerprint: registryFingerprint(registry),
+  })
 }
 
 function sameGenerationIdentity(
@@ -126,9 +184,27 @@ function generationIdentity(plugin: ResolvedPlugin): CanonicalGenerationIdentity
 
 /** Bind a plugin to the exact result of a real adapter validation/emission pass. */
 export function projectionRecordForCurrentGeneration(
+  platform: ResolvedPlatform,
   plugin: ResolvedPlugin,
   validation: GenerationValidation,
 ): PluginProjectionRecord {
+  return projectionRecord(platform, plugin, validation, platformProjectionEvidence(platform))
+}
+
+function projectionRecord(
+  platform: ResolvedPlatform,
+  plugin: ResolvedPlugin,
+  validation: GenerationValidation,
+  platformEvidence: PlatformProjectionEvidence,
+): PluginProjectionRecord {
+  if (platformEvidence.producer !== platform || !platform.plugins.includes(plugin)) {
+    throw projectionError(
+      'PROJECTION_GENERATION_PROVENANCE',
+      `projection record for ${plugin.id} does not belong to the producing platform`,
+      'Use the resolved plugin from the platform that produced this canonical validation.',
+      { source: plugin.config.source, plugin: plugin.id, field: 'generation' },
+    )
+  }
   const identity = generationIdentity(plugin)
   if (!isCanonicalGenerationFor(validation, identity)) {
     throw projectionError(
@@ -153,6 +229,7 @@ export function projectionRecordForCurrentGeneration(
     evidence,
     identity: Object.freeze({ ...identity }),
     producer: plugin,
+    platform: platformEvidence,
   })
   return record
 }
@@ -164,14 +241,17 @@ export function projectionRecordForCurrentGeneration(
  */
 export function currentProjectionRecords(platform: ResolvedPlatform): readonly PluginProjectionRecord[] {
   const marketplaceName = defaultProfileId(platform)
-  return platform.plugins.map((plugin) => projectionRecordForCurrentGeneration(
+  const platformEvidence = platformProjectionEvidence(platform)
+  return platform.plugins.map((plugin) => projectionRecord(
+    platform,
     plugin,
     validateCanonicalGeneration(generationIdentity(plugin), { marketplaceName }),
+    platformEvidence,
   ))
 }
 
-function defaultProfile(platform: ResolvedPlatform): [string, (typeof platform.registry.profiles)[string]] {
-  const profiles = Object.entries(platform.registry.profiles).filter(([, profile]) => profile.default)
+function defaultProfile(registry: ResolvedPlatform['registry']): [string, (typeof registry.profiles)[string]] {
+  const profiles = Object.entries(registry.profiles).filter(([, profile]) => profile.default)
   if (profiles.length !== 1) {
     throw projectionError(
       'PROJECTION_PROFILE_INVALID',
@@ -193,7 +273,7 @@ function defaultProfile(platform: ResolvedPlatform): [string, (typeof platform.r
 }
 
 export function defaultProfileId(platform: ResolvedPlatform): string {
-  return defaultProfile(platform)[0]
+  return defaultProfile(platform.registry)[0]
 }
 
 function marketplaceSource(plugin: CanonicalProjectionPlugin): { source: 'npm'; package: string } {
@@ -300,13 +380,13 @@ export function renderMarketplace(
   platform: ResolvedPlatform,
   artifacts: readonly PluginProjectionRecord[],
 ): string {
-  const records = projectionRecords(platform, artifacts)
-  const [profileId, profile] = defaultProfile(platform)
+  const { records, registry } = projectionRecords(platform, artifacts)
+  const [profileId, profile] = defaultProfile(registry)
   const profilePlugin = records.find((record) => record.plugin.id === profile.plugins[0])?.plugin
   const author = profilePlugin?.author
   if (author === undefined) {
     const plugin = profile.plugins[0]
-    const source = platform.registry.plugins.find((entry) => entry.id === plugin)?.config ?? 'moe-platform.yaml'
+    const source = registry.plugins.find((entry) => entry.id === plugin)?.config ?? 'moe-platform.yaml'
     throw projectionError(
       'PROJECTION_PROFILE_INVALID',
       `default profile ${profileId} has no plugin author for marketplace ownership`,
@@ -334,8 +414,8 @@ export function renderPublicCatalog(
   platform: ResolvedPlatform,
   artifacts: readonly PluginProjectionRecord[],
 ): string {
-  const records = projectionRecords(platform, artifacts)
-  const headers = ['Plugin', 'npm package', 'Summary', ...TARGET_IDS.map((target) => markdownCell(platform.registry.targets[target].display_name))]
+  const { records, registry } = projectionRecords(platform, artifacts)
+  const headers = ['Plugin', 'npm package', 'Summary', ...TARGET_IDS.map((target) => markdownCell(registry.targets[target].display_name))]
   const rows = records.map((record) => [
     `\`${record.plugin.id}\``,
     `\`${record.plugin.npmPackage}\``,
@@ -358,7 +438,7 @@ export function resolvePublishMatrix(
   platform: ResolvedPlatform,
   artifacts: readonly PluginProjectionRecord[],
 ): readonly PublishMatrixEntry[] {
-  const records = projectionRecords(platform, artifacts)
+  const { records } = projectionRecords(platform, artifacts)
   return records.map(({ plugin }) => {
     return {
       plugin: plugin.id,
