@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { basename, join, normalize, resolve } from "node:path";
+import { basename, join, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 
 export function estimateTokens(text) {
@@ -146,6 +146,43 @@ function parseTokenCount(value) {
   return Number(value);
 }
 
+function pathParts(path, separatorPattern) {
+  return path.split(separatorPattern).filter((part) => part && part !== ".");
+}
+
+function normalizeWindowsPathSpelling(path) {
+  const windowsPath = path.replaceAll("/", "\\");
+  const unc = windowsPath.match(/^\\\\([^\\]+)\\([^\\]+)(?:\\|$)/);
+  if (unc) {
+    const root = `\\\\${unc[1]}\\${unc[2]}\\`;
+    const parts = pathParts(windowsPath.slice(unc[0].length), /\\+/);
+    return parts.length > 0 ? `${root}${parts.join("\\")}` : root;
+  }
+
+  const drive = windowsPath.match(/^([A-Za-z]:)(\\?)/);
+  if (drive) {
+    const rooted = drive[2] === "\\";
+    const parts = pathParts(windowsPath.slice(drive[1].length + (rooted ? 1 : 0)), /\\+/);
+    if (rooted) return parts.length > 0 ? `${drive[1]}\\${parts.join("\\")}` : `${drive[1]}\\`;
+    return parts.length > 0 ? `${drive[1]}${parts.join("\\")}` : drive[1];
+  }
+
+  const rooted = windowsPath.startsWith("\\");
+  const parts = pathParts(windowsPath.slice(rooted ? 1 : 0), /\\+/);
+  if (rooted) return parts.length > 0 ? `\\${parts.join("\\")}` : "\\";
+  return parts.length > 0 ? parts.join("\\") : ".";
+}
+
+function normalizePathSpelling(path) {
+  if (sep === "\\") return normalizeWindowsPathSpelling(path);
+
+  const doubleSlashRoot = path.startsWith("//") && !path.startsWith("///");
+  const root = doubleSlashRoot ? "//" : path.startsWith("/") ? "/" : "";
+  const parts = pathParts(path, /\/+/);
+  if (root) return parts.length > 0 ? `${root}${parts.join("/")}` : root;
+  return parts.length > 0 ? parts.join("/") : ".";
+}
+
 function parseArgs(args) {
   let path;
   let maxTokens = 4000;
@@ -158,6 +195,9 @@ function parseArgs(args) {
       const value = arg === "--max-tokens" ? args[++index] : arg.slice("--max-tokens=".length);
       if (value === undefined) return { error: "argument --max-tokens: expected one argument" };
       const parsed = parseTokenCount(value);
+      if (arg === "--max-tokens" && value.startsWith("-") && parsed === null) {
+        return { error: "argument --max-tokens: expected one argument" };
+      }
       if (parsed === null) return { error: `argument --max-tokens: invalid int value: '${value}'` };
       maxTokens = parsed;
     } else if (!path && !arg.startsWith("-")) {
@@ -184,7 +224,7 @@ export async function main(args) {
     return 2;
   }
 
-  const path = normalize(options.path);
+  const path = normalizePathSpelling(options.path);
 
   try {
     statSync(path);
