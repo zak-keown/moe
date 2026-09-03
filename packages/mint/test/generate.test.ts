@@ -12,7 +12,8 @@ import {
   symlinkSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, dirname } from 'node:path'
+import { join, dirname, resolve } from 'node:path'
+import { execFileSync } from 'node:child_process'
 import { generate } from '../src/generate.js'
 import { MANIFEST_PATH, checkDrift } from '../src/manifest.js'
 import type { HarnessAdapter } from '../src/adapters/index.js'
@@ -527,6 +528,111 @@ describe('generate', () => {
 })
 
 describe('vocabulary integration', () => {
+  it('renders resources without a vocabulary while preserving ordinary literal braces', () => {
+    const dir = freshFixture()
+    const skillPath = join(dir, 'skills/greeting/SKILL.md')
+    writeFileSync(
+      skillPath,
+      `${readFileSync(skillPath, 'utf8')}\nKeep {literal-example}; run {resource:skills/greeting/scripts/hello.sh}.\n`,
+    )
+
+    const result = generate(dir)
+    const codexSkill = String(result.files.find(
+      (file) => file.path === '.codex-plugin/skills/greeting/SKILL.md',
+    )!.content)
+
+    expect(codexSkill).toContain('{literal-example}')
+    expect(codexSkill).toContain('[skills/greeting/scripts/hello.sh](scripts/hello.sh)')
+  })
+
+  it('preserves escaped resource and vocabulary expressions as literals during generation', () => {
+    const dir = freshFixture()
+    const skillPath = join(dir, 'skills/greeting/SKILL.md')
+    writeFileSync(
+      skillPath,
+      `${readFileSync(skillPath, 'utf8')}\nKeep \\{ask} and \\{resource:skills/greeting/scripts/missing.sh}.\n`,
+    )
+    cpSync('fixtures/vocab-basic/moe-mint-vocab.yaml', join(dir, 'moe-mint-vocab.yaml'))
+
+    const result = generate(dir)
+    const codexSkill = String(result.files.find(
+      (file) => file.path === '.codex-plugin/skills/greeting/SKILL.md',
+    )!.content)
+
+    expect(codexSkill).toContain('{ask}')
+    expect(codexSkill).toContain('{resource:skills/greeting/scripts/missing.sh}')
+  })
+
+  it('closes every adapter profile resource link and resolves its helper from a project cwd', () => {
+    const dir = freshFixture()
+    const skillPath = join(dir, 'skills/greeting/SKILL.md')
+    writeFileSync(
+      skillPath,
+      `${readFileSync(skillPath, 'utf8')}\nRun {resource:skills/greeting/scripts/hello.sh}.\n`,
+    )
+
+    const result = generate(dir)
+    const profileSkillPaths = [
+      'skills/greeting/SKILL.md',
+      '.claude-plugin/skills/greeting/SKILL.md',
+      '.cursor-plugin/skills/greeting/SKILL.md',
+      '.codex-plugin/skills/greeting/SKILL.md',
+      '.kimi-plugin/skills/greeting/SKILL.md',
+      '.opencode/skills/greeting/SKILL.md',
+      '.pi/skills/greeting/SKILL.md',
+    ]
+
+    for (const generatedSkillPath of profileSkillPaths) {
+      const content = readFileSync(join(dir, generatedSkillPath), 'utf8')
+      expect(content, generatedSkillPath).toContain(
+        '[skills/greeting/scripts/hello.sh](scripts/hello.sh)',
+      )
+      const helper = resolve(dirname(join(dir, generatedSkillPath)), 'scripts/hello.sh')
+      expect(readFileSync(helper, 'utf8'), generatedSkillPath).toContain('echo hello')
+      expect(
+        execFileSync('bash', [helper], { cwd: dir, encoding: 'utf8' }),
+        generatedSkillPath,
+      ).toBe('hello\n')
+    }
+
+    expect(
+      result.files
+        .filter((file) => file.path.endsWith('.md'))
+        .some((file) => String(file.content).includes('{resource:')),
+    ).toBe(false)
+  })
+
+  it.each([
+    ['/skills/greeting/scripts/hello.sh', /absolute/i],
+    ['skills/greeting/../greeting/scripts/hello.sh', /traversal/i],
+    ['skills/greeting/scripts/missing.sh', /not found/i],
+    ['skills/greeting/scripts', /regular file/i],
+  ])('rejects invalid resource target %s before writing output', (resource, message) => {
+    const dir = freshFixture()
+    const skillPath = join(dir, 'skills/greeting/SKILL.md')
+    writeFileSync(
+      skillPath,
+      `${readFileSync(skillPath, 'utf8')}\nRun {resource:${resource}}.\n`,
+    )
+
+    expect(() => generate(dir)).toThrow(message)
+    expect(existsSync(join(dir, MANIFEST_PATH))).toBe(false)
+  })
+
+  it('rejects a symlink resource target before writing output', () => {
+    const dir = freshFixture()
+    const skillPath = join(dir, 'skills/greeting/SKILL.md')
+    const linkPath = join(dir, 'skills/greeting/scripts/hello-link.sh')
+    symlinkSync(join(dir, 'skills/greeting/scripts/hello.sh'), linkPath)
+    writeFileSync(
+      skillPath,
+      `${readFileSync(skillPath, 'utf8')}\nRun {resource:skills/greeting/scripts/hello-link.sh}.\n`,
+    )
+
+    expect(() => generate(dir)).toThrow(/symbolic link/i)
+    expect(existsSync(join(dir, MANIFEST_PATH))).toBe(false)
+  })
+
   it('emits per-adapter skill directories when moe-mint-vocab.yaml exists', () => {
     const dir = freshFixture()
     writeFileSync(join(dir, 'moe-mint-vocab.yaml'), 'tokens: {}\nblocks: {}')

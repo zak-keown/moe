@@ -18,6 +18,7 @@ import {
   validateCoverage,
   scanForUnknownTokens,
   assertNoSurvivors,
+  assertNoResourceSurvivors,
   substituteAllSkills,
   adjustedModel,
 } from './vocabulary.js'
@@ -163,9 +164,8 @@ export function generate(
     warnings.push(...result.warnings.map((w) => `[${adapter.name}] ${w}`))
   }
   mergeFiles(byPath, 'skill-renderer', renderedSkillFiles, model.config)
-  if (configuredVocab) {
-    assertNoSurvivors(renderedSkillFiles)
-  }
+  if (configuredVocab) assertNoSurvivors(renderedSkillFiles, model.skillFiles)
+  else assertNoResourceSurvivors(renderedSkillFiles, model.skillFiles)
   mergeFiles(byPath, 'docs', emitDocs(model, active, skillDelivery), model.config)
   const files: FileSet<FileContent> = [...byPath.values()].map((v) => v.file)
 

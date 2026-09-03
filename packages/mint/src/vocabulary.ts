@@ -1,9 +1,9 @@
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs'
-import { isAbsolute, join, resolve, sep } from 'node:path'
+import { isAbsolute, join, posix, resolve, sep } from 'node:path'
 import { parse } from 'yaml'
 import { z } from 'zod'
 import { ConfigError } from './config.js'
-import type { PluginModel } from './model.js'
+import { resolveSkillResource, type PluginModel } from './model.js'
 import { writeFileSet, type GeneratedFile } from './fileset.js'
 import type { HarnessAdapter, SkillLayout } from './adapters/types.js'
 
@@ -94,16 +94,24 @@ export function validateCoverage(
 }
 
 const TOKEN_PATTERN = /(?<!\\)\{([a-z][a-z0-9-]*)\}/g
+const RESOURCE_PATTERN = /(?<!\\)\{resource:([^{}\n]*)\}/g
+
+export type ResourceRenderer = (resourcePath: string) => string
 
 export function substituteContent(
   content: string,
   adapterName: string,
   vocab: Vocabulary,
+  renderResource?: ResourceRenderer,
 ): string {
   const lines = content.split('\n')
   const result: string[] = []
+  let inFence = false
 
   for (const line of lines) {
+    const fenceLine = /^```/.test(line)
+    const resourceIsLiteral = inFence || fenceLine
+
     const blockMatch = /^(\s*)(?<!\\)\{([a-z][a-z0-9-]*)\}\s*$/.exec(line)
     if (blockMatch) {
       const indent = blockMatch[1]!
@@ -117,7 +125,11 @@ export function substituteContent(
       }
     }
 
-    let substituted = line.replace(TOKEN_PATTERN, (_match, tokenName: string) => {
+    let substituted = line.replace(RESOURCE_PATTERN, (expression, resourcePath: string) => {
+      return !resourceIsLiteral && renderResource ? renderResource(resourcePath) : expression
+    })
+
+    substituted = substituted.replace(TOKEN_PATTERN, (_match, tokenName: string) => {
       const inlineEntry = vocab.tokens.get(tokenName)
       if (inlineEntry && adapterName in inlineEntry) return inlineEntry[adapterName]!
       const blockEntry = vocab.blocks.get(tokenName)
@@ -126,7 +138,11 @@ export function substituteContent(
     })
 
     substituted = substituted.replace(/\\(\{[a-z][a-z0-9-]*\})/g, '$1')
+    if (!resourceIsLiteral) {
+      substituted = substituted.replace(/\\(\{resource:[^{}\n]*\})/g, '$1')
+    }
     result.push(substituted)
+    if (fenceLine) inFence = !inFence
   }
 
   return result.join('\n')
@@ -187,10 +203,46 @@ export function scanForUnknownTokens(
 
 export function assertNoSurvivors(
   files: Array<{ path: string; content: string | Uint8Array }>,
+  sourceFiles: PluginModel['skillFiles'] = [],
+): void {
+  assertNoExpressions(files, true, sourceFiles)
+}
+
+export function assertNoResourceSurvivors(
+  files: Array<{ path: string; content: string | Uint8Array }>,
+  sourceFiles: PluginModel['skillFiles'] = [],
+): void {
+  assertNoExpressions(files, false, sourceFiles)
+}
+
+function assertNoExpressions(
+  files: Array<{ path: string; content: string | Uint8Array }>,
+  includeVocabularyTokens: boolean,
+  sourceFiles: PluginModel['skillFiles'],
 ): void {
   const problems: string[] = []
+  const sourceBySpecificity = [...sourceFiles].sort((left, right) => right.path.length - left.path.length)
   for (const file of files) {
     if (!file.path.endsWith('.md')) continue
+    const source = sourceBySpecificity.find(
+      (candidate) => file.path === candidate.path || file.path.endsWith(`/${candidate.path}`),
+    )
+    const literalAllowances = new Map<string, number>()
+    if (source) {
+      const sourceText = stripFencedBlocks(Buffer.from(source.content).toString('utf8'))
+      const escapedExpression = /\\(\{(?:[a-z][a-z0-9-]*|resource:[^{}\n]*)\})/g
+      let escapedMatch: RegExpExecArray | null
+      while ((escapedMatch = escapedExpression.exec(sourceText)) !== null) {
+        const expression = escapedMatch[1]!
+        literalAllowances.set(expression, (literalAllowances.get(expression) ?? 0) + 1)
+      }
+    }
+    const isAllowedLiteral = (expression: string): boolean => {
+      const remaining = literalAllowances.get(expression) ?? 0
+      if (remaining === 0) return false
+      literalAllowances.set(expression, remaining - 1)
+      return true
+    }
     const stripped = stripFencedBlocks(
       typeof file.content === 'string' ? file.content : Buffer.from(file.content).toString('utf8'),
     )
@@ -198,16 +250,28 @@ export function assertNoSurvivors(
     for (let i = 0; i < lines.length; i++) {
       const line: string = lines[i]!
       let match: RegExpExecArray | null
-      TOKEN_PATTERN.lastIndex = 0
-      while ((match = TOKEN_PATTERN.exec(line)) !== null) {
-        const tokenName = match[1] as string
-        problems.push(`surviving token {${tokenName}} in ${file.path} line ${i + 1}`)
+      if (includeVocabularyTokens) {
+        TOKEN_PATTERN.lastIndex = 0
+        while ((match = TOKEN_PATTERN.exec(line)) !== null) {
+          const tokenName = match[1] as string
+          const expression = `{${tokenName}}`
+          if (!isAllowedLiteral(expression)) {
+            problems.push(`surviving token ${expression} in ${file.path} line ${i + 1}`)
+          }
+        }
+      }
+      RESOURCE_PATTERN.lastIndex = 0
+      while ((match = RESOURCE_PATTERN.exec(line)) !== null) {
+        const expression = `{resource:${match[1]}}`
+        if (!isAllowedLiteral(expression)) {
+          problems.push(`surviving resource expression ${expression} in ${file.path} line ${i + 1}`)
+        }
       }
     }
   }
 
   if (problems.length > 0) {
-    throw new ConfigError('tokens survived substitution', problems)
+    throw new ConfigError('semantic expressions survived substitution', problems)
   }
 }
 
@@ -279,11 +343,29 @@ function validateLayout(root: string, sourceDir: string, adapter: HarnessAdapter
 function transformedContent(
   file: PluginModel['skillFiles'][number],
   profile: string,
+  outputDir: string,
+  model: PluginModel,
   vocab: Vocabulary,
 ): Uint8Array {
   if (!file.path.endsWith('.md')) return Buffer.from(file.content)
+  const currentDocument = posix.join(outputDir, file.path)
   return Buffer.from(
-    substituteContent(Buffer.from(file.content).toString('utf8'), profile, vocab),
+    substituteContent(
+      Buffer.from(file.content).toString('utf8'),
+      profile,
+      vocab,
+      (resourcePath) => {
+        const resource = resolveSkillResource(model, resourcePath)
+        const generatedTarget = posix.join(outputDir, resource.path)
+        const relativeTarget = posix.relative(posix.dirname(currentDocument), generatedTarget)
+        const encodedTarget = relativeTarget
+          .split('/')
+          .map((segment) => segment === '..' ? segment : encodeURIComponent(segment))
+          .join('/')
+        const label = resourcePath.replaceAll('\\', '\\\\').replaceAll('[', '\\[').replaceAll(']', '\\]')
+        return `[${label}](${encodedTarget})`
+      },
+    ),
     'utf8',
   )
 }
@@ -324,9 +406,14 @@ export function substituteAllSkills(
     const { outputDir, profile, mode } = adapter.skillLayout
     const tree = model.skillFiles.map((file) => ({
       path: `${outputDir.replace(/\/$/, '')}/${file.path}`,
-      content: transformedContent(file, profile, vocab),
+      content: transformedContent(file, profile, outputDir, model, vocab),
       mode: file.mode,
     }))
+    if (vocab.tokens.size > 0 || vocab.blocks.size > 0) {
+      assertNoSurvivors(tree, model.skillFiles)
+    } else {
+      assertNoResourceSurvivors(tree, model.skillFiles)
+    }
     if (mode === 'in-place') {
       writeFileSet(root, tree)
     } else {
