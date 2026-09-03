@@ -9,7 +9,7 @@
  * of those before this file existed.
  */
 
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import {
   accessSync,
   chmodSync,
@@ -1393,18 +1393,17 @@ describe("plan-set-notice", () => {
   // testable.
   const HOOK = join(PKG, "hooks/plan-set-notice");
   const runHook = (input: string, env: Record<string, string> = {}) => {
-    try {
-      const stdout = execFileSync("/bin/bash", [HOOK], {
-        input,
-        env: { ...process.env, ...env },
-        stdio: ["pipe", "pipe", "pipe"],
-        encoding: "utf8",
-      });
-      return { status: 0, stdout, stderr: "" };
-    } catch (err) {
-      const e = err as { status: number; stdout: string; stderr: string };
-      return { status: e.status ?? 1, stdout: e.stdout ?? "", stderr: e.stderr ?? "" };
-    }
+    const result = spawnSync("/bin/bash", [HOOK], {
+      input,
+      env: { ...process.env, ...env },
+      stdio: ["pipe", "pipe", "pipe"],
+      encoding: "utf8",
+    });
+    return {
+      status: result.status ?? 1,
+      stdout: result.stdout ?? "",
+      stderr: result.stderr ?? result.error?.message ?? "",
+    };
   };
 
   const expectSilentSuccess = (result: { status: number; stdout: string; stderr: string }) => {
