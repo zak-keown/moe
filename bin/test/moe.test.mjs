@@ -345,6 +345,11 @@ describe("main", () => {
 });
 
 describe("packaging invariants", () => {
+  it("tracks the canonical plugin registry as a Mint generation cache input", () => {
+    const turbo = JSON.parse(readFileSync(join(REPO_ROOT, "turbo.json"), "utf8"));
+    expect(turbo.tasks?.["//#mint:generate"]?.inputs).toContain("bin/lib/plugin-registry.mjs");
+  });
+
   it("publishes one exact registry for every active adapter and current plugin", async () => {
     const registry = await import("../lib/plugin-registry.mjs");
 

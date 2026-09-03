@@ -27,6 +27,7 @@
       "dependsOn": ["@bubstack/moe-mint#build"],
       "inputs": [
         "scripts/mint-plugins.mjs",
+        "bin/lib/plugin-registry.mjs",
         ".claude-plugin/marketplace.json",
         "packages/core/skill-tiers.yaml",
         "packages/*/mint/*.yaml",
