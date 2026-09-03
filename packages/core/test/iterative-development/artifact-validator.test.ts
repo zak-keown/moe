@@ -162,6 +162,41 @@ describe("validate_requirements_index", () => {
     expect(result.stderr).toBe("");
     expect(result.stdout).toBe(`OK: ${input}\n`);
   });
+
+  it.each(["\r", "\r\n"])("normalizes %j newlines at CLI file reads", (newline) => {
+    const root = tempDir("requirements-universal-newlines-");
+    const input = write(root, "requirements.md", validStory().trimEnd().replaceAll("\n", newline));
+
+    const result = runHelper(REQUIREMENTS_VALIDATOR, [input]);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    expect(result.stdout).toBe(`OK: ${input}\n`);
+  });
+
+  it.each(["\u2028", "\u2029"])(
+    "does not treat %j as a story or next-H2 regex boundary",
+    (separator) => {
+      const root = tempDir("requirements-unicode-separator-");
+      const input = write(
+        root,
+        "requirements.md",
+        [
+          "## STORY-0001",
+          `**Epic:** EPIC-001${separator}## Not a boundary`,
+          "**Title:** Checkout",
+          "**Acceptance criteria:**",
+          "**Sources:**",
+          "**Status:** pending",
+        ].join("\n"),
+      );
+
+      const result = runHelper(REQUIREMENTS_VALIDATOR, [input]);
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe("");
+    },
+  );
 });
 
 describe("validate_scenarios", () => {

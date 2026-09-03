@@ -89,7 +89,7 @@ Run the story aggregation script on all extracted story JSONs (including any add
 node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_stories.mjs" -o docs/moe/iterations/requirements/ <json-file-1> <json-file-2> ...
 ```
 
-The script combines, deduplicates by title, groups into epics, assigns stable STORY/EPIC IDs, and outputs per-epic files with proof obligations preserved.
+The script combines stories, deduplicates matching theme + trimmed title + body identities (never blank titles), groups them into epics, assigns stable STORY/EPIC IDs, and outputs per-epic files with proof obligations preserved.
 
 ### 5. Aggregate scenarios
 

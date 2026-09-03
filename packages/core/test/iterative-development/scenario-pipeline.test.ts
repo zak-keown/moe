@@ -1,5 +1,13 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -10,6 +18,7 @@ const AGGREGATOR = "skills/extracting-requirements/scripts/aggregate_scenarios.m
 const BACKLINKER = "skills/extracting-requirements/scripts/backlink_scenarios.mjs";
 const CORE = resolve(import.meta.dirname, "..", "..");
 const AGGREGATOR_PATH = join(CORE, AGGREGATOR);
+const BACKLINKER_PATH = join(CORE, BACKLINKER);
 const temporaryRoots: string[] = [];
 
 function tempDir(prefix: string): string {
@@ -559,6 +568,60 @@ describe("aggregate_scenarios", () => {
     expect(missingStories.status).toBe(2);
     expect(missingStories.stderr).toBe("error: stories directory not found: missing-stories\n");
   });
+
+  it.each(["\r", "\v", "\f", "\x1c", "\x1d", "\x1e", "\x85", "\u2028", "\u2029"])(
+    "uses Python splitlines boundary %j when loading story titles",
+    (separator) => {
+      const root = tempDir("scenario-story-splitlines-");
+      const stories = join(root, "requirements");
+      mkdirSync(stories);
+      writeFileSync(
+        join(stories, "EPIC-001.md"),
+        `## STORY-0001${separator}**Title:** First${separator}## STORY-0002${separator}**Title:** Second`,
+      );
+      const input = writeJson(root, "scenarios.json", [
+        { title: "Resolve", owning_story_titles: ["First", "Second"] },
+      ]);
+      const output = join(root, "out.md");
+
+      const result = runAggregator(output, stories, [input]);
+
+      expect(result.status).toBe(0);
+      expect(readFileSync(output, "utf8")).toContain("**Owning stories:** STORY-0001, STORY-0002");
+    },
+  );
+
+  it("executes the scenario aggregator through a symlink and stays silent when imported", () => {
+    const root = tempDir("scenario-aggregate-direct-entry-");
+    const link = join(root, "aggregate-link.mjs");
+    const stories = join(root, "requirements");
+    const input = writeJson(root, "empty.json", []);
+    const output = join(root, "out.md");
+    mkdirSync(stories);
+    symlinkSync(AGGREGATOR_PATH, link);
+
+    const linked = spawnSync(
+      process.execPath,
+      [link, "-o", output, "--stories-dir", stories, input],
+      { encoding: "utf8" },
+    );
+    expect(linked.status).toBe(0);
+    expect(linked.stderr).toBe("warning: no scenarios found in input files\n");
+    expect(readFileSync(output, "utf8")).toContain("No scenarios extracted.");
+
+    const imported = spawnSync(
+      process.execPath,
+      [
+        "--input-type=module",
+        "--eval",
+        `import ${JSON.stringify(pathToFileURL(AGGREGATOR_PATH).href)}`,
+      ],
+      { encoding: "utf8" },
+    );
+    expect(imported.status).toBe(0);
+    expect(imported.stdout).toBe("");
+    expect(imported.stderr).toBe("");
+  });
 });
 
 describe("backlink_scenarios", () => {
@@ -749,5 +812,60 @@ describe("backlink_scenarios", () => {
     expect(missingDirectory.status).toBe(2);
     expect(missingDirectory.stdout).toBe("");
     expect(missingDirectory.stderr).toBe("error: directory not found: missing-requirements\n");
+  });
+
+  it.each(["\r", "\v", "\f", "\x1c", "\x1d", "\x1e", "\x85", "\u2028", "\u2029"])(
+    "uses Python splitlines boundary %j and rewrites without a final newline",
+    (separator) => {
+      const root = tempDir("scenario-backlink-splitlines-");
+      const requirements = join(root, "requirements");
+      const epic = join(requirements, "EPIC-001.md");
+      const scenarios = join(root, "scenarios.md");
+      mkdirSync(requirements);
+      writeFileSync(epic, `## STORY-0001${separator}- AC-1: observable${separator}`);
+      writeFileSync(
+        scenarios,
+        `## SCENARIO-0001 — Link${separator}**Owning stories:** STORY-0001${separator}`,
+      );
+
+      const result = runHelper(BACKLINKER, [scenarios, requirements]);
+
+      expect(result.status).toBe(0);
+      expect(readFileSync(epic, "utf8")).toBe(
+        "## STORY-0001\n- AC-1: observable · scenario:`SCENARIO-0001`",
+      );
+    },
+  );
+
+  it("executes the backlinker through a symlink and stays silent when imported", () => {
+    const root = tempDir("scenario-backlink-direct-entry-");
+    const link = join(root, "backlink-link.mjs");
+    const requirements = join(root, "requirements");
+    const epic = join(requirements, "EPIC-001.md");
+    const scenarios = join(root, "scenarios.md");
+    mkdirSync(requirements);
+    writeFileSync(epic, "## STORY-0001\n- AC-1: observable\n");
+    writeFileSync(scenarios, "## SCENARIO-0001 — Link\n**Owning stories:** STORY-0001\n");
+    symlinkSync(BACKLINKER_PATH, link);
+
+    const linked = spawnSync(process.execPath, [link, scenarios, requirements], {
+      encoding: "utf8",
+    });
+    expect(linked.status).toBe(0);
+    expect(linked.stderr).toBe("");
+    expect(linked.stdout).toContain("OK: 1 AC(s) linked, 0 already linked\n");
+
+    const imported = spawnSync(
+      process.execPath,
+      [
+        "--input-type=module",
+        "--eval",
+        `import ${JSON.stringify(pathToFileURL(BACKLINKER_PATH).href)}`,
+      ],
+      { encoding: "utf8" },
+    );
+    expect(imported.status).toBe(0);
+    expect(imported.stdout).toBe("");
+    expect(imported.stderr).toBe("");
   });
 });
