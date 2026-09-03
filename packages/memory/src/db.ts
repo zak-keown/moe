@@ -684,9 +684,9 @@ function nodeFromRow(row: MemoryNodeRow): MemoryNode {
 }
 
 export function getNode(db: Database.Database, id: string): MemoryNode | null {
-  const row = db
-    .prepare("SELECT * FROM memory_nodes WHERE id = ?")
-    .get(id) as MemoryNodeRow | undefined;
+  const row = db.prepare("SELECT * FROM memory_nodes WHERE id = ?").get(id) as
+    | MemoryNodeRow
+    | undefined;
   return row ? nodeFromRow(row) : null;
 }
 
@@ -778,9 +778,7 @@ export function traceProvenance(
       if (curDepth >= depth) continue;
 
       const edges =
-        direction === "causes"
-          ? getEdgesTo(db, curType, curId)
-          : getEdgesFrom(db, curType, curId);
+        direction === "causes" ? getEdgesTo(db, curType, curId) : getEdgesFrom(db, curType, curId);
 
       for (const edge of edges) {
         if (visited.has(edge.id)) continue;

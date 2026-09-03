@@ -121,7 +121,10 @@ describe("task-set gate verb", () => {
 
     const sidecar = readSidecar(plan);
     expect(sidecar).not.toBeNull();
-    const gates = sidecar!.gates as Record<string, { approved: boolean; approvedAt: string; approvedBy: string }>;
+    const gates = sidecar!.gates as Record<
+      string,
+      { approved: boolean; approvedAt: string; approvedBy: string }
+    >;
     expect(gates["1"]!.approved).toBe(true);
     expect(gates["1"]!.approvedBy).toBe("human");
     expect(typeof gates["1"]!.approvedAt).toBe("string");
@@ -302,7 +305,7 @@ describe("moe-completion-evidence governance spend counter", () => {
   ): { status: number | null; stdout: string; stderr: string } {
     const input = JSON.stringify({ session_id: "gov-session", transcript_path: f.transcript });
     const env: Record<string, string> = {
-      ...process.env as Record<string, string>,
+      ...(process.env as Record<string, string>),
       HOME: f.home,
       USERPROFILE: f.home,
       MOE_EVIDENCE_DISABLED: "",
@@ -375,9 +378,7 @@ describe("moe-completion-evidence governance spend counter", () => {
         type: "assistant",
         message: {
           role: "assistant",
-          content: [
-            { type: "tool_use", id: "t1", name: "Read", input: {} },
-          ],
+          content: [{ type: "tool_use", id: "t1", name: "Read", input: {} }],
         },
       },
     ]);
@@ -404,9 +405,7 @@ describe("moe-completion-evidence governance spend counter", () => {
         type: "assistant",
         message: {
           role: "assistant",
-          content: [
-            { type: "tool_use", id: "t1", name: "Read", input: {} },
-          ],
+          content: [{ type: "tool_use", id: "t1", name: "Read", input: {} }],
         },
       },
     ]);
@@ -441,7 +440,10 @@ describe("moe-completion-evidence governance spend counter", () => {
     expect(result.status).toBe(0);
 
     const sidecar = readSidecar(planPath)!;
-    const spend = sidecar.spend as Record<string, { toolCalls: number; tokenEstimate: number; lastUpdatedAt: string }>;
+    const spend = sidecar.spend as Record<
+      string,
+      { toolCalls: number; tokenEstimate: number; lastUpdatedAt: string }
+    >;
     expect(spend["2"]!.toolCalls).toBe(2);
     expect(spend["2"]!.tokenEstimate).toBe(0);
     expect(typeof spend["2"]!.lastUpdatedAt).toBe("string");

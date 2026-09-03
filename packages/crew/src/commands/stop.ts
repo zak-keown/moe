@@ -1,13 +1,13 @@
 import { dirname } from "node:path";
 import { readRawLines } from "../core/event-log.js";
 import { eventsPath } from "../core/paths.js";
-import { removeWorktree } from "../core/worktree.js";
 import {
   readHarnessMarker,
   readWorktreeMarker,
   removeOrphan,
   removeWorker,
 } from "../core/worker-store.js";
+import { removeWorktree } from "../core/worktree.js";
 import { parseEvent } from "../events.js";
 import type { CommandContext, CommandResult } from "./context.js";
 import { resolveWorker } from "./context.js";

@@ -2,10 +2,10 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { CommandContext } from "../src/commands/context.js";
 import { loadPack, parsePackYaml } from "../src/core/packs.js";
 import { makeTmux } from "../src/core/tmux.js";
 import { getDriver } from "../src/harness/registry.js";
-import type { CommandContext } from "../src/commands/context.js";
 
 function tmpDir(prefix: string): string {
   return mkdtempSync(join(tmpdir(), prefix));
