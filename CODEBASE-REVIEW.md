@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 7
+  fixed: 8
   stale: 0
   skipped: 0
   deferred: 0
-  open: 100
+  open: 99
 ---
 
 # Codebase Review — moe
@@ -2532,6 +2532,10 @@ I verified this is not merely theoretical: `ls -d "$TMPDIR"/moe-flight-runone-*`
 
 Fix: use `makeConfig(projectRoot, { ... })` from `test/qa/helpers/make-config.js` here instead of the hand-rolled `as any` literal, the same fix already applied to the four siblings `make-config.ts` names.
 
+**Disposition:** fixed
+**Commit:** `622a69048914e0f3922cd9442ef04c469a84d2d1`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-089: `resolveRunDir` has no traversal-safety test despite paths.ts's "one and only path-safety guard" framing
 **File:** `packages/flight/test/qa/paths.test.ts`
 **Anchor:** `describe("resolveRunDir", ...)`
