@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 4
+  fixed: 5
   stale: 0
   skipped: 0
   deferred: 0
-  open: 103
+  open: 102
 ---
 
 # Codebase Review — moe
@@ -1042,6 +1042,10 @@ Fix: search from the end of the *previous* match rather than from the start
 of `full_content` each time (e.g. thread an offset through `split_by_heading`
 sections in document order), or match on a longer/more unique substring.
 
+**Disposition:** fixed
+**Commit:** `709635b84e04554768a56f8c22bda5a048c0c806`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-026: Negative-index slice makes the epic-misattribution regression guard vacuous
 **File:** `packages/core/test/iterative-development/test_aggregate_stories.py`
 **Anchor:** `test_dedup_does_not_merge_same_title_across_different_epics`
