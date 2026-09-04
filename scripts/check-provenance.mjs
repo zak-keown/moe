@@ -100,7 +100,14 @@ function countImportedWorks(root, problems) {
 function checkPluginLicenses(root, problems) {
   const pluginsRoot = join(root, "plugins");
   let count = 0;
-  for (const entry of readdirSync(pluginsRoot, { withFileTypes: true })) {
+  let entries;
+  try {
+    entries = readdirSync(pluginsRoot, { withFileTypes: true });
+  } catch (err) {
+    problems.push(`could not read plugins/ directory: ${err.message}`);
+    return count;
+  }
+  for (const entry of entries) {
     if (!entry.isDirectory()) continue;
     count++;
     const dir = join(pluginsRoot, entry.name);
