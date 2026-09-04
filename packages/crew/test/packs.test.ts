@@ -80,6 +80,30 @@ workers:
     expect(workers).toHaveLength(1);
     expect(workers[0]!.namePrefix).toBe("w1");
   });
+
+  it("does not truncate a quoted inline scalar containing ' #' (CR-007)", () => {
+    const yaml = `
+name: hashtag-pack
+description: "Fix issue #20 regression"
+workers:
+  - namePrefix: w1
+    rolePrompt: hello
+`;
+    const result = parsePackYaml(yaml) as Record<string, unknown>;
+    expect(result.description).toBe("Fix issue #20 regression");
+  });
+
+  it("still strips a real unquoted trailing comment (CR-007)", () => {
+    const yaml = `
+name: hashtag-pack
+description: real value # this is a genuine trailing comment
+workers:
+  - namePrefix: w1
+    rolePrompt: hello
+`;
+    const result = parsePackYaml(yaml) as Record<string, unknown>;
+    expect(result.description).toBe("real value");
+  });
 });
 
 describe("loadPack", () => {

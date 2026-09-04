@@ -20,10 +20,17 @@ export function flightPath(projectRoot: string, stateDirName: string, ...sub: st
 
 /**
  * Absolute path to a run's results directory: `<stateDir>/results/<runId>`.
- * The run-id is itself a directory name (`<cardId>_<ts>_<nonce>`).
+ * The run-id is itself a directory name (`<cardId>_<ts>_<nonce>`), but
+ * callers include CLI positionals (`moe-flight qa render <run-id-or-path>`)
+ * — not always a value the process itself generated. Composed through
+ * `resolveInside` (defined below) rather than a bare `join()` so a
+ * traversal-shaped runId (`"../../etc"`) is rejected instead of silently
+ * resolving outside the results root. Throws under the same conditions
+ * `resolveInside` does.
  */
 export function resolveRunDir(projectRoot: string, stateDirName: string, runId: string): string {
-  return flightPath(projectRoot, stateDirName, "results", runId);
+  const resultsRoot = flightPath(projectRoot, stateDirName, "results");
+  return resolveInside(resultsRoot, runId);
 }
 
 // Canonicalize a path to its realpath if it exists; otherwise walk up

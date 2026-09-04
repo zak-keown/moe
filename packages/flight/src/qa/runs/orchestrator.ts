@@ -227,14 +227,30 @@ export async function executeRunCore(opts: ExecuteRunCoreOptions): Promise<Execu
     if (runSetCtx) result.runSet = runSetCtx;
     (opts.writeResultFiles ?? writeResultFiles)(outDir, result);
 
-    await hooks?.beforeClose?.(started);
+    try {
+      await hooks?.beforeClose?.(started);
+    } catch (hookErr) {
+      logger.logRunError({
+        turn: -1,
+        message: hookErr instanceof Error ? hookErr.message : String(hookErr),
+        stack: hookErr instanceof Error ? hookErr.stack : undefined,
+      });
+    }
     try {
       await adapter.close();
     } catch {
       /* swallow */
     }
     detachLogger();
-    await hooks?.afterClose?.(started);
+    try {
+      await hooks?.afterClose?.(started);
+    } catch (hookErr) {
+      logger.logRunError({
+        turn: -1,
+        message: hookErr instanceof Error ? hookErr.message : String(hookErr),
+        stack: hookErr instanceof Error ? hookErr.stack : undefined,
+      });
+    }
 
     return { runId, outDir, result };
   } catch (err) {

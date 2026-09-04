@@ -29,7 +29,18 @@ export async function startFetchServer(
   handler: (req: Request) => Response | Promise<Response>,
 ): Promise<MockServer> {
   const port = await pickFreePort();
-  const server = honoServe({ port, fetch: (req) => handler(req as Request) });
+  // Binding a literal hostname (vs. leaving it undefined) makes Node resolve
+  // it before the listen completes, so — unlike the undefined-host case —
+  // the server is not yet listening when `honoServe` returns. Wait for its
+  // listening callback, the same way `startMockWsServer` below awaits
+  // `server.listen(...)`'s callback, so `stop()` never races a socket that
+  // hasn't bound yet.
+  const server = await new Promise<ReturnType<typeof honoServe>>((resolve) => {
+    const s = honoServe(
+      { port, hostname: "127.0.0.1", fetch: (req) => handler(req as Request) },
+      () => resolve(s),
+    );
+  });
   return {
     port,
     stop: () =>

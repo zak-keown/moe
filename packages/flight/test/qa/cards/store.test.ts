@@ -99,6 +99,24 @@ describe("findCard", () => {
     expect(entry?.filename).toBe("correct.md");
   });
 
+  test("CR-014: a `..`-containing id cannot escape storiesDir via the direct-hit fast path", () => {
+    // A file exists at the project root — outside storiesDir — and is not
+    // valid story-card frontmatter. Before the fix, findCard's direct-hit
+    // fast path built `join(storiesDir, "${id}.md")` with no isSafePath
+    // guard (unlike every other disk-touching route in this package), so
+    // a traversal id resolved outside storiesDir. Hono decodes a
+    // percent-encoded slash inside a single :id route segment, so this id
+    // is reachable from an untrusted route param. The bug is a working
+    // existence oracle (parse-failure throw vs. undefined) for any path
+    // reachable via ".." from storiesDir, and — for a target that both
+    // exists and parses with a matching frontmatter id — read/delete/write
+    // of a file entirely outside the stories directory.
+    writeFileSync(join(projectRoot, "README.md"), "# Not a story card\n");
+
+    expect(() => findCard(projectRoot, ".moe-flight", "../../README")).not.toThrow();
+    expect(findCard(projectRoot, ".moe-flight", "../../README")).toBeUndefined();
+  });
+
   test("fallback scan: malformed sibling doesn't hide a valid match", () => {
     // Direct hit misses (no `target.md`), fallback engages. One file in
     // the scan is broken — it must be skipped, not propagate.

@@ -10,6 +10,30 @@ export interface UseResultsParams {
   cardId?: string | undefined;
 }
 
+export interface LoadMoreState {
+  loading: boolean;
+  offset: number;
+  limit: number;
+  total: number;
+}
+
+/**
+ * Decides what `loadMore` should do next: the offset to fetch, or `null`
+ * to bail out. Guards against two failure modes:
+ *
+ * - A fetch already in flight (`loading`) — `offset` is only updated
+ *   *after* `loadPage`'s `await` resolves, so two calls issued before the
+ *   first resolves would otherwise both read the same stale `offset`,
+ *   compute the same `nextOffset`, and both append the same page.
+ * - No more pages (`offset + limit >= total`).
+ */
+export function computeLoadMoreOffset(state: LoadMoreState): number | null {
+  if (state.loading) return null;
+  const nextOffset = state.offset + state.limit;
+  if (nextOffset >= state.total) return null;
+  return nextOffset;
+}
+
 /**
  * Fetches a page of results from `GET /api/results`. Page-at-a-time: on
  * `loadMore`, the next page is fetched and *appended* to `results`. The
@@ -51,10 +75,10 @@ export function useResults(params?: UseResultsParams) {
   const refresh = useCallback(() => loadPage(0, false), [loadPage]);
 
   const loadMore = useCallback(() => {
-    const nextOffset = offset + limit;
-    if (nextOffset >= total) return;
+    const nextOffset = computeLoadMoreOffset({ loading, offset, limit, total });
+    if (nextOffset === null) return;
     return loadPage(nextOffset, true);
-  }, [loadPage, offset, limit, total]);
+  }, [loadPage, loading, offset, limit, total]);
 
   useEffect(() => {
     refresh();

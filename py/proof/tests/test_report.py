@@ -115,6 +115,25 @@ def test_metrics_aggregation_numbers_and_booleans(invoke, make_eval):
     assert "- status_correct: 50%" in result.output  # booleans as rates
 
 
+def test_non_numeric_metric_does_not_crash_report(invoke, make_eval):
+    # CR-067: normalize_check_info only requires metrics to be a dict, not
+    # that its values are number|bool, so a bad metric value can land in
+    # grade.yaml (written by a checker version that has since changed -
+    # report runs over Grades that may be weeks old). render_model_blocks
+    # then blindly did float(v) on every non-bool metric value, so one
+    # stale/bad metric crashed reporting for every other row too.
+    eval_dir, grader_doc = reported_eval(make_eval)
+    runs_root = eval_dir / "runs"
+    write_grade(
+        write_run(runs_root),
+        grader_doc,
+        score=1.0,
+        checks=[{"checker": "c", "ok": True, "metrics": {"weird": "not-a-number"}}],
+    )
+    result = invoke("report", eval_dir)
+    assert "- weird:" in result.output
+
+
 def test_by_task_breakdown(invoke, make_eval):
     eval_dir, grader_doc = reported_eval(make_eval)
     runs_root = eval_dir / "runs"

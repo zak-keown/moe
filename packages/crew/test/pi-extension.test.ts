@@ -1,6 +1,6 @@
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import type {
   AgentEndEvent,
   ExtensionContext,
@@ -297,6 +297,39 @@ describe("moe-crew pi extension — env contract", () => {
     const pi = register(dir, "other-name");
     pi.fire("session_start", SESSION_START, fakeCtx({}));
     expect(readMeta(dir, SID)?.tmux_name).toBe("other-name");
+  });
+});
+
+describe("moe-crew pi extension — session id path safety (CR-029)", () => {
+  it("does not self-register a meta file outside the worker dir for a path-traversal session id", () => {
+    const dir = tmpDir();
+    // A separate, real, EXISTING directory outside `dir` that the traversal
+    // targets — computed relative to `dir` so this doesn't depend on how
+    // deep the platform's tmpdir happens to nest `dir` (the write would only
+    // reach here, and only silently succeed instead of ENOENT-ing into the
+    // best-effort catch, if the traversal target's parent already exists).
+    const outsideTarget = tmpDir();
+    const evilSid = join(relative(dir, outsideTarget), "pwned");
+
+    const pi = register(dir);
+    expect(() => pi.fire("session_start", SESSION_START, fakeCtx({ sid: evilSid }))).not.toThrow();
+
+    expect(existsSync(join(outsideTarget, "pwned.meta"))).toBe(false);
+    expect(existsSync(metaPath(dir, evilSid))).toBe(false);
+    // No legitimate meta/event was recorded for the rejected id either.
+    expect(readMeta(dir, evilSid)).toBeNull();
+  });
+
+  it("does not throw when a path-traversal session id's parent dir does not exist", () => {
+    // The whole function is wrapped in try/catch ("BEST-EFFORT / NEVER
+    // THROW"), so this can't crash pi even before the fix — but it should
+    // no-op via the safe-segment check, not rely on the catch to paper over
+    // an attempted out-of-bounds write.
+    const dir = tmpDir();
+    const pi = register(dir);
+    expect(() =>
+      pi.fire("session_start", SESSION_START, fakeCtx({ sid: "no/such/parent/dir/pwned" })),
+    ).not.toThrow();
   });
 });
 

@@ -153,7 +153,12 @@ async function runLoop(args: {
         });
         resultsByRunId.set(runEntry.runId, ret.result);
         writer.recordRunEnd(runEntry.runId, ret.result.status);
-      } catch (_e) {
+      } catch (e) {
+        // The executor threw before producing a result — record the run as
+        // errored, but don't let the exception vanish. Without this, an
+        // errored run in set.json carries zero information about why: no
+        // message, no stack, nothing on stdout/stderr either.
+        console.error(`runRunSet: executor failed for run ${runEntry.runId}:`, e);
         writer.recordRunEnd(runEntry.runId, "errored");
       }
     }

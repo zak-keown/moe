@@ -2,6 +2,8 @@
 
 from datetime import datetime, timezone
 
+import yaml
+
 import moe_proof.cli
 from conftest import read_yaml, run_dirs
 
@@ -44,6 +46,20 @@ printf '%s\\n' "$MOE_PROOF_TASK"
     invoke("run", eval_dir)
     output = (run_dirs(eval_dir)[0] / "output.txt").read_text()
     assert output == "unset\nabc\ndata-task\n"
+
+
+def test_run_stringifies_non_string_prompt(invoke, make_eval):
+    # CR-065: every other per-task/check scalar destined for the subprocess
+    # env is routed through scalar_env_vars, which stringifies scalars
+    # before merging them in. `prompt` was the one exception - written
+    # straight into the env dict - so an easy authoring mistake (an
+    # unquoted numeric scalar, e.g. `prompt: 42`) crashed deep in
+    # subprocess.run with a raw TypeError instead of behaving like every
+    # other scalar value.
+    eval_dir = make_eval(tasks={"first": {"prompt": 42}})
+    invoke("run", eval_dir)
+    output = (run_dirs(eval_dir)[0] / "output.txt").read_text()
+    assert "42" in output
 
 
 def test_stderr_captured_when_present(invoke, make_eval):
@@ -104,6 +120,34 @@ def test_runner_must_be_executable(invoke, make_eval):
     (eval_dir / "run-llm").write_text("#!/bin/sh\necho hi\n")  # not chmod +x
     result = invoke("run", eval_dir, expect_exit=1)
     assert "is not an executable file" in result.output
+
+
+def test_task_missing_name_errors_cleanly(invoke, make_eval):
+    # CR-068: run indexed task["name"] directly - remaining[(task["name"],
+    # model)] - before a single Runner ran, assuming every task doc has a
+    # "name" key. A hand-written task YAML that omits it (plausible: eval
+    # names are forgiving elsewhere - .get("name") or eval_path.name) must
+    # fail with a click.ClickException naming the file, like every other
+    # validation in this module, not a raw KeyError.
+    eval_dir = make_eval()
+    (eval_dir / "tasks" / "first.yaml").write_text(yaml.safe_dump({"prompt": "hi"}))
+    result = invoke("run", eval_dir, expect_exit=1)
+    assert "first.yaml" in result.output
+    assert "name" in result.output
+    assert not (eval_dir / "runs").exists()
+
+
+def test_config_missing_runner_or_model_errors_cleanly(invoke, make_eval):
+    # CR-068: run also indexed config["runner"] and config["model"]
+    # directly, with the same raw-KeyError failure mode on a config YAML
+    # that omits either.
+    eval_dir = make_eval()
+    (eval_dir / "configs" / "default.yaml").write_text(
+        yaml.safe_dump({"name": "default"})
+    )
+    result = invoke("run", eval_dir, expect_exit=1)
+    assert "default.yaml" in result.output
+    assert not (eval_dir / "runs").exists()
 
 
 def test_not_an_eval_error(invoke, tmp_path):

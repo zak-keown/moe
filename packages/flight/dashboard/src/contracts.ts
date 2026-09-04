@@ -142,10 +142,23 @@ export function cellKey(scenario: string, agent: string, credential: string, os:
   return `${scenario}\t${agent}\t${credential}\t${os}`;
 }
 
+// Percent-encode the "-" join delimiter (and any literal "%" first, so an
+// already-encoded "%2D" in the input can't be mistaken for one we produced)
+// inside a single identity segment. Applied before joining segments with "-"
+// in cellId, this guarantees no segment can ever contribute an unescaped "-"
+// to the joined string, so the join is unambiguous and reversible.
+function encodeIdSegment(segment: string): string {
+  return segment.replace(/%/g, "%25").replace(/-/g, "%2D");
+}
+
 // The DOM id / SSE event name for a cell. Both the `id` and `sse-swap`
-// attributes equal this; cell events are addressed to it.
+// attributes equal this; cell events are addressed to it. Each segment is
+// percent-encoded (see encodeIdSegment) before joining with "-" so two
+// distinct (scenario, agent, credential, os) tuples can never collide on the
+// same id merely because a name (e.g. "claude-opus-4") itself contains a
+// hyphen.
 export function cellId(scenario: string, agent: string, credential: string, os: string): string {
-  return `cell-${scenario}-${agent}-${credential}-${os}`;
+  return `cell-${[scenario, agent, credential, os].map(encodeIdSegment).join("-")}`;
 }
 
 // One verdict ribbon slot: a kind plus a normalized cost-bar height (0..1).

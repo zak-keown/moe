@@ -267,8 +267,15 @@ function peekNonBlank(lines: string[], start: number): number | null {
 
 /** Parse a scalar value: booleans, numbers, null, or strings (with optional quotes). */
 function parseScalar(raw: string): string | number | boolean | null {
-  // Remove inline comment.
-  const stripped = raw.replace(/\s+#.*$/, "").trim();
+  const trimmedRaw = raw.trim();
+  // A quoted value owns everything between its matching quotes, `#` included —
+  // do not comment-strip inside it. Only strip an inline comment ahead of a
+  // quote-aware check, so `"Fix issue #20"` isn't truncated at the `#`.
+  const isQuoted =
+    (trimmedRaw.startsWith('"') && trimmedRaw.endsWith('"') && trimmedRaw.length >= 2) ||
+    (trimmedRaw.startsWith("'") && trimmedRaw.endsWith("'") && trimmedRaw.length >= 2);
+  // Remove inline comment (but not one that lives inside a quoted value).
+  const stripped = isQuoted ? trimmedRaw : raw.replace(/\s+#.*$/, "").trim();
   if (stripped === "true" || stripped === "True" || stripped === "TRUE") return true;
   if (stripped === "false" || stripped === "False" || stripped === "FALSE") return false;
   if (stripped === "null" || stripped === "Null" || stripped === "NULL" || stripped === "~")

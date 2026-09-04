@@ -9,7 +9,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   eventsPath,
   harnessMarkerPath,
@@ -29,6 +29,15 @@ import {
   writeMeta,
   writeShim,
 } from "../src/core/worker-store.js";
+
+// mkdirSync is wrapped (default behavior unchanged) so the CR-028 TOCTOU test
+// below can override its behavior for exactly one call to model an attacker
+// winning the create-path race, without touching every other test's use of
+// the real filesystem.
+vi.mock("node:fs", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs")>();
+  return { ...actual, mkdirSync: vi.fn(actual.mkdirSync) };
+});
 
 function tmpDir(): string {
   return mkdtempSync(join(tmpdir(), "moe-crew-store-"));
@@ -257,6 +266,30 @@ describe("ensureOwnedDir (CR-019/CR-021)", () => {
     const dir = join(parent, "workers");
     writeFileSync(dir, "not a directory");
     expect(() => ensureOwnedDir(dir)).toThrow(/not a real directory/);
+  });
+
+  it("refuses a symlink planted between the ENOENT check and mkdirSync (CR-028 TOCTOU)", () => {
+    // ensureOwnedDir's create-path only re-verifies the pre-existing-path
+    // branch; when `dir` does not exist yet, it calls mkdirSync(dir,
+    // {recursive:true}) and trusts it unconditionally. mkdirSync's recursive
+    // mode does not throw when the target already resolves to a directory
+    // (a symlink included), so an attacker who plants a symlink to their own
+    // directory in the window between the lstatSync ENOENT and this
+    // mkdirSync call would make it return normally without ever creating a
+    // fresh, private, owned directory. Two real OS processes can't be raced
+    // deterministically in a unit test, so model the outcome directly: make
+    // mkdirSync itself plant the attacker's symlink, exactly what it would
+    // observe if the race had already been won by the time it ran.
+    const parent = tmpDir();
+    const attackerOwned = tmpDir();
+    const dir = join(parent, "workers");
+
+    vi.mocked(mkdirSync).mockImplementationOnce(((target: unknown) => {
+      symlinkSync(attackerOwned, target as string);
+      return undefined;
+    }) as typeof mkdirSync);
+
+    expect(() => ensureOwnedDir(dir)).toThrow(/not a real directory|not owned/);
   });
 });
 

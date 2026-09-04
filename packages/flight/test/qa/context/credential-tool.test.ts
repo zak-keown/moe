@@ -348,4 +348,41 @@ describe("buildFetchCredentialTool", () => {
       expect((result as { transcriptText?: string }).transcriptText).toBeUndefined();
     });
   });
+
+  // CR-015: the nonzero_exit failure path put result.stderr straight into
+  // `text` with no transcriptText override, so EvidenceLogger.logToolResult
+  // (which substitutes transcriptText for text before writing the row)
+  // always persisted the resolver's raw stderr to run.jsonl — even when the
+  // operator explicitly set includeInTranscripts: false. A resolver script
+  // that echoes diagnostic context to stderr before failing (an HTTP
+  // response body, a partially-fetched OTP, an upstream auth token) would
+  // land unredacted in the durable evidence file regardless of the
+  // operator's opt-out.
+  test("CR-015: nonzero exit redacts stderr from transcriptText by default", async () => {
+    await withPopulatedContextRoot(async (root) => {
+      const tool = buildFetchCredentialTool(root, cfg(FAIL))!;
+      const result = await tool.execute({ entity: "alice", key: "pin" });
+      // The agent's live context still needs the real stderr to reason
+      // about the failure.
+      expect(result.text).toContain("no credential 'pin' for entity 'alice'");
+      // But nothing persisted to run.jsonl may carry it.
+      const transcriptText = (result as { transcriptText?: string }).transcriptText;
+      expect(transcriptText).toBeDefined();
+      expect(transcriptText).not.toContain("no credential 'pin' for entity 'alice'");
+    });
+  });
+
+  test("CR-015: nonzero exit includes raw stderr in transcriptText when includeInTranscripts is true", async () => {
+    await withPopulatedContextRoot(async (root) => {
+      const reveal: CredentialResolverConfig = {
+        path: FAIL,
+        timeoutMs: 5_000,
+        includeInTranscripts: true,
+      };
+      const tool = buildFetchCredentialTool(root, reveal)!;
+      const result = await tool.execute({ entity: "alice", key: "pin" });
+      expect(result.text).toContain("no credential 'pin' for entity 'alice'");
+      expect((result as { transcriptText?: string }).transcriptText).toBeUndefined();
+    });
+  });
 });

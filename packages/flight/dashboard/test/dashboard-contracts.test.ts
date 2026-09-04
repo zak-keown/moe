@@ -65,3 +65,19 @@ test("cellKey + cellId form the composite key and DOM id", () => {
   expect(cellKey("s", "claude", "opus", "linux")).toBe("s\tclaude\topus\tlinux");
   expect(cellId("s", "claude", "opus", "linux")).toBe("cell-s-claude-opus-linux");
 });
+
+// CR-009: cellId hyphen-joins scenario/agent/credential/os with no escaping,
+// so an ambiguous segment boundary lets two distinct 4-tuples collide on the
+// same DOM id / SSE event name. Hyphenated agent names (claude-opus-4,
+// gpt-4o-mini) are the norm, not an edge case.
+test("cellId does not collide when a segment boundary is ambiguous", () => {
+  const a = cellId("foo", "bar-baz", "", "linux");
+  const b = cellId("foo-bar", "baz", "", "linux");
+  expect(a).not.toBe(b);
+});
+
+test("cellId does not collide across the hyphenated-agent-name repro from CR-010", () => {
+  const a = cellId("signup", "claude-opus-4", "default", "linux");
+  const b = cellId("signup-claude", "opus-4", "default", "linux");
+  expect(a).not.toBe(b);
+});
