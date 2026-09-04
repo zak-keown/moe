@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 1
+  fixed: 2
   stale: 1
   skipped: 0
   deferred: 0
-  open: 105
+  open: 104
 ---
 
 # Codebase Review — moe
@@ -1200,6 +1200,10 @@ and/or tighten `PhaseJsonSchema`'s `pid` to `z.number().int().positive()` so
 a schema-invalid phase.json degrades to "no live phase" instead of parsing
 into a value that later reads as immortal.
 
+**Disposition:** fixed
+**Commit:** `864a47110997ceddf502f4eac0e6fadaeae197c6`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-031: `driftFlag`/`cardView` can label a stale run as "latest" when the true latest run's cost is unpriced
 
 **File:** `packages/flight/dashboard/src/view.ts`
