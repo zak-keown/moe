@@ -190,6 +190,33 @@ function textResult(text: string) {
   return { content: [{ type: "text" as const, text }] };
 }
 
+/** The closed set of `SourceType` values (types.ts), duplicated at runtime. */
+const SOURCE_TYPES = ["exchange", "journal", "decision", "finding", "moedex_symbol"] as const;
+
+/**
+ * CR-057: split a model-supplied `type:id` string and validate the `type`
+ * half against the declared `SourceType` enum. `link_memories`/
+ * `trace_provenance` previously only checked that a colon was present, then
+ * did `... as SourceType` — a compile-time-only cast that let a hallucinated
+ * or typo'd type (e.g. "anything:123") through to `insertEdge`, silently
+ * corrupting the graph despite the tool's own `inputSchema` description
+ * advertising a closed set of types.
+ */
+function parseTypeId(value: string, label: string): { type: SourceType; id: string } {
+  const colonIdx = value.indexOf(":");
+  if (colonIdx < 1) {
+    throw new Error(`Invalid ${label} format: expected type:id, got "${value}"`);
+  }
+  const type = value.slice(0, colonIdx);
+  const id = value.slice(colonIdx + 1);
+  if (!(SOURCE_TYPES as readonly string[]).includes(type)) {
+    throw new Error(
+      `Invalid ${label} type "${type}": expected one of ${SOURCE_TYPES.join(", ")}`,
+    );
+  }
+  return { type: type as SourceType, id };
+}
+
 function isUnderRoot(candidate: string, root: string): boolean {
   return candidate === root || candidate.startsWith(root + path.sep);
 }
@@ -784,17 +811,8 @@ export function createMemoryMcpServer(options: MemoryServerOptions = {}): Server
       if (name === "link_memories") {
         const params = LinkMemoriesInputSchema.parse(args);
 
-        const sourceColon = params.source.indexOf(":");
-        const targetColon = params.target.indexOf(":");
-        if (sourceColon < 1)
-          throw new Error(`Invalid source format: expected type:id, got "${params.source}"`);
-        if (targetColon < 1)
-          throw new Error(`Invalid target format: expected type:id, got "${params.target}"`);
-
-        const sourceType = params.source.slice(0, sourceColon) as SourceType;
-        const sourceId = params.source.slice(sourceColon + 1);
-        const targetType = params.target.slice(0, targetColon) as SourceType;
-        const targetId = params.target.slice(targetColon + 1);
+        const { type: sourceType, id: sourceId } = parseTypeId(params.source, "source");
+        const { type: targetType, id: targetId } = parseTypeId(params.target, "target");
 
         const edgeId = crypto.randomUUID();
         const edge: MemoryEdge = {
@@ -824,12 +842,7 @@ export function createMemoryMcpServer(options: MemoryServerOptions = {}): Server
       if (name === "trace_provenance") {
         const params = TraceProvenanceInputSchema.parse(args);
 
-        const colonIdx = params.id.indexOf(":");
-        if (colonIdx < 1)
-          throw new Error(`Invalid id format: expected type:id, got "${params.id}"`);
-
-        const recordType = params.id.slice(0, colonIdx);
-        const recordId = params.id.slice(colonIdx + 1);
+        const { type: recordType, id: recordId } = parseTypeId(params.id, "id");
 
         const db = initDatabase();
         try {
