@@ -29,7 +29,12 @@ for (const f of readdirSync(staging).filter((n) => n.endsWith(".json")).sort()) 
   docTypes.push(type);
   const items = JSON.parse(readFileSync(join(staging, f), "utf8"));
   for (const item of items) {
-    allFindings.push({ ...item, docType: type });
+    // Normalize casing so a producer emitting e.g. "Critical" is grouped
+    // and rendered the same as "critical" — a finding assigned an id and
+    // counted in the total must not silently disappear from the body
+    // because its severity was spelled with different casing.
+    const severity = typeof item.severity === "string" ? item.severity.toLowerCase() : item.severity;
+    allFindings.push({ ...item, severity, docType: type });
   }
 }
 
