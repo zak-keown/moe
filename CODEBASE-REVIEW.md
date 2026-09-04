@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 10
+  fixed: 11
   stale: 0
   skipped: 0
   deferred: 0
-  open: 97
+  open: 96
 ---
 
 # Codebase Review — moe
@@ -2906,6 +2906,10 @@ Fix: resolve the joined path and assert `is_relative_to(grade_dir)` /
 `is_relative_to(run_dir)` before use, or reject `check["file"]` values that
 are absolute or contain `..` segments.
 
+**Disposition:** fixed
+**Commit:** `2e753b6bc1adcbfd2af94f8f455f7fd9399f08eb`
+**Resolved:** 2026-09-04
+**Note:** —
 ## Checked and found sound
 
 - `bin/moe.js`'s `resolve()` — sibling → PATH → workspace-fallback precedence,
