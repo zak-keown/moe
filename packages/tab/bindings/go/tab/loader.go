@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"unsafe"
 
@@ -131,7 +132,7 @@ func extractEmbedded(b []byte, ext, base string) (string, error) {
 			return target, nil
 		}
 	}
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := mkdirAllUnder(base, dir); err != nil {
 		return "", err
 	}
 	tmp, err := os.CreateTemp(dir, "lib-*") // unique name per writer
@@ -158,6 +159,62 @@ func extractEmbedded(b []byte, ext, base string) (string, error) {
 		return "", err
 	}
 	return target, nil
+}
+
+// mkdirAllUnder creates dir (a descendant of base) level by level, refusing
+// to create through or resolve any symlinked intermediate component.
+//
+// Unlike os.MkdirAll — which, like the underlying mkdir(2)/stat(2) syscalls,
+// follows symlinks in every intermediate path component — this stops a
+// co-tenant on a shared host from pre-planting a symlink at an ancestor
+// (e.g. base/moe) to silently redirect the whole cache, and the dlopen that
+// follows extraction, into a directory they control (CR-021). base itself
+// is trusted as-is (it comes from os.UserCacheDir()/os.TempDir()); only the
+// components this package creates underneath it are checked.
+func mkdirAllUnder(base, dir string) error {
+	rel, err := filepath.Rel(base, dir)
+	if err != nil {
+		return err
+	}
+	if rel == "." {
+		return nil
+	}
+	cur := base
+	for _, part := range strings.Split(rel, string(filepath.Separator)) {
+		cur = filepath.Join(cur, part)
+		if err := mkdirNoFollow(cur); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// mkdirNoFollow creates p if nothing exists there yet, or verifies that
+// whatever already exists at p is a real directory — not a symlink — before
+// treating it as safe to write under or descend into.
+func mkdirNoFollow(p string) error {
+	fi, err := os.Lstat(p)
+	if err == nil {
+		if fi.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("moe-tab: refusing cache path %s: it is a symlink, possibly planted by another user", p)
+		}
+		if !fi.IsDir() {
+			return fmt.Errorf("moe-tab: refusing cache path %s: not a directory", p)
+		}
+		return nil
+	}
+	if !os.IsNotExist(err) {
+		return err
+	}
+	if err := os.Mkdir(p, 0o755); err != nil {
+		if os.IsExist(err) {
+			// A concurrent creator won the race; re-check what's there now
+			// rather than assuming our own benign Mkdir call lost the race.
+			return mkdirNoFollow(p)
+		}
+		return err
+	}
+	return nil
 }
 
 func fileExists(p string) bool {
