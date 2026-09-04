@@ -23,12 +23,15 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    container: node:24
+    container:
+      image: node:24
+      options: --init
     environment: release
     steps:
       - uses: actions/checkout@v4
       - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - run: corepack enable
+      - run: apt-get update -qq && apt-get install -y -qq --no-install-recommends jq lsof
       - uses: actions/cache@v4
         with:
           path: .pnpm-store
