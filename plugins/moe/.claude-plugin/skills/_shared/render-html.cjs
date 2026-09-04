@@ -25,7 +25,25 @@ const path = require("node:path");
 
 const SLOTS = /** @type {const} */ (["TITLE", "NAV", "CONTENT", "SCRIPTS"]);
 const REQUIRED = new Set(["TITLE", "CONTENT"]);
+// NAV, CONTENT and SCRIPTS are documented to carry raw HTML/JS (a report's
+// nav is literal `<a href="#...">` markup — see
+// skills/improve-codebase-architecture/HTML-REPORT.md's sample data.json)
+// and must render unescaped. TITLE is the one slot documented as plain text
+// (e.g. a report name derived from a directory or file name) and sits
+// inside <title>...</title>, so an unescaped value there could break out of
+// the element and inject a live tag.
+const ESCAPE_SLOTS = new Set(["TITLE"]);
 const SENTINELS = Object.fromEntries(SLOTS.map((slot) => [slot, `<!-- MOE:SLOT:${slot} -->`]));
+
+const HTML_ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+
+/**
+ * @param {string} value
+ * @returns {string}
+ */
+function escapeHtml(value) {
+  return value.replace(/[&<>"']/g, (ch) => HTML_ESCAPES[ch]);
+}
 
 /**
  * Replace parser-safe HTML comment sentinels in the template with values from `data`.
@@ -47,7 +65,8 @@ function renderTemplate(template, data) {
       }
       html = html.replaceAll(SENTINELS[slot], "");
     } else {
-      html = html.replaceAll(SENTINELS[slot], String(value));
+      const rendered = ESCAPE_SLOTS.has(slot) ? escapeHtml(String(value)) : String(value);
+      html = html.replaceAll(SENTINELS[slot], rendered);
     }
   }
   return html;

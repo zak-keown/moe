@@ -276,8 +276,14 @@ function attachChromeProcess({ state, chromeHttp, getTabs, newTab }) {
     } else if (state.activePort) {
       // We didn't launch this Chrome (or already dropped the handle), but we
       // know the port. Kill whoever holds it so showBrowser/hideBrowser can
-      // restart cleanly in the target mode.
-      pidToKill = findPidOnPort(state.activePort);
+      // restart cleanly in the target mode — but only after verifying that
+      // pid actually looks like our Chrome (CR-047). Without this check, a
+      // foreign process that grabbed the port after Chrome exited without
+      // updating meta.json would be SIGTERMed unverified.
+      const candidatePid = findPidOnPort(state.activePort);
+      if (candidatePid && (await isPortAlive(CHROME_DEBUG_HOST, state.activePort, candidatePid))) {
+        pidToKill = candidatePid;
+      }
     }
 
     if (pidToKill === null) {

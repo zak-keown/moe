@@ -54,14 +54,27 @@ def split_by_heading(content: str, level: int) -> list[dict]:
     return sections
 
 
-def find_line_range(full_content: str, section_content: str) -> tuple[int, int]:
-    """Find the start and end line numbers of section_content within full_content."""
-    pos = full_content.find(section_content[:80])
+def find_line_range(
+    full_content: str, section_content: str, search_from: int = 0
+) -> tuple[int, int, int]:
+    """Find the start and end line numbers of section_content within
+    full_content, searching from search_from onward.
+
+    Sections are always visited in document order, so searching forward
+    from where the previous match ended (rather than always from the start
+    of full_content) keeps sections with duplicate heading text and shared
+    opening content attributed to their own occurrence instead of every
+    one after the first resolving to the first match found.
+
+    Returns (start_line, end_line, next_search_from) — pass next_search_from
+    as search_from on the next call to keep searching forward.
+    """
+    pos = full_content.find(section_content[:80], search_from)
     if pos == -1:
-        return 1, full_content.count("\n") + 1
+        return 1, full_content.count("\n") + 1, search_from
     start_line = full_content[:pos].count("\n") + 1
     end_line = start_line + section_content.count("\n")
-    return start_line, end_line
+    return start_line, end_line, pos + len(section_content[:80])
 
 
 def chunk_file(path: Path, max_tokens: int) -> list[dict]:
@@ -83,9 +96,16 @@ def chunk_file(path: Path, max_tokens: int) -> list[dict]:
     sections = split_by_heading(content, level=2)
     chunks: list[dict] = []
 
+    # Sections (and their ### subsections) are visited in document order, so
+    # a single cursor threaded through every find_line_range call — never
+    # reset back to the start of content — keeps each occurrence attributed
+    # to its own line range instead of every one after the first resolving
+    # to whichever occurrence happens to come first in the document.
+    search_from = 0
+
     for section in sections:
         sec_tokens = estimate_tokens(section["content"])
-        start_line, end_line = find_line_range(content, section["content"])
+        start_line, end_line, search_from = find_line_range(content, section["content"], search_from)
 
         if sec_tokens <= max_tokens:
             chunks.append({
@@ -101,7 +121,7 @@ def chunk_file(path: Path, max_tokens: int) -> list[dict]:
             subsections = split_by_heading(section["content"], level=3)
             for subsec in subsections:
                 sub_tokens = estimate_tokens(subsec["content"])
-                sub_start, sub_end = find_line_range(content, subsec["content"])
+                sub_start, sub_end, search_from = find_line_range(content, subsec["content"], search_from)
                 heading = section["heading"]
                 if subsec["heading"] and subsec["heading"] != "(preamble)":
                     heading = f"{heading} > {subsec['heading']}"

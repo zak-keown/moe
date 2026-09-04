@@ -50,8 +50,8 @@
     },
     {
       "path": ".claude-plugin/skills/_shared/render-html.cjs",
-      "size": 4120,
-      "sha256": "cac63db8259737c72c45db3ff6e538d297a58bae9df224c7cc14fdb3fc877fd6",
+      "size": 4955,
+      "sha256": "0c7e8fc4412578b1874982d7167354eaa60dad8f655225a55c99d99831e94247",
       "mode": "0644"
     },
     {
@@ -296,8 +296,8 @@
     },
     {
       "path": ".claude-plugin/skills/docs-update/scripts/docs-verify-report.mjs",
-      "size": 2794,
-      "sha256": "384945326ef1e07dabf3379daf881aa99516d0b890749026d841790b020af7bc",
+      "size": 3131,
+      "sha256": "cada3225fe4aac51c1b377fc22d762ae5b3a6bc3a65d5381eff8d385b9f9f588",
       "mode": "0644"
     },
     {
@@ -338,8 +338,8 @@
     },
     {
       "path": ".claude-plugin/skills/extracting-requirements/scripts/aggregate_scenarios.py",
-      "size": 7600,
-      "sha256": "5acca69a6be897ada1d8f253d301d2516fc7c9c17dc0a265aef4868ebcc4dc88",
+      "size": 8200,
+      "sha256": "2755d338617718aa9b290fd8646cbcad7f489fdbcdcee1243390d94388b7b56e",
       "mode": "0644"
     },
     {
@@ -356,8 +356,8 @@
     },
     {
       "path": ".claude-plugin/skills/extracting-requirements/scripts/chunk_spec.py",
-      "size": 5008,
-      "sha256": "ad3eba0daebb875bc684cd04b21eb61f990ad75c1508e65c39cf1c1ff834ab7d",
+      "size": 6090,
+      "sha256": "b18ac63013e4c24990843e4e7571204567e50f675ad90755541604e93d502fda",
       "mode": "0755"
     },
     {
@@ -422,8 +422,8 @@
     },
     {
       "path": ".claude-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs",
-      "size": 2932,
-      "sha256": "c409ad442d0afe072940e1c160094a81de035d06504b5c68e5d556af561f9886",
+      "size": 3925,
+      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
       "mode": "0755"
     },
     {
@@ -566,8 +566,8 @@
     },
     {
       "path": ".claude-plugin/skills/reviewing-a-codebase/scripts/review-report.mjs",
-      "size": 2746,
-      "sha256": "85d9f3ec8ac91084a6fe4741afa7192a0440041c7508e003d61ee36cfc4c204b",
+      "size": 3101,
+      "sha256": "e8afdc2e82ca911978addb841d6709ce81a401d3f4cd70c074778a67cd1bf560",
       "mode": "0644"
     },
     {
@@ -1058,8 +1058,8 @@
     },
     {
       "path": ".codex-plugin/skills/_shared/render-html.cjs",
-      "size": 4120,
-      "sha256": "cac63db8259737c72c45db3ff6e538d297a58bae9df224c7cc14fdb3fc877fd6",
+      "size": 4955,
+      "sha256": "0c7e8fc4412578b1874982d7167354eaa60dad8f655225a55c99d99831e94247",
       "mode": "0644"
     },
     {
@@ -1304,8 +1304,8 @@
     },
     {
       "path": ".codex-plugin/skills/docs-update/scripts/docs-verify-report.mjs",
-      "size": 2794,
-      "sha256": "384945326ef1e07dabf3379daf881aa99516d0b890749026d841790b020af7bc",
+      "size": 3131,
+      "sha256": "cada3225fe4aac51c1b377fc22d762ae5b3a6bc3a65d5381eff8d385b9f9f588",
       "mode": "0644"
     },
     {
@@ -1346,8 +1346,8 @@
     },
     {
       "path": ".codex-plugin/skills/extracting-requirements/scripts/aggregate_scenarios.py",
-      "size": 7600,
-      "sha256": "5acca69a6be897ada1d8f253d301d2516fc7c9c17dc0a265aef4868ebcc4dc88",
+      "size": 8200,
+      "sha256": "2755d338617718aa9b290fd8646cbcad7f489fdbcdcee1243390d94388b7b56e",
       "mode": "0644"
     },
     {
@@ -1364,8 +1364,8 @@
     },
     {
       "path": ".codex-plugin/skills/extracting-requirements/scripts/chunk_spec.py",
-      "size": 5008,
-      "sha256": "ad3eba0daebb875bc684cd04b21eb61f990ad75c1508e65c39cf1c1ff834ab7d",
+      "size": 6090,
+      "sha256": "b18ac63013e4c24990843e4e7571204567e50f675ad90755541604e93d502fda",
       "mode": "0755"
     },
     {
@@ -1430,8 +1430,8 @@
     },
     {
       "path": ".codex-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs",
-      "size": 2932,
-      "sha256": "c409ad442d0afe072940e1c160094a81de035d06504b5c68e5d556af561f9886",
+      "size": 3925,
+      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
       "mode": "0755"
     },
     {
@@ -1574,8 +1574,8 @@
     },
     {
       "path": ".codex-plugin/skills/reviewing-a-codebase/scripts/review-report.mjs",
-      "size": 2746,
-      "sha256": "85d9f3ec8ac91084a6fe4741afa7192a0440041c7508e003d61ee36cfc4c204b",
+      "size": 3101,
+      "sha256": "e8afdc2e82ca911978addb841d6709ce81a401d3f4cd70c074778a67cd1bf560",
       "mode": "0644"
     },
     {
@@ -2090,8 +2090,8 @@
     },
     {
       "path": ".cursor-plugin/skills/_shared/render-html.cjs",
-      "size": 4120,
-      "sha256": "cac63db8259737c72c45db3ff6e538d297a58bae9df224c7cc14fdb3fc877fd6",
+      "size": 4955,
+      "sha256": "0c7e8fc4412578b1874982d7167354eaa60dad8f655225a55c99d99831e94247",
       "mode": "0644"
     },
     {
@@ -2336,8 +2336,8 @@
     },
     {
       "path": ".cursor-plugin/skills/docs-update/scripts/docs-verify-report.mjs",
-      "size": 2794,
-      "sha256": "384945326ef1e07dabf3379daf881aa99516d0b890749026d841790b020af7bc",
+      "size": 3131,
+      "sha256": "cada3225fe4aac51c1b377fc22d762ae5b3a6bc3a65d5381eff8d385b9f9f588",
       "mode": "0644"
     },
     {
@@ -2378,8 +2378,8 @@
     },
     {
       "path": ".cursor-plugin/skills/extracting-requirements/scripts/aggregate_scenarios.py",
-      "size": 7600,
-      "sha256": "5acca69a6be897ada1d8f253d301d2516fc7c9c17dc0a265aef4868ebcc4dc88",
+      "size": 8200,
+      "sha256": "2755d338617718aa9b290fd8646cbcad7f489fdbcdcee1243390d94388b7b56e",
       "mode": "0644"
     },
     {
@@ -2396,8 +2396,8 @@
     },
     {
       "path": ".cursor-plugin/skills/extracting-requirements/scripts/chunk_spec.py",
-      "size": 5008,
-      "sha256": "ad3eba0daebb875bc684cd04b21eb61f990ad75c1508e65c39cf1c1ff834ab7d",
+      "size": 6090,
+      "sha256": "b18ac63013e4c24990843e4e7571204567e50f675ad90755541604e93d502fda",
       "mode": "0755"
     },
     {
@@ -2462,8 +2462,8 @@
     },
     {
       "path": ".cursor-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs",
-      "size": 2932,
-      "sha256": "c409ad442d0afe072940e1c160094a81de035d06504b5c68e5d556af561f9886",
+      "size": 3925,
+      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
       "mode": "0755"
     },
     {
@@ -2606,8 +2606,8 @@
     },
     {
       "path": ".cursor-plugin/skills/reviewing-a-codebase/scripts/review-report.mjs",
-      "size": 2746,
-      "sha256": "85d9f3ec8ac91084a6fe4741afa7192a0440041c7508e003d61ee36cfc4c204b",
+      "size": 3101,
+      "sha256": "e8afdc2e82ca911978addb841d6709ce81a401d3f4cd70c074778a67cd1bf560",
       "mode": "0644"
     },
     {
@@ -3098,8 +3098,8 @@
     },
     {
       "path": ".kimi-plugin/skills/_shared/render-html.cjs",
-      "size": 4120,
-      "sha256": "cac63db8259737c72c45db3ff6e538d297a58bae9df224c7cc14fdb3fc877fd6",
+      "size": 4955,
+      "sha256": "0c7e8fc4412578b1874982d7167354eaa60dad8f655225a55c99d99831e94247",
       "mode": "0644"
     },
     {
@@ -3344,8 +3344,8 @@
     },
     {
       "path": ".kimi-plugin/skills/docs-update/scripts/docs-verify-report.mjs",
-      "size": 2794,
-      "sha256": "384945326ef1e07dabf3379daf881aa99516d0b890749026d841790b020af7bc",
+      "size": 3131,
+      "sha256": "cada3225fe4aac51c1b377fc22d762ae5b3a6bc3a65d5381eff8d385b9f9f588",
       "mode": "0644"
     },
     {
@@ -3386,8 +3386,8 @@
     },
     {
       "path": ".kimi-plugin/skills/extracting-requirements/scripts/aggregate_scenarios.py",
-      "size": 7600,
-      "sha256": "5acca69a6be897ada1d8f253d301d2516fc7c9c17dc0a265aef4868ebcc4dc88",
+      "size": 8200,
+      "sha256": "2755d338617718aa9b290fd8646cbcad7f489fdbcdcee1243390d94388b7b56e",
       "mode": "0644"
     },
     {
@@ -3404,8 +3404,8 @@
     },
     {
       "path": ".kimi-plugin/skills/extracting-requirements/scripts/chunk_spec.py",
-      "size": 5008,
-      "sha256": "ad3eba0daebb875bc684cd04b21eb61f990ad75c1508e65c39cf1c1ff834ab7d",
+      "size": 6090,
+      "sha256": "b18ac63013e4c24990843e4e7571204567e50f675ad90755541604e93d502fda",
       "mode": "0755"
     },
     {
@@ -3470,8 +3470,8 @@
     },
     {
       "path": ".kimi-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs",
-      "size": 2932,
-      "sha256": "c409ad442d0afe072940e1c160094a81de035d06504b5c68e5d556af561f9886",
+      "size": 3925,
+      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
       "mode": "0755"
     },
     {
@@ -3614,8 +3614,8 @@
     },
     {
       "path": ".kimi-plugin/skills/reviewing-a-codebase/scripts/review-report.mjs",
-      "size": 2746,
-      "sha256": "85d9f3ec8ac91084a6fe4741afa7192a0440041c7508e003d61ee36cfc4c204b",
+      "size": 3101,
+      "sha256": "e8afdc2e82ca911978addb841d6709ce81a401d3f4cd70c074778a67cd1bf560",
       "mode": "0644"
     },
     {
@@ -4077,7 +4077,7 @@
     {
       "path": ".moe-mint/manifest.json",
       "size": 633221,
-      "sha256": "86da2f10ea15661d45f7b6183d2c7a6fd696873afbaa2b6fb11a43101c519c5a",
+      "sha256": "bcb575b8f0dbd6d932236416307a0e118da6c8b5dfa80c18aab45aa8fea335ac",
       "mode": "0644"
     },
     {
@@ -4130,8 +4130,8 @@
     },
     {
       "path": ".opencode/skills/_shared/render-html.cjs",
-      "size": 4120,
-      "sha256": "cac63db8259737c72c45db3ff6e538d297a58bae9df224c7cc14fdb3fc877fd6",
+      "size": 4955,
+      "sha256": "0c7e8fc4412578b1874982d7167354eaa60dad8f655225a55c99d99831e94247",
       "mode": "0644"
     },
     {
@@ -4376,8 +4376,8 @@
     },
     {
       "path": ".opencode/skills/docs-update/scripts/docs-verify-report.mjs",
-      "size": 2794,
-      "sha256": "384945326ef1e07dabf3379daf881aa99516d0b890749026d841790b020af7bc",
+      "size": 3131,
+      "sha256": "cada3225fe4aac51c1b377fc22d762ae5b3a6bc3a65d5381eff8d385b9f9f588",
       "mode": "0644"
     },
     {
@@ -4418,8 +4418,8 @@
     },
     {
       "path": ".opencode/skills/extracting-requirements/scripts/aggregate_scenarios.py",
-      "size": 7600,
-      "sha256": "5acca69a6be897ada1d8f253d301d2516fc7c9c17dc0a265aef4868ebcc4dc88",
+      "size": 8200,
+      "sha256": "2755d338617718aa9b290fd8646cbcad7f489fdbcdcee1243390d94388b7b56e",
       "mode": "0644"
     },
     {
@@ -4436,8 +4436,8 @@
     },
     {
       "path": ".opencode/skills/extracting-requirements/scripts/chunk_spec.py",
-      "size": 5008,
-      "sha256": "ad3eba0daebb875bc684cd04b21eb61f990ad75c1508e65c39cf1c1ff834ab7d",
+      "size": 6090,
+      "sha256": "b18ac63013e4c24990843e4e7571204567e50f675ad90755541604e93d502fda",
       "mode": "0755"
     },
     {
@@ -4502,8 +4502,8 @@
     },
     {
       "path": ".opencode/skills/fixing-a-code-review/scripts/compact-resolved.mjs",
-      "size": 2932,
-      "sha256": "c409ad442d0afe072940e1c160094a81de035d06504b5c68e5d556af561f9886",
+      "size": 3925,
+      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
       "mode": "0755"
     },
     {
@@ -4646,8 +4646,8 @@
     },
     {
       "path": ".opencode/skills/reviewing-a-codebase/scripts/review-report.mjs",
-      "size": 2746,
-      "sha256": "85d9f3ec8ac91084a6fe4741afa7192a0440041c7508e003d61ee36cfc4c204b",
+      "size": 3101,
+      "sha256": "e8afdc2e82ca911978addb841d6709ce81a401d3f4cd70c074778a67cd1bf560",
       "mode": "0644"
     },
     {
@@ -5138,8 +5138,8 @@
     },
     {
       "path": ".pi/skills/_shared/render-html.cjs",
-      "size": 4120,
-      "sha256": "cac63db8259737c72c45db3ff6e538d297a58bae9df224c7cc14fdb3fc877fd6",
+      "size": 4955,
+      "sha256": "0c7e8fc4412578b1874982d7167354eaa60dad8f655225a55c99d99831e94247",
       "mode": "0644"
     },
     {
@@ -5384,8 +5384,8 @@
     },
     {
       "path": ".pi/skills/docs-update/scripts/docs-verify-report.mjs",
-      "size": 2794,
-      "sha256": "384945326ef1e07dabf3379daf881aa99516d0b890749026d841790b020af7bc",
+      "size": 3131,
+      "sha256": "cada3225fe4aac51c1b377fc22d762ae5b3a6bc3a65d5381eff8d385b9f9f588",
       "mode": "0644"
     },
     {
@@ -5426,8 +5426,8 @@
     },
     {
       "path": ".pi/skills/extracting-requirements/scripts/aggregate_scenarios.py",
-      "size": 7600,
-      "sha256": "5acca69a6be897ada1d8f253d301d2516fc7c9c17dc0a265aef4868ebcc4dc88",
+      "size": 8200,
+      "sha256": "2755d338617718aa9b290fd8646cbcad7f489fdbcdcee1243390d94388b7b56e",
       "mode": "0644"
     },
     {
@@ -5444,8 +5444,8 @@
     },
     {
       "path": ".pi/skills/extracting-requirements/scripts/chunk_spec.py",
-      "size": 5008,
-      "sha256": "ad3eba0daebb875bc684cd04b21eb61f990ad75c1508e65c39cf1c1ff834ab7d",
+      "size": 6090,
+      "sha256": "b18ac63013e4c24990843e4e7571204567e50f675ad90755541604e93d502fda",
       "mode": "0755"
     },
     {
@@ -5510,8 +5510,8 @@
     },
     {
       "path": ".pi/skills/fixing-a-code-review/scripts/compact-resolved.mjs",
-      "size": 2932,
-      "sha256": "c409ad442d0afe072940e1c160094a81de035d06504b5c68e5d556af561f9886",
+      "size": 3925,
+      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
       "mode": "0755"
     },
     {
@@ -5654,8 +5654,8 @@
     },
     {
       "path": ".pi/skills/reviewing-a-codebase/scripts/review-report.mjs",
-      "size": 2746,
-      "sha256": "85d9f3ec8ac91084a6fe4741afa7192a0440041c7508e003d61ee36cfc4c204b",
+      "size": 3101,
+      "sha256": "e8afdc2e82ca911978addb841d6709ce81a401d3f4cd70c074778a67cd1bf560",
       "mode": "0644"
     },
     {
@@ -6320,8 +6320,8 @@
     },
     {
       "path": "skills/_shared/render-html.cjs",
-      "size": 4120,
-      "sha256": "cac63db8259737c72c45db3ff6e538d297a58bae9df224c7cc14fdb3fc877fd6",
+      "size": 4955,
+      "sha256": "0c7e8fc4412578b1874982d7167354eaa60dad8f655225a55c99d99831e94247",
       "mode": "0644"
     },
     {
@@ -6566,8 +6566,8 @@
     },
     {
       "path": "skills/docs-update/scripts/docs-verify-report.mjs",
-      "size": 2794,
-      "sha256": "384945326ef1e07dabf3379daf881aa99516d0b890749026d841790b020af7bc",
+      "size": 3131,
+      "sha256": "cada3225fe4aac51c1b377fc22d762ae5b3a6bc3a65d5381eff8d385b9f9f588",
       "mode": "0644"
     },
     {
@@ -6608,8 +6608,8 @@
     },
     {
       "path": "skills/extracting-requirements/scripts/aggregate_scenarios.py",
-      "size": 7600,
-      "sha256": "5acca69a6be897ada1d8f253d301d2516fc7c9c17dc0a265aef4868ebcc4dc88",
+      "size": 8200,
+      "sha256": "2755d338617718aa9b290fd8646cbcad7f489fdbcdcee1243390d94388b7b56e",
       "mode": "0644"
     },
     {
@@ -6626,8 +6626,8 @@
     },
     {
       "path": "skills/extracting-requirements/scripts/chunk_spec.py",
-      "size": 5008,
-      "sha256": "ad3eba0daebb875bc684cd04b21eb61f990ad75c1508e65c39cf1c1ff834ab7d",
+      "size": 6090,
+      "sha256": "b18ac63013e4c24990843e4e7571204567e50f675ad90755541604e93d502fda",
       "mode": "0755"
     },
     {
@@ -6692,8 +6692,8 @@
     },
     {
       "path": "skills/fixing-a-code-review/scripts/compact-resolved.mjs",
-      "size": 2932,
-      "sha256": "c409ad442d0afe072940e1c160094a81de035d06504b5c68e5d556af561f9886",
+      "size": 3925,
+      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
       "mode": "0755"
     },
     {
@@ -6836,8 +6836,8 @@
     },
     {
       "path": "skills/reviewing-a-codebase/scripts/review-report.mjs",
-      "size": 2746,
-      "sha256": "85d9f3ec8ac91084a6fe4741afa7192a0440041c7508e003d61ee36cfc4c204b",
+      "size": 3101,
+      "sha256": "e8afdc2e82ca911978addb841d6709ce81a401d3f4cd70c074778a67cd1bf560",
       "mode": "0644"
     },
     {
@@ -7297,7 +7297,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "479eaefde8a9c45c00d55dd2040428c24d91f0f414a33c08c595995ef89f1304",
+  "tree_sha256": "78e18b221b55dc3b069b211a94aafe66b11e113fff12a87f81169696dd1d3f89",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

@@ -322,3 +322,10 @@ export function resolveStrictStructuredPayload(payload) {
         errorDetail: `payload was valid JSON but not an object: ${truncateForError(payload)}`,
     };
 }
+export function resolveTypeOptions(p) {
+    return {
+        fast: p?.fast === true,
+        delay: typeof p?.delay === 'number' ? p.delay : undefined,
+        jitter: typeof p?.jitter === 'number' ? p.jitter : undefined,
+    };
+}

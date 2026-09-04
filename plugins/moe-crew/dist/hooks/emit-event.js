@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { appendEvent } from "../core/event-log.js";
-import { eventsPath, metaPath, workerDir } from "../core/paths.js";
+import { eventsPath, isSafeSegment, metaPath, workerDir } from "../core/paths.js";
 import { isoSecondsUtc } from "../core/time.js";
 import { writeMeta } from "../core/worker-store.js";
 /** Claude/Codex hook event names mapped to our snake_case WorkerEvent names. */
@@ -41,7 +41,10 @@ export function runHook(opts) {
     if (payload === null)
         return empty;
     const sessionId = payload.session_id;
-    if (typeof sessionId !== "string" || sessionId.length === 0)
+    // A session id that isn't a single safe path segment (e.g. contains `../`)
+    // would let metaPath/eventsPath below escape the worker dir. Treat it the
+    // same as a missing session_id: no-op rather than build a path from it.
+    if (typeof sessionId !== "string" || sessionId.length === 0 || !isSafeSegment(sessionId))
         return empty;
     // Codex (derive) path: self-register the worker meta on the first event for
     // this sid, since moe-crew could not pre-write it at launch (it did not know the

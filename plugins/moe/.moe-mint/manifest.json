@@ -28,7 +28,7 @@
       "mode": 420
     },
     ".claude-plugin/skills/_shared/render-html.cjs": {
-      "sha256": "cac63db8259737c72c45db3ff6e538d297a58bae9df224c7cc14fdb3fc877fd6",
+      "sha256": "0c7e8fc4412578b1874982d7167354eaa60dad8f655225a55c99d99831e94247",
       "mode": 420
     },
     ".claude-plugin/skills/_shared/report-base.html": {
@@ -192,7 +192,7 @@
       "mode": 420
     },
     ".claude-plugin/skills/docs-update/scripts/docs-verify-report.mjs": {
-      "sha256": "384945326ef1e07dabf3379daf881aa99516d0b890749026d841790b020af7bc",
+      "sha256": "cada3225fe4aac51c1b377fc22d762ae5b3a6bc3a65d5381eff8d385b9f9f588",
       "mode": 420
     },
     ".claude-plugin/skills/domain-modeling/ADR-FORMAT.md": {
@@ -220,7 +220,7 @@
       "mode": 420
     },
     ".claude-plugin/skills/extracting-requirements/scripts/aggregate_scenarios.py": {
-      "sha256": "5acca69a6be897ada1d8f253d301d2516fc7c9c17dc0a265aef4868ebcc4dc88",
+      "sha256": "2755d338617718aa9b290fd8646cbcad7f489fdbcdcee1243390d94388b7b56e",
       "mode": 420
     },
     ".claude-plugin/skills/extracting-requirements/scripts/aggregate_stories.py": {
@@ -232,7 +232,7 @@
       "mode": 420
     },
     ".claude-plugin/skills/extracting-requirements/scripts/chunk_spec.py": {
-      "sha256": "ad3eba0daebb875bc684cd04b21eb61f990ad75c1508e65c39cf1c1ff834ab7d",
+      "sha256": "b18ac63013e4c24990843e4e7571204567e50f675ad90755541604e93d502fda",
       "mode": 493
     },
     ".claude-plugin/skills/extracting-requirements/scripts/validate_requirements_index.py": {
@@ -276,7 +276,7 @@
       "mode": 420
     },
     ".claude-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "c409ad442d0afe072940e1c160094a81de035d06504b5c68e5d556af561f9886",
+      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
       "mode": 493
     },
     ".claude-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
@@ -372,7 +372,7 @@
       "mode": 420
     },
     ".claude-plugin/skills/reviewing-a-codebase/scripts/review-report.mjs": {
-      "sha256": "85d9f3ec8ac91084a6fe4741afa7192a0440041c7508e003d61ee36cfc4c204b",
+      "sha256": "e8afdc2e82ca911978addb841d6709ce81a401d3f4cd70c074778a67cd1bf560",
       "mode": 420
     },
     ".claude-plugin/skills/reviewing-a-codebase/scripts/review-scope.mjs": {
@@ -699,7 +699,7 @@
       "mode": 420
     },
     ".codex-plugin/skills/_shared/render-html.cjs": {
-      "sha256": "cac63db8259737c72c45db3ff6e538d297a58bae9df224c7cc14fdb3fc877fd6",
+      "sha256": "0c7e8fc4412578b1874982d7167354eaa60dad8f655225a55c99d99831e94247",
       "mode": 420
     },
     ".codex-plugin/skills/_shared/report-base.html": {
@@ -863,7 +863,7 @@
       "mode": 420
     },
     ".codex-plugin/skills/docs-update/scripts/docs-verify-report.mjs": {
-      "sha256": "384945326ef1e07dabf3379daf881aa99516d0b890749026d841790b020af7bc",
+      "sha256": "cada3225fe4aac51c1b377fc22d762ae5b3a6bc3a65d5381eff8d385b9f9f588",
       "mode": 420
     },
     ".codex-plugin/skills/domain-modeling/ADR-FORMAT.md": {
@@ -891,7 +891,7 @@
       "mode": 420
     },
     ".codex-plugin/skills/extracting-requirements/scripts/aggregate_scenarios.py": {
-      "sha256": "5acca69a6be897ada1d8f253d301d2516fc7c9c17dc0a265aef4868ebcc4dc88",
+      "sha256": "2755d338617718aa9b290fd8646cbcad7f489fdbcdcee1243390d94388b7b56e",
       "mode": 420
     },
     ".codex-plugin/skills/extracting-requirements/scripts/aggregate_stories.py": {
@@ -903,7 +903,7 @@
       "mode": 420
     },
     ".codex-plugin/skills/extracting-requirements/scripts/chunk_spec.py": {
-      "sha256": "ad3eba0daebb875bc684cd04b21eb61f990ad75c1508e65c39cf1c1ff834ab7d",
+      "sha256": "b18ac63013e4c24990843e4e7571204567e50f675ad90755541604e93d502fda",
       "mode": 493
     },
     ".codex-plugin/skills/extracting-requirements/scripts/validate_requirements_index.py": {
@@ -947,7 +947,7 @@
       "mode": 420
     },
     ".codex-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "c409ad442d0afe072940e1c160094a81de035d06504b5c68e5d556af561f9886",
+      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
       "mode": 493
     },
     ".codex-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
@@ -1043,7 +1043,7 @@
       "mode": 420
     },
     ".codex-plugin/skills/reviewing-a-codebase/scripts/review-report.mjs": {
-      "sha256": "85d9f3ec8ac91084a6fe4741afa7192a0440041c7508e003d61ee36cfc4c204b",
+      "sha256": "e8afdc2e82ca911978addb841d6709ce81a401d3f4cd70c074778a67cd1bf560",
       "mode": 420
     },
     ".codex-plugin/skills/reviewing-a-codebase/scripts/review-scope.mjs": {
@@ -1384,7 +1384,7 @@
       "mode": 420
     },
     ".cursor-plugin/skills/_shared/render-html.cjs": {
-      "sha256": "cac63db8259737c72c45db3ff6e538d297a58bae9df224c7cc14fdb3fc877fd6",
+      "sha256": "0c7e8fc4412578b1874982d7167354eaa60dad8f655225a55c99d99831e94247",
       "mode": 420
     },
     ".cursor-plugin/skills/_shared/report-base.html": {
@@ -1548,7 +1548,7 @@
       "mode": 420
     },
     ".cursor-plugin/skills/docs-update/scripts/docs-verify-report.mjs": {
-      "sha256": "384945326ef1e07dabf3379daf881aa99516d0b890749026d841790b020af7bc",
+      "sha256": "cada3225fe4aac51c1b377fc22d762ae5b3a6bc3a65d5381eff8d385b9f9f588",
       "mode": 420
     },
     ".cursor-plugin/skills/domain-modeling/ADR-FORMAT.md": {
@@ -1576,7 +1576,7 @@
       "mode": 420
     },
     ".cursor-plugin/skills/extracting-requirements/scripts/aggregate_scenarios.py": {
-      "sha256": "5acca69a6be897ada1d8f253d301d2516fc7c9c17dc0a265aef4868ebcc4dc88",
+      "sha256": "2755d338617718aa9b290fd8646cbcad7f489fdbcdcee1243390d94388b7b56e",
       "mode": 420
     },
     ".cursor-plugin/skills/extracting-requirements/scripts/aggregate_stories.py": {
@@ -1588,7 +1588,7 @@
       "mode": 420
     },
     ".cursor-plugin/skills/extracting-requirements/scripts/chunk_spec.py": {
-      "sha256": "ad3eba0daebb875bc684cd04b21eb61f990ad75c1508e65c39cf1c1ff834ab7d",
+      "sha256": "b18ac63013e4c24990843e4e7571204567e50f675ad90755541604e93d502fda",
       "mode": 493
     },
     ".cursor-plugin/skills/extracting-requirements/scripts/validate_requirements_index.py": {
@@ -1632,7 +1632,7 @@
       "mode": 420
     },
     ".cursor-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "c409ad442d0afe072940e1c160094a81de035d06504b5c68e5d556af561f9886",
+      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
       "mode": 493
     },
     ".cursor-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
@@ -1728,7 +1728,7 @@
       "mode": 420
     },
     ".cursor-plugin/skills/reviewing-a-codebase/scripts/review-report.mjs": {
-      "sha256": "85d9f3ec8ac91084a6fe4741afa7192a0440041c7508e003d61ee36cfc4c204b",
+      "sha256": "e8afdc2e82ca911978addb841d6709ce81a401d3f4cd70c074778a67cd1bf560",
       "mode": 420
     },
     ".cursor-plugin/skills/reviewing-a-codebase/scripts/review-scope.mjs": {
@@ -2055,7 +2055,7 @@
       "mode": 420
     },
     ".kimi-plugin/skills/_shared/render-html.cjs": {
-      "sha256": "cac63db8259737c72c45db3ff6e538d297a58bae9df224c7cc14fdb3fc877fd6",
+      "sha256": "0c7e8fc4412578b1874982d7167354eaa60dad8f655225a55c99d99831e94247",
       "mode": 420
     },
     ".kimi-plugin/skills/_shared/report-base.html": {
@@ -2219,7 +2219,7 @@
       "mode": 420
     },
     ".kimi-plugin/skills/docs-update/scripts/docs-verify-report.mjs": {
-      "sha256": "384945326ef1e07dabf3379daf881aa99516d0b890749026d841790b020af7bc",
+      "sha256": "cada3225fe4aac51c1b377fc22d762ae5b3a6bc3a65d5381eff8d385b9f9f588",
       "mode": 420
     },
     ".kimi-plugin/skills/domain-modeling/ADR-FORMAT.md": {
@@ -2247,7 +2247,7 @@
       "mode": 420
     },
     ".kimi-plugin/skills/extracting-requirements/scripts/aggregate_scenarios.py": {
-      "sha256": "5acca69a6be897ada1d8f253d301d2516fc7c9c17dc0a265aef4868ebcc4dc88",
+      "sha256": "2755d338617718aa9b290fd8646cbcad7f489fdbcdcee1243390d94388b7b56e",
       "mode": 420
     },
     ".kimi-plugin/skills/extracting-requirements/scripts/aggregate_stories.py": {
@@ -2259,7 +2259,7 @@
       "mode": 420
     },
     ".kimi-plugin/skills/extracting-requirements/scripts/chunk_spec.py": {
-      "sha256": "ad3eba0daebb875bc684cd04b21eb61f990ad75c1508e65c39cf1c1ff834ab7d",
+      "sha256": "b18ac63013e4c24990843e4e7571204567e50f675ad90755541604e93d502fda",
       "mode": 493
     },
     ".kimi-plugin/skills/extracting-requirements/scripts/validate_requirements_index.py": {
@@ -2303,7 +2303,7 @@
       "mode": 420
     },
     ".kimi-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "c409ad442d0afe072940e1c160094a81de035d06504b5c68e5d556af561f9886",
+      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
       "mode": 493
     },
     ".kimi-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
@@ -2399,7 +2399,7 @@
       "mode": 420
     },
     ".kimi-plugin/skills/reviewing-a-codebase/scripts/review-report.mjs": {
-      "sha256": "85d9f3ec8ac91084a6fe4741afa7192a0440041c7508e003d61ee36cfc4c204b",
+      "sha256": "e8afdc2e82ca911978addb841d6709ce81a401d3f4cd70c074778a67cd1bf560",
       "mode": 420
     },
     ".kimi-plugin/skills/reviewing-a-codebase/scripts/review-scope.mjs": {
@@ -2735,7 +2735,7 @@
       "mode": 420
     },
     ".opencode/skills/_shared/render-html.cjs": {
-      "sha256": "cac63db8259737c72c45db3ff6e538d297a58bae9df224c7cc14fdb3fc877fd6",
+      "sha256": "0c7e8fc4412578b1874982d7167354eaa60dad8f655225a55c99d99831e94247",
       "mode": 420
     },
     ".opencode/skills/_shared/report-base.html": {
@@ -2899,7 +2899,7 @@
       "mode": 420
     },
     ".opencode/skills/docs-update/scripts/docs-verify-report.mjs": {
-      "sha256": "384945326ef1e07dabf3379daf881aa99516d0b890749026d841790b020af7bc",
+      "sha256": "cada3225fe4aac51c1b377fc22d762ae5b3a6bc3a65d5381eff8d385b9f9f588",
       "mode": 420
     },
     ".opencode/skills/domain-modeling/ADR-FORMAT.md": {
@@ -2927,7 +2927,7 @@
       "mode": 420
     },
     ".opencode/skills/extracting-requirements/scripts/aggregate_scenarios.py": {
-      "sha256": "5acca69a6be897ada1d8f253d301d2516fc7c9c17dc0a265aef4868ebcc4dc88",
+      "sha256": "2755d338617718aa9b290fd8646cbcad7f489fdbcdcee1243390d94388b7b56e",
       "mode": 420
     },
     ".opencode/skills/extracting-requirements/scripts/aggregate_stories.py": {
@@ -2939,7 +2939,7 @@
       "mode": 420
     },
     ".opencode/skills/extracting-requirements/scripts/chunk_spec.py": {
-      "sha256": "ad3eba0daebb875bc684cd04b21eb61f990ad75c1508e65c39cf1c1ff834ab7d",
+      "sha256": "b18ac63013e4c24990843e4e7571204567e50f675ad90755541604e93d502fda",
       "mode": 493
     },
     ".opencode/skills/extracting-requirements/scripts/validate_requirements_index.py": {
@@ -2983,7 +2983,7 @@
       "mode": 420
     },
     ".opencode/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "c409ad442d0afe072940e1c160094a81de035d06504b5c68e5d556af561f9886",
+      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
       "mode": 493
     },
     ".opencode/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
@@ -3079,7 +3079,7 @@
       "mode": 420
     },
     ".opencode/skills/reviewing-a-codebase/scripts/review-report.mjs": {
-      "sha256": "85d9f3ec8ac91084a6fe4741afa7192a0440041c7508e003d61ee36cfc4c204b",
+      "sha256": "e8afdc2e82ca911978addb841d6709ce81a401d3f4cd70c074778a67cd1bf560",
       "mode": 420
     },
     ".opencode/skills/reviewing-a-codebase/scripts/review-scope.mjs": {
@@ -3406,7 +3406,7 @@
       "mode": 420
     },
     ".pi/skills/_shared/render-html.cjs": {
-      "sha256": "cac63db8259737c72c45db3ff6e538d297a58bae9df224c7cc14fdb3fc877fd6",
+      "sha256": "0c7e8fc4412578b1874982d7167354eaa60dad8f655225a55c99d99831e94247",
       "mode": 420
     },
     ".pi/skills/_shared/report-base.html": {
@@ -3570,7 +3570,7 @@
       "mode": 420
     },
     ".pi/skills/docs-update/scripts/docs-verify-report.mjs": {
-      "sha256": "384945326ef1e07dabf3379daf881aa99516d0b890749026d841790b020af7bc",
+      "sha256": "cada3225fe4aac51c1b377fc22d762ae5b3a6bc3a65d5381eff8d385b9f9f588",
       "mode": 420
     },
     ".pi/skills/domain-modeling/ADR-FORMAT.md": {
@@ -3598,7 +3598,7 @@
       "mode": 420
     },
     ".pi/skills/extracting-requirements/scripts/aggregate_scenarios.py": {
-      "sha256": "5acca69a6be897ada1d8f253d301d2516fc7c9c17dc0a265aef4868ebcc4dc88",
+      "sha256": "2755d338617718aa9b290fd8646cbcad7f489fdbcdcee1243390d94388b7b56e",
       "mode": 420
     },
     ".pi/skills/extracting-requirements/scripts/aggregate_stories.py": {
@@ -3610,7 +3610,7 @@
       "mode": 420
     },
     ".pi/skills/extracting-requirements/scripts/chunk_spec.py": {
-      "sha256": "ad3eba0daebb875bc684cd04b21eb61f990ad75c1508e65c39cf1c1ff834ab7d",
+      "sha256": "b18ac63013e4c24990843e4e7571204567e50f675ad90755541604e93d502fda",
       "mode": 493
     },
     ".pi/skills/extracting-requirements/scripts/validate_requirements_index.py": {
@@ -3654,7 +3654,7 @@
       "mode": 420
     },
     ".pi/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "c409ad442d0afe072940e1c160094a81de035d06504b5c68e5d556af561f9886",
+      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
       "mode": 493
     },
     ".pi/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
@@ -3750,7 +3750,7 @@
       "mode": 420
     },
     ".pi/skills/reviewing-a-codebase/scripts/review-report.mjs": {
-      "sha256": "85d9f3ec8ac91084a6fe4741afa7192a0440041c7508e003d61ee36cfc4c204b",
+      "sha256": "e8afdc2e82ca911978addb841d6709ce81a401d3f4cd70c074778a67cd1bf560",
       "mode": 420
     },
     ".pi/skills/reviewing-a-codebase/scripts/review-scope.mjs": {

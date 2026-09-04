@@ -31,13 +31,27 @@ export function metaPath(dir, sid) {
     return `${dir}/${sid}.meta`;
 }
 /**
+ * True when `name` is safe to use as a single on-disk path segment: letters,
+ * digits, `_` and `-` only, so it can never carry `/`, `.` or `..` out of the
+ * directory it's joined into. Exported so untrusted ids that reach
+ * `metaPath`/`eventsPath` from outside this module (e.g. a hook's
+ * `session_id`, or pi's self-minted session id) can be checked *before* a
+ * path is built from them, rather than after — those two builders take a
+ * `sid` that is not always the same trusted tmux_name every other builder
+ * here validates, so they cannot enforce this internally without changing
+ * their contract for already-validated callers.
+ */
+export function isSafeSegment(name) {
+    return /^[A-Za-z0-9_-]+$/.test(name);
+}
+/**
  * tmux_name (and any other worker name keyed into these paths) is untrusted:
  * it round-trips through a `.meta` file on disk, which a co-resident local
  * user can plant ahead of `prune`/`stop`. Require a single safe path segment
  * so it can never carry `/`, `.` or `..` out of the worker dir.
  */
 function assertSafeSegment(name) {
-    if (!/^[A-Za-z0-9_-]+$/.test(name)) {
+    if (!isSafeSegment(name)) {
         throw new Error(`unsafe worker name (must be a single [A-Za-z0-9_-]+ segment): ${JSON.stringify(name)}`);
     }
 }

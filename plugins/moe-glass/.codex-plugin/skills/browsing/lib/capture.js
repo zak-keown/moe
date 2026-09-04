@@ -267,7 +267,11 @@ function attachCapture({ state, getPageSession, getHtml, screenshot, actions, di
       if (focusInfo.type === 'id') {
         selector = `document.getElementById(${JSON.stringify(focusInfo.value)})`;
       } else if (focusInfo.type === 'name') {
-        selector = `document.querySelector(${JSON.stringify(focusInfo.tag + '[name="' + focusInfo.value + '"]')})`;
+        // Escape backslashes and double quotes so the resulting attribute
+        // value is valid CSS-selector syntax, not just a valid JS string
+        // literal (JSON.stringify below only handles the latter).
+        const escapedName = String(focusInfo.value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        selector = `document.querySelector(${JSON.stringify(focusInfo.tag + '[name="' + escapedName + '"]')})`;
       } else if (focusInfo.type === 'path') {
         selector = `(() => {
           let el = document.body;

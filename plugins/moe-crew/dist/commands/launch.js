@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, realpathSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { hasConsent } from "../core/consent.js";
 import { eventsPath, workerHomePath } from "../core/paths.js";
 import { shellQuote } from "../core/shell.js";
 import { isoSecondsUtc } from "../core/time.js";
 import { ensureOwnedDir, removeWorker, resolveSession, writeHarnessMarker, writeMeta, writeShim, writeWorktreeMarker, } from "../core/worker-store.js";
-import { createWorktree } from "../core/worktree.js";
+import { createWorktree, removeWorktree } from "../core/worktree.js";
 import { getDriver } from "../harness/registry.js";
 import { awaitSessionStart } from "./await-start.js";
 import { awaitComposerReady, dismissCodexTrustGate } from "./codex-launch.js";
@@ -167,7 +167,7 @@ async function launchAssign(ctx, { driver, tmuxName, cwd, extraArgs, invocation,
  * (awaitPiReady) — enough to let the TUI come up before the first send; the meta
  * still self-registers when pi fires its first event.
  */
-async function launchDerive(ctx, { driver, tmuxName, cwd, extraArgs, invocation }, opts) {
+async function launchDerive(ctx, { driver, tmuxName, cwd, extraArgs, invocation, worktreeDir }, opts) {
     // Sidecar marker so per-worker commands load the codex or pi driver during
     // the pre-registration window (before the extension self-registers the meta).
     writeHarnessMarker(ctx.workerDir, tmuxName, driver.id);
@@ -213,6 +213,14 @@ async function launchDerive(ctx, { driver, tmuxName, cwd, extraArgs, invocation 
         // (meta/events, which don't exist here) is a no-op; only the
         // name-keyed cleanup (harness marker, home) does anything.
         removeWorker(ctx.workerDir, "", tmuxName);
+        // Also remove the disposable git worktree itself (CR-027): removeWorker
+        // only deletes the sidecar marker, so without this the
+        // .moe-worktrees/<name> checkout and git's internal worktree
+        // registration are left behind on a launch that never started tmux.
+        if (worktreeDir !== undefined) {
+            const repoRoot = dirname(dirname(worktreeDir));
+            await removeWorktree(undefined, repoRoot, worktreeDir);
+        }
         return {
             stderr: `Error: tmux session '${tmuxName}' was not started (tmux missing, unreachable, or it rejected the session)`,
             code: 1,
