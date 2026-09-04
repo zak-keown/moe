@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { execSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
 import { mkdtempSync, existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -247,11 +247,46 @@ function buildConfig(originals: Record<ComparedFile, Record<string, unknown>>): 
   }
 }
 
+// Reads a git checkout's HEAD tree straight from the object database (never
+// touches the checkout's working tree or index) and extracts it into `dir`.
+// Uses execFileSync (argv arrays, no shell) rather than a single
+// shell-interpolated execSync string: SUPERPOWERS_REPO is
+// environment-controlled (MOE_MINT_DOGFOOD_REPO), and a value containing a
+// double quote followed by shell metacharacters would otherwise break out of
+// the quoted argument and execute arbitrary shell commands (CR-102).
+const MAX_ARCHIVE_BYTES = 64 * 1024 * 1024
+function extractRepoArchive(repo: string, dir: string): void {
+  const archive = execFileSync('git', ['-C', repo, 'archive', 'HEAD'], { maxBuffer: MAX_ARCHIVE_BYTES })
+  execFileSync('tar', ['-x', '-C', dir], { input: archive, maxBuffer: MAX_ARCHIVE_BYTES })
+}
+
 if (!SUPERPOWERS_AVAILABLE) {
   console.log(
     `[dogfood] superpowers checkout not found at ${SUPERPOWERS_REPO} (or has no .git) -- skipping the dogfood test. Restore the pinned reference snapshot there (\`superpowers\` @ b36e082, from github.com/obra/superpowers), or set MOE_MINT_DOGFOOD_REPO to point at an existing checkout, to run it locally.`,
   )
 }
+
+// Not gated by SUPERPOWERS_AVAILABLE: this exercises the extraction helper
+// itself against an attacker-influenced path, independent of whether a real
+// reference checkout exists locally.
+describe('extractRepoArchive', () => {
+  it('does not execute shell metacharacters embedded in the repo path (CR-102)', () => {
+    const scratch = mkdtempSync(join(tmpdir(), 'mint-dogfood-injection-'))
+    const dest = mkdtempSync(join(tmpdir(), 'mint-dogfood-injection-dest-'))
+    const marker = join(scratch, 'INJECTED')
+    const maliciousRepo = `${join(scratch, 'x')}"; touch "${marker}"; echo "`
+    try {
+      // Not a real git repo, so this is expected to fail -- the point is
+      // *how* it fails: no shell ever sees this string, so nothing in it
+      // can be interpreted as a second, injected command.
+      expect(() => extractRepoArchive(maliciousRepo, dest)).toThrow()
+      expect(existsSync(marker)).toBe(false)
+    } finally {
+      rmSync(scratch, { recursive: true, force: true })
+      rmSync(dest, { recursive: true, force: true })
+    }
+  })
+})
 
 describe.skipIf(!SUPERPOWERS_AVAILABLE)('dogfood: regenerate superpowers hand-maintained manifests', () => {
   const originals: Record<ComparedFile, Record<string, unknown>> = {} as Record<ComparedFile, Record<string, unknown>>
@@ -264,7 +299,7 @@ describe.skipIf(!SUPERPOWERS_AVAILABLE)('dogfood: regenerate superpowers hand-ma
     // Read-only on the source repo: `git archive` reads straight from the
     // object database at the `dev` ref, regardless of the checkout's
     // current branch or working-tree state, and never touches either.
-    execSync(`git -C "${SUPERPOWERS_REPO}" archive HEAD | tar -x -C "${dir}"`)
+    extractRepoArchive(SUPERPOWERS_REPO, dir)
 
     for (const file of COMPARED_FILES) {
       originals[file] = readJson(join(dir, file))

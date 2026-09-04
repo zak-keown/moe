@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join, } from 'node:path'
 import { MintError } from '../diagnostics.js'
@@ -179,13 +178,6 @@ export async function prepareCandidate(
       changed,
     })
   }
-
-  const _pluginHashes = new Map(
-    tarballMeta.map((t) => {
-      const sha512 = createHash('sha512').update('').digest('hex')
-      return [t.filename, { sha256: t.sha256, sha512 }] as const
-    }),
-  )
 
   const sha256Rows = tarballMeta.map((t) => ({ hash: t.sha256, filename: t.filename }))
   const sha256sumsContent = renderChecksumFile(sha256Rows)

@@ -133,10 +133,22 @@ describe("Parser - Real Conversation Data", () => {
     });
 
     it("should handle malformed JSONL gracefully", async () => {
-      // This test would need a fixture with malformed JSON
-      // For now, we verify that valid fixtures don't throw
-      const result = await parseConversationFile(getFixturePath("short-conversation.jsonl"));
+      // CR-098: this used to just re-parse a valid fixture and assert
+      // `toBeDefined()` — it never exercised a malformed line, so it could
+      // not catch a regression in the parser's malformed-line handling.
+      // malformed-conversation.jsonl has a genuinely malformed middle line
+      // (unterminated, non-JSON) between two valid user/assistant messages.
+      const result = await parseConversationFile(getFixturePath("malformed-conversation.jsonl"));
+
+      // The malformed line must not crash the parser...
       expect(result).toBeDefined();
+
+      // ...and the valid lines surrounding it must still parse into a real
+      // exchange, proving the bad line was skipped rather than corrupting or
+      // dropping its neighbors.
+      expect(result.exchanges).toHaveLength(1);
+      expect(result.exchanges[0]?.userMessage).toBe("Where should uploaded files be stored?");
+      expect(result.exchanges[0]?.assistantMessage).toBe("Store them in S3 for production.");
     });
   });
 });

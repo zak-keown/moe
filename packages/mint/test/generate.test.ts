@@ -178,6 +178,9 @@ describe('generate', () => {
     expect(existsSync(join(dir, 'my-skills/greeting/SKILL.md'))).toBe(true)
     expect(result.emissions['agent-plugins-1.0']?.limitations.map((entry) => entry.message).join('\n'))
       .not.toMatch(/will not be discovered/)
+
+    const installDoc = readFileSync(join(dir, 'docs/install/agent-plugins-1.0.md'), 'utf8')
+    expect(installDoc).not.toMatch(/will not be discovered/)
   })
 
   it('reports unsupported skill delivery when the source skill tree is empty', () => {

@@ -32,6 +32,31 @@ export function isResumeFailure(error: unknown): boolean {
   return error instanceof SummarizerSdkError && error.subtype === "error_during_execution";
 }
 
+/**
+ * Thrown by callClaude when BOTH the primary and fallback model hit the
+ * "thinking.budget_tokens" API error (#96/CR-059). This used to be handled
+ * by returning the raw error text as though it were the model's output —
+ * summarizeConversation would then extractSummary() it, find no <summary>
+ * tags, fall back to text.trim(), and write the error text to
+ * `<archive>-summary.txt` as a permanent "summary" with no error sentinel
+ * and no retry path. Throwing here routes the failure through the same
+ * catch-and-sentinel machinery every caller already has for other errors.
+ */
+export class SummarizerThinkingBudgetError extends Error {
+  constructor(public readonly rawResult: string) {
+    super(
+      `Summarizer hit a persistent thinking.budget_tokens error on both the primary and fallback model: ${rawResult}`,
+    );
+    this.name = "SummarizerThinkingBudgetError";
+  }
+}
+
+/**
+ * Detect whether the current process is running inside the Claude Agent SDK
+ * subprocess that the summarizer just spawned. The flag is set by getApiEnv()
+ * and inherited by the spawned subprocess. Used by sync entry points to bail
+ * out before re-entering the sync→summarizer→spawn cycle (#87).
+ */
 export function shouldSkipReentrantSync(): boolean {
   return process.env.MOE_MEMORY_SUMMARIZER_GUARD === "1";
 }
@@ -116,13 +141,17 @@ async function callClaude(
   try {
     return await runClaudeCommand(spec, adapter);
   } catch (error) {
-    if (
-      !useFallback &&
-      error instanceof Error &&
-      error.message.includes("thinking.budget_tokens")
-    ) {
-      console.log(`    ${primaryModel} hit thinking budget error, retrying with ${fallbackModel}`);
-      return await callClaude(prompt, sessionId, true, cwd);
+    if (error instanceof Error && error.message.includes("thinking.budget_tokens")) {
+      if (!useFallback) {
+        console.log(
+          `    ${primaryModel} hit thinking budget error, retrying with ${fallbackModel}`,
+        );
+        return await callClaude(prompt, sessionId, true, cwd);
+      }
+      // Fallback also hit the same persistent error: throw instead of
+      // returning the error text as data (CR-059), so callers' existing
+      // catch blocks write the #96 error sentinel and retry on the next run.
+      throw new SummarizerThinkingBudgetError(error.message);
     }
     throw error;
   }

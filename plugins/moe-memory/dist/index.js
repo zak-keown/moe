@@ -28,7 +28,7 @@ import {
   searchConversations,
   searchMultipleConcepts,
   vectorReadinessMessage
-} from "./chunks/chunk-ESBWE2AP.js";
+} from "./chunks/chunk-TG7AXCW2.js";
 import {
   resolveInstalledPackageRoot
 } from "./chunks/chunk-RO2MBIC5.js";

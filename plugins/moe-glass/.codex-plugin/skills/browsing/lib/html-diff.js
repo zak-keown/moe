@@ -20,10 +20,17 @@ const MAX_LINE_LENGTH = 200;
 // documents can exhaust the process heap — a V8 OOM is a hard process abort,
 // not a catchable exception, so it takes the whole MCP server down (CR-059,
 // CR-060). Bail out to a cheap, O(N+M)-memory summary above this budget
-// instead of ever entering the Myers loop. 2000 lines/side is comfortably
-// below every measured-safe point in both findings' repro tables and far
-// below the sizes that measured multi-GB / OOM.
-const MAX_DIFFABLE_LINES_PER_SIDE = 2000;
+// instead of ever entering the Myers loop.
+//
+// CR-049: memory for the worst case (every line differs, so D = N+M) grows
+// quadratically with lines/side — empirically ~64 * L^2 bytes for L
+// lines/side on each of two documents (500 -> ~16MB, 1000 -> ~62MB,
+// 2000 -> ~246MB). A cap of 2000 therefore still allowed a single call to
+// allocate ~250MB, easily enough to OOM-kill the server under a
+// container/shared-host memory budget — the exact failure mode this cap
+// exists to prevent. 300 lines/side bounds the worst case to single-digit
+// MB while still covering the overwhelming majority of real DOM diffs.
+const MAX_DIFFABLE_LINES_PER_SIDE = 300;
 
 // Myers' O((N+M)D) shortest-edit-script. Returns an array of
 // { type: 'eq'|'del'|'add', value: string } operations in order.

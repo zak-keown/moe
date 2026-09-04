@@ -24,7 +24,7 @@
     "proof:test": "uv run --project py/proof pytest py/proof",
     "artifact:check": "node scripts/check-artifacts.mjs",
     "provenance": "node scripts/check-provenance.mjs",
-    "provenance:selftest": "node scripts/test-provenance-red.mjs",
+    "provenance:selftest": "node scripts/test-provenance-red.mjs && node scripts/test-provenance-worktree.mjs && node scripts/test-provenance-no-plugins.mjs",
     "memory:native:refresh": "node packages/memory/scripts/refresh-sqlite-vec.mjs",
     "memory:runtime:smoke": "pnpm --filter @bubstack/moe-memory run runtime:smoke",
     "memory:recovery:check": "node scripts/verify-memory-recovery-capsule.mjs",

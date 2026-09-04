@@ -20,6 +20,16 @@ const { throwIfExceptionDetails } = require('./cdp-utils');
  */
 function attachSelectOption({ getPageSession }) {
   async function selectOption(tabIndexOrPageSession, selector, value, index = 0) {
+    // CR-078: index used to be interpolated unescaped into the evaluated JS
+    // source below (`elements[${index}]`), unlike every sibling value in
+    // this function (selector, value), which goes through JSON.stringify. A
+    // non-integer index (e.g. a string ending `0]; fetch(...); //`) could
+    // break out of the array-index expression into arbitrary JS running in
+    // the page context. Reject it before ever building that expression.
+    if (!Number.isInteger(index)) {
+      throw new Error(`selectOption: index must be an integer, got ${JSON.stringify(index)}`);
+    }
+
     const ps = await getPageSession(tabIndexOrPageSession);
     const values = Array.isArray(value) ? value : [value];
 
@@ -40,8 +50,8 @@ function attachSelectOption({ getPageSession }) {
     const js = `
       (() => {
         const elements = ${getElementSelectorAll(selector)};
-        const el = elements[${index}];
-        if (!el) return { success: false, error: 'Element not found at index ${index}' };
+        const el = elements[${JSON.stringify(index)}];
+        if (!el) return { success: false, error: 'Element not found at index ' + ${JSON.stringify(index)} };
         if (el.tagName !== 'SELECT') return { success: false, error: 'Element is not a SELECT' };
 
         const requested = ${JSON.stringify(values)};

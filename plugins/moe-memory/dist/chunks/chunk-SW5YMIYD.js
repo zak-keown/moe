@@ -121,41 +121,44 @@ Skipping excluded project: ${project}`);
     } catch {
       console.error("moe-memory: embedding model unavailable; text will be stored without vectors");
     }
-    for (const file of filesToIndex) {
-      try {
-        if (shouldSkipConversation(file)) {
-          continue;
-        }
-        const project = path.basename(path.dirname(file));
-        const exchanges = await parseConversation(file, project, file);
-        for (const exchange of exchanges) {
-          const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
-          let embedding = null;
-          if (embeddingsReady) {
-            try {
-              embedding = await generateExchangeEmbedding(
-                exchange.userMessage,
-                exchange.assistantMessage,
-                toolNames
-              );
-            } catch {
-            }
+    try {
+      for (const file of filesToIndex) {
+        try {
+          if (shouldSkipConversation(file)) {
+            continue;
           }
-          insertExchange(db, exchange, embedding, toolNames);
+          const project = path.basename(path.dirname(file));
+          const exchanges = await parseConversation(file, project, file);
+          for (const exchange of exchanges) {
+            const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
+            let embedding = null;
+            if (embeddingsReady) {
+              try {
+                embedding = await generateExchangeEmbedding(
+                  exchange.userMessage,
+                  exchange.assistantMessage,
+                  toolNames
+                );
+              } catch {
+              }
+            }
+            insertExchange(db, exchange, embedding, toolNames);
+          }
+          result.indexed++;
+        } catch (error) {
+          result.errors.push({
+            file,
+            error: error instanceof Error ? error.message : String(error)
+          });
         }
-        result.indexed++;
-      } catch (error) {
-        result.errors.push({
-          file,
-          error: error instanceof Error ? error.message : String(error)
-        });
       }
+    } finally {
+      db.close();
     }
-    db.close();
   }
   if (!options.skipSummaries && filesToSummarize.length > 0) {
     const { parseConversation } = await import("./parser-OZTBPBQF.js");
-    const { summarizeConversation } = await import("./summarizer-BEQGKIDK.js");
+    const { summarizeConversation } = await import("./summarizer-JX2L5D3P.js");
     const summaryLimit = options.summaryLimit ?? 10;
     const toSummarize = filesToSummarize.slice(0, summaryLimit);
     const remaining = filesToSummarize.length - toSummarize.length;

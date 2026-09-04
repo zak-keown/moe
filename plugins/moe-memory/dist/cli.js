@@ -49,15 +49,15 @@ EXAMPLES:
 async function dispatch(command, args) {
   switch (command) {
     case "sync": {
-      const { runSync } = await import("./chunks/sync-cli-RYHS7KOV.js");
+      const { runSync } = await import("./chunks/sync-cli-MVRJHA27.js");
       return runSync(args);
     }
     case "index": {
-      const { runIndex } = await import("./chunks/index-cli-UD7JLLQP.js");
+      const { runIndex } = await import("./chunks/index-cli-UDBVKCEP.js");
       return runIndex(args);
     }
     case "search": {
-      const { runSearch } = await import("./chunks/search-cli-6E3U65FN.js");
+      const { runSearch } = await import("./chunks/search-cli-LYU6NKPX.js");
       return runSearch(args);
     }
     case "show": {
@@ -69,7 +69,7 @@ async function dispatch(command, args) {
       return runStats(args);
     }
     case "journal": {
-      const { runJournal } = await import("./chunks/journal-cli-HVKPG4AC.js");
+      const { runJournal } = await import("./chunks/journal-cli-KTIO6TGG.js");
       return runJournal(args);
     }
     case "doctor": {
@@ -81,7 +81,7 @@ async function dispatch(command, args) {
       return runRollback(args);
     }
     case "mcp-server": {
-      const { runMemoryMcpServer } = await import("./chunks/mcp-server-BFPW4CCT.js");
+      const { runMemoryMcpServer } = await import("./chunks/mcp-server-USA6OEPA.js");
       await runMemoryMcpServer(args);
       return 0;
     }

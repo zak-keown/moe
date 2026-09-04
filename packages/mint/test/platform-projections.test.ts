@@ -1,7 +1,7 @@
-import { mkdtempSync, readFileSync, readdirSync, symlinkSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, promises as fs, readFileSync, readdirSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { resolvePlatform, type ResolvedPlatform } from '../src/platform/load.js'
 import {
   currentProjectionRecords,
@@ -241,5 +241,52 @@ describe('registry projections', () => {
       },
     })
     expect(() => readFileSync(join(outside, 'moe', 'generated', 'plugin-catalog.md'), 'utf8')).toThrow()
+  })
+
+  it('closes the TOCTOU window between the destination symlink check and the write', async () => {
+    const platform = await resolvePlatform(REPO_ROOT)
+    const root = mkdtempSync(join(tmpdir(), 'mint-projection-toctou-'))
+    const outside = mkdtempSync(join(tmpdir(), 'mint-projection-toctou-outside-'))
+    const records = recordsFor(platform)
+    // Mutate repositoryRoot in place (not a spread copy) — the projection
+    // records carry provenance keyed to this exact platform object identity
+    // (see the "writes allowed relative projection destinations…" test
+    // above), so a copy fails provenance before ever reaching the write path
+    // this test exercises.
+    platform.repositoryRoot = root
+    mkdirSync(join(root, '.claude-plugin'), { recursive: true })
+    const marketplaceAbs = join(root, '.claude-plugin', 'marketplace.json')
+    const outsideFile = join(outside, 'attacker-owned.json')
+    writeFileSync(outsideFile, 'PRE-EXISTING\n')
+
+    // validateDestination's own lstat sees no symlink (the file does not
+    // exist yet) and passes. Right after that check returns — the exact
+    // TOCTOU window CR-062 describes — an attacker with write access to the
+    // destination directory swaps the leaf for a symlink pointing outside
+    // the repository, before the write itself runs.
+    let injected = false
+    const realLstat = fs.lstat.bind(fs)
+    const lstatSpy = vi.spyOn(fs, 'lstat').mockImplementation(async (path: Parameters<typeof fs.lstat>[0]) => {
+      if (path === marketplaceAbs && !injected) {
+        injected = true
+        try {
+          return await realLstat(path)
+        } finally {
+          symlinkSync(outsideFile, marketplaceAbs)
+        }
+      }
+      return realLstat(path)
+    })
+
+    try {
+      await expect(writeRegistryProjections(platform, records, {
+        marketplacePath: '.claude-plugin/marketplace.json',
+        publicCatalogPath: 'docs/moe/generated/plugin-catalog.md',
+      })).rejects.toThrow()
+    } finally {
+      lstatSpy.mockRestore()
+    }
+
+    expect(readFileSync(outsideFile, 'utf8')).toBe('PRE-EXISTING\n')
   })
 })

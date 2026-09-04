@@ -1,7 +1,13 @@
 // Page-side script: token-efficient page summary used by auto-capture.
 // Loaded as a string at attachCapture setup and embedded in CDP
-// Runtime.evaluate. Tested directly against jsdom in
-// test/lib/page-scripts/dom-summary.test.mjs.
+// Runtime.evaluate. CR-032: this is a byte-identical copy of
+// packages/glass/skills/browsing/lib/page-scripts/dom-summary.js, which
+// *is* covered by a jsdom test (packages/glass/test/lib/page-scripts/
+// dom-summary.test.mjs) — but that test lives in the sibling glass
+// package and exercises glass's copy, not this one. This copy has no
+// jsdom coverage of its own in packages/flight; the only flight-side
+// references are mocked stubs in adapter.test.ts that exercise the
+// adapter's plumbing, not the DOM-walking logic below.
 module.exports = `
   (() => {
     const buttons = document.querySelectorAll('button, input[type="button"], input[type="submit"]').length;

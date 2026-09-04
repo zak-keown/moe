@@ -905,7 +905,7 @@
       "format": "esm"
     },
     "src/summarizer.ts": {
-      "bytes": 8001,
+      "bytes": 9511,
       "imports": [
         {
           "path": "src/constants.ts",
@@ -973,7 +973,7 @@
       "format": "esm"
     },
     "src/sync.ts": {
-      "bytes": 9292,
+      "bytes": 9384,
       "imports": [
         {
           "path": "node:fs",
@@ -1029,7 +1029,7 @@
       "format": "esm"
     },
     "src/sync-cli.ts": {
-      "bytes": 9555,
+      "bytes": 10157,
       "imports": [
         {
           "path": "node:child_process",
@@ -1213,7 +1213,7 @@
       "format": "esm"
     },
     "src/verify.ts": {
-      "bytes": 8779,
+      "bytes": 8969,
       "imports": [
         {
           "path": "node:fs",
@@ -1330,7 +1330,7 @@
       "format": "esm"
     },
     "src/search.ts": {
-      "bytes": 17668,
+      "bytes": 17810,
       "imports": [
         {
           "path": "node:fs",
@@ -6204,7 +6204,7 @@
       "format": "esm"
     },
     "src/mcp-server.ts": {
-      "bytes": 32246,
+      "bytes": 34241,
       "imports": [
         {
           "path": "node:crypto",
@@ -6260,6 +6260,11 @@
           "path": "src/mcp-runtime.ts",
           "kind": "import-statement",
           "original": "./mcp-runtime.js"
+        },
+        {
+          "path": "src/paths.ts",
+          "kind": "import-statement",
+          "original": "./paths.js"
         },
         {
           "path": "src/search.ts",
@@ -6557,14 +6562,14 @@
       },
       "bytes": 13818
     },
-    "dist/chunks/mcp-server-BFPW4CCT.js": {
+    "dist/chunks/mcp-server-USA6OEPA.js": {
       "imports": [
         {
           "path": "dist/chunks/chunk-BCQKWEPH.js",
           "kind": "import-statement"
         },
         {
-          "path": "dist/chunks/chunk-TPANDLU7.js",
+          "path": "dist/chunks/chunk-AGJG5ER2.js",
           "kind": "import-statement"
         },
         {
@@ -6576,7 +6581,7 @@
           "kind": "import-statement"
         },
         {
-          "path": "dist/chunks/chunk-ESBWE2AP.js",
+          "path": "dist/chunks/chunk-TG7AXCW2.js",
           "kind": "import-statement"
         },
         {
@@ -6853,7 +6858,7 @@
           "bytesInOutput": 1692
         },
         "src/mcp-server.ts": {
-          "bytesInOutput": 28783
+          "bytesInOutput": 29367
         },
         "../../node_modules/.pnpm/zod@4.5.4/node_modules/zod/v4/core/index.js": {
           "bytesInOutput": 9954
@@ -7186,7 +7191,7 @@
           "bytesInOutput": 464
         }
       },
-      "bytes": 1159410
+      "bytes": 1160019
     },
     "dist/chunks/parser-OZTBPBQF.js": {
       "imports": [
@@ -7207,10 +7212,10 @@
       "inputs": {},
       "bytes": 341
     },
-    "dist/chunks/sync-cli-RYHS7KOV.js": {
+    "dist/chunks/sync-cli-MVRJHA27.js": {
       "imports": [
         {
-          "path": "dist/chunks/chunk-DWPDJ6LO.js",
+          "path": "dist/chunks/chunk-SW5YMIYD.js",
           "kind": "import-statement"
         },
         {
@@ -7234,7 +7239,7 @@
           "kind": "import-statement"
         },
         {
-          "path": "dist/chunks/chunk-EYIEB7RJ.js",
+          "path": "dist/chunks/chunk-HSI3HVDR.js",
           "kind": "import-statement"
         },
         {
@@ -7279,15 +7284,15 @@
       "entryPoint": "src/sync-cli.ts",
       "inputs": {
         "src/sync-cli.ts": {
-          "bytesInOutput": 6757
+          "bytesInOutput": 7005
         }
       },
-      "bytes": 7683
+      "bytes": 7931
     },
-    "dist/chunks/index-cli-UD7JLLQP.js": {
+    "dist/chunks/index-cli-UDBVKCEP.js": {
       "imports": [
         {
-          "path": "dist/chunks/chunk-DWPDJ6LO.js",
+          "path": "dist/chunks/chunk-SW5YMIYD.js",
           "kind": "import-statement"
         },
         {
@@ -7319,7 +7324,7 @@
           "kind": "import-statement"
         },
         {
-          "path": "dist/chunks/chunk-EYIEB7RJ.js",
+          "path": "dist/chunks/chunk-HSI3HVDR.js",
           "kind": "import-statement"
         },
         {
@@ -7395,7 +7400,7 @@
           "kind": "dynamic-import"
         },
         {
-          "path": "dist/chunks/summarizer-BEQGKIDK.js",
+          "path": "dist/chunks/summarizer-JX2L5D3P.js",
           "kind": "dynamic-import"
         },
         {
@@ -7415,12 +7420,12 @@
           "bytesInOutput": 13567
         },
         "src/verify.ts": {
-          "bytesInOutput": 5831
+          "bytesInOutput": 5993
         }
       },
-      "bytes": 26258
+      "bytes": 26420
     },
-    "dist/chunks/chunk-DWPDJ6LO.js": {
+    "dist/chunks/chunk-SW5YMIYD.js": {
       "imports": [
         {
           "path": "dist/chunks/chunk-YFLZKW2J.js",
@@ -7461,7 +7466,7 @@
           "kind": "dynamic-import"
         },
         {
-          "path": "dist/chunks/summarizer-BEQGKIDK.js",
+          "path": "dist/chunks/summarizer-JX2L5D3P.js",
           "kind": "dynamic-import"
         }
       ],
@@ -7471,15 +7476,15 @@
       ],
       "inputs": {
         "src/sync.ts": {
-          "bytesInOutput": 6452
+          "bytesInOutput": 6546
         }
       },
-      "bytes": 6929
+      "bytes": 7023
     },
-    "dist/chunks/search-cli-6E3U65FN.js": {
+    "dist/chunks/search-cli-LYU6NKPX.js": {
       "imports": [
         {
-          "path": "dist/chunks/chunk-ESBWE2AP.js",
+          "path": "dist/chunks/chunk-TG7AXCW2.js",
           "kind": "import-statement"
         },
         {
@@ -7616,10 +7621,10 @@
       },
       "bytes": 5164
     },
-    "dist/chunks/journal-cli-HVKPG4AC.js": {
+    "dist/chunks/journal-cli-KTIO6TGG.js": {
       "imports": [
         {
-          "path": "dist/chunks/chunk-TPANDLU7.js",
+          "path": "dist/chunks/chunk-AGJG5ER2.js",
           "kind": "import-statement"
         },
         {
@@ -7631,7 +7636,7 @@
           "kind": "import-statement"
         },
         {
-          "path": "dist/chunks/chunk-ESBWE2AP.js",
+          "path": "dist/chunks/chunk-TG7AXCW2.js",
           "kind": "import-statement"
         },
         {
@@ -7675,14 +7680,14 @@
       },
       "bytes": 5158
     },
-    "dist/chunks/chunk-TPANDLU7.js": {
+    "dist/chunks/chunk-AGJG5ER2.js": {
       "imports": [
         {
           "path": "dist/chunks/chunk-XQQVRDY6.js",
           "kind": "import-statement"
         },
         {
-          "path": "dist/chunks/chunk-ESBWE2AP.js",
+          "path": "dist/chunks/chunk-TG7AXCW2.js",
           "kind": "import-statement"
         },
         {
@@ -7884,15 +7889,15 @@
           "kind": "import-statement"
         },
         {
-          "path": "dist/chunks/sync-cli-RYHS7KOV.js",
+          "path": "dist/chunks/sync-cli-MVRJHA27.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "dist/chunks/index-cli-UD7JLLQP.js",
+          "path": "dist/chunks/index-cli-UDBVKCEP.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "dist/chunks/search-cli-6E3U65FN.js",
+          "path": "dist/chunks/search-cli-LYU6NKPX.js",
           "kind": "dynamic-import"
         },
         {
@@ -7904,7 +7909,7 @@
           "kind": "dynamic-import"
         },
         {
-          "path": "dist/chunks/journal-cli-HVKPG4AC.js",
+          "path": "dist/chunks/journal-cli-KTIO6TGG.js",
           "kind": "dynamic-import"
         },
         {
@@ -7916,7 +7921,7 @@
           "kind": "dynamic-import"
         },
         {
-          "path": "dist/chunks/mcp-server-BFPW4CCT.js",
+          "path": "dist/chunks/mcp-server-USA6OEPA.js",
           "kind": "dynamic-import"
         },
         {
@@ -7950,7 +7955,7 @@
           "kind": "import-statement"
         },
         {
-          "path": "dist/chunks/chunk-ESBWE2AP.js",
+          "path": "dist/chunks/chunk-TG7AXCW2.js",
           "kind": "import-statement"
         },
         {
@@ -8158,7 +8163,7 @@
       },
       "bytes": 496
     },
-    "dist/chunks/chunk-ESBWE2AP.js": {
+    "dist/chunks/chunk-TG7AXCW2.js": {
       "imports": [
         {
           "path": "dist/chunks/chunk-TD4KRVGL.js",
@@ -8198,10 +8203,10 @@
           "bytesInOutput": 1731
         },
         "src/search.ts": {
-          "bytesInOutput": 11358
+          "bytesInOutput": 11509
         }
       },
-      "bytes": 13717
+      "bytes": 13868
     },
     "dist/chunks/chunk-RO2MBIC5.js": {
       "imports": [
@@ -8805,10 +8810,10 @@
       "inputs": {},
       "bytes": 271
     },
-    "dist/chunks/summarizer-BEQGKIDK.js": {
+    "dist/chunks/summarizer-JX2L5D3P.js": {
       "imports": [
         {
-          "path": "dist/chunks/chunk-EYIEB7RJ.js",
+          "path": "dist/chunks/chunk-HSI3HVDR.js",
           "kind": "import-statement"
         },
         {
@@ -8830,6 +8835,7 @@
       ],
       "exports": [
         "SummarizerSdkError",
+        "SummarizerThinkingBudgetError",
         "buildCodexSummarizerCommand",
         "buildCodexSummaryPrompt",
         "buildSummarizerQueryOptions",
@@ -8843,9 +8849,9 @@
       ],
       "entryPoint": "src/summarizer.ts",
       "inputs": {},
-      "bytes": 853
+      "bytes": 919
     },
-    "dist/chunks/chunk-EYIEB7RJ.js": {
+    "dist/chunks/chunk-HSI3HVDR.js": {
       "imports": [
         {
           "path": "dist/chunks/chunk-KVDJIHLR.js",
@@ -8882,6 +8888,7 @@
       ],
       "exports": [
         "SummarizerSdkError",
+        "SummarizerThinkingBudgetError",
         "buildCodexSummarizerCommand",
         "buildCodexSummaryPrompt",
         "buildSummarizerQueryOptions",
@@ -8904,10 +8911,10 @@
           "bytesInOutput": 1720
         },
         "src/summarizer.ts": {
-          "bytesInOutput": 6714
+          "bytesInOutput": 7127
         }
       },
-      "bytes": 20825
+      "bytes": 21271
     },
     "dist/chunks/chunk-KVDJIHLR.js": {
       "imports": [],

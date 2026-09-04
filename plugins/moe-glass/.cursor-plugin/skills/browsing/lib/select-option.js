@@ -19,6 +19,9 @@ const { throwIfExceptionDetails } = require('./cdp-utils');
  */
 function attachSelectOption({ getPageSession }) {
   async function selectOption(tabIndexOrWsUrl, selector, value, index = 0) {
+    if (!Number.isInteger(index)) {
+      throw new Error(`selectOption index must be an integer, got: ${JSON.stringify(index)}`);
+    }
     const pageSession = await getPageSession(tabIndexOrWsUrl);
     const values = Array.isArray(value) ? value : [value];
 
@@ -39,7 +42,7 @@ function attachSelectOption({ getPageSession }) {
     const js = `
       (() => {
         const elements = ${getElementSelectorAll(selector)};
-        const el = elements[${index}];
+        const el = elements[${JSON.stringify(index)}];
         if (!el) return { success: false, error: 'Element not found at index ${index}' };
         if (el.tagName !== 'SELECT') return { success: false, error: 'Element is not a SELECT' };
 
