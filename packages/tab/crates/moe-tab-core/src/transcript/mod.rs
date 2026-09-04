@@ -17,11 +17,15 @@ pub enum Dialect {
 /// starting with "ATIF-".
 pub fn detect(bytes: &[u8]) -> Result<Dialect, TabError> {
     let text = std::str::from_utf8(bytes).map_err(|_| TabError::UnknownDialect)?;
-    for line in text.lines().take(20) {
-        let line = line.trim();
-        if line.is_empty() {
-            continue;
-        }
+    // Budget the 20-line scan on non-blank lines only: a blank line is
+    // skipped below and can never claim a row, so it must not consume a
+    // slot that a real claiming row further down could have used (CR-106).
+    for line in text
+        .lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty())
+        .take(20)
+    {
         let v: Value = match serde_json::from_str(line) {
             Ok(v) => v,
             Err(_) => continue,
@@ -70,5 +74,18 @@ mod tests {
     #[test]
     fn unknown_dialect_errors() {
         assert!(matches!(detect(b"{}\n{}"), Err(TabError::UnknownDialect)));
+    }
+
+    // CR-106: detect() looked for a claiming row only within the file's
+    // first 20 *lines*, and blank lines consumed a slot in that budget even
+    // though the loop skips them — so a tab-dialect file with more than 20
+    // leading blank lines (plausible from a buffered writer that
+    // pre-allocates newline padding) was never recognized, even though
+    // tab::parse would parse it correctly once the dialect were known.
+    #[test]
+    fn detects_tab_dialect_past_20_leading_blank_lines() {
+        let mut bytes = "\n".repeat(25).into_bytes();
+        bytes.extend_from_slice(br#"{"type":"moe.tab.usage","v":"2026-06-08"}"#);
+        assert_eq!(detect(&bytes).unwrap(), Dialect::Tab);
     }
 }

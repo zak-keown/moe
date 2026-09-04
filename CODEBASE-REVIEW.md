@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 24
+  fixed: 35
   stale: 1
   skipped: 0
   deferred: 0
-  open: 82
+  open: 71
 ---
 
 # Codebase Review — moe
@@ -907,6 +907,10 @@ Once redirected, the CR-081/CR-082 tamper-detection added in this same file (`Te
 
 Fix: resolve `base` once with `filepath.EvalSymlinks`/`Lstat` and reject (or recreate under a path guaranteed not to traverse a symlink) any pre-existing non-directory or symlinked component under `base/moe`, or use `O_NOFOLLOW`-safe directory creation (e.g., `os.Mkdir` per level with an `Lstat` check that the just-created/found entry is a real directory owned by the current user) instead of `os.MkdirAll` over an attacker-influenced shared prefix.
 
+**Disposition:** fixed
+**Commit:** `265213ad576421041e60cd5b042e8e919a618d41`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-022: Artifact files are served with browser-executable Content-Types, enabling stored XSS in the report UI
 
 **File:** `py/proof/src/moe_proof/site.py`
@@ -941,6 +945,10 @@ Fix: force `Content-Disposition: attachment` (or at minimum serve
 `.html`/`.svg`/`.js`/`.xhtml` as `text/plain`) for anything under
 `runs/`, and add `X-Content-Type-Options: nosniff` to every response.
 
+**Disposition:** fixed
+**Commit:** `1b2b191ee4e00af8e4f9f5d83b219bb2a8d6bafe`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-023: `pnpm provenance` false-positives (and fails) whenever a `.moe/worktrees/` checkout is present
 
 **File:** `scripts/check-provenance.mjs`
@@ -2117,6 +2125,10 @@ throughout, or `resolve_store()` should surface a loud `InvalidAsOf`-style
 error when the override variable is present but not valid UTF-8, rather than
 silently taking a fallback path while claiming `PricingSource::Local`.
 
+**Disposition:** fixed
+**Commit:** `14d822199dc3e045e687e2a78cf04af596be08ab`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-065: `execute_run` crashes with a raw TypeError when a task's prompt is a non-string YAML scalar
 
 **File:** `py/proof/src/moe_proof/cli.py`
@@ -2141,6 +2153,10 @@ handling.
 
 Fix: `env["MOE_PROOF_PROMPT"] = str(task["prompt"])`.
 
+**Disposition:** fixed
+**Commit:** `f2abee6c6660045ab2531c5ed1312b62d83e4c60`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-066: A checker emitting a non-numeric `score` aborts the entire `grade` run with an unhandled ValueError
 
 **File:** `py/proof/src/moe_proof/cli.py`
@@ -2172,6 +2188,10 @@ unconvertible `score` to `details` (mirroring how unknown/extra keys are
 already demoted), or fail just that one check with a `notes` message instead
 of raising through the whole command.
 
+**Disposition:** fixed
+**Commit:** `f32fd9e526f51c10fa47fc57a18a5e7ca5ec430c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-067: `render_model_blocks` crashes `report` with an unhandled ValueError on a non-numeric metric value
 
 **File:** `py/proof/src/moe_proof/cli.py`
@@ -2198,6 +2218,10 @@ Fix: validate/coerce metric values defensively in `normalize_check_info` (or
 skip/flag non-numeric, non-bool values in `render_model_blocks` rather than
 crashing the whole report).
 
+**Disposition:** fixed
+**Commit:** `5dc92ab988ac4932276f8f4c9dee090f4b221903`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-068: A task or config YAML missing a required key crashes with a raw KeyError instead of a ClickException
 
 **File:** `py/proof/src/moe_proof/cli.py`
@@ -2227,6 +2251,10 @@ Fix: validate that each loaded task doc has a `name` (and each config has
 `click.ClickException` naming the offending file, consistent with every
 other validation in this module.
 
+**Disposition:** fixed
+**Commit:** `7aefa4e55a279750dc4fbbd3804f37aa9f73c0c7`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-069: `check-provenance.mjs` crashes with an uncaught exception instead of a diagnostic when `root` has no `plugins/` directory
 
 **File:** `scripts/check-provenance.mjs`
@@ -2899,6 +2927,10 @@ misattribute cost. Fix: key `per_model` by `(namespace, model, provider.label())
 (or at minimum change `provider` to a set/vec when it disagrees) instead of
 model string alone.
 
+**Disposition:** fixed
+**Commit:** `bc589f0850df2678abd8566837a6019f91c9c8db`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-105: `PriceStore::save` writes the snapshot in place, not atomically
 
 **File:** `packages/tab/crates/moe-tab-core/src/pricing/store.rs`
@@ -2919,6 +2951,10 @@ every `estimate_cost` call errors loudly until the caller re-runs
 `Local`'s "wins absolutely". A rename-based write (write to
 `current.json.tmp`, `fsync`, `rename`) would make `save` crash-safe.
 
+**Disposition:** fixed
+**Commit:** `3e0349ef59400e1f8732700f4f0362b865eb88ac`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-106: `transcript::detect` misclassifies a valid dialect file with more than 20 leading lines as `UnknownDialect`
 
 **File:** `packages/tab/crates/moe-tab-core/src/transcript/mod.rs`
@@ -2942,6 +2978,10 @@ budget (mirror the loop body's `if line.is_empty() { continue; }` by not
 consuming a slot for it), or scan a fixed byte budget instead of a fixed line
 count.
 
+**Disposition:** fixed
+**Commit:** `8a4dbb7b016391f031e6c785688c996ad2cdccb5`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-107: `check_xml_valid`'s file lookup silently escapes the run/grade sandbox for absolute or `..`-containing paths
 
 **File:** `py/proof/src/moe_proof/cli.py`
@@ -2966,6 +3006,10 @@ Fix: resolve the joined path and assert `is_relative_to(grade_dir)` /
 `is_relative_to(run_dir)` before use, or reject `check["file"]` values that
 are absolute or contain `..` segments.
 
+**Disposition:** fixed
+**Commit:** `2e753b6bc1adcbfd2af94f8f455f7fd9399f08eb`
+**Resolved:** 2026-09-04
+**Note:** —
 ## Checked and found sound
 
 - `bin/moe.js`'s `resolve()` — sibling → PATH → workspace-fallback precedence,

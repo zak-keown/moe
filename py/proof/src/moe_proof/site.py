@@ -25,6 +25,26 @@ from pathlib import Path
 
 import yaml
 
+# Extensions whose native/guessed Content-Type a browser will execute as
+# active content (markup, script) rather than just display. Artifacts under
+# runs/ can be produced by a checker from raw, unsanitized model output (see
+# examples/pelican-riding-a-bicycle/checkers/extract-svg), so any of these
+# served with their natural Content-Type is a stored-XSS vector against the
+# report server's own origin (CR-022) — force them to inert text instead,
+# the same way YAML has always been served.
+_INERT_SUFFIXES = {
+    ".yaml",
+    ".yml",
+    ".html",
+    ".htm",
+    ".xhtml",
+    ".shtml",
+    ".svg",
+    ".svgz",
+    ".js",
+    ".mjs",
+}
+
 _yaml_cache = {}
 
 
@@ -187,8 +207,11 @@ def run_server(evals, grader_name, host, port):
                 runs_root = (eval_path / "runs").resolve()
                 target = (eval_path / tail).resolve()
                 if target.is_relative_to(runs_root) and target.is_file():
-                    # YAML and unknown types render inline, not download
-                    if target.suffix in (".yaml", ".yml"):
+                    # YAML and unknown types render inline, not download.
+                    # Extensions a browser would execute as active content
+                    # (html/svg/js/...) are forced to inert text/plain too —
+                    # see _INERT_SUFFIXES (CR-022).
+                    if target.suffix.lower() in _INERT_SUFFIXES:
                         ctype = "text/plain; charset=utf-8"
                     else:
                         ctype = (
@@ -206,6 +229,9 @@ def run_server(evals, grader_name, host, port):
             self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "no-store")
+            # Stop a browser from ignoring our declared Content-Type and
+            # sniffing renderable markup out of the body instead (CR-022).
+            self.send_header("X-Content-Type-Options", "nosniff")
             self.end_headers()
             self.wfile.write(body)
 
