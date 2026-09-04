@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 7
+  fixed: 8
   stale: 0
   skipped: 0
   deferred: 0
-  open: 100
+  open: 99
 ---
 
 # Codebase Review — moe
@@ -2253,6 +2253,10 @@ wire it into one of the "guarded surfaces" checks named in `AGENTS.md` (e.g.
 alongside the `marketplace.json` bidirectional check), or remove it — as
 written it is inert validation that looks load-bearing but is not.
 
+**Disposition:** fixed
+**Commit:** `f8439ac3d58d67c9be20cb09323f8fd99346e1df`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-071: render-html.cjs interpolates slot values into the HTML template without escaping
 
 **File:** `packages/core/skills/_shared/render-html.cjs`
