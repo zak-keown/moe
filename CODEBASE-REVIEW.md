@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 5
+  fixed: 6
   stale: 0
   skipped: 0
   deferred: 0
-  open: 102
+  open: 101
 ---
 
 # Codebase Review — moe
@@ -2541,6 +2541,10 @@ Today's only call site (`packages/flight/src/qa/cli/render.ts`, checked to confi
 
 `ErrorLog.add()` (`packages/flight/src/qa/util/error-log.ts`, read to confirm the shape) stamps each entry with `new Date().toISOString()` (millisecond resolution) and a `source` drawn from only three possible values: `"run" | "fanout" | "cards"`. Two errors from the same source recorded within the same millisecond — plausible during a run-set with several near-simultaneous failures, all logged via `source: "run"` — produce an identical `${timestamp}-${source}` key. `AppShell`'s error-log `<li>` list keys on exactly that combination, so React sees two siblings with the same key on the polled re-render (the panel refetches every 10s via `setInterval(refreshErrors, 10000)`), which is exactly the scenario a burst of failures would hit, in the one panel whose entire job is to surface those failures reliably. Use `err.timestamp + err.source + index` (or have the server assign a monotonic id) instead of relying on the tuple being unique.
 
+**Disposition:** fixed
+**Commit:** `8bf72b3555ce5eadc421ec30a0f32e7c858e8e1d`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-091: `Passes` input silently truncates exponent-notation values via `Number.parseInt`
 
 **File:** `packages/flight/ui/src/components/NewRunModal.tsx`
