@@ -14,6 +14,12 @@ findings:
   total: 107
 verified: false
 status: issues_found
+dispositions:
+  fixed: 1
+  stale: 0
+  skipped: 0
+  deferred: 0
+  open: 106
 ---
 
 # Codebase Review — moe
@@ -1394,6 +1400,10 @@ produces.
 
 Fix: pass `hostname: "127.0.0.1"` to `honoServe(...)`, matching `startMockWsServer` and the package's own stated default.
 
+**Disposition:** fixed
+**Commit:** `7fe5b4b4fb67f584ad932902bb1eef75a421f994`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-040: `chrome-profile-rotation.test.ts` only guards the module `require()`, not the actual `startChrome()` launch, so it fails outright (rather than skipping) whenever Chrome itself is missing
 
 **File:** `packages/flight/test/qa/integration/chrome-profile-rotation.test.ts`
