@@ -16,10 +16,10 @@ verified: false
 status: issues_found
 dispositions:
   fixed: 1
-  stale: 0
+  stale: 1
   skipped: 0
   deferred: 0
-  open: 106
+  open: 105
 ---
 
 # Codebase Review — moe
@@ -491,6 +491,10 @@ key `cellKey` already uses, e.g. hash it or percent/URL-encode each segment
 before joining, so no two distinct identity tuples can ever produce the same
 id.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-04
+**Note:** Same root defect as CR-009 (both point at cellId()'s bare hyphen-join in contracts.ts, only the call site/impact framing differs). Already resolved by 22642b56 (CR-009), which percent-encodes each segment before joining. Verified: checked out contracts.ts as of the pre-fix commit (92c44271) and manually re-ran the templates.ts-level repro from this finding (gridHtml -> fallbackCell -> cellId with scenario/agent tuples signup/claude-opus-4 vs signup-claude/opus-4) -- it collided as described; re-running the same repro against the fixed contracts.ts (22642b56) produces four distinct ids. No separate fix needed in templates.ts itself.
 ### CR-011: `trySpawnOn` leaves the spawned Chrome `ChildProcess` with no `'error'` listener, crashing the host process on spawn failure
 
 **File:** `packages/flight/src/qa/adapters/web/lib/chrome-process.js`
