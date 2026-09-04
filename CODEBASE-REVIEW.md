@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 8
+  fixed: 9
   stale: 0
   skipped: 0
   deferred: 0
-  open: 99
+  open: 98
 ---
 
 # Codebase Review — moe
@@ -2146,6 +2146,10 @@ Fix: validate/coerce metric values defensively in `normalize_check_info` (or
 skip/flag non-numeric, non-bool values in `render_model_blocks` rather than
 crashing the whole report).
 
+**Disposition:** fixed
+**Commit:** `5dc92ab988ac4932276f8f4c9dee090f4b221903`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-068: A task or config YAML missing a required key crashes with a raw KeyError instead of a ClickException
 
 **File:** `py/proof/src/moe_proof/cli.py`
