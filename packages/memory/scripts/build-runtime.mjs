@@ -31,6 +31,7 @@ const result = await esbuild.build({
   entryPoints: {
     cli: path.join(PACKAGE_ROOT, "src/cli.ts"),
     index: path.join(PACKAGE_ROOT, "src/index.ts"),
+    "file-lock": path.join(PACKAGE_ROOT, "src/file-lock.ts"),
   },
   outdir: DIST,
   bundle: true,
@@ -62,7 +63,7 @@ const outputs = Object.keys(result.metafile.outputs)
 
 const manifest = {
   version: 1,
-  entrypoints: ["cli.js", "index.js"],
+  entrypoints: ["cli.js", "file-lock.js", "index.js"],
   files: outputs.map((f) => {
     const abs = path.join(DIST, f);
     const content = fs.readFileSync(abs);
