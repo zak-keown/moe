@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 3
+  fixed: 4
   stale: 0
   skipped: 0
   deferred: 0
-  open: 104
+  open: 103
 ---
 
 # Codebase Review — moe
@@ -1811,6 +1811,10 @@ that their input was altered. Fix: track and skip the specific index consumed
 by `--entry` (e.g. `args.filter((a, i) => i !== entryIdx && i !== entryIdx + 1)`)
 rather than filtering by value.
 
+**Disposition:** fixed
+**Commit:** `c1badc9ad182af7b5db90a8db0cdee764802acbe`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-055: `loadExtensions` mangles multi-word CLI flags when forwarding to extension commands
 
 **File:** `packages/jig/src/extension.ts`
