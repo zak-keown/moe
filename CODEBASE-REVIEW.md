@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 5
+  fixed: 6
   stale: 1
   skipped: 0
   deferred: 0
-  open: 101
+  open: 100
 ---
 
 # Codebase Review — moe
@@ -2463,6 +2463,10 @@ a try/catch that skips (or reports) an unparsable line, consistent with how
 `ws-handlers.ts`'s `handleWsOpen` already treats the same `run.jsonl`
 per-line parse (`try { JSON.parse(l) } catch { return null }`).
 
+**Disposition:** fixed
+**Commit:** `03ad55d8861317743bfbe712b90f3a690f3255ba`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-084: `RunSetWriter.finalize`'s `processedIds` set is computed but never consulted
 
 **File:** `packages/flight/src/qa/evidence/run-set-writer.ts`
