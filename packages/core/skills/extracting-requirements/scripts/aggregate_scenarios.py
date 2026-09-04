@@ -46,15 +46,29 @@ def load_story_title_to_id(stories_dir: Path) -> dict[str, str]:
 
 
 def dedup_scenarios(scenarios: list[dict]) -> list[dict]:
-    """Deduplicate scenarios by exact title match."""
-    seen: dict[str, dict] = OrderedDict()
+    """Deduplicate scenarios by exact title match.
+
+    Title alone is not a safe key: two scenarios can both come back from
+    extraction with a missing or empty title (e.g. an extraction subagent
+    that failed to produce one), and merging them would silently drop one
+    scenario's kind/preconditions/steps/final_observables and misattribute
+    its citations to the survivor. An empty title is never treated as a
+    match, even against another empty title.
+    """
+    seen: "OrderedDict[object, dict]" = OrderedDict()
+    empty_title_count = 0
     for scenario in scenarios:
         title = scenario.get("title", "").strip()
-        if title not in seen:
-            seen[title] = dict(scenario)
+        if not title:
+            empty_title_count += 1
+            key = ("__no_title__", empty_title_count)
+        else:
+            key = title
+        if key not in seen:
+            seen[key] = dict(scenario)
         else:
             # Merge owning_story_titles and sources
-            existing = seen[title]
+            existing = seen[key]
             for t in scenario.get("owning_story_titles", []):
                 if t not in existing.get("owning_story_titles", []):
                     existing.setdefault("owning_story_titles", []).append(t)
