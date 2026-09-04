@@ -75,7 +75,7 @@ Defaults are generous and you inherit them by saying nothing.
   question, not by truncating the answer afterwards.
 
 **Delegate the retrieval, not the conclusion.** The cheapest budget is a
-subagent's context instead of yours: dispatch `search-moedex` (`model:` {model-fast},
+subagent's context instead of yours: dispatch `search-moedex` (`model: haiku`,
 a narrow tool allowlist, a hard word cap) and the raw blocks never enter this
 window. `remembering-conversations` (in the memory plugin, when installed)
 does the same for transcripts, and its skill text measures the saving at

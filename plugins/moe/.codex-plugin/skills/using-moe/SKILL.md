@@ -7,13 +7,11 @@ description: Use when starting any conversation - establishes how to find and us
 If you were dispatched as a subagent to execute a specific task, ignore this skill.
 </SUBAGENT-STOP>
 
-<BOOTSTRAP-CONTEXT>
-Codex provides native skill discovery only; this bootstrap is not
-injected at session start. If you explicitly loaded `using-moe`, follow
-it now and use native skill discovery for every other skill. Do not
-assume it was preloaded merely because it is installed.
-
-</BOOTSTRAP-CONTEXT>
+<ALREADY-LOADED>
+If you are reading this at session start, this skill is ALREADY LOADED and you
+are currently following it. Do NOT use native skill discovery to load `using-moe` again —
+that is redundant. Every OTHER skill you reach through the same mechanism.
+</ALREADY-LOADED>
 
 <EXTREMELY-IMPORTANT>
 If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.

@@ -93,11 +93,11 @@ plans:
 
 ## The CLI
 
-Resolve {resource:skills/sequencing-plans/scripts/plan-set.mjs} relative to this
-loaded document. It is a plugin-owned Node launcher, not a global executable:
-invoke the resolved resource with `node`, never as a bare `plan-set` command.
-It locates the plugin's scheduler independently of the project working
-directory and ships in the `moe` plugin alongside this skill.
+`plan-set` is one extensionless Node script under
+`${CLAUDE_PLUGIN_ROOT}/hooks/plan-set`. It is a plugin-owned script, not a
+global executable: invoke it as
+`node "${CLAUDE_PLUGIN_ROOT}/hooks/plan-set"`, never as a bare `plan-set`
+command. It ships in the `moe` plugin alongside this skill.
 
 Verbs:
 
@@ -139,21 +139,19 @@ loop.
 
 ## The loop
 
-1. **Confirm the manifest set.** Resolve
-   {resource:skills/sequencing-plans/scripts/plan-set.mjs} relative to this
-   loaded document, then invoke it as
-   `node "<resolved-plan-set.mjs>" check`
+1. **Confirm the manifest set.** Run
+   `node "${CLAUDE_PLUGIN_ROOT}/hooks/plan-set" check`
    before anything else. A cycle, a missing plan file, or a duplicate id is a
    dead end before the first plan runs, and `check` says which one at once. Use
    `--manifest docs/moe/plans/<project>-MANIFEST.md` only when intentionally
    scoping to that set and its prerequisites.
 
-2. **Pick the next plan.** Invoke the resolved launcher as
-   `node "<resolved-plan-set.mjs>" next`. `next`
+2. **Pick the next plan.** Run
+   `node "${CLAUDE_PLUGIN_ROOT}/hooks/plan-set" next`. `next`
    returns a set; the loop takes the first line of it.
 
    ```bash
-   NEXT=$(node "<resolved-plan-set.mjs>" next | head -n 1)
+   NEXT=$(node "${CLAUDE_PLUGIN_ROOT}/hooks/plan-set" next | head -n 1)
    ```
 
    If the output is empty, either everything is `done` (the project is
@@ -169,7 +167,7 @@ loop.
    base and head SHAs and mark it done:
 
    ```bash
-   node "<resolved-plan-set.mjs>" done "$NEXT" \
+   node "${CLAUDE_PLUGIN_ROOT}/hooks/plan-set" done "$NEXT" \
      "$(git merge-base main HEAD | cut -c1-7)..$(git rev-parse --short HEAD)"
    ```
 

@@ -66,12 +66,13 @@ in the table.
 When you have no network, or you want to search across the whole corpus with
 `shell` (rg/grep), populate a local cache first:
 
-Resolve [skills/working-with-claude-code/scripts/update_docs.cjs](scripts/update_docs.cjs)
-relative to this loaded document, then invoke it with `node`.
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/skills/working-with-claude-code/scripts/update_docs.mjs"
+```
 
 It reads `llms.txt`, extracts every `claude-code/*.md` URL, and writes each page
-into the sibling `references/` directory beside the resolved script's parent
-directory. Then use `shell` (cat) or `shell` (rg/grep) on that directory as usual.
+into `${CLAUDE_PLUGIN_ROOT}/skills/working-with-claude-code/references/`. Then
+use `shell` (cat) or `shell` (rg/grep) on that directory as usual.
 
 Two things to know about the cache:
 
