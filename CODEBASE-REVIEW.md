@@ -14,6 +14,12 @@ findings:
   total: 107
 verified: false
 status: issues_found
+dispositions:
+  fixed: 1
+  stale: 0
+  skipped: 0
+  deferred: 0
+  open: 106
 ---
 
 # Codebase Review — moe
@@ -1553,6 +1559,10 @@ assigning to `url.hostname` (e.g. via `net.isIPv6(host) ? \`[${host}]\` : host`)
 or verify `url.hostname === useHost` after assignment and throw/return the
 original on mismatch.
 
+**Disposition:** fixed
+**Commit:** `86597b67fc828709b24ec9a7ad07bfbb3cd9ff7c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-047: killChrome's port-based fallback SIGTERMs whatever now holds the port, unverified
 
 **File:** `packages/glass/skills/browsing/lib/chrome-process.js`
