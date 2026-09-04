@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 5
+  fixed: 6
   stale: 0
   skipped: 0
   deferred: 0
-  open: 102
+  open: 101
 ---
 
 # Codebase Review — moe
@@ -2504,6 +2504,10 @@ Functionally the tests still pass and still exercise real behavior (the screenca
 
 `makeRun()` calls `mkdtempSync(join(tmpdir(), "moe-flight-render-cmd-"))` and is invoked from all three tests in the file, but the file never calls `rmSync` on the returned `projectRoot` (no import of `rmSync`, no `afterEach`/`afterAll`). As with `run-one.test.ts` in this same shard, this leaks a temp directory per test run; confirmed 147 stale `moe-flight-render-cmd-*` directories present in the OS temp dir from previous runs. Fix: capture the returned `projectRoot` in each test and remove it in a `finally`/`afterEach`, consistent with `render.ts`'s other consumers in this package (e.g. `render-args.test.ts`'s siblings, `attach.test.ts`) that do clean up.
 
+**Disposition:** fixed
+**Commit:** `1764bbe7a3133ce85fc654a0ff87a835e7baa39b`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-087: Temp directories leaked by run-one.test.ts (no cleanup)
 **File:** `packages/flight/test/qa/cli/run-one.test.ts`
 **Anchor:** `mkdtempSync(join(tmpdir(), "moe-flight-runone-ctx-"))`
