@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 3
+  fixed: 4
   stale: 0
   skipped: 0
   deferred: 0
-  open: 104
+  open: 103
 ---
 
 # Codebase Review — moe
@@ -1284,6 +1284,10 @@ Same issue as `dom-summary.js`'s header comment, in the sibling file: it claims 
 
 Fix: same as the sibling finding — either port glass's jsdom test into `packages/flight/test/`, or fix the comment.
 
+**Disposition:** fixed
+**Commit:** `29086e025a94fd11ad5c5fa36c31f8278b86dc60`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-034: Screenshot temp-file name collision under concurrent runs
 
 **File:** `packages/flight/src/qa/adapters/web/tools/return-screenshot.ts`
