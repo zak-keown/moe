@@ -62,7 +62,7 @@ Test files (`*.test.*`, `*.spec.*`, `__tests__/**`) are excluded by default sinc
 
 ### Phase 2: Categorize by Domain
 
-Dispatch a **haiku** subagent using the prompt in `${CLAUDE_PLUGIN_ROOT}/skills/finding-duplicate-functions/scripts/categorize-prompt.md`.
+Dispatch a **haiku** subagent using the prompt in [categorize-prompt.md](./scripts/categorize-prompt.md).
 
 Insert the contents of `catalog.json` where indicated in the prompt template. Save output as `categorized.json`.
 
@@ -76,7 +76,7 @@ Creates one JSON file per category. Only categories with 3+ functions are worth 
 
 ### Phase 4: Find Duplicates (Per Category)
 
-For each category file in `./categories/`, dispatch an **opus** subagent using the prompt in `${CLAUDE_PLUGIN_ROOT}/skills/finding-duplicate-functions/scripts/find-duplicates-prompt.md`.
+For each category file in `./categories/`, dispatch an **opus** subagent using the prompt in [find-duplicates-prompt.md](./scripts/find-duplicates-prompt.md).
 
 Save each output as `./duplicates/<category-name>.json`.
 

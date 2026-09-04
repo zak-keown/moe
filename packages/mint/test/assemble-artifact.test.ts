@@ -110,10 +110,10 @@ describe('complete artifact assembly', () => {
     expect(artifact.emissions).toBe(artifact.projection.emissions)
     expect(artifact.omittedOptionalPayloads).toEqual([])
     const paths = await inventory(artifact.root)
-    expect(paths).toContain('skills/demo/test-runtime.js')
-    expect(paths).toContain('skills/demo/__tests__/test-transitive.js')
+    expect(paths).toContain('skills/demo/scripts/test-runtime.mjs')
+    expect(paths).toContain('skills/demo/__tests__/transitive-fixture.json')
     expect(paths).toContain('skills/test-driven-development/SKILL.md')
-    expect(paths).not.toContain('skills/demo/test-unlinked.js')
+    expect(paths).not.toContain('skills/demo/test-unlinked.md')
     expect(paths).not.toContain('skills/demo/.gitignore')
     expect(paths).not.toContain('moe-mint.yaml')
     expect(paths).toContain('.moe/artifact.json')
@@ -349,6 +349,26 @@ describe('complete artifact assembly', () => {
     await expect(assembleArtifact({ repoRoot: root, platform: platform(root, [plugin]), plugin, destinationRoot }))
       .rejects.toMatchObject({ diagnostic: { code: 'LEGAL_TEMPLATE_DRIFT' } })
     await expect(readFile(join(destinationRoot, plugin.id, '.moe/artifact.json'))).rejects.toMatchObject({ code: 'ENOENT' })
+  })
+
+  it('rejects a nonconforming skill backend before staging any component', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'moe-assemble-runtime-'))
+    workspaces.push(root)
+    await Promise.all([
+      cp(join(repoRoot, 'LICENSE'), join(root, 'LICENSE')),
+      cp(join(repoRoot, 'LICENSE-MIT'), join(root, 'LICENSE-MIT')),
+      cp(join(repoRoot, 'NOTICE'), join(root, 'NOTICE')),
+    ])
+    const plugin = await fixturePlugin(root)
+    await mkdir(join(plugin.sourcePath, 'skills/demo/scripts'), { recursive: true })
+    await writeFile(join(plugin.sourcePath, 'skills/demo/scripts/task.py'), 'print("hello")\n')
+    const destinationRoot = join(root, 'plugins.next-runtime')
+    await mkdir(destinationRoot)
+
+    await expect(assembleArtifact({ repoRoot: root, platform: platform(root, [plugin]), plugin, destinationRoot }))
+      .rejects.toMatchObject({ diagnostic: { code: 'SKILL_RUNTIME_INVALID' } })
+
+    await expect(readFile(join(destinationRoot, plugin.id, '.moe-mint/manifest.json'))).rejects.toMatchObject({ code: 'ENOENT' })
   })
 
   it('refuses to assemble through a symbolic-link destination root', async () => {

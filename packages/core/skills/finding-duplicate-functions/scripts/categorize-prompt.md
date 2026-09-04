@@ -53,7 +53,7 @@ Do NOT truncate or summarize - write ALL entries.
 
 ## Usage
 
-1. Run extraction: `node extract-functions.mjs src/ -o catalog.json`
+1. Run extraction: `node "${CLAUDE_PLUGIN_ROOT}/skills/finding-duplicate-functions/scripts/extract-functions.mjs" src/ -o catalog.json`
 2. Dispatch haiku subagent with the prompt above, replacing:
    - `<CATALOG_PATH>` with path to catalog.json
    - `<OUTPUT_PATH>` with desired output path (e.g., `categorized.json`)

@@ -132,4 +132,4 @@ git commit -m "docs: add roadmap — walking skeleton with journey scenario + it
 - `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md` — PAR methodology
 - `${CLAUDE_PLUGIN_ROOT}/skills/_shared/behavior-evidence-formats.md` — scenario and proof obligation formats
 - `${CLAUDE_PLUGIN_ROOT}/skills/running-an-iteration/scope-reviewer-prompt.md` — scope reviewer prompt (reused from a sibling skill)
-- `${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/check_citations.mjs` — mechanical citation check
+- [check_citations.mjs](./scripts/check_citations.mjs) — mechanical citation check

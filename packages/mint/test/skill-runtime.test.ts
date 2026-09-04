@@ -120,6 +120,10 @@ describe('skill runtime validation', () => {
     ['re-exported child-process exec APIs', 'export { exec } from "node:child_process";', 'SKILL_RUNTIME_SHELL_EXEC'],
     ['literal computed namespace spawn calls', 'import * as childProcess from "node:child_process"; childProcess["spawn"]("tool", [], { shell: true });', 'SKILL_RUNTIME_SHELL_EXEC'],
     ['spawn calls before their static imports', 'spawn("tool", [], { shell: true }); import { spawn } from "node:child_process";', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['dynamic import of node:module followed by createRequire', 'const mod = await import("node:module"); const req = mod.createRequire(import.meta.url); req("left-pad");', 'SKILL_RUNTIME_COMMONJS'],
+    ['re-exported child-process spawn API', 'export { spawn } from "node:child_process";', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['re-exported child-process execFileSync API', 'export { execFileSync } from "node:child_process";', 'SKILL_RUNTIME_SHELL_EXEC'],
+    ['export-all child-process re-export', 'export * from "node:child_process";', 'SKILL_RUNTIME_SHELL_EXEC'],
     ['missing relative modules', 'import value from "./missing.mjs";', 'SKILL_RUNTIME_IMPORT'],
     ['relative modules without the mjs extension', 'import value from "./lib.js";', 'SKILL_RUNTIME_IMPORT'],
     ['unknown node built-ins', 'import value from "node:not-a-real-built-in";', 'SKILL_RUNTIME_IMPORT'],
@@ -264,15 +268,15 @@ describe('skill runtime validation', () => {
       ...valid,
       file('skills/demo/guide.md', [
         '`"${CLAUDE_PLUGIN_ROOT}/skills/demo/scripts/main.mjs"`',
-        '`node ./missing.mjs`',
-        '`node "$SKILL/missing.mjs"`',
+        '`node "${CLAUDE_PLUGIN_ROOT}/skills/demo/scripts/missing.mjs"`',
+        '`node main.mjs`',
       ].join('\n')),
     ]))
 
     expect(report.diagnostics.map(({ code }) => code)).toEqual([
       'SKILL_RUNTIME_INVOCATION',
       'SKILL_RUNTIME_INVOCATION',
-      'SKILL_RUNTIME_INVOCATION',
+      'SKILL_RUNTIME_REFERENCE',
     ])
   })
 
