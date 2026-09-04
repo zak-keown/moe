@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 5
+  fixed: 6
   stale: 0
   skipped: 0
   deferred: 0
-  open: 102
+  open: 101
 ---
 
 # Codebase Review — moe
@@ -1168,6 +1168,10 @@ by sharing the check, e.g. exporting `assertSafeSegment` from `paths.ts` and
 calling it from both `record()` and `runHook` before path construction), and
 no-op instead of writing when it fails.
 
+**Disposition:** fixed
+**Commit:** `6278af574f7d87354ce3f89a5eb9e34a1e6c4a73`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-030: `pidAlive` reports pid 0 and negative pids as permanently alive, contradicting its own doc comment
 
 **File:** `packages/flight/dashboard/src/scan.ts`
