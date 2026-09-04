@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 5
+  fixed: 6
   stale: 0
   skipped: 0
   deferred: 0
-  open: 102
+  open: 101
 ---
 
 # Codebase Review — moe
@@ -2651,6 +2651,10 @@ block already has, or move `bug3Dir`/`bug4Dir` under the shared `tmpRoot`.
 
 `runSync()` unconditionally adds one listener each for `"exit"`, `"SIGINT"`, `"SIGTERM"`, and `"SIGHUP"` every time it runs, and never removes them (`process.off`/`removeListener` is never called). For a normal one-shot CLI invocation this is harmless because the process exits immediately afterward. But `runSync` is an exported function, not a script entry point, and nothing prevents it from being called more than once inside a single process (e.g. a test suite that calls it repeatedly, or any future in-process caller). Each extra call adds four more permanent listeners; past the default Node limit of 10 per event, `process.on("exit", ...)` and friends will start emitting `MaxListenersExceededWarning`, and every one of the accumulated closures (each capturing its own `syncLock`/`released` state) fires on the eventual signal/exit even though only the most recent call's lock is still meaningfully live. It's inert in the common CLI case, but it's a real, unbounded listener leak for any repeated in-process use — guard with `once()` plus explicit removal after `releaseSyncLockOnce()` fires, or register the handlers once at module scope instead of per-call.
 
+**Disposition:** fixed
+**Commit:** `63ec17827b478b05747b11d9b3c231cd816fea4c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-098: Vacuous "malformed JSONL" test does not exercise malformed input
 
 **File:** `packages/memory/test/parser.test.ts`
