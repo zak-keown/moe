@@ -37,9 +37,15 @@ function fakeDot(root: string): string {
   const bin = join(root, "bin");
   mkdirSync(bin);
   const dot = join(bin, "dot");
+  // Drain stdin before exiting: render-graphs pipes the graph to `dot` via
+  // spawnSync({ input }). Real graphviz reads all of stdin; a stand-in that
+  // exits without reading it races the parent's write and throws EPIPE once the
+  // graph exceeds the pipe buffer -- flaky locally, deterministic under CI load,
+  // and the reason the --combine case (a larger graph) went red. Reading stdin
+  // first makes the fake a faithful stand-in and removes the race.
   writeFileSync(
     dot,
-    '#!/bin/sh\nif [ "$1" = "-V" ]; then exit 0; fi\nprintf \'<svg>fixture</svg>\\n\'\n',
+    '#!/bin/sh\nif [ "$1" = "-V" ]; then exit 0; fi\ncat >/dev/null\nprintf \'<svg>fixture</svg>\\n\'\n',
   );
   chmodSync(dot, 0o755);
   return bin;
