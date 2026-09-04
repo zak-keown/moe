@@ -14,6 +14,12 @@ findings:
   total: 107
 verified: false
 status: issues_found
+dispositions:
+  fixed: 1
+  stale: 0
+  skipped: 0
+  deferred: 0
+  open: 106
 ---
 
 # Codebase Review — moe
@@ -846,6 +852,10 @@ Fix: either wire each `--execute` branch to call the corresponding implementatio
 wiring lands — make the stub exit non-zero with an explicit "not implemented" `MintError` instead of
 logging a message that reads as confirmation and exiting 0.
 
+**Disposition:** fixed
+**Commit:** `c69b01c49285e887976b7dd31352654bb1913817`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-021: extractEmbedded's directory creation follows a pre-planted symlink, letting a co-tenant redirect the native-library cache outside the content-hash integrity check
 
 **File:** `packages/tab/bindings/go/tab/loader.go`
