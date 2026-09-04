@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 3
+  fixed: 4
   stale: 0
   skipped: 0
   deferred: 0
-  open: 104
+  open: 103
 ---
 
 # Codebase Review — moe
@@ -654,6 +654,10 @@ return textResult(
 
 `textResult` is called with no `opts.transcriptText`, so `result.stderr` (up to `STDERR_CAP_BYTES` = 8 KiB, but otherwise verbatim) is always written into `run.jsonl`'s `tool_result.text`, regardless of `includeInTranscripts`. A resolver script that echoes diagnostic context to stderr before a non-zero exit — a very ordinary thing for an operator-authored credential-fetch script to do (e.g. dumping the HTTP response body, a partially-fetched OTP, or an upstream auth token used to reach the OTP provider) — lands unredacted in the durable, disk-persisted evidence file even when the operator explicitly configured `MOE_FLIGHT_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS=false` (the default). The `timeout` case avoids this by not including `result.stderr` in its message at all, which confirms the omission on `nonzero_exit` is inconsistent rather than intentional. The fix is to route `nonzero_exit` (and any other stderr-bearing message) through the same `transcriptText` gating as the `ok` case.
 
+**Disposition:** fixed
+**Commit:** `52b1c66d59112d509ec69b1d703ea80a6773eb9c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-016: `executeRunCore` double-fires lifecycle hooks and misreports a successful run as errored when `beforeClose`/`afterClose` throws
 
 **File:** `packages/flight/src/qa/runs/orchestrator.ts`
