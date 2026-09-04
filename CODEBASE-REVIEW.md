@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 44
+  fixed: 51
   stale: 1
   skipped: 0
   deferred: 0
-  open: 62
+  open: 55
 ---
 
 # Codebase Review — moe
@@ -305,6 +305,10 @@ Downstream, `cmdWaitForTurn` (`packages/crew/src/commands/wait-for-turn.ts`, rea
 
 Either way the command silently breaks instead of the "Error: --after-line expects a number" style rejection the sibling flag gets. `cli.test.ts` has a covering test for converse's analogous numeric-timeout validation (`"rejects converse with a non-numeric timeout positional"`) but no equivalent test exists for `wait-for-turn`'s positional timeout, which is how this gap survived. Fix: validate with `Number.isFinite` in the digit-leading branch the same way `--after-line` does, and reject non-numeric input with a clear code-2 error.
 
+**Disposition:** fixed
+**Commit:** `78207f9ce71de4471fc90170b22410910b67bf70`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-007: Pack-file inline scalar parser silently truncates values containing `" #"`, even inside quotes
 
 **File:** `packages/crew/src/core/packs.ts`
@@ -324,6 +328,10 @@ This is not a contrived input for this project: the codebase's own review/issue 
 
 Fix: only strip an inline comment when not inside a quoted value (e.g. only apply the regex when `raw.trim()` doesn't already start with a quote character, or do a proper quote-aware scan), and preserve `#` characters that are already inside a matched quote pair.
 
+**Disposition:** fixed
+**Commit:** `09a0772bac6b5ea87957428d55400d611430f581`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-008: Unsanitized `session_id` from hook stdin lets a crafted payload escape the worker dir and can defeat the hook's own "always exit 0" guarantee
 
 **File:** `packages/crew/src/hooks/emit-event.ts`
@@ -388,6 +396,10 @@ mirroring `assertSafeSegment`/`CLAUDE_SESSION_ID`) before using it to build
 any path, and treat a failing validation as a no-op (return `empty`) the same
 way a missing/empty `session_id` already is.
 
+**Disposition:** fixed
+**Commit:** `54ad5ce6d5b844dff1e71f7b27f98853e373b70f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-009: `cellId()` uses an unsafe separator, letting two distinct cells collide on the same DOM id and SSE event name
 
 **File:** `packages/flight/dashboard/src/contracts.ts`
@@ -1129,6 +1141,10 @@ The result: on a launch failure with `--worktree` set (a real, reachable conditi
 
 Fix: route every teardown path that might be tearing down a `--worktree` worker (the `awaitSessionStart` timeout branch, `launchDerive`'s no-session branch, and `cmdPrune`) through the same read-marker-then-`removeWorktree` sequence `cmdStop` already uses, or make `removeWorker`/`removeOrphan` themselves worktree-aware.
 
+**Disposition:** fixed
+**Commit:** `3df505d5636ed23e0f43f2e4e4b3c234015337c8`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-028: `ensureOwnedDir`'s create-path has a TOCTOU window that defeats its own symlink defense
 
 **File:** `packages/crew/src/core/worker-store.ts`
@@ -1160,6 +1176,10 @@ So an attacker who can win the race between the `lstatSync` ENOENT and the `mkdi
 
 Fix: after the `mkdirSync` call in the catch branch, `lstatSync` again and verify `isDirectory()` and ownership before returning (or open the directory with `O_NOFOLLOW`/use `mkdirSync` without `recursive` so an existing entry throws `EEXIST` and can be re-validated).
 
+**Disposition:** fixed
+**Commit:** `a607cdbb5c5856a81cb6ac3089a91a9d2200e11b`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-029: Same unsanitized-session-id pattern in the pi extension's self-registration path
 
 **File:** `packages/crew/src/pi-extension/index.ts`
@@ -1188,6 +1208,10 @@ by sharing the check, e.g. exporting `assertSafeSegment` from `paths.ts` and
 calling it from both `record()` and `runHook` before path construction), and
 no-op instead of writing when it fails.
 
+**Disposition:** fixed
+**Commit:** `6278af574f7d87354ce3f89a5eb9e34a1e6c4a73`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-030: `pidAlive` reports pid 0 and negative pids as permanently alive, contradicting its own doc comment
 
 **File:** `packages/flight/dashboard/src/scan.ts`
@@ -2390,6 +2414,10 @@ The comment on the final branch says: "Real failure — let the caller know, but
 
 Fix: either make the comment accurate (state plainly that failures are swallowed and unobservable), or actually surface the failure (e.g. attach a warning to the `CommandResult` returned by `cmdStop`).
 
+**Disposition:** fixed
+**Commit:** `b32c486a76b695f434d9042fd7cdc581738df6d9`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-075: Verdict-cache grows without bound for the lifetime of the dashboard process
 
 **File:** `packages/flight/dashboard/src/scan.ts`

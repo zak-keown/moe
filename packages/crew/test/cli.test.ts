@@ -241,6 +241,13 @@ describe("run — validation and dispatch", () => {
     expect(err()).toContain("Error: --after-line expects a number for wait-for-turn");
   });
 
+  it("rejects wait-for-turn with a digit-leading non-numeric timeout positional (CR-006)", async () => {
+    const { io, err } = makeIo();
+    const code = await run(["--worker", "w", "wait-for-turn", "60x"], io);
+    expect(code).toBe(2);
+    expect(err()).toContain("Error: wait-for-turn timeout must be a number");
+  });
+
   it("rejects converse with a non-numeric timeout positional", async () => {
     const { io, err } = makeIo();
     const code = await run(["--worker", "w", "converse", "hello", "notanumber"], io);
