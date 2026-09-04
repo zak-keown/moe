@@ -1,26 +1,29 @@
-(function() {
-  const MIN_RECONNECT_MS = 500;
-  const MAX_RECONNECT_MS = 30000;
-  const TOMBSTONE_AFTER_MS = 15000; // show the "paused" overlay after this long disconnected
+export const MIN_RECONNECT_MS = 500;
+export const MAX_RECONNECT_MS = 30000;
+export const TOMBSTONE_AFTER_MS = 15000;
 
-  // Pure: next backoff delay (doubles, capped). Exported for unit tests.
+export function nextReconnectDelay(current, max) {
+	return Math.min(current * 2, max);
+}
+
+export const helperScript = `(function() {
+  var MIN_RECONNECT_MS = 500;
+  var MAX_RECONNECT_MS = 30000;
+  var TOMBSTONE_AFTER_MS = 15000;
+
   function nextReconnectDelay(current, max) {
     return Math.min(current * 2, max);
   }
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { nextReconnectDelay, MIN_RECONNECT_MS, MAX_RECONNECT_MS, TOMBSTONE_AFTER_MS };
-  }
 
-  // Everything below is browser-only; bail out when loaded in Node (tests).
   if (typeof window === 'undefined') return;
 
-  let ws = null;
-  let eventQueue = [];
-  let reconnectDelay = MIN_RECONNECT_MS;
-  let reconnectTimer = null;
-  let disconnectedSince = null;
-  let everConnected = false;
-  let tombstoneShown = false;
+  var ws = null;
+  var eventQueue = [];
+  var reconnectDelay = MIN_RECONNECT_MS;
+  var reconnectTimer = null;
+  var disconnectedSince = null;
+  var everConnected = false;
+  var tombstoneShown = false;
 
   function sessionKey() {
     try {
@@ -30,12 +33,12 @@
   }
 
   function websocketUrl() {
-    const key = sessionKey();
+    var key = sessionKey();
     return 'ws://' + window.location.host + (key ? '/?key=' + encodeURIComponent(key) : '');
   }
 
   function reloadAfterRecovery() {
-    const key = sessionKey();
+    var key = sessionKey();
     if (key) {
       window.location.replace('/?key=' + encodeURIComponent(key));
     } else {
@@ -43,26 +46,24 @@
     }
   }
 
-  // Reflect connection state in the frame's status pill (absent on full-doc screens).
   function setStatus(state) {
-    const el = document.querySelector('.status');
+    var el = document.querySelector('.status');
     if (!el) return;
-    const map = {
-      connecting:   ['Connecting…',   'var(--text-tertiary)'],
+    var map = {
+      connecting:   ['Connecting\\u2026',   'var(--text-tertiary)'],
       connected:    ['Connected',     'var(--success)'],
-      reconnecting: ['Reconnecting…', 'var(--warning)'],
+      reconnecting: ['Reconnecting\\u2026', 'var(--warning)'],
       disconnected: ['Disconnected',  'var(--error)']
     };
-    const [text, color] = map[state] || map.disconnected;
-    el.textContent = text;
-    el.style.setProperty('--status-color', color);
+    var entry = map[state] || map.disconnected;
+    el.textContent = entry[0];
+    el.style.setProperty('--status-color', entry[1]);
   }
 
-  // Self-styled so it works on framed and full-document screens alike.
   function showTombstone() {
     if (tombstoneShown) return;
     tombstoneShown = true;
-    const el = document.createElement('div');
+    var el = document.createElement('div');
     el.id = 'bs-tombstone';
     el.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;' +
       'align-items:center;justify-content:center;padding:2rem;text-align:center;' +
@@ -70,7 +71,7 @@
     el.innerHTML = '<div style="max-width:480px">' +
       '<h2 style="margin:0 0 .5rem;font-weight:600">Companion paused</h2>' +
       '<p style="margin:0;opacity:.85">This brainstorm companion has stopped. ' +
-      'Ask your coding agent to bring it back — this page reconnects automatically.</p></div>';
+      'Ask your coding agent to bring it back \\u2014 this page reconnects automatically.</p></div>';
     if (document.body) document.body.appendChild(el);
   }
 
@@ -79,28 +80,25 @@
     setStatus(everConnected ? 'reconnecting' : 'connecting');
     ws = new WebSocket(websocketUrl());
 
-    ws.onopen = () => {
-      const recovered = tombstoneShown;
+    ws.onopen = function() {
+      var recovered = tombstoneShown;
       everConnected = true;
       disconnectedSince = null;
       reconnectDelay = MIN_RECONNECT_MS;
       tombstoneShown = false;
       setStatus('connected');
-      eventQueue.forEach(e => ws.send(JSON.stringify(e)));
+      eventQueue.forEach(function(e) { ws.send(JSON.stringify(e)); });
       eventQueue = [];
-      // Recovered from a tombstoned outage (e.g. the server restarted on the same
-      // port) — reload through the keyed bootstrap when possible so the cookie is
-      // refreshed before the visible URL returns to bare /.
       if (recovered) reloadAfterRecovery();
     };
 
-    ws.onmessage = (msg) => {
-      let data;
+    ws.onmessage = function(msg) {
+      var data;
       try { data = JSON.parse(msg.data); } catch (_e) { return; }
       if (data.type === 'reload') window.location.reload();
     };
 
-    ws.onclose = () => {
+    ws.onclose = function() {
       ws = null;
       if (disconnectedSince === null) disconnectedSince = Date.now();
       if (Date.now() - disconnectedSince >= TOMBSTONE_AFTER_MS) {
@@ -113,8 +111,7 @@
       reconnectDelay = nextReconnectDelay(reconnectDelay, MAX_RECONNECT_MS);
     };
 
-    // Let onclose own reconnection so we don't schedule it twice.
-    ws.onerror = () => { try { ws.close(); } catch (_e) {} };
+    ws.onerror = function() { try { ws.close(); } catch (_e) {} };
   }
 
   function sendEvent(event) {
@@ -126,28 +123,24 @@
     }
   }
 
-  // Capture clicks on choice elements
-  document.addEventListener('click', (e) => {
-    const target = e.target.closest('[data-choice]');
+  document.addEventListener('click', function(e) {
+    var target = e.target.closest('[data-choice]');
     if (!target) return;
-
     sendEvent({
       type: 'click',
       text: target.textContent.trim(),
       choice: target.dataset.choice,
       id: target.id || null
     });
-
   });
 
-  // Frame UI: selection tracking
   window.selectedChoice = null;
 
   window.toggleSelect = function(el) {
-    const container = el.closest('.options') || el.closest('.cards');
-    const multi = container && container.dataset.multiselect !== undefined;
+    var container = el.closest('.options') || el.closest('.cards');
+    var multi = container && container.dataset.multiselect !== undefined;
     if (container && !multi) {
-      container.querySelectorAll('.option, .card').forEach(o => o.classList.remove('selected'));
+      container.querySelectorAll('.option, .card').forEach(function(o) { o.classList.remove('selected'); });
     }
     if (multi) {
       el.classList.toggle('selected');
@@ -157,11 +150,10 @@
     window.selectedChoice = el.dataset.choice;
   };
 
-  // Expose API for explicit use
   window.brainstorm = {
     send: sendEvent,
-    choice: (value, metadata = {}) => sendEvent({ type: 'choice', value, ...metadata })
+    choice: function(value, metadata) { sendEvent(Object.assign({ type: 'choice', value: value }, metadata || {})); }
   };
 
   connect();
-})();
+})();`;

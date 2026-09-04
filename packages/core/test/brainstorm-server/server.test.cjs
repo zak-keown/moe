@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-const SERVER_PATH = path.join(__dirname, '../../skills/brainstorming/scripts/server.cjs');
+const SERVER_PATH = path.join(__dirname, '../../skills/brainstorming/scripts/server.mjs');
 const TEST_PORT = 3334;
 const TEST_DIR = '/tmp/brainstorm-test';
 const CONTENT_DIR = path.join(TEST_DIR, 'content');

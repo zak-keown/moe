@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-const SERVER = path.join(__dirname, '../../skills/brainstorming/scripts/server.cjs');
+const SERVER = path.join(__dirname, '../../skills/brainstorming/scripts/server.mjs');
 const START = path.join(__dirname, '../../skills/brainstorming/scripts/start-server.sh');
 const STOP = path.join(__dirname, '../../skills/brainstorming/scripts/stop-server.sh');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
