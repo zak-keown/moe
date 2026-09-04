@@ -52,6 +52,22 @@ describe('publish workflow contract', () => {
     }
   })
 
+  it('provides the process and system dependencies required by pnpm check', () => {
+    const publish = PUBLISH_YAML.jobs.publish
+    expect(publish.container).toEqual({ image: 'node:24', options: '--init' })
+
+    const commands = publish.steps
+      .map((step: { run?: string }) => step.run)
+      .filter((command: string | undefined): command is string => command !== undefined)
+    const dependenciesAt = commands.findIndex(
+      (command: string) => command.includes('apt-get install') && command.includes('jq') && command.includes('lsof'),
+    )
+    const checkAt = commands.indexOf('pnpm check')
+
+    expect(dependenciesAt).toBeGreaterThan(-1)
+    expect(dependenciesAt).toBeLessThan(checkAt)
+  })
+
   it('publishes prereleases to next and stable tags to latest', () => {
     expect(PUBLISH_WORKFLOW).toContain('echo "tag=next"')
     expect(PUBLISH_WORKFLOW).toContain('echo "tag=latest"')
