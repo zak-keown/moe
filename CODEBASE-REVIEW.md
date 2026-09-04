@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 2
+  fixed: 3
   stale: 0
   skipped: 0
   deferred: 0
-  open: 105
+  open: 104
 ---
 
 # Codebase Review — moe
@@ -288,6 +288,10 @@ checks currently unique to `review-check.mjs`) into `findingProblems` itself,
 so `review-merge.mjs` refuses them unconditionally rather than relying on a
 separately-invoked lint.
 
+**Disposition:** fixed
+**Commit:** `cbf6cd5fb00fe3004e7815e71de1912d535e39c0`
+**Resolved:** 2026-09-04
+**Note:** Scoped to the citation-pattern check; the fenced-### and numbered-heading checks stay in review-check.mjs, see commit message
 ### CR-006: A bad `wait-for-turn` timeout argument produces NaN and either hangs forever or fails instantly instead of erroring
 
 **File:** `packages/crew/src/cli.ts`
