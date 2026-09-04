@@ -20,7 +20,7 @@ const config = {
   components: { skills: 'skills', commands: 'commands', agents: 'agents', hooks: 'hooks/hooks.json', mcp: '.mcp.json' },
   harnesses: { exclude: [], settings: {} },
   distribution: { npm: '@bubstack/package-consumer' },
-  artifact: { payloads: [] },
+  artifact: { runtimeDependencyPolicy: 'preserve', payloads: [] },
   targets: {} as MintConfig['targets'],
   importedWorks: [],
 } satisfies MintConfig

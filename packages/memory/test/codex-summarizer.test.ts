@@ -1,0 +1,117 @@
+import { describe, expect, it } from "vitest";
+import { buildCodexSummarizerCommand, runCodexCommand } from "../src/summarizers/codex.js";
+
+describe("buildCodexSummarizerCommand", () => {
+  it("starts the Codex app-server so the summarizer can fork ephemerally", () => {
+    const command = buildCodexSummarizerCommand({
+      sessionId: "019e4c75-d5bf-7c71-9df7-77f5fb86b711",
+      model: "gpt-5.2",
+      prompt: "Summarize this conversation.",
+      codexBin: "codex",
+    });
+
+    expect(command).toEqual({
+      command: "codex",
+      args: ["app-server"],
+      prompt: "Summarize this conversation.",
+      sessionId: "019e4c75-d5bf-7c71-9df7-77f5fb86b711",
+      model: "gpt-5.2",
+    });
+  });
+
+  it("uses MOE_MEMORY_CODEX_BIN env when no codexBin argument is given", () => {
+    const prev = process.env.MOE_MEMORY_CODEX_BIN;
+    try {
+      process.env.MOE_MEMORY_CODEX_BIN = "/usr/local/bin/codex";
+      const command = buildCodexSummarizerCommand({
+        sessionId: "abc",
+        prompt: "test",
+      });
+      expect(command.command).toBe("/usr/local/bin/codex");
+    } finally {
+      if (prev === undefined) delete process.env.MOE_MEMORY_CODEX_BIN;
+      else process.env.MOE_MEMORY_CODEX_BIN = prev;
+    }
+  });
+});
+
+describe("runCodexCommand", () => {
+  it("forks ephemerally and starts a read-only turn", async () => {
+    const fakeAppServer = `
+      const readline = require('readline');
+      const rl = readline.createInterface({ input: process.stdin });
+      rl.on('line', line => {
+        const message = JSON.parse(line);
+        if (message.method === 'initialize') {
+          console.log(JSON.stringify({ id: message.id, result: { userAgent: 'fake', codexHome: '/tmp/codex', platformFamily: 'unix', platformOs: 'macos' } }));
+          return;
+        }
+        if (message.method === 'initialized') return;
+        if (message.method === 'thread/fork') {
+          if (message.params.threadId !== 'session-123') throw new Error('wrong session id');
+          if (message.params.ephemeral !== true) throw new Error('fork was not ephemeral');
+          if (message.params.sandbox !== 'read-only') throw new Error('fork was not read-only');
+          console.log(JSON.stringify({ id: message.id, result: { thread: { id: 'fork-456' } } }));
+          return;
+        }
+        if (message.method === 'turn/start') {
+          if (message.params.threadId !== 'fork-456') throw new Error('turn did not target fork');
+          if (!message.params.input[0].text.includes('Summarize this conversation')) throw new Error('wrong prompt');
+          console.log(JSON.stringify({ id: message.id, result: { turn: { id: 'turn-789', status: 'inProgress' } } }));
+          console.log(JSON.stringify({ method: 'item/agentMessage/delta', params: { delta: '<summary>Codex fork summary.</summary>' } }));
+          console.log(JSON.stringify({ method: 'turn/completed', params: { turn: { id: 'turn-789', status: 'completed' } } }));
+        }
+      });
+    `;
+
+    const result = await runCodexCommand({
+      command: process.execPath,
+      args: ["-e", fakeAppServer],
+      sessionId: "session-123",
+      prompt: "Summarize this conversation.",
+      skipVersionCheck: true,
+    });
+
+    expect(result).toBe("<summary>Codex fork summary.</summary>");
+  });
+
+  it("rejects Codex versions below the production support floor before starting app-server", async () => {
+    await expect(
+      runCodexCommand({
+        command: process.execPath,
+        versionArgs: ["-e", "console.log('codex-cli 0.129.9')"],
+        args: ["-e", "setTimeout(() => {}, 1000)"],
+        sessionId: "session-123",
+        prompt: "Summarize this conversation.",
+      }),
+    ).rejects.toThrow(/requires codex-cli >= 0\.152\.1; found 0\.129\.9/);
+  });
+
+  it("reports malformed app-server fork responses clearly", async () => {
+    const fakeAppServer = `
+      const readline = require('readline');
+      const rl = readline.createInterface({ input: process.stdin });
+      rl.on('line', line => {
+        const message = JSON.parse(line);
+        if (message.method === 'initialize') {
+          console.log(JSON.stringify({ id: message.id, result: {} }));
+          return;
+        }
+        if (message.method === 'initialized') return;
+        if (message.method === 'thread/fork') {
+          console.log(JSON.stringify({ id: message.id, result: {} }));
+        }
+      });
+    `;
+
+    await expect(
+      runCodexCommand({
+        command: process.execPath,
+        args: ["-e", fakeAppServer],
+        sessionId: "session-123",
+        prompt: "Summarize this conversation.",
+        skipVersionCheck: true,
+      }),
+    ).rejects.toThrow(/thread\/fork returned unexpected response/);
+  });
+});

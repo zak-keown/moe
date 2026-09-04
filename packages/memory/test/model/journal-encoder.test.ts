@@ -1,13 +1,13 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { initDatabase } from "../../src/db.js";
+import type { MemoryDatabase } from "../../src/db.js";
 import { EMBEDDING_VERSION } from "../../src/embedding-migration.js";
 import { EMBEDDING_DIMENSIONS } from "../../src/embeddings.js";
 import { JournalSearchService } from "../../src/journal/search.js";
 import { JournalStore } from "../../src/journal/store.js";
+import { openTestDatabase } from "../test-utils.js";
 
 /**
  * The end-to-end journal round trip against the REAL bge encoder.
@@ -23,16 +23,15 @@ describe("journal — real encoder", () => {
   let userDir: string;
   let dataDir: string;
   let store: JournalStore;
-  let db: Database.Database;
+  let db: MemoryDatabase;
 
   beforeEach(async () => {
     projectDir = await fs.mkdtemp(path.join(os.tmpdir(), "moe-memory-journal-enc-p-"));
     userDir = await fs.mkdtemp(path.join(os.tmpdir(), "moe-memory-journal-enc-u-"));
     dataDir = await fs.mkdtemp(path.join(os.tmpdir(), "moe-memory-journal-enc-d-"));
     process.env.MOE_MEMORY_CONFIG_DIR = dataDir;
-    process.env.TEST_DB_PATH = path.join(dataDir, "test.db");
     store = new JournalStore({ projectPath: projectDir, userPath: userDir });
-    db = initDatabase();
+    db = openTestDatabase(path.join(dataDir, "test.db"));
   });
 
   afterEach(async () => {

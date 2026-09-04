@@ -1,0 +1,34 @@
+name: memory-native-refresh
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: '"check" verifies vendored assets match upstream; "refresh" overwrites them.'
+        required: true
+        default: check
+        type: choice
+        options:
+          - check
+          - refresh
+  schedule:
+    - cron: "0 6 1 * *" # monthly check
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: node packages/memory/scripts/refresh-sqlite-vec.mjs --check
+        if: inputs.mode == 'check' || github.event_name == 'schedule'
+      - run: node packages/memory/scripts/refresh-sqlite-vec.mjs
+        if: inputs.mode == 'refresh'
+      - name: Show diff
+        if: inputs.mode == 'refresh'
+        run: git diff --stat

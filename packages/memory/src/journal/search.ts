@@ -26,11 +26,12 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import type Database from "better-sqlite3";
+import type { MemoryDatabase } from "../db.js";
 import { JOURNAL_SELECT_COLUMNS, journalEntryFromRow } from "../db.js";
 import { type EmbedFn, generateQueryEmbedding } from "../embeddings.js";
 import { l2DistanceToCosineSimilarity } from "../search.js";
 import type { JournalScope, JournalSearchResult } from "../types.js";
+import { isVectorQueryAuthorized } from "../vector-readiness.js";
 import { generateExcerpt, sectionsMatch } from "./markdown.js";
 
 /** `both` means "do not filter by scope", matching upstream's `type` parameter. */
@@ -71,7 +72,7 @@ export interface JournalEntryContent {
 
 interface Filters {
   sql: string;
-  params: unknown[];
+  params: Array<string | number>;
 }
 
 function buildFilters(
@@ -82,7 +83,7 @@ function buildFilters(
   roots: readonly string[],
 ): Filters {
   const parts: string[] = [];
-  const params: unknown[] = [];
+  const params: Array<string | number> = [];
   // Confine retrieval to the roots this service was constructed with.
   //
   // The service has always been handed them and never used them for filtering,
@@ -129,7 +130,7 @@ export class JournalSearchService {
    * @param roots the journal roots, already de-duplicated (see `JournalStore.roots`)
    */
   constructor(
-    private readonly db: Database.Database,
+    private readonly db: MemoryDatabase,
     roots: string[],
     options: JournalSearchServiceOptions = {},
   ) {
@@ -141,6 +142,10 @@ export class JournalSearchService {
     const limit = options.limit ?? 10;
     const minScore = options.minScore ?? 0.1;
     const sections = options.sections ?? [];
+
+    if (!isVectorQueryAuthorized(this.db)) {
+      return [];
+    }
 
     const queryEmbedding = await this.embedQuery(query);
     const { sql: filterClause, params: filterParams } = buildFilters(options, this.roots);
@@ -159,14 +164,15 @@ export class JournalSearchService {
       JOIN journal_entries AS j ON vec.id = j.id
       WHERE vec.embedding MATCH ?
         AND k = ?
+        AND j.embedding_version = 3
         ${filterClause}
       ORDER BY vec.distance ASC
     `)
       .all(
-        Buffer.from(new Float32Array(queryEmbedding).buffer),
+        new Uint8Array(new Float32Array(queryEmbedding).buffer),
         limit * overfetch,
         ...filterParams,
-      ) as Array<Parameters<typeof journalEntryFromRow>[0] & { distance: number }>;
+      ) as unknown as Array<Parameters<typeof journalEntryFromRow>[0] & { distance: number }>;
 
     const results: JournalSearchResult[] = [];
     for (const row of rows) {
@@ -193,7 +199,7 @@ export class JournalSearchService {
       ORDER BY j.timestamp DESC
       LIMIT ?
     `)
-      .all(...filterParams, limit) as Array<Parameters<typeof journalEntryFromRow>[0]>;
+      .all(...filterParams, limit) as unknown as Array<Parameters<typeof journalEntryFromRow>[0]>;
 
     return rows.map((row) => {
       const entry = journalEntryFromRow(row);
@@ -282,4 +288,63 @@ export class JournalSearchService {
 
 function isUnderRoot(candidate: string, roots: string[]): boolean {
   return roots.some((root) => candidate === root || candidate.startsWith(root + path.sep));
+}
+
+export interface JournalTextSearchOptions {
+  limit?: number | undefined;
+  scope?: JournalScopeFilter | undefined;
+  dateRange?:
+    | {
+        start?: Date | undefined;
+        end?: Date | undefined;
+      }
+    | undefined;
+}
+
+export interface JournalTextSearchResult {
+  entry: {
+    id: string;
+    path: string;
+    root: string;
+    scope: JournalScope;
+    timestamp: number;
+    text: string;
+    sections: string[];
+  };
+  embeddingVersion: number;
+  excerpt: string;
+}
+
+export function searchJournalText(
+  db: MemoryDatabase,
+  query: string,
+  roots: readonly string[],
+  options: JournalTextSearchOptions = {},
+): JournalTextSearchResult[] {
+  const limit = options.limit ?? 10;
+  const { sql: filterClause, params: filterParams } = buildFilters(options, roots as string[]);
+
+  const rows = db
+    .prepare(`
+    SELECT
+      ${JOURNAL_SELECT_COLUMNS},
+      j.embedding_version
+    FROM journal_entries AS j
+    WHERE j.text LIKE ?
+      ${filterClause}
+    ORDER BY j.timestamp DESC
+    LIMIT ?
+  `)
+    .all(`%${query}%`, ...filterParams, limit) as unknown as Array<
+    Parameters<typeof journalEntryFromRow>[0] & { embedding_version: number }
+  >;
+
+  return rows.map((row) => {
+    const entry = journalEntryFromRow(row);
+    return {
+      entry,
+      embeddingVersion: row.embedding_version,
+      excerpt: generateExcerpt(entry.text, query),
+    };
+  });
 }

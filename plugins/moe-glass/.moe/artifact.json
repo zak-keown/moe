@@ -3,7 +3,7 @@
   "plugin": {
     "id": "moe-glass",
     "package": "@bubstack/moe-glass",
-    "version": "0.1.4"
+    "version": "0.1.6"
   },
   "files": [
     {
@@ -15,13 +15,13 @@
     {
       "path": ".claude-plugin/marketplace.json",
       "size": 573,
-      "sha256": "7799f0feb37ae2203d02180ef7b6159f99e8f90a559ca78e9946ac629ca29570",
+      "sha256": "274ec2b49d5fd9ab4ffe48b222f5b3c4aae20099f293eb2043d71266f1c03264",
       "mode": "0644"
     },
     {
       "path": ".claude-plugin/plugin.json",
       "size": 506,
-      "sha256": "aa67ffec0a334029dbe0170c23d6083b904bb4a4db0bce9240cfe3b5b3c9e817",
+      "sha256": "7202420752d485761148babe0e2b56d2b0308c478e076c95d614accfe0c1b596",
       "mode": "0644"
     },
     {
@@ -267,7 +267,7 @@
     {
       "path": ".codex-plugin/plugin.json",
       "size": 521,
-      "sha256": "76f99fde9429a222d378025ceb168683cdbb5356d1bc6392ff31f02c9033c511",
+      "sha256": "49d0edea2a16121d4cd54ff623461e69cdf51d5c28c5df980a067c18101ec558",
       "mode": "0644"
     },
     {
@@ -519,7 +519,7 @@
     {
       "path": ".cursor-plugin/plugin.json",
       "size": 640,
-      "sha256": "20a12aaf67c743835d289fd3eead0ff9b5658491d0645f3b2454842752df968a",
+      "sha256": "9faaa4970d46fc572ad522724d90b8933b5ebcf9207eddf9a6e979998503b867",
       "mode": "0644"
     },
     {
@@ -765,7 +765,7 @@
     {
       "path": ".kimi-plugin/plugin.json",
       "size": 505,
-      "sha256": "69aba128b803d184dd365f7917639502ca1b6b28c33e492c43bf9b73c25ba318",
+      "sha256": "6d2a500fbca531db5ba4b7dfa1fd961f9fdb08245074d2eabfb77d20b93afacc",
       "mode": "0644"
     },
     {
@@ -1011,7 +1011,7 @@
     {
       "path": ".moe-mint/manifest.json",
       "size": 42217,
-      "sha256": "90d068d56a334a480ff65b9484b5f8f52d6a9cc9bea60337d339c91d6fdd8f3b",
+      "sha256": "0b3298e058a6f708e203b748e5cc10b352093ee343b1dd1435f1ae8f1d13f098",
       "mode": "0644"
     },
     {
@@ -1611,13 +1611,13 @@
     {
       "path": "package.json",
       "size": 16639,
-      "sha256": "a449000e5759fc90032ab9c0552214ea3edefe576377db3a70ce742164b405c1",
+      "sha256": "a500c21bb01ff72fdcba33c547afe866bb930c5923a8890d1397549fefe0285d",
       "mode": "0644"
     },
     {
       "path": "plugin.json",
       "size": 542,
-      "sha256": "871f72520db8fc7829643afce67ae08d14aab39d6fccb2b85048c00e1a5cae55",
+      "sha256": "be1e5d8173faf778bb53779b598f4991d9afac7c7326d0b9287a92fbf736e3d6",
       "mode": "0644"
     },
     {
@@ -1861,7 +1861,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "adabe7f18d08e6d637ad9417bffd6c9fff085adb1229dee97c9593c65800d452",
+  "tree_sha256": "7ea5ccf1a138d4f6be98f04e9d0542b7d884bb8d739837a192774453f205bfec",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { indexUnprocessed } from "../../src/indexer.js";
 import { suppressConsole } from "../test-utils.js";
@@ -102,7 +102,7 @@ describe("exclude.txt applies to nested directories (#80) — indexer", () => {
   }
 
   function indexedArchivePaths(): string[] {
-    const db = new Database(dbPath);
+    const db = new DatabaseSync(dbPath);
     const rows = db.prepare("SELECT DISTINCT archive_path FROM exchanges").all() as Array<{
       archive_path: string;
     }>;

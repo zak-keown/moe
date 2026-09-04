@@ -166,9 +166,14 @@ export async function syncConversations(
     const { parseConversation } = await import("./parser.js");
 
     const db = initDatabase();
+    let embeddingsReady = false;
     try {
       await initEmbeddings();
-
+      embeddingsReady = true;
+    } catch {
+      console.error("moe-memory: embedding model unavailable; text will be stored without vectors");
+    }
+    try {
       for (const file of filesToIndex) {
         try {
           // Check for DO NOT INDEX marker
@@ -181,11 +186,16 @@ export async function syncConversations(
 
           for (const exchange of exchanges) {
             const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
-            const embedding = await generateExchangeEmbedding(
-              exchange.userMessage,
-              exchange.assistantMessage,
-              toolNames,
-            );
+            let embedding: number[] | null = null;
+            if (embeddingsReady) {
+              try {
+                embedding = await generateExchangeEmbedding(
+                  exchange.userMessage,
+                  exchange.assistantMessage,
+                  toolNames,
+                );
+              } catch {}
+            }
             insertExchange(db, exchange, embedding, toolNames);
           }
 

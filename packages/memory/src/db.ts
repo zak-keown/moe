@@ -16,11 +16,15 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import Database from "better-sqlite3";
-import * as sqliteVec from "sqlite-vec";
+import { DatabaseSync } from "node:sqlite";
 import { EMBEDDING_DIMENSIONS } from "./constants.js";
+import { acquireSharedDatabaseLease, type DatabaseLease } from "./database-lease.js";
+import { withForeignKeysDisabled, withTransaction } from "./database-transaction.js";
 import { EMBEDDING_VERSION } from "./embedding-migration.js";
+import type { InstalledPackageRoot } from "./installed-package-root.js";
+import { resolveNativeAsset } from "./native-assets.js";
 import { getDbPath } from "./paths.js";
+import { assertWritesAllowed } from "./rollback/fence.js";
 import type {
   ConversationExchange,
   JournalEntry,
@@ -29,7 +33,39 @@ import type {
   MemoryNode,
 } from "./types.js";
 
-export function migrateSchema(db: Database.Database): void {
+export type MemoryDatabase = DatabaseSync;
+
+const _leases = new WeakMap<MemoryDatabase, DatabaseLease>();
+
+export interface DatabaseOptions {
+  path?: string;
+  packageRoot?: InstalledPackageRoot;
+}
+
+let _defaultPackageRoot: InstalledPackageRoot | undefined;
+
+export function setDefaultPackageRoot(root: InstalledPackageRoot): void {
+  _defaultPackageRoot = root;
+}
+
+export function getDefaultPackageRoot(): InstalledPackageRoot | undefined {
+  return _defaultPackageRoot;
+}
+
+export function getDatabaseLease(db: MemoryDatabase): DatabaseLease | undefined {
+  return _leases.get(db);
+}
+
+export function closeDatabase(db: MemoryDatabase): void {
+  const lease = _leases.get(db);
+  if (lease) {
+    _leases.delete(db);
+    lease.release();
+  }
+  db.close();
+}
+
+export function migrateSchema(db: MemoryDatabase): void {
   const columns = db.prepare(`SELECT name FROM pragma_table_info('exchanges')`).all() as Array<{
     name: string;
   }>;
@@ -107,7 +143,7 @@ export function migrateSchema(db: Database.Database): void {
  * Each project restores its own rows the next time it indexes, which is what
  * makes this recoverable rather than the deletion it replaces.
  */
-export function migrateJournalRoot(db: Database.Database): void {
+export function migrateJournalRoot(db: MemoryDatabase): void {
   const table = db
     .prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='journal_entries'`)
     .get() as { sql: string } | undefined;
@@ -138,7 +174,7 @@ export function migrateJournalRoot(db: Database.Database): void {
  *   2. Drops orphaned tool_calls rows.
  *   3. Recreates the table with ON DELETE CASCADE and copies surviving rows.
  */
-export function migrateToolCallsCascade(db: Database.Database): void {
+export function migrateToolCallsCascade(db: MemoryDatabase): void {
   const row = db
     .prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='tool_calls'`)
     .get() as { sql: string } | undefined;
@@ -159,12 +195,9 @@ export function migrateToolCallsCascade(db: Database.Database): void {
     console.log(`  Removing ${orphanCount} orphaned tool_calls row(s)`);
   }
 
-  // FK is enforced by default in better-sqlite3, but ALTER ... RENAME of a
-  // table that other objects reference can trip checks during the rebuild.
-  // Disable temporarily; the post-migration FK_check verifies integrity.
-  db.pragma("foreign_keys = OFF");
-  const tx = db.transaction(() => {
-    db.exec(`
+  withForeignKeysDisabled(db, () =>
+    withTransaction(db, () => {
+      db.exec(`
       CREATE TABLE tool_calls_new (
         id TEXT PRIMARY KEY,
         exchange_id TEXT NOT NULL,
@@ -176,23 +209,28 @@ export function migrateToolCallsCascade(db: Database.Database): void {
         FOREIGN KEY (exchange_id) REFERENCES exchanges(id) ON DELETE CASCADE
       )
     `);
-    db.exec(`
+      db.exec(`
       INSERT INTO tool_calls_new
       SELECT id, exchange_id, tool_name, tool_input, tool_result, is_error, timestamp
       FROM tool_calls
       WHERE exchange_id IN (SELECT id FROM exchanges)
     `);
-    db.exec(`DROP TABLE tool_calls`);
-    db.exec(`ALTER TABLE tool_calls_new RENAME TO tool_calls`);
-  });
-  tx();
-  db.pragma("foreign_keys = ON");
+      db.exec(`DROP TABLE tool_calls`);
+      db.exec(`ALTER TABLE tool_calls_new RENAME TO tool_calls`);
+    }),
+  );
 
   console.log("  tool_calls migration complete.");
 }
 
-export function initDatabase(): Database.Database {
-  const dbPath = getDbPath();
+export function initDatabase(options?: DatabaseOptions): MemoryDatabase {
+  const dbPath = options?.path ?? getDbPath();
+  const packageRoot = options?.packageRoot ?? _defaultPackageRoot;
+  if (!packageRoot) {
+    throw new Error(
+      "initDatabase requires a packageRoot — either pass it in options or call setDefaultPackageRoot() first",
+    );
+  }
 
   // Ensure directory exists
   const dbDir = path.dirname(dbPath);
@@ -200,13 +238,21 @@ export function initDatabase(): Database.Database {
     fs.mkdirSync(dbDir, { recursive: true });
   }
 
-  const db = new Database(dbPath);
+  // Acquire a shared lease before opening the database
+  const lease = acquireSharedDatabaseLease(dbPath);
 
-  // Load sqlite-vec extension
-  sqliteVec.load(db);
+  const db = new DatabaseSync(dbPath, { allowExtension: true });
+  _leases.set(db, lease);
 
-  // Enable WAL mode for better concurrency
-  db.pragma("journal_mode = WAL");
+  // Load sqlite-vec extension from vendored binary
+  const asset = resolveNativeAsset(packageRoot);
+  db.loadExtension(asset.absolutePath);
+  db.enableLoadExtension(false);
+
+  // Enable WAL mode and foreign keys
+  db.exec("PRAGMA journal_mode = WAL");
+  db.exec("PRAGMA foreign_keys = ON");
+  db.exec("PRAGMA busy_timeout = 5000");
 
   // Create exchanges table
   db.exec(`
@@ -377,14 +423,14 @@ export function initDatabase(): Database.Database {
 }
 
 export function insertExchange(
-  db: Database.Database,
+  db: MemoryDatabase,
   exchange: ConversationExchange,
-  embedding: number[],
-  // Never read: the tool names actually written come off `exchange.toolCalls`
-  // below. Retained so the seven existing call sites keep compiling.
+  embedding: number[] | null,
   _toolNames?: string[],
 ): void {
+  assertWritesAllowed();
   const now = Date.now();
+  const hasEmbedding = embedding !== null && embedding.length > 0;
 
   const stmt = db.prepare(`
     INSERT OR REPLACE INTO exchanges
@@ -418,19 +464,18 @@ export function insertExchange(
     exchange.thinkingLevel || null,
     exchange.thinkingDisabled ? 1 : 0,
     exchange.thinkingTriggers || null,
-    EMBEDDING_VERSION,
+    hasEmbedding ? EMBEDDING_VERSION : 0,
   );
 
-  // Insert into vector table (delete first since virtual tables don't support REPLACE)
-  const delStmt = db.prepare(`DELETE FROM vec_exchanges WHERE id = ?`);
-  delStmt.run(exchange.id);
+  // Delete any stale vec row (virtual tables don't support REPLACE)
+  db.prepare("DELETE FROM vec_exchanges WHERE id = ?").run(exchange.id);
 
-  const vecStmt = db.prepare(`
-    INSERT INTO vec_exchanges (id, embedding)
-    VALUES (?, ?)
-  `);
-
-  vecStmt.run(exchange.id, Buffer.from(new Float32Array(embedding).buffer));
+  if (hasEmbedding) {
+    db.prepare("INSERT INTO vec_exchanges (id, embedding) VALUES (?, ?)").run(
+      exchange.id,
+      new Uint8Array(new Float32Array(embedding).buffer),
+    );
+  }
 
   // Insert tool calls if present
   if (exchange.toolCalls && exchange.toolCalls.length > 0) {
@@ -454,12 +499,12 @@ export function insertExchange(
   }
 }
 
-export function getAllExchanges(db: Database.Database): Array<{ id: string; archivePath: string }> {
+export function getAllExchanges(db: MemoryDatabase): Array<{ id: string; archivePath: string }> {
   const stmt = db.prepare(`SELECT id, archive_path as archivePath FROM exchanges`);
   return stmt.all() as Array<{ id: string; archivePath: string }>;
 }
 
-export function getFileLastIndexed(db: Database.Database, archivePath: string): number | null {
+export function getFileLastIndexed(db: MemoryDatabase, archivePath: string): number | null {
   const stmt = db.prepare(`
     SELECT MAX(last_indexed) as lastIndexed
     FROM exchanges
@@ -469,7 +514,8 @@ export function getFileLastIndexed(db: Database.Database, archivePath: string): 
   return row.lastIndexed;
 }
 
-export function deleteExchange(db: Database.Database, id: string): void {
+export function deleteExchange(db: MemoryDatabase, id: string): void {
+  assertWritesAllowed();
   // Delete from vector table
   db.prepare(`DELETE FROM vec_exchanges WHERE id = ?`).run(id);
 
@@ -526,11 +572,14 @@ export const JOURNAL_SELECT_COLUMNS = `
  * vector row is deleted then inserted.
  */
 export function upsertJournalEntry(
-  db: Database.Database,
+  db: MemoryDatabase,
   entry: JournalEntry,
   sourceMtimeMs: number,
-  embedding: number[],
+  embedding: number[] | null = null,
 ): void {
+  assertWritesAllowed();
+  const hasEmbedding = embedding !== null && embedding.length > 0;
+
   db.prepare(`
     INSERT OR REPLACE INTO journal_entries
       (id, path, root, scope, timestamp, text, sections, source_mtime_ms, last_indexed, embedding_version)
@@ -545,17 +594,21 @@ export function upsertJournalEntry(
     JSON.stringify(entry.sections),
     sourceMtimeMs,
     Date.now(),
-    EMBEDDING_VERSION,
+    hasEmbedding ? EMBEDDING_VERSION : 0,
   );
 
   db.prepare("DELETE FROM vec_journal_entries WHERE id = ?").run(entry.id);
-  db.prepare("INSERT INTO vec_journal_entries (id, embedding) VALUES (?, ?)").run(
-    entry.id,
-    Buffer.from(new Float32Array(embedding).buffer),
-  );
+
+  if (hasEmbedding) {
+    db.prepare("INSERT INTO vec_journal_entries (id, embedding) VALUES (?, ?)").run(
+      entry.id,
+      new Uint8Array(new Float32Array(embedding).buffer),
+    );
+  }
 }
 
-export function deleteJournalEntry(db: Database.Database, id: string): void {
+export function deleteJournalEntry(db: MemoryDatabase, id: string): void {
+  assertWritesAllowed();
   db.prepare("DELETE FROM vec_journal_entries WHERE id = ?").run(id);
   db.prepare("DELETE FROM journal_entries WHERE id = ?").run(id);
 }
@@ -579,7 +632,7 @@ export interface JournalIndexState {
  * EMBEDDING_VERSION both re-index.
  */
 export function getJournalIndexState(
-  db: Database.Database,
+  db: MemoryDatabase,
   scope?: JournalScope,
 ): Map<string, JournalIndexState> {
   const rows = (
@@ -613,7 +666,7 @@ export function getJournalIndexState(
   return state;
 }
 
-export function countJournalEntries(db: Database.Database, scope?: JournalScope): number {
+export function countJournalEntries(db: MemoryDatabase, scope?: JournalScope): number {
   const row = (
     scope
       ? db.prepare("SELECT COUNT(*) AS c FROM journal_entries WHERE scope = ?").get(scope)
@@ -626,7 +679,8 @@ export function countJournalEntries(db: Database.Database, scope?: JournalScope)
 // Graph memory: nodes and edges
 // ---------------------------------------------------------------------------
 
-export function insertNode(db: Database.Database, node: MemoryNode): void {
+export function insertNode(db: MemoryDatabase, node: MemoryNode): void {
+  assertWritesAllowed();
   db.prepare(`
     INSERT OR REPLACE INTO memory_nodes
       (id, node_type, project, content, created_at, superseded_at, embedding_version)
@@ -642,7 +696,8 @@ export function insertNode(db: Database.Database, node: MemoryNode): void {
   );
 }
 
-export function insertEdge(db: Database.Database, edge: MemoryEdge): void {
+export function insertEdge(db: MemoryDatabase, edge: MemoryEdge): void {
+  assertWritesAllowed();
   db.prepare(`
     INSERT OR REPLACE INTO memory_edges
       (id, source_type, source_id, target_type, target_id, relation, confidence, created_at, created_by, metadata)
@@ -683,7 +738,7 @@ function nodeFromRow(row: MemoryNodeRow): MemoryNode {
   };
 }
 
-export function getNode(db: Database.Database, id: string): MemoryNode | null {
+export function getNode(db: MemoryDatabase, id: string): MemoryNode | null {
   const row = db.prepare("SELECT * FROM memory_nodes WHERE id = ?").get(id) as
     | MemoryNodeRow
     | undefined;
@@ -727,24 +782,20 @@ function edgeFromRow(row: MemoryEdgeRow): MemoryEdge {
 }
 
 export function getEdgesFrom(
-  db: Database.Database,
+  db: MemoryDatabase,
   sourceType: string,
   sourceId: string,
 ): MemoryEdge[] {
   const rows = db
     .prepare("SELECT * FROM memory_edges WHERE source_type = ? AND source_id = ?")
-    .all(sourceType, sourceId) as MemoryEdgeRow[];
+    .all(sourceType, sourceId) as unknown as MemoryEdgeRow[];
   return rows.map(edgeFromRow);
 }
 
-export function getEdgesTo(
-  db: Database.Database,
-  targetType: string,
-  targetId: string,
-): MemoryEdge[] {
+export function getEdgesTo(db: MemoryDatabase, targetType: string, targetId: string): MemoryEdge[] {
   const rows = db
     .prepare("SELECT * FROM memory_edges WHERE target_type = ? AND target_id = ?")
-    .all(targetType, targetId) as MemoryEdgeRow[];
+    .all(targetType, targetId) as unknown as MemoryEdgeRow[];
   return rows.map(edgeFromRow);
 }
 
@@ -760,7 +811,7 @@ export function getEdgesTo(
  * Uses an iterative BFS to avoid stack overflow on deep chains.
  */
 export function traceProvenance(
-  db: Database.Database,
+  db: MemoryDatabase,
   type: string,
   id: string,
   depth: number,

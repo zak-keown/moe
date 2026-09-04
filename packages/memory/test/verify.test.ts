@@ -2,11 +2,11 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { initDatabase, insertExchange } from "../src/db.js";
+import { insertExchange } from "../src/db.js";
 import { EXCLUSION_MARKER } from "../src/sync.js";
 import type { ConversationExchange } from "../src/types.js";
 import { verifyIndex } from "../src/verify.js";
-import { suppressConsole } from "./test-utils.js";
+import { openTestDatabase, suppressConsole } from "./test-utils.js";
 
 // Suppress console output for clean test runs
 suppressConsole();
@@ -188,7 +188,7 @@ describe("verifyIndex", () => {
 
   it("detects orphaned database entries", async () => {
     // Initialize database
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
 
     // Create an exchange in the database
     const exchange: ConversationExchange = {
@@ -239,7 +239,7 @@ describe("verifyIndex", () => {
     fs.writeFileSync(summaryPath, "Test summary");
 
     // Index it
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
     const exchange: ConversationExchange = {
       id: "updated-id-1",
       project: "test-project",

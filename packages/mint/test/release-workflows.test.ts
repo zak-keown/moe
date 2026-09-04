@@ -48,6 +48,27 @@ describe('publish workflow contract', () => {
   })
 })
 
+describe('publish workflow memory gates', () => {
+  it('runs memory:artifact:test in candidate job', () => {
+    expect(PUBLISH_WORKFLOW).toContain('memory:artifact:test')
+  })
+
+  it('runs memory:runtime:smoke in candidate job', () => {
+    expect(PUBLISH_WORKFLOW).toContain('memory:runtime:smoke')
+  })
+
+  it('runs memory release evidence verify in candidate job', () => {
+    expect(PUBLISH_WORKFLOW).toContain('memory release evidence verify')
+  })
+
+  it('does not build, pack, or npm publish in promote job', () => {
+    const promoteSection = PUBLISH_WORKFLOW.split(/^\s+promote:/m)[1] ?? ''
+    expect(promoteSection).not.toMatch(/pnpm build(?!\s*#)/)
+    expect(promoteSection).not.toMatch(/npm pack(?!\s*#)/)
+    expect(promoteSection).not.toMatch(/npm publish(?!\s*#)/)
+  })
+})
+
 describe('publish workflow negative assertions', () => {
   it('does not npm publish from packages/ directories', () => {
     expect(PUBLISH_WORKFLOW).not.toMatch(/npm publish packages\//)

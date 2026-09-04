@@ -22,7 +22,7 @@ import { shouldSkipReentrantSync } from "./summarizer.js";
 import { syncConversations } from "./sync.js";
 
 const HELP = `
-Usage: moe-memory sync [--background]
+Usage: moe-memory sync [--hook | --background]
 
 Sync conversations from Claude Code and Codex transcript directories to archive and index them.
 
@@ -35,16 +35,17 @@ Only processes files that are new or have been modified since last sync.
 Safe to run multiple times - subsequent runs are fast no-ops.
 
 OPTIONS:
-  --background    Run sync in background (for hooks, returns immediately)
+  --hook          Hook-safe mode: always exits 0, spawns background sync, bounded stderr
+  --background    Run sync in background (returns immediately)
 
 EXAMPLES:
   # Sync all new conversations
   moe-memory sync
 
-  # Sync in background (for hooks)
-  moe-memory sync --background
+  # Use in a SessionStart hook (recommended)
+  moe-memory sync --hook
 
-  # Use in a Claude Code SessionStart hook
+  # Sync in background without hook safety
   moe-memory sync --background
 `;
 
@@ -97,6 +98,10 @@ export async function runSync(args: string[]): Promise<number> {
     // while still being visible in hook logs.
     console.error("moe-memory: skipping sync inside summarizer-spawned subprocess (#87)");
     return 0;
+  }
+
+  if (args.includes("--hook")) {
+    return runHookMode(args.filter((a) => a !== "--hook"));
   }
 
   if (args.includes("--help") || args.includes("-h")) {
@@ -238,4 +243,38 @@ export async function runSync(args: string[]): Promise<number> {
     process.off("SIGTERM", onSigterm);
     process.off("SIGHUP", onSighup);
   }
+}
+
+const MAX_HOOK_STDERR_BYTES = 512;
+
+function writeBoundedHookDiagnostic(error: unknown): void {
+  const msg = error instanceof Error ? error.message : String(error);
+  const bounded =
+    msg.length > MAX_HOOK_STDERR_BYTES ? `${msg.slice(0, MAX_HOOK_STDERR_BYTES)}…` : msg;
+  process.stderr.write(`moe-memory: hook sync failed: ${bounded}\n`);
+}
+
+async function runHookMode(args: string[]): Promise<number> {
+  try {
+    const logPath = getSyncLogPath();
+    const logFd = fs.openSync(logPath, "a");
+    fs.writeSync(logFd, formatLogLine("info", `Hook sync starting from pid ${process.pid}`));
+
+    const entry = process.argv[1];
+    if (!entry) {
+      fs.writeSync(logFd, formatLogLine("error", "Cannot determine own entry point"));
+      fs.closeSync(logFd);
+      return 0;
+    }
+
+    const child = spawn(process.execPath, [entry, "sync", ...args], {
+      detached: true,
+      stdio: ["ignore", logFd, logFd],
+    });
+    child.unref();
+    fs.closeSync(logFd);
+  } catch (error) {
+    writeBoundedHookDiagnostic(error);
+  }
+  return 0;
 }

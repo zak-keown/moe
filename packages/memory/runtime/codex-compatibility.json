@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "description": "Pinned Codex CLI versions tested for custom plugin component path support.",
+  "minimumVersion": "0.152.1",
+  "currentLane": "0.156.0",
+  "candidates": [
+    {
+      "version": "0.152.1",
+      "integrity": "sha256-placeholder-minimum",
+      "role": "minimum",
+      "status": "baseline",
+      "customPaths": true
+    },
+    {
+      "version": "0.156.0",
+      "integrity": "sha256-placeholder-current",
+      "role": "current",
+      "status": "current",
+      "customPaths": true
+    }
+  ],
+  "requiredFeatures": ["plugins", "app-server"],
+  "requiredFlags": ["app-server"]
+}

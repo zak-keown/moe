@@ -14,7 +14,7 @@
  * of truth: `indexJournal()` walks them, and anything missing from the index or
  * behind the current EMBEDDING_VERSION is picked up on the next run.
  */
-import type Database from "better-sqlite3";
+import type { MemoryDatabase } from "../db.js";
 import { type EmbedFn } from "../embeddings.js";
 import type { JournalScope, JournalThoughts } from "../types.js";
 export interface JournalStoreOptions {
@@ -71,7 +71,7 @@ export declare class JournalStore {
      * `db` is optional: pass it to index the new entries immediately (what the MCP
      * server does), omit it to write markdown only.
      */
-    writeThoughts(thoughts: JournalThoughts, db?: Database.Database): Promise<string[]>;
+    writeThoughts(thoughts: JournalThoughts, db?: MemoryDatabase): Promise<string[]>;
     private writeToLocation;
     private ensureDirectoryExists;
     /**
@@ -88,8 +88,8 @@ export declare class JournalStore {
      * rows whose file is gone — so an edited entry, a bumped encoder and a deleted
      * file are all handled.
      */
-    indexJournal(db: Database.Database): Promise<JournalIndexResult>;
+    indexJournal(db: MemoryDatabase): Promise<JournalIndexResult>;
     /** Count indexed entries, optionally for one scope. */
-    count(db: Database.Database, scope?: JournalScope): number;
+    count(db: MemoryDatabase, scope?: JournalScope): number;
 }
 export {};

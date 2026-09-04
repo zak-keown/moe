@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { suppressConsole } from "./test-utils.js";
 
@@ -19,10 +19,31 @@ import { suppressConsole } from "./test-utils.js";
  * so this stays in the CI-safe "unit" project rather than needing the real
  * ~35MB model.
  */
-const pipelineMock = vi.hoisted(() => vi.fn());
-vi.mock("@huggingface/transformers", () => ({
-  pipeline: pipelineMock,
-  env: {} as Record<string, unknown>,
+const createBackendMock = vi.hoisted(() => vi.fn());
+vi.mock("../src/embedding-runtime.js", () => ({
+  createEmbeddingBackend: createBackendMock,
+}));
+vi.mock("../src/model-cache.js", () => ({
+  ensureModelSet: vi.fn(async () => ({
+    root: "/fake",
+    revision: "x",
+    variant: "q8",
+    files: new Map(),
+  })),
+}));
+vi.mock("../src/model-manifest.js", () => ({
+  loadModelManifest: vi.fn(() => ({
+    schema: 1,
+    model: "test",
+    revision: "x",
+    variant: "q8",
+    license: "MIT",
+    dimensions: 384,
+    maxTokens: 512,
+    maxInputChars: 2000,
+    queryPrefix: "",
+    files: [],
+  })),
 }));
 
 const { indexConversations, indexSession } = await import("../src/indexer.js");
@@ -87,10 +108,12 @@ describe("CR-070: DO-NOT-INDEX marker is honored by indexer.ts entry points", ()
     process.env.MOE_MEMORY_CONFIG_DIR = configDir;
     process.env.TEST_DB_PATH = dbPath;
 
-    pipelineMock.mockReset();
-    pipelineMock.mockImplementation(async () =>
-      vi.fn(async () => ({ data: new Float32Array(384).fill(0.1) })),
-    );
+    createBackendMock.mockReset();
+    createBackendMock.mockResolvedValue({
+      embed: vi.fn(async () => new Float32Array(384).fill(0.1)),
+      embedQuery: vi.fn(async () => new Float32Array(384).fill(0.1)),
+      close: vi.fn(async () => {}),
+    });
     restoreConsole = suppressConsole();
   });
 
@@ -106,7 +129,7 @@ describe("CR-070: DO-NOT-INDEX marker is honored by indexer.ts entry points", ()
   });
 
   function exchangeCount(): number {
-    const db = new Database(dbPath);
+    const db = new DatabaseSync(dbPath);
     const row = db.prepare("SELECT COUNT(*) as n FROM exchanges").get() as { n: number };
     db.close();
     return row.n;
@@ -129,7 +152,7 @@ describe("CR-070: DO-NOT-INDEX marker is honored by indexer.ts entry points", ()
 
     await indexConversations(undefined, undefined, 1, true);
 
-    const db = new Database(dbPath);
+    const db = new DatabaseSync(dbPath);
     const rows = db.prepare("SELECT session_id FROM exchanges").all() as Array<{
       session_id: string;
     }>;

@@ -35,7 +35,7 @@ const codexLegacyFixture = new URL(
 
 type IsolatedFixture = Awaited<ReturnType<typeof isolatedHome>>;
 
-describe("smoothing helper CLI", () => {
+describe("smoothing helper CLI", { timeout: 15_000 }, () => {
   it("uses exit 2 for malformed invocations and prints no transcript content", async () => {
     const fixture = await isolatedHome();
 

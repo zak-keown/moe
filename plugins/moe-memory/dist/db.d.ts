@@ -13,9 +13,20 @@
  * `embedding_version`, so the migration in embedding-migration.ts covers either.
  *
  */
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
+import { type DatabaseLease } from "./database-lease.js";
+import type { InstalledPackageRoot } from "./installed-package-root.js";
 import type { ConversationExchange, JournalEntry, JournalScope, MemoryEdge, MemoryNode } from "./types.js";
-export declare function migrateSchema(db: Database.Database): void;
+export type MemoryDatabase = DatabaseSync;
+export interface DatabaseOptions {
+    path?: string;
+    packageRoot?: InstalledPackageRoot;
+}
+export declare function setDefaultPackageRoot(root: InstalledPackageRoot): void;
+export declare function getDefaultPackageRoot(): InstalledPackageRoot | undefined;
+export declare function getDatabaseLease(db: MemoryDatabase): DatabaseLease | undefined;
+export declare function closeDatabase(db: MemoryDatabase): void;
+export declare function migrateSchema(db: MemoryDatabase): void;
 /**
  * Add `journal_entries.root` and discard the journal index once.
  *
@@ -40,7 +51,7 @@ export declare function migrateSchema(db: Database.Database): void;
  * Each project restores its own rows the next time it indexes, which is what
  * makes this recoverable rather than the deletion it replaces.
  */
-export declare function migrateJournalRoot(db: Database.Database): void;
+export declare function migrateJournalRoot(db: MemoryDatabase): void;
 /**
  * Earlier versions created `tool_calls` with a plain
  * `FOREIGN KEY (exchange_id) REFERENCES exchanges(id)`.
@@ -52,15 +63,15 @@ export declare function migrateJournalRoot(db: Database.Database): void;
  *   2. Drops orphaned tool_calls rows.
  *   3. Recreates the table with ON DELETE CASCADE and copies surviving rows.
  */
-export declare function migrateToolCallsCascade(db: Database.Database): void;
-export declare function initDatabase(): Database.Database;
-export declare function insertExchange(db: Database.Database, exchange: ConversationExchange, embedding: number[], _toolNames?: string[]): void;
-export declare function getAllExchanges(db: Database.Database): Array<{
+export declare function migrateToolCallsCascade(db: MemoryDatabase): void;
+export declare function initDatabase(options?: DatabaseOptions): MemoryDatabase;
+export declare function insertExchange(db: MemoryDatabase, exchange: ConversationExchange, embedding: number[] | null, _toolNames?: string[]): void;
+export declare function getAllExchanges(db: MemoryDatabase): Array<{
     id: string;
     archivePath: string;
 }>;
-export declare function getFileLastIndexed(db: Database.Database, archivePath: string): number | null;
-export declare function deleteExchange(db: Database.Database, id: string): void;
+export declare function getFileLastIndexed(db: MemoryDatabase, archivePath: string): number | null;
+export declare function deleteExchange(db: MemoryDatabase, id: string): void;
 interface JournalRow {
     id: string;
     path: string;
@@ -78,8 +89,8 @@ export declare const JOURNAL_SELECT_COLUMNS = "\n        j.id,\n        j.path,\
  * Same shape as insertExchange: the vec0 virtual table rejects REPLACE, so the
  * vector row is deleted then inserted.
  */
-export declare function upsertJournalEntry(db: Database.Database, entry: JournalEntry, sourceMtimeMs: number, embedding: number[]): void;
-export declare function deleteJournalEntry(db: Database.Database, id: string): void;
+export declare function upsertJournalEntry(db: MemoryDatabase, entry: JournalEntry, sourceMtimeMs: number, embedding?: number[] | null): void;
+export declare function deleteJournalEntry(db: MemoryDatabase, id: string): void;
 export interface JournalIndexState {
     id: string;
     path: string;
@@ -97,13 +108,13 @@ export interface JournalIndexState {
  * entry. Carrying mtime and version means a changed file and a bumped
  * EMBEDDING_VERSION both re-index.
  */
-export declare function getJournalIndexState(db: Database.Database, scope?: JournalScope): Map<string, JournalIndexState>;
-export declare function countJournalEntries(db: Database.Database, scope?: JournalScope): number;
-export declare function insertNode(db: Database.Database, node: MemoryNode): void;
-export declare function insertEdge(db: Database.Database, edge: MemoryEdge): void;
-export declare function getNode(db: Database.Database, id: string): MemoryNode | null;
-export declare function getEdgesFrom(db: Database.Database, sourceType: string, sourceId: string): MemoryEdge[];
-export declare function getEdgesTo(db: Database.Database, targetType: string, targetId: string): MemoryEdge[];
+export declare function getJournalIndexState(db: MemoryDatabase, scope?: JournalScope): Map<string, JournalIndexState>;
+export declare function countJournalEntries(db: MemoryDatabase, scope?: JournalScope): number;
+export declare function insertNode(db: MemoryDatabase, node: MemoryNode): void;
+export declare function insertEdge(db: MemoryDatabase, edge: MemoryEdge): void;
+export declare function getNode(db: MemoryDatabase, id: string): MemoryNode | null;
+export declare function getEdgesFrom(db: MemoryDatabase, sourceType: string, sourceId: string): MemoryEdge[];
+export declare function getEdgesTo(db: MemoryDatabase, targetType: string, targetId: string): MemoryEdge[];
 /**
  * Walk the edge graph from a starting record, collecting edges up to `depth`.
  *
@@ -115,7 +126,7 @@ export declare function getEdgesTo(db: Database.Database, targetType: string, ta
  *
  * Uses an iterative BFS to avoid stack overflow on deep chains.
  */
-export declare function traceProvenance(db: Database.Database, type: string, id: string, depth: number, direction: "causes" | "effects"): Array<{
+export declare function traceProvenance(db: MemoryDatabase, type: string, id: string, depth: number, direction: "causes" | "effects"): Array<{
     depth: number;
     edge: MemoryEdge;
 }>;

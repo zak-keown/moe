@@ -6,7 +6,7 @@
 # sibling. This config remains source-only and is never copied into the plugin.
 
 name: moe-memory
-version: 0.1.4
+version: 0.2.0
 description: Semantic recall over past sessions and journal entries.
 author:
   name: Zak Keown
@@ -25,8 +25,14 @@ distribution:
   npm: "@bubstack/moe-memory"
 
 artifact:
+  node_package:
+    dependencies: bundled
+  runtime_dependency_policy: bundled
   payloads:
     - {from: dist, to: dist, required: true}
+    - {from: runtime, to: runtime, required: true}
+    - {from: vendor/sqlite-vec, to: vendor/sqlite-vec, required: true}
+    - {from: recovery, to: recovery, required: false}
     - {from: prompts, to: prompts, required: true}
 
 targets:
@@ -58,11 +64,33 @@ bootstrap:
 
 imported_works:
   - name: episodic-memory
-    artifact_roots: [agents/search-conversations.md, hooks/hooks.json, prompts/search-agent.md, dist/sync.d.ts, dist/sync.js, dist/sync-cli.d.ts, dist/sync-cli.js]
+    artifact_roots: [agents/search-conversations.md, hooks/hooks.json, prompts/search-agent.md, dist/cli.js]
   - name: private-journal-mcp
-    artifact_roots: [dist/journal/markdown.d.ts, dist/journal/markdown.js]
+    artifact_roots: [dist/index.js]
+  - name: "@huggingface/tokenizers"
+  - name: "@modelcontextprotocol/sdk"
+  - name: ajv
+  - name: ajv-formats
+  - name: fast-deep-equal
+  - name: fast-uri
+  - name: graceful-fs
+  - name: json-schema-traverse
+  - name: marked
+  - name: onnxruntime-common
+  - name: onnxruntime-web
+  - name: proper-lockfile
+  - name: retry
+  - name: signal-exit
+  - name: sqlite-vec
+    artifact_roots: [vendor/sqlite-vec]
+  - name: zod
+  - name: zod-to-json-schema
 
-# harnesses: no exclusions. All 8 adapters run.
+harnesses:
+  codex:
+    source_hooks: source
+
+# All 8 adapters run (no exclusions).
 
 marketplace:
   # Standalone generation uses this package-local name. Root minting overrides

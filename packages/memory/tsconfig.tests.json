@@ -9,6 +9,6 @@
     "rootDir": "."
   },
   "include": ["src/**/*", "test/**/*.ts", "vitest.config.ts"],
-  "exclude": ["test/manual/**"],
+  "exclude": ["test/manual/**", "test/fixtures/public-consumer/**"],
   "references": []
 }

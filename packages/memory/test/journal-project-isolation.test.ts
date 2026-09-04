@@ -1,13 +1,13 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { countJournalEntries, initDatabase } from "../src/db.js";
+import type { MemoryDatabase } from "../src/db.js";
+import { countJournalEntries } from "../src/db.js";
 import { journalEntryId } from "../src/journal/markdown.js";
 import { JournalSearchService } from "../src/journal/search.js";
 import { JournalStore } from "../src/journal/store.js";
-import { fakeEmbed } from "./test-utils.js";
+import { fakeEmbed, openTestDatabase } from "./test-utils.js";
 
 /**
  * Project isolation for the journal index.
@@ -39,7 +39,7 @@ describe("journal project isolation", () => {
   let dataDir: string;
   let storeA: JournalStore;
   let storeB: JournalStore;
-  let db: Database.Database;
+  let db: MemoryDatabase;
 
   beforeEach(async () => {
     projectA = await fs.mkdtemp(path.join(os.tmpdir(), "journal-iso-a-"));
@@ -55,7 +55,7 @@ describe("journal project isolation", () => {
     // its own, differing only in projectPath.
     storeA = new JournalStore({ projectPath: projectA, userPath: userDir, embed: fakeEmbed() });
     storeB = new JournalStore({ projectPath: projectB, userPath: userDir, embed: fakeEmbed() });
-    db = initDatabase();
+    db = openTestDatabase(path.join(dataDir, "test.db"));
   });
 
   afterEach(async () => {

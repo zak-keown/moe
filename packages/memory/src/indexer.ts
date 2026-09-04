@@ -14,6 +14,33 @@ import { formatErrorSentinel, shouldQueueForSummary } from "./summary-sentinel.j
 import { shouldSkipConversation } from "./sync.js";
 import type { ConversationExchange } from "./types.js";
 
+let embeddingsAvailable = false;
+
+async function tryInitEmbeddings(): Promise<boolean> {
+  try {
+    await initEmbeddings();
+    embeddingsAvailable = true;
+    return true;
+  } catch {
+    console.error("moe-memory: embedding model unavailable; text will be stored without vectors");
+    embeddingsAvailable = false;
+    return false;
+  }
+}
+
+async function tryGenerateEmbedding(
+  userMessage: string,
+  assistantMessage: string,
+  toolNames?: string[],
+): Promise<number[] | null> {
+  if (!embeddingsAvailable) return null;
+  try {
+    return await generateExchangeEmbedding(userMessage, assistantMessage, toolNames);
+  } catch {
+    return null;
+  }
+}
+
 // Set max output tokens for Claude SDK (used by summarizer)
 process.env.CLAUDE_CODE_MAX_OUTPUT_TOKENS = "20000";
 
@@ -74,7 +101,7 @@ export async function indexConversations(
   const db = initDatabase();
 
   console.log("Loading embedding model...");
-  await initEmbeddings();
+  await tryInitEmbeddings();
 
   if (noSummaries) {
     console.log("⚠️  Running in no-summaries mode (skipping AI summaries)");
@@ -205,11 +232,11 @@ export async function indexConversations(
         console.log(`  Skipping ${toProcess.length} summaries (--no-summaries mode)`);
       }
 
-      // Now process embeddings and DB inserts (fast, sequential is fine)
+      // Now process DB inserts (with embeddings when available)
       for (const conv of toProcess) {
         for (const exchange of conv.exchanges) {
           const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
-          const embedding = await generateExchangeEmbedding(
+          const embedding = await tryGenerateEmbedding(
             exchange.userMessage,
             exchange.assistantMessage,
             toolNames,
@@ -276,7 +303,7 @@ export async function indexSession(
         const sourcePath = path.join(projectPath, file);
 
         const db = initDatabase();
-        await initEmbeddings();
+        await tryInitEmbeddings();
 
         const projectArchive = path.join(ARCHIVE_DIR, project);
         fs.mkdirSync(projectArchive, { recursive: true });
@@ -328,7 +355,7 @@ export async function indexSession(
           // Index
           for (const exchange of exchanges) {
             const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
-            const embedding = await generateExchangeEmbedding(
+            const embedding = await tryGenerateEmbedding(
               exchange.userMessage,
               exchange.assistantMessage,
               toolNames,
@@ -360,7 +387,7 @@ export async function indexUnprocessed(
   if (noSummaries) console.log("⚠️  Running in no-summaries mode (skipping AI summaries)");
 
   const db = initDatabase();
-  await initEmbeddings();
+  await tryInitEmbeddings();
 
   const sourceDirs = getConversationSourceDirs();
   const ARCHIVE_DIR = getArchiveDir();
@@ -486,12 +513,12 @@ export async function indexUnprocessed(
     );
   }
 
-  // Now index embeddings
-  console.log(`\nIndexing embeddings...`);
+  // Now index (with embeddings when available)
+  console.log(`\nIndexing...`);
   for (const conv of unprocessed) {
     for (const exchange of conv.exchanges) {
       const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
-      const embedding = await generateExchangeEmbedding(
+      const embedding = await tryGenerateEmbedding(
         exchange.userMessage,
         exchange.assistantMessage,
         toolNames,

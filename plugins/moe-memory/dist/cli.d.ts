@@ -19,6 +19,6 @@
  * left in the package.
  *
  * Subcommands are dispatched through dynamic import so that `moe-memory show`
- * does not load better-sqlite3 or transformers.js just to render a JSONL file.
+ * does not load node:sqlite or transformers.js just to render a JSONL file.
  */
 export declare function main(argv?: string[]): Promise<number>;

@@ -6,10 +6,10 @@
       "sha256": "3a40f5c114e437170d305866599132f4d1efd33f101237f0a227e1cdf44ce5e1"
     },
     ".claude-plugin/marketplace.json": {
-      "sha256": "095d673c586c176c792716445ea6946e14629f64c2c6d041f5c4a971ffd20cc9"
+      "sha256": "2d9b35caa763c8dfb5f6262f07087638691876894d9ed99ef11f40848af2ae72"
     },
     ".claude-plugin/plugin.json": {
-      "sha256": "5f8cead027419830e8fccd76df0c886c2583f37b0e38523440c7b4e1346aa7c9"
+      "sha256": "470f6b93e31ada3fa5a5b9137a32921858711b9739e2ccba85450a12bbd9fd36"
     },
     ".claude-plugin/skills/remembering-conversations/MCP-TOOLS.md": {
       "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
@@ -20,7 +20,7 @@
       "mode": 420
     },
     ".codex-plugin/plugin.json": {
-      "sha256": "8df8f61d88249078ce6f06133c1b05e15aeb3e0809392f029eb5d3d612a8fd2c"
+      "sha256": "e39dd0369af16bb9739a8141160ba4b530a22bc069f047e033e3be2dc965a514"
     },
     ".codex-plugin/skills/remembering-conversations/MCP-TOOLS.md": {
       "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
@@ -48,7 +48,7 @@
       "sha256": "e124142cbe932ed37ca08b900a7fddc4170b380768ff48c5a09bdf858dbdbbd4"
     },
     ".cursor-plugin/plugin.json": {
-      "sha256": "7afe8a6ea2f5b8bd61d1adfb0075ec6362baf1e6592e1d146b441ddc61a8f80a"
+      "sha256": "b09e1e3192dd2e7f1e4300eaaee4d891943fd69ffbd67d4c84a714d94fe90aa0"
     },
     ".cursor-plugin/skills/remembering-conversations/MCP-TOOLS.md": {
       "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
@@ -59,7 +59,7 @@
       "mode": 420
     },
     ".kimi-plugin/plugin.json": {
-      "sha256": "2417c5ffeb53ff0e613a0914f4b527239a8aee4d99f14b7e371dea3b372cdc45"
+      "sha256": "9b9f0421fcb69550da76c70e3088419147645608d13c3fe3b48a8577249b5226"
     },
     ".kimi-plugin/skills/remembering-conversations/MCP-TOOLS.md": {
       "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
@@ -122,7 +122,7 @@
       "sha256": "8f66a350aeea2d8e1d30782ecf932a631e5914ff080bdfed7c4a96dbf2857113"
     },
     "hooks/moe-mint/hooks.json": {
-      "sha256": "78e7becfee3177f6f757b824aa41441b1506c0e971ef01a3e1e35ad85b6ad0e7"
+      "sha256": "f84190fe43a1e6074468bd6ae91f87c3b9b4c0a7e8c2fcaa927f707fba8600c6"
     },
     "hooks/moe-mint/run-hook.cmd": {
       "sha256": "1091dc12af883e19c6f322221281ad7e1a9816d0e266ca60088dfbc278a50db8",
@@ -136,7 +136,7 @@
       "sha256": "b5f7747065d44d77b4412ce197952f1dab0d5d6d773dd0a4c227217f94959275"
     },
     "plugin.json": {
-      "sha256": "f3b2c1c4f8bd373680ae64be3ac6b3d11d608875baf57b7cbf16a51e078177fa"
+      "sha256": "f6a8db7fb390f4c3f85a2e0a29f81b90adc97833774bdf2865f50281a2a92347"
     }
   }
 }

@@ -2,10 +2,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { initDatabase } from "../../src/db.js";
 import { searchConversations } from "../../src/search.js";
 import { indexTestFiles } from "../test-indexer.js";
-import { getFixturePath } from "../test-utils.js";
+import { getFixturePath, openTestDatabase } from "../test-utils.js";
 
 describe("Integration Tests", () => {
   let testDbPath: string;
@@ -40,7 +39,7 @@ describe("Integration Tests", () => {
       await indexTestFiles([fixturePath]);
 
       // Verify data was indexed
-      const db = initDatabase();
+      const db = openTestDatabase(testDbPath);
       const count = db.prepare("SELECT COUNT(*) as count FROM exchanges").get() as {
         count: number;
       };
@@ -54,7 +53,7 @@ describe("Integration Tests", () => {
 
       await indexTestFiles([shortPath, longPath]);
 
-      const db = initDatabase();
+      const db = openTestDatabase(testDbPath);
       const count = db.prepare("SELECT COUNT(*) as count FROM exchanges").get() as {
         count: number;
       };
@@ -67,7 +66,7 @@ describe("Integration Tests", () => {
 
       await indexTestFiles([fixturePath]);
 
-      const db = initDatabase();
+      const db = openTestDatabase(testDbPath);
       const vecCount = db.prepare("SELECT COUNT(*) as count FROM vec_exchanges").get() as {
         count: number;
       };
@@ -80,7 +79,7 @@ describe("Integration Tests", () => {
 
       await indexTestFiles([fixturePath]);
 
-      const db = initDatabase();
+      const db = openTestDatabase(testDbPath);
       const row = db.prepare("SELECT * FROM exchanges LIMIT 1").get() as any;
 
       expect(row.project).toBeDefined();

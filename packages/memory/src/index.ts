@@ -1,18 +1,62 @@
-// Public API for the @bubstack/moe-memory package.
-//
-// This file is a pure re-export barrel with no side effects. private-journal-mcp
-// also had a `src/index.ts` — but theirs was the executable entry point, with a
-// shebang, argv parsing and a server boot. Both names could not survive in place;
-// the barrel keeps the filename and the executable became src/cli.ts, which is
-// what the package's single `bin` points at.
+import { setDefaultPackageRoot } from "./db.js";
+import { resolveInstalledPackageRoot } from "./installed-package-root.js";
+
+setDefaultPackageRoot(resolveInstalledPackageRoot(import.meta.url));
+
 export * from "./constants.js";
-export * from "./db.js";
-export * from "./embedding-migration.js";
-export * from "./embeddings.js";
-export * from "./indexer.js";
-export * from "./journal/index.js";
+export {
+  acquireDatabaseWriter,
+  acquireExclusiveMaintenanceLease,
+  acquireSharedDatabaseLease,
+  assertWritableEpoch,
+  DatabaseBusyError,
+  type DatabaseLease,
+  type DatabaseWriter,
+  inspectLegacyDatabaseUsers,
+  readDatabaseEpoch,
+  withDatabaseWriter,
+} from "./database-lease.js";
+export {
+  collectSnapshotSources,
+  createDatabaseSnapshot,
+  type SnapshotResult,
+  type SnapshotSidecar,
+  type SnapshotSourceRecord,
+  validateSnapshotSources,
+  verifySnapshot,
+} from "./database-snapshot.js";
+export { withForeignKeysDisabled, withTransaction } from "./database-transaction.js";
+export {
+  createEmbeddingCoordinator,
+  type EmbeddingCoordinator,
+  type EmbeddingCoordinatorOptions,
+} from "./embedding-coordinator.js";
+export {
+  commitEnrichment,
+  type JournalTextResult,
+  type PendingEnrichment,
+  pickPendingEnrichment,
+  searchJournalText as searchJournalTextDb,
+} from "./enrichment.js";
 export * from "./parser.js";
 export * from "./paths.js";
+export {
+  ensureRecoveryCapsule,
+  type IntegrityFile,
+  loadCatalog as loadRecoveryCatalog,
+  RecoveryCapsuleError,
+  type RecoveryCapsuleManifest,
+  type RecoveryCatalog,
+  type RecoveryCatalogEntry,
+  type VerifiedRecoveryCapsule,
+  validateManifest as validateCapsuleManifest,
+  verifyRecoveryCapsule,
+} from "./recovery-capsule.js";
 export * from "./search.js";
-export * from "./summarizer.js";
 export * from "./types.js";
+export {
+  assessVectorReadiness,
+  isVectorQueryAuthorized,
+  type VectorReadiness,
+  vectorReadinessMessage,
+} from "./vector-readiness.js";

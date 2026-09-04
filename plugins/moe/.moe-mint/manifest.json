@@ -6,10 +6,10 @@
       "sha256": "fb14245e6a89311cd0edebb68e0ef3a5105183ac4ad6a10f895bd9454aff72b0"
     },
     ".claude-plugin/marketplace.json": {
-      "sha256": "4137e5d7b282e64e26d25a5b26f461474cfe0df9231556607c04737a16a389bd"
+      "sha256": "f76b9d5e3d482f53d768f31f85da571b31e441d2826a1be4d042bfecfa9db5d2"
     },
     ".claude-plugin/plugin.json": {
-      "sha256": "f5104627e30fa9216ef8f4ab0cf9ce4d74fb6fc5cdac3fc699f8b9e4cd75e6fb"
+      "sha256": "e7929ef157e3a5a46a65ed11e05c795e8dbfbde38fb313b48869dcca1b2f945c"
     },
     ".claude-plugin/skills/_shared/behavior-evidence-formats.md": {
       "sha256": "2b47ceb87e03958e00022e5ae57cd9fd1fecb1478a89b272909ca2f9fab0a243",
@@ -680,7 +680,7 @@
       "mode": 420
     },
     ".codex-plugin/plugin.json": {
-      "sha256": "af32a03cebb319ec09ffbe62bf968bc2b91d94622e5b20d0e97cac1b65fd6dce"
+      "sha256": "42a952146fc2fea7f53a8000887019c4a328249cbd6408c4b52eed13027e4ce4"
     },
     ".codex-plugin/skills/_shared/behavior-evidence-formats.md": {
       "sha256": "2b47ceb87e03958e00022e5ae57cd9fd1fecb1478a89b272909ca2f9fab0a243",
@@ -1365,7 +1365,7 @@
       "sha256": "4913eb681604fc3074c89aef2da69e0dc9ddcb072f46afeaabec4c8553595a21"
     },
     ".cursor-plugin/plugin.json": {
-      "sha256": "b60482350d645945d2e66decb8558c8e5604d1f3ee5c6fa2ddf642ce8ef304a2"
+      "sha256": "8294fc5d7c5f4f7a61dc7ef1edf874039d513dfd04cce3ca8e0f352bb59d90a8"
     },
     ".cursor-plugin/skills/_shared/behavior-evidence-formats.md": {
       "sha256": "2b47ceb87e03958e00022e5ae57cd9fd1fecb1478a89b272909ca2f9fab0a243",
@@ -2036,7 +2036,7 @@
       "mode": 420
     },
     ".kimi-plugin/plugin.json": {
-      "sha256": "cd5c003a6fc2d11382445bcee453fe71065e026a704436aab80f0d09307cd202"
+      "sha256": "7496877573ff1378470350909ec66bba956d893ecdbf8857642274d2590a71d8"
     },
     ".kimi-plugin/skills/_shared/behavior-evidence-formats.md": {
       "sha256": "2b47ceb87e03958e00022e5ae57cd9fd1fecb1478a89b272909ca2f9fab0a243",
@@ -4096,7 +4096,7 @@
       "executable": true
     },
     "plugin.json": {
-      "sha256": "70cdddf08760726cbd79c0e081cd2082c8530deec755fb9c217de24823095e06"
+      "sha256": "5ccff798b2bebcddc540e78fd7a049987f6bc6184c9e9d751643f844f3955b53"
     }
   },
   "skillSources": {

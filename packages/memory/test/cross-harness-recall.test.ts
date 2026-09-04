@@ -2,9 +2,10 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { initDatabase, insertExchange } from "../src/db.js";
+import { insertExchange } from "../src/db.js";
 import { searchConversations } from "../src/search.js";
 import type { ConversationExchange } from "../src/types.js";
+import { openTestDatabase } from "./test-utils.js";
 
 describe("cross-harness recall", () => {
   let testDir: string;
@@ -29,7 +30,7 @@ describe("cross-harness recall", () => {
     writeFileSync(claudePath, "{}\n", "utf-8");
     writeFileSync(codexPath, "{}\n", "utf-8");
 
-    const db = initDatabase();
+    const db = openTestDatabase(join(testDir, "index.sqlite"));
     const base = {
       timestamp: "2026-05-12T20:00:00.000Z",
       userMessage: "Recall shared-cross-harness-marker",
