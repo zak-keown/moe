@@ -1,7 +1,7 @@
 #!/bin/bash
 # plan-set-notice: SessionStart hook that announces an incomplete plan set.
 #
-# The `sequencing-plans` skill's description is the warm trigger — "use when a
+# The `sequence-plans` skill's description is the warm trigger — "use when a
 # project has more than one plan and you need to know which is runnable." The
 # cold trigger — "new session, four plans exist, which are done?" — cannot be a
 # description, because in a fresh session on a partly-finished project nothing
@@ -10,7 +10,7 @@
 # Deterministic and announce-only: read the manifest, run `plan-set next`, and
 # print the runnable id(s) as SessionStart additionalContext. It does NOT
 # invoke the skill by name, so a lean-tier user (who does not have
-# `sequencing-plans` installed) still gets the answer plus a working command
+# `sequence-plans` installed) still gets the answer plus a working command
 # — the CLI ships in `hooks/` unfiltered, per D2 and the tier collision noted
 # in the deterministic-task-dag item in .planning/backlog/ (cited by slug —
 # the W##P## filename prefix moves whenever the backlog is re-waved).

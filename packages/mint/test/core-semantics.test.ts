@@ -21,17 +21,17 @@ const PROFILE_DIRS = {
 } as const
 
 const CLAUDE_CONTRACT_ALLOWANCE = new Map<string, number>([
-  ['developing-claude-code-plugins/SKILL.md', 2],
-  ['developing-claude-code-plugins/examples/full-featured-plugin/README.md', 1],
-  ['developing-claude-code-plugins/references/plugin-structure.md', 9],
-  ['developing-claude-code-plugins/references/polyglot-hooks.md', 2],
-  ['developing-claude-code-plugins/references/troubleshooting.md', 9],
-  ['smoothing-the-experience/SKILL.md', 1],
+  ['cc-plugins/SKILL.md', 2],
+  ['cc-plugins/examples/full-featured-plugin/README.md', 1],
+  ['cc-plugins/references/plugin-structure.md', 9],
+  ['cc-plugins/references/polyglot-hooks.md', 2],
+  ['cc-plugins/references/troubleshooting.md', 9],
+  ['smooth-experience/SKILL.md', 1],
 ])
 
 const CLAUDE_TERM_ALLOWANCE = new Map<string, number>([
-  ['developing-claude-code-plugins/references/anthropic-best-practices.md:haiku', 3],
-  ['developing-claude-code-plugins/references/anthropic-best-practices.md:opus', 3],
+  ['cc-plugins/references/anthropic-best-practices.md:haiku', 3],
+  ['cc-plugins/references/anthropic-best-practices.md:opus', 3],
 ])
 
 function markdownFiles(root: string): string[] {
@@ -97,8 +97,8 @@ describe('core semantic generation', () => {
     try {
       for (const [profile, relRoot] of Object.entries(PROFILE_DIRS)) {
         for (const [skill, script, banner] of [
-          ['subagent-driven-development', 'task-set.mjs', 'task-set: compute the intra-plan task DAG'],
-          ['sequencing-plans', 'plan-set.mjs', 'plan-set: sequence a set of plans'],
+          ['sdd', 'task-set.mjs', 'task-set: compute the intra-plan task DAG'],
+          ['sequence-plans', 'plan-set.mjs', 'plan-set: sequence a set of plans'],
         ] as const) {
           const resource = join(root, relRoot, skill, 'scripts', script)
           const output = execFileSync(process.execPath, [resource, '--help'], {
@@ -114,16 +114,16 @@ describe('core semantic generation', () => {
   })
 
   it('keeps both requirement validators in explicit generated commands', () => {
-    const rel = 'extracting-requirements/SKILL.md'
+    const rel = 'extract-requirements/SKILL.md'
     const canonical = readFileSync(join(CORE, 'skills', rel), 'utf8')
     const expected = [
       {
-        resource: 'skills/extracting-requirements/scripts/validate_requirements_index.mjs',
+        resource: 'skills/extract-requirements/scripts/validate_requirements_index.mjs',
         command:
           'node "<resolved-validate_requirements_index.mjs>" docs/moe/iterations/requirements/',
       },
       {
-        resource: 'skills/extracting-requirements/scripts/validate_scenarios.mjs',
+        resource: 'skills/extract-requirements/scripts/validate_scenarios.mjs',
         command:
           'node "<resolved-validate_scenarios.mjs>" docs/moe/iterations/behavior-scenarios.md docs/moe/iterations/requirements/',
       },
@@ -145,10 +145,10 @@ describe('core semantic generation', () => {
 
   it('renders profile-specific call-level model override guidance', () => {
     const documents = [
-      'subagent-driven-development/SKILL.md',
-      'subagent-driven-development/implementer-prompt.md',
-      'subagent-driven-development/re-review-prompt.md',
-      'subagent-driven-development/task-reviewer-prompt.md',
+      'sdd/SKILL.md',
+      'sdd/implementer-prompt.md',
+      'sdd/re-review-prompt.md',
+      'sdd/task-reviewer-prompt.md',
     ] as const
     for (const rel of documents) {
       expect(readFileSync(join(CORE, 'skills', rel), 'utf8'), rel).toContain(

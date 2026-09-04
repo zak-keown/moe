@@ -1,8 +1,8 @@
 # Does the house-voice pointer change the output?
 
-Measure a skill edit instead of asserting it. `writing-skills/SKILL.md`'s Iron
+Measure a skill edit instead of asserting it. `write-skill/SKILL.md`'s Iron
 Law binds EDITS to existing skills, not only new ones, and the edit under test is
-three lines added to `writing-clearly-and-concisely/SKILL.md` pointing at
+three lines added to `write-clearly/SKILL.md` pointing at
 `house-voice.md`. This directory is that measurement: two arms, three runs each,
 both arms' raw output committed, and a mechanical scorer.
 
@@ -15,7 +15,7 @@ can go red.
 ## What is being measured, and what is not
 
 This measures whether the pointer changes the OUTPUT. It does not measure whether
-`writing-clearly-and-concisely` FIRES in the first place — an agent that never
+`write-clearly` FIRES in the first place — an agent that never
 loads the skill is unaffected by anything written inside it. Firing rate is a
 different question with a different owner: `verification-split-and-firing-rate`
 Part C builds a per-session `Skill`-invocation counter, and that counter is the
@@ -41,9 +41,9 @@ The prompt is identical in both arms. Only the payload differs.
 
 | | Arm A — baseline | Arm B — with pointer |
 |---|---|---|
-| `writing-clearly-and-concisely/SKILL.md` | as it stood before this item (2650 bytes) | with the `**The house voice.**` paragraph |
-| `writing-clearly-and-concisely/elements-of-style.md` | present | present |
-| `writing-clearly-and-concisely/house-voice.md` | absent | present |
+| `write-clearly/SKILL.md` | as it stood before this item (2650 bytes) | with the `**The house voice.**` paragraph |
+| `write-clearly/elements-of-style.md` | present | present |
+| `write-clearly/house-voice.md` | absent | present |
 | Runs | 3 (`baseline/01-03.md`) | 3 (`with-pointer/01-03.md`) |
 
 `scenario.md` is the task: write `packages/relay/README.md` for a package that
@@ -202,7 +202,7 @@ node packages/core/test/house-voice/score.mjs --json <file.md>
 ```
 
 To re-run an arm, build a directory holding only `scenario.md` and the payload
-copy of `writing-clearly-and-concisely/`, then run a fresh session with its cwd
+copy of `write-clearly/`, then run a fresh session with its cwd
 there, resetting the directory between runs. If the numbers move, change the
 recorded values in `house-voice.test.ts` in the same commit and say what changed —
 a stale pinned number is worse than no number.

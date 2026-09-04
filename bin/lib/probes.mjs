@@ -289,14 +289,14 @@ export function probeCargo() {
   });
 }
 
-/** tmux gates moe-crew and the `using-tmux-for-interactive-commands` skill.
+/** tmux gates moe-crew and the `use-tmux` skill.
  *  On native Windows this is WSL-only: `packages/crew/src/core/tmux.ts`
  *  shells out to bare `tmux` with no platform branch. */
 export function probeTmux() {
   const version = extractTmuxVersion(tryExec("tmux", ["-V"]));
   const capability = WIN32
     ? "@bubstack/moe-crew (native Windows: WSL-only; tmux does not exist on native Windows)"
-    : "@bubstack/moe-crew and the using-tmux-for-interactive-commands skill";
+    : "@bubstack/moe-crew and the use-tmux skill";
   if (!version) {
     return result({
       name: "tmux",

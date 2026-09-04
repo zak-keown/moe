@@ -10,8 +10,8 @@
 // counter is session-cumulative (the question it answers — "did any
 // core-tier skill fire this session?" — is a session question).
 //
-// Companion to verification-before-completion/SKILL.md ("evidence before
-// claims, always") and the skill-firing signal auditing-progress reasons
+// Companion to verify-completion/SKILL.md ("evidence before
+// claims, always") and the skill-firing signal audit-progress reasons
 // about. Two different silences this makes falsifiable:
 //
 //   1. The assistant said "tests pass" but no test command ran this turn.
@@ -116,7 +116,7 @@ const VERIFY_PATTERNS = [
 ];
 const isVerify = (cmd) => VERIFY_PATTERNS.some((r) => r.test(cmd));
 
-// Completion-claim phrases. Regex list mirrors what verification-before-completion's
+// Completion-claim phrases. Regex list mirrors what verify-completion's
 // "Red Flags" enumerates. Detected in the LAST assistant text block only.
 // The bare `done|complete|finished|ready|all set` was intentionally dropped:
 // it fired on ordinary status prose ("done reading", "ready to try") and

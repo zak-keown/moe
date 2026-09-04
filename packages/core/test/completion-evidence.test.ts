@@ -250,13 +250,13 @@ describe("moe-completion-evidence", () => {
   it("keeps current Claude skill expansions inside the active human turn", () => {
     const f = fixture();
     writeTranscript(f.transcript, [
-      human("Use verification-before-completion and run the test."),
+      human("Use verify-completion and run the test."),
       assistant([
         {
           type: "tool_use",
           id: "skill-live",
           name: "Skill",
-          input: { skill: "moe-core:verification-before-completion" },
+          input: { skill: "moe-core:verify-completion" },
         },
       ]),
       {
@@ -288,7 +288,7 @@ describe("moe-completion-evidence", () => {
     ) as { skill_tool_uses: number; skills: string[] };
     expect(firing).toMatchObject({
       skill_tool_uses: 1,
-      skills: ["moe-core:verification-before-completion"],
+      skills: ["moe-core:verify-completion"],
     });
   });
 

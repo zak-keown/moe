@@ -51,74 +51,85 @@ imported:
       "Use when encountering any bug, test failure, or unexpected behavior."
       Fires on every bug, unasked. The other skill the bootstrap names.
 
-  test-driven-development:
+  tdd:
     from: imported
+    renamed_from: test-driven-development
     why: >-
       "Use when implementing any feature or bugfix, before writing
       implementation code." Fires on every implementation. Also the REQUIRED
       BACKGROUND for systematic-debugging's failing-test step.
 
-  verification-before-completion:
+  verify-completion:
     from: imported
+    renamed_from: verification-before-completion
     why: >-
       "Use when about to claim work is complete." Fires at the end of every
       task, and systematic-debugging routes to it before any success claim.
 
-  writing-plans:
+  write-plan:
     from: imported
+    renamed_from: writing-plans
     why: >-
       "Use when you have a spec or requirements for a multi-step task, before
       touching code." The step brainstorming hands off to; nobody asks for it
       by name.
 
-  subagent-driven-development:
+  sdd:
     from: imported
+    renamed_from: subagent-driven-development
     why: >-
       writing-plans marks it "**REQUIRED SUB-SKILL**" as the recommended
       execution path, and it is the path every harness Moe targets can
       actually take.
 
-  executing-plans:
+  execute-plan:
     from: imported
+    renamed_from: executing-plans
     why: >-
       writing-plans marks it "**REQUIRED SUB-SKILL**" as the second of exactly
       two execution options — the one to take when subagents are unavailable.
 
-  using-git-worktrees:
+  use-worktrees:
     from: imported
+    renamed_from: using-git-worktrees
     why: >-
       Step 0 of both execution paths ("ensure an isolated workspace") and
       named by the bootstrap.
 
-  finishing-a-development-branch:
+  finish-branch:
     from: imported
+    renamed_from: finishing-a-development-branch
     why: >-
       "**REQUIRED SUB-SKILL**" at the terminal step of both execution paths.
       Without it the everyday flow ends with the branch unmerged and no
       guidance.
 
-  requesting-code-review:
+  request-review:
     from: imported
+    renamed_from: requesting-code-review
     why: >-
       subagent-driven-development's review phase dispatches this skill's
       `code-reviewer.md` template. Also fires unasked on "before merging".
 
-  receiving-code-review:
+  receive-review:
     from: imported
+    renamed_from: receiving-code-review
     why: >-
       Fires when review feedback arrives, which is ordinary work, and it is
       the counterpart to requesting-code-review. Shipping the request half
       without the receive half teaches half the loop.
 
-  writing-clearly-and-concisely:
+  write-clearly:
     from: imported
+    renamed_from: writing-clearly-and-concisely
     why: >-
       Its trigger is literally "ANY prose humans will read", which includes
       the commit messages, MR descriptions and error text of every session.
       Fires unasked more often than anything else in the tree.
 
-  dispatching-parallel-agents:
+  dispatch-agents:
     from: imported
+    renamed_from: dispatching-parallel-agents
     why: >-
       "Use when facing 2+ independent tasks" is a recognition trigger.
       subagent-driven-development and implementing-tasks restate the parallel
@@ -126,26 +137,30 @@ imported:
       source for the full gate, the degradation ladder, and the divergent-tree
       rule.
 
-  writing-skills:
+  write-skill:
     from: imported
+    renamed_from: writing-skills
     why: >-
       You invoke it deliberately, when authoring or editing a skill. Also the
       largest skill in the set at 3,781 words.
 
-  working-with-claude-code:
+  cc-config:
     from: imported
+    renamed_from: working-with-claude-code
     why: >-
       A documentation router. You reach for it when you are already working on
       Claude Code configuration.
 
-  developing-claude-code-plugins:
+  cc-plugins:
     from: imported
+    renamed_from: developing-claude-code-plugins
     why: >-
       You invoke it when you know you are building a plugin. Ships the example
       plugins and the polyglot-hook reference.
 
-  finding-duplicate-functions:
+  find-duplicates:
     from: imported
+    renamed_from: finding-duplicate-functions
     why: >-
       Experimental (upstream's own word). A codebase audit you run on purpose;
       it also wants `rg` and `jq` and dispatches two subagent tiers.
@@ -156,8 +171,9 @@ imported:
       Experimental. Deliberate reach, and it instructs the agent to clone and
       `go build` a third-party binary onto the user's PATH — see README.md.
 
-  using-tmux-for-interactive-commands:
+  use-tmux:
     from: imported
+    renamed_from: using-tmux-for-interactive-commands
     why: >-
       Experimental. Can fire unprompted on "run vim"; also trigger-overlaps
       moe-crew's driving-claude-code-sessions on the word tmux.
@@ -168,37 +184,43 @@ imported:
       Experimental, and it cannot run on this fork's dev machines or in CI —
       needs /dev/kvm, sshpass and Debian. See README.md.
 
-  iterative-development:
+  iterate:
     from: imported
+    renamed_from: iterative-development
     why: >-
       An alternative whole methodology, invoked by name when a spec is too
       large for the writing-plans flow.
 
-  extracting-requirements:
+  extract-requirements:
     from: imported
+    renamed_from: extracting-requirements
     why: >-
       Part of the iterative-development cluster. Dispatched by the
       orchestrator, never reached on its own.
 
-  scoping-the-simplest-core:
+  scope-core:
     from: imported
+    renamed_from: scoping-the-simplest-core
     why: >-
       Part of the cluster, and it reads a prompt template out of
       running-an-iteration's directory — the two cannot be split.
 
-  running-an-iteration:
+  run-iteration:
     from: imported
+    renamed_from: running-an-iteration
     why: >-
       Part of the cluster. Dispatches implementing-tasks.
 
-  implementing-tasks:
+  implement-tasks:
     from: imported
+    renamed_from: implementing-tasks
     why: >-
       Part of the cluster. A fork of subagent-driven-development for
       in-memory task batches; only running-an-iteration invokes it.
 
-  auditing-progress:
+  audit-progress:
     from: imported
+    renamed_from: auditing-progress
     why: >-
       Part of the cluster. The orchestrator's post-iteration gate.
 
@@ -210,8 +232,9 @@ imported:
       test-driven-development's "Seams — Where Tests Go" section reaches for.
       Ships with DEEPENING.md and DESIGN-IT-TWICE.md.
 
-  improve-codebase-architecture:
+  improve-architecture:
     from: imported
+    renamed_from: improve-codebase-architecture
     why: >-
       Deliberately invoked, by name. Router-shaped: it scans, renders an HTML
       report of deepening candidates, then hands off — to brainstorming for
@@ -231,8 +254,9 @@ imported:
       a design question: a single-file HTML logic demo, or a set of UI
       variants switchable via `?variant=`.
 
-  resolving-merge-conflicts:
+  resolve-conflicts:
     from: imported
+    renamed_from: resolving-merge-conflicts
     why: >-
       Fires when git status shows unmerged paths — during a merge, rebase, or
       cherry-pick. No other skill covers conflict resolution; without this the
@@ -246,7 +270,7 @@ imported:
 # `why:` earns the skill's place the same way an imported one does.
 # ---------------------------------------------------------------------------
 authored:
-  retrieving-context:
+  retrieve-context:
     from: moe
     why: >-
       A retrieval-discipline skill: "search before you answer" applied to the
@@ -259,7 +283,7 @@ authored:
       Costs nothing: the routing rule reaches memory through its MCP *tools*,
       and tools are not skills.
 
-  sequencing-plans:
+  sequence-plans:
     from: moe
     why: >-
       A deterministic scheduler for the multi-plan case that neither
@@ -271,7 +295,7 @@ authored:
       set with no model in the loop. `plan-set` (the CLI) lives under
       `hooks/` rather than inside this skill's directory.
 
-  reviewing-a-codebase:
+  review-codebase:
     from: moe
     why: >-
       A whole-repository review you invoke on purpose — an inherited codebase,
@@ -280,7 +304,7 @@ authored:
       owns the diff trigger. Ships two node scripts invoked as `node <path>`,
       so neither needs an X_BIT_ALLOWLIST entry.
 
-  fixing-a-code-review:
+  fix-review:
     from: moe
     why: >-
       The consumer half of the pair — it reads the report
@@ -315,7 +339,7 @@ authored:
       `finishing-a-development-branch` and `resolving-merge-conflicts` so
       both flows share one statement of the rule.
 
-  developing-for-moe:
+  moe-dev:
     from: moe
     why: >-
       Enforces the two non-negotiable development tenets for work on the Moe
@@ -324,7 +348,7 @@ authored:
       eight harnesses). Paired with a SessionStart hook that injects the tenets
       into agent sessions automatically.
 
-  smoothing-the-experience:
+  smooth-experience:
     from: moe
     why: >-
       An on-demand local audit that turns repeated successful Claude Code and

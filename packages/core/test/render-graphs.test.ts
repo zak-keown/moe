@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 const CORE = fileURLToPath(new URL("..", import.meta.url));
-const SCRIPT = join(CORE, "skills/writing-skills/scripts/render-graphs.mjs");
+const SCRIPT = join(CORE, "skills/write-skill/scripts/render-graphs.mjs");
 const roots: string[] = [];
 
 afterEach(() => {

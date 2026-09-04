@@ -7,8 +7,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { runHelper } from "./cli-harness.js";
 
 const REQUIREMENTS_VALIDATOR =
-  "skills/extracting-requirements/scripts/validate_requirements_index.mjs";
-const SCENARIO_VALIDATOR = "skills/extracting-requirements/scripts/validate_scenarios.mjs";
+  "skills/extract-requirements/scripts/validate_requirements_index.mjs";
+const SCENARIO_VALIDATOR = "skills/extract-requirements/scripts/validate_scenarios.mjs";
 const CORE = resolve(import.meta.dirname, "..", "..");
 const FIXTURES = resolve(import.meta.dirname, "fixtures");
 const temporaryRoots: string[] = [];

@@ -15,7 +15,7 @@ import { dirname, join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 // biome-ignore format: TypeScript's next-line suppression must cover this import.
 // @ts-expect-error — plain ESM production helper.
-import { applyBoundPlan, createBoundPlan, formatUnifiedDiff, readBoundPlan } from "../skills/smoothing-the-experience/scripts/lib/mutation.mjs";
+import { applyBoundPlan, createBoundPlan, formatUnifiedDiff, readBoundPlan } from "../skills/smooth-experience/scripts/lib/mutation.mjs";
 
 const ORIGINAL = '{"untouched":true}\n';
 const REPLACEMENT = '{"permissions":{"allow":["Bash(git status:*)"]}}\n';

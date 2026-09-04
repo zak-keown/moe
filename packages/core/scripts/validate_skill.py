@@ -87,10 +87,10 @@ def validate(path: Path) -> tuple[list[str], list[str]]:
                 f"frontmatter 'description' should start with 'Use when' but starts with: {desc[:30]!r}"
             )
 
-    # Word count is a target per writing-skills guidance, not a hard limit.
+    # Word count is a target per write-skill guidance, not a hard limit.
     word_count = len(body.split())
     if word_count > 500:
-        warnings.append(f"body word count {word_count} exceeds 500 (target per writing-skills guidance)")
+        warnings.append(f"body word count {word_count} exceeds 500 (target per write-skill guidance)")
 
     return errors, warnings
 

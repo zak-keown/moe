@@ -1,4 +1,4 @@
-"""Unit tests for extracting-requirements/scripts/chunk_spec.py."""
+"""Unit tests for extract-requirements/scripts/chunk_spec.py."""
 import sys
 import json
 import subprocess
@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-SCRIPT = Path(__file__).parent.parent.parent / "skills" / "extracting-requirements" / "scripts" / "chunk_spec.py"
+SCRIPT = Path(__file__).parent.parent.parent / "skills" / "extract-requirements" / "scripts" / "chunk_spec.py"
 
 
 class TestChunkSpec(unittest.TestCase):

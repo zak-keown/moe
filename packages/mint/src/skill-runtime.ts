@@ -461,8 +461,8 @@ function inspectMarkdown(
     const resolved = resolveScriptReference(scriptRoot, reference)
     const resolvesInThisSkill = resolved !== undefined && filePaths.has(resolved)
     // The resolved-placeholder convention's `{resource:...}` macro can point
-    // at another skill's scripts/ directory (writing-plans documenting
-    // subagent-driven-development's task-set.mjs, for example) — a bare
+    // at another skill's scripts/ directory (write-plan documenting
+    // sdd's task-set.mjs, for example) — a bare
     // basename reference that doesn't resolve within this skill still counts
     // if it names a real .mjs script under some skill's scripts/ directory.
     const resolvesInAnotherSkill =

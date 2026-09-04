@@ -1,4 +1,4 @@
-"""Unit tests for extracting-requirements/scripts/aggregate_stories.py."""
+"""Unit tests for extract-requirements/scripts/aggregate_stories.py."""
 import sys
 import json
 import re
@@ -8,9 +8,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-SCRIPT = Path(__file__).parent.parent.parent / "skills" / "extracting-requirements" / "scripts" / "aggregate_stories.py"
+SCRIPT = Path(__file__).parent.parent.parent / "skills" / "extract-requirements" / "scripts" / "aggregate_stories.py"
 FIXTURES = Path(__file__).parent / "fixtures"
-VALIDATOR = Path(__file__).parent.parent.parent / "skills" / "extracting-requirements" / "scripts" / "validate_requirements_index.py"
+VALIDATOR = Path(__file__).parent.parent.parent / "skills" / "extract-requirements" / "scripts" / "validate_requirements_index.py"
 
 
 class TestAggregateStories(unittest.TestCase):

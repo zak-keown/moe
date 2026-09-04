@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — the production helper is intentionally plain ESM.
-import { classifyFilesystem } from "../skills/smoothing-the-experience/scripts/lib/safety/filesystem.mjs";
+import { classifyFilesystem } from "../skills/smooth-experience/scripts/lib/safety/filesystem.mjs";
 // @ts-expect-error — the production helper is intentionally plain ESM.
-import { classifyMcp } from "../skills/smoothing-the-experience/scripts/lib/safety/mcp.mjs";
+import { classifyMcp } from "../skills/smooth-experience/scripts/lib/safety/mcp.mjs";
 // @ts-expect-error — the production helper is intentionally plain ESM.
-import { classifyNetwork } from "../skills/smoothing-the-experience/scripts/lib/safety/network.mjs";
+import { classifyNetwork } from "../skills/smooth-experience/scripts/lib/safety/network.mjs";
 // @ts-expect-error — the production helper is intentionally plain ESM.
-import * as shellSafety from "../skills/smoothing-the-experience/scripts/lib/safety/shell.mjs";
+import * as shellSafety from "../skills/smooth-experience/scripts/lib/safety/shell.mjs";
 
 const { classifyShell, parseConservativeShell, PROJECT_SHELL_CATALOG } = shellSafety;
 

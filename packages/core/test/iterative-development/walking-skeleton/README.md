@@ -23,17 +23,17 @@ git init && git add spec.md && git commit -m "initial: sample spec"
 
 ### 2. Invoke the plugin
 
-In a Claude Code session running in `/tmp/walking-skeleton-dogfood`, ask Claude to use the `iterative-development` skill on `spec.md`.
+In a Claude Code session running in `/tmp/walking-skeleton-dogfood`, ask Claude to use the `iterate` skill on `spec.md`.
 
 Expected high-level flow:
-1. Claude invokes `iterative-development` (orchestrator)
-2. Orchestrator invokes `extracting-requirements` → creates per-epic files in `docs/superpowers/iterations/requirements/`
-3. Orchestrator invokes `scoping-the-simplest-core` → creates `docs/superpowers/iterations/roadmap.md`
+1. Claude invokes `iterate` (orchestrator)
+2. Orchestrator invokes `extract-requirements` → creates per-epic files in `docs/superpowers/iterations/requirements/`
+3. Orchestrator invokes `scope-core` → creates `docs/superpowers/iterations/roadmap.md`
 4. Orchestrator enters the iteration loop:
-   - Invokes `running-an-iteration` → picks ITER-0000, decomposes into tasks
-   - `running-an-iteration` dispatches `implementing-tasks` → writes TDD-style code that implements greet
-   - `running-an-iteration` updates epic files in `requirements/`, `roadmap.md`, appends to `iteration-log.md`
-   - Orchestrator invokes `auditing-progress` → confirms ACs pass
+   - Invokes `run-iteration` → picks ITER-0000, decomposes into tasks
+   - `run-iteration` dispatches `implement-tasks` → writes TDD-style code that implements greet
+   - `run-iteration` updates epic files in `requirements/`, `roadmap.md`, appends to `iteration-log.md`
+   - Orchestrator invokes `audit-progress` → confirms ACs pass
    - Roadmap is empty + audit clean → orchestrator terminates
 
 ### 3. Verify artifacts
@@ -41,9 +41,9 @@ Expected high-level flow:
 Check that the following files exist and validate:
 
 ```bash
-python3 <plugin-repo>/skills/extracting-requirements/scripts/validate_requirements_index.py docs/superpowers/iterations/requirements/
-python3 <plugin-repo>/skills/scoping-the-simplest-core/scripts/validate_roadmap.py docs/superpowers/iterations/roadmap.md
-python3 <plugin-repo>/skills/running-an-iteration/scripts/validate_iteration_log.py docs/superpowers/iterations/iteration-log.md
+python3 <plugin-repo>/skills/extract-requirements/scripts/validate_requirements_index.py docs/superpowers/iterations/requirements/
+python3 <plugin-repo>/skills/scope-core/scripts/validate_roadmap.py docs/superpowers/iterations/roadmap.md
+python3 <plugin-repo>/skills/run-iteration/scripts/validate_iteration_log.py docs/superpowers/iterations/iteration-log.md
 ```
 
 Expected: all three print `OK: <path>`.

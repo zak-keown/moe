@@ -46,7 +46,7 @@ Execution index mapping scenarios to their evidence.
     join(iterDir, "roadmap.md"),
     `# Iteration Roadmap
 
-Ordered iteration plan produced by \`scoping-the-simplest-core\`.
+Ordered iteration plan produced by \`scope-core\`.
 
 ## Iterations
 

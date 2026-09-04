@@ -4,9 +4,9 @@ import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { runHelper } from "./cli-harness.js";
 
-const CHUNKER = "skills/extracting-requirements/scripts/chunk_spec.mjs";
-const AGGREGATOR = "skills/extracting-requirements/scripts/aggregate_stories.mjs";
-const VALIDATOR = "skills/extracting-requirements/scripts/validate_requirements_index.mjs";
+const CHUNKER = "skills/extract-requirements/scripts/chunk_spec.mjs";
+const AGGREGATOR = "skills/extract-requirements/scripts/aggregate_stories.mjs";
+const VALIDATOR = "skills/extract-requirements/scripts/validate_requirements_index.mjs";
 const FIXTURES = resolve(import.meta.dirname, "fixtures");
 const temporaryRoots: string[] = [];
 
