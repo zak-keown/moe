@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 5
+  fixed: 6
   stale: 0
   skipped: 0
   deferred: 0
-  open: 102
+  open: 101
 ---
 
 # Codebase Review — moe
@@ -1091,6 +1091,10 @@ Fix: compute the window with `max(0, idx - 2000)` (or slice
 additionally assert `"card" not in <the corresponding Auth-epic slice>` so
 the test fails if misattribution actually occurs.
 
+**Disposition:** fixed
+**Commit:** `e788e8b5474bd0fd3a0986e4a6e365c80d169b6c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-027: `--worktree` teardown paths delete the worktree marker without removing the git worktree, leaking disk and git state
 
 **File:** `packages/crew/src/commands/await-start.ts`
