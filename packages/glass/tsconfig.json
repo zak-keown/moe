@@ -1,5 +1,5 @@
 {
-  "//": "Runtime DAG: no workspace dependencies.",
+  "//": "Runtime DAG: no workspace dependencies. The MCP server loads skills/browsing/chrome-ws-lib.js through createRequire at runtime, which is a file path, not a module edge.",
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",

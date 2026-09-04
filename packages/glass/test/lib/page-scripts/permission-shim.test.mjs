@@ -1,7 +1,10 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
+import { createRequire } from 'node:module';
 import { JSDOM } from 'jsdom';
-import { buildShimSource } from '../../../skills/browsing/scripts/lib/page-scripts/permission-shim.mjs';
+
+const require = createRequire(import.meta.url);
+const { buildShimSource } = require('../../../skills/browsing/lib/page-scripts/permission-shim.js');
 
 // Builds a jsdom window with a fake navigator.mediaDevices.getUserMedia,
 // evaluates the real shim source in it (runScripts:'dangerously' + eval is

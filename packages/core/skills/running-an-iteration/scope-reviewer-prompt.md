@@ -30,7 +30,7 @@ You are reviewing the scope of an upcoming iteration BEFORE any code is written.
 For every story committed to this iteration:
 - Does it cite a valid STORY-NNNN that exists in the requirements directory?
 - Does each story's acceptance criteria match what the source spec says?
-(Note: the mechanical citation check via check_citations.mjs has already run.
+(Note: the mechanical citation check via check_citations.py has already run.
 Your job is the SEMANTIC check — do the stories actually mean what the spec says?)
 
 ### 2. Scope Creep

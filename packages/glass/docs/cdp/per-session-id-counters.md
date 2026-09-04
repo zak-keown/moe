@@ -26,11 +26,11 @@ uses the wrong primary key.
 
 ## For moe-glass
 
-`scripts/lib/page-session.mjs` handles this correctly. Inside `buildPageSessionFromAttached`,
+`lib/page-session.js` handles this correctly. Inside `buildPageSessionFromAttached`,
 a closure-local `let messageIdCounter = 1` starts at line 28 — one counter per
 call, scoped to the handle, never shared. The browser-session in
-`scripts/lib/browser-session.mjs` has its own counter for root-session commands.
-`scripts/lib/cdp-router.mjs` reads `sessionId` before doing any id lookup.
+`lib/browser-session.js` has its own counter for root-session commands.
+`lib/cdp-router.js` reads `sessionId` before doing any id lookup.
 
 Any extension that adds batching, replay, or a second transport channel must
 preserve this invariant: the counter is local to the handle, not to the transport.
@@ -41,5 +41,5 @@ guarantee even if session dispatch elsewhere is correct.
 
 - Lushnikov, "Getting Started With CDP":
   https://github.com/aslushnikov/getting-started-with-cdp
-- `skills/browsing/scripts/lib/page-session.mjs` — per-session `messageIdCounter` at line 28
-- `skills/browsing/scripts/lib/cdp-router.mjs` — sessionId-first dispatch
+- `skills/browsing/lib/page-session.js` — per-session `messageIdCounter` at line 28
+- `skills/browsing/lib/cdp-router.js` — sessionId-first dispatch

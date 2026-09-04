@@ -21,7 +21,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CLI = path.join(__dirname, '..', 'skills', 'browsing', 'scripts', 'chrome-ws.mjs');
+const CLI = path.join(__dirname, '..', 'skills', 'browsing', 'chrome-ws');
 
 function runCLI(args, { env = {}, timeoutMs = 5000 } = {}) {
   return spawnSync('node', [CLI, ...args], {

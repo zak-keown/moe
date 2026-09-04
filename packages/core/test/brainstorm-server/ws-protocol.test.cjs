@@ -14,11 +14,19 @@
 const assert = require('assert');
 const crypto = require('crypto');
 const path = require('path');
-const { pathToFileURL } = require('url');
 
-// The module under test — ESM, loaded via dynamic import()
-const SERVER_PATH = path.join(__dirname, '../../skills/brainstorming/scripts/server.mjs');
+// The module under test — will be the new zero-dep server file
+const SERVER_PATH = path.join(__dirname, '../../skills/brainstorming/scripts/server.cjs');
 let ws;
+
+try {
+  ws = require(SERVER_PATH);
+} catch (e) {
+  // Module doesn't exist yet (TDD — tests written before implementation)
+  console.error(`Cannot load ${SERVER_PATH}: ${e.message}`);
+  console.error('This is expected if running tests before implementation.');
+  process.exit(1);
+}
 
 function runTests() {
   let passed = 0;
@@ -396,12 +404,4 @@ function runTests() {
   if (failed > 0) process.exit(1);
 }
 
-(async () => {
-  try {
-    ws = await import(pathToFileURL(SERVER_PATH).href);
-  } catch (e) {
-    console.error(`Cannot load ${SERVER_PATH}: ${e.message}`);
-    process.exit(1);
-  }
-  runTests();
-})();
+runTests();

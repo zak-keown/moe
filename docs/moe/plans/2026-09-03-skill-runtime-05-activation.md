@@ -40,7 +40,6 @@ None.
 **Files:**
 - Modify: `packages/mint/src/artifact/assemble.ts`
 - Modify: `packages/mint/src/skill-runtime.ts`
-- Modify: `packages/mint/test/skill-runtime.test.ts`
 - Modify: `packages/mint/test/assemble-artifact.test.ts`
 - Modify: `packages/mint/test/fixtures/composed-plugin/skills/demo/SKILL.md`
 - Move/replace: `packages/mint/test/fixtures/composed-plugin/skills/demo/test-runtime.js` → `scripts/test-runtime.mjs`
@@ -51,30 +50,11 @@ None.
 - Consumes: `assertValidSkillRuntime(input)` and `SkillRuntimeReport` from Plan 1; private `ComponentFile[]` from `collectComponentFiles`.
 - Produces: a collection result containing complete candidates plus staged files, exported `inspectSkillRuntime(plugin): Promise<SkillRuntimeReport>`, and a pre-filter/pre-write validation call in `stageComponents`.
 
-- [ ] **Step 1: Close the carried validator and Core-data parity gaps**
-
-Add failing adversarial cases to `skill-runtime.test.ts` for dynamic
-`import("node:module")` followed by `createRequire`, direct re-exports of
-shell-capable `node:child_process` APIs, and a downstream relative import that
-invokes a re-exported `spawn`/`spawnSync`/`execFile`/`execFileSync` with shell
-enabled. Preserve complete diagnostic reporting and fix the validator before
-adding either activation call below. Plan 1's final scoped re-review identified
-these as load-bearing carryovers; neither gate may activate while either case
-passes without a diagnostic.
-
-Also add a failing Core regression proving `chunk_spec.mjs` accepts Unicode
-decimal digits wherever Python `argparse(type=int)` accepted them (for example
-`--max-tokens ١`), then fix its token-count parser without regressing signed
-ASCII values or existing argparse-compatible errors. Plan 2's sole whole-plan
-fix wave closed every other final-review finding; its scoped re-review carried
-this bounded parity gap forward. The live repository gate must not activate
-until this accepted legacy CLI form passes.
-
-- [ ] **Step 2: Make the composed fixture conform**
+- [ ] **Step 1: Make the composed fixture conform**
 
 Move the runtime fixture to `skills/demo/scripts/test-runtime.mjs`, remove its shebang/execute bit, and update `SKILL.md` to invoke it through explicit `node`. Preserve developer-harness classification with a linked non-code fixture such as `__tests__/transitive-fixture.json`; replace unlinked code with `test-unlinked.md` so the fixture still proves staging exclusion without creating forbidden hidden code.
 
-- [ ] **Step 3: Add failing assembly-boundary tests**
+- [ ] **Step 2: Add failing assembly-boundary tests**
 
 Add a test named `rejects a nonconforming skill backend before staging any component`. Inject `skills/demo/scripts/task.py`, call `assembleArtifact`, and assert:
 
@@ -88,19 +68,17 @@ await expect(readFile(join(destinationRoot, plugin.id, ".moe-mint/manifest.json"
 
 Also inspect the thrown `diagnostics` list for `SKILL_RUNTIME_LANGUAGE` and assert no component was staged.
 
-- [ ] **Step 4: Run the validator and assembly tests to verify they fail**
+- [ ] **Step 3: Run the assembly test to verify it fails**
 
 Run:
 
 ```bash
-pnpm --filter @bubstack/moe-mint exec vitest run test/skill-runtime.test.ts test/assemble-artifact.test.ts
+pnpm --filter @bubstack/moe-mint exec vitest run test/assemble-artifact.test.ts
 ```
 
-Expected: the carryover validator cases fail because both bypasses are still
-accepted, and the new assembly case succeeds because validation is not wired
-yet.
+Expected: the new red case assembles successfully because validation is not wired yet.
 
-- [ ] **Step 5: Wire complete candidates before classification**
+- [ ] **Step 4: Wire complete candidates before classification**
 
 Refactor collection to return both the complete, sorted candidate list and the current Markdown-link-classified staging list without rereading disk. Immediately after collection and before applying the developer-harness staging filter or any `mkdir`/`writeNewFile`, call:
 
@@ -119,7 +97,7 @@ assertValidSkillRuntime({
 
 The validator recognizes only files beneath the configured skills component, so commands/agents/hooks in the candidate list remain out of scope. Factor the same candidate mapping into `inspectSkillRuntime(plugin)` so tests do not duplicate collection or tree walking. Apply the existing developer-harness filter only after the assertion succeeds; do not reread source files.
 
-- [ ] **Step 6: Run Mint validator/assembly tests and typecheck**
+- [ ] **Step 5: Run Mint validator/assembly tests and typecheck**
 
 Run:
 
@@ -130,7 +108,7 @@ pnpm --filter @bubstack/moe-mint typecheck
 
 Expected: all tests pass; invalid assembly fails before writes.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add packages/mint/src packages/mint/test

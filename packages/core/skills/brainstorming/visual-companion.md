@@ -32,10 +32,14 @@ The server watches a directory for HTML files and serves the newest one to the b
 
 ## Starting a Session
 
+Resolve {resource:skills/brainstorming/scripts/start-server.sh} relative to this
+loaded document. Use that resolved script path everywhere
+`<resolved-start-server.sh>` appears below.
+
 ```bash
 # Start as soon as brainstorming reaches a genuinely visual question. --open
 # auto-opens the browser; --project-dir persists mockups and enables same-port restart.
-node "${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/scripts/start-server.mjs" --project-dir /path/to/project --open
+"<resolved-start-server.sh>" --project-dir /path/to/project --open
 
 # Returns: {"type":"server-started","port":52341,
 #           "url":"http://localhost:52341/?key=ab12…",
@@ -62,7 +66,7 @@ without repeating it.
 **Claude Code:**
 ```bash
 # Default mode works — the script backgrounds the server itself.
-node "${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/scripts/start-server.mjs" --project-dir /path/to/project --open
+"<resolved-start-server.sh>" --project-dir /path/to/project --open
 ```
 
 On Windows, the script auto-detects and switches to foreground mode (which blocks the tool call). Use `run_in_background: true` on the Bash tool call so the server survives across conversation turns, then read `$STATE_DIR/server-info` on the next turn to get the URL and port.
@@ -71,22 +75,23 @@ On Windows, the script auto-detects and switches to foreground mode (which block
 ```bash
 # Codex reaps background processes. The script auto-detects CODEX_CI and
 # switches to foreground mode. Run it normally — no extra flags needed.
-node "${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/scripts/start-server.mjs" --project-dir /path/to/project --open
+"<resolved-start-server.sh>" --project-dir /path/to/project --open
 ```
 
 **Gemini CLI:**
 ```bash
 # Use --foreground and set is_background: true on your shell tool call
 # so the process survives across turns
-node "${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/scripts/start-server.mjs" --project-dir /path/to/project --open --foreground
+"<resolved-start-server.sh>" --project-dir /path/to/project --open --foreground
 ```
 
 **Copilot CLI:**
 ```bash
 # Start it with Copilot CLI's non-blocking/background shell mechanism so the
 # server survives across turns. Keep --foreground so the harness, not the
-# script, owns backgrounding.
-node "${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/scripts/start-server.mjs" --project-dir /path/to/project --open --foreground
+# script, owns backgrounding. The launcher is a .sh, so invoke it via bash
+# (on Windows, call Git Bash's bash.exe from the PowerShell tool).
+bash "<resolved-start-server.sh>" --project-dir /path/to/project --open --foreground
 ```
 
 **Other environments:** The server must keep running in the background across conversation turns. If your environment reaps detached processes, use `--foreground` and launch the command with your platform's background execution mechanism.
@@ -94,7 +99,7 @@ node "${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/scripts/start-server.mjs" --pro
 If the URL is unreachable from your browser (common in remote/containerized setups), bind a non-loopback host:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/scripts/start-server.mjs" \
+"<resolved-start-server.sh>" \
   --project-dir /path/to/project \
   --host 0.0.0.0 \
   --url-host localhost
@@ -105,7 +110,7 @@ Use `--url-host` to control what hostname is printed in the returned URL JSON.
 ## The Loop
 
 1. **Check server is alive**, then **write HTML** to a new file in `screen_dir`:
-   - **Required: confirm the server is alive before referring to the URL or pushing a screen.** Check that `$STATE_DIR/server-info` exists and `$STATE_DIR/server-stopped` does not. If it has shut down, restart it with `start-server.mjs` using the **same `--project-dir`** — it reuses the same port, so the user's open tab reconnects on its own (it shows a "paused" overlay while the server is down) and you don't need to send a new URL. The server auto-exits after 4 hours idle (configurable with `--idle-timeout-minutes`).
+   - **Required: confirm the server is alive before referring to the URL or pushing a screen.** Check that `$STATE_DIR/server-info` exists and `$STATE_DIR/server-stopped` does not. If it has shut down, restart it with `start-server.sh` using the **same `--project-dir`** — it reuses the same port, so the user's open tab reconnects on its own (it shows a "paused" overlay while the server is down) and you don't need to send a new URL. The server auto-exits after 4 hours idle (configurable with `--idle-timeout-minutes`).
    - Use semantic filenames: `platform.html`, `visual-style.html`, `layout.html`
    - **Never reuse filenames** — each screen gets a fresh file
    - Use your file-creation tool — **never use cat/heredoc** (dumps noise into terminal)
@@ -286,8 +291,11 @@ If `$STATE_DIR/events` doesn't exist, the user didn't interact with the browser 
 
 ## Cleaning Up
 
+Resolve {resource:skills/brainstorming/scripts/stop-server.sh} relative to this
+loaded document, then invoke it as:
+
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/scripts/stop-server.mjs" $SESSION_DIR
+"<resolved-stop-server.sh>" $SESSION_DIR
 ```
 
 If the session used `--project-dir`, mockup files persist in `.moe/brainstorm/` for later reference. Only `/tmp` sessions get deleted on stop.
@@ -295,4 +303,4 @@ If the session used `--project-dir`, mockup files persist in `.moe/brainstorm/` 
 ## Reference
 
 - Frame template (CSS reference): `scripts/frame-template.html`
-- Helper script (client-side): `scripts/helper.mjs`
+- Helper script (client-side): `scripts/helper.cjs`

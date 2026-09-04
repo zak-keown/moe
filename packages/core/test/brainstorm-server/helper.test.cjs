@@ -1,32 +1,31 @@
 /**
- * Tests for the injected browser client (helper.mjs).
+ * Tests for the injected browser client (helper.cjs).
  *
- * helper.mjs runs in the browser via its exported IIFE string; here we
+ * helper.cjs runs in the browser, so its DOM behaviour is exercised live; here we
  * unit-test the pure reconnect-backoff function it exports and assert that the
  * reconnect / status / tombstone wiring is present.
  */
 
 const assert = require('assert');
+const fs = require('fs');
 const path = require('path');
-const { pathToFileURL } = require('url');
 
-const HELPER = path.join(__dirname, '../../skills/brainstorming/scripts/helper.mjs');
+const HELPER = path.join(__dirname, '../../skills/brainstorming/scripts/helper.cjs');
 
-let nextReconnectDelay, MIN_RECONNECT_MS, MAX_RECONNECT_MS, TOMBSTONE_AFTER_MS, src;
+const src = fs.readFileSync(HELPER, 'utf-8');
+
+// helper.cjs is browser code, and the repo is an ES module package, so a plain
+// require() won't surface its exports. Evaluate the source in a CommonJS sandbox
+// with no `window`, so only the exported pure helpers run (not the browser code).
+const moduleShim = { exports: {} };
+new Function('module', src)(moduleShim);
+const { nextReconnectDelay, MIN_RECONNECT_MS, MAX_RECONNECT_MS, TOMBSTONE_AFTER_MS } = moduleShim.exports;
 
 let passed = 0, failed = 0;
 function test(name, fn) {
   try { fn(); console.log(`  PASS: ${name}`); passed++; }
   catch (e) { console.log(`  FAIL: ${name}`); console.log(`    ${e.message}`); failed++; }
 }
-
-(async () => {
-const mod = await import(pathToFileURL(HELPER).href);
-nextReconnectDelay = mod.nextReconnectDelay;
-MIN_RECONNECT_MS = mod.MIN_RECONNECT_MS;
-MAX_RECONNECT_MS = mod.MAX_RECONNECT_MS;
-TOMBSTONE_AFTER_MS = mod.TOMBSTONE_AFTER_MS;
-src = mod.helperScript;
 
 console.log('\n--- Backoff (pure) ---');
 
@@ -196,4 +195,3 @@ test('reloads to recover when tombstoned and no sessionStorage key is present', 
 
 console.log(`\n--- Results: ${passed} passed, ${failed} failed ---`);
 if (failed > 0) process.exit(1);
-})().catch(e => { console.error(e); process.exit(1); });

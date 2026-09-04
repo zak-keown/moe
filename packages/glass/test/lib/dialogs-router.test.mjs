@@ -1,7 +1,10 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
+import { createRequire } from 'node:module';
 import { makeCdpSpy } from './_helpers.mjs';
-import { tryHandleDialogSelector, tryHandleDialogSelectorForSession } from '../../skills/browsing/scripts/lib/dialogs-router.mjs';
+
+const require = createRequire(import.meta.url);
+const { tryHandleDialogSelector, tryHandleDialogSelectorForSession } = require('../../skills/browsing/lib/dialogs-router.js');
 
 function jsAlert() {
   return { kind: 'alert', payload: { message: 'x', url: '', defaultPrompt: '', hasBrowserHandler: false }, staged: {} };

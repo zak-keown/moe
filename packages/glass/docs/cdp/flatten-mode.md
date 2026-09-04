@@ -57,7 +57,7 @@ The library opens exactly one CDP WebSocket per Chrome process (against
 `/devtools/browser/<id>`, the browser-level endpoint) and obtains a `sessionId`
 for each page via `Target.attachToTarget({targetId, flatten: true})`. All page
 action commands ride that envelope through `browser.sendRaw(JSON.stringify({id,
-method, params, sessionId}))` in `scripts/lib/page-session.mjs`. The `scripts/lib/cdp-router.mjs`
+method, params, sessionId}))` in `lib/page-session.js`. The `lib/cdp-router.js`
 reads `sessionId` on each incoming message to dispatch to the right session or
 root listener.
 

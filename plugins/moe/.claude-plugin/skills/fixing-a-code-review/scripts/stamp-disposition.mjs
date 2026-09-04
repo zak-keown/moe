@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // Stamp one finding's disposition into CODEBASE-REVIEW.md and refresh the
 // frontmatter counts.
 //
@@ -5,8 +6,7 @@
 // different ways and none of them updated the frontmatter. Hand-stamping is the
 // step that gets skipped under time pressure, and a report whose frontmatter
 // disagrees with its findings cannot be resumed from.
-import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 
 const DISPOSITIONS = ["fixed", "stale", "skipped", "deferred"];
 
@@ -43,7 +43,6 @@ const arg = (name, fallback) => {
   return i !== -1 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
 };
 
-export function main() {
 const file = arg("file", "CODEBASE-REVIEW.md");
 const id = arg("id");
 const disposition = arg("disposition");
@@ -124,7 +123,3 @@ process.stdout.write(
     (open === null ? "" : `, open ${open}`) +
     "\n",
 );
-}
-
-const modulePath = fileURLToPath(import.meta.url);
-if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(modulePath)) main();

@@ -5,8 +5,7 @@
     "composite": false,
     "declaration": false,
     "declarationMap": false,
-    "noEmit": true,
-    "allowJs": true
+    "noEmit": true
   },
   "include": ["test/**/*", "vitest.config.ts"],
   "exclude": ["skills/**"]

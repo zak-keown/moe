@@ -26,7 +26,7 @@ export interface SkillRuntimeReport {
 const CODE_EXTENSIONS = new Set(['.mjs', '.py', '.rb', '.sh', '.bash', '.zsh', '.fish', '.cjs', '.js', '.jsx', '.ts', '.mts', '.cts', '.tsx', '.ps1', '.cmd'])
 const NON_CODE_ASSET_EXTENSIONS = new Set(['.md', '.html', '.json'])
 const NODE_BUILTINS = new Set(builtinModules)
-const RUNTIME_BACKEND_SUFFIX = /\.(?:mjs|py|rb|sh|bash|zsh|fish|cjs|js|jsx|ts|mts|cts|tsx|ps1|cmd)(?:\b|$)/
+const _RUNTIME_BACKEND_SUFFIX = /\.(?:mjs|py|rb|sh|bash|zsh|fish|cjs|js|jsx|ts|mts|cts|tsx|ps1|cmd)(?:\b|$)/
 const SHELL_FENCE_LANGUAGES = new Set(['bash', 'console', 'fish', 'sh', 'shell', 'shellscript', 'zsh'])
 const RUNTIME_ACTION = 'Use dependency-free Node 24 ESM under the owning scripts/ directory.'
 

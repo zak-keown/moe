@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // Record challenger verdicts into the ledger review-merge consumes.
 //
 // Hand-writing dozens of JSON entries is where a typo silently changes a
@@ -6,9 +7,8 @@
 // partial file. Input is either a bare JSON object or a whole agent reply,
 // from which the last `VERDICT-JSON:` line is taken.
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { RANK, VERDICTS } from "./review-report.mjs";
 
 const EVIDENCE_CAP = 1000;
@@ -17,7 +17,6 @@ const fail = (message) => {
   process.exit(2);
 };
 
-export function main() {
 const argv = process.argv.slice(2);
 let shardsDir = ".moe/review-shards";
 let replace = false;
@@ -103,7 +102,3 @@ const tally = Object.fromEntries(
 process.stdout.write(
   `ledger: ${ledger.results.length}/${manifest.findings.length} recorded; ${missing} missing; tally ${JSON.stringify(tally)}\n`,
 );
-}
-
-const modulePath = fileURLToPath(import.meta.url);
-if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(modulePath)) main();

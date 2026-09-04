@@ -32,12 +32,6 @@ and the reasoning; this file is the checklist.
 5. **Keep legal metadata centralized.** `NOTICE` is the canonical attribution
    surface; generated distributions carry applicable license terms.
    `pnpm provenance` checks their completeness.
-6. **Skill backends are dependency-free Node 24 ESM.** Every production module
-   under a skill's `scripts/` directory must be `.mjs`, mode 0644, no shebang,
-   importing only `node:` built-ins and relative `.mjs` peers. Invoke through
-   `node "$SKILL/<name>.mjs"`. Mint's `assertValidSkillRuntime` blocks
-   non-conforming code before staging. The repo contract test "every registered
-   plugin passes skill runtime validation with zero diagnostics" is the gate.
 
 ## Guarded surfaces — a bad edit turns the suite red
 
@@ -53,8 +47,6 @@ Cite by test name / symbol / quoted sentence, never by line number.
 - `packages/core/skills/_shared/` — every relative markdown link inside an
   owned file must resolve.
 - `.gitattributes` — `git ls-files --eol` surfaces any CRLF that crept in.
-- `packages/mint/test/repository-skill-runtime.test.ts` — "every registered
-  plugin passes skill runtime validation with zero diagnostics".
 
 ## Unguarded prose — read carefully
 

@@ -1,7 +1,10 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
 import { createServer } from 'node:http';
-import { WebSocketClient } from '../../skills/browsing/scripts/lib/websocket-client.mjs';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const { WebSocketClient } = require('../../skills/browsing/lib/websocket-client.js');
 
 // Why this test exists: the downstream Gauntlet fork hit a nasty
 // failure mode when it replaced this hand-rolled WebSocket client

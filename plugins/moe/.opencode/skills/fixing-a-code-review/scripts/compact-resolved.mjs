@@ -1,7 +1,7 @@
+#!/usr/bin/env node
 // Move fixed/stale findings from inline to a "Resolved findings" section at
 // the bottom. Leaves skipped, deferred, and open findings in place.
-import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 
 const COMPACTABLE = ["fixed", "stale"];
 
@@ -44,7 +44,6 @@ const arg = (name, fallback) => {
   return i !== -1 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
 };
 
-export function main() {
 const file = arg("file", "CODEBASE-REVIEW.md");
 
 const die = (msg) => {
@@ -143,7 +142,3 @@ writeFileSync(file, front + body.replace(/\n*$/, "\n"));
 process.stdout.write(
   `Compacted ${resolved.length} finding(s): ${summaries.map((s) => s.id).join(", ")}\n`,
 );
-}
-
-const modulePath = fileURLToPath(import.meta.url);
-if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(modulePath)) main();

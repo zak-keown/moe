@@ -5,12 +5,12 @@
  * Runs click/type tests repeatedly to catch intermittent failures.
  *
  * Usage:
- *   node test-harness.js [iterations] [testUrl]
+ *   node test-harness.cjs [iterations] [testUrl]
  *
  * Examples:
- *   node test-harness.js                    # 50 iterations on default test page
- *   node test-harness.js 100                # 100 iterations
- *   node test-harness.js 50 http://localhost:8080/settings  # Test specific URL
+ *   node test-harness.cjs                    # 50 iterations on default test page
+ *   node test-harness.cjs 100                # 100 iterations
+ *   node test-harness.cjs 50 http://localhost:8080/settings  # Test specific URL
  *
  * Requirements:
  *   - Chrome running with --remote-debugging-port=9222
@@ -18,7 +18,7 @@
  */
 
 const path = require('path');
-const chromeWs = require('./skills/browsing/scripts/chrome-ws-lib.mjs');
+const chromeWs = require('../../skills/browsing/chrome-ws-lib.js');
 
 // Test configuration
 const DEFAULT_ITERATIONS = 50;

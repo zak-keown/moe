@@ -122,7 +122,7 @@ hand — it also updates the frontmatter counts, which is the half that gets
 forgotten:
 
 ```bash
-node "$SKILL/stamp-disposition.mjs" \
+node "<resolved-stamp-disposition.mjs>" \
   --id CR-004 --disposition fixed --commit abc1234
 ```
 
@@ -170,7 +170,7 @@ Resolve [skills/fixing-a-code-review/scripts/compact-resolved.mjs](scripts/compa
 relative to this loaded document, then run compaction with:
 
 ```bash
-node "$SKILL/compact-resolved.mjs" \
+node "<resolved-compact-resolved.mjs>" \
   --file CODEBASE-REVIEW.md
 ```
 

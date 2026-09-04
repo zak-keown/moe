@@ -1,6 +1,9 @@
 import { describe, it } from 'vitest';
 import assert from 'node:assert/strict';
-import { createSession } from '../../skills/browsing/scripts/chrome-ws-lib.mjs';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const { createSession } = require('../../skills/browsing/chrome-ws-lib.js');
 
 // Minimal fakes for a fully self-contained test (no real Chrome required)
 function makeFakeChromeHttp() {

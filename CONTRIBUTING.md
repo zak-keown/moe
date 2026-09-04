@@ -166,20 +166,6 @@ in the relevant mint yaml's `imported_works:` list.
    surface; generated distributions carry applicable license terms.
    `pnpm provenance` checks their completeness.
 
-### Skill backend code
-
-Production skill helper code lives exclusively under each skill's `scripts/`
-directory as dependency-free Node 24 ESM `.mjs` modules — no shebang, mode
-0644, importing only `node:` built-ins and relative `.mjs` peers. Skills
-invoke them through `node "$SKILL/<name>.mjs"`, never as bare executables.
-Mint validates every code file under the skills root before staging; a
-non-conforming module blocks plugin generation. The repository-wide contract
-test "every registered plugin passes skill runtime validation with zero
-diagnostics" catches drift across all six plugins.
-
-Compiled TypeScript (`src/` → `dist/`) is staged as a separate runtime
-payload, not placed inside the skill tree.
-
 ### Citation discipline
 
 Cite by test name, symbol, or quoted sentence — never by line number. The

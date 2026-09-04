@@ -21,7 +21,7 @@ instructs Chrome to pause each newly attached target before its first script run
 Chrome emits `Target.attachedToTarget` with `waitingForDebugger: true`. The target
 sits idle. You have unlimited time to configure it.
 
-The library's sequence in `scripts/lib/browser-bridge.mjs` and `scripts/chrome-ws-lib.mjs`:
+The library's sequence in `lib/browser-bridge.js` and `chrome-ws-lib.js`:
 
 1. Chrome emits `Target.attachedToTarget` with `waitingForDebugger: true`.
 2. `buildPageSessionFromAttached` constructs a page session from the provided `sessionId`.
@@ -40,7 +40,7 @@ is intercepted.
 
 Service workers and background pages don't support the Page CDP domain. Calling
 `Page.addScriptToEvaluateOnNewDocument` on a service worker target produces a
-`'Page.enable' wasn't found` error. The auto-attach handler in `browser-bridge.mjs`
+`'Page.enable' wasn't found` error. The auto-attach handler in `browser-bridge.js`
 gates the `onPageSession` hook on `targetInfo.type === 'page'`.
 
 ## The non-paused case
@@ -67,7 +67,7 @@ test fails because the dialog fires before the shim installs.
   https://chromedevtools.github.io/devtools-protocol/tot/Target/
 - CDP Runtime domain — `runIfWaitingForDebugger`:
   https://chromedevtools.github.io/devtools-protocol/tot/Runtime/
-- `skills/browsing/scripts/chrome-ws-lib.mjs` — `state.ensureBridge` / `onPageSession` hook
-- `skills/browsing/scripts/lib/browser-bridge.mjs` — `Target.attachedToTarget` handler
-- `skills/browsing/scripts/lib/dialogs.mjs` — `attachToPageSession`
+- `skills/browsing/chrome-ws-lib.js` — `state.ensureBridge` / `onPageSession` hook
+- `skills/browsing/lib/browser-bridge.js` — `Target.attachedToTarget` handler
+- `skills/browsing/lib/dialogs.js` — `attachToPageSession`
 - `test/popup-dialog-integration.test.mjs`

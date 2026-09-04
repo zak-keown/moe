@@ -1,7 +1,10 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
+import { createRequire } from 'node:module';
 import { makePageSessionFake } from './_helpers.mjs';
-import { attachFileUpload } from '../../skills/browsing/scripts/lib/file-upload.mjs';
+
+const require = createRequire(import.meta.url);
+const { attachFileUpload } = require('../../skills/browsing/lib/file-upload.js');
 
 describe('file-upload', () => {
   function setup(handlers) {

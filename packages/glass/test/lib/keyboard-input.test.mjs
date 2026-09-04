@@ -1,8 +1,11 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
+import { createRequire } from 'node:module';
 import { makePageSessionFake } from './_helpers.mjs';
-import { attachKeyboardInput } from '../../skills/browsing/scripts/lib/keyboard-input.mjs';
-import { attachDialogs } from '../../skills/browsing/scripts/lib/dialogs.mjs';
+
+const require = createRequire(import.meta.url);
+const { attachKeyboardInput } = require('../../skills/browsing/lib/keyboard-input.js');
+const { attachDialogs } = require('../../skills/browsing/lib/dialogs.js');
 
 describe('keyboard-input', () => {
   function setup({ headless = true, handlers = {}, click = async () => ({ clicked: true }) } = {}) {

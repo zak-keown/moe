@@ -12,21 +12,21 @@ not have to discover it. DO NOT use `chrome-ws` from `$PATH` or anything
 under `~/.claude/plugins/cache/...` — those are older marketplace builds
 and will give misleading results.
 
-The CLI entry point for this run is:
+The CLI binary for this run is:
 ```
-/tmp/bridge-bin/chrome-ws.mjs
+/tmp/bridge-bin/chrome-ws
 ```
 
 Before any step, confirm it is the right one:
 ```bash
-node /tmp/bridge-bin/chrome-ws.mjs --version
+/tmp/bridge-bin/chrome-ws --version
 ```
 Must print `2.2.0`. If anything else prints (including the literal usage
 banner that ends with `Usage: chrome-ws raw ...`), stop and report —
 the harness setup is broken; do not continue.
 
-Throughout this scenario, use `node /tmp/bridge-bin/chrome-ws.mjs` for
-every invocation. Do not abbreviate it, alias it, or rely on PATH.
+Throughout this scenario, use that absolute path for every invocation.
+Do not abbreviate it, alias it, or rely on PATH.
 
 ## Command syntax reference
 
@@ -47,25 +47,25 @@ code as FAIL for that step (note the exit code in the report).
 
 1. **Help**
    ```bash
-   node /tmp/bridge-bin/chrome-ws.mjs --help
+   /tmp/bridge-bin/chrome-ws --help
    ```
    Must exit 0. First non-blank line must be `Usage: chrome-ws <command> [args]`.
 
 2. **Version**
    ```bash
-   node /tmp/bridge-bin/chrome-ws.mjs --version
+   /tmp/bridge-bin/chrome-ws --version
    ```
    Must exit 0 and print exactly `2.2.0`.
 
 3. **Start Chrome**
    ```bash
-   node /tmp/bridge-bin/chrome-ws.mjs start
+   /tmp/bridge-bin/chrome-ws start
    ```
    Must exit 0. Subsequent commands need Chrome running.
 
 4. **List tabs**
    ```bash
-   node /tmp/bridge-bin/chrome-ws.mjs tabs
+   /tmp/bridge-bin/chrome-ws tabs
    ```
    Must exit 0. Output is TSV (one line per page tab, columns
    `id<TAB>url<TAB>title`) — not JSON. Pass criterion: at least one
@@ -78,25 +78,25 @@ code as FAIL for that step (note the exit code in the report).
 
 5. **Navigate**
    ```bash
-   node /tmp/bridge-bin/chrome-ws.mjs navigate <T> https://example.com
+   /tmp/bridge-bin/chrome-ws navigate <T> https://example.com
    ```
    Must exit 0.
 
 6. **Extract**
    ```bash
-   node /tmp/bridge-bin/chrome-ws.mjs extract <T> h1
+   /tmp/bridge-bin/chrome-ws extract <T> h1
    ```
    Must exit 0. Output must contain `Example Domain`.
 
 7. **Eval**
    ```bash
-   node /tmp/bridge-bin/chrome-ws.mjs eval <T> "2 + 2"
+   /tmp/bridge-bin/chrome-ws eval <T> "2 + 2"
    ```
    Must exit 0. Output must contain `4`.
 
 8. **Stop Chrome**
    ```bash
-   node /tmp/bridge-bin/chrome-ws.mjs stop
+   /tmp/bridge-bin/chrome-ws stop
    ```
    Must exit 0. After this, `chrome-ws tabs` will fail; that's expected
    and is not part of this step's pass criterion.

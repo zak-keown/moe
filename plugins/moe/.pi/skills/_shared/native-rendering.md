@@ -16,8 +16,9 @@ without carrying two branches of prose per skill.
 1. **Claude Code Artifact tool** — publish an artifact via the host's
    Artifact tool. The user sees it inline in their client; the URL is
    private-by-default (see [Sharing default](#sharing-default) below).
-2. **Browser companion** — the in-repo brainstorm server
-   (`${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/scripts/start-server.mjs`)
+2. **Browser companion** — the in-repo brainstorm server. Resolve
+   [skills/brainstorming/scripts/start-server.sh](../brainstorming/scripts/start-server.sh) relative to this
+   loaded document before invoking it. The server
    watches a session directory and serves HTML to the user's browser.
    Available whenever `node` is on PATH and the sandbox lets us bind a
    port.
@@ -39,9 +40,11 @@ If installed and configured, use the higher rung. Otherwise, drop.
   fall to rung 2 — do not surface the raw error at the user.
 - Rung 2 fails when `node` isn't on PATH, when the sandbox blocks port
   binding, or when there is no browser to point at (headless CI,
-  detached tmux). See the platform reference under
-  `${CLAUDE_PLUGIN_ROOT}/skills/using-moe/references/` for per-harness
-  notes.
+  detached tmux). Resolve the relevant platform note relative to this loaded
+  document: [skills/using-moe/references/antigravity-tools.md](../using-moe/references/antigravity-tools.md),
+  [skills/using-moe/references/codex-tools.md](../using-moe/references/codex-tools.md),
+  [skills/using-moe/references/gemini-tools.md](../using-moe/references/gemini-tools.md), or
+  [skills/using-moe/references/opencode-tools.md](../using-moe/references/opencode-tools.md).
 - Rung 3 fails when the sandbox is read-only, or when the user has no
   local filesystem access (remote-only or in-container sessions where
   they cannot open a file path).
