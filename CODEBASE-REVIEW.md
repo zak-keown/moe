@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 4
+  fixed: 5
   stale: 0
   skipped: 0
   deferred: 0
-  open: 103
+  open: 102
 ---
 
 # Codebase Review — moe
@@ -1893,6 +1893,10 @@ When both the primary and fallback model hit this specific API error, `callClaud
 
 This defeats the error-sentinel mechanism the file's own comments describe as fixing "#96" (failed summarizations must be retryable, not silently permanent): `formatErrorSentinel`/`ERROR_MARKER` is only written from a `catch` block, and this path never throws, so `hasRealSummary()` sees ordinary non-empty text and treats it as a legitimate summary forever. A misconfigured `thinking.budget_tokens` setting (a persistent, not transient, condition — it will recur for every conversation processed while misconfigured) therefore poisons the search index with API-error text as the "summary" for every affected conversation, permanently, with no retry path and no operator-visible signal beyond one `console.log` on the first attempt (easy to miss during a large backfill). The fix is to throw (e.g. `throw new SummarizerSdkError(...)` or a dedicated error) in the fallback-also-failed branch instead of returning the error text as data.
 
+**Disposition:** fixed
+**Commit:** `a92c8c095c407831403ec4438785330c17c70019`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-060: Claude E2E harness leaks a real Codex-style temp directory that is never cleaned up
 
 **File:** `packages/memory/test/manual/claude-e2e.js`
