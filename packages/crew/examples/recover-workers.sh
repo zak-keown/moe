@@ -48,7 +48,7 @@ set -euo pipefail
 #   -- <args>         : forwarded to each `moe-crew adopt` (e.g. -- --model sonnet).
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-MOE_CREW="$SCRIPT_DIR/../skills/driving-claude-code-sessions/scripts/moe-crew"
+MOE_CREW="$SCRIPT_DIR/../skills/driving-claude-code-sessions/scripts/moe-crew.mjs"
 
 DRY_RUN=0
 SNAPSHOT=""
@@ -131,8 +131,8 @@ while IFS=$'\t' read -r name cwd; do
   [ "${#EXTRA[@]}" -gt 0 ] && ADOPT+=(-- "${EXTRA[@]}")
 
   if [ "$DRY_RUN" -eq 1 ]; then
-    printf '%q' "$MOE_CREW"; printf ' %q' "${ADOPT[@]}"; printf '\n'
-  elif "$MOE_CREW" "${ADOPT[@]}" >/dev/null; then
+    printf 'node %q' "$MOE_CREW"; printf ' %q' "${ADOPT[@]}"; printf '\n'
+  elif node "$MOE_CREW" "${ADOPT[@]}" >/dev/null; then
     echo "OK    $name  <-  $uuid"
     recovered=$((recovered+1))
   else
