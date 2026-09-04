@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 1
+  fixed: 2
   stale: 0
   skipped: 0
   deferred: 0
-  open: 106
+  open: 105
 ---
 
 # Codebase Review — moe
@@ -551,6 +551,10 @@ This is a real exfiltration path for the QA agent specifically, because the whol
 
 The CR-038 redaction (`redactSecrets`) only protects the audit trail from *accidental* leakage (e.g. a stray `env` dump landing in `run.jsonl`); it does not address deliberate misuse by an agent that has been steered via injected page content, and the file's own comments frame the credential forwarding as something "the agent still needs" — a functionality tradeoff, not a security boundary. Fix: either stop forwarding live SDK credentials into the LLM-controlled shell by default (require an explicit opt-in per run, or forward only a scoped/short-lived credential), or add egress restriction to the spawned process so it cannot reach the network directly with these values.
 
+**Disposition:** fixed
+**Commit:** `2f94d5fa4f6bc2d60e5d8fc9d3f563f309e71c67`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-014: `findCard` bypasses the codebase's own "one and only path-safety guard", enabling a file-existence oracle for arbitrary paths
 
 **File:** `packages/flight/src/qa/cards/store.ts`
