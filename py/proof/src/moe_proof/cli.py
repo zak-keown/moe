@@ -831,7 +831,18 @@ def render_model_blocks(rows, by_task):
             if all(isinstance(v, bool) for v in values):
                 display = f"{sum(values) / len(values):.0%}"
             else:
-                display = mean_stderr([float(v) for v in values])
+                # A metric's contract is number|bool, but nothing enforces
+                # that where it's written (a Grade can be weeks old, from a
+                # checker version that has since changed) - skip a value
+                # that isn't float-coercible rather than crashing reporting
+                # for every other row too (CR-067).
+                numeric = []
+                for v in values:
+                    try:
+                        numeric.append(float(v))
+                    except (TypeError, ValueError):
+                        continue
+                display = mean_stderr(numeric) if numeric else "-"
             lines.append(f"- {key}: {display}")
         tag_counts = {}
         for row in group:
