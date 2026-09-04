@@ -16,6 +16,7 @@ const UNICODE_CASE_FOLDING_FIXTURE_SHA256 =
 const SKIP_SEGMENTS = new Set([
   ".claude",
   ".git",
+  ".moe",
   ".planning",
   ".venv",
   "dist",
