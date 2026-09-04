@@ -104,6 +104,9 @@ export function withTimeout<T>(promise: Promise<T>, ms: number, label: string): 
 export function isChromeUnavailable(err: any): boolean {
   const msg = err?.message ?? "";
   return (
+    // The actual message chrome-process.js's startChrome() throws when no
+    // browser binary is found on disk: `Chrome not found. Searched: ...`.
+    msg.includes("Chrome not found") ||
     msg.includes("No Chrome") ||
     msg.includes("ECONNREFUSED") ||
     msg.includes("chrome-ws-lib") ||
