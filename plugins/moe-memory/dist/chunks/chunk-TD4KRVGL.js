@@ -2,13 +2,15 @@
 import { createRequire as __createRequire } from 'module';
 const require = __createRequire(import.meta.url);
 import {
-  acquireFileLock,
-  getDefaultPackageRoot,
-  releaseFileLock
-} from "./chunk-LUAEQ7DI.js";
+  getDefaultPackageRoot
+} from "./chunk-X4QDSJ7Q.js";
 import {
   getModelCacheDir
 } from "./chunk-YFLZKW2J.js";
+import {
+  acquireFileLock,
+  releaseFileLock
+} from "./chunk-OYWI4M6D.js";
 
 // src/embeddings.ts
 import fs5 from "node:fs";

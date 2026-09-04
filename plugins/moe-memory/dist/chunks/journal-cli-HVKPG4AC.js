@@ -3,20 +3,21 @@ import { createRequire as __createRequire } from 'module';
 const require = __createRequire(import.meta.url);
 import {
   JournalSearchService
-} from "./chunk-6ABCQ4HT.js";
+} from "./chunk-TPANDLU7.js";
 import {
   JournalStore
-} from "./chunk-XXEPA7OF.js";
+} from "./chunk-XQQVRDY6.js";
 import "./chunk-22YHH63V.js";
-import "./chunk-HIE7CIAX.js";
-import "./chunk-QGTMUDP7.js";
+import "./chunk-ESBWE2AP.js";
+import "./chunk-TD4KRVGL.js";
 import {
   initDatabase
-} from "./chunk-LUAEQ7DI.js";
+} from "./chunk-X4QDSJ7Q.js";
 import {
   resolveProjectJournalPath,
   resolveUserJournalPath
 } from "./chunk-YFLZKW2J.js";
+import "./chunk-OYWI4M6D.js";
 import "./chunk-NH4NDHAK.js";
 import "./chunk-YAXDOI5O.js";
 import "./chunk-XRZM5UX2.js";

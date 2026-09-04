@@ -4,18 +4,18 @@ const require = __createRequire(import.meta.url);
 import {
   generateExcerpt,
   sectionsMatch
-} from "./chunk-XXEPA7OF.js";
+} from "./chunk-XQQVRDY6.js";
 import {
   isVectorQueryAuthorized,
   l2DistanceToCosineSimilarity
-} from "./chunk-HIE7CIAX.js";
+} from "./chunk-ESBWE2AP.js";
 import {
   generateQueryEmbedding
-} from "./chunk-QGTMUDP7.js";
+} from "./chunk-TD4KRVGL.js";
 import {
   JOURNAL_SELECT_COLUMNS,
   journalEntryFromRow
-} from "./chunk-LUAEQ7DI.js";
+} from "./chunk-X4QDSJ7Q.js";
 
 // src/journal/search.ts
 import fs from "node:fs/promises";

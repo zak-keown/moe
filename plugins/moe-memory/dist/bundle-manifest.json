@@ -2,6 +2,7 @@
   "version": 1,
   "entrypoints": [
     "cli.js",
+    "file-lock.js",
     "index.js"
   ],
   "files": [
@@ -11,29 +12,24 @@
       "bytes": 496
     },
     {
-      "path": "chunks/chunk-6ABCQ4HT.js",
-      "hash": "99c8ca4e00dcbedc",
-      "bytes": 5466
-    },
-    {
       "path": "chunks/chunk-BCQKWEPH.js",
       "hash": "94974fccf036acaf",
       "bytes": 80908
     },
     {
-      "path": "chunks/chunk-DIF2OON7.js",
-      "hash": "60b7d019228b6d75",
-      "bytes": 9684
+      "path": "chunks/chunk-DWPDJ6LO.js",
+      "hash": "dd7dece2d5c4258b",
+      "bytes": 6929
+    },
+    {
+      "path": "chunks/chunk-ESBWE2AP.js",
+      "hash": "0ae44da76e9db634",
+      "bytes": 13717
     },
     {
       "path": "chunks/chunk-EYIEB7RJ.js",
       "hash": "216549563eff82ea",
       "bytes": 20825
-    },
-    {
-      "path": "chunks/chunk-HIE7CIAX.js",
-      "hash": "ee61ddd07d56bdfc",
-      "bytes": 13717
     },
     {
       "path": "chunks/chunk-KB33ZOJX.js",
@@ -46,11 +42,6 @@
       "bytes": 1449
     },
     {
-      "path": "chunks/chunk-LUAEQ7DI.js",
-      "hash": "baba7c23406cb980",
-      "bytes": 88961
-    },
-    {
       "path": "chunks/chunk-NH4NDHAK.js",
       "hash": "f06c6a73e7df49b5",
       "bytes": 434
@@ -61,14 +52,9 @@
       "bytes": 13809
     },
     {
-      "path": "chunks/chunk-PHC5G2NH.js",
-      "hash": "a878daf130dbda6b",
-      "bytes": 6929
-    },
-    {
-      "path": "chunks/chunk-QGTMUDP7.js",
-      "hash": "1c504f0c682013ca",
-      "bytes": 169216
+      "path": "chunks/chunk-OYWI4M6D.js",
+      "hash": "c2d92721796dfd98",
+      "bytes": 53591
     },
     {
       "path": "chunks/chunk-RO2MBIC5.js",
@@ -76,14 +62,34 @@
       "bytes": 1011
     },
     {
+      "path": "chunks/chunk-TD4KRVGL.js",
+      "hash": "17615b45c3208a83",
+      "bytes": 169254
+    },
+    {
+      "path": "chunks/chunk-TPANDLU7.js",
+      "hash": "6239d5e968c7af58",
+      "bytes": 5466
+    },
+    {
+      "path": "chunks/chunk-X4QDSJ7Q.js",
+      "hash": "bf88d9c9ad835f17",
+      "bytes": 35649
+    },
+    {
+      "path": "chunks/chunk-XQQVRDY6.js",
+      "hash": "b1e69e46ff4b95d7",
+      "bytes": 13464
+    },
+    {
       "path": "chunks/chunk-XRZM5UX2.js",
       "hash": "871efe845e5c2fb4",
       "bytes": 2046
     },
     {
-      "path": "chunks/chunk-XXEPA7OF.js",
-      "hash": "c67ab903e8b3fe4a",
-      "bytes": 13464
+      "path": "chunks/chunk-XS7JIMFA.js",
+      "hash": "e7e922fc1c5fbd54",
+      "bytes": 9684
     },
     {
       "path": "chunks/chunk-YAXDOI5O.js",
@@ -101,9 +107,9 @@
       "bytes": 235
     },
     {
-      "path": "chunks/db-MUTYZPUC.js",
-      "hash": "6cc1535831b71cb5",
-      "bytes": 1257
+      "path": "chunks/db-SNCDV7GU.js",
+      "hash": "c386a00e3900ecfd",
+      "bytes": 1287
     },
     {
       "path": "chunks/doctor-cli-MMNFWTX4.js",
@@ -111,24 +117,24 @@
       "bytes": 8814
     },
     {
-      "path": "chunks/embeddings-5HWUD4V3.js",
-      "hash": "70cf503342875c7f",
-      "bytes": 751
+      "path": "chunks/embeddings-MIYVCACC.js",
+      "hash": "466f1c79ab5423b0",
+      "bytes": 781
     },
     {
-      "path": "chunks/index-cli-ZDZFDSAF.js",
-      "hash": "79c8f583b5b98a56",
-      "bytes": 26228
+      "path": "chunks/index-cli-UD7JLLQP.js",
+      "hash": "48b0bc6ceac08b66",
+      "bytes": 26258
     },
     {
-      "path": "chunks/journal-cli-33KCO5K6.js",
-      "hash": "85553a2b4a62b4be",
-      "bytes": 5128
+      "path": "chunks/journal-cli-HVKPG4AC.js",
+      "hash": "f5ca54f9870d0672",
+      "bytes": 5158
     },
     {
-      "path": "chunks/mcp-server-UC7ZYGQU.js",
-      "hash": "447fe9bd779e036c",
-      "bytes": 1159380
+      "path": "chunks/mcp-server-BFPW4CCT.js",
+      "hash": "5a6e66eeaf518e4f",
+      "bytes": 1159410
     },
     {
       "path": "chunks/parser-OZTBPBQF.js",
@@ -136,14 +142,14 @@
       "bytes": 341
     },
     {
-      "path": "chunks/rollback-cli-DPPYDCDB.js",
-      "hash": "273a5170fb15322f",
-      "bytes": 13788
+      "path": "chunks/rollback-cli-DHNOUMU2.js",
+      "hash": "2c2d827e7cac05e2",
+      "bytes": 13818
     },
     {
-      "path": "chunks/search-cli-GIDO42TR.js",
-      "hash": "6f0409addff220be",
-      "bytes": 4285
+      "path": "chunks/search-cli-6E3U65FN.js",
+      "hash": "ab6409b4b2c727ee",
+      "bytes": 4315
     },
     {
       "path": "chunks/show-cli-2E7W7RTI.js",
@@ -151,9 +157,9 @@
       "bytes": 2025
     },
     {
-      "path": "chunks/stats-cli-2UYEULHA.js",
-      "hash": "25f880dbe075ef67",
-      "bytes": 5134
+      "path": "chunks/stats-cli-Z5WVOPQM.js",
+      "hash": "88449b849334c2d7",
+      "bytes": 5164
     },
     {
       "path": "chunks/summarizer-BEQGKIDK.js",
@@ -166,9 +172,9 @@
       "bytes": 455
     },
     {
-      "path": "chunks/sync-cli-6ML6IFE5.js",
-      "hash": "f9abf923bd42d9a4",
-      "bytes": 7645
+      "path": "chunks/sync-cli-RYHS7KOV.js",
+      "hash": "42aa580638f85e2d",
+      "bytes": 7683
     },
     {
       "path": "chunks/version-K4ISJPNE.js",
@@ -177,13 +183,18 @@
     },
     {
       "path": "cli.js",
-      "hash": "1bb15b34da6fde4f",
-      "bytes": 3656
+      "hash": "0b7587b9a6fa2a71",
+      "bytes": 3693
+    },
+    {
+      "path": "file-lock.js",
+      "hash": "795e4b295a0cb8c4",
+      "bytes": 375
     },
     {
       "path": "index.js",
-      "hash": "706cc3971bd2c31b",
-      "bytes": 8759
+      "hash": "91258167ede39dd7",
+      "bytes": 8796
     }
   ]
 }

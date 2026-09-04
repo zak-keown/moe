@@ -110,8 +110,8 @@ Skipping excluded project: ${project}`);
     }
   }
   if (!options.skipIndex && filesToIndex.length > 0) {
-    const { initDatabase, insertExchange } = await import("./db-MUTYZPUC.js");
-    const { initEmbeddings, generateExchangeEmbedding } = await import("./embeddings-5HWUD4V3.js");
+    const { initDatabase, insertExchange } = await import("./db-SNCDV7GU.js");
+    const { initEmbeddings, generateExchangeEmbedding } = await import("./embeddings-MIYVCACC.js");
     const { parseConversation } = await import("./parser-OZTBPBQF.js");
     const db = initDatabase();
     let embeddingsReady = false;

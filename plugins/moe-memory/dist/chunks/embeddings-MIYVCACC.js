@@ -10,9 +10,10 @@ import {
   initEmbeddings,
   resetEmbeddings,
   withQueryPrefix
-} from "./chunk-QGTMUDP7.js";
-import "./chunk-LUAEQ7DI.js";
+} from "./chunk-TD4KRVGL.js";
+import "./chunk-X4QDSJ7Q.js";
 import "./chunk-YFLZKW2J.js";
+import "./chunk-OYWI4M6D.js";
 import {
   EMBEDDING_DIMENSIONS
 } from "./chunk-NH4NDHAK.js";
