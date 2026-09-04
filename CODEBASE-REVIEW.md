@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 1
+  fixed: 2
   stale: 0
   skipped: 0
   deferred: 0
-  open: 106
+  open: 105
 ---
 
 # Codebase Review — moe
@@ -777,6 +777,10 @@ Verified by running the exact mock from `seed.test.ts`'s "generates a markdown s
 
 Since this is the entire point of `moe jig plan seed`, every multi-cluster skeleton it produces has backwards task ordering, silently, with no error — a human or agent filling in the skeleton would be told the wrong build order.
 
+**Disposition:** fixed
+**Commit:** `1c653a1bd1185101c314795fd9872733129b6ae6`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-019: `read_conversation` MCP tool reads any path on disk with no containment check
 **File:** `packages/memory/src/mcp-server.ts`
 **Anchor:** `if (name === "read_conversation")`
