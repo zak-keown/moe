@@ -13,7 +13,10 @@ describe('publish workflow contract', () => {
   it('requires contents: write permission', () => {
     const perms = PUBLISH_YAML.permissions
     expect(perms).toBeDefined()
-    expect(perms.contents).toMatch(/write|read/)
+    // CR-103: a /write|read/ pattern here would silently accept a future
+    // downgrade from write to read despite this test's own title. Match the
+    // sibling certify-workflow assertion below: require the exact value.
+    expect(perms.contents).toBe('write')
   })
 
   it('requires id-token: write permission', () => {
