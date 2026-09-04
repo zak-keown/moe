@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 4
+  fixed: 5
   stale: 0
   skipped: 0
   deferred: 0
-  open: 103
+  open: 102
 ---
 
 # Codebase Review — moe
@@ -2493,6 +2493,10 @@ This is silent today because `packages/flight/tsconfig.tests.json` intentionally
 
 Functionally the tests still pass and still exercise real behavior (the screencast-gate assertions correctly depend on `effective.stateDirName`, which is independently set via `loadConfig({ projectRoot }, ...)` and defaults to `.moe-flight`), so this is not a false-positive test. It is leftover cruft — most likely from a prior version of `ExecuteHttpRunOpts` that took `stateDirName` directly — that no longer means anything and should be deleted so a future reader doesn't assume overriding it changes where frames/results are written.
 
+**Disposition:** fixed
+**Commit:** `2394153f339aea2217d7d12a1a87a808e7d196d3`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-086: Temp directory leaked by render-cmd.test.ts (no cleanup)
 **File:** `packages/flight/test/qa/cli/render-cmd.test.ts`
 **Anchor:** `function makeRun()`
