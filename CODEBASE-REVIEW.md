@@ -14,6 +14,12 @@ findings:
   total: 107
 verified: false
 status: issues_found
+dispositions:
+  fixed: 1
+  stale: 0
+  skipped: 0
+  deferred: 0
+  open: 106
 ---
 
 # Codebase Review — moe
@@ -869,6 +875,10 @@ Once redirected, the CR-081/CR-082 tamper-detection added in this same file (`Te
 
 Fix: resolve `base` once with `filepath.EvalSymlinks`/`Lstat` and reject (or recreate under a path guaranteed not to traverse a symlink) any pre-existing non-directory or symlinked component under `base/moe`, or use `O_NOFOLLOW`-safe directory creation (e.g., `os.Mkdir` per level with an `Lstat` check that the just-created/found entry is a real directory owned by the current user) instead of `os.MkdirAll` over an attacker-influenced shared prefix.
 
+**Disposition:** fixed
+**Commit:** `265213ad576421041e60cd5b042e8e919a618d41`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-022: Artifact files are served with browser-executable Content-Types, enabling stored XSS in the report UI
 
 **File:** `py/proof/src/moe_proof/site.py`
