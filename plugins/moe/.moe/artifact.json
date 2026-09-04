@@ -3,7 +3,7 @@
   "plugin": {
     "id": "moe",
     "package": "@bubstack/moe-core",
-    "version": "0.1.4"
+    "version": "0.1.6"
   },
   "files": [
     {
@@ -15,13 +15,13 @@
     {
       "path": ".claude-plugin/marketplace.json",
       "size": 622,
-      "sha256": "4137e5d7b282e64e26d25a5b26f461474cfe0df9231556607c04737a16a389bd",
+      "sha256": "f76b9d5e3d482f53d768f31f85da571b31e441d2826a1be4d042bfecfa9db5d2",
       "mode": "0644"
     },
     {
       "path": ".claude-plugin/plugin.json",
       "size": 683,
-      "sha256": "f5104627e30fa9216ef8f4ab0cf9ce4d74fb6fc5cdac3fc699f8b9e4cd75e6fb",
+      "sha256": "e7929ef157e3a5a46a65ed11e05c795e8dbfbde38fb313b48869dcca1b2f945c",
       "mode": "0644"
     },
     {
@@ -1029,7 +1029,7 @@
     {
       "path": ".codex-plugin/plugin.json",
       "size": 656,
-      "sha256": "af32a03cebb319ec09ffbe62bf968bc2b91d94622e5b20d0e97cac1b65fd6dce",
+      "sha256": "42a952146fc2fea7f53a8000887019c4a328249cbd6408c4b52eed13027e4ce4",
       "mode": "0644"
     },
     {
@@ -2061,7 +2061,7 @@
     {
       "path": ".cursor-plugin/plugin.json",
       "size": 823,
-      "sha256": "b60482350d645945d2e66decb8558c8e5604d1f3ee5c6fa2ddf642ce8ef304a2",
+      "sha256": "8294fc5d7c5f4f7a61dc7ef1edf874039d513dfd04cce3ca8e0f352bb59d90a8",
       "mode": "0644"
     },
     {
@@ -3069,7 +3069,7 @@
     {
       "path": ".kimi-plugin/plugin.json",
       "size": 690,
-      "sha256": "cd5c003a6fc2d11382445bcee453fe71065e026a704436aab80f0d09307cd202",
+      "sha256": "7496877573ff1378470350909ec66bba956d893ecdbf8857642274d2590a71d8",
       "mode": "0644"
     },
     {
@@ -4077,7 +4077,7 @@
     {
       "path": ".moe-mint/manifest.json",
       "size": 633221,
-      "sha256": "c80be521d656757d66a1e7538d48510735e47be9df528fabe6b8c66406157f34",
+      "sha256": "708f0823f2c1cbef912840e31286286d87c3ff05f0ac114673b69355eb0ce06c",
       "mode": "0644"
     },
     {
@@ -6285,13 +6285,13 @@
     {
       "path": "package.json",
       "size": 83295,
-      "sha256": "0d77ea4ed800f53da3707d69a52128ac44d81f0f388de0e4538a468416110284",
+      "sha256": "0c8be6bbe9f66ca9d70ab2aab7f9103f403814bcf33d0f72214d3c8c261c6633",
       "mode": "0644"
     },
     {
       "path": "plugin.json",
       "size": 677,
-      "sha256": "70cdddf08760726cbd79c0e081cd2082c8530deec755fb9c217de24823095e06",
+      "sha256": "5ccff798b2bebcddc540e78fd7a049987f6bc6184c9e9d751643f844f3955b53",
       "mode": "0644"
     },
     {
@@ -7297,7 +7297,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "76016f59a97331c8b9ce0a1841f7e1cb5b743c7cd48bc1a9a517490b5f1e4626",
+  "tree_sha256": "c0d71ea8163463bb4ebf7463c0bbec8a4c321502ada56068f9c154ec9d1a2281",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [
