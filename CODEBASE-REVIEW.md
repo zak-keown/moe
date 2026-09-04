@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 6
+  fixed: 7
   stale: 0
   skipped: 0
   deferred: 0
-  open: 101
+  open: 100
 ---
 
 # Codebase Review — moe
@@ -2517,6 +2517,10 @@ This file calls `mkdtempSync` four times (`moe-flight-runone-ctx-`, `moe-flight-
 
 I verified this is not merely theoretical: `ls -d "$TMPDIR"/moe-flight-runone-*` on this machine currently shows 147 leftover directories accumulated from prior test runs (same command against `moe-flight-render-cmd-*` also shows 147, corroborating the pattern below). Each run of the suite adds three more directories under the OS temp dir that are never reclaimed until the OS clears `/tmp` (or, on CI runners with a long-lived temp volume, not at all). Fix: add an `afterEach`/`afterAll` that `rmSync(dir, { recursive: true, force: true })`s each created root, matching the pattern used elsewhere in this same test suite.
 
+**Disposition:** fixed
+**Commit:** `001191831ecabe23f4e72cfc916db4fe34cd751f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-088: `cli-batch.test.ts` reproduces the exact `AppConfig` field-name drift `make-config.ts` was written to prevent
 
 **File:** `packages/flight/test/qa/integration/cli-batch.test.ts`
