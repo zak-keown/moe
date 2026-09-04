@@ -123,6 +123,36 @@ func TestExtractEmbeddedRejectsTamperedTarget(t *testing.T) {
 	}
 }
 
+// CR-021: os.MkdirAll follows symlinks in every intermediate path
+// component. On a shared host, a co-tenant can pre-plant base/moe as a
+// symlink into a directory they own before the legitimate process ever
+// runs; extractEmbedded must refuse to create/use a directory tree through
+// a symlinked ancestor rather than silently writing (and later dlopen-ing)
+// through it into attacker-controlled territory.
+func TestExtractEmbeddedRejectsSymlinkedAncestor(t *testing.T) {
+	base := t.TempDir()
+	attacker := t.TempDir()
+
+	// Simulate the attacker winning the race before the victim's first run:
+	// base/moe is a symlink into a directory the attacker owns.
+	if err := os.Symlink(attacker, filepath.Join(base, "moe")); err != nil {
+		t.Fatal(err)
+	}
+
+	b := []byte("the real, expected library bytes for ancestor-symlink test")
+	if _, err := extractEmbedded(b, "so", base); err == nil {
+		t.Fatal("extractEmbedded followed a symlinked ancestor directory instead of refusing it")
+	}
+
+	entries, err := os.ReadDir(attacker)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 0 {
+		t.Fatalf("extractEmbedded wrote into the attacker-controlled directory: %v", entries)
+	}
+}
+
 // A target that is a symlink to attacker-controlled content must also be
 // replaced, not dlopened as-is — os.Rename on a mismatch must unlink the
 // symlink rather than write through it.
