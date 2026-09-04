@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
@@ -78,6 +78,49 @@ describe("ask error paths", () => {
       } as never);
       expect(code).toBe(1);
       expect(errors.some((e) => e.includes("no run.jsonl"))).toBe(true);
+    } finally {
+      console.error = origErr;
+    }
+  });
+
+  // CR-083: peekRecordedModel/peekRecordedDate JSON.parse every non-blank
+  // line of run.jsonl with no try/catch, and peekRecordedModel runs before
+  // any of ask()'s surrounding try/catch blocks. A truncated/corrupted line
+  // ahead of run_start (plausible: this codebase's own shutdown-drain design
+  // can interrupt a run mid-write) must not escape as a raw SyntaxError --
+  // it should be skipped so the real run_start line downstream is still
+  // found, same as ws-handlers.ts already treats the same file per-line.
+  test("ask tolerates a corrupt line ahead of run_start in run.jsonl instead of crashing", async () => {
+    const projRoot = mkdtempSync(join(tmpdir(), "moe-flight-ask-"));
+    cleanups.push(projRoot);
+    const runDir = join(projRoot, ".moe-flight", "results", "corrupt_run");
+    mkdirSync(runDir, { recursive: true });
+    const lines = [
+      "not valid json — truncated mid-write",
+      JSON.stringify({
+        type: "run_start",
+        model: "totally-unknown-model",
+        ts: "2026-01-01T00:00:00Z",
+      }),
+    ];
+    writeFileSync(join(runDir, "run.jsonl"), `${lines.join("\n")}\n`);
+    const errors: string[] = [];
+    const origErr = console.error;
+    console.error = (...msg: unknown[]) => {
+      errors.push(msg.map((m) => String(m)).join(" "));
+    };
+    try {
+      const code = await ask({ command: "ask", runId: "corrupt_run", cli: {} }, {
+        projectRoot: projRoot,
+        stateDirName: ".moe-flight",
+      } as never);
+      // Returns cleanly (via the existing UnknownModelProviderError path for
+      // the recorded model), rather than an uncaught JSON SyntaxError.
+      expect(code).toBe(1);
+      // The line AFTER the corrupt one was still found and its model used --
+      // proof the corrupt line was skipped, not just swallowed into "".
+      expect(errors.some((e) => e.includes("totally-unknown-model"))).toBe(true);
+      expect(errors.some((e) => /SyntaxError|Unexpected token|JSON/.test(e))).toBe(false);
     } finally {
       console.error = origErr;
     }

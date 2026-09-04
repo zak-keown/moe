@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 11
-  stale: 0
+  fixed: 17
+  stale: 1
   skipped: 0
   deferred: 0
-  open: 96
+  open: 89
 ---
 
 # Codebase Review — moe
@@ -432,6 +432,10 @@ Fix: give `cellId` the same tab-join-then-encode treatment as `cellKey` (or at
 minimum percent-encode/hash each segment before joining) so two different
 4-tuples can never produce the same id.
 
+**Disposition:** fixed
+**Commit:** `22642b56d7dd202257719718409fa00cd28b8e0a`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-010: Hyphen-joined `cellId` can collide across distinct (scenario, agent, credential, os) identities, misrouting SSE cell updates
 
 **File:** `packages/flight/dashboard/src/templates.ts`
@@ -491,6 +495,10 @@ key `cellKey` already uses, e.g. hash it or percent/URL-encode each segment
 before joining, so no two distinct identity tuples can ever produce the same
 id.
 
+**Disposition:** stale
+**Commit:** —
+**Resolved:** 2026-09-04
+**Note:** Same root defect as CR-009 (both point at cellId()'s bare hyphen-join in contracts.ts, only the call site/impact framing differs). Already resolved by 22642b56 (CR-009), which percent-encodes each segment before joining. Verified: checked out contracts.ts as of the pre-fix commit (92c44271) and manually re-ran the templates.ts-level repro from this finding (gridHtml -> fallbackCell -> cellId with scenario/agent tuples signup/claude-opus-4 vs signup-claude/opus-4) -- it collided as described; re-running the same repro against the fixed contracts.ts (22642b56) produces four distinct ids. No separate fix needed in templates.ts itself.
 ### CR-011: `trySpawnOn` leaves the spawned Chrome `ChildProcess` with no `'error'` listener, crashing the host process on spawn failure
 
 **File:** `packages/flight/src/qa/adapters/web/lib/chrome-process.js`
@@ -1212,6 +1220,10 @@ and/or tighten `PhaseJsonSchema`'s `pid` to `z.number().int().positive()` so
 a schema-invalid phase.json degrades to "no live phase" instead of parsing
 into a value that later reads as immortal.
 
+**Disposition:** fixed
+**Commit:** `864a47110997ceddf502f4eac0e6fadaeae197c6`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-031: `driftFlag`/`cardView` can label a stale run as "latest" when the true latest run's cost is unpriced
 
 **File:** `packages/flight/dashboard/src/view.ts`
@@ -1270,6 +1282,10 @@ unpriced latest run as "no drift signal available" rather than falling
 through to an older run), or make `cellCosts` and its caller agree on what
 "latest" means when the true latest entry is unpriced.
 
+**Disposition:** fixed
+**Commit:** `b8eab4be558e2e3d89097be6538fecefc1e7228f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-032: Page-script comments claim jsdom test coverage that does not exist in this package
 
 **File:** `packages/flight/src/qa/adapters/web/lib/page-scripts/dom-summary.js`
@@ -1362,6 +1378,10 @@ const base = `  ${p.cyan("▸")} ${p.bold(name)}${bodyStr}`;
 
 This is not a narrow edge case: `report_result` (`REPORT_TOOL` / `agent.ts`, called exactly once at the end of every run) is not in `format-args.ts`'s `HUMANIZERS` map, so every run's final tool call falls through to `jsonFallback`, which is `JSON.stringify(args)` of the full `status`/`summary`/`observations[]`/`criteria[]` payload — routinely hundreds to thousands of characters — rendered as one unwrapped, un-truncated terminal line. This is a real, always-reachable readability defect in the pretty-mode CLI stream, not a hypothetical one. Wire `truncateArgs` (or an equivalent cap) into `renderToolCall`'s body before printing.
 
+**Disposition:** fixed
+**Commit:** `a03e123b2d8fd3dd2bae15e51714906fc64962a3`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-037: Fanout card generation silently corrupts embedded code fences in generated story-card content
 
 **File:** `packages/flight/src/qa/fanout/generator.ts`
@@ -2341,6 +2361,10 @@ present in some cell's window, or an LRU with a generous ceiling) so a
 dashboard left running across a large results/ history doesn't grow without
 limit.
 
+**Disposition:** fixed
+**Commit:** `88191150cfdd9da6b55d7230f6c649c5e6163679`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-076: `docs/credentials.md` duplicates its own "Username and password" section and links to a nonexistent path
 
 **File:** `packages/flight/docs/credentials.md`
@@ -2479,6 +2503,10 @@ a try/catch that skips (or reports) an unparsable line, consistent with how
 `ws-handlers.ts`'s `handleWsOpen` already treats the same `run.jsonl`
 per-line parse (`try { JSON.parse(l) } catch { return null }`).
 
+**Disposition:** fixed
+**Commit:** `03ad55d8861317743bfbe712b90f3a690f3255ba`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-084: `RunSetWriter.finalize`'s `processedIds` set is computed but never consulted
 
 **File:** `packages/flight/src/qa/evidence/run-set-writer.ts`

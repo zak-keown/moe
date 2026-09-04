@@ -599,6 +599,34 @@ describe("PrettyRenderer", () => {
     expect(sink.out).toMatch(/▸ press Enter\n {2}▸ read_output/);
   });
 
+  // CR-036: format-args.ts's module doc + formatToolArgs's own doc comment
+  // both say the JSON fallback body is "(truncated by the caller)", and
+  // wrap.ts exports truncateArgs specifically for that purpose — but no
+  // caller ever invoked it. report_result (called once at the end of every
+  // run) isn't in HUMANIZERS, so it always falls through to jsonFallback's
+  // raw JSON.stringify(args), which was rendered as one unwrapped,
+  // un-truncated line.
+  test("renderToolCall truncates the JSON-fallback body for an unrecognised tool", () => {
+    const sink = collect();
+    const r = new PrettyRenderer(sink, { color: false, columns: 100 });
+    const summary = "x".repeat(500);
+    r.handle({
+      eventId: 1,
+      parentEventId: 0,
+      ts: "t",
+      type: "tool_call",
+      turn: 1,
+      toolUseId: "t1",
+      name: "report_result",
+      arguments: { status: "pass", summary, observations: [], criteria: [] },
+    } as any);
+    r.close();
+    // The call line must not carry the full, untruncated JSON dump.
+    expect(sink.out).not.toContain(summary);
+    // It carries the truncateArgs "… (+N more)" marker instead.
+    expect(sink.out).toMatch(/…\s\(\+\d+\smore\)/);
+  });
+
   test("anomaly event line uses compact summary for known event families", () => {
     const sink = collect();
     const r = new PrettyRenderer(sink, { color: false, columns: 100 });
