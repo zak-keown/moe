@@ -107,17 +107,15 @@ source: code-review:CR-012    # code-review:<id> | brainstorm | hardener | manua
 claimed_by:                   # agent/run id while in-progress, else empty
 created: 2026-09-04
 updated: 2026-09-04
-provenance:
-  filed_by: wave3-item/tab    # agent or run that filed it
-  filed_sha: a1b2c3d
-  moved_by: coordinator
-  moved_sha: e4f5g6h
-links:
-  ref: CR-012                 # originating finding / spec / plan
-  blocked_by: [BL-0003]
-  blocks: [BL-0009]
-  parent: BL-0001             # decomposition
-tags: [tab, ffi]
+filed_by: wave3-item/tab      # agent or run that filed it
+filed_sha: a1b2c3d
+moved_by: coordinator
+moved_sha: e4f5g6h
+ref: CR-012                   # originating finding / spec / plan
+blocked_by: BL-0003           # comma-separated ids
+blocks: BL-0009
+parent: BL-0001               # decomposition
+tags: tab, ffi                # comma-separated
 ---
 
 ## Context
