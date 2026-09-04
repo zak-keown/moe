@@ -64,15 +64,18 @@ export async function seedPlanSkeleton(
 
   // Step 4: Build depends_on edges between clusters.
   // A cluster B depends on cluster A if any file in B consumes a file in A.
+  // `consumers.get(f)` holds the files that *consume* `f` (i.e. depend on
+  // it), so to test "does B consume A" we look at A's files' consumers and
+  // check whether any of them lands in B — not the reverse.
   const clusterDeps = new Map<number, number[]>();
   for (let i = 0; i < clusters.length; i++) {
     const deps: number[] = [];
     for (let j = 0; j < clusters.length; j++) {
       if (i === j) continue;
-      const aFiles = new Set(clusters[j]!.files);
-      const bConsumesA = clusters[i]!.files.some((f) => {
+      const bFiles = new Set(clusters[i]!.files);
+      const bConsumesA = clusters[j]!.files.some((f) => {
         const fConsumers = consumers.get(f) ?? new Set();
-        return [...fConsumers].some((c) => aFiles.has(c));
+        return [...fConsumers].some((c) => bFiles.has(c));
       });
       if (bConsumesA) deps.push(j + 1);
     }
