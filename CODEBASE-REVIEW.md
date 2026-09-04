@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 3
+  fixed: 4
   stale: 0
   skipped: 0
   deferred: 0
-  open: 104
+  open: 103
 ---
 
 # Codebase Review — moe
@@ -1866,6 +1866,10 @@ This matters most because `searchConversations` is called directly from the `sea
 
 Contrast this with `stats.ts`'s `getIndexStats` and `journal-cli.ts`/`stats-cli.ts`, which correctly wrap their DB usage in `try { ... } finally { db.close(); }`. The identical gap (open `initDatabase()`, do fallible work, unconditional close with no `finally`) also exists in `sync.ts`'s `syncConversations` (around the `initEmbeddings()` call before its indexing loop) and `verify.ts`'s `verifyIndex` (the `db` opened at the top is only guaranteed to close if none of the un-guarded `fs.readdirSync`/`fs.statSync` calls in the project walk throw); those two are lower risk since they normally run inside short-lived CLI/hook processes that exit right after, but they are the same defect. Wrap each of these in `try/finally`.
 
+**Disposition:** fixed
+**Commit:** `583b74f0b35113c3446cd373f639ce73a8889a66`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-059: Persistent "thinking budget" summarizer failure is silently accepted as the permanent summary
 **File:** `packages/memory/src/summarizer.ts`
 **Anchor:** `// If fallback also fails, return error message`
