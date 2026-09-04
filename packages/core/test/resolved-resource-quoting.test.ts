@@ -105,10 +105,7 @@ describe("resolved executable resource quoting", () => {
   });
 
   it("preserves the tmux helper as a quoted assignment before indirect execution", () => {
-    const content = readFileSync(
-      join(CANONICAL_SKILLS, "use-tmux/SKILL.md"),
-      "utf8",
-    );
+    const content = readFileSync(join(CANONICAL_SKILLS, "use-tmux/SKILL.md"), "utf8");
     expect(content).toContain('WRAPPER="<resolved-tmux-wrapper.mjs>"');
     expect(content).toContain('node "$WRAPPER" start');
   });

@@ -230,10 +230,7 @@ describe("parallel execution skill contract", () => {
   });
 
   it("finishes a greenfield project once after its final evidence audit", () => {
-    const iterative = readFileSync(
-      resolve(ROOT, "core/skills/iterate/SKILL.md"),
-      "utf8",
-    );
+    const iterative = readFileSync(resolve(ROOT, "core/skills/iterate/SKILL.md"), "utf8");
 
     expect(iterative).toMatch(/one project workspace/i);
     expect(iterative).toContain("use-worktrees");
