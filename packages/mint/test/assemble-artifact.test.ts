@@ -100,7 +100,6 @@ describe('complete artifact assembly', () => {
       cp(join(repoRoot, 'NOTICE'), join(root, 'NOTICE')),
     ])
     const plugin = await fixturePlugin(root)
-    await chmod(join(plugin.sourcePath, 'skills/demo/test-runtime.js'), 0o740)
     const resolved = platform(root, [plugin])
     const destinationRoot = join(root, 'plugins.next-testnonce')
     await mkdir(destinationRoot)
@@ -111,15 +110,13 @@ describe('complete artifact assembly', () => {
     expect(artifact.emissions).toBe(artifact.projection.emissions)
     expect(artifact.omittedOptionalPayloads).toEqual([])
     const paths = await inventory(artifact.root)
-    expect(paths).toContain('skills/demo/test-runtime.js')
-    expect(paths).toContain('skills/demo/__tests__/test-transitive.js')
+    expect(paths).toContain('skills/demo/scripts/test-runtime.mjs')
+    expect(paths).toContain('skills/demo/__tests__/transitive-fixture.json')
     expect(paths).toContain('skills/test-driven-development/SKILL.md')
-    expect(paths).not.toContain('skills/demo/test-unlinked.js')
-    expect((await stat(join(artifact.root, 'skills/demo/test-runtime.js'))).mode & 0o777).toBe(0o740)
+    expect(paths).not.toContain('skills/demo/test-unlinked.md')
     for (const privateRoot of ['.claude-plugin/skills', '.opencode/skills', '.pi/skills']) {
-      expect(paths).not.toContain(`${privateRoot}/demo/test-unlinked.js`)
-      expect(paths).toContain(`${privateRoot}/demo/test-runtime.js`)
-      expect((await stat(join(artifact.root, privateRoot, 'demo/test-runtime.js'))).mode & 0o777).toBe(0o740)
+      expect(paths).not.toContain(`${privateRoot}/demo/test-unlinked.md`)
+      expect(paths).toContain(`${privateRoot}/demo/scripts/test-runtime.mjs`)
     }
     expect(paths).not.toContain('skills/demo/.gitignore')
     expect(paths).not.toContain('moe-mint.yaml')
@@ -154,17 +151,17 @@ describe('complete artifact assembly', () => {
     const plugin = await fixturePlugin(root)
     await writeFile(
       join(plugin.sourcePath, 'skills/demo/SKILL.md'),
-      `${await readFile(join(plugin.sourcePath, 'skills/demo/SKILL.md'), 'utf8')}\nRun {resource:skills/demo/test-unlinked.js}.\n`,
+      `${await readFile(join(plugin.sourcePath, 'skills/demo/SKILL.md'), 'utf8')}\nRun {resource:skills/demo/test-unlinked.md}.\n`,
     )
     const destinationRoot = join(root, 'plugins.next-resource')
     await mkdir(destinationRoot)
 
     const artifact = await assembleArtifact({ repoRoot: root, platform: platform(root, [plugin]), plugin, destinationRoot })
     const paths = await inventory(artifact.root)
-    expect(paths).toContain('skills/demo/test-unlinked.js')
-    expect(paths).toContain('.claude-plugin/skills/demo/test-unlinked.js')
+    expect(paths).toContain('skills/demo/test-unlinked.md')
+    expect(paths).toContain('.claude-plugin/skills/demo/test-unlinked.md')
     expect(await readFile(join(artifact.root, '.claude-plugin/skills/demo/SKILL.md'), 'utf8'))
-      .toContain('[skills/demo/test-unlinked.js](test-unlinked.js)')
+      .toContain('[skills/demo/test-unlinked.md](test-unlinked.md)')
   })
 
   it('loads the companion vocabulary beside a non-root canonical config', async () => {

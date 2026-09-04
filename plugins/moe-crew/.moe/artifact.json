@@ -31,12 +31,6 @@
       "mode": "0644"
     },
     {
-      "path": ".claude-plugin/skills/driving-claude-code-sessions/scripts/moe-crew",
-      "size": 120,
-      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
-      "mode": "0755"
-    },
-    {
       "path": ".claude-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
       "size": 835,
       "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
@@ -53,12 +47,6 @@
       "size": 19720,
       "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
       "mode": "0644"
-    },
-    {
-      "path": ".codex-plugin/skills/driving-claude-code-sessions/scripts/moe-crew",
-      "size": 120,
-      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
-      "mode": "0755"
     },
     {
       "path": ".codex-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
@@ -85,12 +73,6 @@
       "mode": "0644"
     },
     {
-      "path": ".cursor-plugin/skills/driving-claude-code-sessions/scripts/moe-crew",
-      "size": 120,
-      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
-      "mode": "0755"
-    },
-    {
       "path": ".cursor-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
       "size": 835,
       "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
@@ -109,12 +91,6 @@
       "mode": "0644"
     },
     {
-      "path": ".kimi-plugin/skills/driving-claude-code-sessions/scripts/moe-crew",
-      "size": 120,
-      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
-      "mode": "0755"
-    },
-    {
       "path": ".kimi-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
       "size": 835,
       "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
@@ -122,8 +98,8 @@
     },
     {
       "path": ".moe-mint/manifest.json",
-      "size": 5701,
-      "sha256": "e7a5f48d1fe190e7ba835006b6770a04c9b0b479bc4fff9aecd3bf31d99fec8e",
+      "size": 4604,
+      "sha256": "b14ccff72beae620df4c0118b7784a781f8b497b40ccc4bb0dcde032cc932c2d",
       "mode": "0644"
     },
     {
@@ -137,12 +113,6 @@
       "size": 19720,
       "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
       "mode": "0644"
-    },
-    {
-      "path": ".opencode/skills/driving-claude-code-sessions/scripts/moe-crew",
-      "size": 120,
-      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
-      "mode": "0755"
     },
     {
       "path": ".opencode/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
@@ -161,12 +131,6 @@
       "size": 19720,
       "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
       "mode": "0644"
-    },
-    {
-      "path": ".pi/skills/driving-claude-code-sessions/scripts/moe-crew",
-      "size": 120,
-      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
-      "mode": "0755"
     },
     {
       "path": ".pi/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
@@ -806,8 +770,8 @@
     },
     {
       "path": "package.json",
-      "size": 5948,
-      "sha256": "48dc2170526b8975c4a900c7fe144628d7f62e91430f9c8137c62f7e4b69c98d",
+      "size": 5457,
+      "sha256": "03a56234c8b5461626c2cca803f481d1e5c1758e20a02e15ce001de5ddcf71b5",
       "mode": "0644"
     },
     {
@@ -823,19 +787,13 @@
       "mode": "0644"
     },
     {
-      "path": "skills/driving-claude-code-sessions/scripts/moe-crew",
-      "size": 120,
-      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
-      "mode": "0755"
-    },
-    {
       "path": "skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
       "size": 835,
       "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
       "mode": "0644"
     }
   ],
-  "tree_sha256": "d3b3c7804ce1d6e812948b70306c79aebd8ecde2629b6ed29a36c0f471331cd5",
+  "tree_sha256": "b55f7324080a6035b076a893a82083cca8e7693f0b2aeb6c0b55c37b7a974a0b",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

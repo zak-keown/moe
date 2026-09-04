@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Split the merged report's critical and high findings into one file each.
 //
 // A verify-finding challenger reads exactly its finding, and the ledger

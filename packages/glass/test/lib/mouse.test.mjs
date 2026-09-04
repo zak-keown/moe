@@ -5,7 +5,7 @@ import { JSDOM } from 'jsdom';
 import { makePageSessionFake } from './_helpers.mjs';
 
 const require = createRequire(import.meta.url);
-const { attachMouse } = require('../../skills/browsing/lib/mouse.js');
+const { attachMouse } = require('../../browsing-compat/lib/mouse.js');
 
 // A page session whose Runtime.evaluate actually RUNS the given expression
 // against a real jsdom document, instead of returning a canned fixture.

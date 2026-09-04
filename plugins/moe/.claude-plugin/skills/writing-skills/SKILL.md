@@ -327,10 +327,10 @@ digraph when_flowchart {
 
 See `graphviz-conventions.dot` in this directory for graphviz style rules.
 
-**Visualizing for your human partner:** Use the `render-graphs.mjs` this skill ships to render a skill's flowcharts to SVG:
+**Visualizing for your human partner:** Resolve [skills/writing-skills/scripts/render-graphs.mjs](scripts/render-graphs.mjs) relative to this loaded document and use it to render a skill's flowcharts to SVG:
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/writing-skills/scripts/render-graphs.mjs" ../some-skill           # Each diagram separately
-node "${CLAUDE_PLUGIN_ROOT}/skills/writing-skills/scripts/render-graphs.mjs" ../some-skill --combine # All diagrams in one SVG
+node "<resolved-render-graphs.mjs>" ../some-skill           # Each diagram separately
+node "<resolved-render-graphs.mjs>" ../some-skill --combine # All diagrams in one SVG
 ```
 
 ## Code Examples

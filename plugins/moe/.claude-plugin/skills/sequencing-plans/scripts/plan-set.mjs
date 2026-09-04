@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { spawnSync } from 'node:child_process'

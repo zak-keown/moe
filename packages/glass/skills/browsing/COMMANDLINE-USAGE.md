@@ -8,9 +8,9 @@ Direct command-line access to Chrome DevTools Protocol via the `chrome-ws` bash 
 
 ```bash
 cd ~/.claude/plugins/cache/using-chrome-directly/skills/using-chrome-directly
-chmod +x chrome-ws
-./chrome-ws start    # Auto-detects platform, launches Chrome
-./chrome-ws tabs     # Verify running
+# No chmod needed — invoked via node
+node "$SKILL/chrome-ws.mjs" start    # Auto-detects platform, launches Chrome
+node "$SKILL/chrome-ws.mjs" tabs     # Verify running
 ```
 
 Chrome starts headed with `--remote-debugging-port=9222`, a separate profile in `/tmp/chrome-debug` (or `C:\temp\chrome-debug` on Windows), and the same automation flag set the MCP launch path uses.
@@ -29,13 +29,13 @@ Chrome starts headed with `--remote-debugging-port=9222`, a separate profile in 
 
 ```bash
 # Force Chromium instead of Chrome
-CHROME_WS_BROWSER=/usr/bin/chromium ./chrome-ws start
+CHROME_WS_BROWSER=/usr/bin/chromium node "$SKILL/chrome-ws.mjs" start
 
 # Use custom port
-CHROME_WS_PORT=9333 ./chrome-ws start
+CHROME_WS_PORT=9333 node "$SKILL/chrome-ws.mjs" start
 
 # Use Brave browser
-CHROME_WS_BROWSER="/usr/bin/brave-browser" ./chrome-ws start
+CHROME_WS_BROWSER="/usr/bin/brave-browser" node "$SKILL/chrome-ws.mjs" start
 ```
 
 ## Command Reference

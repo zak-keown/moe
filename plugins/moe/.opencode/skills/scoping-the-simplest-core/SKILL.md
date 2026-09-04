@@ -36,7 +36,7 @@ The walking skeleton must also produce:
 - The first executable behavior harness (the E2E test infrastructure)
 - A small sentinel corpus that can be rerun every iteration
 
-**Harness-first task:** The walking skeleton's FIRST task should be designing and building the E2E test harness — before implementing any product features. Use the test infrastructure checklist in `${CLAUDE_PLUGIN_ROOT}/skills/_shared/behavior-evidence-formats.md` to guide the design. Document the harness design decisions in the project's docs. The harness is a first-class deliverable, not an afterthought — every subsequent iteration extends it.
+**Harness-first task:** The walking skeleton's FIRST task should be designing and building the E2E test harness — before implementing any product features. Resolve [skills/_shared/behavior-evidence-formats.md](../_shared/behavior-evidence-formats.md) relative to this loaded document and use its test infrastructure checklist to guide the design. Document the harness design decisions in the project's docs. The harness is a first-class deliverable, not an afterthought — every subsequent iteration extends it.
 
 Selection rule: "if someone ran just these stories, they should see a demo that proves the product exists AND have at least one passing journey scenario that proves the demo works."
 
@@ -58,15 +58,15 @@ Then SPLIT the story:
 
 ### 4. Run citation check
 
-Run: `node "${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/check_citations.mjs" docs/moe/iterations/roadmap.md docs/moe/iterations/requirements/`
+Resolve [skills/scoping-the-simplest-core/scripts/check_citations.mjs](scripts/check_citations.mjs) relative to this loaded document, then invoke it as `node "<resolved-check_citations.mjs>" docs/moe/iterations/roadmap.md docs/moe/iterations/requirements/`.
 
 Every iteration must cite only valid STORY-IDs from the index.
 
 ### 5. Scope review via PAR
 
-Following `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md`:
+Following [skills/_shared/parallel-adversarial-review.md](../_shared/parallel-adversarial-review.md), resolved relative to this loaded document:
 
-1. Build scope reviewer prompts using `${CLAUDE_PLUGIN_ROOT}/skills/running-an-iteration/scope-reviewer-prompt.md` (a sibling skill's template, deliberately shared)
+1. Resolve [skills/running-an-iteration/scope-reviewer-prompt.md](../running-an-iteration/scope-reviewer-prompt.md) relative to this loaded document and build scope reviewer prompts from that deliberately shared sibling template
 2. Wrap in PAR competitive framing
 3. Dispatch paired scope reviewers focused on:
    - Is ITER-0000 really the thinnest possible walking skeleton?
@@ -107,7 +107,7 @@ Write the result to `docs/moe/iterations/roadmap.md` using this format:
 **Look-ahead check:** <does this block or get blocked by neighbors?>
 ```
 
-Run: `node "${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/validate_roadmap.mjs" docs/moe/iterations/roadmap.md`
+Resolve [skills/scoping-the-simplest-core/scripts/validate_roadmap.mjs](scripts/validate_roadmap.mjs) relative to this loaded document, then invoke it as `node "<resolved-validate_roadmap.mjs>" docs/moe/iterations/roadmap.md`.
 
 **Note:** The validator checks format only. The PAR scope review is the real structural gate.
 
@@ -122,14 +122,14 @@ git commit -m "docs: add roadmap — walking skeleton with journey scenario + it
 
 | Step | Tool/Skill | Purpose |
 |---|---|---|
-| Citation check | `node "${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/check_citations.mjs" <roadmap> <requirements-dir>` | All cited stories exist |
+| Citation check | `scripts/check_citations.mjs` | All cited stories exist |
 | Scope review | PAR + scope reviewer prompt | Walking skeleton minimal, journey scenario included, story splitting applied, no boxing-in |
 | Story splitting | Manual (if PAR or dependency analysis finds heterogeneous ACs) | Split stories by dependency profile |
-| Validate | `node "${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/validate_roadmap.mjs" <roadmap>` | Format check only |
+| Validate | `scripts/validate_roadmap.mjs` | Format check only |
 
 ## References
 
-- `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md` — PAR methodology
-- `${CLAUDE_PLUGIN_ROOT}/skills/_shared/behavior-evidence-formats.md` — scenario and proof obligation formats
-- `${CLAUDE_PLUGIN_ROOT}/skills/running-an-iteration/scope-reviewer-prompt.md` — scope reviewer prompt (reused from a sibling skill)
-- [check_citations.mjs](./scripts/check_citations.mjs) — mechanical citation check
+- [skills/_shared/parallel-adversarial-review.md](../_shared/parallel-adversarial-review.md) — PAR methodology; resolve relative to this loaded document
+- [skills/_shared/behavior-evidence-formats.md](../_shared/behavior-evidence-formats.md) — scenario and proof obligation formats; resolve relative to this loaded document
+- [skills/running-an-iteration/scope-reviewer-prompt.md](../running-an-iteration/scope-reviewer-prompt.md) — scope reviewer prompt reused from a sibling skill; resolve relative to this loaded document
+- `scripts/check_citations.mjs` — mechanical citation check

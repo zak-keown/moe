@@ -1,7 +1,7 @@
 // Page-side script: token-efficient page summary used by auto-capture.
 // Loaded as a string at attachCapture setup and embedded in CDP
 // Runtime.evaluate. CR-032: this is a byte-identical copy of
-// packages/glass/skills/browsing/lib/page-scripts/dom-summary.js, which
+// packages/glass/skills/browsing/scripts/lib/page-scripts/dom-summary.mjs, which
 // *is* covered by a jsdom test (packages/glass/test/lib/page-scripts/
 // dom-summary.test.mjs) — but that test lives in the sibling glass
 // package and exercises glass's copy, not this one. This copy has no

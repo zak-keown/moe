@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { makePageSessionFake } from './_helpers.mjs';
 
 const require = createRequire(import.meta.url);
-const { attachExtraction } = require('../../skills/browsing/lib/extraction.js');
+const { attachExtraction } = require('../../browsing-compat/lib/extraction.js');
 
 describe('extraction', () => {
   function setup(handlers = {}) {

@@ -128,7 +128,29 @@ install coordinates and the ephemeral publish matrix share one validated
 authority. Generated plugin trees are the complete harness and runtime
 artifacts those packages ultimately publish.
 
-## 6. Toolchain and project references
+## 6. Skill runtime boundary
+
+Shipped skill backends are dependency-free Node 24 ESM. Every production
+module beneath a skill's `scripts/` directory is a `.mjs` file, mode 0644,
+with no shebang, importing only `node:` built-ins and relative `.mjs` peers.
+Skills invoke these modules through explicit `node "$SKILL/<name>.mjs"`,
+never a bare script execution. Compiled TypeScript remains beneath each
+package's `src/`/`dist` — it is staged into the plugin as a runtime payload,
+not mixed into the skill tree.
+
+Mint enforces this boundary before staging any component: `assertValidSkillRuntime`
+validates every code file under the configured skills root and rejects the
+assembly if any diagnostic is raised. The repository-wide contract test
+"every registered plugin passes skill runtime validation with zero diagnostics"
+exercises the same validator through `inspectSkillRuntime` against the live
+platform registry.
+
+Runtime portability does not erase runtime prerequisites. Git, tmux, Chrome,
+and graphviz remain legitimate skill dependencies declared by the skill itself;
+the boundary constrains how the skill's own helper code is packaged and
+invoked, not what external tools it can call.
+
+## 7. Toolchain and project references
 
 - Node 24 and pnpm 11.23.0
 - TypeScript 5.9 project references
@@ -152,7 +174,7 @@ points.
 pnpm postinstall scripts must be approved by package name under `allowBuilds` in
 `pnpm-workspace.yaml`. The old pnpm 10 setting is ignored by pnpm 11.
 
-## 7. Commands and runtime names
+## 8. Commands and runtime names
 
 The dependency-free `bin/moe.js` dispatcher fronts eight permanent namespace
 bins:
@@ -169,7 +191,7 @@ MCP server keys are `moe-memory` and `moe-glass`. State and cache paths use Moe
 names exclusively. There is no compatibility or migration layer for retired
 product identifiers, paths, or environment variables.
 
-## 8. Installation and platforms
+## 9. Installation and platforms
 
 `bin/moe-doctor` checks hard prerequisites and reports optional capabilities.
 `bin/moe-install` is dry-run by default and executes only with `--apply`. Both
@@ -180,7 +202,7 @@ crew requires tmux, hook execution requires bash, and sandbox support differs.
 Every script and polyglot hook is pinned to LF by `.gitattributes`, including a
 checkout reached from WSL through a Windows filesystem.
 
-## 9. Verification and CI
+## 10. Verification and CI
 
 The normal local gates are:
 
@@ -201,7 +223,7 @@ build, plugin reproducibility, provenance) plus three path-scoped workflows
 OIDC-publishes to npm via trusted publishing. Flight remains private because
 it contains an internal-only legal exception; controls are in `NOTICE`.
 
-## 10. Hosting, provenance, and legal payloads
+## 11. Hosting, provenance, and legal payloads
 
 The canonical project is `github.com/zak-keown/moe`. Package scope (`@bubstack`)
 and repo owner (`zak-keown`) are intentionally decoupled; npm trusted publishing

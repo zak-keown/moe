@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { JSDOM } from 'jsdom';
 
 const require = createRequire(import.meta.url);
-const domSummaryScript = require('../../../skills/browsing/lib/page-scripts/dom-summary.js');
+const domSummaryScript = require('../../../browsing-compat/lib/page-scripts/dom-summary.js');
 
 describe('page-scripts/dom-summary', () => {
   function evalScript(html) {

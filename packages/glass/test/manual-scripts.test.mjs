@@ -49,7 +49,7 @@ describe('test/manual/test-harness.cjs (CR-052)', () => {
 });
 
 // CR-053: every script in test/manual/ requires its library dependency via
-// require('./skills/browsing/chrome-ws-lib.js') — a path resolved relative
+// require('./browsing-compat/chrome-ws-lib.js') — a path resolved relative
 // to each script's own directory (test/manual/), where no skills/
 // subdirectory exists. The real file is two levels up. Running any of these
 // scripts as documented in their own header comments failed immediately with

@@ -442,23 +442,6 @@ const X_BIT_ALLOWLIST = [
   "hooks/jig-worktree-guard",
   "hooks/developing-for-moe-notice",
   "hooks/jig-review-format-guard",
-  "skills/brainstorming/scripts/start-server.sh",
-  "skills/brainstorming/scripts/stop-server.sh",
-  "skills/extracting-requirements/scripts/aggregate_stories.py",
-  "skills/extracting-requirements/scripts/chunk_spec.py",
-  "skills/fixing-a-code-review/scripts/compact-resolved.mjs",
-  "skills/finding-duplicate-functions/scripts/extract-functions.sh",
-  "skills/finding-duplicate-functions/scripts/generate-report.sh",
-  "skills/finding-duplicate-functions/scripts/prepare-category-analysis.sh",
-  "skills/running-an-iteration/scripts/check_citations.py",
-  "skills/scoping-the-simplest-core/scripts/check_citations.py",
-  "skills/subagent-driven-development/scripts/review-package",
-  "skills/subagent-driven-development/scripts/sdd-workspace",
-  "skills/subagent-driven-development/scripts/task-brief",
-  "skills/systematic-debugging/find-polluter.sh",
-  "skills/using-tmux-for-interactive-commands/tmux-wrapper.sh",
-  "skills/working-with-claude-code/scripts/update_docs.cjs",
-  "skills/writing-skills/render-graphs.mjs",
 ];
 
 // Everything Zone-A discovery walks: the skills tree and the hooks directory,
@@ -496,10 +479,6 @@ describe("runtime paths", () => {
   });
 
   it("keeps the execute bit on every shipped executable", () => {
-    // The three subagent-driven-development scripts are invoked as bare paths
-    // with no `bash` prefix, so a mode-losing copy breaks them with
-    // "Permission denied" and nothing else would notice.
-    //
     // The presence direction. This is the one discovery cannot replace: a file
     // that loses its bit stops being discovered, so only a pinned list notices.
     for (const rel of X_BIT_ALLOWLIST) {
@@ -529,11 +508,13 @@ describe("runtime paths", () => {
   });
 
   it("every shell script and node script parses", { timeout: 15_000 }, () => {
-    // Discovered, not enumerated. Two hardcoded lists (11 shell, 4 node) drifted
+    // Discovered, not enumerated. Two hardcoded lists (6 shell, 51 node) drifted
     // out of this file's sight the moment a skill import added a script, exactly
     // as the execute-bit allowlist did. Routing is by extension, plus a shebang
-    // read for the extensionless scripts the subagent-driven-development and
-    // hooks trees ship.
+    // read for the extensionless scripts the hooks tree ships. The
+    // skill-backend-runtime migration to Node 24 ESM converted every shipped
+    // `.sh`/`.py` skill script to `.mjs`, so the hooks tree is now the only
+    // source of extensionless bash-shebang targets.
     //
     // Extensionless files with a `#!/usr/bin/env node` shebang route to
     // `node --check`. Without that branch, `hooks/plan-set` would be picked
@@ -560,9 +541,7 @@ describe("runtime paths", () => {
         // shebang's interpreter — bash/sh go to `bash -n`, node goes to
         // `node --check`, so a Node-shebang extensionless hook (the
         // moe-completion-evidence pattern) is syntax-checked by the right
-        // tool. Only the four extensionless bash scripts existed before
-        // that routing was added, and the metadata test relied on none of
-        // them ever being anything but bash.
+        // tool.
         const first = readFileSync(abs, "utf8").split(/\r?\n/)[0] ?? "";
         if (/^#!.*\b(bash|sh)\b/.test(first)) bash.push(rel);
         else if (/^#!.*\bnode\b/.test(first)) node.push(rel);
@@ -571,28 +550,24 @@ describe("runtime paths", () => {
 
     // Floors. A walk that stopped finding anything — a moved directory, a
     // tightened filter — would otherwise satisfy every assertion below by
-    // iterating zero times. Node floor is 7 now, not 6: the four .cjs/.mjs
-    // scripts plus the three extensionless Node hooks (`hooks/plan-set`,
+    // iterating zero times. Bash floor is 6: every extensionless bash-shebang
+    // hook, and nothing else — the migration left no `.sh` file shipped
+    // anywhere. Node floor is 51: every shipped `.mjs`/`.cjs` skill and hook
+    // script plus the three extensionless Node hooks (`hooks/plan-set`,
     // `hooks/moe-completion-evidence`, and `hooks/task-set`) with node
     // shebangs.
-    expect(bash.length, "bash targets discovered").toBeGreaterThanOrEqual(11);
-    expect(node.length, "node targets discovered").toBeGreaterThanOrEqual(7);
-    for (const rel of [
-      "hooks/claude-judge-continuation",
-      "hooks/plan-set-notice",
-      "skills/subagent-driven-development/scripts/review-package",
-      "skills/subagent-driven-development/scripts/sdd-workspace",
-      "skills/subagent-driven-development/scripts/task-brief",
-    ]) {
+    expect(bash.length, "bash targets discovered").toBeGreaterThanOrEqual(6);
+    expect(node.length, "node targets discovered").toBeGreaterThanOrEqual(51);
+    for (const rel of ["hooks/claude-judge-continuation", "hooks/plan-set-notice"]) {
       // The extensionless bash scripts. If the shebang read regresses, these
-      // vanish silently and the floor above could still be met by .sh files
-      // alone.
+      // vanish silently and the floor above drops to zero — no `.sh` file
+      // remains to keep it propped up on its own.
       expect(bash, `extensionless script ${rel} not routed to bash -n`).toContain(rel);
     }
     // Extensionless node script(s). Same regression concern in the mirror
     // direction: if the node-shebang branch above is removed, these fall
-    // through and node's floor could still be met by the .cjs/.mjs four.
-    // plan-set (deterministic-task-dag), moe-completion-evidence
+    // through and node's floor could still be met by the .cjs/.mjs scripts
+    // alone. plan-set (deterministic-task-dag), moe-completion-evidence
     // (verification-split-and-firing-rate), and task-set are all
     // extensionless Node hooks.
     for (const rel of ["hooks/plan-set", "hooks/moe-completion-evidence", "hooks/task-set"]) {
@@ -943,7 +918,7 @@ describe("the skill registry", () => {
 
 describe("fork invariants", () => {
   it("sends no telemetry from the brainstorming companion", () => {
-    const src = readFileSync(join(PKG, "skills/brainstorming/scripts/server.cjs"), "utf8");
+    const src = readFileSync(join(PKG, "skills/brainstorming/scripts/server.mjs"), "utf8");
     // Upstream injected <img src="https://primeradiant.com/brand/...?v=<version>">
     // into every served page, opt-out only. Removed, not rebranded.
     expect(src).not.toContain("https://primeradiant.com");

@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { makePageSessionFake } from './_helpers.mjs';
 
 const require = createRequire(import.meta.url);
-const { attachCookies } = require('../../skills/browsing/lib/cookies.js');
+const { attachCookies } = require('../../browsing-compat/lib/cookies.js');
 
 describe('cookies (pageSession-shaped)', () => {
   it('clearCookies resolves the pageSession and sends Network.clearBrowserCookies', async () => {

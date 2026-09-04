@@ -14,7 +14,7 @@ const {
   isPortFree,
   portFreeFromProbes,
   sandboxDisableNeeded,
-} = require('../../skills/browsing/lib/chrome-launcher-helpers.js');
+} = require('../../browsing-compat/lib/chrome-launcher-helpers.js');
 
 describe('chrome-launcher-helpers', () => {
   it('PORT_RANGE_START is 9222 (backward compat)', () => {

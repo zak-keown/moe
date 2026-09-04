@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { execFile, spawn } from "node:child_process";
 import {
   mkdtemp,

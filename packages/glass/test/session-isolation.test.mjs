@@ -3,8 +3,8 @@ import { strict as assert } from 'node:assert';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { createSession } = require('../skills/browsing/chrome-ws-lib.js');
-const { createOverride } = require('../skills/browsing/host-override.js');
+const { createSession } = require('../browsing-compat/chrome-ws-lib.js');
+const { createOverride } = require('../browsing-compat/host-override.js');
 
 // Regression gate for the createSession() / createOverride() factories.
 //

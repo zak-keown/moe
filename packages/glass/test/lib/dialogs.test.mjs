@@ -3,7 +3,7 @@ import { strict as assert } from 'node:assert';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { attachDialogs } = require('../../skills/browsing/lib/dialogs.js');
+const { attachDialogs } = require('../../browsing-compat/lib/dialogs.js');
 
 function setup() {
   const state = {};
@@ -26,7 +26,7 @@ describe('dialogs state map', () => {
 
 
 describe('action classification', () => {
-  const { PAGE_TARGET_ACTIONS, BROWSER_TARGET_ACTIONS } = require('../../skills/browsing/lib/dialogs.js');
+  const { PAGE_TARGET_ACTIONS, BROWSER_TARGET_ACTIONS } = require('../../browsing-compat/lib/dialogs.js');
 
   it('PAGE_TARGET_ACTIONS contains the expected set', () => {
     const expected = [

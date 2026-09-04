@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Move fixed/stale findings from inline to a "Resolved findings" section at
 // the bottom. Leaves skipped, deferred, and open findings in place.
 import { readFileSync, writeFileSync, existsSync } from "node:fs";

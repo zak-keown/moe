@@ -25,6 +25,7 @@ export interface SkillRuntimeReport {
 
 const CODE_EXTENSIONS = new Set(['.mjs', '.py', '.rb', '.sh', '.bash', '.zsh', '.fish', '.cjs', '.js', '.jsx', '.ts', '.mts', '.cts', '.tsx', '.ps1', '.cmd'])
 const NON_CODE_ASSET_EXTENSIONS = new Set(['.md', '.html', '.json'])
+const DECLARATION_SUFFIXES = ['.d.mts', '.d.ts', '.d.cts']
 const NODE_BUILTINS = new Set(builtinModules)
 const _RUNTIME_BACKEND_SUFFIX = /\.(?:mjs|py|rb|sh|bash|zsh|fish|cjs|js|jsx|ts|mts|cts|tsx|ps1|cmd)(?:\b|$)/
 const SHELL_FENCE_LANGUAGES = new Set(['bash', 'console', 'fish', 'sh', 'shell', 'shellscript', 'zsh'])
@@ -57,6 +58,11 @@ function extension(path: string): string {
   const basename = path.slice(path.lastIndexOf('/') + 1)
   const index = basename.lastIndexOf('.')
   return index < 0 ? '' : basename.slice(index)
+}
+
+function isDeclarationFile(path: string): boolean {
+  const basename = path.slice(path.lastIndexOf('/') + 1)
+  return DECLARATION_SUFFIXES.some((suffix) => basename.endsWith(suffix))
 }
 
 function compareRawStrings(left: string, right: string): number {
@@ -353,6 +359,7 @@ function commandText(fragment: string): string {
 
 function mentionsBackendCode(command: string, scriptBasenames: ReadonlySet<string>): boolean {
   if ([...scriptBasenames].some((basename) => command.includes(basename))) return true
+  if (/<resolved-[^<>]+>/.test(command)) return true
   if (!command.includes('/scripts/')) return false
   return command.includes('CLAUDE_PLUGIN_ROOT') || command.includes('PLUGIN_ROOT')
 }
@@ -379,12 +386,25 @@ function resolveScriptReference(scriptRoot: string, reference: string): string |
 }
 
 function canonicalInvocation(input: ValidateSkillRuntimeInput, skill: string, command: string): string | undefined {
+  // A bare `VAR="<resolved-name.mjs>"` declares the placeholder for later
+  // indirect use (e.g. `node "$VAR" start`); it is an assignment, not an
+  // executable position, so it carries the same `<resolved-...>` reference
+  // this function otherwise recognizes only as a `node` script argument —
+  // handle it directly rather than through the `node`-prefixed match below.
+  const assignment = command.match(/^[A-Z_][A-Z0-9_]*="<resolved-([^<>]+)>"$/)
+  if (assignment) {
+    const name = assignment[1]
+    return name === undefined || name === '' ? undefined : name
+  }
+
   const stripped = command
     .replace(/^[A-Z_][A-Z0-9_]*=\$\(/, '')
     .replace(/^(?:[A-Z_][A-Z0-9_]*=(?:"[^"]*"|'[^']*'|[^\s]*)[ \t]+)*/, '')
   const match = stripped.match(/^node[ \t]+(?:"([^"\r\n]+)"|'([^'\r\n]+)'|([^\s"'`]+))(?=$|[ \t])/)
   const script = match?.[1] ?? match?.[2] ?? match?.[3]
-  if (script === undefined || !script.endsWith('.mjs')) return undefined
+  const isMjsPath = script !== undefined && script.endsWith('.mjs')
+  const isResolvedPlaceholder = script !== undefined && /^<resolved-[^<>]+>$/.test(script)
+  if (!isMjsPath && !isResolvedPlaceholder) return undefined
   const fullPrefix = `\${CLAUDE_PLUGIN_ROOT}/${input.skillsRoot}/${skill}/scripts/`
   const shortPrefix = '$SKILL/'
   let reference: string | undefined
@@ -392,6 +412,17 @@ function canonicalInvocation(input: ValidateSkillRuntimeInput, skill: string, co
     reference = script.slice(fullPrefix.length)
   } else if (script.startsWith(shortPrefix)) {
     reference = script.slice(shortPrefix.length)
+  } else {
+    // The pre-existing harness-neutral convention: prose resolves
+    // `{resource:${skillsRoot}/${skill}/scripts/<name>.mjs}` relative to the
+    // loaded document (mint renders that macro as a checked relative link),
+    // then the invocation references the placeholder this yields,
+    // `<resolved-<name>.mjs>`, instead of a literal `${CLAUDE_PLUGIN_ROOT}`
+    // path. Canonical exactly when the name it carries is a real .mjs
+    // script in this skill's scripts/ directory — resolveScriptReference
+    // below still verifies that.
+    const placeholderMatch = script.match(/^<resolved-([^<>]+)>$/)
+    if (placeholderMatch?.[1] !== undefined) reference = placeholderMatch[1]
   }
   return reference === undefined || reference === '' ? undefined : reference
 }
@@ -428,7 +459,17 @@ function inspectMarkdown(
     }
 
     const resolved = resolveScriptReference(scriptRoot, reference)
-    if (resolved === undefined || !filePaths.has(resolved)) {
+    const resolvesInThisSkill = resolved !== undefined && filePaths.has(resolved)
+    // The resolved-placeholder convention's `{resource:...}` macro can point
+    // at another skill's scripts/ directory (writing-plans documenting
+    // subagent-driven-development's task-set.mjs, for example) — a bare
+    // basename reference that doesn't resolve within this skill still counts
+    // if it names a real .mjs script under some skill's scripts/ directory.
+    const resolvesInAnotherSkill =
+      !resolvesInThisSkill &&
+      !reference.includes('/') &&
+      [...filePaths].some((path) => path.startsWith(`${input.skillsRoot}/`) && path.endsWith(`/scripts/${reference}`))
+    if (!resolvesInThisSkill && !resolvesInAnotherSkill) {
       diagnostics.push(diagnostic(
         input,
         file,
@@ -471,6 +512,10 @@ export function validateSkillRuntime(input: ValidateSkillRuntimeInput): SkillRun
     const relative = skillRelativePath(file.path, input.skillsRoot)
     const skill = skillDirectory(file.path, input.skillsRoot)
     if (relative === undefined || skill === undefined || !skills.has(skill) || relative === 'SKILL.md' || relative.startsWith('examples/')) continue
+    // A .d.mts/.d.ts/.d.cts sibling carries type declarations only — it
+    // compiles to nothing and never executes, so it is not a runtime module
+    // and is exempt from the .mjs/scripts/ contract the way .md prose is.
+    if (isDeclarationFile(relative)) continue
 
     const fileExtension = extension(relative)
     const inScripts = relative.startsWith('scripts/')

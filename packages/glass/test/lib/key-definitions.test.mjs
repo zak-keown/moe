@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { describe, it } from 'vitest';
 
 const require = createRequire(import.meta.url);
-const { KEY_DEFINITIONS, charToKeyDef } = require('../../skills/browsing/lib/key-definitions.js');
+const { KEY_DEFINITIONS, charToKeyDef } = require('../../browsing-compat/lib/key-definitions.js');
 
 describe('key-definitions', () => {
   it('KEY_DEFINITIONS includes Tab, Enter, Escape with the expected key codes', () => {

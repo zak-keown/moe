@@ -102,9 +102,12 @@ git merge <feature-branch>
 <test command>
 ```
 
-If tests fail on the merged result: stop, leave the worktree and branch in
-place, and investigate — nothing has been pushed, so the merge is local
-and recoverable.
+If tests fail on the merged result, fix it before continuing — per
+`merge-discipline`, it does not matter whether the failing line is in your
+changeset, the base branch's, or predates both; merging made it yours to
+ship working. Nothing has been pushed, so the merge is local and
+recoverable while you fix it. Only stop and ask if the fix needs a
+judgment call your human partner has to make.
 
 Once the merged result is green: clean up the worktree (Step 6), then
 delete the branch:
@@ -222,6 +225,7 @@ place. If your platform provides a workspace-exit tool, use it.
 | "The MR is up, so the worktree is clutter now" | MR feedback gets fixed in that worktree. It stays until the work lands. |
 | "This other worktree looks stale — I'll clean it too" | Clean up only worktrees under `.moe/worktrees/`, `.worktrees/`, or `worktrees/`. Everything else belongs to the host. |
 | "Removal refused — `--force` is just finishing the cleanup" | The refusal means files exist only in that worktree. `--force` destroys them permanently. Show your human partner and ask. |
-| "The merged-result failure is probably flaky" | A failing merged result stops everything. Branch and worktree stay put while you investigate. |
+| "The merged-result failure is probably flaky" | A failing merged result stops everything. Branch and worktree stay put while you fix it. |
+| "That failure isn't in the commits I wrote" | Doesn't matter — see `merge-discipline`. You're the one merging, so you own the result. |
 | "The base branch is obviously main" | Confirm the fork point or ask. Merging into the wrong base is expensive to undo. |
 | "The push was rejected — force-push will fix it" | A rejected push means the remote moved. Investigate; force-push only on your human partner's explicit request. |

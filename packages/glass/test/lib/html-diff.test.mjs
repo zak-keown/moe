@@ -3,7 +3,7 @@ import { strict as assert } from 'node:assert';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { generateHtmlDiff } = require('../../skills/browsing/lib/html-diff.js');
+const { generateHtmlDiff } = require('../../browsing-compat/lib/html-diff.js');
 
 describe('generateHtmlDiff', () => {
   it('returns "(no changes detected)" for identical input', () => {

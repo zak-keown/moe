@@ -5,7 +5,7 @@ import { createServer as createNetServer } from 'node:net';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { WebSocketClient } = require('../../skills/browsing/lib/websocket-client.js');
+const { WebSocketClient } = require('../../browsing-compat/lib/websocket-client.js');
 
 // CR-066: connect() used to settle only from req.on('upgrade') (resolve) or
 // req.on('error') (reject) — no 'response' handler and no timeout. An

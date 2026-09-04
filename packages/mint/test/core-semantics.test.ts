@@ -118,14 +118,14 @@ describe('core semantic generation', () => {
     const canonical = readFileSync(join(CORE, 'skills', rel), 'utf8')
     const expected = [
       {
-        resource: 'skills/extracting-requirements/scripts/validate_requirements_index.py',
+        resource: 'skills/extracting-requirements/scripts/validate_requirements_index.mjs',
         command:
-          'python3 "<resolved-validate-requirements-index.py>" docs/moe/iterations/requirements/',
+          'node "<resolved-validate_requirements_index.mjs>" docs/moe/iterations/requirements/',
       },
       {
-        resource: 'skills/extracting-requirements/scripts/validate_scenarios.py',
+        resource: 'skills/extracting-requirements/scripts/validate_scenarios.mjs',
         command:
-          'python3 "<resolved-validate-scenarios.py>" docs/moe/iterations/behavior-scenarios.md docs/moe/iterations/requirements/',
+          'node "<resolved-validate_scenarios.mjs>" docs/moe/iterations/behavior-scenarios.md docs/moe/iterations/requirements/',
       },
     ] as const
 

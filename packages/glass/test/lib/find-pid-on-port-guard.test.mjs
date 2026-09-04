@@ -24,7 +24,7 @@ const require = createRequire(import.meta.url);
 // the function body, so the stub is picked up at call time. No real lsof or
 // netstat ever runs in these tests.
 
-const { findPidOnPort } = require('../../skills/browsing/lib/chrome-launcher-helpers.js');
+const { findPidOnPort } = require('../../browsing-compat/lib/chrome-launcher-helpers.js');
 
 const NETSTAT_LISTENING_9222 =
   '  TCP    127.0.0.1:9222      0.0.0.0:0      LISTENING      4321\r\n';

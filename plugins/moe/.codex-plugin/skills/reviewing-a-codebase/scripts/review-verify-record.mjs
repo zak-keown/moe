@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Record challenger verdicts into the ledger review-merge consumes.
 //
 // Hand-writing dozens of JSON entries is where a typo silently changes a

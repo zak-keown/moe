@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { JSDOM } from 'jsdom';
 
 const require = createRequire(import.meta.url);
-const { buildShimSource } = require('../../../skills/browsing/lib/page-scripts/permission-shim.js');
+const { buildShimSource } = require('../../../browsing-compat/lib/page-scripts/permission-shim.js');
 
 // Builds a jsdom window with a fake navigator.mediaDevices.getUserMedia,
 // evaluates the real shim source in it (runScripts:'dangerously' + eval is
