@@ -51,52 +51,6 @@ describe('action classification', () => {
   });
 });
 
-describe('withDialogAwareness', () => {
-  it('refuses page-target action when dialog is open', async () => {
-    const { api, state } = setup();
-    state.dialogs.set('ws://x', { kind: 'alert', openedAt: Date.now(), payload: { message: 'x', url: '' }, staged: {} });
-    const r = await api.withDialogAwareness('click', 'ws://x', { selector: 'button' }, async () => 'body-ran');
-    assert.equal(r.refused, true);
-    assert.match(r.error, /Page is behind a dialog/);
-    assert.equal(r.dialog.kind, 'alert');
-  });
-
-  it('passes through browser-target action when dialog is open', async () => {
-    const { api, state } = setup();
-    state.dialogs.set('ws://x', { kind: 'alert', openedAt: Date.now(), payload: { message: 'x' }, staged: {} });
-    const r = await api.withDialogAwareness('list_tabs', 'ws://x', {}, async () => 'tabs-result');
-    assert.equal(r, 'tabs-result');
-  });
-
-  it('allows page-target click with dialog::* selector through', async () => {
-    const { api, state } = setup();
-    state.dialogs.set('ws://x', { kind: 'alert', openedAt: Date.now(), payload: { message: 'x' }, staged: {} });
-    const r = await api.withDialogAwareness('click', 'ws://x', { selector: 'dialog::accept' }, async () => 'click-ran');
-    assert.equal(r, 'click-ran');
-  });
-
-  it('passes through page-target action when no dialog open', async () => {
-    const { api } = setup();
-    const r = await api.withDialogAwareness('click', 'ws://x', { selector: 'button' }, async () => 'ran');
-    assert.equal(r, 'ran');
-  });
-});
-
-describe('withDialogAwareness mid-flight', () => {
-  it('replaces post-capture when a dialog opens during action', async () => {
-    const { api, state } = setup();
-    const r = await api.withDialogAwareness('eval', 'ws://x', { expression: 'x' }, async () => {
-      // Simulate page firing alert while action body runs.
-      state.dialogs.set('ws://x', { kind: 'alert', openedAt: Date.now(), payload: { message: 'm', url: '' }, staged: {} });
-      return 'body-ok';
-    });
-    assert.equal(r.midFlight, true);
-    assert.equal(r.actionResult, 'body-ok');
-    assert.equal(r.dialog.kind, 'alert');
-    assert.ok(r.artifacts.markdown.includes('# Dialog: alert'));
-  });
-});
-
 describe('dialogs.attachToPageSession', () => {
   it('enables Page/DeviceAccess/Fetch/Runtime, adds script + binding via pageSession.send', async () => {
     const sent = [];

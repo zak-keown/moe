@@ -961,3 +961,132 @@ describe('chrome-process: startChrome readiness probe on an explicit port (CR-05
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// CR-047: killChrome's port-based fallback (state.chromeProcess unset, e.g.
+// after an adopted/reconnected Chrome) must verify that whatever currently
+// holds state.activePort actually looks like the Chrome we expect before
+// sending it SIGTERM. Without verification, a foreign process that grabbed
+// the same port after Chrome exited without updating meta.json gets killed
+// instead.
+// ---------------------------------------------------------------------------
+
+describe('chrome-process: killChrome port-based fallback verifies the pid before killing (CR-047)', () => {
+  const HELPERS_PATH = require.resolve('../../skills/browsing/lib/chrome-launcher-helpers.js');
+  const FOREIGN_PID = 55555;
+
+  function withFakeHelpers(fakeHelpers, testFn) {
+    const origHelpers = require.cache[HELPERS_PATH];
+    require.cache[HELPERS_PATH] = {
+      id: HELPERS_PATH, filename: HELPERS_PATH, loaded: true, exports: fakeHelpers,
+    };
+    delete require.cache[CHROME_PROCESS_PATH];
+    const { attachChromeProcess: fresh } = require(CHROME_PROCESS_PATH);
+    try {
+      return testFn(fresh);
+    } finally {
+      if (origHelpers) { require.cache[HELPERS_PATH] = origHelpers; }
+      else { delete require.cache[HELPERS_PATH]; }
+      delete require.cache[CHROME_PROCESS_PATH];
+      require(CHROME_PROCESS_PATH);
+    }
+  }
+
+  it('does not SIGTERM the pid on the port when isPortAlive cannot confirm it is our Chrome', async () => {
+    const fakeHelpers = {
+      readProfileMeta: () => null,
+      writeProfileMeta: () => {},
+      clearProfileMeta: () => {},
+      // The port has SOME listener, but it does not verify as our Chrome
+      // (wrong pid, no /json/version Browser field, whatever the reason).
+      isPortAlive: async () => false,
+      findAvailablePort: async () => { throw new Error('must not be called'); },
+      findPidOnPort: () => FOREIGN_PID,
+      findOrphanChromeForProfile: () => null,
+      buildChromeArgs: () => ['--fake'],
+      getChromeProfileDir: () => '/tmp/fake-profile-cr047',
+    };
+
+    await withFakeHelpers(fakeHelpers, async (fresh) => {
+      const state = {
+        hostOverride: { getHost: () => '127.0.0.1', getPort: () => 9222 },
+        activePort: 9222,
+        chromeHeadless: true,
+        chromeProcess: null, // adopted/reconnected — no owned handle
+        chromeProfileName: 'test-cr047',
+        chromeUserDataDir: null,
+      };
+      const { killChrome } = fresh({
+        state,
+        chromeHttp: async () => ({}),
+        getTabs: async () => [],
+        newTab: async () => ({}),
+      });
+
+      const killCalls = [];
+      const originalKill = process.kill;
+      process.kill = (pid, sig) => { killCalls.push([pid, sig]); };
+      try {
+        await killChrome();
+      } finally {
+        process.kill = originalKill;
+      }
+
+      assert.ok(
+        !killCalls.some(([pid]) => pid === FOREIGN_PID),
+        `killChrome must not SIGTERM an unverified pid; got calls: ${JSON.stringify(killCalls)}`
+      );
+    });
+  });
+
+  it('does SIGTERM the pid on the port once isPortAlive confirms it is our Chrome', async () => {
+    const REAL_PID = 66666;
+    const isPortAliveCalls = [];
+    const fakeHelpers = {
+      readProfileMeta: () => null,
+      writeProfileMeta: () => {},
+      clearProfileMeta: () => {},
+      isPortAlive: async (...args) => { isPortAliveCalls.push(args); return true; },
+      findAvailablePort: async () => { throw new Error('must not be called'); },
+      findPidOnPort: () => REAL_PID,
+      findOrphanChromeForProfile: () => null,
+      buildChromeArgs: () => ['--fake'],
+      getChromeProfileDir: () => '/tmp/fake-profile-cr047',
+    };
+
+    await withFakeHelpers(fakeHelpers, async (fresh) => {
+      const state = {
+        hostOverride: { getHost: () => '127.0.0.1', getPort: () => 9222 },
+        activePort: 9222,
+        chromeHeadless: true,
+        chromeProcess: null,
+        chromeProfileName: 'test-cr047-verified',
+        chromeUserDataDir: null,
+      };
+      const { killChrome } = fresh({
+        state,
+        chromeHttp: async () => ({}),
+        getTabs: async () => [],
+        newTab: async () => ({}),
+      });
+
+      const killCalls = [];
+      const originalKill = process.kill;
+      process.kill = (pid, sig) => { killCalls.push([pid, sig]); };
+      try {
+        await killChrome();
+      } finally {
+        process.kill = originalKill;
+      }
+
+      assert.ok(
+        killCalls.some(([pid, sig]) => pid === REAL_PID && sig === 'SIGTERM'),
+        `killChrome should SIGTERM the verified pid; got calls: ${JSON.stringify(killCalls)}`
+      );
+      assert.ok(
+        isPortAliveCalls.some(([, port, pid]) => port === 9222 && pid === REAL_PID),
+        'isPortAlive must be called with the candidate pid to verify it before killing'
+      );
+    });
+  });
+});
