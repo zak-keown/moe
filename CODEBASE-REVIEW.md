@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 4
+  fixed: 5
   stale: 1
   skipped: 0
   deferred: 0
-  open: 102
+  open: 101
 ---
 
 # Codebase Review — moe
@@ -2329,6 +2329,10 @@ present in some cell's window, or an LRU with a generous ceiling) so a
 dashboard left running across a large results/ history doesn't grow without
 limit.
 
+**Disposition:** fixed
+**Commit:** `88191150cfdd9da6b55d7230f6c649c5e6163679`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-076: `docs/credentials.md` duplicates its own "Username and password" section and links to a nonexistent path
 
 **File:** `packages/flight/docs/credentials.md`
