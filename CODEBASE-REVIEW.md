@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 2
+  fixed: 3
   stale: 1
   skipped: 0
   deferred: 0
-  open: 104
+  open: 103
 ---
 
 # Codebase Review — moe
@@ -1262,6 +1262,10 @@ unpriced latest run as "no drift signal available" rather than falling
 through to an older run), or make `cellCosts` and its caller agree on what
 "latest" means when the true latest entry is unpriced.
 
+**Disposition:** fixed
+**Commit:** `b8eab4be558e2e3d89097be6538fecefc1e7228f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-032: Page-script comments claim jsdom test coverage that does not exist in this package
 
 **File:** `packages/flight/src/qa/adapters/web/lib/page-scripts/dom-summary.js`
