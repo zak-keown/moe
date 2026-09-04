@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 2
+  fixed: 3
   stale: 0
   skipped: 0
   deferred: 0
-  open: 105
+  open: 104
 ---
 
 # Codebase Review — moe
@@ -1414,6 +1414,10 @@ The test wraps only the `require("../../../src/qa/adapters/web/lib/chrome-ws-lib
 
 Fix: check for a Chrome/Chromium binary the same way `hasTmux`/`hasNano` are checked in the TUI suites (`spawnSync(["which", "google-chrome"])`-style) and gate the whole `describe` on it, or wrap the `startChrome` calls the same way the other three web-e2e files intend to (once that helper is also fixed).
 
+**Disposition:** fixed
+**Commit:** `f6842488061aeba597c2f84f6daa7da9c027e26a`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-041: `isChromeUnavailable()` never matches the actual "Chrome not found" error, so `test:chrome` hard-fails instead of skipping when no browser is installed
 
 **File:** `packages/flight/test/qa/integration/helpers.ts`
