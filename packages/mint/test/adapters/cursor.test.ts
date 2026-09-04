@@ -96,12 +96,9 @@ describe('cursor adapter', () => {
     expect(runHookCmd?.content).toBe(claudeByPath['hooks/moe-mint/run-hook.cmd']?.content)
   })
 
-  it('warns about user hooks, commands, agents, and mcp not being translated/emitted', () => {
+  it('warns about user hooks not being translated, and reports no limitation for commands, agents, or mcp since all three are actually emitted', () => {
     expect(result.limitations.map((limitation) => limitation.message)).toEqual([
       'user hooks are not translated for cursor in v1',
-      'commands are not emitted for cursor in v1',
-      'agents are not emitted for cursor in v1',
-      'mcp servers are not emitted for cursor in v1',
     ])
   })
 
