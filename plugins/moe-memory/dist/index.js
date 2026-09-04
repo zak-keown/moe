@@ -2,6 +2,21 @@
 import { createRequire as __createRequire } from 'module';
 const require = __createRequire(import.meta.url);
 import {
+  RecoveryCapsuleError,
+  collectSnapshotSources,
+  createDatabaseSnapshot,
+  ensureRecoveryCapsule,
+  loadCatalog,
+  validateManifest,
+  validateSnapshotSources,
+  verifyRecoveryCapsule,
+  verifySnapshot
+} from "./chunks/chunk-XS7JIMFA.js";
+import {
+  parseConversation,
+  parseConversationFile
+} from "./chunks/chunk-NSDW7PUB.js";
+import {
   JOURNAL_SECTION_HEADINGS
 } from "./chunks/chunk-22YHH63V.js";
 import {
@@ -13,22 +28,11 @@ import {
   searchConversations,
   searchMultipleConcepts,
   vectorReadinessMessage
-} from "./chunks/chunk-HIE7CIAX.js";
-import {
-  RecoveryCapsuleError,
-  collectSnapshotSources,
-  createDatabaseSnapshot,
-  ensureRecoveryCapsule,
-  loadCatalog,
-  validateManifest,
-  validateSnapshotSources,
-  verifyRecoveryCapsule,
-  verifySnapshot
-} from "./chunks/chunk-DIF2OON7.js";
+} from "./chunks/chunk-ESBWE2AP.js";
 import {
   resolveInstalledPackageRoot
 } from "./chunks/chunk-RO2MBIC5.js";
-import "./chunks/chunk-QGTMUDP7.js";
+import "./chunks/chunk-TD4KRVGL.js";
 import {
   DatabaseBusyError,
   EMBEDDING_VERSION,
@@ -43,7 +47,7 @@ import {
   withDatabaseWriter,
   withForeignKeysDisabled,
   withTransaction
-} from "./chunks/chunk-LUAEQ7DI.js";
+} from "./chunks/chunk-X4QDSJ7Q.js";
 import {
   JOURNAL_DIR_NAME,
   findJsonlFiles,
@@ -62,15 +66,12 @@ import {
   resolveProjectJournalPath,
   resolveUserJournalPath
 } from "./chunks/chunk-YFLZKW2J.js";
+import "./chunks/chunk-OYWI4M6D.js";
 import {
   EMBEDDING_DIMENSIONS,
   SUMMARIZER_CONTEXT_MARKER
 } from "./chunks/chunk-NH4NDHAK.js";
 import "./chunks/chunk-YAXDOI5O.js";
-import {
-  parseConversation,
-  parseConversationFile
-} from "./chunks/chunk-NSDW7PUB.js";
 import "./chunks/chunk-XRZM5UX2.js";
 
 // src/embedding-coordinator.ts

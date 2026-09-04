@@ -4,10 +4,11 @@ const require = __createRequire(import.meta.url);
 import {
   countJournalEntries,
   initDatabase
-} from "./chunk-LUAEQ7DI.js";
+} from "./chunk-X4QDSJ7Q.js";
 import {
   getDbPath
 } from "./chunk-YFLZKW2J.js";
+import "./chunk-OYWI4M6D.js";
 import "./chunk-NH4NDHAK.js";
 import "./chunk-XRZM5UX2.js";
 

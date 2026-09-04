@@ -7,8 +7,9 @@ import {
 } from "./chunks/chunk-RO2MBIC5.js";
 import {
   setDefaultPackageRoot
-} from "./chunks/chunk-LUAEQ7DI.js";
+} from "./chunks/chunk-X4QDSJ7Q.js";
 import "./chunks/chunk-YFLZKW2J.js";
+import "./chunks/chunk-OYWI4M6D.js";
 import "./chunks/chunk-NH4NDHAK.js";
 import "./chunks/chunk-XRZM5UX2.js";
 
@@ -48,15 +49,15 @@ EXAMPLES:
 async function dispatch(command, args) {
   switch (command) {
     case "sync": {
-      const { runSync } = await import("./chunks/sync-cli-6ML6IFE5.js");
+      const { runSync } = await import("./chunks/sync-cli-RYHS7KOV.js");
       return runSync(args);
     }
     case "index": {
-      const { runIndex } = await import("./chunks/index-cli-ZDZFDSAF.js");
+      const { runIndex } = await import("./chunks/index-cli-UD7JLLQP.js");
       return runIndex(args);
     }
     case "search": {
-      const { runSearch } = await import("./chunks/search-cli-GIDO42TR.js");
+      const { runSearch } = await import("./chunks/search-cli-6E3U65FN.js");
       return runSearch(args);
     }
     case "show": {
@@ -64,11 +65,11 @@ async function dispatch(command, args) {
       return runShow(args);
     }
     case "stats": {
-      const { runStats } = await import("./chunks/stats-cli-2UYEULHA.js");
+      const { runStats } = await import("./chunks/stats-cli-Z5WVOPQM.js");
       return runStats(args);
     }
     case "journal": {
-      const { runJournal } = await import("./chunks/journal-cli-33KCO5K6.js");
+      const { runJournal } = await import("./chunks/journal-cli-HVKPG4AC.js");
       return runJournal(args);
     }
     case "doctor": {
@@ -76,11 +77,11 @@ async function dispatch(command, args) {
       return runDoctor(args);
     }
     case "rollback": {
-      const { runRollback } = await import("./chunks/rollback-cli-DPPYDCDB.js");
+      const { runRollback } = await import("./chunks/rollback-cli-DHNOUMU2.js");
       return runRollback(args);
     }
     case "mcp-server": {
-      const { runMemoryMcpServer } = await import("./chunks/mcp-server-UC7ZYGQU.js");
+      const { runMemoryMcpServer } = await import("./chunks/mcp-server-BFPW4CCT.js");
       await runMemoryMcpServer(args);
       return 0;
     }

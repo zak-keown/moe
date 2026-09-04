@@ -6,14 +6,14 @@ import {
 } from "./chunk-22YHH63V.js";
 import {
   generateEntryEmbedding
-} from "./chunk-QGTMUDP7.js";
+} from "./chunk-TD4KRVGL.js";
 import {
   EMBEDDING_VERSION,
   countJournalEntries,
   deleteJournalEntry,
   getJournalIndexState,
   upsertJournalEntry
-} from "./chunk-LUAEQ7DI.js";
+} from "./chunk-X4QDSJ7Q.js";
 import {
   resolveProjectJournalPath,
   resolveUserJournalPath

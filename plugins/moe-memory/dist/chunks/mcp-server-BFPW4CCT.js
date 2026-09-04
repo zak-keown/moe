@@ -7,24 +7,25 @@ import {
 } from "./chunk-BCQKWEPH.js";
 import {
   JournalSearchService
-} from "./chunk-6ABCQ4HT.js";
+} from "./chunk-TPANDLU7.js";
 import {
   JournalStore
-} from "./chunk-XXEPA7OF.js";
+} from "./chunk-XQQVRDY6.js";
 import "./chunk-22YHH63V.js";
 import {
   formatMultiConceptResults,
   formatResults,
   searchConversations,
   searchMultipleConcepts
-} from "./chunk-HIE7CIAX.js";
-import "./chunk-QGTMUDP7.js";
+} from "./chunk-ESBWE2AP.js";
+import "./chunk-TD4KRVGL.js";
 import {
   initDatabase,
   insertEdge,
   traceProvenance
-} from "./chunk-LUAEQ7DI.js";
+} from "./chunk-X4QDSJ7Q.js";
 import "./chunk-YFLZKW2J.js";
+import "./chunk-OYWI4M6D.js";
 import "./chunk-NH4NDHAK.js";
 import {
   VERSION

@@ -3,21 +3,24 @@ import { createRequire as __createRequire } from 'module';
 const require = __createRequire(import.meta.url);
 import {
   shouldSkipConversation
-} from "./chunk-PHC5G2NH.js";
+} from "./chunk-DWPDJ6LO.js";
 import {
   JournalStore
-} from "./chunk-XXEPA7OF.js";
+} from "./chunk-XQQVRDY6.js";
+import {
+  parseConversation
+} from "./chunk-NSDW7PUB.js";
 import "./chunk-22YHH63V.js";
 import {
   generateExchangeEmbedding,
   initEmbeddings
-} from "./chunk-QGTMUDP7.js";
+} from "./chunk-TD4KRVGL.js";
 import {
   getAllExchanges,
   getFileLastIndexed,
   initDatabase,
   insertExchange
-} from "./chunk-LUAEQ7DI.js";
+} from "./chunk-X4QDSJ7Q.js";
 import {
   findJsonlFiles,
   getArchiveDir,
@@ -25,6 +28,7 @@ import {
   getDbPath,
   getExcludedProjects
 } from "./chunk-YFLZKW2J.js";
+import "./chunk-OYWI4M6D.js";
 import {
   summarizeConversation
 } from "./chunk-EYIEB7RJ.js";
@@ -36,9 +40,6 @@ import {
   isErroredSentinel,
   shouldQueueForSummary
 } from "./chunk-YAXDOI5O.js";
-import {
-  parseConversation
-} from "./chunk-NSDW7PUB.js";
 import "./chunk-XRZM5UX2.js";
 
 // src/index-cli.ts
@@ -494,9 +495,9 @@ Skipping excluded project: ${project}`);
 }
 async function repairIndex(issues, options = {}) {
   console.log("Repairing index...");
-  const { initDatabase: initDatabase2, insertExchange: insertExchange2, deleteExchange } = await import("./db-MUTYZPUC.js");
+  const { initDatabase: initDatabase2, insertExchange: insertExchange2, deleteExchange } = await import("./db-SNCDV7GU.js");
   const { parseConversation: parseConversation2 } = await import("./parser-OZTBPBQF.js");
-  const { initEmbeddings: initEmbeddings2, generateExchangeEmbedding: generateExchangeEmbedding2 } = await import("./embeddings-5HWUD4V3.js");
+  const { initEmbeddings: initEmbeddings2, generateExchangeEmbedding: generateExchangeEmbedding2 } = await import("./embeddings-MIYVCACC.js");
   const { summarizeConversation: summarizeConversation2 } = await import("./summarizer-BEQGKIDK.js");
   const { formatErrorSentinel: formatErrorSentinel2 } = await import("./summary-sentinel-SZIFJFYT.js");
   const db = initDatabase2();

@@ -3,7 +3,7 @@ import { createRequire as __createRequire } from 'module';
 const require = __createRequire(import.meta.url);
 import {
   syncConversations
-} from "./chunk-PHC5G2NH.js";
+} from "./chunk-DWPDJ6LO.js";
 import {
   formatLogLine,
   getSyncLogPath
@@ -11,20 +11,22 @@ import {
 import {
   generateExchangeEmbedding,
   initEmbeddings
-} from "./chunk-QGTMUDP7.js";
+} from "./chunk-TD4KRVGL.js";
 import {
-  acquireFileLock,
   countStale,
   initDatabase,
-  readLockHolder,
-  releaseFileLock,
   runMigrationBatch
-} from "./chunk-LUAEQ7DI.js";
+} from "./chunk-X4QDSJ7Q.js";
 import {
   getArchiveDir,
   getConversationSourceDirs,
   getIndexDir
 } from "./chunk-YFLZKW2J.js";
+import {
+  acquireFileLock,
+  readLockHolder,
+  releaseFileLock
+} from "./chunk-OYWI4M6D.js";
 import {
   shouldSkipReentrantSync
 } from "./chunk-EYIEB7RJ.js";

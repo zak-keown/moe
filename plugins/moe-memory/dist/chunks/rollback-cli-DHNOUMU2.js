@@ -4,7 +4,7 @@ const require = __createRequire(import.meta.url);
 import {
   ensureRecoveryCapsule,
   verifySnapshot
-} from "./chunk-DIF2OON7.js";
+} from "./chunk-XS7JIMFA.js";
 import {
   RollbackStateError,
   acquireExclusiveMaintenanceLease,
@@ -16,11 +16,12 @@ import {
   readRollbackState,
   resolveNativeAsset,
   withTransaction
-} from "./chunk-LUAEQ7DI.js";
+} from "./chunk-X4QDSJ7Q.js";
 import {
   getDbPath,
   getMemoryDataDir
 } from "./chunk-YFLZKW2J.js";
+import "./chunk-OYWI4M6D.js";
 import "./chunk-NH4NDHAK.js";
 import "./chunk-XRZM5UX2.js";
 
