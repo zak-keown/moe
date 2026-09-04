@@ -134,4 +134,4 @@ This step is a hard gate. An iteration that leaves its own TODO markers in the c
 - `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md` — PAR methodology
 - `${CLAUDE_PLUGIN_ROOT}/skills/_shared/behavior-evidence-formats.md` — scenario and proof obligation formats
 - `scope-reviewer-prompt.md` — scope reviewer prompt template
-- `${CLAUDE_PLUGIN_ROOT}/skills/running-an-iteration/scripts/check_citations.mjs` — mechanical citation check
+- [check_citations.mjs](./scripts/check_citations.mjs) — mechanical citation check

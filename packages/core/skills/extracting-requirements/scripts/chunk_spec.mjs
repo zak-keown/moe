@@ -147,9 +147,26 @@ function help(program) {
   ].join("\n");
 }
 
+function unicodeDigitValue(ch) {
+  const cp = ch.codePointAt(0);
+  if (cp >= 0x30 && cp <= 0x39) return cp - 0x30;
+  for (let d = 0; d <= 9; d++) {
+    if (!/^\p{Nd}$/u.test(String.fromCodePoint(cp - d - 1))) return d;
+  }
+  return -1;
+}
+
 function parseTokenCount(value) {
-  if (!/^[-+]?\d+$/.test(value)) return null;
-  return Number(value);
+  if (!/^[-+]?\p{Nd}+$/u.test(value)) return null;
+  let result = 0;
+  let sign = 1;
+  let start = 0;
+  if (value[0] === "-") { sign = -1; start = 1; }
+  else if (value[0] === "+") { start = 1; }
+  for (const ch of Array.from(value).slice(start)) {
+    result = result * 10 + unicodeDigitValue(ch);
+  }
+  return sign * result;
 }
 
 function pathParts(path, separatorPattern) {

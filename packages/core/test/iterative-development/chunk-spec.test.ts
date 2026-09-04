@@ -366,6 +366,18 @@ describe("chunk_spec", () => {
     expect(chunks.map((chunk) => chunk.source_file)).toEqual([join(".", "only.md")]);
   });
 
+  it("accepts Unicode decimal digits in --max-tokens like Python argparse(type=int)", () => {
+    const root = tempDir("chunk-spec-unicode-decimal-");
+    writeFileSync(join(root, "spec.md"), "# Unicode\n\nContent.\n");
+
+    const result = run(join(root, "spec.md"), ["--max-tokens", "١٠٠٠"]);
+
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe("");
+    const chunks = JSON.parse(result.stdout) as Array<{ estimated_tokens: number }>;
+    expect(chunks).toHaveLength(1);
+  });
+
   it("preserves argparse empty, missing, and ambiguous option errors", () => {
     for (const [args, message] of [
       [["--max-tokens=", "missing.md"], "argument --max-tokens: invalid int value: ''"],

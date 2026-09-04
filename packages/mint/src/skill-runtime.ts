@@ -221,13 +221,14 @@ function inspectModule(
       if (moduleSource !== undefined) {
         inspectSource(moduleSource)
         if (moduleSource === 'node:child_process') {
-          const exportsShellExec = node.type === 'ExportAllDeclaration'
+          const shellCapableApis = new Set(['exec', 'execSync', 'spawn', 'spawnSync', 'execFile', 'execFileSync'])
+          const exportsShellCapable = node.type === 'ExportAllDeclaration'
             || (node.specifiers as AstNode[]).some((specifier) => {
               const exported = localName(specifier)
-              return exported === 'exec' || exported === 'execSync'
+              return exported !== undefined && shellCapableApis.has(exported)
             })
-          if (exportsShellExec) {
-            add('SKILL_RUNTIME_SHELL_EXEC', `runtime module "${file.path}" must not re-export child_process exec APIs`, 'Remove shell execution from the skill runtime module.')
+          if (exportsShellCapable) {
+            add('SKILL_RUNTIME_SHELL_EXEC', `runtime module "${file.path}" must not re-export child_process shell-capable APIs`, 'Remove shell execution from the skill runtime module.')
           }
         }
         if (moduleSource === 'node:module'
@@ -246,6 +247,9 @@ function inspectModule(
         inspectSource(moduleSource)
         if (moduleSource === 'node:child_process') {
           add('SKILL_RUNTIME_SHELL_EXEC', `runtime module "${file.path}" must not dynamically import child_process APIs`, 'Use a static child_process import whose shell behavior can be validated.')
+        }
+        if (moduleSource === 'node:module') {
+          add('SKILL_RUNTIME_COMMONJS', `runtime module "${file.path}" must not dynamically import node:module`, 'Use static or literal dynamic ESM imports instead.')
         }
       }
     }
@@ -348,9 +352,9 @@ function commandText(fragment: string): string {
 }
 
 function mentionsBackendCode(command: string, scriptBasenames: ReadonlySet<string>): boolean {
-  return command.includes('/scripts/')
-    || RUNTIME_BACKEND_SUFFIX.test(command)
-    || [...scriptBasenames].some((basename) => command.includes(basename))
+  if ([...scriptBasenames].some((basename) => command.includes(basename))) return true
+  if (!command.includes('/scripts/')) return false
+  return command.includes('CLAUDE_PLUGIN_ROOT') || command.includes('PLUGIN_ROOT')
 }
 
 function isInlineCommandCandidate(command: string): boolean {
