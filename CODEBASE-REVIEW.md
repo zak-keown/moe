@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 6
+  fixed: 7
   stale: 0
   skipped: 0
   deferred: 0
-  open: 101
+  open: 100
 ---
 
 # Codebase Review — moe
@@ -2081,6 +2081,10 @@ handling.
 
 Fix: `env["MOE_PROOF_PROMPT"] = str(task["prompt"])`.
 
+**Disposition:** fixed
+**Commit:** `f2abee6c6660045ab2531c5ed1312b62d83e4c60`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-066: A checker emitting a non-numeric `score` aborts the entire `grade` run with an unhandled ValueError
 
 **File:** `py/proof/src/moe_proof/cli.py`
