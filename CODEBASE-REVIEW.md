@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 6
+  fixed: 7
   stale: 0
   skipped: 0
   deferred: 0
-  open: 101
+  open: 100
 ---
 
 # Codebase Review — moe
@@ -2220,6 +2220,10 @@ assert on a specific diagnostic code. Wrap the `readdirSync` in
 `countImportedWorks`, pushing a `problems` entry (e.g. `"plugins/ directory
 not found"`) instead of throwing.
 
+**Disposition:** fixed
+**Commit:** `4e91a1b67957dfabad6bd5f9c0ffb41c0582813a`
+**Resolved:** 2026-09-04
+**Note:** —
 ## Low
 
 ### CR-070: Exported harness-registry order/duplicate validator is dead code
