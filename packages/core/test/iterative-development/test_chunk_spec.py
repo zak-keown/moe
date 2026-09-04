@@ -132,6 +132,53 @@ class TestChunkSpec(unittest.TestCase):
         finally:
             Path(tmp).unlink()
 
+    def test_duplicate_heading_shared_opening_gets_correct_line_range(self):
+        """Two ### subsections that share the same heading text and the same
+        opening 80 characters of content (e.g. a repeated boilerplate
+        sentence under a recurring '### Notes' heading) must each be
+        attributed to their own line range, not both to the first one's."""
+        shared_opening = (
+            "Refer to the shared appendix for full details on error "
+            "handling semantics here. "
+        )
+        filler = "word " * 800
+        section_a = (
+            "## Feature One\n\n" + filler + "\n\n"
+            "### Notes\n\n" + shared_opening + ("alpha " * 800) + "\n\n"
+        )
+        section_b = (
+            "## Feature Two\n\n" + filler + "\n\n"
+            "### Notes\n\n" + shared_opening + ("beta " * 800) + "\n\n"
+        )
+        content = "# Spec\n\n" + section_a + section_b
+
+        with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False) as f:
+            f.write(content)
+            tmp = f.name
+        try:
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), tmp, "--max-tokens", "500"],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            chunks = json.loads(result.stdout)
+            notes_chunks = [c for c in chunks if c["heading"] and c["heading"].endswith("Notes")]
+            self.assertEqual(len(notes_chunks), 2, f"expected 2 Notes chunks, got {notes_chunks}")
+
+            true_notes_lines = [
+                i + 1 for i, line in enumerate(content.splitlines()) if line.strip() == "### Notes"
+            ]
+            self.assertEqual(len(true_notes_lines), 2)
+
+            reported_starts = sorted(c["start_line"] for c in notes_chunks)
+            self.assertEqual(
+                reported_starts, true_notes_lines,
+                "the second '### Notes' section was misattributed to the first "
+                "section's line range instead of its own",
+            )
+        finally:
+            Path(tmp).unlink()
+
 
 if __name__ == "__main__":
     unittest.main()
