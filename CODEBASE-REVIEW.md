@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 6
+  fixed: 7
   stale: 0
   skipped: 0
   deferred: 0
-  open: 101
+  open: 100
 ---
 
 # Codebase Review — moe
@@ -1757,6 +1757,10 @@ field); `test-harness.js` alone kept the `.js` extension from the import and
 therefore hits both bugs. Fix: rename to `test-harness.cjs` (matching its
 siblings) in addition to fixing the relative require path.
 
+**Disposition:** fixed
+**Commit:** `b1ca215f8a0ddd1d75b25549cf0702f1b6fe0fdd`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-053: Manual Chrome test scripts require a relative path that only resolves from the package root, not from their own directory
 
 **File:** `packages/glass/test/manual/test-issue-18-pid.cjs`
