@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 3
+  fixed: 4
   stale: 0
   skipped: 0
   deferred: 0
-  open: 104
+  open: 103
 ---
 
 # Codebase Review — moe
@@ -1101,6 +1101,10 @@ The result: on a launch failure with `--worktree` set (a real, reachable conditi
 
 Fix: route every teardown path that might be tearing down a `--worktree` worker (the `awaitSessionStart` timeout branch, `launchDerive`'s no-session branch, and `cmdPrune`) through the same read-marker-then-`removeWorktree` sequence `cmdStop` already uses, or make `removeWorker`/`removeOrphan` themselves worktree-aware.
 
+**Disposition:** fixed
+**Commit:** `3df505d5636ed23e0f43f2e4e4b3c234015337c8`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-028: `ensureOwnedDir`'s create-path has a TOCTOU window that defeats its own symlink defense
 
 **File:** `packages/crew/src/core/worker-store.ts`
