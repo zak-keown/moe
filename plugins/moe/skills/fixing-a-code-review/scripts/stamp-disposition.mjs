@@ -10,6 +10,32 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 
 const DISPOSITIONS = ["fixed", "stale", "skipped", "deferred"];
 
+// A finding's own body can legitimately contain a fenced illustration of a
+// stamp block or a heading — e.g. a finding *about* this exact script
+// showing a realistic example of the bug it describes. Matching structural
+// patterns (heading search, disposition-duplicate check) against fenced
+// content mistakes that illustration for the real thing: the block-boundary
+// search can stop at a fenced heading and splice the stamp into the middle
+// of the example instead of appending it after the finding's real content,
+// and a fenced "**Disposition:**" example can trip the duplicate-stamp
+// refusal. Returns a copy of `text` with every character on a fenced
+// interior line replaced by a space — identical length and line count, so
+// indices found via regex on the masked copy stay valid against the
+// original — leaving fence markers and non-fenced lines untouched.
+function maskFencedLines(text) {
+  const lines = text.split("\n");
+  let inFence = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^\s*(```|~~~)/.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) lines[i] = " ".repeat(line.length);
+  }
+  return lines.join("\n");
+}
+
 const arg = (name, fallback) => {
   const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
   if (hit) return hit.slice(name.length + 3);
@@ -40,16 +66,21 @@ if (!raw.startsWith("---\n") || fmEnd === -1) die(`${file} has no frontmatter to
 let front = raw.slice(4, fmEnd);
 let body = raw.slice(fmEnd + 5);
 
-// Locate the finding's block: its heading up to the next heading of any level.
-const head = new RegExp(`^###\\s+${id}:.*$`, "m").exec(body);
+// Locate the finding's block: its heading up to the next heading of any
+// level. Matched against the fence-masked copy so a fenced illustration of
+// a heading can't be mistaken for the real next finding.
+const maskedBody = maskFencedLines(body);
+const head = new RegExp(`^###\\s+${id}:.*$`, "m").exec(maskedBody);
 if (!head) die(`${id} not found in ${file}`);
 const start = head.index;
-const rest = body.slice(start + head[0].length);
-const nextRel = rest.search(/^#{2,3}\s+/m);
+const maskedRest = maskedBody.slice(start + head[0].length);
+const nextRel = maskedRest.search(/^#{2,3}\s+/m);
 const end = nextRel === -1 ? body.length : start + head[0].length + nextRel;
 
 let block = body.slice(start, end).replace(/\n*$/, "");
-if (/^\*\*Disposition:\*\*/m.test(block)) {
+// Checked against the masked block too, so a fenced "**Disposition:**"
+// example doesn't trip a false "already stamped" refusal.
+if (/^\*\*Disposition:\*\*/m.test(maskedBody.slice(start, end))) {
   die(`${id} already has a disposition — refusing to stamp it twice`);
 }
 
@@ -65,9 +96,12 @@ const stamp = [
 
 body = body.slice(0, start) + block + stamp + body.slice(end);
 
-// Refresh the counts from what is actually stamped, never from a running total.
+// Refresh the counts from what is actually stamped, never from a running
+// total. Tallied against a freshly fence-masked copy of the updated body so
+// a fenced illustration of a stamp (e.g. this exact finding's own example)
+// isn't counted as a real disposition.
 const tally = Object.fromEntries(DISPOSITIONS.map((d) => [d, 0]));
-for (const m of body.matchAll(/^\*\*Disposition:\*\*\s*(\w+)/gm)) {
+for (const m of maskFencedLines(body).matchAll(/^\*\*Disposition:\*\*\s*(\w+)/gm)) {
   if (Object.hasOwn(tally, m[1])) tally[m[1]] += 1;
 }
 const total = (front.match(/^\s+total:\s*(\d+)/m) || [])[1];
