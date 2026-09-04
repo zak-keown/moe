@@ -426,8 +426,6 @@ const X_BIT_ALLOWLIST = [
   "hooks/jig-worktree-guard",
   "hooks/developing-for-moe-notice",
   "hooks/jig-review-format-guard",
-  "skills/brainstorming/scripts/start-server.sh",
-  "skills/brainstorming/scripts/stop-server.sh",
 ];
 
 // Everything Zone-A discovery walks: the skills tree and the hooks directory,
@@ -568,10 +566,7 @@ describe("runtime paths", () => {
     // shebangs.
     expect(bash.length, "bash targets discovered").toBeGreaterThanOrEqual(6);
     expect(node.length, "node targets discovered").toBeGreaterThanOrEqual(7);
-    for (const rel of [
-      "hooks/claude-judge-continuation",
-      "hooks/plan-set-notice",
-    ]) {
+    for (const rel of ["hooks/claude-judge-continuation", "hooks/plan-set-notice"]) {
       // The extensionless bash scripts. If the shebang read regresses, these
       // vanish silently and the floor above could still be met by .sh files
       // alone.
@@ -931,7 +926,7 @@ describe("the skill registry", () => {
 
 describe("fork invariants", () => {
   it("sends no telemetry from the brainstorming companion", () => {
-    const src = readFileSync(join(PKG, "skills/brainstorming/scripts/server.cjs"), "utf8");
+    const src = readFileSync(join(PKG, "skills/brainstorming/scripts/server.mjs"), "utf8");
     // Upstream injected <img src="https://primeradiant.com/brand/...?v=<version>">
     // into every served page, opt-out only. Removed, not rebranded.
     expect(src).not.toContain("https://primeradiant.com");

@@ -17,7 +17,7 @@ without carrying two branches of prose per skill.
    Artifact tool. The user sees it inline in their client; the URL is
    private-by-default (see [Sharing default](#sharing-default) below).
 2. **Browser companion** — the in-repo brainstorm server
-   (`${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/scripts/start-server.sh`)
+   (`${CLAUDE_PLUGIN_ROOT}/skills/brainstorming/scripts/start-server.mjs`)
    watches a session directory and serves HTML to the user's browser.
    Available whenever `node` is on PATH and the sandbox lets us bind a
    port.
