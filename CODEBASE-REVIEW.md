@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 8
+  fixed: 9
   stale: 0
   skipped: 0
   deferred: 0
-  open: 99
+  open: 98
 ---
 
 # Codebase Review — moe
@@ -2301,6 +2301,10 @@ always skip empty groups — for all four severities.
 
 The repo root `AGENTS.md`'s "Guarded surfaces" section names this test by exact title for cite-by-name purposes: `"the pinned imported-set literal in \"pins the IMPORTED skill set at exactly 31\""`. The actual test in this file (run; it passes) is titled `"pins the IMPORTED skill set at exactly 32"` and asserts `expect(Object.keys(imported).length).toBe(32)`. A skill was added to `imported:` (mattpocock-skills, per the test's own comment) after `AGENTS.md`'s guarded-surfaces list was last updated, and the citation was never bumped. AGENTS.md's whole point for this section is that an agent can grep for the quoted title to find the guarded literal without a line number; that grep now fails. This is a documentation-drift issue only — the test itself is correct and enforced — but it defeats the citation mechanism AGENTS.md relies on. Fix: update AGENTS.md's citation from "31" to "32".
 
+**Disposition:** fixed
+**Commit:** `905a5c2b0b0dabb5e292a3fa0f375783265f6ad6`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-074: `removeWorktree`'s comment promises to "let the caller know" on real failure but the function cannot
 
 **File:** `packages/crew/src/core/worktree.ts`
