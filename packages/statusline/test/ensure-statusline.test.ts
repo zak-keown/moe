@@ -155,10 +155,11 @@ describe("packed SessionStart command", () => {
       ...envOverrides,
     };
     if (envOverrides.PLUGIN_ROOT === undefined) delete env.PLUGIN_ROOT;
+    const needsInput = envOverrides.PLUGIN_ROOT === undefined;
     return spawnSync("bash", ["-c", command], {
       cwd: commandDir,
       env,
-      input: '{"hook_event_name":"SessionStart","source":"startup"}\n',
+      ...(needsInput ? { input: '{"hook_event_name":"SessionStart","source":"startup"}\n' } : { stdio: ["ignore", "pipe", "pipe"] }),
       encoding: "utf8",
     });
   }
