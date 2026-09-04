@@ -239,3 +239,42 @@ export function backlogDecline(id: string, opts: { reason: string; note?: string
   if (opts.note) item.body = writeResume(item.body, { note: opts.note, next: "—" });
   return persist(dir, name, item, opts.cwd);
 }
+
+const TERMINAL: BacklogStatus[] = ["done", "declined"];
+
+export interface ListOpts {
+  cwd?: string; status?: BacklogStatus; source?: string; severity?: Severity; tag?: string;
+}
+
+function loadAll(cwd?: string): BacklogItem[] {
+  const dir = backlogDir(cwd);
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((f) => f.endsWith(".md"))
+    .sort()
+    .map((f) => parseItem(readFileSync(join(dir, f), "utf-8")));
+}
+
+export function backlogList(opts: ListOpts = {}): BacklogItem[] {
+  return loadAll(opts.cwd).filter((i) => {
+    if (opts.status) return i.status === opts.status;
+    if (TERMINAL.includes(i.status)) return false;
+    if (opts.source && i.source !== opts.source) return false;
+    if (opts.severity && i.severity !== opts.severity) return false;
+    if (opts.tag && !i.tags.includes(opts.tag)) return false;
+    return true;
+  });
+}
+
+export function backlogTriage(opts: { cwd?: string } = {}): BacklogItem[] {
+  return loadAll(opts.cwd).filter((i) => i.status === "needs-triage");
+}
+
+export function backlogShow(id: string, opts: { cwd?: string } = {}): string {
+  const { dir, name } = loadItem(opts.cwd, id);
+  return readFileSync(join(dir, name), "utf-8");
+}
+
+export function formatLine(item: BacklogItem): string {
+  return `${item.id}  ${item.status.padEnd(12)}  ${item.severity.padEnd(8)}  ${item.title}`;
+}

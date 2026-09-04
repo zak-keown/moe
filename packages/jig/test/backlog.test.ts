@@ -198,3 +198,35 @@ describe("transitions", () => {
     expect(sha).not.toBe("abc1234");
   });
 });
+
+describe("read surface", () => {
+  let repo: string;
+  beforeEach(() => { repo = makeRepo(); });
+  afterEach(() => { rmSync(repo, { recursive: true, force: true }); });
+
+  it("list AND-filters and hides terminal items by default", async () => {
+    const { backlogAdd, backlogDone, backlogList } = await import("../src/backlog.js");
+    backlogAdd("keep me", { cwd: repo, severity: "high", tags: ["tab"] });
+    backlogAdd("done one", { cwd: repo });
+    backlogDone("BL-0002", { cwd: repo });
+    const open = backlogList({ cwd: repo });
+    expect(open.map((i) => i.id)).toEqual(["BL-0001"]); // done hidden
+    expect(backlogList({ cwd: repo, tag: "tab", severity: "high" }).map((i) => i.id)).toEqual(["BL-0001"]);
+    expect(backlogList({ cwd: repo, tag: "nope" })).toEqual([]);
+    expect(backlogList({ cwd: repo, status: "done" }).map((i) => i.id)).toEqual(["BL-0002"]);
+  });
+
+  it("triage lists only needs-triage items", async () => {
+    const { backlogAdd, backlogDefer, backlogTriage } = await import("../src/backlog.js");
+    backlogAdd("triage me", { cwd: repo });
+    backlogDefer("BL-0001", { reason: "mystery", cwd: repo });
+    backlogAdd("fine", { cwd: repo });
+    expect(backlogTriage({ cwd: repo }).map((i) => i.id)).toEqual(["BL-0001"]);
+  });
+
+  it("show returns the full item text", async () => {
+    const { backlogAdd, backlogShow } = await import("../src/backlog.js");
+    backlogAdd("show me", { cwd: repo });
+    expect(backlogShow("BL-0001", { cwd: repo })).toContain("id: BL-0001");
+  });
+});
