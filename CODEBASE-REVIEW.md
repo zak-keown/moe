@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 4
+  fixed: 5
   stale: 0
   skipped: 0
   deferred: 0
-  open: 103
+  open: 102
 ---
 
 # Codebase Review — moe
@@ -2707,6 +2707,10 @@ dead map (and consider deleting `buildTarballChecksumRows`/`validateChecksumFile
 if truly unused) rather than leaving a plausible-looking but broken
 computation next to the correct one.
 
+**Disposition:** fixed
+**Commit:** `4e36913b5877e65180b4aaaf8c0d67e58e2b3c02`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-101: `computeResumeActions` treats an unobserved draft-asset hash as a match, not as "unknown"
 
 **File:** `packages/mint/src/release/recovery.ts`
