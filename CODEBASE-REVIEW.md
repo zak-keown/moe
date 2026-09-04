@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 7
+  fixed: 8
   stale: 0
   skipped: 0
   deferred: 0
-  open: 100
+  open: 99
 ---
 
 # Codebase Review — moe
@@ -2675,6 +2675,10 @@ The test's own comment admits it: "This test would need a fixture with malformed
 
 The test body is `expect(markdown).toBeTruthy()` on the same fixture used by five other tests in the file, with a comment admitting "For now we test the structure - will need a fixture with sidechains later." `toBeTruthy()` on a non-empty markdown string is guaranteed to pass regardless of whether sidechain rendering logic exists, is correct, or is deleted entirely. I grepped `packages/memory/test/` and found no fixture or test elsewhere that exercises `isSidechain: true` content through `formatConversationAsMarkdown`/`formatConversationAsHTML`. This means sidechain formatting in `show.ts` has no regression coverage anywhere in the suite despite a test that reads as if it provides some. Fix: add a fixture line with `isSidechain: true` and assert on the specific rendering (e.g., a sidechain marker/heading), or remove the test rather than leave a false signal of coverage.
 
+**Disposition:** fixed
+**Commit:** `6c4ad266ee27bc7f9e2bdea6844023dc59d76717`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-100: Dead code computes SHA-512 of an empty string instead of the tarball's actual digest
 
 **File:** `packages/mint/src/release/candidate.ts`
