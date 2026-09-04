@@ -45,7 +45,7 @@ identical regardless of which binary you're connecting to.
 
 ## For moe-glass
 
-`lib/chrome-process.js` looks for the standard Chrome binary (
+`scripts/lib/chrome-process.mjs` looks for the standard Chrome binary (
 `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome` on macOS,
 `/usr/bin/google-chrome` on Linux, etc.) and passes `--headless=new`. That is
 correct for 2026. A maintainer running in a minimal container who wants the shell

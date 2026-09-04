@@ -1,10 +1,7 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
-const { createSession } = require('../skills/browsing/chrome-ws-lib.js');
-const { createOverride } = require('../skills/browsing/host-override.js');
+import { createSession } from '../skills/browsing/scripts/chrome-ws-lib.mjs';
+import { createOverride } from '../skills/browsing/scripts/host-override.mjs';
 
 // Regression gate for the createSession() / createOverride() factories.
 //

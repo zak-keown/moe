@@ -1,9 +1,6 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
-const { generateHtmlDiff } = require('../../skills/browsing/lib/html-diff.js');
+import { generateHtmlDiff } from '../../skills/browsing/scripts/lib/html-diff.mjs';
 
 describe('generateHtmlDiff', () => {
   it('returns "(no changes detected)" for identical input', () => {

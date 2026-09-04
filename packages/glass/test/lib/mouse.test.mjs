@@ -1,11 +1,8 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
-import { createRequire } from 'node:module';
 import { JSDOM } from 'jsdom';
 import { makePageSessionFake } from './_helpers.mjs';
-
-const require = createRequire(import.meta.url);
-const { attachMouse } = require('../../skills/browsing/lib/mouse.js');
+import { attachMouse } from '../../skills/browsing/scripts/lib/mouse.mjs';
 
 // A page session whose Runtime.evaluate actually RUNS the given expression
 // against a real jsdom document, instead of returning a canned fixture.

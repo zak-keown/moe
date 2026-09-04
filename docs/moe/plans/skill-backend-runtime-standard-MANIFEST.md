@@ -17,23 +17,28 @@ plans:
   - id: runtime-validator
     plan: docs/moe/plans/2026-09-03-skill-runtime-01-validator.md
     depends_on: []
-    status: pending
+    status: done
+    commits: dee3ed9..6221ce1
   - id: core-data
     plan: docs/moe/plans/2026-09-03-skill-runtime-02-core-data.md
     depends_on: [runtime-validator]
-    status: pending
+    status: done
+    commits: 3e86cd2..952a747
   - id: core-process
     plan: docs/moe/plans/2026-09-03-skill-runtime-03-core-process.md
     depends_on: [core-data]
-    status: pending
+    status: done
+    commits: b87d2df..2be92e3
   - id: glass-esm
     plan: docs/moe/plans/2026-09-03-skill-runtime-04-glass.md
     depends_on: [core-process]
-    status: pending
+    status: done
+    commits: 28bbe71..518a544
   - id: enforcement-activation
     plan: docs/moe/plans/2026-09-03-skill-runtime-05-activation.md
     depends_on: [glass-esm]
-    status: pending
+    status: done
+    commits: 51f74fe..18379ef
 ```
 
 The plan set is complete only when the Mint assembly and live-repository gates

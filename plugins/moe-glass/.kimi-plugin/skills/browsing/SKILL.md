@@ -448,10 +448,10 @@ Best for: Multi-step test suites, standalone automation scripts
 
 ```bash
 # Example: Automated form testing
-./chrome-ws navigate 0 "https://app.com/form"
-./chrome-ws fill 0 "#email" "test@example.com"
-./chrome-ws click 0 "button[type=submit]"
-./chrome-ws wait-text 0 "Success"
+node "${CLAUDE_PLUGIN_ROOT}/skills/browsing/scripts/chrome-ws.mjs" navigate 0 "https://app.com/form"
+node "${CLAUDE_PLUGIN_ROOT}/skills/browsing/scripts/chrome-ws.mjs" fill 0 "#email" "test@example.com"
+node "${CLAUDE_PLUGIN_ROOT}/skills/browsing/scripts/chrome-ws.mjs" click 0 "button[type=submit]"
+node "${CLAUDE_PLUGIN_ROOT}/skills/browsing/scripts/chrome-ws.mjs" wait-text 0 "Success"
 ```
 
 ### When use_browser Fails

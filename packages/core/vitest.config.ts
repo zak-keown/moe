@@ -8,19 +8,19 @@ import { defineConfig } from "vitest/config";
 // keeps its bit, and every skill has a recorded rationale. That is what
 // test/metadata.test.ts asserts.
 //
-// The four suites that are NOT in this project, and why:
-//   test/iterative-development/  37 Python unittest tests covering the 9 skill
-//                                CLIs. `pnpm test:python`; needs python3.
-//   test/brainstorm-server/      3,000 lines of upstream node:assert + `ws`
-//                                suites that spawn real servers on fixed ports.
+// The three suites that are NOT in this project, and why:
+//   test/iterative-development/test_skill_validator.py
+//                                six repo-only tests for the unshipped Python
+//                                skill validator. `pnpm test:python`.
+//   test/brainstorm-server/      upstream node:assert + `ws` suites that spawn
+//                                real servers on fixed ports.
 //                                `pnpm test:brainstorm`.
-//   test/shell/                  two bash suites; test-render-graphs.sh needs
-//                                graphviz. `pnpm test:shell`.
 //   test/latte/                  65 conversation scenarios x 5 runs = 325
 //                                authenticated model calls. `pnpm latte:evals`,
 //                                never in CI.
 export default defineConfig({
   test: {
-    include: ["test/*.test.ts"],
+    include: ["test/**/*.test.ts"],
+    pool: "forks",
   },
 });

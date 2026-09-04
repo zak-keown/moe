@@ -31,10 +31,8 @@
 //   - Bootstrap injection mechanism (system prompt? config? first-message?)
 //   - Whether skills are loaded as markdown or via a different mechanism
 //
-// Until the unknowns above are resolved, emit() returns no files and a
-// warning. The support matrix is conservatively set to 'none' for every
-// component except skills (set to 'partial' — directory-based loading is
-// a reasonable assumption, but unverified).
+// Until the unknowns above are resolved, emit() returns no files, limitations,
+// or capability claims.
 // ──────────────────────────────────────────────────────────────────────
 
 import type { PluginModel } from '../model.js'

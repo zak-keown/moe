@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Enumerate, exclude, group and shard a repository for review.
 //
 // Deterministic on purpose. Three baseline runs asked to count "source files"
@@ -12,9 +11,11 @@ import {
   lstatSync,
   mkdirSync,
   openSync,
+  realpathSync,
   writeFileSync,
 } from "node:fs";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const CODE = ["ts", "tsx", "js", "mjs", "cjs", "py", "rs", "go", "rb", "java", "cs"];
 const DEPTH_EXTS = {
@@ -57,6 +58,7 @@ const arg = (name, fallback) => {
   return i !== -1 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
 };
 
+export function main() {
 const depth = arg("depth", "medium");
 if (!Object.hasOwn(DEPTH_EXTS, depth)) {
   process.stderr.write(`review-scope: unknown depth "${depth}" (shallow|medium|deep)\n`);
@@ -240,3 +242,7 @@ process.stdout.write(
   `${shards.length} shard(s) across ${groups.size} group(s); ` +
     `denominator ${selected.length} at depth ${depth}, base ${sha}.\n`,
 );
+}
+
+const modulePath = fileURLToPath(import.meta.url);
+if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(modulePath)) main();

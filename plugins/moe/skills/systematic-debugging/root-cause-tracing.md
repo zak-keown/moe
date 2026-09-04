@@ -98,11 +98,10 @@ npm test 2>&1 | grep 'DEBUG git init'
 
 If something appears during tests but you don't know which test:
 
-Resolve [skills/systematic-debugging/find-polluter.sh](find-polluter.sh) relative to this
-loaded document and use that bisection script:
+Use the bisection script this skill ships:
 
 ```bash
-"<resolved-find-polluter.sh>" '.git' 'src/**/*.test.ts'
+node "${CLAUDE_PLUGIN_ROOT}/skills/systematic-debugging/scripts/find-polluter.mjs" '.git' 'src/**/*.test.ts'
 ```
 
 Runs tests one-by-one, stops at first polluter. See script for usage.

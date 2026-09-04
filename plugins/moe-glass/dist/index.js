@@ -21555,7 +21555,7 @@ function resolveTypeOptions(p) {
 var __filename = fileURLToPath(import.meta.url);
 var __dirname = dirname(__filename);
 var require2 = createRequire(import.meta.url);
-var chromeLib = require2(join(__dirname, "../skills/browsing/chrome-ws-lib.js")).createSession();
+var chromeLib = require2(join(__dirname, "../skills/browsing/scripts/chrome-ws-lib.mjs")).createSession();
 var SERVER_VERSION = require2(join(__dirname, "../package.json")).version;
 function hasDisplay() {
   const platform = process.platform;

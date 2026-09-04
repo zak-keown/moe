@@ -5,6 +5,7 @@ import { EventEmitter } from 'node:events';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { attachChromeProcess } from '../../skills/browsing/scripts/lib/chrome-process.mjs';
 
 // Several tests here run killChrome/startChrome against the REAL meta/lock
 // helpers with the real default profile name — without this, they delete
@@ -13,8 +14,8 @@ import { join } from 'node:path';
 // isolates every profile-meta and lock path this process touches.
 process.env.XDG_CACHE_HOME = mkdtempSync(join(tmpdir(), 'chrome-process-test-'));
 
+// CJS require kept for tests that use require.cache injection to stub deps.
 const require = createRequire(import.meta.url);
-const { attachChromeProcess } = require('../../skills/browsing/lib/chrome-process.js');
 
 function setup() {
   const state = {
@@ -247,7 +248,7 @@ describe('chrome-process: killChrome calls state.resetBridge()', () => {
 // Bug-fix regression tests
 // ---------------------------------------------------------------------------
 
-const CHROME_PROCESS_PATH = require.resolve('../../skills/browsing/lib/chrome-process.js');
+const CHROME_PROCESS_PATH = require.resolve('../../browsing-compat/lib/chrome-process.js');
 
 // Build a fake EventEmitter-based proc that can emit 'exit' on demand.
 function makeFakeProc({ pid = 99999 } = {}) {
@@ -309,7 +310,7 @@ describe('chrome-process: Bug 1b — startChrome clears chromeProcess on readine
   // It self-skips when Chrome is not installed (binary discovery happens
   // inside the module before spawn is called).
 
-  const HELPERS_PATH = require.resolve('../../skills/browsing/lib/chrome-launcher-helpers.js');
+  const HELPERS_PATH = require.resolve('../../browsing-compat/lib/chrome-launcher-helpers.js');
 
   function withFakeModules(_fakeProc, testFn) {
     const origHelpers = require.cache[HELPERS_PATH];
@@ -548,10 +549,10 @@ describe('chrome-process: profile-lock auto-disambiguation', () => {
       process.env.XDG_CACHE_HOME = tmpRoot;
       // Force re-require so lib/profile-lock and chrome-launcher-helpers see the new env.
       const r = createRequire(import.meta.url);
-      delete r.cache[r.resolve('../../skills/browsing/lib/profile-lock.js')];
-      delete r.cache[r.resolve('../../skills/browsing/lib/chrome-launcher-helpers.js')];
-      delete r.cache[r.resolve('../../skills/browsing/lib/chrome-process.js')];
-      _attachChromeProcess = r('../../skills/browsing/lib/chrome-process.js').attachChromeProcess;
+      delete r.cache[r.resolve('../../browsing-compat/lib/profile-lock.js')];
+      delete r.cache[r.resolve('../../browsing-compat/lib/chrome-launcher-helpers.js')];
+      delete r.cache[r.resolve('../../browsing-compat/lib/chrome-process.js')];
+      _attachChromeProcess = r('../../browsing-compat/lib/chrome-process.js').attachChromeProcess;
 
       try {
         await fn();
@@ -570,7 +571,7 @@ describe('chrome-process: profile-lock auto-disambiguation', () => {
     // would try to spawn real Chrome — but the integration we care about
     // (does the bridge select the right profile name?) lives in the lock
     // module, which is what this asserts.
-    const lock = require('../../skills/browsing/lib/profile-lock.js');
+    const lock = require('../../browsing-compat/lib/profile-lock.js');
     const r = lock.acquireWithFallback('moe-glass');
     assert.equal(r.profileName, 'moe-glass');
     assert.equal(r.slot, 1);
@@ -580,7 +581,7 @@ describe('chrome-process: profile-lock auto-disambiguation', () => {
   }));
 
   it('second session falls through to -2 when base is held', withTmpXdg(async () => {
-    const lock = require('../../skills/browsing/lib/profile-lock.js');
+    const lock = require('../../browsing-compat/lib/profile-lock.js');
     // First session takes the base.
     const first = lock.acquireWithFallback('moe-glass');
     assert.equal(first.profileName, 'moe-glass');
@@ -679,7 +680,7 @@ describe('chrome-process: getBrowserMode for adopted Chrome', () => {
 // ---------------------------------------------------------------------------
 
 describe('chrome-process: spawn failure surfaces as an error, not a crash', () => {
-  const HELPERS_PATH = require.resolve('../../skills/browsing/lib/chrome-launcher-helpers.js');
+  const HELPERS_PATH = require.resolve('../../browsing-compat/lib/chrome-launcher-helpers.js');
 
   it('startChrome rejects when the spawned proc emits error', async () => {
     const origHelpers = require.cache[HELPERS_PATH];
@@ -761,7 +762,7 @@ describe('chrome-process: spawn failure surfaces as an error, not a crash', () =
 // ---------------------------------------------------------------------------
 
 describe('chrome-process: CHROME_WS_BROWSER overrides binary auto-detection', () => {
-  const HELPERS_PATH = require.resolve('../../skills/browsing/lib/chrome-launcher-helpers.js');
+  const HELPERS_PATH = require.resolve('../../browsing-compat/lib/chrome-launcher-helpers.js');
 
   // Runs startChrome with fake helpers and a spawn stub that records the
   // binary path and flips isPortAlive to true so the readiness poll returns
@@ -879,7 +880,7 @@ describe('chrome-process: CHROME_WS_BROWSER overrides binary auto-detection', ()
 // ---------------------------------------------------------------------------
 
 describe('chrome-process: startChrome readiness probe on an explicit port (CR-057)', () => {
-  const HELPERS_PATH = require.resolve('../../skills/browsing/lib/chrome-launcher-helpers.js');
+  const HELPERS_PATH = require.resolve('../../browsing-compat/lib/chrome-launcher-helpers.js');
   const EXPLICIT_PORT = 19222;
   const SPAWNED_PID = 424242;
 

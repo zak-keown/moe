@@ -27,6 +27,11 @@
       "tailwindDirectives": true
     }
   },
+  "html": {
+    "parser": {
+      "interpolation": true
+    }
+  },
   "linter": {
     "enabled": true,
     "rules": {

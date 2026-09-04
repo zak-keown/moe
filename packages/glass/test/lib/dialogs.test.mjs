@@ -1,9 +1,6 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
-const { attachDialogs } = require('../../skills/browsing/lib/dialogs.js');
+import { attachDialogs, PAGE_TARGET_ACTIONS, BROWSER_TARGET_ACTIONS } from '../../skills/browsing/scripts/lib/dialogs.mjs';
 
 function setup() {
   const state = {};
@@ -26,7 +23,6 @@ describe('dialogs state map', () => {
 
 
 describe('action classification', () => {
-  const { PAGE_TARGET_ACTIONS, BROWSER_TARGET_ACTIONS } = require('../../skills/browsing/lib/dialogs.js');
 
   it('PAGE_TARGET_ACTIONS contains the expected set', () => {
     const expected = [

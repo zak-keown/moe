@@ -26,15 +26,15 @@
     },
     {
       "path": ".claude-plugin/skills/driving-claude-code-sessions/SKILL.md",
-      "size": 19720,
-      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "size": 19868,
+      "sha256": "76321b7879e6a25bf55afd3e5d29707bec55cdd0fba2fb02b349a752bb83fe06",
       "mode": "0644"
     },
     {
-      "path": ".claude-plugin/skills/driving-claude-code-sessions/scripts/moe-crew",
-      "size": 120,
-      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
-      "mode": "0755"
+      "path": ".claude-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
+      "size": 835,
+      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
+      "mode": "0644"
     },
     {
       "path": ".codex-plugin/plugin.json",
@@ -44,15 +44,15 @@
     },
     {
       "path": ".codex-plugin/skills/driving-claude-code-sessions/SKILL.md",
-      "size": 19720,
-      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "size": 19868,
+      "sha256": "76321b7879e6a25bf55afd3e5d29707bec55cdd0fba2fb02b349a752bb83fe06",
       "mode": "0644"
     },
     {
-      "path": ".codex-plugin/skills/driving-claude-code-sessions/scripts/moe-crew",
-      "size": 120,
-      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
-      "mode": "0755"
+      "path": ".codex-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
+      "size": 835,
+      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
+      "mode": "0644"
     },
     {
       "path": ".cursor-plugin/marketplace.json",
@@ -68,15 +68,15 @@
     },
     {
       "path": ".cursor-plugin/skills/driving-claude-code-sessions/SKILL.md",
-      "size": 19720,
-      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "size": 19868,
+      "sha256": "76321b7879e6a25bf55afd3e5d29707bec55cdd0fba2fb02b349a752bb83fe06",
       "mode": "0644"
     },
     {
-      "path": ".cursor-plugin/skills/driving-claude-code-sessions/scripts/moe-crew",
-      "size": 120,
-      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
-      "mode": "0755"
+      "path": ".cursor-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
+      "size": 835,
+      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
+      "mode": "0644"
     },
     {
       "path": ".kimi-plugin/plugin.json",
@@ -86,20 +86,20 @@
     },
     {
       "path": ".kimi-plugin/skills/driving-claude-code-sessions/SKILL.md",
-      "size": 19720,
-      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "size": 19868,
+      "sha256": "76321b7879e6a25bf55afd3e5d29707bec55cdd0fba2fb02b349a752bb83fe06",
       "mode": "0644"
     },
     {
-      "path": ".kimi-plugin/skills/driving-claude-code-sessions/scripts/moe-crew",
-      "size": 120,
-      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
-      "mode": "0755"
+      "path": ".kimi-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
+      "size": 835,
+      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
+      "mode": "0644"
     },
     {
       "path": ".moe-mint/manifest.json",
-      "size": 4580,
-      "sha256": "a2767fa02b8ca869caf672f5429b4bcef2fb5bcb6029fdda6015479f2e544f96",
+      "size": 4604,
+      "sha256": "aca6dd400698183c4d237c2e679d79f15298ba2104ec26cfeab31217232d20c2",
       "mode": "0644"
     },
     {
@@ -110,15 +110,15 @@
     },
     {
       "path": ".opencode/skills/driving-claude-code-sessions/SKILL.md",
-      "size": 19720,
-      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "size": 19868,
+      "sha256": "76321b7879e6a25bf55afd3e5d29707bec55cdd0fba2fb02b349a752bb83fe06",
       "mode": "0644"
     },
     {
-      "path": ".opencode/skills/driving-claude-code-sessions/scripts/moe-crew",
-      "size": 120,
-      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
-      "mode": "0755"
+      "path": ".opencode/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
+      "size": 835,
+      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
+      "mode": "0644"
     },
     {
       "path": ".pi/extensions/moe-crew.ts",
@@ -128,15 +128,15 @@
     },
     {
       "path": ".pi/skills/driving-claude-code-sessions/SKILL.md",
-      "size": 19720,
-      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "size": 19868,
+      "sha256": "76321b7879e6a25bf55afd3e5d29707bec55cdd0fba2fb02b349a752bb83fe06",
       "mode": "0644"
     },
     {
-      "path": ".pi/skills/driving-claude-code-sessions/scripts/moe-crew",
-      "size": 120,
-      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
-      "mode": "0755"
+      "path": ".pi/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
+      "size": 835,
+      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
+      "mode": "0644"
     },
     {
       "path": "LICENSE",
@@ -770,8 +770,8 @@
     },
     {
       "path": "package.json",
-      "size": 5429,
-      "sha256": "2a8d52db0506c7211e5ba4dbfc7c56359088fa10d76ef7949076109621d3b4e0",
+      "size": 5457,
+      "sha256": "03a56234c8b5461626c2cca803f481d1e5c1758e20a02e15ce001de5ddcf71b5",
       "mode": "0644"
     },
     {
@@ -782,18 +782,18 @@
     },
     {
       "path": "skills/driving-claude-code-sessions/SKILL.md",
-      "size": 19720,
-      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "size": 19868,
+      "sha256": "76321b7879e6a25bf55afd3e5d29707bec55cdd0fba2fb02b349a752bb83fe06",
       "mode": "0644"
     },
     {
-      "path": "skills/driving-claude-code-sessions/scripts/moe-crew",
-      "size": 120,
-      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
-      "mode": "0755"
+      "path": "skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
+      "size": 835,
+      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
+      "mode": "0644"
     }
   ],
-  "tree_sha256": "cac6d071957a846bd28e07452f0a03894ae7230279a52a02f93ab08e8769a358",
+  "tree_sha256": "7687c8a682c592dbefe42fcd447b17238c0db4a2f3e78c313f2d9ef584e00398",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

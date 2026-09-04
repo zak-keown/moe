@@ -3,11 +3,9 @@ import { strict as assert } from 'node:assert';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createRequire } from 'node:module';
+import { renderSyntheticArtifacts } from '../../skills/browsing/scripts/lib/dialogs-render.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const require = createRequire(import.meta.url);
-const { renderSyntheticArtifacts } = require('../../skills/browsing/lib/dialogs-render.js');
 
 function golden(name) {
   return readFileSync(join(__dirname, 'fixtures', name), 'utf8');
@@ -175,7 +173,7 @@ describe('synthetic html', () => {
 });
 
 describe('renderResponseSummary', () => {
-  const { renderResponseSummary } = require('../../skills/browsing/lib/dialogs-render.js');
+  const { renderResponseSummary } = require('../../browsing-compat/lib/dialogs-render.js');
 
   it('summarizes a confirm dialog inline', () => {
     const summary = renderResponseSummary({

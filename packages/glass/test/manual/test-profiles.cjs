@@ -11,7 +11,7 @@
  * 5. Different profiles have isolated data
  */
 
-const chromeLib = require('../../skills/browsing/chrome-ws-lib.js').createSession();
+const chromeLib = require('./skills/browsing/scripts/chrome-ws-lib.mjs').createSession();
 const fs = require('fs');
 const path = require('path');
 

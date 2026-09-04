@@ -1,10 +1,7 @@
 import { describe, it } from 'vitest';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import { makePageSessionFake } from './_helpers.mjs';
-
-const require = createRequire(import.meta.url);
-const { attachViewport } = require('../../skills/browsing/lib/viewport.js');
+import { attachViewport } from '../../skills/browsing/scripts/lib/viewport.mjs';
 
 describe('viewport (pageSession-shaped)', () => {
   function setup(handlers = {}) {

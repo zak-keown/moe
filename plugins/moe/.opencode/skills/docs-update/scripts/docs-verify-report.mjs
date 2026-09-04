@@ -1,7 +1,7 @@
-#!/usr/bin/env node
 import { execFileSync } from "node:child_process";
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const RANK = { critical: 0, high: 1, medium: 2, low: 3 };
 
@@ -10,6 +10,9 @@ const arg = (name, fallback) => {
   return i !== -1 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
 };
 
+const modulePath = fileURLToPath(import.meta.url);
+
+export function main() {
 const cwd = process.cwd();
 const staging = arg("staging", ".moe/docs-verify");
 const out = arg("out", "DOCS-VERIFY-REPORT.md");
@@ -92,3 +95,6 @@ for (const sev of ["critical", "high", "medium", "low"]) {
 }
 
 writeFileSync(join(cwd, out), lines.join("\n"));
+}
+
+if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(modulePath)) main();

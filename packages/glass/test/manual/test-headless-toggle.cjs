@@ -11,7 +11,7 @@
  * 5. Tabs are preserved across mode switches
  */
 
-const chromeLib = require('../../skills/browsing/chrome-ws-lib.js').createSession();
+const chromeLib = require('./skills/browsing/scripts/chrome-ws-lib.mjs').createSession();
 
 async function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));

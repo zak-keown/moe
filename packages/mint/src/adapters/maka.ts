@@ -29,11 +29,8 @@
 //   - Bootstrap injection point (system prompt? first-message? lifecycle hook?)
 //   - Whether Maka uses a package.json entry point or its own config file
 //
-// Until the unknowns above are resolved, emit() returns no files and a
-// warning. The support matrix is conservatively set to 'none' for every
-// component except skills (set to 'partial' because directory-based
-// loading is a reasonable assumption for any modern harness, but is
-// unverified).
+// Until the unknowns above are resolved, emit() returns no files, limitations,
+// or capability claims.
 // ──────────────────────────────────────────────────────────────────────
 
 import type { PluginModel } from '../model.js'

@@ -9,10 +9,10 @@ const { execFileSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { pathToFileURL } = require('url');
 
-const SERVER = path.join(__dirname, '../../skills/brainstorming/scripts/server.cjs');
+const SERVER = path.join(__dirname, '../../skills/brainstorming/scripts/server.mjs');
 const START_SCRIPT = path.join(__dirname, '../../skills/brainstorming/scripts/start-server.sh');
-const { writeSecretFile } = require(SERVER);
 
 let passed = 0, failed = 0;
 function test(name, fn) {
@@ -24,7 +24,12 @@ function tmpDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'brainstorm-secfile-'));
 }
 
-console.log('\n--- writeSecretFile (server.cjs) ---');
+let writeSecretFile;
+(async () => {
+const mod = await import(pathToFileURL(SERVER).href);
+writeSecretFile = mod.writeSecretFile;
+
+console.log('\n--- writeSecretFile (server.mjs) ---');
 
 test('creates a fresh file with the requested mode', () => {
   const dir = tmpDir();
@@ -101,3 +106,4 @@ test('refuses when a symlink is planted at that path', () => {
 
 console.log(`\n--- Results: ${passed} passed, ${failed} failed ---`);
 if (failed > 0) process.exit(1);
+})().catch(e => { console.error(e); process.exit(1); });

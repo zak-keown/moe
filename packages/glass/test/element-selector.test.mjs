@@ -1,11 +1,7 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
-import { createRequire } from 'node:module';
 import { JSDOM } from 'jsdom';
-
-const require = createRequire(import.meta.url);
-const { createSession } = require('../skills/browsing/chrome-ws-lib.js');
-const { getElementSelector } = createSession();
+import { getElementSelector } from '../skills/browsing/scripts/lib/element-selector.mjs';
 
 // Helper: create a JSDOM document with specified elements, evaluate the
 // generated selector expression, and return the picked element.
