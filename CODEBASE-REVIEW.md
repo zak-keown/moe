@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 3
+  fixed: 4
   stale: 0
   skipped: 0
   deferred: 0
-  open: 104
+  open: 103
 ---
 
 # Codebase Review — moe
@@ -2831,6 +2831,10 @@ every `estimate_cost` call errors loudly until the caller re-runs
 `Local`'s "wins absolutely". A rename-based write (write to
 `current.json.tmp`, `fsync`, `rename`) would make `save` crash-safe.
 
+**Disposition:** fixed
+**Commit:** `3e0349ef59400e1f8732700f4f0362b865eb88ac`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-106: `transcript::detect` misclassifies a valid dialect file with more than 20 leading lines as `UnknownDialect`
 
 **File:** `packages/tab/crates/moe-tab-core/src/transcript/mod.rs`
