@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 8
+  fixed: 9
   stale: 0
   skipped: 0
   deferred: 0
-  open: 99
+  open: 98
 ---
 
 # Codebase Review — moe
@@ -2545,6 +2545,10 @@ Fix: use `makeConfig(projectRoot, { ... })` from `test/qa/helpers/make-config.js
 
 Today's only call site (`packages/flight/src/qa/cli/render.ts`, checked to confirm) passes a CLI argv value, and the HTTP route layer (`api/routes/results.ts`) does its own `join()` + `isSafePath()` check rather than going through `resolveRunDir`, so this isn't currently reachable from an untrusted input. But the test file's own docstring block ("Containment checks operate on already-absolute-or-resolvable inputs... These cover the cases the old `src/api/safe-path.ts` helper handled") signals the whole file's job is exhaustively pinning this module's safety contract, and `resolveRunDir` is the one exported, runId-shaped composer left with zero coverage of the traversal case its siblings are drilled on. Add a test asserting `resolveRunDir` either validates its `runId` or is documented as intentionally unvalidated (call-site-trusted only), so a future caller reaching for "the" path-safety helper in `paths.ts` doesn't reasonably assume it's covered.
 
+**Disposition:** fixed
+**Commit:** `affad1ba3df863f10389009f8591aaca075f0e2c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-090: Error Log list items can collide on React key under a same-millisecond error burst
 **File:** `packages/flight/ui/src/components/AppShell.tsx`
 **Anchor:** `key={`${err.timestamp}-${err.source}`}`
