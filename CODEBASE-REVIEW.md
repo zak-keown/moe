@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 8
+  fixed: 9
   stale: 0
   skipped: 0
   deferred: 0
-  open: 99
+  open: 98
 ---
 
 # Codebase Review — moe
@@ -2607,6 +2607,10 @@ before building the attribute-selector string, or use
 `CSS.escape`-style handling / `querySelector` with an attribute value built
 via `element.getAttribute` comparison instead of string interpolation.
 
+**Disposition:** fixed
+**Commit:** `47647716c87069f699326bcde3606144c4fa248e`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-093: Two independently-maintained dialog-gate allowlists; one implementation is dead code
 
 **File:** `packages/glass/skills/browsing/lib/dialogs.js`
