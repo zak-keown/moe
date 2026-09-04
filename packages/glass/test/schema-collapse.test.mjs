@@ -17,6 +17,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { makePageSessionFake } from './lib/_helpers.mjs';
 import { attachConsoleLogging as attachConsoleLoggingEsm } from '../skills/browsing/scripts/lib/console-logging.mjs';
+import { createSession as createSessionEsm } from '../skills/browsing/scripts/chrome-ws-lib.mjs';
 
 // The restartInMode tests reach the real profile-lock helpers; isolate every
 // meta/lock path so this process never touches the user's real cache dir.
@@ -287,15 +288,13 @@ describe('Fix D: restartInMode probes liveness before returning alreadyMessage',
 // ---------------------------------------------------------------------------
 
 describe('Fix E: kill_chrome and restart_chrome methods exist on session', () => {
-  const { createSession } = require('../skills/browsing/chrome-ws-lib.js');
-
   it('chromeLib exposes killChrome method', () => {
-    const session = createSession();
+    const session = createSessionEsm();
     assert.equal(typeof session.killChrome, 'function', 'killChrome should be a function');
   });
 
   it('chromeLib exposes startChrome method', () => {
-    const session = createSession();
+    const session = createSessionEsm();
     assert.equal(typeof session.startChrome, 'function', 'startChrome should be a function');
   });
 });
@@ -404,8 +403,7 @@ describe('Fix G: console message dedup', () => {
 // ---------------------------------------------------------------------------
 
 describe('Schema collapse: bundle includes kill_chrome and restart_chrome actions', () => {
-  const { createSession } = require('../skills/browsing/chrome-ws-lib.js');
-  const session = createSession();
+  const session = createSessionEsm();
 
   it('session has killChrome for kill_chrome action', () => {
     assert.equal(typeof session.killChrome, 'function');
