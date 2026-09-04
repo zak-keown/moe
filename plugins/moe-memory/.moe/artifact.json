@@ -201,7 +201,7 @@
     {
       "path": "dist/bundle-metafile.json",
       "size": 298771,
-      "sha256": "30949d58ff06c0a92bff320da18817e759e1a0a2cfd48443389d067316f820a9",
+      "sha256": "523e303c768e2cf4de4aae54b58d37476542c7242a20945c272c98108cb3ae97",
       "mode": "0644"
     },
     {
@@ -603,7 +603,7 @@
     {
       "path": "dist/metafile-esm.json",
       "size": 298771,
-      "sha256": "30949d58ff06c0a92bff320da18817e759e1a0a2cfd48443389d067316f820a9",
+      "sha256": "523e303c768e2cf4de4aae54b58d37476542c7242a20945c272c98108cb3ae97",
       "mode": "0644"
     },
     {
@@ -979,7 +979,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "61b217c19eb6a68426862f53313af1bb74ddfed780bf56d9f890308d8f332abf",
+  "tree_sha256": "fa2dc087c034e3bd2773f61425d814ac96082546a279b0312e1c3194401a6536",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [
