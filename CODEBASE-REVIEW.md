@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 1
+  fixed: 2
   stale: 0
   skipped: 0
   deferred: 0
-  open: 106
+  open: 105
 ---
 
 # Codebase Review — moe
@@ -2049,6 +2049,10 @@ throughout, or `resolve_store()` should surface a loud `InvalidAsOf`-style
 error when the override variable is present but not valid UTF-8, rather than
 silently taking a fallback path while claiming `PricingSource::Local`.
 
+**Disposition:** fixed
+**Commit:** `14d822199dc3e045e687e2a78cf04af596be08ab`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-065: `execute_run` crashes with a raw TypeError when a task's prompt is a non-string YAML scalar
 
 **File:** `py/proof/src/moe_proof/cli.py`
