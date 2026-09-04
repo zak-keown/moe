@@ -69,14 +69,10 @@ describe("CR-059: a persistent thinking-budget error is not accepted as the summ
   it("throws (rather than returning the raw error text) when both the primary and fallback model hit thinking.budget_tokens", async () => {
     vi.mocked(query)
       .mockReturnValueOnce(
-        asyncIterableFor([
-          { type: "result", is_error: false, result: BUDGET_ERROR_RESULT },
-        ]) as any,
+        asyncIterableFor([{ type: "result", is_error: false, result: BUDGET_ERROR_RESULT }]) as any,
       )
       .mockReturnValueOnce(
-        asyncIterableFor([
-          { type: "result", is_error: false, result: BUDGET_ERROR_RESULT },
-        ]) as any,
+        asyncIterableFor([{ type: "result", is_error: false, result: BUDGET_ERROR_RESULT }]) as any,
       );
 
     await expect(summarizeConversation([makeExchange()])).rejects.toThrow();
@@ -86,9 +82,7 @@ describe("CR-059: a persistent thinking-budget error is not accepted as the summ
   it("still recovers via the fallback model when only the primary hits thinking.budget_tokens", async () => {
     vi.mocked(query)
       .mockReturnValueOnce(
-        asyncIterableFor([
-          { type: "result", is_error: false, result: BUDGET_ERROR_RESULT },
-        ]) as any,
+        asyncIterableFor([{ type: "result", is_error: false, result: BUDGET_ERROR_RESULT }]) as any,
       )
       .mockReturnValueOnce(
         asyncIterableFor([
