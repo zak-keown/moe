@@ -1,29 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConversationExchange } from "../src/types.js";
 
-// Stub the SDK's query() so each test controls what messages it yields.
-vi.mock("@anthropic-ai/claude-agent-sdk", () => ({
-  query: vi.fn(),
+const runClaudeCommandMock = vi.hoisted(() => vi.fn());
+vi.mock("../src/summarizers/claude.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/summarizers/claude.js")>();
+  return {
+    ...actual,
+    runClaudeCommand: runClaudeCommandMock,
+  };
+});
+
+vi.mock("../src/summarizers/process.js", () => ({
+  createChildProcessAdapter: () => ({}),
 }));
 
-import { query } from "@anthropic-ai/claude-agent-sdk";
-import { summarizeConversation } from "../src/summarizer.js";
-
-function asyncIterableFor(sdkMessages: unknown[]): AsyncIterable<unknown> {
-  return {
-    [Symbol.asyncIterator]() {
-      let i = 0;
-      return {
-        next() {
-          if (i < sdkMessages.length) {
-            return Promise.resolve({ value: sdkMessages[i++], done: false });
-          }
-          return Promise.resolve({ value: undefined, done: true });
-        },
-      };
-    },
-  };
-}
+const { summarizeConversation, SummarizerThinkingBudgetError } = await import(
+  "../src/summarizer.js"
+);
 
 function makeExchange(overrides: Partial<ConversationExchange> = {}): ConversationExchange {
   return {
@@ -41,54 +34,42 @@ function makeExchange(overrides: Partial<ConversationExchange> = {}): Conversati
   };
 }
 
-const BUDGET_ERROR_RESULT =
-  "API Error: 400 invalid_request_error - thinking.budget_tokens must be less than max_tokens";
-
 /**
- * CR-059: callClaude's fallback-also-failed branch did `return result;` — the
- * raw "API Error ... thinking.budget_tokens ..." string returned as though it
- * were the model's actual output — instead of throwing. summarizeConversation
- * then ran it through extractSummary(), which finds no <summary> tags and
- * falls back to text.trim(), so the error text itself became "the summary."
- * Every caller (indexer.ts, sync.ts, verify.ts's repairIndex) treats a
- * non-thrown return as success and writes it straight to
- * <archive>-summary.txt with no error sentinel — defeating the #96
- * error-sentinel mechanism entirely: hasRealSummary() sees ordinary
- * non-empty text and treats a persistent misconfiguration as a legitimate,
- * permanent summary forever, with no retry path.
+ * CR-059: callClaude's fallback-also-failed branch used to `return result;`
+ * — returning the raw error text as though it were model output — instead of
+ * throwing. Now it throws SummarizerThinkingBudgetError so callers' catch
+ * blocks write the #96 error sentinel and retry on the next run.
  *
- * The fix must make callClaude throw once both the primary and the fallback
- * model hit this specific error, so the normal catch-and-sentinel machinery
- * in every caller actually engages.
+ * Plan 1 replaced @anthropic-ai/claude-agent-sdk with a child process
+ * adapter. We mock runClaudeCommand (from summarizers/claude.js) to throw
+ * errors containing "thinking.budget_tokens".
  */
 describe("CR-059: a persistent thinking-budget error is not accepted as the summary", () => {
   beforeEach(() => {
-    vi.mocked(query).mockReset();
+    runClaudeCommandMock.mockReset();
   });
 
   it("throws (rather than returning the raw error text) when both the primary and fallback model hit thinking.budget_tokens", async () => {
-    vi.mocked(query)
-      .mockReturnValueOnce(
-        asyncIterableFor([{ type: "result", is_error: false, result: BUDGET_ERROR_RESULT }]) as any,
-      )
-      .mockReturnValueOnce(
-        asyncIterableFor([{ type: "result", is_error: false, result: BUDGET_ERROR_RESULT }]) as any,
-      );
+    runClaudeCommandMock.mockRejectedValue(
+      new Error(
+        "API Error: 400 invalid_request_error - thinking.budget_tokens must be less than max_tokens",
+      ),
+    );
 
-    await expect(summarizeConversation([makeExchange()])).rejects.toThrow();
-    expect(vi.mocked(query)).toHaveBeenCalledTimes(2);
+    await expect(summarizeConversation([makeExchange()])).rejects.toThrow(
+      SummarizerThinkingBudgetError,
+    );
+    expect(runClaudeCommandMock).toHaveBeenCalledTimes(2);
   });
 
   it("still recovers via the fallback model when only the primary hits thinking.budget_tokens", async () => {
-    vi.mocked(query)
-      .mockReturnValueOnce(
-        asyncIterableFor([{ type: "result", is_error: false, result: BUDGET_ERROR_RESULT }]) as any,
+    runClaudeCommandMock
+      .mockRejectedValueOnce(
+        new Error(
+          "API Error: 400 invalid_request_error - thinking.budget_tokens must be less than max_tokens",
+        ),
       )
-      .mockReturnValueOnce(
-        asyncIterableFor([
-          { type: "result", is_error: false, result: "<summary>Recovered via fallback.</summary>" },
-        ]) as any,
-      );
+      .mockResolvedValueOnce("<summary>Recovered via fallback.</summary>");
 
     const result = await summarizeConversation([makeExchange()]);
     expect(result).toBe("Recovered via fallback.");
