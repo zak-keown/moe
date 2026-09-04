@@ -293,22 +293,33 @@ git commit -m "refactor(core): rename 30 skills to short names; record renamed_f
 
 **Files:**
 - Regenerate (never hand-edit): `plugins/**` via `pnpm mint`
+- Modify: remove the four Task-2 `STALE_GENERATED_*` shims now that `plugins/` carries the new names — `packages/core/test/metadata.test.ts`, `packages/core/test/resolved-resource-quoting.test.ts`, `packages/core/test/smoothing-the-experience-contract.test.ts`, `packages/core/test/retrieving-context-contract.test.ts`
 - Verify only: `.claude-plugin/marketplace.json` (regenerated if mint owns it)
 
 **Interfaces:**
-- Consumes: the renamed source tree from Task 2
-- Produces: generated plugins consistent with the new names across all eight harnesses; a fully green Node gate
+- Consumes: the renamed source tree from Task 2, and its four `STALE_GENERATED_*` shims (removed here)
+- Produces: generated plugins consistent with the new names across all eight harnesses; test files that assert the new names directly (no shim); a fully green Node gate
 
 - [ ] **Step 1: Regenerate the plugins**
 
 Run: `pnpm mint`
 Expected: completes with no error; `git status` shows changes under `plugins/**` reflecting the new skill names.
 
-- [ ] **Step 2: Commit the regenerated output**
+- [ ] **Step 1b: Remove the four STALE_GENERATED shims**
+
+Task 2 kept `plugins/` un-regenerated, so four tests temporarily mapped new→old names when comparing the source set against the generated root. Now that Step 1 regenerated `plugins/` with the new names, that mapping is wrong and must go. In each of the four files, delete the `STALE_GENERATED_*` table and the `?? name` translation so the assertion compares the source names to the generated names **directly** (revert that test's comparison to its pre-shim shape, but keeping the new names). Then confirm none remains:
 
 ```bash
-git add -A plugins .claude-plugin
-git commit -m "chore(mint): regenerate plugins for renamed skills"
+rg -n 'STALE_GENERATED|deliberately NOT regenerated' packages/core/test packages/mint/test || echo "no shims remain ✓"
+```
+
+Expected: `no shims remain ✓`. If a test now fails, it means the generated root and the source disagree — a real rename miss to fix in source, NOT a reason to keep the shim.
+
+- [ ] **Step 2: Commit the regen + shim removal together**
+
+```bash
+git add -A plugins .claude-plugin packages/core/test
+git commit -m "chore(mint): regenerate plugins for renamed skills; drop stale-name shims"
 ```
 
 - [ ] **Step 3: Verify the mint gate is byte-identical**
