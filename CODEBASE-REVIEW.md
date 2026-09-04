@@ -14,6 +14,12 @@ findings:
   total: 107
 verified: false
 status: issues_found
+dispositions:
+  fixed: 1
+  stale: 0
+  skipped: 0
+  deferred: 0
+  open: 106
 ---
 
 # Codebase Review — moe
@@ -295,6 +301,10 @@ Downstream, `cmdWaitForTurn` (`packages/crew/src/commands/wait-for-turn.ts`, rea
 
 Either way the command silently breaks instead of the "Error: --after-line expects a number" style rejection the sibling flag gets. `cli.test.ts` has a covering test for converse's analogous numeric-timeout validation (`"rejects converse with a non-numeric timeout positional"`) but no equivalent test exists for `wait-for-turn`'s positional timeout, which is how this gap survived. Fix: validate with `Number.isFinite` in the digit-leading branch the same way `--after-line` does, and reject non-numeric input with a clear code-2 error.
 
+**Disposition:** fixed
+**Commit:** `78207f9ce71de4471fc90170b22410910b67bf70`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-007: Pack-file inline scalar parser silently truncates values containing `" #"`, even inside quotes
 
 **File:** `packages/crew/src/core/packs.ts`
