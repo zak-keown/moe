@@ -38,8 +38,16 @@ impl PriceStore {
 
 /// Directory holding price snapshots: $MOE_TAB_PRICING_DIR, else $XDG_DATA_HOME/moe/tab,
 /// else $HOME/.local/share/moe/tab.
+///
+/// Reads the override with `var_os`, not `var`, and must keep doing so: callers
+/// (`resolve_store` in lib.rs) decide whether the override applies with
+/// `var_os(..).is_some()`, which is `true` regardless of encoding. `var`
+/// returns `Err(NotUnicode)` for a non-UTF-8 value (legal at the OS level on
+/// Unix), so reading it with `var` here would silently fall through to the
+/// XDG/HOME default while the caller still believes — and reports — that the
+/// override won (CR-064).
 pub fn pricing_dir() -> PathBuf {
-    if let Ok(d) = std::env::var("MOE_TAB_PRICING_DIR") {
+    if let Some(d) = std::env::var_os("MOE_TAB_PRICING_DIR") {
         return PathBuf::from(d);
     }
     let base = std::env::var("XDG_DATA_HOME")
