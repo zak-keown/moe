@@ -10,8 +10,8 @@ const BOOTSTRAP_MARKER = '<plugin-bootstrap plugin="moe">'
 
 const extensionDir = dirname(fileURLToPath(import.meta.url))
 const packageRoot = resolve(extensionDir, '../..')
-const skillsDir = resolve(packageRoot, 'skills')
-const bootstrapPath = resolve(packageRoot, 'skills/using-moe/SKILL.md')
+const skillsDir = resolve(packageRoot, '.pi/skills')
+const bootstrapPath = resolve(packageRoot, '.pi/skills/using-moe/SKILL.md')
 
 // Module-level cache for bootstrap content. The bootstrap file does not
 // change during a session, so reading and stripping it once eliminates

@@ -303,6 +303,23 @@ authored:
       than WHAT it does. Complements `verification-before-completion`, which
       fires at completion time, by firing alongside the task itself.
 
+  developing-for-moe:
+    from: moe
+    why: >-
+      Enforces the two non-negotiable development tenets for work on the Moe
+      project itself: integration-completeness (a feature is not done until
+      wired in) and multi-harness awareness (every decision must work for all
+      eight harnesses). Paired with a SessionStart hook that injects the tenets
+      into agent sessions automatically.
+
+  smoothing-the-experience:
+    from: moe
+    why: >-
+      An on-demand local audit that turns repeated successful Claude Code and
+      Codex tool use into narrow, individually reviewed permanent permission
+      suggestions. It is deterministic and never grants permissions without
+      an exact diff and explicit per-harness confirmation.
+
 
 # Not a skill: skills/_shared/ holds the three PAR reference documents the
 # iterative-development cluster reads at runtime. It carries no SKILL.md, so

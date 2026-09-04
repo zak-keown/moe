@@ -4,6 +4,7 @@ import type { HarnessDriver } from "../harness/driver.js";
 export interface CommandContext {
     workerDir: string;
     home: string;
+    environment?: NodeJS.ProcessEnv;
     tmux: Tmux;
     driver: HarnessDriver;
 }

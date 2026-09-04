@@ -1,6 +1,6 @@
-import { mkdtempSync, readFileSync, rmSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import type { Adapter } from "../../../src/qa/adapters/adapter.js";
 import { runAgent } from "../../../src/qa/agent/agent.js";
@@ -111,16 +111,16 @@ describe("agent event stream", () => {
     const req = rows.find((r) => r.type === "llm_request");
     const res = rows.find((r) => r.type === "llm_response");
     expect(req).toBeDefined();
-    expect(req!.turn).toBe(1);
-    expect(req!.messageCount).toBe(1);
+    expect(req?.turn).toBe(1);
+    expect(req?.messageCount).toBe(1);
     expect(res).toBeDefined();
-    expect(res!.turn).toBe(1);
-    expect(res!.stopReason).toBe("tool_use");
-    expect(res!.text).toBe("hi");
+    expect(res?.turn).toBe(1);
+    expect(res?.stopReason).toBe("tool_use");
+    expect(res?.text).toBe("hi");
     expect((res!.usage as any).inputTokens).toBe(100);
     expect((res!.usage as any).cacheReadInputTokens).toBe(30);
-    expect(res!.rawAssistantMessage).toEqual(rawAssistant);
-    expect(Array.isArray(res!.toolCalls)).toBe(true);
+    expect(res?.rawAssistantMessage).toEqual(rawAssistant);
+    expect(Array.isArray(res?.toolCalls)).toBe(true);
     expect((res!.toolCalls as any[])[0].name).toBe("report_result");
   });
 
@@ -206,14 +206,14 @@ describe("agent event stream", () => {
     const call = rows.find((r) => r.type === "tool_call" && r.name === "noop");
     const result = rows.find((r) => r.type === "tool_result" && r.name === "noop");
     expect(call).toBeDefined();
-    expect(call!.toolUseId).toBe("t1");
-    expect(call!.turn).toBe(1);
+    expect(call?.toolUseId).toBe("t1");
+    expect(call?.turn).toBe(1);
     expect((call!.arguments as any).a).toBe(1);
     expect(result).toBeDefined();
-    expect(result!.toolUseId).toBe("t1");
-    expect(result!.text).toBe("done");
-    expect(result!.error).toBe(false);
-    expect(typeof result!.durationMs).toBe("number");
+    expect(result?.toolUseId).toBe("t1");
+    expect(result?.text).toBe("done");
+    expect(result?.error).toBe(false);
+    expect(typeof result?.durationMs).toBe("number");
   });
 
   test("tool failure surfaces error:true and the message in text", async () => {
@@ -260,8 +260,8 @@ describe("agent event stream", () => {
     });
 
     const result = readLog(outDir).find((r) => r.type === "tool_result");
-    expect(result!.error).toBe(true);
-    expect(result!.text as string).toContain("boom");
+    expect(result?.error).toBe(true);
+    expect(result?.text as string).toContain("boom");
   });
 
   test("run_start carries provider + model when supplied", async () => {

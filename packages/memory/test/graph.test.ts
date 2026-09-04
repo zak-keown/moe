@@ -1,4 +1,3 @@
-import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -83,13 +82,13 @@ describe("graph memory CRUD", () => {
     const retrieved = getNode(db, "node-1");
 
     expect(retrieved).not.toBeNull();
-    expect(retrieved!.id).toBe("node-1");
-    expect(retrieved!.nodeType).toBe("decision");
-    expect(retrieved!.project).toBe("test-project");
-    expect(retrieved!.content).toBe("We chose SQLite for graph storage");
-    expect(retrieved!.createdAt).toBe("2026-09-02T10:00:00Z");
-    expect(retrieved!.embeddingVersion).toBe(0);
-    expect(retrieved!.supersededAt).toBeUndefined();
+    expect(retrieved?.id).toBe("node-1");
+    expect(retrieved?.nodeType).toBe("decision");
+    expect(retrieved?.project).toBe("test-project");
+    expect(retrieved?.content).toBe("We chose SQLite for graph storage");
+    expect(retrieved?.createdAt).toBe("2026-09-02T10:00:00Z");
+    expect(retrieved?.embeddingVersion).toBe(0);
+    expect(retrieved?.supersededAt).toBeUndefined();
 
     db.close();
   });
@@ -114,8 +113,8 @@ describe("graph memory CRUD", () => {
     const retrieved = getNode(db, "node-sparse");
 
     expect(retrieved).not.toBeNull();
-    expect(retrieved!.project).toBeUndefined();
-    expect(retrieved!.supersededAt).toBeUndefined();
+    expect(retrieved?.project).toBeUndefined();
+    expect(retrieved?.supersededAt).toBeUndefined();
 
     db.close();
   });
@@ -139,14 +138,14 @@ describe("graph memory CRUD", () => {
 
     const fromEdges = getEdgesFrom(db, "exchange", "ex-123");
     expect(fromEdges).toHaveLength(1);
-    expect(fromEdges[0]!.id).toBe("edge-1");
-    expect(fromEdges[0]!.relation).toBe("caused_by");
-    expect(fromEdges[0]!.confidence).toBe(0.9);
-    expect(fromEdges[0]!.metadata).toEqual({ reason: "temporal proximity" });
+    expect(fromEdges[0]?.id).toBe("edge-1");
+    expect(fromEdges[0]?.relation).toBe("caused_by");
+    expect(fromEdges[0]?.confidence).toBe(0.9);
+    expect(fromEdges[0]?.metadata).toEqual({ reason: "temporal proximity" });
 
     const toEdges = getEdgesTo(db, "journal", "jn-456");
     expect(toEdges).toHaveLength(1);
-    expect(toEdges[0]!.id).toBe("edge-1");
+    expect(toEdges[0]?.id).toBe("edge-1");
 
     // No edges for unrelated records
     expect(getEdgesFrom(db, "journal", "jn-456")).toHaveLength(0);
@@ -201,10 +200,10 @@ describe("traceProvenance", () => {
     // Trace causes from A: should find B at depth 1, C at depth 2
     const chain = traceProvenance(db, "finding", "A", 3, "causes");
     expect(chain).toHaveLength(2);
-    expect(chain[0]!.depth).toBe(1);
-    expect(chain[0]!.edge.sourceId).toBe("B");
-    expect(chain[1]!.depth).toBe(2);
-    expect(chain[1]!.edge.sourceId).toBe("C");
+    expect(chain[0]?.depth).toBe(1);
+    expect(chain[0]?.edge.sourceId).toBe("B");
+    expect(chain[1]?.depth).toBe(2);
+    expect(chain[1]?.edge.sourceId).toBe("C");
 
     db.close();
   });
@@ -220,10 +219,10 @@ describe("traceProvenance", () => {
     // Trace effects from A: should find B at depth 1, C at depth 2
     const chain = traceProvenance(db, "finding", "A", 3, "effects");
     expect(chain).toHaveLength(2);
-    expect(chain[0]!.depth).toBe(1);
-    expect(chain[0]!.edge.targetId).toBe("B");
-    expect(chain[1]!.depth).toBe(2);
-    expect(chain[1]!.edge.targetId).toBe("C");
+    expect(chain[0]?.depth).toBe(1);
+    expect(chain[0]?.edge.targetId).toBe("B");
+    expect(chain[1]?.depth).toBe(2);
+    expect(chain[1]?.edge.targetId).toBe("C");
 
     db.close();
   });
@@ -239,7 +238,7 @@ describe("traceProvenance", () => {
     // Trace with depth=1: only get B
     const chain1 = traceProvenance(db, "finding", "A", 1, "causes");
     expect(chain1).toHaveLength(1);
-    expect(chain1[0]!.edge.sourceId).toBe("B");
+    expect(chain1[0]?.edge.sourceId).toBe("B");
 
     // Trace with depth=2: get B and C
     const chain2 = traceProvenance(db, "finding", "A", 2, "causes");
@@ -318,10 +317,10 @@ describe("trace_provenance MCP handler", () => {
 
     const chain = traceProvenance(db, "decision", "dec-200", 3, "causes");
     expect(chain).toHaveLength(1);
-    expect(chain[0]!.depth).toBe(1);
-    expect(chain[0]!.edge.sourceType).toBe("exchange");
-    expect(chain[0]!.edge.sourceId).toBe("ex-100");
-    expect(chain[0]!.edge.relation).toBe("supports");
+    expect(chain[0]?.depth).toBe(1);
+    expect(chain[0]?.edge.sourceType).toBe("exchange");
+    expect(chain[0]?.edge.sourceId).toBe("ex-100");
+    expect(chain[0]?.edge.relation).toBe("supports");
 
     // Verify it serializes to JSON without error
     const json = JSON.stringify({

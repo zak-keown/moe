@@ -22,7 +22,7 @@ function turnDuration(turn: TurnModel): string {
   const res = turn.llmResponse?.ts;
   if (!req || !res) return "";
   const ms = Date.parse(res) - Date.parse(req);
-  if (isNaN(ms) || ms <= 0) return "";
+  if (Number.isNaN(ms) || ms <= 0) return "";
   if (ms < 1000) return `${ms} ms`;
   return `${(ms / 1000).toFixed(1)} s`;
 }

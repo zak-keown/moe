@@ -30,8 +30,11 @@ Do NOT use for a `patch` or a `change` (see `brainstorming`) — the `writing-pl
 
 ### Bootstrap (first invocation)
 
-1. Check `docs/moe/iterations/` for existing state. Existing state selects an
-   explicit continuation; no state selects new work.
+1. Check `docs/moe/iterations/` for existing state. If no state exists, call
+   `moe jig iterations init` to scaffold the directory, then proceed with
+   requirements extraction. If `moe-jig` is not on PATH, create the
+   directories and files manually. Existing state selects an explicit
+   continuation; no state selects new work.
 2. Establish one project workspace with `using-git-worktrees`. Record its
    `WORKSPACE_ID`, `BASE_BRANCH`, `BASE_SHA`, and work branch in
    `docs/moe/iterations/workspace.md`, and keep all ITER-NNNN iterations on
@@ -68,7 +71,7 @@ while True:
 
     run next iteration:
         - running-an-iteration (sentinel baseline → scope review → decompose code + evidence tasks → implementing-tasks → impacted + sentinel scenario runs → wrap up)
-    
+
     audit:
         - auditing-progress (PAR paired auditors, three-tier: deep evidence + impacted behavior + sentinel corpus)
         - if gaps: append to backlog, revise roadmap, continue
@@ -155,7 +158,7 @@ The autonomous loop may run for hours. Two progress mechanisms ensure visibility
 **Last event:** 2026-04-11T14:23:00Z — Task 3 committed
 ```
 
-Update this file at: iteration start, each task completion, iteration wrap-up, audit start/end. Overwrite (not append) — it's a snapshot of current state, not a log.
+Update this file at: iteration start, each task completion, iteration wrap-up, audit start/end. Overwrite (not append) — it's a snapshot of current state, not a log. Call `moe jig progress update --phase <phase> --task <task>` at each phase transition. The command overwrites `progress.md` with the correct format. If `moe-jig` is not on PATH, write the file manually using the exact format above.
 
 **2. Git log:** Every task produces a commit. The commit history is a detailed progress trail. A human can check `git log --oneline` for fine-grained status without interrupting the loop.
 
@@ -210,4 +213,4 @@ Every evaluative gate uses parallel adversarial review (PAR):
 - Post-iteration impacted + sentinel scenario runs
 - Per-sprint audit (deep evidence + impacted behavior + sentinel corpus)
 
-See `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md` for PAR methodology.
+Resolve {resource:skills/_shared/parallel-adversarial-review.md} relative to this loaded document for the PAR methodology.

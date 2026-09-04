@@ -1,6 +1,6 @@
-import { mkdtempSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { buildBashTool } from "../../../src/qa/agent/bash-tool.js";
 import type { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
@@ -94,8 +94,8 @@ describe("buildBashTool", () => {
 
   test("timeout reaps background children spawned by the command", async () => {
     const cwd = freshCwd();
-    const { join } = await import("path");
-    const { readFileSync } = await import("fs");
+    const { join } = await import("node:path");
+    const { readFileSync } = await import("node:fs");
     const pidFile = join(cwd, "child.pid");
 
     const tool = buildBashTool({ cwd });
@@ -192,11 +192,11 @@ describe("buildBashTool", () => {
     await tool.execute({ command: "echo hello" }, recordingLogger(events));
     const call = events.find((e) => e.name === "bash_call");
     expect(call).toBeDefined();
-    expect(call!.payload.command).toBe("echo hello");
-    expect(call!.payload.exit_code).toBe(0);
-    expect(call!.payload.timed_out).toBe(false);
-    expect(call!.payload.stdout_bytes).toBeGreaterThan(0);
-    expect(typeof call!.payload.elapsed_ms).toBe("number");
+    expect(call?.payload.command).toBe("echo hello");
+    expect(call?.payload.exit_code).toBe(0);
+    expect(call?.payload.timed_out).toBe(false);
+    expect(call?.payload.stdout_bytes).toBeGreaterThan(0);
+    expect(typeof call?.payload.elapsed_ms).toBe("number");
   });
 
   test("emits bash_call event for non-zero exit (not bash_spawn_failed)", async () => {
@@ -205,7 +205,7 @@ describe("buildBashTool", () => {
     await tool.execute({ command: "exit 7" }, recordingLogger(events));
     const call = events.find((e) => e.name === "bash_call");
     expect(call).toBeDefined();
-    expect(call!.payload.exit_code).toBe(7);
+    expect(call?.payload.exit_code).toBe(7);
     expect(events.find((e) => e.name === "bash_spawn_failed")).toBeUndefined();
   });
 });

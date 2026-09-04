@@ -30,14 +30,14 @@ export type OperatingSystemId = 'macos' | 'linux' | 'wsl2' | 'windows'
 
 export const OPERATING_SYSTEM_IDS = ['macos', 'linux', 'wsl2', 'windows'] as const satisfies readonly OperatingSystemId[]
 
-import { readFileSync, existsSync, readdirSync, statSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { readFileSync, existsSync, lstatSync, readdirSync, statSync } from 'node:fs'
+import { basename, dirname, extname, isAbsolute, join, posix, resolve, sep } from 'node:path'
 import { parse } from 'yaml'
 import { z } from 'zod'
 import { ConfigError } from './diagnostics.js'
-import type { PluginModel } from './model.js'
-import type { GeneratedFile } from './fileset.js'
-import type { HarnessAdapter } from './adapters/types.js'
+import type { PluginModel, SkillTreeFile } from './model.js'
+import { writeFileSet, type GeneratedFile } from './fileset.js'
+import type { HarnessAdapter, SkillLayout } from './adapters/types.js'
 
 export const TOKEN_NAME_RE = /^[a-z][a-z0-9-]*$/
 
@@ -55,8 +55,15 @@ const vocabSchema = z.object({
   blocks: z.record(z.string(), entrySchema).optional().default({}),
 })
 
-export function loadVocabulary(root: string): Vocabulary | null {
-  const vocabPath = join(root, 'moe-mint-vocab.yaml')
+function vocabularyFileFor(configFile: string): string {
+  const extension = extname(configFile) || '.yaml'
+  const stem = basename(configFile, extname(configFile))
+  return join(dirname(configFile), `${stem}-vocab${extension}`)
+}
+
+export function loadVocabulary(root: string, configFile = 'moe-mint.yaml'): Vocabulary | null {
+  const vocabularyFile = vocabularyFileFor(configFile)
+  const vocabPath = join(root, vocabularyFile)
   if (!existsSync(vocabPath)) return null
 
   let doc: unknown
@@ -64,7 +71,7 @@ export function loadVocabulary(root: string): Vocabulary | null {
     doc = parse(readFileSync(vocabPath, 'utf8'))
   } catch (e) {
     throw new ConfigError(
-      `moe-mint-vocab.yaml is not valid YAML: ${(e as Error).message}`,
+      `${vocabularyFile} is not valid YAML: ${(e as Error).message}`,
       [],
       { cause: e },
     )
@@ -73,7 +80,7 @@ export function loadVocabulary(root: string): Vocabulary | null {
   const parsed = vocabSchema.safeParse(doc)
   if (!parsed.success) {
     throw new ConfigError(
-      'moe-mint-vocab.yaml is invalid',
+      `${vocabularyFile} is invalid`,
       parsed.error.issues.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`),
     )
   }
@@ -126,16 +133,106 @@ export function validateCoverage(
 }
 
 const TOKEN_PATTERN = /(?<!\\)\{([a-z][a-z0-9-]*)\}/g
+const RESOURCE_PATTERN = /(?<!\\)\{resource:([^{}\n]*)\}/g
+
+export type ResourceRenderer = (resourcePath: string) => string
+
+function resolveSkillResource(model: PluginModel, resourcePath: string): SkillTreeFile {
+  if (isAbsolute(resourcePath) || posix.isAbsolute(resourcePath)) {
+    throw new ConfigError(`resource path must be relative, not absolute: ${resourcePath}`)
+  }
+  if (resourcePath.includes('\\')) {
+    throw new ConfigError(`resource path must use POSIX separators: ${resourcePath}`)
+  }
+  const segments = resourcePath.split('/')
+  if (segments.some((segment) => segment === '..')) {
+    throw new ConfigError(`resource path contains traversal: ${resourcePath}`)
+  }
+  if (
+    segments.some((segment) => segment === '' || segment === '.')
+    || segments[0] !== 'skills'
+    || segments.length < 2
+  ) {
+    throw new ConfigError(
+      `resource path must be a normalized plugin-root-relative path under skills/: ${resourcePath}`,
+    )
+  }
+  const relativeSkillPath = segments.slice(1).join('/')
+  const target = model.skillFiles.find((file) => file.path === relativeSkillPath)
+  if (target !== undefined) return target
+  const absoluteTarget = join(model.root, model.config.components.skills, relativeSkillPath)
+  let targetStat: ReturnType<typeof lstatSync>
+  try {
+    targetStat = lstatSync(absoluteTarget)
+  } catch {
+    throw new ConfigError(`resource target not found: ${resourcePath}`)
+  }
+  if (targetStat.isSymbolicLink()) {
+    throw new ConfigError(`resource target must not be a symbolic link: ${resourcePath}`)
+  }
+  if (!targetStat.isFile()) {
+    throw new ConfigError(`resource target must be a regular file: ${resourcePath}`)
+  }
+  throw new ConfigError(`resource target not found in skill snapshot: ${resourcePath}`)
+}
+
+interface MarkdownFence {
+  marker: '`' | '~'
+  length: number
+}
+
+function advanceMarkdownFence(
+  line: string,
+  fence: MarkdownFence | null,
+): { literal: boolean; next: MarkdownFence | null } {
+  if (fence) {
+    const closing = /^ {0,3}(`{3,}|~{3,})[ \t]*$/.exec(line)
+    const markerRun = closing?.[1]
+    const closesFence =
+      markerRun !== undefined &&
+      markerRun[0] === fence.marker &&
+      markerRun.length >= fence.length
+    return { literal: true, next: closesFence ? null : fence }
+  }
+
+  const opening = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line)
+  const markerRun = opening?.[1]
+  const info = opening?.[2]
+  if (
+    markerRun === undefined ||
+    info === undefined ||
+    (markerRun[0] === '`' && info.includes('`'))
+  ) {
+    return { literal: false, next: null }
+  }
+
+  return {
+    literal: true,
+    next: {
+      marker: markerRun[0] as '`' | '~',
+      length: markerRun.length,
+    },
+  }
+}
 
 export function substituteContent(
   content: string,
   adapterName: string,
   vocab: Vocabulary,
+  renderResource?: ResourceRenderer,
 ): string {
   const lines = content.split('\n')
   const result: string[] = []
+  let fence: MarkdownFence | null = null
 
   for (const line of lines) {
+    const fenceLine = advanceMarkdownFence(line, fence)
+    fence = fenceLine.next
+    if (fenceLine.literal) {
+      result.push(line)
+      continue
+    }
+
     const blockMatch = /^(\s*)(?<!\\)\{([a-z][a-z0-9-]*)\}\s*$/.exec(line)
     if (blockMatch) {
       const indent = blockMatch[1]!
@@ -149,7 +246,11 @@ export function substituteContent(
       }
     }
 
-    let substituted = line.replace(TOKEN_PATTERN, (_match, tokenName: string) => {
+    let substituted = line.replace(RESOURCE_PATTERN, (expression, resourcePath: string) => {
+      return renderResource ? renderResource(resourcePath) : expression
+    })
+
+    substituted = substituted.replace(TOKEN_PATTERN, (_match, tokenName: string) => {
       const inlineEntry = vocab.tokens.get(tokenName)
       if (inlineEntry && adapterName in inlineEntry) return inlineEntry[adapterName]!
       const blockEntry = vocab.blocks.get(tokenName)
@@ -158,6 +259,7 @@ export function substituteContent(
     })
 
     substituted = substituted.replace(/\\(\{[a-z][a-z0-9-]*\})/g, '$1')
+    substituted = substituted.replace(/\\(\{resource:[^{}\n]*\})/g, '$1')
     result.push(substituted)
   }
 
@@ -184,7 +286,26 @@ function collectMdFiles(root: string, dir: string): string[] {
 }
 
 function stripFencedBlocks(content: string): string {
-  return content.replace(/^```[^\n]*\n[\s\S]*?^```/gm, '')
+  let fence: MarkdownFence | null = null
+  return content
+    .split('\n')
+    .map((line) => {
+      const fenceLine = advanceMarkdownFence(line, fence)
+      fence = fenceLine.next
+      return fenceLine.literal ? '' : line
+    })
+    .join('\n')
+}
+
+/** Returns unescaped semantic resource targets outside Markdown fences. */
+export function semanticResourceTargets(content: string): readonly string[] {
+  const targets: string[] = []
+  const stripped = stripFencedBlocks(content)
+  RESOURCE_PATTERN.lastIndex = 0
+  for (const match of stripped.matchAll(RESOURCE_PATTERN)) {
+    targets.push(match[1]!)
+  }
+  return targets
 }
 
 export function scanForUnknownTokens(
@@ -218,135 +339,255 @@ export function scanForUnknownTokens(
 }
 
 export function assertNoSurvivors(
-  files: Array<{ path: string; content: string }>,
+  files: Array<{ path: string; content: string | Uint8Array }>,
+  sourceFiles: PluginModel['skillFiles'] = [],
+): void {
+  assertNoExpressions(files, true, sourceFiles)
+}
+
+export function assertNoResourceSurvivors(
+  files: Array<{ path: string; content: string | Uint8Array }>,
+  sourceFiles: PluginModel['skillFiles'] = [],
+): void {
+  assertNoExpressions(files, false, sourceFiles)
+}
+
+function assertNoExpressions(
+  files: Array<{ path: string; content: string | Uint8Array }>,
+  includeVocabularyTokens: boolean,
+  sourceFiles: PluginModel['skillFiles'],
 ): void {
   const problems: string[] = []
+  const sourceBySpecificity = [...sourceFiles].sort((left, right) => right.path.length - left.path.length)
   for (const file of files) {
-    const stripped = stripFencedBlocks(file.content)
+    if (!file.path.endsWith('.md')) continue
+    const source = sourceBySpecificity.find(
+      (candidate) => file.path === candidate.path || file.path.endsWith(`/${candidate.path}`),
+    )
+    const literalAllowances = new Map<string, number>()
+    if (source) {
+      const sourceText = stripFencedBlocks(Buffer.from(source.content).toString('utf8'))
+      const escapedExpression = /\\(\{(?:[a-z][a-z0-9-]*|resource:[^{}\n]*)\})/g
+      let escapedMatch: RegExpExecArray | null
+      while ((escapedMatch = escapedExpression.exec(sourceText)) !== null) {
+        const expression = escapedMatch[1]!
+        literalAllowances.set(expression, (literalAllowances.get(expression) ?? 0) + 1)
+      }
+    }
+    const isAllowedLiteral = (expression: string): boolean => {
+      const remaining = literalAllowances.get(expression) ?? 0
+      if (remaining === 0) return false
+      literalAllowances.set(expression, remaining - 1)
+      return true
+    }
+    const stripped = stripFencedBlocks(
+      typeof file.content === 'string' ? file.content : Buffer.from(file.content).toString('utf8'),
+    )
     const lines: string[] = stripped.split('\n')
     for (let i = 0; i < lines.length; i++) {
       const line: string = lines[i]!
       let match: RegExpExecArray | null
-      TOKEN_PATTERN.lastIndex = 0
-      while ((match = TOKEN_PATTERN.exec(line)) !== null) {
-        const tokenName = match[1] as string
-        problems.push(`surviving token {${tokenName}} in ${file.path} line ${i + 1}`)
+      if (includeVocabularyTokens) {
+        TOKEN_PATTERN.lastIndex = 0
+        while ((match = TOKEN_PATTERN.exec(line)) !== null) {
+          const tokenName = match[1] as string
+          const expression = `{${tokenName}}`
+          if (!isAllowedLiteral(expression)) {
+            problems.push(`surviving token ${expression} in ${file.path} line ${i + 1}`)
+          }
+        }
+      }
+      RESOURCE_PATTERN.lastIndex = 0
+      while ((match = RESOURCE_PATTERN.exec(line)) !== null) {
+        const expression = `{resource:${match[1]}}`
+        if (!isAllowedLiteral(expression)) {
+          problems.push(`surviving resource expression ${expression} in ${file.path} line ${i + 1}`)
+        }
       }
     }
   }
 
   if (problems.length > 0) {
-    throw new ConfigError('tokens survived substitution', problems)
+    throw new ConfigError('semantic expressions survived substitution', problems)
   }
 }
 
-// Points config.components.skills at an adapter's own generated skills
-// copy, so anything the adapter derives purely from that config field (its
-// own plugin manifest's `skills` path, its own in-process template's
-// skills-dir placeholder) resolves to the location substituteAllSkills
-// actually populated for it, instead of the shared source skills/.
-//
-// Deliberately leaves model.skills[].dir (each skill's own directory)
-// untouched: some adapters emit a file that is intentionally byte-identical
-// across multiple active adapters (claude-code and cursor share one
-// hooks/moe-mint/session-start bootstrap script; opencode and pi share one
-// package.json) precisely so mergeFiles' collision check dedupes it as a
-// single file instead of raising a "both adapters emit this path" conflict.
-// Those cross-adapter-shared computations read model.skills[].dir for the
-// bootstrap skill's path; adjusting it per adapter would make that shared
-// output diverge by adapter and break the dedupe. config.components.skills
-// only feeds each adapter's own, uniquely-named manifest/template output,
-// so adjusting only that field is what those adapters actually need.
+// Points both config.components.skills and each captured skill directory at
+// an adapter's generated skill tree. Adapter manifests and bootstrap loaders
+// therefore resolve the same profile-rendered files; leaving skill.dir at the
+// source path would make a loader bypass semantic substitution.
 export function adjustedModel(
   model: PluginModel,
-  skillsOutputDir: string,
+  layout: SkillLayout,
 ): PluginModel {
+  const sourcePrefix = model.config.components.skills.replace(/\/+$/, '')
   return {
     ...model,
+    skills: model.skills.map((skill) => ({
+      ...skill,
+      dir: `${layout.outputDir}/${skill.dir.slice(sourcePrefix.length).replace(/^\/+/, '')}`,
+    })),
     config: {
       ...model.config,
       components: {
         ...model.config.components,
-        skills: skillsOutputDir,
+        skills: layout.outputDir,
       },
     },
   }
 }
 
-// Substitutes every skill .md file per active adapter's vocabulary mapping.
-// Adapters with their own skillsOutputDir get a full copy of the skills tree
-// (substituted) returned as GeneratedFile[] for the caller to merge into the
-// output fileset. Adapters that share the source skills/ directory (no
-// skillsOutputDir — claude-code, agent-plugins-1.0, copilot) get their
-// mapping applied in place, overwriting the source files on disk, since
-// those adapters read skills/ directly rather than from a generated copy.
-//
-// All shared adapters MUST agree on every token/block mapping — there's only
-// one skills/ directory to overwrite, so divergent mappings between them are
-// unrepresentable and rejected up front.
+function validateLayout(
+  root: string,
+  sourceDir: string,
+  adapter: HarnessAdapter,
+): 'rendered' | 'in-place' {
+  const { outputDir, mode } = adapter.skillLayout
+  const rootAbs = resolve(root)
+  if (outputDir.length === 0 || outputDir.includes('\\') || outputDir.split('/').includes('')) {
+    throw new ConfigError(
+      `adapter "${adapter.name}" skill output directory is not a normalized relative path: ${outputDir}`,
+    )
+  }
+  if (isAbsolute(outputDir)) {
+    throw new ConfigError(`adapter "${adapter.name}" skill output directory must be relative: ${outputDir}`)
+  }
+  if (outputDir.split('/').some((segment) => segment === '.' || segment === '..')) {
+    throw new ConfigError(
+      `adapter "${adapter.name}" skill output directory contains traversal: ${outputDir}`,
+    )
+  }
+  const outputAbs = resolve(root, outputDir)
+  if (outputAbs !== rootAbs && !outputAbs.startsWith(rootAbs + sep)) {
+    throw new ConfigError(`adapter "${adapter.name}" skill output directory escapes plugin root: ${outputDir}`)
+  }
+  if (mode === 'in-place' && outputAbs !== resolve(root, sourceDir)) {
+    throw new ConfigError(
+      `adapter "${adapter.name}" in-place skill output directory must equal ${sourceDir}: ${outputDir}`,
+    )
+  }
+  return mode === 'source-or-rendered'
+    ? outputAbs === resolve(root, sourceDir)
+      ? 'in-place'
+      : 'rendered'
+    : mode
+}
+
+function transformedContent(
+  file: PluginModel['skillFiles'][number],
+  profile: string,
+  outputDir: string,
+  model: PluginModel,
+  vocab: Vocabulary,
+): Uint8Array {
+  if (!file.path.endsWith('.md')) return Buffer.from(file.content)
+  const currentDocument = posix.join(outputDir, file.path)
+  return Buffer.from(
+    substituteContent(
+      Buffer.from(file.content).toString('utf8'),
+      profile,
+      vocab,
+      (resourcePath) => {
+        const resource = resolveSkillResource(model, resourcePath)
+        const generatedTarget = posix.join(outputDir, resource.path)
+        const relativeTarget = posix.relative(posix.dirname(currentDocument), generatedTarget)
+        const encodedTarget = relativeTarget
+          .split('/')
+          .map((segment) => segment === '..'
+            ? segment
+            : encodeURIComponent(segment).replaceAll('(', '%28').replaceAll(')', '%29'))
+          .join('/')
+        const label = resourcePath.replaceAll('\\', '\\\\').replaceAll('[', '\\[').replaceAll(']', '\\]')
+        return `[${label}](${encodedTarget})`
+      },
+    ),
+    'utf8',
+  )
+}
+
+export interface SkillRenderPlan {
+  readonly generatedFiles: GeneratedFile<Uint8Array>[]
+  readonly sourceUpdates: GeneratedFile<Uint8Array>[]
+}
+
+// Plans a render from the immutable skill-tree snapshot captured by buildModel.
+// Validation callers can inspect the complete result without mutating either
+// canonical source or a staged artifact tree.
+export function planSkillRendering(
+  root: string,
+  model: PluginModel,
+  vocab: Vocabulary,
+  activeAdapters: HarnessAdapter[],
+): SkillRenderPlan {
+  const srcDir = model.config.components.skills
+  const generatedFiles: GeneratedFile<Uint8Array>[] = []
+  const sourceUpdates: GeneratedFile<Uint8Array>[] = []
+  const byOutputDir = new Map<
+    string,
+    { adapter: HarnessAdapter; names: string[]; mode: 'rendered' | 'in-place' }
+  >()
+
+  for (const adapter of activeAdapters) {
+    const mode = validateLayout(root, srcDir, adapter)
+    const existing = byOutputDir.get(adapter.skillLayout.outputDir)
+    if (existing) {
+      const sameProfile = existing.adapter.skillLayout.profile === adapter.skillLayout.profile
+      const sameMode = existing.mode === mode
+      if (!sameProfile || !sameMode) {
+        throw new ConfigError(
+          `adapters "${existing.names.join(', ')}" and "${adapter.name}" share skill output directory ` +
+            `${adapter.skillLayout.outputDir} with incompatible profiles or modes`,
+        )
+      }
+      existing.names.push(adapter.name)
+    } else {
+      byOutputDir.set(adapter.skillLayout.outputDir, { adapter, names: [adapter.name], mode })
+    }
+  }
+
+  for (const { adapter, mode } of byOutputDir.values()) {
+    const { outputDir, profile } = adapter.skillLayout
+    const tree = model.skillFiles.map((file) => ({
+      path: `${outputDir.replace(/\/$/, '')}/${file.path}`,
+      content: transformedContent(file, profile, outputDir, model, vocab),
+      mode: file.mode,
+    }))
+    if (vocab.tokens.size > 0 || vocab.blocks.size > 0) {
+      assertNoSurvivors(tree, model.skillFiles)
+    } else {
+      assertNoResourceSurvivors(tree, model.skillFiles)
+    }
+    if (mode === 'in-place') {
+      sourceUpdates.push(...tree)
+    } else {
+      generatedFiles.push(...tree)
+    }
+  }
+
+  if (![...byOutputDir.values()].some(({ mode }) => mode === 'in-place')) {
+    sourceUpdates.push(...model.skillFiles.map((file) => ({
+      path: `${srcDir.replace(/\/$/, '')}/${file.path}`,
+      content: file.content,
+      mode: file.mode,
+    })))
+  }
+
+  const byPath = (left: GeneratedFile<Uint8Array>, right: GeneratedFile<Uint8Array>): number =>
+    left.path < right.path ? -1 : left.path > right.path ? 1 : 0
+  return {
+    generatedFiles: generatedFiles.sort(byPath),
+    sourceUpdates: sourceUpdates.sort(byPath),
+  }
+}
+
+/** Backward-compatible imperative wrapper used by focused renderer tests. */
 export function substituteAllSkills(
   root: string,
   model: PluginModel,
   vocab: Vocabulary,
   activeAdapters: HarnessAdapter[],
-): GeneratedFile[] {
-  const srcDir = model.config.components.skills
-  const mdFiles = collectMdFiles(root, srcDir)
-  const generatedFiles: GeneratedFile[] = []
-
-  // Read every source file's original content exactly once, up front. Both
-  // branches below derive their substitutions from this snapshot rather than
-  // re-reading from disk — the shared-adapter branch overwrites the source
-  // files in place, and a later disk read for a non-shared adapter would
-  // otherwise pick up that already-substituted content instead of the
-  // original {token} markers.
-  const originalContent = new Map<string, string>()
-  for (const relPath of mdFiles) {
-    originalContent.set(relPath, readFileSync(join(root, relPath), 'utf8'))
-  }
-
-  const sharedAdapters = activeAdapters.filter((a) => !a.skillsOutputDir)
-  if (sharedAdapters.length > 0) {
-    // All shared adapters must produce identical substitution — validate by
-    // checking that their mappings agree for every token.
-    const baseline = sharedAdapters[0]!.name
-    for (const other of sharedAdapters.slice(1)) {
-      for (const [name, entry] of vocab.tokens) {
-        if (entry[baseline] !== entry[other.name]) {
-          throw new ConfigError(
-            `adapters "${baseline}" and "${other.name}" share skills/ but differ on token "${name}": ` +
-              `"${entry[baseline]}" vs "${entry[other.name]}"`,
-          )
-        }
-      }
-      for (const [name, entry] of vocab.blocks) {
-        if (entry[baseline] !== entry[other.name]) {
-          throw new ConfigError(
-            `adapters "${baseline}" and "${other.name}" share skills/ but differ on block "${name}"`,
-          )
-        }
-      }
-    }
-
-    // Overwrite source in place once, using the baseline adapter's mappings.
-    for (const relPath of mdFiles) {
-      const substituted = substituteContent(originalContent.get(relPath)!, baseline, vocab)
-      writeFileSync(join(root, relPath), substituted)
-    }
-  }
-
-  for (const adapter of activeAdapters) {
-    const outputDir = adapter.skillsOutputDir
-    if (!outputDir) continue // handled above via in-place overwrite
-
-    for (const relPath of mdFiles) {
-      const substituted = substituteContent(originalContent.get(relPath)!, adapter.name, vocab)
-      const outputPath = relPath.startsWith(srcDir + '/')
-        ? outputDir + relPath.slice(srcDir.length)
-        : relPath
-      generatedFiles.push({ path: outputPath, content: substituted })
-    }
-  }
-
-  return generatedFiles
+): GeneratedFile<Uint8Array>[] {
+  const plan = planSkillRendering(root, model, vocab, activeAdapters)
+  writeFileSet(root, plan.sourceUpdates)
+  return plan.generatedFiles
 }

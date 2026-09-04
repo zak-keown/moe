@@ -1,7 +1,7 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { Hono } from "hono";
-import { tmpdir } from "os";
-import { join } from "path";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import type { Adapter } from "../../../src/qa/adapters/adapter.js";
 import { ActiveRunRegistry } from "../../../src/qa/api/active-runs.js";
@@ -429,13 +429,13 @@ describe("Run API", () => {
   }
 
   test("screencast gate: saveScreencast=false does NOT create frames/ on disk", async () => {
-    const { existsSync } = await import("fs");
+    const { existsSync } = await import("node:fs");
     const { framesDir } = await runExecuteWithStubbedWebAdapter(false);
     expect(existsSync(framesDir)).toBe(false);
   });
 
   test("screencast gate: saveScreencast=true creates frames/ on disk", async () => {
-    const { existsSync } = await import("fs");
+    const { existsSync } = await import("node:fs");
     const { framesDir } = await runExecuteWithStubbedWebAdapter(true);
     expect(existsSync(framesDir)).toBe(true);
   });

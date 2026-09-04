@@ -1,7 +1,7 @@
 import { deepMerge } from '../fileset.js'
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import type { ComponentSupport, HarnessAdapter, EmissionLimitation } from './types.js'
 import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { baseManifestFields, json } from './shared.js'
 
@@ -62,7 +62,7 @@ function installDoc(_model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const codex = Object.freeze({
+export const codex: HarnessAdapter = Object.freeze({
   name: 'codex',
   support: {
     skills: 'full',
@@ -73,8 +73,9 @@ export const codex = Object.freeze({
     bootstrap: 'partial',
     rules: 'none',
     variables: 'none',
-  } as const,
-  skillsOutputDir: '.codex-plugin/skills',
+  } satisfies ComponentSupport,
+  skillLayout: { outputDir: '.codex-plugin/skills', profile: 'codex', mode: 'rendered' as const },
+  skillDelivery: 'rendered',
   installDoc,
   emit(model: PluginModel) {
     const limitations: EmissionLimitation[] = []
@@ -92,4 +93,4 @@ export const codex = Object.freeze({
 
     return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('codex', model, files) }
   },
-}) satisfies HarnessAdapter
+})

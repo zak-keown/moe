@@ -18,7 +18,7 @@ import {
 } from '../platform/projections.js'
 import type { ResolvedPlatform, ResolvedPlugin } from '../platform/load.js'
 import type { AdapterEmission } from '../adapters/types.js'
-import { TARGET_IDS, type TargetId } from '../vocabulary.js'
+import { semanticResourceTargets, TARGET_IDS, type TargetId } from '../vocabulary.js'
 import { readArtifactManifest, validateArtifact, writeArtifactManifest, type ExpectedArtifactContext } from './artifact-manifest.js'
 import { validateArtifactReferences } from './references.js'
 import { artifactCollisionKey, artifactPath, compareArtifactPaths, type ArtifactPath } from './paths.js'
@@ -52,7 +52,7 @@ export interface AssembleArtifactSetInput {
 interface ComponentFile {
   readonly destination: ArtifactPath
   readonly bytes: Buffer
-  readonly executable: boolean
+  readonly mode: number
 }
 
 function assemblyError(
@@ -195,7 +195,7 @@ async function collectComponentFiles(plugin: ResolvedPlugin): Promise<readonly C
     candidates.set(destination, {
       destination,
       bytes: await readFile(sourceAbsolute),
-      executable: (stats.mode & 0o111) !== 0,
+      mode: stats.mode & 0o777,
     })
   }
 
@@ -222,6 +222,18 @@ async function collectComponentFiles(plugin: ResolvedPlugin): Promise<readonly C
       linked.add(resolved)
       pending.push(resolved)
     }
+    for (const target of semanticResourceTargets(contents)) {
+      const resolved = posix.normalize(target)
+      if (
+        resolved === '..'
+        || resolved.startsWith('../')
+        || !resolved.startsWith('skills/')
+        || !candidates.has(resolved)
+        || linked.has(resolved)
+      ) continue
+      linked.add(resolved)
+      pending.push(resolved)
+    }
   }
 
   return [...candidates.values()]
@@ -229,11 +241,11 @@ async function collectComponentFiles(plugin: ResolvedPlugin): Promise<readonly C
     .sort((left, right) => compareArtifactPaths(left.destination, right.destination))
 }
 
-async function writeNewFile(path: string, bytes: Uint8Array | string, executable = false): Promise<void> {
+async function writeNewFile(path: string, bytes: Uint8Array | string, mode = 0o644): Promise<void> {
   const handle = await open(path, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600)
   try {
     await handle.writeFile(bytes)
-    await handle.chmod(executable ? 0o755 : 0o644)
+    await handle.chmod(mode)
   } finally {
     await handle.close()
   }
@@ -243,7 +255,7 @@ async function stageComponents(plugin: ResolvedPlugin, artifactRoot: string): Pr
   const files = await collectComponentFiles(plugin)
   for (const file of files) {
     await mkdir(dirname(join(artifactRoot, file.destination)), { recursive: true })
-    await writeNewFile(join(artifactRoot, file.destination), file.bytes, file.executable)
+    await writeNewFile(join(artifactRoot, file.destination), file.bytes, file.mode)
   }
   return files
 }
@@ -413,8 +425,21 @@ export async function assembleArtifact(input: AssembleArtifactInput): Promise<As
 
   const componentFiles = await stageComponents(input.plugin, root)
   const stagedPayloads = await stagePayloads(input.plugin.sourcePath, root, input.plugin.config.artifact.payloads)
-  const validation = validateCanonicalGeneration(identity(input.plugin), { marketplaceName: defaultProfileId(input.platform) })
-  await assertGeneratedPathsCompatible(input.plugin, root, validation.files.map((file) => file.path))
+  await assertGeneratedPathsCompatible(input.plugin, root, [
+    'package.json',
+    '.moe/artifact.json',
+    '.moe-mint/manifest.json',
+  ])
+  const validation = validateCanonicalGeneration(identity(input.plugin), {
+    marketplaceName: defaultProfileId(input.platform),
+    componentRoot: root,
+  })
+  await assertGeneratedPathsCompatible(input.plugin, root, [
+    'package.json',
+    '.moe/artifact.json',
+    '.moe-mint/manifest.json',
+    ...validation.files.map((file) => file.path),
+  ])
   writeValidatedGeneration(root, validation)
   const licensePayload = await writeLicensePayload({
     repoRoot,
@@ -456,6 +481,15 @@ export async function assembleArtifact(input: AssembleArtifactInput): Promise<As
   })
   const paths = await artifactFiles(input.plugin, root)
   const releaseVersions = Object.fromEntries(input.platform.plugins.map((plugin) => [plugin.npmPackage, plugin.version]))
+  for (const entry of await readdir(join(repoRoot, 'packages'), { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue
+    try {
+      const pkg = JSON.parse(await readFile(join(repoRoot, 'packages', entry.name, 'package.json'), 'utf8')) as Record<string, unknown>
+      if (typeof pkg.name === 'string' && typeof pkg.version === 'string' && !Object.hasOwn(releaseVersions, pkg.name)) {
+        releaseVersions[pkg.name] = pkg.version
+      }
+    } catch {}
+  }
   const manifest = composePackageManifest({
     source: input.plugin.packageJson,
     config: input.plugin.config,

@@ -113,15 +113,15 @@ export function RunDetail({ result, onFanout, onRunAgain }: RunDetailProps) {
             onClick={() =>
               onRunAgain({
                 cardId: result.scenario,
-                target: result.config!.target,
-                model: result.config!.model,
-                adapter: result.config!.adapter,
+                target: result.config?.target,
+                model: result.config?.model,
+                adapter: result.config?.adapter,
                 // Spread rather than assign `undefined`: the prefill is a
                 // partial by design and the modal distinguishes "not set" from
                 // "set to nothing".
-                ...(result.config!.chrome !== undefined ? { chrome: result.config!.chrome } : {}),
-                ...(result.config!.viewport !== undefined
-                  ? { viewport: result.config!.viewport }
+                ...(result.config?.chrome !== undefined ? { chrome: result.config?.chrome } : {}),
+                ...(result.config?.viewport !== undefined
+                  ? { viewport: result.config?.viewport }
                   : {}),
                 ...(result.runSet?.passes !== undefined ? { passes: result.runSet.passes } : {}),
               })

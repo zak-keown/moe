@@ -16,5 +16,5 @@
     "automation",
     "screenshots"
   ],
-  "skills": "./skills/"
+  "skills": "./.kimi-plugin/skills/"
 }

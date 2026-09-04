@@ -14,9 +14,14 @@ import { cmdAdopt } from "../src/commands/adopt.js";
 import type { CommandContext } from "../src/commands/context.js";
 import { grantConsent } from "../src/core/consent.js";
 import { appendEvent } from "../src/core/event-log.js";
-import { eventsPath, shimPath } from "../src/core/paths.js";
+import { eventsPath, metaPath, shimPath } from "../src/core/paths.js";
 import type { Tmux } from "../src/core/tmux.js";
-import { readHarnessMarker, readMeta, writeHarnessMarker } from "../src/core/worker-store.js";
+import {
+  readHarnessMarker,
+  readMeta,
+  writeHarnessMarker,
+  writeMeta,
+} from "../src/core/worker-store.js";
 import { getDriver } from "../src/harness/registry.js";
 
 function tmpDir(prefix: string): string {
@@ -201,10 +206,82 @@ describe("cmdAdopt", () => {
     expect(readMeta(workerDir, SID)).toBeNull();
   });
 
-  it("adopts with NO existing session: opens a new pane with --resume", async () => {
+  it("refuses a metadata-only non-Claude worker without respawning it", async () => {
+    grantConsent(home);
+    writeMeta(workerDir, {
+      tmux_name: "codex-worker",
+      session_id: "codex-existing-sid",
+      cwd,
+      harness: "codex",
+    });
+    const state = { ...freshState(), hasSession: true };
+    const result = await cmdAdopt(
+      makeCtx(workerDir, home, fakeTmux(state)),
+      { tmuxName: "codex-worker", cwd, sessionId: SID, extraArgs: [] },
+      { ...baseOpts(), ...FAST },
+    );
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain("codex worker");
+    expect(state.respawnPane).toHaveLength(0);
+    expect(readMeta(workerDir, "codex-existing-sid")?.harness).toBe("codex");
+  });
+
+  it("returns code 2 for an empty harness marker instead of treating it as absent", async () => {
+    grantConsent(home);
+    writeHarnessMarker(workerDir, "broken-worker", "");
+    const state = { ...freshState(), hasSession: true };
+    const result = await cmdAdopt(
+      makeCtx(workerDir, home, fakeTmux(state)),
+      { tmuxName: "broken-worker", cwd, sessionId: SID, extraArgs: [] },
+      { ...baseOpts(), ...FAST },
+    );
+
+    expect(result.code).toBe(2);
+    expect(result.stderr).toContain("harness marker");
+    expect(state.respawnPane).toHaveLength(0);
+  });
+
+  it("returns code 2 for unreadable worker metadata", async () => {
+    grantConsent(home);
+    writeFileSync(metaPath(workerDir, SID), "{not json\n");
+    const result = await cmdAdopt(
+      makeCtx(workerDir, home, fakeTmux(freshState())),
+      { tmuxName: "broken-worker", cwd, sessionId: SID, extraArgs: [] },
+      { ...baseOpts(), ...FAST },
+    );
+
+    expect(result.code).toBe(2);
+    expect(result.stderr).toContain("unreadable metadata");
+  });
+
+  it("returns code 2 when metadata and marker harnesses conflict", async () => {
+    grantConsent(home);
+    writeMeta(workerDir, {
+      tmux_name: "conflicted-worker",
+      session_id: SID,
+      cwd,
+      harness: "claude",
+    });
+    writeHarnessMarker(workerDir, "conflicted-worker", "pi");
+    const state = { ...freshState(), hasSession: true };
+    const result = await cmdAdopt(
+      makeCtx(workerDir, home, fakeTmux(state)),
+      { tmuxName: "conflicted-worker", cwd, sessionId: SID, extraArgs: [] },
+      { ...baseOpts(), ...FAST },
+    );
+
+    expect(result.code).toBe(2);
+    expect(result.stderr).toContain("conflicting harness state");
+    expect(state.respawnPane).toHaveLength(0);
+  });
+
+  it("adopts with genuinely absent persisted state: opens a new pane with --resume", async () => {
     grantConsent(home);
     seedTranscript();
     const state = freshState();
+    expect(readMeta(workerDir, SID)).toBeNull();
+    expect(readHarnessMarker(workerDir, "w1")).toBeNull();
     // The meta must already exist when the pane is created (the SessionStart
     // hook needs it to record events), so assert it from the launch callback.
     let metaExistedAtLaunch = false;

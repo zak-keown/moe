@@ -17,7 +17,7 @@
     "automation",
     "screenshots"
   ],
-  "skills": "./skills/",
+  "skills": "./.cursor-plugin/skills/",
   "category": "development",
   "tags": [
     "browser",

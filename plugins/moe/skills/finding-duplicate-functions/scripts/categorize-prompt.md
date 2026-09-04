@@ -1,6 +1,6 @@
 # Function Categorization Prompt
 
-Use this prompt with a **haiku** subagent for cost-effective categorization.
+Use this prompt with a **the configured fast model** subagent for cost-effective categorization.
 
 ## Prompt Template
 
@@ -54,9 +54,9 @@ Do NOT truncate or summarize - write ALL entries.
 ## Usage
 
 1. Run extraction: `./extract-functions.sh src/ -o catalog.json`
-2. Dispatch haiku subagent with the prompt above, replacing:
+2. Dispatch a the configured fast model subagent with the prompt above, replacing:
    - `<CATALOG_PATH>` with path to catalog.json
    - `<OUTPUT_PATH>` with desired output path (e.g., `categorized.json`)
 3. Verify output file was created with all entries
 
-**Critical:** The subagent must use {write} to save output. If it only returns a summary, re-prompt with explicit file write instructions.
+**Critical:** The subagent must use `write_to_file` to save output. If it only returns a summary, re-prompt with explicit file write instructions.

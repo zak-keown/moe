@@ -100,7 +100,7 @@ export class PrettyRenderer implements StreamRenderer {
   }
 
   private write(line: string): void {
-    this.sink.write(line + "\n");
+    this.sink.write(`${line}\n`);
   }
 
   private renderRunStart(e: StreamEvent): void {
@@ -273,7 +273,7 @@ export class PrettyRenderer implements StreamRenderer {
     const bodyParts: string[] = [];
     if (formatted.body) bodyParts.push(p.dim(formatted.body));
     if (formatted.marker) bodyParts.push(p.dim(formatted.marker));
-    const bodyStr = bodyParts.length > 0 ? " " + bodyParts.join(" ") : "";
+    const bodyStr = bodyParts.length > 0 ? ` ${bodyParts.join(" ")}` : "";
     const base = `  ${p.cyan("▸")} ${p.bold(name)}${bodyStr}`;
     this.firstSection = false;
 
@@ -419,5 +419,5 @@ function pickResultSnippet(text: string, maxWidth: number): string | null {
   if (!line) return null;
   const width = Math.max(20, maxWidth);
   if (line.length <= width) return line;
-  return line.slice(0, width - 1) + "…";
+  return `${line.slice(0, width - 1)}…`;
 }

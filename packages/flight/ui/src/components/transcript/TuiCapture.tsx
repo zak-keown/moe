@@ -31,7 +31,7 @@ interface Props {
 
 /** Swap `.ansi` → `.json` so we fetch the parsed grid, not the raw bytes. */
 function toJsonPath(ansiPath: string): string {
-  return ansiPath.endsWith(".ansi") ? ansiPath.slice(0, -5) + ".json" : ansiPath;
+  return ansiPath.endsWith(".ansi") ? `${ansiPath.slice(0, -5)}.json` : ansiPath;
 }
 
 /**

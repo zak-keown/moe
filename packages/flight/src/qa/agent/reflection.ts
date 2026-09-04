@@ -15,7 +15,7 @@ export interface ReflectableToolCall {
 function renderValue(value: unknown): string {
   if (typeof value === "string") {
     const truncated =
-      value.length > MAX_ARG_VALUE_LEN ? value.slice(0, MAX_ARG_VALUE_LEN) + "…" : value;
+      value.length > MAX_ARG_VALUE_LEN ? `${value.slice(0, MAX_ARG_VALUE_LEN)}…` : value;
     return JSON.stringify(truncated);
   }
   if (value === null || typeof value === "number" || typeof value === "boolean") {
@@ -30,7 +30,7 @@ function renderValue(value: unknown): string {
     rendered = "<unserializable>";
   }
   if (rendered.length > MAX_ARG_VALUE_LEN) {
-    rendered = rendered.slice(0, MAX_ARG_VALUE_LEN) + "…";
+    rendered = `${rendered.slice(0, MAX_ARG_VALUE_LEN)}…`;
   }
   return rendered;
 }

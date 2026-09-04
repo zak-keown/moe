@@ -1,5 +1,5 @@
-import { readFileSync } from "fs";
-import { join } from "path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import {
   applyEvent,
@@ -60,14 +60,14 @@ describe("reduceTranscript", () => {
 
     const turn1 = model.turns.get(1)!;
     expect(turn1.tools.length).toBe(2);
-    expect(turn1.tools[0]!.call.name).toBe("read");
-    expect(turn1.tools[0]!.result?.text.length).toBeGreaterThan(0);
-    expect(turn1.tools[1]!.call.name).toBe("read");
+    expect(turn1.tools[0]?.call.name).toBe("read");
+    expect(turn1.tools[0]?.result?.text.length).toBeGreaterThan(0);
+    expect(turn1.tools[1]?.call.name).toBe("read");
 
     // Turn 7 has the extract tool with an artifact.
     const turn7 = model.turns.get(7)!;
-    expect(turn7.tools[0]!.call.name).toBe("extract");
-    expect(turn7.tools[0]!.result?.artifact).toBe("artifacts/001.md");
+    expect(turn7.tools[0]?.call.name).toBe("extract");
+    expect(turn7.tools[0]?.result?.artifact).toBe("artifacts/001.md");
 
     // Usage rolls up.
     const usage = totalUsage(model);
@@ -146,8 +146,8 @@ describe("reduceTranscript", () => {
       arguments: { url: "/login" },
     };
     const model = reduceTranscript([a, b]);
-    expect(model.turns.get(3)!.tools.length).toBe(1);
-    expect(model.turns.get(3)!.llmResponse).toBe(a);
+    expect(model.turns.get(3)?.tools.length).toBe(1);
+    expect(model.turns.get(3)?.llmResponse).toBe(a);
   });
 
   test("tool_result without matching tool_call is dropped with warn", () => {
@@ -274,8 +274,8 @@ describe("soft-error detection", () => {
     // returned "Error: path ... must not contain '..' segments".
     const turn8 = sites.find((s) => s.turn === 8);
     expect(turn8).toBeDefined();
-    expect(turn8!.toolName).toBe("read");
-    expect(turn8!.snippet.toLowerCase()).toContain("error");
+    expect(turn8?.toolName).toBe("read");
+    expect(turn8?.snippet.toLowerCase()).toContain("error");
   });
 });
 

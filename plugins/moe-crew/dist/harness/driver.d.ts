@@ -49,7 +49,7 @@ export interface HarnessDriver {
      */
     stopGraceSeconds: number;
     /** The binary to invoke (honours any per-harness override env var). */
-    bin(): string;
+    bin(environment?: NodeJS.ProcessEnv): string;
     /**
      * The env pins for a worker's tmux session, derived from the controller's env.
      * Harness-specific: claude scrubs stale provider/IDE vars (issue #18); codex

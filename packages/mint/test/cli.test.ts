@@ -131,6 +131,11 @@ function sixPluginFailureFixture(): string {
     mkdirSync(join(packageRoot, 'mint'), { recursive: true })
     const packageJson = structuredClone(corePackage)
     packageJson.name = `@example/${id}`
+    if (packageJson.dependencies) {
+      for (const [dep, range] of Object.entries(packageJson.dependencies as Record<string, string>)) {
+        if (range.startsWith('workspace:')) delete packageJson.dependencies[dep]
+      }
+    }
     writeFileSync(join(packageRoot, 'package.json'), `${JSON.stringify(packageJson, null, 2)}\n`)
     const config = structuredClone(coreConfig)
     config.name = id
@@ -243,7 +248,7 @@ describe('CLI end-to-end', () => {
     expect(result.stderr).toContain('missing-runtime')
     expect(readFileSync(join(root, 'plugins', 'canonical.bin'))).toEqual(canonical)
     expect(existsSync(join(root, 'plugins.next-sixfailure'))).toBe(false)
-  })
+  }, 15_000)
 
   it('ships every core hook executable referenced by the canonical Claude hook manifest', () => {
     const pluginRoot = join(WORKSPACE_ROOT, 'plugins', 'moe')
@@ -259,8 +264,11 @@ describe('CLI end-to-end', () => {
     }
     expect(readdirSync(join(pluginRoot, 'hooks')).sort()).toEqual([
       'claude-judge-continuation',
+      'developing-for-moe-notice',
       'governance-marker-check',
       'hooks.json',
+      'jig-review-format-guard',
+      'jig-worktree-guard',
       'moe-completion-evidence',
       'moe-mint',
       'plan-set',
@@ -276,12 +284,12 @@ describe('CLI end-to-end', () => {
     expect(result.status).toBe(0)
     expect(result.stderr).toBe('')
     expect(JSON.parse(result.stdout)).toEqual([
-      { plugin: 'moe', package: '@bubstack/moe-core', version: '0.1.4', sourcePackagePath: 'packages/core', generatedArtifactPath: 'plugins/moe' },
-      { plugin: 'moe-backstory', package: '@bubstack/moe-backstory', version: '0.1.4', sourcePackagePath: 'packages/backstory', generatedArtifactPath: 'plugins/moe-backstory' },
+      { plugin: 'moe', package: '@bubstack/moe-core', version: '0.1.6', sourcePackagePath: 'packages/core', generatedArtifactPath: 'plugins/moe' },
+      { plugin: 'moe-backstory', package: '@bubstack/moe-backstory', version: '0.1.6', sourcePackagePath: 'packages/backstory', generatedArtifactPath: 'plugins/moe-backstory' },
       { plugin: 'moe-memory', package: '@bubstack/moe-memory', version: '0.2.0', sourcePackagePath: 'packages/memory', generatedArtifactPath: 'plugins/moe-memory' },
-      { plugin: 'moe-glass', package: '@bubstack/moe-glass', version: '0.1.4', sourcePackagePath: 'packages/glass', generatedArtifactPath: 'plugins/moe-glass' },
-      { plugin: 'moe-crew', package: '@bubstack/moe-crew', version: '0.1.4', sourcePackagePath: 'packages/crew', generatedArtifactPath: 'plugins/moe-crew' },
-      { plugin: 'moe-statusline', package: '@bubstack/moe-statusline', version: '0.1.0', sourcePackagePath: 'packages/statusline', generatedArtifactPath: 'plugins/moe-statusline' },
+      { plugin: 'moe-glass', package: '@bubstack/moe-glass', version: '0.1.6', sourcePackagePath: 'packages/glass', generatedArtifactPath: 'plugins/moe-glass' },
+      { plugin: 'moe-crew', package: '@bubstack/moe-crew', version: '0.1.6', sourcePackagePath: 'packages/crew', generatedArtifactPath: 'plugins/moe-crew' },
+      { plugin: 'moe-statusline', package: '@bubstack/moe-statusline', version: '0.1.2', sourcePackagePath: 'packages/statusline', generatedArtifactPath: 'plugins/moe-statusline' },
     ])
     for (const sourcePackage of ['core', 'backstory', 'memory', 'glass', 'crew', 'statusline']) {
       expect(existsSync(join(REPO_ROOT, '..', sourcePackage, '.claude-plugin', 'plugin.json'))).toBe(false)
@@ -339,8 +347,9 @@ describe('CLI end-to-end', () => {
     runCli(['generate'], dir)
     const yamlPath = join(dir, 'moe-mint.yaml')
     const yaml = readFileSync(yamlPath, 'utf8')
-    // Excluding opencode drops its four uniquely-owned files (the plugin JS,
-    // the translated command/agent .md files, and the install doc).
+    // Excluding opencode drops its uniquely-owned adapter files and complete
+    // rendered skill tree. Every removed path must be itemized before an
+    // exact summary count so users can audit the destructive change.
     writeFileSync(yamlPath, yaml
       .replace('  opencode: { intent: preview, expected_capabilities: [skill-discovery, command-discovery, agent-discovery, bootstrap-routing], operating_systems: [macos] }', '  opencode: { intent: omit }')
       .replace('harnesses:\n', 'harnesses:\n  exclude: [opencode]\n'))
@@ -351,15 +360,22 @@ describe('CLI end-to-end', () => {
     const pluginJsIndex = result.stdout.indexOf('pruned: .opencode/plugins/kitchen-sink.js')
     const commandIndex = result.stdout.indexOf('pruned: .opencode/command/ks-hello.md')
     const agentIndex = result.stdout.indexOf('pruned: .opencode/agent/ks-reviewer.md')
+    const skillIndex = result.stdout.indexOf('pruned: .opencode/skills/greeting/SKILL.md')
     const installDocIndex = result.stdout.indexOf('pruned: docs/install/opencode.md')
-    const countIndex = result.stdout.indexOf('Pruned 4 stale file(s)')
+    const pruneLines = result.stdout.split('\n').filter((line) => line.startsWith('pruned: '))
+    const summary = result.stdout.match(/Pruned (\d+) stale file\(s\)/)
+    expect(summary).not.toBeNull()
+    expect(Number(summary?.[1])).toBe(pruneLines.length)
+    const countIndex = summary?.index ?? -1
     expect(pluginJsIndex).toBeGreaterThanOrEqual(0)
     expect(commandIndex).toBeGreaterThanOrEqual(0)
     expect(agentIndex).toBeGreaterThanOrEqual(0)
+    expect(skillIndex).toBeGreaterThanOrEqual(0)
     expect(installDocIndex).toBeGreaterThanOrEqual(0)
     expect(countIndex).toBeGreaterThan(pluginJsIndex)
     expect(countIndex).toBeGreaterThan(commandIndex)
     expect(countIndex).toBeGreaterThan(agentIndex)
+    expect(countIndex).toBeGreaterThan(skillIndex)
     expect(countIndex).toBeGreaterThan(installDocIndex)
   })
 

@@ -90,7 +90,7 @@ function spawnViaNode(argv: string[], options?: SpawnOptions): SpawnedProcess {
       pid: proc.pid,
       stdin: {
         write: (d) => {
-          proc.stdin!.write(d);
+          proc.stdin?.write(d);
         },
         // Node's child_process stdin flushes synchronously to the kernel
         // pipe on each write call; there's no equivalent of FileSink.flush.

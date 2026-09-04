@@ -344,8 +344,8 @@ describe("rebuildMessages — image rehydration", () => {
     expect(block.type).toBe("tool_result");
     const imageBlock = block.content.find((c) => c.type === "image");
     expect(imageBlock).toBeDefined();
-    expect(imageBlock!.source!.media_type).toBe("image/png");
-    expect(imageBlock!.source!.data).toBe(ONE_PIXEL_PNG.toString("base64"));
+    expect(imageBlock?.source?.media_type).toBe("image/png");
+    expect(imageBlock?.source?.data).toBe(ONE_PIXEL_PNG.toString("base64"));
   });
 
   test("warns and defaults to image/png when mediaType is missing", () => {
@@ -545,7 +545,7 @@ describe("rebuildMessages — reflection checkpoint", () => {
     expect(types).toContain("tool_result");
     expect(types).toContain("text");
     const textBlock = lastUser.content.find((b) => b.type === "text");
-    expect(textBlock!.text).toContain("reflect now");
+    expect(textBlock?.text).toContain("reflect now");
     const userTurns = result.messages.filter((m) => (m as { role?: string }).role === "user");
     expect(userTurns).toHaveLength(2);
   });

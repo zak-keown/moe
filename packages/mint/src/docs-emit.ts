@@ -1,6 +1,6 @@
 import type { PluginModel } from './model.js'
 import type { HarnessAdapter } from './adapters/types.js'
-import type { AdapterEmission } from './adapters/types.js'
+import type { AdapterEmission, SkillDelivery } from './adapters/types.js'
 import type { FileSet, GeneratedFile } from './fileset.js'
 import { renderMatrix } from './matrix.js'
 import type { TargetId } from './vocabulary.js'
@@ -46,17 +46,21 @@ function installDocFile(model: PluginModel, adapter: HarnessAdapter): GeneratedF
 // consuming the emitted shell hooks (Design decision 2).
 const NOTES = [
   '- Copilot consumes the Claude Code layout through `.claude-plugin/marketplace.json`; keep the `claude-code` adapter enabled when targeting Copilot.',
-  '- Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.',
+  '- Repos consuming shell-hook output should pin both `hooks/moe-mint/*` and `.cursor-plugin/hooks/moe-mint/*` to LF in .gitattributes or accept drift warnings on autocrlf checkouts.',
 ]
 
-function supportMatrixFile(model: PluginModel, emissions?: Partial<Record<TargetId, AdapterEmission>>): GeneratedFile {
+function supportMatrixFile(
+  model: PluginModel,
+  emissions?: Partial<Record<TargetId, AdapterEmission>>,
+  skillDelivery?: Readonly<Record<string, SkillDelivery>>,
+): GeneratedFile {
   const content =
     [
       GENERATED_MARKER,
       '',
       `# ${model.config.name} harness support matrix`,
       '',
-      renderMatrix(emissions).trimEnd(),
+      renderMatrix(emissions, skillDelivery).trimEnd(),
       '',
       '## Notes',
       '',
@@ -75,12 +79,13 @@ export function emitDocs(
   model: PluginModel,
   activeAdapters: readonly HarnessAdapter[],
   emissions?: Partial<Record<TargetId, AdapterEmission>>,
+  skillDelivery?: Readonly<Record<string, SkillDelivery>>,
 ): FileSet {
   const files: FileSet = []
   for (const adapter of activeAdapters) {
     const file = installDocFile(model, adapter)
     if (file) files.push(file)
   }
-  files.push(supportMatrixFile(model, emissions))
+  files.push(supportMatrixFile(model, emissions, skillDelivery))
   return files
 }

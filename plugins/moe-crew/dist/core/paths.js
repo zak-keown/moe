@@ -76,6 +76,3 @@ export function worktreeMarkerPath(dir, name) {
     assertSafeSegment(name);
     return `${dir}/${name}.worktree`;
 }
-export function claudeTranscriptPath(home, cwd, sid) {
-    return `${home}/.claude/projects/${cwd.replace(/[/._:]/g, "-")}/${sid}.jsonl`;
-}

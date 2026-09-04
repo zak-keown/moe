@@ -1,5 +1,5 @@
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter } from './types.js'
+import type { ComponentSupport, HarnessAdapter } from './types.js'
 import { marketplaceName } from './shared.js'
 
 // GitHub Copilot CLI reads Claude Code's marketplace descriptor and installs
@@ -27,7 +27,7 @@ function installDoc(model: PluginModel): string {
   ].join('\n')
 }
 
-export const copilot = Object.freeze({
+export const copilot: HarnessAdapter = Object.freeze({
   name: 'copilot',
   support: {
     skills: 'full',
@@ -38,12 +38,13 @@ export const copilot = Object.freeze({
     bootstrap: 'full',
     rules: 'none',
     variables: 'none',
-  } as const,
-  skillsOutputDir: undefined,
+  } satisfies ComponentSupport,
+  skillLayout: { outputDir: '.claude-plugin/skills', profile: 'claude-code', mode: 'rendered' as const },
+  skillDelivery: 'shared-compatible',
   installDoc,
   emit(_model: PluginModel) {
     // Copilot consumes Claude's validated marketplace layout. Generation
     // replaces the empty local set with its projection owner's capabilities.
     return { files: [], limitations: [], emittedCapabilities: [], projectionOwner: 'claude-code' as const }
   },
-}) satisfies HarnessAdapter
+})

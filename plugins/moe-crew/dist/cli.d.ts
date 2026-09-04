@@ -5,6 +5,12 @@ export interface Io {
     err: (s: string) => void;
 }
 /**
+ * The bootstrap opts launch/adopt need. In the tsup CJS bundle `__dirname` is
+ * the `dist/` directory, so the plugin root is its parent and `moe-crew.cjs` sits
+ * beside this file.
+ */
+export declare function resolvePluginRoot(bundleDir: string, environment?: NodeJS.ProcessEnv): string;
+/**
  * Read the first line from `input` (default stdin), resolving the trimmed
  * string. On EOF without a line (empty pipe), resolves '' so the caller does not
  * hang forever waiting for a line that never arrives.

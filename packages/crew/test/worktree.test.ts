@@ -1,9 +1,9 @@
-import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { worktreeMarkerPath } from "../src/core/paths.js";
-import type { Runner, RunResult } from "../src/core/proc.js";
+import type { Runner } from "../src/core/proc.js";
 import { readWorktreeMarker, writeWorktreeMarker } from "../src/core/worker-store.js";
 import { createWorktree, removeWorktree, worktreePath } from "../src/core/worktree.js";
 

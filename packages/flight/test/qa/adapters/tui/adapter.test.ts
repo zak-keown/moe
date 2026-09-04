@@ -1,7 +1,7 @@
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { TUIAdapter } from "../../../../src/qa/adapters/tui/adapter.js";
 import { EvidenceLogger } from "../../../../src/qa/evidence/logger.js";
@@ -144,7 +144,7 @@ describe.skipIf(!tmuxAvailable)("TUIAdapter", () => {
       const screen = await adapter.readScreen();
       const match = screen.match(/PID=(\d+)/);
       expect(match).not.toBeNull();
-      const sleepPid = Number(match![1]);
+      const sleepPid = Number(match?.[1]);
       expect(() => process.kill(sleepPid, 0)).not.toThrow();
 
       await adapter.close();
@@ -356,9 +356,9 @@ describe("TUIAdapter context tool wiring", () => {
   });
 
   test("registers fetch_credential when contextRoot and credentialResolver set", () => {
-    const { mkdtempSync, writeFileSync, chmodSync, rmSync } = require("fs");
-    const { tmpdir } = require("os");
-    const { join } = require("path");
+    const { mkdtempSync, writeFileSync, chmodSync, rmSync } = require("node:fs");
+    const { tmpdir } = require("node:os");
+    const { join } = require("node:path");
     const ctxTmp = mkdtempSync(join(tmpdir(), "moe-flight-tui-cred-ctx-"));
     const resTmp = mkdtempSync(join(tmpdir(), "moe-flight-tui-cred-res-"));
     try {
@@ -378,9 +378,9 @@ describe("TUIAdapter context tool wiring", () => {
   });
 
   test("omits fetch_credential when credentialResolver is undefined", () => {
-    const { mkdtempSync, writeFileSync, rmSync } = require("fs");
-    const { tmpdir } = require("os");
-    const { join } = require("path");
+    const { mkdtempSync, writeFileSync, rmSync } = require("node:fs");
+    const { tmpdir } = require("node:os");
+    const { join } = require("node:path");
     const ctxTmp = mkdtempSync(join(tmpdir(), "moe-flight-tui-cred-ctx-"));
     try {
       writeFileSync(join(ctxTmp, "alice.md"), "anything");
@@ -392,9 +392,9 @@ describe("TUIAdapter context tool wiring", () => {
   });
 
   test("omits fetch_credential when contextRoot is empty even if resolver is set", () => {
-    const { mkdtempSync, writeFileSync, chmodSync, rmSync } = require("fs");
-    const { tmpdir } = require("os");
-    const { join } = require("path");
+    const { mkdtempSync, writeFileSync, chmodSync, rmSync } = require("node:fs");
+    const { tmpdir } = require("node:os");
+    const { join } = require("node:path");
     const ctxTmp = mkdtempSync(join(tmpdir(), "moe-flight-tui-cred-ctx-empty-"));
     const resTmp = mkdtempSync(join(tmpdir(), "moe-flight-tui-cred-res-"));
     try {

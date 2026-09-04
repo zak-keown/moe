@@ -6,9 +6,9 @@ import {
   readFileSync,
   rmSync,
   writeFileSync,
-} from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { CLIAdapter } from "../../../src/qa/adapters/cli/adapter.js";
 import { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
@@ -83,7 +83,7 @@ describe("CLIAdapter — close cleanup", () => {
     const out = await adapter.executeTool("read_output", {}, logger);
     const match = out.text.match(/PID=(\d+)/);
     expect(match).not.toBeNull();
-    const childPid = Number(match![1]);
+    const childPid = Number(match?.[1]);
     expect(pidStillAlive(childPid)).toBe(true);
 
     await adapter.close();
@@ -123,12 +123,12 @@ describe("CLIAdapter — prompt-response compatibility", () => {
     const scriptPath = join(scratch, "prompts.sh");
     writeFileSync(
       scriptPath,
-      [
+      `${[
         "#!/usr/bin/env bash",
         'read -p "name: " name',
         'read -p "color: " color',
         'echo "got: $name / $color"',
-      ].join("\n") + "\n",
+      ].join("\n")}\n`,
     );
     chmodSync(scriptPath, 0o755);
 

@@ -1,7 +1,7 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { Hono } from "hono";
-import { tmpdir } from "os";
-import { join } from "path";
 import { describe, expect, test } from "vitest";
 import { ActiveRunRegistry } from "../../../src/qa/api/active-runs.js";
 import { activeRunRoutes } from "../../../src/qa/api/routes/active-runs.js";
@@ -177,7 +177,7 @@ describe("PRI-1478: concurrency cap", () => {
 describe("PRI-1478: active-runs target truncation", () => {
   test("truncates target longer than cap to <cap>... in list view", async () => {
     const registry = new ActiveRunRegistry();
-    const longTarget = "http://" + "x".repeat(2000);
+    const longTarget = `http://${"x".repeat(2000)}`;
     registry.register({
       id: "run-a",
       cardId: "x",
@@ -221,7 +221,7 @@ describe("PRI-1478: active-runs target truncation", () => {
 
   test("snapshot endpoint returns full target even when list view truncated", async () => {
     const registry = new ActiveRunRegistry();
-    const longTarget = "http://" + "x".repeat(2000);
+    const longTarget = `http://${"x".repeat(2000)}`;
     registry.register({
       id: "run-a",
       cardId: "x",

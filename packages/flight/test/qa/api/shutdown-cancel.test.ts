@@ -1,6 +1,6 @@
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { RunSetBroadcaster } from "../../../src/qa/api/run-set-broadcaster.js";
 import { drainShutdown, ShutdownState } from "../../../src/qa/api/shutdown.js";

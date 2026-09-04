@@ -26,7 +26,7 @@ const extractAndStripFrontmatter = (content) => {
   return { frontmatter, content: body }
 }
 
-const skillsDir = path.resolve(__dirname, '../../skills')
+const skillsDir = path.resolve(__dirname, '../../.opencode/skills')
 const BOOTSTRAP_MARKER = '<plugin-bootstrap plugin="moe-memory">'
 
 // Module-level cache for bootstrap content. The bootstrap file does not
@@ -38,7 +38,7 @@ export const MoeMemoryPlugin = async ({ client, directory }) => {
   const getBootstrapContent = () => {
     if (_bootstrapCache !== undefined) return _bootstrapCache
 
-    const bootstrapPath = path.resolve(__dirname, '../../skills/remembering-conversations/SKILL.md')
+    const bootstrapPath = path.resolve(__dirname, '../../.opencode/skills/remembering-conversations/SKILL.md')
     if (!fs.existsSync(bootstrapPath)) {
       _bootstrapCache = null
       return null

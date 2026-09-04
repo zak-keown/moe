@@ -5,15 +5,14 @@ import type { ComponentSupport, EmissionLimitation } from '../adapters/types.js'
 import { CAPABILITY_IDS, type CapabilityId, type TargetId, type TargetIntent } from '../vocabulary.js'
 import { conformsToGeneratedSchema } from '../validate.js'
 
-type MappedComponent = 'skills' | 'commands' | 'agents' | 'hooks' | 'mcp' | 'bootstrap'
-const componentCapability: Record<MappedComponent, CapabilityId> = {
+const componentCapability: Readonly<Partial<Record<keyof ComponentSupport, CapabilityId>>> = {
   skills: 'skill-discovery',
   commands: 'command-discovery',
   agents: 'agent-discovery',
   hooks: 'hook-execution',
   mcp: 'mcp-registration',
   bootstrap: 'bootstrap-routing',
-}
+} as const
 
 function paths(files: FileSet): ReadonlySet<string> {
   return new Set(files.map((file) => file.path))
@@ -88,7 +87,7 @@ export function mapLegacyComponentSupport(
 ): CapabilityId[] {
   const direct = deriveEmittedCapabilities(target, model, files)
   const allowed = new Set<CapabilityId>()
-  for (const [component, capability] of Object.entries(componentCapability) as Array<[MappedComponent, CapabilityId]>) {
+  for (const [component, capability] of Object.entries(componentCapability) as Array<[keyof ComponentSupport, CapabilityId]>) {
     if (support[component] !== 'none') allowed.add(capability)
   }
   return ordered(direct.filter((capability) => allowed.has(capability) || capability === 'format-conformance'))
@@ -126,7 +125,8 @@ export function deriveEmittedCapabilities(target: TargetId, model: PluginModel, 
         const manifest = jsonObject(files, '.cursor-plugin/plugin.json')
         if (manifest === undefined) break
         if (hasSkills && manifest.skills === `./${model.config.components.skills}/`) capabilities.add('skill-discovery')
-        const bootstrapHooks = manifest.hooks === './hooks/moe-mint/hooks-cursor.json' && includes(emitted, 'hooks/moe-mint/session-start')
+        const bootstrapHooks = manifest.hooks === './.cursor-plugin/hooks/moe-mint/hooks.json'
+          && includes(emitted, '.cursor-plugin/hooks/moe-mint/session-start')
         if (bootstrapHooks) capabilities.add('hook-execution')
         if (bootstrapActive && bootstrapHooks) capabilities.add('bootstrap-routing')
       }
@@ -205,9 +205,7 @@ export function validateEmissionLimitations(
   const actual = new Set(emitted)
   for (const limitation of limitations) {
     if (limitation.code === 'SETTING_DROPPED') continue
-    const capability = limitation.component in componentCapability
-      ? componentCapability[limitation.component as MappedComponent]
-      : undefined
+    const capability = componentCapability[limitation.component]
     if (capability === undefined) continue
     if (limitation.code === 'COMPONENT_OMITTED' && actual.has(capability)) {
       throw capabilityError(

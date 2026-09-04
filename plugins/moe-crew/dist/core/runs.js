@@ -27,7 +27,7 @@ function readRunMeta(workerDir, runId) {
 function writeRunMeta(workerDir, meta) {
     const dir = runDir(workerDir, meta.id);
     mkdirSync(dir, { recursive: true });
-    writeFileSync(runMetaPath(workerDir, meta.id), JSON.stringify(meta, null, 2) + "\n");
+    writeFileSync(runMetaPath(workerDir, meta.id), `${JSON.stringify(meta, null, 2)}\n`);
 }
 /**
  * Start a new run. Creates `runs/<run-id>/run.json` with the initial metadata

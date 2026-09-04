@@ -21,12 +21,12 @@
     "writing",
     "plugin-authoring"
   ],
-  "skills": "./skills/",
+  "skills": "./.cursor-plugin/skills/",
   "category": "development",
   "tags": [
     "skills",
     "workflow"
   ],
   "agents": "./agents/",
-  "hooks": "./hooks/moe-mint/hooks-cursor.json"
+  "hooks": "./.cursor-plugin/hooks/moe-mint/hooks.json"
 }

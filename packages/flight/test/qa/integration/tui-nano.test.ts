@@ -1,6 +1,6 @@
-import { mkdtempSync, unlinkSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { mkdtempSync, unlinkSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
 import { TUIAdapter } from "../../../src/qa/adapters/tui/adapter.js";
 import { runAgent } from "../../../src/qa/agent/agent.js";

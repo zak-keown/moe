@@ -1,5 +1,5 @@
+import { join } from "node:path";
 import { Hono } from "hono";
-import { join } from "path";
 import { findCard } from "../../cards/store.js";
 import {
   type AppConfig,
@@ -170,30 +170,22 @@ export async function executeHttpRun(opts: ExecuteHttpRunOpts): Promise<ExecuteR
       if (terminal) broadcaster?.send(runId, terminal);
     },
   };
-
-  try {
-    const result = await executeRunCore({
-      card,
-      storyPath,
-      runId,
-      client,
-      runSetCtx,
-      adapterFactory: opts.adapterFactory,
-      abortSignal: opts.abortSignal,
-      runConfig: effective,
-      hooks,
-    });
-    terminal = { type: "complete", result: result.result };
-    // afterClose has already run by this point in the success path,
-    // so emit the success terminal directly.
-    broadcaster?.send(runId, terminal);
-    return result;
-  } catch (err) {
-    // onError already populated `terminal` and ErrorLog; afterClose
-    // already broadcast it. Just rethrow so the multi-pass executor
-    // observes the failure.
-    throw err;
-  }
+  const result = await executeRunCore({
+    card,
+    storyPath,
+    runId,
+    client,
+    runSetCtx,
+    adapterFactory: opts.adapterFactory,
+    abortSignal: opts.abortSignal,
+    runConfig: effective,
+    hooks,
+  });
+  terminal = { type: "complete", result: result.result };
+  // afterClose has already run by this point in the success path,
+  // so emit the success terminal directly.
+  broadcaster?.send(runId, terminal);
+  return result;
 }
 
 export function runRoutes(

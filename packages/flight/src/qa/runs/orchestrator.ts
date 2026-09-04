@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from "fs";
-import { join } from "path";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { type Adapter, snapshotViewport } from "../adapters/adapter.js";
 import { CLIAdapter } from "../adapters/cli/adapter.js";
 import { runAgent } from "../agent/agent.js";
@@ -64,7 +64,9 @@ export interface RunCoreStarted extends RunCorePrepared {
 export interface RunCoreHooks {
   /** Attach observers to the freshly-built logger. Optional detach fn is
    * called after adapter close so close-time events still fan out. */
-  onLogger?: ((logger: EvidenceLogger, ctx: RunCorePrepared) => void | (() => void)) | undefined;
+  onLogger?:
+    | ((logger: EvidenceLogger, ctx: RunCorePrepared) => undefined | (() => void))
+    | undefined;
   beforeAgent?: ((ctx: RunCoreStarted) => Promise<void> | void) | undefined;
   onError?:
     | ((err: unknown, ctx: RunCoreStarted | RunCorePrepared) => Promise<void> | void)

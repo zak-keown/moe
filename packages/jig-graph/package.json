@@ -1,0 +1,51 @@
+{
+  "name": "@bubstack/moe-jig-graph",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Graph-grounded plan validation. Extends jig with moedex-powered validate and seed commands.",
+  "license": "MIT",
+  "author": {
+    "name": "Zak Keown",
+    "email": "zak.keown@outlook.com"
+  },
+  "homepage": "https://github.com/zak-keown/moe",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zak-keown/moe.git"
+  },
+  "keywords": [
+    "moe",
+    "jig",
+    "moedex",
+    "code-graph",
+    "plan-validation"
+  ],
+  "exports": {
+    "./jig-extension": "./dist/jig-extension.js"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc -b && node ../../scripts/copy-license.mjs MIT dist/LICENSE",
+    "typecheck": "tsc -b --pretty",
+    "test": "vitest run",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "@bubstack/moe-jig": "workspace:*",
+    "@modelcontextprotocol/sdk": "1.30.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.4"
+  }
+}

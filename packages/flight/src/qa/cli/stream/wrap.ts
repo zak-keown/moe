@@ -29,7 +29,7 @@ export function softWrap(text: string, width: number): string[] {
         continue;
       }
       if (line.length + 1 + word.length <= width) {
-        line += " " + word;
+        line += ` ${word}`;
       } else {
         out.push(line);
         if (word.length > width) {

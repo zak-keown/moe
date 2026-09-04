@@ -15,3 +15,4 @@ export interface EnsureStatusLineResult {
     reason: "written" | "already-set" | "unreadable-settings";
 }
 export declare function ensureStatusLine(opts: EnsureStatusLineOptions): EnsureStatusLineResult;
+export declare function defaultSettingsPath(env?: NodeJS.ProcessEnv, homeDir?: string): string;

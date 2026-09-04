@@ -1,6 +1,6 @@
-import { mkdtempSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { CLIAdapter } from "../../../src/qa/adapters/cli/adapter.js";
 import { runAgent } from "../../../src/qa/agent/agent.js";

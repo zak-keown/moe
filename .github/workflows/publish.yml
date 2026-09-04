@@ -1,4 +1,4 @@
-# Publishes the six @bubstack/moe-* packages to npm when a tag matching /^v/
+# Publishes the seven @bubstack/moe-* packages to npm when a tag matching /^v/
 # is pushed. Authenticates via OIDC "trusted publishing" — pnpm/npm mint a
 # short-lived ID token per job via ACTIONS_ID_TOKEN_REQUEST_URL, verified
 # against a trusted publisher pre-registered on each package at npmjs.com.

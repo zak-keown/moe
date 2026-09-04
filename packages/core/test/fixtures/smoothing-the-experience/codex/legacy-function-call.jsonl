@@ -1,0 +1,6 @@
+{"timestamp":"2026-09-01T12:00:00.000Z","type":"session_meta","payload":{"id":"codex-root-b","cwd":"/fixture/repo-a","cli_version":"0.152.0"}}
+{"timestamp":"2026-09-01T12:00:01.000Z","type":"response_item","payload":{"type":"function_call","name":"exec_command","arguments":"{\"cmd\":\"git status\",\"aggregated_output\":\"discard\"}","status":"completed"}}
+{"timestamp":"2026-09-01T12:00:02.000Z","type":"response_item","payload":{"type":"local_shell_call","command":["zsh","-lc","git diff --name-only"],"cwd":"/fixture/repo-a","status":"completed","output":"discard"}}
+{"timestamp":"2026-09-01T12:00:03.000Z","type":"response_item","payload":{"type":"function_call","name":"filesystem","arguments":{"action":"read","path":"src/index.ts","output":"discard"},"status":"completed"}}
+{"timestamp":"2026-09-01T12:00:04.000Z","type":"response_item","payload":{"type":"function_call","name":"network_request","arguments":{"url":"https://user:password@api.example.invalid/path?token=discard"},"status":"completed"}}
+{"timestamp":"2026-09-01T12:00:05.000Z","type":"response_item","payload":{"type":"function_call","name":"mcp__fixture__search","arguments":{"query":"discard"},"status":"completed"}}

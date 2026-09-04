@@ -16,5 +16,5 @@
     "archaeology",
     "documentation"
   ],
-  "skills": "./skills/"
+  "skills": "./.kimi-plugin/skills/"
 }

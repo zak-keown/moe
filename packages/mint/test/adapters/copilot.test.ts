@@ -30,17 +30,31 @@ describe('copilot adapter', () => {
     })
   })
 
+  it('emits no Copilot-specific files and reports effective Claude-layout support', () => {
+    expect(copilot.emit(model)).toEqual({ files: [], limitations: [], emittedCapabilities: [], projectionOwner: 'claude-code' })
+    expect(copilot.support).toEqual({
+      skills: 'full',
+      commands: 'full',
+      agents: 'full',
+      hooks: 'full',
+      mcp: 'full',
+      bootstrap: 'full',
+      rules: 'none',
+      variables: 'none',
+    })
+  })
+
   it('uses the Claude marketplace name in the install id', () => {
     const configured = modelFromYaml([
       'name: demo',
       'version: 1.0.0',
       'description: Copilot fixture',
-      'repository: https://gitlab.com/moe-ai/moe',
+      'repository: https://github.com/zak-keown/moe',
       'marketplace:',
       '  name: moe',
     ].join('\n'))
     const doc = copilot.installDoc!(configured)
-    expect(doc).toContain('copilot plugin marketplace add https://gitlab.com/moe-ai/moe')
+    expect(doc).toContain('copilot plugin marketplace add https://github.com/zak-keown/moe')
     expect(doc).toContain('copilot plugin install demo@moe')
   })
 

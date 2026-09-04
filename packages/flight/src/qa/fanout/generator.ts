@@ -21,7 +21,7 @@ ${card.stakeholder ? `**Stakeholder:** ${card.stakeholder}` : ""}
 
 ${card.description}
 
-${card.acceptanceCriteria.length > 0 ? "## Acceptance Criteria\n" + card.acceptanceCriteria.map((c) => `- ${c}`).join("\n") : ""}
+${card.acceptanceCriteria.length > 0 ? `## Acceptance Criteria\n${card.acceptanceCriteria.map((c) => `- ${c}`).join("\n")}` : ""}
 
 ## Generate Variations
 

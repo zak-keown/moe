@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/ensure-statusline.cjs\""
+            "command": "if [ -n \"${PLUGIN_ROOT:-}\" ]; then exit 0; fi; node \"${CLAUDE_PLUGIN_ROOT}/dist/ensure-statusline.cjs\""
           }
         ]
       }

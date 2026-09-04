@@ -1,7 +1,7 @@
 import { deepMerge } from '../fileset.js'
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import type { ComponentSupport, HarnessAdapter, EmissionLimitation } from './types.js'
 import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { baseManifestFields, json } from './shared.js'
 
@@ -53,7 +53,7 @@ function pluginManifest(model: PluginModel): Record<string, unknown> {
   return override ? (deepMerge(manifest, override) as Record<string, unknown>) : manifest
 }
 
-export const kimi = Object.freeze({
+export const kimi: HarnessAdapter = Object.freeze({
   name: 'kimi',
   support: {
     skills: 'full',
@@ -64,8 +64,9 @@ export const kimi = Object.freeze({
     bootstrap: 'partial', // sessionStart only supports a named bootstrap skill; bootstrap.generate is unsupported
     rules: 'none',
     variables: 'none',
-  } as const,
-  skillsOutputDir: '.kimi-plugin/skills',
+  } satisfies ComponentSupport,
+  skillLayout: { outputDir: '.kimi-plugin/skills', profile: 'kimi', mode: 'rendered' as const },
+  skillDelivery: 'rendered',
   installDoc,
   emit(model: PluginModel) {
     const { config } = model
@@ -83,4 +84,4 @@ export const kimi = Object.freeze({
 
     return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('kimi', model, files) }
   },
-}) satisfies HarnessAdapter
+})

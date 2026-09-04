@@ -38,7 +38,7 @@ function readRunMeta(workerDir: string, runId: string): RunMeta | null {
 function writeRunMeta(workerDir: string, meta: RunMeta): void {
   const dir = runDir(workerDir, meta.id);
   mkdirSync(dir, { recursive: true });
-  writeFileSync(runMetaPath(workerDir, meta.id), JSON.stringify(meta, null, 2) + "\n");
+  writeFileSync(runMetaPath(workerDir, meta.id), `${JSON.stringify(meta, null, 2)}\n`);
 }
 
 /**

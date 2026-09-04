@@ -1,4 +1,4 @@
-import { rm } from "fs/promises";
+import { rm } from "node:fs/promises";
 import type { Viewport } from "../../config.js";
 import type { BrowserEventCategory, EvidenceLogger } from "../../evidence/logger.js";
 import type { ChromeSession } from "./adapter.js";

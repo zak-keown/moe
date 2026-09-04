@@ -16,7 +16,7 @@ export interface ArtifactEntry {
   readonly path: string
   readonly size: number
   readonly sha256: string
-  readonly mode: '0644' | '0755'
+  readonly mode: string
 }
 
 export interface ArtifactManifestV1 {
@@ -38,6 +38,7 @@ export interface ExpectedArtifactContext {
 
 const ARTIFACT_MANIFEST_PATH = '.moe/artifact.json'
 const SHA256_RE = /^[0-9a-f]{64}$/
+const MODE_RE = /^0[0-7]{3}$/
 
 function manifestError(code: string, message: string, action: string, path?: string, cause?: unknown): MintError {
   return new MintError({
@@ -91,8 +92,8 @@ function assertEntry(entry: ArtifactEntry): ArtifactPath {
   if (!SHA256_RE.test(entry.sha256)) {
     throw manifestError('ARTIFACT_HASH_INVALID', `artifact entry "${path}" has an invalid SHA-256`, 'Use a 64-character lowercase hexadecimal SHA-256.', path)
   }
-  if (entry.mode !== '0644' && entry.mode !== '0755') {
-    throw manifestError('ARTIFACT_MODE_INVALID', `artifact entry "${path}" has invalid mode "${entry.mode}"`, 'Normalize regular files to 0644 or 0755 before manifest creation.', path)
+  if (!MODE_RE.test(entry.mode)) {
+    throw manifestError('ARTIFACT_MODE_INVALID', `artifact entry "${path}" has invalid mode "${entry.mode}"`, 'Use the exact four-digit regular-file permission mode from 0000 through 0777.', path)
   }
   return path
 }
@@ -144,16 +145,17 @@ function decodeUtf8Name(name: Buffer, parent: string): string {
   }
 }
 
-function normalizedMode(mode: number, path: ArtifactPath): '0644' | '0755' {
-  const permissions = mode & 0o7777
-  if (permissions === 0o644) return '0644'
-  if (permissions === 0o755) return '0755'
-  throw manifestError(
-    'ARTIFACT_MODE_INVALID',
-    `artifact entry "${path}" has mode ${permissions.toString(8).padStart(4, '0')}`,
-    'Normalize regular files to 0644 or 0755 before manifest creation.',
-    path,
-  )
+function exactMode(mode: number, path: ArtifactPath): string {
+  const specialBits = mode & 0o7000
+  if (specialBits !== 0) {
+    throw manifestError(
+      'ARTIFACT_MODE_INVALID',
+      `artifact entry "${path}" has unsupported special mode bits ${specialBits.toString(8).padStart(4, '0')}`,
+      'Remove setuid, setgid, and sticky bits from regular files before manifest creation.',
+      path,
+    )
+  }
+  return (mode & 0o777).toString(8).padStart(4, '0')
 }
 
 async function readRegularFile(absolute: string, path: ArtifactPath, initial: Awaited<ReturnType<typeof fs.lstat>>): Promise<Buffer> {
@@ -185,7 +187,7 @@ async function readRegularFile(absolute: string, path: ArtifactPath, initial: Aw
     ) {
       throw manifestError('ARTIFACT_FILE_CHANGED', `artifact entry "${path}" changed while it was inspected`, 'Scan a stable artifact tree.', path)
     }
-    normalizedMode(before.mode, path)
+    exactMode(before.mode, path)
     const bytes = await handle.readFile()
     const after = await handle.stat()
     if (
@@ -266,7 +268,7 @@ export async function scanArtifact(root: string): Promise<readonly ArtifactEntry
           logical,
         )
       }
-      const mode = normalizedMode(stats.mode, logical)
+      const mode = exactMode(stats.mode, logical)
       const bytes = await readRegularFile(absoluteChild, logical, stats)
       if (logical === ARTIFACT_MANIFEST_PATH) continue
       entries.push({
@@ -288,7 +290,7 @@ const entrySchema = z.object({
   path: z.string().min(1),
   size: z.number().int().nonnegative(),
   sha256: z.string().regex(SHA256_RE),
-  mode: z.enum(['0644', '0755']),
+  mode: z.string().regex(MODE_RE),
 }).strict()
 const emissionSchema = z.object({ emitted_capabilities: z.array(z.enum(CAPABILITY_IDS)) }).strict()
 const manifestSchema = z.object({

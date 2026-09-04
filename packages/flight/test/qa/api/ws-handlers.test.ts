@@ -1,6 +1,6 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { ActiveRunRegistry } from "../../../src/qa/api/active-runs.js";
 import { RunSetBroadcaster } from "../../../src/qa/api/run-set-broadcaster.js";
@@ -116,7 +116,7 @@ describe("handleWsOpen", () => {
       ];
       writeFileSync(
         join(resultsRoot, RUN_ID, "run.jsonl"),
-        events.map((e) => JSON.stringify(e)).join("\n") + "\n",
+        `${events.map((e) => JSON.stringify(e)).join("\n")}\n`,
       );
 
       const registry = new ActiveRunRegistry();
@@ -136,7 +136,7 @@ describe("handleWsOpen", () => {
       mkdirSync(join(resultsRoot, RUN_ID), { recursive: true });
       writeFileSync(
         join(resultsRoot, RUN_ID, "run.jsonl"),
-        JSON.stringify({ eventId: 1, parentEventId: 0, ts: "t", type: "run_start" }) + "\n",
+        `${JSON.stringify({ eventId: 1, parentEventId: 0, ts: "t", type: "run_start" })}\n`,
       );
 
       const registry = new ActiveRunRegistry();
@@ -187,7 +187,7 @@ describe("handleWsOpen", () => {
       const good = { eventId: 1, parentEventId: 0, ts: "t", type: "run_start" };
       writeFileSync(
         join(resultsRoot, RUN_ID, "run.jsonl"),
-        JSON.stringify(good) + "\n" + "this-is-not-json\n",
+        `${JSON.stringify(good)}\nthis-is-not-json\n`,
       );
 
       const registry = new ActiveRunRegistry();

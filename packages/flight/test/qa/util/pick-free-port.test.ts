@@ -1,4 +1,4 @@
-import { createServer } from "net";
+import { createServer } from "node:net";
 import { describe, expect, test } from "vitest";
 import { pickFreePort } from "../../../src/qa/util/pick-free-port.js";
 

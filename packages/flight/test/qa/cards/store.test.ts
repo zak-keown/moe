@@ -1,6 +1,6 @@
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { findCard, loadAllCards } from "../../../src/qa/cards/store.js";
 import { flightPath } from "../../../src/qa/paths.js";
@@ -48,8 +48,8 @@ describe("findCard", () => {
 
     const entry = findCard(projectRoot, ".moe-flight", "story-001");
     expect(entry).toBeDefined();
-    expect(entry!.card.id).toBe("story-001");
-    expect(entry!.filename).toBe("story-001.md");
+    expect(entry?.card.id).toBe("story-001");
+    expect(entry?.filename).toBe("story-001.md");
   });
 
   test("fallback scan: resolves cards with non-<id> filenames", () => {
@@ -61,8 +61,8 @@ describe("findCard", () => {
 
     const entry = findCard(projectRoot, ".moe-flight", "story-xyz");
     expect(entry).toBeDefined();
-    expect(entry!.card.id).toBe("story-xyz");
-    expect(entry!.filename).toBe("legacy-filename.md");
+    expect(entry?.card.id).toBe("story-xyz");
+    expect(entry?.filename).toBe("legacy-filename.md");
   });
 
   test("returns undefined when no card matches", () => {
@@ -95,8 +95,8 @@ describe("findCard", () => {
 
     const entry = findCard(projectRoot, ".moe-flight", "story-001");
     expect(entry).toBeDefined();
-    expect(entry!.card.id).toBe("story-001");
-    expect(entry!.filename).toBe("correct.md");
+    expect(entry?.card.id).toBe("story-001");
+    expect(entry?.filename).toBe("correct.md");
   });
 
   test("fallback scan: malformed sibling doesn't hide a valid match", () => {
@@ -108,7 +108,7 @@ describe("findCard", () => {
     const log = new ErrorLog();
     const entry = findCard(projectRoot, ".moe-flight", "target", log);
     expect(entry).toBeDefined();
-    expect(entry!.card.id).toBe("target");
+    expect(entry?.card.id).toBe("target");
     expect(log.count()).toBe(1);
     expect(log.entries()[0].source).toBe("cards");
     expect(log.entries()[0].message).toContain("broken.md");

@@ -1,0 +1,271 @@
+// Plan parser, validator, and wave scheduler.
+//
+// Extracted from packages/core/hooks/task-set so jig-graph (and any future
+// consumer) can reuse the same parsing/validation/scheduling logic without
+// depending on core. jig is L0 (no @bubstack/moe-* imports), so this module
+// stays dependency-free — Node built-ins only, no I/O.
+//
+// Extracts tasks from plan markdown. A task starts at a heading matching
+// `### Task N:` and ends at the next such heading or EOF. Inside a task,
+// the parser looks for:
+//   - `**depends_on:** [1, 3]` — bracket-delimited integer list
+//   - `**Files:**` block — lines starting with `- Create:`, `- Modify:`, `- Test:`
+//   - `- Consumes:` and `- Produces:` lines (presence, not content)
+//   - `- [ ]` and `- [x]` checkboxes (step completion state)
+//
+// The parser must skip fenced code blocks to avoid false positives on
+// task-heading patterns inside code examples.
+
+export interface PlanTask {
+  num: number;
+  title: string;
+  dependsOn: number[];
+  blockedBy: string | null;
+  files: string[];
+  hasConsumes: boolean;
+  hasProduces: boolean;
+  steps: { checked: boolean }[];
+}
+
+export function parsePlan(text: string): { tasks: PlanTask[] } {
+  const lines = text.split(/\r?\n/);
+  const tasks: PlanTask[] = [];
+  let current: PlanTask | null = null;
+  let inFence = false;
+
+  const pushCurrent = () => {
+    if (current !== null) tasks.push(current);
+    current = null;
+  };
+
+  for (const line of lines) {
+    // Track fenced code blocks to avoid false positives.
+    if (/^(`{3,}|~{3,})/.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+
+    // Task heading: ### Task N: Title
+    const taskMatch = /^###\s+Task\s+(\d+)\s*:\s*(.*)$/.exec(line);
+    if (taskMatch) {
+      pushCurrent();
+      current = {
+        num: parseInt(taskMatch[1]!, 10),
+        title: taskMatch[2]!.trim(),
+        dependsOn: [],
+        blockedBy: null,
+        files: [],
+        hasConsumes: false,
+        hasProduces: false,
+        steps: [],
+      };
+      continue;
+    }
+
+    if (!current) continue;
+
+    // depends_on: [1, 3] or []
+    const depMatch = /^\*\*depends_on:\*\*\s*\[([^\]]*)\]/.exec(line);
+    if (depMatch) {
+      const inner = depMatch[1]!.trim();
+      if (inner !== "") {
+        current.dependsOn = inner.split(",").map((s) => {
+          const n = parseInt(s.trim(), 10);
+          if (Number.isNaN(n)) {
+            throw new Error(`task ${current!.num}: depends_on contains non-integer "${s.trim()}"`);
+          }
+          return n;
+        });
+      }
+      continue;
+    }
+
+    // Blocked by: decision id(s)
+    const blockedMatch = /^\*\*Blocked by:\*\*\s*(.+)/.exec(line);
+    if (blockedMatch) {
+      current.blockedBy = blockedMatch[1]!.trim();
+      continue;
+    }
+
+    // Files: entries
+    const fileMatch = /^-\s+(?:Create|Modify|Test):\s*`([^`]+)`/.exec(line);
+    if (fileMatch) {
+      current.files.push(fileMatch[1]!);
+      continue;
+    }
+
+    // Consumes / Produces presence
+    if (/^-\s+Consumes:/.test(line)) {
+      current.hasConsumes = true;
+      continue;
+    }
+    if (/^-\s+Produces:/.test(line)) {
+      current.hasProduces = true;
+      continue;
+    }
+
+    // Checkbox steps
+    const checkMatch = /^-\s+\[([ xX])\]/.exec(line);
+    if (checkMatch) {
+      current.steps.push({ checked: checkMatch[1] !== " " });
+    }
+  }
+  pushCurrent();
+  return { tasks };
+}
+
+// ---------------------------------------------------------------------------
+// Validation (shared by check and every other verb).
+
+export function validatePlan(tasks: PlanTask[]): { errors: string[] } {
+  const errors: string[] = [];
+  const nums = new Map<number, PlanTask>();
+
+  for (const t of tasks) {
+    if (nums.has(t.num)) {
+      errors.push(`duplicate task number ${t.num}`);
+    } else {
+      nums.set(t.num, t);
+    }
+  }
+
+  const known = new Set(nums.keys());
+
+  for (const t of tasks) {
+    if (t.files.length === 0) {
+      errors.push(`task ${t.num} (${t.title}): missing "Files:" block`);
+    }
+    if (!t.hasConsumes) {
+      errors.push(`task ${t.num} (${t.title}): missing "Consumes:" entry`);
+    }
+    if (!t.hasProduces) {
+      errors.push(`task ${t.num} (${t.title}): missing "Produces:" entry`);
+    }
+    for (const d of t.dependsOn) {
+      if (!known.has(d)) {
+        errors.push(`task ${t.num}: depends_on ${d} — not a known task`);
+      }
+    }
+  }
+
+  // Cycle detection (Kahn).
+  const indeg = new Map<number, number>();
+  const adj = new Map<number, number[]>();
+  for (const n of known) {
+    indeg.set(n, 0);
+    adj.set(n, []);
+  }
+  for (const t of tasks) {
+    for (const d of t.dependsOn) {
+      if (!known.has(d)) continue;
+      indeg.set(t.num, (indeg.get(t.num) ?? 0) + 1);
+      adj.get(d)!.push(t.num);
+    }
+  }
+  const q: number[] = [];
+  const remaining = new Map(indeg);
+  for (const [n, deg] of remaining) if (deg === 0) q.push(n);
+  while (q.length) {
+    const n = q.shift()!;
+    for (const nb of adj.get(n) ?? []) {
+      remaining.set(nb, remaining.get(nb)! - 1);
+      if (remaining.get(nb) === 0) q.push(nb);
+    }
+  }
+  const inCycle = [...remaining.entries()].filter(([, d]) => d > 0).map(([n]) => n);
+  if (inCycle.length > 0) {
+    errors.push(`cycle detected among: ${inCycle.sort((a, b) => a - b).join(", ")}`);
+  }
+
+  return { errors };
+}
+
+// ---------------------------------------------------------------------------
+// Wave computation.
+//
+// A wave is a maximal set of tasks where:
+//   1. No task depends on another in the same wave (no depends_on edge).
+//   2. No two tasks share a file path (pairwise-disjoint Files blocks).
+//
+// Algorithm: topological order by Kahn's, then greedily assign each task to
+// the earliest wave whose constraints it satisfies. The topological order
+// guarantees a task's dependencies are assigned to earlier waves.
+
+export function computeWaves(tasks: PlanTask[]): number[][] {
+  const byNum = new Map<number, PlanTask>();
+  for (const t of tasks) byNum.set(t.num, t);
+
+  // Topological sort (Kahn's) to get a valid processing order.
+  const indeg = new Map<number, number>();
+  const adj = new Map<number, number[]>();
+  for (const t of tasks) {
+    indeg.set(t.num, 0);
+    adj.set(t.num, []);
+  }
+  for (const t of tasks) {
+    for (const d of t.dependsOn) {
+      indeg.set(t.num, (indeg.get(t.num) ?? 0) + 1);
+      adj.get(d)?.push(t.num);
+    }
+  }
+  const q: number[] = [];
+  for (const [n, deg] of indeg) if (deg === 0) q.push(n);
+  // Stable tie-break: sort by task number so output is deterministic.
+  q.sort((a, b) => a - b);
+  const order: number[] = [];
+  while (q.length) {
+    const n = q.shift()!;
+    order.push(n);
+    const neighbors = (adj.get(n) ?? []).slice().sort((a, b) => a - b);
+    for (const nb of neighbors) {
+      indeg.set(nb, indeg.get(nb)! - 1);
+      if (indeg.get(nb) === 0) q.push(nb);
+    }
+    q.sort((a, b) => a - b);
+  }
+
+  // Assign each task in topological order to the earliest valid wave.
+  // A task can join wave W if:
+  //   - None of its depends_on targets are in wave W.
+  //   - No task already in wave W shares a file path.
+  const taskWave = new Map<number, number>(); // task num -> wave index
+  const waves: number[][] = []; // waves[i] = [task nums]
+  const waveFiles: Set<string>[] = []; // waveFiles[i] = Set of file paths
+
+  for (const num of order) {
+    const t = byNum.get(num)!;
+
+    // Earliest wave this task could join: one past the latest wave
+    // containing any of its dependencies.
+    let earliest = 0;
+    for (const d of t.dependsOn) {
+      const dw = taskWave.get(d);
+      if (dw !== undefined && dw + 1 > earliest) earliest = dw + 1;
+    }
+
+    // From earliest onward, find the first wave with no file overlap.
+    let assigned = -1;
+    for (let w = earliest; w < waves.length; w++) {
+      const wFiles = waveFiles[w]!;
+      const overlap = t.files.some((f) => wFiles.has(f));
+      if (!overlap) {
+        assigned = w;
+        break;
+      }
+    }
+
+    if (assigned === -1) {
+      // No existing wave works; create a new one.
+      assigned = waves.length;
+      waves.push([]);
+      waveFiles.push(new Set());
+    }
+
+    waves[assigned]!.push(num);
+    taskWave.set(num, assigned);
+    for (const f of t.files) waveFiles[assigned]!.add(f);
+  }
+
+  return waves;
+}

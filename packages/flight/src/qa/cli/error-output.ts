@@ -32,14 +32,14 @@ export function formatCliError(err: unknown, opts: FormatCliErrorOptions): strin
     // Prose for humans. The errno code is already implied by the prose
     // message in practice (e.g. "ENOENT: no such file") — skip the
     // structured form.
-    out = message.endsWith("\n") ? message : message + "\n";
+    out = message.endsWith("\n") ? message : `${message}\n`;
   } else {
     const envelope = code !== undefined ? { error: { message, code } } : { error: { message } };
-    out = JSON.stringify(envelope) + "\n";
+    out = `${JSON.stringify(envelope)}\n`;
   }
 
   if (opts.verbose && err instanceof Error && typeof err.stack === "string") {
-    out += err.stack + "\n";
+    out += `${err.stack}\n`;
   }
   return out;
 }
