@@ -18,6 +18,7 @@ const REVIEW_VERIFY_RECORD = join(
   "skills/reviewing-a-codebase/scripts/review-verify-record.mjs",
 );
 const STAMP_DISPOSITION = join(CORE, "skills/fixing-a-code-review/scripts/stamp-disposition.mjs");
+const COMPACT_RESOLVED = join(CORE, "skills/fixing-a-code-review/scripts/compact-resolved.mjs");
 
 const sandboxes: string[] = [];
 
@@ -628,6 +629,14 @@ describe("review-merge behavior", () => {
       "a line-number citation",
       "### Broken\n**File:** `src/a.ts:12`\n**Anchor:** `aSymbol`\n**Severity:** high\nbody\n",
     ],
+    [
+      "a line-number citation in the anchor",
+      "### Broken\n**File:** `src/a.ts`\n**Anchor:** `src/a.ts:42`\n**Severity:** high\nbody\n",
+    ],
+    [
+      "a line-number citation in the body",
+      "### Broken\n**File:** `src/a.ts`\n**Anchor:** `aSymbol`\n**Severity:** high\nsee `src/a.ts:12` for details\n",
+    ],
   ])("refuses malformed finding records: %s", (_label, report) => {
     const { repo } = mergeFixture([report]);
     const result = run(REVIEW_MERGE, ["--shards", ".review-shards", "--out", "out.md"], repo);
@@ -781,6 +790,96 @@ describe("stamp-disposition behavior", () => {
     expect(result.status).toBe(2);
     expect(result.stderr).toContain(message);
     expect(readFileSync(file, "utf8")).toBe(before);
+  });
+});
+
+describe("compact-resolved behavior", () => {
+  it("does not duplicate the Resolved findings heading or destroy prior blocks on a second run", () => {
+    const { file, repo } = stampFixture();
+
+    // reviewReport() ships CR-002 already disposed `stale`. Dispose CR-001
+    // too, then compact once — this is the first, uncontested compaction.
+    const fixedFirst = run(
+      STAMP_DISPOSITION,
+      ["--file", file, "--id", "CR-001", "--disposition", "fixed", "--commit", "abc1234"],
+      repo,
+    );
+    expect(fixedFirst.status, fixedFirst.stderr).toBe(0);
+
+    const firstCompact = run(COMPACT_RESOLVED, ["--file", file], repo);
+    expect(firstCompact.status, firstCompact.stderr).toBe(0);
+    const afterFirst = readFileSync(file, "utf8");
+    expect(afterFirst.match(/^## Resolved findings$/gm)?.length).toBe(1);
+    expect(afterFirst).toContain("### CR-001: First finding");
+    expect(afterFirst).toContain("### CR-002: Already stale");
+
+    // Dispose the remaining open finding, then compact a second time —
+    // this must extend the existing Resolved findings section, not
+    // re-scan (and collapse) what it already moved there.
+    const stampSecond = run(
+      STAMP_DISPOSITION,
+      ["--file", file, "--id", "CR-003", "--disposition", "stale", "--note", "Second run."],
+      repo,
+    );
+    expect(stampSecond.status, stampSecond.stderr).toBe(0);
+
+    const secondCompact = run(COMPACT_RESOLVED, ["--file", file], repo);
+    expect(secondCompact.status, secondCompact.stderr).toBe(0);
+    const afterSecond = readFileSync(file, "utf8");
+
+    // Exactly one heading — not a second one created by the re-scan.
+    expect(afterSecond.match(/^## Resolved findings$/gm)?.length).toBe(1);
+
+    // CR-001 and CR-002's full blocks — moved on the first run — must
+    // still carry their File/Anchor/Severity/body/disposition content,
+    // not have been collapsed back down to one-line summaries by the
+    // second run finding the old headings inside the Resolved section.
+    expect(afterSecond).toContain("### CR-001: First finding");
+    expect(afterSecond).toContain("**File:** `src/first.ts`");
+    expect(afterSecond).toContain("First finding body.");
+    expect(afterSecond).toContain("### CR-002: Already stale");
+    expect(afterSecond).toContain("Second finding body must survive byte-for-byte.");
+
+    // CR-003, newly disposed, must be appended to the same section.
+    expect(afterSecond).toContain("### CR-003: Third finding");
+    expect(afterSecond).toContain("Third finding body.");
+
+    // Unrelated prose survives untouched.
+    expect(afterSecond).toContain("The parser preserved unrelated content.");
+  });
+
+  it("reports nothing to compact when nothing is fixed or stale", () => {
+    const repo = sandbox("compact-repo");
+    const file = join(repo, "CODEBASE-REVIEW.md");
+    writeFileSync(
+      file,
+      [
+        "---",
+        "report: codebase-review",
+        "findings:",
+        "  critical: 0",
+        "  high: 1",
+        "  medium: 0",
+        "  low: 0",
+        "  total: 1",
+        "status: issues_found",
+        "---",
+        "# Review fixture",
+        "",
+        "## High",
+        "",
+        "### CR-001: Open finding",
+        "**File:** `src/a.ts`",
+        "**Anchor:** `aSymbol`",
+        "**Severity:** high",
+        "Body.",
+        "",
+      ].join("\n"),
+    );
+    const result = run(COMPACT_RESOLVED, ["--file", file], repo);
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain("Nothing to compact");
+    expect(readFileSync(file, "utf8")).not.toContain("## Resolved findings");
   });
 });
 

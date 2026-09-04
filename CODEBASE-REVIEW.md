@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 51
+  fixed: 60
   stale: 1
   skipped: 0
   deferred: 0
-  open: 55
+  open: 46
 ---
 
 # Codebase Review — moe
@@ -198,6 +198,10 @@ Fix: mirror `aggregate_stories.py`'s empty-title handling — assign each
 empty-titled scenario a unique key so it is never merged with another
 empty-titled scenario.
 
+**Disposition:** fixed
+**Commit:** `ed891aad4eb9eecac120ce5d8cbf61b8d633a994`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-004: compact-resolved.mjs re-compacts already-resolved findings and duplicates the "Resolved findings" heading on a second run
 
 **File:** `packages/core/skills/fixing-a-code-review/scripts/compact-resolved.mjs`
@@ -219,6 +223,11 @@ inline one-line summary in its place. Stamping `CR-002` as `stale` and
 running the script again produces:
 
 ```
+
+**Disposition:** fixed
+**Commit:** `301bf7f88087562206f8106bd6e923043aa7537f`
+**Resolved:** 2026-09-04
+**Note:** —
 ## Checked and found sound
 ...
 ## Resolved findings
@@ -283,6 +292,10 @@ checks currently unique to `review-check.mjs`) into `findingProblems` itself,
 so `review-merge.mjs` refuses them unconditionally rather than relying on a
 separately-invoked lint.
 
+**Disposition:** fixed
+**Commit:** `cbf6cd5fb00fe3004e7815e71de1912d535e39c0`
+**Resolved:** 2026-09-04
+**Note:** Scoped to the citation-pattern check; the fenced-### and numbered-heading checks stay in review-check.mjs, see commit message
 ### CR-006: A bad `wait-for-turn` timeout argument produces NaN and either hangs forever or fails instantly instead of erroring
 
 **File:** `packages/crew/src/cli.ts`
@@ -1040,6 +1053,10 @@ Fix: normalize `f.severity` (e.g. `.toLowerCase()`) before grouping/counting,
 and/or fail loudly on an unrecognized severity value instead of silently
 excluding it from the rendered body.
 
+**Disposition:** fixed
+**Commit:** `02b0c6926a9d056ce8df90db85f8e6ea447b9e19`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-025: chunk_spec.py misattributes line numbers for sections with duplicate heading text and shared opening content
 
 **File:** `packages/core/skills/extracting-requirements/scripts/chunk_spec.py`
@@ -1077,6 +1094,10 @@ Fix: search from the end of the *previous* match rather than from the start
 of `full_content` each time (e.g. thread an offset through `split_by_heading`
 sections in document order), or match on a longer/more unique substring.
 
+**Disposition:** fixed
+**Commit:** `709635b84e04554768a56f8c22bda5a048c0c806`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-026: Negative-index slice makes the epic-misattribution regression guard vacuous
 **File:** `packages/core/test/iterative-development/test_aggregate_stories.py`
 **Anchor:** `test_dedup_does_not_merge_same_title_across_different_epics`
@@ -1122,6 +1143,10 @@ Fix: compute the window with `max(0, idx - 2000)` (or slice
 additionally assert `"card" not in <the corresponding Auth-epic slice>` so
 the test fails if misattribution actually occurs.
 
+**Disposition:** fixed
+**Commit:** `e788e8b5474bd0fd3a0986e4a6e365c80d169b6c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-027: `--worktree` teardown paths delete the worktree marker without removing the git worktree, leaking disk and git state
 
 **File:** `packages/crew/src/commands/await-start.ts`
@@ -2381,6 +2406,10 @@ directory name) would silently become injectable. Consider escaping `title`
 and `nav` (which are more likely to carry plain text than markup) or
 documenting that all four slots must already be HTML-safe on input.
 
+**Disposition:** fixed
+**Commit:** `6c36aa1729aca42ffcac70320d3b2368423cff1f`
+**Resolved:** 2026-09-04
+**Note:** Scoped to the title slot; nav/content/scripts stay raw per their documented HTML-carrying contract, see commit message
 ### CR-072: docs-verify-report.mjs suppresses the "No findings" heading only for Critical, inconsistently with High/Medium/Low
 
 **File:** `packages/core/skills/docs-update/scripts/docs-verify-report.mjs`
@@ -2396,6 +2425,10 @@ deliberately omitted (as designed here) or whether the report is truncated.
 Align the behavior — either always print the heading with "No findings." or
 always skip empty groups — for all four severities.
 
+**Disposition:** fixed
+**Commit:** `6eabdff4802c153dbc8ac72e9d36f9297546acb6`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-073: AGENTS.md's guarded-surface citation for the imported-skill-count test no longer matches the code
 
 **File:** `packages/core/test/metadata.test.ts`
@@ -2404,6 +2437,10 @@ always skip empty groups — for all four severities.
 
 The repo root `AGENTS.md`'s "Guarded surfaces" section names this test by exact title for cite-by-name purposes: `"the pinned imported-set literal in \"pins the IMPORTED skill set at exactly 31\""`. The actual test in this file (run; it passes) is titled `"pins the IMPORTED skill set at exactly 32"` and asserts `expect(Object.keys(imported).length).toBe(32)`. A skill was added to `imported:` (mattpocock-skills, per the test's own comment) after `AGENTS.md`'s guarded-surfaces list was last updated, and the citation was never bumped. AGENTS.md's whole point for this section is that an agent can grep for the quoted title to find the guarded literal without a line number; that grep now fails. This is a documentation-drift issue only — the test itself is correct and enforced — but it defeats the citation mechanism AGENTS.md relies on. Fix: update AGENTS.md's citation from "31" to "32".
 
+**Disposition:** fixed
+**Commit:** `905a5c2b0b0dabb5e292a3fa0f375783265f6ad6`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-074: `removeWorktree`'s comment promises to "let the caller know" on real failure but the function cannot
 
 **File:** `packages/crew/src/core/worktree.ts`
