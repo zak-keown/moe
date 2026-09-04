@@ -26,7 +26,7 @@ describe('selectOption (jsdom)', () => {
       }
     });
     const getPageSession = async () => ps;
-    return attachSelectOption({ getPageSession });
+    return { ...attachSelectOption({ getPageSession }), window };
   }
 
   const SINGLE = `<select id="single">
@@ -82,5 +82,28 @@ describe('selectOption (jsdom)', () => {
     const r = await selectOption(0, '#multi', ['b']);
     assert.equal(r.matched.length, 1);
     assert.equal(r.matched[0].value, 'b');
+  });
+
+  // CR-094: `index` was spliced directly into the generated Runtime.evaluate
+  // source (`elements[${index}]`) with no Number.isInteger check and no
+  // JSON.stringify wrapping, unlike every other value this module embeds.
+  // Not reachable from any current caller, but attachSelectOption is a
+  // publicly exported module whose documented signature accepts an index —
+  // a future caller wiring a user-supplied value through without an
+  // intermediate validation layer would execute arbitrary JS in the page.
+  it('rejects a non-integer index instead of splicing it unescaped into generated JS', async () => {
+    const { selectOption, window } = setup(SINGLE);
+    // Breaks out of the `elements[...]` subscript and comments out the
+    // template's trailing `];` on the same line, letting an arbitrary
+    // statement run in the page if left unescaped.
+    const maliciousIndex = '0]; window.__pwned = true; //';
+
+    await assert.rejects(
+      () => selectOption(0, '#single', 'b', maliciousIndex),
+      /index/i,
+      'a non-integer index must be rejected before it reaches the generated JS'
+    );
+
+    assert.equal(window.__pwned, undefined, 'the malicious index must not have executed in the page');
   });
 });
