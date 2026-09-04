@@ -63,12 +63,45 @@ export async function generateFanout(card: StoryCard, client: LLMClient): Promis
   return splitAndValidateCards(response.text);
 }
 
+// A bare fence-marker line: an opening ```lang or a closing ```.
+const FENCE_MARKER_LINE_RE = /^```\w*$/;
+
+/**
+ * Strip a code fence that wraps the *entire* given text — i.e. its first
+ * non-blank line opens a fence and its last non-blank line closes one.
+ * Only those two boundary lines are removed; anything in between (including
+ * a fence-looking line that is part of the content itself) is left alone.
+ * Returns `text` unchanged if it is not fence-wrapped end-to-end.
+ */
+function stripOuterCodeFence(text: string): string {
+  const lines = text.split("\n");
+  let start = 0;
+  while (start < lines.length && lines[start]?.trim() === "") start++;
+  let end = lines.length - 1;
+  while (end >= 0 && lines[end]?.trim() === "") end--;
+  if (start >= end) return text;
+
+  const first = lines[start]?.trim() ?? "";
+  const last = lines[end]?.trim() ?? "";
+  if (!FENCE_MARKER_LINE_RE.test(first) || last !== "```") return text;
+
+  return lines.slice(start + 1, end).join("\n");
+}
+
+function countFenceMarkerLines(text: string): number {
+  return text.split("\n").filter((l) => FENCE_MARKER_LINE_RE.test(l.trim())).length;
+}
+
 export function splitAndValidateCards(text: string): string[] {
-  // Strip markdown code fences that LLMs sometimes wrap around output
-  const stripped = text
-    .replace(/^```\w*\s*\n/gm, "")
-    .replace(/\n```\s*$/gm, "")
-    .replace(/\n```\s*\n/gm, "\n");
+  // Strip a markdown code fence that wraps the model's *entire* response —
+  // the one case the module doc means by "LLMs sometimes wrap around
+  // output". Only fire this whole-text strip when there are exactly the
+  // two fence-marker lines that a single wrap would produce; if the model
+  // instead fenced each card individually (or a card's own body legitimately
+  // contains a fenced example), there are more than two such lines and this
+  // step is a no-op — per-chunk stripping below handles those without
+  // touching any fence embedded inside a chunk's own content.
+  const stripped = countFenceMarkerLines(text) === 2 ? stripOuterCodeFence(text) : text;
 
   // Try explicit separator first
   let chunks = stripped
@@ -83,6 +116,12 @@ export function splitAndValidateCards(text: string): string[] {
       .map((s) => s.trim())
       .filter(Boolean);
   }
+
+  // Each chunk may still carry its own individual wrapping fence (e.g. the
+  // model fenced each card separately rather than the whole response) —
+  // strip that too, per chunk, without touching fences embedded further
+  // inside that chunk's own body.
+  chunks = chunks.map(stripOuterCodeFence);
 
   return chunks.filter((chunk) => {
     try {
