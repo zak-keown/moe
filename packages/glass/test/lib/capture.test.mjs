@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import { createRequire } from 'node:module';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { JSDOM } from 'jsdom';
 import { afterAll, describe, it } from 'vitest';
 import { makePageSessionFake as makePageSessionFakeWithTargetId } from './_helpers.mjs';
 
@@ -307,5 +308,54 @@ describe('captureActionWithDiff restoreFocus uses preventScroll (Bug 4 regressio
     assert.ok(restoreExpr, 'restoreFocus Runtime.evaluate must have been sent');
     assert.match(restoreExpr, /preventScroll.*true|preventScroll:.*true/,
       'restoreFocus must call el.focus({ preventScroll: true }) to avoid scroll reset');
+  });
+});
+
+describe('captureActionWithDiff restoreFocus with a quote in the name attribute (CR-092)', () => {
+  it('does not throw a DOMException when the focused element\'s name attribute contains a double quote', async () => {
+    // Build a real DOM with an <input name='foo"bar'> — a perfectly legal
+    // HTML/DOM attribute value. restoreFocus's 'name' branch built a CSS
+    // attribute selector via bare string concatenation
+    // (tag + '[name="' + value + '"]') before JSON.stringify-ing the whole
+    // thing as a JS string literal — JSON.stringify escapes it correctly for
+    // JS-string embedding, but does nothing for the CSS syntax inside that
+    // string, so an embedded `"` produced a malformed selector.
+    const dom = new JSDOM('<!doctype html><html><body></body></html>', { runScripts: 'dangerously' });
+    const { window } = dom;
+    const input = window.document.createElement('input');
+    input.setAttribute('name', 'foo"bar');
+    window.document.body.appendChild(input);
+    let focused = false;
+    input.focus = () => { focused = true; };
+
+    const ps = makePageSessionFakeWithTargetId({
+      'Runtime.evaluate': (params) => {
+        const expr = params.expression;
+        if (expr && expr.includes('document.activeElement')) {
+          // saveFocus result: a name-type focusInfo with an embedded quote.
+          return { result: { value: { type: 'name', value: 'foo"bar', tag: 'input' } } };
+        }
+        // restoreFocus's querySelector+focus expression: evaluate for real
+        // against a live DOM, so a malformed CSS selector surfaces as a
+        // genuine thrown DOMException, not a simulated one.
+        const result = window.eval(expr);
+        return { result: { value: result } };
+      },
+    }, { sessionId: 'S-quote', targetId: 'T-quote' });
+
+    const cr092Dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cr092-'));
+    const { captureActionWithDiff } = attachCapture({
+      state: { sessionDir: cr092Dir, captureCounter: 0 },
+      getPageSession: async () => ps,
+      getHtml: async () => '<html></html>',
+      screenshot: async (_tab, file) => { fs.writeFileSync(file, ''); },
+      actions: {},
+    });
+
+    await captureActionWithDiff(0, 'click', async () => 'click-done', 0);
+
+    assert.equal(focused, true, 'restoreFocus should have found and focused the input despite the quote in its name');
+
+    fs.rmSync(cr092Dir, { recursive: true, force: true });
   });
 });
