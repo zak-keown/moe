@@ -179,6 +179,30 @@ def test_checker_full_json_output_is_normalized(invoke, make_eval):
     assert grade["tags"] == ["ok", "wearing_a_hat"]
 
 
+def test_non_numeric_score_is_demoted_not_fatal(invoke, make_eval):
+    # CR-066: the checker contract says score is float-coercible, but
+    # nothing validates that before normalize_check_info calls float() on
+    # it - a plausible mistake (e.g. "N/A" to signal not-applicable, the
+    # same way `notes` accepts a bare string) aborted the entire grade run
+    # with an unhandled ValueError instead of demoting the bad value like
+    # any other malformed checker output.
+    bad_score = python_script("""\
+        import json
+        print(json.dumps({"score": "N/A"}))
+        """)
+    grade = graded(
+        invoke,
+        make_eval,
+        {"checks": [{"checker": "../checkers/bad-score"}]},
+        checkers={"bad-score": bad_score},
+    )
+    check = grade["checks"][0]
+    assert check["ok"] is True
+    assert "score" not in check
+    assert check["details"]["score"] == "N/A"
+    assert grade["score"] is None
+
+
 def test_checker_non_json_stdout_kept_as_details_output(invoke, make_eval):
     plain = python_script('print("plain words")\n')
     grade = graded(

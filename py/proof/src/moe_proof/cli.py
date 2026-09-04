@@ -113,8 +113,17 @@ def normalize_check_info(info):
     at the top level, so core-owned keys can never be clobbered.
     """
     out = {}
+    invalid_score = None
     if info.get("score") is not None:
-        out["score"] = float(info["score"])
+        try:
+            out["score"] = float(info["score"])
+        except (TypeError, ValueError):
+            # A checker emitting a non-float-coercible score (e.g. "N/A")
+            # breaks its contract, but that's the checker's mistake, not a
+            # reason to abort every run still queued in this invocation -
+            # demote it like any other unknown/malformed value instead of
+            # raising (CR-066).
+            invalid_score = info["score"]
     if isinstance(info.get("metrics"), dict):
         out["metrics"] = info["metrics"]
     if isinstance(info.get("tags"), list):
@@ -127,6 +136,8 @@ def normalize_check_info(info):
         for key, value in info.items()
         if key not in ("score", "metrics", "tags", "notes", "details")
     }
+    if invalid_score is not None:
+        extras["score"] = invalid_score
     if details or extras:
         out["details"] = details | extras
     return out
