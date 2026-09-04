@@ -67,8 +67,41 @@ describe("seedPlanSkeleton", () => {
       entry: "src/api/handler.ts",
     });
 
-    // db/queries.ts is loosely coupled (0.60) — separate task.
-    // It should have depends_on to the API task.
-    expect(skeleton).toMatch(/\*\*depends_on:\*\*\s*\[\d+\]/);
+    // db/queries.ts is loosely coupled (0.60) — separate task. The API
+    // (handler.ts) task consumes it, so the API task should carry a
+    // non-empty depends_on (CR-018: direction runs from the consuming
+    // task to the consumed task, not the reverse).
+    expect(skeleton).toMatch(/\*\*depends_on:\*\*\s*\[\d+(?:, \d+)*\]/);
+  });
+
+  it("points depends_on from the consuming task to the consumed task, not backwards", async () => {
+    // The default mock's traceConsumers always resolves to handler.ts
+    // regardless of the queried file, i.e. handler.ts is the sole consumer
+    // of (depends on) every other file. That makes three separate task
+    // clusters (handler.ts, middleware.ts, queries.ts — nothing else meets
+    // the 0.7 clustering threshold since each file's only "coupled"
+    // consumer, handler.ts, is already assigned to its own cluster first).
+    const client = makeMockClient();
+    const skeleton = await seedPlanSkeleton("add rate limiting", client, {
+      entry: "src/api/handler.ts",
+    });
+
+    const taskBlocks = skeleton.split(/(?=^### Task)/m).filter((b) => b.trim().length > 0);
+    expect(taskBlocks).toHaveLength(3);
+
+    const handlerTask = taskBlocks[0]!;
+    const middlewareTask = taskBlocks[1]!;
+    const queriesTask = taskBlocks[2]!;
+
+    expect(handlerTask).toContain("src/api/handler.ts");
+    expect(middlewareTask).toContain("src/api/middleware.ts");
+    expect(queriesTask).toContain("src/db/queries.ts");
+
+    // handler.ts consumes (depends on) middleware.ts and queries.ts, so
+    // handler.ts's task must declare depends_on those tasks — not the
+    // reverse, and the leaf tasks must declare no dependencies of their own.
+    expect(handlerTask).toMatch(/\*\*depends_on:\*\*\s*\[2, 3\]/);
+    expect(middlewareTask).toMatch(/\*\*depends_on:\*\*\s*\[\]/);
+    expect(queriesTask).toMatch(/\*\*depends_on:\*\*\s*\[\]/);
   });
 });

@@ -82,4 +82,32 @@ describe("loadExtensions", () => {
 
     expect(() => loadExtensions(program, ctx, () => collision)).toThrow(/collision/i);
   });
+
+  it("forwards a hyphenated flag to run() using its original spelling, not the camelCased property name", async () => {
+    const program = new Command();
+    const plan = program.command("plan").description("test plan group");
+
+    const ctx: JigContext = {
+      parsePlan: vi.fn(),
+      validatePlan: vi.fn(),
+      computeWaves: vi.fn(),
+    };
+
+    const runSpy = vi.fn().mockResolvedValue(0);
+    const mockExtension: JigExtensionCommand[] = [
+      {
+        namespace: "plan",
+        name: "seed",
+        description: "test extension with a multi-word flag",
+        options: [{ flags: "--dry-run", description: "Preview only" }],
+        run: runSpy,
+      },
+    ];
+
+    loadExtensions(program, ctx, () => mockExtension);
+
+    await plan.parseAsync(["seed", "topic", "--dry-run"], { from: "user" });
+
+    expect(runSpy).toHaveBeenCalledWith(["topic", "--dry-run"], ctx);
+  });
 });

@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 69
+  fixed: 77
   stale: 1
   skipped: 0
   deferred: 0
-  open: 37
+  open: 29
 ---
 
 # Codebase Review — moe
@@ -170,6 +170,10 @@ name list, or shell out to `which` instead of `command` — `which` ships as a
 real binary on all of node:24 / Ubuntu / Alpine / Debian by default, unlike
 `command`.
 
+**Disposition:** fixed
+**Commit:** `69b16fb9fdcfdad77bc50b4b1c629c45ea68c4cf`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-003: aggregate_scenarios.py silently merges distinct untitled scenarios, discarding one's content
 
 **File:** `packages/core/skills/extracting-requirements/scripts/aggregate_scenarios.py`
@@ -838,6 +842,10 @@ Verified by running the exact mock from `seed.test.ts`'s "generates a markdown s
 
 Since this is the entire point of `moe jig plan seed`, every multi-cluster skeleton it produces has backwards task ordering, silently, with no error — a human or agent filling in the skeleton would be told the wrong build order.
 
+**Disposition:** fixed
+**Commit:** `1c653a1bd1185101c314795fd9872733129b6ae6`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-019: `read_conversation` MCP tool reads any path on disk with no containment check
 **File:** `packages/memory/src/mcp-server.ts`
 **Anchor:** `if (name === "read_conversation")`
@@ -1024,6 +1032,10 @@ adding `.moe` (or specifically `worktrees`) to `SKIP_SEGMENTS`, or by having
 `walk()` respect `.gitignore` for directories that are entire nested git
 worktrees.
 
+**Disposition:** fixed
+**Commit:** `0b7b025f0160347ea973b9c3479d3f1fd45a15f4`
+**Resolved:** 2026-09-04
+**Note:** —
 ## Medium
 
 ### CR-024: docs-verify-report.mjs silently drops findings whose severity isn't an exact lowercase match, while still counting them in the total
@@ -1960,6 +1972,10 @@ that their input was altered. Fix: track and skip the specific index consumed
 by `--entry` (e.g. `args.filter((a, i) => i !== entryIdx && i !== entryIdx + 1)`)
 rather than filtering by value.
 
+**Disposition:** fixed
+**Commit:** `c1badc9ad182af7b5db90a8db0cdee764802acbe`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-055: `loadExtensions` mangles multi-word CLI flags when forwarding to extension commands
 
 **File:** `packages/jig/src/extension.ts`
@@ -1974,6 +1990,10 @@ This is currently latent because the one shipped extension (`@bubstack/moe-jig-g
 
 Fix: preserve the original flag string (e.g. capture `ext.options` flags mapped by their Commander-derived key before parsing) instead of re-deriving `--${camelCaseKey}`.
 
+**Disposition:** fixed
+**Commit:** `d098f67f19ffeaacfbfd3f5cd52e86659037a3e2`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-056: `computeWaves` silently drops tasks whose `depends_on` references an unknown task number
 
 **File:** `packages/jig/src/parser.ts`
@@ -1993,6 +2013,10 @@ This is reachable in production: `validate.ts`'s Check 3 ("Wave conflicts") call
 
 Fix: either have `computeWaves` treat an unknown `dependsOn` target as satisfied/ignored (matching `validatePlan`'s `if (!known.has(d)) continue;` pattern used in its own cycle-detection setup) and document the precondition, or have callers run `validatePlan` first and refuse to compute waves on an invalid plan.
 
+**Disposition:** fixed
+**Commit:** `443a46e5e3b195beaba98c76ea5167ead592926e`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-057: `link_memories`/`trace_provenance` accept any `type` prefix with no runtime validation
 **File:** `packages/memory/src/mcp-server.ts`
 **Anchor:** `const sourceType = params.source.slice(0, sourceColon) as SourceType;`
@@ -2377,6 +2401,10 @@ assert on a specific diagnostic code. Wrap the `readdirSync` in
 `countImportedWorks`, pushing a `problems` entry (e.g. `"plugins/ directory
 not found"`) instead of throwing.
 
+**Disposition:** fixed
+**Commit:** `4e91a1b67957dfabad6bd5f9c0ffb41c0582813a`
+**Resolved:** 2026-09-04
+**Note:** —
 ## Low
 
 ### CR-070: Exported harness-registry order/duplicate validator is dead code
@@ -2406,6 +2434,10 @@ wire it into one of the "guarded surfaces" checks named in `AGENTS.md` (e.g.
 alongside the `marketplace.json` bidirectional check), or remove it — as
 written it is inert validation that looks load-bearing but is not.
 
+**Disposition:** fixed
+**Commit:** `f8439ac3d58d67c9be20cb09323f8fd99346e1df`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-071: render-html.cjs interpolates slot values into the HTML template without escaping
 
 **File:** `packages/core/skills/_shared/render-html.cjs`

@@ -21,6 +21,7 @@
 // top level supports top-level await — and passes the result into
 // loadExtensions via a resolver closure.
 
+import { Option } from "commander";
 import type { Command } from "commander";
 import type { computeWaves, PlanTask, parsePlan, validatePlan } from "./parser.js";
 
@@ -109,9 +110,18 @@ export function loadExtensions(
 
     const sub = group.command(ext.name).description(ext.description);
 
+    // Commander stores parsed options under a camelCased property derived
+    // from the flag's long name (e.g. `--dry-run` -> opts.dryRun). Track
+    // each declared flag's original spelling by that same derived key so
+    // forwarding can reconstruct the literal flag string the user typed
+    // (and the extension's own run() checks for), instead of re-deriving
+    // `--${key}` — which is wrong for any flag with more than one word.
+    const flagByAttribute = new Map<string, string>();
     if (ext.options) {
       for (const opt of ext.options) {
         sub.option(opt.flags, opt.description);
+        const parsed = new Option(opt.flags, opt.description);
+        if (parsed.long) flagByAttribute.set(parsed.attributeName(), parsed.long);
       }
     }
 
@@ -120,8 +130,9 @@ export function loadExtensions(
       .action(async (args: string[], opts: Record<string, unknown>) => {
         const flatArgs = [...args];
         for (const [k, v] of Object.entries(opts)) {
-          if (v === true) flatArgs.push(`--${k}`);
-          else if (typeof v === "string") flatArgs.push(`--${k}`, v);
+          const flag = flagByAttribute.get(k) ?? `--${k}`;
+          if (v === true) flatArgs.push(flag);
+          else if (typeof v === "string") flatArgs.push(flag, v);
         }
         const code = await ext.run(flatArgs, ctx);
         if (code !== 0) process.exitCode = code;
