@@ -6,7 +6,7 @@
 # sibling. This config remains source-only and is never copied into the plugin.
 
 name: moe-backstory
-version: 0.1.6
+version: 0.2.0
 description: Recover a behavioral spec from a codebase that never had one.
 author:
   name: Zak Keown

@@ -6,10 +6,10 @@
       "sha256": "fb14245e6a89311cd0edebb68e0ef3a5105183ac4ad6a10f895bd9454aff72b0"
     },
     ".claude-plugin/marketplace.json": {
-      "sha256": "f76b9d5e3d482f53d768f31f85da571b31e441d2826a1be4d042bfecfa9db5d2"
+      "sha256": "d8ebc864e4a1d1f06abd524aca392f2b0483aab59590406bc2aeee3aca7e279c"
     },
     ".claude-plugin/plugin.json": {
-      "sha256": "e7929ef157e3a5a46a65ed11e05c795e8dbfbde38fb313b48869dcca1b2f945c"
+      "sha256": "f2402f7de7b67a029e1bdc3aec8171cf7cae3fd592214d2d1f33494cbd7d41c0"
     },
     ".claude-plugin/skills/_shared/behavior-evidence-formats.md": {
       "sha256": "c2e7636a683561cb312b69851fb95d6e52a10053ce3dffaf9552f1a5c6f04c6a",
@@ -648,7 +648,7 @@
       "mode": 420
     },
     ".claude-plugin/skills/write-clearly/house-voice.md": {
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": 420
     },
     ".claude-plugin/skills/write-plan/SKILL.md": {
@@ -692,7 +692,7 @@
       "mode": 420
     },
     ".codex-plugin/plugin.json": {
-      "sha256": "42a952146fc2fea7f53a8000887019c4a328249cbd6408c4b52eed13027e4ce4"
+      "sha256": "d23b6b0886abe272fb31f71edef80164dbbe459454ed0d90640d214bc80b1c45"
     },
     ".codex-plugin/skills/_shared/behavior-evidence-formats.md": {
       "sha256": "c2e7636a683561cb312b69851fb95d6e52a10053ce3dffaf9552f1a5c6f04c6a",
@@ -1331,7 +1331,7 @@
       "mode": 420
     },
     ".codex-plugin/skills/write-clearly/house-voice.md": {
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": 420
     },
     ".codex-plugin/skills/write-plan/SKILL.md": {
@@ -1389,7 +1389,7 @@
       "sha256": "4913eb681604fc3074c89aef2da69e0dc9ddcb072f46afeaabec4c8553595a21"
     },
     ".cursor-plugin/plugin.json": {
-      "sha256": "8294fc5d7c5f4f7a61dc7ef1edf874039d513dfd04cce3ca8e0f352bb59d90a8"
+      "sha256": "6341aa107b8aeba143e0513a1ce0f0213fc3cb9d2931ecfd60576b5ff9d45da7"
     },
     ".cursor-plugin/skills/_shared/behavior-evidence-formats.md": {
       "sha256": "c2e7636a683561cb312b69851fb95d6e52a10053ce3dffaf9552f1a5c6f04c6a",
@@ -2028,7 +2028,7 @@
       "mode": 420
     },
     ".cursor-plugin/skills/write-clearly/house-voice.md": {
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": 420
     },
     ".cursor-plugin/skills/write-plan/SKILL.md": {
@@ -2072,7 +2072,7 @@
       "mode": 420
     },
     ".kimi-plugin/plugin.json": {
-      "sha256": "7496877573ff1378470350909ec66bba956d893ecdbf8857642274d2590a71d8"
+      "sha256": "06efaf232566367c16f6fb63173cbc6933932bf9dc9b292212b535c12f130eff"
     },
     ".kimi-plugin/skills/_shared/behavior-evidence-formats.md": {
       "sha256": "c2e7636a683561cb312b69851fb95d6e52a10053ce3dffaf9552f1a5c6f04c6a",
@@ -2711,7 +2711,7 @@
       "mode": 420
     },
     ".kimi-plugin/skills/write-clearly/house-voice.md": {
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": 420
     },
     ".kimi-plugin/skills/write-plan/SKILL.md": {
@@ -3403,7 +3403,7 @@
       "mode": 420
     },
     ".opencode/skills/write-clearly/house-voice.md": {
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": 420
     },
     ".opencode/skills/write-plan/SKILL.md": {
@@ -4086,7 +4086,7 @@
       "mode": 420
     },
     ".pi/skills/write-clearly/house-voice.md": {
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": 420
     },
     ".pi/skills/write-plan/SKILL.md": {
@@ -4168,7 +4168,7 @@
       "executable": true
     },
     "plugin.json": {
-      "sha256": "5ccff798b2bebcddc540e78fd7a049987f6bc6184c9e9d751643f844f3955b53"
+      "sha256": "f294ef3e363aa66f025dd4debf70e2d27f58452575abb6d2b8077524f6a9f7c1"
     }
   },
   "skillSources": {

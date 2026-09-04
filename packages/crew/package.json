@@ -1,6 +1,6 @@
 {
   "name": "@bubstack/moe-crew",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "type": "module",
   "description": "Launch, control and monitor Claude Code, Codex, and Pi workers over tmux.",
   "license": "MIT",
