@@ -98,6 +98,26 @@ describe("renderTemplate", () => {
   it("throws when required slot 'content' is missing", () => {
     expect(() => renderTemplate(MINI_TEMPLATE, { title: "T" })).toThrow(/required slot "content"/);
   });
+
+  it("HTML-escapes the title slot but leaves nav/content/scripts raw", () => {
+    const result = renderTemplate(MINI_TEMPLATE, {
+      title: "</title><script>alert(1)</script>",
+      nav: "<a href='#s1'>Section 1</a>",
+      content: "<h1>Hello &amp; <em>world</em></h1>",
+      scripts: "<script>console.log('a < b')</script>",
+    });
+    // title is the one slot documented as plain text (e.g. a report name
+    // derived from a directory) — a value containing markup must not be
+    // able to break out of the <title> element or inject a live tag.
+    expect(result).not.toContain("</title><script>alert(1)</script>");
+    expect(result).toContain("&lt;/title&gt;&lt;script&gt;alert(1)&lt;/script&gt;");
+    // nav, content and scripts are documented to carry raw HTML/JS
+    // (skills/improve-codebase-architecture/HTML-REPORT.md's sample nav is
+    // literal <a> markup) and must keep rendering unescaped.
+    expect(result).toContain("<a href='#s1'>Section 1</a>");
+    expect(result).toContain("<h1>Hello &amp; <em>world</em></h1>");
+    expect(result).toContain("console.log('a < b')");
+  });
 });
 
 // ── parseArgs tests ───────────────────────────────────────────────
