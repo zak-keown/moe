@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Validate shard reports against the manifest as they land, before the merge.
 //
 // The merge refuses a malformed report, but only once every shard is in, and
@@ -7,8 +6,9 @@
 // fence, a line-number citation in the body), so a reviewer's mistake is
 // caught while that reviewer is still around to fix it.
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   FRONTMATTER_RE,
   RANK,
@@ -25,6 +25,7 @@ const arg = (name, fallback) => {
   return i !== -1 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
 };
 
+export function main() {
 const repo = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
 const shardsDir = arg("shards", ".moe/review-shards");
 const only = arg("shard", "");
@@ -121,3 +122,7 @@ out(
     `${problemReports} report(s) with problems`,
 );
 process.exit(exitCode);
+}
+
+const modulePath = fileURLToPath(import.meta.url);
+if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(modulePath)) main();

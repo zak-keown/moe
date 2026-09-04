@@ -58,7 +58,7 @@ Then SPLIT the story:
 
 ### 4. Run citation check
 
-Run: `python3 "${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/check_citations.py" docs/moe/iterations/roadmap.md docs/moe/iterations/requirements/`
+Run: `node "${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/check_citations.mjs" docs/moe/iterations/roadmap.md docs/moe/iterations/requirements/`
 
 Every iteration must cite only valid STORY-IDs from the index.
 
@@ -107,7 +107,7 @@ Write the result to `docs/moe/iterations/roadmap.md` using this format:
 **Look-ahead check:** <does this block or get blocked by neighbors?>
 ```
 
-Run: `python3 "${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/validate_roadmap.py" docs/moe/iterations/roadmap.md`
+Run: `node "${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/validate_roadmap.mjs" docs/moe/iterations/roadmap.md`
 
 **Note:** The validator checks format only. The PAR scope review is the real structural gate.
 
@@ -122,14 +122,14 @@ git commit -m "docs: add roadmap — walking skeleton with journey scenario + it
 
 | Step | Tool/Skill | Purpose |
 |---|---|---|
-| Citation check | `scripts/check_citations.py` | All cited stories exist |
+| Citation check | `node "${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/check_citations.mjs" <roadmap> <requirements-dir>` | All cited stories exist |
 | Scope review | PAR + scope reviewer prompt | Walking skeleton minimal, journey scenario included, story splitting applied, no boxing-in |
 | Story splitting | Manual (if PAR or dependency analysis finds heterogeneous ACs) | Split stories by dependency profile |
-| Validate | `scripts/validate_roadmap.py` | Format check only |
+| Validate | `node "${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/validate_roadmap.mjs" <roadmap>` | Format check only |
 
 ## References
 
 - `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md` — PAR methodology
 - `${CLAUDE_PLUGIN_ROOT}/skills/_shared/behavior-evidence-formats.md` — scenario and proof obligation formats
 - `${CLAUDE_PLUGIN_ROOT}/skills/running-an-iteration/scope-reviewer-prompt.md` — scope reviewer prompt (reused from a sibling skill)
-- `scripts/check_citations.py` — mechanical citation check
+- [check_citations.mjs](./scripts/check_citations.mjs) — mechanical citation check

@@ -150,7 +150,7 @@
     "hooks/hooks.json",
     "plugin.json",
     "skills/driving-claude-code-sessions/SKILL.md",
-    "skills/driving-claude-code-sessions/scripts/moe-crew"
+    "skills/driving-claude-code-sessions/scripts/moe-crew.mjs"
   ],
   "publishConfig": {
     "access": "public",

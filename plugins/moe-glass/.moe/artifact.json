@@ -98,8 +98,8 @@
     },
     {
       "path": "dist/index.js",
-      "size": 799580,
-      "sha256": "d2b0c35ff799e285ed69021994773d9a7ded7804c93fb29399568f20d391a012",
+      "size": 799589,
+      "sha256": "7fd5c7b3c3495700b53f23c8b194e6ff4408876c314e2b858969601dd2281c37",
       "mode": "0644"
     },
     {
@@ -170,8 +170,8 @@
     },
     {
       "path": "package.json",
-      "size": 3625,
-      "sha256": "7a482df3a8ec579bdff549221df454968867d92a3a83c8e4ac01df250e2143f2",
+      "size": 3907,
+      "sha256": "4f54da9869e0b5a3a1c031da9fb3e4cbfc04763ed7b902774502e5504cd9dc8f",
       "mode": "0644"
     },
     {
@@ -182,8 +182,8 @@
     },
     {
       "path": "skills/browsing/COMMANDLINE-USAGE.md",
-      "size": 14778,
-      "sha256": "40ea7a316b464bfb17ea24e5145631f8163fbe2d02cdc5276f83fbc2cc31ba84",
+      "size": 14839,
+      "sha256": "27c27972711d7aba9f3591ef6fc7ebe8e93145089193e6b838b15d4e34a723c7",
       "mode": "0644"
     },
     {
@@ -194,234 +194,228 @@
     },
     {
       "path": "skills/browsing/README.md",
-      "size": 1554,
-      "sha256": "fdf86dce7d6e7e804f8603abd08aa4f8f9d64b6ea72fe71492c3d041b5880951",
+      "size": 1281,
+      "sha256": "7d639f81c614bfb0c091ce6770a6c769508e444ffdd6dd749dcfe9e18800fb85",
       "mode": "0644"
     },
     {
       "path": "skills/browsing/SKILL.md",
-      "size": 19551,
-      "sha256": "684e0ad61d784a4ddb6e347df1e0c6a1abd370307c5df543113e8581179e3084",
+      "size": 19771,
+      "sha256": "21b7d88b88a1a2e0398b9a5241caba39dcd4795ff6dc66395734c090d3e553bc",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/chrome-ws",
-      "size": 31118,
-      "sha256": "46c7c83bc4e7729cb42625e81140ad0ce2f0926fd08a32bec054d87a3c25df7e",
-      "mode": "0755"
-    },
-    {
-      "path": "skills/browsing/chrome-ws-lib.js",
-      "size": 17958,
-      "sha256": "f7fb2daa07d7034b87d622f799edfcfc009e3b2375a4eacc437284b0f00c7266",
+      "path": "skills/browsing/scripts/chrome-ws-lib.mjs",
+      "size": 9222,
+      "sha256": "165c4993644405fe55f4b9679f942aa8fd2cca899654f89da5855273d81ed82d",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/host-override.js",
-      "size": 3320,
-      "sha256": "65a8b46308dc1c58c7545bf33850d5a41c956d9c7e848f7452b2fa3c95508631",
+      "path": "skills/browsing/scripts/chrome-ws.mjs",
+      "size": 30990,
+      "sha256": "bdd0a3878c728e5f935011616907bf8c0c3832a656a3d5dabf2756138bb066ff",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/browser-bridge.js",
-      "size": 6968,
-      "sha256": "7b7ff24d43ff780f2985b1827c26e14acec372b160ac6076e64106702d40c230",
+      "path": "skills/browsing/scripts/host-override.mjs",
+      "size": 1888,
+      "sha256": "a065bab096db88ea1ca7fd3eee5614571a9daa4c304f66b7bfeea9290df5bba2",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/browser-session.js",
-      "size": 5187,
-      "sha256": "6b230893a81af3ddede455d1c0082c2598b1edffba693518b8e2e4d880e7c33c",
+      "path": "skills/browsing/scripts/lib/browser-bridge.mjs",
+      "size": 4299,
+      "sha256": "76eb740d40d5bb11157afb23b22bb68d5e7fe190f92bb8778f601e51893c299b",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/capture.js",
-      "size": 19292,
-      "sha256": "d9c1d8c17f8d5457e4779e260392d57c5c66fda1025e807f782a6654f3f018f7",
+      "path": "skills/browsing/scripts/lib/browser-session.mjs",
+      "size": 3716,
+      "sha256": "0800c0211dcbf0e9c83edbe8cde12a22440c13312f4eeb3e1eef0547903cc943",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/cdp-router.js",
-      "size": 2584,
-      "sha256": "d1aae89b46cba65657e67187bdfb461b8bdc120abfd5e5b75f960b3355ad68c4",
+      "path": "skills/browsing/scripts/lib/capture.mjs",
+      "size": 14347,
+      "sha256": "b8d82007ac8bc18b8e1cf024f60213ca2908ac2f2236cc53b11be86dfa7162e3",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/cdp-utils.js",
-      "size": 764,
-      "sha256": "b705bc727a9a2727e85400edbe692e5d2571b9ff5d6e49113f888468ca36203d",
+      "path": "skills/browsing/scripts/lib/cdp-router.mjs",
+      "size": 1692,
+      "sha256": "4ba7ddcbb4668b51210f55a8d1ff7525c90f3fff442033057d3c4b38849712df",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/chrome-launcher-helpers.js",
-      "size": 13480,
-      "sha256": "cda95adedea97a18b42c85b77928c3f38d4a42e13eca753239d6bf3279060310",
+      "path": "skills/browsing/scripts/lib/cdp-utils.mjs",
+      "size": 313,
+      "sha256": "0ad97dcba4e1a945e283555f105322985fb3ca742efc7d667539028bceb26324",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/chrome-process.js",
-      "size": 18176,
-      "sha256": "3dfc94a2188eff21fdd0db513f66d4176d501e4cbcffacd300e7accdd2d21d7c",
+      "path": "skills/browsing/scripts/lib/chrome-launcher-helpers.mjs",
+      "size": 8661,
+      "sha256": "e83751c209971c261bff0d97dae2f6b0469a508d0c7004c97e0262be8faff11f",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/console-logging.js",
-      "size": 2623,
-      "sha256": "53d8916a56c8f63fa0ee24ff3dd4eb2bf70500607d6d231d4581d0416ae730c8",
+      "path": "skills/browsing/scripts/lib/chrome-process.mjs",
+      "size": 11655,
+      "sha256": "617e33cd403c87db0bd923eee66f5e8bc518dd8beb27ad5c646998d9a88da984",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/cookies.js",
-      "size": 582,
-      "sha256": "240b3aaee21c66d0703bb9a5ab5f1ee818de7e886977d96e854505f1b8837bda",
+      "path": "skills/browsing/scripts/lib/console-logging.mjs",
+      "size": 1927,
+      "sha256": "5983495ee831232038bb55269024cc368d58255f380fe57d33a7aaa125f9562f",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/dialogs-render.js",
-      "size": 5346,
-      "sha256": "754c9bbe642b6c0c196933a27a04ee2dbb5e917daf41b6f3973f65621e12c0c1",
+      "path": "skills/browsing/scripts/lib/cookies.mjs",
+      "size": 263,
+      "sha256": "a7dfcd1cf6ae518882c63fa880313240d4d0d6efd0cc35468780316923a2e99e",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/dialogs-router.js",
-      "size": 6304,
-      "sha256": "100f81dacdd40530a24241dc605779722b815641a4ba989c39274f118d79a8c1",
+      "path": "skills/browsing/scripts/lib/dialogs-render.mjs",
+      "size": 5321,
+      "sha256": "22ba3a7fcf84bda00e73d1bbaf9ecebcd8f1cab3a1c9ac9a735704542f9f5fb5",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/dialogs.js",
-      "size": 10887,
-      "sha256": "7deace784245d1214ae5f014164a9647c034c62c3c28ba82e9f8fccf9064305d",
+      "path": "skills/browsing/scripts/lib/dialogs-router.mjs",
+      "size": 4574,
+      "sha256": "598fc451831a113961c1136a43df948462ad803f4e633de473ca0ac7d4ac38b1",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/element-selector.js",
-      "size": 3915,
-      "sha256": "6c75da9c82364545bdf9e634c33ee0e7542e6d1d2b82ba99517390bf90bc5615",
+      "path": "skills/browsing/scripts/lib/dialogs.mjs",
+      "size": 8164,
+      "sha256": "ea578416185b0e0a9a1e7f4da8d8468cf64ab83ea3ea5d8d3cd582e3281df1d6",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/evaluation.js",
-      "size": 2876,
-      "sha256": "bf918034a2303067ef30f301ccd15b465d1903f22b681b90bbc4470a04799ad6",
+      "path": "skills/browsing/scripts/lib/element-selector.mjs",
+      "size": 2950,
+      "sha256": "4de35a329b3d153eb5c3af087c181b50dd74008fe6cd10fc3bf650bf5f9c8478",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/extraction.js",
-      "size": 2000,
-      "sha256": "1e554506d20edc1d735871aac4068ac17214ca61d4135f01afe0d2238a2edc29",
+      "path": "skills/browsing/scripts/lib/evaluation.mjs",
+      "size": 1972,
+      "sha256": "666fe11ece131b1a29107e44a8d3ba84cbb6e8990cf2eb32414a1261964d3ee3",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/file-upload.js",
-      "size": 1796,
-      "sha256": "f37dee79c045e12f7aa5f55954f96867affe7f4b1fc3fcebe03f9c2e5d44cc21",
+      "path": "skills/browsing/scripts/lib/extraction.mjs",
+      "size": 1434,
+      "sha256": "89e1f3747196c6a1d131fbd85d83cce74f46a27d5634d480b3e4b2e847e46cd1",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/html-diff.js",
-      "size": 5535,
-      "sha256": "ba5ea361227f3d78dae33d74840be5ad7f0be14d585f37e9af121d582a65dac3",
+      "path": "skills/browsing/scripts/lib/file-upload.mjs",
+      "size": 1308,
+      "sha256": "6ee1a6ba2e04840ccc1ec37c33f47b9c81c082869179b66f9c30f03b3b8932f3",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/key-definitions.js",
-      "size": 4790,
-      "sha256": "6f652aa69aac41463c5ec376a9593702a4af415bed91de0915ef7ec7e8e04555",
+      "path": "skills/browsing/scripts/lib/html-diff.mjs",
+      "size": 3928,
+      "sha256": "ce0313b4df47deab2735c80f914894acabf39f69aad48c4f990b6ff2feab3ac7",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/keyboard-input.js",
-      "size": 10885,
-      "sha256": "083b557ac34664b1e7a94fe6935a4bf2a3f1256e066e155a791689d41ed5d38e",
+      "path": "skills/browsing/scripts/lib/key-definitions.mjs",
+      "size": 3793,
+      "sha256": "a64bafa4533e3582041ec99a3bc24c8b2efd2da2715488dc947d4045ac81e431",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/mouse.js",
-      "size": 16771,
-      "sha256": "50cf0ccaaed77efc96ba2be03c14111d06c56c30886286aad9139cc05fe44f69",
+      "path": "skills/browsing/scripts/lib/keyboard-input.mjs",
+      "size": 7191,
+      "sha256": "aa04312b85fe1f46cab1ba51ea5ce64ba02483c5f205673df39d5f056f21b4d8",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/navigation.js",
-      "size": 10106,
-      "sha256": "b7590ec256bf0795aa8aa9d1e6992ebe8a9fd9eee1af21e95f21e6df8b304ad7",
+      "path": "skills/browsing/scripts/lib/mouse.mjs",
+      "size": 9592,
+      "sha256": "ce7d82a2d9d64627a47f2748cede447ee1cbde04253780b4356f29860b819d01",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/page-scripts/dom-summary.js",
-      "size": 1719,
-      "sha256": "667d88552f76d88026682e656bd6bef05c65db741649bec940cc804dc02df93e",
+      "path": "skills/browsing/scripts/lib/navigation.mjs",
+      "size": 6093,
+      "sha256": "6f540c68c6aea49fd234e57e28a46df6ad3ba644febc5b8a7b6a9e07e91328dd",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/page-scripts/markdown.js",
-      "size": 3155,
-      "sha256": "fae7aeda96efa2b349a7371eb32a0bc9ec8c1ef2ffd104b98b1992c61d597102",
+      "path": "skills/browsing/scripts/lib/page-scripts/dom-summary.mjs",
+      "size": 1479,
+      "sha256": "5158d05655965bb36e50ed0f90807560a068e48dcbb3f54592634350909f1c1c",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/page-scripts/permission-shim.js",
-      "size": 5254,
-      "sha256": "ba0a498325a6b05862432edd86b24a4512c59fce9ecee68d0579e03cb2c1f1d1",
+      "path": "skills/browsing/scripts/lib/page-scripts/markdown.mjs",
+      "size": 2793,
+      "sha256": "1136344b57f1ff65b05c5bc7abf22a161bf1ec3034ca03ae318ed022b0cb6543",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/page-session.js",
-      "size": 3877,
-      "sha256": "96c59bdea0aea7dc2646d98b2cabe4ba12235d38388fa3aed0e6a2b1739e4579",
+      "path": "skills/browsing/scripts/lib/page-scripts/permission-shim.mjs",
+      "size": 3102,
+      "sha256": "96ad2cb802bbdcda65eb3009f5711ebe3bbb80305a276a2f902de3d2bcf9aec9",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/profile-lock.js",
-      "size": 6383,
-      "sha256": "b41b9234ab1b2943b3f010a07ce713d9b42592ef5b4f404e1e6db5987b4f0331",
+      "path": "skills/browsing/scripts/lib/page-session.mjs",
+      "size": 2313,
+      "sha256": "a2c3a04165c63486c988a6f06f22b0afe780109b0839b1172b28f9a4a8a4549c",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/screenshot.js",
-      "size": 9730,
-      "sha256": "7bd275c15969539524a02eafc47012ba6e9181f49ae8d8bc9625d67b761ab5a5",
+      "path": "skills/browsing/scripts/lib/profile-lock.mjs",
+      "size": 2588,
+      "sha256": "203f6b6615d48d0391620f02d0becb9eec2d87ccbc61be12af905412ac395fe9",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/select-option.js",
-      "size": 3559,
-      "sha256": "c86811542643a27819b17dbd6e0ed8d7aef2e97a2da8429b1f07a29ab1e5afea",
+      "path": "skills/browsing/scripts/lib/screenshot.mjs",
+      "size": 5250,
+      "sha256": "7d96f6a6554e68ff4d5ef89b51b4577b9060c62d94050fc14c745654389c2fe3",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/session-state.js",
-      "size": 2534,
-      "sha256": "80df7c796ecf810b8eee428d6bbe5c38d1884c5a318d88960aea643ecc5258a5",
+      "path": "skills/browsing/scripts/lib/select-option.mjs",
+      "size": 2844,
+      "sha256": "a2d4537248da60aafd29c11f0485bf5661f20b37a920d60463ef0435a0c72169",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/tabs.js",
-      "size": 5944,
-      "sha256": "49eafe0f7b2a232ef9f8c6f940be3e2d735b28b6e3c26edda77de8a3bbad4aff",
+      "path": "skills/browsing/scripts/lib/session-state.mjs",
+      "size": 792,
+      "sha256": "3acaee3339de0457fbb965fd8189815d6711a7c5d897400ce4da2b8bfcdc157c",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/viewport.js",
-      "size": 4224,
-      "sha256": "51fbdde6e023d489c74092557cb1fe955aceac3a968d61215f95b73429da2548",
+      "path": "skills/browsing/scripts/lib/tabs.mjs",
+      "size": 3341,
+      "sha256": "0572ecee40f7b1327c82b18d1575bebd936acc06e4684ba7dd622a60668a5f47",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/lib/websocket-client.js",
-      "size": 6484,
-      "sha256": "c7feea5a126ba039b6f79fd4b696d0b98ee35a9d9ff9911b33fe225aa676aefd",
+      "path": "skills/browsing/scripts/lib/viewport.mjs",
+      "size": 2824,
+      "sha256": "e09b0eaf8e31489cda4ccd15ac7f4b274945e1e1f37532732c450674e93d88a1",
       "mode": "0644"
     },
     {
-      "path": "skills/browsing/package.json",
-      "size": 249,
-      "sha256": "c077c7b988ffd222d7f2249a05f47e2ab399347c51948969fe413aca56477784",
+      "path": "skills/browsing/scripts/lib/websocket-client.mjs",
+      "size": 5129,
+      "sha256": "2e85809497e7ec367a2d3015e8ac8927fe27439a7e9d1688d0ce491ca97be4be",
       "mode": "0644"
     }
   ],
-  "tree_sha256": "9c7882ff096ae4cd778e428855ba1888c43d6e91cb1a41ff929559ead0722972",
+  "tree_sha256": "62c7cbc20a33b6af58cec149498ef19a27ff3019c7618c27b4835834ece196a5",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

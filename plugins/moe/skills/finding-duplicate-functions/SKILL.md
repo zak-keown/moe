@@ -22,11 +22,11 @@ This skill uses a two-phase approach: classical extraction followed by LLM-power
 
 | Phase | Tool | Model | Output |
 |-------|------|-------|--------|
-| 1. Extract | `scripts/extract-functions.sh` | - | `catalog.json` |
+| 1. Extract | `scripts/extract-functions.mjs` | - | `catalog.json` |
 | 2. Categorize | `scripts/categorize-prompt.md` | haiku | `categorized.json` |
-| 3. Split | `scripts/prepare-category-analysis.sh` | - | `categories/*.json` |
+| 3. Split | `scripts/prepare-category-analysis.mjs` | - | `categories/*.json` |
 | 4. Detect | `scripts/find-duplicates-prompt.md` | opus | `duplicates/*.json` |
-| 5. Report | `scripts/generate-report.sh` | - | `report.md` |
+| 5. Report | `scripts/generate-report.mjs` | - | `report.md` |
 
 ## Process
 
@@ -35,11 +35,11 @@ digraph duplicate_detection {
   rankdir=TB;
   node [shape=box];
 
-  extract [label="1. Extract function catalog\nscripts/extract-functions.sh"];
+  extract [label="1. Extract function catalog\nscripts/extract-functions.mjs"];
   categorize [label="2. Categorize by domain\n(haiku subagent)"];
-  split [label="3. Split into categories\nscripts/prepare-category-analysis.sh"];
+  split [label="3. Split into categories\nscripts/prepare-category-analysis.mjs"];
   detect [label="4. Find duplicates per category\n(opus subagent per category)"];
-  report [label="5. Generate report\nscripts/generate-report.sh"];
+  report [label="5. Generate report\nscripts/generate-report.mjs"];
   review [label="6. Human review & consolidate"];
 
   extract -> categorize -> split -> detect -> report -> review;
@@ -49,7 +49,7 @@ digraph duplicate_detection {
 ### Phase 1: Extract Function Catalog
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/skills/finding-duplicate-functions/scripts/extract-functions.sh" src/ -o catalog.json
+node "${CLAUDE_PLUGIN_ROOT}/skills/finding-duplicate-functions/scripts/extract-functions.mjs" src/ -o catalog.json
 ```
 
 Options:
@@ -62,28 +62,28 @@ Test files (`*.test.*`, `*.spec.*`, `__tests__/**`) are excluded by default sinc
 
 ### Phase 2: Categorize by Domain
 
-Dispatch a **haiku** subagent using the prompt in `${CLAUDE_PLUGIN_ROOT}/skills/finding-duplicate-functions/scripts/categorize-prompt.md`.
+Dispatch a **haiku** subagent using the prompt in [categorize-prompt.md](./scripts/categorize-prompt.md).
 
 Insert the contents of `catalog.json` where indicated in the prompt template. Save output as `categorized.json`.
 
 ### Phase 3: Split into Categories
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/skills/finding-duplicate-functions/scripts/prepare-category-analysis.sh" categorized.json ./categories
+node "${CLAUDE_PLUGIN_ROOT}/skills/finding-duplicate-functions/scripts/prepare-category-analysis.mjs" categorized.json ./categories
 ```
 
 Creates one JSON file per category. Only categories with 3+ functions are worth analyzing.
 
 ### Phase 4: Find Duplicates (Per Category)
 
-For each category file in `./categories/`, dispatch an **opus** subagent using the prompt in `${CLAUDE_PLUGIN_ROOT}/skills/finding-duplicate-functions/scripts/find-duplicates-prompt.md`.
+For each category file in `./categories/`, dispatch an **opus** subagent using the prompt in [find-duplicates-prompt.md](./scripts/find-duplicates-prompt.md).
 
 Save each output as `./duplicates/<category-name>.json`.
 
 ### Phase 5: Generate Report
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/skills/finding-duplicate-functions/scripts/generate-report.sh" ./duplicates ./duplicates-report.md
+node "${CLAUDE_PLUGIN_ROOT}/skills/finding-duplicate-functions/scripts/generate-report.mjs" ./duplicates ./duplicates-report.md
 ```
 
 Produces a prioritized markdown report grouped by confidence level. This is rung 4 (markdown) of the shared native-rendering ladder at `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md` — the file on disk is what Phase 6 review consumes and is the source of truth. If your human partner wants a scannable version alongside it (a sortable table, colour-coded confidence bands), walk the ladder from the top:
