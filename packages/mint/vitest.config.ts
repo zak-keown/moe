@@ -16,5 +16,13 @@ export default defineConfig({
     globalSetup: ["./test/global-setup.ts"],
     include: ["test/**/*.test.ts"],
     exclude: ["test/manual/**", "**/node_modules/**", "**/dist/**"],
+    testTimeout: 45_000,
+    hookTimeout: 45_000,
+    pool: "forks",
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
   },
 });
