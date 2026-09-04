@@ -136,6 +136,7 @@ jobs:
           key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm config set store-dir .pnpm-store
       - run: pnpm install --frozen-lockfile
+      - run: pnpm build
       - run: pnpm artifact:check
 
   # No pnpm install: the checker uses only node stdlib, so a workspace install
