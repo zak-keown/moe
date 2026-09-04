@@ -1,10 +1,7 @@
 import { describe, it } from 'vitest';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import { makePageSessionFake } from './_helpers.mjs';
-
-const require = createRequire(import.meta.url);
-const { attachCookies } = require('../../skills/browsing/lib/cookies.js');
+import { attachCookies } from '../../skills/browsing/scripts/lib/cookies.mjs';
 
 describe('cookies (pageSession-shaped)', () => {
   it('clearCookies resolves the pageSession and sends Network.clearBrowserCookies', async () => {

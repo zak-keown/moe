@@ -2,10 +2,7 @@ import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
 import { createServer as createHttpServer } from 'node:http';
 import { createServer as createNetServer } from 'node:net';
-import { createRequire } from 'node:module';
-
-const require = createRequire(import.meta.url);
-const { WebSocketClient } = require('../../skills/browsing/lib/websocket-client.js');
+import { WebSocketClient } from '../../skills/browsing/scripts/lib/websocket-client.mjs';
 
 // CR-066: connect() used to settle only from req.on('upgrade') (resolve) or
 // req.on('error') (reject) — no 'response' handler and no timeout. An
