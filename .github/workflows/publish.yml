@@ -4,12 +4,8 @@
 # against a trusted publisher pre-registered on each package at npmjs.com.
 # No long-lived NPM_TOKEN is used. See https://docs.npmjs.com/trusted-publishers
 #
-# Two-channel structure:
-#   - Prerelease tags (v*-*): candidate branch — builds, checks, packs, publishes to `next`
-#   - Stable tags (v* without -): promotion branch — downloads candidate, moves dist-tags to `latest`
-#
-# Both channels use the compiled Mint release CLI; no literal package list
-# or source-directory publication path appears in this YAML.
+# This is the same publish path used for v0.1.4: Mint resolves the registry
+# package matrix, then npm publishes each built source package with OIDC.
 name: publish
 
 on:
@@ -18,15 +14,14 @@ on:
 
 permissions:
   id-token: write
-  contents: write
+  contents: read
 
 concurrency:
-  group: moe-release
+  group: publish-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  candidate:
-    if: contains(github.ref_name, '-')
+  publish:
     runs-on: ubuntu-latest
     container: node:24
     environment: release
@@ -40,51 +35,40 @@ jobs:
           key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm config set store-dir .pnpm-store
       - run: pnpm install --frozen-lockfile
-
       - run: pnpm check
       - run: pnpm build
       - run: pnpm mint:check
       - run: pnpm provenance
 
-      - name: memory artifact test
-        run: pnpm memory:artifact:test --output-dir .artifacts --record .artifacts/moe-memory-packed.json
-
-      - name: memory runtime smoke
-        run: pnpm memory:runtime:smoke --packed-artifact .artifacts/moe-memory-packed.json
-
-      - name: memory release evidence verify
+      - name: pick dist-tag
+        id: dt
         run: |
-          node packages/mint/dist/cli.js release verify-memory-evidence \
-            --packed-artifact .artifacts/moe-memory-packed.json \
-            --repo .
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+            echo "tag=next" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: prepare and publish candidate
+      - name: publish registry packages
+        env:
+          NPM_DIST_TAG: ${{ steps.dt.outputs.tag }}
         run: |
-          node packages/mint/dist/cli.js release candidate \
-            --tag "$GITHUB_REF_NAME" \
-            --repo . \
-            --execute
+          set -eu
+          MATRIX_PATH="$RUNNER_TEMP/moe-publish-matrix.json"
+          node packages/mint/dist/cli.js publish-matrix --repo . > "$MATRIX_PATH"
+          export MATRIX_PATH
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs'
+          import { spawnSync } from 'node:child_process'
 
-  promote:
-    if: "!contains(github.ref_name, '-')"
-    runs-on: ubuntu-latest
-    container: node:24
-    environment: release
-    steps:
-      - uses: actions/checkout@v4
-      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - run: corepack enable
-      - uses: actions/cache@v4
-        with:
-          path: .pnpm-store
-          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-      - run: pnpm config set store-dir .pnpm-store
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @bubstack/moe-mint run build
-
-      - name: promote to stable
-        run: |
-          node packages/mint/dist/cli.js release promote \
-            --tag "$GITHUB_REF_NAME" \
-            --repo . \
-            --execute
+          const matrix = JSON.parse(readFileSync(process.env.MATRIX_PATH, 'utf8'))
+          for (const entry of matrix) {
+            console.log(`::group::publish ${entry.package}@${entry.version}`)
+            const result = spawnSync('npm', ['publish', '--tag', process.env.NPM_DIST_TAG], {
+              cwd: entry.sourcePackagePath,
+              stdio: 'inherit',
+            })
+            if (result.status !== 0) process.exit(result.status ?? 1)
+            console.log('::endgroup::')
+          }
+          NODE

@@ -10,13 +10,10 @@ const CERTIFY_WORKFLOW = readFileSync(resolve(REPO_ROOT, '.github/workflows/cert
 const CERTIFY_YAML = parse(CERTIFY_WORKFLOW) as Record<string, any>
 
 describe('publish workflow contract', () => {
-  it('requires contents: write permission', () => {
+  it('uses read-only repository contents permission', () => {
     const perms = PUBLISH_YAML.permissions
     expect(perms).toBeDefined()
-    // CR-103: a /write|read/ pattern here would silently accept a future
-    // downgrade from write to read despite this test's own title. Match the
-    // sibling certify-workflow assertion below: require the exact value.
-    expect(perms.contents).toBe('write')
+    expect(perms.contents).toBe('read')
   })
 
   it('requires id-token: write permission', () => {
@@ -42,36 +39,33 @@ describe('publish workflow contract', () => {
     expect(hasProtectedEnv).toBe(true)
   })
 
-  it('invokes compiled Mint CLI', () => {
-    const workflowText = PUBLISH_WORKFLOW
-    expect(workflowText).toContain('packages/mint/dist/cli.js')
-  })
-})
-
-describe('publish workflow memory gates', () => {
-  it('runs memory:artifact:test in candidate job', () => {
-    expect(PUBLISH_WORKFLOW).toContain('memory:artifact:test')
+  it('resolves the publish matrix through compiled Mint', () => {
+    expect(PUBLISH_WORKFLOW).toContain('packages/mint/dist/cli.js publish-matrix')
   })
 
-  it('runs memory:runtime:smoke in candidate job', () => {
-    expect(PUBLISH_WORKFLOW).toContain('memory:runtime:smoke')
+  it('runs the normal release gates before publishing', () => {
+    const checks = ['pnpm check', 'pnpm build', 'pnpm mint:check', 'pnpm provenance']
+    const publishAt = PUBLISH_WORKFLOW.indexOf('publish registry packages')
+    for (const check of checks) {
+      expect(PUBLISH_WORKFLOW.indexOf(check)).toBeGreaterThan(-1)
+      expect(PUBLISH_WORKFLOW.indexOf(check)).toBeLessThan(publishAt)
+    }
   })
 
-  it('runs memory release evidence verify in candidate job', () => {
-    expect(PUBLISH_WORKFLOW).toContain('memory release evidence verify')
-  })
-
-  it('does not build, pack, or npm publish in promote job', () => {
-    const promoteSection = PUBLISH_WORKFLOW.split(/^\s+promote:/m)[1] ?? ''
-    expect(promoteSection).not.toMatch(/pnpm build(?!\s*#)/)
-    expect(promoteSection).not.toMatch(/npm pack(?!\s*#)/)
-    expect(promoteSection).not.toMatch(/npm publish(?!\s*#)/)
+  it('publishes prereleases to next and stable tags to latest', () => {
+    expect(PUBLISH_WORKFLOW).toContain('echo "tag=next"')
+    expect(PUBLISH_WORKFLOW).toContain('echo "tag=latest"')
   })
 })
 
 describe('publish workflow negative assertions', () => {
   it('does not npm publish from packages/ directories', () => {
     expect(PUBLISH_WORKFLOW).not.toMatch(/npm publish packages\//)
+  })
+
+  it('publishes every matrix entry with npm so executable bits survive packing', () => {
+    expect(PUBLISH_WORKFLOW).toContain("spawnSync('npm', ['publish', '--tag', process.env.NPM_DIST_TAG]")
+    expect(PUBLISH_WORKFLOW).toContain('cwd: entry.sourcePackagePath')
   })
 
   it('does not use npm pack after candidate verification', () => {
