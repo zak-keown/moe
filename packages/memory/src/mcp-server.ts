@@ -35,6 +35,7 @@ import { initDatabase, insertEdge, traceProvenance } from "./db.js";
 import { reportMissingDeps } from "./install-check.js";
 import { JournalSearchService } from "./journal/search.js";
 import { JournalStore } from "./journal/store.js";
+import { getArchiveDir } from "./paths.js";
 import {
   formatMultiConceptResults,
   formatResults,
@@ -187,6 +188,38 @@ function handleError(error: unknown): string {
 
 function textResult(text: string) {
   return { content: [{ type: "text" as const, text }] };
+}
+
+function isUnderRoot(candidate: string, root: string): boolean {
+  return candidate === root || candidate.startsWith(root + path.sep);
+}
+
+/**
+ * CR-019: confine `read_conversation` to files under the trusted archive
+ * root. `params.path` is model-supplied — the model's context is built
+ * largely from `search_conversations` results, i.e. content harvested out of
+ * past transcripts that can carry attacker-supplied text (prompt injection) —
+ * so without this guard a crafted `path` reads any file on disk that the
+ * server process can see.
+ *
+ * Mirrors `read_journal_entry`'s two-stage guard in journal/search.ts's
+ * `readEntry`: resolve and check containment, then realpath and check
+ * containment again against the realpath'd root, so a symlink inside the
+ * archive cannot be used to escape it.
+ */
+function assertUnderArchiveRoot(candidatePath: string): void {
+  const archiveRoot = path.resolve(getArchiveDir());
+  const resolvedPath = path.resolve(candidatePath);
+
+  if (!isUnderRoot(resolvedPath, archiveRoot)) {
+    throw new Error(`Path is not under the conversation archive: ${candidatePath}`);
+  }
+
+  const realPath = fs.realpathSync(resolvedPath);
+  const realArchiveRoot = fs.realpathSync(archiveRoot);
+  if (!isUnderRoot(realPath, realArchiveRoot)) {
+    throw new Error(`Path is not under the conversation archive: ${candidatePath}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -603,6 +636,8 @@ export function createMemoryMcpServer(options: MemoryServerOptions = {}): Server
         if (!fs.existsSync(params.path)) {
           throw new Error(`File not found: ${params.path}`);
         }
+
+        assertUnderArchiveRoot(params.path);
 
         const jsonlContent = fs.readFileSync(params.path, "utf-8");
         return textResult(
