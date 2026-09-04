@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 3
+  fixed: 4
   stale: 0
   skipped: 0
   deferred: 0
-  open: 104
+  open: 103
 ---
 
 # Codebase Review — moe
@@ -2350,6 +2350,10 @@ either defect.
 Fix: delete the duplicated section, and correct both links to
 `../src/qa/adapters/web/cookies.ts` and `../src/qa/adapters/web/passkey.ts`.
 
+**Disposition:** fixed
+**Commit:** `15743de9210ae2df275769eb1ce505f031187635`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-077: `downscaleImageIfNeeded` builds shell commands via unescaped string interpolation
 
 **File:** `packages/flight/src/qa/adapters/web/lib/screenshot.js`
