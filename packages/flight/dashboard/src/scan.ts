@@ -27,7 +27,14 @@ import type { GridManifest } from "./manifest.js";
 // pid liveness via the null-signal probe. process.kill(pid, 0) throws ESRCH when
 // the process is gone and EPERM when it exists but is owned by another user
 // (alive). Everything else (including an out-of-range pid) is treated as dead.
+// pid <= 0 is rejected before the probe: 0 signals the caller's own process
+// group and a negative pid signals every process in a group, so both would
+// otherwise succeed unconditionally and never reach the ESRCH/EPERM branch —
+// a phase.json with pid 0 or negative would then read as permanently alive.
 export function pidAlive(pid: number): boolean {
+  if (!Number.isInteger(pid) || pid <= 0) {
+    return false;
+  }
   try {
     process.kill(pid, 0);
     return true;
