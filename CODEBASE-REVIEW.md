@@ -14,6 +14,12 @@ findings:
   total: 107
 verified: false
 status: issues_found
+dispositions:
+  fixed: 1
+  stale: 0
+  skipped: 0
+  deferred: 0
+  open: 106
 ---
 
 # Codebase Review — moe
@@ -1915,6 +1921,10 @@ Fix: wrap `main()`'s body in the same `withTempRoot`-shaped guarantee used in
 `test/manual/codex-e2e.js` (or extract the helper to a shared location both scripts import), so
 the mkdtemp'd root is removed on both the success and throw paths.
 
+**Disposition:** fixed
+**Commit:** `4fdf754a09f01062f5ed182d68446463fd2f1013`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-061: agent-plugins-1.0 install doc falsely claims a custom skills path "will not be discovered"
 
 **File:** `packages/mint/src/adapters/agent-plugins.ts`
