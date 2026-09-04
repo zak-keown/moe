@@ -257,7 +257,7 @@ export async function searchConversations(
           Buffer.from(new Float32Array(queryEmbedding).buffer),
           k,
           ...filterParams,
-        ) as ExchangeRow[];
+        ) as unknown as ExchangeRow[];
         if (results.length > limit) {
           results = results.slice(0, limit);
         }
@@ -283,7 +283,7 @@ export async function searchConversations(
         `%${query}%`,
         ...filterParams,
         limit,
-      ) as ExchangeRow[];
+      ) as unknown as ExchangeRow[];
 
       if (mode === "both") {
         // Merge and deduplicate by ID
