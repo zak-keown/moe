@@ -4,9 +4,16 @@ import { formatAnomalyEvent } from "./format-event.js";
 import { formatTiming } from "./format-timing.js";
 import type { WriteSink } from "./jsonl.js";
 import type { StreamEvent, StreamRenderer } from "./renderer.js";
-import { softWrap } from "./wrap.js";
+import { softWrap, truncateArgs } from "./wrap.js";
 
 const RULE = "──────────────────────────────────────────────────────";
+
+// Cap for a tool call's inline body, applied to whatever formatToolArgs
+// returns (including the un-truncated JSON.stringify fallback for tools
+// formatToolArgs doesn't recognize, e.g. report_result). Keeps a single call
+// line readable even when a tool's args serialize to hundreds/thousands of
+// characters.
+const TOOL_CALL_BODY_LIMIT = 200;
 
 export interface PrettyOptions {
   color: boolean;
@@ -271,7 +278,7 @@ export class PrettyRenderer implements StreamRenderer {
     const formatted = formatToolArgs(name, e.arguments as Record<string, unknown> | undefined);
 
     const bodyParts: string[] = [];
-    if (formatted.body) bodyParts.push(p.dim(formatted.body));
+    if (formatted.body) bodyParts.push(p.dim(truncateArgs(formatted.body, TOOL_CALL_BODY_LIMIT)));
     if (formatted.marker) bodyParts.push(p.dim(formatted.marker));
     const bodyStr = bodyParts.length > 0 ? ` ${bodyParts.join(" ")}` : "";
     const base = `  ${p.cyan("▸")} ${p.bold(name)}${bodyStr}`;
