@@ -115,6 +115,28 @@ def test_xml_valid_prefers_grade_workspace_over_run_dir(invoke, make_eval):
     assert [c["ok"] for c in grade["checks"]] == [True, True]
 
 
+def test_xml_valid_rejects_absolute_and_dotdot_paths(invoke, make_eval, tmp_path):
+    # CR-107: check["file"] is joined onto grade_dir/run_dir with `/`, but
+    # Path.__truediv__ treats an absolute right-hand operand as a full
+    # replacement of the left base (Path("/a/b") / "/etc/passwd" ==
+    # Path("/etc/passwd")), and a "../.." value walks out of the sandbox
+    # entirely. check["file"] comes from the grader YAML (author-controlled
+    # today), but the lookup must not silently follow either escape rather
+    # than staying contained the way site.py's serve_eval already does.
+    secret = tmp_path / "outside" / "secret.xml"
+    secret.parent.mkdir()
+    secret.write_text("<well-formed/>")
+
+    grade = graded(
+        invoke,
+        make_eval,
+        {"checks": [{"checker": "xml-valid", "file": str(secret)}]},
+        expect_exit=1,
+    )
+    assert grade["outcome"] == "fail"
+    assert "no such file" in grade["checks"][0]["notes"]
+
+
 # --- the Checker contract ------------------------------------------------
 
 
@@ -177,6 +199,30 @@ def test_checker_full_json_output_is_normalized(invoke, make_eval):
     assert check["details"] == {"expected": [1, 2], "custom": "extra"}
     assert grade["score"] == 0.75
     assert grade["tags"] == ["ok", "wearing_a_hat"]
+
+
+def test_non_numeric_score_is_demoted_not_fatal(invoke, make_eval):
+    # CR-066: the checker contract says score is float-coercible, but
+    # nothing validates that before normalize_check_info calls float() on
+    # it - a plausible mistake (e.g. "N/A" to signal not-applicable, the
+    # same way `notes` accepts a bare string) aborted the entire grade run
+    # with an unhandled ValueError instead of demoting the bad value like
+    # any other malformed checker output.
+    bad_score = python_script("""\
+        import json
+        print(json.dumps({"score": "N/A"}))
+        """)
+    grade = graded(
+        invoke,
+        make_eval,
+        {"checks": [{"checker": "../checkers/bad-score"}]},
+        checkers={"bad-score": bad_score},
+    )
+    check = grade["checks"][0]
+    assert check["ok"] is True
+    assert "score" not in check
+    assert check["details"]["score"] == "N/A"
+    assert grade["score"] is None
 
 
 def test_checker_non_json_stdout_kept_as_details_output(invoke, make_eval):

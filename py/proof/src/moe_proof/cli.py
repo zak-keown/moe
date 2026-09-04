@@ -58,6 +58,15 @@ def load_yaml(path):
     return yaml.safe_load(path.read_text())
 
 
+def require_keys(doc, keys, path):
+    "Raise a ClickException naming path if doc is missing any of keys"
+    missing = [key for key in keys if key not in doc]
+    if missing:
+        raise click.ClickException(
+            f"{path}: missing required key(s): {', '.join(missing)}"
+        )
+
+
 def load_eval(eval_path):
     eval_file = eval_path / "eval.yaml"
     if not eval_file.exists():
@@ -113,8 +122,17 @@ def normalize_check_info(info):
     at the top level, so core-owned keys can never be clobbered.
     """
     out = {}
+    invalid_score = None
     if info.get("score") is not None:
-        out["score"] = float(info["score"])
+        try:
+            out["score"] = float(info["score"])
+        except (TypeError, ValueError):
+            # A checker emitting a non-float-coercible score (e.g. "N/A")
+            # breaks its contract, but that's the checker's mistake, not a
+            # reason to abort every run still queued in this invocation -
+            # demote it like any other unknown/malformed value instead of
+            # raising (CR-066).
+            invalid_score = info["score"]
     if isinstance(info.get("metrics"), dict):
         out["metrics"] = info["metrics"]
     if isinstance(info.get("tags"), list):
@@ -127,6 +145,8 @@ def normalize_check_info(info):
         for key, value in info.items()
         if key not in ("score", "metrics", "tags", "notes", "details")
     }
+    if invalid_score is not None:
+        extras["score"] = invalid_score
     if details or extras:
         out["details"] = details | extras
     return out
@@ -199,6 +219,7 @@ def run(eval_path, models, config_name, tasks, repeat, grader_name, runs_dir):
             + (", ".join(available) or "(none)")
         )
     config = load_yaml(config_path)
+    require_keys(config, ("runner", "model"), config_path)
 
     runner = (config_path.parent / config["runner"]).resolve()
     if not (runner.is_file() and os.access(runner, os.X_OK)):
@@ -218,7 +239,11 @@ def run(eval_path, models, config_name, tasks, repeat, grader_name, runs_dir):
         raise click.ClickException(f"No tasks found in {eval_path / 'tasks'}")
 
     models = list(models) or [config["model"]]
-    task_docs = [load_yaml(task_file) for task_file in task_files]
+    task_docs = []
+    for task_file in task_files:
+        doc = load_yaml(task_file)
+        require_keys(doc, ("name",), task_file)
+        task_docs.append(doc)
 
     # New Runs each task/model pair still needs: exactly one without -n,
     # otherwise the shortfall against the target sample size
@@ -305,9 +330,11 @@ def execute_run(runs_root, task, config_name, runner, model):
             "MOE_PROOF_RUN_DIR": str(run_dir.resolve()),
         }
     )
-    # Not every Task is a single prompt - some carry other data instead
+    # Not every Task is a single prompt - some carry other data instead.
+    # Stringify like every other scalar routed into the env (scalar_env_vars)
+    # - an unquoted numeric/bool YAML scalar here must not crash subprocess.run.
     if "prompt" in task:
-        env["MOE_PROOF_PROMPT"] = task["prompt"]
+        env["MOE_PROOF_PROMPT"] = str(task["prompt"])
     t0 = time.monotonic()
     result = subprocess.run(
         [str(runner)], cwd=run_dir, env=env, capture_output=True, text=True
@@ -528,12 +555,26 @@ def check_contains(check, run_dir, grade_dir):
     return False, {"notes": f"output.txt does not contain {value!r}"}
 
 
+def _resolve_within(base, rel):
+    """base / rel, but only if the result stays inside base.
+
+    Path.__truediv__ treats an absolute `rel` as a full replacement of
+    `base` (Path("/a/b") / "/etc/passwd" == Path("/etc/passwd")), and a
+    `..`-containing `rel` can walk out of `base` entirely - neither is a
+    lookup this sandbox should silently follow (CR-107). Returns None
+    instead of a path outside `base`.
+    """
+    base = base.resolve()
+    candidate = (base / rel).resolve()
+    return candidate if candidate.is_relative_to(base) else None
+
+
 def check_xml_valid(check, run_dir, grade_dir):
     "Built-in: is a workspace (or Run) file well-formed XML?"
-    path = grade_dir / check["file"]
-    if not path.exists():
-        path = run_dir / check["file"]
-    if not path.exists():
+    path = _resolve_within(grade_dir, check["file"])
+    if path is None or not path.exists():
+        path = _resolve_within(run_dir, check["file"])
+    if path is None or not path.exists():
         return False, {"notes": f"no such file: {check['file']}"}
     try:
         ET.parse(path)
@@ -818,7 +859,18 @@ def render_model_blocks(rows, by_task):
             if all(isinstance(v, bool) for v in values):
                 display = f"{sum(values) / len(values):.0%}"
             else:
-                display = mean_stderr([float(v) for v in values])
+                # A metric's contract is number|bool, but nothing enforces
+                # that where it's written (a Grade can be weeks old, from a
+                # checker version that has since changed) - skip a value
+                # that isn't float-coercible rather than crashing reporting
+                # for every other row too (CR-067).
+                numeric = []
+                for v in values:
+                    try:
+                        numeric.append(float(v))
+                    except (TypeError, ValueError):
+                        continue
+                display = mean_stderr(numeric) if numeric else "-"
             lines.append(f"- {key}: {display}")
         tag_counts = {}
         for row in group:

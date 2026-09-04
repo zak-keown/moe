@@ -181,11 +181,9 @@ def server(make_eval, tmp_path):
                 conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
                 conn.request("GET", path)
                 response = conn.getresponse()
-                return (
-                    response.status,
-                    response.getheader("Content-Type"),
-                    response.read(),
-                )
+                body = response.read()
+                get.headers = dict(response.getheaders())
+                return (response.status, response.getheader("Content-Type"), body)
             except ConnectionRefusedError:
                 time.sleep(0.05)
         raise AssertionError("server never came up")
@@ -237,6 +235,48 @@ def test_serve_refuses_prefix_sibling_of_runs(server):
     secret.write_text("do not serve me")
     status, _, _ = get("/evals/demo/runs/../runs-secret/secret.txt")
     assert status == 404
+
+
+def test_serve_forces_svg_and_html_artifacts_to_plain_text(server):
+    # CR-022: files with recognized "renderable" extensions (.html, .svg,
+    # .js, ...) were served with their native, browser-executable
+    # Content-Type (e.g. image/svg+xml), so an embedded <script> would
+    # execute in the report server's origin. This is not hypothetical: the
+    # repo's own extract-svg checker writes a model's raw SVG output
+    # verbatim to a grade artifact with no sanitization.
+    get, eval_dir = server
+    data = site.collect_eval(eval_dir)
+    rel = data["rows"][0]["run"]
+    grades_dir = eval_dir / "runs" / rel / "grades" / "default"
+    (grades_dir / "extracted.svg").write_text(
+        "<svg xmlns='http://www.w3.org/2000/svg'><script>alert(1)</script></svg>"
+    )
+    (grades_dir / "extracted.html").write_text("<script>alert(1)</script>")
+
+    status, ctype, body = get(f"/evals/demo/runs/{rel}/grades/default/extracted.svg")
+    assert status == 200
+    assert ctype == "text/plain; charset=utf-8"
+    assert b"<script>" in body  # content is unchanged, just not renderable
+
+    status, ctype, body = get(f"/evals/demo/runs/{rel}/grades/default/extracted.html")
+    assert status == 200
+    assert ctype == "text/plain; charset=utf-8"
+
+
+def test_serve_sets_nosniff_on_every_response(server):
+    # CR-022: without X-Content-Type-Options: nosniff, a browser can ignore
+    # a declared text/plain Content-Type and sniff renderable markup out of
+    # the body anyway, reopening the same stored-XSS path the plain-text
+    # Content-Type fix above is meant to close.
+    get, eval_dir = server
+    get("/")
+    assert get.headers.get("X-Content-Type-Options") == "nosniff"
+    get("/index.json")
+    assert get.headers.get("X-Content-Type-Options") == "nosniff"
+    data = site.collect_eval(eval_dir)
+    rel = data["rows"][0]["run"]
+    get(f"/evals/demo/runs/{rel}/output.txt")
+    assert get.headers.get("X-Content-Type-Options") == "nosniff"
 
 
 def test_serve_refuses_paths_outside_runs(server):
