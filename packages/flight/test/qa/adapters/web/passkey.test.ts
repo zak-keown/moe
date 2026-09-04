@@ -92,6 +92,29 @@ describe("readPasskeyFile", () => {
     expect(() => readPasskeyFile(filePath)).toThrow(/signCount/);
   });
 
+  // CR-079: the validation only checked `typeof p.signCount !== "number"`,
+  // not that the number is an integer — despite the error message it throws
+  // for the missing case promising "(must be an integer)". A YAML typo like
+  // `signCount: 1.5` passed this check silently and was forwarded verbatim
+  // to CDP's WebAuthn.addCredential, which is picky about field encodings —
+  // producing a confusing late CDP-level rejection instead of the clear,
+  // immediate validation error the message already promises.
+  test("throws when signCount is a non-integer number", () => {
+    const dir = join(tmp, ".moe-flight", "context", "fractional");
+    mkdirSync(dir, { recursive: true });
+    const filePath = join(dir, "passkey.yaml");
+    writeFileSync(filePath, YAML.stringify({ ...SAMPLE_PASSKEY, signCount: 1.5 }));
+    expect(() => readPasskeyFile(filePath)).toThrow(/signCount/);
+  });
+
+  test("throws when signCount is negative", () => {
+    const dir = join(tmp, ".moe-flight", "context", "negative");
+    mkdirSync(dir, { recursive: true });
+    const filePath = join(dir, "passkey.yaml");
+    writeFileSync(filePath, YAML.stringify({ ...SAMPLE_PASSKEY, signCount: -1 }));
+    expect(() => readPasskeyFile(filePath)).toThrow(/signCount/);
+  });
+
   test("normalizes byte fields to standard base64 with padding", () => {
     // CDP's WebAuthn.addCredential expects standard base64 with padding
     // (confirmed against Chrome 147), despite the protocol docs saying
