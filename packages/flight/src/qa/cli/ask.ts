@@ -145,12 +145,24 @@ export async function ask(args: AskArgs, config: AppConfig): Promise<number> {
   });
 }
 
+// Best-effort per-line JSON.parse: a truncated/corrupted line (e.g. a run
+// interrupted mid-write by shutdown-drain) is skipped rather than thrown, so
+// the real run_start line further down the file is still found. Same
+// tolerance ws-handlers.ts already applies to this same run.jsonl file.
+function tryParseLine(line: string): Record<string, unknown> | null {
+  try {
+    return JSON.parse(line) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
 function peekRecordedModel(runDir: string): string {
   const text = readFileSync(resolve(runDir, "run.jsonl"), "utf8");
   for (const line of text.split("\n")) {
     if (!line.trim()) continue;
-    const evt = JSON.parse(line) as { type?: string | undefined; model?: string | undefined };
-    if (evt.type === "run_start") return String(evt.model ?? "");
+    const evt = tryParseLine(line);
+    if (evt?.type === "run_start") return String(evt.model ?? "");
   }
   return "";
 }
@@ -159,8 +171,8 @@ function peekRecordedDate(runDir: string): string {
   const text = readFileSync(resolve(runDir, "run.jsonl"), "utf8");
   for (const line of text.split("\n")) {
     if (!line.trim()) continue;
-    const evt = JSON.parse(line) as { type?: string | undefined; ts?: string | undefined };
-    if (evt.type === "run_start") return String(evt.ts ?? "unknown date");
+    const evt = tryParseLine(line);
+    if (evt?.type === "run_start") return String(evt.ts ?? "unknown date");
   }
   return "unknown date";
 }
