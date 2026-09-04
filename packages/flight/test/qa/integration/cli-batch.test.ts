@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { beforeEach, describe, expect, test } from "vitest";
 
 import { runBatch } from "../../../src/qa/cli/batch.js";
+import { makeConfig } from "../helpers/make-config.js";
 import { makeScriptedClient, report } from "./helpers.js";
 
 // Cards: description and acceptanceCriteria come from the markdown body,
@@ -57,18 +58,7 @@ describe("moe-flight qa batch — e2e against CLI adapter", () => {
       scenarioPaths: [pathA, pathB],
       target: "true",
       adapterType: "cli",
-      config: {
-        projectRoot,
-        stateDirName: ".moe-flight",
-        port: 4400,
-        defaultChrome: { host: "127.0.0.1", port: 9222 },
-        defaultBudgetMs: 300000,
-        defaultMaxStuckRetries: 5,
-        defaultViewport: { width: 1440, height: 900 },
-        saveScreencast: false,
-        models: { agent: "claude-sonnet-4-6", fanout: undefined },
-        sources: { defaultChrome: "default" },
-      } as any,
+      config: makeConfig(projectRoot),
       silent: false,
       format: undefined,
       noColor: true,

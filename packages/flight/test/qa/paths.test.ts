@@ -223,4 +223,21 @@ describe("resolveRunDir", () => {
     const path = resolveRunDir("/proj", ".my-state", "card_2026T000000Z_aaaa");
     expect(path).toBe("/proj/.my-state/results/card_2026T000000Z_aaaa");
   });
+
+  // paths.ts opens with "The one and only path-safety guard for Flight. All
+  // containment checks go through this" — but resolveRunDir composed with a
+  // bare `join()` and never called isSafePath/resolveInside, unlike every
+  // other exported composer here. Reachable today: `moe-flight qa render
+  // <run-id-or-path>` (src/qa/cli/render.ts) falls through to
+  // resolveRunDir(config.projectRoot, config.stateDirName, arg) whenever arg
+  // doesn't already resolve to an existing directory relative to cwd — a
+  // traversal-shaped positional like "../../../etc" would compose straight
+  // outside the results root. See CR-089.
+  test("rejects a runId that traverses outside the results root", () => {
+    expect(() => resolveRunDir("/proj", ".moe-flight", "../../../etc/passwd")).toThrow();
+  });
+
+  test("rejects an absolute runId", () => {
+    expect(() => resolveRunDir("/proj", ".moe-flight", "/etc/passwd")).toThrow();
+  });
 });
