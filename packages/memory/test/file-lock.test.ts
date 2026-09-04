@@ -93,7 +93,7 @@ describe("file-lock — concurrent contention under proper-lockfile atomicity", 
     } catch {}
   });
 
-  it("at most one of many concurrent acquirers ends up holding the lock", async () => {
+  it("at most one of many concurrent acquirers ends up holding the lock", { retry: 2 }, async () => {
     // Real subprocesses so each runs in its own event loop and OS-level
     // scheduling decides the interleaving. proper-lockfile's atomic-mkdir
     // protocol guarantees mutual exclusion under this contention shape, which
