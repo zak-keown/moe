@@ -1,9 +1,6 @@
 import { strict as assert } from 'node:assert';
-import { createRequire } from 'node:module';
 import { describe, it } from 'vitest';
-
-const require = createRequire(import.meta.url);
-const { KEY_DEFINITIONS, charToKeyDef } = require('../../skills/browsing/lib/key-definitions.js');
+import { KEY_DEFINITIONS, charToKeyDef } from '../../skills/browsing/scripts/lib/key-definitions.mjs';
 
 describe('key-definitions', () => {
   it('KEY_DEFINITIONS includes Tab, Enter, Escape with the expected key codes', () => {
