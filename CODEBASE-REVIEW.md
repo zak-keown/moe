@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 1
+  fixed: 2
   stale: 0
   skipped: 0
   deferred: 0
-  open: 106
+  open: 105
 ---
 
 # Codebase Review — moe
@@ -219,6 +219,11 @@ inline one-line summary in its place. Stamping `CR-002` as `stale` and
 running the script again produces:
 
 ```
+
+**Disposition:** fixed
+**Commit:** `301bf7f88087562206f8106bd6e923043aa7537f`
+**Resolved:** 2026-09-04
+**Note:** —
 ## Checked and found sound
 ...
 ## Resolved findings
