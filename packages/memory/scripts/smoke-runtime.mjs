@@ -1,18 +1,19 @@
 #!/usr/bin/env node
+
 // Tarball-only runtime smoke test for moe-memory.
 // Extracts the packed artifact tarball and runs database, MCP, and search
 // probes against the extracted content only.
 //
 // Usage: node smoke-runtime.mjs --packed-artifact <record.json>
 
-import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
 // ── Matrix definition ──────────────────────────────────────────────────
-const NODE_LANES = ["22.13.0", "22.23.2", "24.20.0"];
+const _NODE_LANES = ["22.13.0", "22.23.2", "24.20.0"];
 const NATIVE_LANES = ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"];
 const DATABASE_ONLY_LANES = ["win32-x64"];
 
@@ -83,7 +84,11 @@ if (pkgJson.name !== "@bubstack/moe-memory") {
   process.exit(1);
 }
 
-const results = { platform: currentPlatform, lane: isNativeLane ? "native" : "database-only", checks: [] };
+const results = {
+  platform: currentPlatform,
+  lane: isNativeLane ? "native" : "database-only",
+  checks: [],
+};
 
 function check(name, fn) {
   try {
@@ -114,8 +119,12 @@ check("sqlite-vec asset for current platform", () => {
   const vendorDir = path.join(packageRoot, "vendor/sqlite-vec");
   const files = fs.readdirSync(vendorDir);
   const platformPrefix = process.platform === "win32" ? "vec0" : "vec0";
-  const hasAsset = files.some(f => f.includes(platformPrefix) || f.endsWith(".dylib") || f.endsWith(".so") || f.endsWith(".dll"));
-  if (!hasAsset && files.length === 0) throw new Error(`No sqlite-vec assets found in ${vendorDir}`);
+  const hasAsset = files.some(
+    (f) =>
+      f.includes(platformPrefix) || f.endsWith(".dylib") || f.endsWith(".so") || f.endsWith(".dll"),
+  );
+  if (!hasAsset && files.length === 0)
+    throw new Error(`No sqlite-vec assets found in ${vendorDir}`);
 });
 
 check("recovery directory present", () => {
@@ -172,12 +181,14 @@ if (isNativeLane) {
 }
 
 // ── Summary ────────────────────────────────────────────────────────────
-const passed = results.checks.filter(c => c.outcome === "pass").length;
-const failed = results.checks.filter(c => c.outcome === "fail").length;
-const skipped = results.checks.filter(c => c.outcome === "skipped").length;
+const passed = results.checks.filter((c) => c.outcome === "pass").length;
+const failed = results.checks.filter((c) => c.outcome === "fail").length;
+const skipped = results.checks.filter((c) => c.outcome === "skipped").length;
 const total = results.checks.length;
 
-console.log(`\n${passed}/${total} passed${skipped ? `, ${skipped} skipped` : ""}${failed ? `, ${failed} FAILED` : ""}`);
+console.log(
+  `\n${passed}/${total} passed${skipped ? `, ${skipped} skipped` : ""}${failed ? `, ${failed} FAILED` : ""}`,
+);
 
 // Write results JSON
 const resultsPath = path.join(path.dirname(recordPath), `smoke-${currentPlatform}.json`);

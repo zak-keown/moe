@@ -18,7 +18,9 @@ function readRuntimeMatrix(): RuntimeMatrix {
   const dbOnlyMatch = source.match(/DATABASE_ONLY_LANES\s*=\s*(\[[^\]]+\])/);
 
   if (!nodeMatch || !nativeMatch || !dbOnlyMatch) {
-    throw new Error("smoke-runtime.mjs must export NODE_LANES, NATIVE_LANES, and DATABASE_ONLY_LANES");
+    throw new Error(
+      "smoke-runtime.mjs must export NODE_LANES, NATIVE_LANES, and DATABASE_ONLY_LANES",
+    );
   }
 
   return {
@@ -44,7 +46,10 @@ describe("runtime platform matrix", () => {
   });
 
   it("CI workflow exists and uses the matrix", () => {
-    const workflowPath = join(import.meta.dirname, "../../../../.github/workflows/memory-runtime.yml");
+    const workflowPath = join(
+      import.meta.dirname,
+      "../../../../.github/workflows/memory-runtime.yml",
+    );
     const workflow = readFileSync(workflowPath, "utf8");
     expect(workflow).toContain("memory-runtime");
     expect(workflow).toContain("packed-artifact");
