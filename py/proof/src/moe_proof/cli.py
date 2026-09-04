@@ -58,6 +58,15 @@ def load_yaml(path):
     return yaml.safe_load(path.read_text())
 
 
+def require_keys(doc, keys, path):
+    "Raise a ClickException naming path if doc is missing any of keys"
+    missing = [key for key in keys if key not in doc]
+    if missing:
+        raise click.ClickException(
+            f"{path}: missing required key(s): {', '.join(missing)}"
+        )
+
+
 def load_eval(eval_path):
     eval_file = eval_path / "eval.yaml"
     if not eval_file.exists():
@@ -210,6 +219,7 @@ def run(eval_path, models, config_name, tasks, repeat, grader_name, runs_dir):
             + (", ".join(available) or "(none)")
         )
     config = load_yaml(config_path)
+    require_keys(config, ("runner", "model"), config_path)
 
     runner = (config_path.parent / config["runner"]).resolve()
     if not (runner.is_file() and os.access(runner, os.X_OK)):
@@ -229,7 +239,11 @@ def run(eval_path, models, config_name, tasks, repeat, grader_name, runs_dir):
         raise click.ClickException(f"No tasks found in {eval_path / 'tasks'}")
 
     models = list(models) or [config["model"]]
-    task_docs = [load_yaml(task_file) for task_file in task_files]
+    task_docs = []
+    for task_file in task_files:
+        doc = load_yaml(task_file)
+        require_keys(doc, ("name",), task_file)
+        task_docs.append(doc)
 
     # New Runs each task/model pair still needs: exactly one without -n,
     # otherwise the shortfall against the target sample size
