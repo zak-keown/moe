@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 17
+  fixed: 24
   stale: 1
   skipped: 0
   deferred: 0
-  open: 89
+  open: 82
 ---
 
 # Codebase Review — moe
@@ -778,6 +778,10 @@ instead of `!id.trim()` alone. (The server-side gap in `scenarios.ts` is
 outside this shard but is the same root cause and should get the same
 guard.)
 
+**Disposition:** fixed
+**Commit:** `a7ffd9ad3f3aeec2770a90c38e979f11f602bd7e`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-018: `seedPlanSkeleton` builds `depends_on` edges backwards
 
 **File:** `packages/jig-graph/src/seed.ts`
@@ -1494,6 +1498,10 @@ Compounding this, `StatusBadge` (`packages/flight/ui/src/components/shared.tsx`,
 
 Since nothing server-side normalizes or rejects these statuses, a user who assigns them via the editor gets silently degraded functionality in two sibling UI surfaces (unfilterable, indistinguishable). Fix: either constrain `CardEditor`'s status `<select>` to the values the rest of the UI actually supports, or extend `CardsList`'s filter options and `StatusBadge`'s color map to cover the full five-value set the editor exposes.
 
+**Disposition:** fixed
+**Commit:** `61144584e3c403351ea61c3614204d25cebc996e`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-043: Run-set live view has no error/close handling on its WebSocket — no polling fallback either
 
 **File:** `packages/flight/ui/src/components/RunSetDetail.tsx`
@@ -1517,6 +1525,10 @@ Fix: add `onerror`/`onclose` handling that either reconnects or falls back
 to polling `api.runSets.get(id)` on an interval, mirroring the
 `useActiveRuns` pattern already used elsewhere in this package.
 
+**Disposition:** fixed
+**Commit:** `9945a2296df30c68c2258559f7aacd0b5dbca133`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-044: Live transcript WebSocket never reconnects and gives no indication after a drop
 
 **File:** `packages/flight/ui/src/hooks/useLiveTranscript.ts`
@@ -1543,6 +1555,10 @@ Fix: add exponential-backoff reconnect on `onclose` while the run is
 plausibly still active (i.e. until `gone` or `model.runEnd` is set), and/or
 expose a manual "reconnect" affordance to the caller.
 
+**Disposition:** fixed
+**Commit:** `85a58cdc33549edd8a05a9c5d86f85b7653b96d5`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-045: `loadMore` has no in-flight guard — rapid repeated calls fetch and append the same page twice
 
 **File:** `packages/flight/ui/src/hooks/useResults.ts`
@@ -1574,6 +1590,10 @@ warning, and React may render one of the two copies).
 Fix: guard `loadMore` (and `refresh`) against concurrent calls, e.g. bail
 out if `loading` is already true, or track an in-flight ref/AbortController.
 
+**Disposition:** fixed
+**Commit:** `d7674e764f71dc9d377e9af0ff4bc2091bbbb4bb`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-046: IPv6 host override silently fails to rewrite the WebSocket URL
 
 **File:** `packages/glass/skills/browsing/host-override.js`
@@ -2593,6 +2613,10 @@ Today's only call site (`packages/flight/src/qa/cli/render.ts`, checked to confi
 
 `ErrorLog.add()` (`packages/flight/src/qa/util/error-log.ts`, read to confirm the shape) stamps each entry with `new Date().toISOString()` (millisecond resolution) and a `source` drawn from only three possible values: `"run" | "fanout" | "cards"`. Two errors from the same source recorded within the same millisecond — plausible during a run-set with several near-simultaneous failures, all logged via `source: "run"` — produce an identical `${timestamp}-${source}` key. `AppShell`'s error-log `<li>` list keys on exactly that combination, so React sees two siblings with the same key on the polled re-render (the panel refetches every 10s via `setInterval(refreshErrors, 10000)`), which is exactly the scenario a burst of failures would hit, in the one panel whose entire job is to surface those failures reliably. Use `err.timestamp + err.source + index` (or have the server assign a monotonic id) instead of relying on the tuple being unique.
 
+**Disposition:** fixed
+**Commit:** `8bf72b3555ce5eadc421ec30a0f32e7c858e8e1d`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-091: `Passes` input silently truncates exponent-notation values via `Number.parseInt`
 
 **File:** `packages/flight/ui/src/components/NewRunModal.tsx`
@@ -2616,6 +2640,10 @@ Fix: use `Number(passes)` (or reject non-plain-digit strings with a regex)
 instead of `Number.parseInt`, so exponent/partial-numeric strings are
 rejected rather than truncated.
 
+**Disposition:** fixed
+**Commit:** `83d808e3f22b263b88bc3ff789992506e4c80ee9`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-092: `restoreFocus` builds an invalid CSS selector for `name` attributes containing a quote
 
 **File:** `packages/glass/skills/browsing/lib/capture.js`

@@ -6,6 +6,18 @@ interface AppShellProps {
   children: ReactNode;
 }
 
+/**
+ * React key for one Error Log row. `ErrorEntry.timestamp` is
+ * millisecond-resolution and `source` is drawn from only three values
+ * (`"run" | "fanout" | "cards"`), so two errors from the same source
+ * within the same millisecond — plausible during a run-set with several
+ * near-simultaneous failures — collide on `${timestamp}-${source}` alone.
+ * Folding in the list index disambiguates them.
+ */
+export function errorKey(err: ErrorEntry, index: number): string {
+  return `${err.timestamp}-${err.source}-${index}`;
+}
+
 export function AppShell({ sidebar, children }: AppShellProps) {
   const [errors, setErrors] = useState<ErrorEntry[]>([]);
   const [showErrors, setShowErrors] = useState(false);
@@ -60,8 +72,8 @@ export function AppShell({ sidebar, children }: AppShellProps) {
             <div className="p-4 text-sm text-slate">No errors recorded.</div>
           ) : (
             <ul className="divide-y divide-edge">
-              {errors.map((err) => (
-                <li key={`${err.timestamp}-${err.source}`} className="px-4 py-2">
+              {errors.map((err, index) => (
+                <li key={errorKey(err, index)} className="px-4 py-2">
                   <div className="flex items-center gap-2">
                     <span className="rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700">
                       {err.source}
