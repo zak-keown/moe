@@ -88,7 +88,6 @@ while ((match = findingRe.exec(maskedBody)) !== null) {
   const id = match[1];
   const title = match[2];
   const start = match.index;
-  const rest = body.slice(start + match[0].length);
   const maskedRest = maskedBody.slice(start + match[0].length);
   const nextRel = maskedRest.search(/^#{2,3}\s+/m);
   const end = nextRel === -1 ? body.length : start + match[0].length + nextRel;
