@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 1
+  fixed: 2
   stale: 0
   skipped: 0
   deferred: 0
-  open: 106
+  open: 105
 ---
 
 # Codebase Review — moe
@@ -1435,6 +1435,10 @@ The actual error the launcher throws when no browser binary exists is `Chrome no
 
 Fix: add a branch matching the real message, e.g. `msg.includes("Chrome not found")`, or better, detect the browser once with a `spawnSync`-based `hasChrome` check (the same pattern the TUI suites already use for `tmux`) instead of string-sniffing error messages after the fact.
 
+**Disposition:** fixed
+**Commit:** `73f8b8c54b39dd0085347d38c1175a84a6c2126e`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-042: Card status vocabulary diverges between CardEditor, CardsList's filter, and StatusBadge's color map
 **File:** `packages/flight/ui/src/components/CardsList.tsx`
 **Anchor:** `<option value="all">All status</option>` filter dropdown vs. `CardEditor`'s `<select id="card-status">`
