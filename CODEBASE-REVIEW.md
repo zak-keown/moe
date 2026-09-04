@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 11
+  fixed: 12
   stale: 0
   skipped: 0
   deferred: 0
-  open: 96
+  open: 95
 ---
 
 # Codebase Review — moe
@@ -2651,6 +2651,10 @@ The `type` action's handler unconditionally calls `chromeLib.humanType(tabIndex,
 
 Concretely: typing a 500-character value (a moderately long form field, a JSON blob, a paragraph of text — all ordinary uses of a browser-automation "type" action) takes on the order of 60 seconds with the documented defaults, with no override reachable through the MCP tool's schema or the HELP text (which just says `payload=literal text to type`). Any MCP host with a tool-call timeout shorter than that turns an entirely ordinary "type this text" request into a silent failure, and the codebase already contains the faster primitive (`fill`) that solves exactly this but is never wired into the exposed `type` action. Recommend forwarding `p.delay`/`p.jitter` (or a `p.fast` flag routing to `fill`) from the `type` payload into the underlying call.
 
+**Disposition:** fixed
+**Commit:** `04c08b8edd5327b751353a28ae907727d8695315`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-096: Temp directories from capture.test.mjs regression cases are never cleaned up
 
 **File:** `packages/glass/test/lib/capture.test.mjs`
