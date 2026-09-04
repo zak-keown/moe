@@ -14,6 +14,12 @@ findings:
   total: 107
 verified: false
 status: issues_found
+dispositions:
+  fixed: 1
+  stale: 0
+  skipped: 0
+  deferred: 0
+  open: 106
 ---
 
 # Codebase Review — moe
@@ -188,6 +194,10 @@ Fix: mirror `aggregate_stories.py`'s empty-title handling — assign each
 empty-titled scenario a unique key so it is never merged with another
 empty-titled scenario.
 
+**Disposition:** fixed
+**Commit:** `ed891aad4eb9eecac120ce5d8cbf61b8d633a994`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-004: compact-resolved.mjs re-compacts already-resolved findings and duplicates the "Resolved findings" heading on a second run
 
 **File:** `packages/core/skills/fixing-a-code-review/scripts/compact-resolved.mjs`
