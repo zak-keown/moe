@@ -74,7 +74,6 @@ lines.push("");
 
 for (const sev of ["critical", "high", "medium", "low"]) {
   const group = allFindings.filter((f) => f.severity === sev);
-  if (group.length === 0 && sev === "critical") continue;
   lines.push(`## ${sev.charAt(0).toUpperCase() + sev.slice(1)}`);
   if (group.length === 0) {
     lines.push("No findings.");
