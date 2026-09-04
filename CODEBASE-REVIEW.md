@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 7
+  fixed: 8
   stale: 0
   skipped: 0
   deferred: 0
-  open: 100
+  open: 99
 ---
 
 # Codebase Review — moe
@@ -1795,6 +1795,10 @@ adjusted for the new depth. None of this is caught by CI or `pnpm test` —
 silent. Fix: change each `./skills/browsing/...` reference to
 `../../skills/browsing/...`.
 
+**Disposition:** fixed
+**Commit:** `8ebf16df4a39d3d23aafdd9289e09fde504af517`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-054: jig plan seed silently drops topic words that coincide with the --entry value
 
 **File:** `packages/jig-graph/src/jig-extension.ts`
