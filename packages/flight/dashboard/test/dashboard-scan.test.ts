@@ -20,6 +20,21 @@ test("pidAlive returns false for a certainly-dead pid", () => {
   expect(pidAlive(2147483646)).toBe(false);
 });
 
+// CR-030: process.kill(pid, 0) with pid === 0 signals the caller's own
+// process group (always present) and pid < 0 signals every process in that
+// group — both succeed without ever reaching the ESRCH/EPERM branch, so a
+// naive translation of "didn't throw" -> alive treats pid 0 and negative
+// pids as permanently alive. The doc comment above pidAlive explicitly
+// claims "Everything else (including an out-of-range pid) is treated as
+// dead," which pid 0 and negative pids contradict.
+test("pidAlive returns false for pid 0 (signals the caller's own process group, not a real pid)", () => {
+  expect(pidAlive(0)).toBe(false);
+});
+
+test("pidAlive returns false for a negative pid (signals a whole process group)", () => {
+  expect(pidAlive(-1)).toBe(false);
+});
+
 // --- readDashboardVerdict ----------------------------------------------------
 
 test("readDashboardVerdict returns null when verdict.json is missing", () => {
