@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 6
+  fixed: 7
   stale: 0
   skipped: 0
   deferred: 0
-  open: 101
+  open: 100
 ---
 
 # Codebase Review — moe
@@ -2489,6 +2489,10 @@ finalize(lookup: (runId: string) => VerdictResult | null): void {
 
 `processedIds` is populated but `grep -n "processedIds"` shows it is never read anywhere else in the file (or referenced again after the loop that builds it). The comment above it ("Track which run IDs had results provided via lookup...") describes intent that the rest of `finalize` does not implement — `summarizeCard` re-derives its own classification from `run.status` and its own `lookup()` calls without consulting this set. This has no behavioral effect today (dead code, not wrong code), but it reads as load-bearing to a maintainer and should either be wired into the classification logic it was clearly meant to support, or removed.
 
+**Disposition:** fixed
+**Commit:** `8e203e51bbac03eff699931b769a9b47aa123c79`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-085: Stale `stateDirName` field passed to `executeHttpRun` has no effect
 
 **File:** `packages/flight/test/qa/api/run.test.ts`
