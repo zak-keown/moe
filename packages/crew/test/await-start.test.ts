@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -7,7 +8,13 @@ import type { CommandContext } from "../src/commands/context.js";
 import { appendEvent } from "../src/core/event-log.js";
 import { eventsPath, metaPath, shimPath } from "../src/core/paths.js";
 import type { Tmux } from "../src/core/tmux.js";
-import { writeMeta, writeShim } from "../src/core/worker-store.js";
+import {
+  readWorktreeMarker,
+  writeMeta,
+  writeShim,
+  writeWorktreeMarker,
+} from "../src/core/worker-store.js";
+import { createWorktree } from "../src/core/worktree.js";
 import { getDriver } from "../src/harness/registry.js";
 
 function tmpDir(): string {
@@ -66,6 +73,25 @@ function seedWorker(workerDir: string): void {
     harness: "claude",
   });
   writeShim(workerDir, TMUX_NAME, "/path/to/moe-crew.js");
+}
+
+/** A real git repo with one commit, so `git worktree add --detach <path> HEAD` works. */
+function makeGitRepo(): string {
+  const repoRoot = mkdtempSync(join(tmpdir(), "moe-crew-await-repo-"));
+  const git = (args: string[]) => execFileSync("git", ["-C", repoRoot, ...args]);
+  git(["init", "-q"]);
+  git([
+    "-c",
+    "user.email=t@t.test",
+    "-c",
+    "user.name=t",
+    "commit",
+    "--allow-empty",
+    "-q",
+    "-m",
+    "init",
+  ]);
+  return repoRoot;
 }
 
 describe("awaitSessionStart", () => {
@@ -157,5 +183,36 @@ describe("awaitSessionStart", () => {
     expect(existsSync(metaPath(workerDir, SID))).toBe(false);
     expect(existsSync(eventsPath(workerDir, SID))).toBe(false);
     expect(existsSync(shimPath(workerDir, TMUX_NAME))).toBe(false);
+  });
+
+  it("removes the git worktree on timeout teardown, not just the marker (CR-027)", async () => {
+    const realRepo = makeGitRepo();
+    try {
+      const wtPath = await createWorktree(undefined, realRepo, TMUX_NAME);
+      writeWorktreeMarker(workerDir, TMUX_NAME, wtPath);
+      expect(existsSync(wtPath)).toBe(true);
+
+      const calls: FakeTmuxCalls = { capturePane: [], sendEnter: [], killSession: [] };
+      const tmux = fakeTmux(calls, () => "");
+      const ctx = makeCtx(workerDir, tmux);
+      const result = await awaitSessionStart(ctx, TMUX_NAME, SID, {
+        trustTimeoutMs: 30,
+        startTimeoutMs: 60,
+        pollMs: 10,
+      });
+
+      expect(result.started).toBe(false);
+      // The marker is gone (removeWorker already did this before the fix)...
+      expect(readWorktreeMarker(workerDir, TMUX_NAME)).toBeNull();
+      // ...but the git worktree itself must ALSO be gone: both the checkout
+      // directory and git's own internal worktree registration.
+      expect(existsSync(wtPath)).toBe(false);
+      const list = execFileSync("git", ["-C", realRepo, "worktree", "list"], {
+        encoding: "utf8",
+      });
+      expect(list).not.toContain(wtPath);
+    } finally {
+      rmSync(realRepo, { recursive: true, force: true });
+    }
   });
 });
