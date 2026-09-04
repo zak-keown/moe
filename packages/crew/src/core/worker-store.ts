@@ -9,6 +9,7 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
+  type Stats,
   unlinkSync,
   writeFileSync,
   writeSync,
@@ -32,23 +33,12 @@ export interface WorkerMeta {
 }
 
 /**
- * Create `dir` privately (mode 0700) if nothing exists there, or verify an
- * existing path is already a real directory owned by the current user.
- * Refuses (throws) otherwise, closing the shared-host precondition that lets
- * another local account pre-plant a directory — or a symlink, which fails
- * the `isDirectory()` check regardless of what it points at — at a
- * predictable worker-dir or per-worker-home path ahead of us. The ownership
- * check no-ops where `process.getuid` is unavailable (native Windows;
- * moe-crew is WSL2-only there per ARCHITECTURE.md, where getuid exists).
+ * Throws unless `st` describes a real directory owned by the current user.
+ * The ownership check no-ops where `process.getuid` is unavailable (native
+ * Windows; moe-crew is WSL2-only there per ARCHITECTURE.md, where getuid
+ * exists).
  */
-export function ensureOwnedDir(dir: string): void {
-  let st: ReturnType<typeof lstatSync>;
-  try {
-    st = lstatSync(dir);
-  } catch {
-    mkdirSync(dir, { recursive: true, mode: 0o700 });
-    return;
-  }
+function assertRealOwnedDir(dir: string, st: Stats): void {
   if (!st.isDirectory()) {
     throw new Error(`refusing to use ${dir}: not a real directory (possibly a planted symlink)`);
   }
@@ -56,6 +46,33 @@ export function ensureOwnedDir(dir: string): void {
   if (uid !== undefined && st.uid !== uid) {
     throw new Error(`refusing to use ${dir}: not owned by the current user`);
   }
+}
+
+/**
+ * Create `dir` privately (mode 0700) if nothing exists there, or verify an
+ * existing path is already a real directory owned by the current user.
+ * Refuses (throws) otherwise, closing the shared-host precondition that lets
+ * another local account pre-plant a directory — or a symlink, which fails
+ * the `isDirectory()` check regardless of what it points at — at a
+ * predictable worker-dir or per-worker-home path ahead of us.
+ */
+export function ensureOwnedDir(dir: string): void {
+  let st: Stats;
+  try {
+    st = lstatSync(dir);
+  } catch {
+    mkdirSync(dir, { recursive: true, mode: 0o700 });
+    // CR-028: mkdirSync's recursive mode does not throw when the target
+    // already resolves to a directory (a symlink included) — it silently
+    // succeeds. An attacker who wins the race between the lstatSync ENOENT
+    // above and this mkdirSync call, by planting a symlink to their own
+    // directory at `dir` in that window, would otherwise make this function
+    // return normally as if it had created a fresh, private, owned
+    // directory. Re-verify what's actually at `dir` now before trusting it.
+    assertRealOwnedDir(dir, lstatSync(dir));
+    return;
+  }
+  assertRealOwnedDir(dir, st);
 }
 
 /**
