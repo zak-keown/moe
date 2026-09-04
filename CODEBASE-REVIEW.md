@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 4
+  fixed: 5
   stale: 0
   skipped: 0
   deferred: 0
-  open: 103
+  open: 102
 ---
 
 # Codebase Review — moe
@@ -2405,6 +2405,10 @@ In practice this is currently gated by whichever LLM provider's tool-calling API
 
 `RunSnapshot.abortController` in `active-runs.ts` (the data model, also in this shard) is documented as "NOT part of the public `ActiveRunInfo` payload — internal infrastructure, never serialized to clients." The `/:runId/snapshot` route in `routes/active-runs.ts`, however, does `return c.json(snap)` on the entire `RunSnapshot` object — `info`, `lastFrame`, `progressLog`, and `abortController` together — rather than picking out the public fields. Today this is harmless because `AbortController` has no own enumerable properties and serializes to `{}`, but the route's actual behavior does not match the guarantee documented on the type it serializes: any future field added to `RunSnapshot` that is meant to stay internal (the kind of thing the `abortController` comment anticipates) will be silently exposed over this unauthenticated HTTP endpoint the next time someone adds it, because nothing at the route enforces the boundary the comment promises. Fix: build an explicit public snapshot shape (`{ info, lastFrame, progressLog }`) at the route instead of forwarding the internal struct.
 
+**Disposition:** fixed
+**Commit:** `66342430c0fcb0b945521402a67547caf4c60bf1`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-082: `run-sets.ts` manifest reads skip the malformed-JSON handling every sibling route has
 
 **File:** `packages/flight/src/qa/api/routes/run-sets.ts`
