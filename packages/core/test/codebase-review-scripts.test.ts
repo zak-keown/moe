@@ -826,7 +826,9 @@ describe("stamp-disposition behavior", () => {
     // ...and the real stamp lands after the finding's real trailing prose,
     // not spliced in right after the fence opens.
     const realStampIdx = after.indexOf("**Commit:** `cafef00d`");
-    const trailingProseIdx = after.indexOf("and must not be truncated by the fenced example above.");
+    const trailingProseIdx = after.indexOf(
+      "and must not be truncated by the fenced example above.",
+    );
     expect(realStampIdx).toBeGreaterThan(-1);
     expect(trailingProseIdx).toBeGreaterThan(-1);
     expect(realStampIdx).toBeGreaterThan(trailingProseIdx);
@@ -990,8 +992,12 @@ describe("compact-resolved behavior", () => {
 
     const after = readFileSync(file, "utf8");
     // Both findings compacted to one-line summaries inline...
-    expect(after).toContain("- **CR-001:** Finding whose body illustrates a fake Resolved section — fixed (`aaaaaaa`)");
-    expect(after).toContain("- **CR-002:** Real finding after the illustration — fixed (`bbbbbbb`)");
+    expect(after).toContain(
+      "- **CR-001:** Finding whose body illustrates a fake Resolved section — fixed (`aaaaaaa`)",
+    );
+    expect(after).toContain(
+      "- **CR-002:** Real finding after the illustration — fixed (`bbbbbbb`)",
+    );
     // ...and CR-002's full block actually moved to the real Resolved section,
     // not left behind as an inline full block because scanning stopped at
     // CR-001's fenced illustration.
