@@ -14,6 +14,12 @@ findings:
   total: 107
 verified: false
 status: issues_found
+dispositions:
+  fixed: 1
+  stale: 0
+  skipped: 0
+  deferred: 0
+  open: 106
 ---
 
 # Codebase Review — moe
@@ -422,6 +428,10 @@ Fix: give `cellId` the same tab-join-then-encode treatment as `cellKey` (or at
 minimum percent-encode/hash each segment before joining) so two different
 4-tuples can never produce the same id.
 
+**Disposition:** fixed
+**Commit:** `22642b56d7dd202257719718409fa00cd28b8e0a`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-010: Hyphen-joined `cellId` can collide across distinct (scenario, agent, credential, os) identities, misrouting SSE cell updates
 
 **File:** `packages/flight/dashboard/src/templates.ts`
