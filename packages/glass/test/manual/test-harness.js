@@ -18,7 +18,7 @@
  */
 
 const path = require('path');
-const chromeWs = require('./skills/browsing/chrome-ws-lib.js');
+const chromeWs = require('./skills/browsing/scripts/chrome-ws-lib.mjs');
 
 // Test configuration
 const DEFAULT_ITERATIONS = 50;
