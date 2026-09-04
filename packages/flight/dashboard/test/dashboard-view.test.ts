@@ -338,6 +338,29 @@ test("cellView: drift flag set and drift_line populated when latest spikes", () 
   expect(v.card?.drift_line).toBe("▲ latest $3.00 vs median $1.00 of prior runs");
 });
 
+// CR-031: cellCosts() filters out every run with a null (unpriced) cost, so
+// when the chronologically-latest run in the window is unpriced but an
+// EARLIER run is a genuine cost outlier, the filtered array's last element is
+// that earlier run, not the true latest one. driftFlag then flags the cell as
+// drifting and the card's drift_line describes the earlier run's cost as
+// "latest" -- pointing a viewer investigating a cost spike at the wrong run.
+// An unpriced true-latest run must read as "no drift signal available", not
+// fall through to an older run.
+test("cellView: no drift when the true latest run is unpriced, even if an earlier run spiked", () => {
+  const now = new Date("2026-06-13T00:00:00Z");
+  const c = cell({
+    window: [
+      rec({ cost_usd: 1, final: "pass" }),
+      rec({ cost_usd: 1, final: "pass" }),
+      rec({ cost_usd: 5, final: "pass" }), // earlier run: genuine outlier
+      rec({ cost_usd: null, final: "pass" }), // true latest run: unpriced
+    ],
+  });
+  const v = cellView(c, "s", "claude", "none", "linux", null, now);
+  expect(v.drift).toBe(false);
+  expect(v.card?.drift_line).toBeNull();
+});
+
 test("cellView: no drift_line when there is no drift", () => {
   const c = cell({
     window: [rec({ cost_usd: 1 }), rec({ cost_usd: 1 }), rec({ cost_usd: 1 })],
