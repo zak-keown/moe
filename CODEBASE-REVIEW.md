@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 3
+  fixed: 4
   stale: 0
   skipped: 0
   deferred: 0
-  open: 104
+  open: 103
 ---
 
 # Codebase Review — moe
@@ -2018,6 +2018,10 @@ Because the index is always `-1` against the current workflow, the `if` body —
 
 Fix: either assert unconditionally that `PUBLISH_WORKFLOW` never matches `/npm pack(?!\s*#)/` (since the whole publish path is now delegated to the compiled Mint CLI and no anchor is needed), or fail the test loudly when `publishMatrixLine === -1` instead of silently skipping the check.
 
+**Disposition:** fixed
+**Commit:** `42f7f7d78de50408536d90845878c7416fc28e2f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-064: `MOE_TAB_PRICING_DIR` override silently loses its "wins absolutely" contract for non-UTF-8 values
 
 **File:** `packages/tab/crates/moe-tab-core/src/lib.rs`
