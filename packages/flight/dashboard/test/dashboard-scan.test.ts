@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "vitest";
 import { cellKey } from "../src/contracts.js";
-import { pidAlive, readDashboardVerdict, scanResults } from "../src/scan.js";
+import { _verdictCacheSizeForTest, pidAlive, readDashboardVerdict, scanResults } from "../src/scan.js";
 
 // Identity is read from each run's authoritative verdict.json / phase.json
 // (scenario, coding_agent, credential, os) — never parsed out of the run-dir
@@ -141,6 +141,27 @@ test("scanResults buckets runs into cells and windows to 5 newest", () => {
   // newest is i=6 with cost 6.
   expect(cell?.window[4]?.cost_usd).toBe(6);
   expect(cell?.window[0]?.cost_usd).toBe(2);
+});
+
+// CR-075: scanRunDir calls readDashboardVerdict on EVERY listed run dir (for
+// identity resolution) before scanResults windows each bucket down to the 5
+// newest, so a run dir that scrolls out of a cell's window still keeps its
+// entry in the module-level _verdictCache forever -- the cache grows with
+// the total historical run count on disk, not the rendered window, for as
+// long as the long-lived dashboard process stays up.
+test("scanResults prunes the verdict cache back down to the currently-windowed run dirs", () => {
+  const root = mkdtempSync(join(tmpdir(), "res-"));
+  // 9 run dirs for one cell; only the 5 newest stay in the rendered window,
+  // so 4 scroll out on this very first scan.
+  for (let i = 0; i < 9; i++) {
+    writeRun(root, runId("s", "claude", "none", "linux", `2026061${i}T000000Z`, `00${i}a`), {
+      verdict: { final: "pass", ...identity() },
+    });
+  }
+  scan(root);
+  // Bounded by the rendered window (5 dirs for the one cell here), not the 9
+  // run dirs that were actually observed on disk.
+  expect(_verdictCacheSizeForTest()).toBeLessThanOrEqual(5);
 });
 
 test("scanResults skips batches and identity-less dirs", () => {
