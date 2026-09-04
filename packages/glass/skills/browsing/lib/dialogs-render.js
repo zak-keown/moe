@@ -1,5 +1,18 @@
 'use strict';
 
+// Escapes a string for safe interpolation into HTML text/attribute content.
+// Needed because device-chooser device names/ids come verbatim from the CDP
+// DeviceAccess.deviceRequestPrompted event — the advertised name of a nearby
+// WebBluetooth/WebUSB peripheral, which is attacker-controlled (CR-048).
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function renderSyntheticArtifacts(s) {
   const origin = s.payload.url || '(unknown)';
   let markdown;
@@ -119,7 +132,7 @@ function renderSyntheticArtifacts(s) {
   }
   if (s.kind === 'device-chooser') {
     for (const d of s.payload.devices) {
-      htmlParts.push(`<button data-device-id="${d.id}">${d.name}</button>`);
+      htmlParts.push(`<button data-device-id="${escapeHtml(d.id)}">${escapeHtml(d.name)}</button>`);
     }
   }
   const acceptKinds = new Set(['alert', 'confirm', 'prompt', 'beforeunload', 'permission', 'basic-auth']);
