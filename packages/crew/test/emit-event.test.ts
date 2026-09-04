@@ -259,6 +259,39 @@ describe("runHook — no-op cases", () => {
     const result = run(stdin, dir);
     expect(result).toEqual({ stdout: "" });
   });
+
+});
+
+describe("runHook — session_id path safety (CR-008)", () => {
+  const baked = { tmuxName: "codex-worker", cwd: "/proj" };
+
+  it("does not self-register a meta file outside the worker dir for a path-traversal session_id", () => {
+    const dir = tmpDir();
+    const evilSid = "../../../../tmp/moe-crew-cr008-pwned";
+    const stdin = JSON.stringify({
+      session_id: evilSid,
+      hook_event_name: "SessionStart",
+      cwd: "/proj",
+    });
+    const result = runHook({ stdin, workerDir: dir, now: fixedNow, baked });
+    expect(result).toEqual({ stdout: "" });
+    expect(existsSync(join(tmpdir(), "moe-crew-cr008-pwned.meta"))).toBe(false);
+    expect(existsSync(metaPath(dir, evilSid))).toBe(false);
+  });
+
+  it("does not throw when a path-traversal session_id's parent dir does not exist", () => {
+    // Before the fix, an sid whose traversal target's parent dir does not
+    // exist made writeMeta throw ENOENT synchronously out of runHook — the
+    // exact non-zero-exit failure mode issue #15 was fixed to avoid.
+    // runHook must never throw on untrusted stdin.
+    const dir = tmpDir();
+    const stdin = JSON.stringify({
+      session_id: "no/such/parent/dir/pwned",
+      hook_event_name: "SessionStart",
+      cwd: "/proj",
+    });
+    expect(() => runHook({ stdin, workerDir: dir, now: fixedNow, baked })).not.toThrow();
+  });
 });
 
 describe("runHook — codex meta self-registration (baked args)", () => {
