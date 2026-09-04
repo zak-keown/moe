@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 3
+  fixed: 4
   stale: 0
   skipped: 0
   deferred: 0
-  open: 104
+  open: 103
 ---
 
 # Codebase Review — moe
@@ -1660,6 +1660,10 @@ Memory grows quadratically with line count (500 lines -> 15.9MB, 1000 -> 61.5MB,
 
 Fix: either lower `MAX_DIFFABLE_LINES_PER_SIDE` substantially (e.g. to bound worst-case memory to single-digit MB), or replace the trace-snapshotting Myers implementation with a linear-space variant (Hirschberg-style divide-and-conquer) so the cap can stay generous without the quadratic memory cost.
 
+**Disposition:** fixed
+**Commit:** `4eb99bae9b4491ab3a9877d9637733612fd143bd`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-050: Session-boundary dialog-refusal test doesn't exercise the refusal it names
 
 **File:** `packages/glass/test/dialogs-wiring.test.mjs`
