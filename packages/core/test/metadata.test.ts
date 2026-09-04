@@ -33,7 +33,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = resolve(HERE, "..");
 const SKILLS = join(PKG, "skills");
 
-// Self-contained example plugins the developing-claude-code-plugins skill ships
+// Self-contained example plugins the cc-plugins skill ships
 // as teaching material. They have their own plugin roots and their own
 // (deliberately different) manifests.
 const EXAMPLES_SEGMENT = "examples";
@@ -108,7 +108,7 @@ const skillNames = new Set(skills.map((s) => s.name));
 // upstream drop or rename is aimed at `imported:` alone, which is what lets a
 // fork-authored skill exist at all without loosening it.
 const tiers = parseYaml(readFileSync(join(PKG, "skill-tiers.yaml"), "utf8")) as {
-  imported: Record<string, { from: string; why: string }> | null;
+  imported: Record<string, { from: string; why: string; renamed_from?: string }> | null;
   authored: Record<string, { from: string; why: string }> | null;
 };
 const imported = tiers.imported ?? {};
@@ -249,7 +249,7 @@ describe("skill inventory", () => {
       "systematic-debugging",
       "test-driven-development",
       "using-git-worktrees",
-      "using-moe",
+      "using-superpowers",
       "verification-before-completion",
       "writing-plans",
       "writing-skills",
@@ -282,7 +282,11 @@ describe("skill inventory", () => {
     // import: a skill deleted from the tree still fails, via the completeness
     // equality below, and a skill RENAMED in only one of the two places fails
     // here. Weakening this to a superset check would retire the detector.
-    expect(Object.keys(imported).sort()).toEqual(expected);
+    const upstreamIdentity = (key: string): string => imported[key]?.renamed_from ?? key;
+    // Anchored on UPSTREAM identities, never on current names: the array above is
+    // the immutable import fidelity record. A rename that omits `renamed_from`
+    // projects to its new name and fails here, exactly as a silent drop does.
+    expect(Object.keys(imported).map(upstreamIdentity).sort()).toEqual(expected);
   });
 
   it("accounts for every skill on disk in exactly one of the two maps", () => {
@@ -334,14 +338,14 @@ describe("cross-references", () => {
       const text = readFileSync(p, "utf8");
       for (const line of text.split(/\r?\n/)) {
         if (!/REQUIRED (SUB-SKILL|BACKGROUND)/.test(line)) continue;
-        // The two lines in writing-skills/SKILL.md that quote the marker syntax
+        // The two lines in write-skill/SKILL.md that quote the marker syntax
         // as an authoring example are double-backticked code spans.
         if (line.trimStart().startsWith("- ✅") || line.trimStart().startsWith("- ❌")) continue;
         const named = [...line.matchAll(/`([a-z0-9][a-z0-9-]*)`/g)].map((m) => m[1] as string);
         const resolved = named.filter((n) => skillNames.has(n));
         // EVERY backticked token on the line must resolve, not merely one of
         // them. The old rule flagged only a line where NOTHING resolved, so
-        // `Use \`subagent-driven-development\` or \`not-a-real-skill\`` passed on
+        // `Use \`sdd\` or \`not-a-real-skill\`` passed on
         // the strength of its good half while the reader still hit a dead end
         // on the bad one. A line carrying no backticked token at all stays an
         // offender: `named.length === 0` is checked FIRST, because an
@@ -387,18 +391,18 @@ describe("cross-references", () => {
     // dispatchers or flag decorative uses. The listed skills are the ones
     // that actually route the reader into a parallel dispatch.
     const parallelDispatchers = [
-      "dispatching-parallel-agents",
-      "subagent-driven-development",
-      "implementing-tasks",
-      "extracting-requirements",
-      "running-an-iteration",
-      "auditing-progress",
-      "scoping-the-simplest-core",
-      "iterative-development",
+      "dispatch-agents",
+      "sdd",
+      "implement-tasks",
+      "extract-requirements",
+      "run-iteration",
+      "audit-progress",
+      "scope-core",
+      "iterate",
       // Dispatches one review-shard agent per shard, in bounded waves.
-      // `fixing-a-code-review` is deliberately absent: its fixes commit to a
+      // `fix-review` is deliberately absent: its fixes commit to a
       // single tree in sequence, so it dispatches nothing in parallel.
-      "reviewing-a-codebase",
+      "review-codebase",
     ];
     const parRef = "_shared/parallel-adversarial-review.md";
     const offenders: string[] = [];
@@ -815,7 +819,7 @@ describe("hooks", () => {
   });
 });
 
-// packages/core/agents/ is this package's first, added with retrieving-context.
+// packages/core/agents/ is this package's first, added with retrieve-context.
 // Nothing asserted anything about agents/ before, and the failure mode is silent:
 // an agent's `tools:` allowlist is a comma-separated list of identifiers, and an
 // MCP tool that is named in any form other than `mcp__<server>__<tool>` simply
@@ -1009,16 +1013,16 @@ describe("native rendering", () => {
 describe("workflow depth vocabulary", () => {
   // brainstorming names the workflow depth axis patch/change/feature and NOT
   // "tier" — three unrelated meanings of "tier" already ship (skill-tiers, the
-  // auditing-progress three-tier audit, and the model tier under
-  // subagent-driven-development's Model Selection). Adding a fourth would
+  // audit-progress three-tier audit, and the model tier under
+  // sdd's Model Selection). Adding a fourth would
   // silently overload a word carrying real load elsewhere. These assertions
   // fence the vocabulary in.
 
   const DEPTH_GUARDED_SKILLS = [
     "skills/brainstorming/SKILL.md",
-    "skills/writing-plans/SKILL.md",
-    "skills/executing-plans/SKILL.md",
-    "skills/subagent-driven-development/SKILL.md",
+    "skills/write-plan/SKILL.md",
+    "skills/execute-plan/SKILL.md",
+    "skills/sdd/SKILL.md",
   ];
 
   it("names all three depths in every depth-guarded skill", () => {
@@ -1037,19 +1041,19 @@ describe("workflow depth vocabulary", () => {
 
   it("does not name the workflow depth 'tier' in any SKILL.md that lacks a legitimate tier meaning", () => {
     // Three legitimate meanings of tier already ship, each confined to its own
-    // area: the auditing-progress cluster (three-tier audit), iterative-development
-    // (references the same audit), subagent-driven-development (model tier under
+    // area: the audit-progress cluster (three-tier audit), iterate
+    // (references the same audit), sdd (model tier under
     // Model Selection), and one platform reference that names its model tier.
     // Anywhere else, \btier\b would be the FOURTH meaning — the one this rename
     // existed to avoid — and a half-rename takes exactly that shape on the way in.
     const allowedPrefixes = [
-      "skills/auditing-progress/", // every prompt in the cluster names Tier 1/2/3 audits
-      "skills/iterative-development/SKILL.md",
-      "skills/subagent-driven-development/SKILL.md",
-      "skills/subagent-driven-development/re-review-prompt.md",
-      "skills/sequencing-plans/SKILL.md", // discusses plugin tiers (skill-tiers.yaml packaging), not workflow depth
+      "skills/audit-progress/", // every prompt in the cluster names Tier 1/2/3 audits
+      "skills/iterate/SKILL.md",
+      "skills/sdd/SKILL.md",
+      "skills/sdd/re-review-prompt.md",
+      "skills/sequence-plans/SKILL.md", // discusses plugin tiers (skill-tiers.yaml packaging), not workflow depth
       "skills/codebase-design/SKILL.md", // imported mattpocock skill: "tier-spanning slice" = architectural tier (presentation/business/data), not workflow depth
-      "skills/writing-skills/references/skill-typography.md", // imported mattpocock reference: "primary tier" = hierarchical level in authoring guidance, not workflow depth
+      "skills/write-skill/references/skill-typography.md", // imported mattpocock reference: "primary tier" = hierarchical level in authoring guidance, not workflow depth
       "skills/using-moe/references/codex-tools.md",
     ];
     const offenders: string[] = [];
@@ -1105,15 +1109,15 @@ describe("workflow depth vocabulary", () => {
   });
 
   it("keeps the REQUIRED SUB-SKILL count across the depth-guarded pair at four", () => {
-    // Distribution: writing-plans (3), executing-plans (1),
-    // subagent-driven-development (0). The tiered-workflow-naming wave3 gate
+    // Distribution: write-plan (3), execute-plan (1),
+    // sdd (0). The tiered-workflow-naming wave3 gate
     // asserts the same sum with `grep -c` in CI; asserting it in vitest too
     // means a drop is caught by `pnpm test` before CI ever runs.
     let count = 0;
     for (const rel of [
-      "skills/writing-plans/SKILL.md",
-      "skills/executing-plans/SKILL.md",
-      "skills/subagent-driven-development/SKILL.md",
+      "skills/write-plan/SKILL.md",
+      "skills/execute-plan/SKILL.md",
+      "skills/sdd/SKILL.md",
     ]) {
       const text = readFileSync(join(PKG, rel), "utf8");
       const matches = text.match(/REQUIRED SUB-SKILL/g);

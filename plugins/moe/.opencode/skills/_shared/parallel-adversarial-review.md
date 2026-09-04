@@ -1,6 +1,6 @@
 # Parallel Adversarial Review (PAR)
 
-A shared reference for all skills that dispatch reviewers. Every evaluative gate in the iterative-development plugin uses PAR. There is no opt-out.
+A shared reference for all skills that dispatch reviewers. Every evaluative gate in the iterate plugin uses PAR. There is no opt-out.
 
 ## The Pattern
 
@@ -45,10 +45,10 @@ When dispatching ANY reviewer (scope reviewer, spec-compliance reviewer, code-qu
 
 | Gate | Reviewer role | Skill that dispatches |
 |---|---|---|
-| Pre-iteration scope review | Scope reviewer | `running-an-iteration` (Plan 4) |
-| Per-task spec compliance | Spec-compliance reviewer | `implementing-tasks` (Plan 5) |
-| Per-task code quality | Code-quality reviewer | `implementing-tasks` (Plan 5) |
-| Per-sprint audit | Auditor | `auditing-progress` (this plan) |
+| Pre-iteration scope review | Scope reviewer | `run-iteration` (Plan 4) |
+| Per-task spec compliance | Spec-compliance reviewer | `implement-tasks` (Plan 5) |
+| Per-task code quality | Code-quality reviewer | `implement-tasks` (Plan 5) |
+| Per-sprint audit | Auditor | `audit-progress` (this plan) |
 
 ## Single-Agent Fallback
 

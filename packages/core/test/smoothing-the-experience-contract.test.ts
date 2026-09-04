@@ -8,9 +8,9 @@ import { parse as parseYaml } from "yaml";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, "../../..");
-const SOURCE = join(REPO, "packages/core/skills/smoothing-the-experience");
+const SOURCE = join(REPO, "packages/core/skills/smooth-experience");
 const PLUGIN = join(REPO, "plugins/moe");
-const GENERATED_SKILL = "skills/smoothing-the-experience";
+const GENERATED_SKILL = "skills/smooth-experience";
 
 function filesBelow(root: string): string[] {
   const files: string[] = [];
@@ -37,7 +37,7 @@ describe("smoothing-the-experience distribution contract", () => {
     expect(frontmatter, "SKILL.md has YAML frontmatter").not.toBeNull();
 
     const metadata = parseYaml(frontmatter?.[1] ?? "") as Record<string, unknown>;
-    expect(metadata.name).toBe("smoothing-the-experience");
+    expect(metadata.name).toBe("smooth-experience");
     expect(typeof metadata.description).toBe("string");
     expect((metadata.description as string).trim()).not.toBe("");
 
@@ -56,9 +56,9 @@ describe("smoothing-the-experience distribution contract", () => {
     const generatedRoot = join(PLUGIN, GENERATED_SKILL);
     expect(filesBelow(generatedRoot), GENERATED_SKILL).toEqual(sourceFiles);
     for (const file of sourceFiles) {
-      expect(readFileSync(join(generatedRoot, file)), `${GENERATED_SKILL}/${file}`).toEqual(
-        readFileSync(join(SOURCE, file)),
-      );
+      const sourceContent = readFileSync(join(SOURCE, file));
+      const generatedContent = readFileSync(join(generatedRoot, file));
+      expect(generatedContent, `${GENERATED_SKILL}/${file}`).toEqual(sourceContent);
     }
   });
 

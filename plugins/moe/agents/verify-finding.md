@@ -98,7 +98,7 @@ reaches the defect is `confirmed`.
 ## Note on where this ships
 
 `packages/core/agents/` is not filtered by skill grouping, so this file is staged
-into the lean plugin as well as the full one, where `reviewing-a-codebase` is not
+into the lean plugin as well as the full one, where `review-codebase` is not
 installed. That is a known, accepted cost recorded in the codebase-review-skills
 backlog item; finding this agent without its skill is not a packaging bug and
 deleting it is not the fix.

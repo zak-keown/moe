@@ -47,7 +47,7 @@ You are generating or verifying a project's `ARCHITECTURE.md`.
   file, or config — `read` it first.
 - Do not draw a dependency edge, invent a component, or describe a deployment
   target that does not exist in the codebase.
-- Invoke `writing-clearly-and-concisely` before finalizing prose.
+- Invoke `write-clearly` before finalizing prose.
 
 ## Verify mode
 

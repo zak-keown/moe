@@ -6,8 +6,8 @@ import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { runHelper } from "./cli-harness.js";
 
-const ROADMAP_VALIDATOR = "skills/scoping-the-simplest-core/scripts/validate_roadmap.mjs";
-const LOG_VALIDATOR = "skills/running-an-iteration/scripts/validate_iteration_log.mjs";
+const ROADMAP_VALIDATOR = "skills/scope-core/scripts/validate_roadmap.mjs";
+const LOG_VALIDATOR = "skills/run-iteration/scripts/validate_iteration_log.mjs";
 const CORE = resolve(import.meta.dirname, "..", "..");
 const FIXTURES = resolve(import.meta.dirname, "fixtures");
 const temporaryRoots: string[] = [];

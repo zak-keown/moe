@@ -118,7 +118,7 @@ template already covers: verify every fact against the code in this run
 (open the file, grep the symbol) rather than trust memory or the existing
 doc, and never invent a path, command, or signature that does not check out.
 
-**REQUIRED SUB-SKILL:** Every dispatched agent must invoke `writing-clearly-and-concisely` before finalizing prose.
+**REQUIRED SUB-SKILL:** Every dispatched agent must invoke `write-clearly` before finalizing prose.
 
 A `skip-drift` agent still reads and reports; it just does not write the file
 — see the marker section above. In verify mode, every dispatched agent
@@ -155,7 +155,7 @@ instead.
    It assigns `DV-###` IDs in severity order, builds the frontmatter, and
    writes `DOCS-VERIFY-REPORT.md` at the project root — same frontmatter
    shape, same severity ladder, same stable-ID principle as
-   `reviewing-a-codebase`'s `CR-###` report, so `fixing-a-code-review` can
+   `review-codebase`'s `CR-###` report, so `fix-review` can
    consume it directly.
 
 ## Final report

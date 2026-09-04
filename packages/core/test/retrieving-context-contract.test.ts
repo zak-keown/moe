@@ -1,5 +1,5 @@
 /**
- * Contract for retrieving-context and its delegated `search-moedex` agent.
+ * Contract for retrieve-context and its delegated `search-moedex` agent.
  *
  * The skill is what makes the model spend a retrieval budget before answering
  * from first principles. That's a behavioral contract, not a piece of
@@ -22,8 +22,8 @@ import { describe, expect, it } from "vitest";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = resolve(HERE, "..");
-const SKILL = readFileSync(join(PKG, "skills/retrieving-context/SKILL.md"), "utf8");
-const REVIEWING_SKILL = readFileSync(join(PKG, "skills/reviewing-a-codebase/SKILL.md"), "utf8");
+const SKILL = readFileSync(join(PKG, "skills/retrieve-context/SKILL.md"), "utf8");
+const REVIEWING_SKILL = readFileSync(join(PKG, "skills/review-codebase/SKILL.md"), "utf8");
 const MOEDEX_AGENT = readFileSync(join(PKG, "agents/search-moedex.md"), "utf8");
 const GENERATED_SKILLS = [
   "skills",
@@ -34,7 +34,7 @@ const GENERATED_SKILLS = [
   ".opencode/skills",
   ".pi/skills",
 ].flatMap((root) =>
-  ["retrieving-context", "reviewing-a-codebase"].map((skill) =>
+  ["retrieve-context", "review-codebase"].map((skill) =>
     readFileSync(join(PKG, "../../plugins/moe", root, skill, "SKILL.md"), "utf8"),
   ),
 );
@@ -47,7 +47,7 @@ function section(text: string, heading: string): string {
   return next < 0 ? rest : rest.slice(0, next);
 }
 
-describe("retrieving-context contract", () => {
+describe("retrieve-context contract", () => {
   it("routes working-tree files to direct reads before any corpus", () => {
     // The one rule that fires unconditionally. A retrieval call for a file
     // sitting on disk returns the corpus's snapshot, not the working tree,

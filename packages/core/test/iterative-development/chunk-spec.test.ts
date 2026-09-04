@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { runHelper } from "./cli-harness.js";
 
-const HELPER = "skills/extracting-requirements/scripts/chunk_spec.mjs";
+const HELPER = "skills/extract-requirements/scripts/chunk_spec.mjs";
 const PROGRAM = "chunk_spec.mjs";
 const CORE = resolve(import.meta.dirname, "..", "..");
 const HELPER_PATH = join(CORE, HELPER);

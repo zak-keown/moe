@@ -7,11 +7,11 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, "../..");
 
 const skillPaths = [
-  "core/skills/dispatching-parallel-agents/SKILL.md",
-  "core/skills/writing-plans/SKILL.md",
-  "core/skills/subagent-driven-development/SKILL.md",
-  "core/skills/implementing-tasks/SKILL.md",
-  "core/skills/using-git-worktrees/SKILL.md",
+  "core/skills/dispatch-agents/SKILL.md",
+  "core/skills/write-plan/SKILL.md",
+  "core/skills/sdd/SKILL.md",
+  "core/skills/implement-tasks/SKILL.md",
+  "core/skills/use-worktrees/SKILL.md",
   "crew/skills/driving-claude-code-sessions/SKILL.md",
 ] as const;
 
@@ -93,7 +93,7 @@ function chooseExecution(tasks: Task[], worktrees: Worktree[]): Execution {
 
 describe("parallel execution skill contract", () => {
   it("documents only the two safe implementation rungs", () => {
-    const dispatcher = skills.get("core/skills/dispatching-parallel-agents/SKILL.md") as string;
+    const dispatcher = skills.get("core/skills/dispatch-agents/SKILL.md") as string;
     expect(dispatcher).toContain("exact two-rung ladder");
     expect(dispatcher).toContain("**Worktree-isolated parallel dispatch**");
     expect(dispatcher).toContain("**Sequential dispatch**");
@@ -108,11 +108,11 @@ describe("parallel execution skill contract", () => {
 
   it("requires pairwise-unique linked Git directories at every dispatch boundary", () => {
     for (const path of [
-      "core/skills/dispatching-parallel-agents/SKILL.md",
-      "core/skills/writing-plans/SKILL.md",
-      "core/skills/subagent-driven-development/SKILL.md",
-      "core/skills/implementing-tasks/SKILL.md",
-      "core/skills/using-git-worktrees/SKILL.md",
+      "core/skills/dispatch-agents/SKILL.md",
+      "core/skills/write-plan/SKILL.md",
+      "core/skills/sdd/SKILL.md",
+      "core/skills/implement-tasks/SKILL.md",
+      "core/skills/use-worktrees/SKILL.md",
       "crew/skills/driving-claude-code-sessions/SKILL.md",
     ] as const) {
       expect(skills.get(path), path).toMatch(/pairwise[ -]unique linked Git director(?:y|ies)/i);
@@ -121,9 +121,9 @@ describe("parallel execution skill contract", () => {
 
   it("makes all four task metadata fields mandatory at authoring and execution", () => {
     for (const path of [
-      "core/skills/writing-plans/SKILL.md",
-      "core/skills/subagent-driven-development/SKILL.md",
-      "core/skills/implementing-tasks/SKILL.md",
+      "core/skills/write-plan/SKILL.md",
+      "core/skills/sdd/SKILL.md",
+      "core/skills/implement-tasks/SKILL.md",
       "crew/skills/driving-claude-code-sessions/SKILL.md",
     ] as const) {
       const text = skills.get(path) as string;
@@ -203,7 +203,7 @@ describe("parallel execution skill contract", () => {
   });
 
   it("pins every new top-level worktree to an explicit lifecycle base", () => {
-    const worktrees = skills.get("core/skills/using-git-worktrees/SKILL.md") as string;
+    const worktrees = skills.get("core/skills/use-worktrees/SKILL.md") as string;
     const gitignore = readFileSync(resolve(ROOT, "../.gitignore"), "utf8");
 
     expect(worktrees).toContain("WORKSPACE_ID");
@@ -220,24 +220,21 @@ describe("parallel execution skill contract", () => {
   });
 
   it("integrates parallel iteration workers before the controller advances", () => {
-    const tasks = skills.get("core/skills/implementing-tasks/SKILL.md") as string;
+    const tasks = skills.get("core/skills/implement-tasks/SKILL.md") as string;
 
     expect(tasks).toContain("CONTROLLER_HEAD");
     expect(tasks).toMatch(/Integrate the parallel wave/i);
     expect(tasks).toMatch(/merge each worker branch/i);
     expect(tasks).toMatch(/remove each owned worker worktree/i);
-    expect(tasks).toMatch(/before returning to\s+`running-an-iteration`/i);
+    expect(tasks).toMatch(/before returning to\s+`run-iteration`/i);
   });
 
   it("finishes a greenfield project once after its final evidence audit", () => {
-    const iterative = readFileSync(
-      resolve(ROOT, "core/skills/iterative-development/SKILL.md"),
-      "utf8",
-    );
+    const iterative = readFileSync(resolve(ROOT, "core/skills/iterate/SKILL.md"), "utf8");
 
     expect(iterative).toMatch(/one project workspace/i);
-    expect(iterative).toContain("using-git-worktrees");
-    expect(iterative).toContain("finishing-a-development-branch");
+    expect(iterative).toContain("use-worktrees");
+    expect(iterative).toContain("finish-branch");
     expect(iterative).toMatch(/exactly once,\s+after the final behavior-evidence audit/i);
   });
 });

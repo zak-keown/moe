@@ -1,6 +1,6 @@
 # Behavior Evidence Formats
 
-Shared reference for all iterative-development skills. Defines the artifact formats for behavior evidence.
+Shared reference for all iterate skills. Defines the artifact formats for behavior evidence.
 
 ## Spec Taxonomy → Proof Seam
 

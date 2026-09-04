@@ -1,6 +1,6 @@
-// The Iron Law (writing-skills/SKILL.md, "Iron Law" section) binds edits to
+// The Iron Law (write-skill/SKILL.md, "Iron Law" section) binds edits to
 // existing skills, not just new skills. This suite is the receipt for the
-// `house-voice.md` pointer added to `writing-clearly-and-concisely/SKILL.md`.
+// `house-voice.md` pointer added to `write-clearly/SKILL.md`.
 //
 // WHAT THIS SUITE VERIFIES, precisely, because a green run here is easy to
 // over-read:
@@ -15,7 +15,7 @@
 //      effect.
 //
 // It does NOT verify that the pointer improves prose in general, and it does not
-// measure whether `writing-clearly-and-concisely` FIRES in the first place.
+// measure whether `write-clearly` FIRES in the first place.
 // Firing is a different question, owned by `verification-split-and-firing-rate`
 // Part C. See test/house-voice/README.md for the procedure and the raw failures.
 

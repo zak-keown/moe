@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 const CORE = fileURLToPath(new URL("..", import.meta.url));
-const SCRIPT = join(CORE, "skills/using-tmux-for-interactive-commands/scripts/tmux-wrapper.mjs");
+const SCRIPT = join(CORE, "skills/use-tmux/scripts/tmux-wrapper.mjs");
 
 const roots: string[] = [];
 

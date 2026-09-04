@@ -46,7 +46,7 @@ You are generating or verifying a project's `CONTRIBUTING.md`.
   or a dependency entry proving it is actually in use.
 - Do not describe a pull request process, required check, or workflow step
   that CI config does not enforce.
-- Invoke `writing-clearly-and-concisely` before finalizing prose.
+- Invoke `write-clearly` before finalizing prose.
 
 ## Verify mode
 

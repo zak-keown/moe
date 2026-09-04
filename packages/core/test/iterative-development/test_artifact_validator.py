@@ -7,9 +7,9 @@ from pathlib import Path
 SKILLS = Path(__file__).parent.parent.parent / "skills"
 FIXTURES = Path(__file__).parent / "fixtures"
 
-VALIDATE_REQ_INDEX = SKILLS / "extracting-requirements" / "scripts" / "validate_requirements_index.py"
-VALIDATE_ROADMAP = SKILLS / "scoping-the-simplest-core" / "scripts" / "validate_roadmap.py"
-VALIDATE_ITER_LOG = SKILLS / "running-an-iteration" / "scripts" / "validate_iteration_log.py"
+VALIDATE_REQ_INDEX = SKILLS / "extract-requirements" / "scripts" / "validate_requirements_index.py"
+VALIDATE_ROADMAP = SKILLS / "scope-core" / "scripts" / "validate_roadmap.py"
+VALIDATE_ITER_LOG = SKILLS / "run-iteration" / "scripts" / "validate_iteration_log.py"
 
 
 class TestRequirementsIndexValidator(unittest.TestCase):

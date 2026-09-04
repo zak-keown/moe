@@ -6,8 +6,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { runHelper } from "./cli-harness.js";
 
 const SCRIPTS = [
-  "skills/scoping-the-simplest-core/scripts/check_citations.mjs",
-  "skills/running-an-iteration/scripts/check_citations.mjs",
+  "skills/scope-core/scripts/check_citations.mjs",
+  "skills/run-iteration/scripts/check_citations.mjs",
 ] as const;
 const CORE = resolve(import.meta.dirname, "..", "..");
 const FIXTURES = resolve(import.meta.dirname, "fixtures");

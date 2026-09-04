@@ -10,7 +10,7 @@ const {
   readClaudeSession,
 } = await import(
   // @ts-expect-error — the production helper is intentionally plain ESM.
-  "../skills/smoothing-the-experience/scripts/lib/harnesses/claude.mjs"
+  "../skills/smooth-experience/scripts/lib/harnesses/claude.mjs"
 );
 
 const fixture = fileURLToPath(

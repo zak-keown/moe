@@ -4,13 +4,13 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 // biome-ignore format: TypeScript's next-line suppression must cover this import.
 // @ts-expect-error — plain ESM production helper.
-import { matchClaudePermission, renderClaudeCandidate, renderClaudeSettings } from "../skills/smoothing-the-experience/scripts/lib/harnesses/claude.mjs";
+import { matchClaudePermission, renderClaudeCandidate, renderClaudeSettings } from "../skills/smooth-experience/scripts/lib/harnesses/claude.mjs";
 // biome-ignore format: TypeScript's next-line suppression must cover this import.
 // @ts-expect-error — plain ESM production helper.
-import { inspectCodexDecision, renderCodexPermission, renderCodexRules, validateCodexReplacement } from "../skills/smoothing-the-experience/scripts/lib/harnesses/codex.mjs";
+import { inspectCodexDecision, renderCodexPermission, renderCodexRules, validateCodexReplacement } from "../skills/smooth-experience/scripts/lib/harnesses/codex.mjs";
 // biome-ignore format: TypeScript's next-line suppression must cover this import.
 // @ts-expect-error — plain ESM production helper.
-import { buildCandidates, candidateId, rankCandidates } from "../skills/smoothing-the-experience/scripts/lib/rank.mjs";
+import { buildCandidates, candidateId, rankCandidates } from "../skills/smooth-experience/scripts/lib/rank.mjs";
 
 type EvidenceOverrides = Partial<{
   harness: "claude" | "codex";

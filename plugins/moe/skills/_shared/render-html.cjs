@@ -27,7 +27,7 @@ const SLOTS = /** @type {const} */ (["TITLE", "NAV", "CONTENT", "SCRIPTS"]);
 const REQUIRED = new Set(["TITLE", "CONTENT"]);
 // NAV, CONTENT and SCRIPTS are documented to carry raw HTML/JS (a report's
 // nav is literal `<a href="#...">` markup — see
-// skills/improve-codebase-architecture/HTML-REPORT.md's sample data.json)
+// skills/improve-architecture/HTML-REPORT.md's sample data.json)
 // and must render unescaped. TITLE is the one slot documented as plain text
 // (e.g. a report name derived from a directory or file name) and sits
 // inside <title>...</title>, so an unescaped value there could break out of

@@ -1,4 +1,4 @@
-"""Unit tests for extracting-requirements/scripts/aggregate_scenarios.py."""
+"""Unit tests for extract-requirements/scripts/aggregate_scenarios.py."""
 import json
 import shutil
 import subprocess
@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-SCRIPT = Path(__file__).parent.parent.parent / "skills" / "extracting-requirements" / "scripts" / "aggregate_scenarios.py"
+SCRIPT = Path(__file__).parent.parent.parent / "skills" / "extract-requirements" / "scripts" / "aggregate_scenarios.py"
 
 
 class TestAggregateScenarios(unittest.TestCase):

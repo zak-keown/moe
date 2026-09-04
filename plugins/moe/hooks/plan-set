@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-// plan-set: the deterministic scheduler behind the `sequencing-plans` skill.
+// plan-set: the deterministic scheduler behind the `sequence-plans` skill.
 //
-// A single project can grow past what one plan holds. `writing-plans` says so
+// A single project can grow past what one plan holds. `write-plan` says so
 // ("suggest breaking this into separate plans - one per subsystem"), and
 // `brainstorming` before it ("decompose into sub-projects: what are the
 // independent pieces, how do they relate, what order should they be built?").
 // Neither writes that decomposition to a file, and once decomposed nothing in
 // this fork tracks which plan runs after which. On a context reset the agent
 // re-derives the order from prose, which is the failure mode
-// `subagent-driven-development` calls "the single most expensive failure
+// `sdd` calls "the single most expensive failure
 // observed" one level down inside a plan and does not catch one level up.
 //
 // This CLI answers "which plan is runnable now" from a committed manifest, so a
@@ -22,7 +22,7 @@
 // are loaded, and output remains the legacy bare plan id.
 //
 // This file lives under `packages/core/hooks/` rather than
-// `skills/sequencing-plans/scripts/` because SessionStart invokes the adjacent
+// `skills/sequence-plans/scripts/` because SessionStart invokes the adjacent
 // notice before any skill body is loaded. Keeping both runtime pieces together
 // also gives every generated harness the same stable plugin-relative path.
 //

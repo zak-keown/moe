@@ -17,7 +17,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const PKG = resolve(HERE, "..");
 const SCRIPT = join(PKG, "skills", "_shared", "render-html.cjs");
 const DEFAULT_TEMPLATE = join(PKG, "skills", "_shared", "report-base.html");
-const SKILL = join(PKG, "skills", "improve-codebase-architecture", "SKILL.md");
+const SKILL = join(PKG, "skills", "improve-architecture", "SKILL.md");
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { renderTemplate, parseArgs } = require(SCRIPT) as {
@@ -112,7 +112,7 @@ describe("renderTemplate", () => {
     expect(result).not.toContain("</title><script>alert(1)</script>");
     expect(result).toContain("&lt;/title&gt;&lt;script&gt;alert(1)&lt;/script&gt;");
     // nav, content and scripts are documented to carry raw HTML/JS
-    // (skills/improve-codebase-architecture/HTML-REPORT.md's sample nav is
+    // (skills/improve-architecture/HTML-REPORT.md's sample nav is
     // literal <a> markup) and must keep rendering unescaped.
     expect(result).toContain("<a href='#s1'>Section 1</a>");
     expect(result).toContain("<h1>Hello &amp; <em>world</em></h1>");

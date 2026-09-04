@@ -147,14 +147,26 @@ git commit -m "test(core): anchor imported fidelity check on upstream identities
 
 Renames all 30 directories, frontmatter names, ledger keys, provenance paths, and every reference the core test suite guards — in one task, because a partial sweep fails the strict-marker and relative-link rules. The commit at the end leaves `pnpm mint:check` intentionally red (plugins not yet regenerated); Task 3 closes that.
 
-**Files:**
+**Files — RENAME the skill and its references (SURGICAL, per Ruling R3 — the tokens are overloaded across the corpus):**
 - Rename (via `git mv`): the 30 directories in the map, under `packages/core/skills/`
 - Modify: the `name:` frontmatter line in each of the 30 renamed `SKILL.md` files
 - Modify: `packages/core/skill-tiers.yaml` (rename the 30 keys; add `renamed_from` to the 24 imported renames)
-- Modify: `packages/core/mint/moe.yaml` (`imported_works[*].artifact_roots`: rewrite every `skills/<old>` path for the 24 imported renames)
-- Modify: `packages/core/skills/using-moe/SKILL.md` (the "Skill Triggers" list names renamed skills)
-- Modify: reference occurrences of renamed skills across `packages/core/skills/**` — REQUIRED `SUB-SKILL`/`BACKGROUND` marker lines, and relative markdown links into renamed directories
-- Modify: `packages/core/test/**` — hardcoded `skills/<old>/…` path literals and current-name string literals (e.g. `skills/writing-skills/references/skill-typography.md` → `skills/write-skill/…`), **but NOT** the frozen `expected` upstream-identity array in `metadata.test.ts`
+- Modify: `packages/core/mint/moe.yaml` — in `imported_works[*].artifact_roots`, rewrite `skills/<old>` PATH SEGMENTS only. **Do NOT touch the `- name: iterative-development` work-name field.**
+- Modify: `packages/core/skills/**` — the `using-moe` "Skill Triggers" list, REQUIRED `SUB-SKILL`/`BACKGROUND` marker lines, relative markdown links into renamed dirs, backticked cross-refs to renamed skills
+- Modify: every `skills/<old>/…` and `core/skills/<old>/…` PATH reference in live code/tests/config:
+  - `packages/core/test/**` (parallel-execution-contract, resolved-resource-quoting, retrieving-context-contract, smoothing-*, the `iterative-development/` fixture tests, codebase-review-scripts, completion-evidence, update-docs, render-graphs, tmux-wrapper, finding-duplicate-functions, subagent-development-scripts, house-voice, …)
+  - `packages/core/hooks/**` (plan-set, plan-set-notice, moe-completion-evidence, developing-for-moe-notice, hooks.json), `packages/core/agents/*.md`, `packages/core/scripts/validate_skill.py`, `packages/core/package.json`, `packages/core/vitest.config.ts`
+  - `packages/mint/src/skill-runtime.ts`, `packages/mint/test/**` (core-semantics, assemble-artifact, cli)
+  - `packages/jig/src/*.ts` (verify each hit is a skill ref before rewriting), `bin/lib/probes.mjs`, `packages/crew/skills/driving-claude-code-sessions/SKILL.md`
+
+**Files — PRESERVE (untested; a wrong edit here is SILENT — hand-verified after the sweep):**
+- `packages/core/test/metadata.test.ts` `expected` upstream-identity array and its upstream-naming comments (Ruling R1)
+- `packages/core/mint/moe.yaml` `imported_works: - name: iterative-development`, and `NOTICE`'s "iterative-development" (WORK name ≠ skill dir)
+- the `renamed_from:` VALUES in `skill-tiers.yaml` (they are the old names, on purpose)
+
+**Files — LEAVE (archival / not-a-skill; Task 4 or never):**
+- fixture DIR names: `packages/core/test/iterative-development/` (the dir stays — only skill-PATH refs *inside* its tests change), `packages/mint/test/fixtures/composed-plugin/skills/test-driven-development/`
+- `biome.json` (`…/test/iterative-development/fixtures/**` is a fixture path), `.planning/**`, every package's `docs/history/**`, `CODEBASE-REVIEW.md`
 
 **Interfaces:**
 - Consumes: the `renamed_from` projection from Task 1
@@ -208,7 +220,7 @@ In `packages/core/skill-tiers.yaml`, rename all 30 map keys to their new names. 
 
 - [ ] **Step 4: Update provenance `artifact_roots` in `moe.yaml`**
 
-In `packages/core/mint/moe.yaml`, under `imported_works`, rewrite every `skills/<old>` path for the 24 imported renames to `skills/<new>` (bounded match on the path segment). Authored skills do not appear in `imported_works`; leave them.
+In `packages/core/mint/moe.yaml`, under `imported_works`, rewrite every `skills/<old>` path segment in `artifact_roots` for the 24 imported renames to `skills/<new>`. Match with the `skills/` prefix so the replacement cannot touch the `- name: iterative-development` work-name key on the adjacent line — that names the upstream source, not the skill, and MUST stay. Authored skills do not appear in `imported_works`; leave them.
 
 ```bash
 # after editing, no old imported dir path should remain:
@@ -217,38 +229,61 @@ rg -n "skills/(test-driven-development|subagent-driven-development|writing-plans
 
 Expected: no output (spot-check across the imported renames).
 
-- [ ] **Step 5: Sweep the test-guarded references**
+- [ ] **Step 5: Sweep references in three passes (path-first, because paths are collision-free)**
 
-Rewrite occurrences of each old name → new name, bounded per the Global Constraints matching rule, across:
-- `packages/core/skills/**` REQUIRED `SUB-SKILL` / `BACKGROUND` marker lines and relative markdown links,
-- `packages/core/skills/using-moe/SKILL.md` "Skill Triggers" list,
-- `packages/core/test/**` path/string literals **except** the `expected` upstream-identity array.
+The rename tokens are overloaded: bare `iterative-development` is a work name and a fixture-dir tree; the `expected` array holds bare old names as upstream identities. But the RENAME targets are overwhelmingly **path-prefixed** (`skills/<old>/`, `core/skills/<old>/`), and no work-name or anchor entry carries that prefix. So sweep paths first, bare names second (scoped), and residuals by hand.
 
-Per-name bounded sweep (repeat for every renamed row; illustrated for one):
+**5a — PATH references (safe everywhere; this is the bulk).** For each renamed row, rewrite `skills/<old>/` → `skills/<new>/` and `core/skills/<old>/` → `core/skills/<new>/` across the live surface, excluding generated and archival trees. Illustrated for one row:
 
 ```bash
-# rewrite `writing-plans` → `write-plan` only as a whole token:
-rg -l --hidden -g '!plugins/**' -g '!node_modules' '(^|[^A-Za-z0-9-])writing-plans([^A-Za-z0-9-]|$)' packages/core/skills packages/core/test \
+# writing-plans → write-plan, PATH form only:
+rg -l --hidden -g '!plugins/**' -g '!node_modules' -g '!.planning/**' -g '!**/docs/history/**' -g '!docs/moe/**' -g '!.moe/**' \
+   '(^|[^A-Za-z0-9-])(skills/writing-plans/|core/skills/writing-plans/)' . \
+  | xargs sed -i '' -E 's#(skills/)writing-plans/#\1write-plan/#g; s#(core/skills/)writing-plans/#\1write-plan/#g'
+```
+
+This form cannot hit `- name: iterative-development` (no `skills/` prefix) or the `expected` array entries (bare, unslashed). It DOES correctly rewrite the `test/iterative-development/` fixture tests' `skills/extracting-requirements/scripts/…` constants while leaving the fixture directory name itself alone.
+
+**5b — BARE-name cross-refs, scoped to `packages/core/skills/**` prose only.** Backticked cross-refs, REQUIRED `SUB-SKILL`/`BACKGROUND` marker lines, and the `using-moe` "Skill Triggers" list use bare names. Confine the bare-name rewrite to `packages/core/skills/**` markdown — the anchor array and work-names live in `test/` and `moe.yaml`, never under `skills/`, so a skills-scoped bare sweep cannot reach them:
+
+```bash
+# writing-plans → write-plan, bare token, skills prose only:
+rg -l --hidden 'writing-plans' packages/core/skills \
   | xargs sed -i '' -E 's/([^A-Za-z0-9-]|^)writing-plans([^A-Za-z0-9-]|$)/\1write-plan\2/g'
 ```
 
-Guard the anchor: after the sweep, confirm the frozen array is untouched —
+**5c — residual LIVE bare-name refs, by hand.** A few live non-skills files name a skill bare, not by path (e.g. `bin/lib/probes.mjs`'s user-facing "… and the `using-tmux-for-interactive-commands` skill", `packages/core/agents/*.md`). Enumerate and fix case by case, rewriting only genuine skill references and NOT the preserve targets:
 
 ```bash
-rg -n '"subagent-driven-development"|"writing-plans"|"writing-skills"' packages/core/test/metadata.test.ts
+rg -n --hidden -g '!plugins/**' -g '!node_modules' -g '!.planning/**' -g '!**/docs/history/**' -g '!docs/moe/**' -g '!.moe/**' \
+   '(using-tmux-for-interactive-commands|retrieving-context|smoothing-the-experience|developing-for-moe|finding-duplicate-functions|working-with-claude-code|developing-claude-code-plugins)' \
+   bin packages/core/hooks packages/core/agents packages/mint/src packages/jig/src packages/crew/skills
 ```
 
-Expected: these still appear **only** inside the `expected` upstream-identity array (they are upstream identities, intentionally preserved).
+**Guard the three untested hazards.** After the three passes, confirm they are byte-unchanged:
 
-- [ ] **Step 6: Run the core test suite — verify it PASSES**
+```bash
+git diff -- packages/core/test/metadata.test.ts | rg -n '^\+.*"(subagent-driven-development|writing-plans|iterative-development)"' && echo "ANCHOR TOUCHED — REVERT" || echo "anchor OK"
+rg -n '^\s*- name: iterative-development' packages/core/mint/moe.yaml   # must still print
+rg -n 'iterative-development' NOTICE                                     # work name must still print
+```
 
-Run: `pnpm --filter @bubstack/moe-core test`
-Expected: PASS — including `"accounts for every skill the six upstream sources shipped"` (keys project to upstream identities), `"accounts for every skill on disk in exactly one of the two maps"` (keys == frontmatter names == dirs), the three cross-reference tests, and the `REQUIRED SUB-SKILL` count test. If a cross-ref test fails, it names the unresolved old token and file — fix that reference and re-run.
+Expected: `anchor OK`; the `- name: iterative-development` line still present; `NOTICE` still names the work.
+
+- [ ] **Step 6: Run the core AND mint suites — verify they PASS**
+
+Task 2 edits both `packages/core` and `packages/mint`, so gate both (the base is 534/534 green in core; do not regress it):
+
+```bash
+pnpm --filter @bubstack/moe-core test && pnpm --filter @bubstack/moe-mint test
+```
+
+Expected: PASS — including `"accounts for every skill the six upstream sources shipped"` (keys project to upstream identities), `"accounts for every skill on disk in exactly one of the two maps"` (keys == frontmatter names == dirs), the three cross-reference tests, the `REQUIRED SUB-SKILL` count test, `resolved-resource-quoting`, `parallel-execution-contract`, `retrieving-context-contract`, the `iterative-development/` fixture tests, and mint's `core-semantics`. A failing test names the unresolved old token and file — fix that reference and re-run. (`repository-skill-runtime` runs in Task 3's full gate.)
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add -A packages/core
+git add -A
 git commit -m "refactor(core): rename 30 skills to short names; record renamed_from"
 ```
 
@@ -258,22 +293,33 @@ git commit -m "refactor(core): rename 30 skills to short names; record renamed_f
 
 **Files:**
 - Regenerate (never hand-edit): `plugins/**` via `pnpm mint`
+- Modify: remove the four Task-2 `STALE_GENERATED_*` shims now that `plugins/` carries the new names — `packages/core/test/metadata.test.ts`, `packages/core/test/resolved-resource-quoting.test.ts`, `packages/core/test/smoothing-the-experience-contract.test.ts`, `packages/core/test/retrieving-context-contract.test.ts`
 - Verify only: `.claude-plugin/marketplace.json` (regenerated if mint owns it)
 
 **Interfaces:**
-- Consumes: the renamed source tree from Task 2
-- Produces: generated plugins consistent with the new names across all eight harnesses; a fully green Node gate
+- Consumes: the renamed source tree from Task 2, and its four `STALE_GENERATED_*` shims (removed here)
+- Produces: generated plugins consistent with the new names across all eight harnesses; test files that assert the new names directly (no shim); a fully green Node gate
 
 - [ ] **Step 1: Regenerate the plugins**
 
 Run: `pnpm mint`
 Expected: completes with no error; `git status` shows changes under `plugins/**` reflecting the new skill names.
 
-- [ ] **Step 2: Commit the regenerated output**
+- [ ] **Step 1b: Remove the four STALE_GENERATED shims**
+
+Task 2 kept `plugins/` un-regenerated, so four tests temporarily mapped new→old names when comparing the source set against the generated root. Now that Step 1 regenerated `plugins/` with the new names, that mapping is wrong and must go. In each of the four files, delete the `STALE_GENERATED_*` table and the `?? name` translation so the assertion compares the source names to the generated names **directly** (revert that test's comparison to its pre-shim shape, but keeping the new names). Then confirm none remains:
 
 ```bash
-git add -A plugins .claude-plugin
-git commit -m "chore(mint): regenerate plugins for renamed skills"
+rg -n 'STALE_GENERATED|deliberately NOT regenerated' packages/core/test packages/mint/test || echo "no shims remain ✓"
+```
+
+Expected: `no shims remain ✓`. If a test now fails, it means the generated root and the source disagree — a real rename miss to fix in source, NOT a reason to keep the shim.
+
+- [ ] **Step 2: Commit the regen + shim removal together**
+
+```bash
+git add -A plugins .claude-plugin packages/core/test
+git commit -m "chore(mint): regenerate plugins for renamed skills; drop stale-name shims"
 ```
 
 - [ ] **Step 3: Verify the mint gate is byte-identical**

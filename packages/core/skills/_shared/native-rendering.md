@@ -7,7 +7,7 @@ runtime. It NEVER stalls when a rung is unavailable: it drops one and
 keeps going.
 
 The ladder is the reason the three skills that name it
-(`brainstorming`, `writing-plans`, `finding-duplicate-functions`) can
+(`brainstorming`, `write-plan`, `find-duplicates`) can
 render on Claude Code AND on runtimes without a native artifact tool
 without carrying two branches of prose per skill.
 

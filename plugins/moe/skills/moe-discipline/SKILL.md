@@ -13,7 +13,7 @@ description: >-
 **Core principle: do exactly what was asked, nothing more, and say what you
 did not do.**
 
-`verification-before-completion` fires when you are about to claim the work
+`verify-completion` fires when you are about to claim the work
 is done. This skill fires while you are doing it. The two are complements:
 one shapes the work, the other gates the claim.
 

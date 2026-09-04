@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 const CORE = fileURLToPath(new URL("..", import.meta.url));
-const SCRIPTS = join(CORE, "skills/subagent-driven-development/scripts");
+const SCRIPTS = join(CORE, "skills/sdd/scripts");
 const SDD_WORKSPACE = join(SCRIPTS, "sdd-workspace.mjs");
 const TASK_BRIEF = join(SCRIPTS, "task-brief.mjs");
 const REVIEW_PACKAGE = join(SCRIPTS, "review-package.mjs");

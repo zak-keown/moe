@@ -3,10 +3,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — the production helper is intentionally plain ESM.
-import { discoverHarnesses } from "../skills/smoothing-the-experience/scripts/lib/discovery.mjs";
+import { discoverHarnesses } from "../skills/smooth-experience/scripts/lib/discovery.mjs";
 // @ts-expect-error — the production helper is intentionally plain ESM.
 // biome-ignore format: TypeScript's directive must remain with this one-line import.
-import { evidenceKey, makeEvidence, redactedEvidenceSummary } from "../skills/smoothing-the-experience/scripts/lib/evidence.mjs";
+import { evidenceKey, makeEvidence, redactedEvidenceSummary } from "../skills/smooth-experience/scripts/lib/evidence.mjs";
 
 describe("smoothing evidence contract", () => {
   it("rejects prose and secret-bearing fields", () => {

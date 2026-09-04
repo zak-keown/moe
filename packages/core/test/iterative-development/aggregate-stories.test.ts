@@ -14,7 +14,7 @@ import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { runHelper } from "./cli-harness.js";
 
-const HELPER = "skills/extracting-requirements/scripts/aggregate_stories.mjs";
+const HELPER = "skills/extract-requirements/scripts/aggregate_stories.mjs";
 const PROGRAM = "aggregate_stories.mjs";
 const CORE = resolve(import.meta.dirname, "..", "..");
 const HELPER_PATH = join(CORE, HELPER);

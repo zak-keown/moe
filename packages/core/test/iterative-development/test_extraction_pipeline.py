@@ -12,7 +12,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-EXTRACT_SCRIPTS = Path(__file__).parent.parent.parent / "skills" / "extracting-requirements" / "scripts"
+EXTRACT_SCRIPTS = Path(__file__).parent.parent.parent / "skills" / "extract-requirements" / "scripts"
 FIXTURES = Path(__file__).parent / "fixtures"
 
 

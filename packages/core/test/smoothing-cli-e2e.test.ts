@@ -18,7 +18,7 @@ import { describe, expect, it } from "vitest";
 
 const runFile = promisify(execFile);
 const cli = fileURLToPath(
-  new URL("../skills/smoothing-the-experience/scripts/smooth.mjs", import.meta.url),
+  new URL("../skills/smooth-experience/scripts/smooth.mjs", import.meta.url),
 );
 const claudeFixture = new URL(
   "fixtures/smoothing-the-experience/claude/root.jsonl",

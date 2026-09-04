@@ -4,7 +4,7 @@ import { today } from "./util.js";
 
 const PLAN_SKELETON = (name: string) => `# ${name} Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use \`subagent-driven-development\` (recommended) or \`executing-plans\` to implement this plan task-by-task. Steps use checkbox (\`- [ ]\`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use \`sdd\` (recommended) or \`execute-plan\` to implement this plan task-by-task. Steps use checkbox (\`- [ ]\`) syntax for tracking.
 
 **Goal:**
 

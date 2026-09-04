@@ -6,19 +6,13 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 const CORE = fileURLToPath(new URL("..", import.meta.url));
-const REVIEW_SCOPE = join(CORE, "skills/reviewing-a-codebase/scripts/review-scope.mjs");
-const REVIEW_MERGE = join(CORE, "skills/reviewing-a-codebase/scripts/review-merge.mjs");
-const REVIEW_CHECK = join(CORE, "skills/reviewing-a-codebase/scripts/review-check.mjs");
-const REVIEW_VERIFY_SCOPE = join(
-  CORE,
-  "skills/reviewing-a-codebase/scripts/review-verify-scope.mjs",
-);
-const REVIEW_VERIFY_RECORD = join(
-  CORE,
-  "skills/reviewing-a-codebase/scripts/review-verify-record.mjs",
-);
-const STAMP_DISPOSITION = join(CORE, "skills/fixing-a-code-review/scripts/stamp-disposition.mjs");
-const COMPACT_RESOLVED = join(CORE, "skills/fixing-a-code-review/scripts/compact-resolved.mjs");
+const REVIEW_SCOPE = join(CORE, "skills/review-codebase/scripts/review-scope.mjs");
+const REVIEW_MERGE = join(CORE, "skills/review-codebase/scripts/review-merge.mjs");
+const REVIEW_CHECK = join(CORE, "skills/review-codebase/scripts/review-check.mjs");
+const REVIEW_VERIFY_SCOPE = join(CORE, "skills/review-codebase/scripts/review-verify-scope.mjs");
+const REVIEW_VERIFY_RECORD = join(CORE, "skills/review-codebase/scripts/review-verify-record.mjs");
+const STAMP_DISPOSITION = join(CORE, "skills/fix-review/scripts/stamp-disposition.mjs");
+const COMPACT_RESOLVED = join(CORE, "skills/fix-review/scripts/compact-resolved.mjs");
 
 const sandboxes: string[] = [];
 

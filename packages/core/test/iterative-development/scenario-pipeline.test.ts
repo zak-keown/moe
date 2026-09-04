@@ -14,8 +14,8 @@ import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import { runHelper } from "./cli-harness.js";
 
-const AGGREGATOR = "skills/extracting-requirements/scripts/aggregate_scenarios.mjs";
-const BACKLINKER = "skills/extracting-requirements/scripts/backlink_scenarios.mjs";
+const AGGREGATOR = "skills/extract-requirements/scripts/aggregate_scenarios.mjs";
+const BACKLINKER = "skills/extract-requirements/scripts/backlink_scenarios.mjs";
 const CORE = resolve(import.meta.dirname, "..", "..");
 const AGGREGATOR_PATH = join(CORE, AGGREGATOR);
 const BACKLINKER_PATH = join(CORE, BACKLINKER);

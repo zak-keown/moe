@@ -48,7 +48,7 @@ You are generating or verifying a project's `API.md`.
   that are not in the source.
 - Group consistently — by route prefix for HTTP APIs, by subcommand for
   CLIs, by module for libraries. Do not mix grouping schemes within one doc.
-- Invoke `writing-clearly-and-concisely` before finalizing prose.
+- Invoke `write-clearly` before finalizing prose.
 
 ## Verify mode
 

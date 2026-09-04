@@ -5,13 +5,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  fetchAndSaveDoc,
-  getClaudeCodeUrls,
-} from "../skills/working-with-claude-code/scripts/update_docs.mjs";
+import { fetchAndSaveDoc, getClaudeCodeUrls } from "../skills/cc-config/scripts/update_docs.mjs";
 
 const CORE = fileURLToPath(new URL("..", import.meta.url));
-const SCRIPT = join(CORE, "skills/working-with-claude-code/scripts/update_docs.mjs");
+const SCRIPT = join(CORE, "skills/cc-config/scripts/update_docs.mjs");
 
 describe("update_docs", () => {
   let server: Server;

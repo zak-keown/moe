@@ -70,7 +70,7 @@ whoever wrote the line that broke it and whenever it broke.
 - `moe-discipline` — the scope-containment rule this skill deliberately
   overrides for the duration of a merge, and the source of the "not my
   changes" instinct that is correct everywhere else.
-- `finishing-a-development-branch` — the branch-integration flow; its local
+- `finish-branch` — the branch-integration flow; its local
   merge step defers to this skill's verification requirement.
-- `resolving-merge-conflicts` — the conflict-resolution flow; its own
+- `resolve-conflicts` — the conflict-resolution flow; its own
   Verify step defers to this skill for why the fix is not optional.

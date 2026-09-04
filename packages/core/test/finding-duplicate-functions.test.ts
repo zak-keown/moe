@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 const CORE = fileURLToPath(new URL("..", import.meta.url));
-const SCRIPTS = join(CORE, "skills/finding-duplicate-functions/scripts");
+const SCRIPTS = join(CORE, "skills/find-duplicates/scripts");
 const EXTRACT = join(SCRIPTS, "extract-functions.mjs");
 const PREPARE = join(SCRIPTS, "prepare-category-analysis.mjs");
 const REPORT = join(SCRIPTS, "generate-report.mjs");
