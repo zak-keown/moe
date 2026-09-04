@@ -27,12 +27,45 @@ impl PriceStore {
         Self::from_json(&std::fs::read(path)?)
     }
 
+    /// Writes the snapshot via a sibling temp file + rename, never in place
+    /// (CR-105). A process killed mid-write (OOM, SIGKILL, power loss) would
+    /// otherwise leave a truncated, non-JSON file at `path`; renaming a fully
+    /// written temp file into place means `path` only ever holds a complete
+    /// snapshot, old or new.
     pub fn save(&self, path: &Path) -> Result<(), TabError> {
         if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent)?;
+            if !parent.as_os_str().is_empty() {
+                std::fs::create_dir_all(parent)?;
+            }
         }
-        std::fs::write(path, serde_json::to_vec_pretty(self)?)?;
+        let bytes = serde_json::to_vec_pretty(self)?;
+        let tmp_path = tmp_sibling_path(path);
+        let result =
+            std::fs::write(&tmp_path, &bytes).and_then(|()| std::fs::rename(&tmp_path, path));
+        if result.is_err() {
+            std::fs::remove_file(&tmp_path).ok();
+        }
+        result?;
         Ok(())
+    }
+}
+
+/// A same-directory temp path to write through before renaming over `path`,
+/// unique per writer so concurrent `save` calls (e.g. two refreshes racing)
+/// don't clobber each other's in-flight temp file.
+fn tmp_sibling_path(path: &Path) -> PathBuf {
+    let file_name = path
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_else(|| "price-store".to_string());
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or_default();
+    let unique = format!(".{file_name}.tmp.{}.{nanos}", std::process::id());
+    match path.parent() {
+        Some(parent) if !parent.as_os_str().is_empty() => parent.join(unique),
+        _ => PathBuf::from(unique),
     }
 }
 
@@ -115,6 +148,76 @@ mod tests {
         store().save(&path).unwrap();
         let loaded = PriceStore::load(&path).unwrap();
         assert_eq!(loaded, store());
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    // CR-105: save() must not write the snapshot in place — a crash mid-write
+    // would leave a truncated, non-JSON file on disk. It should write to a
+    // sibling temp file and rename into place, so a failed write can never
+    // corrupt a previously good snapshot. Proven here by revoking the
+    // directory's create/rename permission (write-in-place needs only the
+    // target file's own permission bits; creating a sibling temp file needs
+    // the directory's write bit) and confirming a failed save leaves the old
+    // snapshot untouched rather than overwritten.
+    #[cfg(unix)]
+    #[test]
+    fn save_is_atomic_and_preserves_old_snapshot_on_write_failure() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = std::env::temp_dir().join(format!(
+            "tab-atomic-save-{}-{}",
+            std::process::id(),
+            line!()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("current.json");
+
+        let old = store();
+        old.save(&path).unwrap();
+        let old_bytes = std::fs::read(&path).unwrap();
+
+        // Lock the directory: read+execute only, no create/rename/unlink.
+        let mut locked = std::fs::metadata(&dir).unwrap().permissions();
+        locked.set_mode(0o555);
+        std::fs::set_permissions(&dir, locked).unwrap();
+
+        // Detect a privileged test runner (e.g. root) where permission bits
+        // aren't enforced — this test's assumption wouldn't hold there.
+        let probe = dir.join("probe-write-access");
+        let privileged = std::fs::write(&probe, b"x").is_ok();
+        std::fs::remove_file(&probe).ok();
+
+        let mut new = store();
+        new.as_of = "2099-12-31".to_string();
+        let result = new.save(&path);
+
+        // Restore permissions before asserting so cleanup always runs.
+        let mut restored = std::fs::metadata(&dir).unwrap().permissions();
+        restored.set_mode(0o755);
+        std::fs::set_permissions(&dir, restored).unwrap();
+
+        if privileged {
+            std::fs::remove_dir_all(&dir).ok();
+            eprintln!(
+                "skipping save_is_atomic_and_preserves_old_snapshot_on_write_failure: \
+                 running with elevated privileges, directory permissions not enforced"
+            );
+            return;
+        }
+
+        assert!(
+            result.is_err(),
+            "save() should fail cleanly (it can't create its temp file in a \
+             read-only directory) rather than write through to the target"
+        );
+        let content_after = std::fs::read(&path).unwrap();
+        assert_eq!(
+            content_after, old_bytes,
+            "a failed save must not touch the previous good snapshot — writing \
+             directly to the target instead of via a temp file + rename left it \
+             overwritten"
+        );
+
         std::fs::remove_dir_all(&dir).ok();
     }
 
