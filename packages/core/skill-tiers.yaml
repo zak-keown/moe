@@ -2,7 +2,7 @@
 #
 # This file is the record of every skill this package ships. It has two jobs:
 #
-#   FIDELITY. `imported:` is a frozen ledger of the 27 upstream skills Moe
+#   FIDELITY. `imported:` is a frozen ledger of the 32 upstream skills Moe
 #   inherited. A diff inside that map is a fidelity decision, not an edit:
 #   renaming, adding or dropping a key here fails test/metadata.test.ts against
 #   the pinned name literal — that assertion is the drop-and-rename detector
@@ -33,6 +33,7 @@
 imported:
   using-moe:
     from: imported
+    renamed_from: using-superpowers
     why: >-
       The bootstrap. It is moe-mint's `bootstrap: { skill: }` target and the
       thing that makes every other skill fire at all.

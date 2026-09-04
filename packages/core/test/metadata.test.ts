@@ -108,7 +108,7 @@ const skillNames = new Set(skills.map((s) => s.name));
 // upstream drop or rename is aimed at `imported:` alone, which is what lets a
 // fork-authored skill exist at all without loosening it.
 const tiers = parseYaml(readFileSync(join(PKG, "skill-tiers.yaml"), "utf8")) as {
-  imported: Record<string, { from: string; why: string }> | null;
+  imported: Record<string, { from: string; why: string; renamed_from?: string }> | null;
   authored: Record<string, { from: string; why: string }> | null;
 };
 const imported = tiers.imported ?? {};
@@ -249,7 +249,7 @@ describe("skill inventory", () => {
       "systematic-debugging",
       "test-driven-development",
       "using-git-worktrees",
-      "using-moe",
+      "using-superpowers",
       "verification-before-completion",
       "writing-plans",
       "writing-skills",
@@ -282,7 +282,11 @@ describe("skill inventory", () => {
     // import: a skill deleted from the tree still fails, via the completeness
     // equality below, and a skill RENAMED in only one of the two places fails
     // here. Weakening this to a superset check would retire the detector.
-    expect(Object.keys(imported).sort()).toEqual(expected);
+    const upstreamIdentity = (key: string): string => imported[key]?.renamed_from ?? key;
+    // Anchored on UPSTREAM identities, never on current names: the array above is
+    // the immutable import fidelity record. A rename that omits `renamed_from`
+    // projects to its new name and fails here, exactly as a silent drop does.
+    expect(Object.keys(imported).map(upstreamIdentity).sort()).toEqual(expected);
   });
 
   it("accounts for every skill on disk in exactly one of the two maps", () => {
