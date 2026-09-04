@@ -203,7 +203,7 @@ moe-crew grant-consent
 Each worker gets its OWN linked git worktree — never a shared checkout. Two
 workers writing into the same tree collide on the axis the parallel-
 implementation worktree gate is built to prevent (see the `moe` plugin's
-`dispatching-parallel-agents`, "Safe Parallel Implementation: The Worktree
+`dispatch-agents`, "Safe Parallel Implementation: The Worktree
 Gate", and its two-rung fallback ladder). Create all worktrees first, branched
 from one recorded base SHA. Before launching anything, validate every cwd has
 one of the wave's pairwise-unique linked Git directories:

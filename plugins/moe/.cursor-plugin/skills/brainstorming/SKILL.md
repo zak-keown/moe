@@ -6,7 +6,7 @@ triggers: >-
   before implementation — new features, components, or behavioral
   changes. Do NOT load for: bug fixes, refactoring existing code, test
   additions, documentation edits, or tasks with an approved spec already
-  in hand (use `writing-plans` directly).
+  in hand (use `write-plan` directly).
 ---
 
 # Brainstorming Ideas Into Designs
@@ -66,7 +66,7 @@ can override it. The three depths, in increasing size, are **patch**,
 - **Feature** — new projects, new subsystems, changes that restructure
   how components fit together or alter interfaces others depend on.
   Follow the full process: questions, approaches, sectioned design,
-  written spec, then the writing-plans skill.
+  written spec, then the write-plan skill.
 
 When in doubt between two depths, take the heavier one. The ratchet is
 one-way: hidden complexity discovered mid-task upgrades the depth —
@@ -125,7 +125,7 @@ on that depth's list and complete them in order.
 6. **Write design doc** — use `moe jig spec init <topic>` to create `docs/moe/specs/YYYY-MM-DD-<topic>-design.md`, then fill in the content and commit
 7. **Spec self-review** — quick inline check for placeholders, contradictions, ambiguity, scope (see below)
 8. **User reviews written spec** — ask user to review the spec file before proceeding
-9. **Transition to implementation** — invoke writing-plans skill to create implementation plan
+9. **Transition to implementation** — invoke write-plan skill to create implementation plan
 
 ## Process Flow
 
@@ -146,7 +146,7 @@ digraph brainstorming {
     "Write design doc" [shape=box];
     "Spec self-review\n(fix inline)" [shape=box];
     "User reviews spec?" [shape=diamond];
-    "Invoke writing-plans skill" [shape=doublecircle];
+    "Invoke write-plan skill" [shape=doublecircle];
     "Hidden complexity? Upgrade depth" [shape=box];
 
     "Classify: patch / change / feature" -> "Present intent + minimal plan (1-2 sentences)" [label="patch"];
@@ -167,7 +167,7 @@ digraph brainstorming {
     "Write design doc" -> "Spec self-review\n(fix inline)";
     "Spec self-review\n(fix inline)" -> "User reviews spec?";
     "User reviews spec?" -> "Write design doc" [label="changes requested"];
-    "User reviews spec?" -> "Invoke writing-plans skill" [label="approved"];
+    "User reviews spec?" -> "Invoke write-plan skill" [label="approved"];
 }
 ```
 
@@ -176,7 +176,7 @@ it — a way of running the question steps, not another branch out of the
 classifier — so it does not appear as a node.
 
 **Terminal states are depth-bound.** `feature`: the ONLY skill you
-invoke after brainstorming is writing-plans — never frontend-design,
+invoke after brainstorming is write-plan — never frontend-design,
 mcp-builder, or any other implementation skill. `change`: after
 approval, implementation proceeds directly through the normal
 development workflow; no plan document. `patch`: the terminal state is
@@ -281,7 +281,7 @@ present the intent, get a nod, do the smallest thing.
   `docs/moe/specs/YYYY-MM-DD-<topic>-design.md` with the correct naming and a
   skeleton. Fill in the validated design and commit.
   - (User preferences for spec location override this default)
-- Use the `writing-clearly-and-concisely` skill (a sibling skill in this plugin)
+- Use the `write-clearly` skill (a sibling skill in this plugin)
 - Commit the design document to git
 
 **Spec Self-Review:**
@@ -303,8 +303,8 @@ Wait for the user's response. If they request changes, make them and re-run the 
 
 **Implementation:**
 
-- Invoke the writing-plans skill to create a detailed implementation plan
-- Do NOT invoke any other skill. writing-plans is the next step.
+- Invoke the write-plan skill to create a detailed implementation plan
+- Do NOT invoke any other skill. write-plan is the next step.
 
 ## Visual Companion
 

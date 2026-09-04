@@ -1,6 +1,6 @@
 # Semantic Knowledge-Base Recall via MemPalace
 
-How to search prior debugging sessions before re-deriving a known cause. In this fork the retrieval routing it assumes lives in the `retrieving-context` skill, and the stores are moe-memory's `search_journal` / `search_conversations`.
+How to search prior debugging sessions before re-deriving a known cause. In this fork the retrieval routing it assumes lives in the `retrieve-context` skill, and the stores are moe-memory's `search_journal` / `search_conversations`.
 
 *Imported from `open-gsd/gsd-core` @ `05092ff3` (MIT), `gsd-core/references/debugger-semantic-recall.md`. Rewritten only where it named GSD's own agent and phase machine; the technique content is upstream's. See NOTICE.*
 
@@ -47,7 +47,7 @@ secret, and MemPalace is a cross-session, cross-project store.
 Upstream's debugger agent declared no MCP tools in its `tools:` frontmatter, so it
 had to shell out. In this fork the stores are moe-memory's `search_journal` and
 `search_conversations`, and which store answers which question is the
-`retrieving-context` skill's routing rule, not this file's. Upstream's CLI path is
+`retrieve-context` skill's routing rule, not this file's. Upstream's CLI path is
 kept below because it still applies to a headless run with no MCP surface at all:
 `mempalace search
 "<symptoms>" --wing <wing>` to recall, and the matching index command on

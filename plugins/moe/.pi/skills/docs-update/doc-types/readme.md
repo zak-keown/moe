@@ -35,7 +35,7 @@ You are generating or verifying a project's `README.md`.
 - Every function signature you cite must match the source — `read` the file.
 - Do not add badges, shields, or external service links unless they already
   exist in CI config.
-- Invoke `writing-clearly-and-concisely` before finalizing prose.
+- Invoke `write-clearly` before finalizing prose.
 
 ## Verify mode
 

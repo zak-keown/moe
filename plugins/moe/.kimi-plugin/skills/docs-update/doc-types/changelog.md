@@ -43,7 +43,7 @@ handed a blank file to fill from the entire git history.
 - Do not invent a version number or release date; use the commit dates from
   `git log`, or leave the entry under an "Unreleased" heading if the
   project's format already has one.
-- Invoke `writing-clearly-and-concisely` before finalizing prose.
+- Invoke `write-clearly` before finalizing prose.
 
 ## Verify mode
 

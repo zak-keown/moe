@@ -26,8 +26,8 @@
     },
     {
       "path": ".claude-plugin/skills/driving-claude-code-sessions/SKILL.md",
-      "size": 19720,
-      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "size": 19708,
+      "sha256": "17311047eaaafb3f553b6f0ace901256a5ce17083c889b46d805266d8ce5e946",
       "mode": "0644"
     },
     {
@@ -44,8 +44,8 @@
     },
     {
       "path": ".codex-plugin/skills/driving-claude-code-sessions/SKILL.md",
-      "size": 19720,
-      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "size": 19708,
+      "sha256": "17311047eaaafb3f553b6f0ace901256a5ce17083c889b46d805266d8ce5e946",
       "mode": "0644"
     },
     {
@@ -68,8 +68,8 @@
     },
     {
       "path": ".cursor-plugin/skills/driving-claude-code-sessions/SKILL.md",
-      "size": 19720,
-      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "size": 19708,
+      "sha256": "17311047eaaafb3f553b6f0ace901256a5ce17083c889b46d805266d8ce5e946",
       "mode": "0644"
     },
     {
@@ -86,8 +86,8 @@
     },
     {
       "path": ".kimi-plugin/skills/driving-claude-code-sessions/SKILL.md",
-      "size": 19720,
-      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "size": 19708,
+      "sha256": "17311047eaaafb3f553b6f0ace901256a5ce17083c889b46d805266d8ce5e946",
       "mode": "0644"
     },
     {
@@ -99,7 +99,7 @@
     {
       "path": ".moe-mint/manifest.json",
       "size": 4604,
-      "sha256": "b14ccff72beae620df4c0118b7784a781f8b497b40ccc4bb0dcde032cc932c2d",
+      "sha256": "76bcd77549a04df556c8d6611f43150abbc876afc21ac1189a7f0118fa0f0c2f",
       "mode": "0644"
     },
     {
@@ -110,8 +110,8 @@
     },
     {
       "path": ".opencode/skills/driving-claude-code-sessions/SKILL.md",
-      "size": 19720,
-      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "size": 19708,
+      "sha256": "17311047eaaafb3f553b6f0ace901256a5ce17083c889b46d805266d8ce5e946",
       "mode": "0644"
     },
     {
@@ -128,8 +128,8 @@
     },
     {
       "path": ".pi/skills/driving-claude-code-sessions/SKILL.md",
-      "size": 19720,
-      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "size": 19708,
+      "sha256": "17311047eaaafb3f553b6f0ace901256a5ce17083c889b46d805266d8ce5e946",
       "mode": "0644"
     },
     {
@@ -782,8 +782,8 @@
     },
     {
       "path": "skills/driving-claude-code-sessions/SKILL.md",
-      "size": 19720,
-      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
+      "size": 19708,
+      "sha256": "17311047eaaafb3f553b6f0ace901256a5ce17083c889b46d805266d8ce5e946",
       "mode": "0644"
     },
     {
@@ -793,7 +793,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "b55f7324080a6035b076a893a82083cca8e7693f0b2aeb6c0b55c37b7a974a0b",
+  "tree_sha256": "177e5bd8ef2fc3c8ba449d896731c3f399e7af1184e968c619893e1ee58515ca",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

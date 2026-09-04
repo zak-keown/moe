@@ -41,8 +41,8 @@ When multiple skills apply, process skills come first — they set the approach,
 request by DEPTH — **patch** (smallest: one-line fix, config, probe),
 **change** (well-scoped modification to a flow that already exists in
 this repo), **feature** (new subsystem or interface). Skills that fire
-only at the `feature` depth (`writing-plans`,
-`subagent-driven-development`, `executing-plans`) say so under an "At
+only at the `feature` depth (`write-plan`,
+`sdd`, `execute-plan`) say so under an "At
 this depth" note at their top.
 
 ## Red Flags
@@ -71,12 +71,12 @@ Skills without triggers here are general-purpose — check their description in
 the skill listing.
 
 - **`brainstorming`** — New creative work needing design exploration (features, components, behavioral changes). *Skip for:* bug fixes, refactoring, test additions, docs, or tasks with an approved spec.
-- **`writing-plans`** — Approved requirements or design ready for a multi-task implementation plan. *Skip for:* initial exploration (use `brainstorming`), single-file changes, bug fixes, or when a plan already exists (use `subagent-driven-development`).
-- **`subagent-driven-development`** — Executing a multi-task plan with fresh-context isolation. *Skip for:* single tasks, debugging, initial planning, or low-level dispatch without a plan.
-- **`dispatching-parallel-agents`** — Low-level mechanics for 2+ independent parallel tasks outside a plan. *Skip for:* plan execution (SDD includes dispatching), sequential tasks, single tasks.
-- **`improve-codebase-architecture`** — Deliberate architectural review across modules. *Skip for:* known refactors, single-module fixes, code questions, debugging, initial design.
-- **`iterative-development`** — Large specs (10+ files, 100+ requirements) needing audited sprints with behavior evidence. *Skip for:* well-scoped features, single tasks, bug fixes, or projects without prior planning.
-- **`writing-skills`** — Creating, editing, or pressure-testing SKILL.md files. *Skip for:* discussing skills conceptually, invoking skills, editing non-skill docs, building plugins.
+- **`write-plan`** — Approved requirements or design ready for a multi-task implementation plan. *Skip for:* initial exploration (use `brainstorming`), single-file changes, bug fixes, or when a plan already exists (use `sdd`).
+- **`sdd`** — Executing a multi-task plan with fresh-context isolation. *Skip for:* single tasks, debugging, initial planning, or low-level dispatch without a plan.
+- **`dispatch-agents`** — Low-level mechanics for 2+ independent parallel tasks outside a plan. *Skip for:* plan execution (SDD includes dispatching), sequential tasks, single tasks.
+- **`improve-architecture`** — Deliberate architectural review across modules. *Skip for:* known refactors, single-module fixes, code questions, debugging, initial design.
+- **`iterate`** — Large specs (10+ files, 100+ requirements) needing audited sprints with behavior evidence. *Skip for:* well-scoped features, single tasks, bug fixes, or projects without prior planning.
+- **`write-skill`** — Creating, editing, or pressure-testing SKILL.md files. *Skip for:* discussing skills conceptually, invoking skills, editing non-skill docs, building plugins.
 
 ## Platform Adaptation
 
