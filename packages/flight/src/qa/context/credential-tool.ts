@@ -269,7 +269,7 @@ export function buildFetchCredentialTool(
         return textResult(result.stdout, {
           transcriptText: `<credential redacted: entity=${entity} key=${key} len=${result.stdout.length}>`,
         });
-      case "nonzero_exit":
+      case "nonzero_exit": {
         logger?.logEvent("fetch_credential_failed", {
           entity,
           key,
@@ -279,9 +279,20 @@ export function buildFetchCredentialTool(
           stderrLength: result.stderr.length,
           elapsedMs: result.elapsedMs,
         });
-        return textResult(
-          `Error: fetch_credential resolver exited ${result.exitCode} for ${entity}:${key}:\n${result.stderr}`,
-        );
+        // CR-015: result.stderr can carry secret material (a resolver
+        // dumping an HTTP response body, a partially-fetched OTP, an
+        // upstream auth token) just as readily as result.stdout does on
+        // the "ok" path above. Honor the same includeInTranscripts gate
+        // here so it isn't always written to run.jsonl regardless of the
+        // operator's opt-out.
+        const message = `Error: fetch_credential resolver exited ${result.exitCode} for ${entity}:${key}:\n${result.stderr}`;
+        if (resolverConfig.includeInTranscripts) {
+          return textResult(message);
+        }
+        return textResult(message, {
+          transcriptText: `Error: fetch_credential resolver exited ${result.exitCode} for ${entity}:${key}: <stderr redacted: len=${result.stderr.length}>`,
+        });
+      }
       case "empty_stdout":
         logger?.logEvent("fetch_credential_failed", {
           entity,
