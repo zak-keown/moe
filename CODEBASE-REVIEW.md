@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 7
+  fixed: 8
   stale: 0
   skipped: 0
   deferred: 0
-  open: 100
+  open: 99
 ---
 
 # Codebase Review — moe
@@ -2399,6 +2399,10 @@ Fix: interpolate `JSON.stringify(index)` (and validate it's an integer) the same
 
 `readPasskeyFile`'s validation is `if (typeof p.signCount !== "number") throw ... "missing or invalid signCount (must be an integer)"`. The check only verifies `signCount` is a `number`, not that it is an integer (`Number.isInteger`) or non-negative. A credential YAML with `signCount: 1.5` (a plausible authoring typo) passes this check silently, then gets forwarded verbatim to `session.addCredential` / CDP's `WebAuthn.addCredential`, which is documented elsewhere in this file to be picky about field encodings — the agent will get a confusing late CDP-level rejection instead of the clear, immediate validation error the message promises. Fix: `Number.isInteger(p.signCount) && p.signCount >= 0`.
 
+**Disposition:** fixed
+**Commit:** `5c28441bb37bafc6937db730f1035c98a60d801a`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-080: `eval` tool remains dispatchable after being deliberately removed from the schema
 
 **File:** `packages/flight/src/qa/adapters/web/tool-defs.ts`
