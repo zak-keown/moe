@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 6
+  fixed: 7
   stale: 0
   skipped: 0
   deferred: 0
-  open: 101
+  open: 100
 ---
 
 # Codebase Review — moe
@@ -2770,6 +2770,10 @@ piped into `tar -x -C dir` (or use `execFileSync('tar', ['-x', '-C', dir], { inp
 so the path is passed as an argv element rather than shell-interpolated text regardless of
 its contents.
 
+**Disposition:** fixed
+**Commit:** `47f3dc24ca10ef2928b9bad10557067d5d9c043a`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-103: Publish-workflow permission test accepts a downgrade its own name forbids
 
 **File:** `packages/mint/test/release-workflows.test.ts`
