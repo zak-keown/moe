@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseStoryCard, type StoryCard } from "../format/story-card.js";
-import { flightPath } from "../paths.js";
+import { flightPath, isSafePath } from "../paths.js";
 import type { ErrorLog } from "../util/error-log.js";
 
 export interface CardEntry {
@@ -30,7 +30,14 @@ export function findCard(
   const storiesDir = flightPath(projectRoot, stateDirName, "stories");
   const directPath = join(storiesDir, `${id}.md`);
 
-  if (existsSync(directPath)) {
+  // CR-014: `id` is untrusted (a raw route param — Hono decodes a
+  // percent-encoded slash inside a single :id segment into a literal "/"
+  // before the handler sees it, so `..` sequences reach here). Route the
+  // direct-hit fast path through the codebase's one path-safety guard
+  // before touching disk, exactly like every other disk-touching route in
+  // this package already does. An unsafe id skips straight to the scan
+  // below, which only ever reads files inside storiesDir.
+  if (isSafePath(storiesDir, directPath) && existsSync(directPath)) {
     const content = readFileSync(directPath, "utf-8");
     const card = parseStoryCard(content); // direct hit: throw on parse failure
     if (card.id === id) {
