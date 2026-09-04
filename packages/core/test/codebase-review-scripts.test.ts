@@ -764,6 +764,78 @@ describe("stamp-disposition behavior", () => {
     expect(readFileSync(file, "utf8")).toBe(before);
   });
 
+  it("stamps at the finding's true end, not inside its own fenced illustration of a stamp", () => {
+    // A finding's body can legitimately contain a fenced example of what a
+    // **Disposition:**/**Commit:** stamp block looks like — e.g. a finding
+    // *about* this exact stamping script illustrating a bug with a
+    // realistic-looking example. The block-boundary search must not mistake
+    // that fenced "## "/"### " heading for the real next finding, or the
+    // stamp gets spliced into the middle of the fence instead of appended
+    // after the finding's real content, and a fenced "**Disposition:**"
+    // example must not trip the duplicate-stamp refusal either.
+    const repo = sandbox("stamp-fence-repo");
+    const file = join(repo, "CODEBASE-REVIEW.md");
+    writeFileSync(
+      file,
+      [
+        "---",
+        "report: codebase-review",
+        "findings:",
+        "  critical: 0",
+        "  high: 1",
+        "  medium: 0",
+        "  low: 0",
+        "  total: 1",
+        "status: issues_found",
+        "---",
+        "# Review fixture",
+        "",
+        "## High",
+        "",
+        "### CR-001: Finding whose body illustrates a fake stamp",
+        "**File:** `src/first.ts`",
+        "**Anchor:** `firstFinding`",
+        "**Severity:** high",
+        "Reproduced by running the script twice, which produces:",
+        "",
+        "```",
+        "",
+        "**Disposition:** fixed",
+        "**Commit:** `deadbeef`",
+        "**Resolved:** 2026-09-04",
+        "**Note:** —",
+        "## Checked and found sound",
+        "```",
+        "",
+        "That duplicate section is the defect. Real fix content continues here",
+        "and must not be truncated by the fenced example above.",
+        "",
+      ].join("\n"),
+    );
+
+    const result = run(
+      STAMP_DISPOSITION,
+      ["--file", file, "--id", "CR-001", "--disposition", "fixed", "--commit", "cafef00d"],
+      repo,
+    );
+    expect(result.status, result.stderr).toBe(0);
+
+    const after = readFileSync(file, "utf8");
+    // The fenced illustration survives untouched...
+    expect(after).toContain("**Commit:** `deadbeef`");
+    // ...and the real stamp lands after the finding's real trailing prose,
+    // not spliced in right after the fence opens.
+    const realStampIdx = after.indexOf("**Commit:** `cafef00d`");
+    const trailingProseIdx = after.indexOf("and must not be truncated by the fenced example above.");
+    expect(realStampIdx).toBeGreaterThan(-1);
+    expect(trailingProseIdx).toBeGreaterThan(-1);
+    expect(realStampIdx).toBeGreaterThan(trailingProseIdx);
+    // The frontmatter tally counts the one real disposition, not the
+    // fenced illustration's fake one too.
+    expect(after).toContain("  fixed: 1");
+    expect(after).toContain("  open: 0");
+  });
+
   it.each([
     ["missing id", ["--disposition", "fixed", "--commit", "abc1234"], "--id must"],
     [
