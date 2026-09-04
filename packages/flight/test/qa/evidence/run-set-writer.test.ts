@@ -206,4 +206,19 @@ describe("RunSetWriter", () => {
     });
     expect(set.summary.overall.overallStatus).toBe("mixed");
   });
+
+  test("CR-084: finalize does not build a processedIds set it never consults", () => {
+    // processedIds was computed in finalize() from this.manifest.runs but
+    // never read again anywhere in the file — summarizeCard re-derives its
+    // own classification from run.status and lookup() independently. A
+    // maintainer reading the comment above the loop ("Track which run IDs
+    // had results provided via lookup...") would reasonably assume it's
+    // load-bearing. It is dead code and must be removed rather than left
+    // to mislead the next reader.
+    const src = readFileSync(
+      join(__dirname, "..", "..", "..", "src", "qa", "evidence", "run-set-writer.ts"),
+      "utf-8",
+    );
+    expect(src).not.toContain("processedIds");
+  });
 });

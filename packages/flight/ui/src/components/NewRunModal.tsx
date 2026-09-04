@@ -2,6 +2,23 @@ import { useEffect, useState } from "react";
 import { api, type CardSummary } from "../lib/api";
 import { Spinner } from "./shared";
 
+/**
+ * Parses the `Passes` field. `<input type="number">` accepts exponential
+ * notation as valid content (e.g. `1e2` is a syntactically valid
+ * floating-point number per the HTML spec, and the browser doesn't reject
+ * or reformat it as you type). `Number.parseInt` stops at the first
+ * non-digit character, so `Number.parseInt("1e2", 10)` silently returns
+ * `1` instead of `100`. Parse with `Number` (which understands exponent
+ * notation) instead, and reject anything that isn't a finite integer —
+ * so an out-of-range or malformed value surfaces as the existing "must be
+ * an integer in [1, 50]" error rather than silently truncating.
+ */
+export function parsePasses(value: string): number | null {
+  if (value.trim() === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) && Number.isInteger(n) ? n : null;
+}
+
 export interface NewRunPrefill {
   cardId?: string | undefined;
   target?: string | undefined;
@@ -88,8 +105,8 @@ export function NewRunModal({ onClose, onStarted, prefill }: NewRunModalProps) {
     }
     let passesNum: number | undefined;
     if (passes.trim() !== "") {
-      const parsed = Number.parseInt(passes, 10);
-      if (Number.isNaN(parsed) || parsed < 1 || parsed > 50) {
+      const parsed = parsePasses(passes);
+      if (parsed === null || parsed < 1 || parsed > 50) {
         setError("Passes must be an integer in [1, 50]");
         return;
       }

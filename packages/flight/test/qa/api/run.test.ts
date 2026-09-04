@@ -248,7 +248,6 @@ describe("Run API", () => {
       client: stubClient,
       effective,
       projectRoot,
-      stateDirName: ".moe-flight",
       broadcaster,
       registry,
       adapterFactory: () => stubAdapter,
@@ -418,7 +417,6 @@ describe("Run API", () => {
       client: stubClient,
       effective,
       projectRoot,
-      stateDirName: ".moe-flight",
       registry,
       adapterFactory: () => stubAdapter,
     }).catch(() => {

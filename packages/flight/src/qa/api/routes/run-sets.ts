@@ -13,7 +13,12 @@ export function runSetRoutes(flightRoot: string, cancelTokens?: CancelTokenRegis
     if (!RUN_SET_ID_RE.test(id)) return c.json({ error: "invalid run set id" }, 400);
     const path = join(flightRoot, "run-sets", id, "set.json");
     if (!existsSync(path)) return c.json({ error: "not found" }, 404);
-    const manifest = JSON.parse(readFileSync(path, "utf8"));
+    let manifest: unknown;
+    try {
+      manifest = JSON.parse(readFileSync(path, "utf8"));
+    } catch {
+      return c.json({ error: "malformed set file" }, 500);
+    }
     return c.json(manifest);
   });
 
@@ -22,7 +27,12 @@ export function runSetRoutes(flightRoot: string, cancelTokens?: CancelTokenRegis
     if (!RUN_SET_ID_RE.test(id)) return c.json({ error: "invalid run set id" }, 400);
     const path = join(flightRoot, "run-sets", id, "set.json");
     if (!existsSync(path)) return c.json({ error: "not found" }, 404);
-    const manifest = JSON.parse(readFileSync(path, "utf8"));
+    let manifest: { summary?: unknown };
+    try {
+      manifest = JSON.parse(readFileSync(path, "utf8"));
+    } catch {
+      return c.json({ error: "malformed set file" }, 500);
+    }
     if (!manifest.summary) return c.json({ error: "summary not yet computed" }, 404);
     return c.json(manifest.summary);
   });

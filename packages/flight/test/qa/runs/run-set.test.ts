@@ -1,7 +1,7 @@
 import { existsSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { runRunSet } from "../../../src/qa/runs/run-set.js";
 import type { RunSetCtx } from "../../../src/qa/runs/run-set-types.js";
 import type { VerdictResult } from "../../../src/qa/types.js";
@@ -75,6 +75,26 @@ describe("runRunSet — orchestrator loop", () => {
     expect(result.summary?.perCard[0].byStatus.pass).toBe(2);
     expect(result.summary?.perCard[0].byStatus.errored).toBe(1);
     expect(result.summary?.perCard[0].cardStatus).toBe("mixed_with_errors");
+  });
+
+  test("CR-038: logs the executor's exception when recording an errored run", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const cfg = baseConfig({ passes: 1 });
+    const handle = await runRunSet({
+      ...cfg,
+      executor: async () => {
+        throw new Error("kapow");
+      },
+    });
+    await handle.completion;
+
+    // The exception must leave a diagnostic trail somewhere observable —
+    // not just the bare "errored" status with no message or stack.
+    const loggedKapow = errorSpy.mock.calls.some((args) =>
+      args.some((a) => (a instanceof Error ? a.message : String(a)).includes("kapow")),
+    );
+    expect(loggedKapow).toBe(true);
+    errorSpy.mockRestore();
   });
 
   test("writes set.json and summary.md", async () => {

@@ -121,6 +121,26 @@ describe("Scenarios API", () => {
     expect(body.error).toBe("invalid id");
   });
 
+  test("POST /api/scenarios rejects an id containing a path separator that stays inside storiesDir", async () => {
+    // "a/b" survives isSafePath (targetPath is still under storiesDir) but
+    // is not a valid [a-zA-Z0-9-]+ filename segment — the parent directory
+    // "a" is never created, so an unguarded write would throw ENOENT and
+    // leak an absolute path through the generic 500 handler instead of a
+    // clean 400.
+    const res = await app.request("/api/scenarios", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: "a/b",
+        title: "Slash in id",
+        description: "",
+      }),
+    });
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe("invalid id");
+  });
+
   test("POST /api/scenarios returns 400 for missing id", async () => {
     const res = await app.request("/api/scenarios", {
       method: "POST",

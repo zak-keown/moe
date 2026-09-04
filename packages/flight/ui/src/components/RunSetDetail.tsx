@@ -3,6 +3,32 @@ import { Link, useParams } from "react-router-dom";
 import { api, type RunSetManifest } from "../lib/api";
 import { Spinner, StatusBadge } from "./shared";
 
+/** How often the fallback poll re-fetches the manifest while mounted. */
+export const RUN_SET_POLL_INTERVAL_MS = 3000;
+
+/**
+ * The WS subscription (below) only carries the manifest while the socket
+ * stays connected — no reconnect, and until this fix no fallback either.
+ * If the socket fails to connect, or drops mid-run (server restart,
+ * reverse-proxy timeout, network blip), this interval is the only thing
+ * that keeps `manifest` from going stale for however long the run set
+ * continues to execute server-side. Mirrors `useActiveRuns.ts`'s
+ * polling-as-fallback-over-push pattern. Returns a cleanup that stops the
+ * interval.
+ */
+export function pollRunSetManifest(
+  fetchManifest: () => Promise<RunSetManifest>,
+  onUpdate: (manifest: RunSetManifest) => void,
+  intervalMs: number,
+): () => void {
+  const id = setInterval(() => {
+    fetchManifest().then(onUpdate).catch(() => {
+      // best-effort; keep the last known manifest and try again next tick
+    });
+  }, intervalMs);
+  return () => clearInterval(id);
+}
+
 export function RunSetDetail() {
   const { id } = useParams<{ id: string }>();
   const [manifest, setManifest] = useState<RunSetManifest | null>(null);
@@ -26,13 +52,21 @@ export function RunSetDetail() {
     };
   }, [id]);
 
-  // WS subscription — snapshot on connect, re-fetch on pass_end / set_done
+  // WS subscription — snapshot on connect, re-fetch on pass_end / set_done.
+  // No reconnect on drop: the fallback poll below is what keeps `manifest`
+  // from going stale if the socket never connects or dies mid-run.
   useEffect(() => {
     if (!id) return;
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const ws = new WebSocket(
       `${protocol}//${window.location.host}/api/ws/run-sets/${encodeURIComponent(id)}`,
     );
+    ws.onerror = () => {
+      // best-effort; the fallback poll below keeps the manifest updated
+    };
+    ws.onclose = () => {
+      // best-effort; the fallback poll below keeps the manifest updated
+    };
     ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data);
@@ -52,6 +86,13 @@ export function RunSetDetail() {
     return () => {
       ws.close();
     };
+  }, [id]);
+
+  // Fallback poll — covers the window before the socket connects and any
+  // period after it drops. See `pollRunSetManifest`.
+  useEffect(() => {
+    if (!id) return;
+    return pollRunSetManifest(() => api.runSets.get(id), setManifest, RUN_SET_POLL_INTERVAL_MS);
   }, [id]);
 
   const handleCancel = async () => {
