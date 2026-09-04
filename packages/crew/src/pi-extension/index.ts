@@ -247,7 +247,7 @@ import type {
   ToolResultEvent,
 } from "@earendil-works/pi-coding-agent";
 import { appendEvent } from "../core/event-log.js";
-import { eventsPath, metaPath } from "../core/paths.js";
+import { eventsPath, isSafeSegment, metaPath } from "../core/paths.js";
 import { isoSecondsUtc } from "../core/time.js";
 import { canonicalToolName } from "../core/tool-name.js";
 import { writeMeta } from "../core/worker-store.js";
@@ -293,7 +293,11 @@ function record(ctx: ExtensionContext, e: WorkerEvent): void {
     if (dir === null) return;
 
     const sid = ctx.sessionManager.getSessionId();
-    if (sid.length === 0) return;
+    // A sid that isn't a single safe path segment (e.g. contains `../`)
+    // would let metaPath/eventsPath below escape the worker dir (CR-029,
+    // same pattern as the emit-event hook). Treat it the same as an empty
+    // sid: no-op rather than build a path from it.
+    if (sid.length === 0 || !isSafeSegment(sid)) return;
 
     if (!existsSync(metaPath(dir, sid))) {
       const transcriptPath = ctx.sessionManager.getSessionFile();
