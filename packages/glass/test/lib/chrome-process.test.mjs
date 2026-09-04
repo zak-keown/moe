@@ -5,6 +5,7 @@ import { EventEmitter } from 'node:events';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { attachChromeProcess } from '../../skills/browsing/scripts/lib/chrome-process.mjs';
 
 // Several tests here run killChrome/startChrome against the REAL meta/lock
 // helpers with the real default profile name — without this, they delete
@@ -13,8 +14,8 @@ import { join } from 'node:path';
 // isolates every profile-meta and lock path this process touches.
 process.env.XDG_CACHE_HOME = mkdtempSync(join(tmpdir(), 'chrome-process-test-'));
 
+// CJS require kept for tests that use require.cache injection to stub deps.
 const require = createRequire(import.meta.url);
-const { attachChromeProcess } = require('../../skills/browsing/lib/chrome-process.js');
 
 function setup() {
   const state = {
