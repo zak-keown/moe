@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 7
+  fixed: 8
   stale: 0
   skipped: 0
   deferred: 0
-  open: 100
+  open: 99
 ---
 
 # Codebase Review — moe
@@ -2116,6 +2116,10 @@ unconvertible `score` to `details` (mirroring how unknown/extra keys are
 already demoted), or fail just that one check with a `notes` message instead
 of raising through the whole command.
 
+**Disposition:** fixed
+**Commit:** `f32fd9e526f51c10fa47fc57a18a5e7ca5ec430c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-067: `render_model_blocks` crashes `report` with an unhandled ValueError on a non-numeric metric value
 
 **File:** `py/proof/src/moe_proof/cli.py`
