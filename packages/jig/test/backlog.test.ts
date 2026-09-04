@@ -181,4 +181,20 @@ describe("transitions", () => {
     const p = backlogDecline("BL-0002", { reason: "wont-fix", cwd: repo });
     expect(parseItem(readFileSync(p, "utf-8")).status).toBe("declined");
   });
+
+  it("done honors an explicit --commit over the current HEAD sha", async () => {
+    const { backlogAdd, backlogDone, parseItem } = await import("../src/backlog.js");
+    backlogAdd("f", { cwd: repo });
+    const p = backlogDone("BL-0001", { cwd: repo, commit: "abc1234" });
+    expect(parseItem(readFileSync(p, "utf-8")).movedSha).toBe("abc1234");
+  });
+
+  it("done without --commit stamps the current HEAD sha", async () => {
+    const { backlogAdd, backlogDone, parseItem } = await import("../src/backlog.js");
+    backlogAdd("g", { cwd: repo });
+    const p = backlogDone("BL-0001", { cwd: repo });
+    const sha = parseItem(readFileSync(p, "utf-8")).movedSha;
+    expect(sha).toBeTruthy();
+    expect(sha).not.toBe("abc1234");
+  });
 });

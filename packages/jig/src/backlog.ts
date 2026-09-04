@@ -193,9 +193,9 @@ export function backlogDefer(id: string, opts: DeferOpts): { path: string; statu
   return { path: resolve(path), status: target, triaged: target === "needs-triage" };
 }
 
-function persist(dir: string, name: string, item: BacklogItem, cwd?: string): string {
+function persist(dir: string, name: string, item: BacklogItem, cwd?: string, sha?: string): string {
   item.updated = today();
-  item.movedSha = safeSha(cwd) ?? item.movedSha;
+  item.movedSha = sha ?? safeSha(cwd) ?? item.movedSha;
   const path = join(dir, name);
   writeFileSync(path, serializeItem(item), "utf-8");
   return resolve(path);
@@ -226,8 +226,7 @@ export function backlogDone(id: string, opts: { cwd?: string; commit?: string; b
   const { dir, name, item } = loadItem(opts.cwd, id);
   item.status = "done";
   item.movedBy = opts.by ?? "manual";
-  if (opts.commit) item.movedSha = opts.commit;
-  return persist(dir, name, item, opts.cwd);
+  return persist(dir, name, item, opts.cwd, opts.commit);
 }
 
 export function backlogDecline(id: string, opts: { reason: string; note?: string; cwd?: string; by?: string }): string {
