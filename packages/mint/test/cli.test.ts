@@ -506,6 +506,42 @@ describe('CLI end-to-end', () => {
     expect(result.stderr).toContain('error:')
   })
 
+  it('release candidate --execute exits 1 instead of falsely claiming success', () => {
+    const result = runCli(['release', 'candidate', '--tag', 'v0.1.5-rc.1', '--repo', '.', '--execute'], REPO_ROOT)
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('error:')
+    expect(result.stdout).not.toContain('preparing candidate')
+  })
+
+  it('release promote --execute exits 1 instead of falsely claiming success', () => {
+    const result = runCli(['release', 'promote', '--tag', 'v0.1.5', '--repo', '.', '--execute'], REPO_ROOT)
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('error:')
+    expect(result.stdout).not.toContain('promoting')
+  })
+
+  it('release certify-claude --execute exits 1 instead of falsely claiming success, even with complete producer identity', () => {
+    const result = runCli([
+      'release', 'certify-claude',
+      '--candidate', 'v0.1.5-rc.1',
+      '--repo', '.',
+      '--execute',
+      '--producer-repository', 'bubstack/moe',
+      '--producer-workflow', 'certify.yml',
+      '--producer-workflow-sha', 'a'.repeat(40),
+      '--producer-run-id', '123',
+      '--producer-job-id', '456',
+      '--producer-trigger-actor', 'zak',
+      '--producer-runner-image', 'ubuntu-24.04',
+      '--producer-deployment-id', '789',
+      '--producer-approval-actor', 'zak',
+      '--producer-approved-at', '2026-09-03T00:00:00Z',
+    ], REPO_ROOT)
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('error:')
+    expect(result.stdout).not.toContain('certifying candidate')
+  })
+
   it('init → generate → validate happy path exits 0 at each step', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mint-cli-e2e-'))
 
