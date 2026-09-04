@@ -555,12 +555,26 @@ def check_contains(check, run_dir, grade_dir):
     return False, {"notes": f"output.txt does not contain {value!r}"}
 
 
+def _resolve_within(base, rel):
+    """base / rel, but only if the result stays inside base.
+
+    Path.__truediv__ treats an absolute `rel` as a full replacement of
+    `base` (Path("/a/b") / "/etc/passwd" == Path("/etc/passwd")), and a
+    `..`-containing `rel` can walk out of `base` entirely - neither is a
+    lookup this sandbox should silently follow (CR-107). Returns None
+    instead of a path outside `base`.
+    """
+    base = base.resolve()
+    candidate = (base / rel).resolve()
+    return candidate if candidate.is_relative_to(base) else None
+
+
 def check_xml_valid(check, run_dir, grade_dir):
     "Built-in: is a workspace (or Run) file well-formed XML?"
-    path = grade_dir / check["file"]
-    if not path.exists():
-        path = run_dir / check["file"]
-    if not path.exists():
+    path = _resolve_within(grade_dir, check["file"])
+    if path is None or not path.exists():
+        path = _resolve_within(run_dir, check["file"])
+    if path is None or not path.exists():
         return False, {"notes": f"no such file: {check['file']}"}
     try:
         ET.parse(path)
