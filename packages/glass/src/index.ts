@@ -28,11 +28,10 @@ import {
 // too, without requiring tests to boot a browser or an MCP server).
 export { parsePayload, resolveStrictStructuredPayload, tryParseJsonObject, tryParseCoords, describeUnusableScrollPayload, resolveConsoleSince, tryParseIntegerValue, PAYLOAD_SPECS } from "./payload.js";
 
-// Get the directory and import chrome-ws-lib
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const require = createRequire(import.meta.url);
-const chromeLib = require(join(__dirname, "../skills/browsing/chrome-ws-lib.js")).createSession();
+const chromeLib = require(join(__dirname, "../skills/browsing/scripts/chrome-ws-lib.mjs")).createSession();
 const SERVER_VERSION = require(join(__dirname, "../package.json")).version;
 
 /**
