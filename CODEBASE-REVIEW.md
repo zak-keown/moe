@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 4
+  fixed: 5
   stale: 0
   skipped: 0
   deferred: 0
-  open: 103
+  open: 102
 ---
 
 # Codebase Review — moe
@@ -2858,6 +2858,10 @@ budget (mirror the loop body's `if line.is_empty() { continue; }` by not
 consuming a slot for it), or scan a fixed byte budget instead of a fixed line
 count.
 
+**Disposition:** fixed
+**Commit:** `8a4dbb7b016391f031e6c785688c996ad2cdccb5`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-107: `check_xml_valid`'s file lookup silently escapes the run/grade sandbox for absolute or `..`-containing paths
 
 **File:** `py/proof/src/moe_proof/cli.py`
