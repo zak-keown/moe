@@ -1,3 +1,7 @@
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { git, slugify, today, worktreeRoot } from "./util.js";
+
 export type BacklogStatus =
   | "open" | "in-progress" | "blocked" | "carry-over"
   | "done" | "declined" | "needs-triage";
@@ -97,4 +101,55 @@ export function allocateId(existing: string[]): { num: number; id: string } {
   }
   const num = max + 1;
   return { num, id: `BL-${String(num).padStart(4, "0")}` };
+}
+
+export function backlogDir(cwd?: string): string {
+  return join(worktreeRoot(cwd), ".moe", "backlog");
+}
+
+function safeSha(cwd?: string): string | undefined {
+  try { return git("-C", worktreeRoot(cwd), "rev-parse", "--short", "HEAD"); }
+  catch { return undefined; }
+}
+
+export function loadItem(cwd: string | undefined, id: string): { dir: string; name: string; item: BacklogItem } {
+  const dir = backlogDir(cwd);
+  if (!existsSync(dir)) throw new Error(`no backlog at ${dir}`);
+  for (const name of readdirSync(dir)) {
+    if (!name.endsWith(".md")) continue;
+    const item = parseItem(readFileSync(join(dir, name), "utf-8"));
+    if (item.id === id) return { dir, name, item };
+  }
+  throw new Error(`${id} not found in ${dir}`);
+}
+
+export interface AddOpts {
+  cwd?: string; source?: string; severity?: Severity; tags?: string[]; by?: string;
+}
+
+export function backlogAdd(title: string, opts: AddOpts = {}): string {
+  if (!title.trim()) throw new Error("title is required");
+  const dir = backlogDir(opts.cwd);
+  mkdirSync(dir, { recursive: true });
+  const existing = readdirSync(dir).filter((f) => f.endsWith(".md"));
+  const slug = slugify(title);
+  if (!slug) throw new Error("title must contain at least one alphanumeric character");
+  for (const name of existing) {
+    if (name.endsWith(`-${slug}.md`)) {
+      const item = parseItem(readFileSync(join(dir, name), "utf-8"));
+      if (item.status === "open") throw new Error(`an open item with slug "${slug}" already exists: ${item.id}`);
+    }
+  }
+  const { num, id } = allocateId(existing);
+  const now = today();
+  const item: BacklogItem = {
+    id, title: title.trim(), status: "open",
+    severity: opts.severity ?? "medium", source: opts.source ?? "manual",
+    created: now, updated: now, filedBy: opts.by ?? "manual", filedSha: safeSha(opts.cwd),
+    blockedBy: [], blocks: [], tags: opts.tags ?? [],
+    body: '## Context\n\n<why this exists and what "done" looks like>\n',
+  };
+  const filepath = join(dir, `${String(num).padStart(4, "0")}-${slug}.md`);
+  writeFileSync(filepath, serializeItem(item), "utf-8");
+  return resolve(filepath);
 }
