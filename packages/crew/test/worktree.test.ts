@@ -118,6 +118,37 @@ describe("removeWorktree", () => {
     expect(calls).toHaveLength(2);
     expect(calls[1]!.args).toEqual(["-C", "/repo", "worktree", "prune"]);
   });
+
+  // CR-074: the comment on the real-failure branch said "let the caller
+  // know", but the function returned Promise<void> with no way to do that —
+  // a genuine failure was indistinguishable from success to every caller.
+  it("resolves true on success", async () => {
+    const fakeRunner: Runner = async () => ({ stdout: "", stderr: "", code: 0 });
+    await expect(removeWorktree(fakeRunner, "/repo", "/repo/.moe-worktrees/w1")).resolves.toBe(
+      true,
+    );
+  });
+
+  it("resolves true when swallowing an already-gone error (not a working tree)", async () => {
+    const fakeRunner: Runner = async () => ({
+      stdout: "",
+      stderr: "fatal: '/x' is not a working tree",
+      code: 128,
+    });
+    await expect(removeWorktree(fakeRunner, "/repo", "/x")).resolves.toBe(true);
+  });
+
+  it("resolves false on a real failure, so the caller CAN know it happened (CR-074)", async () => {
+    const fakeRunner: Runner = async (_cmd, args) => {
+      if (args.includes("remove")) {
+        return { stdout: "", stderr: "fatal: unexpected error", code: 1 };
+      }
+      return { stdout: "", stderr: "", code: 0 };
+    };
+    await expect(removeWorktree(fakeRunner, "/repo", "/repo/.moe-worktrees/w1")).resolves.toBe(
+      false,
+    );
+  });
 });
 
 describe("worktree marker (sidecar)", () => {
