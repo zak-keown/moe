@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../lib/api";
+import { isValidCardId } from "../lib/cardId";
 
 interface NewCardFormProps {
   onCreated: (id: string) => void;
@@ -20,6 +21,10 @@ export function NewCardForm({ onCreated, onCancel }: NewCardFormProps) {
     setAttempted(true);
     if (!id.trim() || !title.trim()) {
       setError("ID and Title are required");
+      return;
+    }
+    if (!isValidCardId(id.trim())) {
+      setError("ID may only contain letters, numbers, and hyphens");
       return;
     }
 
@@ -63,11 +68,18 @@ export function NewCardForm({ onCreated, onCancel }: NewCardFormProps) {
           </label>
           <input
             id="new-card-id"
-            className={`input-field ${attempted && !id.trim() ? "!border-red-400" : ""}`}
+            className={`input-field ${
+              attempted && (!id.trim() || !isValidCardId(id.trim())) ? "!border-red-400" : ""
+            }`}
             value={id}
             onChange={(e) => setId(e.target.value)}
             placeholder="unique-card-id"
           />
+          {attempted && id.trim() && !isValidCardId(id.trim()) && (
+            <p className="text-xs text-red-600 mt-1">
+              Letters, numbers, and hyphens only (no spaces, underscores, or slashes).
+            </p>
+          )}
         </div>
 
         <div>
