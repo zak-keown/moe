@@ -26,13 +26,7 @@ describe("moe-memory artifact gate", () => {
       })
       .filter(Boolean)
       .sort();
-    expect(roots).toEqual([
-      "dist",
-      "prompts",
-      "recovery",
-      "runtime",
-      "vendor/sqlite-vec",
-    ]);
+    expect(roots).toEqual(["dist", "prompts", "recovery", "runtime", "vendor/sqlite-vec"]);
   });
 
   it("mint version matches package.json", () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { normalizeMcpServers, emitClaudeMcp, emitCodexMcp, type NormalizedMcpServer } from '../../src/adapters/mcp.js'
+import { normalizeMcpServers, emitClaudeMcp, emitCodexMcp } from '../../src/adapters/mcp.js'
 import type { PluginModel } from '../../src/model.js'
 
 const memoryMcp = {

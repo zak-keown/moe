@@ -128,7 +128,11 @@ for (const [rawOutput, output] of Object.entries(result.metafile.outputs)) {
         try {
           const pkg = JSON.parse(fs.readFileSync(pjsonPath, "utf8"));
           if (pkg.name && pkg.version) {
-            manifest = { name: pkg.name, version: pkg.version, path: path.relative(REPO_ROOT, pjsonPath).split(path.sep).join("/") };
+            manifest = {
+              name: pkg.name,
+              version: pkg.version,
+              path: path.relative(REPO_ROOT, pjsonPath).split(path.sep).join("/"),
+            };
             break;
           }
         } catch {}
@@ -137,10 +141,20 @@ for (const [rawOutput, output] of Object.entries(result.metafile.outputs)) {
       if (parent === dir) break;
       dir = parent;
     }
-    const pkgManifestRel = path.relative(REPO_ROOT, path.join(PACKAGE_ROOT, "package.json")).split(path.sep).join("/");
+    const pkgManifestRel = path
+      .relative(REPO_ROOT, path.join(PACKAGE_ROOT, "package.json"))
+      .split(path.sep)
+      .join("/");
     if (!manifest || manifest.path === pkgManifestRel) continue;
     const key = `${manifest.name}\0${manifest.version}\0${manifest.path}`;
-    if (!bundleInputs.has(key)) bundleInputs.set(key, { name: manifest.name, version: manifest.version, package_manifest: manifest.path, inputs: new Set(), outputs: new Set() });
+    if (!bundleInputs.has(key))
+      bundleInputs.set(key, {
+        name: manifest.name,
+        version: manifest.version,
+        package_manifest: manifest.path,
+        inputs: new Set(),
+        outputs: new Set(),
+      });
     const entry = bundleInputs.get(key);
     entry.inputs.add(inputRel.split(path.sep).join("/"));
     entry.outputs.add(outputRel.split(path.sep).join("/"));
@@ -151,7 +165,10 @@ const packages = [...bundleInputs.values()]
   .sort((a, b) => a.name.localeCompare(b.name) || a.version.localeCompare(b.version))
   .map((p) => ({ ...p, inputs: [...p.inputs].sort(), outputs: [...p.outputs].sort() }));
 
-fs.writeFileSync(path.join(evidenceDir, "bundle-inventory.json"), JSON.stringify(packages, null, 2) + "\n");
+fs.writeFileSync(
+  path.join(evidenceDir, "bundle-inventory.json"),
+  JSON.stringify(packages, null, 2) + "\n",
+);
 console.log(`${packages.length} bundled packages recorded.`);
 
 console.log("\nBuild complete.");
