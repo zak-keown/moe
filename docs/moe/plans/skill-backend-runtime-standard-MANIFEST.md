@@ -37,7 +37,8 @@ plans:
   - id: enforcement-activation
     plan: docs/moe/plans/2026-09-03-skill-runtime-05-activation.md
     depends_on: [glass-esm]
-    status: pending
+    status: done
+    commits: 51f74fe..18379ef
 ```
 
 The plan set is complete only when the Mint assembly and live-repository gates
