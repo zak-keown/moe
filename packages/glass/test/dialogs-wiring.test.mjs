@@ -3,7 +3,7 @@ import { strict as assert } from 'node:assert';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { createSession, PAGE_TARGET_SESSION_METHODS } = require('../skills/browsing/chrome-ws-lib.js');
+const { createSession, PAGE_TARGET_SESSION_METHODS, DialogRefusedError } = require('../skills/browsing/chrome-ws-lib.js');
 const { attachDialogs } = require('../skills/browsing/lib/dialogs.js');
 const { renderSyntheticArtifacts } = require('../skills/browsing/lib/dialogs-render.js');
 
@@ -38,18 +38,27 @@ describe('dialogs wiring — withDialogAwareness integration', () => {
 
   it('returns refused result when a dialog is open and a page-target action is attempted', async () => {
     const session = createSession();
-    const wsUrl = 'ws://fake/with-dialog';
+    const wsUrl = 'ws://127.0.0.1:9222/devtools/page/unit-test-refusal';
 
-    // Confirm no dialog is staged for the test URL. Since we can't inject CDP
-    // events in a unit test without a live Chrome, we verify the gate is real by
-    // inspecting what getOpen returns for unseen URLs.
     assert.equal(session.dialogs.getOpen(wsUrl), null, 'no dialog before staging');
 
-    // We can't stage a dialog without a live CDP connection, so we verify the
-    // refusal path through a different approach: assert that withDialogAwareness
-    // is a real gate by inspecting what getOpen returns for an unseen URL.
-    const open = session.dialogs.getOpen('ws://unknown');
-    assert.equal(open, null, 'getOpen returns null for unknown URL — no stray dialogs');
+    // Stage a dialog directly on the session's OWN dialogs instance — the one
+    // wrapWithDialogGate closes over — via attachToPageSession + a synthetic
+    // Page.javascriptDialogOpening event. No live Chrome required, same
+    // technique stageAlertDialog() below uses.
+    await stageAlertDialog(wsUrl, session.dialogs);
+    assert.ok(session.dialogs.getOpen(wsUrl), 'dialog should be staged on the session used by the gate');
+
+    // wsUrl is a literal ws:// string, so resolveWsUrl short-circuits without
+    // an HTTP call to Chrome — this drives wrapWithDialogGate end to end.
+    await assert.rejects(
+      () => session.click(wsUrl, '#btn'),
+      (err) => {
+        assert.ok(err instanceof DialogRefusedError, `expected DialogRefusedError, got ${err}`);
+        assert.equal(err.refused, true);
+        return true;
+      },
+    );
   });
 
   it('session exposes all actions that receive dialogs wiring', () => {
@@ -74,12 +83,14 @@ describe('dialogs wiring — withDialogAwareness integration', () => {
 // call) and assert the refusal shape is returned.
 // ---------------------------------------------------------------------------
 
-// Helper: build a dialogs instance with a staged alert dialog on the given wsUrl.
-// Uses attachToPageSession with a fake page session so dialog state is stored under
-// a sessionId; registers the targetId→sessionId mapping so getOpen(wsUrl) works.
-async function stageAlertDialog(wsUrl) {
-  const state = { dialogs: new Map() };
-  const dialogs = attachDialogs({ state });
+// Helper: stage an alert dialog on the given wsUrl, on `dialogsInstance` if
+// provided (e.g. a live session's session.dialogs, so the gate that closes
+// over it actually observes the staged dialog) or a fresh standalone
+// instance otherwise. Uses attachToPageSession with a fake page session so
+// dialog state is stored under a sessionId; registers the targetId→sessionId
+// mapping so getOpen(wsUrl) works.
+async function stageAlertDialog(wsUrl, dialogsInstance) {
+  const dialogs = dialogsInstance || attachDialogs({ state: { dialogs: new Map() } });
 
   // Extract targetId from wsUrl so attachToPageSession can register the mapping.
   const m = /\/devtools\/page\/([^/]+)$/.exec(wsUrl);
