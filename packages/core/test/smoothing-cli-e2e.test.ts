@@ -35,7 +35,7 @@ const codexLegacyFixture = new URL(
 
 type IsolatedFixture = Awaited<ReturnType<typeof isolatedHome>>;
 
-describe("smoothing helper CLI", () => {
+describe("smoothing helper CLI", { timeout: 15_000 }, () => {
   it("uses exit 2 for malformed invocations and prints no transcript content", async () => {
     const fixture = await isolatedHome();
 
@@ -444,9 +444,7 @@ prefix_rule(
     10_000,
   );
 
-  it("parses boundaries strictly and filters requested harnesses", {
-    timeout: 15_000,
-  }, async () => {
+  it("parses boundaries strictly and filters requested harnesses", async () => {
     const fixture = await isolatedHome();
     for (const args of [
       ["scan", "--days", "0"],
