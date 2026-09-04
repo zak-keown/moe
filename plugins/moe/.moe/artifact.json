@@ -422,8 +422,8 @@
     },
     {
       "path": ".claude-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs",
-      "size": 3925,
-      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
+      "size": 5922,
+      "sha256": "aa5b814de342bf9e42db2e024dcc0b0c1df9ac8a564323d803b18790a3ae494f",
       "mode": "0755"
     },
     {
@@ -1430,8 +1430,8 @@
     },
     {
       "path": ".codex-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs",
-      "size": 3925,
-      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
+      "size": 5922,
+      "sha256": "aa5b814de342bf9e42db2e024dcc0b0c1df9ac8a564323d803b18790a3ae494f",
       "mode": "0755"
     },
     {
@@ -2462,8 +2462,8 @@
     },
     {
       "path": ".cursor-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs",
-      "size": 3925,
-      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
+      "size": 5922,
+      "sha256": "aa5b814de342bf9e42db2e024dcc0b0c1df9ac8a564323d803b18790a3ae494f",
       "mode": "0755"
     },
     {
@@ -3470,8 +3470,8 @@
     },
     {
       "path": ".kimi-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs",
-      "size": 3925,
-      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
+      "size": 5922,
+      "sha256": "aa5b814de342bf9e42db2e024dcc0b0c1df9ac8a564323d803b18790a3ae494f",
       "mode": "0755"
     },
     {
@@ -4077,7 +4077,7 @@
     {
       "path": ".moe-mint/manifest.json",
       "size": 633221,
-      "sha256": "bcb575b8f0dbd6d932236416307a0e118da6c8b5dfa80c18aab45aa8fea335ac",
+      "sha256": "5f5f857382d533c65411d27a262f3183c64131bfc886852924f9a0f8a2d8ef97",
       "mode": "0644"
     },
     {
@@ -4502,8 +4502,8 @@
     },
     {
       "path": ".opencode/skills/fixing-a-code-review/scripts/compact-resolved.mjs",
-      "size": 3925,
-      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
+      "size": 5922,
+      "sha256": "aa5b814de342bf9e42db2e024dcc0b0c1df9ac8a564323d803b18790a3ae494f",
       "mode": "0755"
     },
     {
@@ -5510,8 +5510,8 @@
     },
     {
       "path": ".pi/skills/fixing-a-code-review/scripts/compact-resolved.mjs",
-      "size": 3925,
-      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
+      "size": 5922,
+      "sha256": "aa5b814de342bf9e42db2e024dcc0b0c1df9ac8a564323d803b18790a3ae494f",
       "mode": "0755"
     },
     {
@@ -6692,8 +6692,8 @@
     },
     {
       "path": "skills/fixing-a-code-review/scripts/compact-resolved.mjs",
-      "size": 3925,
-      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
+      "size": 5922,
+      "sha256": "aa5b814de342bf9e42db2e024dcc0b0c1df9ac8a564323d803b18790a3ae494f",
       "mode": "0755"
     },
     {
@@ -7297,7 +7297,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "78e18b221b55dc3b069b211a94aafe66b11e113fff12a87f81169696dd1d3f89",
+  "tree_sha256": "ce4a96ab4111032920d02ae7a1d2b752a1010a3c9b43833d1a19b5e636411fa8",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [
