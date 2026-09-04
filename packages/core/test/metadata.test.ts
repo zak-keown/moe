@@ -428,9 +428,6 @@ const X_BIT_ALLOWLIST = [
   "hooks/jig-review-format-guard",
   "skills/brainstorming/scripts/start-server.sh",
   "skills/brainstorming/scripts/stop-server.sh",
-  "skills/subagent-driven-development/scripts/review-package",
-  "skills/subagent-driven-development/scripts/sdd-workspace",
-  "skills/subagent-driven-development/scripts/task-brief",
   "skills/systematic-debugging/find-polluter.sh",
   "skills/using-tmux-for-interactive-commands/tmux-wrapper.sh",
 ];
@@ -571,14 +568,11 @@ describe("runtime paths", () => {
     // scripts plus the three extensionless Node hooks (`hooks/plan-set`,
     // `hooks/moe-completion-evidence`, and `hooks/task-set`) with node
     // shebangs.
-    expect(bash.length, "bash targets discovered").toBeGreaterThanOrEqual(11);
+    expect(bash.length, "bash targets discovered").toBeGreaterThanOrEqual(8);
     expect(node.length, "node targets discovered").toBeGreaterThanOrEqual(7);
     for (const rel of [
       "hooks/claude-judge-continuation",
       "hooks/plan-set-notice",
-      "skills/subagent-driven-development/scripts/review-package",
-      "skills/subagent-driven-development/scripts/sdd-workspace",
-      "skills/subagent-driven-development/scripts/task-brief",
     ]) {
       // The extensionless bash scripts. If the shebang read regresses, these
       // vanish silently and the floor above could still be met by .sh files
