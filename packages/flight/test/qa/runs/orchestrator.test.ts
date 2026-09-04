@@ -337,6 +337,52 @@ describe("executeRunCore — error path", () => {
   });
 });
 
+describe("executeRunCore — success-path hook failure", () => {
+  test("afterClose throwing does not double-fire hooks or reject a successful run", async () => {
+    const projectRoot = mkdtempSync(join(tmpdir(), "moe-flight-orch-hookerr-"));
+    const storyPath = join(projectRoot, "card.md");
+    writeFileSync(storyPath, HAPPY_CARD);
+    const card = parseStoryCard(HAPPY_CARD);
+    const client = makeScriptedClient([report("pass", "ok", "fine")]);
+
+    const calls: string[] = [];
+
+    const { outDir, result } = await executeRunCore({
+      card,
+      storyPath,
+      client,
+      runConfig: {
+        projectRoot,
+        stateDirName: ".moe-flight",
+        model: "claude-sonnet-4-6",
+        adapter: "cli",
+        target: "true",
+        budgetMs: 600_000,
+      },
+      hooks: {
+        onError: () => {
+          calls.push("onError");
+        },
+        beforeClose: () => {
+          calls.push("beforeClose");
+        },
+        afterClose: () => {
+          calls.push("afterClose");
+          throw new Error("afterClose boom");
+        },
+      },
+    });
+
+    // The run itself passed and result.json was already durably written
+    // before beforeClose/afterClose ran — a hook exception must not turn
+    // that into a rejection, must not relabel it via onError, and must not
+    // re-run beforeClose/afterClose a second time.
+    expect(result.status).toBe("pass");
+    expect(existsSync(join(outDir, "result.json"))).toBe(true);
+    expect(calls).toEqual(["beforeClose", "afterClose"]);
+  });
+}, 15000);
+
 describe("executeRunCore — boundary", () => {
   test("orchestrator source does not import HTTP-only types", () => {
     const src = readFileSync(
