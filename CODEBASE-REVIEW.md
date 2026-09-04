@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 2
+  fixed: 3
   stale: 0
   skipped: 0
   deferred: 0
-  open: 105
+  open: 104
 ---
 
 # Codebase Review — moe
@@ -632,6 +632,10 @@ as `fanout.ts`'s `/:id/:mode` route already does for its own id via
 `parseRunId`, and as the CR-040/041/042 comments already flag for the
 sibling `writeCards` path.
 
+**Disposition:** fixed
+**Commit:** `95e5d92cba6e86c08ec0cb322fe1a32c09959a17`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-015: `fetch_credential` failure path leaks resolver stderr into the persisted transcript, bypassing the redaction opt-out
 
 **File:** `packages/flight/src/qa/context/credential-tool.ts`
