@@ -159,6 +159,29 @@ async function waitFor(label, predicate, timeoutMs = 180000) {
   throw new Error(`timed out waiting for ${label}`);
 }
 
+/**
+ * Create a fresh temp root, run `fn(root)`, and guarantee `root` is removed
+ * afterward — on both the success and the failure path (CR-060).
+ *
+ * `main()` used to `mkdtempSync` this tree — which holds the full conversation
+ * archive, embedding database, journal state, and a copy of the real Claude
+ * session transcript — and never remove it: no try/finally, no cleanup on the
+ * failure path, and the success path printed the retained path as though
+ * keeping it were the point. Same defect class already fixed in the sibling
+ * script's `withTempRoot` (test/manual/codex-e2e.js, CR-077).
+ *
+ * Exported so a unit test can prove the cleanup runs — including on a thrown
+ * error — without needing a real Claude session.
+ */
+export async function withTempRoot(prefix, fn) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  try {
+    return await fn(root);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+}
+
 function runClaude(env, workspace, prompt) {
   const output = run(CLAUDE_BIN, [
     '-p',
@@ -195,75 +218,87 @@ async function main() {
   const claudeVersionOutput = run(CLAUDE_BIN, ['--version']).trim();
   run(CLAUDE_BIN, ['plugin', 'validate', PLUGIN_DIR]);
 
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'moe-memory-claude-e2e-'));
-  const memoryDir = path.join(root, 'moe-memory');
-  const workspace = path.join(root, 'workspace');
-  const codexHome = path.join(root, 'codex-empty');
-  const sourceDir = path.join(root, 'source');
-  fs.mkdirSync(memoryDir, { recursive: true });
-  fs.mkdirSync(workspace, { recursive: true });
-  fs.mkdirSync(codexHome, { recursive: true });
-  fs.mkdirSync(sourceDir, { recursive: true });
+  // CR-060: the whole tree written below — the full conversation archive,
+  // embedding database, journal state, and a copy of the real Claude session
+  // transcript — lives and dies with this call. It is removed on both the
+  // success and the failure path — see withTempRoot.
+  await withTempRoot('moe-memory-claude-e2e-', async (root) => {
+    const memoryDir = path.join(root, 'moe-memory');
+    const workspace = path.join(root, 'workspace');
+    const codexHome = path.join(root, 'codex-empty');
+    const sourceDir = path.join(root, 'source');
+    fs.mkdirSync(memoryDir, { recursive: true });
+    fs.mkdirSync(workspace, { recursive: true });
+    fs.mkdirSync(codexHome, { recursive: true });
+    fs.mkdirSync(sourceDir, { recursive: true });
 
-  const env = {
-    ...process.env,
-    MOE_MEMORY_CONFIG_DIR: memoryDir,
-    TEST_PROJECTS_DIR: sourceDir,
-    CODEX_HOME: codexHome,
-  };
-  delete env.CLAUDE_CONFIG_DIR;
+    const env = {
+      ...process.env,
+      MOE_MEMORY_CONFIG_DIR: memoryDir,
+      TEST_PROJECTS_DIR: sourceDir,
+      CODEX_HOME: codexHome,
+    };
+    delete env.CLAUDE_CONFIG_DIR;
 
-  const seed = runClaude(
-    env,
-    workspace,
-    `Reply exactly MEMORY_CLAUDE_SEED ${MARKER} and nothing else.`
-  );
-  if (seed.result.result !== `MEMORY_CLAUDE_SEED ${MARKER}`) {
-    throw new Error(`seed session did not echo marker:\n${seed.output}`);
-  }
+    const seed = runClaude(
+      env,
+      workspace,
+      `Reply exactly MEMORY_CLAUDE_SEED ${MARKER} and nothing else.`
+    );
+    if (seed.result.result !== `MEMORY_CLAUDE_SEED ${MARKER}`) {
+      throw new Error(`seed session did not echo marker:\n${seed.output}`);
+    }
 
-  const seedTranscript = findTranscript(seed.result.session_id, workspace);
-  const projectDir = path.basename(path.dirname(seedTranscript));
-  const copiedProjectDir = path.join(sourceDir, projectDir);
-  fs.mkdirSync(copiedProjectDir, { recursive: true });
-  fs.copyFileSync(seedTranscript, path.join(copiedProjectDir, path.basename(seedTranscript)));
+    const seedTranscript = findTranscript(seed.result.session_id, workspace);
+    const projectDir = path.basename(path.dirname(seedTranscript));
+    const copiedProjectDir = path.join(sourceDir, projectDir);
+    fs.mkdirSync(copiedProjectDir, { recursive: true });
+    fs.copyFileSync(seedTranscript, path.join(copiedProjectDir, path.basename(seedTranscript)));
 
-  const trigger = runClaude(
-    env,
-    workspace,
-    'Reply exactly MEMORY_CLAUDE_TRIGGER and nothing else.'
-  );
-  if (trigger.result.result !== 'MEMORY_CLAUDE_TRIGGER') {
-    throw new Error(`trigger session did not complete:\n${trigger.output}`);
-  }
+    const trigger = runClaude(
+      env,
+      workspace,
+      'Reply exactly MEMORY_CLAUDE_TRIGGER and nothing else.'
+    );
+    if (trigger.result.result !== 'MEMORY_CLAUDE_TRIGGER') {
+      throw new Error(`trigger session did not complete:\n${trigger.output}`);
+    }
 
-  const archiveRoot = path.join(memoryDir, 'conversation-archive');
-  const dbPath = path.join(memoryDir, 'conversation-index', 'db.sqlite');
-  await waitFor('archived Claude marker', () => fileTreeContains(archiveRoot, MARKER));
-  await waitFor('Claude summaries', () => countFiles(archiveRoot, '-summary.txt') >= 1);
-  await waitFor('conversation index database', () => fs.existsSync(dbPath));
+    const archiveRoot = path.join(memoryDir, 'conversation-archive');
+    const dbPath = path.join(memoryDir, 'conversation-index', 'db.sqlite');
+    await waitFor('archived Claude marker', () => fileTreeContains(archiveRoot, MARKER));
+    await waitFor('Claude summaries', () => countFiles(archiveRoot, '-summary.txt') >= 1);
+    await waitFor('conversation index database', () => fs.existsSync(dbPath));
 
-  const recall = runClaude(
-    env,
-    workspace,
-    `Use the moe-memory remembering-conversations skill and its MCP search tool to search for ${MARKER}. If the search result contains MEMORY_CLAUDE_SEED, reply exactly FOUND_CLAUDE_MEMORY_E2E. If it does not, reply exactly NOT_FOUND_CLAUDE_MEMORY_E2E. Do not use shell commands.`
-  );
-  if (!String(recall.result.result).includes('FOUND_CLAUDE_MEMORY_E2E')) {
-    throw new Error(`recall session failed:\n${recall.output}`);
-  }
-  if (!recall.output.includes('mcp__plugin_moe-memory_moe-memory__search_conversations')) {
-    throw new Error('recall succeeded without evidence of an moe-memory MCP search call in Claude output');
-  }
+    const recall = runClaude(
+      env,
+      workspace,
+      `Use the moe-memory remembering-conversations skill and its MCP search tool to search for ${MARKER}. If the search result contains MEMORY_CLAUDE_SEED, reply exactly FOUND_CLAUDE_MEMORY_E2E. If it does not, reply exactly NOT_FOUND_CLAUDE_MEMORY_E2E. Do not use shell commands.`
+    );
+    if (!String(recall.result.result).includes('FOUND_CLAUDE_MEMORY_E2E')) {
+      throw new Error(`recall session failed:\n${recall.output}`);
+    }
+    if (!recall.output.includes('mcp__plugin_moe-memory_moe-memory__search_conversations')) {
+      throw new Error('recall succeeded without evidence of an moe-memory MCP search call in Claude output');
+    }
 
-  console.log(`Claude E2E passed in ${root}`);
-  console.log(`Archived JSONLs: ${countFiles(archiveRoot, '.jsonl')}`);
-  console.log(`Summaries: ${countFiles(archiveRoot, '-summary.txt')}`);
-  console.log(`Database: ${dbPath}`);
-  console.log(`Seed session: ${seed.result.session_id}`);
-  console.log(`Claude: ${CLAUDE_BIN} (${claudeVersionOutput})`);
+    console.log('Claude E2E passed (temp root has been removed)');
+    console.log(`Archived JSONLs: ${countFiles(archiveRoot, '.jsonl')}`);
+    console.log(`Summaries: ${countFiles(archiveRoot, '-summary.txt')}`);
+    console.log(`Database: ${dbPath}`);
+    console.log(`Seed session: ${seed.result.session_id}`);
+    console.log(`Claude: ${CLAUDE_BIN} (${claudeVersionOutput})`);
+  });
 }
 
-main().catch(error => {
-  console.error(error instanceof Error ? error.stack || error.message : String(error));
-  process.exit(1);
-});
+// Only run the E2E flow when this file is executed directly (`node
+// test/manual/claude-e2e.js`), not when it is imported — a unit test imports
+// `withTempRoot` to exercise the CR-060 cleanup fix without triggering a real
+// Claude session.
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === __filename;
+if (isMain) {
+  main().catch(error => {
+    console.error(error instanceof Error ? error.stack || error.message : String(error));
+    process.exit(1);
+  });
+}
