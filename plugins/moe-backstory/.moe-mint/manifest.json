@@ -6,10 +6,10 @@
       "sha256": "5bbf713adae87d6cdc2d989a413905b97384f5bbc04843179e53d89891bcda19"
     },
     ".claude-plugin/marketplace.json": {
-      "sha256": "08bf61c2310cc3f49634717f613f8fb6ec8d64bc7c160468ce58c86976a0327d"
+      "sha256": "f8186df6b4078ffa3d06e9b0d7893d9b7ce7a253ff68b48427822f4917b0624e"
     },
     ".claude-plugin/plugin.json": {
-      "sha256": "6a2027d08017992da9bfde0519893b2535148c4110183030769466dfa553e06d"
+      "sha256": "049958fa12da539610d96bd0358989414a33ca53736568be2ac71f4227be6da6"
     },
     ".claude-plugin/skills/analysis-pipeline/SKILL.md": {
       "sha256": "a6d6c278879125f7bca7a837f4a4ee0abe75d35385b7be2ffc26039bc862fe48",
@@ -100,7 +100,7 @@
       "mode": 420
     },
     ".codex-plugin/plugin.json": {
-      "sha256": "b1058850fd7eee8de687a381c0e861dc3b6ac9f6ba8e4e40027c39e613cc409a"
+      "sha256": "106c8338b9a6a2dfda7863c9ce579d035793f06f38d2c78a3ec9347e0f56140e"
     },
     ".codex-plugin/skills/analysis-pipeline/SKILL.md": {
       "sha256": "a6d6c278879125f7bca7a837f4a4ee0abe75d35385b7be2ffc26039bc862fe48",
@@ -194,7 +194,7 @@
       "sha256": "894ffddb378f28f8d8b9e220230aa53b15e08c14f2c4d92854669b98f4c744c7"
     },
     ".cursor-plugin/plugin.json": {
-      "sha256": "dcc961a253944a930441f717fa81f4d5791854edfc2ddec1e05bf77722f6d4e4"
+      "sha256": "ce8a400020482396a7e2aa1a31ee97c802b9a088485164d8952a60feb2b660ed"
     },
     ".cursor-plugin/skills/analysis-pipeline/SKILL.md": {
       "sha256": "a6d6c278879125f7bca7a837f4a4ee0abe75d35385b7be2ffc26039bc862fe48",
@@ -285,7 +285,7 @@
       "mode": 420
     },
     ".kimi-plugin/plugin.json": {
-      "sha256": "dbbebcf26a89f166d3d30b097c09f60bc7cf990540476791bb8ce377d99ca8bd"
+      "sha256": "2e14999698c5d892f453239d5a32e3629dddd68a75723df5bf1e823694e6d07d"
     },
     ".kimi-plugin/skills/analysis-pipeline/SKILL.md": {
       "sha256": "a6d6c278879125f7bca7a837f4a4ee0abe75d35385b7be2ffc26039bc862fe48",
@@ -597,7 +597,7 @@
       "sha256": "ccfeac06607b4fc776ccd7fdb873963314a2c5a9039ea2035f695809135797b1"
     },
     "plugin.json": {
-      "sha256": "4649b0ffea31f98d6829bc7913b61d9df0f9b7ae91a7701ae0acd0f43d7078a6"
+      "sha256": "dcc022296f18a00abc0fccc7cad7437cc15e438bce5786f0233a4137dc563a35"
     }
   }
 }

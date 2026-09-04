@@ -1,6 +1,6 @@
 {
   "name": "@bubstack/moe-backstory",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "type": "module",
   "description": "Recover a behavioral spec from a codebase that never had one.",
   "license": "Apache-2.0",

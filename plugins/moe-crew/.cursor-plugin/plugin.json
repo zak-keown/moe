@@ -2,7 +2,7 @@
   "name": "moe-crew",
   "displayName": "moe-crew",
   "description": "Launch, control and monitor Claude Code, Codex, and Pi workers over tmux.",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "author": {
     "name": "Zak Keown",
     "email": "zak.keown@outlook.com"

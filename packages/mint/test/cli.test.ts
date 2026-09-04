@@ -284,12 +284,12 @@ describe('CLI end-to-end', { timeout: 45_000 }, () => {
     expect(result.status).toBe(0)
     expect(result.stderr).toBe('')
     expect(JSON.parse(result.stdout)).toEqual([
-      { plugin: 'moe', package: '@bubstack/moe-core', version: '0.1.6', sourcePackagePath: 'packages/core', generatedArtifactPath: 'plugins/moe' },
-      { plugin: 'moe-backstory', package: '@bubstack/moe-backstory', version: '0.1.6', sourcePackagePath: 'packages/backstory', generatedArtifactPath: 'plugins/moe-backstory' },
+      { plugin: 'moe', package: '@bubstack/moe-core', version: '0.2.0', sourcePackagePath: 'packages/core', generatedArtifactPath: 'plugins/moe' },
+      { plugin: 'moe-backstory', package: '@bubstack/moe-backstory', version: '0.2.0', sourcePackagePath: 'packages/backstory', generatedArtifactPath: 'plugins/moe-backstory' },
       { plugin: 'moe-memory', package: '@bubstack/moe-memory', version: '0.2.0', sourcePackagePath: 'packages/memory', generatedArtifactPath: 'plugins/moe-memory' },
-      { plugin: 'moe-glass', package: '@bubstack/moe-glass', version: '0.1.6', sourcePackagePath: 'packages/glass', generatedArtifactPath: 'plugins/moe-glass' },
-      { plugin: 'moe-crew', package: '@bubstack/moe-crew', version: '0.1.6', sourcePackagePath: 'packages/crew', generatedArtifactPath: 'plugins/moe-crew' },
-      { plugin: 'moe-statusline', package: '@bubstack/moe-statusline', version: '0.1.2', sourcePackagePath: 'packages/statusline', generatedArtifactPath: 'plugins/moe-statusline' },
+      { plugin: 'moe-glass', package: '@bubstack/moe-glass', version: '0.2.0', sourcePackagePath: 'packages/glass', generatedArtifactPath: 'plugins/moe-glass' },
+      { plugin: 'moe-crew', package: '@bubstack/moe-crew', version: '0.2.0', sourcePackagePath: 'packages/crew', generatedArtifactPath: 'plugins/moe-crew' },
+      { plugin: 'moe-statusline', package: '@bubstack/moe-statusline', version: '0.2.0', sourcePackagePath: 'packages/statusline', generatedArtifactPath: 'plugins/moe-statusline' },
     ])
     for (const sourcePackage of ['core', 'backstory', 'memory', 'glass', 'crew', 'statusline']) {
       expect(existsSync(join(REPO_ROOT, '..', sourcePackage, '.claude-plugin', 'plugin.json'))).toBe(false)
