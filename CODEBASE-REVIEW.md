@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 1
+  fixed: 2
   stale: 0
   skipped: 0
   deferred: 0
-  open: 106
+  open: 105
 ---
 
 # Codebase Review — moe
@@ -539,6 +539,10 @@ So the `navigate` tool always reports `"navigated"` to the agent, even when the 
 
 Fix: after `navigateResult = await ps.send('Page.navigate', { url })`, check `navigateResult?.errorText` and throw (or otherwise surface) a navigation-failed error instead of falling through to `await loadP`.
 
+**Disposition:** fixed
+**Commit:** `9b63e7bd84696df5612a9e3d3b1ad6c140cd07f6`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-013: Bash tool forwards live LLM provider credentials into a shell the agent controls while reading untrusted page content
 
 **File:** `packages/flight/src/qa/agent/bash-tool.ts`
