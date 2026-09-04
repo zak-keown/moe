@@ -76,6 +76,15 @@ export async function runResolver(
         try {
           child.kill("SIGKILL");
         } catch {}
+        // Settle here rather than waiting for 'close': a killed process whose
+        // grandchild (e.g. a lingering `sleep`) still holds the stdout pipe open
+        // never emits 'close', so relying on the close handler would hang.
+        settle({
+          kind: "timeout",
+          stderr: Buffer.concat(stderrChunks).toString("utf-8"),
+          timeoutMs: config.timeoutMs,
+          elapsedMs: Date.now() - start,
+        });
       }
     }, config.timeoutMs + KILL_GRACE_MS);
 
@@ -111,7 +120,10 @@ export async function runResolver(
       settle({ kind: "spawn_failed", error: err.message, elapsedMs: Date.now() - start });
     });
 
-    child.on("exit", (code) => {
+    // 'close' (not 'exit') so stdout is fully drained before we read it: 'exit'
+    // can fire before the child's stdout 'data' events are delivered, which under
+    // load yields an empty Buffer.concat and a spurious empty_stdout result.
+    child.on("close", (code) => {
       if (settled) return;
       const elapsedMs = Date.now() - start;
       const stdout = Buffer.concat(stdoutChunks).toString("utf-8");

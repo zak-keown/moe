@@ -61,7 +61,9 @@ function readCommandOutput(
       output += chunk.toString();
     });
     child.on("error", reject);
-    child.on("exit", (code) => {
+    // 'close' (not 'exit'): 'exit' can fire before stdout 'data' is delivered,
+    // truncating or emptying `output` under load.
+    child.on("close", (code) => {
       if (code === 0) {
         resolve(output);
       } else {

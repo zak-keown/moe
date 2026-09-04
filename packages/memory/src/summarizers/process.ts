@@ -64,7 +64,9 @@ export function createChildProcessAdapter(): ProcessAdapter {
           }
         });
 
-        child.on("exit", (code, signal) => {
+        // 'close' (not 'exit'): wait for stdio to drain so stdout/stderr are
+        // complete; 'exit' can fire before the final 'data' events under load.
+        child.on("close", (code, signal) => {
           if (!finished) {
             finished = true;
             clearTimeout(timeout);

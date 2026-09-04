@@ -30,10 +30,11 @@ packages to `0.2.0`, which is the version floor these two releases build on.
 
 ## The split rule
 
-- **0.2.1 = patch.** No new user-facing capability. Bug fixes, correctness and
-  reproducibility (umask #4, main's red render-graphs), dead-code removal, and
-  documentation truthing. Packaging is *not* a 0.2.1 build — it is 0.2.0's job
-  (see R1); 0.2.1 only verifies it landed.
+- **0.2.1 = patch, led by packaging.** No new user-facing capability. Its
+  **priority 1** is making the install real — wiring the release orchestration
+  and republishing complete plugin trees (see R1); 0.2.0 ships without that
+  wiring. Then: reproducibility (umask #4, render-graphs, the EPIPE races — all
+  already merged), dead-code removal, and documentation truthing.
 - **0.3.0 = minor.** New capability: the backlog's high/medium features, the
   advertised-surface stubs promoted to real implementations, and the
   multi-harness parity work. Several 0.3.0 items need their own spec + plan-set
@@ -43,39 +44,36 @@ packages to `0.2.0`, which is the version floor these two releases build on.
 
 1. **`.moe/backlog/`** — 31 open items: the original 9, plus 22 filed this
    session from the audit + verification (see below).
-2. **GitHub** — issue #4 (umask/reproducibility, still open); issue #5 (EPIPE)
-   closed by PR #6, **merged** this session (`ffbf1bf6`).
+2. **GitHub** — issue #4 (umask/reproducibility) fixed by PR #7 (`b8986b96`) and
+   issue #5 (EPIPE) by PR #6 (`ffbf1bf6`), both **merged** this session.
 3. **Concept review** (`.moe/concept-review/SYNTHESIS.md`) — 11-reviewer audit.
-   Predates 0.2.0; its structural themes still stand, but its packaging headline
-   is now addressed by 0.2.0's release orchestration (see R1).
+   Predates 0.2.0; its structural themes still stand, and its packaging headline
+   is 0.2.1 priority 1 (see R1).
 4. **Packaging verification** (this session) — the release orchestration packs
-   the complete plugin tree; the gap is unwired release CLI paths, owned by
-   0.2.0. See risk **R1** (this corrects an earlier over-call).
+   the complete plugin tree, but the release CLI paths are unwired and 0.2.0
+   ships without them, so packaging is **0.2.1 priority 1**. See risk **R1**.
 5. **Promise-hunt audit** (this session, `main` @ `64304930`) — 22
    findings across stubs, dead code, harness-parity, and doc drift. Referenced
    below as **A#n**.
 
 ## Two release-shaping risks
 
-- **R1 — the install: solved by design in 0.2.0's release orchestration; the
-  risk is unwired CLI, not missing packaging (CORRECTED).** An earlier read of
-  this session called the install broken for 0.2.1 based on `npm pack` of the
-  raw `packages/<pkg>` workspace — the wrong artifact. The release path packs the
-  *assembled* tree: `release/candidate.ts` `prepareCandidate` packs
-  `artifact.artifactRoot`, which `artifact/check.ts` sets to `plugins/<id>` — the
-  complete generated tree carrying `.claude-plugin/plugin.json`, LICENSE, NOTICE,
-  `dist`, and all eight harness dirs (`license-payload.ts` writes LICENSE/NOTICE
-  into that root). So once the orchestration runs, published tarballs are
-  complete and the `using-moe` bootstrap registers. What remains is **wiring**:
-  `release candidate/promote/certify-claude --execute` all throw `*_EXECUTE_NOT_
-  WIRED` on main, while `publish.yml` already calls `mint release candidate
-  --execute` — so a real 0.2.0 tag fails loudly there until wired (never a silent
-  broken ship). That wiring is 0.2.0's last mile (tracked: `BL-d932811282`).
-  Caveat: the already-published 0.1.x tarballs were packed the old way and *are*
-  incomplete, so 0.1.x installs stay broken until 0.2.0 republishes. The one true
-  residual gap — an end-to-end "after install the bootstrap fires" test for the
-  non-memory plugins — folds into robust e2e testing (`BL-3ce1956bb4`), a 0.3.0
-  item.
+- **R1 — the install is incomplete and 0.2.0 ships without the fix, so it is
+  0.2.1 priority 1.** The release *design* is sound: `release/candidate.ts`
+  `prepareCandidate` packs `artifact.artifactRoot`, which `artifact/check.ts`
+  sets to `plugins/<id>` — the complete generated tree carrying
+  `.claude-plugin/plugin.json`, LICENSE, NOTICE, `dist`, and all eight harness
+  dirs (`license-payload.ts` writes LICENSE/NOTICE there). But the CLI is not
+  wired to it: `release candidate/promote/certify-claude --execute` all throw
+  `*_EXECUTE_NOT_WIRED` on main. Per the release owner, **0.2.0 ships before that
+  wiring lands** — so 0.2.0's published install is the incomplete one (raw
+  `packages/<pkg>` tarball: no top-level manifest, no LICENSE, so the `using-moe`
+  bootstrap never registers), the same shape as the already-broken 0.1.x
+  installs. Wiring the three `--execute` paths and republishing complete trees is
+  therefore **0.2.1 priority 1** (tracked: `BL-d932811282`; earlier in this
+  session this was mislabelled 0.2.0's job). Residual (→ 0.3.0): an end-to-end
+  "after install the bootstrap fires" test for the non-memory plugins, under
+  robust e2e testing (`BL-3ce1956bb4`).
 - **R2 — "8 harnesses" is true for skills only.** commands/mcp/hooks/agents are
   absent on most of the seven non-Claude harnesses (A#5), and this is honest at
   the machine level (mint yaml tiers, INSTALL matrix, `moe-install` refusal) but
