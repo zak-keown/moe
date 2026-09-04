@@ -30,6 +30,14 @@ function isStringArray(v: unknown): v is string[] {
   return Array.isArray(v) && v.every((x) => typeof x === "string");
 }
 
+// Mirrors the documented id charset (`CARD_ID_RE` in fanout.ts,
+// `parseRunId`/`parseRunSetId` in util/id.ts). `isSafePath` alone accepts an
+// id like "a/b" — it stays inside storiesDir, so it passes the traversal
+// check, but its parent directory is never created and the write throws an
+// uncaught ENOENT that leaks an absolute filesystem path via the generic
+// 500 handler. Reject anything outside this charset before that check runs.
+const CARD_ID_RE = /^[a-zA-Z0-9-]+$/;
+
 function parseScenarioBody(raw: unknown, kind: "create" | "update"): ScenarioBody {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     throw new Error("body must be a JSON object");
@@ -127,6 +135,10 @@ export function scenarioRoutes(projectRoot: string, stateDirName: string, errorL
     // parseScenarioBody guarantees id and title on create.
     const id = body.id!;
     const title = body.title!;
+
+    if (!CARD_ID_RE.test(id)) {
+      return c.json({ error: "invalid id" }, 400);
+    }
 
     const targetPath = join(storiesDir, `${id}.md`);
     if (!isSafePath(storiesDir, targetPath)) {
