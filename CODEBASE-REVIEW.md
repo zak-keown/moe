@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 1
+  fixed: 2
   stale: 0
   skipped: 0
   deferred: 0
-  open: 106
+  open: 105
 ---
 
 # Codebase Review — moe
@@ -1446,6 +1446,10 @@ Compounding this, `StatusBadge` (`packages/flight/ui/src/components/shared.tsx`,
 
 Since nothing server-side normalizes or rejects these statuses, a user who assigns them via the editor gets silently degraded functionality in two sibling UI surfaces (unfilterable, indistinguishable). Fix: either constrain `CardEditor`'s status `<select>` to the values the rest of the UI actually supports, or extend `CardsList`'s filter options and `StatusBadge`'s color map to cover the full five-value set the editor exposes.
 
+**Disposition:** fixed
+**Commit:** `61144584e3c403351ea61c3614204d25cebc996e`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-043: Run-set live view has no error/close handling on its WebSocket — no polling fallback either
 
 **File:** `packages/flight/ui/src/components/RunSetDetail.tsx`
