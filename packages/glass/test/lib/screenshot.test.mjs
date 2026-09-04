@@ -1,13 +1,10 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
-import { createRequire } from 'node:module';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { makePageSessionFake } from './_helpers.mjs';
-
-const require = createRequire(import.meta.url);
-const { attachScreenshot } = require('../../skills/browsing/lib/screenshot.js');
+import { attachScreenshot } from '../../skills/browsing/scripts/lib/screenshot.mjs';
 
 // Helper: create a real temp session dir and tear it down after the test.
 async function withTempDir(fn) {

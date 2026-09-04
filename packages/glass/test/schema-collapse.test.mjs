@@ -16,6 +16,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { makePageSessionFake } from './lib/_helpers.mjs';
+import { attachConsoleLogging as attachConsoleLoggingEsm } from '../skills/browsing/scripts/lib/console-logging.mjs';
 
 // The restartInMode tests reach the real profile-lock helpers; isolate every
 // meta/lock path so this process never touches the user's real cache dir.
@@ -304,13 +305,11 @@ describe('Fix E: kill_chrome and restart_chrome methods exist on session', () =>
 // ---------------------------------------------------------------------------
 
 describe('Fix G: console message dedup', () => {
-  const { attachConsoleLogging } = require('../skills/browsing/lib/console-logging.js');
-
   function setup(sessionId = 'S-dedup') {
     const ps = makePageSessionFake({}, { sessionId });
     const state = { consoleMessages: new Map() };
     const getPageSession = async () => ps;
-    const api = attachConsoleLogging({ state, getPageSession });
+    const api = attachConsoleLoggingEsm({ state, getPageSession });
     return { ps, state, ...api };
   }
 
@@ -332,7 +331,7 @@ describe('Fix G: console message dedup', () => {
     const ps2 = makePageSessionFake({}, { sessionId: 'S-dedup-2' });
     const getPageSession2 = async () => ps2;
     const { enableConsoleLogging: enable2, getConsoleMessages: get2 } =
-      attachConsoleLogging({ state, getPageSession: getPageSession2 });
+      attachConsoleLoggingEsm({ state, getPageSession: getPageSession2 });
     await enable2(0);
 
     // Step 1: Inject the first message and capture its timestamp.
