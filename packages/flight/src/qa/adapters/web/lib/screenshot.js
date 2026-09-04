@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const os = require('os');
 const { getElementSelector } = require('./element-selector');
 const { throwIfExceptionDetails } = require('./cdp-utils');
@@ -37,15 +37,26 @@ function attachScreenshot({ getPageSession }) {
     try {
       let width, height;
 
+      // CR-077: filepath (and maxDimension) go through execFileSync's argv
+      // array, never through a shell string — a filepath containing a
+      // double quote, backtick, or $(...) can no longer break out of an
+      // interpolated shell command. `stdio: ['ignore', 'pipe', 'ignore']`
+      // replaces the old `2>/dev/null` shell redirection.
+      const EXEC_OPTS = { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] };
+
       if (platform === 'darwin') {
-        const output = execSync(`sips -g pixelWidth -g pixelHeight "${filepath}" 2>/dev/null`, { encoding: 'utf8' });
+        const output = execFileSync(
+          'sips',
+          ['-g', 'pixelWidth', '-g', 'pixelHeight', filepath],
+          EXEC_OPTS,
+        );
         const widthMatch = output.match(/pixelWidth:\s*(\d+)/);
         const heightMatch = output.match(/pixelHeight:\s*(\d+)/);
         width = widthMatch ? parseInt(widthMatch[1]) : 0;
         height = heightMatch ? parseInt(heightMatch[1]) : 0;
       } else if (platform === 'linux') {
         try {
-          const output = execSync(`identify -format "%w %h" "${filepath}" 2>/dev/null`, { encoding: 'utf8' });
+          const output = execFileSync('identify', ['-format', '%w %h', filepath], EXEC_OPTS);
           [width, height] = output.trim().split(' ').map(Number);
         } catch {
           // ImageMagick not available — skip downscaling.
@@ -61,9 +72,13 @@ function attachScreenshot({ getPageSession }) {
       }
 
       if (platform === 'darwin') {
-        execSync(`sips -Z ${maxDimension} "${filepath}" 2>/dev/null`);
+        execFileSync('sips', ['-Z', String(maxDimension), filepath], EXEC_OPTS);
       } else if (platform === 'linux') {
-        execSync(`convert "${filepath}" -resize ${maxDimension}x${maxDimension}\\> "${filepath}" 2>/dev/null`);
+        execFileSync(
+          'convert',
+          [filepath, '-resize', `${maxDimension}x${maxDimension}>`, filepath],
+          EXEC_OPTS,
+        );
       }
     } catch (_e) {
       // Better to ship a too-big PNG than none.
