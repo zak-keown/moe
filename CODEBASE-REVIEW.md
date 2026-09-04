@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 85
+  fixed: 93
   stale: 1
   skipped: 0
   deferred: 0
-  open: 21
+  open: 13
 ---
 
 # Codebase Review — moe
@@ -867,6 +867,10 @@ I confirmed there is no other guard: `grep -rn "getArchiveDir\|isUnderRoot\|read
 
 Fix: resolve `params.path`, realpath it, and require it be contained in `getArchiveDir()` (mirroring the journal's two-stage guard) before reading.
 
+**Disposition:** fixed
+**Commit:** `49e6fb0738391e09c22f0311bde6073234d911e5`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-020: `release --execute` commands print success but never invoke the release automation they claim to run
 
 **File:** `packages/mint/src/release/promotion.ts`
@@ -2036,6 +2040,10 @@ const sourceType = params.source.slice(0, sourceColon) as SourceType;
 
 Since these tools are model-callable and the API contract advertised to the model (`inputSchema` description: `"e.g. 'exchange:abc123', 'journal:def456', 'decision:ghi789'"`) implies a closed set of types, a malformed or hallucinated `type:id` string silently corrupts the graph rather than erroring — `traceProvenance` walks `source_type`/`target_type` equality, so a typo'd type just becomes an unreachable island with no diagnostic. Add a zod `.refine()` (or a regex/enum check on the prefix) before constructing the edge, and consider a `CHECK` constraint in the schema as defense in depth.
 
+**Disposition:** fixed
+**Commit:** `e34065c9286ecf0ab27c677885aefa8e78fbdc73`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-058: `searchConversations` and other DB-opening helpers leak the SQLite handle on error
 **File:** `packages/memory/src/search.ts`
 **Anchor:** `const db = initDatabase();` in `searchConversations`
@@ -2047,6 +2055,10 @@ This matters most because `searchConversations` is called directly from the `sea
 
 Contrast this with `stats.ts`'s `getIndexStats` and `journal-cli.ts`/`stats-cli.ts`, which correctly wrap their DB usage in `try { ... } finally { db.close(); }`. The identical gap (open `initDatabase()`, do fallible work, unconditional close with no `finally`) also exists in `sync.ts`'s `syncConversations` (around the `initEmbeddings()` call before its indexing loop) and `verify.ts`'s `verifyIndex` (the `db` opened at the top is only guaranteed to close if none of the un-guarded `fs.readdirSync`/`fs.statSync` calls in the project walk throw); those two are lower risk since they normally run inside short-lived CLI/hook processes that exit right after, but they are the same defect. Wrap each of these in `try/finally`.
 
+**Disposition:** fixed
+**Commit:** `583b74f0b35113c3446cd373f639ce73a8889a66`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-059: Persistent "thinking budget" summarizer failure is silently accepted as the permanent summary
 **File:** `packages/memory/src/summarizer.ts`
 **Anchor:** `// If fallback also fails, return error message`
@@ -2070,6 +2082,10 @@ When both the primary and fallback model hit this specific API error, `callClaud
 
 This defeats the error-sentinel mechanism the file's own comments describe as fixing "#96" (failed summarizations must be retryable, not silently permanent): `formatErrorSentinel`/`ERROR_MARKER` is only written from a `catch` block, and this path never throws, so `hasRealSummary()` sees ordinary non-empty text and treats it as a legitimate summary forever. A misconfigured `thinking.budget_tokens` setting (a persistent, not transient, condition — it will recur for every conversation processed while misconfigured) therefore poisons the search index with API-error text as the "summary" for every affected conversation, permanently, with no retry path and no operator-visible signal beyond one `console.log` on the first attempt (easy to miss during a large backfill). The fix is to throw (e.g. `throw new SummarizerSdkError(...)` or a dedicated error) in the fallback-also-failed branch instead of returning the error text as data.
 
+**Disposition:** fixed
+**Commit:** `a92c8c095c407831403ec4438785330c17c70019`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-060: Claude E2E harness leaks a real Codex-style temp directory that is never cleaned up
 
 **File:** `packages/memory/test/manual/claude-e2e.js`
@@ -2110,6 +2126,10 @@ Fix: wrap `main()`'s body in the same `withTempRoot`-shaped guarantee used in
 `test/manual/codex-e2e.js` (or extract the helper to a shared location both scripts import), so
 the mkdtemp'd root is removed on both the success and throw paths.
 
+**Disposition:** fixed
+**Commit:** `4fdf754a09f01062f5ed182d68446463fd2f1013`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-061: agent-plugins-1.0 install doc falsely claims a custom skills path "will not be discovered"
 
 **File:** `packages/mint/src/adapters/agent-plugins.ts`
@@ -2944,6 +2964,10 @@ block already has, or move `bug3Dir`/`bug4Dir` under the shared `tmpRoot`.
 
 `runSync()` unconditionally adds one listener each for `"exit"`, `"SIGINT"`, `"SIGTERM"`, and `"SIGHUP"` every time it runs, and never removes them (`process.off`/`removeListener` is never called). For a normal one-shot CLI invocation this is harmless because the process exits immediately afterward. But `runSync` is an exported function, not a script entry point, and nothing prevents it from being called more than once inside a single process (e.g. a test suite that calls it repeatedly, or any future in-process caller). Each extra call adds four more permanent listeners; past the default Node limit of 10 per event, `process.on("exit", ...)` and friends will start emitting `MaxListenersExceededWarning`, and every one of the accumulated closures (each capturing its own `syncLock`/`released` state) fires on the eventual signal/exit even though only the most recent call's lock is still meaningfully live. It's inert in the common CLI case, but it's a real, unbounded listener leak for any repeated in-process use — guard with `once()` plus explicit removal after `releaseSyncLockOnce()` fires, or register the handlers once at module scope instead of per-call.
 
+**Disposition:** fixed
+**Commit:** `63ec17827b478b05747b11d9b3c231cd816fea4c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-098: Vacuous "malformed JSONL" test does not exercise malformed input
 
 **File:** `packages/memory/test/parser.test.ts`
@@ -2952,6 +2976,10 @@ block already has, or move `bug3Dir`/`bug4Dir` under the shared `tmpRoot`.
 
 The test's own comment admits it: "This test would need a fixture with malformed JSON. For now, we verify that valid fixtures don't throw." The body calls `parseConversationFile` on `short-conversation.jsonl` — a valid fixture already covered by three other tests in the same `describe` block — and asserts only `expect(result).toBeDefined()`. It never constructs or feeds malformed JSONL, so it cannot catch a real regression in the parser's malformed-line handling (e.g., a change that makes `parseConversationFile` throw on a truncated or non-JSON line instead of skipping it). I confirmed by grep that no other file in `packages/memory/test/` exercises malformed JSONL input (`verify.test.ts` even has a comment noting corruption detection is "harder to test... skipping for now"), so this is the only place such a regression could be caught, and it is not caught. A reader trusting the test name would believe malformed-input handling is under regression protection; it is not. Fix: either write a fixture with a genuinely malformed line (unterminated JSON, non-JSON garbage line mixed with valid lines) and assert the valid lines still parse, or rename the test to reflect what it actually verifies and drop the misleading claim.
 
+**Disposition:** fixed
+**Commit:** `67129698660c99b2ab870722e9828659d62abb7e`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-099: Vacuous "sidechain" test asserts nothing sidechain-specific
 
 **File:** `packages/memory/test/show.test.ts`
@@ -2960,6 +2988,10 @@ The test's own comment admits it: "This test would need a fixture with malformed
 
 The test body is `expect(markdown).toBeTruthy()` on the same fixture used by five other tests in the file, with a comment admitting "For now we test the structure - will need a fixture with sidechains later." `toBeTruthy()` on a non-empty markdown string is guaranteed to pass regardless of whether sidechain rendering logic exists, is correct, or is deleted entirely. I grepped `packages/memory/test/` and found no fixture or test elsewhere that exercises `isSidechain: true` content through `formatConversationAsMarkdown`/`formatConversationAsHTML`. This means sidechain formatting in `show.ts` has no regression coverage anywhere in the suite despite a test that reads as if it provides some. Fix: add a fixture line with `isSidechain: true` and assert on the specific rendering (e.g., a sidechain marker/heading), or remove the test rather than leave a false signal of coverage.
 
+**Disposition:** fixed
+**Commit:** `6c4ad266ee27bc7f9e2bdea6844023dc59d76717`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-100: Dead code computes SHA-512 of an empty string instead of the tarball's actual digest
 
 **File:** `packages/mint/src/release/candidate.ts`

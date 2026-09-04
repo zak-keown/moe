@@ -177,6 +177,56 @@ function codexJsonlWithLocalShellOutput(): string {
     .join("\n");
 }
 
+/**
+ * A minimal conversation where a subagent sidechain runs in the middle of the
+ * main thread: a main-thread user turn, a sidechain assistant/user exchange
+ * (isSidechain: true), then a main-thread assistant turn that resumes after
+ * it. Exercises formatConversationAsMarkdown's SIDECHAIN START/END grouping
+ * and its isSidechain-driven Agent/Subagent role labels (show.ts), without
+ * needing a full real transcript fixture.
+ */
+function sidechainJsonl(): string {
+  return [
+    {
+      uuid: "main-user-1",
+      parentUuid: null,
+      timestamp: "2026-01-01T00:00:00.000Z",
+      type: "user",
+      isSidechain: false,
+      message: { role: "user", content: "Please refactor the auth module." },
+    },
+    {
+      uuid: "sub-assistant-1",
+      parentUuid: "main-user-1",
+      timestamp: "2026-01-01T00:00:01.000Z",
+      type: "assistant",
+      isSidechain: true,
+      message: { role: "assistant", content: "Investigating the auth module's code paths." },
+    },
+    {
+      uuid: "sub-user-1",
+      parentUuid: "sub-assistant-1",
+      timestamp: "2026-01-01T00:00:02.000Z",
+      type: "user",
+      isSidechain: true,
+      message: { role: "user", content: "Report back what you found." },
+    },
+    {
+      uuid: "main-assistant-1",
+      parentUuid: "sub-user-1",
+      timestamp: "2026-01-01T00:00:03.000Z",
+      type: "assistant",
+      isSidechain: false,
+      message: {
+        role: "assistant",
+        content: "Refactored the auth module using the subagent's findings.",
+      },
+    },
+  ]
+    .map((line) => JSON.stringify(line))
+    .join("\n");
+}
+
 describe("show command - markdown formatting", () => {
   const fixturesDir = join(import.meta.dirname, "fixtures");
 
@@ -241,12 +291,38 @@ describe("show command - markdown formatting", () => {
   });
 
   it("should indicate sidechains if present", () => {
-    // For now we test the structure - will need a fixture with sidechains later
-    const jsonl = readFileSync(join(fixturesDir, "tiny-conversation.jsonl"), "utf-8");
+    // CR-099: this used to run tiny-conversation.jsonl (no sidechain content,
+    // already covered by five other tests in this file) through
+    // formatConversationAsMarkdown and assert only `toBeTruthy()` — true of
+    // any non-empty markdown string regardless of whether sidechain
+    // rendering exists, is correct, or is deleted. sidechainJsonl() actually
+    // contains isSidechain: true messages, so this now exercises show.ts's
+    // real sidechain-grouping logic.
+    const jsonl = sidechainJsonl();
     const markdown = formatConversationAsMarkdown(jsonl);
 
-    // Should have structure that could show sidechains
-    expect(markdown).toBeTruthy();
+    // The sidechain start/end markers actually appear...
+    expect(markdown).toContain("SIDECHAIN START");
+    expect(markdown).toContain("SIDECHAIN END");
+
+    // ...the sidechain messages get the Subagent role label, distinct from
+    // the main thread's User/Agent labels...
+    expect(markdown).toMatch(/\*\*Subagent\*\*/);
+
+    // ...and everything is ordered correctly: START precedes the sidechain
+    // content, which precedes END, which precedes the main-thread message
+    // that resumes after the sidechain closes.
+    const startIndex = markdown.indexOf("SIDECHAIN START");
+    const subagentContentIndex = markdown.indexOf("Investigating the auth module's code paths");
+    const endIndex = markdown.indexOf("SIDECHAIN END");
+    const resumedMainThreadIndex = markdown.indexOf(
+      "Refactored the auth module using the subagent's findings",
+    );
+
+    expect(startIndex).toBeGreaterThan(-1);
+    expect(subagentContentIndex).toBeGreaterThan(startIndex);
+    expect(endIndex).toBeGreaterThan(subagentContentIndex);
+    expect(resumedMainThreadIndex).toBeGreaterThan(endIndex);
   });
 
   it("should handle token usage information", () => {

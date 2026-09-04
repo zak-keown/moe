@@ -216,74 +216,76 @@ export async function searchConversations(
 
   let results: ExchangeRow[] = [];
 
-  const { sql: filterClause, params: filterParams } = buildSearchFilters(options);
+  try {
+    const { sql: filterClause, params: filterParams } = buildSearchFilters(options);
 
-  if (mode === "vector" || mode === "both") {
-    // Vector similarity search.
-    // vec0 applies KNN before WHERE, so when extra metadata filters are
-    // active we ask for more candidates than `limit` and trim afterwards.
-    await initEmbeddings();
-    const queryEmbedding = await generateQueryEmbedding(query);
-    const k = hasMetadataFilters(options) ? limit * 3 : limit;
+    if (mode === "vector" || mode === "both") {
+      // Vector similarity search.
+      // vec0 applies KNN before WHERE, so when extra metadata filters are
+      // active we ask for more candidates than `limit` and trim afterwards.
+      await initEmbeddings();
+      const queryEmbedding = await generateQueryEmbedding(query);
+      const k = hasMetadataFilters(options) ? limit * 3 : limit;
 
-    const stmt = db.prepare(`
-      SELECT
-        ${EXCHANGE_SELECT_COLUMNS},
-        vec.distance
-      FROM vec_exchanges AS vec
-      JOIN exchanges AS e ON vec.id = e.id
-      WHERE vec.embedding MATCH ?
-        AND k = ?
-        AND e.is_sidechain = 0
-        ${filterClause}
-      ORDER BY vec.distance ASC
-    `);
+      const stmt = db.prepare(`
+        SELECT
+          ${EXCHANGE_SELECT_COLUMNS},
+          vec.distance
+        FROM vec_exchanges AS vec
+        JOIN exchanges AS e ON vec.id = e.id
+        WHERE vec.embedding MATCH ?
+          AND k = ?
+          AND e.is_sidechain = 0
+          ${filterClause}
+        ORDER BY vec.distance ASC
+      `);
 
-    results = stmt.all(
-      Buffer.from(new Float32Array(queryEmbedding).buffer),
-      k,
-      ...filterParams,
-    ) as ExchangeRow[];
-    if (results.length > limit) {
-      results = results.slice(0, limit);
-    }
-  }
-
-  if (mode === "text" || mode === "both") {
-    // Text search
-    const textStmt = db.prepare(`
-      SELECT
-        ${EXCHANGE_SELECT_COLUMNS},
-        NULL as distance
-      FROM exchanges AS e
-      WHERE (e.user_message LIKE ? OR e.assistant_message LIKE ?)
-        AND e.is_sidechain = 0
-        ${filterClause}
-      ORDER BY e.timestamp DESC
-      LIMIT ?
-    `);
-
-    const textResults = textStmt.all(
-      `%${query}%`,
-      `%${query}%`,
-      ...filterParams,
-      limit,
-    ) as ExchangeRow[];
-
-    if (mode === "both") {
-      // Merge and deduplicate by ID
-      const seenIds = new Set(results.map((r) => r.id));
-      for (const textResult of textResults) {
-        if (!seenIds.has(textResult.id)) {
-          results.push(textResult);
-        }
+      results = stmt.all(
+        Buffer.from(new Float32Array(queryEmbedding).buffer),
+        k,
+        ...filterParams,
+      ) as ExchangeRow[];
+      if (results.length > limit) {
+        results = results.slice(0, limit);
       }
-    } else {
-      results = textResults;
     }
-  }
 
-  db.close();
+    if (mode === "text" || mode === "both") {
+      // Text search
+      const textStmt = db.prepare(`
+        SELECT
+          ${EXCHANGE_SELECT_COLUMNS},
+          NULL as distance
+        FROM exchanges AS e
+        WHERE (e.user_message LIKE ? OR e.assistant_message LIKE ?)
+          AND e.is_sidechain = 0
+          ${filterClause}
+        ORDER BY e.timestamp DESC
+        LIMIT ?
+      `);
+
+      const textResults = textStmt.all(
+        `%${query}%`,
+        `%${query}%`,
+        ...filterParams,
+        limit,
+      ) as ExchangeRow[];
+
+      if (mode === "both") {
+        // Merge and deduplicate by ID
+        const seenIds = new Set(results.map((r) => r.id));
+        for (const textResult of textResults) {
+          if (!seenIds.has(textResult.id)) {
+            results.push(textResult);
+          }
+        }
+      } else {
+        results = textResults;
+      }
+    }
+  } finally {
+    db.close();
+  }
 
   return results.map((row) => {
     const exchange = exchangeFromRow(row);
