@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 6
+  fixed: 7
   stale: 0
   skipped: 0
   deferred: 0
-  open: 101
+  open: 100
 ---
 
 # Codebase Review — moe
@@ -2302,6 +2302,10 @@ The comment on the final branch says: "Real failure — let the caller know, but
 
 Fix: either make the comment accurate (state plainly that failures are swallowed and unobservable), or actually surface the failure (e.g. attach a warning to the `CommandResult` returned by `cmdStop`).
 
+**Disposition:** fixed
+**Commit:** `b32c486a76b695f434d9042fd7cdc581738df6d9`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-075: Verdict-cache grows without bound for the lifetime of the dashboard process
 
 **File:** `packages/flight/dashboard/src/scan.ts`
