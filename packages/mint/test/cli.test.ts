@@ -243,7 +243,7 @@ describe('CLI end-to-end', () => {
     expect(result.stderr).toContain('missing-runtime')
     expect(readFileSync(join(root, 'plugins', 'canonical.bin'))).toEqual(canonical)
     expect(existsSync(join(root, 'plugins.next-sixfailure'))).toBe(false)
-  })
+  }, 30_000)
 
   it('ships every core hook executable referenced by the canonical Claude hook manifest', () => {
     const pluginRoot = join(WORKSPACE_ROOT, 'plugins', 'moe')

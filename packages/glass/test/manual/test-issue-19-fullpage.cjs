@@ -63,7 +63,7 @@ console.log('\n=== Issue #19: fullpage - CLI chrome-ws handles --fullpage flag =
 
 test('chrome-ws CLI source includes --fullpage flag handling', () => {
   const fs = require('fs');
-  const cliSrc = fs.readFileSync('./skills/browsing/chrome-ws', 'utf8');
+  const cliSrc = fs.readFileSync('./browsing-compat/chrome-ws', 'utf8');
   assert.ok(
     cliSrc.includes('--fullpage') || cliSrc.includes('fullpage') || cliSrc.includes('fullPage'),
     'chrome-ws CLI should handle --fullpage flag for screenshot command'

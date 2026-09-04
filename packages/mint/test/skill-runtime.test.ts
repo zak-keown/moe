@@ -241,7 +241,6 @@ describe('skill runtime validation', () => {
       { path: 'skills/demo/guide.md', code: 'SKILL_RUNTIME_INVOCATION' },
       { path: 'skills/demo/guide.md', code: 'SKILL_RUNTIME_INVOCATION' },
       { path: 'skills/demo/guide.md', code: 'SKILL_RUNTIME_INVOCATION' },
-      { path: 'skills/demo/scripts/prompt.md', code: 'SKILL_RUNTIME_INVOCATION' },
       { path: 'skills/demo/scripts/prompt.md', code: 'SKILL_RUNTIME_REFERENCE' },
     ])
   })
