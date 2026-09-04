@@ -309,6 +309,23 @@ describe("transitions", () => {
     expect(sha).toBeTruthy();
     expect(sha).not.toBe("abc1234");
   });
+
+  it("accept moves needs-triage → open and records provenance", async () => {
+    const { backlogAdd, backlogDefer, backlogAccept, parseItem } = await import(
+      "../src/backlog.js"
+    );
+    const id = idOf(backlogAdd("triaged", { cwd: repo }));
+    backlogDefer(id, { reason: "mystery", cwd: repo }); // unrecognized → needs-triage
+    const item = parseItem(readFileSync(backlogAccept(id, { cwd: repo, by: "human" }), "utf-8"));
+    expect(item.status).toBe("open");
+    expect(item.movedBy).toBe("human");
+  });
+
+  it("accept refuses a non-triage state", async () => {
+    const { backlogAdd, backlogAccept } = await import("../src/backlog.js");
+    const id = idOf(backlogAdd("open item", { cwd: repo }));
+    expect(() => backlogAccept(id, { cwd: repo })).toThrow(/cannot accept/);
+  });
 });
 
 describe("read surface", () => {

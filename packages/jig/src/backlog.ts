@@ -288,6 +288,15 @@ export function backlogResume(
   return { path, resume: rm ? (rm[0] ?? "") : "" };
 }
 
+export function backlogAccept(id: string, opts: { cwd?: string; by?: string } = {}): string {
+  const { dir, name, item } = loadItem(opts.cwd, id);
+  if (item.status !== "needs-triage")
+    throw new Error(`cannot accept ${id}: status is ${item.status} (only needs-triage)`);
+  item.status = "open";
+  item.movedBy = opts.by ?? "manual";
+  return persist(dir, name, item, opts.cwd);
+}
+
 export function backlogDone(
   id: string,
   opts: { cwd?: string; commit?: string; by?: string } = {},

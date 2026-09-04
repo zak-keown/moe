@@ -109,4 +109,28 @@ describe("moe-jig CLI", () => {
       rmSync(repo, { recursive: true, force: true });
     }
   });
+
+  it("accepts a triaged item to open end-to-end", () => {
+    const repo = makeRepo();
+    try {
+      const addOut = execFileSync(process.execPath, [CLI, "backlog", "add", "triage cli"], {
+        cwd: repo,
+        encoding: "utf-8",
+      });
+      const id = /\bBL-[0-9a-f]{10}\b/.exec(addOut)?.[0] ?? "";
+      runIn(repo, "backlog", "defer", id, "--reason", "just because"); // → needs-triage
+      const out = execFileSync(process.execPath, [CLI, "backlog", "accept", id], {
+        cwd: repo,
+        encoding: "utf-8",
+      });
+      expect(out).toContain(".moe/backlog");
+      const show = execFileSync(process.execPath, [CLI, "backlog", "show", id], {
+        cwd: repo,
+        encoding: "utf-8",
+      });
+      expect(show).toContain("status: open");
+    } finally {
+      rmSync(repo, { recursive: true, force: true });
+    }
+  });
 });
