@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 3
+  fixed: 4
   stale: 1
   skipped: 0
   deferred: 0
-  open: 103
+  open: 102
 ---
 
 # Codebase Review — moe
@@ -1354,6 +1354,10 @@ const base = `  ${p.cyan("▸")} ${p.bold(name)}${bodyStr}`;
 
 This is not a narrow edge case: `report_result` (`REPORT_TOOL` / `agent.ts`, called exactly once at the end of every run) is not in `format-args.ts`'s `HUMANIZERS` map, so every run's final tool call falls through to `jsonFallback`, which is `JSON.stringify(args)` of the full `status`/`summary`/`observations[]`/`criteria[]` payload — routinely hundreds to thousands of characters — rendered as one unwrapped, un-truncated terminal line. This is a real, always-reachable readability defect in the pretty-mode CLI stream, not a hypothetical one. Wire `truncateArgs` (or an equivalent cap) into `renderToolCall`'s body before printing.
 
+**Disposition:** fixed
+**Commit:** `a03e123b2d8fd3dd2bae15e51714906fc64962a3`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-037: Fanout card generation silently corrupts embedded code fences in generated story-card content
 
 **File:** `packages/flight/src/qa/fanout/generator.ts`
