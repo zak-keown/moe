@@ -396,7 +396,12 @@ export function cellView(
   } else {
     const latest = cell.window[cell.window.length - 1] as RunRecord;
     bottom = "—";
-    drift = driftFlag(cellCosts(cell));
+    // cellCosts() filters out unpriced (null cost_usd) runs, so its last
+    // element is only the TRUE latest run's cost when that run is priced. If
+    // the chronologically-latest run is unpriced, there is no drift signal
+    // available -- falling through to an earlier run's cost as "latest" would
+    // point a viewer investigating a spike at the wrong run (CR-031).
+    drift = latest.cost_usd !== null && driftFlag(cellCosts(cell));
     face_time = formatDuration(effectiveDuration(latest));
     face_cost = rowCost(latest.cost_usd);
   }
