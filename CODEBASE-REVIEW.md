@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 4
+  fixed: 5
   stale: 0
   skipped: 0
   deferred: 0
-  open: 103
+  open: 102
 ---
 
 # Codebase Review — moe
@@ -1829,6 +1829,10 @@ This is currently latent because the one shipped extension (`@bubstack/moe-jig-g
 
 Fix: preserve the original flag string (e.g. capture `ext.options` flags mapped by their Commander-derived key before parsing) instead of re-deriving `--${camelCaseKey}`.
 
+**Disposition:** fixed
+**Commit:** `d098f67f19ffeaacfbfd3f5cd52e86659037a3e2`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-056: `computeWaves` silently drops tasks whose `depends_on` references an unknown task number
 
 **File:** `packages/jig/src/parser.ts`
