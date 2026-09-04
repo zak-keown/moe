@@ -305,9 +305,11 @@ def execute_run(runs_root, task, config_name, runner, model):
             "MOE_PROOF_RUN_DIR": str(run_dir.resolve()),
         }
     )
-    # Not every Task is a single prompt - some carry other data instead
+    # Not every Task is a single prompt - some carry other data instead.
+    # Stringify like every other scalar routed into the env (scalar_env_vars)
+    # - an unquoted numeric/bool YAML scalar here must not crash subprocess.run.
     if "prompt" in task:
-        env["MOE_PROOF_PROMPT"] = task["prompt"]
+        env["MOE_PROOF_PROMPT"] = str(task["prompt"])
     t0 = time.monotonic()
     result = subprocess.run(
         [str(runner)], cwd=run_dir, env=env, capture_output=True, text=True
