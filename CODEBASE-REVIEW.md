@@ -14,6 +14,12 @@ findings:
   total: 107
 verified: false
 status: issues_found
+dispositions:
+  fixed: 1
+  stale: 0
+  skipped: 0
+  deferred: 0
+  open: 106
 ---
 
 # Codebase Review — moe
@@ -510,6 +516,10 @@ The process exits with code 1 immediately after the synchronous call returns —
 
 Fix: attach `proc.on('error', (err) => { ... })` before returning/polling in `trySpawnOn`, converting the async spawn failure into a rejected promise (or at minimum a swallowed/logged error) instead of an unhandled `EventEmitter` throw.
 
+**Disposition:** fixed
+**Commit:** `3b98657939f428f80db11723015e7464a5c48df9`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-012: `navigate()` never checks `Page.navigate`'s `errorText`, so failed navigations are reported as success
 
 **File:** `packages/flight/src/qa/adapters/web/lib/navigation.js`
