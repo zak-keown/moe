@@ -145,6 +145,24 @@ describe('synthetic html', () => {
     assert.match(out.html, /data-device-id="abc"/);
   });
 
+  it('HTML-escapes a device name/id that breaks out of the button tag (CR-048)', () => {
+    const out = renderSyntheticArtifacts({
+      kind: 'device-chooser',
+      payload: {
+        requestId: 'r',
+        deviceKind: 'bluetooth',
+        devices: [{ id: 'dev1', name: '"><script>window.__pwned = true;</script>' }],
+      },
+      staged: {},
+    });
+    // The raw payload must never appear verbatim — it would break out of the
+    // <button> tag and inject a live <script> element into the artifact.
+    assert.doesNotMatch(out.html, /<script>window\.__pwned/);
+    assert.doesNotMatch(out.html, /"><script>/);
+    // The escaped form must still be present so the device name is visible.
+    assert.match(out.html, /&quot;&gt;&lt;script&gt;/);
+  });
+
   it('emits username and password inputs for basic-auth', () => {
     const out = renderSyntheticArtifacts({
       kind: 'basic-auth',

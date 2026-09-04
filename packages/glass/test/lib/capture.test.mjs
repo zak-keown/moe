@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import { createRequire } from 'node:module';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { JSDOM } from 'jsdom';
 import { afterAll, describe, it } from 'vitest';
 import { makePageSessionFake as makePageSessionFakeWithTargetId } from './_helpers.mjs';
 
@@ -220,6 +221,9 @@ describe('clickWithCapture with dialog::* selector (Bug 2 regression)', () => {
 });
 
 describe('captureActionWithDiff session pinning (Bug 3 regression)', () => {
+  const bug3Dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bug3-'));
+  afterAll(() => fs.rmSync(bug3Dir, { recursive: true, force: true }));
+
   it('AFTER-capture targets the same pageSession as at action start, not re-resolved index 0', async () => {
     // When a click opens a popup, Chrome may reorder tabs so tab[0] becomes
     // the popup.  captureActionWithDiff must NOT re-resolve "tab 0" after the
@@ -257,7 +261,6 @@ describe('captureActionWithDiff session pinning (Bug 3 regression)', () => {
       return originalPs; // still return original for the test to complete
     };
 
-    const bug3Dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bug3-'));
     const { captureActionWithDiff } = attachCapture({
       state: { sessionDir: bug3Dir, captureCounter: 0 },
       getPageSession,
@@ -274,6 +277,9 @@ describe('captureActionWithDiff session pinning (Bug 3 regression)', () => {
 });
 
 describe('captureActionWithDiff restoreFocus uses preventScroll (Bug 4 regression)', () => {
+  const bug4Dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bug4-'));
+  afterAll(() => fs.rmSync(bug4Dir, { recursive: true, force: true }));
+
   it('restoreFocus calls el.focus({ preventScroll: true }) so scroll position is preserved', async () => {
     // When BEFORE-capture saves focus and then restores it after the screenshot,
     // the old code called el.focus() without preventScroll:true.  On Chrome,
@@ -291,7 +297,6 @@ describe('captureActionWithDiff restoreFocus uses preventScroll (Bug 4 regressio
       },
     }, { sessionId: 'S-scroll', targetId: 'T-scroll' });
 
-    const bug4Dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bug4-'));
     const { captureActionWithDiff } = attachCapture({
       state: { sessionDir: bug4Dir, captureCounter: 0 },
       getPageSession: async () => ps,
@@ -308,4 +313,78 @@ describe('captureActionWithDiff restoreFocus uses preventScroll (Bug 4 regressio
     assert.match(restoreExpr, /preventScroll.*true|preventScroll:.*true/,
       'restoreFocus must call el.focus({ preventScroll: true }) to avoid scroll reset');
   });
+});
+
+describe('captureActionWithDiff restoreFocus with a quote in the name attribute (CR-092)', () => {
+  it('does not throw a DOMException when the focused element\'s name attribute contains a double quote', async () => {
+    // Build a real DOM with an <input name='foo"bar'> — a perfectly legal
+    // HTML/DOM attribute value. restoreFocus's 'name' branch built a CSS
+    // attribute selector via bare string concatenation
+    // (tag + '[name="' + value + '"]') before JSON.stringify-ing the whole
+    // thing as a JS string literal — JSON.stringify escapes it correctly for
+    // JS-string embedding, but does nothing for the CSS syntax inside that
+    // string, so an embedded `"` produced a malformed selector.
+    const dom = new JSDOM('<!doctype html><html><body></body></html>', { runScripts: 'dangerously' });
+    const { window } = dom;
+    const input = window.document.createElement('input');
+    input.setAttribute('name', 'foo"bar');
+    window.document.body.appendChild(input);
+    let focused = false;
+    input.focus = () => { focused = true; };
+
+    const ps = makePageSessionFakeWithTargetId({
+      'Runtime.evaluate': (params) => {
+        const expr = params.expression;
+        if (expr && expr.includes('document.activeElement')) {
+          // saveFocus result: a name-type focusInfo with an embedded quote.
+          return { result: { value: { type: 'name', value: 'foo"bar', tag: 'input' } } };
+        }
+        // restoreFocus's querySelector+focus expression: evaluate for real
+        // against a live DOM, so a malformed CSS selector surfaces as a
+        // genuine thrown DOMException, not a simulated one.
+        const result = window.eval(expr);
+        return { result: { value: result } };
+      },
+    }, { sessionId: 'S-quote', targetId: 'T-quote' });
+
+    const cr092Dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cr092-'));
+    const { captureActionWithDiff } = attachCapture({
+      state: { sessionDir: cr092Dir, captureCounter: 0 },
+      getPageSession: async () => ps,
+      getHtml: async () => '<html></html>',
+      screenshot: async (_tab, file) => { fs.writeFileSync(file, ''); },
+      actions: {},
+    });
+
+    await captureActionWithDiff(0, 'click', async () => 'click-done', 0);
+
+    assert.equal(focused, true, 'restoreFocus should have found and focused the input despite the quote in its name');
+
+    fs.rmSync(cr092Dir, { recursive: true, force: true });
+  });
+});
+
+// CR-096: bug3Dir/bug4Dir above are created via fs.mkdtempSync with no
+// corresponding cleanup anywhere in this file, unlike the outer 'capture'
+// describe block's tmpRoot (cleaned up in its own afterAll) and CR-092's
+// cr092Dir (cleaned up inline). Every test run left two more directories
+// under the OS temp dir permanently.
+//
+// Snapshots what already exists with these prefixes at module-load time
+// (before any test in this file runs, including the Bug 3/4 tests below in
+// file order) and asserts nothing NEW is left behind once the whole file's
+// suite completes — robust to unrelated pre-existing clutter on a machine
+// that's run this file before the fix landed.
+function listTempDirsWithPrefix(prefix) {
+  return new Set(fs.readdirSync(os.tmpdir()).filter((name) => name.startsWith(prefix)));
+}
+
+const cr096PreExistingBug3Dirs = listTempDirsWithPrefix('bug3-');
+const cr096PreExistingBug4Dirs = listTempDirsWithPrefix('bug4-');
+
+afterAll(() => {
+  const newBug3Dirs = [...listTempDirsWithPrefix('bug3-')].filter((n) => !cr096PreExistingBug3Dirs.has(n));
+  const newBug4Dirs = [...listTempDirsWithPrefix('bug4-')].filter((n) => !cr096PreExistingBug4Dirs.has(n));
+  assert.deepEqual(newBug3Dirs, [], 'Bug 3 regression test must clean up its mkdtempSync dir (CR-096)');
+  assert.deepEqual(newBug4Dirs, [], 'Bug 4 regression test must clean up its mkdtempSync dir (CR-096)');
 });

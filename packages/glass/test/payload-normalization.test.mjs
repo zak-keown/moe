@@ -36,6 +36,7 @@ const {
   describeUnusableScrollPayload,
   resolveConsoleSince,
   tryParseIntegerValue,
+  resolveTypeOptions,
 } = await import(path.join(__dirname, '..', 'dist', 'payload.js'));
 
 // ---------------------------------------------------------------------------
@@ -470,5 +471,47 @@ describe('PAYLOAD_SPECS: the action -> shape declaration table', () => {
 
   it('parsePayload throws for an action with no registered spec', () => {
     assert.throws(() => parsePayload('x', 'not_a_real_action'), /no PayloadSpec registered/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CR-095: the `type` action's handler unconditionally called humanType(),
+// whose default ~80-160ms/char timing turns an ordinary few-hundred-
+// character value into a tens-of-seconds call with no way to opt out.
+// resolveTypeOptions() is the decision logic extracted so it's testable
+// without booting Chrome or an MCP server (index.ts can't be imported
+// directly in a test — see the file-level comment above).
+// ---------------------------------------------------------------------------
+
+describe('resolveTypeOptions: how the type action should perform its typing', () => {
+  it('defaults to the realistic (non-fast) humanType path with no overrides', () => {
+    assert.deepEqual(resolveTypeOptions({ text: 'hello' }), {
+      fast: false, delay: undefined, jitter: undefined,
+    });
+  });
+
+  it('fast:true routes to the fill() fast path', () => {
+    assert.equal(resolveTypeOptions({ text: 'hello', fast: true }).fast, true);
+  });
+
+  it('a non-true fast value does not opt into the fast path', () => {
+    assert.equal(resolveTypeOptions({ text: 'hello', fast: 'true' }).fast, false);
+    assert.equal(resolveTypeOptions({ text: 'hello', fast: 1 }).fast, false);
+  });
+
+  it('forwards numeric delay/jitter overrides for the humanType path', () => {
+    const opts = resolveTypeOptions({ text: 'hello', delay: 0, jitter: 0 });
+    assert.equal(opts.delay, 0);
+    assert.equal(opts.jitter, 0);
+  });
+
+  it('ignores non-numeric delay/jitter values', () => {
+    const opts = resolveTypeOptions({ text: 'hello', delay: '0', jitter: null });
+    assert.equal(opts.delay, undefined);
+    assert.equal(opts.jitter, undefined);
+  });
+
+  it('handles a payload with no extra fields at all', () => {
+    assert.deepEqual(resolveTypeOptions({}), { fast: false, delay: undefined, jitter: undefined });
   });
 });
