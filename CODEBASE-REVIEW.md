@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 4
+  fixed: 5
   stale: 0
   skipped: 0
   deferred: 0
-  open: 103
+  open: 102
 ---
 
 # Codebase Review — moe
@@ -1705,6 +1705,10 @@ the real refusal, and only when a contributor has Chrome installed locally.
 Fix: replace the placebo assertions with the `stageAlertDialog` + wrapped
 session-method-call pattern already proven above.
 
+**Disposition:** fixed
+**Commit:** `d6850a38bbda0231cb00eb71e6ad8f92e8c6087f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-051: Chrome 148+ incompatibility test is not skipped and will always fail
 
 **File:** `packages/glass/test/dialogs.smoke.test.mjs`
