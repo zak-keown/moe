@@ -78,19 +78,6 @@ export class RunSetWriter {
   }
 
   finalize(lookup: (runId: string) => VerdictResult | null): void {
-    // Track which run IDs had results provided via lookup (vs explicitly errored/cancelled)
-    const processedIds = new Set<string>();
-    for (const run of this.manifest.runs) {
-      if (
-        run.status !== "queued" &&
-        run.status !== "running" &&
-        run.status !== "cancelled" &&
-        run.status !== "errored"
-      ) {
-        processedIds.add(run.runId);
-      }
-    }
-
     const perCard: CardSummary[] = this.ctx.cards.map((cardId) => {
       const cardRuns = this.manifest.runs.filter((r) => r.cardId === cardId);
       return summarizeCard(cardId, cardRuns, lookup);
