@@ -159,7 +159,9 @@ describe("packed SessionStart command", () => {
     return spawnSync("bash", ["-c", command], {
       cwd: commandDir,
       env,
-      ...(needsInput ? { input: '{"hook_event_name":"SessionStart","source":"startup"}\n' } : { stdio: ["ignore", "pipe", "pipe"] }),
+      ...(needsInput
+        ? { input: '{"hook_event_name":"SessionStart","source":"startup"}\n' }
+        : { stdio: ["ignore", "pipe", "pipe"] }),
       encoding: "utf8",
     });
   }
