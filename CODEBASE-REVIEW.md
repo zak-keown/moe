@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 1
+  fixed: 2
   stale: 0
   skipped: 0
   deferred: 0
-  open: 106
+  open: 105
 ---
 
 # Codebase Review — moe
@@ -1944,6 +1944,10 @@ The generated install doc directly contradicts the tool's own capability/deliver
 
 Fix: either (a) have `docs-emit.ts` pass each adapter's `adjustedModel(model, adapter.skillLayout)` into `installDoc()` so it sees the same effective component paths `emit()` does, or (b) drop the caveat/branch in `agent-plugins.ts`'s `installDoc` entirely, since the tool always relocates skills to the fixed `skills/` root and the caveat can never be true in a real generation run.
 
+**Disposition:** fixed
+**Commit:** `1267dc571835c15c4633b242c467587775c1ea59`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-062: TOCTOU between the marketplace/catalog symlink check and the write
 
 **File:** `packages/mint/src/platform/projections.ts`
