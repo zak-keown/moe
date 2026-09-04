@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 9
+  fixed: 10
   stale: 0
   skipped: 0
   deferred: 0
-  open: 98
+  open: 97
 ---
 
 # Codebase Review — moe
@@ -2623,6 +2623,10 @@ Meanwhile the actual, comprehensive dialog gate that protects every other page-t
 
 This is a maintenance/drift hazard rather than a live bug today: a future contributor adding a new page-target action would reasonably update `PAGE_TARGET_ACTIONS` (the more prominently documented set, with a full doc comment) believing that's sufficient to gate it, while the actual enforcement point they need to touch is `chrome-ws-lib.js`'s `PAGE_TARGET_SESSION_METHODS`. Any bug introduced in the dead `withDialogAwareness` function would also never be caught by any test that exercises real behavior. Recommend either wiring `withDialogAwareness` into an actual call site or deleting it and the unused portions of `PAGE_TARGET_ACTIONS`/`BROWSER_TARGET_ACTIONS`, and consolidating on the one set that chrome-ws-lib.js actually enforces.
 
+**Disposition:** fixed
+**Commit:** `d724e9ba1a6e11ff2f9af7773cbe19dc0ec56ee9`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-094: `selectOption`'s `index` parameter is interpolated into generated JS source unescaped
 
 **File:** `packages/glass/skills/browsing/lib/select-option.js`
