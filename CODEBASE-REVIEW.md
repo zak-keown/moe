@@ -14,6 +14,12 @@ findings:
   total: 107
 verified: false
 status: issues_found
+dispositions:
+  fixed: 1
+  stale: 0
+  skipped: 0
+  deferred: 0
+  open: 106
 ---
 
 # Codebase Review — moe
@@ -744,6 +750,10 @@ instead of `!id.trim()` alone. (The server-side gap in `scenarios.ts` is
 outside this shard but is the same root cause and should get the same
 guard.)
 
+**Disposition:** fixed
+**Commit:** `a7ffd9ad3f3aeec2770a90c38e979f11f602bd7e`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-018: `seedPlanSkeleton` builds `depends_on` edges backwards
 
 **File:** `packages/jig-graph/src/seed.ts`
