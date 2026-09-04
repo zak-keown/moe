@@ -20,13 +20,14 @@ import {
   truncateForError,
   describeUnusableScrollPayload,
   resolveConsoleSince,
+  resolveTypeOptions,
 } from "./payload.js";
 
 // Re-exported for tests (src/payload.ts has no side effects and is
 // also importable directly from dist/payload.js — this re-export just
 // makes the normalization helpers reachable from the bundled entry point
 // too, without requiring tests to boot a browser or an MCP server).
-export { parsePayload, resolveStrictStructuredPayload, tryParseJsonObject, tryParseCoords, describeUnusableScrollPayload, resolveConsoleSince, tryParseIntegerValue, PAYLOAD_SPECS } from "./payload.js";
+export { parsePayload, resolveStrictStructuredPayload, tryParseJsonObject, tryParseCoords, describeUnusableScrollPayload, resolveConsoleSince, tryParseIntegerValue, PAYLOAD_SPECS, resolveTypeOptions } from "./payload.js";
 
 // Get the directory and import chrome-ws-lib
 const __filename = fileURLToPath(import.meta.url);
@@ -385,10 +386,16 @@ async function executeBrowserAction(params: UseBrowserInput): Promise<string> {
       if (!text || typeof text !== 'string') {
         throw new Error("type requires payload with text (string or {selector?,text})");
       }
+      // CR-095: humanType's default ~80-160ms/char timing has no override
+      // reachable through the payload shape otherwise — resolveTypeOptions
+      // reads an optional fast/delay/jitter off the (object-form) payload.
+      const typeOptions = resolveTypeOptions(p);
       const typeResult = await chromeLib.captureActionWithDiff(
         tabIndex,
         'type',
-        () => chromeLib.humanType(tabIndex, selector, text)
+        () => typeOptions.fast
+          ? chromeLib.fill(tabIndex, selector, text)
+          : chromeLib.humanType(tabIndex, selector, text, { delay: typeOptions.delay, jitter: typeOptions.jitter })
       );
       // When a dialog is open, captureActionWithDiff skips AFTER-capture
       if (!typeResult.capture) {
