@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { statusColorClass } from "../lib/cardStatus";
 
 export function Spinner({ label = "Loading..." }: { label?: string | undefined }) {
   return (
@@ -16,26 +17,14 @@ export function StatusBadge({
   status: string;
   size?: "sm" | "md" | undefined;
 }) {
-  const colors: Record<string, string> = {
-    pass: "bg-green-100 text-green-800",
-    fail: "bg-red-100 text-red-800",
-    investigate: "bg-yellow-100 text-yellow-800",
-    // PRI-1507: a run that didn't reach a verdict (today: shutdown
-    // interrupted; future: other terminal errors). Red treatment shared
-    // with `fail`; label is rendered as "interrupted" rather than the
-    // literal "errored" to communicate cause.
-    errored: "bg-red-100 text-red-800",
-    cancelled: "bg-panel text-slate",
-    ready: "bg-teal-wash text-teal-dark",
-    draft: "bg-panel text-slate",
-  };
   const sizeClass = size === "md" ? "px-2 py-1 text-sm" : "px-1.5 py-0.5 text-xs";
+  // PRI-1507: a run that didn't reach a verdict (today: shutdown
+  // interrupted; future: other terminal errors). Label is rendered as
+  // "interrupted" rather than the literal "errored" to communicate cause.
   const label = status === "errored" ? "interrupted" : status;
   return (
     <span
-      className={`inline-block rounded ${sizeClass} font-medium ${
-        colors[status] || "bg-panel text-slate"
-      }`}
+      className={`inline-block rounded ${sizeClass} font-medium ${statusColorClass(status)}`}
     >
       {label}
     </span>
