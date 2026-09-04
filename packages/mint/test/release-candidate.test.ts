@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mkdtemp, rm, writeFile, } from 'node:fs/promises'
+import { readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { prepareCandidate, type CandidateInput, type CandidatePreparationDeps, type CandidateArtifactInput } from '../src/release/candidate.js'
 import { parsePlatformTag } from '../src/release/tag-policy.js'
 import { sha256, REGISTRY_PLUGIN_COUNT, type ReleasePreflightV1 } from '../src/release/catalog.js'
@@ -247,5 +249,20 @@ describe('prepareCandidate', () => {
     } finally {
       await cleanup()
     }
+  })
+})
+
+describe('prepareCandidate source (CR-100)', () => {
+  it('never hashes an empty string to stand in for a tarball digest', () => {
+    // _pluginHashes was dead scaffolding that computed
+    // createHash('sha512').update('').digest('hex') for every plugin — the
+    // well-known empty-SHA-512 constant below, regardless of the actual
+    // tarball bytes. It was never read (the real SHA512SUMS content comes
+    // from packed.integrity, a few lines later), but its shape matched
+    // buildTarballChecksumRows exactly, so a future edit that wired it back
+    // in would silently corrupt every release's SHA512SUMS with this
+    // constant, content-independent digest. Guard against reintroducing it.
+    const src = readFileSync(fileURLToPath(new URL('../src/release/candidate.ts', import.meta.url)), 'utf8')
+    expect(src).not.toMatch(/createHash\(['"]sha512['"]\)\.update\(['"]{2}\)/)
   })
 })
