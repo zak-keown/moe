@@ -58,12 +58,28 @@ function attachChromeProcess({ state, chromeHttp, getTabs, newTab, closeBridge }
       stdio: 'ignore'
     });
 
+    // CR-011: spawn() can emit an asynchronous 'error' event for failures
+    // that only manifest after this call already returned (EACCES on a file
+    // that exists but isn't executable, the binary vanishing between the
+    // existsSync() check in startChrome() and this spawn(), resource
+    // exhaustion like EMFILE/EAGAIN, ...). An EventEmitter with no 'error'
+    // listener throws synchronously on emit, and an uncaught throw from a
+    // process-internal event tick crashes the whole host process — not just
+    // this QA run. Recording it here (instead of leaving it unlistened) lets
+    // the poll loop below bail out early instead of waiting out the full
+    // timeout for a Chrome that will never come up.
+    let spawnError = null;
+    proc.on('error', (err) => {
+      spawnError = err;
+    });
+
     proc.unref();
 
     const POLL_INTERVAL_MS = 200;
     const POLL_TIMEOUT_MS = 15000;
     const deadline = Date.now() + POLL_TIMEOUT_MS;
     while (Date.now() < deadline) {
+      if (spawnError) return null;
       if (await isPortAlive(CHROME_DEBUG_HOST, chosenPort)) return proc;
       await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
     }
