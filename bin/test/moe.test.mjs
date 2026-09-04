@@ -5,6 +5,7 @@
 // this test never actually spawns one of the seven namespace bins — every
 // assertion runs against the resolver, not against a built dist bundle.
 
+import { execFileSync } from "node:child_process";
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -431,6 +432,49 @@ describe("packaging invariants", () => {
       expect(activeByTargetIntent, `${plugin.name} target intents`).toEqual(plugin.harnesses);
       expect(activeByExclusion, `${plugin.name} harness exclusions`).toEqual(plugin.harnesses);
     }
+  });
+
+  it("keeps harnessRegistryProblems wired into a real check instead of dead code", () => {
+    // CR-070: harnessRegistryProblems implements a real missing/extra/
+    // duplicate/out-of-order check against HARNESS_IDS, but nothing called
+    // it. Grep the tree the same way the review did — this must find a
+    // caller outside the definition file and outside this test itself (this
+    // test's own search pattern below is a string literal containing the
+    // search term, which would otherwise trivially self-match). The real
+    // caller is "keeps HARNESS_IDS and the HARNESSES registry in exact
+    // agreement" in doctor.test.mjs.
+    const needle = ["harnessRegistryProblems", "("].join("");
+    let matches;
+    try {
+      matches = execFileSync(
+        "grep",
+        [
+          "-rl",
+          needle,
+          "--include=*.mjs",
+          "--include=*.js",
+          "--include=*.ts",
+          "--exclude-dir=node_modules",
+          "--exclude-dir=dist",
+          "--exclude-dir=.git",
+          "bin",
+          "scripts",
+          "packages",
+        ],
+        { cwd: REPO_ROOT, encoding: "utf8" },
+      );
+    } catch (err) {
+      // grep exits 1 with no output when there are zero matches.
+      matches = err.stdout ?? "";
+    }
+    const ownFiles = new Set(["bin/lib/plugin-registry.mjs", "bin/test/moe.test.mjs"]);
+    const callers = matches
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .filter((f) => !ownFiles.has(f));
+
+    expect(callers.length).toBeGreaterThan(0);
   });
 
   it("bin/moe.js opens with #!/usr/bin/env node", () => {

@@ -14,6 +14,7 @@ import {
   extractVersion,
   overallExit,
   probeBashOnWindows,
+  probeChrome,
 } from "../lib/probes.mjs";
 
 const BIN_DIR = fileURLToPath(new URL("..", import.meta.url));
@@ -186,6 +187,27 @@ describe("probes library", () => {
       ok: true,
       version: "C:\\Program Files\\Git\\bin\\bash.exe",
     });
+  });
+
+  it("probeChrome finds a PATH-installed browser without relying on a standalone `command` executable", () => {
+    // Regression for CR-002: on Debian/Ubuntu/Alpine there is no standalone
+    // `command` binary (it is a shell builtin only), so shelling out to it
+    // via execFileSync always throws ENOENT. Constrain PATH to a directory
+    // that has the browser but nothing named `command`/`where`, matching
+    // that environment, and confirm probeChrome still finds it.
+    const dir = mkdtempSync(join(tmpdir(), "moe-chrome-bin-"));
+    const file = join(dir, "chromium");
+    writeFileSync(file, "#!/bin/sh\necho fixture\n");
+    chmodSync(file, 0o755);
+
+    const originalPath = process.env.PATH;
+    process.env.PATH = dir;
+    try {
+      const found = probeChrome();
+      expect(found).toMatchObject({ name: "chrome", ok: true });
+    } finally {
+      process.env.PATH = originalPath;
+    }
   });
 });
 
@@ -418,5 +440,20 @@ describe("moe-doctor and moe-install entry points", () => {
     const proc = runBin("moe-install", args, { path: harnessBin("claude") });
     expect(proc.status).toBe(2);
     expect(proc.stderr).toMatch(message);
+  });
+});
+
+describe("plugin registry self-consistency", () => {
+  it("keeps HARNESS_IDS and the HARNESSES registry in exact agreement", async () => {
+    // CR-070: harnessRegistryProblems implements a real missing/extra/
+    // duplicate/out-of-order check against HARNESS_IDS, but nothing called
+    // it — a genuine future risk, since HARNESS_IDS and Object.keys(HARNESSES)
+    // are two independently hand-written lists that every other lookup here
+    // (getHarness, detectInstalledHarnesses, probeHarness) assumes agree. A
+    // mismatch would otherwise surface only downstream, as e.g.
+    // HARNESSES[id] being undefined.
+    const { HARNESSES, harnessRegistryProblems } = await import("../lib/plugin-registry.mjs");
+
+    expect(harnessRegistryProblems("HARNESSES registry", Object.keys(HARNESSES))).toEqual([]);
   });
 });

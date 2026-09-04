@@ -359,15 +359,12 @@ export function probeChrome() {
     }
   }
   for (const bin of linuxNames) {
-    const found = tryExec(WIN32 ? "where" : "command", WIN32 ? [bin] : ["-v", bin]);
-    if (found)
-      return result({
-        name: "chrome",
-        tier: "soft",
-        ok: true,
-        version: found.split(/\r?\n/)[0],
-        capability,
-      });
+    // Resolve directly against PATH rather than shelling out to `command -v`
+    // (or Windows `where`): `command` is a shell builtin with no standalone
+    // executable on Debian/Ubuntu/Alpine, so execFileSync("command", …)
+    // always threw ENOENT there and this branch never found anything.
+    if (executableOnPath(bin))
+      return result({ name: "chrome", tier: "soft", ok: true, version: bin, capability });
   }
   return result({
     name: "chrome",
