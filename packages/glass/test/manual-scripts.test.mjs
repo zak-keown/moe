@@ -47,3 +47,43 @@ describe('test/manual/test-harness.cjs (CR-052)', () => {
     assert.match(output, /React Input Test Harness/, 'expected the script banner to print');
   });
 });
+
+// CR-053: every script in test/manual/ requires its library dependency via
+// require('./skills/browsing/chrome-ws-lib.js') — a path resolved relative
+// to each script's own directory (test/manual/), where no skills/
+// subdirectory exists. The real file is two levels up. Running any of these
+// scripts as documented in their own header comments failed immediately with
+// MODULE_NOT_FOUND, before any of the script's own logic ran.
+describe('test/manual/*.cjs siblings requiring the wrong relative depth (CR-053)', () => {
+  const CASES = [
+    { file: 'test-headless-toggle.cjs', banner: /Testing headless mode toggle functionality/ },
+    { file: 'test-issue-18-pid.cjs', banner: /Issue #18: getChromePid\(\) export/ },
+    { file: 'test-issue-19-fullpage.cjs', banner: /Issue #19: fullpage screenshot/ },
+    { file: 'test-issue-20-hidpi.cjs', banner: /Issue #20: HiDPI screenshot fix/ },
+    { file: 'test-profiles.cjs', banner: /Testing Chrome profile functionality/ },
+    { file: 'test-xdg-cache.cjs', banner: /Testing XDG cache directory/ },
+  ];
+
+  for (const { file, banner } of CASES) {
+    it(`${file} resolves chrome-ws-lib.js and runs past the module-resolution bug`, () => {
+      const result = spawnSync(process.execPath, [file], {
+        cwd: MANUAL_DIR,
+        encoding: 'utf8',
+        timeout: 15_000,
+      });
+      const output = `${result.stdout}\n${result.stderr}`;
+
+      assert.doesNotMatch(
+        output,
+        /Cannot find module '\.\/skills\/browsing\/chrome-ws-lib\.js'/,
+        `${file} must resolve chrome-ws-lib.js via the correct relative depth`
+      );
+      assert.doesNotMatch(
+        output,
+        /Cannot find module '\.\/skills\/browsing\/chrome-ws'/,
+        `${file} must resolve any chrome-ws CLI reference via the correct relative depth`
+      );
+      assert.match(output, banner, `expected ${file} to reach its own banner output`);
+    });
+  }
+});
