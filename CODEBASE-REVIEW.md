@@ -14,6 +14,12 @@ findings:
   total: 107
 verified: false
 status: issues_found
+dispositions:
+  fixed: 1
+  stale: 0
+  skipped: 0
+  deferred: 0
+  open: 106
 ---
 
 # Codebase Review — moe
@@ -160,6 +166,10 @@ name list, or shell out to `which` instead of `command` — `which` ships as a
 real binary on all of node:24 / Ubuntu / Alpine / Debian by default, unlike
 `command`.
 
+**Disposition:** fixed
+**Commit:** `69b16fb9fdcfdad77bc50b4b1c629c45ea68c4cf`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-003: aggregate_scenarios.py silently merges distinct untitled scenarios, discarding one's content
 
 **File:** `packages/core/skills/extracting-requirements/scripts/aggregate_scenarios.py`
