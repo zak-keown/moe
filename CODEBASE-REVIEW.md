@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 2
+  fixed: 3
   stale: 0
   skipped: 0
   deferred: 0
-  open: 105
+  open: 104
 ---
 
 # Codebase Review — moe
@@ -1363,6 +1363,10 @@ const stripped = text
 
 I reproduced this with `node -e` against a synthetic LLM response containing a legitimate ` ```js ... ``` ` block inside the card body (mirroring `buildFanoutPrompt`'s own instruction to the model to "generate variation scenarios" with "boundary conditions" and example input): both the opening and closing fence lines are silently deleted, and the `\n```\s*\n` → `\n` replacement also swallows the blank line that separated the code block from the following `## Acceptance Criteria` heading — the two sections end up glued together. Any fanout-generated card whose description legitimately includes a code/config example (plausible output from "You are a QA test designer... Think about: Edge cases... boundary conditions") has its markdown silently mangled before being persisted, with no error, warning, or way to detect the corruption after the fact (`parseStoryCard` still parses the mangled text without complaint, since the `##` marker lookup is unaffected). Anchor the fence-strip to only the true leading/trailing wrapper (first and last non-blank lines of the whole `text`), not every line in the document.
 
+**Disposition:** fixed
+**Commit:** `5488d60ae1e9e6d15d038104000ae72087ce5f90`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-038: `runLoop` silently discards the executor's exception, leaving `"errored"` runs with no diagnostic trail
 
 **File:** `packages/flight/src/qa/runs/run-set.ts`
