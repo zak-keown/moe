@@ -229,4 +229,34 @@ describe("read surface", () => {
     backlogAdd("show me", { cwd: repo });
     expect(backlogShow("BL-0001", { cwd: repo })).toContain("id: BL-0001");
   });
+
+  it("AND-combines status filter with tag filter", async () => {
+    const { backlogAdd, backlogDone, backlogList } = await import("../src/backlog.js");
+    backlogAdd("done foo", { cwd: repo, tags: ["foo"] });
+    backlogDone("BL-0001", { cwd: repo });
+    backlogAdd("done bar", { cwd: repo, tags: ["bar"] });
+    backlogDone("BL-0002", { cwd: repo });
+    expect(backlogList({ cwd: repo, status: "done", tag: "foo" }).map((i) => i.id)).toEqual(["BL-0001"]);
+    expect(backlogList({ cwd: repo, status: "done", tag: "bar" }).map((i) => i.id)).toEqual(["BL-0002"]);
+  });
+
+  it("AND-combines status filter with severity filter", async () => {
+    const { backlogAdd, backlogDone, backlogList } = await import("../src/backlog.js");
+    backlogAdd("done high", { cwd: repo, severity: "high" });
+    backlogDone("BL-0001", { cwd: repo });
+    backlogAdd("done low", { cwd: repo, severity: "low" });
+    backlogDone("BL-0002", { cwd: repo });
+    expect(backlogList({ cwd: repo, status: "done", severity: "high" }).map((i) => i.id)).toEqual(["BL-0001"]);
+    expect(backlogList({ cwd: repo, status: "done", severity: "low" }).map((i) => i.id)).toEqual(["BL-0002"]);
+  });
+
+  it("formatLine includes id, status, and title", async () => {
+    const { backlogAdd, formatLine, parseItem } = await import("../src/backlog.js");
+    const p = backlogAdd("test item", { cwd: repo, severity: "high" });
+    const item = parseItem(readFileSync(p, "utf-8"));
+    const line = formatLine(item);
+    expect(line).toContain(item.id);
+    expect(line).toContain(item.status);
+    expect(line).toContain(item.title);
+  });
 });

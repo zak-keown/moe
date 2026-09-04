@@ -257,8 +257,7 @@ function loadAll(cwd?: string): BacklogItem[] {
 
 export function backlogList(opts: ListOpts = {}): BacklogItem[] {
   return loadAll(opts.cwd).filter((i) => {
-    if (opts.status) return i.status === opts.status;
-    if (TERMINAL.includes(i.status)) return false;
+    if (opts.status ? i.status !== opts.status : TERMINAL.includes(i.status)) return false;
     if (opts.source && i.source !== opts.source) return false;
     if (opts.severity && i.severity !== opts.severity) return false;
     if (opts.tag && !i.tags.includes(opts.tag)) return false;
