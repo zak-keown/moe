@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 2
+  fixed: 3
   stale: 0
   skipped: 0
   deferred: 0
-  open: 105
+  open: 104
 ---
 
 # Codebase Review — moe
@@ -1628,6 +1628,10 @@ opened/rendered. No other string in this file is escaped either (see the
 Fix: HTML-escape `d.id`/`d.name` (and any other page/device-controlled string)
 before interpolating into `htmlParts`.
 
+**Disposition:** fixed
+**Commit:** `37342c74150eb2cd675accd1d731a90e84cf21ce`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-049: html-diff safety cap still allows ~250MB single-call allocation, undercutting its own OOM mitigation
 
 **File:** `packages/glass/skills/browsing/lib/html-diff.js`
