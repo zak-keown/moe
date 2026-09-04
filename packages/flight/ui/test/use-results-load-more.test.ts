@@ -13,6 +13,8 @@ describe("computeLoadMoreOffset", () => {
   });
 
   test("bails out once every page has been loaded", () => {
-    expect(computeLoadMoreOffset({ loading: false, offset: 150, limit: 50, total: 200 })).toBeNull();
+    expect(
+      computeLoadMoreOffset({ loading: false, offset: 150, limit: 50, total: 200 }),
+    ).toBeNull();
   });
 });

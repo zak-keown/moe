@@ -57,6 +57,9 @@ function eventsPath(dir, sid) {
 function metaPath(dir, sid) {
   return `${dir}/${sid}.meta`;
 }
+function isSafeSegment(name) {
+  return /^[A-Za-z0-9_-]+$/.test(name);
+}
 
 // packages/crew/src/core/time.ts
 function isoSecondsUtc(date = /* @__PURE__ */ new Date()) {
@@ -97,7 +100,8 @@ function runHook(opts) {
   const payload = asRecord(parsed);
   if (payload === null) return empty;
   const sessionId = payload.session_id;
-  if (typeof sessionId !== "string" || sessionId.length === 0) return empty;
+  if (typeof sessionId !== "string" || sessionId.length === 0 || !isSafeSegment(sessionId))
+    return empty;
   if (opts.baked !== void 0 && !(0, import_node_fs3.existsSync)(metaPath(opts.workerDir, sessionId))) {
     const transcriptPath = asString(payload.transcript_path);
     writeMeta(opts.workerDir, {

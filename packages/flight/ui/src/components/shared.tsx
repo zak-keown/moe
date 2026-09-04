@@ -23,9 +23,7 @@ export function StatusBadge({
   // "interrupted" rather than the literal "errored" to communicate cause.
   const label = status === "errored" ? "interrupted" : status;
   return (
-    <span
-      className={`inline-block rounded ${sizeClass} font-medium ${statusColorClass(status)}`}
-    >
+    <span className={`inline-block rounded ${sizeClass} font-medium ${statusColorClass(status)}`}>
       {label}
     </span>
   );

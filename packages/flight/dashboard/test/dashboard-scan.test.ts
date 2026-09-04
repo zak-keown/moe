@@ -3,7 +3,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "vitest";
 import { cellKey } from "../src/contracts.js";
-import { _verdictCacheSizeForTest, pidAlive, readDashboardVerdict, scanResults } from "../src/scan.js";
+import {
+  _verdictCacheSizeForTest,
+  pidAlive,
+  readDashboardVerdict,
+  scanResults,
+} from "../src/scan.js";
 
 // Identity is read from each run's authoritative verdict.json / phase.json
 // (scenario, coding_agent, credential, os) — never parsed out of the run-dir

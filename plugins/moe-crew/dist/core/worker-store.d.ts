@@ -11,9 +11,7 @@ export interface WorkerMeta {
  * Refuses (throws) otherwise, closing the shared-host precondition that lets
  * another local account pre-plant a directory — or a symlink, which fails
  * the `isDirectory()` check regardless of what it points at — at a
- * predictable worker-dir or per-worker-home path ahead of us. The ownership
- * check no-ops where `process.getuid` is unavailable (native Windows;
- * moe-crew is WSL2-only there per ARCHITECTURE.md, where getuid exists).
+ * predictable worker-dir or per-worker-home path ahead of us.
  */
 export declare function ensureOwnedDir(dir: string): void;
 /**

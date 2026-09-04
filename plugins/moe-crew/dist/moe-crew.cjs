@@ -30,12 +30,12 @@ __export(cli_exports, {
 module.exports = __toCommonJS(cli_exports);
 var import_node_fs16 = require("fs");
 var import_node_os4 = require("os");
-var import_node_path12 = require("path");
+var import_node_path14 = require("path");
 var import_node_readline = require("readline");
 
 // packages/crew/src/commands/adopt.ts
 var import_node_fs7 = require("fs");
-var import_node_path9 = require("path");
+var import_node_path10 = require("path");
 
 // packages/crew/src/core/consent.ts
 var import_node_fs2 = require("fs");
@@ -62,8 +62,11 @@ function eventsPath(dir, sid) {
 function metaPath(dir, sid) {
   return `${dir}/${sid}.meta`;
 }
+function isSafeSegment(name) {
+  return /^[A-Za-z0-9_-]+$/.test(name);
+}
 function assertSafeSegment(name) {
-  if (!/^[A-Za-z0-9_-]+$/.test(name)) {
+  if (!isSafeSegment(name)) {
     throw new Error(
       `unsafe worker name (must be a single [A-Za-z0-9_-]+ segment): ${JSON.stringify(name)}`
     );
@@ -87,14 +90,7 @@ function worktreeMarkerPath(dir, name) {
 }
 
 // packages/crew/src/core/worker-store.ts
-function ensureOwnedDir(dir) {
-  let st;
-  try {
-    st = (0, import_node_fs.lstatSync)(dir);
-  } catch {
-    (0, import_node_fs.mkdirSync)(dir, { recursive: true, mode: 448 });
-    return;
-  }
+function assertRealOwnedDir(dir, st) {
   if (!st.isDirectory()) {
     throw new Error(`refusing to use ${dir}: not a real directory (possibly a planted symlink)`);
   }
@@ -102,6 +98,17 @@ function ensureOwnedDir(dir) {
   if (uid !== void 0 && st.uid !== uid) {
     throw new Error(`refusing to use ${dir}: not owned by the current user`);
   }
+}
+function ensureOwnedDir(dir) {
+  let st;
+  try {
+    st = (0, import_node_fs.lstatSync)(dir);
+  } catch {
+    (0, import_node_fs.mkdirSync)(dir, { recursive: true, mode: 448 });
+    assertRealOwnedDir(dir, (0, import_node_fs.lstatSync)(dir));
+    return;
+  }
+  assertRealOwnedDir(dir, st);
 }
 function stageCredentialFile(src, dest) {
   if (!(0, import_node_fs.existsSync)(src)) return;
@@ -952,6 +959,9 @@ function resolveHarness(input) {
   };
 }
 
+// packages/crew/src/commands/await-start.ts
+var import_node_path8 = require("path");
+
 // packages/crew/src/core/event-log.ts
 var import_node_fs5 = require("fs");
 
@@ -1013,6 +1023,57 @@ function classifyStatus(last) {
   }
 }
 
+// packages/crew/src/core/worktree.ts
+var import_node_path7 = require("path");
+
+// packages/crew/src/core/proc.ts
+var import_node_child_process = require("child_process");
+var run = (cmd, args) => new Promise((resolve2) => {
+  (0, import_node_child_process.execFile)(
+    cmd,
+    args,
+    { encoding: "utf8", maxBuffer: 10 * 1024 * 1024 },
+    (err2, stdout, stderr) => {
+      if (!err2) {
+        resolve2({ stdout, stderr, code: 0 });
+        return;
+      }
+      const errCode = err2.code;
+      const code = typeof errCode === "number" ? errCode : 1;
+      resolve2({ stdout: stdout ?? "", stderr: stderr || String(err2), code });
+    }
+  );
+});
+
+// packages/crew/src/core/worktree.ts
+var WORKTREE_DIR = ".moe-worktrees";
+function worktreePath(repoRoot, name) {
+  return (0, import_node_path7.join)(repoRoot, WORKTREE_DIR, name);
+}
+async function createWorktree(runner = run, repoRoot, name, ref = "HEAD") {
+  const wt = worktreePath(repoRoot, name);
+  const result = await runner("git", ["-C", repoRoot, "worktree", "add", "--detach", wt, ref]);
+  if (result.code !== 0) {
+    throw new Error(`git worktree add failed (code ${result.code}): ${result.stderr.trim()}`);
+  }
+  return wt;
+}
+async function removeWorktree(runner = run, repoRoot, wtPath) {
+  const result = await runner("git", ["-C", repoRoot, "worktree", "remove", "--force", wtPath]);
+  if (result.code !== 0) {
+    const msg = result.stderr.toLowerCase();
+    if (msg.includes("not a working tree") || msg.includes("is not a valid")) {
+      return true;
+    }
+    if (msg.includes("no such file") || msg.includes("does not exist")) {
+      return true;
+    }
+    await runner("git", ["-C", repoRoot, "worktree", "prune"]);
+    return false;
+  }
+  return true;
+}
+
 // packages/crew/src/commands/await-start.ts
 var sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 var DEFAULT_TRUST_TIMEOUT_MS = 5e3;
@@ -1055,64 +1116,20 @@ async function awaitSessionStart(ctx, tmuxName, sessionId, opts = {}) {
   if (tail.length > 0) {
     lines.push("", "Last visible content in the worker pane:", "----------", tail, "----------");
   }
+  const wtPath = readWorktreeMarker(ctx.workerDir, tmuxName);
   await ctx.tmux.killSession(tmuxName);
   removeWorker(ctx.workerDir, sessionId, tmuxName);
+  if (wtPath) {
+    const repoRoot = (0, import_node_path8.dirname)((0, import_node_path8.dirname)(wtPath));
+    await removeWorktree(void 0, repoRoot, wtPath);
+  }
   return { started: false, failureMessage: lines.join("\n") };
 }
 
 // packages/crew/src/commands/launch.ts
 var import_node_crypto = require("crypto");
 var import_node_fs6 = require("fs");
-var import_node_path8 = require("path");
-
-// packages/crew/src/core/worktree.ts
-var import_node_path7 = require("path");
-
-// packages/crew/src/core/proc.ts
-var import_node_child_process = require("child_process");
-var run = (cmd, args) => new Promise((resolve2) => {
-  (0, import_node_child_process.execFile)(
-    cmd,
-    args,
-    { encoding: "utf8", maxBuffer: 10 * 1024 * 1024 },
-    (err2, stdout, stderr) => {
-      if (!err2) {
-        resolve2({ stdout, stderr, code: 0 });
-        return;
-      }
-      const errCode = err2.code;
-      const code = typeof errCode === "number" ? errCode : 1;
-      resolve2({ stdout: stdout ?? "", stderr: stderr || String(err2), code });
-    }
-  );
-});
-
-// packages/crew/src/core/worktree.ts
-var WORKTREE_DIR = ".moe-worktrees";
-function worktreePath(repoRoot, name) {
-  return (0, import_node_path7.join)(repoRoot, WORKTREE_DIR, name);
-}
-async function createWorktree(runner = run, repoRoot, name, ref = "HEAD") {
-  const wt = worktreePath(repoRoot, name);
-  const result = await runner("git", ["-C", repoRoot, "worktree", "add", "--detach", wt, ref]);
-  if (result.code !== 0) {
-    throw new Error(`git worktree add failed (code ${result.code}): ${result.stderr.trim()}`);
-  }
-  return wt;
-}
-async function removeWorktree(runner = run, repoRoot, wtPath) {
-  const result = await runner("git", ["-C", repoRoot, "worktree", "remove", "--force", wtPath]);
-  if (result.code !== 0) {
-    const msg = result.stderr.toLowerCase();
-    if (msg.includes("not a working tree") || msg.includes("is not a valid")) {
-      return;
-    }
-    if (msg.includes("no such file") || msg.includes("does not exist")) {
-      return;
-    }
-    await runner("git", ["-C", repoRoot, "worktree", "prune"]);
-  }
-}
+var import_node_path9 = require("path");
 
 // packages/crew/src/commands/codex-launch.ts
 var sleep2 = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -1223,7 +1240,7 @@ async function cmdLaunch(ctx, args, opts) {
     };
   }
   ensureOwnedDir(ctx.workerDir);
-  (0, import_node_fs6.mkdirSync)((0, import_node_path8.join)(ctx.workerDir, "bin"), { recursive: true, mode: 448 });
+  (0, import_node_fs6.mkdirSync)((0, import_node_path9.join)(ctx.workerDir, "bin"), { recursive: true, mode: 448 });
   let effectiveCwd = cwd;
   let worktreeDir;
   if (args.worktree) {
@@ -1278,7 +1295,7 @@ async function launchAssign(ctx, { driver, tmuxName, cwd, extraArgs, invocation,
   });
   return { stdout: shim, stderr: panel, code: 0 };
 }
-async function launchDerive(ctx, { driver, tmuxName, cwd, extraArgs, invocation }, opts) {
+async function launchDerive(ctx, { driver, tmuxName, cwd, extraArgs, invocation, worktreeDir }, opts) {
   writeHarnessMarker(ctx.workerDir, tmuxName, driver.id);
   const workerHome = deriveWorkerHome(ctx.workerDir, tmuxName);
   const env = driver.workerEnv(workerHome, tmuxName, process.env);
@@ -1303,6 +1320,10 @@ async function launchDerive(ctx, { driver, tmuxName, cwd, extraArgs, invocation 
   }
   if (!await ctx.tmux.hasSession(tmuxName)) {
     removeWorker(ctx.workerDir, "", tmuxName);
+    if (worktreeDir !== void 0) {
+      const repoRoot = (0, import_node_path9.dirname)((0, import_node_path9.dirname)(worktreeDir));
+      await removeWorktree(void 0, repoRoot, worktreeDir);
+    }
     return {
       stderr: `Error: tmux session '${tmuxName}' was not started (tmux missing, unreachable, or it rejected the session)`,
       code: 1
@@ -1411,7 +1432,7 @@ async function cmdAdopt(ctx, args, opts) {
     };
   }
   ensureOwnedDir(ctx.workerDir);
-  (0, import_node_fs7.mkdirSync)((0, import_node_path9.join)(ctx.workerDir, "bin"), { recursive: true, mode: 448 });
+  (0, import_node_fs7.mkdirSync)((0, import_node_path10.join)(ctx.workerDir, "bin"), { recursive: true, mode: 448 });
   const invocation = extraArgs.length > 0 ? [tmuxName, cwd, sessionId, "--", ...extraArgs] : [tmuxName, cwd, sessionId];
   writeMeta(ctx.workerDir, {
     tmux_name: tmuxName,
@@ -1459,7 +1480,7 @@ var import_node_fs10 = require("fs");
 
 // packages/crew/src/core/diagnostics.ts
 var import_node_fs8 = require("fs");
-var import_node_path10 = require("path");
+var import_node_path11 = require("path");
 function tailLines(text, n) {
   const trimmed = text.endsWith("\n") ? text.slice(0, -1) : text;
   if (trimmed.length === 0) return "";
@@ -1501,7 +1522,7 @@ function fileTail(file, n, missingNote) {
 async function dumpConverseDiag(opts) {
   const run3 = opts.run ?? run;
   try {
-    (0, import_node_fs8.mkdirSync)((0, import_node_path10.dirname)(opts.dest), { recursive: true });
+    (0, import_node_fs8.mkdirSync)((0, import_node_path11.dirname)(opts.dest), { recursive: true });
   } catch {
     return false;
   }
@@ -2088,7 +2109,9 @@ function peekNonBlank(lines, start) {
   return null;
 }
 function parseScalar(raw) {
-  const stripped = raw.replace(/\s+#.*$/, "").trim();
+  const trimmedRaw = raw.trim();
+  const isQuoted = trimmedRaw.startsWith('"') && trimmedRaw.endsWith('"') && trimmedRaw.length >= 2 || trimmedRaw.startsWith("'") && trimmedRaw.endsWith("'") && trimmedRaw.length >= 2;
+  const stripped = isQuoted ? trimmedRaw : raw.replace(/\s+#.*$/, "").trim();
   if (stripped === "true" || stripped === "True" || stripped === "TRUE") return true;
   if (stripped === "false" || stripped === "False" || stripped === "FALSE") return false;
   if (stripped === "null" || stripped === "Null" || stripped === "NULL" || stripped === "~")
@@ -2179,7 +2202,7 @@ function loadPack(path) {
 }
 
 // packages/crew/src/commands/stop.ts
-var import_node_path11 = require("path");
+var import_node_path12 = require("path");
 var sleep7 = (ms) => new Promise((r) => setTimeout(r, ms));
 function sawSessionEnd(eventFile) {
   return readRawLines(eventFile).some((line) => parseEvent(line)?.event === "session_end");
@@ -2199,7 +2222,7 @@ async function cmdStop(ctx, worker, opts = {}) {
       if (await ctx.tmux.hasSession(worker)) await ctx.tmux.killSession(worker);
       removeOrphan(ctx.workerDir, worker);
       if (orphanWt) {
-        const repoRoot = (0, import_node_path11.dirname)((0, import_node_path11.dirname)(orphanWt));
+        const repoRoot = (0, import_node_path12.dirname)((0, import_node_path12.dirname)(orphanWt));
         await removeWorktree(void 0, repoRoot, orphanWt);
       }
       return {
@@ -2235,7 +2258,7 @@ async function cmdStop(ctx, worker, opts = {}) {
   removeWorker(ctx.workerDir, sid, tmuxName);
   const effectiveWt = wtPath ?? meta.worktree;
   if (effectiveWt) {
-    const repoRoot = (0, import_node_path11.dirname)((0, import_node_path11.dirname)(effectiveWt));
+    const repoRoot = (0, import_node_path12.dirname)((0, import_node_path12.dirname)(effectiveWt));
     await removeWorktree(void 0, repoRoot, effectiveWt);
   }
   return {
@@ -2393,16 +2416,26 @@ async function cmdPackStop(ctx, args) {
 }
 
 // packages/crew/src/commands/prune.ts
+var import_node_path13 = require("path");
+async function removeAssociatedWorktree(wtPath) {
+  if (!wtPath) return;
+  const repoRoot = (0, import_node_path13.dirname)((0, import_node_path13.dirname)(wtPath));
+  await removeWorktree(void 0, repoRoot, wtPath);
+}
 async function cmdPrune(ctx) {
   const removed = [];
   for (const meta of listWorkers(ctx.workerDir)) {
     if (await computeStatus(ctx, meta) !== "gone") continue;
+    const wtPath = readWorktreeMarker(ctx.workerDir, meta.tmux_name) ?? meta.worktree;
     removeWorker(ctx.workerDir, meta.session_id, meta.tmux_name);
+    await removeAssociatedWorktree(wtPath);
     removed.push(meta.tmux_name);
   }
   for (const name of listOrphanNames(ctx.workerDir)) {
     if (await ctx.tmux.hasSession(name)) continue;
+    const wtPath = readWorktreeMarker(ctx.workerDir, name);
     removeOrphan(ctx.workerDir, name);
+    await removeAssociatedWorktree(wtPath);
     removed.push(name);
   }
   if (removed.length === 0) {
@@ -2753,10 +2786,10 @@ function buildContext(worker) {
   };
 }
 function resolvePluginRoot(bundleDir, environment = process.env) {
-  return environment.MOE_CREW_PLUGIN_ROOT || (0, import_node_path12.resolve)(bundleDir, "..");
+  return environment.MOE_CREW_PLUGIN_ROOT || (0, import_node_path14.resolve)(bundleDir, "..");
 }
 function bootstrapOpts() {
-  const moeCrewEntry = (0, import_node_path12.join)(__dirname, "moe-crew.cjs");
+  const moeCrewEntry = (0, import_node_path14.join)(__dirname, "moe-crew.cjs");
   return {
     pluginDir: resolvePluginRoot(__dirname),
     moeCrewEntry,
@@ -3086,7 +3119,11 @@ function parseWaitForTurnArgs(argv) {
       afterLine = n;
       i += 2;
     } else if (/^[0-9]/.test(a)) {
-      timeout = Number(a);
+      const n = Number(a);
+      if (!Number.isFinite(n)) {
+        return err("Error: wait-for-turn timeout must be a number");
+      }
+      timeout = n;
       i += 1;
     } else {
       return err(`Error: unknown option '${a}' for wait-for-turn`);
