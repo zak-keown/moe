@@ -46,6 +46,20 @@ printf '%s\\n' "$MOE_PROOF_TASK"
     assert output == "unset\nabc\ndata-task\n"
 
 
+def test_run_stringifies_non_string_prompt(invoke, make_eval):
+    # CR-065: every other per-task/check scalar destined for the subprocess
+    # env is routed through scalar_env_vars, which stringifies scalars
+    # before merging them in. `prompt` was the one exception - written
+    # straight into the env dict - so an easy authoring mistake (an
+    # unquoted numeric scalar, e.g. `prompt: 42`) crashed deep in
+    # subprocess.run with a raw TypeError instead of behaving like every
+    # other scalar value.
+    eval_dir = make_eval(tasks={"first": {"prompt": 42}})
+    invoke("run", eval_dir)
+    output = (run_dirs(eval_dir)[0] / "output.txt").read_text()
+    assert "42" in output
+
+
 def test_stderr_captured_when_present(invoke, make_eval):
     eval_dir = make_eval(runner="#!/bin/sh\necho warned >&2\necho hello\n")
     invoke("run", eval_dir)
