@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 2
+  fixed: 3
   stale: 0
   skipped: 0
   deferred: 0
-  open: 105
+  open: 104
 ---
 
 # Codebase Review — moe
@@ -1987,6 +1987,10 @@ comment). `writeRegistryProjections` should use the same
 open-with-`O_NOFOLLOW` pattern (or route through `writeFileSet`) instead of
 `node:fs/promises`'s `writeFile`.
 
+**Disposition:** fixed
+**Commit:** `fb27eec3521b9b3e21e652a8bb541207fdf31385`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-063: `does not use npm pack after candidate verification` test never executes its assertion
 
 **File:** `packages/mint/test/release-workflows.test.ts`
