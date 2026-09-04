@@ -228,10 +228,6 @@ running the script again produces:
 
 ```
 
-**Disposition:** fixed
-**Commit:** `301bf7f88087562206f8106bd6e923043aa7537f`
-**Resolved:** 2026-09-04
-**Note:** —
 ## Checked and found sound
 ...
 ## Resolved findings
@@ -256,6 +252,15 @@ Fix: skip (or stop scanning at) content already under a `## Resolved findings`
 heading, e.g. by only scanning the body up to the first `## Resolved findings`
 match, or by checking that a candidate heading isn't nested under one before
 compacting it.
+
+**Disposition:** fixed
+**Commit:** `301bf7f88087562206f8106bd6e923043aa7537f`
+**Resolved:** 2026-09-04
+**Note:** A prior stamping run of this same finding was corrupted by the
+identical bug: its unmasked block-boundary search stopped at this finding's
+own fenced illustration and spliced the disposition stamp inside the fence
+instead of appending it here. Repaired by hand in the same commit that fixes
+stamp-disposition.mjs's fence-blindness (packages/core/skills/fixing-a-code-review/scripts/stamp-disposition.mjs).
 
 ### CR-005: review-merge.mjs's finding validation does not enforce the "no line-number citation" rule it exists to guarantee
 
