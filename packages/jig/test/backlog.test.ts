@@ -326,6 +326,19 @@ describe("transitions", () => {
     const id = idOf(backlogAdd("open item", { cwd: repo }));
     expect(() => backlogAccept(id, { cwd: repo })).toThrow(/cannot accept/);
   });
+
+  it("decline writes a Disposition block, never Resume", async () => {
+    const { backlogAdd, backlogDecline } = await import("../src/backlog.js");
+    const id = idOf(backlogAdd("nope", { cwd: repo }));
+    const text = readFileSync(
+      backlogDecline(id, { reason: "wont-fix", note: "superseded by X", cwd: repo }),
+      "utf-8",
+    );
+    expect(text).toContain("## Disposition");
+    expect(text).toContain("- declined: wont-fix");
+    expect(text).toContain("- note: superseded by X");
+    expect(text).not.toContain("## Resume");
+  });
 });
 
 describe("read surface", () => {

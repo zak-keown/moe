@@ -226,6 +226,14 @@ function writeResume(
   return `${body.replace(/\n*$/, "")}\n\n${block}`;
 }
 
+function writeDisposition(body: string, reason: string, note?: string): string {
+  const lines = ["## Disposition", "", `- declined: ${reason}`];
+  if (note) lines.push(`- note: ${note}`);
+  const block = `${lines.join("\n")}\n`;
+  if (/^## Disposition$/m.test(body)) return body.replace(/## Disposition[\s\S]*$/m, block);
+  return `${body.replace(/\n*$/, "")}\n\n${block}`;
+}
+
 export interface DeferOpts {
   reason: string;
   note?: string;
@@ -321,7 +329,7 @@ export function backlogDecline(
   item.status = "declined";
   item.reason = opts.reason;
   item.movedBy = opts.by ?? "manual";
-  if (opts.note) item.body = writeResume(item.body, { note: opts.note, next: "—" });
+  item.body = writeDisposition(item.body, opts.reason, opts.note);
   return persist(dir, name, item, opts.cwd);
 }
 
