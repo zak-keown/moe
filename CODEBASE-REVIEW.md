@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 6
+  fixed: 7
   stale: 0
   skipped: 0
   deferred: 0
-  open: 101
+  open: 100
 ---
 
 # Codebase Review — moe
@@ -2663,6 +2663,10 @@ block already has, or move `bug3Dir`/`bug4Dir` under the shared `tmpRoot`.
 
 The test's own comment admits it: "This test would need a fixture with malformed JSON. For now, we verify that valid fixtures don't throw." The body calls `parseConversationFile` on `short-conversation.jsonl` — a valid fixture already covered by three other tests in the same `describe` block — and asserts only `expect(result).toBeDefined()`. It never constructs or feeds malformed JSONL, so it cannot catch a real regression in the parser's malformed-line handling (e.g., a change that makes `parseConversationFile` throw on a truncated or non-JSON line instead of skipping it). I confirmed by grep that no other file in `packages/memory/test/` exercises malformed JSONL input (`verify.test.ts` even has a comment noting corruption detection is "harder to test... skipping for now"), so this is the only place such a regression could be caught, and it is not caught. A reader trusting the test name would believe malformed-input handling is under regression protection; it is not. Fix: either write a fixture with a genuinely malformed line (unterminated JSON, non-JSON garbage line mixed with valid lines) and assert the valid lines still parse, or rename the test to reflect what it actually verifies and drop the misleading claim.
 
+**Disposition:** fixed
+**Commit:** `67129698660c99b2ab870722e9828659d62abb7e`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-099: Vacuous "sidechain" test asserts nothing sidechain-specific
 
 **File:** `packages/memory/test/show.test.ts`
