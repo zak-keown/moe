@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 4
+  fixed: 5
   stale: 0
   skipped: 0
   deferred: 0
-  open: 103
+  open: 102
 ---
 
 # Codebase Review — moe
@@ -1538,6 +1538,10 @@ warning, and React may render one of the two copies).
 Fix: guard `loadMore` (and `refresh`) against concurrent calls, e.g. bail
 out if `loading` is already true, or track an in-flight ref/AbortController.
 
+**Disposition:** fixed
+**Commit:** `d7674e764f71dc9d377e9af0ff4bc2091bbbb4bb`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-046: IPv6 host override silently fails to rewrite the WebSocket URL
 
 **File:** `packages/glass/skills/browsing/host-override.js`
