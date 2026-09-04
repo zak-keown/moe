@@ -14,6 +14,7 @@ import {
   extractVersion,
   overallExit,
   probeBashOnWindows,
+  probeChrome,
 } from "../lib/probes.mjs";
 
 const BIN_DIR = fileURLToPath(new URL("..", import.meta.url));
@@ -186,6 +187,27 @@ describe("probes library", () => {
       ok: true,
       version: "C:\\Program Files\\Git\\bin\\bash.exe",
     });
+  });
+
+  it("probeChrome finds a PATH-installed browser without relying on a standalone `command` executable", () => {
+    // Regression for CR-002: on Debian/Ubuntu/Alpine there is no standalone
+    // `command` binary (it is a shell builtin only), so shelling out to it
+    // via execFileSync always throws ENOENT. Constrain PATH to a directory
+    // that has the browser but nothing named `command`/`where`, matching
+    // that environment, and confirm probeChrome still finds it.
+    const dir = mkdtempSync(join(tmpdir(), "moe-chrome-bin-"));
+    const file = join(dir, "chromium");
+    writeFileSync(file, "#!/bin/sh\necho fixture\n");
+    chmodSync(file, 0o755);
+
+    const originalPath = process.env.PATH;
+    process.env.PATH = dir;
+    try {
+      const found = probeChrome();
+      expect(found).toMatchObject({ name: "chrome", ok: true });
+    } finally {
+      process.env.PATH = originalPath;
+    }
   });
 });
 
