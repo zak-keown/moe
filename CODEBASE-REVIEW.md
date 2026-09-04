@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 9
+  fixed: 10
   stale: 0
   skipped: 0
   deferred: 0
-  open: 98
+  open: 97
 ---
 
 # Codebase Review — moe
@@ -2179,6 +2179,10 @@ Fix: validate that each loaded task doc has a `name` (and each config has
 `click.ClickException` naming the offending file, consistent with every
 other validation in this module.
 
+**Disposition:** fixed
+**Commit:** `7aefa4e55a279750dc4fbbd3804f37aa9f73c0c7`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-069: `check-provenance.mjs` crashes with an uncaught exception instead of a diagnostic when `root` has no `plugins/` directory
 
 **File:** `scripts/check-provenance.mjs`
