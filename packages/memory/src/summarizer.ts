@@ -34,6 +34,25 @@ export function isResumeFailure(error: unknown): boolean {
   return error instanceof SummarizerSdkError && error.subtype === "error_during_execution";
 }
 
+/**
+ * Thrown by callClaude when BOTH the primary and fallback model hit the
+ * "thinking.budget_tokens" API error (#96/CR-059). This used to be handled
+ * by returning the raw error text as though it were the model's output —
+ * summarizeConversation would then extractSummary() it, find no <summary>
+ * tags, fall back to text.trim(), and write the error text to
+ * `<archive>-summary.txt` as a permanent "summary" with no error sentinel
+ * and no retry path. Throwing here routes the failure through the same
+ * catch-and-sentinel machinery every caller already has for other errors.
+ */
+export class SummarizerThinkingBudgetError extends Error {
+  constructor(public readonly rawResult: string) {
+    super(
+      `Summarizer hit a persistent thinking.budget_tokens error on both the primary and fallback model: ${rawResult}`,
+    );
+    this.name = "SummarizerThinkingBudgetError";
+  }
+}
+
 export interface CodexSummarizerCommand {
   command: string;
   args: string[];
@@ -214,8 +233,10 @@ async function callClaude(
           );
           return await callClaude(prompt, sessionId, true, cwd);
         }
-        // If fallback also fails, return error message
-        return result;
+        // Fallback also hit the same persistent error: throw instead of
+        // returning the error text as data (CR-059), so callers' existing
+        // catch blocks write the #96 error sentinel and retry on the next run.
+        throw new SummarizerThinkingBudgetError(result);
       }
 
       return result;
