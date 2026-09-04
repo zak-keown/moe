@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { makeFakeWs } from './_helpers.mjs';
 
 const require = createRequire(import.meta.url);
-const { createBrowserSession } = require('../../skills/browsing/lib/browser-session.js');
+const { createBrowserSession } = require('../../browsing-compat/lib/browser-session.js');
 
 function makeFixtures() {
   const ws = makeFakeWs();

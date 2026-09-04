@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Stamp one finding's disposition into CODEBASE-REVIEW.md and refresh the
 // frontmatter counts.
 //

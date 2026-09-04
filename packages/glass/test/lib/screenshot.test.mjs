@@ -7,7 +7,7 @@ import * as path from 'node:path';
 import { makePageSessionFake } from './_helpers.mjs';
 
 const require = createRequire(import.meta.url);
-const { attachScreenshot } = require('../../skills/browsing/lib/screenshot.js');
+const { attachScreenshot } = require('../../browsing-compat/lib/screenshot.js');
 
 // Helper: create a real temp session dir and tear it down after the test.
 async function withTempDir(fn) {

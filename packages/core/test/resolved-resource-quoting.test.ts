@@ -21,24 +21,36 @@ const GENERATED_SKILL_ROOTS = [
 // used directly as executable shell positions. Assignment-only and prose-only
 // placeholders are deliberately absent.
 const EXECUTABLE_RESOLVED_RESOURCES = {
-  "brainstorming/visual-companion.md#resolved-start-server.sh": 6,
-  "brainstorming/visual-companion.md#resolved-stop-server.sh": 1,
+  "brainstorming/visual-companion.md#resolved-start-server.mjs": 6,
+  "brainstorming/visual-companion.md#resolved-stop-server.mjs": 1,
   "docs-update/SKILL.md#resolved-docs-verify-report.mjs": 1,
-  "extracting-requirements/SKILL.md#resolved-validate-requirements-index.py": 1,
-  "extracting-requirements/SKILL.md#resolved-validate-scenarios.py": 1,
+  "extracting-requirements/SKILL.md#resolved-chunk_spec.mjs": 1,
+  "extracting-requirements/SKILL.md#resolved-aggregate_stories.mjs": 1,
+  "extracting-requirements/SKILL.md#resolved-aggregate_scenarios.mjs": 1,
+  "extracting-requirements/SKILL.md#resolved-backlink_scenarios.mjs": 1,
+  "extracting-requirements/SKILL.md#resolved-validate_requirements_index.mjs": 1,
+  "extracting-requirements/SKILL.md#resolved-validate_scenarios.mjs": 1,
+  "finding-duplicate-functions/SKILL.md#resolved-extract-functions.mjs": 1,
+  "finding-duplicate-functions/SKILL.md#resolved-prepare-category-analysis.mjs": 1,
+  "finding-duplicate-functions/SKILL.md#resolved-generate-report.mjs": 1,
+  "finding-duplicate-functions/scripts/categorize-prompt.md#resolved-extract-functions.mjs": 1,
   "fixing-a-code-review/SKILL.md#resolved-stamp-disposition.mjs": 1,
   "fixing-a-code-review/SKILL.md#resolved-compact-resolved.mjs": 1,
+  "reviewing-a-codebase/SKILL.md#resolved-review-scope.mjs": 1,
   "reviewing-a-codebase/SKILL.md#resolved-review-check.mjs": 1,
   "reviewing-a-codebase/SKILL.md#resolved-review-merge.mjs": 2,
-  "reviewing-a-codebase/SKILL.md#resolved-review-scope.mjs": 1,
-  "reviewing-a-codebase/SKILL.md#resolved-review-verify-record.mjs": 2,
   "reviewing-a-codebase/SKILL.md#resolved-review-verify-scope.mjs": 1,
+  "reviewing-a-codebase/SKILL.md#resolved-review-verify-record.mjs": 2,
+  "running-an-iteration/SKILL.md#resolved-check_citations.mjs": 1,
+  "running-an-iteration/SKILL.md#resolved-validate_iteration_log.mjs": 1,
+  "scoping-the-simplest-core/SKILL.md#resolved-check_citations.mjs": 1,
+  "scoping-the-simplest-core/SKILL.md#resolved-validate_roadmap.mjs": 1,
   "sequencing-plans/SKILL.md#resolved-plan-set.mjs": 4,
-  "subagent-driven-development/SKILL.md#resolved-review-package": 1,
-  "subagent-driven-development/SKILL.md#resolved-sdd-workspace": 1,
-  "subagent-driven-development/SKILL.md#resolved-task-brief": 1,
+  "subagent-driven-development/SKILL.md#resolved-sdd-workspace.mjs": 1,
   "subagent-driven-development/SKILL.md#resolved-task-set.mjs": 2,
-  "systematic-debugging/root-cause-tracing.md#resolved-find-polluter.sh": 1,
+  "subagent-driven-development/SKILL.md#resolved-task-brief.mjs": 1,
+  "subagent-driven-development/SKILL.md#resolved-review-package.mjs": 1,
+  "systematic-debugging/root-cause-tracing.md#resolved-find-polluter.mjs": 1,
   "writing-plans/SKILL.md#resolved-task-set.mjs": 1,
   "writing-skills/SKILL.md#resolved-render-graphs.mjs": 2,
 } as const;
@@ -97,7 +109,7 @@ describe("resolved executable resource quoting", () => {
       join(CANONICAL_SKILLS, "using-tmux-for-interactive-commands/SKILL.md"),
       "utf8",
     );
-    expect(content).toContain('WRAPPER="<resolved-tmux-wrapper.sh>"');
-    expect(content).toContain('"$WRAPPER" start');
+    expect(content).toContain('WRAPPER="<resolved-tmux-wrapper.mjs>"');
+    expect(content).toContain('node "$WRAPPER" start');
   });
 });

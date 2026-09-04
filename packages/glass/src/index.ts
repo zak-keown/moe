@@ -33,7 +33,7 @@ export { parsePayload, resolveStrictStructuredPayload, tryParseJsonObject, tryPa
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const require = createRequire(import.meta.url);
-const chromeLib = require(join(__dirname, "../skills/browsing/chrome-ws-lib.js")).createSession();
+const chromeLib = require(join(__dirname, "../skills/browsing/scripts/chrome-ws-lib.mjs")).createSession();
 const SERVER_VERSION = require(join(__dirname, "../package.json")).version;
 
 /**

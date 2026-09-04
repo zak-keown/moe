@@ -2,11 +2,14 @@
 
 Use this template when dispatching an implementer subagent.
 
+**Dispatch model selection:** The `Agent` tool supports a call-level
+`model` field. Every dispatch must set its `model` field explicitly to
+the model assigned by the selected role in Model Selection.
+
+
 ```
 Subagent (general-purpose):
   description: "Implement Task N: [task name]"
-  model: [MODEL — REQUIRED: choose per SKILL.md Model Selection; an omitted
-         model silently inherits the session's most expensive one]
   prompt: |
     You are implementing Task N: [task name]
 

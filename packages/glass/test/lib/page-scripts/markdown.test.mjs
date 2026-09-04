@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { JSDOM } from 'jsdom';
 
 const require = createRequire(import.meta.url);
-const markdownScript = require('../../../skills/browsing/lib/page-scripts/markdown.js');
+const markdownScript = require('../../../browsing-compat/lib/page-scripts/markdown.js');
 
 describe('page-scripts/markdown', () => {
   function evalScript(html) {

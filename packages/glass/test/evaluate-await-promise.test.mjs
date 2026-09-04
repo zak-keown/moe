@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // evaluate / evaluateJson live in lib/evaluation.js since the file split.
-const source = readFileSync(join(__dirname, '../skills/browsing/lib/evaluation.js'), 'utf8');
+const source = readFileSync(join(__dirname, '../browsing-compat/lib/evaluation.js'), 'utf8');
 
 // Extract the evaluate() function body from source.
 // We verify the CDP call parameters directly rather than mocking the CDP connection,

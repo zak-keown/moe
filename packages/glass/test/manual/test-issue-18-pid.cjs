@@ -6,7 +6,7 @@
  */
 
 const assert = require('assert');
-const lib = require('../../skills/browsing/chrome-ws-lib.js').createSession();
+const lib = require('../../browsing-compat/chrome-ws-lib.js').createSession();
 
 let passed = 0;
 let failed = 0;

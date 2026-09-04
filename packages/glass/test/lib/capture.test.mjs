@@ -21,7 +21,7 @@ function makePageSessionFake(sessionId = 'fake-session-id') {
 }
 
 const require = createRequire(import.meta.url);
-const { attachCapture } = require('../../skills/browsing/lib/capture.js');
+const { attachCapture } = require('../../browsing-compat/lib/capture.js');
 
 describe('capture', () => {
   // Use a process-scoped temp dir so we don't touch ~/.cache

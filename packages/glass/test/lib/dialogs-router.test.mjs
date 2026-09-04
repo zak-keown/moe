@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { makeCdpSpy } from './_helpers.mjs';
 
 const require = createRequire(import.meta.url);
-const { tryHandleDialogSelector, tryHandleDialogSelectorForSession } = require('../../skills/browsing/lib/dialogs-router.js');
+const { tryHandleDialogSelector, tryHandleDialogSelectorForSession } = require('../../browsing-compat/lib/dialogs-router.js');
 
 function jsAlert() {
   return { kind: 'alert', payload: { message: 'x', url: '', defaultPrompt: '', hasBrowserHandler: false }, staged: {} };

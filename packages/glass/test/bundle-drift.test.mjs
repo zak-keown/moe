@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 
-const { createSession } = require('../skills/browsing/chrome-ws-lib.js');
+const { createSession } = require('../browsing-compat/chrome-ws-lib.js');
 
 describe('bundle drift', () => {
   it('every chromeLib.X call in dist/index.js exists on the lib session object', () => {

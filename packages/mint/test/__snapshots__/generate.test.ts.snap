@@ -69,9 +69,8 @@ exports[`generate > snapshots the generated tree for the kitchen-sink fixture 1`
   "homepage": "https://example.com/kitchen-sink"
 }
 
-=== .claude-plugin/skills/greeting/scripts/hello.sh ===
-#!/usr/bin/env bash
-echo hello
+=== .claude-plugin/skills/greeting/scripts/hello.mjs ===
+console.log("hello");
 
 === .claude-plugin/skills/greeting/SKILL.md ===
 ---
@@ -112,9 +111,8 @@ mentions greetings, use the greeting skill.
   "hooks": {}
 }
 
-=== .codex-plugin/skills/greeting/scripts/hello.sh ===
-#!/usr/bin/env bash
-echo hello
+=== .codex-plugin/skills/greeting/scripts/hello.mjs ===
+console.log("hello");
 
 === .codex-plugin/skills/greeting/SKILL.md ===
 ---
@@ -289,9 +287,8 @@ exit 0
   "hooks": "./.cursor-plugin/hooks/moe-mint/hooks.json"
 }
 
-=== .cursor-plugin/skills/greeting/scripts/hello.sh ===
-#!/usr/bin/env bash
-echo hello
+=== .cursor-plugin/skills/greeting/scripts/hello.mjs ===
+console.log("hello");
 
 === .cursor-plugin/skills/greeting/SKILL.md ===
 ---
@@ -334,9 +331,8 @@ mentions greetings, use the greeting skill.
   }
 }
 
-=== .kimi-plugin/skills/greeting/scripts/hello.sh ===
-#!/usr/bin/env bash
-echo hello
+=== .kimi-plugin/skills/greeting/scripts/hello.mjs ===
+console.log("hello");
 
 === .kimi-plugin/skills/greeting/SKILL.md ===
 ---
@@ -458,9 +454,8 @@ export const KitchenSinkPlugin = async ({ client, directory }) => {
   }
 }
 
-=== .opencode/skills/greeting/scripts/hello.sh ===
-#!/usr/bin/env bash
-echo hello
+=== .opencode/skills/greeting/scripts/hello.mjs ===
+console.log("hello");
 
 === .opencode/skills/greeting/SKILL.md ===
 ---
@@ -589,9 +584,8 @@ function firstNonCompactionSummaryIndex(messages: unknown[]): number {
   return index
 }
 
-=== .pi/skills/greeting/scripts/hello.sh ===
-#!/usr/bin/env bash
-echo hello
+=== .pi/skills/greeting/scripts/hello.mjs ===
+console.log("hello");
 
 === .pi/skills/greeting/SKILL.md ===
 ---

@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Enumerate, exclude, group and shard a repository for review.
 //
 // Deterministic on purpose. Three baseline runs asked to count "source files"

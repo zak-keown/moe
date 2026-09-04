@@ -3,7 +3,7 @@ import { strict as assert } from 'node:assert';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { createOverride } = require('../skills/browsing/host-override.js');
+const { createOverride } = require('../browsing-compat/host-override.js');
 
 // CR-046: assigning a bare IPv6 literal to `URL#hostname` is a silent no-op
 // per the WHATWG URL spec (the hostname must be bracketed, e.g. `[::1]`).
