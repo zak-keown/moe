@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 3
+  fixed: 4
   stale: 0
   skipped: 0
   deferred: 0
-  open: 104
+  open: 103
 ---
 
 # Codebase Review — moe
@@ -1402,6 +1402,10 @@ existing `ErrorLog`) before or when calling `writer.recordRunEnd(..., "errored")
 so an errored run in a batch is debuggable from the artifacts the run-set
 produces.
 
+**Disposition:** fixed
+**Commit:** `446cbbdcd25e510099ba086130f7b3ab9a73611f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-039: `startFetchServer` binds to all interfaces instead of loopback, unlike its sibling `startMockWsServer` in the same file
 
 **File:** `packages/flight/test/qa/helpers/mock-http.ts`
