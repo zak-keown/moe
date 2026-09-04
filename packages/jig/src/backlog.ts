@@ -12,20 +12,20 @@ export interface BacklogItem {
   id: string;
   title: string;
   status: BacklogStatus;
-  reason?: string;
+  reason?: string | undefined;
   severity: Severity;
   source: string;
-  claimedBy?: string;
+  claimedBy?: string | undefined;
   created: string;
   updated: string;
-  filedBy?: string;
-  filedSha?: string;
-  movedBy?: string;
-  movedSha?: string;
+  filedBy?: string | undefined;
+  filedSha?: string | undefined;
+  movedBy?: string | undefined;
+  movedSha?: string | undefined;
   blockedBy: string[];
   blocks: string[];
-  parent?: string;
-  ref?: string;
+  parent?: string | undefined;
+  ref?: string | undefined;
   tags: string[];
   body: string;
 }
@@ -36,7 +36,7 @@ export function parseItem(text: string): BacklogItem {
   const m = FM.exec(text.replace(/\r\n/g, "\n"));
   if (!m) throw new Error("backlog item has no frontmatter");
   const fm = new Map<string, string>();
-  for (const line of m[1].split("\n")) {
+  for (const line of (m[1] ?? "").split("\n")) {
     const i = line.indexOf(":");
     if (i !== -1) fm.set(line.slice(0, i).trim(), line.slice(i + 1).trim());
   }
@@ -61,7 +61,7 @@ export function parseItem(text: string): BacklogItem {
     blockedBy: list("blocked_by"), blocks: list("blocks"),
     parent: fm.get("parent") || undefined, ref: fm.get("ref") || undefined,
     tags: list("tags"),
-    body: m[2].replace(/^\n+/, ""),
+    body: (m[2] ?? "").replace(/^\n+/, ""),
   };
 }
 
@@ -97,7 +97,7 @@ export function allocateId(existing: string[]): { num: number; id: string } {
   let max = 0;
   for (const name of existing) {
     const m = /^(\d{4})-.*\.md$/.exec(name);
-    if (m) max = Math.max(max, Number.parseInt(m[1], 10));
+    if (m) max = Math.max(max, Number.parseInt(m[1] ?? "0", 10));
   }
   const num = max + 1;
   return { num, id: `BL-${String(num).padStart(4, "0")}` };
