@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 3
+  fixed: 4
   stale: 0
   skipped: 0
   deferred: 0
-  open: 104
+  open: 103
 ---
 
 # Codebase Review — moe
@@ -1503,6 +1503,10 @@ Fix: add exponential-backoff reconnect on `onclose` while the run is
 plausibly still active (i.e. until `gone` or `model.runEnd` is set), and/or
 expose a manual "reconnect" affordance to the caller.
 
+**Disposition:** fixed
+**Commit:** `85a58cdc33549edd8a05a9c5d86f85b7653b96d5`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-045: `loadMore` has no in-flight guard — rapid repeated calls fetch and append the same page twice
 
 **File:** `packages/flight/ui/src/hooks/useResults.ts`
