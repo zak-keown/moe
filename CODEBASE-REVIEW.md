@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 77
+  fixed: 85
   stale: 1
   skipped: 0
   deferred: 0
-  open: 29
+  open: 21
 ---
 
 # Codebase Review — moe
@@ -925,6 +925,10 @@ Fix: either wire each `--execute` branch to call the corresponding implementatio
 wiring lands — make the stub exit non-zero with an explicit "not implemented" `MintError` instead of
 logging a message that reads as confirmation and exiting 0.
 
+**Disposition:** fixed
+**Commit:** `c69b01c49285e887976b7dd31352654bb1913817`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-021: extractEmbedded's directory creation follows a pre-planted symlink, letting a co-tenant redirect the native-library cache outside the content-hash integrity check
 
 **File:** `packages/tab/bindings/go/tab/loader.go`
@@ -2125,6 +2129,10 @@ The generated install doc directly contradicts the tool's own capability/deliver
 
 Fix: either (a) have `docs-emit.ts` pass each adapter's `adjustedModel(model, adapter.skillLayout)` into `installDoc()` so it sees the same effective component paths `emit()` does, or (b) drop the caveat/branch in `agent-plugins.ts`'s `installDoc` entirely, since the tool always relocates skills to the fixed `skills/` root and the caveat can never be true in a real generation run.
 
+**Disposition:** fixed
+**Commit:** `1267dc571835c15c4633b242c467587775c1ea59`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-062: TOCTOU between the marketplace/catalog symlink check and the write
 
 **File:** `packages/mint/src/platform/projections.ts`
@@ -2164,6 +2172,10 @@ comment). `writeRegistryProjections` should use the same
 open-with-`O_NOFOLLOW` pattern (or route through `writeFileSet`) instead of
 `node:fs/promises`'s `writeFile`.
 
+**Disposition:** fixed
+**Commit:** `fb27eec3521b9b3e21e652a8bb541207fdf31385`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-063: `does not use npm pack after candidate verification` test never executes its assertion
 
 **File:** `packages/mint/test/release-workflows.test.ts`
@@ -2191,6 +2203,10 @@ Because the index is always `-1` against the current workflow, the `if` body —
 
 Fix: either assert unconditionally that `PUBLISH_WORKFLOW` never matches `/npm pack(?!\s*#)/` (since the whole publish path is now delegated to the compiled Mint CLI and no anchor is needed), or fail the test loudly when `publishMatrixLine === -1` instead of silently skipping the check.
 
+**Disposition:** fixed
+**Commit:** `42f7f7d78de50408536d90845878c7416fc28e2f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-064: `MOE_TAB_PRICING_DIR` override silently loses its "wins absolutely" contract for non-UTF-8 values
 
 **File:** `packages/tab/crates/moe-tab-core/src/lib.rs`
@@ -2988,6 +3004,10 @@ dead map (and consider deleting `buildTarballChecksumRows`/`validateChecksumFile
 if truly unused) rather than leaving a plausible-looking but broken
 computation next to the correct one.
 
+**Disposition:** fixed
+**Commit:** `4e36913b5877e65180b4aaaf8c0d67e58e2b3c02`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-101: `computeResumeActions` treats an unobserved draft-asset hash as a match, not as "unknown"
 
 **File:** `packages/mint/src/release/recovery.ts`
@@ -3008,6 +3028,10 @@ require `draftAssetSha256` to be non-optional on `RegistrySnapshot` (forcing eve
 either provide a real hash or explicitly report "absent"), or block with a distinct
 `RECOVERY_DRAFT_ASSET_UNVERIFIABLE` code when the hash can't be observed, rather than silently accepting.
 
+**Disposition:** fixed
+**Commit:** `42d8cd90505e51689b8929680651d434fc405795`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-102: Unescaped shell interpolation of an environment-controlled path in the dogfood test
 
 **File:** `packages/mint/test/dogfood.test.ts`
@@ -3043,6 +3067,10 @@ piped into `tar -x -C dir` (or use `execFileSync('tar', ['-x', '-C', dir], { inp
 so the path is passed as an argv element rather than shell-interpolated text regardless of
 its contents.
 
+**Disposition:** fixed
+**Commit:** `47f3dc24ca10ef2928b9bad10557067d5d9c043a`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-103: Publish-workflow permission test accepts a downgrade its own name forbids
 
 **File:** `packages/mint/test/release-workflows.test.ts`
@@ -3068,6 +3096,10 @@ it('requires contents: write permission', () => {
 
 `publish.yml` currently declares `contents: write` (confirmed by reading the workflow directly), so there is no live defect today, but the test provides no protection against a regression that its name promises to catch. Fix: change the publish-workflow assertion to `expect(perms.contents).toBe('write')`, matching the certify-workflow test right below it.
 
+**Disposition:** fixed
+**Commit:** `571b270e00e54d87a622d60a0b23d95efce6714f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-104: `CostEstimate.per_model` mislabels `provider` when the same model string is billed under two different providers
 
 **File:** `packages/tab/crates/moe-tab-core/src/cost.rs`

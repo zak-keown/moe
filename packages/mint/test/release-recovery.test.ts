@@ -116,6 +116,22 @@ describe('computeResumeActions', () => {
     expect(actions[0]!.kind).toBe('block')
   })
 
+  it('blocks rather than publishes when the draft asset hash could not be observed (CR-101)', () => {
+    const lock = fakeLock([
+      { id: 'a', changed: true, tarball: 'a.tgz', integrity: 'sha512-aaa', sha256: sha256('tarball-a') },
+    ])
+    // exactOptionalPropertyTypes forbids `draftAssetSha256: undefined` as an
+    // override value — omit the key entirely to model "hash not observed".
+    const { draftAssetSha256: _omitted, ...unverifiable } = snapshot('a')
+    const actions = computeResumeActions(lock, [unverifiable])
+    expect(actions).toEqual([{
+      kind: 'block',
+      plugin: 'a',
+      code: 'RECOVERY_DRAFT_ASSET_UNVERIFIABLE',
+      message: expect.stringContaining('a.tgz'),
+    }])
+  })
+
   it('handles partial publication (mix of published and unpublished)', () => {
     const lock = fakeLock([
       { id: 'a', changed: true, tarball: 'a.tgz', integrity: 'sha512-aaa', sha256: sha256('tarball-a') },
