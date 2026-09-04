@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 4
+  fixed: 5
   stale: 0
   skipped: 0
   deferred: 0
-  open: 103
+  open: 102
 ---
 
 # Codebase Review — moe
@@ -1298,6 +1298,10 @@ Both `buildReturnScreenshot` in this file and `executeScreenshot` in the sibling
 
 Two different runs' screenshot calls that happen to compute `Date.now()` in the same millisecond (plausible under concurrency, since the write-then-read-then-unlink sequence around `chrome.screenshot()` spans a CDP round trip of tens of milliseconds during which another run's call can land on the identical path) will target the same temp file. The result is silent cross-run data corruption: one run's `readFileSync(tmpFile)` can return the other run's PNG bytes (attributing the wrong screenshot to a run's evidence log/verdict), or one run's `unlinkSync` can remove the file out from under the other run's still-pending read (producing an `ENOENT` that gets logged as `screenshotSkipped`/a swallowed cleanup error instead of the real cause). Fix: include `process.pid` and/or `crypto.randomUUID()` in the filename, matching the pattern that should be used for any temp artifact shared across concurrent runs in the same process.
 
+**Disposition:** fixed
+**Commit:** `f900535cac6a21de78ab915cbc1bc2468f2ed42f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-035: `POST /api/scenarios` creation has no id charset check despite a comment elsewhere claiming it does
 
 **File:** `packages/flight/src/qa/api/routes/scenarios.ts`
