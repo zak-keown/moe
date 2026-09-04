@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 2
+  fixed: 3
   stale: 0
   skipped: 0
   deferred: 0
-  open: 105
+  open: 104
 ---
 
 # Codebase Review — moe
@@ -392,6 +392,10 @@ mirroring `assertSafeSegment`/`CLAUDE_SESSION_ID`) before using it to build
 any path, and treat a failing validation as a no-op (return `empty`) the same
 way a missing/empty `session_id` already is.
 
+**Disposition:** fixed
+**Commit:** `54ad5ce6d5b844dff1e71f7b27f98853e373b70f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-009: `cellId()` uses an unsafe separator, letting two distinct cells collide on the same DOM id and SSE event name
 
 **File:** `packages/flight/dashboard/src/contracts.ts`
