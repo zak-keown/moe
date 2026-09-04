@@ -14,6 +14,12 @@ findings:
   total: 107
 verified: false
 status: issues_found
+dispositions:
+  fixed: 1
+  stale: 0
+  skipped: 0
+  deferred: 0
+  open: 106
 ---
 
 # Codebase Review — moe
@@ -700,6 +706,10 @@ exception is logged/reported without re-entering the whole error path,
 double-invoking hooks, or overwriting the already-known result with a
 rejection.
 
+**Disposition:** fixed
+**Commit:** `8f681217b85998c2eddc1e3de7c2076bfcc768ce`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-017: Card creation form does not enforce the character set `makeRunId`/`parseRunId` require, silently breaking live transcript for the run
 
 **File:** `packages/flight/ui/src/components/NewCardForm.tsx`
