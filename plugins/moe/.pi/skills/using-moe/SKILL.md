@@ -7,12 +7,11 @@ description: Use when starting any conversation - establishes how to find and us
 If you were dispatched as a subagent to execute a specific task, ignore this skill.
 </SUBAGENT-STOP>
 
-<BOOTSTRAP-CONTEXT>
-This bootstrap is actively injected at session start and is already
-loaded. Follow it now. Do not reload `using-moe`; read every other
-skill's `SKILL.md` through Pi's configured skill discovery.
-
-</BOOTSTRAP-CONTEXT>
+<ALREADY-LOADED>
+If you are reading this at session start, this skill is ALREADY LOADED and you
+are currently following it. Do NOT use read the skill's `SKILL.md` to load `using-moe` again —
+that is redundant. Every OTHER skill you reach through the same mechanism.
+</ALREADY-LOADED>
 
 <EXTREMELY-IMPORTANT>
 If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.

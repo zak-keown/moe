@@ -2,15 +2,11 @@
 
 Use this template when dispatching an implementer subagent.
 
-**Dispatch model selection:** Pass a call-level model override only when
-the installed subagent tool documents that field. Otherwise route the
-selected role through the tool's configured subagent profile, or use the
-configured default. Do not invent an unsupported field.
-
-
 ```
 Subagent (general-purpose):
   description: "Implement Task N: [task name]"
+  model: [MODEL — REQUIRED: choose per SKILL.md Model Selection; an omitted
+         model silently inherits the session's most expensive one]
   prompt: |
     You are implementing Task N: [task name]
 

@@ -37,6 +37,12 @@
       "mode": "0755"
     },
     {
+      "path": ".claude-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
+      "size": 835,
+      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
+      "mode": "0644"
+    },
+    {
       "path": ".codex-plugin/plugin.json",
       "size": 484,
       "sha256": "0bac67e71def11d0d25ad8eea538cccff87b50dabea07a549b0a6b1d8ffdafe2",
@@ -53,6 +59,12 @@
       "size": 120,
       "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
       "mode": "0755"
+    },
+    {
+      "path": ".codex-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
+      "size": 835,
+      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
+      "mode": "0644"
     },
     {
       "path": ".cursor-plugin/marketplace.json",
@@ -79,6 +91,12 @@
       "mode": "0755"
     },
     {
+      "path": ".cursor-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
+      "size": 835,
+      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
+      "mode": "0644"
+    },
+    {
       "path": ".kimi-plugin/plugin.json",
       "size": 468,
       "sha256": "bc77912356c4fbf65dd5e54570e0fc79a5a43bc8aa946e60e96d1202f8e368a1",
@@ -97,9 +115,15 @@
       "mode": "0755"
     },
     {
+      "path": ".kimi-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
+      "size": 835,
+      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
+      "mode": "0644"
+    },
+    {
       "path": ".moe-mint/manifest.json",
-      "size": 4580,
-      "sha256": "a2767fa02b8ca869caf672f5429b4bcef2fb5bcb6029fdda6015479f2e544f96",
+      "size": 5701,
+      "sha256": "e7a5f48d1fe190e7ba835006b6770a04c9b0b479bc4fff9aecd3bf31d99fec8e",
       "mode": "0644"
     },
     {
@@ -121,6 +145,12 @@
       "mode": "0755"
     },
     {
+      "path": ".opencode/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
+      "size": 835,
+      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
+      "mode": "0644"
+    },
+    {
       "path": ".pi/extensions/moe-crew.ts",
       "size": 579,
       "sha256": "11f3b2cf5ebe937208c9dc08f2510fe23240502363850699ab24a1db9ae3d298",
@@ -137,6 +167,12 @@
       "size": 120,
       "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
       "mode": "0755"
+    },
+    {
+      "path": ".pi/skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
+      "size": 835,
+      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
+      "mode": "0644"
     },
     {
       "path": "LICENSE",
@@ -770,8 +806,8 @@
     },
     {
       "path": "package.json",
-      "size": 5429,
-      "sha256": "2a8d52db0506c7211e5ba4dbfc7c56359088fa10d76ef7949076109621d3b4e0",
+      "size": 5948,
+      "sha256": "48dc2170526b8975c4a900c7fe144628d7f62e91430f9c8137c62f7e4b69c98d",
       "mode": "0644"
     },
     {
@@ -791,9 +827,15 @@
       "size": 120,
       "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
       "mode": "0755"
+    },
+    {
+      "path": "skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
+      "size": 835,
+      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
+      "mode": "0644"
     }
   ],
-  "tree_sha256": "cac6d071957a846bd28e07452f0a03894ae7230279a52a02f93ab08e8769a358",
+  "tree_sha256": "d3b3c7804ce1d6e812948b70306c79aebd8ecde2629b6ed29a36c0f471331cd5",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [
