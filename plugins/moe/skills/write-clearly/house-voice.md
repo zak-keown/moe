@@ -36,6 +36,30 @@ Lineage sections and "Status: imported" are import-ledger moves, aimed at one
 reader auditing one import, and they become historical furniture once it is done.
 Transcribe the register; do not mistake it for a persona.
 
+## Plain words before assurance
+
+For prose humans read, prefer named files, commands, conditions, and
+consequences over assurance words. Delete an adjective that only certifies the
+sentence's seriousness. These are preferences, not bans: use a term when it is
+the exact technical claim, then name the mechanism or consequence.
+
+| Prefer not to lean on | Prefer |
+| --- | --- |
+| load-bearing | important, necessary |
+| evidence / evidence-backed | test result, proof, observed result |
+| canonical, when it only means current or expected | generated, expected, reference |
+| contract, when it only means a rule | rule, requirement, interface, guarantee |
+| focused test or suite | targeted test; better, name the test |
+| strictly scoped | affects only _X_ |
+| genuinely, real, or exact as reassurance | delete it; state the fact |
+| fail-closed | rejects invalid or unsafe input |
+| tighten | restrict, narrow, fix |
+| surface | file, API, behaviour, or output |
+
+For example, write "`pnpm mint:check` passed; `pnpm check` remains" instead of
+"the focused suite is green and the required gate is next." The command and the
+remaining condition carry the meaning.
+
 ## The tavern vocabulary is closed
 
 `ARCHITECTURE.md` §7 names exactly four measures: `tab`, `flight`, `proof`,

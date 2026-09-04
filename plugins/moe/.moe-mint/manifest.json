@@ -648,7 +648,7 @@
       "mode": 420
     },
     ".claude-plugin/skills/write-clearly/house-voice.md": {
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": 420
     },
     ".claude-plugin/skills/write-plan/SKILL.md": {
@@ -1331,7 +1331,7 @@
       "mode": 420
     },
     ".codex-plugin/skills/write-clearly/house-voice.md": {
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": 420
     },
     ".codex-plugin/skills/write-plan/SKILL.md": {
@@ -2028,7 +2028,7 @@
       "mode": 420
     },
     ".cursor-plugin/skills/write-clearly/house-voice.md": {
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": 420
     },
     ".cursor-plugin/skills/write-plan/SKILL.md": {
@@ -2711,7 +2711,7 @@
       "mode": 420
     },
     ".kimi-plugin/skills/write-clearly/house-voice.md": {
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": 420
     },
     ".kimi-plugin/skills/write-plan/SKILL.md": {
@@ -3403,7 +3403,7 @@
       "mode": 420
     },
     ".opencode/skills/write-clearly/house-voice.md": {
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": 420
     },
     ".opencode/skills/write-plan/SKILL.md": {
@@ -4086,7 +4086,7 @@
       "mode": 420
     },
     ".pi/skills/write-clearly/house-voice.md": {
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": 420
     },
     ".pi/skills/write-plan/SKILL.md": {

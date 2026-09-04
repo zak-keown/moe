@@ -980,8 +980,8 @@
     },
     {
       "path": ".claude-plugin/skills/write-clearly/house-voice.md",
-      "size": 4944,
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "size": 6108,
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": "0644"
     },
     {
@@ -2006,8 +2006,8 @@
     },
     {
       "path": ".codex-plugin/skills/write-clearly/house-voice.md",
-      "size": 4944,
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "size": 6108,
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": "0644"
     },
     {
@@ -3056,8 +3056,8 @@
     },
     {
       "path": ".cursor-plugin/skills/write-clearly/house-voice.md",
-      "size": 4944,
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "size": 6108,
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": "0644"
     },
     {
@@ -4082,8 +4082,8 @@
     },
     {
       "path": ".kimi-plugin/skills/write-clearly/house-voice.md",
-      "size": 4944,
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "size": 6108,
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": "0644"
     },
     {
@@ -4149,7 +4149,7 @@
     {
       "path": ".moe-mint/manifest.json",
       "size": 627969,
-      "sha256": "62de249356bda2313a274729209cec8740d225aff40426afde3b2b96642358a6",
+      "sha256": "a14a7a2e1583697988a2d8570960090f1a0a971184244600291d2f770d71c29f",
       "mode": "0644"
     },
     {
@@ -5132,8 +5132,8 @@
     },
     {
       "path": ".opencode/skills/write-clearly/house-voice.md",
-      "size": 4944,
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "size": 6108,
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": "0644"
     },
     {
@@ -6158,8 +6158,8 @@
     },
     {
       "path": ".pi/skills/write-clearly/house-voice.md",
-      "size": 4944,
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "size": 6108,
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": "0644"
     },
     {
@@ -7358,8 +7358,8 @@
     },
     {
       "path": "skills/write-clearly/house-voice.md",
-      "size": 4944,
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "size": 6108,
+      "sha256": "159662672c0ad1852d8a9a7b08ed1bfa7c6430d21af8ac234d0c20e2b72fe7e6",
       "mode": "0644"
     },
     {
@@ -7423,7 +7423,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "3fed860e0621f91866a29796f573c29bde85a7964bad44b890ace18b3c4751f3",
+  "tree_sha256": "fe492ee37cc45a7d1b3295be40742d8da465f2d0248948d218ac69ce1d8a6dfe",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [
