@@ -1,11 +1,8 @@
 import { describe, it } from 'vitest';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import { makeBrowserSessionFake } from './_helpers.mjs';
-
-const require = createRequire(import.meta.url);
-const { attachPageSession } = require('../../skills/browsing/lib/page-session.js');
-const { createCdpRouter } = require('../../skills/browsing/lib/cdp-router.js');
+import { attachPageSession } from '../../skills/browsing/scripts/lib/page-session.mjs';
+import { createCdpRouter } from '../../skills/browsing/scripts/lib/cdp-router.mjs';
 
 function setup() {
   const browser = makeBrowserSessionFake();

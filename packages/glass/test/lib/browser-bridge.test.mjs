@@ -1,10 +1,7 @@
 import { describe, it } from 'vitest';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import { makeBrowserSessionFake } from './_helpers.mjs';
-
-const require = createRequire(import.meta.url);
-const { attachBrowserBridge } = require('../../skills/browsing/lib/browser-bridge.js');
+import { attachBrowserBridge } from '../../skills/browsing/scripts/lib/browser-bridge.mjs';
 
 function setup() {
   const browser = makeBrowserSessionFake();
