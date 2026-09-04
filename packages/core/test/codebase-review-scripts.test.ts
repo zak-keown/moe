@@ -629,6 +629,14 @@ describe("review-merge behavior", () => {
       "a line-number citation",
       "### Broken\n**File:** `src/a.ts:12`\n**Anchor:** `aSymbol`\n**Severity:** high\nbody\n",
     ],
+    [
+      "a line-number citation in the anchor",
+      "### Broken\n**File:** `src/a.ts`\n**Anchor:** `src/a.ts:42`\n**Severity:** high\nbody\n",
+    ],
+    [
+      "a line-number citation in the body",
+      "### Broken\n**File:** `src/a.ts`\n**Anchor:** `aSymbol`\n**Severity:** high\nsee `src/a.ts:12` for details\n",
+    ],
   ])("refuses malformed finding records: %s", (_label, report) => {
     const { repo } = mergeFixture([report]);
     const result = run(REVIEW_MERGE, ["--shards", ".review-shards", "--out", "out.md"], repo);
