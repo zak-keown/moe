@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 7
+  fixed: 8
   stale: 0
   skipped: 0
   deferred: 0
-  open: 100
+  open: 99
 ---
 
 # Codebase Review — moe
@@ -2799,6 +2799,10 @@ it('requires contents: write permission', () => {
 
 `publish.yml` currently declares `contents: write` (confirmed by reading the workflow directly), so there is no live defect today, but the test provides no protection against a regression that its name promises to catch. Fix: change the publish-workflow assertion to `expect(perms.contents).toBe('write')`, matching the certify-workflow test right below it.
 
+**Disposition:** fixed
+**Commit:** `571b270e00e54d87a622d60a0b23d95efce6714f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-104: `CostEstimate.per_model` mislabels `provider` when the same model string is billed under two different providers
 
 **File:** `packages/tab/crates/moe-tab-core/src/cost.rs`
