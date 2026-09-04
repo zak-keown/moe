@@ -192,3 +192,51 @@ export function backlogDefer(id: string, opts: DeferOpts): { path: string; statu
   writeFileSync(path, serializeItem(item), "utf-8");
   return { path: resolve(path), status: target, triaged: target === "needs-triage" };
 }
+
+function persist(dir: string, name: string, item: BacklogItem, cwd?: string): string {
+  item.updated = today();
+  item.movedSha = safeSha(cwd) ?? item.movedSha;
+  const path = join(dir, name);
+  writeFileSync(path, serializeItem(item), "utf-8");
+  return resolve(path);
+}
+
+export function backlogClaim(id: string, opts: { cwd?: string; by?: string } = {}): string {
+  const { dir, name, item } = loadItem(opts.cwd, id);
+  if (item.status !== "open" && item.status !== "in-progress")
+    throw new Error(`cannot claim ${id}: status is ${item.status}`);
+  item.status = "in-progress";
+  item.claimedBy = opts.by ?? "manual";
+  item.movedBy = opts.by ?? "manual";
+  return persist(dir, name, item, opts.cwd);
+}
+
+export function backlogResume(id: string, opts: { cwd?: string; by?: string } = {}): { path: string; resume: string } {
+  const { dir, name, item } = loadItem(opts.cwd, id);
+  if (item.status === "blocked") item.status = "open";
+  else if (item.status === "carry-over") item.status = "in-progress";
+  else throw new Error(`cannot resume ${id}: status is ${item.status} (only blocked or carry-over)`);
+  item.movedBy = opts.by ?? "manual";
+  const path = persist(dir, name, item, opts.cwd);
+  const rm = /## Resume[\s\S]*$/m.exec(item.body);
+  return { path, resume: rm ? (rm[0] ?? "") : "" };
+}
+
+export function backlogDone(id: string, opts: { cwd?: string; commit?: string; by?: string } = {}): string {
+  const { dir, name, item } = loadItem(opts.cwd, id);
+  item.status = "done";
+  item.movedBy = opts.by ?? "manual";
+  if (opts.commit) item.movedSha = opts.commit;
+  return persist(dir, name, item, opts.cwd);
+}
+
+export function backlogDecline(id: string, opts: { reason: string; note?: string; cwd?: string; by?: string }): string {
+  if (!(DECLINE_REASONS as readonly string[]).includes(opts.reason))
+    throw new Error(`decline reason must be one of ${DECLINE_REASONS.join(", ")}`);
+  const { dir, name, item } = loadItem(opts.cwd, id);
+  item.status = "declined";
+  item.reason = opts.reason;
+  item.movedBy = opts.by ?? "manual";
+  if (opts.note) item.body = writeResume(item.body, { note: opts.note, next: "—" });
+  return persist(dir, name, item, opts.cwd);
+}

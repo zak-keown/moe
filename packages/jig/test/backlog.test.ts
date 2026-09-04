@@ -139,3 +139,46 @@ describe("routeReason + backlogDefer", () => {
     expect(readFileSync(r.path, "utf-8")).toContain("reason: just because");
   });
 });
+
+describe("transitions", () => {
+  let repo: string;
+  beforeEach(() => { repo = makeRepo(); });
+  afterEach(() => { rmSync(repo, { recursive: true, force: true }); });
+
+  it("claim moves open → in-progress and records claimedBy", async () => {
+    const { backlogAdd, backlogClaim, parseItem } = await import("../src/backlog.js");
+    backlogAdd("x", { cwd: repo });
+    const p = backlogClaim("BL-0001", { cwd: repo, by: "agent-7" });
+    const item = parseItem(readFileSync(p, "utf-8"));
+    expect(item.status).toBe("in-progress");
+    expect(item.claimedBy).toBe("agent-7");
+  });
+
+  it("resume: blocked → open, carry-over → in-progress", async () => {
+    const { backlogAdd, backlogDefer, backlogResume, parseItem } = await import("../src/backlog.js");
+    backlogAdd("b", { cwd: repo });
+    backlogDefer("BL-0001", { reason: "no-runtime", cwd: repo });
+    expect(parseItem(readFileSync(backlogResume("BL-0001", { cwd: repo }).path, "utf-8")).status).toBe("open");
+
+    backlogAdd("c", { cwd: repo });
+    backlogDefer("BL-0002", { reason: "budget", next: "step", cwd: repo });
+    expect(parseItem(readFileSync(backlogResume("BL-0002", { cwd: repo }).path, "utf-8")).status).toBe("in-progress");
+  });
+
+  it("resume refuses a non-resumable state", async () => {
+    const { backlogAdd, backlogResume } = await import("../src/backlog.js");
+    backlogAdd("open item", { cwd: repo });
+    expect(() => backlogResume("BL-0001", { cwd: repo })).toThrow(/cannot resume/);
+  });
+
+  it("done is terminal; decline requires a decline reason", async () => {
+    const { backlogAdd, backlogDone, backlogDecline, parseItem } = await import("../src/backlog.js");
+    backlogAdd("d", { cwd: repo });
+    const donePath = backlogDone("BL-0001", { cwd: repo, commit: "abc1234" });
+    expect(parseItem(readFileSync(donePath, "utf-8")).status).toBe("done");
+    backlogAdd("e", { cwd: repo });
+    expect(() => backlogDecline("BL-0002", { reason: "nope", cwd: repo })).toThrow(/decline reason/);
+    const p = backlogDecline("BL-0002", { reason: "wont-fix", cwd: repo });
+    expect(parseItem(readFileSync(p, "utf-8")).status).toBe("declined");
+  });
+});
