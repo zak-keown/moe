@@ -170,9 +170,32 @@ const SDK_PASSTHROUGH_KEYS = [
   "NO_PROXY",
 ] as const;
 
+// CR-013: SDK_PASSTHROUGH_KEYS carries live LLM provider credentials (and
+// any proxy credentials embedded in HTTPS_PROXY/HTTP_PROXY). Forwarding
+// them unconditionally into every `bash -c <command>` child is dangerous
+// specifically because the QA agent that controls this shell also reads
+// untrusted content from the target under test (extract/screenshot) into
+// its own context every turn — an indirect prompt-injection payload on a
+// page can induce the agent to run a command that exfiltrates the
+// credential over the network without ever printing it anywhere CR-038's
+// transcript redaction would catch. So this pass-through is opt-in per
+// run, not a default: the operator must explicitly set
+// MOE_FLIGHT_BASH_FORWARD_CREDENTIALS to enable it.
+const FORWARD_CREDENTIALS_ENV_VAR = "MOE_FLIGHT_BASH_FORWARD_CREDENTIALS";
+
+function isCredentialForwardingEnabled(parent: NodeJS.ProcessEnv): boolean {
+  const raw = parent[FORWARD_CREDENTIALS_ENV_VAR];
+  if (typeof raw !== "string") return false;
+  const v = raw.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes" || v === "on";
+}
+
 function buildScrubbedEnv(parent: NodeJS.ProcessEnv): Record<string, string> {
   const out: Record<string, string> = {};
-  for (const key of [...BASE_ENV_KEYS, ...SDK_PASSTHROUGH_KEYS]) {
+  const keys = isCredentialForwardingEnabled(parent)
+    ? [...BASE_ENV_KEYS, ...SDK_PASSTHROUGH_KEYS]
+    : BASE_ENV_KEYS;
+  for (const key of keys) {
     const v = parent[key];
     if (typeof v === "string") out[key] = v;
   }
@@ -181,8 +204,9 @@ function buildScrubbedEnv(parent: NodeJS.ProcessEnv): Record<string, string> {
 
 /**
  * Mask every occurrence of a forwarded SDK credential/config value out of
- * bash output before it reaches the evidence log (CR-038). `buildScrubbedEnv`
- * deliberately forwards ANTHROPIC_API_KEY/OPENAI_API_KEY (and the other
+ * bash output before it reaches the evidence log (CR-038). When the operator
+ * has opted in (CR-013) via MOE_FLIGHT_BASH_FORWARD_CREDENTIALS,
+ * `buildScrubbedEnv` forwards ANTHROPIC_API_KEY/OPENAI_API_KEY (and the other
  * SDK_PASSTHROUGH_KEYS) into the child process the LLM controls; any command
  * that prints its environment (`env`, `printenv`, a failing `curl -v`, ...)
  * would otherwise put a live credential on disk in run.jsonl or a spilled

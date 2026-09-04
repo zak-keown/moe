@@ -292,6 +292,46 @@ describe("Results API", () => {
     rmSync(liveDir, { recursive: true, force: true });
   });
 
+  test("GET /api/results/:runId/file/:path refuses a `../` escape inside an allow-listed prefix during a live run", async () => {
+    // isLiveAllowedPath used to be checked against the raw, un-normalized
+    // relPath while the actual file read went through `join(runDir, relPath)`,
+    // which collapses `..` segments. A relPath like
+    // "screenshots/../inputs/context/..." starts with the allow-listed
+    // "screenshots/" prefix as a raw string, but resolves to the
+    // credential-fixture directory on disk. That must be refused.
+    const liveDir = mkdtempSync(join(tmpdir(), "moe-flight-live-traversal-"));
+    mkdirSync(flightPath(liveDir, ".moe-flight", "stories"), { recursive: true });
+    const resultsDir = flightPath(liveDir, ".moe-flight", "results");
+    const runId = "live-003_20260422T000000Z_cccc";
+    const runDir = join(resultsDir, runId);
+    mkdirSync(join(runDir, "screenshots"), { recursive: true });
+    mkdirSync(join(runDir, "inputs", "context", "alice"), { recursive: true });
+    writeFileSync(
+      join(runDir, "inputs", "context", "alice", "credentials.yaml"),
+      "password: hunter2\n",
+    );
+
+    const registry = new ActiveRunRegistry();
+    registry.register({
+      id: runId,
+      cardId: "live-003",
+      title: "live",
+      target: "http://localhost:3000",
+      model: "claude-sonnet-4-6",
+      startedAt: Date.now(),
+      status: "running",
+    });
+
+    const liveApp = makeAppWithRegistry(liveDir, registry);
+
+    const res = await liveApp.request(
+      `/api/results/${runId}/file/screenshots/..%2Finputs%2Fcontext%2Falice%2Fcredentials.yaml`,
+    );
+    expect(res.status).not.toBe(200);
+
+    rmSync(liveDir, { recursive: true, force: true });
+  });
+
   test("GET /api/results/:runId/file/:path still enforces manifest on completed runs", async () => {
     // Existing test-001 has result.json with evidence.screenshots=[] — no
     // screenshot files are listed. A request for a screenshot file should
