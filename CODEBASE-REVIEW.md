@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 60
+  fixed: 69
   stale: 1
   skipped: 0
   deferred: 0
-  open: 46
+  open: 37
 ---
 
 # Codebase Review — moe
@@ -553,6 +553,10 @@ The process exits with code 1 immediately after the synchronous call returns —
 
 Fix: attach `proc.on('error', (err) => { ... })` before returning/polling in `trySpawnOn`, converting the async spawn failure into a rejected promise (or at minimum a swallowed/logged error) instead of an unhandled `EventEmitter` throw.
 
+**Disposition:** fixed
+**Commit:** `3b98657939f428f80db11723015e7464a5c48df9`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-012: `navigate()` never checks `Page.navigate`'s `errorText`, so failed navigations are reported as success
 
 **File:** `packages/flight/src/qa/adapters/web/lib/navigation.js`
@@ -572,6 +576,10 @@ So the `navigate` tool always reports `"navigated"` to the agent, even when the 
 
 Fix: after `navigateResult = await ps.send('Page.navigate', { url })`, check `navigateResult?.errorText` and throw (or otherwise surface) a navigation-failed error instead of falling through to `await loadP`.
 
+**Disposition:** fixed
+**Commit:** `9b63e7bd84696df5612a9e3d3b1ad6c140cd07f6`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-013: Bash tool forwards live LLM provider credentials into a shell the agent controls while reading untrusted page content
 
 **File:** `packages/flight/src/qa/agent/bash-tool.ts`
@@ -1359,6 +1367,10 @@ This script runs on every `navigate()` auto-capture and is embedded verbatim int
 
 Fix: either add `packages/flight/test/qa/adapters/web/lib/page-scripts/dom-summary.test.mjs` (mirroring glass's), or correct the comment to stop claiming coverage this package doesn't have.
 
+**Disposition:** fixed
+**Commit:** `5f47e63c8c2cc76aa22760ca4290a1c5e16b170c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-033: `markdown.js` page-script comment claims jsdom test coverage that does not exist in this package
 
 **File:** `packages/flight/src/qa/adapters/web/lib/page-scripts/markdown.js`
@@ -1369,6 +1381,10 @@ Same issue as `dom-summary.js`'s header comment, in the sibling file: it claims 
 
 Fix: same as the sibling finding — either port glass's jsdom test into `packages/flight/test/`, or fix the comment.
 
+**Disposition:** fixed
+**Commit:** `29086e025a94fd11ad5c5fa36c31f8278b86dc60`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-034: Screenshot temp-file name collision under concurrent runs
 
 **File:** `packages/flight/src/qa/adapters/web/tools/return-screenshot.ts`
@@ -1379,6 +1395,10 @@ Both `buildReturnScreenshot` in this file and `executeScreenshot` in the sibling
 
 Two different runs' screenshot calls that happen to compute `Date.now()` in the same millisecond (plausible under concurrency, since the write-then-read-then-unlink sequence around `chrome.screenshot()` spans a CDP round trip of tens of milliseconds during which another run's call can land on the identical path) will target the same temp file. The result is silent cross-run data corruption: one run's `readFileSync(tmpFile)` can return the other run's PNG bytes (attributing the wrong screenshot to a run's evidence log/verdict), or one run's `unlinkSync` can remove the file out from under the other run's still-pending read (producing an `ENOENT` that gets logged as `screenshotSkipped`/a swallowed cleanup error instead of the real cause). Fix: include `process.pid` and/or `crypto.randomUUID()` in the filename, matching the pattern that should be used for any temp artifact shared across concurrent runs in the same process.
 
+**Disposition:** fixed
+**Commit:** `f900535cac6a21de78ab915cbc1bc2468f2ed42f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-035: `POST /api/scenarios` creation has no id charset check despite a comment elsewhere claiming it does
 
 **File:** `packages/flight/src/qa/api/routes/scenarios.ts`
@@ -2535,6 +2555,10 @@ I traced both production call sites of `screenshot()` to confirm this is not cur
 
 The pattern is still fragile: it is one call-site change away (e.g. a future selector- or URL-derived filename) from being exploitable, and the fix is cheap — use `execFileSync('sips', ['-g', 'pixelWidth', ..., filepath])` / `execFileSync('identify', [...])` instead of building shell strings.
 
+**Disposition:** fixed
+**Commit:** `37d1fe214ea0ed9dae77d75e18b34fb80149c8cb`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-078: `selectOption`'s `index` parameter is interpolated unescaped into the evaluated JS source
 
 **File:** `packages/flight/src/qa/adapters/web/lib/select-option.js`
@@ -2548,6 +2572,10 @@ I checked reachability: no tool in `tool-defs.ts`/`tools/*.ts` currently exposes
 
 Fix: interpolate `JSON.stringify(index)` (and validate it's an integer) the same way `value` already is.
 
+**Disposition:** fixed
+**Commit:** `4f12168a1ae458be977db43e651893e104ba44e2`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-079: `readPasskeyFile` accepts a non-integer `signCount` despite its own error message requiring one
 
 **File:** `packages/flight/src/qa/adapters/web/passkey.ts`
@@ -2556,6 +2584,10 @@ Fix: interpolate `JSON.stringify(index)` (and validate it's an integer) the same
 
 `readPasskeyFile`'s validation is `if (typeof p.signCount !== "number") throw ... "missing or invalid signCount (must be an integer)"`. The check only verifies `signCount` is a `number`, not that it is an integer (`Number.isInteger`) or non-negative. A credential YAML with `signCount: 1.5` (a plausible authoring typo) passes this check silently, then gets forwarded verbatim to `session.addCredential` / CDP's `WebAuthn.addCredential`, which is documented elsewhere in this file to be picky about field encodings — the agent will get a confusing late CDP-level rejection instead of the clear, immediate validation error the message promises. Fix: `Number.isInteger(p.signCount) && p.signCount >= 0`.
 
+**Disposition:** fixed
+**Commit:** `5c28441bb37bafc6937db730f1035c98a60d801a`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-080: `eval` tool remains dispatchable after being deliberately removed from the schema
 
 **File:** `packages/flight/src/qa/adapters/web/tool-defs.ts`
@@ -2566,6 +2598,10 @@ Fix: interpolate `JSON.stringify(index)` (and validate it's an integer) the same
 
 In practice this is currently gated by whichever LLM provider's tool-calling API is in use only agreeing to emit tool-call blocks for names in the declared `tools` list — I did not verify that constraint for every `LLMClient` implementation in this codebase (`anthropic.ts`/`openai.ts` are outside this shard) or for revived/replayed transcripts. If any code path ever hands `executeTool` a call named `"eval"` — a lenient or custom provider, a revived session containing an older transcript's tool call, a test harness — the "removal" does nothing to stop it, because the only enforcement is that the model wasn't offered the tool, not that the adapter refuses to run it. Fix: have `executeTool` reject any tool name not present in the current `toolDefinitions()` set, independent of the schema-shape check, so removing a tool from the schema is actually removing it.
 
+**Disposition:** fixed
+**Commit:** `ab33f2e0d33fdf032ca7638abe61373f0146c2c8`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-081: `/:runId/snapshot` serializes the internal `RunSnapshot` struct wholesale, contradicting its own "never serialized" contract
 
 **File:** `packages/flight/src/qa/api/routes/active-runs.ts`

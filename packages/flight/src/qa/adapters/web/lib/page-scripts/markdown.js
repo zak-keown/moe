@@ -1,7 +1,13 @@
 // Page-side script: walk the DOM and emit token-efficient Markdown.
 // Loaded as a string at attachCapture setup and embedded in CDP
-// Runtime.evaluate. Tested directly against jsdom in
-// test/lib/page-scripts/markdown.test.mjs.
+// Runtime.evaluate. CR-033: this is a byte-identical copy of
+// packages/glass/skills/browsing/lib/page-scripts/markdown.js, which *is*
+// covered by a jsdom test (packages/glass/test/lib/page-scripts/
+// markdown.test.mjs) — but that test lives in the sibling glass package
+// and exercises glass's copy, not this one. This copy has no jsdom
+// coverage of its own in packages/flight; the only flight-side references
+// are mocked stubs in adapter.test.ts that exercise the adapter's
+// plumbing, not the DOM-walking logic below.
 //
 // Includes images >= 100x100 in a header summary; inlines image references
 // >= 50x50 with size info; skips smaller icons.
