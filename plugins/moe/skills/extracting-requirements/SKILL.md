@@ -41,7 +41,7 @@ Extraction subagents use the appropriate prompt variant based on source file loc
 Enumerate the spec files without reading full contents:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/chunk_spec.py" <spec-path>
+node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/chunk_spec.mjs" <spec-path>
 ```
 
 This produces a JSON array of chunks. Each chunk has `source_file`, `heading`, `start_line`, `end_line`, `content`, and `estimated_tokens`. Small files (< 4K tokens) are kept whole. Larger files are split by `##` headings, or `###` if sections are still too large.
@@ -86,17 +86,17 @@ This pass is required, not optional. Extraction subagents optimize for what they
 Run the story aggregation script on all extracted story JSONs (including any added by the omission review):
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_stories.py" -o docs/moe/iterations/requirements/ <json-file-1> <json-file-2> ...
+node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_stories.mjs" -o docs/moe/iterations/requirements/ <json-file-1> <json-file-2> ...
 ```
 
-The script combines, deduplicates by title, groups into epics, assigns stable STORY/EPIC IDs, and outputs per-epic files with proof obligations preserved.
+The script combines stories, deduplicates matching theme + trimmed title + body identities (never blank titles), groups them into epics, assigns stable STORY/EPIC IDs, and outputs per-epic files with proof obligations preserved.
 
 ### 5. Aggregate scenarios
 
 Run the scenario aggregation script:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_scenarios.py" \
+node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_scenarios.mjs" \
   -o docs/moe/iterations/behavior-scenarios.md \
   --stories-dir docs/moe/iterations/requirements/ \
   <json-file-1> <json-file-2> ...
@@ -115,7 +115,7 @@ Same as before: review the epic list, merge near-duplicates, re-run aggregation.
 After both aggregations complete, run the back-linking script to update per-epic story files with scenario references:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/backlink_scenarios.py" \
+node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/backlink_scenarios.mjs" \
   docs/moe/iterations/behavior-scenarios.md \
   docs/moe/iterations/requirements/
 ```
@@ -166,8 +166,8 @@ Set command to `TBD` — the implementing iterations will fill these in.
 ### 10. Validate
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_requirements_index.py" docs/moe/iterations/requirements/
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_scenarios.py" docs/moe/iterations/behavior-scenarios.md docs/moe/iterations/requirements/
+node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_requirements_index.mjs" docs/moe/iterations/requirements/
+node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_scenarios.mjs" docs/moe/iterations/behavior-scenarios.md docs/moe/iterations/requirements/
 ```
 
 If validation fails, inspect the output, fix formatting issues, and re-validate.
@@ -185,15 +185,15 @@ git commit -m "docs: add requirements with proof obligations, behavior scenarios
 
 | Step | Tool | Input | Output |
 |---|---|---|---|
-| Chunk | `scripts/chunk_spec.py` | spec path | JSON chunks (stdout) |
+| Chunk | `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/chunk_spec.mjs" <spec-path>` | spec path | JSON chunks (stdout) |
 | Extract | Subagent + `extraction-subagent-prompt.md` | chunk content | JSON stories + scenarios (per subagent) |
 | Omission review | PAR (source text vs. stories + scenarios) | chunks + stories + scenarios | Missing requirements and scenarios |
-| Aggregate stories | `scripts/aggregate_stories.py -o <dir>` | JSON files | Per-epic .md files with proof obligations |
-| Aggregate scenarios | `scripts/aggregate_scenarios.py -o <file>` | JSON files + stories dir | `behavior-scenarios.md` |
-| Back-link | `scripts/backlink_scenarios.py` | scenarios + stories | Updated AC lines with scenario refs |
+| Aggregate stories | `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_stories.mjs" -o <dir> <json-files...>` | JSON files | Per-epic .md files with proof obligations |
+| Aggregate scenarios | `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_scenarios.mjs" -o <file> --stories-dir <dir> <json-files...>` | JSON files + stories dir | `behavior-scenarios.md` |
+| Back-link | `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/backlink_scenarios.mjs" <scenarios-file> <stories-dir>` | scenarios + stories | Updated AC lines with scenario refs |
 | Coverage ledger | Map chunks → story IDs + scenario IDs | chunk list, stories, scenarios | Gap/covered/story-only per chunk |
 | Init corpus | Write corpus index | scenario list | `behavior-corpus.md` |
-| Validate | `scripts/validate_requirements_index.py` + `scripts/validate_scenarios.py` | .md files | OK or errors |
+| Validate | `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_requirements_index.mjs" <requirements-dir>` + `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_scenarios.mjs" <scenarios-file> <requirements-dir>` | .md files | OK or errors |
 
 ## Deferred to later plans
 

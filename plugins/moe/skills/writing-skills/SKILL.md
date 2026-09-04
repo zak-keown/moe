@@ -329,8 +329,8 @@ See `graphviz-conventions.dot` in this directory for graphviz style rules.
 
 **Visualizing for your human partner:** Use the `render-graphs.mjs` this skill ships to render a skill's flowcharts to SVG:
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/skills/writing-skills/render-graphs.mjs" ../some-skill           # Each diagram separately
-"${CLAUDE_PLUGIN_ROOT}/skills/writing-skills/render-graphs.mjs" ../some-skill --combine # All diagrams in one SVG
+node "${CLAUDE_PLUGIN_ROOT}/skills/writing-skills/scripts/render-graphs.mjs" ../some-skill           # Each diagram separately
+node "${CLAUDE_PLUGIN_ROOT}/skills/writing-skills/scripts/render-graphs.mjs" ../some-skill --combine # All diagrams in one SVG
 ```
 
 ## Code Examples

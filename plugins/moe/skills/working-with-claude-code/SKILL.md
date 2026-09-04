@@ -67,7 +67,7 @@ When you have no network, or you want to search across the whole corpus with
 {search}, populate a local cache first:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/working-with-claude-code/scripts/update_docs.cjs"
+node "${CLAUDE_PLUGIN_ROOT}/skills/working-with-claude-code/scripts/update_docs.mjs"
 ```
 
 It reads `llms.txt`, extracts every `claude-code/*.md` URL, and writes each page

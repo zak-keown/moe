@@ -686,8 +686,8 @@
     },
     {
       "path": "package.json",
-      "size": 4533,
-      "sha256": "b13143ab899ae0d5e9650b660d37f8682868351ef4e8dc9904e41e7448ed2c42",
+      "size": 4537,
+      "sha256": "a1c5ff6c645e9fb4ce98c4ae4282b324414c545454be98cbc651ff9c02884085",
       "mode": "0644"
     },
     {
@@ -698,18 +698,18 @@
     },
     {
       "path": "skills/driving-claude-code-sessions/SKILL.md",
-      "size": 18995,
-      "sha256": "bf5f5859e827ed2bfc12d5894659beabf51bf3cb967f06c148a5647bd5e85fb1",
+      "size": 19143,
+      "sha256": "cf4e189b7575a0b1c65e90ff2d7802f9357eb1f98f7c14db21b8165a0a965be2",
       "mode": "0644"
     },
     {
-      "path": "skills/driving-claude-code-sessions/scripts/moe-crew",
-      "size": 118,
-      "sha256": "df6c146000b13c65a11e97229654146e3500fa1c3cc0300c0d7bb5dd566eea00",
-      "mode": "0755"
+      "path": "skills/driving-claude-code-sessions/scripts/moe-crew.mjs",
+      "size": 835,
+      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
+      "mode": "0644"
     }
   ],
-  "tree_sha256": "1df5417fcfae00e610a05fbc6e3ab4bf08f2cf050a0fef609277b9d371e9646a",
+  "tree_sha256": "c839a38a7372f4983904851b9b3bca3dde3d749bf18ad7b16bf5ebc7fc45af5d",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

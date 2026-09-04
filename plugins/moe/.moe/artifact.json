@@ -260,8 +260,8 @@
     },
     {
       "path": "package.json",
-      "size": 11277,
-      "sha256": "7417941745dd597166534a17d31b1684345d643b75b5d5ae01d2e4cdd5ff7496",
+      "size": 11403,
+      "sha256": "8ffbd7e936ffe08d3644a38cc8382a70cbd55ae558bb990a603fe259b284b3af",
       "mode": "0644"
     },
     {
@@ -278,8 +278,8 @@
     },
     {
       "path": "skills/_shared/native-rendering.md",
-      "size": 3463,
-      "sha256": "84b6cacdf525053ee958c519d805b02c352b105a412d0502cb68bd003e851903",
+      "size": 3464,
+      "sha256": "1cfda9dfaac2a7047584133e803729e535e06336b311cb96fe2ec051446d728b",
       "mode": "0644"
     },
     {
@@ -325,28 +325,28 @@
       "mode": "0644"
     },
     {
-      "path": "skills/brainstorming/scripts/helper.cjs",
-      "size": 5618,
-      "sha256": "04ba027006d58a17806737d6929e7079290f1150d0bf1c54c5b57709c3a42232",
+      "path": "skills/brainstorming/scripts/helper.mjs",
+      "size": 4987,
+      "sha256": "9516357be60c481d49a99341b1fe559195346bc4f32c8f834d6196ff476d8d3b",
       "mode": "0644"
     },
     {
-      "path": "skills/brainstorming/scripts/server.cjs",
-      "size": 25782,
-      "sha256": "aa450cd66ad99db90c35293d318fe86c7762eb4f7ca7c2d8db7fc24e83a2ab31",
+      "path": "skills/brainstorming/scripts/server.mjs",
+      "size": 20992,
+      "sha256": "bc81d0593d9ec09c94aeddc16405a5ce6bcb2cd791fece8cd69efa21cec29c87",
       "mode": "0644"
     },
     {
-      "path": "skills/brainstorming/scripts/start-server.sh",
-      "size": 7959,
-      "sha256": "46a7a93a049978058ec372f0e0918d85537b72b24d2eed52a31ef34894ac872e",
-      "mode": "0755"
+      "path": "skills/brainstorming/scripts/start-server.mjs",
+      "size": 7315,
+      "sha256": "c8cf155ea4623c04285880714ae2b8fde70b441af333d5115e0dc79cb4b39560",
+      "mode": "0644"
     },
     {
-      "path": "skills/brainstorming/scripts/stop-server.sh",
-      "size": 3255,
-      "sha256": "a85cf3a40dcb2541b9d41d34ed42750a10bc2a260be8d28a1fd5ab452bf60ab7",
-      "mode": "0755"
+      "path": "skills/brainstorming/scripts/stop-server.mjs",
+      "size": 3905,
+      "sha256": "0cfa74dce0f7644c2ebee3c1b5c330de74b16405d3fd649012648fe63088ce74",
+      "mode": "0644"
     },
     {
       "path": "skills/brainstorming/spec-document-reviewer-prompt.md",
@@ -356,8 +356,8 @@
     },
     {
       "path": "skills/brainstorming/visual-companion.md",
-      "size": 13697,
-      "sha256": "01fbc9188465e370f1d8891119a90b3a1dba440896890f85285930c0619d1a3a",
+      "size": 13578,
+      "sha256": "a5dbde989e72784a17cf03b5f86363e7ee284b50bed681f356a533f80545db12",
       "mode": "0644"
     },
     {
@@ -536,8 +536,8 @@
     },
     {
       "path": "skills/docs-update/scripts/docs-verify-report.mjs",
-      "size": 2794,
-      "sha256": "384945326ef1e07dabf3379daf881aa99516d0b890749026d841790b020af7bc",
+      "size": 3001,
+      "sha256": "a423309e77a217824e97f7b78741195d921ebf4cdd43b2bf24c7b9dbd3e4efb5",
       "mode": "0644"
     },
     {
@@ -566,8 +566,8 @@
     },
     {
       "path": "skills/extracting-requirements/SKILL.md",
-      "size": 10974,
-      "sha256": "aab78aaa56185f780fc06e8be638d3a4ea99686fd5c6355b7108087acbc7e733",
+      "size": 11552,
+      "sha256": "6a292f0e47ad26d80e4b19fb3d8c61d293e1ee20c8d6e00833b30433ede128b7",
       "mode": "0644"
     },
     {
@@ -577,58 +577,64 @@
       "mode": "0644"
     },
     {
-      "path": "skills/extracting-requirements/scripts/aggregate_scenarios.py",
-      "size": 7600,
-      "sha256": "5acca69a6be897ada1d8f253d301d2516fc7c9c17dc0a265aef4868ebcc4dc88",
+      "path": "skills/extracting-requirements/scripts/aggregate_scenarios.mjs",
+      "size": 13485,
+      "sha256": "bd0fc410013d7729fef56365fc8b167672c9fa365b3258484e5b69944802ecc9",
       "mode": "0644"
     },
     {
-      "path": "skills/extracting-requirements/scripts/aggregate_stories.py",
-      "size": 8159,
-      "sha256": "158e9bfa135ed77cd9a6e70b9911474d43772a9def26d2baf36f5d7d02a95d83",
-      "mode": "0755"
-    },
-    {
-      "path": "skills/extracting-requirements/scripts/backlink_scenarios.py",
-      "size": 3714,
-      "sha256": "e00896558621252f35e82163070a7cde3b8a87ee08c8151c9b33802e340625c1",
+      "path": "skills/extracting-requirements/scripts/aggregate_stories.mjs",
+      "size": 11195,
+      "sha256": "f85bd58cbcb5e6947f688da1daad7db3dd59422c70504b3ae2765b85b81d1744",
       "mode": "0644"
     },
     {
-      "path": "skills/extracting-requirements/scripts/chunk_spec.py",
-      "size": 5008,
-      "sha256": "ad3eba0daebb875bc684cd04b21eb61f990ad75c1508e65c39cf1c1ff834ab7d",
-      "mode": "0755"
-    },
-    {
-      "path": "skills/extracting-requirements/scripts/validate_requirements_index.py",
-      "size": 2684,
-      "sha256": "d241d8862c8b03ef5df9aba6883e0911da2f43f5a71c83dedf1f36a13cb2ab33",
+      "path": "skills/extracting-requirements/scripts/backlink_scenarios.mjs",
+      "size": 5338,
+      "sha256": "a46e0f5893ab7bcda0598500fb81208f054a9420eb6e14e365f7559f9b7abac4",
       "mode": "0644"
     },
     {
-      "path": "skills/extracting-requirements/scripts/validate_scenarios.py",
-      "size": 3951,
-      "sha256": "75e129c93b7ed36bbf870aca2f969198943a32c8356afd6d4f0b58d1ee5a53dd",
+      "path": "skills/extracting-requirements/scripts/chunk_spec.mjs",
+      "size": 9311,
+      "sha256": "7e39f5fbc36faecb4432ebad3c2355ed6fb2f21b4db540cba6e75674b697b49f",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/extracting-requirements/scripts/python_compat.mjs",
+      "size": 2949,
+      "sha256": "f081ca4f346900ce025c25139bc2de151fe5fb449f7f84ca41c03d68627c37a6",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/extracting-requirements/scripts/validate_requirements_index.mjs",
+      "size": 5376,
+      "sha256": "ad066c79298b3bcbf4dec1c5643608bfcbbfd9d1fd5141abbfc8883ed490d554",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/extracting-requirements/scripts/validate_scenarios.mjs",
+      "size": 6377,
+      "sha256": "bf533fbe985342414c310d5cd114a68fe10f2f9dfee3a0675c41a2d6d18eb4e2",
       "mode": "0644"
     },
     {
       "path": "skills/finding-duplicate-functions/SKILL.md",
-      "size": 5490,
-      "sha256": "6a1e075229e130fa6eed70c591723cc6f6d94fd5ba377d25471b9feb4ebf0ea4",
+      "size": 5453,
+      "sha256": "4558daabcc697e5cbac4fa299b9cfc30400eb2451552a0b08e15f88204151add",
       "mode": "0644"
     },
     {
       "path": "skills/finding-duplicate-functions/scripts/categorize-prompt.md",
-      "size": 2759,
-      "sha256": "4b1eab22a5eb4caa1ed18d907e725ea2f59fd8664a589cd694ffb405e662ac3c",
+      "size": 2830,
+      "sha256": "faa323c805693455a4057275f1d15e46320308ac1ff0856c2c1338ee4f061756",
       "mode": "0644"
     },
     {
-      "path": "skills/finding-duplicate-functions/scripts/extract-functions.sh",
-      "size": 8171,
-      "sha256": "6e4a1ab1738463bc1f85cf30730990d359f476e4ca06d26ba662b923ecd30fd2",
-      "mode": "0755"
+      "path": "skills/finding-duplicate-functions/scripts/extract-functions.mjs",
+      "size": 5757,
+      "sha256": "0121f7d6104b7cca56052a768797bcf434ac9eb08a7f848207f94182bc1eb48a",
+      "mode": "0644"
     },
     {
       "path": "skills/finding-duplicate-functions/scripts/find-duplicates-prompt.md",
@@ -637,16 +643,16 @@
       "mode": "0644"
     },
     {
-      "path": "skills/finding-duplicate-functions/scripts/generate-report.sh",
-      "size": 4670,
-      "sha256": "b55187a8b8149a6b0f65e1128accdae7340a3124d3291f6df51e5da374c70b35",
-      "mode": "0755"
+      "path": "skills/finding-duplicate-functions/scripts/generate-report.mjs",
+      "size": 5690,
+      "sha256": "c550131bb9d55c8798f632ee8f95cd3fc17802377f6c20ab5dee0b43b12b1be8",
+      "mode": "0644"
     },
     {
-      "path": "skills/finding-duplicate-functions/scripts/prepare-category-analysis.sh",
-      "size": 1965,
-      "sha256": "3452d4a370fe2fdebc1f0fa6de93ac7ee8a6c382bbfe77907871c663b8d6ebad",
-      "mode": "0755"
+      "path": "skills/finding-duplicate-functions/scripts/prepare-category-analysis.mjs",
+      "size": 3358,
+      "sha256": "bca5be27efe35ee61d0b818b020e454a01996b5b74fe68ad9dc46b50fbc676c6",
+      "mode": "0644"
     },
     {
       "path": "skills/finishing-a-development-branch/SKILL.md",
@@ -662,14 +668,14 @@
     },
     {
       "path": "skills/fixing-a-code-review/scripts/compact-resolved.mjs",
-      "size": 2932,
-      "sha256": "c409ad442d0afe072940e1c160094a81de035d06504b5c68e5d556af561f9886",
-      "mode": "0755"
+      "size": 3138,
+      "sha256": "f7bdff5e3f8da11fe010db2e636f989400ad0f8365bddcfe4fbdf82e2ec6bb1b",
+      "mode": "0644"
     },
     {
       "path": "skills/fixing-a-code-review/scripts/stamp-disposition.mjs",
-      "size": 3708,
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "size": 3914,
+      "sha256": "064e2208cf81602be5a7e589bd32d9ac486438d33ccb28606c6a6cee6f455fd0",
       "mode": "0644"
     },
     {
@@ -794,14 +800,14 @@
     },
     {
       "path": "skills/reviewing-a-codebase/scripts/review-check.mjs",
-      "size": 4627,
-      "sha256": "c31247b4d978d67ad17f1409d237257a2de3d6808cd87066261f2cf59a135716",
+      "size": 4833,
+      "sha256": "f3f08c91083dfdb1d9fbe03558726aeeba7f81a125dc87b9b6b75b804076f525",
       "mode": "0644"
     },
     {
       "path": "skills/reviewing-a-codebase/scripts/review-merge.mjs",
-      "size": 11628,
-      "sha256": "b08d166fff003ea604119ee9a0828987925f9295c1be45f3255a911a6cb884f9",
+      "size": 11834,
+      "sha256": "efeed32e3facca22f13575649e2e7f327fc5c4a12ee96e8d139df45b8db83881",
       "mode": "0644"
     },
     {
@@ -812,62 +818,62 @@
     },
     {
       "path": "skills/reviewing-a-codebase/scripts/review-scope.mjs",
-      "size": 9255,
-      "sha256": "99228d7d6ced341788dd3d80ab18057e2178e67bf59a485e260e4071a0af8616",
+      "size": 9463,
+      "sha256": "9cf16e50d1194a59463eeb15130124d313bf016e3a47bd92d62b5b7831701a9e",
       "mode": "0644"
     },
     {
       "path": "skills/reviewing-a-codebase/scripts/review-verify-record.mjs",
-      "size": 4836,
-      "sha256": "2255ece7e52d325c786c4ef3d80f41ef6c0b83468dceb48e06f1642377e47a9d",
+      "size": 5042,
+      "sha256": "afbf300ea0730b8c230e4ecc29ac53c5eaa1d8cb01176de1987492194432b0c9",
       "mode": "0644"
     },
     {
       "path": "skills/reviewing-a-codebase/scripts/review-verify-scope.mjs",
-      "size": 3555,
-      "sha256": "576ea98c715e757d1182f76031b6f2e9661d737d65205b508233fb40c1588248",
+      "size": 3761,
+      "sha256": "92b187c7347b0c8951185750bc169b9cfed67b4638c052966b0abc33cadc497f",
       "mode": "0644"
     },
     {
       "path": "skills/running-an-iteration/SKILL.md",
-      "size": 8047,
-      "sha256": "f710ced0d250373a5a60706003b9654367ae4efd7564615b42d566a38aa22283",
+      "size": 8228,
+      "sha256": "141642d6e6eb45c451709f6fde2dfb9388079a849cfb946a9b811f10571862a1",
       "mode": "0644"
     },
     {
       "path": "skills/running-an-iteration/scope-reviewer-prompt.md",
-      "size": 3308,
-      "sha256": "cfb072171c98f60124da9b9543f1e82aa4113b775f3b9e472c2279d5b0357140",
+      "size": 3309,
+      "sha256": "ff29faf6eb892186a186da0c42513635b528a9271d5754618d80a2805732325f",
       "mode": "0644"
     },
     {
-      "path": "skills/running-an-iteration/scripts/check_citations.py",
-      "size": 2113,
-      "sha256": "d663579bba177d4cd6704dfb85ffb5dea9284a9fc6e92d4e527107c2176d9d7d",
-      "mode": "0755"
+      "path": "skills/running-an-iteration/scripts/check_citations.mjs",
+      "size": 4507,
+      "sha256": "c966e92685cc43495462c2de25c836a90218e84536532f8aff2176865db3b307",
+      "mode": "0644"
     },
     {
-      "path": "skills/running-an-iteration/scripts/validate_iteration_log.py",
-      "size": 1797,
-      "sha256": "b7016d457e12c893020846ae7249fd09f4464364dbe99af62306d8122c1681ef",
+      "path": "skills/running-an-iteration/scripts/validate_iteration_log.mjs",
+      "size": 3583,
+      "sha256": "ed8ef7d52747fe78fa59c8a35470f420c62d4245456ddb49270953dd9aa6baad",
       "mode": "0644"
     },
     {
       "path": "skills/scoping-the-simplest-core/SKILL.md",
-      "size": 6920,
-      "sha256": "fdb5b720603105528a15c25204ad77b664f122fe4c706517451d9f677c2de847",
+      "size": 7105,
+      "sha256": "98ecc254cb2959e7cfbb053932023b08420764ddead2bd71dcdc5d1646fdf59a",
       "mode": "0644"
     },
     {
-      "path": "skills/scoping-the-simplest-core/scripts/check_citations.py",
-      "size": 2113,
-      "sha256": "d663579bba177d4cd6704dfb85ffb5dea9284a9fc6e92d4e527107c2176d9d7d",
-      "mode": "0755"
+      "path": "skills/scoping-the-simplest-core/scripts/check_citations.mjs",
+      "size": 4507,
+      "sha256": "c966e92685cc43495462c2de25c836a90218e84536532f8aff2176865db3b307",
+      "mode": "0644"
     },
     {
-      "path": "skills/scoping-the-simplest-core/scripts/validate_roadmap.py",
-      "size": 1851,
-      "sha256": "bb9c87b9c06de8af16ff33057dfecda02c3f1ee2bd1acdc3d17f06840b1e6e75",
+      "path": "skills/scoping-the-simplest-core/scripts/validate_roadmap.mjs",
+      "size": 3756,
+      "sha256": "9592e877ff68cee24b6e64b505ecc56ef6b35c32affa28f45ad0e214e0164f9c",
       "mode": "0644"
     },
     {
@@ -878,8 +884,8 @@
     },
     {
       "path": "skills/subagent-driven-development/SKILL.md",
-      "size": 38622,
-      "sha256": "7b1ce0561ce04658f44461de6e5c8116130a1f65c907a79eb18ceb20fc0e9ff1",
+      "size": 38694,
+      "sha256": "fd0a3c233813b92438acf9abdc297013cf690ba856979c4f2ccbadc67ff20fd0",
       "mode": "0644"
     },
     {
@@ -890,32 +896,32 @@
     },
     {
       "path": "skills/subagent-driven-development/re-review-prompt.md",
-      "size": 4815,
-      "sha256": "2ba125e6c61d62ef8db41a93f9000e0998d9984fdc442033c6c228c78dcc5922",
+      "size": 4824,
+      "sha256": "c7abe714edde0e3ca7f46fd1780b8c3d30a6591ef77e536cff1671ee89136401",
       "mode": "0644"
     },
     {
-      "path": "skills/subagent-driven-development/scripts/review-package",
-      "size": 1461,
-      "sha256": "b7d98b7f9661fc5f823e5913ef721da8faf3aa7c9d928ff9df099499752a39bd",
-      "mode": "0755"
+      "path": "skills/subagent-driven-development/scripts/review-package.mjs",
+      "size": 2724,
+      "sha256": "2f61ac88ff64643b28a9b11840ce9b00271599903e18f5ae2457eba8910f0e23",
+      "mode": "0644"
     },
     {
-      "path": "skills/subagent-driven-development/scripts/sdd-workspace",
-      "size": 1562,
-      "sha256": "43fc09d5def10c885fb607ae18dbe14d93a46426987896d723dec4d6c1afcada",
-      "mode": "0755"
+      "path": "skills/subagent-driven-development/scripts/sdd-workspace.mjs",
+      "size": 1402,
+      "sha256": "ad3cd383011375cb2c66dd8f1c7c468e46f8da2ffff75661e086f565e7c4ebc7",
+      "mode": "0644"
     },
     {
-      "path": "skills/subagent-driven-development/scripts/task-brief",
-      "size": 1150,
-      "sha256": "1272b704aa09f51d88906bcc557434196eba861ef165bcd2bea5446618ae1480",
-      "mode": "0755"
+      "path": "skills/subagent-driven-development/scripts/task-brief.mjs",
+      "size": 1947,
+      "sha256": "38942cbee87d23bc089ba00f6201e464a3f78fe78f172665f1cdd20028a6c9dd",
+      "mode": "0644"
     },
     {
       "path": "skills/subagent-driven-development/task-reviewer-prompt.md",
-      "size": 9139,
-      "sha256": "6aebeaae41cde02548fc331d5d0482eb5c0820780f90dd08676cdba74d73cbdc",
+      "size": 9157,
+      "sha256": "e7c9b2a8c2df22dbd37b9e7f5d47378bd6da21b4b0bda4f4273470b539cceeb0",
       "mode": "0644"
     },
     {
@@ -931,15 +937,9 @@
       "mode": "0644"
     },
     {
-      "path": "skills/systematic-debugging/condition-based-waiting-example.ts",
-      "size": 5054,
-      "sha256": "40ae5ebe497fdf310200e43fe986552546d0a22837c0d39e855db1cfd33eb88e",
-      "mode": "0644"
-    },
-    {
       "path": "skills/systematic-debugging/condition-based-waiting.md",
-      "size": 3516,
-      "sha256": "e89fec8400d6cd50f43407cec9fab50976ba4d55d0ec2eb51c0bd68036b54c26",
+      "size": 3507,
+      "sha256": "db0e2fc0dbca675e7e567bc47065638fbd32f8520a6380f7e6f9e1a96d780135",
       "mode": "0644"
     },
     {
@@ -1003,15 +1003,21 @@
       "mode": "0644"
     },
     {
-      "path": "skills/systematic-debugging/find-polluter.sh",
-      "size": 1986,
-      "sha256": "dd7b8f13c4cc2a24b33ff87b18da9248f3e1c80a085c3316224f69ff0fa5c43c",
-      "mode": "0755"
+      "path": "skills/systematic-debugging/examples/condition-based-waiting-example.ts",
+      "size": 5054,
+      "sha256": "40ae5ebe497fdf310200e43fe986552546d0a22837c0d39e855db1cfd33eb88e",
+      "mode": "0644"
     },
     {
       "path": "skills/systematic-debugging/root-cause-tracing.md",
-      "size": 5346,
-      "sha256": "66b98741ae2fa3151d093d81826706fb37602e89b5038caa0b337b71e471aa42",
+      "size": 5360,
+      "sha256": "8cf2ec9bfa590c0e2dac2f2bf55de21908083e036ee6be734fdecd6e7a06550e",
+      "mode": "0644"
+    },
+    {
+      "path": "skills/systematic-debugging/scripts/find-polluter.mjs",
+      "size": 2980,
+      "sha256": "09ff410a36bda5d72e3fbd4f65d972f98005eb2ebfb8a6e945fd9d867a6f1b8c",
       "mode": "0644"
     },
     {
@@ -1064,15 +1070,15 @@
     },
     {
       "path": "skills/using-tmux-for-interactive-commands/SKILL.md",
-      "size": 5118,
-      "sha256": "97f4c6b8efa1b077cda5a1f14f0cb4c05d05dcf8eb88e9e2a99b0b3b47988b6f",
+      "size": 5341,
+      "sha256": "c2cdfae0e5ba15e82750474a1f12177e44a6939fee088cc3d75f73b104920d39",
       "mode": "0644"
     },
     {
-      "path": "skills/using-tmux-for-interactive-commands/tmux-wrapper.sh",
-      "size": 1911,
-      "sha256": "07fc3255187bcb0c9abe2861331ca5b23707e7e5625022472a82812c42bbcfee",
-      "mode": "0755"
+      "path": "skills/using-tmux-for-interactive-commands/scripts/tmux-wrapper.mjs",
+      "size": 4020,
+      "sha256": "b175efa1fc47ccda9cb927558973c4fc9911cf2da3d14bbe1683d0aab4acd88e",
+      "mode": "0644"
     },
     {
       "path": "skills/verification-before-completion/SKILL.md",
@@ -1095,14 +1101,14 @@
     {
       "path": "skills/working-with-claude-code/SKILL.md",
       "size": 3874,
-      "sha256": "3c0c36e03a8979b23ac8b8dd7e51925a7bb8ffd5a6356cee633ccebe65b845c5",
+      "sha256": "c8cacd1e841daf769f00105e60aefb2aa963e71064af34d5bd1a7b8d3cbc1bd1",
       "mode": "0644"
     },
     {
-      "path": "skills/working-with-claude-code/scripts/update_docs.cjs",
-      "size": 3875,
-      "sha256": "33f2d9006188c77eca89740c7c59d9c5975545f5d306588a9d93f27d49f448b8",
-      "mode": "0755"
+      "path": "skills/working-with-claude-code/scripts/update_docs.mjs",
+      "size": 4264,
+      "sha256": "686e8f25736dc651e86a6c340da6184ff041b3a410bb3ef4d35fb02c62c9a49f",
+      "mode": "0644"
     },
     {
       "path": "skills/writing-clearly-and-concisely/SKILL.md",
@@ -1136,8 +1142,8 @@
     },
     {
       "path": "skills/writing-skills/SKILL.md",
-      "size": 27287,
-      "sha256": "b7b13a5f543fe7371f9c27c8b69182efd9225bebf57d2e89ef584851935ead5b",
+      "size": 27313,
+      "sha256": "f519f55dd0ff860bda4a609d50eb60008ab65f9567416f356bb824977af59d52",
       "mode": "0644"
     },
     {
@@ -1171,10 +1177,10 @@
       "mode": "0644"
     },
     {
-      "path": "skills/writing-skills/render-graphs.mjs",
-      "size": 4973,
-      "sha256": "ca19fc55bfc83c76532ff8a256227308856a923177912a9742cf8a86a6c90411",
-      "mode": "0755"
+      "path": "skills/writing-skills/scripts/render-graphs.mjs",
+      "size": 4406,
+      "sha256": "8f18ae2b727cd1918e085720257e85623d4b05e8e8bfd015fa6da1332e7130b0",
+      "mode": "0644"
     },
     {
       "path": "skills/writing-skills/testing-skills-with-subagents.md",
@@ -1183,7 +1189,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "afffd9b9416a998268d7ce1f4dc85ac94844b5d5e583b92af2a31060ed6491c0",
+  "tree_sha256": "c31a312f62e203f51c41d5207e8f2abc661b964529cfec1e02a5f915a0737596",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [
