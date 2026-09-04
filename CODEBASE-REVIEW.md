@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 8
+  fixed: 9
   stale: 0
   skipped: 0
   deferred: 0
-  open: 99
+  open: 98
 ---
 
 # Codebase Review — moe
@@ -2413,6 +2413,10 @@ Fix: interpolate `JSON.stringify(index)` (and validate it's an integer) the same
 
 In practice this is currently gated by whichever LLM provider's tool-calling API is in use only agreeing to emit tool-call blocks for names in the declared `tools` list — I did not verify that constraint for every `LLMClient` implementation in this codebase (`anthropic.ts`/`openai.ts` are outside this shard) or for revived/replayed transcripts. If any code path ever hands `executeTool` a call named `"eval"` — a lenient or custom provider, a revived session containing an older transcript's tool call, a test harness — the "removal" does nothing to stop it, because the only enforcement is that the model wasn't offered the tool, not that the adapter refuses to run it. Fix: have `executeTool` reject any tool name not present in the current `toolDefinitions()` set, independent of the schema-shape check, so removing a tool from the schema is actually removing it.
 
+**Disposition:** fixed
+**Commit:** `ab33f2e0d33fdf032ca7638abe61373f0146c2c8`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-081: `/:runId/snapshot` serializes the internal `RunSnapshot` struct wholesale, contradicting its own "never serialized" contract
 
 **File:** `packages/flight/src/qa/api/routes/active-runs.ts`
