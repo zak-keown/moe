@@ -206,6 +206,9 @@ async function writeNew(path: string, contents: string): Promise<void> {
   const handle = await open(path, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o644)
   try {
     await handle.writeFile(contents, 'utf8')
+    // open()'s mode argument is masked by the umask, so 0o644 lands as 0600 on
+    // a umask-077 host. The artifact manifest records this mode.
+    await handle.chmod(0o644)
   } finally {
     await handle.close()
   }

@@ -475,6 +475,9 @@ async function writeProjectionFile(path: string, content: string, field: keyof P
   }
   try {
     await handle.writeFile(content)
+    // Explicit, for the same reason as the artifact writers: open()'s mode is
+    // umask-masked, and a projection's mode should not depend on the host.
+    await handle.chmod(0o644)
   } finally {
     await handle.close()
   }

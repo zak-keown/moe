@@ -145,6 +145,20 @@ function decodeUtf8Name(name: Buffer, parent: string): string {
   }
 }
 
+/**
+ * The mode recorded for an artifact entry: canonical, derived from the
+ * executable bit alone.
+ *
+ * Recording the literal on-disk mode looks stricter, but it makes a committed
+ * manifest unverifiable. Git stores exactly one permission bit, so a
+ * checkout's remaining bits are whatever umask the clone ran under -- 0644 at
+ * umask 022, 0666 at 000, 0600 at 077. Validating a committed artifact against
+ * its committed manifest therefore fails on any host but the one that
+ * generated it, and pack extraction normalizes to 0755/0644 regardless.
+ *
+ * Special bits are still rejected rather than normalized away: setuid on an
+ * artifact entry is worth failing on, not quietly dropping.
+ */
 function exactMode(mode: number, path: ArtifactPath): string {
   const specialBits = mode & 0o7000
   if (specialBits !== 0) {
@@ -155,7 +169,7 @@ function exactMode(mode: number, path: ArtifactPath): string {
       path,
     )
   }
-  return (mode & 0o777).toString(8).padStart(4, '0')
+  return ((mode & 0o111) === 0 ? 0o644 : 0o755).toString(8).padStart(4, '0')
 }
 
 async function readRegularFile(absolute: string, path: ArtifactPath, initial: Awaited<ReturnType<typeof fs.lstat>>): Promise<Buffer> {
