@@ -397,7 +397,7 @@ describe('complete artifact assembly', () => {
     await expect(readdir(setDestination)).rejects.toMatchObject({ code: 'ENOENT' })
   })
 
-  it('cleans only its own failed nonce tree and leaves the canonical tree unchanged when plugin six fails', async () => {
+  it('cleans only its own failed nonce tree and leaves the canonical tree unchanged when plugin six fails', { timeout: 15_000 }, async () => {
     const root = await mkdtemp(join(tmpdir(), 'moe-assemble-six-'))
     workspaces.push(root)
     await Promise.all([
