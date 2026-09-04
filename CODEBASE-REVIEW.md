@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 5
+  fixed: 6
   stale: 0
   skipped: 0
   deferred: 0
-  open: 102
+  open: 101
 ---
 
 # Codebase Review — moe
@@ -2370,6 +2370,10 @@ I traced both production call sites of `screenshot()` to confirm this is not cur
 
 The pattern is still fragile: it is one call-site change away (e.g. a future selector- or URL-derived filename) from being exploitable, and the fix is cheap — use `execFileSync('sips', ['-g', 'pixelWidth', ..., filepath])` / `execFileSync('identify', [...])` instead of building shell strings.
 
+**Disposition:** fixed
+**Commit:** `37d1fe214ea0ed9dae77d75e18b34fb80149c8cb`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-078: `selectOption`'s `index` parameter is interpolated unescaped into the evaluated JS source
 
 **File:** `packages/flight/src/qa/adapters/web/lib/select-option.js`
