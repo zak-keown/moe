@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 4
+  fixed: 5
   stale: 0
   skipped: 0
   deferred: 0
-  open: 103
+  open: 102
 ---
 
 # Codebase Review — moe
@@ -1136,6 +1136,10 @@ So an attacker who can win the race between the `lstatSync` ENOENT and the `mkdi
 
 Fix: after the `mkdirSync` call in the catch branch, `lstatSync` again and verify `isDirectory()` and ownership before returning (or open the directory with `O_NOFOLLOW`/use `mkdirSync` without `recursive` so an existing entry throws `EEXIST` and can be re-validated).
 
+**Disposition:** fixed
+**Commit:** `a607cdbb5c5856a81cb6ac3089a91a9d2200e11b`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-029: Same unsanitized-session-id pattern in the pi extension's self-registration path
 
 **File:** `packages/crew/src/pi-extension/index.ts`
