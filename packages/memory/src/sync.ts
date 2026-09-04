@@ -166,38 +166,40 @@ export async function syncConversations(
     const { parseConversation } = await import("./parser.js");
 
     const db = initDatabase();
-    await initEmbeddings();
+    try {
+      await initEmbeddings();
 
-    for (const file of filesToIndex) {
-      try {
-        // Check for DO NOT INDEX marker
-        if (shouldSkipConversation(file)) {
-          continue; // Skip indexing but file is already copied
+      for (const file of filesToIndex) {
+        try {
+          // Check for DO NOT INDEX marker
+          if (shouldSkipConversation(file)) {
+            continue; // Skip indexing but file is already copied
+          }
+
+          const project = path.basename(path.dirname(file));
+          const exchanges = await parseConversation(file, project, file);
+
+          for (const exchange of exchanges) {
+            const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
+            const embedding = await generateExchangeEmbedding(
+              exchange.userMessage,
+              exchange.assistantMessage,
+              toolNames,
+            );
+            insertExchange(db, exchange, embedding, toolNames);
+          }
+
+          result.indexed++;
+        } catch (error) {
+          result.errors.push({
+            file,
+            error: error instanceof Error ? error.message : String(error),
+          });
         }
-
-        const project = path.basename(path.dirname(file));
-        const exchanges = await parseConversation(file, project, file);
-
-        for (const exchange of exchanges) {
-          const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
-          const embedding = await generateExchangeEmbedding(
-            exchange.userMessage,
-            exchange.assistantMessage,
-            toolNames,
-          );
-          insertExchange(db, exchange, embedding, toolNames);
-        }
-
-        result.indexed++;
-      } catch (error) {
-        result.errors.push({
-          file,
-          error: error instanceof Error ? error.message : String(error),
-        });
       }
+    } finally {
+      db.close();
     }
-
-    db.close();
   }
 
   // Generate summaries for files that need them
