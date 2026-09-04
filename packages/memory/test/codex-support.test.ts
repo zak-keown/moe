@@ -8,7 +8,7 @@ import {
 
 describe("Codex support floor", () => {
   it("pins production Codex support to the verified CLI version", () => {
-    expect(MIN_CODEX_VERSION).toBe("0.130.0");
+    expect(MIN_CODEX_VERSION).toBe("0.152.1");
   });
 
   it("parses Codex CLI version output", () => {
@@ -24,8 +24,9 @@ describe("Codex support floor", () => {
   });
 
   it("accepts only versions at or above the support floor", () => {
-    expect(versionMeetsMinimum("0.130.0")).toBe(true);
-    expect(versionMeetsMinimum("0.131.0")).toBe(true);
+    expect(versionMeetsMinimum("0.152.1")).toBe(true);
+    expect(versionMeetsMinimum("0.153.0")).toBe(true);
+    expect(versionMeetsMinimum("0.152.0")).toBe(false);
     expect(versionMeetsMinimum("0.129.9")).toBe(false);
   });
 });

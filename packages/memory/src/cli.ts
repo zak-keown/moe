@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * `moe-memory` — the package's single bin, compiled to dist/cli.js.
  *
@@ -19,8 +20,13 @@
  * left in the package.
  *
  * Subcommands are dispatched through dynamic import so that `moe-memory show`
- * does not load better-sqlite3 or transformers.js just to render a JSONL file.
+ * does not load node:sqlite or transformers.js just to render a JSONL file.
  */
+
+import { setDefaultPackageRoot } from "./db.js";
+import { resolveInstalledPackageRoot } from "./installed-package-root.js";
+
+setDefaultPackageRoot(resolveInstalledPackageRoot(import.meta.url));
 
 const HELP = `moe-memory - semantic recall over past sessions and journal entries
 
@@ -35,6 +41,7 @@ COMMANDS:
   stats        Show index statistics for both record types
   journal      Index and search deliberately-written journal entries
   doctor       Diagnose Claude Code or Codex integration issues
+  rollback     Prepare or abort a rollback to a previous version
   mcp-server   Run the moe-memory MCP server on stdio
 
 Run 'moe-memory <command> --help' for command-specific help.
@@ -82,6 +89,10 @@ async function dispatch(command: string | undefined, args: string[]): Promise<nu
     case "doctor": {
       const { runDoctor } = await import("./doctor-cli.js");
       return runDoctor(args);
+    }
+    case "rollback": {
+      const { runRollback } = await import("./rollback-cli.js");
+      return runRollback(args);
     }
     case "mcp-server": {
       const { runMemoryMcpServer } = await import("./mcp-server.js");

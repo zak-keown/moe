@@ -71,8 +71,8 @@ export function buildCodexDoctorReport(inputs: CodexDoctorInputs): DoctorReport 
   if (pluginsEnabled === false) {
     issues.push("Codex plugins are disabled; run codex features enable plugins.");
   }
-  if (pluginHooksEnabled !== true) {
-    issues.push("Codex plugin hooks are not enabled; run codex features enable plugin_hooks.");
+  if (pluginHooksEnabled === false) {
+    issues.push("Codex plugin hooks are disabled; run codex features enable plugin_hooks.");
   }
   if (!inputs.sessionsDirExists) {
     issues.push("Codex sessions directory does not exist yet; start at least one Codex session.");

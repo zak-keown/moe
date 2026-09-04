@@ -2,11 +2,11 @@ import { existsSync, utimesSync } from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { countJournalEntries, initDatabase } from "../src/db.js";
+import type { MemoryDatabase } from "../src/db.js";
+import { countJournalEntries } from "../src/db.js";
 import { JournalStore } from "../src/journal/store.js";
-import { fakeEmbed } from "./test-utils.js";
+import { fakeEmbed, openTestDatabase } from "./test-utils.js";
 
 /**
  * Ported from private-journal-mcp's tests/journal.test.ts, and extended.
@@ -36,7 +36,7 @@ describe("JournalStore", () => {
   let userDir: string;
   let dataDir: string;
   let store: JournalStore;
-  let db: Database.Database;
+  let db: MemoryDatabase;
 
   beforeEach(async () => {
     projectDir = await fs.mkdtemp(path.join(os.tmpdir(), "journal-project-test-"));
@@ -51,7 +51,7 @@ describe("JournalStore", () => {
       userPath: userDir,
       embed: fakeEmbed(),
     });
-    db = initDatabase();
+    db = openTestDatabase(path.join(dataDir, "test.db"));
   });
 
   afterEach(async () => {
@@ -332,9 +332,9 @@ describe("JournalStore", () => {
     });
 
     it("recovers an entry whose embedding failed at write time", async () => {
-      // Upstream this was a permanent loss: the sidecar index was the only
-      // enumeration path, so an entry written with a failed encode could never
-      // be found again by search, list_recent_entries or read_recent_entries.
+      // Text-first persistence: the entry is stored with embedding_version=0
+      // even when the encoder is unavailable. indexJournal then upgrades it
+      // once the encoder becomes available.
       let fail = true;
       const flaky = new JournalStore({
         projectPath: projectDir,
@@ -347,10 +347,16 @@ describe("JournalStore", () => {
 
       await flaky.writeThoughts({ reflections: "written while the encoder was down" }, db);
       expect((await entriesIn(userDir)).filter((f) => f.endsWith(".md"))).toHaveLength(1);
-      expect(countJournalEntries(db)).toBe(0);
+      // Text is persisted with version=0 (no vector)
+      expect(countJournalEntries(db)).toBe(1);
+      const row = db.prepare("SELECT embedding_version FROM journal_entries LIMIT 1").get() as {
+        embedding_version: number;
+      };
+      expect(row.embedding_version).toBe(0);
 
       fail = false;
       const result = await flaky.indexJournal(db);
+      // Re-indexes: version 0 is behind EMBEDDING_VERSION so it gets re-embedded
       expect(result.indexed).toBe(1);
       expect(countJournalEntries(db)).toBe(1);
     });

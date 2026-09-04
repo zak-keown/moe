@@ -3,7 +3,7 @@ import { join, posix } from 'node:path'
 import { parse } from 'yaml'
 import { z } from 'zod'
 import { artifactCollisionKey, artifactPath, compareArtifactPaths, isReservedArtifactDestination, type ArtifactPath } from './artifact/paths.js'
-import { ConfigError, type ConfigErrorDiagnostic, type ConfigErrorOptions } from './diagnostics.js'
+import { ConfigError, configError, type ConfigErrorDiagnostic, type ConfigErrorOptions } from './diagnostics.js'
 import {
   CAPABILITY_IDS,
   OPERATING_SYSTEM_IDS,
@@ -14,20 +14,7 @@ import {
   type TargetIntent,
 } from './vocabulary.js'
 
-export { ConfigError, type ConfigErrorDiagnostic, type ConfigErrorOptions } from './diagnostics.js'
-
-const CONFIG_DIAGNOSTIC: ConfigErrorDiagnostic = {
-  code: 'CONFIG_INVALID',
-  source: 'moe-mint.yaml',
-  action: 'Correct the configuration and run the command again.',
-}
-
-function configError(message: string, details: string[] = [], opts: ConfigErrorOptions = {}): ConfigError {
-  return new ConfigError(message, details, {
-    ...opts,
-    diagnostic: opts.diagnostic ?? { ...CONFIG_DIAGNOSTIC, source: opts.source ?? CONFIG_DIAGNOSTIC.source },
-  })
-}
+export { ConfigError, configError, type ConfigErrorDiagnostic, type ConfigErrorOptions }
 
 function migrationError(
   source: string,
@@ -60,8 +47,11 @@ export type BootstrapMode =
 // A resolved harnesses.<name> block: the per-harness hook tier ('generated'
 // default | 'own') and an optional manifest patch (deep-merged into the
 // adapter's generated manifest; a null value is the delete-sentinel).
+export type CodexSourceHookPolicy = 'source' | 'disabled'
+
 export interface HarnessSettings {
   hooks: 'generated' | 'own'
+  sourceHooks?: CodexSourceHookPolicy
   manifest?: Record<string, unknown>
 }
 
@@ -238,13 +228,25 @@ const rawSchema = z.object({
   marketplace: marketplaceSchema,
   release: releaseSchema,
   distribution: z.object({ npm: npmPackageSchema }).strict(),
-  artifact: z.object({ payloads: z.array(artifactPayloadSchema) }).strict(),
+  artifact: z.object({
+    node_package: z.object({
+      dependencies: z.enum(['preserve', 'bundled']),
+    }).strict().optional(),
+    runtime_dependency_policy: z.enum(['preserve', 'bundled']).default('preserve'),
+    payloads: z.array(artifactPayloadSchema),
+  }).strict(),
   targets: targetsSchema,
   imported_works: z.array(importedWorkSchema),
 }).strict()
 
 export interface DistributionConfig {
   npm: string
+}
+
+export type RuntimeDependencyPolicy = 'preserve' | 'bundled'
+
+export interface NodePackagePolicy {
+  dependencies: RuntimeDependencyPolicy
 }
 
 export interface ArtifactPayload {
@@ -281,7 +283,7 @@ export interface MintConfig {
   components: { skills: string; commands: string; agents: string; hooks: string; mcp: string }
   harnesses: { exclude: string[]; settings: Record<string, HarnessSettings> }
   distribution: DistributionConfig
-  artifact: { payloads: readonly ArtifactPayload[] }
+  artifact: { nodePackage?: NodePackagePolicy | undefined; runtimeDependencyPolicy: RuntimeDependencyPolicy; payloads: readonly ArtifactPayload[] }
   targets: Readonly<Record<TargetId, PluginTargetIntent>>
   importedWorks: readonly ImportedWorkRef[]
   // Inferred from the schemas rather than restated: a hand-written copy drifts,
@@ -394,8 +396,8 @@ function resolveHarnessSettings(raw: Record<string, unknown> | undefined, source
       throw configError(`harnesses.${key}: must be a mapping of hooks and/or manifest`, [], { source })
     }
     for (const settingKey of Object.keys(value)) {
-      if (settingKey !== 'hooks' && settingKey !== 'manifest') {
-        throw configError(`harnesses.${key}.${settingKey}: unknown key (expected hooks or manifest)`, [], { source })
+      if (settingKey !== 'hooks' && settingKey !== 'manifest' && settingKey !== 'source_hooks') {
+        throw configError(`harnesses.${key}.${settingKey}: unknown key (expected hooks, source_hooks, or manifest)`, [], { source })
       }
     }
     const entry: HarnessSettings = { hooks: 'generated' }
@@ -405,6 +407,16 @@ function resolveHarnessSettings(raw: Record<string, unknown> | undefined, source
         throw configError(`harnesses.${key}.hooks: must be "generated" or "own"`, [], { source })
       }
       entry.hooks = hooks
+    }
+    if ('source_hooks' in value) {
+      const sourceHooks = value.source_hooks
+      if (sourceHooks !== 'source' && sourceHooks !== 'disabled') {
+        throw configError(`harnesses.${key}.source_hooks: must be "source" or "disabled"`, [], { source })
+      }
+      if (key !== 'codex') {
+        throw configError(`harnesses.${key}.source_hooks: only valid on codex`, [], { source })
+      }
+      entry.sourceHooks = sourceHooks
     }
     if ('manifest' in value) {
       const manifest = value.manifest
@@ -591,7 +603,13 @@ export function loadConfig(root: string, configFile = 'moe-mint.yaml', source = 
     },
     harnesses: { exclude, settings },
     distribution: raw.distribution,
-    artifact: { payloads: raw.artifact.payloads },
+    artifact: {
+      nodePackage: raw.artifact.node_package
+        ? { dependencies: raw.artifact.node_package.dependencies }
+        : undefined,
+      runtimeDependencyPolicy: raw.artifact.runtime_dependency_policy,
+      payloads: raw.artifact.payloads,
+    },
     targets,
     importedWorks,
     marketplace: raw.marketplace,

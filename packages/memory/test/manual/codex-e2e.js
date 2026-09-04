@@ -6,7 +6,7 @@ import path from 'path';
 import readline from 'readline';
 import { fileURLToPath } from 'url';
 
-const MIN_CODEX_VERSION = '0.130.0';
+const MIN_CODEX_VERSION = '0.152.1';
 const MARKER = 'purple-lantern-codex-archive-20260512';
 
 const __filename = fileURLToPath(import.meta.url);

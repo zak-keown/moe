@@ -1,8 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import Database from "better-sqlite3";
-import * as sqliteVec from "sqlite-vec";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { getIndexStats } from "../src/stats.js";
 
@@ -33,9 +32,7 @@ describe("stats command", () => {
   });
 
   it("should count conversations and exchanges", async () => {
-    // Create and initialize database
-    const db = new Database(dbPath);
-    sqliteVec.load(db);
+    const db = new DatabaseSync(dbPath);
 
     db.exec(`
       CREATE TABLE exchanges (
@@ -50,7 +47,6 @@ describe("stats command", () => {
       )
     `);
 
-    // Insert test data
     db.prepare(`
       INSERT INTO exchanges (id, project, timestamp, user_message, assistant_message, archive_path, line_start, line_end)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -75,8 +71,7 @@ describe("stats command", () => {
   });
 
   it("should track date range", async () => {
-    const db = new Database(dbPath);
-    sqliteVec.load(db);
+    const db = new DatabaseSync(dbPath);
 
     db.exec(`
       CREATE TABLE exchanges (
@@ -115,8 +110,7 @@ describe("stats command", () => {
   });
 
   it("should count projects", async () => {
-    const db = new Database(dbPath);
-    sqliteVec.load(db);
+    const db = new DatabaseSync(dbPath);
 
     db.exec(`
       CREATE TABLE exchanges (

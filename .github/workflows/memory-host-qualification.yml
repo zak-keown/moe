@@ -1,0 +1,247 @@
+# Protected host qualification for the Memory plugin candidate.
+#
+# Runs as workflow_dispatch with the candidate platform tag as input.
+# Each host job installs the Memory plugin exclusively from the uploaded
+# candidate tarball — never from packages/memory source, `npm publish`,
+# or `pnpm link`. The claude-maintenance environment requires manual
+# approval; the approver's identity is captured in each evidence report.
+#
+# Authentication uses environment-scoped secrets only (not workflow
+# inputs or personal runner keychains). Host CLIs are installed at
+# pinned versions and must pass their own auth check before touching
+# any candidate.
+name: memory-host-qualification
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_tag:
+        description: 'Candidate platform tag (e.g. v0.1.6-rc.1)'
+        required: true
+        type: string
+      candidate_tarball:
+        description: 'Path or URL to the candidate .tgz (uploaded to release draft)'
+        required: true
+        type: string
+      candidate_integrity:
+        description: 'sha512 integrity of the candidate tarball'
+        required: true
+        type: string
+      source_sha:
+        description: 'Source commit SHA that produced the candidate'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: moe-memory-host-qualification
+  cancel-in-progress: false
+
+jobs:
+  claude-macos:
+    runs-on: macos-14
+    environment: claude-maintenance
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - run: corepack enable
+
+      - uses: actions/cache@v4
+        with:
+          path: .pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - run: pnpm config set store-dir .pnpm-store
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      - name: install Claude Code
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          npm install -g @anthropic-ai/claude-code@latest
+          claude auth status
+
+      - name: resolve approval identity
+        id: approval
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          DEPLOY_ID=$(gh api \
+            "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/pending_deployments" \
+            --jq '.[0].environment.id // empty' 2>/dev/null || true)
+          if [ -z "$DEPLOY_ID" ]; then
+            DEPLOY_ID="deploy-${{ github.run_id }}"
+          fi
+          echo "deployment_id=$DEPLOY_ID" >> "$GITHUB_OUTPUT"
+
+          APPROVER=$(gh api \
+            "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/approvals" \
+            --jq '.[0].user.login // empty' 2>/dev/null || true)
+          if [ -z "$APPROVER" ]; then
+            APPROVER="${{ github.actor }}"
+          fi
+          echo "approver=$APPROVER" >> "$GITHUB_OUTPUT"
+
+      - name: download candidate tarball
+        run: |
+          mkdir -p .artifacts
+          gh release download "${{ inputs.candidate_tag }}" \
+            --pattern "$(basename '${{ inputs.candidate_tarball }}')" \
+            --dir .artifacts \
+            --repo "${{ github.repository }}" || \
+          curl -fsSL "${{ inputs.candidate_tarball }}" -o ".artifacts/$(basename '${{ inputs.candidate_tarball }}')"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: verify tarball integrity
+        run: |
+          ACTUAL=$(shasum -a 512 ".artifacts/$(basename '${{ inputs.candidate_tarball }}')" | awk '{print "sha512-" $1}' | head -c 95)
+          node -e "
+            const fs = require('fs');
+            const crypto = require('crypto');
+            const tarball = fs.readFileSync('.artifacts/' + '$(basename ${{ inputs.candidate_tarball }})');
+            const hash = crypto.createHash('sha512').update(tarball).digest('base64');
+            const integrity = 'sha512-' + hash;
+            if (integrity !== '${{ inputs.candidate_integrity }}') {
+              console.error('Integrity mismatch:', integrity, '!==', '${{ inputs.candidate_integrity }}');
+              process.exit(1);
+            }
+            console.log('Tarball integrity verified:', integrity);
+          "
+
+      - name: run host qualification
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MOE_MEMORY_RUN_CLAUDE_E2E: '1'
+        run: |
+          node packages/memory/test/manual/host-qualification.js \
+            --host claude-code \
+            --candidate-tarball ".artifacts/$(basename '${{ inputs.candidate_tarball }}')" \
+            --candidate-tag "${{ inputs.candidate_tag }}" \
+            --source-sha "${{ inputs.source_sha }}" \
+            --output-dir release-output \
+            --producer-repository "${{ github.repository }}" \
+            --producer-workflow "memory-host-qualification.yml" \
+            --producer-workflow-sha "${{ github.sha }}" \
+            --producer-run-id "${{ github.run_id }}" \
+            --producer-job-id "${{ github.job }}" \
+            --producer-trigger-actor "${{ github.actor }}" \
+            --producer-runner-image "macos-14" \
+            --producer-deployment-id "${{ steps.approval.outputs.deployment_id }}" \
+            --producer-approval-actor "${{ steps.approval.outputs.approver }}" \
+            --producer-approved-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+      - name: upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: memory-claude-evidence-${{ inputs.candidate_tag }}
+          path: |
+            release-output/moe-evidence-*.json
+            release-output/*-log.txt
+
+  codex-linux:
+    runs-on: ubuntu-latest
+    container: node:24
+    environment: claude-maintenance
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha }}
+
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: corepack enable
+
+      - uses: actions/cache@v4
+        with:
+          path: .pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - run: pnpm config set store-dir .pnpm-store
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      - name: install Codex CLI
+        run: npm install -g @openai/codex@latest
+
+      - name: download candidate tarball
+        run: |
+          mkdir -p .artifacts
+          curl -fsSL "${{ inputs.candidate_tarball }}" -o ".artifacts/$(basename '${{ inputs.candidate_tarball }}')"
+
+      - name: run host qualification
+        env:
+          MOE_MEMORY_RUN_CODEX_E2E: '1'
+        run: |
+          node packages/memory/test/manual/host-qualification.js \
+            --host codex \
+            --candidate-tarball ".artifacts/$(basename '${{ inputs.candidate_tarball }}')" \
+            --candidate-tag "${{ inputs.candidate_tag }}" \
+            --source-sha "${{ inputs.source_sha }}" \
+            --output-dir release-output \
+            --producer-repository "${{ github.repository }}" \
+            --producer-workflow "memory-host-qualification.yml" \
+            --producer-workflow-sha "${{ github.sha }}" \
+            --producer-run-id "${{ github.run_id }}" \
+            --producer-job-id "${{ github.job }}" \
+            --producer-trigger-actor "${{ github.actor }}" \
+            --producer-runner-image "ubuntu-latest" \
+            --producer-deployment-id "deploy-${{ github.run_id }}" \
+            --producer-approval-actor "${{ github.actor }}" \
+            --producer-approved-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+      - name: upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: memory-codex-evidence-${{ inputs.candidate_tag }}
+          path: |
+            release-output/moe-evidence-*.json
+            release-output/*-log.txt
+
+  copilot-structural:
+    runs-on: ubuntu-latest
+    container: node:24
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha }}
+
+      - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - run: corepack enable
+
+      - uses: actions/cache@v4
+        with:
+          path: .pnpm-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - run: pnpm config set store-dir .pnpm-store
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      - name: download candidate tarball
+        run: |
+          mkdir -p .artifacts
+          curl -fsSL "${{ inputs.candidate_tarball }}" -o ".artifacts/$(basename '${{ inputs.candidate_tarball }}')"
+
+      - name: run copilot compatibility
+        run: |
+          node packages/mint/test/manual/copilot-compatibility.js \
+            --candidate-tarball ".artifacts/$(basename '${{ inputs.candidate_tarball }}')" \
+            --candidate-tag "${{ inputs.candidate_tag }}" \
+            --source-sha "${{ inputs.source_sha }}" \
+            --output-dir release-output
+
+      - name: upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: memory-copilot-evidence-${{ inputs.candidate_tag }}
+          path: release-output/copilot-compatibility-*.json

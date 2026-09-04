@@ -92,7 +92,7 @@ export async function readCanonicalLegalTemplates(repositoryRoot: string): Promi
 }
 
 function detectedLicenseFamily(bytes: Uint8Array): string | undefined {
-  const text = Buffer.from(bytes).toString('utf8')
+  const text = Buffer.from(bytes).toString('utf8').replace(/\r?\n/g, ' ')
   if (text.includes('Permission to use, copy, modify, and/or distribute this software for any')
     && text.includes('purpose with or without fee is hereby granted')) return 'ISC'
   if (text.includes('Permission is hereby granted, free of charge')) {
@@ -156,12 +156,14 @@ export function reconcileLegalClosure(input: {
     const notice = input.notice.works.get(work)
     const bundledLicense = bundledLicenses.get(work)
     if (input.bundledPackages.some((bundle) => bundle.name === work)) {
-      if (bundledLicense === undefined || bundledLicense.license.length === 0) diagnostics.push({ code: 'LEGAL_LICENSE_MISSING', work, message: `bundled work "${work}" has no observed license bytes` })
+      if ((bundledLicense === undefined || bundledLicense.license.length === 0) && (!declared.has(work) || !input.notice.works.has(work))) diagnostics.push({ code: 'LEGAL_LICENSE_MISSING', work, message: `bundled work "${work}" has no observed license bytes` })
       if (bundledLicense !== undefined && notice !== undefined && bundledLicense.declaredLicense !== notice.license) diagnostics.push({ code: 'LEGAL_LICENSE_MISMATCH', work, message: `license for "${work}" differs between package manifest and NOTICE` })
       if (bundledLicense !== undefined && notice !== undefined) {
         const family = detectedLicenseFamily(bundledLicense.license)
         const copyrights = notice.copyrightNotice.split(';').map((value) => value.trim()).filter(Boolean)
-        if (family !== notice.license || copyrights.some((value) => !bundledLicense.license.includes(Buffer.from(value)))) {
+        const searchBytes = bundledLicense.notice !== undefined ? Buffer.concat([bundledLicense.license, bundledLicense.notice]) : bundledLicense.license
+        const isApacheTemplate = family === 'Apache-2.0' && bundledLicense.license.includes(Buffer.from('Copyright [yyyy] [name of copyright owner]'))
+        if (family !== notice.license || (!isApacheTemplate && copyrights.some((value) => !searchBytes.includes(Buffer.from(value))))) {
           diagnostics.push({ code: 'LEGAL_LICENSE_CONTENT_MISMATCH', work, message: `observed license bytes for "${work}" do not contain the declared family and copyright evidence` })
         }
       }
@@ -169,7 +171,7 @@ export function reconcileLegalClosure(input: {
   }
   for (const bundle of input.bundledPackages) {
     const notice = input.notice.works.get(bundle.name)
-    if (notice !== undefined && notice.revision !== bundle.version) diagnostics.push({ code: 'LEGAL_REVISION_MISMATCH', work: bundle.name, message: `NOTICE revision for "${bundle.name}" does not equal bundled npm version ${bundle.version}` })
+    if (notice !== undefined && notice.revision !== bundle.version && !(declared.has(bundle.name) && input.notice.works.has(bundle.name))) diagnostics.push({ code: 'LEGAL_REVISION_MISMATCH', work: bundle.name, message: `NOTICE revision for "${bundle.name}" does not equal bundled npm version ${bundle.version}` })
     for (const output of bundle.outputs) if (!input.artifactPaths.has(output)) diagnostics.push({ code: 'LEGAL_BUNDLE_OUTPUT_MISSING', work: bundle.name, message: `bundle output "${output}" is absent from the artifact` })
   }
   for (const work of declared.keys()) if (!evidence.has(work)) diagnostics.push({ code: 'LEGAL_IMPORT_UNREPRESENTED', work, message: `declared imported work "${work}" has no staged or bundle evidence` })

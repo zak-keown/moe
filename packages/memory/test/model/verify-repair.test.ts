@@ -2,10 +2,10 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { initDatabase, insertExchange } from "../../src/db.js";
+import { insertExchange } from "../../src/db.js";
 import type { ConversationExchange } from "../../src/types.js";
 import { repairIndex, verifyIndex } from "../../src/verify.js";
-import { suppressConsole } from "../test-utils.js";
+import { openTestDatabase, suppressConsole } from "../test-utils.js";
 
 // Suppress console output for clean test runs
 suppressConsole();
@@ -52,7 +52,7 @@ describe("repairIndex", () => {
 
   it("deletes orphaned database entries during repair", async () => {
     // Initialize database with orphaned entry
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
 
     const exchange: ConversationExchange = {
       id: "orphan-repair-1",
@@ -70,7 +70,7 @@ describe("repairIndex", () => {
     db.close();
 
     // Verify it's there
-    const dbBefore = initDatabase();
+    const dbBefore = openTestDatabase(dbPath);
     const beforeCount = dbBefore
       .prepare(`SELECT COUNT(*) as count FROM exchanges WHERE id = ?`)
       .get("orphan-repair-1") as { count: number };
@@ -83,7 +83,7 @@ describe("repairIndex", () => {
     await repairIndex(issues, { noSummaries: true });
 
     // Verify it's gone
-    const dbAfter = initDatabase();
+    const dbAfter = openTestDatabase(dbPath);
     const afterCount = dbAfter
       .prepare(`SELECT COUNT(*) as count FROM exchanges WHERE id = ?`)
       .get("orphan-repair-1") as { count: number };
@@ -116,7 +116,7 @@ describe("repairIndex", () => {
     fs.writeFileSync(summaryPath, "Old summary");
 
     // Index it
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
     const exchange: ConversationExchange = {
       id: "outdated-repair-1",
       project: "test-project",
@@ -168,7 +168,7 @@ describe("repairIndex", () => {
     await repairIndex(issues, { noSummaries: true });
 
     // Verify it was re-indexed with new timestamp
-    const dbAfter = initDatabase();
+    const dbAfter = openTestDatabase(dbPath);
     const afterRow = dbAfter
       .prepare(`SELECT MAX(last_indexed) as last_indexed FROM exchanges WHERE archive_path = ?`)
       .get(conversationPath) as any;

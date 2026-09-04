@@ -18,7 +18,8 @@
  */
 
 import path from "node:path";
-import type Database from "better-sqlite3";
+import { withTransaction } from "./database-transaction.js";
+import type { MemoryDatabase } from "./db.js";
 import { acquireFileLock, type FileLockHandle, releaseFileLock } from "./file-lock.js";
 
 /**
@@ -30,7 +31,7 @@ import { acquireFileLock, type FileLockHandle, releaseFileLock } from "./file-lo
  * column accepts either vector without complaint and a mixed corpus ranks
  * wrongly with no error — which is exactly the event this constant exists for.
  */
-export const EMBEDDING_VERSION = 2;
+export const EMBEDDING_VERSION = 3;
 
 /**
  * Lock primitives for the migration are the same as for sync (#97) and any
@@ -53,7 +54,7 @@ export interface StaleRow {
  * EMBEDDING_VERSION, joined with their tool names so the caller can
  * reproduce the production exchange-text format.
  */
-export function pickStaleBatch(db: Database.Database, limit: number): StaleRow[] {
+export function pickStaleBatch(db: MemoryDatabase, limit: number): StaleRow[] {
   return db
     .prepare(`
     SELECT
@@ -67,7 +68,7 @@ export function pickStaleBatch(db: Database.Database, limit: number): StaleRow[]
     GROUP BY e.id
     LIMIT ?
   `)
-    .all(EMBEDDING_VERSION, limit) as StaleRow[];
+    .all(EMBEDDING_VERSION, limit) as unknown as StaleRow[];
 }
 
 /**
@@ -76,11 +77,11 @@ export function pickStaleBatch(db: Database.Database, limit: number): StaleRow[]
  * for durability; this function executes its statements in order without
  * starting its own transaction.
  */
-export function recordReembedded(db: Database.Database, id: string, embedding: number[]): void {
+export function recordReembedded(db: MemoryDatabase, id: string, embedding: number[]): void {
   db.prepare("DELETE FROM vec_exchanges WHERE id = ?").run(id);
   db.prepare("INSERT INTO vec_exchanges (id, embedding) VALUES (?, ?)").run(
     id,
-    Buffer.from(new Float32Array(embedding).buffer),
+    new Uint8Array(new Float32Array(embedding).buffer),
   );
   db.prepare("UPDATE exchanges SET embedding_version = ? WHERE id = ?").run(EMBEDDING_VERSION, id);
 }
@@ -89,7 +90,7 @@ export function recordReembedded(db: Database.Database, id: string, embedding: n
  * Count rows whose embedding is older than the current version.
  * Used to decide whether migration is needed and to report progress.
  */
-export function countStale(db: Database.Database): number {
+export function countStale(db: MemoryDatabase): number {
   const row = db
     .prepare("SELECT COUNT(*) AS c FROM exchanges WHERE embedding_version < ?")
     .get(EMBEDDING_VERSION) as { c: number };
@@ -109,7 +110,7 @@ export function getMigrationLockPath(indexDir: string): string {
  * Returns the number of rows re-embedded (0 if nothing to do or locked out).
  */
 export async function runMigrationBatch(
-  db: Database.Database,
+  db: MemoryDatabase,
   indexDir: string,
   batchSize: number,
   embedFn: (user: string, assistant: string, toolNames?: string[]) => Promise<number[]>,
@@ -140,10 +141,9 @@ export async function runMigrationBatch(
       const vec = await embedFn(row.user_message, row.assistant_message, tools);
       embeddings.push({ id: row.id, vec });
     }
-    const writeTx = db.transaction((items: typeof embeddings) => {
-      for (const item of items) recordReembedded(db, item.id, item.vec);
+    withTransaction(db, () => {
+      for (const item of embeddings) recordReembedded(db, item.id, item.vec);
     });
-    writeTx(embeddings);
     return embeddings.length;
   } finally {
     releaseMigrationLock(lock);

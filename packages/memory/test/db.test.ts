@@ -1,11 +1,11 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { initDatabase, insertExchange, migrateSchema } from "../src/db.js";
 import type { ConversationExchange } from "../src/types.js";
-import { suppressConsole } from "./test-utils.js";
+import { openTestDatabase, suppressConsole } from "./test-utils.js";
 
 // Suppress console output for clean test runs
 suppressConsole();
@@ -26,7 +26,7 @@ describe("database migration", () => {
 
   it("adds last_indexed column to existing database", () => {
     // Create a database with old schema (no last_indexed)
-    const db = new Database(dbPath);
+    const db = new DatabaseSync(dbPath);
     db.exec(`
       CREATE TABLE exchanges (
         id TEXT PRIMARY KEY,
@@ -49,7 +49,7 @@ describe("database migration", () => {
     db.close();
 
     // Run migration
-    const migratedDb = initDatabase();
+    const migratedDb = openTestDatabase(dbPath);
 
     // Verify column now exists
     const columnsAfter = migratedDb.prepare(`PRAGMA table_info(exchanges)`).all();
@@ -61,7 +61,7 @@ describe("database migration", () => {
 
   it("handles existing last_indexed column gracefully", () => {
     // Create database with migration already applied
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
 
     // Run migration again - should not error
     expect(() => migrateSchema(db)).not.toThrow();
@@ -85,7 +85,7 @@ describe("insertExchange with last_indexed", () => {
   });
 
   it("sets last_indexed timestamp when inserting exchange", () => {
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
 
     const exchange: ConversationExchange = {
       id: "test-id-1",

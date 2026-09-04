@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "runtime-contract.schema.json",
+  "title": "MemoryRuntimeContractV1",
+  "description": "Declares the MCP server command, forwarded environment, and asset selectors for the packaged Memory plugin. Physical from/to payload mappings belong in the Mint YAML, not here.",
+  "type": "object",
+  "required": ["schema", "server", "forwardEnv", "assets"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "server": {
+      "type": "object",
+      "required": ["name", "command", "args", "cwd"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 },
+        "args": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "cwd": { "const": "." }
+      }
+    },
+    "forwardEnv": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z][A-Z0-9_]*$"
+      },
+      "uniqueItems": true
+    },
+    "assets": {
+      "type": "object",
+      "required": ["native", "embedding", "model", "claudeCompatibility", "codexCompatibility"],
+      "additionalProperties": false,
+      "properties": {
+        "native": { "type": "string", "minLength": 1 },
+        "embedding": { "type": "string", "minLength": 1 },
+        "model": { "type": "string", "minLength": 1 },
+        "claudeCompatibility": { "type": "string", "minLength": 1 },
+        "codexCompatibility": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

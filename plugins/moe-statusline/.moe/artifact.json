@@ -3,25 +3,25 @@
   "plugin": {
     "id": "moe-statusline",
     "package": "@bubstack/moe-statusline",
-    "version": "0.1.0"
+    "version": "0.1.2"
   },
   "files": [
     {
       "path": ".claude-plugin/marketplace.json",
       "size": 605,
-      "sha256": "486f6e339feed1f1613d9ab297032aca7ee47ee8cd6b34ca401dd835622f763b",
+      "sha256": "1f07403971d26d97f73f5c281b6e9104acb6fab77fc7bf8fa9744b555e09a259",
       "mode": "0644"
     },
     {
       "path": ".claude-plugin/plugin.json",
       "size": 455,
-      "sha256": "387a4f7f764ccf17c55f8d143a9c4c1665ba37c6bbe99276295810ca0ae790d0",
+      "sha256": "ceb26038773c739a03db4cfc4bb8bef20752e7522082e5a089a9d07f5779adf0",
       "mode": "0644"
     },
     {
       "path": ".moe-mint/manifest.json",
       "size": 569,
-      "sha256": "69d28790df5d1e07d9ccab16e3ee8f3007f073837d723bdbdfbc46060410cfac",
+      "sha256": "d2966e560a9fc93a0ffca714f59978f0a2d78136ed2b9b458eae7bf0ba1755c8",
       "mode": "0644"
     },
     {
@@ -75,7 +75,7 @@
     {
       "path": "package.json",
       "size": 1041,
-      "sha256": "ebc7807041cf5ea939ccbfbfc73c71a4c4a2b176ff9f65ff1727a4c5fbd7adc9",
+      "sha256": "ba2ae66987669c6edc55ef26fa72a5050a3d548a013697d03d483ee9ada8f4a7",
       "mode": "0644"
     },
     {
@@ -85,7 +85,7 @@
       "mode": "0755"
     }
   ],
-  "tree_sha256": "394c68ba9076585cfa33730ea2ce3c85fca4357bb29eb9bb75655bb0d51fe8f7",
+  "tree_sha256": "34be1c3f2b176aceaad7efc06844c816904754c83f734d94652e09885ee6fd1e",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

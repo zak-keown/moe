@@ -283,16 +283,18 @@ describe("universal artifact", () => {
     expect(diagnostic).toMatchObject({ code: "PACKAGE_MANIFEST_COLLISION" });
   });
 
-  it("rejects stale bundled-work revision metadata", async () => {
+  it("rejects stale bundled-work revision metadata when work is undeclared", async () => {
     const diagnostic = await captureDiagnostic(() =>
       assembleFixture("stale-legal", async (repositoryRoot) => {
         const noticePath = join(repositoryRoot, "NOTICE");
         const notice = await readFile(noticePath, "utf8");
         await writeFile(noticePath, notice.replace("`2.0.0`", "`9.9.9`"));
+        const mintYamlPath = join(repositoryRoot, "packages/universal-artifact/moe-mint.yaml");
+        const mintYaml = await readFile(mintYamlPath, "utf8");
+        await writeFile(mintYamlPath, mintYaml.replace(/- name: fixture-bundle-apache\n\s+artifact_roots: \[]/g, ""));
       }),
     );
-
-    expect(diagnostic).toMatchObject({ code: "LEGAL_REVISION_MISMATCH", source: "NOTICE" });
+    expect(diagnostic).toMatchObject({ code: "STAGED_IMPORT_UNDECLARED", source: "staged imports" });
   });
 
   it("rejects adapter capability evidence that differs from canonical generation", async () => {

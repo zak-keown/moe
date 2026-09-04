@@ -22,27 +22,33 @@ plans:
   - id: storage-native
     plan: docs/moe/plans/2026-09-02-moe-memory-01-storage-native.md
     depends_on: []
-    status: pending
+    status: done
+    commits: 4f57bd8..1a729c7
   - id: embeddings-migration
     plan: docs/moe/plans/2026-09-02-moe-memory-02-embeddings-migration.md
     depends_on: [storage-native]
-    status: pending
+    status: done
+    commits: 31dd9a3..67caf0e
   - id: process-mcp
     plan: docs/moe/plans/2026-09-02-moe-memory-03-process-mcp.md
     depends_on: [embeddings-migration]
-    status: pending
+    status: done
+    commits: c042d9d..e6c840a
   - id: artifact-integration
     plan: docs/moe/plans/2026-09-02-moe-memory-04-artifact-integration.md
     depends_on: [process-mcp]
-    status: pending
+    status: done
+    commits: 987b090..afa836b
   - id: harness-integration
     plan: docs/moe/plans/2026-09-02-moe-memory-05-harness-integration.md
     depends_on: [artifact-integration]
-    status: pending
+    status: done
+    commits: 5de5f4b..d8282a4
   - id: rollback-recovery
     plan: docs/moe/plans/2026-09-02-moe-memory-06-rollback-recovery.md
     depends_on: [harness-integration]
-    status: pending
+    status: done
+    commits: bc6e544..aa41286
   - id: release-qualification
     plan: docs/moe/plans/2026-09-02-moe-memory-07-release-qualification.md
     depends_on: [rollback-recovery]

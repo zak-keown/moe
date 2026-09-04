@@ -1,6 +1,6 @@
 {
   "name": "@bubstack/moe-core",
-  "version": "0.1.4",
+  "version": "0.1.6",
   "type": "module",
   "description": "The Moe skill library — brainstorming, planning, TDD, systematic debugging, code review, worktrees, parallel dispatch, plugin authoring, and more.",
   "license": "MIT AND Apache-2.0",

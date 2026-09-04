@@ -1,4 +1,4 @@
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 import { getDbPath } from "./paths.js";
 
 export interface IndexStats {
@@ -32,7 +32,7 @@ export async function getIndexStats(dbPath?: string): Promise<IndexStats> {
     };
   }
 
-  const db = new Database(resolvedDbPath, { readonly: true });
+  const db = new DatabaseSync(resolvedDbPath, { readOnly: true });
 
   try {
     // Check if tables exist

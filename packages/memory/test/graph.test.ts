@@ -6,13 +6,12 @@ import {
   getEdgesFrom,
   getEdgesTo,
   getNode,
-  initDatabase,
   insertEdge,
   insertNode,
   traceProvenance,
 } from "../src/db.js";
 import type { MemoryEdge, MemoryNode } from "../src/types.js";
-import { suppressConsole } from "./test-utils.js";
+import { openTestDatabase, suppressConsole } from "./test-utils.js";
 
 suppressConsole();
 
@@ -22,16 +21,14 @@ describe("graph memory schema", () => {
 
   beforeEach(() => {
     fs.mkdirSync(testDir, { recursive: true });
-    process.env.TEST_DB_PATH = dbPath;
   });
 
   afterEach(() => {
-    delete process.env.TEST_DB_PATH;
     fs.rmSync(testDir, { recursive: true, force: true });
   });
 
   it("memory_nodes table exists after initDatabase", () => {
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
     const tables = db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='memory_nodes'")
       .all() as Array<{ name: string }>;
@@ -40,7 +37,7 @@ describe("graph memory schema", () => {
   });
 
   it("memory_edges table exists after initDatabase", () => {
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
     const tables = db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='memory_edges'")
       .all() as Array<{ name: string }>;
@@ -49,7 +46,7 @@ describe("graph memory schema", () => {
   });
 
   it("vec_memory_nodes virtual table exists after initDatabase", () => {
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
     const tables = db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='vec_memory_nodes'")
       .all() as Array<{ name: string }>;
@@ -64,16 +61,14 @@ describe("graph memory CRUD", () => {
 
   beforeEach(() => {
     fs.mkdirSync(testDir, { recursive: true });
-    process.env.TEST_DB_PATH = dbPath;
   });
 
   afterEach(() => {
-    delete process.env.TEST_DB_PATH;
     fs.rmSync(testDir, { recursive: true, force: true });
   });
 
   it("insertNode + getNode roundtrip", () => {
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
     const node: MemoryNode = {
       id: "node-1",
       nodeType: "decision",
@@ -99,13 +94,13 @@ describe("graph memory CRUD", () => {
   });
 
   it("getNode returns null for missing id", () => {
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
     expect(getNode(db, "nonexistent")).toBeNull();
     db.close();
   });
 
   it("insertNode with optional fields omitted", () => {
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
     const node: MemoryNode = {
       id: "node-sparse",
       nodeType: "finding",
@@ -125,7 +120,7 @@ describe("graph memory CRUD", () => {
   });
 
   it("insertEdge + getEdgesFrom + getEdgesTo", () => {
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
     const edge: MemoryEdge = {
       id: "edge-1",
       sourceType: "exchange",
@@ -166,11 +161,9 @@ describe("traceProvenance", () => {
 
   beforeEach(() => {
     fs.mkdirSync(testDir, { recursive: true });
-    process.env.TEST_DB_PATH = dbPath;
   });
 
   afterEach(() => {
-    delete process.env.TEST_DB_PATH;
     fs.rmSync(testDir, { recursive: true, force: true });
   });
 
@@ -199,7 +192,7 @@ describe("traceProvenance", () => {
     // Chain: A caused_by B caused_by C
     // Edge 1: source=B, target=A (B caused A)
     // Edge 2: source=C, target=B (C caused B)
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
 
     insertEdge(db, makeEdge("e1", "finding", "B", "finding", "A"));
     insertEdge(db, makeEdge("e2", "finding", "C", "finding", "B"));
@@ -218,7 +211,7 @@ describe("traceProvenance", () => {
   it("traces in effects direction", () => {
     // Edge: source=A, target=B (A caused B)
     // Edge: source=B, target=C (B caused C)
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
 
     insertEdge(db, makeEdge("e1", "finding", "A", "finding", "B"));
     insertEdge(db, makeEdge("e2", "finding", "B", "finding", "C"));
@@ -235,7 +228,7 @@ describe("traceProvenance", () => {
   });
 
   it("respects depth limit", () => {
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
 
     // Chain: A <- B <- C <- D (3 edges, 4 nodes)
     insertEdge(db, makeEdge("e1", "finding", "B", "finding", "A"));
@@ -255,14 +248,14 @@ describe("traceProvenance", () => {
   });
 
   it("returns empty for a record with no edges", () => {
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
     const chain = traceProvenance(db, "finding", "orphan", 3, "causes");
     expect(chain).toHaveLength(0);
     db.close();
   });
 
   it("handles cycles without infinite loop", () => {
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
 
     // Cycle: A -> B -> A
     insertEdge(db, makeEdge("e1", "finding", "A", "finding", "B"));
@@ -300,16 +293,14 @@ describe("trace_provenance MCP handler", () => {
 
   beforeEach(() => {
     fs.mkdirSync(testDir, { recursive: true });
-    process.env.TEST_DB_PATH = dbPath;
   });
 
   afterEach(() => {
-    delete process.env.TEST_DB_PATH;
     fs.rmSync(testDir, { recursive: true, force: true });
   });
 
   it("returns structured chain as JSON", () => {
-    const db = initDatabase();
+    const db = openTestDatabase(dbPath);
 
     const edge: MemoryEdge = {
       id: "e-mcp-1",
