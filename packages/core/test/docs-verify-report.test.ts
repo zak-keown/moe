@@ -22,7 +22,20 @@ describe("docs-verify-report", () => {
   beforeEach(() => {
     tmp = mkdtempSync(join(tmpdir(), "dv-"));
     execFileSync("git", ["init"], { cwd: tmp });
-    execFileSync("git", ["commit", "--allow-empty", "-m", "init"], { cwd: tmp });
+    execFileSync(
+      "git",
+      [
+        "-c",
+        "user.name=Test",
+        "-c",
+        "user.email=test@test",
+        "commit",
+        "--allow-empty",
+        "-m",
+        "init",
+      ],
+      { cwd: tmp },
+    );
   });
 
   afterEach(() => rmSync(tmp, { recursive: true, force: true }));
