@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative, sep } from "node:path";
 import { Hono } from "hono";
 import { isSafePath } from "../../paths.js";
 import type { ActiveRunRegistry } from "../active-runs.js";
@@ -137,7 +137,14 @@ export function resultRoutes(resultsDir: string, registry?: ActiveRunRegistry) {
 
     const live = registry?.has(runId) ?? false;
     if (live) {
-      if (!isLiveAllowedPath(relPath)) {
+      // Check the allow-list against the *resolved* path, relative to
+      // runDir, rather than the raw route param. A raw-string prefix test
+      // against `relPath` (e.g. "screenshots/../inputs/context/...") can be
+      // satisfied by a value whose actual, `..`-collapsed disk target
+      // (what `filePath` above already resolved to) lands outside every
+      // allow-listed subtree — see CR-001.
+      const normalizedRelPath = relative(runDir, filePath).split(sep).join("/");
+      if (!isLiveAllowedPath(normalizedRelPath)) {
         return c.json({ error: "not found" }, 404);
       }
     } else {

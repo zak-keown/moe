@@ -14,6 +14,12 @@ findings:
   total: 107
 verified: false
 status: issues_found
+dispositions:
+  fixed: 4
+  stale: 0
+  skipped: 0
+  deferred: 0
+  open: 103
 ---
 
 # Codebase Review — moe
@@ -92,6 +98,10 @@ filePath).split(sep)` rather than the raw route param, or simply re-derive
 the check from the resolved path the same way `isSafePath` does for
 containment.
 
+**Disposition:** fixed
+**Commit:** `c3f1f2f447775eb9a8d1ab35688ae7e7470a2375`
+**Resolved:** 2026-09-04
+**Note:** —
 ## High
 
 ### CR-002: probeChrome never detects an installed browser on Linux because `command -v` has no standalone executable there
@@ -541,6 +551,10 @@ This is a real exfiltration path for the QA agent specifically, because the whol
 
 The CR-038 redaction (`redactSecrets`) only protects the audit trail from *accidental* leakage (e.g. a stray `env` dump landing in `run.jsonl`); it does not address deliberate misuse by an agent that has been steered via injected page content, and the file's own comments frame the credential forwarding as something "the agent still needs" — a functionality tradeoff, not a security boundary. Fix: either stop forwarding live SDK credentials into the LLM-controlled shell by default (require an explicit opt-in per run, or forward only a scoped/short-lived credential), or add egress restriction to the spawned process so it cannot reach the network directly with these values.
 
+**Disposition:** fixed
+**Commit:** `2f94d5fa4f6bc2d60e5d8fc9d3f563f309e71c67`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-014: `findCard` bypasses the codebase's own "one and only path-safety guard", enabling a file-existence oracle for arbitrary paths
 
 **File:** `packages/flight/src/qa/cards/store.ts`
@@ -618,6 +632,10 @@ as `fanout.ts`'s `/:id/:mode` route already does for its own id via
 `parseRunId`, and as the CR-040/041/042 comments already flag for the
 sibling `writeCards` path.
 
+**Disposition:** fixed
+**Commit:** `95e5d92cba6e86c08ec0cb322fe1a32c09959a17`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-015: `fetch_credential` failure path leaks resolver stderr into the persisted transcript, bypassing the redaction opt-out
 
 **File:** `packages/flight/src/qa/context/credential-tool.ts`
@@ -636,6 +654,10 @@ return textResult(
 
 `textResult` is called with no `opts.transcriptText`, so `result.stderr` (up to `STDERR_CAP_BYTES` = 8 KiB, but otherwise verbatim) is always written into `run.jsonl`'s `tool_result.text`, regardless of `includeInTranscripts`. A resolver script that echoes diagnostic context to stderr before a non-zero exit — a very ordinary thing for an operator-authored credential-fetch script to do (e.g. dumping the HTTP response body, a partially-fetched OTP, or an upstream auth token used to reach the OTP provider) — lands unredacted in the durable, disk-persisted evidence file even when the operator explicitly configured `MOE_FLIGHT_CREDENTIAL_INCLUDE_IN_TRANSCRIPTS=false` (the default). The `timeout` case avoids this by not including `result.stderr` in its message at all, which confirms the omission on `nonzero_exit` is inconsistent rather than intentional. The fix is to route `nonzero_exit` (and any other stderr-bearing message) through the same `transcriptText` gating as the `ok` case.
 
+**Disposition:** fixed
+**Commit:** `52b1c66d59112d509ec69b1d703ea80a6773eb9c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-016: `executeRunCore` double-fires lifecycle hooks and misreports a successful run as errored when `beforeClose`/`afterClose` throws
 
 **File:** `packages/flight/src/qa/runs/orchestrator.ts`
