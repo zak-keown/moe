@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 5
+  fixed: 6
   stale: 0
   skipped: 0
   deferred: 0
-  open: 102
+  open: 101
 ---
 
 # Codebase Review — moe
@@ -2731,6 +2731,10 @@ require `draftAssetSha256` to be non-optional on `RegistrySnapshot` (forcing eve
 either provide a real hash or explicitly report "absent"), or block with a distinct
 `RECOVERY_DRAFT_ASSET_UNVERIFIABLE` code when the hash can't be observed, rather than silently accepting.
 
+**Disposition:** fixed
+**Commit:** `42d8cd90505e51689b8929680651d434fc405795`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-102: Unescaped shell interpolation of an environment-controlled path in the dogfood test
 
 **File:** `packages/mint/test/dogfood.test.ts`
