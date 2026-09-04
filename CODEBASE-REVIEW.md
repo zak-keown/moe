@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 6
+  fixed: 7
   stale: 0
   skipped: 0
   deferred: 0
-  open: 101
+  open: 100
 ---
 
 # Codebase Review — moe
@@ -2568,6 +2568,10 @@ Fix: use `Number(passes)` (or reject non-plain-digit strings with a regex)
 instead of `Number.parseInt`, so exponent/partial-numeric strings are
 rejected rather than truncated.
 
+**Disposition:** fixed
+**Commit:** `83d808e3f22b263b88bc3ff789992506e4c80ee9`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-092: `restoreFocus` builds an invalid CSS selector for `name` attributes containing a quote
 
 **File:** `packages/glass/skills/browsing/lib/capture.js`
