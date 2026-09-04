@@ -1,8 +1,8 @@
 import { mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { MemoryDatabase } from "../src/db.js";
 import { suppressConsole } from "./test-utils.js";
 
 /**
@@ -16,9 +16,10 @@ import { suppressConsole } from "./test-utils.js";
  *
  * db.js is mocked to pass through to the real implementation while
  * capturing the `Database` instance `verifyIndex` opens internally, so the
- * test can assert `.open` directly rather than inferring a leak indirectly.
+ * test can assert on whether the handle was closed rather than inferring a
+ * leak indirectly.
  */
-const capturedDbs = vi.hoisted(() => [] as Database.Database[]);
+const capturedDbs = vi.hoisted(() => [] as MemoryDatabase[]);
 vi.mock("../src/db.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../src/db.js")>();
   return {
@@ -32,6 +33,15 @@ vi.mock("../src/db.js", async (importOriginal) => {
 });
 
 const { verifyIndex } = await import("../src/verify.js");
+
+function isDbClosed(db: MemoryDatabase): boolean {
+  try {
+    db.exec("SELECT 1");
+    return false;
+  } catch {
+    return true;
+  }
+}
 
 describe("CR-058: verifyIndex does not leak the SQLite handle on error", () => {
   let testDir: string;
@@ -59,7 +69,7 @@ describe("CR-058: verifyIndex does not leak the SQLite handle on error", () => {
     delete process.env.TEST_ARCHIVE_DIR;
     delete process.env.TEST_DB_PATH;
     for (const db of capturedDbs) {
-      if (db.open) db.close();
+      if (!isDbClosed(db)) db.close();
     }
     try {
       rmSync(testDir, { recursive: true, force: true });
@@ -70,6 +80,6 @@ describe("CR-058: verifyIndex does not leak the SQLite handle on error", () => {
     await expect(verifyIndex()).rejects.toThrow();
 
     expect(capturedDbs).toHaveLength(1);
-    expect(capturedDbs[0]?.open).toBe(false);
+    expect(isDbClosed(capturedDbs[0]!)).toBe(true);
   });
 });
