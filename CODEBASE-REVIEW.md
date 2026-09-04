@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 5
+  fixed: 6
   stale: 0
   skipped: 0
   deferred: 0
-  open: 102
+  open: 101
 ---
 
 # Codebase Review — moe
@@ -2433,6 +2433,10 @@ elsewhere in this API won't recognize this response.
 Fix: wrap the `JSON.parse` in these two handlers the same way
 `resultRoutes` does, for a consistent error envelope.
 
+**Disposition:** fixed
+**Commit:** `0fa90bfbe544a49ab2d4dbd17b95ac9701b2132b`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-083: `ask`'s recorded-model/date lookups can crash with a raw JSON-parse error on a corrupt `run.jsonl`
 
 **File:** `packages/flight/src/qa/cli/ask.ts`
