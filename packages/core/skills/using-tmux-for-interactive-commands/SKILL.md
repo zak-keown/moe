@@ -87,22 +87,21 @@ tmux new-session -d -s git_session -c /path/to/repo git rebase -i HEAD~3
 
 ### Helper Wrapper
 
-This skill ships `tmux-wrapper.sh` beside its `SKILL.md`. Declare the path once,
-then use it:
+This skill ships `scripts/tmux-wrapper.mjs`. Declare the path once, then use it:
 ```bash
-WRAPPER="${CLAUDE_PLUGIN_ROOT}/skills/using-tmux-for-interactive-commands/tmux-wrapper.sh"
+WRAPPER="node ${CLAUDE_PLUGIN_ROOT}/skills/using-tmux-for-interactive-commands/scripts/tmux-wrapper.mjs"
 
 # Start session
-"$WRAPPER" start <session-name> <command> [args...]
+$WRAPPER start <session-name> <command> [args...]
 
 # Send input
-"$WRAPPER" send <session-name> 'text' Enter
+$WRAPPER send <session-name> 'text' Enter
 
 # Capture current state
-"$WRAPPER" capture <session-name>
+$WRAPPER capture <session-name>
 
 # Stop
-"$WRAPPER" stop <session-name>
+$WRAPPER stop <session-name>
 ```
 
 ## Common Patterns

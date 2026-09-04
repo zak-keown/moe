@@ -428,8 +428,6 @@ const X_BIT_ALLOWLIST = [
   "hooks/jig-review-format-guard",
   "skills/brainstorming/scripts/start-server.sh",
   "skills/brainstorming/scripts/stop-server.sh",
-  "skills/systematic-debugging/find-polluter.sh",
-  "skills/using-tmux-for-interactive-commands/tmux-wrapper.sh",
 ];
 
 // Everything Zone-A discovery walks: the skills tree and the hooks directory,
@@ -568,7 +566,7 @@ describe("runtime paths", () => {
     // scripts plus the three extensionless Node hooks (`hooks/plan-set`,
     // `hooks/moe-completion-evidence`, and `hooks/task-set`) with node
     // shebangs.
-    expect(bash.length, "bash targets discovered").toBeGreaterThanOrEqual(8);
+    expect(bash.length, "bash targets discovered").toBeGreaterThanOrEqual(6);
     expect(node.length, "node targets discovered").toBeGreaterThanOrEqual(7);
     for (const rel of [
       "hooks/claude-judge-continuation",
