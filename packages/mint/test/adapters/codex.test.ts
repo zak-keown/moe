@@ -73,8 +73,6 @@ describe('codex adapter', () => {
       hooks: 'none',
       mcp: 'none',
       bootstrap: 'partial',
-      rules: 'none',
-      variables: 'none',
     })
   })
 })

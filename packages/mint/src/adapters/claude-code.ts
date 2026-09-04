@@ -163,8 +163,6 @@ export const claudeCode: HarnessAdapter = Object.freeze({
     hooks: 'full',
     mcp: 'full',
     bootstrap: 'full',
-    rules: 'none',
-    variables: 'none',
   } satisfies ComponentSupport,
   skillLayout: { outputDir: '.claude-plugin/skills', profile: 'claude-code', mode: 'rendered' as const },
   skillDelivery: 'rendered',

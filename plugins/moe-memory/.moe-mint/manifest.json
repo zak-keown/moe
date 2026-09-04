@@ -12,7 +12,7 @@
       "sha256": "470f6b93e31ada3fa5a5b9137a32921858711b9739e2ccba85450a12bbd9fd36"
     },
     ".claude-plugin/skills/remembering-conversations/MCP-TOOLS.md": {
-      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "sha256": "2b96341da1b09e3531559bc9339c7208bb25c12c5821ae6e1d17d760f40af3fc",
       "mode": 420
     },
     ".claude-plugin/skills/remembering-conversations/SKILL.md": {
@@ -23,7 +23,7 @@
       "sha256": "e39dd0369af16bb9739a8141160ba4b530a22bc069f047e033e3be2dc965a514"
     },
     ".codex-plugin/skills/remembering-conversations/MCP-TOOLS.md": {
-      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "sha256": "2b96341da1b09e3531559bc9339c7208bb25c12c5821ae6e1d17d760f40af3fc",
       "mode": 420
     },
     ".codex-plugin/skills/remembering-conversations/SKILL.md": {
@@ -51,7 +51,7 @@
       "sha256": "b09e1e3192dd2e7f1e4300eaaee4d891943fd69ffbd67d4c84a714d94fe90aa0"
     },
     ".cursor-plugin/skills/remembering-conversations/MCP-TOOLS.md": {
-      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "sha256": "2b96341da1b09e3531559bc9339c7208bb25c12c5821ae6e1d17d760f40af3fc",
       "mode": 420
     },
     ".cursor-plugin/skills/remembering-conversations/SKILL.md": {
@@ -62,7 +62,7 @@
       "sha256": "9b9f0421fcb69550da76c70e3088419147645608d13c3fe3b48a8577249b5226"
     },
     ".kimi-plugin/skills/remembering-conversations/MCP-TOOLS.md": {
-      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "sha256": "2b96341da1b09e3531559bc9339c7208bb25c12c5821ae6e1d17d760f40af3fc",
       "mode": 420
     },
     ".kimi-plugin/skills/remembering-conversations/SKILL.md": {
@@ -76,7 +76,7 @@
       "sha256": "d7c258d371834c2ae563b3ead530031c56c1501ca4bd2bd5ddbcd9be15874bbb"
     },
     ".opencode/skills/remembering-conversations/MCP-TOOLS.md": {
-      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "sha256": "2b96341da1b09e3531559bc9339c7208bb25c12c5821ae6e1d17d760f40af3fc",
       "mode": 420
     },
     ".opencode/skills/remembering-conversations/SKILL.md": {
@@ -87,7 +87,7 @@
       "sha256": "d134a2d49ed7c9d8fe97ed8cbcc9faf3cf2df722154387a93b6c95e7d428d17e"
     },
     ".pi/skills/remembering-conversations/MCP-TOOLS.md": {
-      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "sha256": "2b96341da1b09e3531559bc9339c7208bb25c12c5821ae6e1d17d760f40af3fc",
       "mode": 420
     },
     ".pi/skills/remembering-conversations/SKILL.md": {
@@ -101,7 +101,7 @@
       "sha256": "dc2c7b15071008bfee2298742afb99c529ad18faa2002860ec272185b0c51e4d"
     },
     "docs/install/codex.md": {
-      "sha256": "cb5112e7aba9fddb245fdf6d0c1bd6b9d82feec01ad8aaaa3bb85a47303272e0"
+      "sha256": "741511cb16064e81b8ed458cd1894e2bb44d9ada5bd365f8c8f7c716cb3ecf8a"
     },
     "docs/install/copilot.md": {
       "sha256": "55915502c59bbbfaa01d031948bf70a82cb99bcfaf3a6782280096a238196c51"
@@ -119,7 +119,7 @@
       "sha256": "962a860951403b566bae19dcfc9b5c5fd8924d4c8f400693006fbd3d8ecf3c13"
     },
     "docs/support-matrix.md": {
-      "sha256": "8f66a350aeea2d8e1d30782ecf932a631e5914ff080bdfed7c4a96dbf2857113"
+      "sha256": "352b1ae59bc981a043233b9b0f348bc5f22cf4cd6686bfdb6da0fb8c0485622f"
     },
     "hooks/moe-mint/hooks.json": {
       "sha256": "f84190fe43a1e6074468bd6ae91f87c3b9b4c0a7e8c2fcaa927f707fba8600c6"

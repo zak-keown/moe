@@ -12,9 +12,6 @@ function makeMockClient(overrides: Partial<MoedexClient> = {}): MoedexClient {
         { rel_path: "src/db/queries.ts", score: 0.6, repo: "moe" },
       ],
     }),
-    traceCalls: vi.fn().mockResolvedValue({
-      results: [{ rel_path: "src/api/middleware.ts", score: 0.88, repo: "moe" }],
-    }),
     traceConsumers: vi.fn().mockResolvedValue({
       results: [{ rel_path: "src/api/handler.ts", score: 0.9, repo: "moe" }],
     }),

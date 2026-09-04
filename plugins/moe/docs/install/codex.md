@@ -19,4 +19,8 @@ Codex discovers this plugin's skills natively; there is no session-start hook to
 
 ## Caveats
 
-- Hooks and commands are not supported on Codex; bootstrap relies entirely on native skill discovery, with no active injection mechanism.
+- Hooks and commands are not supported on Codex.
+- Agents are not emitted for Codex.
+- MCP servers are not emitted for Codex.
+
+Bootstrap relies entirely on native skill discovery, with no active injection mechanism.

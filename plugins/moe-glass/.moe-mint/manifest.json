@@ -975,7 +975,7 @@
       "sha256": "3d772771f6b43865099ede27eb744029bfdb4141bc5ada1de8ee6242e1c96ff4"
     },
     "docs/install/codex.md": {
-      "sha256": "01547105b494b71f784abdd814848b3c4d301620a949cdbe7b5d2eefb8f9e478"
+      "sha256": "f0033b550734aed9e8d69c67dd5c6fabcf76447a6277ab820d7c3c6df562b749"
     },
     "docs/install/copilot.md": {
       "sha256": "25b999ab0dc485584b1f011786dc711cbea635887b970d5d2cc221e1ea4cbc5b"
@@ -993,7 +993,7 @@
       "sha256": "54288b18f17fa4879bc54121c15db042cfb9d0f2cb06b6b345a19b34f33fa613"
     },
     "docs/support-matrix.md": {
-      "sha256": "a4244b32548ae1122452123a289ef5b667e7b4cfb6a7623d101bcce449a8e47c"
+      "sha256": "580018017044fb55540abae23f38c8eae421657d79918fcbe5dc10736488075a"
     },
     "plugin.json": {
       "sha256": "be1e5d8173faf778bb53779b598f4991d9afac7c7326d0b9287a92fbf736e3d6"

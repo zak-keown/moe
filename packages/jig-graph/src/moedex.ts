@@ -24,10 +24,6 @@ export interface SearchResult {
   results: GraphResult[];
 }
 
-export interface CallResult {
-  results: GraphResult[];
-}
-
 type ToolCaller = (req: {
   name: string;
   arguments: Record<string, unknown>;
@@ -102,12 +98,6 @@ export class MoedexClient {
     return (await this.call("trace_consumers", {
       query: files.join(", "),
     })) as ConsumerResult;
-  }
-
-  async traceCalls(symbol: string): Promise<CallResult> {
-    return (await this.call("trace_calls", {
-      query: symbol,
-    })) as CallResult;
   }
 
   async searchContext(query: string): Promise<SearchResult> {

@@ -9,7 +9,7 @@ import { generate, validateGeneration } from '../src/generate.js'
 
 const stubSupport: ComponentSupport = {
   skills: 'full', commands: 'full', agents: 'full', hooks: 'full',
-  mcp: 'full', bootstrap: 'full', rules: 'none', variables: 'none',
+  mcp: 'full', bootstrap: 'full',
 }
 
 const stubAdapterFields = {

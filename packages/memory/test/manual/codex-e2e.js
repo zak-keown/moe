@@ -1,4 +1,16 @@
 #!/usr/bin/env node
+
+/**
+ * Opt-in Codex MCP end-to-end harness. This exercises the v0.3.0 (H1) Codex MCP
+ * path — plugin MCP loading, plugin hooks, hook trust, and MCP-backed recall —
+ * which is NOT a 0.2.1 capability. In 0.2.1 the Codex plugin ships native skill
+ * discovery only (`moe-memory.yaml` grants Codex
+ * `expected_capabilities: [skill-discovery]`), so this harness only passes once
+ * the codex adapter emits an MCP server and hooks for Codex in 0.3.0. It is kept
+ * on disk as 0.3.0 groundwork; `codex-e2e-cleanup.test.ts` also imports
+ * `withTempRoot` from here to prove the CR-077 credential-cleanup fix.
+ */
+
 import { spawn, spawnSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';

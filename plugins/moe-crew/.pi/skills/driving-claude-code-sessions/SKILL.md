@@ -150,7 +150,7 @@ If you see something you don't want, stop the worker:
 /tmp/moe-crew-workers/bin/my-task stop
 ```
 
-Sends `/exit`, waits up to 10s for `session_end`, kills the tmux session if still running, and removes the meta, events, **and shim** files.
+Sends the harness's quit command (`/exit` for Claude, `/quit` for Codex and Pi), waits up to 10s for `session_end`, kills the tmux session if still running, and removes the meta, events, **and shim** files. (Codex and Pi can drop the pane on quit without emitting `session_end`; `stop` returns as soon as the pane is gone rather than waiting out the full grace.)
 
 `stop` is destructive: the worker is gone and the shim path stops working. If you wanted the worker around for follow-up turns or a parallel workflow, don't call `stop` until you're done with it. To resume work under the same name, relaunch — `moe-crew launch my-task /path/to/project` again — and you'll get a fresh worker at the same shim path.
 
@@ -317,6 +317,7 @@ The `moe-crew` CLI honors a small set of env vars. All are optional.
 | `MOE_CREW_PLUGIN_ROOT` | Installed moe-crew plugin root. The launcher otherwise derives it from the running bundle. |
 | `MOE_CREW_CLAUDE_BIN` / `MOE_CREW_CODEX_BIN` / `MOE_CREW_PI_BIN` | Path to each harness binary. Default to `claude` / `codex` / `pi` (resolved via `PATH`). Set when a binary is not on `PATH` or you want to pin a specific version. |
 | `MOE_CREW_CODEX_MODEL` / `MOE_CREW_PI_MODEL` | Optional model override for codex / pi workers. Unset = the harness default (codex: `gpt-5.5`; pi: its configured default). |
+| `MOE_CREW_PI_PROVIDER` | Provider override for pi workers, passed as --provider — only when MOE_CREW_PI_MODEL is also set (pi's --provider rides with --model). Unset = pi's configured default provider. |
 | `MOE_CREW_CONVERSE_DIAG_FILE` | When set, `moe-crew converse` writes a post-mortem diagnostic on timeout — `ps` tree, `tmux capture-pane`, last 30 lines of the worker's session JSONL, last 20 lines of the moe-crew events JSONL — to this path, then emits a `moe-crew-diagnostic: <path>` pointer to stderr. The file is overwritten on each timeout. Unset = no diagnostic file. Useful when wrapping moe-crew in a harness that can ship the file off-box before the worker is reaped. |
 | `MOE_CREW_WORKER_DIR` | Override the worker dir (default `$XDG_RUNTIME_DIR/moe-crew-workers`, or `~/.local/state/moe-crew/workers`). |
 | `MOE_CREW_SUBMIT_TIMEOUT` / `MOE_CREW_SUBMIT_RETRY_INTERVAL` | `send`: seconds to wait for the worker to confirm a pasted prompt (default `10`) and seconds between retry-Enter resends (default `2`). Raise the timeout if a slow tmux session drops the paste. |

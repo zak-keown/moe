@@ -57,7 +57,11 @@ function installDoc(_model: PluginModel): string {
     '',
     '## Caveats',
     '',
-    '- Hooks and commands are not supported on Codex; bootstrap relies entirely on native skill discovery, with no active injection mechanism.',
+    '- Hooks and commands are not supported on Codex.',
+    '- Agents are not emitted for Codex.',
+    '- MCP servers are not emitted for Codex.',
+    '',
+    'Bootstrap relies entirely on native skill discovery, with no active injection mechanism.',
   ]
   return lines.join('\n')
 }
@@ -71,8 +75,6 @@ export const codex: HarnessAdapter = Object.freeze({
     hooks: 'none',
     mcp: 'none',
     bootstrap: 'partial',
-    rules: 'none',
-    variables: 'none',
   } satisfies ComponentSupport,
   skillLayout: { outputDir: '.codex-plugin/skills', profile: 'codex', mode: 'rendered' as const },
   skillDelivery: 'rendered',

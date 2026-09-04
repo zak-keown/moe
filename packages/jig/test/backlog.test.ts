@@ -339,6 +339,86 @@ describe("transitions", () => {
     expect(text).toContain("- note: superseded by X");
     expect(text).not.toContain("## Resume");
   });
+
+  it("decline strips a stale Resume block (carry-over → decline)", async () => {
+    const { backlogAdd, backlogDefer, backlogDecline } = await import("../src/backlog.js");
+    const id = idOf(backlogAdd("carried then declined", { cwd: repo }));
+    const deferred = backlogDefer(id, { reason: "budget", next: "later", cwd: repo });
+    expect(readFileSync(deferred.path, "utf-8")).toContain("## Resume");
+    const text = readFileSync(backlogDecline(id, { reason: "wont-fix", cwd: repo }), "utf-8");
+    expect(text).toContain("## Disposition");
+    expect(text).toContain("- declined: wont-fix");
+    expect(text).not.toContain("## Resume");
+  });
+
+  it("decline strips a stale Resume block (blocked → decline)", async () => {
+    const { backlogAdd, backlogDefer, backlogDecline } = await import("../src/backlog.js");
+    const id = idOf(backlogAdd("blocked then declined", { cwd: repo }));
+    const deferred = backlogDefer(id, { reason: "no-runtime", cwd: repo });
+    expect(readFileSync(deferred.path, "utf-8")).toContain("## Resume");
+    const text = readFileSync(backlogDecline(id, { reason: "wont-fix", cwd: repo }), "utf-8");
+    expect(text).toContain("## Disposition");
+    expect(text).not.toContain("## Resume");
+  });
+
+  it("accept clears a stale reason", async () => {
+    const { backlogAdd, backlogDefer, backlogAccept, parseItem } = await import(
+      "../src/backlog.js"
+    );
+    const id = idOf(backlogAdd("triaged with reason", { cwd: repo }));
+    backlogDefer(id, { reason: "mystery", cwd: repo }); // unrecognized → needs-triage, reason: mystery
+    const path = backlogAccept(id, { cwd: repo });
+    const item = parseItem(readFileSync(path, "utf-8"));
+    expect(item.status).toBe("open");
+    expect(item.reason).toBeUndefined();
+    expect(readFileSync(path, "utf-8")).not.toContain("reason: mystery");
+  });
+
+  it("resume clears the deferral reason", async () => {
+    const { backlogAdd, backlogDefer, backlogResume, parseItem } = await import(
+      "../src/backlog.js"
+    );
+    const id1 = idOf(backlogAdd("blocked resume", { cwd: repo }));
+    backlogDefer(id1, { reason: "no-runtime", cwd: repo }); // → blocked, reason: no-runtime
+    const item1 = parseItem(readFileSync(backlogResume(id1, { cwd: repo }).path, "utf-8"));
+    expect(item1.status).toBe("open");
+    expect(item1.reason).toBeUndefined();
+
+    const id2 = idOf(backlogAdd("carry resume", { cwd: repo }));
+    backlogDefer(id2, { reason: "budget", next: "step", cwd: repo }); // → carry-over, reason: budget
+    const item2 = parseItem(readFileSync(backlogResume(id2, { cwd: repo }).path, "utf-8"));
+    expect(item2.status).toBe("in-progress");
+    expect(item2.reason).toBeUndefined();
+  });
+
+  it("defer clears a stale claimedBy", async () => {
+    const { backlogAdd, backlogClaim, backlogDefer, parseItem } = await import("../src/backlog.js");
+    const id = idOf(backlogAdd("claimed then deferred", { cwd: repo }));
+    backlogClaim(id, { cwd: repo, by: "agent-7" });
+    const r = backlogDefer(id, { reason: "no-runtime", cwd: repo }); // → blocked
+    expect(r.status).toBe("blocked");
+    expect(parseItem(readFileSync(r.path, "utf-8")).claimedBy).toBeUndefined();
+  });
+
+  it("done and decline clear a stale claimedBy", async () => {
+    const { backlogAdd, backlogClaim, backlogDone, backlogDecline, parseItem } = await import(
+      "../src/backlog.js"
+    );
+    const id1 = idOf(backlogAdd("claimed then done", { cwd: repo }));
+    backlogClaim(id1, { cwd: repo, by: "agent-7" });
+    const done = parseItem(readFileSync(backlogDone(id1, { cwd: repo }), "utf-8"));
+    expect(done.status).toBe("done");
+    expect(done.claimedBy).toBeUndefined();
+
+    const id2 = idOf(backlogAdd("claimed then declined", { cwd: repo }));
+    backlogClaim(id2, { cwd: repo, by: "agent-7" });
+    const declined = parseItem(
+      readFileSync(backlogDecline(id2, { reason: "wont-fix", cwd: repo }), "utf-8"),
+    );
+    expect(declined.status).toBe("declined");
+    expect(declined.claimedBy).toBeUndefined();
+    expect(declined.reason).toBe("wont-fix");
+  });
 });
 
 describe("read surface", () => {

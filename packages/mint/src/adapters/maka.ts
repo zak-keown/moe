@@ -75,8 +75,6 @@ export const maka: HarnessAdapter = {
     hooks: 'none',
     mcp: 'none',
     bootstrap: 'none',
-    rules: 'none',
-    variables: 'none',
   },
   skillLayout: { outputDir: 'skills', profile: 'maka', mode: 'in-place' },
   skillDelivery: 'unsupported',

@@ -434,8 +434,8 @@
     },
     {
       "path": ".claude-plugin/skills/fix-review/SKILL.md",
-      "size": 10080,
-      "sha256": "bb0caaec030ce87789829c1c9a86c25a0d3db5ce8aac3581252ce5c0d1bda60c",
+      "size": 10117,
+      "sha256": "e60485f1fae2871a3418f7182e320a0c9b61af7af671a55dc5ad634fb6e9bd9d",
       "mode": "0644"
     },
     {
@@ -980,8 +980,8 @@
     },
     {
       "path": ".claude-plugin/skills/write-clearly/house-voice.md",
-      "size": 4944,
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "size": 7289,
+      "sha256": "5c512153647ddc7940fb45eccdcfd763e0e72de2ec4fda1c2d32ba74627fa3d0",
       "mode": "0644"
     },
     {
@@ -1460,8 +1460,8 @@
     },
     {
       "path": ".codex-plugin/skills/fix-review/SKILL.md",
-      "size": 10080,
-      "sha256": "bb0caaec030ce87789829c1c9a86c25a0d3db5ce8aac3581252ce5c0d1bda60c",
+      "size": 10117,
+      "sha256": "e60485f1fae2871a3418f7182e320a0c9b61af7af671a55dc5ad634fb6e9bd9d",
       "mode": "0644"
     },
     {
@@ -2006,8 +2006,8 @@
     },
     {
       "path": ".codex-plugin/skills/write-clearly/house-voice.md",
-      "size": 4944,
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "size": 7289,
+      "sha256": "5c512153647ddc7940fb45eccdcfd763e0e72de2ec4fda1c2d32ba74627fa3d0",
       "mode": "0644"
     },
     {
@@ -2510,8 +2510,8 @@
     },
     {
       "path": ".cursor-plugin/skills/fix-review/SKILL.md",
-      "size": 10080,
-      "sha256": "bb0caaec030ce87789829c1c9a86c25a0d3db5ce8aac3581252ce5c0d1bda60c",
+      "size": 10117,
+      "sha256": "e60485f1fae2871a3418f7182e320a0c9b61af7af671a55dc5ad634fb6e9bd9d",
       "mode": "0644"
     },
     {
@@ -3056,8 +3056,8 @@
     },
     {
       "path": ".cursor-plugin/skills/write-clearly/house-voice.md",
-      "size": 4944,
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "size": 7289,
+      "sha256": "5c512153647ddc7940fb45eccdcfd763e0e72de2ec4fda1c2d32ba74627fa3d0",
       "mode": "0644"
     },
     {
@@ -3536,8 +3536,8 @@
     },
     {
       "path": ".kimi-plugin/skills/fix-review/SKILL.md",
-      "size": 10080,
-      "sha256": "bb0caaec030ce87789829c1c9a86c25a0d3db5ce8aac3581252ce5c0d1bda60c",
+      "size": 10117,
+      "sha256": "e60485f1fae2871a3418f7182e320a0c9b61af7af671a55dc5ad634fb6e9bd9d",
       "mode": "0644"
     },
     {
@@ -4082,8 +4082,8 @@
     },
     {
       "path": ".kimi-plugin/skills/write-clearly/house-voice.md",
-      "size": 4944,
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "size": 7289,
+      "sha256": "5c512153647ddc7940fb45eccdcfd763e0e72de2ec4fda1c2d32ba74627fa3d0",
       "mode": "0644"
     },
     {
@@ -4148,8 +4148,8 @@
     },
     {
       "path": ".moe-mint/manifest.json",
-      "size": 627969,
-      "sha256": "62de249356bda2313a274729209cec8740d225aff40426afde3b2b96642358a6",
+      "size": 628017,
+      "sha256": "32b00bbd7f22dee1029d817bad1c593c228f490139a810d1c7a71c1347261b41",
       "mode": "0644"
     },
     {
@@ -4586,8 +4586,8 @@
     },
     {
       "path": ".opencode/skills/fix-review/SKILL.md",
-      "size": 10080,
-      "sha256": "bb0caaec030ce87789829c1c9a86c25a0d3db5ce8aac3581252ce5c0d1bda60c",
+      "size": 10117,
+      "sha256": "e60485f1fae2871a3418f7182e320a0c9b61af7af671a55dc5ad634fb6e9bd9d",
       "mode": "0644"
     },
     {
@@ -5132,8 +5132,8 @@
     },
     {
       "path": ".opencode/skills/write-clearly/house-voice.md",
-      "size": 4944,
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "size": 7289,
+      "sha256": "5c512153647ddc7940fb45eccdcfd763e0e72de2ec4fda1c2d32ba74627fa3d0",
       "mode": "0644"
     },
     {
@@ -5612,8 +5612,8 @@
     },
     {
       "path": ".pi/skills/fix-review/SKILL.md",
-      "size": 10080,
-      "sha256": "bb0caaec030ce87789829c1c9a86c25a0d3db5ce8aac3581252ce5c0d1bda60c",
+      "size": 10117,
+      "sha256": "e60485f1fae2871a3418f7182e320a0c9b61af7af671a55dc5ad634fb6e9bd9d",
       "mode": "0644"
     },
     {
@@ -6158,8 +6158,8 @@
     },
     {
       "path": ".pi/skills/write-clearly/house-voice.md",
-      "size": 4944,
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "size": 7289,
+      "sha256": "5c512153647ddc7940fb45eccdcfd763e0e72de2ec4fda1c2d32ba74627fa3d0",
       "mode": "0644"
     },
     {
@@ -6266,8 +6266,8 @@
     },
     {
       "path": "docs/install/codex.md",
-      "size": 718,
-      "sha256": "1f3ab8d896db25d7a0dfc48639c48e3c487e92853072811f3bcbb9377a26ab40",
+      "size": 796,
+      "sha256": "770e606904fe9288d6f4e5383549b703c2e27c1278f48558e35e7ea085eb1a28",
       "mode": "0644"
     },
     {
@@ -6302,8 +6302,8 @@
     },
     {
       "path": "docs/support-matrix.md",
-      "size": 1081,
-      "sha256": "0497a87f299db249203c41c1f6873d2184ac1274587ea320d45cc39e6cc9c110",
+      "size": 1578,
+      "sha256": "b04388433512482bc76ac9e02379ad702498d96a20b2e065c826e3100fbb2395",
       "mode": "0644"
     },
     {
@@ -6812,8 +6812,8 @@
     },
     {
       "path": "skills/fix-review/SKILL.md",
-      "size": 10080,
-      "sha256": "bb0caaec030ce87789829c1c9a86c25a0d3db5ce8aac3581252ce5c0d1bda60c",
+      "size": 10117,
+      "sha256": "e60485f1fae2871a3418f7182e320a0c9b61af7af671a55dc5ad634fb6e9bd9d",
       "mode": "0644"
     },
     {
@@ -7358,8 +7358,8 @@
     },
     {
       "path": "skills/write-clearly/house-voice.md",
-      "size": 4944,
-      "sha256": "0f281802dc8fa273af8e89fa65131d6e0375bb5f110a53ff7fcef88fb5525943",
+      "size": 7289,
+      "sha256": "5c512153647ddc7940fb45eccdcfd763e0e72de2ec4fda1c2d32ba74627fa3d0",
       "mode": "0644"
     },
     {
@@ -7423,7 +7423,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "3ab73362ad1f88986f985efa44b73abdd2e4bc2a6e4bf88fcaa7d852b06b51cd",
+  "tree_sha256": "2eadf9395abf1ab096cbb4b92d2cd30d55a60698f653c80d41ee2082253db902",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

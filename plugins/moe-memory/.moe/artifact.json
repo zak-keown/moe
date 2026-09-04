@@ -26,8 +26,8 @@
     },
     {
       "path": ".claude-plugin/skills/remembering-conversations/MCP-TOOLS.md",
-      "size": 4114,
-      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "size": 6024,
+      "sha256": "2b96341da1b09e3531559bc9339c7208bb25c12c5821ae6e1d17d760f40af3fc",
       "mode": "0644"
     },
     {
@@ -44,8 +44,8 @@
     },
     {
       "path": ".codex-plugin/skills/remembering-conversations/MCP-TOOLS.md",
-      "size": 4114,
-      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "size": 6024,
+      "sha256": "2b96341da1b09e3531559bc9339c7208bb25c12c5821ae6e1d17d760f40af3fc",
       "mode": "0644"
     },
     {
@@ -92,8 +92,8 @@
     },
     {
       "path": ".cursor-plugin/skills/remembering-conversations/MCP-TOOLS.md",
-      "size": 4114,
-      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "size": 6024,
+      "sha256": "2b96341da1b09e3531559bc9339c7208bb25c12c5821ae6e1d17d760f40af3fc",
       "mode": "0644"
     },
     {
@@ -110,8 +110,8 @@
     },
     {
       "path": ".kimi-plugin/skills/remembering-conversations/MCP-TOOLS.md",
-      "size": 4114,
-      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "size": 6024,
+      "sha256": "2b96341da1b09e3531559bc9339c7208bb25c12c5821ae6e1d17d760f40af3fc",
       "mode": "0644"
     },
     {
@@ -129,7 +129,7 @@
     {
       "path": ".moe-mint/manifest.json",
       "size": 5803,
-      "sha256": "1847dc0252352df3f824c5245279e1c35fdfbf37171a5de93d1c6e234084ba22",
+      "sha256": "2261428667c5623434f3095d013509507be16fad3d7a73502767f5cf10876d04",
       "mode": "0644"
     },
     {
@@ -146,8 +146,8 @@
     },
     {
       "path": ".opencode/skills/remembering-conversations/MCP-TOOLS.md",
-      "size": 4114,
-      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "size": 6024,
+      "sha256": "2b96341da1b09e3531559bc9339c7208bb25c12c5821ae6e1d17d760f40af3fc",
       "mode": "0644"
     },
     {
@@ -164,8 +164,8 @@
     },
     {
       "path": ".pi/skills/remembering-conversations/MCP-TOOLS.md",
-      "size": 4114,
-      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "size": 6024,
+      "sha256": "2b96341da1b09e3531559bc9339c7208bb25c12c5821ae6e1d17d760f40af3fc",
       "mode": "0644"
     },
     {
@@ -195,13 +195,13 @@
     {
       "path": "dist/bundle-manifest.json",
       "size": 4271,
-      "sha256": "9d557fb2321cbad5c2f40819c3df240b4e71288b15d330faa26cec444b619ed3",
+      "sha256": "b2e60ad59c8e6385b27ac2f7542aaec2c888f3f46821f8a147c15478a3344e34",
       "mode": "0644"
     },
     {
       "path": "dist/bundle-metafile.json",
       "size": 298771,
-      "sha256": "523e303c768e2cf4de4aae54b58d37476542c7242a20945c272c98108cb3ae97",
+      "sha256": "bab716887a5c7f3eac32167cb09bf788a824cfabf967091f0be712858e4dd9b6",
       "mode": "0644"
     },
     {
@@ -223,12 +223,6 @@
       "mode": "0644"
     },
     {
-      "path": "dist/chunks/chunk-HSI3HVDR.js",
-      "size": 21271,
-      "sha256": "aaa382097406eb8a4c30e6efdd5fa569c64c746e5d33ff30c44988579670f901",
-      "mode": "0644"
-    },
-    {
       "path": "dist/chunks/chunk-KB33ZOJX.js",
       "size": 724,
       "sha256": "378d20af95109969728d321a87a1bed0bfa658fa579fff983c24ef4ecc54ece8",
@@ -238,6 +232,12 @@
       "path": "dist/chunks/chunk-KVDJIHLR.js",
       "size": 1449,
       "sha256": "b350d168e38b63d5e6333182d259bf51b7930ee4161ef31941daff1f7c5b5c2d",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/chunks/chunk-M3KU6P7K.js",
+      "size": 7023,
+      "sha256": "ee66c423fb2ae4544b6b20811832bf99013a15f8c0a7725cda0669cbea55e952",
       "mode": "0644"
     },
     {
@@ -265,12 +265,6 @@
       "mode": "0644"
     },
     {
-      "path": "dist/chunks/chunk-SW5YMIYD.js",
-      "size": 7023,
-      "sha256": "cfec49daf1ffe8ef02b0d32515435c6086f09ad42e13f38a8e3b4e4a57d3d409",
-      "mode": "0644"
-    },
-    {
       "path": "dist/chunks/chunk-TD4KRVGL.js",
       "size": 169254,
       "sha256": "17615b45c3208a831f49c0d4650b560eb200765201bbe956ef1d6650d9ba8434",
@@ -280,6 +274,12 @@
       "path": "dist/chunks/chunk-TG7AXCW2.js",
       "size": 13868,
       "sha256": "d0b8edbc3bb2e634a4b605548f6d377009fdde993c552798979fdd8dd91c757d",
+      "mode": "0644"
+    },
+    {
+      "path": "dist/chunks/chunk-WYYWGHLN.js",
+      "size": 21273,
+      "sha256": "9b939c11cceb042cf538a1fe9ac8db8e83fd885b52ef24f389680b409a04861f",
       "mode": "0644"
     },
     {
@@ -343,9 +343,9 @@
       "mode": "0644"
     },
     {
-      "path": "dist/chunks/index-cli-UDBVKCEP.js",
+      "path": "dist/chunks/index-cli-ZOMD4TTF.js",
       "size": 26420,
-      "sha256": "c7b7c6ab27db674dea14451d90c381a50b7357adbfa84d1c5d58e9012982486f",
+      "sha256": "aaff18c2a6b838a8337cdd82c5452a8957ae18871a4c9689342fbb23a3b68c93",
       "mode": "0644"
     },
     {
@@ -391,9 +391,9 @@
       "mode": "0644"
     },
     {
-      "path": "dist/chunks/summarizer-JX2L5D3P.js",
+      "path": "dist/chunks/summarizer-S67PKAKI.js",
       "size": 919,
-      "sha256": "03931e9b6075381aaa998e512ea5e20680cd18eae7363661e6e081b6ba050f68",
+      "sha256": "2292b671ff498ce0bfff3196949aaba1c38252c427500aae8a6335edf87caf74",
       "mode": "0644"
     },
     {
@@ -403,9 +403,9 @@
       "mode": "0644"
     },
     {
-      "path": "dist/chunks/sync-cli-MVRJHA27.js",
+      "path": "dist/chunks/sync-cli-ZZ72EWVV.js",
       "size": 7931,
-      "sha256": "abf74ec9fd28901c914903f972339af0b8835e70bfec95ce2891a03a46b13808",
+      "sha256": "a678c79954ec5b8baa03d4d267095486e9f8d13fd97fab36f1e2d5efa8be1d57",
       "mode": "0644"
     },
     {
@@ -423,7 +423,7 @@
     {
       "path": "dist/cli.js",
       "size": 3693,
-      "sha256": "56de261994df2d2af08123a78c59cec8f54fe2fae9ad1bf7c783d9f90ba031bb",
+      "sha256": "80b7b011f8a8221305dd17e04f994cb5c7b91a3e7c480ce1cdf6d196fb6eaa3d",
       "mode": "0755"
     },
     {
@@ -596,14 +596,14 @@
     },
     {
       "path": "dist/mcp-server.d.ts",
-      "size": 1344,
-      "sha256": "26dcb756ba633a19bd4d7756084bf6b58e4491449a6af7aa49d27bbf97b5e3c5",
+      "size": 1479,
+      "sha256": "439b1b2e6af297bd38e85856876061fd7a54afe1972dd4a38484f0c717453f55",
       "mode": "0644"
     },
     {
       "path": "dist/metafile-esm.json",
       "size": 298771,
-      "sha256": "523e303c768e2cf4de4aae54b58d37476542c7242a20945c272c98108cb3ae97",
+      "sha256": "bab716887a5c7f3eac32167cb09bf788a824cfabf967091f0be712858e4dd9b6",
       "mode": "0644"
     },
     {
@@ -806,8 +806,8 @@
     },
     {
       "path": "docs/install/codex.md",
-      "size": 725,
-      "sha256": "cb5112e7aba9fddb245fdf6d0c1bd6b9d82feec01ad8aaaa3bb85a47303272e0",
+      "size": 803,
+      "sha256": "741511cb16064e81b8ed458cd1894e2bb44d9ada5bd365f8c8f7c716cb3ecf8a",
       "mode": "0644"
     },
     {
@@ -842,8 +842,8 @@
     },
     {
       "path": "docs/support-matrix.md",
-      "size": 1142,
-      "sha256": "8f66a350aeea2d8e1d30782ecf932a631e5914ff080bdfed7c4a96dbf2857113",
+      "size": 1639,
+      "sha256": "352b1ae59bc981a043233b9b0f348bc5f22cf4cd6686bfdb6da0fb8c0485622f",
       "mode": "0644"
     },
     {
@@ -879,7 +879,7 @@
     {
       "path": "package.json",
       "size": 6773,
-      "sha256": "86e141551a900170c9a1f13db8718db7c1e09bb505e1606041d911b911413348",
+      "sha256": "26a2fc9873bab4e60e1485efeec57310791b4d76a1434faa5f257cdc5a3811c4",
       "mode": "0644"
     },
     {
@@ -932,8 +932,8 @@
     },
     {
       "path": "skills/remembering-conversations/MCP-TOOLS.md",
-      "size": 4114,
-      "sha256": "8366dcce43ea2a1c81294c5ece22d7aa3ad80203d39fafb894e5ebca23da2841",
+      "size": 6024,
+      "sha256": "2b96341da1b09e3531559bc9339c7208bb25c12c5821ae6e1d17d760f40af3fc",
       "mode": "0644"
     },
     {
@@ -979,7 +979,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "fa2dc087c034e3bd2773f61425d814ac96082546a279b0312e1c3194401a6536",
+  "tree_sha256": "6a8540df145f2154d8b196fe856662d615fe7609cbe9a3ae3f4c536fe70cb458",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

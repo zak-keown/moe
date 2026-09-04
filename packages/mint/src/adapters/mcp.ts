@@ -1,3 +1,17 @@
+/**
+ * STAGED SEED — not wired into generation (as of v0.2.1).
+ *
+ * These helpers are imported only by test/adapters/mcp.test.ts. The pipeline
+ * emits MCP config inline: cursor.ts writes model.mcp to .cursor-plugin/mcp.json
+ * and claude-code.ts points the manifest at the source .mcp.json — neither
+ * routes through this module.
+ *
+ * `emitCodexMcp` is the deliberate seed for 0.3.0 item H1 (BL-f4dac1becd):
+ * wiring Codex MCP emission into adapters/codex.ts. Kept and tested ahead of
+ * that work on purpose. Its green test attests the emitter's shape, not that
+ * the pipeline uses it. Do not delete before H1 resolves its fate
+ * (BL-3fdd56ee5a).
+ */
 import type { PluginModel } from '../model.js'
 
 export interface NormalizedMcpServer {

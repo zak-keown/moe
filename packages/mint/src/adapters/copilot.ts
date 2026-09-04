@@ -36,8 +36,6 @@ export const copilot: HarnessAdapter = Object.freeze({
     hooks: 'full',
     mcp: 'full',
     bootstrap: 'full',
-    rules: 'none',
-    variables: 'none',
   } satisfies ComponentSupport,
   skillLayout: { outputDir: '.claude-plugin/skills', profile: 'claude-code', mode: 'rendered' as const },
   skillDelivery: 'shared-compatible',

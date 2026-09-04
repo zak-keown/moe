@@ -9,8 +9,6 @@ const COLUMNS: Array<keyof ComponentSupport> = [
   'hooks',
   'mcp',
   'bootstrap',
-  'rules',
-  'variables',
 ]
 
 export function renderMatrix(

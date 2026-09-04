@@ -25,6 +25,9 @@ software QA, transcript pricing, and model evals in one workspace.
 | `@bubstack/moe-mint` | Generate native plugin manifests for supported harnesses |
 | `@bubstack/moe-crew` | Launch and supervise coding-agent workers through tmux |
 | `@bubstack/moe-glass` | Direct Chrome DevTools Protocol access |
+| `@bubstack/moe-statusline` | Auto-configure a vendored statusline on session start (Claude Code only) |
+| `@bubstack/moe-jig` | Deterministic enforcement tooling for skill conventions |
+| `@bubstack/moe-jig-graph` | Graph-grounded plan validation extending `jig` |
 | `@bubstack/moe-tab` | Parse usage records and estimate transcript cost |
 | `moe-proof` | Run and grade model evals |
 
@@ -39,8 +42,15 @@ moe tab price session.jsonl
 moe crew list
 ```
 
-Namespaces are `crew`, `flight`, `glass`, `memory`, `mint`, `proof`, and `tab`.
-The direct `moe-<namespace>` binaries remain valid.
+Namespaces are `crew`, `flight`, `glass`, `jig`, `memory`, `mint`, `proof`,
+and `tab`. The direct `moe-<namespace>` binaries remain valid.
+
+**Harness support.** Moe ships plugins for eight harnesses. `claude-code` is
+the certify tier (validated in CI); the other seven — `cursor`, `codex`,
+`kimi`, `opencode`, `pi`, `agent-plugins-1.0`, `copilot` — are preview: skills
+work everywhere, but commands, agents, hooks, and MCP vary by harness.
+MCP-backed plugins (`moe-memory`, `moe-glass`) reach only four harnesses;
+elsewhere they degrade to skills. See each plugin's `docs/support-matrix.md`.
 
 ## Development
 

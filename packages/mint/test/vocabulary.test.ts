@@ -367,8 +367,6 @@ const noSupport = {
   hooks: 'none',
   mcp: 'none',
   bootstrap: 'none',
-  rules: 'none',
-  variables: 'none',
 } as const
 
 function fullTreeFixture(): string {

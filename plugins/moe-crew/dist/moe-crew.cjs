@@ -2706,6 +2706,9 @@ Environment variables:
   MOE_CREW_CODEX_MODEL / MOE_CREW_PI_MODEL
                        Optional model override for codex / pi workers. Unset = the
                        harness default (codex: gpt-5.5; pi: its configured default).
+  MOE_CREW_PI_PROVIDER Provider override for pi workers, passed as --provider
+                       (only alongside MOE_CREW_PI_MODEL; pi's --provider rides
+                       with --model). Unset = pi's default provider.
   MOE_CREW_CONVERSE_DIAG_FILE
                        When set, \`converse\` writes a post-mortem diagnostic (ps tree +
                        tmux capture-pane + worker session JSONL tail + moe-crew events tail)

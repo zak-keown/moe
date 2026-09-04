@@ -1,3 +1,6 @@
+// Exercises the STAGED, unwired MCP-emit seed (src/adapters/mcp.ts). Green here
+// attests the emitter's shape only; generation emits MCP inline. See H1 /
+// BL-f4dac1becd for the wiring decision, BL-3fdd56ee5a for context.
 import { describe, it, expect } from 'vitest'
 import { normalizeMcpServers, emitClaudeMcp, emitCodexMcp } from '../../src/adapters/mcp.js'
 import type { PluginModel } from '../../src/model.js'

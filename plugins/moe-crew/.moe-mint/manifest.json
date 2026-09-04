@@ -12,7 +12,7 @@
       "sha256": "82d3bbc0bce6a60344fe470553b23113d90b5b642a9201c9c544efc608a49324"
     },
     ".claude-plugin/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "17311047eaaafb3f553b6f0ace901256a5ce17083c889b46d805266d8ce5e946",
+      "sha256": "fe81f4bb5b963422e874560b87b074ae982ff1baa1f22a2d82ad2ff16e37b6d6",
       "mode": 420
     },
     ".claude-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs": {
@@ -23,7 +23,7 @@
       "sha256": "0bac67e71def11d0d25ad8eea538cccff87b50dabea07a549b0a6b1d8ffdafe2"
     },
     ".codex-plugin/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "17311047eaaafb3f553b6f0ace901256a5ce17083c889b46d805266d8ce5e946",
+      "sha256": "fe81f4bb5b963422e874560b87b074ae982ff1baa1f22a2d82ad2ff16e37b6d6",
       "mode": 420
     },
     ".codex-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs": {
@@ -37,7 +37,7 @@
       "sha256": "5131b69484d5432a676bba18d66b8ba87e093cb1bb4d046a7bffa373b1a4ee85"
     },
     ".cursor-plugin/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "17311047eaaafb3f553b6f0ace901256a5ce17083c889b46d805266d8ce5e946",
+      "sha256": "fe81f4bb5b963422e874560b87b074ae982ff1baa1f22a2d82ad2ff16e37b6d6",
       "mode": 420
     },
     ".cursor-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs": {
@@ -48,7 +48,7 @@
       "sha256": "bc77912356c4fbf65dd5e54570e0fc79a5a43bc8aa946e60e96d1202f8e368a1"
     },
     ".kimi-plugin/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "17311047eaaafb3f553b6f0ace901256a5ce17083c889b46d805266d8ce5e946",
+      "sha256": "fe81f4bb5b963422e874560b87b074ae982ff1baa1f22a2d82ad2ff16e37b6d6",
       "mode": 420
     },
     ".kimi-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs": {
@@ -59,7 +59,7 @@
       "sha256": "75f9741bb89732c408fe86757c526516ceafedd392c593d99f35fe887b1e601c"
     },
     ".opencode/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "17311047eaaafb3f553b6f0ace901256a5ce17083c889b46d805266d8ce5e946",
+      "sha256": "fe81f4bb5b963422e874560b87b074ae982ff1baa1f22a2d82ad2ff16e37b6d6",
       "mode": 420
     },
     ".opencode/skills/driving-claude-code-sessions/scripts/moe-crew.mjs": {
@@ -70,7 +70,7 @@
       "sha256": "11f3b2cf5ebe937208c9dc08f2510fe23240502363850699ab24a1db9ae3d298"
     },
     ".pi/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "17311047eaaafb3f553b6f0ace901256a5ce17083c889b46d805266d8ce5e946",
+      "sha256": "fe81f4bb5b963422e874560b87b074ae982ff1baa1f22a2d82ad2ff16e37b6d6",
       "mode": 420
     },
     ".pi/skills/driving-claude-code-sessions/scripts/moe-crew.mjs": {
@@ -84,7 +84,7 @@
       "sha256": "480c82b531e9f2537af66a1f62d3d608085a4ba20a8e1fb68cd89ba01e0d4267"
     },
     "docs/install/codex.md": {
-      "sha256": "95ef4be47a16f03a023fe6ae8496427bd0807a82147b19f5772e862c5e59de36"
+      "sha256": "bab95c5e19db5533fb9c38d9d8e6cc58848d95a9caab5525e40e0b5e2a576194"
     },
     "docs/install/copilot.md": {
       "sha256": "d0e268f8b21d1e0f35f6ee57f8caf58f5a2e7d2233b7152f5e47f9a1db361b30"
@@ -102,7 +102,7 @@
       "sha256": "8d38e7ec54b7c8987c73378fbf81eac8f8e7bc15124fcf708e08c52e559f506b"
     },
     "docs/support-matrix.md": {
-      "sha256": "56cd49b3275077fd4f5558f21b390490dae0f3ca7f18c949c9c7173bc788d7f6"
+      "sha256": "b4c292005790891b0c57da4e2ac16fa766f1e762e4a58be16ecb7cf97f9325fe"
     },
     "plugin.json": {
       "sha256": "396fea8703a531d402b9b063db7e2f0e96b980748d29e9821e77f79c30f39e95"

@@ -45,6 +45,47 @@ flight`, `moe tab`, `moe proof`, `moe glass` reads as ordering at a bar, which
 turns "Just ask Moe." from decoration into a literal description of the CLI; a
 fifth half-metaphor costs that and buys a synonym.
 
+## The no-no list — words and patterns to cut
+
+Part of this list is already mechanized, and this section transcribes it rather
+than inventing it. `packages/core/test/house-voice/score.mjs` scores package
+READMEs and FAILS the ones below; when the prose here and that scorer disagree,
+the scorer wins and this section is wrong — fix it. The scorer runs on READMEs,
+but the same cuts apply to every doc a human reads. Cite examples as backticked
+paths, never as markdown links (a relative link is dead inside the generated
+plugin).
+
+**Hedging adverbs — cut, do not soften.** The `HEDGES` set: *probably, arguably,
+fairly, quite, somewhat, generally, basically, essentially, simply, actually,
+really, very.* A hedge is a claim you have not measured; measure it or drop it.
+This is Strunk Rule 11 (positive form) and Rule 13 (omit needless words) made
+concrete.
+
+**Category-description openers — say what it does, not what it is.** The
+`verdict-opening` detector fails an opening line that leads with a noun-phrase
+opener (*This, That, A, An, The, It, There*) or a copular / permission-granting
+construction — the `COPULAR` set: *is a, are a, provides, allows, enables,
+offers, serves as, acts as, is designed to, is intended to, is responsible for.*
+Open on a bare verb-phrase verdict instead: `packages/tab/README.md` — "Price an
+agent transcript."
+
+**No coined tavern measure.** Enforced by the `closed-vocabulary` detector; the
+`COINED_MEASURE` set is the ban list. See "The tavern vocabulary is closed"
+above — the four measures are `tab`, `flight`, `proof`, `glass`, and nothing
+else is one.
+
+**AI-tell filler — not yet mechanized, cut on sight.** *delve, seamless,
+seamlessly, robust, powerful, cutting-edge, in the realm of, it is worth noting,
+needless to say, at the end of the day*; *in order to* (write "to"); *utilize*
+(write "use"). They pad without adding a fact.
+
+**One deliberate exception — the architecture glossary.** `codebase-design` and
+`improve-architecture` MANDATE a fixed vocabulary in architecture prose —
+*module, interface, depth, seam, adapter, leverage, locality* — and use those
+terms exactly. `leverage` there is a required term, not filler; do not cut it in
+that context. This no-no list governs general product prose, and the
+architecture glossary overrides it inside architecture writing.
+
 ## The name policy
 
 This repo is `@bubstack/moe` and owns the bare `moe` binary. `moe <thing>` is the

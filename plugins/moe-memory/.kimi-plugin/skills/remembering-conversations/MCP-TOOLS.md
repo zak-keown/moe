@@ -1,8 +1,11 @@
 # Moe Memory MCP Tools Reference
 
-The moe-memory plugin exposes seven MCP tools over two record types. This file
+The moe-memory plugin exposes nine MCP tools in three groups. This file
 documents the two **conversation** tools — harvested Claude Code and Codex
-transcripts.
+transcripts — in full, plus the two **graph / provenance** tools
+(`link_memories`, `trace_provenance`) that connect and walk memory records
+across the closed source-type set (`exchange`, `journal`, `decision`,
+`finding`, `moedex_symbol`).
 
 The five **journal** tools cover what you deliberately wrote down:
 `process_thoughts`, `search_journal`, `read_journal_entry`,
@@ -145,3 +148,58 @@ Both tools return errors as text content with `isError: true`:
   - Conversations can be 1000+ lines
 - Vector search uses sqlite-vec with cached embeddings
 - Text search is a bound-parameter SQL `LIKE`, not FTS5 — the upstream note claiming FTS5 was wrong
+
+## link_memories
+
+Create a typed edge between two memory records. `source` and `target` are
+`type:id` strings; the `type` half must be one of the closed source-type set
+(`exchange`, `journal`, `decision`, `finding`, `moedex_symbol`) or the call is
+rejected.
+
+**Tool name:** `mcp__plugin_moe-memory_moe-memory__link_memories`
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `source` | `string` | Yes | Source record as `type:id` (e.g. `exchange:abc123`) |
+| `target` | `string` | Yes | Target record as `type:id` (e.g. `journal:def456`) |
+| `relation` | `"caused_by"` \| `"contradicts"` \| `"supersedes"` \| `"supports"` \| `"implements"` | Yes | Relationship from source to target |
+| `confidence` | `number` | No | Confidence in the relationship, 0.0–1.0 (default: 1.0) |
+
+### Usage
+
+```typescript
+{
+  source: "exchange:abc123",
+  target: "decision:ghi789",
+  relation: "caused_by",
+  confidence: 0.9
+}
+```
+
+## trace_provenance
+
+Walk the relationship graph from a memory record and return the chain of
+connected records. Use `causes` to find what led to a record, `effects` to
+find what it influenced.
+
+**Tool name:** `mcp__plugin_moe-memory_moe-memory__trace_provenance`
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | `string` | Yes | Starting record as `type:id` (e.g. `exchange:abc123`) |
+| `depth` | `number` | No | Maximum traversal depth, 1–10 (default: 3) |
+| `direction` | `"causes"` \| `"effects"` | No | Direction to walk (default: `"causes"`) |
+
+### Usage
+
+```typescript
+{
+  id: "decision:def456",
+  depth: 3,
+  direction: "causes"
+}
+```

@@ -17,3 +17,5 @@
 
 - Copilot consumes the Claude Code layout through `.claude-plugin/marketplace.json`; keep the `claude-code` adapter enabled when targeting Copilot.
 - Repos consuming shell-hook output should pin both `hooks/moe-mint/*` and `.cursor-plugin/hooks/moe-mint/*` to LF in .gitattributes or accept drift warnings on autocrlf checkouts.
+- `claude-code` is the certify tier; the other seven harnesses are preview. Skill delivery is universal, but capabilities beyond skill-discovery vary by harness — see the Emitted capabilities column above.
+- MCP-backed plugins (for example `moe-memory` and `moe-glass`) register their MCP server only where `mcp` support is `full` (`claude-code`, `cursor`, `agent-plugins-1.0`, `copilot`); on the other four harnesses the MCP-only features are unavailable and the plugin degrades to its skills.

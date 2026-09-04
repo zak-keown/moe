@@ -142,8 +142,6 @@ export const cursor: HarnessAdapter = Object.freeze({
     hooks: 'partial',
     mcp: 'full',
     bootstrap: 'full',
-    rules: 'none',
-    variables: 'none',
   } satisfies ComponentSupport,
   skillLayout: { outputDir: '.cursor-plugin/skills', profile: 'cursor', mode: 'rendered' as const },
   skillDelivery: 'rendered',

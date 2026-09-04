@@ -62,8 +62,6 @@ export const kimi: HarnessAdapter = Object.freeze({
     hooks: 'none',
     mcp: 'none',
     bootstrap: 'partial', // sessionStart only supports a named bootstrap skill; bootstrap.generate is unsupported
-    rules: 'none',
-    variables: 'none',
   } satisfies ComponentSupport,
   skillLayout: { outputDir: '.kimi-plugin/skills', profile: 'kimi', mode: 'rendered' as const },
   skillDelivery: 'rendered',

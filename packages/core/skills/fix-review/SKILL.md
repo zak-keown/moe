@@ -121,7 +121,8 @@ moe jig backlog add "<finding title>" --source code-review:<CR-ID> --severity <s
 moe jig backlog defer <BL-ID> --reason <reason> --note "<why>" [--next "<step>"]
 ```
 
-Record the returned `BL-####` in the disposition `Note`. The reason must be a
+Record the returned `BL-<10hex>` id (e.g. `BL-5897265d07`) in the disposition
+`Note`. The reason must be a
 recognized deferral reason — `no-runtime`, `upstream-decision`, `depends-on`,
 `needs-human`, `external-service` for blocks; `budget`, `scope-split` for
 carry-over, which also needs `--next`. An unrecognized reason files the item as
@@ -206,4 +207,4 @@ inline findings that remain.
 - Frontmatter counts that disagree with the stamped dispositions
 - Starting the next finding with the tree dirty
 - A compaction that moved `skipped` or `deferred` findings to the resolved section
-- A deferred or skipped finding with no BL-#### in its Note
+- A deferred or skipped finding with no `BL-<10hex>` id in its Note

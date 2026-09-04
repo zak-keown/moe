@@ -2,11 +2,12 @@
 /**
  * The one MCP server, keyed `moe-memory`.
  *
- * Seven tools over two record types:
+ * Nine tools over two record types, plus the provenance graph that links them:
  *
  *   search_conversations  read_conversation                    harvested transcript turns
  *   process_thoughts      search_journal  read_journal_entry   deliberately written entries
  *   list_recent_entries   read_recent_entries
+ *   link_memories         trace_provenance                     provenance edges across both
  *
  * Startup connects MCP transport BEFORE opening databases, loading models,
  * or indexing journals. `initialize` and `tools/list` finish in under two

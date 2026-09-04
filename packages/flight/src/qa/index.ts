@@ -203,8 +203,10 @@ export async function qaMain(argv: string[]): Promise<void> {
       // marks state as draining (middleware then refuses new POSTs),
       // closes existing WS connections, waits up to shutdownGraceMs for
       // in-flight runs to complete naturally, then stops the server and
-      // exits 0. Runs that exceed the grace window are abandoned —
-      // PRI-1507 closes that gap once the orchestrator can be cancelled.
+      // exits 0. Runs still in flight after the grace window are cancelled:
+      // drainShutdown cancels the run-set tokens (cancelTokens.cancelAll) and
+      // fires the per-run AbortControllers (registry.abortAll), then writes a
+      // stub result.json for any run that still didn't exit (PRI-1507).
       let shuttingDown = false;
       installShutdownHandlers(["SIGTERM", "SIGINT", "SIGHUP"], async (signal) => {
         if (shuttingDown) return;

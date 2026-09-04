@@ -172,7 +172,7 @@ function readCommandOutput(command, args, env) {
       output += chunk.toString();
     });
     child.on("error", reject);
-    child.on("exit", (code) => {
+    child.on("close", (code) => {
       if (code === 0) {
         resolve(output);
       } else {
@@ -400,7 +400,7 @@ function createChildProcessAdapter() {
             reject(error);
           }
         });
-        child.on("exit", (code, signal) => {
+        child.on("close", (code, signal) => {
           if (!finished) {
             finished = true;
             clearTimeout(timeout);

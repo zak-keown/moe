@@ -124,8 +124,6 @@ describe('pi adapter', () => {
       hooks: 'none',
       mcp: 'none',
       bootstrap: 'full',
-      rules: 'none',
-      variables: 'none',
     })
   })
 

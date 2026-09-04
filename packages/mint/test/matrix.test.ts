@@ -21,6 +21,8 @@ describe('renderMatrix', () => {
 describe('renderSupportMatrix', () => {
   it('renders one row per adapter with component support levels', () => {
     const out = renderSupportMatrix()
-    expect(out).toMatch(/\| claude-code \|( full \|){6}( none \|){2}/)
+    // Six component columns (skills/commands/agents/hooks/mcp/bootstrap); the row
+    // ends after the sixth `full` — no trailing rules/variables `none` columns.
+    expect(out).toMatch(/\| claude-code \|( full \|){6}\n/)
   })
 })

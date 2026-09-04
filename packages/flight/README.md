@@ -10,7 +10,7 @@ components for reviewing runs.
 moe-flight qa run story.yaml
 moe-flight qa validate story.yaml
 moe-flight qa batch stories/
-moe-flight dashboard serve
+moe-flight dashboard
 ```
 
 Run `moe-flight --help` and `moe-flight qa --help` for the current command

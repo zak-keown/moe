@@ -3,8 +3,8 @@
 > Just ask Moe.
 
 Moe is one workspace for coding-agent skills, browser control, memory, session
-orchestration, QA, transcript pricing, and evals. Nine source packages produce
-six installable plugins and seven command namespaces.
+orchestration, QA, transcript pricing, and evals. Twelve source packages produce
+six installable plugins and eight command namespaces.
 
 This file records why the current shape exists. `NOTICE` is the attribution
 register.
@@ -63,7 +63,9 @@ moe/
 | `@bubstack/moe-mint` | Generate native plugin manifests and installation metadata | workspace tool |
 | `@bubstack/moe-crew` | Launch and supervise coding-agent workers through tmux | generated `moe-crew` plugin |
 | `@bubstack/moe-glass` | Direct Chrome DevTools Protocol access through a skill and MCP server | npm-backed `moe-glass` plugin |
+| `@bubstack/moe-statusline` | Auto-configure a vendored, MIT-licensed statusline (ccstatusline) on session start | generated `moe-statusline` plugin (Claude Code only) |
 | `@bubstack/moe-jig` | Deterministic enforcement tooling for skill conventions | npm-published CLI |
+| `@bubstack/moe-jig-graph` | Graph-grounded plan validation; extends `jig` with moedex-powered `validate` and `seed` | npm-published extension library (no plugin, no namespace) |
 | `@bubstack/moe-tab` | Parse usage records and estimate transcript cost in Rust | workspace library and CLI |
 | `moe-proof` | Run and grade model evals | internal Python tool |
 
@@ -201,6 +203,17 @@ macOS, Linux, and WSL2 are supported. Native Windows is not first-class yet:
 crew requires tmux, hook execution requires bash, and sandbox support differs.
 Every script and polyglot hook is pinned to LF by `.gitattributes`, including a
 checkout reached from WSL through a Windows filesystem.
+
+Harnesses are tiered. `claude-code` is the certify tier: it is exercised in
+CI (macOS) and every declared capability — skills, commands, agents, hooks,
+MCP, bootstrap — is validated. The other seven harnesses (`cursor`, `codex`,
+`kimi`, `opencode`, `pi`, `agent-plugins-1.0`, `copilot`) are preview: skill
+delivery is universal, but commands, agents, hooks, and MCP are `none` on most
+of them (see each plugin's generated `docs/support-matrix.md`). MCP-backed
+plugins degrade accordingly — `moe-memory` and `moe-glass` register their MCP
+server on only four harnesses (`claude-code`, `cursor`, `agent-plugins-1.0`,
+`copilot`); on the other four the plugin falls back to its skills and the
+MCP-only features are unavailable.
 
 ## 10. Verification and CI
 

@@ -227,11 +227,15 @@ function writeResume(
 }
 
 function writeDisposition(body: string, reason: string, note?: string): string {
+  // Strip any pre-existing Resume block: a declined item is terminal and must
+  // not invite resumption. Safe to strip to end-of-body because writeResume
+  // only ever appends Resume last, so no block follows it.
+  const cleaned = body.replace(/\n*## Resume[\s\S]*$/m, "");
   const lines = ["## Disposition", "", `- declined: ${reason}`];
   if (note) lines.push(`- note: ${note}`);
   const block = `${lines.join("\n")}\n`;
-  if (/^## Disposition$/m.test(body)) return body.replace(/## Disposition[\s\S]*$/m, block);
-  return `${body.replace(/\n*$/, "")}\n\n${block}`;
+  if (/^## Disposition$/m.test(cleaned)) return cleaned.replace(/## Disposition[\s\S]*$/m, block);
+  return `${cleaned.replace(/\n*$/, "")}\n\n${block}`;
 }
 
 export interface DeferOpts {
@@ -254,18 +258,23 @@ export function backlogDefer(
   if (target === "carry-over" && !opts.next?.trim()) target = "needs-triage";
   item.status = target;
   item.reason = opts.reason;
-  item.updated = today();
   item.movedBy = opts.by ?? "manual";
-  item.movedSha = safeSha(opts.cwd) ?? item.movedSha;
   if (target === "carry-over" || target === "blocked") item.body = writeResume(item.body, opts);
-  const path = join(dir, name);
-  writeFileSync(path, serializeItem(item), "utf-8");
-  return { path: resolve(path), status: target, triaged: target === "needs-triage" };
+  const path = persist(dir, name, item, opts.cwd);
+  return { path, status: target, triaged: target === "needs-triage" };
+}
+
+const REASON_STATES: BacklogStatus[] = ["blocked", "carry-over", "needs-triage", "declined"];
+
+function normalizeStateFields(item: BacklogItem): void {
+  if (!REASON_STATES.includes(item.status)) item.reason = undefined;
+  if (item.status !== "in-progress") item.claimedBy = undefined;
 }
 
 function persist(dir: string, name: string, item: BacklogItem, cwd?: string, sha?: string): string {
   item.updated = today();
   item.movedSha = sha ?? safeSha(cwd) ?? item.movedSha;
+  normalizeStateFields(item);
   const path = join(dir, name);
   writeFileSync(path, serializeItem(item), "utf-8");
   return resolve(path);

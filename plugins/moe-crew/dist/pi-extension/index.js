@@ -56,13 +56,11 @@
  *   is the correct artifact — a CJS bundle (current tsup output `.cjs`) is the
  *   WRONG format for an ESM-default-export factory pi loads.
  *
- *   tsup TODO (RECORDED, not yet applied — see note at end of this block):
- *   change the `pi-extension` entry's output to ESM `dist/pi-extension.mjs`.
- *   The extension is self-contained (it must NOT import from our CJS `moe-crew`
- *   bundle at pi-runtime; it imports only `node:fs`/`node:path` + inlines the
- *   tiny event-append + meta-write logic, OR C2/C3 bundle those helpers into
- *   the same ESM artifact). C2 owns the actual extension code; once that exists
- *   the ESM format flip + `dist:check` rebuild is a clean, single change.
+ *   tsup output: the `pi-extension` entry is built as ESM
+ *   `dist/pi-extension.mjs` (`tsup.config.ts`, the second config:
+ *   `format: ["esm"]`, `outExtension: () => ({ js: ".mjs" })`), self-contained
+ *   (no runtime require of the CJS `moe-crew` bundle), which is the format pi's
+ *   jiti/ESM loader expects.
  *
  * ----------------------------------------------------------------------------
  * 2. THE pi.on EVENT API + REAL EVENT NAMES + CORRECTED MAPPING  (VERIFIED)
@@ -225,13 +223,9 @@
  *   driver's `quitKeys` analogue is the typed command `/quit`.)
  *
  * ----------------------------------------------------------------------------
- * tsup.config.ts NOTE: left AS-IS in C1 (still CJS `.cjs` for all 3 entries).
- * The pi-extension entry MUST become ESM `dist/pi-extension.mjs` for pi's
- * jiti/ESM loader, but flipping it now (with the file still a `export {}` stub)
- * would churn `dist/` and `dist:check` without the real extension behind it.
- * C2 implements the extension and performs the format flip + dist rebuild as one
- * coherent change. Decision RECORDED here; not half-applied (per the task's
- * "prefer recording over a risky half-change").
+ * tsup.config.ts ships the `pi-extension` entry as ESM `dist/pi-extension.mjs`
+ * (its own header comment explains the CJS/ESM split); the CJS config carries
+ * the `moe-crew` + `emit-event` entries.
  * ----------------------------------------------------------------------------
  */
 import { existsSync } from "node:fs";

@@ -65,11 +65,11 @@ describe('claude-code adapter', () => {
     ])
   })
 
-  it('declares full support for every component except rules and variables', () => {
-    const { rules, variables, ...rest } = claudeCode.support
-    expect(Object.values(rest).every((level) => level === 'full')).toBe(true)
-    expect(rules).toBe('none')
-    expect(variables).toBe('none')
+  it('declares full support for every component', () => {
+    expect(Object.values(claudeCode.support).every((level) => level === 'full')).toBe(true)
+    expect(Object.keys(claudeCode.support).sort()).toEqual([
+      'agents', 'bootstrap', 'commands', 'hooks', 'mcp', 'skills',
+    ])
   })
 
   it('emits an executable bootstrap session-start hook', () => {

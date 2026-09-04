@@ -220,8 +220,6 @@ export const pi: HarnessAdapter = Object.freeze({
     hooks: 'none',
     mcp: 'none',
     bootstrap: 'full',
-    rules: 'none',
-    variables: 'none',
   } satisfies ComponentSupport,
   skillLayout: { outputDir: '.pi/skills', profile: 'pi', mode: 'rendered' as const },
   skillDelivery: 'rendered',

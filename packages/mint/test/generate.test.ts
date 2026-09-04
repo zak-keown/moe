@@ -18,8 +18,6 @@ const stubSupport = {
   hooks: 'full',
   mcp: 'full',
   bootstrap: 'full',
-  rules: 'none',
-  variables: 'none',
 } as const
 
 const stubAdapterFields = {

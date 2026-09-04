@@ -77,8 +77,6 @@ export const openclaude: HarnessAdapter = {
     hooks: 'none',
     mcp: 'none',
     bootstrap: 'none',
-    rules: 'none',
-    variables: 'none',
   },
   skillLayout: { outputDir: 'skills', profile: 'openclaude', mode: 'in-place' },
   skillDelivery: 'unsupported',

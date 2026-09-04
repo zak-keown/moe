@@ -60,8 +60,6 @@ describe('kimi adapter', () => {
       hooks: 'none',
       mcp: 'none',
       bootstrap: 'partial',
-      rules: 'none',
-      variables: 'none',
     })
   })
 })

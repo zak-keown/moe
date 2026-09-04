@@ -200,8 +200,6 @@ export const agentPlugins: HarnessAdapter = Object.freeze({
     hooks: 'none',
     mcp: 'full',
     bootstrap: 'none',
-    rules: 'none',
-    variables: 'none',
   } satisfies ComponentSupport,
   skillLayout: { outputDir: 'skills', profile: 'agent-plugins-1.0', mode: 'source-or-rendered' as const },
   skillDelivery: 'native-discovery',

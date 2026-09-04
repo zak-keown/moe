@@ -114,8 +114,6 @@ describe('cursor adapter', () => {
       hooks: 'partial',
       mcp: 'full',
       bootstrap: 'full',
-      rules: 'none',
-      variables: 'none',
     })
   })
 })

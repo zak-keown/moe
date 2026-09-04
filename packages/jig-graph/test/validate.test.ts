@@ -13,7 +13,6 @@ function makeMockClient(overrides: Partial<MoedexClient> = {}): MoedexClient {
     isAvailable: vi.fn().mockResolvedValue(true),
     impactAnalysis: vi.fn().mockResolvedValue({ results: [] }),
     traceConsumers: vi.fn().mockResolvedValue({ results: [] }),
-    traceCalls: vi.fn().mockResolvedValue({ results: [] }),
     searchContext: vi.fn().mockResolvedValue({ results: [] }),
     connect: vi.fn().mockResolvedValue(true),
     disconnect: vi.fn().mockResolvedValue(undefined),

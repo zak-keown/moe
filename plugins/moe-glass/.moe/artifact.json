@@ -987,7 +987,7 @@
     {
       "path": ".moe-mint/manifest.json",
       "size": 43172,
-      "sha256": "743b9a2d4bd3a655bb7ce019aef03172d6ac3aeb5d950b7b6ca23c6e5a1a428d",
+      "sha256": "31ceaac62a9690c0064a4e93b24cb5479abc03dcd251e720d9e21e0e0a5d7202",
       "mode": "0644"
     },
     {
@@ -1532,8 +1532,8 @@
     },
     {
       "path": "docs/install/codex.md",
-      "size": 724,
-      "sha256": "01547105b494b71f784abdd814848b3c4d301620a949cdbe7b5d2eefb8f9e478",
+      "size": 802,
+      "sha256": "f0033b550734aed9e8d69c67dd5c6fabcf76447a6277ab820d7c3c6df562b749",
       "mode": "0644"
     },
     {
@@ -1568,8 +1568,8 @@
     },
     {
       "path": "docs/support-matrix.md",
-      "size": 925,
-      "sha256": "a4244b32548ae1122452123a289ef5b667e7b4cfb6a7623d101bcce449a8e47c",
+      "size": 1422,
+      "sha256": "580018017044fb55540abae23f38c8eae421657d79918fcbe5dc10736488075a",
       "mode": "0644"
     },
     {
@@ -1819,7 +1819,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "9755b51314606e569b15c7f03d2ea59353bc7d99a671a1f346bc826c8353fa88",
+  "tree_sha256": "5b768a59ac0ba7fad1641b2305cad1fffd45db19f755241e518a6a402a54b670",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

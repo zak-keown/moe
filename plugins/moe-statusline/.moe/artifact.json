@@ -21,7 +21,7 @@
     {
       "path": ".moe-mint/manifest.json",
       "size": 569,
-      "sha256": "d2966e560a9fc93a0ffca714f59978f0a2d78136ed2b9b458eae7bf0ba1755c8",
+      "sha256": "292db4cf8e127c5ac11f6edd3b4613d16d79077590bada518f50e075bf0192b4",
       "mode": "0644"
     },
     {
@@ -62,8 +62,8 @@
     },
     {
       "path": "docs/support-matrix.md",
-      "size": 809,
-      "sha256": "bc1523e0eff644f6a98791371a6e52c748261640e88e9932aeeed0b038a21abc",
+      "size": 1306,
+      "sha256": "f3470938aa65a3e0c4aa67ca18e2ad953f2a1c399a0bcbdb4fd71ea1e161055f",
       "mode": "0644"
     },
     {
@@ -85,7 +85,7 @@
       "mode": "0755"
     }
   ],
-  "tree_sha256": "34be1c3f2b176aceaad7efc06844c816904754c83f734d94652e09885ee6fd1e",
+  "tree_sha256": "d415c7d959d584d40a33f8456bf139bb3702d641a89398a4fd3affe5d96d52b1",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

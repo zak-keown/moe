@@ -111,6 +111,8 @@ describe("run — validation and dispatch", () => {
     expect(usage).not.toContain("/tmp/claude-workers");
     expect(usage).toContain("MOE_CREW_DEFAULT_HARNESS");
     expect(usage).toContain("MOE_CREW_PLUGIN_ROOT");
+    expect(usage).toContain("MOE_CREW_PI_MODEL");
+    expect(usage).toContain("MOE_CREW_PI_PROVIDER");
     expect(usage).toContain("Claude Code, Codex, or Pi");
     expect(usage).not.toContain("harness defaults to claude");
     for (const sub of [

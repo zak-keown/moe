@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// bin/moe.js — the dispatcher in front of the seven `moe-<ns>` bins.
+// bin/moe.js — the dispatcher in front of the eight `moe-<ns>` bins.
 //
 // Node stdlib only. The grammar is copied from packages/flight/src/cli.ts:
 // switch on argv[2], one usage block, and namespaces declared-and-refused
