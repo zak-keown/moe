@@ -428,8 +428,8 @@
     },
     {
       "path": ".claude-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs",
-      "size": 3708,
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "size": 5476,
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": "0644"
     },
     {
@@ -1436,8 +1436,8 @@
     },
     {
       "path": ".codex-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs",
-      "size": 3708,
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "size": 5476,
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": "0644"
     },
     {
@@ -2468,8 +2468,8 @@
     },
     {
       "path": ".cursor-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs",
-      "size": 3708,
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "size": 5476,
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": "0644"
     },
     {
@@ -3476,8 +3476,8 @@
     },
     {
       "path": ".kimi-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs",
-      "size": 3708,
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "size": 5476,
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": "0644"
     },
     {
@@ -4077,7 +4077,7 @@
     {
       "path": ".moe-mint/manifest.json",
       "size": 633221,
-      "sha256": "5f5f857382d533c65411d27a262f3183c64131bfc886852924f9a0f8a2d8ef97",
+      "sha256": "504dbfece1aea182736b253db758d0394cdf0ef6d3989c98285824b17ac355e9",
       "mode": "0644"
     },
     {
@@ -4508,8 +4508,8 @@
     },
     {
       "path": ".opencode/skills/fixing-a-code-review/scripts/stamp-disposition.mjs",
-      "size": 3708,
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "size": 5476,
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": "0644"
     },
     {
@@ -5516,8 +5516,8 @@
     },
     {
       "path": ".pi/skills/fixing-a-code-review/scripts/stamp-disposition.mjs",
-      "size": 3708,
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "size": 5476,
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": "0644"
     },
     {
@@ -6698,8 +6698,8 @@
     },
     {
       "path": "skills/fixing-a-code-review/scripts/stamp-disposition.mjs",
-      "size": 3708,
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "size": 5476,
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": "0644"
     },
     {
@@ -7297,7 +7297,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "ce4a96ab4111032920d02ae7a1d2b752a1010a3c9b43833d1a19b5e636411fa8",
+  "tree_sha256": "10c13b6c1b74746080e38d798616379d59226dcbde48944bf63c169ea9423e12",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

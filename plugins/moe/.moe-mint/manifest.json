@@ -280,7 +280,7 @@
       "mode": 493
     },
     ".claude-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": 420
     },
     ".claude-plugin/skills/implementing-tasks/SKILL.md": {
@@ -951,7 +951,7 @@
       "mode": 493
     },
     ".codex-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": 420
     },
     ".codex-plugin/skills/implementing-tasks/SKILL.md": {
@@ -1636,7 +1636,7 @@
       "mode": 493
     },
     ".cursor-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": 420
     },
     ".cursor-plugin/skills/implementing-tasks/SKILL.md": {
@@ -2307,7 +2307,7 @@
       "mode": 493
     },
     ".kimi-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": 420
     },
     ".kimi-plugin/skills/implementing-tasks/SKILL.md": {
@@ -2987,7 +2987,7 @@
       "mode": 493
     },
     ".opencode/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": 420
     },
     ".opencode/skills/implementing-tasks/SKILL.md": {
@@ -3658,7 +3658,7 @@
       "mode": 493
     },
     ".pi/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": 420
     },
     ".pi/skills/implementing-tasks/SKILL.md": {
