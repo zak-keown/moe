@@ -1,10 +1,10 @@
 import { strict as assert } from 'node:assert';
 import * as fs from 'node:fs';
-import { createRequire } from 'node:module';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { afterAll, describe, it } from 'vitest';
 import { makePageSessionFake as makePageSessionFakeWithTargetId } from './_helpers.mjs';
+import { attachCapture } from '../../skills/browsing/scripts/lib/capture.mjs';
 
 function makePageSessionFake(sessionId = 'fake-session-id') {
   const calls = [];
@@ -19,8 +19,6 @@ function makePageSessionFake(sessionId = 'fake-session-id') {
   return ps;
 }
 
-const require = createRequire(import.meta.url);
-const { attachCapture } = require('../../skills/browsing/lib/capture.js');
 
 describe('capture', () => {
   // Use a process-scoped temp dir so we don't touch ~/.cache

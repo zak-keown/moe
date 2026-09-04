@@ -1,11 +1,11 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
 import { createRequire } from 'node:module';
+import { attachDialogs } from '../skills/browsing/scripts/lib/dialogs.mjs';
+import { renderSyntheticArtifacts } from '../skills/browsing/scripts/lib/dialogs-render.mjs';
 
 const require = createRequire(import.meta.url);
 const { createSession, PAGE_TARGET_SESSION_METHODS } = require('../skills/browsing/chrome-ws-lib.js');
-const { attachDialogs } = require('../skills/browsing/lib/dialogs.js');
-const { renderSyntheticArtifacts } = require('../skills/browsing/lib/dialogs-render.js');
 
 describe('chrome-ws-lib exposes dialogs API', () => {
   it('session has a dialogs property with all expected methods', () => {
