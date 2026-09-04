@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 5
+  fixed: 6
   stale: 0
   skipped: 0
   deferred: 0
-  open: 102
+  open: 101
 ---
 
 # Codebase Review — moe
@@ -913,6 +913,10 @@ Fix: force `Content-Disposition: attachment` (or at minimum serve
 `.html`/`.svg`/`.js`/`.xhtml` as `text/plain`) for anything under
 `runs/`, and add `X-Content-Type-Options: nosniff` to every response.
 
+**Disposition:** fixed
+**Commit:** `1b2b191ee4e00af8e4f9f5d83b219bb2a8d6bafe`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-023: `pnpm provenance` false-positives (and fails) whenever a `.moe/worktrees/` checkout is present
 
 **File:** `scripts/check-provenance.mjs`
