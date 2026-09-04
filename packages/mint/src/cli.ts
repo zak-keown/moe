@@ -258,7 +258,13 @@ release
       console.log(`candidate: would prepare candidate ${opts.tag} (pass --execute to run)`)
       return
     }
-    console.log(`candidate: preparing candidate ${opts.tag} in ${opts.repo}`)
+    throw new MintError({
+      severity: 'error',
+      code: 'CANDIDATE_EXECUTE_NOT_WIRED',
+      source: 'cli',
+      message: 'release candidate --execute is not wired to candidate preparation yet',
+      action: 'Do not rely on this command to prepare a real candidate release. See prepareCandidate in packages/mint/src/release/candidate.ts.',
+    })
   })
 
 release
@@ -326,8 +332,13 @@ release
         })
       }
     }
-    console.log(`certify-claude: certifying candidate ${opts.candidate} in ${opts.repo}`)
-    console.log(`producer: ${opts.producerRepository} / ${opts.producerWorkflow}@${opts.producerWorkflowSha}`)
+    throw new MintError({
+      severity: 'error',
+      code: 'CERTIFY_CLAUDE_EXECUTE_NOT_WIRED',
+      source: 'cli',
+      message: 'release certify-claude --execute is not wired to the maintenance certification runner yet',
+      action: 'Do not rely on this command to certify a real candidate. See runClaudeMaintenance in packages/mint/src/release/claude-maintenance.ts.',
+    })
   })
 
 release
@@ -341,7 +352,13 @@ release
       console.log(`promote: would promote ${opts.tag} to stable (pass --execute to run)`)
       return
     }
-    console.log(`promote: promoting ${opts.tag} in ${opts.repo}`)
+    throw new MintError({
+      severity: 'error',
+      code: 'PROMOTE_EXECUTE_NOT_WIRED',
+      source: 'cli',
+      message: 'release promote --execute is not wired to promotion automation yet',
+      action: 'Do not rely on this command to promote a real release. See promoteToStable in packages/mint/src/release/promotion.ts.',
+    })
   })
 
 release
