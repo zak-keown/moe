@@ -1,7 +1,10 @@
 import { strict as assert } from 'node:assert';
+import { createRequire } from 'node:module';
 import { describe, it } from 'vitest';
 import { makePageSessionFake } from './_helpers.mjs';
-import { attachConsoleLogging } from '../../skills/browsing/scripts/lib/console-logging.mjs';
+
+const require = createRequire(import.meta.url);
+const { attachConsoleLogging } = require('../../skills/browsing/lib/console-logging.js');
 
 describe('console-logging', () => {
   function setup(sessionId = 'S-test') {

@@ -1,6 +1,7 @@
 const assert = require('assert');
-const path = require('path');
-const { pathToFileURL } = require('url');
+const {
+  browserLauncherForPlatform
+} = require('../../skills/brainstorming/scripts/server.cjs');
 
 let passed = 0;
 let failed = 0;
@@ -18,8 +19,6 @@ async function test(name, fn) {
 }
 
 (async () => {
-  const SERVER_PATH = path.join(__dirname, '../../skills/brainstorming/scripts/server.mjs');
-  const { browserLauncherForPlatform } = await import(pathToFileURL(SERVER_PATH).href);
   console.log('\n--- Browser Launcher ---');
 
   await test('Windows launcher does not route URLs through cmd.exe', () => {

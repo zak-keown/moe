@@ -1,7 +1,10 @@
 import { describe, it } from 'vitest';
 import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { makeFakeWs } from './_helpers.mjs';
-import { createBrowserSession } from '../../skills/browsing/scripts/lib/browser-session.mjs';
+
+const require = createRequire(import.meta.url);
+const { createBrowserSession } = require('../../skills/browsing/lib/browser-session.js');
 
 function makeFixtures() {
   const ws = makeFakeWs();

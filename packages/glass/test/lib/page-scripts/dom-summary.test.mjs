@@ -1,7 +1,10 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
+import { createRequire } from 'node:module';
 import { JSDOM } from 'jsdom';
-import domSummaryScript from '../../../skills/browsing/scripts/lib/page-scripts/dom-summary.mjs';
+
+const require = createRequire(import.meta.url);
+const domSummaryScript = require('../../../skills/browsing/lib/page-scripts/dom-summary.js');
 
 describe('page-scripts/dom-summary', () => {
   function evalScript(html) {

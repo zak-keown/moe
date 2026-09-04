@@ -15,9 +15,9 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-const SERVER = path.join(__dirname, '../../skills/brainstorming/scripts/server.mjs');
-const START = path.join(__dirname, '../../skills/brainstorming/scripts/start-server.mjs');
-const STOP = path.join(__dirname, '../../skills/brainstorming/scripts/stop-server.mjs');
+const SERVER = path.join(__dirname, '../../skills/brainstorming/scripts/server.cjs');
+const START = path.join(__dirname, '../../skills/brainstorming/scripts/start-server.sh');
+const STOP = path.join(__dirname, '../../skills/brainstorming/scripts/stop-server.sh');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 function waitForExit(child, timeoutMs = 2000) {
@@ -102,21 +102,22 @@ async function waitForStartedOutput(child, timeoutMs = 5000) {
 }
 
 function makeShellTempDir(prefix) {
-  return fs.mkdtempSync(path.join(require('os').tmpdir(), `${prefix}-`));
+  return execFileSync('bash', ['-lc', `mktemp -d "\${TMPDIR:-/tmp}/${prefix}-XXXXXX"`], { encoding: 'utf8' }).trim();
 }
 
 function removeShellPath(p) {
-  fs.rmSync(p, { recursive: true, force: true });
+  execFileSync('bash', ['-lc', 'rm -rf "$1"', 'bash', p], { stdio: 'ignore' });
 }
 
 function newestSessionDir(projectDir) {
-  const brainstormDir = path.join(projectDir, '.moe', 'brainstorm');
-  const entries = fs.readdirSync(brainstormDir, { withFileTypes: true })
-    .filter(e => e.isDirectory())
-    .map(e => e.name)
-    .sort();
-  assert(entries.length > 0, `expected at least one session dir under ${brainstormDir}`);
-  return path.join(brainstormDir, entries[entries.length - 1]);
+  const sessionDir = execFileSync('bash', [
+    '-lc',
+    'find "$1/.moe/brainstorm" -mindepth 1 -maxdepth 1 -type d -print | sort | tail -1',
+    'bash',
+    projectDir
+  ], { encoding: 'utf8' }).trim();
+  assert(sessionDir, `expected at least one session dir under ${projectDir}/.moe/brainstorm`);
+  return sessionDir;
 }
 
 async function runTests() {
@@ -165,23 +166,23 @@ async function runTests() {
     }
   });
 
-  await test('start-server.mjs --idle-timeout-minutes sets the timeout', async () => {
+  await test('start-server.sh --idle-timeout-minutes sets the timeout', async () => {
     const dir = makeShellTempDir('bs-life');
     let info = null;
     let startProcess = null;
     let sessionDir = null;
     try {
       if (isWindowsLikeShell()) {
-        startProcess = spawn('node', [START, '--project-dir', dir, '--idle-timeout-minutes', '5']);
+        startProcess = spawn('bash', [START, '--project-dir', dir, '--idle-timeout-minutes', '5']);
         info = firstServerStarted(await waitForStartedOutput(startProcess));
       } else {
-        const out = execFileSync('node', [START, '--project-dir', dir, '--idle-timeout-minutes', '5', '--background'], { encoding: 'utf8' });
+        const out = execFileSync('bash', [START, '--project-dir', dir, '--idle-timeout-minutes', '5', '--background'], { encoding: 'utf8' });
         info = firstServerStarted(out);
       }
       sessionDir = newestSessionDir(dir);
       assert.strictEqual(info.idle_timeout_ms, 5 * 60 * 1000, '5 minutes -> 300000 ms');
     } finally {
-      if (sessionDir) execFileSync('node', [STOP, sessionDir], { stdio: 'ignore' });
+      if (sessionDir) execFileSync('bash', [STOP, sessionDir], { stdio: 'ignore' });
       if (startProcess && !await waitForExit(startProcess, 3000)) {
         await killAndWait(startProcess);
       }

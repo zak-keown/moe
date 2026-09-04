@@ -28,9 +28,9 @@ beforeEach(() => {
   process.env.XDG_CACHE_HOME = tmpRoot;
 
   // Clear require cache so the helpers see the new env var.
-  delete require.cache[require.resolve('../../browsing-compat/lib/profile-lock.js')];
-  delete require.cache[require.resolve('../../browsing-compat/lib/chrome-launcher-helpers.js')];
-  lock = require('../../browsing-compat/lib/profile-lock.js');
+  delete require.cache[require.resolve('../../skills/browsing/lib/profile-lock.js')];
+  delete require.cache[require.resolve('../../skills/browsing/lib/chrome-launcher-helpers.js')];
+  lock = require('../../skills/browsing/lib/profile-lock.js');
 });
 
 afterEach(() => {

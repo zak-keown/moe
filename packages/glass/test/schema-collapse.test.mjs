@@ -16,8 +16,6 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { makePageSessionFake } from './lib/_helpers.mjs';
-import { attachConsoleLogging as attachConsoleLoggingEsm } from '../skills/browsing/scripts/lib/console-logging.mjs';
-import { createSession as createSessionEsm } from '../skills/browsing/scripts/chrome-ws-lib.mjs';
 
 // The restartInMode tests reach the real profile-lock helpers; isolate every
 // meta/lock path so this process never touches the user's real cache dir.
@@ -77,7 +75,7 @@ describe('parsePayload coercion logic', () => {
 // ---------------------------------------------------------------------------
 
 describe('Fix A: captureActionWithDiff AFTER-capture short-circuit on dialog open', () => {
-  const { attachCapture } = require('../browsing-compat/lib/capture.js');
+  const { attachCapture } = require('../skills/browsing/lib/capture.js');
 
   const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'fix-a-test-'));
 
@@ -173,8 +171,8 @@ describe('Fix A: captureActionWithDiff AFTER-capture short-circuit on dialog ope
 // ---------------------------------------------------------------------------
 
 describe('Fix D: restartInMode probes liveness before returning alreadyMessage', () => {
-  const HELPERS_PATH = require.resolve('../browsing-compat/lib/chrome-launcher-helpers.js');
-  const CHROME_PROCESS_PATH = require.resolve('../browsing-compat/lib/chrome-process.js');
+  const HELPERS_PATH = require.resolve('../skills/browsing/lib/chrome-launcher-helpers.js');
+  const CHROME_PROCESS_PATH = require.resolve('../skills/browsing/lib/chrome-process.js');
 
   function withFakeIsPortAlive(portAliveResult, testFn) {
     const origHelpers = require.cache[HELPERS_PATH];
@@ -288,13 +286,15 @@ describe('Fix D: restartInMode probes liveness before returning alreadyMessage',
 // ---------------------------------------------------------------------------
 
 describe('Fix E: kill_chrome and restart_chrome methods exist on session', () => {
+  const { createSession } = require('../skills/browsing/chrome-ws-lib.js');
+
   it('chromeLib exposes killChrome method', () => {
-    const session = createSessionEsm();
+    const session = createSession();
     assert.equal(typeof session.killChrome, 'function', 'killChrome should be a function');
   });
 
   it('chromeLib exposes startChrome method', () => {
-    const session = createSessionEsm();
+    const session = createSession();
     assert.equal(typeof session.startChrome, 'function', 'startChrome should be a function');
   });
 });
@@ -304,11 +304,13 @@ describe('Fix E: kill_chrome and restart_chrome methods exist on session', () =>
 // ---------------------------------------------------------------------------
 
 describe('Fix G: console message dedup', () => {
+  const { attachConsoleLogging } = require('../skills/browsing/lib/console-logging.js');
+
   function setup(sessionId = 'S-dedup') {
     const ps = makePageSessionFake({}, { sessionId });
     const state = { consoleMessages: new Map() };
     const getPageSession = async () => ps;
-    const api = attachConsoleLoggingEsm({ state, getPageSession });
+    const api = attachConsoleLogging({ state, getPageSession });
     return { ps, state, ...api };
   }
 
@@ -330,7 +332,7 @@ describe('Fix G: console message dedup', () => {
     const ps2 = makePageSessionFake({}, { sessionId: 'S-dedup-2' });
     const getPageSession2 = async () => ps2;
     const { enableConsoleLogging: enable2, getConsoleMessages: get2 } =
-      attachConsoleLoggingEsm({ state, getPageSession: getPageSession2 });
+      attachConsoleLogging({ state, getPageSession: getPageSession2 });
     await enable2(0);
 
     // Step 1: Inject the first message and capture its timestamp.
@@ -403,7 +405,8 @@ describe('Fix G: console message dedup', () => {
 // ---------------------------------------------------------------------------
 
 describe('Schema collapse: bundle includes kill_chrome and restart_chrome actions', () => {
-  const session = createSessionEsm();
+  const { createSession } = require('../skills/browsing/chrome-ws-lib.js');
+  const session = createSession();
 
   it('session has killChrome for kill_chrome action', () => {
     assert.equal(typeof session.killChrome, 'function');

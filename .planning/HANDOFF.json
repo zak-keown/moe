@@ -17,13 +17,25 @@
     }
   ],
   "remaining_tasks": [
-    {"id": 1, "name": "Finish, verify, review, and commit existing Core Node helper normalization", "status": "in_progress"},
-    {"id": 2, "name": "Port duplicate-analysis pipeline", "status": "not_started"},
-    {"id": 3, "name": "Port SDD workspace and review-package utilities", "status": "not_started"},
-    {"id": 4, "name": "Port Git/tmux utilities and Crew launcher", "status": "not_started"},
-    {"id": 5, "name": "Convert brainstorming server and injected client to ESM", "status": "not_started"},
-    {"id": 6, "name": "Port brainstorming lifecycle entry points", "status": "not_started"},
-    {"id": 7, "name": "Reconcile Core metadata and prove remaining skill tree", "status": "not_started"}
+    {
+      "id": 1,
+      "name": "Finish, verify, review, and commit existing Core Node helper normalization",
+      "status": "in_progress"
+    },
+    { "id": 2, "name": "Port duplicate-analysis pipeline", "status": "not_started" },
+    { "id": 3, "name": "Port SDD workspace and review-package utilities", "status": "not_started" },
+    { "id": 4, "name": "Port Git/tmux utilities and Crew launcher", "status": "not_started" },
+    {
+      "id": 5,
+      "name": "Convert brainstorming server and injected client to ESM",
+      "status": "not_started"
+    },
+    { "id": 6, "name": "Port brainstorming lifecycle entry points", "status": "not_started" },
+    {
+      "id": 7,
+      "name": "Reconcile Core metadata and prove remaining skill tree",
+      "status": "not_started"
+    }
   ],
   "blockers": [
     {

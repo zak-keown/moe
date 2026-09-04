@@ -1,6 +1,9 @@
 import { describe, it } from 'vitest';
 import assert from 'node:assert/strict';
-import { createCdpRouter } from '../../skills/browsing/scripts/lib/cdp-router.mjs';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const { createCdpRouter } = require('../../skills/browsing/lib/cdp-router.js');
 
 function makeBrowserFake() {
   const handlers = new Set();

@@ -12,23 +12,23 @@
       "sha256": "82d3bbc0bce6a60344fe470553b23113d90b5b642a9201c9c544efc608a49324"
     },
     ".claude-plugin/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "76321b7879e6a25bf55afd3e5d29707bec55cdd0fba2fb02b349a752bb83fe06",
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
       "mode": 420
     },
-    ".claude-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs": {
-      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
-      "mode": 420
+    ".claude-plugin/skills/driving-claude-code-sessions/scripts/moe-crew": {
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
+      "mode": 493
     },
     ".codex-plugin/plugin.json": {
       "sha256": "0bac67e71def11d0d25ad8eea538cccff87b50dabea07a549b0a6b1d8ffdafe2"
     },
     ".codex-plugin/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "76321b7879e6a25bf55afd3e5d29707bec55cdd0fba2fb02b349a752bb83fe06",
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
       "mode": 420
     },
-    ".codex-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs": {
-      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
-      "mode": 420
+    ".codex-plugin/skills/driving-claude-code-sessions/scripts/moe-crew": {
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
+      "mode": 493
     },
     ".cursor-plugin/marketplace.json": {
       "sha256": "07b1e208e8f2f76ff84f5bbc20f7721e22556238b8d442f46aac1dfc1e9c725c"
@@ -37,45 +37,45 @@
       "sha256": "5131b69484d5432a676bba18d66b8ba87e093cb1bb4d046a7bffa373b1a4ee85"
     },
     ".cursor-plugin/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "76321b7879e6a25bf55afd3e5d29707bec55cdd0fba2fb02b349a752bb83fe06",
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
       "mode": 420
     },
-    ".cursor-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs": {
-      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
-      "mode": 420
+    ".cursor-plugin/skills/driving-claude-code-sessions/scripts/moe-crew": {
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
+      "mode": 493
     },
     ".kimi-plugin/plugin.json": {
       "sha256": "bc77912356c4fbf65dd5e54570e0fc79a5a43bc8aa946e60e96d1202f8e368a1"
     },
     ".kimi-plugin/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "76321b7879e6a25bf55afd3e5d29707bec55cdd0fba2fb02b349a752bb83fe06",
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
       "mode": 420
     },
-    ".kimi-plugin/skills/driving-claude-code-sessions/scripts/moe-crew.mjs": {
-      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
-      "mode": 420
+    ".kimi-plugin/skills/driving-claude-code-sessions/scripts/moe-crew": {
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
+      "mode": 493
     },
     ".opencode/plugins/moe-crew.js": {
       "sha256": "75f9741bb89732c408fe86757c526516ceafedd392c593d99f35fe887b1e601c"
     },
     ".opencode/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "76321b7879e6a25bf55afd3e5d29707bec55cdd0fba2fb02b349a752bb83fe06",
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
       "mode": 420
     },
-    ".opencode/skills/driving-claude-code-sessions/scripts/moe-crew.mjs": {
-      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
-      "mode": 420
+    ".opencode/skills/driving-claude-code-sessions/scripts/moe-crew": {
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
+      "mode": 493
     },
     ".pi/extensions/moe-crew.ts": {
       "sha256": "11f3b2cf5ebe937208c9dc08f2510fe23240502363850699ab24a1db9ae3d298"
     },
     ".pi/skills/driving-claude-code-sessions/SKILL.md": {
-      "sha256": "76321b7879e6a25bf55afd3e5d29707bec55cdd0fba2fb02b349a752bb83fe06",
+      "sha256": "6a98703441e334d2e92a67e96bbbee8593aa7062da81c22385fcf6ea4cfb7ec5",
       "mode": 420
     },
-    ".pi/skills/driving-claude-code-sessions/scripts/moe-crew.mjs": {
-      "sha256": "8f39b4daaf472b0b3f15eda008bc77467fa0de300746d2f6b26dbab15bf15879",
-      "mode": 420
+    ".pi/skills/driving-claude-code-sessions/scripts/moe-crew": {
+      "sha256": "687e84e783a16e058a0d8dbb7d6f158d0c09976f8bce3c10088839824b4b5baa",
+      "mode": 493
     },
     "docs/install/agent-plugins-1.0.md": {
       "sha256": "982089a59356f529f7809154b5f79243015d8b911bdf5b27bea8635c810ec0f3"

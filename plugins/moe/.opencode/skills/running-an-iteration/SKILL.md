@@ -43,7 +43,7 @@ This establishes whether regressions exist before the current iteration starts.
 
 Before planning any work, verify that artifact state is consistent:
 
-1. **Citation check:** `node "${CLAUDE_PLUGIN_ROOT}/skills/running-an-iteration/scripts/check_citations.mjs" docs/moe/iterations/roadmap.md docs/moe/iterations/requirements/` — if citations fail, stop and fix the roadmap.
+1. **Citation check:** Resolve [skills/running-an-iteration/scripts/check_citations.py](scripts/check_citations.py) relative to this loaded document, then invoke it with `python3` and arguments `docs/moe/iterations/roadmap.md docs/moe/iterations/requirements/`. If citations fail, stop and fix the roadmap.
 2. **Status reconciliation:** For each story in this iteration's scope, verify:
    - Stories listed in the roadmap iteration are not already marked `done:ITER-XXXX` in the requirements index (unless code/tests actually exist for them)
    - Stories marked `done` in the requirements index actually have corresponding code and tests
@@ -54,10 +54,10 @@ If any inconsistencies are found, reconcile before proceeding. Do not trust any 
 
 ### 5. Pre-iteration scope review (PAR)
 
-Following `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md`:
+Following [skills/_shared/parallel-adversarial-review.md](../_shared/parallel-adversarial-review.md), resolved relative to this loaded document:
 
 1. Build the scope reviewer prompt using `scope-reviewer-prompt.md`
-2. Wrap in PAR competitive framing from `${CLAUDE_PLUGIN_ROOT}/skills/_shared/par-reviewer-wrapper.md`
+2. Resolve [skills/_shared/par-reviewer-wrapper.md](../_shared/par-reviewer-wrapper.md) relative to this loaded document and wrap in its competitive framing
 3. Dispatch TWO scope reviewers in parallel
 4. Aggregate findings: same issue from both = high confidence, unique = still actionable, severity disagreement = take worst
 5. If REVISE recommended: adjust iteration scope and re-review. Loop until APPROVE.
@@ -113,7 +113,7 @@ This step is a hard gate. An iteration that leaves its own TODO markers in the c
   - Stories delivered
   - Scenarios added or updated
   - Sentinel corpus results
-- Validate: `node "${CLAUDE_PLUGIN_ROOT}/skills/running-an-iteration/scripts/validate_iteration_log.mjs" docs/moe/iterations/iteration-log.md`
+- Validate: resolve [skills/running-an-iteration/scripts/validate_iteration_log.py](scripts/validate_iteration_log.py) relative to this loaded document, then invoke it with `python3` and argument `docs/moe/iterations/iteration-log.md`
 - After each task commit, update the progress snapshot with `moe jig progress update --phase ... --task ... --iterations ... --event ...`. If `moe-jig` is not on PATH, overwrite `docs/moe/iterations/progress.md` manually.
 - Return control to orchestrator (do NOT invoke `auditing-progress` — that's the orchestrator's job)
 
@@ -122,16 +122,16 @@ This step is a hard gate. An iteration that leaves its own TODO markers in the c
 | Step | Tool/Skill | Purpose |
 |---|---|---|
 | Sentinel baseline | Run sentinel scenarios | Establish pre-iteration regression state |
-| Citation check | `node "${CLAUDE_PLUGIN_ROOT}/skills/running-an-iteration/scripts/check_citations.mjs" <roadmap> <requirements-dir>` | Mechanical: cited stories exist |
+| Citation check | `scripts/check_citations.py` | Mechanical: cited stories exist |
 | Scope review | PAR + `scope-reviewer-prompt.md` | Semantic: scope, scenarios, splitting, boxing-in |
 | Task execution | `implementing-tasks` | TDD code + evidence implementation |
 | Post-iteration runs | Run impacted + sentinel scenarios | Catch regressions |
 | TODO resolution | `grep -rn 'TODO(ITER-<current>)'` | Cross-iteration stubs resolved |
-| Wrap up | `node "${CLAUDE_PLUGIN_ROOT}/skills/running-an-iteration/scripts/validate_iteration_log.mjs" <iteration-log>` | Artifact validation |
+| Wrap up | `scripts/validate_iteration_log.py` | Artifact validation |
 
 ## References
 
-- `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md` — PAR methodology
-- `${CLAUDE_PLUGIN_ROOT}/skills/_shared/behavior-evidence-formats.md` — scenario and proof obligation formats
+- [skills/_shared/parallel-adversarial-review.md](../_shared/parallel-adversarial-review.md) — PAR methodology; resolve relative to this loaded document
+- [skills/_shared/behavior-evidence-formats.md](../_shared/behavior-evidence-formats.md) — scenario and proof obligation formats; resolve relative to this loaded document
 - `scope-reviewer-prompt.md` — scope reviewer prompt template
-- [check_citations.mjs](./scripts/check_citations.mjs) — mechanical citation check
+- `scripts/check_citations.py` — mechanical citation check

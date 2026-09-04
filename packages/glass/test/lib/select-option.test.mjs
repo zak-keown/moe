@@ -5,7 +5,7 @@ import { JSDOM } from 'jsdom';
 import { makePageSessionFake } from './_helpers.mjs';
 
 const require = createRequire(import.meta.url);
-const { attachSelectOption } = require('../../browsing-compat/lib/select-option.js');
+const { attachSelectOption } = require('../../skills/browsing/lib/select-option.js');
 
 describe('selectOption (jsdom)', () => {
   // Build a fake pageSession that evaluates Runtime.evaluate against a jsdom DOM.

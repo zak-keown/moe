@@ -66,13 +66,12 @@ in the table.
 When you have no network, or you want to search across the whole corpus with
 the client's native text search, populate a local cache first:
 
-```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/working-with-claude-code/scripts/update_docs.mjs"
-```
+Resolve [skills/working-with-claude-code/scripts/update_docs.cjs](scripts/update_docs.cjs)
+relative to this loaded document, then invoke it with `node`.
 
 It reads `llms.txt`, extracts every `claude-code/*.md` URL, and writes each page
-into `${CLAUDE_PLUGIN_ROOT}/skills/working-with-claude-code/references/`. Then
-use the client's native file reader or the client's native text search on that directory as usual.
+into the sibling `references/` directory beside the resolved script's parent
+directory. Then use the client's native file reader or the client's native text search on that directory as usual.
 
 Two things to know about the cache:
 

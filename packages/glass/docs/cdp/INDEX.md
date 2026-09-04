@@ -2,7 +2,7 @@
 
 Internal reference for working on the CDP transport layer in moe-glass.
 Not user-facing documentation — this is the "why we did it this way" record for
-the next person modifying `skills/browsing/scripts/lib/{browser-session,cdp-router,page-session,browser-bridge}.mjs`.
+the next person modifying `skills/browsing/lib/{browser-session,cdp-router,page-session,browser-bridge}.js`.
 
 ## Cards
 

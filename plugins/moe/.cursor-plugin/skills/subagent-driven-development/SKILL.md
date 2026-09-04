@@ -145,9 +145,11 @@ controllers that lost their place have re-dispatched entire completed task
 sequences — the single most expensive failure observed. Track progress in
 a ledger file, not only in todos.
 
-- Each plan owns a workspace: at skill start, run this skill's
-  `node "${CLAUDE_PLUGIN_ROOT}/skills/subagent-driven-development/scripts/sdd-workspace.mjs" PLAN_FILE` — it prints the plan's git-ignored
-  directory (`<repo-root>/.moe/sdd/<plan-basename>/`), home to
+- Each plan owns a workspace: at skill start, resolve
+  [skills/subagent-driven-development/scripts/sdd-workspace](scripts/sdd-workspace) relative
+  to this loaded document and invoke it as `"<resolved-sdd-workspace>" PLAN_FILE`
+  — it prints the plan's git-ignored directory
+  (`<repo-root>/.moe/sdd/<plan-basename>/`), home to
   every artifact for THIS plan: ledger, briefs, reports, review packages.
   Another plan's directory is never yours to read or write.
 - Check for this plan's ledger at `<workspace>/progress.md`. If its first
@@ -222,20 +224,20 @@ Record the wave assignment in the ledger before dispatching Wave 1:
 the same shape you dispatched from.
 
 When `task-set` is available (the plan has `depends_on:` fields), compute
-waves deterministically:
+waves deterministically. Resolve [skills/subagent-driven-development/scripts/task-set.mjs](scripts/task-set.mjs) relative to this loaded document, then invoke it as:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/hooks/task-set" waves "$PLAN_PATH"
+node "<resolved-task-set.mjs>" waves "$PLAN_PATH"
 ```
 
 The output replaces the manual scan table. Validate it against your own
 understanding (a sanity check, not a gate). If the plan lacks `depends_on:`
 fields, fall back to the manual scan table.
 
-On a context reset, recover the ready set:
+On a context reset, recover the ready set with that same resolved resource:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/hooks/task-set" next "$PLAN_PATH"
+node "<resolved-task-set.mjs>" next "$PLAN_PATH"
 ```
 
 Before dispatching a wave, record its BASE SHA once — every worker in the wave
@@ -260,38 +262,38 @@ not remove the per-task discipline.
 
 Use the least powerful model that can handle each role to conserve cost and increase speed.
 
-**Mechanical implementation tasks** (isolated functions, clear specs, 1-2 files): use a fast, cheap model. Most implementation tasks are mechanical when the plan is well-specified.
+**Mechanical implementation tasks** (isolated functions, clear specs, 1-2 files): use the configured fast model. Most implementation tasks are mechanical when the plan is well-specified.
 
-**Integration and judgment tasks** (multi-file coordination, pattern matching, debugging): use a standard model.
+**Integration and judgment tasks** (multi-file coordination, pattern matching, debugging): use the configured default.
 
-**Architecture and design tasks**: use the most capable available model.
-The final whole-branch review is one of these — dispatch it on the most
-capable available model, not the session default.
+**Architecture and design tasks**: use the configured deep-reasoning model.
+The final whole-branch review is one of these — dispatch it with
+the configured deep-reasoning model, not an unexamined session default.
 
-**Review tasks**: choose the model with the same judgment, scaled to the
-diff's size, complexity, and risk. A small mechanical diff does not need the
-most capable model; a subtle concurrency change does. Scoped re-reviews of
-small fix diffs take a cheap-to-mid tier.
+**Review tasks**: use the configured default for ordinary reviews and the configured deep-reasoning model
+when the diff's size, complexity, or risk needs deeper judgment. Scoped
+re-reviews of small mechanical fix diffs may use the configured fast model.
 
-**Fix-loop escalation (rounds 4-5)**: use a model at least one tier above
-the implementer that got stuck.
+**Fix-loop escalation (rounds 4-5)**: use the configured deep-reasoning model after the earlier
+implementer gets stuck.
 
-**Always specify the model explicitly when dispatching a subagent.** An
-omitted model inherits your session's model — often the most capable and
-most expensive — which silently defeats this section.
+**Dispatch model selection:** Set the selected role explicitly when the
+installed `Agent` schema exposes a `model` field. Otherwise use the model
+configured for that subagent type; do not invent an unsupported field.
+
 
 **Turn count beats token price.** Wall-clock and context cost scale with how
 many turns a subagent takes, and the cheapest models routinely take 2-3× the
-turns on multi-step work — costing more overall. Use a mid-tier model as the
+turns on multi-step work — costing more overall. Use the configured default as the
 floor for reviewers and for implementers working from prose descriptions.
 When the task's plan text contains the complete code to write, the
-implementation is transcription plus testing: use the cheapest tier for
-that implementer. Single-file mechanical fixes also take the cheapest tier.
+implementation is transcription plus testing: use the configured fast model for
+that implementer. Single-file mechanical fixes also use the configured fast model.
 
 **Task complexity signals (implementation tasks):**
-- Touches 1-2 files with a complete spec → cheap model
-- Touches multiple files with integration concerns → standard model
-- Requires design judgment or broad codebase understanding → most capable model
+- Touches 1-2 files with a complete spec → the configured fast model
+- Touches multiple files with integration concerns → the configured default
+- Requires design judgment or broad codebase understanding → the configured deep-reasoning model
 
 ## The Task Loop
 
@@ -335,9 +337,11 @@ calls in one turn; keep dependent steps sequential.
 Record BASE (`git rev-parse HEAD`) before dispatching — the review package
 and fix-round diffs need it.
 
-- **Task brief:** before dispatching an implementer, run this skill's
-  `node "${CLAUDE_PLUGIN_ROOT}/skills/subagent-driven-development/scripts/task-brief.mjs" PLAN_FILE N` — it extracts the task's full text to a
-  uniquely named file and prints the path. Compose the dispatch so the
+- **Task brief:** before dispatching an implementer, resolve
+  [skills/subagent-driven-development/scripts/task-brief](scripts/task-brief) relative to
+  this loaded document and invoke it as
+  `"<resolved-task-brief>" PLAN_FILE N` — it extracts the task's full text
+  to a uniquely named file and prints the path. Compose the dispatch so the
   brief stays the single source of
   requirements. Your dispatch should contain: (1) one line on where this
   task fits in the project; (2) the brief path, introduced as "read this
@@ -379,7 +383,7 @@ Template: [implementer-prompt.md](implementer-prompt.md)
 
 Implementer subagents report one of four statuses. Handle each appropriately:
 
-**DONE:** Generate the review package (`node "${CLAUDE_PLUGIN_ROOT}/skills/subagent-driven-development/scripts/review-package.mjs" PLAN_FILE BASE HEAD`, from this skill's directory — it prints the unique file path it wrote; BASE is the commit you recorded before dispatching the implementer — never `HEAD~1`, which silently drops all but the last commit of a multi-commit task), then dispatch the task reviewer with the printed path.
+**DONE:** Resolve [skills/subagent-driven-development/scripts/review-package](scripts/review-package) relative to this loaded document and invoke it as `"<resolved-review-package>" PLAN_FILE BASE HEAD`. It prints the unique file path it wrote; BASE is the commit you recorded before dispatching the implementer — never `HEAD~1`, which silently drops all but the last commit of a multi-commit task. Then dispatch the task reviewer with the printed path.
 
 **DONE_WITH_CONCERNS:** The implementer completed the work but flagged doubts. Read the concerns before proceeding. If the concerns are about correctness or scope, address them before review. If they're observations (e.g., "this file is getting large"), note them and proceed to review.
 
@@ -405,8 +409,8 @@ report missing either verdict — spec compliance AND task quality are both
 required. Implementer self-review never replaces the task review; both are
 needed.
 
-- Hand the reviewer its diff as a file: run this skill's
-  `node "${CLAUDE_PLUGIN_ROOT}/skills/subagent-driven-development/scripts/review-package.mjs" PLAN_FILE BASE HEAD` and pass the reviewer the file path
+- Hand the reviewer its diff as a file: invoke the resolved
+  `review-package` resource with `PLAN_FILE BASE HEAD` and pass the reviewer the file path
   it prints (or, without bash: `git log --oneline`, `git diff --stat`,
   and `git diff -U10` for the range, redirected to one uniquely named
   file). The output never enters your own context, and the reviewer sees
@@ -485,7 +489,7 @@ output; dispatch the re-review once all three are present. Name the
 covering test files in the fix message — a one-line fix does not need the
 whole suite.
 
-**The re-review is scoped.** Run `node "${CLAUDE_PLUGIN_ROOT}/skills/subagent-driven-development/scripts/review-package.mjs" PLAN_FILE FIX_BASE HEAD`
+**The re-review is scoped.** Invoke the resolved `review-package` resource with `PLAN_FILE FIX_BASE HEAD`
 where FIX_BASE is the head the previous review saw, and dispatch
 [re-review-prompt.md](re-review-prompt.md) with the findings list, the
 brief, the report file, and the printed diff path. The re-reviewer verdicts
@@ -569,12 +573,12 @@ back to your human partner.
 
 ## Final Review
 
-The final whole-branch review gets a package too: run
-`node "${CLAUDE_PLUGIN_ROOT}/skills/subagent-driven-development/scripts/review-package.mjs" PLAN_FILE MERGE_BASE HEAD` (MERGE_BASE = the commit the
+The final whole-branch review gets a package too: invoke the resolved
+`review-package` resource with `PLAN_FILE MERGE_BASE HEAD` (MERGE_BASE = the commit the
 branch started from, e.g. `git merge-base main HEAD`) and include the
 printed path in the final review dispatch, so the final reviewer reads
 one file instead of re-deriving the branch diff with git commands. Dispatch
-on the most capable available model (see Model Selection), using
+with the configured deep-reasoning model (see Model Selection), using
 `requesting-code-review`'s
 [code-reviewer.md](../requesting-code-review/code-reviewer.md). Point it at
 the ledger's deferred-minor and parked lines so it can triage which must be
@@ -585,7 +589,7 @@ with the complete findings list — not one fixer per finding.
 Per-finding fixers each rebuild context and re-run suites; a real
 session's final-review fix wave cost more than all its tasks combined.
 Then run exactly one scoped re-review of the fix wave
-(`node "${CLAUDE_PLUGIN_ROOT}/skills/subagent-driven-development/scripts/review-package.mjs" PLAN_FILE FIX_BASE HEAD` over the fix range,
+(invoke the resolved `review-package` resource with `PLAN_FILE FIX_BASE HEAD` over the fix range,
 [re-review-prompt.md](re-review-prompt.md)).
 Adjudicate any residual findings as in the task loop's breaker: park with
 rulings, or rule on the load-bearing ones and ledger what you decided. Only
@@ -632,7 +636,7 @@ You: I'm using Subagent-Driven Development to execute this plan.
 
 [Setup: worktree verified]
 [Read plan file once: docs/moe/plans/feature-plan.md]
-[Resolve workspace: node "${CLAUDE_PLUGIN_ROOT}/skills/subagent-driven-development/scripts/sdd-workspace.mjs" docs/moe/plans/feature-plan.md — no ledger inside, fresh start]
+[Resolve the linked sdd-workspace resource relative to this document and invoke it with docs/moe/plans/feature-plan.md — no ledger inside, fresh start]
 [Create todos for all tasks]
 
 Task 1: Hook installation script

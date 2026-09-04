@@ -1,6 +1,9 @@
 import { strict as assert } from 'node:assert';
+import { createRequire } from 'node:module';
 import { describe, it } from 'vitest';
-import { attachTabs, createPageSessionResolver } from '../../skills/browsing/scripts/lib/tabs.mjs';
+
+const require = createRequire(import.meta.url);
+const { attachTabs, createPageSessionResolver } = require('../../skills/browsing/lib/tabs.js');
 
 describe('tabs', () => {
   function fakeHostOverride() {

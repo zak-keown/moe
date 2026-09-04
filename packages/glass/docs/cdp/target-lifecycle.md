@@ -52,7 +52,7 @@ workers in one CDP call. This is the correct primitive for test isolation.
 
 ## For moe-glass
 
-`scripts/lib/browser-bridge.mjs` calls `Target.setDiscoverTargets` unconditionally to
+`lib/browser-bridge.js` calls `Target.setDiscoverTargets` unconditionally to
 populate the target map and keep it current. It calls `Target.setAutoAttach` only
 when `autoAttach: true` is passed to `attachBrowserBridge`. The auto-attach path
 handles `Target.attachedToTarget` events, guards against non-paused targets
@@ -60,7 +60,7 @@ handles `Target.attachedToTarget` events, guards against non-paused targets
 session registrations in the router), and calls `Runtime.runIfWaitingForDebugger`
 after the `onPageSession` hook completes.
 
-`createBrowserContext` in `scripts/lib/browser-bridge.mjs` wraps the create/dispose cycle
+`createBrowserContext` in `lib/browser-bridge.js` wraps the create/dispose cycle
 and exposes a `createPage(url)` helper that opens a tab in the context.
 
 ## Sources

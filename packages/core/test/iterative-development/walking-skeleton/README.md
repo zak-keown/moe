@@ -5,10 +5,10 @@ This directory contains the end-to-end manual verification for Plan 1 of the ite
 ## Prerequisites
 
 - The plugin is installed (or available as a local plugin marketplace entry)
-- Node 24 and pnpm 11.23.0 are available
+- Python 3 is available
 - A clean directory to run the dogfood in (do NOT run in the plugin's own repo)
-- Core typechecking passes: `pnpm --filter @bubstack/moe-core typecheck`
-- Core tests pass: `pnpm --filter @bubstack/moe-core test`
+- All unit tests pass: `python3 -m unittest discover tests/`
+- All skill files validate: `bash scripts/run_validation_suite.sh`
 
 ## Procedure
 
@@ -41,9 +41,9 @@ Expected high-level flow:
 Check that the following files exist and validate:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_requirements_index.mjs" docs/superpowers/iterations/requirements/
-node "${CLAUDE_PLUGIN_ROOT}/skills/scoping-the-simplest-core/scripts/validate_roadmap.mjs" docs/superpowers/iterations/roadmap.md
-node "${CLAUDE_PLUGIN_ROOT}/skills/running-an-iteration/scripts/validate_iteration_log.mjs" docs/superpowers/iterations/iteration-log.md
+python3 <plugin-repo>/skills/extracting-requirements/scripts/validate_requirements_index.py docs/superpowers/iterations/requirements/
+python3 <plugin-repo>/skills/scoping-the-simplest-core/scripts/validate_roadmap.py docs/superpowers/iterations/roadmap.md
+python3 <plugin-repo>/skills/running-an-iteration/scripts/validate_iteration_log.py docs/superpowers/iterations/iteration-log.md
 ```
 
 Expected: all three print `OK: <path>`.

@@ -39,9 +39,9 @@
     "lint": "biome check .",
     "typecheck": "tsc -p tsconfig.tests.json --pretty",
     "test": "vitest run",
-    "test:python": "python3 test/iterative-development/test_skill_validator.py",
-    "test:brainstorm": "node test/brainstorm-server/ws-protocol.test.cjs && node test/brainstorm-server/helper.test.cjs && node test/brainstorm-server/browser-launcher.test.cjs && node test/brainstorm-server/auth.test.cjs && node test/brainstorm-server/branding.test.cjs && node test/brainstorm-server/server.test.cjs && node test/brainstorm-server/lifecycle.test.cjs && node test/brainstorm-server/session-security.test.cjs",
-    "test:shell": "bash test/latte/run-evals-error-handling.test.sh",
+    "test:python": "python3 -m unittest discover -s test/iterative-development -t .",
+    "test:brainstorm": "node test/brainstorm-server/ws-protocol.test.cjs && node test/brainstorm-server/helper.test.cjs && node test/brainstorm-server/browser-launcher.test.cjs && node test/brainstorm-server/auth.test.cjs && node test/brainstorm-server/branding.test.cjs && node test/brainstorm-server/server.test.cjs && node test/brainstorm-server/lifecycle.test.cjs && node test/brainstorm-server/session-security.test.cjs && bash test/brainstorm-server/start-server.test.sh && bash test/brainstorm-server/stop-server.test.sh",
+    "test:shell": "bash test/shell/test-find-polluter.sh && bash test/shell/test-render-graphs.sh && bash test/latte/run-evals-error-handling.test.sh",
     "latte:evals": "bash test/latte/run-evals.sh"
   },
   "dependencies": {

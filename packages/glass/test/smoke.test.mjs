@@ -6,7 +6,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 const require = createRequire(import.meta.url);
-const { createSession } = require('../browsing-compat/chrome-ws-lib.js');
+const { createSession } = require('../skills/browsing/chrome-ws-lib.js');
 
 // Skip the whole suite if Chrome isn't available locally — contributors
 // without Chrome can still run npm test.

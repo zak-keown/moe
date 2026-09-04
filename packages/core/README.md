@@ -15,9 +15,6 @@ collaboration, writing, and plugin authoring.
 Every skill is registered in `skill-tiers.yaml` under either `imported:` or
 `authored:`. Add or remove a skill there whenever its directory changes.
 
-Production skill helper code under `scripts/` is dependency-free Node 24 ESM
-(`.mjs`, mode 0644, no shebang). Mint validates this before staging.
-
 ## Governance hook
 
 `hooks/governance-marker-check` is an optional SessionStart hook that checks

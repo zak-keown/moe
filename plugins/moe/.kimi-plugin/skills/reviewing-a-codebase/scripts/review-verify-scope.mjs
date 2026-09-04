@@ -1,12 +1,12 @@
+#!/usr/bin/env node
 // Split the merged report's critical and high findings into one file each.
 //
 // A verify-finding challenger reads exactly its finding, and the ledger
 // writer learns the complete ID set it must account for, from the same
 // manifest — so neither can drift from what the merge assigned.
 import { execFileSync } from "node:child_process";
-import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { RANK, findingFields, splitSections } from "./review-report.mjs";
 
 const arg = (name, fallback) => {
@@ -20,7 +20,6 @@ const fail = (message) => {
   process.exit(1);
 };
 
-export function main() {
 const repo = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
 const shardsDir = arg("shards", ".moe/review-shards");
 const reportPath = arg("report", "CODEBASE-REVIEW.md");
@@ -81,7 +80,3 @@ process.stdout.write(
   `${findings.length} serious finding(s) written to ${shardsDir}/verify ` +
     `(${critical}C/${findings.length - critical}H); dispatch one verify-finding agent per file.\n`,
 );
-}
-
-const modulePath = fileURLToPath(import.meta.url);
-if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(modulePath)) main();

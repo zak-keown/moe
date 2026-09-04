@@ -22,6 +22,8 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+// @ts-expect-error - score.mjs is plain JS; this package has no tsconfig and
+// never type-checks (its `typecheck` script echoes and exits 0).
 import { score } from "./house-voice/score.mjs";
 
 const DIR = join(import.meta.dirname, "house-voice");

@@ -1,7 +1,10 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
+import { createRequire } from 'node:module';
 import { makePageSessionFake } from './_helpers.mjs';
-import { attachEvaluation } from '../../skills/browsing/scripts/lib/evaluation.mjs';
+
+const require = createRequire(import.meta.url);
+const { attachEvaluation } = require('../../skills/browsing/lib/evaluation.js');
 
 describe('evaluation', () => {
   function setup(handlers = {}) {

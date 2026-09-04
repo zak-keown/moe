@@ -23,7 +23,7 @@ const path = require('path');
 const assert = require('assert');
 
 const REPO_ROOT = path.join(__dirname, '../..');
-const SERVER_PATH = path.join(REPO_ROOT, 'skills/brainstorming/scripts/server.mjs');
+const SERVER_PATH = path.join(REPO_ROOT, 'skills/brainstorming/scripts/server.cjs');
 const PACKAGE_VERSION = JSON.parse(
   fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf-8')
 ).version;
@@ -102,7 +102,7 @@ function createGeneratedPluginFixture(version) {
   );
   return {
     root,
-    serverPath: path.join(scriptDir, 'server.mjs')
+    serverPath: path.join(scriptDir, 'server.cjs')
   };
 }
 

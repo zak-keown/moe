@@ -239,6 +239,7 @@ git commit -m "refactor(core): port scenario pipeline to Node"
 - Create: `packages/core/test/iterative-development/artifact-validator.test.ts`
 - Delete: `packages/core/skills/extracting-requirements/scripts/validate_requirements_index.py`
 - Delete: `packages/core/skills/extracting-requirements/scripts/validate_scenarios.py`
+- Delete: `packages/core/test/iterative-development/test_artifact_validator.py`
 
 **Interfaces:**
 - Consumes: story/scenario Markdown contracts from Tasks 2–3.
@@ -262,11 +263,7 @@ Expected: FAIL because the `.mjs` validators are missing.
 
 Invocation/missing-path errors exit `2`. Validation failures exit `1`; requirements errors use stderr, while scenario failures emit `ERROR:` lines on stderr and `FAIL: N error(s)` on stdout. Success prints `OK: <path>`. Directory reads include only sorted top-level Markdown/`EPIC-*.md` files as the Python versions do.
 
-- [ ] **Step 4: Delete replaced Python sources and run the focused gate**
-
-Keep `test_artifact_validator.py` temporarily: Task 5 still consumes its
-roadmap and iteration-log cases and owns deleting the mixed test only after
-those remaining assertions are ported.
+- [ ] **Step 4: Delete replaced Python sources/tests and run the focused gate**
 
 Run:
 
@@ -296,7 +293,6 @@ git commit -m "refactor(core): port requirement validators to Node"
 - Create: `packages/core/test/iterative-development/roadmap-log-validator.test.ts`
 - Delete: corresponding four `.py` files
 - Delete: `packages/core/test/iterative-development/test_check_citations.py`
-- Delete: `packages/core/test/iterative-development/test_artifact_validator.py`
 
 **Interfaces:**
 - Consumes: `runHelper` from Task 1 and existing walking-skeleton fixtures.
@@ -334,11 +330,7 @@ Keep the two citation copies behavior-identical but skill-owned. Definitions com
 
 - [ ] **Step 4: Remove replaced Python files and finish test migration**
 
-Delete the now-fully-ported mixed `test_artifact_validator.py` and the other
-backend-related Python tests. Preserve `test_skill_validator.py` and
-`packages/core/scripts/validate_skill.py` because they are out of scope.
-Update comments in `vitest.config.ts` and `package.json` so `test:python` is
-described as the repo-only validator suite rather than the skill-backend gate.
+Delete only the backend-related Python tests. Preserve `test_skill_validator.py` and `packages/core/scripts/validate_skill.py` because they are out of scope. Update comments in `vitest.config.ts` and `package.json` so `test:python` is described as the repo-only validator suite rather than the skill-backend gate.
 
 - [ ] **Step 5: Run all iterative-development and Core gates**
 

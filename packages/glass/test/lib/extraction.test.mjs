@@ -1,7 +1,10 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
+import { createRequire } from 'node:module';
 import { makePageSessionFake } from './_helpers.mjs';
-import { attachExtraction } from '../../skills/browsing/scripts/lib/extraction.mjs';
+
+const require = createRequire(import.meta.url);
+const { attachExtraction } = require('../../skills/browsing/lib/extraction.js');
 
 describe('extraction', () => {
   function setup(handlers = {}) {

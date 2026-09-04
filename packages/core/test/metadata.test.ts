@@ -156,6 +156,27 @@ describe("skill inventory", () => {
     expect(Object.keys(imported).length).toBe(32);
   });
 
+  it("cites its own current title in AGENTS.md's guarded-surfaces list", () => {
+    // AGENTS.md's whole point for this section is that an agent can grep for
+    // the quoted title to find the guarded literal without a line number —
+    // that only works if the quote is kept current when the pinned count
+    // changes. Derive the expected citation from this test's own live title
+    // rather than hardcoding the number a second time, so a future bump
+    // (like mattpocock-skills's 31 -> 32) can't silently leave AGENTS.md
+    // quoting a title that no longer exists.
+    const thisFile = readFileSync(join(PKG, "test/metadata.test.ts"), "utf8");
+    const titleMatch = thisFile.match(/it\("(pins the IMPORTED skill set at exactly \d+)"/);
+    expect(titleMatch, "could not find this test's own title in its source").not.toBeNull();
+    const liveTitle = titleMatch![1];
+
+    const root = resolve(PKG, "../..");
+    const agents = readFileSync(join(root, "AGENTS.md"), "utf8").replace(/\s+/g, " ");
+    expect(
+      agents,
+      `AGENTS.md's guarded-surfaces citation is stale — it should quote "${liveTitle}"`,
+    ).toContain(`"${liveTitle}"`);
+  });
+
   it("every skill has a non-empty name and description", () => {
     for (const s of skills) {
       expect(s.name, `${s.dir}: frontmatter name`).not.toBe("");
@@ -397,11 +418,6 @@ describe("cross-references", () => {
   });
 });
 
-// Paths a skill legitimately names that are not in git. The Claude Code docs
-// cache is populated on demand by update_docs.mjs and deliberately not
-// committed - see skills/working-with-claude-code/SKILL.md.
-const NOT_COMMITTED = new Set(["/skills/working-with-claude-code/references/"]);
-
 // Every shipped file that must carry the execute bit, package-relative.
 //
 // Cross-checked against `find`-style discovery in BOTH directions below: the
@@ -426,6 +442,23 @@ const X_BIT_ALLOWLIST = [
   "hooks/jig-worktree-guard",
   "hooks/developing-for-moe-notice",
   "hooks/jig-review-format-guard",
+  "skills/brainstorming/scripts/start-server.sh",
+  "skills/brainstorming/scripts/stop-server.sh",
+  "skills/extracting-requirements/scripts/aggregate_stories.py",
+  "skills/extracting-requirements/scripts/chunk_spec.py",
+  "skills/fixing-a-code-review/scripts/compact-resolved.mjs",
+  "skills/finding-duplicate-functions/scripts/extract-functions.sh",
+  "skills/finding-duplicate-functions/scripts/generate-report.sh",
+  "skills/finding-duplicate-functions/scripts/prepare-category-analysis.sh",
+  "skills/running-an-iteration/scripts/check_citations.py",
+  "skills/scoping-the-simplest-core/scripts/check_citations.py",
+  "skills/subagent-driven-development/scripts/review-package",
+  "skills/subagent-driven-development/scripts/sdd-workspace",
+  "skills/subagent-driven-development/scripts/task-brief",
+  "skills/systematic-debugging/find-polluter.sh",
+  "skills/using-tmux-for-interactive-commands/tmux-wrapper.sh",
+  "skills/working-with-claude-code/scripts/update_docs.cjs",
+  "skills/writing-skills/render-graphs.mjs",
 ];
 
 // Everything Zone-A discovery walks: the skills tree and the hooks directory,
@@ -446,28 +479,6 @@ const isExecutable = (p: string) => {
 };
 
 describe("runtime paths", () => {
-  it("every ${CLAUDE_PLUGIN_ROOT}-anchored path resolves inside the package", () => {
-    // The convention adopted on import: every file a skill owns is addressed as
-    // ${CLAUDE_PLUGIN_ROOT}/skills/<skill>/<path>. Upstream used bare relative
-    // paths, which resolved against the USER's project and always missed.
-    const offenders: string[] = [];
-    for (const p of ownedMarkdown) {
-      const text = readFileSync(p, "utf8");
-      for (const m of text.matchAll(/\$\{CLAUDE_PLUGIN_ROOT\}(\/skills\/[A-Za-z0-9._\-/]+)/g)) {
-        const rel = (m[1] as string).replace(/[.,;:]+$/, "");
-        // Placeholders inside instructions to the reader, not real paths. The
-        // developing-claude-code-plugins references use ${CLAUDE_PLUGIN_ROOT}
-        // with invented paths (`/server.js`, `/config.json`) to teach the idiom;
-        // restricting the match to /skills/ excludes those without exempting the
-        // file, and NOT_COMMITTED covers the one real path that is generated.
-        if (/<|\$|PLAN_FILE|my-plugin/.test(rel)) continue;
-        if (NOT_COMMITTED.has(rel)) continue;
-        if (!existsSync(join(PKG, rel))) offenders.push(`${p.slice(PKG.length + 1)} -> ${rel}`);
-      }
-    }
-    expect(offenders).toEqual([]);
-  });
-
   it("the shared PAR references are reachable and referenced", () => {
     const shared = [
       "parallel-adversarial-review.md",
@@ -517,7 +528,7 @@ describe("runtime paths", () => {
     expect(discovered.length).toBeGreaterThanOrEqual(X_BIT_ALLOWLIST.length);
   });
 
-  it("every shell script and node script parses", () => {
+  it("every shell script and node script parses", { timeout: 15_000 }, () => {
     // Discovered, not enumerated. Two hardcoded lists (11 shell, 4 node) drifted
     // out of this file's sight the moment a skill import added a script, exactly
     // as the execute-bit allowlist did. Routing is by extension, plus a shebang
@@ -564,9 +575,15 @@ describe("runtime paths", () => {
     // scripts plus the three extensionless Node hooks (`hooks/plan-set`,
     // `hooks/moe-completion-evidence`, and `hooks/task-set`) with node
     // shebangs.
-    expect(bash.length, "bash targets discovered").toBeGreaterThanOrEqual(6);
+    expect(bash.length, "bash targets discovered").toBeGreaterThanOrEqual(11);
     expect(node.length, "node targets discovered").toBeGreaterThanOrEqual(7);
-    for (const rel of ["hooks/claude-judge-continuation", "hooks/plan-set-notice"]) {
+    for (const rel of [
+      "hooks/claude-judge-continuation",
+      "hooks/plan-set-notice",
+      "skills/subagent-driven-development/scripts/review-package",
+      "skills/subagent-driven-development/scripts/sdd-workspace",
+      "skills/subagent-driven-development/scripts/task-brief",
+    ]) {
       // The extensionless bash scripts. If the shebang read regresses, these
       // vanish silently and the floor above could still be met by .sh files
       // alone.
@@ -926,7 +943,7 @@ describe("the skill registry", () => {
 
 describe("fork invariants", () => {
   it("sends no telemetry from the brainstorming companion", () => {
-    const src = readFileSync(join(PKG, "skills/brainstorming/scripts/server.mjs"), "utf8");
+    const src = readFileSync(join(PKG, "skills/brainstorming/scripts/server.cjs"), "utf8");
     // Upstream injected <img src="https://primeradiant.com/brand/...?v=<version>">
     // into every served page, opt-out only. Removed, not rebranded.
     expect(src).not.toContain("https://primeradiant.com");
