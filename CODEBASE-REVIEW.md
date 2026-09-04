@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 1
+  fixed: 2
   stale: 0
   skipped: 0
   deferred: 0
-  open: 106
+  open: 105
 ---
 
 # Codebase Review — moe
@@ -1588,6 +1588,10 @@ killing, verify the PID via `isPortAlive(host, port, pidToKill)` (which already
 takes an `expectedPid` for exactly this kind of check) and skip the kill (just
 clear state/meta) if it doesn't look like the Chrome we expect.
 
+**Disposition:** fixed
+**Commit:** `c4af3b3f97c647a67c8bd310ce1b3704a9b93970`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-048: Unescaped WebBluetooth/WebUSB device name injected into generated HTML artifact
 
 **File:** `packages/glass/skills/browsing/lib/dialogs-render.js`
