@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 1
+  fixed: 2
   stale: 0
   skipped: 0
   deferred: 0
-  open: 106
+  open: 105
 ---
 
 # Codebase Review — moe
@@ -1322,6 +1322,10 @@ codebase documents and enforces elsewhere (`CARD_ID_RE` in `fanout.ts`,
 `parseRunId`/`parseRunSetId` in `util/id.ts`) before doing the `isSafePath`
 check, and update or remove the now-inaccurate comment in `fanout.ts`.
 
+**Disposition:** fixed
+**Commit:** `342e17525880dc627ba5271ae07d3cf4bbf33cde`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-036: Pretty CLI renderer never truncates the JSON-fallback tool-call body, contradicting its own doc comment — reproducible on every completed run
 
 **File:** `packages/flight/src/qa/cli/stream/pretty.ts`
