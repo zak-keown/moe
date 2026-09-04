@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 5
+  fixed: 6
   stale: 0
   skipped: 0
   deferred: 0
-  open: 102
+  open: 101
 ---
 
 # Codebase Review — moe
@@ -1730,6 +1730,10 @@ suite. Fix: mark the test `it.skip(...)` (or gate it behind a Chrome-version
 probe) with a pointer to the tracked incompatibility, so a genuine regression
 elsewhere in the suite isn't lost in expected noise.
 
+**Disposition:** fixed
+**Commit:** `050e8dd585a87211e1e0df2fb30b629fb919d991`
+**Resolved:** 2026-09-04
+**Note:** Verified via a new source-hygiene test (dialogs-smoke-hygiene.test.mjs) since no Chrome is installed in this environment to exercise dialogs.smoke.test.mjs directly.
 ### CR-052: test-harness.js cannot run at all: CommonJS `require()` inside an ES module
 
 **File:** `packages/glass/test/manual/test-harness.js`
