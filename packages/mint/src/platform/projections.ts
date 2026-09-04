@@ -1,4 +1,4 @@
-import { lstat, mkdir, realpath, writeFile } from 'node:fs/promises'
+import { constants, promises as fsp } from 'node:fs'
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path'
 import type { AdapterEmission } from '../adapters/types.js'
 import { MintError, type MintDiagnostic } from '../diagnostics.js'
@@ -304,7 +304,7 @@ async function nearestExistingParent(path: string): Promise<string> {
   let candidate = path
   while (true) {
     try {
-      await realpath(candidate)
+      await fsp.realpath(candidate)
       return candidate
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
@@ -333,8 +333,8 @@ async function validateDestination(
   let rootReal: string
   let existingParent: string
   try {
-    rootReal = await realpath(root)
-    existingParent = await realpath(await nearestExistingParent(dirname(resolved)))
+    rootReal = await fsp.realpath(root)
+    existingParent = await fsp.realpath(await nearestExistingParent(dirname(resolved)))
   } catch (error) {
     throw projectionError(
       'PROJECTION_DESTINATION_UNAVAILABLE',
@@ -353,7 +353,7 @@ async function validateDestination(
     )
   }
   try {
-    if ((await lstat(resolved)).isSymbolicLink()) {
+    if ((await fsp.lstat(resolved)).isSymbolicLink()) {
       throw projectionError(
         'PROJECTION_DESTINATION_ESCAPE',
         `projection destination may not be a symbolic link: ${actual}`,
@@ -450,6 +450,36 @@ export function resolvePublishMatrix(
   })
 }
 
+// Writes with O_NOFOLLOW, the same pattern fileset.ts's writeFileSet uses (and
+// documents there): the containment/symlink checks in validateDestination and
+// this write are two separate syscalls, so anything with write access to the
+// destination directory can swap the target for a symlink in between. A
+// symlink-following write (node:fs/promises' writeFile) would silently write
+// the projection content through to wherever that link points, defeating the
+// check above. Opening with O_NOFOLLOW instead makes the open() call itself
+// refuse a symlinked leaf (ELOOP), closing that window (CR-062).
+async function writeProjectionFile(path: string, content: string, field: keyof ProjectionDestinations): Promise<void> {
+  let handle: Awaited<ReturnType<typeof fsp.open>>
+  try {
+    handle = await fsp.open(path, constants.O_WRONLY | constants.O_CREAT | constants.O_TRUNC | constants.O_NOFOLLOW, 0o666)
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ELOOP') {
+      throw projectionError(
+        'PROJECTION_DESTINATION_ESCAPE',
+        `projection destination may not be a symbolic link: ${path}`,
+        'Remove the destination symlink and write the repository-owned projection file.',
+        { source: 'registry projections', field, path },
+      )
+    }
+    throw error
+  }
+  try {
+    await handle.writeFile(content)
+  } finally {
+    await handle.close()
+  }
+}
+
 export async function writeRegistryProjections(
   platform: ResolvedPlatform,
   artifacts: readonly PluginProjectionRecord[],
@@ -461,11 +491,11 @@ export async function writeRegistryProjections(
   const marketplace = renderMarketplace(platform, artifacts)
   const catalog = renderPublicCatalog(platform, artifacts)
   await Promise.all([
-    mkdir(dirname(marketplacePath), { recursive: true }),
-    mkdir(dirname(publicCatalogPath), { recursive: true }),
+    fsp.mkdir(dirname(marketplacePath), { recursive: true }),
+    fsp.mkdir(dirname(publicCatalogPath), { recursive: true }),
   ])
   await Promise.all([
-    writeFile(marketplacePath, marketplace),
-    writeFile(publicCatalogPath, catalog),
+    writeProjectionFile(marketplacePath, marketplace, 'marketplacePath'),
+    writeProjectionFile(publicCatalogPath, catalog, 'publicCatalogPath'),
   ])
 }

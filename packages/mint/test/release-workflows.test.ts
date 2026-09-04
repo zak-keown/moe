@@ -13,7 +13,10 @@ describe('publish workflow contract', () => {
   it('requires contents: write permission', () => {
     const perms = PUBLISH_YAML.permissions
     expect(perms).toBeDefined()
-    expect(perms.contents).toMatch(/write|read/)
+    // CR-103: a /write|read/ pattern here would silently accept a future
+    // downgrade from write to read despite this test's own title. Match the
+    // sibling certify-workflow assertion below: require the exact value.
+    expect(perms.contents).toBe('write')
   })
 
   it('requires id-token: write permission', () => {
@@ -51,12 +54,13 @@ describe('publish workflow negative assertions', () => {
   })
 
   it('does not use npm pack after candidate verification', () => {
-    const lines = PUBLISH_WORKFLOW.split('\n')
-    const publishMatrixLine = lines.findIndex((l) => l.includes('publish-matrix'))
-    if (publishMatrixLine >= 0) {
-      const afterMatrix = lines.slice(publishMatrixLine).join('\n')
-      expect(afterMatrix).not.toMatch(/npm pack(?!\s*#)/)
-    }
+    // The whole publish path is delegated to the compiled Mint CLI (see
+    // "invokes compiled Mint CLI" above), so no post-verification anchor is
+    // needed: the workflow must never shell out to npm pack anywhere, not
+    // just after a "publish-matrix" step that no longer exists in this file
+    // (a prior version of this test gated the assertion behind a lookup for
+    // that literal, which meant the check silently never ran — CR-063).
+    expect(PUBLISH_WORKFLOW).not.toMatch(/npm pack(?!\s*#)/)
   })
 
   it('does not reference the stale OIDC diagnostic script by path', () => {

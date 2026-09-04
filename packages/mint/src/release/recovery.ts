@@ -77,7 +77,17 @@ export function computeResumeActions(
       continue
     }
 
-    if (snapshot.draftAssetSha256 !== undefined && snapshot.draftAssetSha256 !== tarballAsset.sha256) {
+    if (snapshot.draftAssetSha256 === undefined) {
+      actions.push({
+        kind: 'block',
+        plugin: plugin.plugin,
+        code: 'RECOVERY_DRAFT_ASSET_UNVERIFIABLE',
+        message: `draft asset "${plugin.artifact.mirror.asset}" SHA-256 could not be observed; cannot verify it matches the lock`,
+      })
+      continue
+    }
+
+    if (snapshot.draftAssetSha256 !== tarballAsset.sha256) {
       actions.push({
         kind: 'block',
         plugin: plugin.plugin,
