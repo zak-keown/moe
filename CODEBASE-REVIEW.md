@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 12
+  fixed: 13
   stale: 0
   skipped: 0
   deferred: 0
-  open: 95
+  open: 94
 ---
 
 # Codebase Review — moe
@@ -2672,6 +2672,10 @@ but it is an unbounded leak across CI runs and repeated local `pnpm test`
 invocations. Fix: reuse the same `afterAll`-tracked cleanup pattern the outer
 block already has, or move `bug3Dir`/`bug4Dir` under the shared `tmpRoot`.
 
+**Disposition:** fixed
+**Commit:** `87eace5a5ded472ce89becdb63db6a485d9b5fef`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-097: `runSync` re-registers process-level signal/exit handlers on every call with no cleanup
 **File:** `packages/memory/src/sync-cli.ts`
 **Anchor:** `process.on("exit", releaseSyncLockOnce);`
