@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 2
+  fixed: 3
   stale: 0
   skipped: 0
   deferred: 0
-  open: 105
+  open: 104
 ---
 
 # Codebase Review — moe
@@ -959,6 +959,10 @@ adding `.moe` (or specifically `worktrees`) to `SKIP_SEGMENTS`, or by having
 `walk()` respect `.gitignore` for directories that are entire nested git
 worktrees.
 
+**Disposition:** fixed
+**Commit:** `0b7b025f0160347ea973b9c3479d3f1fd45a15f4`
+**Resolved:** 2026-09-04
+**Note:** —
 ## Medium
 
 ### CR-024: docs-verify-report.mjs silently drops findings whose severity isn't an exact lowercase match, while still counting them in the total
