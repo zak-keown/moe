@@ -1,6 +1,18 @@
 export declare function workerDir(): string;
 export declare function eventsPath(dir: string, sid: string): string;
 export declare function metaPath(dir: string, sid: string): string;
+/**
+ * True when `name` is safe to use as a single on-disk path segment: letters,
+ * digits, `_` and `-` only, so it can never carry `/`, `.` or `..` out of the
+ * directory it's joined into. Exported so untrusted ids that reach
+ * `metaPath`/`eventsPath` from outside this module (e.g. a hook's
+ * `session_id`, or pi's self-minted session id) can be checked *before* a
+ * path is built from them, rather than after — those two builders take a
+ * `sid` that is not always the same trusted tmux_name every other builder
+ * here validates, so they cannot enforce this internally without changing
+ * their contract for already-validated callers.
+ */
+export declare function isSafeSegment(name: string): boolean;
 export declare function shimPath(dir: string, name: string): string;
 /**
  * The per-worker home dir, keyed by tmux_name. Derive harnesses (codex's

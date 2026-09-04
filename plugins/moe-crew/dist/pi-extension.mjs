@@ -20,6 +20,9 @@ function eventsPath(dir, sid) {
 function metaPath(dir, sid) {
   return `${dir}/${sid}.meta`;
 }
+function isSafeSegment(name) {
+  return /^[A-Za-z0-9_-]+$/.test(name);
+}
 
 // packages/crew/src/core/time.ts
 function isoSecondsUtc(date = /* @__PURE__ */ new Date()) {
@@ -46,7 +49,7 @@ function record(ctx, e) {
     const dir = workerDirFromEnv();
     if (dir === null) return;
     const sid = ctx.sessionManager.getSessionId();
-    if (sid.length === 0) return;
+    if (sid.length === 0 || !isSafeSegment(sid)) return;
     if (!existsSync(metaPath(dir, sid))) {
       const transcriptPath = ctx.sessionManager.getSessionFile();
       writeMeta(dir, {

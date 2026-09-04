@@ -601,7 +601,11 @@ function parseWaitForTurnArgs(argv) {
             i += 2;
         }
         else if (/^[0-9]/.test(a)) {
-            timeout = Number(a);
+            const n = Number(a);
+            if (!Number.isFinite(n)) {
+                return err("Error: wait-for-turn timeout must be a number");
+            }
+            timeout = n;
             i += 1;
         }
         else {
