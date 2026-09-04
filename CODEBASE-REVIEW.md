@@ -14,6 +14,12 @@ findings:
   total: 107
 verified: false
 status: issues_found
+dispositions:
+  fixed: 1
+  stale: 0
+  skipped: 0
+  deferred: 0
+  open: 106
 ---
 
 # Codebase Review — moe
@@ -92,6 +98,10 @@ filePath).split(sep)` rather than the raw route param, or simply re-derive
 the check from the resolved path the same way `isSafePath` does for
 containment.
 
+**Disposition:** fixed
+**Commit:** `c3f1f2f447775eb9a8d1ab35688ae7e7470a2375`
+**Resolved:** 2026-09-04
+**Note:** —
 ## High
 
 ### CR-002: probeChrome never detects an installed browser on Linux because `command -v` has no standalone executable there
