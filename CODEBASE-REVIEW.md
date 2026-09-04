@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 2
+  fixed: 3
   stale: 0
   skipped: 0
   deferred: 0
-  open: 105
+  open: 104
 ---
 
 # Codebase Review — moe
@@ -1473,6 +1473,10 @@ Fix: add `onerror`/`onclose` handling that either reconnects or falls back
 to polling `api.runSets.get(id)` on an interval, mirroring the
 `useActiveRuns` pattern already used elsewhere in this package.
 
+**Disposition:** fixed
+**Commit:** `9945a2296df30c68c2258559f7aacd0b5dbca133`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-044: Live transcript WebSocket never reconnects and gives no indication after a drop
 
 **File:** `packages/flight/ui/src/hooks/useLiveTranscript.ts`
