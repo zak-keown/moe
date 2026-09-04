@@ -292,3 +292,96 @@ gitignore guard) confirms `.moe/backlog/` is not ignored, so a future blanket
   (code-review) to prove the shape before generalizing.
 - **A TUI or web view.** `list`/`show`/`triage` are CLI-only.
 - **Cross-repo backlogs.** The store is scoped to the repo it runs in.
+
+## v1.5 addendum (2026-09-04): id uniqueness, triage-accept, decline note
+
+Three follow-ups surfaced after v1 shipped. Two correct gaps between this spec
+and the code; one is the id-uniqueness prerequisite flagged for `moe-resume`.
+They land together because they share `backlog.ts` and one test file.
+
+### 1. Ids must be unique across worktrees (the prerequisite)
+
+**Problem.** `allocateId` computes `max(existing NNNN) + 1` from the *local*
+worktree's `.moe/backlog/` listing. The store deliberately resolves to the
+current worktree (§Why the store resolves to the current worktree), so two
+worktrees branched from the same base each see the same `max` and each allocate
+the same next number. On merge, two unrelated items claim one id. A consumer
+that fetches by id — the whole point of `moe-resume` — then resolves the wrong
+record. Monotonic-from-local-max is unfixable without cross-worktree
+coordination the store is designed not to need.
+
+**Fix.** Ids become random, not sequential. `allocateId` generates
+`BL-` + 5 random bytes as hex (`^BL-[0-9a-f]{10}$`), regenerating on the
+astronomically-rare collision with an id already present locally — the
+`existing` list it already holds. Cross-worktree uniqueness is then
+probabilistic at 2^40, not coordinated: safe for a backlog of realistically
+hundreds to thousands of items, with no merge-time machinery and no collision
+window. Sequentiality was incidental to v1, never a requirement; `BL-7f3a2b1c9d`
+is exactly as greppable and quotable in a disposition `Note` as `BL-0007`.
+
+**Ripple.** The id no longer carries an ordinal, so:
+
+- `allocateId(existing)` returns `{ id }` (the `num` field is gone). The
+  filename becomes `<id>-<slug>.md` (e.g. `BL-7f3a2b1c9d-fix-thing.md`),
+  self-identifying and still slug-readable. `loadItem`/`parseItem` already key
+  off the frontmatter `id`, never the filename, so lookups are unaffected.
+- `loadAll` sorts by filename today, which gave chronological-ish order only
+  because `NNNN` incremented. Random ids break that, so `loadAll` sorts by the
+  `created` field (id as the stable tiebreak). List/triage order is thereby
+  decoupled from the id scheme entirely.
+
+**Migration.** None. No `BL-####` item is committed anywhere in the repo, so
+there are no files to rename and no ids to reissue. This is why the change is
+free *now* and would not be once real deferrals land on `main`.
+
+**Breaking test.** `backlog.test.ts` "allocates the next zero-padded id,
+ignoring gaps" asserts the old sequential behaviour and must be rewritten to the
+new contract: two `add`s yield distinct, well-formed ids; the filename is
+`<id>-<slug>.md`; list order follows `created`, not the id.
+
+### 2. `needs-triage → open` needs a verb (`accept`)
+
+§Statuses and transitions draws `needs-triage ─► open | declined (triage: a
+human sets a real state)`. The `→ declined` half exists (`decline` operates on a
+triaged item). The `→ open` half was never given a verb: `resume` refuses
+`needs-triage`, `claim` refuses it, and `triage` only *lists*. A legitimately
+open item filed under a mistyped reason is stranded — visible and declinable,
+but not acceptable. The command surface simply never gave `triage` a way to
+*set* a state; this closes that gap.
+
+**`accept <id>`** — a new top-level verb, sibling to `decline`. The two triage
+outcomes are now symmetric: `accept` → `open`, `decline` → `declined`. It
+requires current status `needs-triage` and refuses any other state with a
+diagnostic, the way `resume` guards its inputs. Backend `backlogAccept(id, {
+cwd?, by? })` stamps `updated`/provenance and persists. `triage` stays a pure
+listing; `accept` is distinct from `claim` (a human accepting a triaged item
+into the pool, versus a worker taking an open item to `in-progress`).
+
+### 3. Decline notes belong under `## Disposition`, not `## Resume`
+
+`backlogDecline` currently routes its `--note` through `writeResume`, stamping a
+`## Resume` block with `next: —` onto a record that is never resumed. Decline
+gets its own section: `## Disposition`, holding `- declined: <reason>` and, when
+given, `- note: <note>`. `## Resume` is reserved for `blocked`/`carry-over`,
+whose semantics it actually matches. Cosmetic, but it stops a terminal record
+from advertising a resumption thread.
+
+### Testing additions
+
+- **Ids:** two `add`s produce distinct ids matching `^BL-[0-9a-f]{10}$`; the
+  filename is `<id>-<slug>.md`. The regression that motivated the change: two
+  items filed in two linked worktrees off one base get *distinct* ids and both
+  survive the merge (strengthens the existing "survives worktree teardown"
+  test). List/triage order tracks `created`, proven independent of id.
+- **`accept`:** `needs-triage → open`; refuses a non-triage state; provenance
+  stamped. CLI e2e: `add` → `defer` with an unrecognized reason (→ `needs-triage`)
+  → `accept` → status `open`.
+- **Decline note:** a declined item's body contains `## Disposition`, never
+  `## Resume`.
+
+### Still out of scope
+
+The v1.5+ list above is unchanged: no machine-falsifiable blocker checks, no
+driver skill (`moe-resume` is the consumer these ids unblock, still separate
+work), no multi-producer ingestion beyond code-review, no TUI, no cross-repo
+store.
