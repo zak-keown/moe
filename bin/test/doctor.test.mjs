@@ -442,3 +442,18 @@ describe("moe-doctor and moe-install entry points", () => {
     expect(proc.stderr).toMatch(message);
   });
 });
+
+describe("plugin registry self-consistency", () => {
+  it("keeps HARNESS_IDS and the HARNESSES registry in exact agreement", async () => {
+    // CR-070: harnessRegistryProblems implements a real missing/extra/
+    // duplicate/out-of-order check against HARNESS_IDS, but nothing called
+    // it — a genuine future risk, since HARNESS_IDS and Object.keys(HARNESSES)
+    // are two independently hand-written lists that every other lookup here
+    // (getHarness, detectInstalledHarnesses, probeHarness) assumes agree. A
+    // mismatch would otherwise surface only downstream, as e.g.
+    // HARNESSES[id] being undefined.
+    const { HARNESSES, harnessRegistryProblems } = await import("../lib/plugin-registry.mjs");
+
+    expect(harnessRegistryProblems("HARNESSES registry", Object.keys(HARNESSES))).toEqual([]);
+  });
+});
