@@ -80,4 +80,33 @@ describe('generateHtmlDiff', () => {
     const big = Array.from({ length: 2200 }, (_, i) => `line-${i}`).join('\n');
     assert.equal(generateHtmlDiff(big, big), '(no changes detected)');
   });
+
+  // CR-049: the old 2000-line/side cap still let a single fully-dissimilar
+  // diff run the quadratic-memory Myers path and allocate ~250MB — well
+  // into "can OOM-kill the server under a constrained container" territory.
+  // The cap must be low enough that this exact case (proven in the review's
+  // own repro) takes the cheap O(N+M) summary path instead of ever entering
+  // myersDiff.
+  it('bails out to the cheap summary for a 2000-line/side fully-dissimilar diff (no longer runs full Myers)', () => {
+    const N = 2000;
+    const before = Array.from({ length: N }, (_, i) => `before-line-${i}`).join('\n');
+    const after = Array.from({ length: N }, (_, i) => `after-line-${i}`).join('\n');
+    const diff = generateHtmlDiff(before, after);
+    assert.match(diff, /too large to diff/i, 'a 2000-line/side diff must no longer run the full Myers algorithm');
+  });
+
+  // Direct memory measurement, matching the review's own repro methodology:
+  // a full-cap, fully-dissimilar diff (the worst case for Myers' O(D*(N+M))
+  // trace-snapshot memory) must stay well under the ~250MB the old 2000-line
+  // cap allowed for a single call. Generous threshold to absorb GC/measurement
+  // noise while still catching a cap that regresses back toward the old value.
+  it('keeps worst-case memory for a full-cap diff far below the old ~250MB (CR-049)', () => {
+    const before = Array.from({ length: 300 }, (_, i) => `AAAA${i}`).join('\n');
+    const after = Array.from({ length: 300 }, (_, i) => `BBBB${i}`).join('\n');
+    if (global.gc) global.gc();
+    const before0 = process.memoryUsage().heapUsed;
+    generateHtmlDiff(before, after);
+    const deltaMB = (process.memoryUsage().heapUsed - before0) / 1024 / 1024;
+    assert.ok(deltaMB < 50, `expected a single full-cap diff call to allocate well under 50MB, got ${deltaMB.toFixed(1)}MB`);
+  });
 });

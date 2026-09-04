@@ -3,7 +3,7 @@ import { createRequire as __createRequire } from 'module';
 const require = __createRequire(import.meta.url);
 import {
   syncConversations
-} from "./chunk-DWPDJ6LO.js";
+} from "./chunk-SW5YMIYD.js";
 import {
   formatLogLine,
   getSyncLogPath
@@ -29,7 +29,7 @@ import {
 } from "./chunk-OYWI4M6D.js";
 import {
   shouldSkipReentrantSync
-} from "./chunk-EYIEB7RJ.js";
+} from "./chunk-HSI3HVDR.js";
 import "./chunk-KVDJIHLR.js";
 import "./chunk-NH4NDHAK.js";
 import "./chunk-ZCVHMAKN.js";
@@ -154,19 +154,22 @@ async function runSync(args) {
     released = true;
     releaseFileLock(syncLock);
   };
-  process.on("exit", releaseSyncLockOnce);
-  process.on("SIGINT", () => {
+  const onSigint = () => {
     releaseSyncLockOnce();
     process.exit(130);
-  });
-  process.on("SIGTERM", () => {
+  };
+  const onSigterm = () => {
     releaseSyncLockOnce();
     process.exit(143);
-  });
-  process.on("SIGHUP", () => {
+  };
+  const onSighup = () => {
     releaseSyncLockOnce();
     process.exit(129);
-  });
+  };
+  process.on("exit", releaseSyncLockOnce);
+  process.on("SIGINT", onSigint);
+  process.on("SIGTERM", onSigterm);
+  process.on("SIGHUP", onSighup);
   console.log("Syncing conversations...");
   console.log(`Sources: ${sourceDirs.join(", ")}`);
   console.log(`Destination: ${destDir}
@@ -211,6 +214,10 @@ async function runSync(args) {
     return 0;
   } finally {
     releaseSyncLockOnce();
+    process.off("exit", releaseSyncLockOnce);
+    process.off("SIGINT", onSigint);
+    process.off("SIGTERM", onSigterm);
+    process.off("SIGHUP", onSighup);
   }
 }
 var MAX_HOOK_STDERR_BYTES = 512;

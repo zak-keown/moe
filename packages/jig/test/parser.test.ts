@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { PlanTask } from "../src/parser.js";
 import { computeWaves, parsePlan, validatePlan } from "../src/parser.js";
 
 const FIXTURE = `
@@ -105,5 +106,42 @@ describe("computeWaves", () => {
     // and have disjoint files — same wave.
     expect(waves[0]).toEqual([1]);
     expect(waves[1]).toEqual(expect.arrayContaining([2, 3]));
+  });
+
+  it("does not silently drop a task whose depends_on references an unknown task number (CR-056)", () => {
+    // Task 1's depends_on references task 99, which doesn't exist in this
+    // task list. Unlike validatePlan (which ignores unknown targets via
+    // `known.has(d)`), computeWaves must not let that dangling reference
+    // inflate task 1's in-degree forever — every task must still end up
+    // scheduled into some wave.
+    const tasks: PlanTask[] = [
+      {
+        num: 1,
+        title: "Has a dangling dependency",
+        dependsOn: [99],
+        blockedBy: null,
+        files: ["src/a.ts"],
+        hasConsumes: true,
+        hasProduces: true,
+        steps: [],
+      },
+      {
+        num: 2,
+        title: "No dependencies",
+        dependsOn: [],
+        blockedBy: null,
+        files: ["src/b.ts"],
+        hasConsumes: true,
+        hasProduces: true,
+        steps: [],
+      },
+    ];
+
+    const waves = computeWaves(tasks);
+    const scheduled = waves.flat();
+
+    expect(scheduled).toContain(1);
+    expect(scheduled).toContain(2);
+    expect(scheduled).toHaveLength(2);
   });
 });

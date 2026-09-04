@@ -433,6 +433,15 @@ var SummarizerSdkError = class extends Error {
 function isResumeFailure(error) {
   return error instanceof SummarizerSdkError && error.subtype === "error_during_execution";
 }
+var SummarizerThinkingBudgetError = class extends Error {
+  constructor(rawResult) {
+    super(
+      `Summarizer hit a persistent thinking.budget_tokens error on both the primary and fallback model: ${rawResult}`
+    );
+    this.rawResult = rawResult;
+    this.name = "SummarizerThinkingBudgetError";
+  }
+};
 function shouldSkipReentrantSync() {
   return process.env.MOE_MEMORY_SUMMARIZER_GUARD === "1";
 }
@@ -502,9 +511,14 @@ async function callClaude(prompt, sessionId, useFallback = false, cwd) {
   try {
     return await runClaudeCommand(spec, adapter);
   } catch (error) {
-    if (!useFallback && error instanceof Error && error.message.includes("thinking.budget_tokens")) {
-      console.log(`    ${primaryModel} hit thinking budget error, retrying with ${fallbackModel}`);
-      return await callClaude(prompt, sessionId, true, cwd);
+    if (error instanceof Error && error.message.includes("thinking.budget_tokens")) {
+      if (!useFallback) {
+        console.log(
+          `    ${primaryModel} hit thinking budget error, retrying with ${fallbackModel}`
+        );
+        return await callClaude(prompt, sessionId, true, cwd);
+      }
+      throw new SummarizerThinkingBudgetError(error.message);
     }
     throw error;
   }
@@ -612,6 +626,7 @@ export {
   buildCodexSummarizerCommand,
   SummarizerSdkError,
   isResumeFailure,
+  SummarizerThinkingBudgetError,
   shouldSkipReentrantSync,
   formatConversationText,
   buildSummarizerQueryOptions,

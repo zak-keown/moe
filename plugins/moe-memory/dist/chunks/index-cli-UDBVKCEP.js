@@ -3,7 +3,7 @@ import { createRequire as __createRequire } from 'module';
 const require = __createRequire(import.meta.url);
 import {
   shouldSkipConversation
-} from "./chunk-DWPDJ6LO.js";
+} from "./chunk-SW5YMIYD.js";
 import {
   JournalStore
 } from "./chunk-XQQVRDY6.js";
@@ -31,7 +31,7 @@ import {
 import "./chunk-OYWI4M6D.js";
 import {
   summarizeConversation
-} from "./chunk-EYIEB7RJ.js";
+} from "./chunk-HSI3HVDR.js";
 import "./chunk-KVDJIHLR.js";
 import "./chunk-NH4NDHAK.js";
 import "./chunk-ZCVHMAKN.js";
@@ -423,82 +423,85 @@ async function verifyIndex() {
     return result;
   }
   const db = initDatabase();
-  const projects = fs2.readdirSync(archiveDir);
-  const excludedProjects = getExcludedProjects();
-  const excludedDirSet = new Set(excludedProjects);
-  let totalChecked = 0;
-  for (const project of projects) {
-    if (excludedProjects.includes(project)) {
-      console.log(`
+  try {
+    const projects = fs2.readdirSync(archiveDir);
+    const excludedProjects = getExcludedProjects();
+    const excludedDirSet = new Set(excludedProjects);
+    let totalChecked = 0;
+    for (const project of projects) {
+      if (excludedProjects.includes(project)) {
+        console.log(`
 Skipping excluded project: ${project}`);
-      continue;
-    }
-    const projectPath = path2.join(archiveDir, project);
-    const stat = fs2.statSync(projectPath);
-    if (!stat.isDirectory()) continue;
-    const files = findJsonlFiles(projectPath, excludedDirSet);
-    for (const file of files) {
-      totalChecked++;
-      if (totalChecked % 100 === 0) {
-        console.log(`  Checked ${totalChecked} conversations...`);
-      }
-      const conversationPath = path2.join(projectPath, file);
-      foundFiles.add(conversationPath);
-      if (shouldSkipConversation(conversationPath)) {
         continue;
       }
-      const summaryPath = conversationPath.replace(".jsonl", "-summary.txt");
-      if (!fs2.existsSync(summaryPath)) {
-        result.missing.push({ path: conversationPath, reason: "No summary file" });
-        continue;
-      }
-      if (isErroredSentinel(fs2.readFileSync(summaryPath, "utf-8"))) {
-        result.missing.push({
-          path: conversationPath,
-          reason: "Previous summarization failed (error sentinel)"
-        });
-        continue;
-      }
-      const lastIndexed = getFileLastIndexed(db, conversationPath);
-      if (lastIndexed !== null) {
-        const fileStat = fs2.statSync(conversationPath);
-        if (fileStat.mtimeMs > lastIndexed) {
-          result.outdated.push({
+      const projectPath = path2.join(archiveDir, project);
+      const stat = fs2.statSync(projectPath);
+      if (!stat.isDirectory()) continue;
+      const files = findJsonlFiles(projectPath, excludedDirSet);
+      for (const file of files) {
+        totalChecked++;
+        if (totalChecked % 100 === 0) {
+          console.log(`  Checked ${totalChecked} conversations...`);
+        }
+        const conversationPath = path2.join(projectPath, file);
+        foundFiles.add(conversationPath);
+        if (shouldSkipConversation(conversationPath)) {
+          continue;
+        }
+        const summaryPath = conversationPath.replace(".jsonl", "-summary.txt");
+        if (!fs2.existsSync(summaryPath)) {
+          result.missing.push({ path: conversationPath, reason: "No summary file" });
+          continue;
+        }
+        if (isErroredSentinel(fs2.readFileSync(summaryPath, "utf-8"))) {
+          result.missing.push({
             path: conversationPath,
-            fileTime: fileStat.mtimeMs,
-            dbTime: lastIndexed
+            reason: "Previous summarization failed (error sentinel)"
+          });
+          continue;
+        }
+        const lastIndexed = getFileLastIndexed(db, conversationPath);
+        if (lastIndexed !== null) {
+          const fileStat = fs2.statSync(conversationPath);
+          if (fileStat.mtimeMs > lastIndexed) {
+            result.outdated.push({
+              path: conversationPath,
+              fileTime: fileStat.mtimeMs,
+              dbTime: lastIndexed
+            });
+          }
+        }
+        try {
+          await parseConversation(conversationPath, project, conversationPath);
+        } catch (error) {
+          result.corrupted.push({
+            path: conversationPath,
+            error: error instanceof Error ? error.message : String(error)
           });
         }
       }
-      try {
-        await parseConversation(conversationPath, project, conversationPath);
-      } catch (error) {
-        result.corrupted.push({
-          path: conversationPath,
-          error: error instanceof Error ? error.message : String(error)
+    }
+    console.log(`Verified ${totalChecked} conversations.`);
+    const dbExchanges = getAllExchanges(db);
+    for (const exchange of dbExchanges) {
+      if (!foundFiles.has(exchange.archivePath)) {
+        result.orphaned.push({
+          uuid: exchange.id,
+          path: exchange.archivePath
         });
       }
     }
+    return result;
+  } finally {
+    db.close();
   }
-  console.log(`Verified ${totalChecked} conversations.`);
-  const dbExchanges = getAllExchanges(db);
-  db.close();
-  for (const exchange of dbExchanges) {
-    if (!foundFiles.has(exchange.archivePath)) {
-      result.orphaned.push({
-        uuid: exchange.id,
-        path: exchange.archivePath
-      });
-    }
-  }
-  return result;
 }
 async function repairIndex(issues, options = {}) {
   console.log("Repairing index...");
   const { initDatabase: initDatabase2, insertExchange: insertExchange2, deleteExchange } = await import("./db-SNCDV7GU.js");
   const { parseConversation: parseConversation2 } = await import("./parser-OZTBPBQF.js");
   const { initEmbeddings: initEmbeddings2, generateExchangeEmbedding: generateExchangeEmbedding2 } = await import("./embeddings-MIYVCACC.js");
-  const { summarizeConversation: summarizeConversation2 } = await import("./summarizer-BEQGKIDK.js");
+  const { summarizeConversation: summarizeConversation2 } = await import("./summarizer-JX2L5D3P.js");
   const { formatErrorSentinel: formatErrorSentinel2 } = await import("./summary-sentinel-SZIFJFYT.js");
   const db = initDatabase2();
   await initEmbeddings2();

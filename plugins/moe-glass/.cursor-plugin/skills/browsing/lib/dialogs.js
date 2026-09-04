@@ -208,37 +208,6 @@ function attachDialogs({ state }) {
     }
   }
 
-  async function withDialogAwareness(actionName, wsUrl, args, fn) {
-    const open = getOpen(wsUrl);
-    const isDialogSelector = typeof args?.selector === 'string' && args.selector.startsWith('dialog::');
-
-    if (open && PAGE_TARGET_ACTIONS.has(actionName) && !isDialogSelector) {
-      return {
-        refused: true,
-        error: 'Page is behind a dialog. Handle dialog::accept or dialog::dismiss first.',
-        dialog: open,
-        artifacts: renderSyntheticArtifacts(open),
-      };
-    }
-
-    if (!open && PAGE_TARGET_ACTIONS.has(actionName)) {
-      const before = state.dialogs.has(wsUrl);
-      const actionResult = await fn();
-      const afterOpen = getOpen(wsUrl);
-      if (!before && afterOpen) {
-        return {
-          midFlight: true,
-          actionResult,
-          dialog: afterOpen,
-          artifacts: renderSyntheticArtifacts(afterOpen),
-        };
-      }
-      return actionResult;
-    }
-
-    return fn();
-  }
-
   async function withDialogAwarenessForSession(actionName, pageSession, args, fn) {
     const sid = pageSession && pageSession.sessionId;
     const open = sid ? state.dialogs.get(sid) : null;
@@ -271,7 +240,7 @@ function attachDialogs({ state }) {
     return fn();
   }
 
-  return { getOpen, clear, attachToPageSession, withDialogAwareness, withDialogAwarenessForSession };
+  return { getOpen, clear, attachToPageSession, withDialogAwarenessForSession };
 }
 
 module.exports = { attachDialogs, PAGE_TARGET_ACTIONS, BROWSER_TARGET_ACTIONS, DialogRefusedError };

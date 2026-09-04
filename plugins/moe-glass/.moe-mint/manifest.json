@@ -36,7 +36,7 @@
       "mode": 420
     },
     ".claude-plugin/skills/browsing/host-override.js": {
-      "sha256": "65a8b46308dc1c58c7545bf33850d5a41c956d9c7e848f7452b2fa3c95508631",
+      "sha256": "9b9495a7b1c0972dfac1c829c0687e64c991f5ae71b142ab28d4ce90493c28f6",
       "mode": 420
     },
     ".claude-plugin/skills/browsing/lib/browser-bridge.js": {
@@ -48,7 +48,7 @@
       "mode": 420
     },
     ".claude-plugin/skills/browsing/lib/capture.js": {
-      "sha256": "d9c1d8c17f8d5457e4779e260392d57c5c66fda1025e807f782a6654f3f018f7",
+      "sha256": "12b5aa16987d6fdb106a4e38802578ef9db97d02bb9a6f947b77ba4f2e5c1d8b",
       "mode": 420
     },
     ".claude-plugin/skills/browsing/lib/cdp-router.js": {
@@ -64,7 +64,7 @@
       "mode": 420
     },
     ".claude-plugin/skills/browsing/lib/chrome-process.js": {
-      "sha256": "3dfc94a2188eff21fdd0db513f66d4176d501e4cbcffacd300e7accdd2d21d7c",
+      "sha256": "f9b3644d287965d59d202271257fbd086f8725c5255ba7ff1742e1be038af7af",
       "mode": 420
     },
     ".claude-plugin/skills/browsing/lib/console-logging.js": {
@@ -76,7 +76,7 @@
       "mode": 420
     },
     ".claude-plugin/skills/browsing/lib/dialogs-render.js": {
-      "sha256": "754c9bbe642b6c0c196933a27a04ee2dbb5e917daf41b6f3973f65621e12c0c1",
+      "sha256": "86de5b1b037c46c2257b9c2cbaa6465b1a6168edf3de51f38274181a8fb39ecc",
       "mode": 420
     },
     ".claude-plugin/skills/browsing/lib/dialogs-router.js": {
@@ -84,7 +84,7 @@
       "mode": 420
     },
     ".claude-plugin/skills/browsing/lib/dialogs.js": {
-      "sha256": "7deace784245d1214ae5f014164a9647c034c62c3c28ba82e9f8fccf9064305d",
+      "sha256": "3e5c6806e9b7e16b99279719a72f2f8283cc836b263d31d31ac69b4ffad2f705",
       "mode": 420
     },
     ".claude-plugin/skills/browsing/lib/element-selector.js": {
@@ -104,7 +104,7 @@
       "mode": 420
     },
     ".claude-plugin/skills/browsing/lib/html-diff.js": {
-      "sha256": "ba5ea361227f3d78dae33d74840be5ad7f0be14d585f37e9af121d582a65dac3",
+      "sha256": "8dd766f5902d1b68c7fc0f2c7e6d451c953179121368fc193adefd462ec1671c",
       "mode": 420
     },
     ".claude-plugin/skills/browsing/lib/key-definitions.js": {
@@ -148,7 +148,7 @@
       "mode": 420
     },
     ".claude-plugin/skills/browsing/lib/select-option.js": {
-      "sha256": "c86811542643a27819b17dbd6e0ed8d7aef2e97a2da8429b1f07a29ab1e5afea",
+      "sha256": "a70e1944a2d3853b4bfb12528d75993e52813af9539ed2c5f127837549dc6ee3",
       "mode": 420
     },
     ".claude-plugin/skills/browsing/lib/session-state.js": {
@@ -199,7 +199,7 @@
       "mode": 420
     },
     ".codex-plugin/skills/browsing/host-override.js": {
-      "sha256": "65a8b46308dc1c58c7545bf33850d5a41c956d9c7e848f7452b2fa3c95508631",
+      "sha256": "9b9495a7b1c0972dfac1c829c0687e64c991f5ae71b142ab28d4ce90493c28f6",
       "mode": 420
     },
     ".codex-plugin/skills/browsing/lib/browser-bridge.js": {
@@ -211,7 +211,7 @@
       "mode": 420
     },
     ".codex-plugin/skills/browsing/lib/capture.js": {
-      "sha256": "d9c1d8c17f8d5457e4779e260392d57c5c66fda1025e807f782a6654f3f018f7",
+      "sha256": "12b5aa16987d6fdb106a4e38802578ef9db97d02bb9a6f947b77ba4f2e5c1d8b",
       "mode": 420
     },
     ".codex-plugin/skills/browsing/lib/cdp-router.js": {
@@ -227,7 +227,7 @@
       "mode": 420
     },
     ".codex-plugin/skills/browsing/lib/chrome-process.js": {
-      "sha256": "3dfc94a2188eff21fdd0db513f66d4176d501e4cbcffacd300e7accdd2d21d7c",
+      "sha256": "f9b3644d287965d59d202271257fbd086f8725c5255ba7ff1742e1be038af7af",
       "mode": 420
     },
     ".codex-plugin/skills/browsing/lib/console-logging.js": {
@@ -239,7 +239,7 @@
       "mode": 420
     },
     ".codex-plugin/skills/browsing/lib/dialogs-render.js": {
-      "sha256": "754c9bbe642b6c0c196933a27a04ee2dbb5e917daf41b6f3973f65621e12c0c1",
+      "sha256": "86de5b1b037c46c2257b9c2cbaa6465b1a6168edf3de51f38274181a8fb39ecc",
       "mode": 420
     },
     ".codex-plugin/skills/browsing/lib/dialogs-router.js": {
@@ -247,7 +247,7 @@
       "mode": 420
     },
     ".codex-plugin/skills/browsing/lib/dialogs.js": {
-      "sha256": "7deace784245d1214ae5f014164a9647c034c62c3c28ba82e9f8fccf9064305d",
+      "sha256": "3e5c6806e9b7e16b99279719a72f2f8283cc836b263d31d31ac69b4ffad2f705",
       "mode": 420
     },
     ".codex-plugin/skills/browsing/lib/element-selector.js": {
@@ -267,7 +267,7 @@
       "mode": 420
     },
     ".codex-plugin/skills/browsing/lib/html-diff.js": {
-      "sha256": "ba5ea361227f3d78dae33d74840be5ad7f0be14d585f37e9af121d582a65dac3",
+      "sha256": "8dd766f5902d1b68c7fc0f2c7e6d451c953179121368fc193adefd462ec1671c",
       "mode": 420
     },
     ".codex-plugin/skills/browsing/lib/key-definitions.js": {
@@ -311,7 +311,7 @@
       "mode": 420
     },
     ".codex-plugin/skills/browsing/lib/select-option.js": {
-      "sha256": "c86811542643a27819b17dbd6e0ed8d7aef2e97a2da8429b1f07a29ab1e5afea",
+      "sha256": "a70e1944a2d3853b4bfb12528d75993e52813af9539ed2c5f127837549dc6ee3",
       "mode": 420
     },
     ".codex-plugin/skills/browsing/lib/session-state.js": {
@@ -365,7 +365,7 @@
       "mode": 420
     },
     ".cursor-plugin/skills/browsing/host-override.js": {
-      "sha256": "65a8b46308dc1c58c7545bf33850d5a41c956d9c7e848f7452b2fa3c95508631",
+      "sha256": "9b9495a7b1c0972dfac1c829c0687e64c991f5ae71b142ab28d4ce90493c28f6",
       "mode": 420
     },
     ".cursor-plugin/skills/browsing/lib/browser-bridge.js": {
@@ -377,7 +377,7 @@
       "mode": 420
     },
     ".cursor-plugin/skills/browsing/lib/capture.js": {
-      "sha256": "d9c1d8c17f8d5457e4779e260392d57c5c66fda1025e807f782a6654f3f018f7",
+      "sha256": "12b5aa16987d6fdb106a4e38802578ef9db97d02bb9a6f947b77ba4f2e5c1d8b",
       "mode": 420
     },
     ".cursor-plugin/skills/browsing/lib/cdp-router.js": {
@@ -393,7 +393,7 @@
       "mode": 420
     },
     ".cursor-plugin/skills/browsing/lib/chrome-process.js": {
-      "sha256": "3dfc94a2188eff21fdd0db513f66d4176d501e4cbcffacd300e7accdd2d21d7c",
+      "sha256": "f9b3644d287965d59d202271257fbd086f8725c5255ba7ff1742e1be038af7af",
       "mode": 420
     },
     ".cursor-plugin/skills/browsing/lib/console-logging.js": {
@@ -405,7 +405,7 @@
       "mode": 420
     },
     ".cursor-plugin/skills/browsing/lib/dialogs-render.js": {
-      "sha256": "754c9bbe642b6c0c196933a27a04ee2dbb5e917daf41b6f3973f65621e12c0c1",
+      "sha256": "86de5b1b037c46c2257b9c2cbaa6465b1a6168edf3de51f38274181a8fb39ecc",
       "mode": 420
     },
     ".cursor-plugin/skills/browsing/lib/dialogs-router.js": {
@@ -413,7 +413,7 @@
       "mode": 420
     },
     ".cursor-plugin/skills/browsing/lib/dialogs.js": {
-      "sha256": "7deace784245d1214ae5f014164a9647c034c62c3c28ba82e9f8fccf9064305d",
+      "sha256": "3e5c6806e9b7e16b99279719a72f2f8283cc836b263d31d31ac69b4ffad2f705",
       "mode": 420
     },
     ".cursor-plugin/skills/browsing/lib/element-selector.js": {
@@ -433,7 +433,7 @@
       "mode": 420
     },
     ".cursor-plugin/skills/browsing/lib/html-diff.js": {
-      "sha256": "ba5ea361227f3d78dae33d74840be5ad7f0be14d585f37e9af121d582a65dac3",
+      "sha256": "8dd766f5902d1b68c7fc0f2c7e6d451c953179121368fc193adefd462ec1671c",
       "mode": 420
     },
     ".cursor-plugin/skills/browsing/lib/key-definitions.js": {
@@ -477,7 +477,7 @@
       "mode": 420
     },
     ".cursor-plugin/skills/browsing/lib/select-option.js": {
-      "sha256": "c86811542643a27819b17dbd6e0ed8d7aef2e97a2da8429b1f07a29ab1e5afea",
+      "sha256": "a70e1944a2d3853b4bfb12528d75993e52813af9539ed2c5f127837549dc6ee3",
       "mode": 420
     },
     ".cursor-plugin/skills/browsing/lib/session-state.js": {
@@ -528,7 +528,7 @@
       "mode": 420
     },
     ".kimi-plugin/skills/browsing/host-override.js": {
-      "sha256": "65a8b46308dc1c58c7545bf33850d5a41c956d9c7e848f7452b2fa3c95508631",
+      "sha256": "9b9495a7b1c0972dfac1c829c0687e64c991f5ae71b142ab28d4ce90493c28f6",
       "mode": 420
     },
     ".kimi-plugin/skills/browsing/lib/browser-bridge.js": {
@@ -540,7 +540,7 @@
       "mode": 420
     },
     ".kimi-plugin/skills/browsing/lib/capture.js": {
-      "sha256": "d9c1d8c17f8d5457e4779e260392d57c5c66fda1025e807f782a6654f3f018f7",
+      "sha256": "12b5aa16987d6fdb106a4e38802578ef9db97d02bb9a6f947b77ba4f2e5c1d8b",
       "mode": 420
     },
     ".kimi-plugin/skills/browsing/lib/cdp-router.js": {
@@ -556,7 +556,7 @@
       "mode": 420
     },
     ".kimi-plugin/skills/browsing/lib/chrome-process.js": {
-      "sha256": "3dfc94a2188eff21fdd0db513f66d4176d501e4cbcffacd300e7accdd2d21d7c",
+      "sha256": "f9b3644d287965d59d202271257fbd086f8725c5255ba7ff1742e1be038af7af",
       "mode": 420
     },
     ".kimi-plugin/skills/browsing/lib/console-logging.js": {
@@ -568,7 +568,7 @@
       "mode": 420
     },
     ".kimi-plugin/skills/browsing/lib/dialogs-render.js": {
-      "sha256": "754c9bbe642b6c0c196933a27a04ee2dbb5e917daf41b6f3973f65621e12c0c1",
+      "sha256": "86de5b1b037c46c2257b9c2cbaa6465b1a6168edf3de51f38274181a8fb39ecc",
       "mode": 420
     },
     ".kimi-plugin/skills/browsing/lib/dialogs-router.js": {
@@ -576,7 +576,7 @@
       "mode": 420
     },
     ".kimi-plugin/skills/browsing/lib/dialogs.js": {
-      "sha256": "7deace784245d1214ae5f014164a9647c034c62c3c28ba82e9f8fccf9064305d",
+      "sha256": "3e5c6806e9b7e16b99279719a72f2f8283cc836b263d31d31ac69b4ffad2f705",
       "mode": 420
     },
     ".kimi-plugin/skills/browsing/lib/element-selector.js": {
@@ -596,7 +596,7 @@
       "mode": 420
     },
     ".kimi-plugin/skills/browsing/lib/html-diff.js": {
-      "sha256": "ba5ea361227f3d78dae33d74840be5ad7f0be14d585f37e9af121d582a65dac3",
+      "sha256": "8dd766f5902d1b68c7fc0f2c7e6d451c953179121368fc193adefd462ec1671c",
       "mode": 420
     },
     ".kimi-plugin/skills/browsing/lib/key-definitions.js": {
@@ -640,7 +640,7 @@
       "mode": 420
     },
     ".kimi-plugin/skills/browsing/lib/select-option.js": {
-      "sha256": "c86811542643a27819b17dbd6e0ed8d7aef2e97a2da8429b1f07a29ab1e5afea",
+      "sha256": "a70e1944a2d3853b4bfb12528d75993e52813af9539ed2c5f127837549dc6ee3",
       "mode": 420
     },
     ".kimi-plugin/skills/browsing/lib/session-state.js": {
@@ -694,7 +694,7 @@
       "mode": 420
     },
     ".opencode/skills/browsing/host-override.js": {
-      "sha256": "65a8b46308dc1c58c7545bf33850d5a41c956d9c7e848f7452b2fa3c95508631",
+      "sha256": "9b9495a7b1c0972dfac1c829c0687e64c991f5ae71b142ab28d4ce90493c28f6",
       "mode": 420
     },
     ".opencode/skills/browsing/lib/browser-bridge.js": {
@@ -706,7 +706,7 @@
       "mode": 420
     },
     ".opencode/skills/browsing/lib/capture.js": {
-      "sha256": "d9c1d8c17f8d5457e4779e260392d57c5c66fda1025e807f782a6654f3f018f7",
+      "sha256": "12b5aa16987d6fdb106a4e38802578ef9db97d02bb9a6f947b77ba4f2e5c1d8b",
       "mode": 420
     },
     ".opencode/skills/browsing/lib/cdp-router.js": {
@@ -722,7 +722,7 @@
       "mode": 420
     },
     ".opencode/skills/browsing/lib/chrome-process.js": {
-      "sha256": "3dfc94a2188eff21fdd0db513f66d4176d501e4cbcffacd300e7accdd2d21d7c",
+      "sha256": "f9b3644d287965d59d202271257fbd086f8725c5255ba7ff1742e1be038af7af",
       "mode": 420
     },
     ".opencode/skills/browsing/lib/console-logging.js": {
@@ -734,7 +734,7 @@
       "mode": 420
     },
     ".opencode/skills/browsing/lib/dialogs-render.js": {
-      "sha256": "754c9bbe642b6c0c196933a27a04ee2dbb5e917daf41b6f3973f65621e12c0c1",
+      "sha256": "86de5b1b037c46c2257b9c2cbaa6465b1a6168edf3de51f38274181a8fb39ecc",
       "mode": 420
     },
     ".opencode/skills/browsing/lib/dialogs-router.js": {
@@ -742,7 +742,7 @@
       "mode": 420
     },
     ".opencode/skills/browsing/lib/dialogs.js": {
-      "sha256": "7deace784245d1214ae5f014164a9647c034c62c3c28ba82e9f8fccf9064305d",
+      "sha256": "3e5c6806e9b7e16b99279719a72f2f8283cc836b263d31d31ac69b4ffad2f705",
       "mode": 420
     },
     ".opencode/skills/browsing/lib/element-selector.js": {
@@ -762,7 +762,7 @@
       "mode": 420
     },
     ".opencode/skills/browsing/lib/html-diff.js": {
-      "sha256": "ba5ea361227f3d78dae33d74840be5ad7f0be14d585f37e9af121d582a65dac3",
+      "sha256": "8dd766f5902d1b68c7fc0f2c7e6d451c953179121368fc193adefd462ec1671c",
       "mode": 420
     },
     ".opencode/skills/browsing/lib/key-definitions.js": {
@@ -806,7 +806,7 @@
       "mode": 420
     },
     ".opencode/skills/browsing/lib/select-option.js": {
-      "sha256": "c86811542643a27819b17dbd6e0ed8d7aef2e97a2da8429b1f07a29ab1e5afea",
+      "sha256": "a70e1944a2d3853b4bfb12528d75993e52813af9539ed2c5f127837549dc6ee3",
       "mode": 420
     },
     ".opencode/skills/browsing/lib/session-state.js": {
@@ -857,7 +857,7 @@
       "mode": 420
     },
     ".pi/skills/browsing/host-override.js": {
-      "sha256": "65a8b46308dc1c58c7545bf33850d5a41c956d9c7e848f7452b2fa3c95508631",
+      "sha256": "9b9495a7b1c0972dfac1c829c0687e64c991f5ae71b142ab28d4ce90493c28f6",
       "mode": 420
     },
     ".pi/skills/browsing/lib/browser-bridge.js": {
@@ -869,7 +869,7 @@
       "mode": 420
     },
     ".pi/skills/browsing/lib/capture.js": {
-      "sha256": "d9c1d8c17f8d5457e4779e260392d57c5c66fda1025e807f782a6654f3f018f7",
+      "sha256": "12b5aa16987d6fdb106a4e38802578ef9db97d02bb9a6f947b77ba4f2e5c1d8b",
       "mode": 420
     },
     ".pi/skills/browsing/lib/cdp-router.js": {
@@ -885,7 +885,7 @@
       "mode": 420
     },
     ".pi/skills/browsing/lib/chrome-process.js": {
-      "sha256": "3dfc94a2188eff21fdd0db513f66d4176d501e4cbcffacd300e7accdd2d21d7c",
+      "sha256": "f9b3644d287965d59d202271257fbd086f8725c5255ba7ff1742e1be038af7af",
       "mode": 420
     },
     ".pi/skills/browsing/lib/console-logging.js": {
@@ -897,7 +897,7 @@
       "mode": 420
     },
     ".pi/skills/browsing/lib/dialogs-render.js": {
-      "sha256": "754c9bbe642b6c0c196933a27a04ee2dbb5e917daf41b6f3973f65621e12c0c1",
+      "sha256": "86de5b1b037c46c2257b9c2cbaa6465b1a6168edf3de51f38274181a8fb39ecc",
       "mode": 420
     },
     ".pi/skills/browsing/lib/dialogs-router.js": {
@@ -905,7 +905,7 @@
       "mode": 420
     },
     ".pi/skills/browsing/lib/dialogs.js": {
-      "sha256": "7deace784245d1214ae5f014164a9647c034c62c3c28ba82e9f8fccf9064305d",
+      "sha256": "3e5c6806e9b7e16b99279719a72f2f8283cc836b263d31d31ac69b4ffad2f705",
       "mode": 420
     },
     ".pi/skills/browsing/lib/element-selector.js": {
@@ -925,7 +925,7 @@
       "mode": 420
     },
     ".pi/skills/browsing/lib/html-diff.js": {
-      "sha256": "ba5ea361227f3d78dae33d74840be5ad7f0be14d585f37e9af121d582a65dac3",
+      "sha256": "8dd766f5902d1b68c7fc0f2c7e6d451c953179121368fc193adefd462ec1671c",
       "mode": 420
     },
     ".pi/skills/browsing/lib/key-definitions.js": {
@@ -969,7 +969,7 @@
       "mode": 420
     },
     ".pi/skills/browsing/lib/select-option.js": {
-      "sha256": "c86811542643a27819b17dbd6e0ed8d7aef2e97a2da8429b1f07a29ab1e5afea",
+      "sha256": "a70e1944a2d3853b4bfb12528d75993e52813af9539ed2c5f127837549dc6ee3",
       "mode": 420
     },
     ".pi/skills/browsing/lib/session-state.js": {

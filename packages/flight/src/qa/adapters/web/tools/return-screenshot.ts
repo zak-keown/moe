@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { readFileSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -30,7 +31,13 @@ export function buildReturnScreenshot(opts: {
     if (!args.return_screenshot) return {};
     const targetTab = tabOverride ?? defaultTab;
     const t0 = Date.now();
-    const tmpFile = join(tmpdir(), `moe-flight-screenshot-${Date.now()}.png`);
+    // CR-034: a timestamp alone collides across concurrent runs (this
+    // process runs multiple QA agents concurrently — see
+    // AppConfig.maxConcurrentRuns / ActiveRunRegistry) — two calls that land
+    // in the same millisecond would otherwise target the identical temp
+    // file. process.pid + a random UUID makes every call's temp file unique
+    // regardless of timing.
+    const tmpFile = join(tmpdir(), `moe-flight-screenshot-${process.pid}-${randomUUID()}.png`);
     try {
       await chrome.screenshot(targetTab, tmpFile, null, false, {
         timeoutMs: RETURN_SCREENSHOT_TIMEOUT_MS,

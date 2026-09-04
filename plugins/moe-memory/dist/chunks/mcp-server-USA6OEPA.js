@@ -7,7 +7,7 @@ import {
 } from "./chunk-BCQKWEPH.js";
 import {
   JournalSearchService
-} from "./chunk-TPANDLU7.js";
+} from "./chunk-AGJG5ER2.js";
 import {
   JournalStore
 } from "./chunk-XQQVRDY6.js";
@@ -17,14 +17,16 @@ import {
   formatResults,
   searchConversations,
   searchMultipleConcepts
-} from "./chunk-ESBWE2AP.js";
+} from "./chunk-TG7AXCW2.js";
 import "./chunk-TD4KRVGL.js";
 import {
   initDatabase,
   insertEdge,
   traceProvenance
 } from "./chunk-X4QDSJ7Q.js";
-import "./chunk-YFLZKW2J.js";
+import {
+  getArchiveDir
+} from "./chunk-YFLZKW2J.js";
 import "./chunk-OYWI4M6D.js";
 import "./chunk-NH4NDHAK.js";
 import {
@@ -29524,6 +29526,34 @@ function handleError(error61) {
 function textResult(text) {
   return { content: [{ type: "text", text }] };
 }
+var SOURCE_TYPES = ["exchange", "journal", "decision", "finding", "moedex_symbol"];
+function parseTypeId(value, label) {
+  const colonIdx = value.indexOf(":");
+  if (colonIdx < 1) {
+    throw new Error(`Invalid ${label} format: expected type:id, got "${value}"`);
+  }
+  const type = value.slice(0, colonIdx);
+  const id = value.slice(colonIdx + 1);
+  if (!SOURCE_TYPES.includes(type)) {
+    throw new Error(`Invalid ${label} type "${type}": expected one of ${SOURCE_TYPES.join(", ")}`);
+  }
+  return { type, id };
+}
+function isUnderRoot(candidate, root) {
+  return candidate === root || candidate.startsWith(root + path.sep);
+}
+function assertUnderArchiveRoot(candidatePath) {
+  const archiveRoot = path.resolve(getArchiveDir());
+  const resolvedPath = path.resolve(candidatePath);
+  if (!isUnderRoot(resolvedPath, archiveRoot)) {
+    throw new Error(`Path is not under the conversation archive: ${candidatePath}`);
+  }
+  const realPath = fs.realpathSync(resolvedPath);
+  const realArchiveRoot = fs.realpathSync(archiveRoot);
+  if (!isUnderRoot(realPath, realArchiveRoot)) {
+    throw new Error(`Path is not under the conversation archive: ${candidatePath}`);
+  }
+}
 var JOURNAL_SCOPE_PROPERTY = {
   type: "string",
   enum: ["project", "user", "both"],
@@ -29890,6 +29920,7 @@ function createMemoryMcpServer(options = {}) {
         if (!fs.existsSync(params.path)) {
           throw new Error(`File not found: ${params.path}`);
         }
+        assertUnderArchiveRoot(params.path);
         const jsonlContent = fs.readFileSync(params.path, "utf-8");
         return textResult(
           formatConversationAsMarkdown(jsonlContent, params.startLine, params.endLine)
@@ -30016,16 +30047,8 @@ ${entry.content}`
       }
       if (name === "link_memories") {
         const params = LinkMemoriesInputSchema.parse(args);
-        const sourceColon = params.source.indexOf(":");
-        const targetColon = params.target.indexOf(":");
-        if (sourceColon < 1)
-          throw new Error(`Invalid source format: expected type:id, got "${params.source}"`);
-        if (targetColon < 1)
-          throw new Error(`Invalid target format: expected type:id, got "${params.target}"`);
-        const sourceType = params.source.slice(0, sourceColon);
-        const sourceId = params.source.slice(sourceColon + 1);
-        const targetType = params.target.slice(0, targetColon);
-        const targetId = params.target.slice(targetColon + 1);
+        const { type: sourceType, id: sourceId } = parseTypeId(params.source, "source");
+        const { type: targetType, id: targetId } = parseTypeId(params.target, "target");
         const edgeId = crypto.randomUUID();
         const edge = {
           id: edgeId,
@@ -30050,11 +30073,7 @@ ${entry.content}`
       }
       if (name === "trace_provenance") {
         const params = TraceProvenanceInputSchema.parse(args);
-        const colonIdx = params.id.indexOf(":");
-        if (colonIdx < 1)
-          throw new Error(`Invalid id format: expected type:id, got "${params.id}"`);
-        const recordType = params.id.slice(0, colonIdx);
-        const recordId = params.id.slice(colonIdx + 1);
+        const { type: recordType, id: recordId } = parseTypeId(params.id, "id");
         const db = initDatabase();
         try {
           const chain = traceProvenance(db, recordType, recordId, params.depth, params.direction);

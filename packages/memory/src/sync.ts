@@ -173,42 +173,43 @@ export async function syncConversations(
     } catch {
       console.error("moe-memory: embedding model unavailable; text will be stored without vectors");
     }
-
-    for (const file of filesToIndex) {
-      try {
-        // Check for DO NOT INDEX marker
-        if (shouldSkipConversation(file)) {
-          continue; // Skip indexing but file is already copied
-        }
-
-        const project = path.basename(path.dirname(file));
-        const exchanges = await parseConversation(file, project, file);
-
-        for (const exchange of exchanges) {
-          const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
-          let embedding: number[] | null = null;
-          if (embeddingsReady) {
-            try {
-              embedding = await generateExchangeEmbedding(
-                exchange.userMessage,
-                exchange.assistantMessage,
-                toolNames,
-              );
-            } catch {}
+    try {
+      for (const file of filesToIndex) {
+        try {
+          // Check for DO NOT INDEX marker
+          if (shouldSkipConversation(file)) {
+            continue; // Skip indexing but file is already copied
           }
-          insertExchange(db, exchange, embedding, toolNames);
+
+          const project = path.basename(path.dirname(file));
+          const exchanges = await parseConversation(file, project, file);
+
+          for (const exchange of exchanges) {
+            const toolNames = exchange.toolCalls?.map((tc) => tc.toolName);
+            let embedding: number[] | null = null;
+            if (embeddingsReady) {
+              try {
+                embedding = await generateExchangeEmbedding(
+                  exchange.userMessage,
+                  exchange.assistantMessage,
+                  toolNames,
+                );
+              } catch {}
+            }
+            insertExchange(db, exchange, embedding, toolNames);
+          }
+
+          result.indexed++;
+        } catch (error) {
+          result.errors.push({
+            file,
+            error: error instanceof Error ? error.message : String(error),
+          });
         }
-
-        result.indexed++;
-      } catch (error) {
-        result.errors.push({
-          file,
-          error: error instanceof Error ? error.message : String(error),
-        });
       }
+    } finally {
+      db.close();
     }
-
-    db.close();
   }
 
   // Generate summaries for files that need them

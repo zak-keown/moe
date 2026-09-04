@@ -451,6 +451,18 @@ export class WebAdapter implements Adapter {
       recomputeActiveTab: () => this.activeTab(),
     };
 
+    // CR-080: a tool removed from toolDefinitions() (e.g. `eval`, PRI-1590)
+    // must actually be unreachable here, not merely undiscoverable to a
+    // well-behaved LLM provider. `this.toolSchemas` was populated from
+    // toolDefinitions() above; the schema-shape check a few lines up only
+    // runs `if (schema)` — i.e. only for declared tools — and silently
+    // no-ops for anything else, so it alone doesn't stop an undeclared name
+    // from reaching the switch below. Reject it here explicitly, independent
+    // of that shape check.
+    if (!this.toolSchemas.has(name)) {
+      return textResult(`Error: unknown tool: ${name}`);
+    }
+
     switch (name) {
       case "screenshot":
         return executeScreenshot(ctx, args);

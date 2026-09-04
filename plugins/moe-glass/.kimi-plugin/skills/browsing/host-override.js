@@ -1,3 +1,5 @@
+const net = require('net');
+
 const DEFAULT_PORT = 9222;
 const DEFAULT_HOST = '127.0.0.1';
 
@@ -77,7 +79,11 @@ function createOverride({ host, port } = {}) {
     const usePort = overridePort !== undefined ? overridePort : instancePort;
     try {
       const url = new URL(originalUrl);
-      url.hostname = useHost;
+      // WHATWG URL: assigning a bare IPv6 literal to `hostname` is a silent
+      // no-op (it must be bracketed, e.g. `[::1]`). Bracket it ourselves so
+      // the assignment actually takes effect instead of quietly leaving the
+      // original host in place.
+      url.hostname = net.isIPv6(useHost) ? `[${useHost}]` : useHost;
       url.port = `${usePort}`;
       return url.toString();
     } catch {

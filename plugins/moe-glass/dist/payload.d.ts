@@ -211,3 +211,28 @@ export type StrictStructuredResult = {
  * looking at a genuinely-parsed object instead of a stray string.
  */
 export declare function resolveStrictStructuredPayload(payload: string | Record<string, any> | undefined | null): StrictStructuredResult;
+/**
+ * How the `type` action's handler should perform the actual typing, decided
+ * from the already-parsed payload object (CR-095).
+ *
+ * The handler unconditionally called chromeLib.humanType(), whose
+ * documented per-character delay+jitter (80ms/80ms by default) means an
+ * ordinary few-hundred-character value takes tens of seconds — with no
+ * field in `type`'s payload shape through which a caller could opt out, even
+ * though the codebase already has a faster primitive (`fill()`, used by the
+ * CLI and fillWithCapture) that solves exactly this.
+ *
+ * `fast: true` on the payload object routes to `fill()` instead of
+ * `humanType()` entirely. `delay`/`jitter` (only meaningful when not fast)
+ * override humanType's per-character timing directly, without opting out of
+ * the realistic-typing path altogether. Only reachable when `payload` is
+ * passed as an object — `type` is a 'scalar' PAYLOAD_SPECS entry, so a
+ * string payload is always taken literally as the text to type (see
+ * parsePayload's kind:'scalar' doc comment), which is unaffected by this.
+ */
+export interface TypeCallOptions {
+    fast: boolean;
+    delay?: number | undefined;
+    jitter?: number | undefined;
+}
+export declare function resolveTypeOptions(p: Record<string, any>): TypeCallOptions;

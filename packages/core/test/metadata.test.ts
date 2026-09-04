@@ -156,6 +156,27 @@ describe("skill inventory", () => {
     expect(Object.keys(imported).length).toBe(32);
   });
 
+  it("cites its own current title in AGENTS.md's guarded-surfaces list", () => {
+    // AGENTS.md's whole point for this section is that an agent can grep for
+    // the quoted title to find the guarded literal without a line number —
+    // that only works if the quote is kept current when the pinned count
+    // changes. Derive the expected citation from this test's own live title
+    // rather than hardcoding the number a second time, so a future bump
+    // (like mattpocock-skills's 31 -> 32) can't silently leave AGENTS.md
+    // quoting a title that no longer exists.
+    const thisFile = readFileSync(join(PKG, "test/metadata.test.ts"), "utf8");
+    const titleMatch = thisFile.match(/it\("(pins the IMPORTED skill set at exactly \d+)"/);
+    expect(titleMatch, "could not find this test's own title in its source").not.toBeNull();
+    const liveTitle = titleMatch![1];
+
+    const root = resolve(PKG, "../..");
+    const agents = readFileSync(join(root, "AGENTS.md"), "utf8").replace(/\s+/g, " ");
+    expect(
+      agents,
+      `AGENTS.md's guarded-surfaces citation is stale — it should quote "${liveTitle}"`,
+    ).toContain(`"${liveTitle}"`);
+  });
+
   it("every skill has a non-empty name and description", () => {
     for (const s of skills) {
       expect(s.name, `${s.dir}: frontmatter name`).not.toBe("");

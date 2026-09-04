@@ -163,70 +163,73 @@ async function searchConversations(query, options = {}) {
   if (before) validateISODate(before, "--before");
   const db = initDatabase();
   let results = [];
-  const { sql: filterClause, params: filterParams } = buildSearchFilters(options);
-  if (mode === "vector" || mode === "both") {
-    if (!isVectorQueryAuthorized(db)) {
-      if (mode === "vector") {
-        db.close();
-        return [];
-      }
-    } else {
-      await initEmbeddings();
-      const queryEmbedding = await generateQueryEmbedding(query);
-      const k = hasMetadataFilters(options) ? limit * 3 : limit;
-      const stmt = db.prepare(`
-        SELECT
-          ${EXCHANGE_SELECT_COLUMNS},
-          vec.distance
-        FROM vec_exchanges AS vec
-        JOIN exchanges AS e ON vec.id = e.id
-        WHERE vec.embedding MATCH ?
-          AND k = ?
-          AND e.is_sidechain = 0
-          AND e.embedding_version = 3
-          ${filterClause}
-        ORDER BY vec.distance ASC
-      `);
-      results = stmt.all(
-        new Uint8Array(new Float32Array(queryEmbedding).buffer),
-        k,
-        ...filterParams
-      );
-      if (results.length > limit) {
-        results = results.slice(0, limit);
-      }
-    }
-  }
-  if (mode === "text" || mode === "both") {
-    const textStmt = db.prepare(`
-      SELECT
-        ${EXCHANGE_SELECT_COLUMNS},
-        NULL as distance
-      FROM exchanges AS e
-      WHERE (e.user_message LIKE ? OR e.assistant_message LIKE ?)
-        AND e.is_sidechain = 0
-        ${filterClause}
-      ORDER BY e.timestamp DESC
-      LIMIT ?
-    `);
-    const textResults = textStmt.all(
-      `%${query}%`,
-      `%${query}%`,
-      ...filterParams,
-      limit
-    );
-    if (mode === "both") {
-      const seenIds = new Set(results.map((r) => r.id));
-      for (const textResult of textResults) {
-        if (!seenIds.has(textResult.id)) {
-          results.push(textResult);
+  try {
+    const { sql: filterClause, params: filterParams } = buildSearchFilters(options);
+    if (mode === "vector" || mode === "both") {
+      if (!isVectorQueryAuthorized(db)) {
+        if (mode === "vector") {
+          db.close();
+          return [];
+        }
+      } else {
+        await initEmbeddings();
+        const queryEmbedding = await generateQueryEmbedding(query);
+        const k = hasMetadataFilters(options) ? limit * 3 : limit;
+        const stmt = db.prepare(`
+          SELECT
+            ${EXCHANGE_SELECT_COLUMNS},
+            vec.distance
+          FROM vec_exchanges AS vec
+          JOIN exchanges AS e ON vec.id = e.id
+          WHERE vec.embedding MATCH ?
+            AND k = ?
+            AND e.is_sidechain = 0
+            AND e.embedding_version = 3
+            ${filterClause}
+          ORDER BY vec.distance ASC
+        `);
+        results = stmt.all(
+          Buffer.from(new Float32Array(queryEmbedding).buffer),
+          k,
+          ...filterParams
+        );
+        if (results.length > limit) {
+          results = results.slice(0, limit);
         }
       }
-    } else {
-      results = textResults;
     }
+    if (mode === "text" || mode === "both") {
+      const textStmt = db.prepare(`
+        SELECT
+          ${EXCHANGE_SELECT_COLUMNS},
+          NULL as distance
+        FROM exchanges AS e
+        WHERE (e.user_message LIKE ? OR e.assistant_message LIKE ?)
+          AND e.is_sidechain = 0
+          ${filterClause}
+        ORDER BY e.timestamp DESC
+        LIMIT ?
+      `);
+      const textResults = textStmt.all(
+        `%${query}%`,
+        `%${query}%`,
+        ...filterParams,
+        limit
+      );
+      if (mode === "both") {
+        const seenIds = new Set(results.map((r) => r.id));
+        for (const textResult of textResults) {
+          if (!seenIds.has(textResult.id)) {
+            results.push(textResult);
+          }
+        }
+      } else {
+        results = textResults;
+      }
+    }
+  } finally {
+    db.close();
   }
-  db.close();
   return results.map((row) => {
     const exchange = exchangeFromRow(row);
     const summaryPath = row.archive_path.replace(".jsonl", "-summary.txt");

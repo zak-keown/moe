@@ -34,104 +34,107 @@ export async function verifyIndex(): Promise<VerificationResult> {
   // Initialize database once for all checks
   const db = initDatabase();
 
-  const projects = fs.readdirSync(archiveDir);
-  const excludedProjects = getExcludedProjects();
-  const excludedDirSet = new Set(excludedProjects);
-  let totalChecked = 0;
+  try {
+    const projects = fs.readdirSync(archiveDir);
+    const excludedProjects = getExcludedProjects();
+    const excludedDirSet = new Set(excludedProjects);
+    let totalChecked = 0;
 
-  for (const project of projects) {
-    if (excludedProjects.includes(project)) {
-      console.log(`\nSkipping excluded project: ${project}`);
-      continue;
-    }
-
-    const projectPath = path.join(archiveDir, project);
-    const stat = fs.statSync(projectPath);
-
-    if (!stat.isDirectory()) continue;
-
-    const files = findJsonlFiles(projectPath, excludedDirSet);
-
-    for (const file of files) {
-      totalChecked++;
-
-      if (totalChecked % 100 === 0) {
-        console.log(`  Checked ${totalChecked} conversations...`);
-      }
-
-      const conversationPath = path.join(projectPath, file);
-      foundFiles.add(conversationPath);
-
-      // A conversation the user marked DO-NOT-INDEX (CR-075/CR-076) has no
-      // summary by design — sync.ts's summarize gate is
-      // `shouldQueueForSummary(summaryPath) && !shouldSkipConversation(destFile)`,
-      // so it never gets one. Reporting that as "missing" turned a respected
-      // opt-out into an apparent index defect, and `index --repair` would then
-      // re-index and externally summarize exactly the conversation the user
-      // excluded. It is still tracked in `foundFiles` above so it is never
-      // reported as orphaned either.
-      if (shouldSkipConversation(conversationPath)) {
+    for (const project of projects) {
+      if (excludedProjects.includes(project)) {
+        console.log(`\nSkipping excluded project: ${project}`);
         continue;
       }
 
-      const summaryPath = conversationPath.replace(".jsonl", "-summary.txt");
+      const projectPath = path.join(archiveDir, project);
+      const stat = fs.statSync(projectPath);
 
-      // Check for missing or errored summary. An error sentinel (#96) means a
-      // previous summarization failed — verify treats it as "missing" so repair
-      // re-attempts it rather than reporting the conversation as healthy.
-      if (!fs.existsSync(summaryPath)) {
-        result.missing.push({ path: conversationPath, reason: "No summary file" });
-        continue;
-      }
-      if (isErroredSentinel(fs.readFileSync(summaryPath, "utf-8"))) {
-        result.missing.push({
-          path: conversationPath,
-          reason: "Previous summarization failed (error sentinel)",
-        });
-        continue;
-      }
+      if (!stat.isDirectory()) continue;
 
-      // Check if file is outdated (modified after last_indexed)
-      const lastIndexed = getFileLastIndexed(db, conversationPath);
-      if (lastIndexed !== null) {
-        const fileStat = fs.statSync(conversationPath);
-        if (fileStat.mtimeMs > lastIndexed) {
-          result.outdated.push({
+      const files = findJsonlFiles(projectPath, excludedDirSet);
+
+      for (const file of files) {
+        totalChecked++;
+
+        if (totalChecked % 100 === 0) {
+          console.log(`  Checked ${totalChecked} conversations...`);
+        }
+
+        const conversationPath = path.join(projectPath, file);
+        foundFiles.add(conversationPath);
+
+        // A conversation the user marked DO-NOT-INDEX (CR-075/CR-076) has no
+        // summary by design — sync.ts's summarize gate is
+        // `shouldQueueForSummary(summaryPath) && !shouldSkipConversation(destFile)`,
+        // so it never gets one. Reporting that as "missing" turned a respected
+        // opt-out into an apparent index defect, and `index --repair` would then
+        // re-index and externally summarize exactly the conversation the user
+        // excluded. It is still tracked in `foundFiles` above so it is never
+        // reported as orphaned either.
+        if (shouldSkipConversation(conversationPath)) {
+          continue;
+        }
+
+        const summaryPath = conversationPath.replace(".jsonl", "-summary.txt");
+
+        // Check for missing or errored summary. An error sentinel (#96) means a
+        // previous summarization failed — verify treats it as "missing" so repair
+        // re-attempts it rather than reporting the conversation as healthy.
+        if (!fs.existsSync(summaryPath)) {
+          result.missing.push({ path: conversationPath, reason: "No summary file" });
+          continue;
+        }
+        if (isErroredSentinel(fs.readFileSync(summaryPath, "utf-8"))) {
+          result.missing.push({
             path: conversationPath,
-            fileTime: fileStat.mtimeMs,
-            dbTime: lastIndexed,
+            reason: "Previous summarization failed (error sentinel)",
+          });
+          continue;
+        }
+
+        // Check if file is outdated (modified after last_indexed)
+        const lastIndexed = getFileLastIndexed(db, conversationPath);
+        if (lastIndexed !== null) {
+          const fileStat = fs.statSync(conversationPath);
+          if (fileStat.mtimeMs > lastIndexed) {
+            result.outdated.push({
+              path: conversationPath,
+              fileTime: fileStat.mtimeMs,
+              dbTime: lastIndexed,
+            });
+          }
+        }
+
+        // Try parsing to detect corruption
+        try {
+          await parseConversation(conversationPath, project, conversationPath);
+        } catch (error) {
+          result.corrupted.push({
+            path: conversationPath,
+            error: error instanceof Error ? error.message : String(error),
           });
         }
       }
+    }
 
-      // Try parsing to detect corruption
-      try {
-        await parseConversation(conversationPath, project, conversationPath);
-      } catch (error) {
-        result.corrupted.push({
-          path: conversationPath,
-          error: error instanceof Error ? error.message : String(error),
+    console.log(`Verified ${totalChecked} conversations.`);
+
+    // Check for orphaned database entries
+    const dbExchanges = getAllExchanges(db);
+
+    for (const exchange of dbExchanges) {
+      if (!foundFiles.has(exchange.archivePath)) {
+        result.orphaned.push({
+          uuid: exchange.id,
+          path: exchange.archivePath,
         });
       }
     }
+
+    return result;
+  } finally {
+    db.close();
   }
-
-  console.log(`Verified ${totalChecked} conversations.`);
-
-  // Check for orphaned database entries
-  const dbExchanges = getAllExchanges(db);
-  db.close();
-
-  for (const exchange of dbExchanges) {
-    if (!foundFiles.has(exchange.archivePath)) {
-      result.orphaned.push({
-        uuid: exchange.id,
-        path: exchange.archivePath,
-      });
-    }
-  }
-
-  return result;
 }
 
 export interface RepairOptions {

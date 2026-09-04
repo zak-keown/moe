@@ -70,12 +70,12 @@ const seed: JigExtensionCommand = {
   async run(args, _ctx) {
     const entryIdx = args.indexOf("--entry");
     const entry = entryIdx >= 0 ? args[entryIdx + 1] : undefined;
-    const skipSet = new Set<string>();
+    const skipIndices = new Set<number>();
     if (entryIdx >= 0) {
-      skipSet.add("--entry");
-      if (entry) skipSet.add(entry);
+      skipIndices.add(entryIdx);
+      if (entry !== undefined) skipIndices.add(entryIdx + 1);
     }
-    const topic = args.filter((a) => !skipSet.has(a)).join(" ");
+    const topic = args.filter((_a, i) => !skipIndices.has(i)).join(" ");
 
     if (!topic) {
       console.error("Usage: moe jig plan seed <topic> [--entry <file>]");

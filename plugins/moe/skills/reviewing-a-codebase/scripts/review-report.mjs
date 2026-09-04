@@ -60,5 +60,12 @@ export function findingProblems(block, repo) {
   if (!Object.hasOwn(RANK, sev)) {
     problems.push(`severity must be critical|high|medium|low, got ${sev ?? "nothing"}`);
   }
+  // A line-number citation survives neither merge nor repair. Refuse it
+  // wherever it appears in the block — the Anchor field or the prose —
+  // not just a bare `:N` suffix on the File field caught above.
+  const cite = block.match(/`[^`\n]*\.[A-Za-z0-9]+:\d+(?:-\d+)?`/);
+  if (cite) {
+    problems.push(`line-number citation: ${cite[0]}`);
+  }
   return problems;
 }

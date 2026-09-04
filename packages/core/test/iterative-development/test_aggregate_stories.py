@@ -112,14 +112,41 @@ class TestAggregateStories(unittest.TestCase):
         try:
             result = self._run(tmp)
             self.assertEqual(result.returncode, 0, msg=result.stderr)
-            output = self._read_all()
+
+            # Read each epic file individually rather than checking the
+            # concatenation of all of them — a substring window sliced out
+            # of the combined text (e.g. `output[idx - 2000:]`) can silently
+            # span both files, so a check against it stays true even when
+            # every story lands in a single, wrongly-shared epic file. Two
+            # distinct files is itself part of the regression guard.
+            epic_files = sorted(self.out_dir.glob("EPIC-*.md"))
+            self.assertEqual(
+                len(epic_files), 2,
+                f"expected one epic file per theme (Auth, Billing), got {epic_files}",
+            )
+            contents = {f: f.read_text() for f in epic_files}
+            auth_file = next((f for f, c in contents.items() if "domain-users.md" in c), None)
+            billing_file = next((f for f, c in contents.items() if "domain-billing.md" in c), None)
+            self.assertIsNotNone(auth_file, "no epic file cites domain-users.md")
+            self.assertIsNotNone(billing_file, "no epic file cites domain-billing.md")
+            self.assertNotEqual(
+                auth_file, billing_file,
+                "the Auth and Billing citations landed in the same epic file",
+            )
+
+            auth_content = contents[auth_file]
+            billing_content = contents[billing_file]
+
             # Both requirements must survive as distinct stories.
-            self.assertEqual(output.count("## STORY-"), 2)
-            self.assertIn("domain-users.md", output)
-            self.assertIn("domain-billing.md", output)
-            # The Billing story must not be misattributed to the Auth epic.
-            billing_section = output[output.index("domain-billing.md") - 2000:]
-            self.assertIn("card", billing_section.lower())
+            self.assertEqual(auth_content.count("## STORY-") + billing_content.count("## STORY-"), 2)
+
+            # The Billing story must not be misattributed to the Auth epic:
+            # its own file carries "card", and — the part a whole-document
+            # substring search can't see — the Auth epic's file must not.
+            self.assertIn("card", billing_content.lower())
+            self.assertNotIn("card", auth_content.lower())
+            self.assertIn("password", auth_content.lower())
+            self.assertNotIn("password", billing_content.lower())
         finally:
             Path(tmp).unlink()
 

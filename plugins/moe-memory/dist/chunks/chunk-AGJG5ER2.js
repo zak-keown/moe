@@ -8,7 +8,7 @@ import {
 import {
   isVectorQueryAuthorized,
   l2DistanceToCosineSimilarity
-} from "./chunk-ESBWE2AP.js";
+} from "./chunk-TG7AXCW2.js";
 import {
   generateQueryEmbedding
 } from "./chunk-TD4KRVGL.js";
