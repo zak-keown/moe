@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 4
+  fixed: 11
   stale: 0
   skipped: 0
   deferred: 0
-  open: 103
+  open: 96
 ---
 
 # Codebase Review — moe
@@ -722,6 +722,10 @@ exception is logged/reported without re-entering the whole error path,
 double-invoking hooks, or overwriting the already-known result with a
 rejection.
 
+**Disposition:** fixed
+**Commit:** `8f681217b85998c2eddc1e3de7c2076bfcc768ce`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-017: Card creation form does not enforce the character set `makeRunId`/`parseRunId` require, silently breaking live transcript for the run
 
 **File:** `packages/flight/ui/src/components/NewCardForm.tsx`
@@ -1334,6 +1338,10 @@ codebase documents and enforces elsewhere (`CARD_ID_RE` in `fanout.ts`,
 `parseRunId`/`parseRunSetId` in `util/id.ts`) before doing the `isSafePath`
 check, and update or remove the now-inaccurate comment in `fanout.ts`.
 
+**Disposition:** fixed
+**Commit:** `342e17525880dc627ba5271ae07d3cf4bbf33cde`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-036: Pretty CLI renderer never truncates the JSON-fallback tool-call body, contradicting its own doc comment — reproducible on every completed run
 
 **File:** `packages/flight/src/qa/cli/stream/pretty.ts`
@@ -1371,6 +1379,10 @@ const stripped = text
 
 I reproduced this with `node -e` against a synthetic LLM response containing a legitimate ` ```js ... ``` ` block inside the card body (mirroring `buildFanoutPrompt`'s own instruction to the model to "generate variation scenarios" with "boundary conditions" and example input): both the opening and closing fence lines are silently deleted, and the `\n```\s*\n` → `\n` replacement also swallows the blank line that separated the code block from the following `## Acceptance Criteria` heading — the two sections end up glued together. Any fanout-generated card whose description legitimately includes a code/config example (plausible output from "You are a QA test designer... Think about: Edge cases... boundary conditions") has its markdown silently mangled before being persisted, with no error, warning, or way to detect the corruption after the fact (`parseStoryCard` still parses the mangled text without complaint, since the `##` marker lookup is unaffected). Anchor the fence-strip to only the true leading/trailing wrapper (first and last non-blank lines of the whole `text`), not every line in the document.
 
+**Disposition:** fixed
+**Commit:** `5488d60ae1e9e6d15d038104000ae72087ce5f90`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-038: `runLoop` silently discards the executor's exception, leaving `"errored"` runs with no diagnostic trail
 
 **File:** `packages/flight/src/qa/runs/run-set.ts`
@@ -1406,6 +1418,10 @@ existing `ErrorLog`) before or when calling `writer.recordRunEnd(..., "errored")
 so an errored run in a batch is debuggable from the artifacts the run-set
 produces.
 
+**Disposition:** fixed
+**Commit:** `446cbbdcd25e510099ba086130f7b3ab9a73611f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-039: `startFetchServer` binds to all interfaces instead of loopback, unlike its sibling `startMockWsServer` in the same file
 
 **File:** `packages/flight/test/qa/helpers/mock-http.ts`
@@ -2405,6 +2421,10 @@ In practice this is currently gated by whichever LLM provider's tool-calling API
 
 `RunSnapshot.abortController` in `active-runs.ts` (the data model, also in this shard) is documented as "NOT part of the public `ActiveRunInfo` payload — internal infrastructure, never serialized to clients." The `/:runId/snapshot` route in `routes/active-runs.ts`, however, does `return c.json(snap)` on the entire `RunSnapshot` object — `info`, `lastFrame`, `progressLog`, and `abortController` together — rather than picking out the public fields. Today this is harmless because `AbortController` has no own enumerable properties and serializes to `{}`, but the route's actual behavior does not match the guarantee documented on the type it serializes: any future field added to `RunSnapshot` that is meant to stay internal (the kind of thing the `abortController` comment anticipates) will be silently exposed over this unauthenticated HTTP endpoint the next time someone adds it, because nothing at the route enforces the boundary the comment promises. Fix: build an explicit public snapshot shape (`{ info, lastFrame, progressLog }`) at the route instead of forwarding the internal struct.
 
+**Disposition:** fixed
+**Commit:** `66342430c0fcb0b945521402a67547caf4c60bf1`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-082: `run-sets.ts` manifest reads skip the malformed-JSON handling every sibling route has
 
 **File:** `packages/flight/src/qa/api/routes/run-sets.ts`
@@ -2429,6 +2449,10 @@ elsewhere in this API won't recognize this response.
 Fix: wrap the `JSON.parse` in these two handlers the same way
 `resultRoutes` does, for a consistent error envelope.
 
+**Disposition:** fixed
+**Commit:** `0fa90bfbe544a49ab2d4dbd17b95ac9701b2132b`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-083: `ask`'s recorded-model/date lookups can crash with a raw JSON-parse error on a corrupt `run.jsonl`
 
 **File:** `packages/flight/src/qa/cli/ask.ts`
@@ -2481,6 +2505,10 @@ finalize(lookup: (runId: string) => VerdictResult | null): void {
 
 `processedIds` is populated but `grep -n "processedIds"` shows it is never read anywhere else in the file (or referenced again after the loop that builds it). The comment above it ("Track which run IDs had results provided via lookup...") describes intent that the rest of `finalize` does not implement — `summarizeCard` re-derives its own classification from `run.status` and its own `lookup()` calls without consulting this set. This has no behavioral effect today (dead code, not wrong code), but it reads as load-bearing to a maintainer and should either be wired into the classification logic it was clearly meant to support, or removed.
 
+**Disposition:** fixed
+**Commit:** `8e203e51bbac03eff699931b769a9b47aa123c79`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-085: Stale `stateDirName` field passed to `executeHttpRun` has no effect
 
 **File:** `packages/flight/test/qa/api/run.test.ts`

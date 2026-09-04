@@ -197,6 +197,45 @@ describe("splitAndValidateCards", () => {
     expect(cards).toHaveLength(1);
     expect(cards[0]).toContain("story-001-a");
   });
+
+  test("preserves a legitimate code fence embedded in a card's own body (CR-037)", () => {
+    // The fence-strip is meant to catch only a wrapper the model puts
+    // around its *entire* response — not a code/config example the card's
+    // own description legitimately includes. A global multiline strip
+    // deletes both fence lines of this embedded block and also merges the
+    // blank line that separates it from the following heading, gluing the
+    // two sections together.
+    const cardWithEmbeddedFence = [
+      "---",
+      "id: story-001-a",
+      "title: Variation A",
+      "status: draft",
+      "parent: story-001",
+      "---",
+      "",
+      "Description with an example payload:",
+      "",
+      "```js",
+      'const x = { foo: "bar" };',
+      "```",
+      "",
+      "## Acceptance Criteria",
+      "",
+      "- Works",
+    ].join("\n");
+
+    const cards = splitAndValidateCards(cardWithEmbeddedFence);
+    expect(cards).toHaveLength(1);
+    // The embedded fence markers must survive intact...
+    expect(cards[0]).toContain("```js");
+    expect(cards[0]).toContain('const x = { foo: "bar" };');
+    expect(cards[0]).toContain("```\n\n## Acceptance Criteria");
+    // ...and the card must still parse with the code block staying inside
+    // the description, not glommed onto the acceptance criteria.
+    const parsed = parseStoryCard(cards[0]);
+    expect(parsed.description).toContain("```js");
+    expect(parsed.acceptanceCriteria).toEqual(["Works"]);
+  });
 });
 
 // --- Task 2: Observation promotion ---

@@ -62,6 +62,29 @@ describe("Active Runs API", () => {
     expect(body.progressLog).toEqual(["hello"]);
   });
 
+  test("CR-081: GET /api/runs/active/:id/snapshot never serializes the internal abortController field", async () => {
+    const { app, registry } = makeApp();
+    registry.register({
+      id: RUN_ID,
+      cardId: "story-001",
+      title: "Test",
+      target: "http://localhost:3000",
+      model: "claude-sonnet-4-6",
+      startedAt: 123,
+      status: "running",
+    });
+    // RunSnapshot.abortController is documented as "NOT part of the public
+    // ActiveRunInfo payload — internal infrastructure, never serialized to
+    // clients." Attach one so a route that forwards the internal struct
+    // wholesale would actually expose it.
+    registry.attachAbortController(RUN_ID, new AbortController());
+
+    const res = await app.request(`/api/runs/active/${RUN_ID}/snapshot`);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(Object.keys(body).sort()).toEqual(["info", "lastFrame", "progressLog"].sort());
+  });
+
   test("GET /api/runs/active/:id/snapshot returns 404 when not running", async () => {
     const { app } = makeApp();
     const res = await app.request("/api/runs/active/nope/snapshot");

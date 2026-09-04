@@ -77,6 +77,22 @@ describe("GET /api/run-sets/:id", () => {
     const res = await app.request("/api/run-sets/..%2F..%2Fetc%2Fpasswd");
     expect(res.status).toBe(400);
   });
+
+  test("CR-082: returns a structured 500 for a malformed set.json instead of throwing", async () => {
+    const id = "single_20260430T000000Z_bad1";
+    mkdirSync(join(runSetsDir, id));
+    // Truncated mid-write, same as a crash the shutdown-drain machinery
+    // already anticipates for result.json.
+    writeFileSync(join(runSetsDir, id, "set.json"), '{"runSetId": "single_2026043');
+
+    const app = new Hono();
+    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".moe-flight")));
+
+    const res = await app.request(`/api/run-sets/${id}`);
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.error).toBe("malformed set file");
+  });
 });
 
 describe("DELETE /api/run-sets/:id", () => {
@@ -147,5 +163,19 @@ describe("GET /api/run-sets/:id/summary", () => {
     app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".moe-flight")));
     const res = await app.request(`/api/run-sets/${id}/summary`);
     expect(res.status).toBe(404);
+  });
+
+  test("CR-082: returns a structured 500 for a malformed set.json instead of throwing", async () => {
+    const id = "single_20260430T000000Z_bad2";
+    mkdirSync(join(runSetsDir, id));
+    writeFileSync(join(runSetsDir, id, "set.json"), '{"runSetId": "single_2026043');
+
+    const app = new Hono();
+    app.route("/api/run-sets", runSetRoutes(join(projectRoot, ".moe-flight")));
+
+    const res = await app.request(`/api/run-sets/${id}/summary`);
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.error).toBe("malformed set file");
   });
 });
