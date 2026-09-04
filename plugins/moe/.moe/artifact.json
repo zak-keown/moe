@@ -6338,8 +6338,8 @@
     },
     {
       "path": "hooks/jig-worktree-guard",
-      "size": 1004,
-      "sha256": "ec98b30d2e4dfc9b21990fc57227b35f52702597725e13bbe92f4ab2395f45c3",
+      "size": 1359,
+      "sha256": "407ef44a7ada0bfc4f49aa40fad72c56347f630bbebb7e42f25c21c82ec46a6d",
       "mode": "0755"
     },
     {
@@ -7423,7 +7423,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "3fed860e0621f91866a29796f573c29bde85a7964bad44b890ace18b3c4751f3",
+  "tree_sha256": "3ab73362ad1f88986f985efa44b73abdd2e4bc2a6e4bf88fcaa7d852b06b51cd",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [
