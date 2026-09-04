@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 2
+  fixed: 3
   stale: 0
   skipped: 0
   deferred: 0
-  open: 105
+  open: 104
 ---
 
 # Codebase Review — moe
@@ -1270,6 +1270,10 @@ This script runs on every `navigate()` auto-capture and is embedded verbatim int
 
 Fix: either add `packages/flight/test/qa/adapters/web/lib/page-scripts/dom-summary.test.mjs` (mirroring glass's), or correct the comment to stop claiming coverage this package doesn't have.
 
+**Disposition:** fixed
+**Commit:** `5f47e63c8c2cc76aa22760ca4290a1c5e16b170c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-033: `markdown.js` page-script comment claims jsdom test coverage that does not exist in this package
 
 **File:** `packages/flight/src/qa/adapters/web/lib/page-scripts/markdown.js`
