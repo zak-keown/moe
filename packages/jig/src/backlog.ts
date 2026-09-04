@@ -3,8 +3,13 @@ import { join, resolve } from "node:path";
 import { git, slugify, today, worktreeRoot } from "./util.js";
 
 export type BacklogStatus =
-  | "open" | "in-progress" | "blocked" | "carry-over"
-  | "done" | "declined" | "needs-triage";
+  | "open"
+  | "in-progress"
+  | "blocked"
+  | "carry-over"
+  | "done"
+  | "declined"
+  | "needs-triage";
 
 export type Severity = "low" | "medium" | "high" | "critical";
 
@@ -42,7 +47,12 @@ export function parseItem(text: string): BacklogItem {
   }
   const list = (k: string) => {
     const v = fm.get(k) ?? "";
-    return v.length ? v.split(",").map((s) => s.trim()).filter(Boolean) : [];
+    return v.length
+      ? v
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
   };
   const req = (k: string) => {
     const v = fm.get(k);
@@ -50,16 +60,23 @@ export function parseItem(text: string): BacklogItem {
     return v;
   };
   return {
-    id: req("id"), title: req("title"), status: req("status") as BacklogStatus,
+    id: req("id"),
+    title: req("title"),
+    status: req("status") as BacklogStatus,
     reason: fm.get("reason") || undefined,
     severity: (fm.get("severity") || "medium") as Severity,
     source: fm.get("source") || "manual",
     claimedBy: fm.get("claimed_by") || undefined,
-    created: req("created"), updated: req("updated"),
-    filedBy: fm.get("filed_by") || undefined, filedSha: fm.get("filed_sha") || undefined,
-    movedBy: fm.get("moved_by") || undefined, movedSha: fm.get("moved_sha") || undefined,
-    blockedBy: list("blocked_by"), blocks: list("blocks"),
-    parent: fm.get("parent") || undefined, ref: fm.get("ref") || undefined,
+    created: req("created"),
+    updated: req("updated"),
+    filedBy: fm.get("filed_by") || undefined,
+    filedSha: fm.get("filed_sha") || undefined,
+    movedBy: fm.get("moved_by") || undefined,
+    movedSha: fm.get("moved_sha") || undefined,
+    blockedBy: list("blocked_by"),
+    blocks: list("blocks"),
+    parent: fm.get("parent") || undefined,
+    ref: fm.get("ref") || undefined,
     tags: list("tags"),
     body: (m[2] ?? "").replace(/^\n+/, ""),
   };
@@ -108,11 +125,17 @@ export function backlogDir(cwd?: string): string {
 }
 
 function safeSha(cwd?: string): string | undefined {
-  try { return git("-C", worktreeRoot(cwd), "rev-parse", "--short", "HEAD"); }
-  catch { return undefined; }
+  try {
+    return git("-C", worktreeRoot(cwd), "rev-parse", "--short", "HEAD");
+  } catch {
+    return undefined;
+  }
 }
 
-export function loadItem(cwd: string | undefined, id: string): { dir: string; name: string; item: BacklogItem } {
+export function loadItem(
+  cwd: string | undefined,
+  id: string,
+): { dir: string; name: string; item: BacklogItem } {
   const dir = backlogDir(cwd);
   if (!existsSync(dir)) throw new Error(`no backlog at ${dir}`);
   for (const name of readdirSync(dir)) {
@@ -124,7 +147,11 @@ export function loadItem(cwd: string | undefined, id: string): { dir: string; na
 }
 
 export interface AddOpts {
-  cwd?: string; source?: string; severity?: Severity; tags?: string[]; by?: string;
+  cwd?: string;
+  source?: string;
+  severity?: Severity;
+  tags?: string[];
+  by?: string;
 }
 
 export function backlogAdd(title: string, opts: AddOpts = {}): string {
@@ -137,16 +164,25 @@ export function backlogAdd(title: string, opts: AddOpts = {}): string {
   for (const name of existing) {
     if (name.endsWith(`-${slug}.md`)) {
       const item = parseItem(readFileSync(join(dir, name), "utf-8"));
-      if (item.status === "open") throw new Error(`an open item with slug "${slug}" already exists: ${item.id}`);
+      if (item.status === "open")
+        throw new Error(`an open item with slug "${slug}" already exists: ${item.id}`);
     }
   }
   const { num, id } = allocateId(existing);
   const now = today();
   const item: BacklogItem = {
-    id, title: title.trim(), status: "open",
-    severity: opts.severity ?? "medium", source: opts.source ?? "manual",
-    created: now, updated: now, filedBy: opts.by ?? "manual", filedSha: safeSha(opts.cwd),
-    blockedBy: [], blocks: [], tags: opts.tags ?? [],
+    id,
+    title: title.trim(),
+    status: "open",
+    severity: opts.severity ?? "medium",
+    source: opts.source ?? "manual",
+    created: now,
+    updated: now,
+    filedBy: opts.by ?? "manual",
+    filedSha: safeSha(opts.cwd),
+    blockedBy: [],
+    blocks: [],
+    tags: opts.tags ?? [],
     body: '## Context\n\n<why this exists and what "done" looks like>\n',
   };
   const filepath = join(dir, `${String(num).padStart(4, "0")}-${slug}.md`);
@@ -154,9 +190,20 @@ export function backlogAdd(title: string, opts: AddOpts = {}): string {
   return resolve(filepath);
 }
 
-export const BLOCK_REASONS = ["no-runtime", "upstream-decision", "depends-on", "needs-human", "external-service"] as const;
+export const BLOCK_REASONS = [
+  "no-runtime",
+  "upstream-decision",
+  "depends-on",
+  "needs-human",
+  "external-service",
+] as const;
 export const CARRY_REASONS = ["budget", "scope-split"] as const;
-export const DECLINE_REASONS = ["wont-fix", "out-of-scope", "duplicate", "not-reproducible"] as const;
+export const DECLINE_REASONS = [
+  "wont-fix",
+  "out-of-scope",
+  "duplicate",
+  "not-reproducible",
+] as const;
 
 export function routeReason(reason: string): BacklogStatus {
   if ((BLOCK_REASONS as readonly string[]).includes(reason)) return "blocked";
@@ -164,7 +211,10 @@ export function routeReason(reason: string): BacklogStatus {
   return "needs-triage";
 }
 
-function writeResume(body: string, opts: { note?: string; next?: string; branch?: string }): string {
+function writeResume(
+  body: string,
+  opts: { note?: string; next?: string; branch?: string },
+): string {
   const lines = ["## Resume", ""];
   if (opts.note) lines.push(`- done: ${opts.note}`);
   lines.push(`- next: ${opts.next ?? "—"}`);
@@ -175,11 +225,21 @@ function writeResume(body: string, opts: { note?: string; next?: string; branch?
 }
 
 export interface DeferOpts {
-  reason: string; note?: string; next?: string; branch?: string; cwd?: string; by?: string;
+  reason: string;
+  note?: string;
+  next?: string;
+  branch?: string;
+  cwd?: string;
+  by?: string;
 }
 
-export function backlogDefer(id: string, opts: DeferOpts): { path: string; status: BacklogStatus; triaged: boolean } {
+export function backlogDefer(
+  id: string,
+  opts: DeferOpts,
+): { path: string; status: BacklogStatus; triaged: boolean } {
   const { dir, name, item } = loadItem(opts.cwd, id);
+  if (item.status === "done" || item.status === "declined")
+    throw new Error(`cannot defer ${id}: it is ${item.status} (terminal)`);
   let target = routeReason(opts.reason);
   if (target === "carry-over" && !opts.next?.trim()) target = "needs-triage";
   item.status = target;
@@ -211,28 +271,42 @@ export function backlogClaim(id: string, opts: { cwd?: string; by?: string } = {
   return persist(dir, name, item, opts.cwd);
 }
 
-export function backlogResume(id: string, opts: { cwd?: string; by?: string } = {}): { path: string; resume: string } {
+export function backlogResume(
+  id: string,
+  opts: { cwd?: string; by?: string } = {},
+): { path: string; resume: string } {
   const { dir, name, item } = loadItem(opts.cwd, id);
   if (item.status === "blocked") item.status = "open";
   else if (item.status === "carry-over") item.status = "in-progress";
-  else throw new Error(`cannot resume ${id}: status is ${item.status} (only blocked or carry-over)`);
+  else
+    throw new Error(`cannot resume ${id}: status is ${item.status} (only blocked or carry-over)`);
   item.movedBy = opts.by ?? "manual";
   const path = persist(dir, name, item, opts.cwd);
   const rm = /## Resume[\s\S]*$/m.exec(item.body);
   return { path, resume: rm ? (rm[0] ?? "") : "" };
 }
 
-export function backlogDone(id: string, opts: { cwd?: string; commit?: string; by?: string } = {}): string {
+export function backlogDone(
+  id: string,
+  opts: { cwd?: string; commit?: string; by?: string } = {},
+): string {
   const { dir, name, item } = loadItem(opts.cwd, id);
+  if (item.status === "done" || item.status === "declined")
+    throw new Error(`cannot complete ${id}: it is ${item.status} (terminal)`);
   item.status = "done";
   item.movedBy = opts.by ?? "manual";
   return persist(dir, name, item, opts.cwd, opts.commit);
 }
 
-export function backlogDecline(id: string, opts: { reason: string; note?: string; cwd?: string; by?: string }): string {
+export function backlogDecline(
+  id: string,
+  opts: { reason: string; note?: string; cwd?: string; by?: string },
+): string {
   if (!(DECLINE_REASONS as readonly string[]).includes(opts.reason))
     throw new Error(`decline reason must be one of ${DECLINE_REASONS.join(", ")}`);
   const { dir, name, item } = loadItem(opts.cwd, id);
+  if (item.status === "done" || item.status === "declined")
+    throw new Error(`cannot decline ${id}: it is ${item.status} (terminal)`);
   item.status = "declined";
   item.reason = opts.reason;
   item.movedBy = opts.by ?? "manual";
@@ -243,7 +317,11 @@ export function backlogDecline(id: string, opts: { reason: string; note?: string
 const TERMINAL: BacklogStatus[] = ["done", "declined"];
 
 export interface ListOpts {
-  cwd?: string; status?: BacklogStatus; source?: string; severity?: Severity; tag?: string;
+  cwd?: string;
+  status?: BacklogStatus;
+  source?: string;
+  severity?: Severity;
+  tag?: string;
 }
 
 function loadAll(cwd?: string): BacklogItem[] {

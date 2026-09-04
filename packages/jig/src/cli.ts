@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { realpathSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { Command, CommanderError } from "commander";
 import {
   type BacklogStatus,
@@ -12,7 +12,9 @@ import {
   backlogResume,
   backlogShow,
   backlogTriage,
+  CARRY_REASONS,
   formatLine,
+  parseItem,
   type Severity,
 } from "./backlog.js";
 import { discoverExtensionCommands, loadExtensions } from "./extension.js";
@@ -187,16 +189,18 @@ backlog
   .option("--severity <s>", "low | medium | high | critical")
   .option("--tag <t...>", "tags")
   .option("--by <id>", "actor id for provenance")
-  .action((parts: string[], o: { source?: string; severity?: Severity; tag?: string[]; by?: string }) => {
-    console.log(
-      backlogAdd(parts.join(" "), {
+  .action(
+    (parts: string[], o: { source?: string; severity?: Severity; tag?: string[]; by?: string }) => {
+      const path = backlogAdd(parts.join(" "), {
         ...(o.source !== undefined ? { source: o.source } : {}),
         ...(o.severity !== undefined ? { severity: o.severity } : {}),
         ...(o.tag !== undefined ? { tags: o.tag } : {}),
         ...(o.by !== undefined ? { by: o.by } : {}),
-      }),
-    );
-  });
+      });
+      const id = parseItem(readFileSync(path, "utf-8")).id;
+      console.log(`${id}  ${path}`);
+    },
+  );
 
 backlog
   .command("claim")
@@ -214,14 +218,27 @@ backlog
   .option("--next <step>", "the next concrete step (required for carry-over)")
   .option("--branch <ref>", "working branch@sha")
   .option("--by <id>", "actor id")
-  .action((id: string, o: { reason: string; note?: string; next?: string; branch?: string; by?: string }) => {
-    const r = backlogDefer(id, o);
-    console.log(`${id} → ${r.status}`);
-    if (r.triaged)
-      console.error(
-        `WARNING: reason "${o.reason}" is not a recognized deferral reason — filed as needs-triage. A human must adjudicate via 'moe jig backlog triage'.`,
-      );
-  });
+  .action(
+    (
+      id: string,
+      o: { reason: string; note?: string; next?: string; branch?: string; by?: string },
+    ) => {
+      const r = backlogDefer(id, o);
+      console.log(`${id} → ${r.status}`);
+      if (r.triaged) {
+        const carryNoNext =
+          (CARRY_REASONS as readonly string[]).includes(o.reason) && !o.next?.trim();
+        if (carryNoNext)
+          console.error(
+            `WARNING: carry-over reason "${o.reason}" requires a --next step — filed as needs-triage. Re-run with --next "<step>", or a human resolves it via 'moe jig backlog triage'.`,
+          );
+        else
+          console.error(
+            `WARNING: reason "${o.reason}" is not a recognized deferral reason — filed as needs-triage. A human must adjudicate via 'moe jig backlog triage'.`,
+          );
+      }
+    },
+  );
 
 backlog
   .command("resume")
@@ -246,7 +263,9 @@ backlog
   .requiredOption("--reason <r>", "wont-fix | out-of-scope | duplicate | not-reproducible")
   .option("--note <n>")
   .option("--by <id>")
-  .action((id: string, o: { reason: string; note?: string; by?: string }) => console.log(backlogDecline(id, o)));
+  .action((id: string, o: { reason: string; note?: string; by?: string }) =>
+    console.log(backlogDecline(id, o)),
+  );
 
 backlog
   .command("list")

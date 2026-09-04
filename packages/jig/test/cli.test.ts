@@ -1,4 +1,4 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -10,6 +10,22 @@ function run(...args: string[]): string {
   return execFileSync(process.execPath, [CLI, ...args], {
     encoding: "utf-8",
   }).trim();
+}
+
+function makeRepo(): string {
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), "jig-cli-bl-")));
+  execFileSync("git", ["init", "--initial-branch", "main"], { cwd: dir });
+  execFileSync("git", ["config", "user.email", "t@t.com"], { cwd: dir });
+  execFileSync("git", ["config", "user.name", "T"], { cwd: dir });
+  execFileSync("touch", ["seed.txt"], { cwd: dir });
+  execFileSync("git", ["add", "."], { cwd: dir });
+  execFileSync("git", ["commit", "-m", "init"], { cwd: dir });
+  return dir;
+}
+
+function runIn(cwd: string, ...args: string[]): { stdout: string; stderr: string } {
+  const r = spawnSync(process.execPath, [CLI, ...args], { cwd, encoding: "utf-8" });
+  return { stdout: r.stdout ?? "", stderr: r.stderr ?? "" };
 }
 
 describe("moe-jig CLI", () => {
@@ -37,18 +53,52 @@ describe("moe-jig CLI", () => {
   });
 
   it("adds and defers an item end-to-end", () => {
-    const repo = realpathSync(mkdtempSync(join(tmpdir(), "jig-cli-bl-")));
-    execFileSync("git", ["init", "--initial-branch", "main"], { cwd: repo });
-    execFileSync("git", ["config", "user.email", "t@t.com"], { cwd: repo });
-    execFileSync("git", ["config", "user.name", "T"], { cwd: repo });
-    execFileSync("touch", ["seed.txt"], { cwd: repo });
-    execFileSync("git", ["add", "."], { cwd: repo });
-    execFileSync("git", ["commit", "-m", "init"], { cwd: repo });
+    const repo = makeRepo();
     try {
-      execFileSync(process.execPath, [CLI, "backlog", "add", "cli item"], { cwd: repo, encoding: "utf-8" });
+      const addOut = execFileSync(process.execPath, [CLI, "backlog", "add", "cli item"], {
+        cwd: repo,
+        encoding: "utf-8",
+      });
       expect(existsSync(join(repo, ".moe", "backlog", "0001-cli-item.md"))).toBe(true);
-      const out = execFileSync(process.execPath, [CLI, "backlog", "defer", "BL-0001", "--reason", "no-runtime", "--note", "no py"], { cwd: repo, encoding: "utf-8" });
+      const idMatch = /\bBL-\d{4}\b/.exec(addOut);
+      expect(idMatch).not.toBeNull();
+      const id = (idMatch as RegExpExecArray)[0];
+      const out = execFileSync(
+        process.execPath,
+        [CLI, "backlog", "defer", id, "--reason", "no-runtime", "--note", "no py"],
+        { cwd: repo, encoding: "utf-8" },
+      );
       expect(out).toContain("blocked");
+    } finally {
+      rmSync(repo, { recursive: true, force: true });
+    }
+  });
+
+  it("defer warns with a carry-over-specific message when a carry reason is missing --next", () => {
+    const repo = makeRepo();
+    try {
+      execFileSync(process.execPath, [CLI, "backlog", "add", "no next item"], {
+        cwd: repo,
+        encoding: "utf-8",
+      });
+      const { stderr } = runIn(repo, "backlog", "defer", "BL-0001", "--reason", "budget");
+      expect(stderr).toContain('carry-over reason "budget"');
+      expect(stderr).toContain("requires a --next step");
+    } finally {
+      rmSync(repo, { recursive: true, force: true });
+    }
+  });
+
+  it("defer warns with the unrecognized-reason message for a reason that is not recognized at all", () => {
+    const repo = makeRepo();
+    try {
+      execFileSync(process.execPath, [CLI, "backlog", "add", "mystery item"], {
+        cwd: repo,
+        encoding: "utf-8",
+      });
+      const { stderr } = runIn(repo, "backlog", "defer", "BL-0001", "--reason", "just because");
+      expect(stderr).toContain('reason "just because" is not a recognized deferral reason');
+      expect(stderr).not.toContain("carry-over reason");
     } finally {
       rmSync(repo, { recursive: true, force: true });
     }
