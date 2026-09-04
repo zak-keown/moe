@@ -5,10 +5,10 @@ Chrome DevTools Protocol CLI - zero dependencies.
 ## Quick Test
 
 ```bash
-node scripts/chrome-ws.mjs start                        # Launch Chrome (auto-detects platform)
-node scripts/chrome-ws.mjs new "https://example.com"   # Create tab
-node scripts/chrome-ws.mjs navigate 0 "https://example.com"
-node scripts/chrome-ws.mjs extract 0 "h1"              # Extract heading
+node "$SKILL/chrome-ws.mjs" start                        # Launch Chrome (auto-detects platform)
+node "$SKILL/chrome-ws.mjs" new "https://example.com"   # Create tab
+node "$SKILL/chrome-ws.mjs" navigate 0 "https://example.com"
+node "$SKILL/chrome-ws.mjs" extract 0 "h1"              # Extract heading
 ```
 
 ## Documentation

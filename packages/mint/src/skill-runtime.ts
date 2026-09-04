@@ -379,12 +379,19 @@ function resolveScriptReference(scriptRoot: string, reference: string): string |
 }
 
 function canonicalInvocation(input: ValidateSkillRuntimeInput, skill: string, command: string): string | undefined {
-  const match = command.match(/^node[ \t]+(?:"([^"\r\n]+)"|'([^'\r\n]+)'|([^\s"'`]+))(?=$|[ \t])/)
+  const stripped = command.replace(/^(?:[A-Z_][A-Z0-9_]*=(?:"[^"]*"|'[^']*'|[^\s]*)[ \t]+)*/, '')
+  const match = stripped.match(/^node[ \t]+(?:"([^"\r\n]+)"|'([^'\r\n]+)'|([^\s"'`]+))(?=$|[ \t])/)
   const script = match?.[1] ?? match?.[2] ?? match?.[3]
-  const prefix = `\${CLAUDE_PLUGIN_ROOT}/${input.skillsRoot}/${skill}/scripts/`
-  if (script === undefined || !script.startsWith(prefix) || !script.endsWith('.mjs')) return undefined
-  const reference = script.slice(prefix.length)
-  return reference === '' ? undefined : reference
+  if (script === undefined || !script.endsWith('.mjs')) return undefined
+  const fullPrefix = `\${CLAUDE_PLUGIN_ROOT}/${input.skillsRoot}/${skill}/scripts/`
+  const shortPrefix = '$SKILL/'
+  let reference: string | undefined
+  if (script.startsWith(fullPrefix)) {
+    reference = script.slice(fullPrefix.length)
+  } else if (script.startsWith(shortPrefix)) {
+    reference = script.slice(shortPrefix.length)
+  }
+  return reference === undefined || reference === '' ? undefined : reference
 }
 
 function inspectMarkdown(

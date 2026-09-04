@@ -155,7 +155,7 @@ describe('synthetic html', () => {
 });
 
 describe('renderResponseSummary', () => {
-  const { renderResponseSummary } = require('../../skills/browsing/lib/dialogs-render.js');
+  const { renderResponseSummary } = require('../../browsing-compat/lib/dialogs-render.js');
 
   it('summarizes a confirm dialog inline', () => {
     const summary = renderResponseSummary({

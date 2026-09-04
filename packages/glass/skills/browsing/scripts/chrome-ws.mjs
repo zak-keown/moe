@@ -1,5 +1,4 @@
 import process from 'node:process';
-import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
 import { existsSync, openSync, closeSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import * as http from 'node:http';
@@ -53,8 +52,8 @@ Tab arg: numeric index (0, 1, 2...) or full ws:// URL.
   process.exit(0);
 }
 if (command === '--version' || command === '-v') {
-  const require = createRequire(import.meta.url);
-  const pkg = require('../../../package.json');
+  const pkgPath = new URL('../../../package.json', import.meta.url);
+  const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
   console.log(pkg.version);
   process.exit(0);
 }

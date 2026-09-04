@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // resolveWsUrl / getTabs / closeTab live in lib/tabs.js since the file split.
-const source = readFileSync(join(__dirname, '../skills/browsing/lib/tabs.js'), 'utf8');
+const source = readFileSync(join(__dirname, '../browsing-compat/lib/tabs.js'), 'utf8');
 
 // Extract a function body by name (matches "async function name(...) { ... }")
 function extractFunction(name) {

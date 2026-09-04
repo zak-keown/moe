@@ -241,7 +241,7 @@ describe('Fix 6: extract treats bare-string payload as format, not selector', ()
 
 describe('startChrome returns boolean: true for new spawn, false for reconnect', () => {
   const chromeSrc = fs.readFileSync(
-    path.join(__dirname, '..', 'skills', 'browsing', 'lib', 'chrome-process.js'),
+    path.join(__dirname, '..', 'browsing-compat', 'lib', 'chrome-process.js'),
     'utf8'
   );
 
