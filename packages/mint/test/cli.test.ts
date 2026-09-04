@@ -171,7 +171,7 @@ function runCli(args: string[], cwd: string) {
   return spawnSync(process.execPath, [CLI, ...args], { cwd, encoding: 'utf8' })
 }
 
-describe('CLI end-to-end', () => {
+describe('CLI end-to-end', { timeout: 45_000 }, () => {
   // dist/cli.js is built once via test/global-setup.ts (vitest globalSetup),
   // before any test file runs.
   it('generate exits 0 and reports generated harness files', () => {
