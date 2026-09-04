@@ -110,7 +110,7 @@ export function readPasskeyFile(absolutePath: string): PasskeyCredential {
   if (typeof p.privateKey !== "string" || !p.privateKey) {
     throw new Error(`passkey "${absolutePath}": missing or invalid privateKey`);
   }
-  if (typeof p.signCount !== "number") {
+  if (typeof p.signCount !== "number" || !Number.isInteger(p.signCount) || p.signCount < 0) {
     throw new Error(`passkey "${absolutePath}": missing or invalid signCount (must be an integer)`);
   }
   return {

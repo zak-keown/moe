@@ -74,6 +74,15 @@ function attachNavigation({ state, getPageSession, capturePageArtifacts, evaluat
     let navigateResult;
     try {
       navigateResult = await ps.send('Page.navigate', { url });
+      // CR-012: Page.navigate resolves with `errorText` set if and only if
+      // the navigation failed (DNS failure, connection refused, cert error,
+      // blocked resource, ...). Chrome still renders an error page for
+      // these, and that error page still fires Page.loadEventFired, so
+      // `await loadP` below resolves normally — errorText is the only
+      // signal a failed navigation leaves behind.
+      if (navigateResult && navigateResult.errorText) {
+        throw new Error(`navigate failed: ${url} (${navigateResult.errorText})`);
+      }
       await loadP;
     } catch (err) {
       if (unsubConsole) try { unsubConsole(); } catch { /* best-effort */ }
