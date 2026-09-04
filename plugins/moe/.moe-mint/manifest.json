@@ -276,7 +276,7 @@
       "mode": 420
     },
     ".claude-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "aa5b814de342bf9e42db2e024dcc0b0c1df9ac8a564323d803b18790a3ae494f",
+      "sha256": "5551945932f1ceb574728924d7c172a9221494370d6e8e19ab9543e8b408b44c",
       "mode": 493
     },
     ".claude-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
@@ -947,7 +947,7 @@
       "mode": 420
     },
     ".codex-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "aa5b814de342bf9e42db2e024dcc0b0c1df9ac8a564323d803b18790a3ae494f",
+      "sha256": "5551945932f1ceb574728924d7c172a9221494370d6e8e19ab9543e8b408b44c",
       "mode": 493
     },
     ".codex-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
@@ -1632,7 +1632,7 @@
       "mode": 420
     },
     ".cursor-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "aa5b814de342bf9e42db2e024dcc0b0c1df9ac8a564323d803b18790a3ae494f",
+      "sha256": "5551945932f1ceb574728924d7c172a9221494370d6e8e19ab9543e8b408b44c",
       "mode": 493
     },
     ".cursor-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
@@ -2303,7 +2303,7 @@
       "mode": 420
     },
     ".kimi-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "aa5b814de342bf9e42db2e024dcc0b0c1df9ac8a564323d803b18790a3ae494f",
+      "sha256": "5551945932f1ceb574728924d7c172a9221494370d6e8e19ab9543e8b408b44c",
       "mode": 493
     },
     ".kimi-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
@@ -2983,7 +2983,7 @@
       "mode": 420
     },
     ".opencode/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "aa5b814de342bf9e42db2e024dcc0b0c1df9ac8a564323d803b18790a3ae494f",
+      "sha256": "5551945932f1ceb574728924d7c172a9221494370d6e8e19ab9543e8b408b44c",
       "mode": 493
     },
     ".opencode/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
@@ -3654,7 +3654,7 @@
       "mode": 420
     },
     ".pi/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "aa5b814de342bf9e42db2e024dcc0b0c1df9ac8a564323d803b18790a3ae494f",
+      "sha256": "5551945932f1ceb574728924d7c172a9221494370d6e8e19ab9543e8b408b44c",
       "mode": 493
     },
     ".pi/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
