@@ -121,6 +121,80 @@ mod api_tests {
         std::env::remove_var("MOE_TAB_PRICING_DIR");
     }
 
+    // CR-064: resolve_store()'s presence check (`var_os`) and
+    // pricing_dir()'s value read (`var`, UTF-8-only) must agree, or an
+    // override set to a non-UTF-8 value (legal at the OS level on Unix) is
+    // silently ignored by pricing_dir() while resolve_store() still
+    // believes the override branch applies. Plant a distinct, loadable
+    // snapshot at the XDG fallback location and point the override at a
+    // non-UTF-8 path with no snapshot: if the override is honored,
+    // resolve_store must report the override path missing rather than
+    // silently returning the fallback snapshot.
+    #[cfg(unix)]
+    #[test]
+    fn resolve_store_honors_non_utf8_pricing_dir_override() {
+        use std::os::unix::ffi::{OsStrExt, OsStringExt};
+
+        let _env = env_lock();
+        std::env::remove_var("MOE_TAB_PRICING_DIR");
+
+        let xdg = std::env::temp_dir().join(format!(
+            "tab-xdg-nonutf8-{}-{}",
+            std::process::id(),
+            line!()
+        ));
+        std::fs::create_dir_all(&xdg).unwrap();
+        std::env::set_var("XDG_DATA_HOME", &xdg);
+        let fallback_store = pricing::PriceStore {
+            as_of: "2099-01-01".to_string(),
+            namespaces: Default::default(),
+        };
+        fallback_store
+            .save(&xdg.join("moe").join("tab").join("current.json"))
+            .unwrap();
+
+        // A non-UTF-8 override path that does not exist on disk. Built as raw
+        // bytes (OsStringExt::from_vec), the same way std::env::var_os would
+        // hand it back — env::var (UTF-8-only) would reject this outright.
+        let mut raw = std::env::temp_dir().into_os_string().into_vec();
+        raw.extend_from_slice(
+            format!("/tab-override-{}-{}-", std::process::id(), line!()).as_bytes(),
+        );
+        raw.push(0xFF); // invalid UTF-8 byte
+        let non_utf8_override = std::ffi::OsString::from_vec(raw);
+        assert!(
+            non_utf8_override.to_str().is_none(),
+            "fixture must be non-UTF-8"
+        );
+        std::env::set_var("MOE_TAB_PRICING_DIR", &non_utf8_override);
+
+        let result = resolve_store();
+
+        std::env::remove_var("MOE_TAB_PRICING_DIR");
+        std::env::remove_var("XDG_DATA_HOME");
+        std::fs::remove_dir_all(&xdg).ok();
+
+        match result {
+            Err(TabError::PricingTablesMissing(path)) => {
+                assert_eq!(
+                    path.as_os_str().as_bytes(),
+                    Path::new(&non_utf8_override)
+                        .join("current.json")
+                        .as_os_str()
+                        .as_bytes(),
+                    "error should name the override path, not a fallback"
+                );
+            }
+            Ok((store, source)) => panic!(
+                "MOE_TAB_PRICING_DIR override (non-UTF-8) was silently ignored: \
+                 fell back to a {source:?} snapshot (as_of {:?}) instead of \
+                 erroring on the missing override path",
+                store.as_of
+            ),
+            Err(other) => panic!("expected PricingTablesMissing, got {other:?}"),
+        }
+    }
+
     #[test]
     fn estimate_cost_end_to_end_with_seeded_store() {
         let _env = env_lock();
