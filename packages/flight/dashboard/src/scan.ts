@@ -51,6 +51,13 @@ export function pidAlive(pid: number): boolean {
 // drives.
 const _verdictCache = new Map<string, DashboardVerdict>();
 
+// Test-only accessor for the cache's current size — lets a test verify the
+// cache is pruned back down after a scan instead of growing without bound
+// (CR-075), without exposing the cache's contents otherwise.
+export function _verdictCacheSizeForTest(): number {
+  return _verdictCache.size;
+}
+
 // Cached (for present verdicts), immutable read of <runDir>/verdict.json narrowed
 // to the read-side view. Returns null when the file is missing, unreadable, or
 // unparseable — and does NOT cache that null, so a verdict landing later is seen.
@@ -306,7 +313,31 @@ export function scanResults(args: { resultsDir: string; manifest: GridManifest |
     }
   }
 
+  pruneVerdictCache(resultsDir, cells);
   return { cells };
+}
+
+// CR-075: scanRunDir() calls readDashboardVerdict() on every listed run dir
+// for identity resolution, before this scan windows each bucket down to the
+// 5 newest -- so, unpruned, _verdictCache would keep exactly one entry per
+// run dir EVER observed under resultsDir, growing without bound for the
+// lifetime of this long-lived dashboard process. Since verdict.json is
+// immutable once written (see the comment on _verdictCache), a run dir that
+// has scrolled out of every cell's window will never be read again, so it's
+// safe to drop its cache entry: bound the cache to exactly the run dirs
+// still present in some cell's window after this scan.
+function pruneVerdictCache(resultsDir: string, cells: ReadonlyMap<string, Cell>): void {
+  const keep = new Set<string>();
+  for (const c of cells.values()) {
+    for (const r of c.window) {
+      keep.add(join(resultsDir, r.run_id));
+    }
+  }
+  for (const key of _verdictCache.keys()) {
+    if (!keep.has(key)) {
+      _verdictCache.delete(key);
+    }
+  }
 }
 
 // Sort by the dir-name started_at stamp, then the full dir name as a stable
