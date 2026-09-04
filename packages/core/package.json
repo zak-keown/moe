@@ -44,6 +44,9 @@
     "test:shell": "bash test/shell/test-find-polluter.sh && bash test/shell/test-render-graphs.sh && bash test/latte/run-evals-error-handling.test.sh",
     "latte:evals": "bash test/latte/run-evals.sh"
   },
+  "dependencies": {
+    "@bubstack/moe-jig": "workspace:*"
+  },
   "devDependencies": {
     "vitest": "^3.2.4",
     "ws": "^8.21.0",

@@ -11,7 +11,7 @@ export class RunBroadcaster {
     if (!this.clients.has(runId)) {
       this.clients.set(runId, new Set());
     }
-    this.clients.get(runId)!.add(ws);
+    this.clients.get(runId)?.add(ws);
   }
 
   removeClient(runId: string, ws: WsLike) {

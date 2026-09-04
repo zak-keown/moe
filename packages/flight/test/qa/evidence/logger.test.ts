@@ -1,6 +1,6 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { EvidenceLogger } from "../../../src/qa/evidence/logger.js";
 
@@ -330,23 +330,23 @@ describe("EvidenceLogger", () => {
     }
 
     // Envelope content matches what the writer put on disk.
-    expect(received[0]!.type).toBe("run_start");
-    expect(received[0]!.eventId).toBe(1);
-    expect(received[0]!.parentEventId).toBe(0);
-    expect(received[0]!.runId).toBe("card-001_20260421T000000Z_aaaa");
-    expect(received[0]!.provider).toBe("anthropic");
+    expect(received[0]?.type).toBe("run_start");
+    expect(received[0]?.eventId).toBe(1);
+    expect(received[0]?.parentEventId).toBe(0);
+    expect(received[0]?.runId).toBe("card-001_20260421T000000Z_aaaa");
+    expect(received[0]?.provider).toBe("anthropic");
 
-    expect(received[1]!.type).toBe("system_prompt");
-    expect(received[1]!.eventId).toBe(2);
-    expect(received[1]!.parentEventId).toBe(1);
-    expect(received[1]!.content).toBe("be helpful");
+    expect(received[1]?.type).toBe("system_prompt");
+    expect(received[1]?.eventId).toBe(2);
+    expect(received[1]?.parentEventId).toBe(1);
+    expect(received[1]?.content).toBe("be helpful");
 
-    expect(received[2]!.type).toBe("user_message");
-    expect(received[2]!.content).toBe("go");
+    expect(received[2]?.type).toBe("user_message");
+    expect(received[2]?.content).toBe("go");
 
-    expect(received[3]!.type).toBe("event");
-    expect(received[3]!.name).toBe("custom");
-    expect(received[3]!.foo).toBe(1);
+    expect(received[3]?.type).toBe("event");
+    expect(received[3]?.name).toBe("custom");
+    expect(received[3]?.foo).toBe(1);
   });
 
   test("addEventObserver delivers the same object that was appended to run.jsonl", () => {
@@ -377,7 +377,7 @@ describe("EvidenceLogger", () => {
     logger.logEvent("second", {});
 
     expect(received).toHaveLength(1);
-    expect(received[0]!.name).toBe("first");
+    expect(received[0]?.name).toBe("first");
   });
 
   test("a throwing event-observer doesn't prevent other event-observers from firing", () => {
@@ -392,7 +392,7 @@ describe("EvidenceLogger", () => {
     logger.logEvent("click", { selector: "#btn" });
 
     expect(received).toHaveLength(1);
-    expect(received[0]!.name).toBe("click");
+    expect(received[0]?.name).toBe("click");
   });
 
   test("addEventObserver and addProgressObserver fire independently on the same logger", () => {
@@ -416,9 +416,9 @@ describe("EvidenceLogger", () => {
     expect(actionEvents).toEqual([{ action: "navigate" }]);
     // Event channel: full structured entry.
     expect(fullEvents).toHaveLength(1);
-    expect(fullEvents[0]!.type).toBe("tool_call");
-    expect(fullEvents[0]!.toolUseId).toBe("t1");
-    expect(fullEvents[0]!.name).toBe("navigate");
+    expect(fullEvents[0]?.type).toBe("tool_call");
+    expect(fullEvents[0]?.toolUseId).toBe("t1");
+    expect(fullEvents[0]?.name).toBe("navigate");
   });
 
   test("saveCapture writes .ansi and .json files, zero-indexed and padded", () => {

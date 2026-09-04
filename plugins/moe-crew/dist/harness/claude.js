@@ -7,8 +7,11 @@
  * command (A11j) owns Claude's trust-dialog handling and the
  * await-session-start wait, since those need the full launch-time context.
  */
-import { claudeTranscriptPath } from "../core/paths.js";
 import { parseClaudeTurn } from "../core/transcript.js";
+/** Claude's harness-specific transcript location and cwd encoding. */
+export function claudeTranscriptPath(home, cwd, sid) {
+    return `${home}/.claude/projects/${cwd.replace(/[/._:]/g, "-")}/${sid}.jsonl`;
+}
 /**
  * Provider/auth vars Claude resolves directly from the process env (issue #18).
  * A new tmux session inherits the tmux SERVER's global env, not this process's,
@@ -67,8 +70,8 @@ export const claude = {
     registersIdAtLaunch: true,
     quitKeys: "/exit",
     stopGraceSeconds: 10,
-    bin() {
-        return process.env.MOE_CREW_CLAUDE_BIN ?? "claude";
+    bin(environment = process.env) {
+        return environment.MOE_CREW_CLAUDE_BIN || "claude";
     },
     // Claude's worker HOME is the controller HOME, so `workerHome` is ignored;
     // the param exists because codex's env depends on its per-worker CODEX_HOME.

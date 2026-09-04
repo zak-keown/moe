@@ -4,9 +4,9 @@ import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { CommandContext } from "../src/commands/context.js";
 import { cmdReadTurn } from "../src/commands/read-turn.js";
-import { claudeTranscriptPath } from "../src/core/paths.js";
 import { makeTmux } from "../src/core/tmux.js";
 import { writeMeta } from "../src/core/worker-store.js";
+import { claudeTranscriptPath } from "../src/harness/claude.js";
 import { getDriver } from "../src/harness/registry.js";
 
 function tmpDir(prefix: string): string {

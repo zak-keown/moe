@@ -1,16 +1,37 @@
 import { mkdirSync, chmodSync, lstatSync, constants, openSync, writeSync, closeSync } from 'node:fs'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
-import { ConfigError } from './config.js'
+import { ConfigError } from './diagnostics.js'
 
-export interface GeneratedFile {
+export type FileContent = string | Uint8Array
+
+export interface GeneratedFile<TContent extends FileContent = string> {
   path: string
-  content: string
+  content: TContent
+  mode?: number | undefined
   // Adapters that compute this pass the computed value through unconditionally,
   // so `undefined` has to be assignable under exactOptionalPropertyTypes — see
   // the dedupe cases in test/generate.test.ts, which construct the same shape.
   executable?: boolean | undefined
 }
-export type FileSet = GeneratedFile[]
+export type FileSet<TContent extends FileContent = string> = GeneratedFile<TContent>[]
+
+export function contentBytes(content: FileContent): Buffer {
+  return typeof content === 'string' ? Buffer.from(content) : Buffer.from(content)
+}
+
+export function contentEquals(left: FileContent, right: FileContent): boolean {
+  return contentBytes(left).equals(contentBytes(right))
+}
+
+export function generatedFileMode(file: Pick<GeneratedFile<FileContent>, 'mode' | 'executable'>): number {
+  if (file.mode !== undefined) {
+    if (!Number.isInteger(file.mode) || file.mode < 0 || file.mode > 0o777) {
+      throw new ConfigError(`generated file mode must be an integer from 0000 through 0777: ${file.mode}`)
+    }
+    return file.mode
+  }
+  return file.executable ? 0o755 : 0o644
+}
 
 // Refuse to write through a symlink planted anywhere between rootAbs and
 // targetDir — mkdirSync({recursive:true}) and writeFileSync both follow
@@ -36,7 +57,7 @@ function assertNoSymlinkInPath(rootAbs: string, targetDir: string): void {
   }
 }
 
-export function writeFileSet(root: string, files: FileSet): void {
+export function writeFileSet(root: string, files: FileSet<FileContent>): void {
   const rootAbs = resolve(root)
   const resolved = files.map((file) => {
     if (isAbsolute(file.path)) {
@@ -68,11 +89,12 @@ export function writeFileSet(root: string, files: FileSet): void {
       throw err
     }
     try {
-      writeSync(fd, file.content)
+      if (typeof file.content === 'string') writeSync(fd, file.content)
+      else writeSync(fd, file.content)
     } finally {
       closeSync(fd)
     }
-    if (file.executable) chmodSync(abs, 0o755)
+    chmodSync(abs, generatedFileMode(file))
   }
 }
 

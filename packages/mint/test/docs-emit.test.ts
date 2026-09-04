@@ -22,7 +22,7 @@ function tmpFixture(yaml: string): string {
   return dir
 }
 
-const fullSupport = {
+const stubSupport = {
   skills: 'full',
   commands: 'full',
   agents: 'full',
@@ -37,14 +37,22 @@ const fullSupport = {
 function adapterWithInstallDoc(name: string, body: string): HarnessAdapter {
   return {
     name,
-    support: fullSupport,
+    support: stubSupport,
+    skillLayout: { outputDir: 'skills', profile: name, mode: 'in-place' },
+    skillDelivery: 'unsupported',
     emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }),
     installDoc: () => body,
   }
 }
 
 function adapterWithoutInstallDoc(name: string): HarnessAdapter {
-  return { name, support: fullSupport, emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }) }
+  return {
+    name,
+    support: stubSupport,
+    skillLayout: { outputDir: 'skills', profile: name, mode: 'in-place' },
+    skillDelivery: 'unsupported',
+    emit: () => ({ files: [], limitations: [], emittedCapabilities: [] }),
+  }
 }
 
 describe('emitDocs install-doc files', () => {
@@ -107,21 +115,21 @@ describe('emitDocs support-matrix.md', () => {
         '',
         '# kitchen-sink harness support matrix',
         '',
-        '| Harness | Emitted capabilities |',
-        '|---|---|',
-        '| claude-code | generate a plugin to inspect |',
-        '| cursor | generate a plugin to inspect |',
-        '| codex | generate a plugin to inspect |',
-        '| kimi | generate a plugin to inspect |',
-        '| opencode | generate a plugin to inspect |',
-        '| pi | generate a plugin to inspect |',
-        '| agent-plugins-1.0 | generate a plugin to inspect |',
-        '| copilot | generate a plugin to inspect |',
+        '| Harness | Skill delivery | Emitted capabilities |',
+        '|---|---|---|',
+        '| claude-code | generate a plugin to inspect | generate a plugin to inspect |',
+        '| cursor | generate a plugin to inspect | generate a plugin to inspect |',
+        '| codex | generate a plugin to inspect | generate a plugin to inspect |',
+        '| kimi | generate a plugin to inspect | generate a plugin to inspect |',
+        '| opencode | generate a plugin to inspect | generate a plugin to inspect |',
+        '| pi | generate a plugin to inspect | generate a plugin to inspect |',
+        '| agent-plugins-1.0 | generate a plugin to inspect | generate a plugin to inspect |',
+        '| copilot | generate a plugin to inspect | generate a plugin to inspect |',
         '',
         '## Notes',
         '',
         '- Copilot consumes the Claude Code layout through `.claude-plugin/marketplace.json`; keep the `claude-code` adapter enabled when targeting Copilot.',
-        '- Repos consuming shell-hook output should add `hooks/moe-mint/* text eol=lf` to .gitattributes or accept drift warnings on autocrlf checkouts.',
+        '- Repos consuming shell-hook output should pin both `hooks/moe-mint/*` and `.cursor-plugin/hooks/moe-mint/*` to LF in .gitattributes or accept drift warnings on autocrlf checkouts.',
         '',
       ].join('\n'),
     )

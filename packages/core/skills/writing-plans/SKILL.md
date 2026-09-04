@@ -26,7 +26,9 @@ the code follows directly.
 
 **Context:** If working in an isolated worktree, it should have been created via the `using-git-worktrees` skill at execution time.
 
-**Save plans to:** `docs/moe/plans/YYYY-MM-DD-<feature-name>.md`
+**Save plans to:** `docs/moe/plans/YYYY-MM-DD-<feature-name>.md` — use
+`moe jig plan init <feature-name>` to create the file with correct naming and a
+skeleton, then fill in the plan content.
 - (User preferences for plan location override this default)
 
 ## Scope Check
@@ -46,6 +48,14 @@ Before defining tasks, map out which files will be created or modified and what 
 - You reason best about code you can hold in context at once, and your edits are more reliable when files are focused. Prefer smaller, focused files over large ones that do too much.
 - Files that change together should live together. Split by responsibility, not by technical layer.
 - In existing codebases, follow established patterns. If the codebase uses large files, don't unilaterally restructure - but if a file you're modifying has grown unwieldy, including a split in the plan is reasonable.
+
+**Graph-grounded decomposition:** If moedex is available (via the
+`retrieving-context` skill or the `moe:search-moedex` agent), query
+`impact_analysis` on the change target before decomposing tasks. Use the blast
+radius to populate `Files:` blocks from the actual call graph rather than from
+your reading alone. After writing the plan, run `moe jig plan validate` to
+check for uncovered files, missing dependency edges, and wave conflicts. If
+moedex is unavailable, proceed from your own analysis as before.
 
 This structure informs the task decomposition. Each task should produce self-contained changes that make sense independently.
 
@@ -255,8 +265,9 @@ exists, and every decision's **Blocks** list names tasks that exist.
 
 **5. Execution metadata:** Validate every task has a `depends_on:` field (or
 omits it, meaning []), a non-empty `Files:` block, an `Interfaces:` block,
-and explicit `Consumes:` and `Produces:` entries. Run
-`node "${CLAUDE_PLUGIN_ROOT}/hooks/task-set" check <plan.md>` to validate
+and explicit `Consumes:` and `Produces:` entries. Resolve
+{resource:skills/subagent-driven-development/scripts/task-set.mjs} relative to
+this loaded document and invoke it as `node "<resolved-task-set.mjs>" check <plan.md>` to validate
 structural integrity — cycles, unresolvable deps, missing blocks.
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task — unless the task cannot be written until something is decided, in which case add the decision.
@@ -264,7 +275,8 @@ If you find issues, fix them inline. No need to re-review — just fix and move 
 ## Presenting the plan
 
 The plan file on disk is already rung 4 (markdown) of the shared
-native-rendering ladder at `${CLAUDE_PLUGIN_ROOT}/skills/_shared/native-rendering.md`.
+native-rendering ladder in {resource:skills/_shared/native-rendering.md},
+resolved relative to this loaded document.
 Every executor path ends up reading that file, so no other rung is
 required for the workflow to work.
 

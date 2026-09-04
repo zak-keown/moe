@@ -1,6 +1,6 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import * as YAML from "yaml";
 import {
@@ -328,17 +328,17 @@ describe("buildInstallCookiesTool", () => {
     // install_cookies_ok action log entry present, with sanitized context.
     const ok = actions.find((a) => a.action === "install_cookies_ok");
     expect(ok).toBeDefined();
-    expect(ok!.params.path).toBe("matt/cookies.yaml");
-    expect(ok!.params.accepted).toBe(3);
-    expect(ok!.params.rejected).toBe(0);
+    expect(ok?.params.path).toBe("matt/cookies.yaml");
+    expect(ok?.params.accepted).toBe(3);
+    expect(ok?.params.rejected).toBe(0);
     // Sensitive bytes — cookie *values* — must NEVER appear in the log.
-    const serialized = JSON.stringify(ok!.params);
+    const serialized = JSON.stringify(ok?.params);
     for (const c of SAMPLE_COOKIES) {
       expect(serialized).not.toContain(c.value);
     }
     // valueLength is recorded per cookie so reviewers can sanity-check
     // sizes without seeing the bytes.
-    const cookies = ok!.params.cookies as Array<Record<string, unknown>>;
+    const cookies = ok?.params.cookies as Array<Record<string, unknown>>;
     expect(cookies).toHaveLength(3);
     expect(cookies[0].name).toBe("_session");
     expect(cookies[0].valueLength).toBe(SAMPLE_COOKIES[0].value.length);
@@ -374,8 +374,8 @@ describe("buildInstallCookiesTool", () => {
 
     const ok = actions.find((a) => a.action === "install_cookies_ok");
     expect(ok).toBeDefined();
-    expect(ok!.params.accepted).toBe(2);
-    expect(ok!.params.rejected).toBe(1);
+    expect(ok?.params.accepted).toBe(2);
+    expect(ok?.params.rejected).toBe(1);
   });
 
   test("missing path argument returns an error and logs validate_args failure", async () => {
@@ -392,7 +392,7 @@ describe("buildInstallCookiesTool", () => {
 
     const failure = actions.find((a) => a.action === "install_cookies_failed");
     expect(failure).toBeDefined();
-    expect(failure!.params.step).toBe("validate_args");
+    expect(failure?.params.step).toBe("validate_args");
   });
 
   test("path that escapes contextRoot is rejected at resolve_path", async () => {
@@ -407,7 +407,7 @@ describe("buildInstallCookiesTool", () => {
     expect(calls.setCookies).toHaveLength(0);
     const failure = actions.find((a) => a.action === "install_cookies_failed");
     expect(failure).toBeDefined();
-    expect(failure!.params.step).toBe("resolve_path");
+    expect(failure?.params.step).toBe("resolve_path");
   });
 
   test("absolute path is rejected at resolve_path", async () => {
@@ -421,7 +421,7 @@ describe("buildInstallCookiesTool", () => {
     expect(calls.setCookies).toHaveLength(0);
     const failure = actions.find((a) => a.action === "install_cookies_failed");
     expect(failure).toBeDefined();
-    expect(failure!.params.step).toBe("resolve_path");
+    expect(failure?.params.step).toBe("resolve_path");
   });
 
   test("path pointing at a non-existent file surfaces as read_cookies error", async () => {
@@ -435,7 +435,7 @@ describe("buildInstallCookiesTool", () => {
     expect(calls.setCookies).toHaveLength(0);
     const failure = actions.find((a) => a.action === "install_cookies_failed");
     expect(failure).toBeDefined();
-    expect(failure!.params.step).toBe("read_cookies");
+    expect(failure?.params.step).toBe("read_cookies");
   });
 
   test("driver throw surfaces as set_cookies step error and logs install_cookies_failed", async () => {
@@ -451,10 +451,10 @@ describe("buildInstallCookiesTool", () => {
 
     const failure = actions.find((a) => a.action === "install_cookies_failed");
     expect(failure).toBeDefined();
-    expect(failure!.params.step).toBe("set_cookies");
-    expect(failure!.params.error).toBe("CDP timeout");
+    expect(failure?.params.step).toBe("set_cookies");
+    expect(failure?.params.error).toBe("CDP timeout");
     // Even on driver failure, cookie values must not leak into the log.
-    const serialized = JSON.stringify(failure!.params);
+    const serialized = JSON.stringify(failure?.params);
     for (const c of SAMPLE_COOKIES) {
       expect(serialized).not.toContain(c.value);
     }

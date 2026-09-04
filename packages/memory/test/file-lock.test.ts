@@ -123,7 +123,7 @@ describe("file-lock — concurrent contention under proper-lockfile atomicity", 
             { stdio: ["ignore", "pipe", "inherit"] },
           );
           let out = "";
-          child.stdout!.on("data", (d) => {
+          child.stdout?.on("data", (d) => {
             out += d.toString();
           });
           child.on("close", () => resolve(out));

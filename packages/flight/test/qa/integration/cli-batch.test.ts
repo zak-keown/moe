@@ -1,6 +1,6 @@
-import { existsSync, mkdtempSync, readdirSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { existsSync, mkdtempSync, readdirSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { beforeEach, describe, expect, test } from "vitest";
 
 import { runBatch } from "../../../src/qa/cli/batch.js";

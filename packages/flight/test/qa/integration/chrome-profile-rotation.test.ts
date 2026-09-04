@@ -1,7 +1,7 @@
+import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
-import { existsSync, mkdtempSync, readdirSync, rmSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 // The CDP library under src/qa/adapters/web/lib/ is vendored CommonJS.

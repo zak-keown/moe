@@ -1,7 +1,7 @@
 {
   "name": "@bubstack/moe-crew",
   "version": "0.1.6",
-  "description": "Launch, control and monitor worker Claude sessions over tmux.",
+  "description": "Launch, control and monitor Claude Code, Codex, and Pi workers over tmux.",
   "author": {
     "name": "Zak Keown",
     "email": "zak.keown@outlook.com"
@@ -30,21 +30,33 @@
       "./.pi/extensions/moe-crew.ts"
     ],
     "skills": [
-      "./skills"
+      "./.pi/skills"
     ]
   },
   "files": [
     ".agents/plugins/marketplace.json",
     ".claude-plugin/marketplace.json",
     ".claude-plugin/plugin.json",
+    ".claude-plugin/skills/driving-claude-code-sessions/SKILL.md",
+    ".claude-plugin/skills/driving-claude-code-sessions/scripts/moe-crew",
     ".codex-plugin/plugin.json",
+    ".codex-plugin/skills/driving-claude-code-sessions/SKILL.md",
+    ".codex-plugin/skills/driving-claude-code-sessions/scripts/moe-crew",
     ".cursor-plugin/marketplace.json",
     ".cursor-plugin/plugin.json",
+    ".cursor-plugin/skills/driving-claude-code-sessions/SKILL.md",
+    ".cursor-plugin/skills/driving-claude-code-sessions/scripts/moe-crew",
     ".kimi-plugin/plugin.json",
+    ".kimi-plugin/skills/driving-claude-code-sessions/SKILL.md",
+    ".kimi-plugin/skills/driving-claude-code-sessions/scripts/moe-crew",
     ".moe-mint/manifest.json",
     ".moe/artifact.json",
     ".opencode/plugins/moe-crew.js",
+    ".opencode/skills/driving-claude-code-sessions/SKILL.md",
+    ".opencode/skills/driving-claude-code-sessions/scripts/moe-crew",
     ".pi/extensions/moe-crew.ts",
+    ".pi/skills/driving-claude-code-sessions/SKILL.md",
+    ".pi/skills/driving-claude-code-sessions/scripts/moe-crew",
     "LICENSE",
     "NOTICE",
     "dist/cli.d.ts",
@@ -132,6 +144,8 @@
     "dist/harness/pi.js",
     "dist/harness/registry.d.ts",
     "dist/harness/registry.js",
+    "dist/harness/resolver.d.ts",
+    "dist/harness/resolver.js",
     "dist/hooks/emit-event.d.ts",
     "dist/hooks/emit-event.js",
     "dist/moe-crew.cjs",

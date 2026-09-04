@@ -4,8 +4,8 @@
 // a streamer without one was previously possible via a fresh-session fallback;
 // that fallback was a footgun (the fresh session has no Chrome behind it) so
 // callers must now pass the WebAdapter's session explicitly.
-import { mkdirSync, writeFileSync } from "fs";
-import { join } from "path";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
 export interface ScreencastFrame {
   data: string; // base64 jpeg

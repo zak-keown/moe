@@ -161,18 +161,18 @@ export function kimiToolResultTotalBytes(file: string): number {
     } catch {
       continue;
     }
-    if (!isObject(row) || row["type"] !== "context.append_loop_event") {
+    if (!isObject(row) || row.type !== "context.append_loop_event") {
       continue;
     }
-    const event = row["event"];
-    if (!isObject(event) || event["type"] !== "tool.result") {
+    const event = row.event;
+    if (!isObject(event) || event.type !== "tool.result") {
       continue;
     }
-    const result = event["result"];
+    const result = event.result;
     if (!isObject(result)) {
       continue;
     }
-    const output = result["output"];
+    const output = result.output;
     if (typeof output === "string") {
       total += Buffer.byteLength(output, "utf8");
     }

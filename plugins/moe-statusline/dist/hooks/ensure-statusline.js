@@ -39,8 +39,12 @@ export function ensureStatusLine(opts) {
     writeFileSync(opts.settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
     return { wrote: true, reason: "written" };
 }
-function defaultSettingsPath() {
-    return join(homedir(), ".claude", "settings.json");
+export function defaultSettingsPath(env = process.env, homeDir = homedir()) {
+    const configuredDir = env.CLAUDE_CONFIG_DIR;
+    if (configuredDir !== undefined && configuredDir.length > 0) {
+        return join(configuredDir, "settings.json");
+    }
+    return join(homeDir, ".claude", "settings.json");
 }
 /**
  * Reads all of stdin, resolving the empty string on a 5s timeout. Claude Code

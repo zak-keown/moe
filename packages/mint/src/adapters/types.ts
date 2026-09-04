@@ -3,6 +3,11 @@ import type { FileSet } from '../fileset.js'
 import type { CapabilityId, TargetId } from '../vocabulary.js'
 
 export type SupportLevel = 'full' | 'partial' | 'none'
+/**
+ * Achieved delivery for a generated plugin. `unsupported` also covers an
+ * active adapter when the source plugin has no skill files to deliver.
+ */
+export type SkillDelivery = 'rendered' | 'shared-compatible' | 'native-discovery' | 'unsupported'
 
 export interface ComponentSupport {
   skills: SupportLevel
@@ -39,10 +44,20 @@ export interface AdapterEmission {
   packageContribution?: AdapterPackageContribution
 }
 
+export interface SkillLayout {
+  outputDir: string
+  profile: string
+  mode: 'rendered' | 'in-place' | 'source-or-rendered'
+}
+
 export interface HarnessAdapter {
   name: string
   support: ComponentSupport
-  skillsOutputDir?: string | undefined
+  skillLayout: SkillLayout
+  /** Candidate delivery mechanism; generation may downgrade it to unsupported. */
+  skillDelivery: SkillDelivery
+  /** A native-discovery adapter is reachable only when this file was emitted. */
+  nativeDiscoveryFile?: string
   emit(model: PluginModel): AdapterEmission
   // Optional: markdown BODY (no marker, no heading — docs-emit.ts adds
   // both) describing how to install the plugin on this harness. Adapters

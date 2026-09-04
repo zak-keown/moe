@@ -21,10 +21,21 @@
 
 set -u
 
+# Check this before invoking any external utility. A hook process can receive a
+# deliberately narrow PATH; missing Node is a supported silent no-op, not an
+# excuse for `dirname: command not found` on stderr.
+if ! command -v node >/dev/null 2>&1; then
+    exit 0
+fi
+
 # The extensionless file is here rather than under a skill directory (see the
 # CLI's header). Fall through silently if it is missing (a partial install, a
 # tier filter that removed too much) or not executable (a broken chmod copy).
-PLAN_SET_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLAN_SET_DIR="${0%/*}"
+if [ "$PLAN_SET_DIR" = "$0" ]; then
+    PLAN_SET_DIR="."
+fi
+PLAN_SET_DIR="$(cd "$PLAN_SET_DIR" 2>/dev/null && pwd -P)" || exit 0
 PLAN_SET="${PLAN_SET_DIR}/plan-set"
 if [ ! -f "$PLAN_SET" ]; then
     exit 0
@@ -64,25 +75,20 @@ MANIFESTS=("$CWD"/docs/moe/plans/*-MANIFEST.md)
 if [ "${#MANIFESTS[@]}" -eq 0 ] || [ ! -f "${MANIFESTS[0]}" ]; then
     exit 0
 fi
-if [ "${#MANIFESTS[@]}" -gt 1 ]; then
-    # More than one manifest under docs/moe/plans/ is a policy call, not this
-    # hook's problem — the CLI itself refuses to guess. Say something helpful,
-    # still exit 0.
-    printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"plan-set-notice: %d MANIFEST files under docs/moe/plans/. Pass --manifest to plan-set to pick one."}}\n' "${#MANIFESTS[@]}"
-    exit 0
-fi
 MANIFEST="${MANIFESTS[0]}"
-
-# Need node on PATH to run the CLI. If not present, say nothing — the plugin
-# still works, the announce just does not fire.
-if ! command -v node >/dev/null 2>&1; then
-    exit 0
-fi
 
 # Ask the CLI which plan is next. Redirect stderr away so a validation error
 # in the manifest does not spam the transcript — `check` would report it, and
 # a broken manifest is not this hook's job to fix.
-NEXT_OUT="$(node "$PLAN_SET" next --manifest "$MANIFEST" 2>/dev/null || true)"
+if [ "${#MANIFESTS[@]}" -gt 1 ]; then
+    if ! NEXT_OUT="$(cd "$CWD" && node "$PLAN_SET" next 2>/dev/null)"; then
+        exit 0
+    fi
+else
+    if ! NEXT_OUT="$(node "$PLAN_SET" next --manifest "$MANIFEST" 2>/dev/null)"; then
+        exit 0
+    fi
+fi
 # Trim trailing whitespace.
 NEXT_OUT="${NEXT_OUT%$'\n'}"
 
@@ -101,11 +107,31 @@ compose_context() {
     # can copy it verbatim.
     local ids
     ids="$(printf '%s' "$NEXT_OUT" | tr '\n' ' ' | sed 's/ *$//' | tr ' ' ',')"
-    # Manifest path relative to CWD if possible, absolute otherwise, so the
-    # command works when pasted.
-    local rel="${MANIFEST#$CWD/}"
-    printf 'A plan set exists at %s. Next runnable plan(s): %s. Run `plan-set next --manifest %s` to re-check, and `plan-set done <id> <base>..<head>` after each plan finishes.' \
-        "$rel" "$ids" "$rel"
+    local plan_set_command
+    plan_set_command="node $(shell_quote "$PLAN_SET")"
+    if [ "${#MANIFESTS[@]}" -gt 1 ]; then
+        printf '%d plan sets exist under docs/moe/plans/. Next runnable plan(s): %s. Run `%s next` to re-check, and `%s done <plan-set-id>/<plan-id> <base>..<head>` after each plan finishes.' \
+            "${#MANIFESTS[@]}" "$ids" "$plan_set_command" "$plan_set_command"
+    else
+        # Manifest path relative to CWD if possible, absolute otherwise, so the
+        # command works when pasted.
+        local rel="${MANIFEST#$CWD/}"
+        local quoted_manifest
+        quoted_manifest="$(shell_quote "$rel")"
+        printf 'A plan set exists at %s. Next runnable plan(s): %s. Run `%s next --manifest %s` to re-check, and `%s done <id> <base>..<head> --manifest %s` after each plan finishes.' \
+            "$rel" "$ids" "$plan_set_command" "$quoted_manifest" "$plan_set_command" "$quoted_manifest"
+    fi
+}
+
+# Emit one shell word using double quotes. Backslash, quote, dollar, and
+# backtick are the characters that retain special meaning inside that form.
+shell_quote() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//\$/\\\$}"
+    s="${s//\`/\\\`}"
+    printf '"%s"' "$s"
 }
 
 escape_for_json() {

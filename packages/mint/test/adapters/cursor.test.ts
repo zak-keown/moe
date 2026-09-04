@@ -4,11 +4,12 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { buildModel } from '../../src/model.js'
+import { adjustedModel } from '../../src/vocabulary.js'
 import { cursor } from '../../src/adapters/cursor.js'
 import { claudeCode } from '../../src/adapters/claude-code.js'
 import { adapters, getAdapter } from '../../src/adapters/index.js'
 
-const model = buildModel('fixtures/kitchen-sink')
+const model = adjustedModel(buildModel('fixtures/kitchen-sink'), cursor.skillLayout)
 
 describe('adapter registry', () => {
   it('registers cursor', () => {
@@ -32,13 +33,13 @@ describe('cursor adapter', () => {
       license: 'MIT',
       repository: 'https://github.com/example/kitchen-sink',
       keywords: ['fixture'],
-      skills: './skills/',
+      skills: './.cursor-plugin/skills/',
       category: 'Developer Tools',
       tags: ['demo', 'fixture'],
       commands: './commands/',
       agents: './agents/',
       mcpServers: './.cursor-plugin/mcp.json',
-      hooks: './hooks/moe-mint/hooks-cursor.json',
+      hooks: './.cursor-plugin/hooks/moe-mint/hooks.json',
     })
   })
 
@@ -70,26 +71,27 @@ describe('cursor adapter', () => {
     })
   })
 
-  it('emits hooks-cursor.json with the sessionStart command', () => {
-    const hooks = JSON.parse(mustGet(byPath, 'hooks/moe-mint/hooks-cursor.json'))
+  it('emits its private hooks.json with the sessionStart command', () => {
+    const hooks = JSON.parse(mustGet(byPath, '.cursor-plugin/hooks/moe-mint/hooks.json'))
     expect(hooks).toEqual({
       version: 1,
       hooks: {
-        sessionStart: [{ command: './hooks/moe-mint/run-hook.cmd session-start' }],
+        sessionStart: [{ command: './.cursor-plugin/hooks/moe-mint/run-hook.cmd session-start' }],
       },
     })
   })
 
-  it('emits session-start and run-hook.cmd identical to claude-code, executable', () => {
+  it('emits an adapter-private session-start and the compatible polyglot wrapper, executable', () => {
     const claudeResult = claudeCode.emit(model)
     const claudeByPath = Object.fromEntries(claudeResult.files.map((f) => [f.path, f]))
     const cursorByPath = Object.fromEntries(result.files.map((f) => [f.path, f]))
 
-    const sessionStart = cursorByPath['hooks/moe-mint/session-start']
+    const sessionStart = cursorByPath['.cursor-plugin/hooks/moe-mint/session-start']
     expect(sessionStart?.executable).toBe(true)
-    expect(sessionStart?.content).toBe(claudeByPath['hooks/moe-mint/session-start']?.content)
+    expect(sessionStart?.content).toContain('.cursor-plugin/skills/using-kitchen-sink/SKILL.md')
+    expect(sessionStart?.content).not.toBe(claudeByPath['hooks/moe-mint/session-start']?.content)
 
-    const runHookCmd = cursorByPath['hooks/moe-mint/run-hook.cmd']
+    const runHookCmd = cursorByPath['.cursor-plugin/hooks/moe-mint/run-hook.cmd']
     expect(runHookCmd?.executable).toBe(true)
     expect(runHookCmd?.content).toBe(claudeByPath['hooks/moe-mint/run-hook.cmd']?.content)
   })
@@ -158,7 +160,7 @@ describe('cursor adapter with harnesses.cursor.hooks: own', () => {
     )
     const noHooksModel = buildModel(dir)
     const result = cursor.emit(noHooksModel)
-    expect(result.files.map((f) => f.path).filter((p) => p.startsWith('hooks/'))).toEqual([])
+    expect(result.files.map((f) => f.path).filter((p) => p.startsWith('.cursor-plugin/hooks/'))).toEqual([])
     const manifest = JSON.parse(result.files.find((f) => f.path === '.cursor-plugin/plugin.json')!.content)
     expect(manifest).not.toHaveProperty('hooks')
   })
@@ -174,7 +176,7 @@ describe('cursor adapter with harnesses.cursor.hooks: own', () => {
     const bootstrapMd = result.files.find((f) => f.path === 'hooks/moe-mint/bootstrap.md')
     expect(bootstrapMd).toBeDefined()
     expect(bootstrapMd?.content).toContain('# no-hooks-generate plugin')
-    const hookFiles = result.files.map((f) => f.path).filter((p) => p.startsWith('hooks/') && p !== 'hooks/moe-mint/bootstrap.md')
+    const hookFiles = result.files.map((f) => f.path).filter((p) => p.startsWith('.cursor-plugin/hooks/'))
     expect(hookFiles).toEqual([])
     const manifest = JSON.parse(result.files.find((f) => f.path === '.cursor-plugin/plugin.json')!.content)
     expect(manifest).not.toHaveProperty('hooks')
@@ -250,15 +252,15 @@ describe('per-harness hooks: own', () => {
     const cursorResult = cursor.emit(mixedModel)
     expect(cursorResult.files.map((f) => f.path)).toEqual(
       expect.arrayContaining([
-        'hooks/moe-mint/session-start',
-        'hooks/moe-mint/run-hook.cmd',
-        'hooks/moe-mint/hooks-cursor.json',
+        '.cursor-plugin/hooks/moe-mint/session-start',
+        '.cursor-plugin/hooks/moe-mint/run-hook.cmd',
+        '.cursor-plugin/hooks/moe-mint/hooks.json',
       ]),
     )
     const cursorManifest = JSON.parse(
       cursorResult.files.find((f) => f.path === '.cursor-plugin/plugin.json')!.content,
     )
-    expect(cursorManifest.hooks).toBe('./hooks/moe-mint/hooks-cursor.json')
+    expect(cursorManifest.hooks).toBe('./.cursor-plugin/hooks/moe-mint/hooks.json')
   })
 })
 
@@ -274,11 +276,11 @@ describe('cursor adapter with bootstrap.generate', () => {
     expect(result.limitations).toEqual([])
     const bootstrapMd = result.files.find((f) => f.path === 'hooks/moe-mint/bootstrap.md')
     expect(bootstrapMd?.content).toContain('# generate-bootstrap plugin')
-    const sessionStart = result.files.find((f) => f.path === 'hooks/moe-mint/session-start')
+    const sessionStart = result.files.find((f) => f.path === '.cursor-plugin/hooks/moe-mint/session-start')
     expect(sessionStart?.executable).toBe(true)
     expect(sessionStart?.content).toContain('hooks/moe-mint/bootstrap.md')
     const manifest = JSON.parse(result.files.find((f) => f.path === '.cursor-plugin/plugin.json')!.content)
-    expect(manifest.hooks).toBe('./hooks/moe-mint/hooks-cursor.json')
+    expect(manifest.hooks).toBe('./.cursor-plugin/hooks/moe-mint/hooks.json')
   })
 })
 
@@ -287,7 +289,17 @@ describe('cursor adapter omits optional manifest fields when model is empty', ()
     const dir = mkdtempSync(join(tmpdir(), 'mint-cursor-empty-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      withV1Policy('name: empty-demo\nversion: 1.0.0\ndescription: empty fixture\nbootstrap: none\n'),
+      [
+        'name: empty-demo', 'version: 1.0.0', 'description: empty fixture', 'bootstrap: none',
+        'distribution:', '  npm: "@scope/empty-demo"',
+        'artifact:', '  payloads: []',
+        'harnesses:', '  exclude: [claude-code, codex, kimi, opencode, pi, agent-plugins-1.0, copilot]',
+        'targets:',
+        '  claude-code: { intent: omit }', '  cursor: { intent: preview, expected_capabilities: [skill-discovery], operating_systems: [macos] }',
+        '  codex: { intent: omit }', '  kimi: { intent: omit }', '  opencode: { intent: omit }',
+        '  pi: { intent: omit }', '  agent-plugins-1.0: { intent: omit }', '  copilot: { intent: omit }',
+        'imported_works: []',
+      ].join('\n') + '\n',
     )
     const emptyModel = buildModel(dir)
     const result = cursor.emit(emptyModel)
@@ -303,7 +315,17 @@ describe('cursor adapter omits optional manifest fields when model is empty', ()
     const dir = mkdtempSync(join(tmpdir(), 'mint-cursor-no-mcp-'))
     writeFileSync(
       join(dir, 'moe-mint.yaml'),
-      withV1Policy('name: no-mcp-demo\nversion: 1.0.0\ndescription: no mcp fixture\nbootstrap: none\n'),
+      [
+        'name: no-mcp-demo', 'version: 1.0.0', 'description: no mcp fixture', 'bootstrap: none',
+        'distribution:', '  npm: "@scope/no-mcp-demo"',
+        'artifact:', '  payloads: []',
+        'harnesses:', '  exclude: [claude-code, codex, kimi, opencode, pi, agent-plugins-1.0, copilot]',
+        'targets:',
+        '  claude-code: { intent: omit }', '  cursor: { intent: preview, expected_capabilities: [skill-discovery], operating_systems: [macos] }',
+        '  codex: { intent: omit }', '  kimi: { intent: omit }', '  opencode: { intent: omit }',
+        '  pi: { intent: omit }', '  agent-plugins-1.0: { intent: omit }', '  copilot: { intent: omit }',
+        'imported_works: []',
+      ].join('\n') + '\n',
     )
     const noMcpModel = buildModel(dir)
     const result = cursor.emit(noMcpModel)

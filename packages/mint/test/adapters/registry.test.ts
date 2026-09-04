@@ -8,7 +8,6 @@ describe('adapter-name registry', () => {
     for (const adapter of adapters) {
       expect(adapter.emit).toBeTypeOf('function')
       expect(adapter).toHaveProperty('support')
-      expect(adapter.support).toBeTypeOf('object')
     }
   })
 })

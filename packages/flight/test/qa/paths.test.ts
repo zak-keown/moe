@@ -1,6 +1,6 @@
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join, resolve as resolvePath } from "path";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve as resolvePath } from "node:path";
 import { describe, expect, test } from "vitest";
 import { flightPath, isSafePath, resolveInside, resolveRunDir } from "../../src/qa/paths.js";
 

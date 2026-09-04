@@ -80,11 +80,17 @@ export const openclaude: HarnessAdapter = {
     rules: 'none',
     variables: 'none',
   },
+  skillLayout: { outputDir: 'skills', profile: 'openclaude', mode: 'in-place' },
+  skillDelivery: 'unsupported',
   installDoc,
   emit(_model: PluginModel): AdapterEmission {
     return {
       files: [],
-      limitations: [{ code: 'COMPONENT_OMITTED', component: 'skills', message: 'openclaude adapter is a placeholder; no files emitted (OpenClaude plugin spec is not yet confirmed)' }],
+      limitations: [{
+        code: 'COMPONENT_OMITTED',
+        component: 'skills',
+        message: 'openclaude adapter is a placeholder; no files emitted (OpenClaude plugin spec is not yet confirmed)',
+      }],
       emittedCapabilities: [],
     }
   },

@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync } from "node:fs";
 import type { AppConfig } from "../config.js";
 import type { EventObserver, EvidenceLogger } from "../evidence/logger.js";
 import { parseStoryCard } from "../format/story-card.js";
@@ -60,7 +60,7 @@ function makeRunObserver(
 
       if (format === "jsonl" && !silent) {
         const enriched = { runId: currentRunId, ...ev };
-        sink.write(JSON.stringify(enriched) + "\n");
+        sink.write(`${JSON.stringify(enriched)}\n`);
       }
     };
     return logger.addEventObserver(observer);

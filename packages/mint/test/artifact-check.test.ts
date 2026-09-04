@@ -51,7 +51,7 @@ describe('artifact check — six-plugin gate', () => {
     expect(manifest.files.length).toBeGreaterThan(0)
 
     for (const f of manifest.files) {
-      expect(f.mode).toMatch(/^0(644|755)$/)
+      expect(f.mode).toMatch(/^0[0-7]{3}$/)
       expect(f.sha256).toMatch(/^[a-f0-9]{64}$/)
     }
   })

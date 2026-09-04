@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { createInterface } from "node:readline";
@@ -19,10 +20,12 @@ import { cmdSessionId } from "./commands/session-id.js";
 import { cmdStatus } from "./commands/status.js";
 import { cmdStop } from "./commands/stop.js";
 import { cmdWaitForTurn } from "./commands/wait-for-turn.js";
-import { workerDir } from "./core/paths.js";
+import { harnessMarkerPath, workerDir } from "./core/paths.js";
 import { tmux } from "./core/tmux.js";
 import { readHarnessMarker, readMeta, resolveSession } from "./core/worker-store.js";
-import { getDriver } from "./harness/registry.js";
+import type { HarnessId } from "./harness/driver.js";
+import { detectInstalledHarnesses, getDriver } from "./harness/registry.js";
+import { resolveHarness } from "./harness/resolver.js";
 
 /** Writers the dispatcher prints through; tests inject capturing functions. */
 export interface Io {
@@ -75,8 +78,9 @@ surface is identical across harnesses.
 
 Top-level subcommands:
   launch [--harness <claude|codex|pi>] [--worktree] <tmux-name> <cwd> [-- harness-args...]
-                       Bootstrap a worker (harness defaults to claude); shim
-                       path on stdout, panel on stderr. --worktree creates a
+                       Bootstrap a worker. Without --harness, selection uses
+                       MOE_CREW_DEFAULT_HARNESS or the sole installed harness.
+                       Shim path on stdout, panel on stderr. --worktree creates a
                        disposable git worktree per worker so parallel workers
                        do not race on git state; stop removes it
   adopt <tmux-name> <cwd> <session-id> [-- claude-args...]
@@ -92,9 +96,10 @@ Top-level subcommands:
   list [--all] [<pattern>]
                        Enumerate workers (default: skip workers whose tmux is
                        gone). Optional pattern filters by tmux-name substring
-  pack <pack-file> [cwd]
+  pack [--harness <claude|codex|pi>] <pack-file> [cwd]
                        Launch a predefined team of workers from a YAML pack
-                       file. Each worker is launched and sent its role prompt.
+                       file. --harness is the command default; each worker's
+                       harness overrides it, followed by pack defaultHarness.
                        cwd defaults to the current directory
   pack-stop <name-or-file>
                        Stop all workers belonging to a pack. Accepts either
@@ -128,6 +133,13 @@ Per-worker subcommands (require --worker, supplied by the shim):
   events-file          Print the absolute path to the events JSONL
 
 Environment variables:
+  MOE_CREW_DEFAULT_HARNESS
+                       Default harness when neither a worker nor --harness nor
+                       pack defaultHarness selects one. Must be claude, codex,
+                       or pi. With no default, the sole installed harness wins;
+                       zero or multiple installed harnesses is a usage error.
+  MOE_CREW_PLUGIN_ROOT Root of the installed moe-crew plugin. Defaults to the
+                       parent of the running bundle's dist directory.
   MOE_CREW_CLAUDE_BIN / MOE_CREW_CODEX_BIN / MOE_CREW_PI_BIN
                        Path to each harness binary (defaults: claude / codex / pi,
                        resolved via PATH). Set when the binary is not on PATH or you
@@ -152,8 +164,10 @@ Environment variables:
   MOE_CREW_REGISTER_TIMEOUT
                        Seconds the FIRST \`send\` to a derive worker (codex/pi) waits
                        for it to self-register its session id (default 15).
-  HOME                 Used to locate ~/.claude/projects/<encoded-cwd>/<sid>.jsonl and
-                       the one-time consent file (~/.claude/.moe-crew-consent).
+  XDG_STATE_HOME       Durable Moe state root. Consent is stored at
+                       $XDG_STATE_HOME/moe/crew/consent, falling back to
+                       ~/.local/state/moe/crew/consent.
+  HOME                 Home-directory fallback and harness-owned state root.
 `;
 
 /** A code-2 dispatch error: print `message` to stderr, return 2. */
@@ -201,30 +215,52 @@ function parseWorker(
  * The harness id for a per-worker command's `worker`. Read from the worker meta
  * (`harness`) once it exists; during a derive worker's pre-registration window
  * (codex, before its hook self-registers the meta) fall back to the sidecar
- * `<tmux_name>.harness` marker launch wrote. Defaults to claude when neither is
- * present (an unknown worker — the command itself reports that).
+ * `<tmux_name>.harness` marker launch wrote. Returns no persisted selection
+ * when neither exists; the worker command itself then reports the unknown
+ * worker without treating that provisional context as durable state.
  */
-function resolveWorkerHarness(dir: string, worker: string): string {
+function resolveWorkerHarness(
+  dir: string,
+  worker: string,
+): { found: true; value: unknown } | { found: false } {
   const sid = resolveSession(dir, worker);
   if (sid !== null) {
     const meta = readMeta(dir, sid);
-    if (meta?.harness) return meta.harness;
+    if (meta === null) return { found: true, value: "(missing or unreadable metadata)" };
+    return {
+      found: true,
+      value: meta.harness ?? "(missing harness field in worker metadata)",
+    };
   }
-  return readHarnessMarker(dir, worker) ?? "claude";
+  const marker = readHarnessMarker(dir, worker);
+  if (marker !== null) return { found: true, value: marker };
+  if (existsSync(harnessMarkerPath(dir, worker))) return { found: true, value: "" };
+  return { found: false };
 }
 
 /**
  * Build the CommandContext: real tmux and the per-worker harness driver. For
  * per-worker commands the driver is resolved from the worker's meta/sidecar so
- * codex workers drive the codex transcript/send paths; top-level commands
- * (launch/adopt resolve their own driver) get claude as a harmless default.
+ * codex workers drive the codex transcript/send paths. Top-level commands use
+ * a provisional Claude driver only as inert context: launch and pack resolve
+ * their actual drivers before any harness-specific work, while adopt is
+ * explicitly Claude-only.
  */
-function buildContext(worker?: string): CommandContext {
+function buildContext(worker?: string): CommandContext | DispatchError {
   const dir = workerDir();
-  const harness = worker !== undefined ? resolveWorkerHarness(dir, worker) : "claude";
+  let harness: HarnessId = "claude";
+  if (worker !== undefined) {
+    const persisted = resolveWorkerHarness(dir, worker);
+    if (persisted.found) {
+      const resolution = resolveHarness({ worker: persisted.value, installed: [] });
+      if (!resolution.ok) return err(`Error: ${resolution.diagnostic}`, resolution.code);
+      harness = resolution.harness;
+    }
+  }
   return {
     workerDir: dir,
     home: process.env.HOME ?? homedir(),
+    environment: process.env,
     tmux,
     driver: getDriver(harness),
   };
@@ -235,12 +271,19 @@ function buildContext(worker?: string): CommandContext {
  * the `dist/` directory, so the plugin root is its parent and `moe-crew.cjs` sits
  * beside this file.
  */
+export function resolvePluginRoot(
+  bundleDir: string,
+  environment: NodeJS.ProcessEnv = process.env,
+): string {
+  return environment.MOE_CREW_PLUGIN_ROOT || resolve(bundleDir, "..");
+}
+
 function bootstrapOpts(): BootstrapOpts {
   const moeCrewEntry = join(__dirname, "moe-crew.cjs");
   return {
-    pluginDir: process.env.CLAUDE_PLUGIN_ROOT ?? resolve(__dirname, ".."),
+    pluginDir: resolvePluginRoot(__dirname),
     moeCrewEntry,
-    moeCrewPath: process.env.MOE_CREW_PATH ?? moeCrewEntry,
+    moeCrewPath: process.env.MOE_CREW_PATH || moeCrewEntry,
   };
 }
 
@@ -269,14 +312,18 @@ export function readLine(input: NodeJS.ReadableStream = process.stdin): Promise<
 }
 
 /** Parse `launch [--harness <id>] [--worktree] <tmux-name> <cwd> [-- harness-args...]`. */
-function parseLaunchArgs(
-  argv: string[],
-):
-  | { tmuxName: string; cwd: string; extraArgs: string[]; harness: string; worktree?: boolean }
+function parseLaunchArgs(argv: string[]):
+  | {
+      tmuxName: string;
+      cwd: string;
+      extraArgs: string[];
+      harness?: HarnessId | undefined;
+      worktree?: boolean;
+    }
   | DispatchError {
-  const usage = "Usage: launch <tmux-name> <cwd> [-- claude-args...]";
+  const usage = "Usage: launch <tmux-name> <cwd> [-- harness-args...]";
   const positionals: string[] = [];
-  let harness = "claude";
+  let harness: HarnessId | undefined;
   let worktree = false;
   let extraArgs: string[] = [];
   let i = 0;
@@ -294,12 +341,9 @@ function parseLaunchArgs(
       // Validate the id against the driver registry at parse time so an unknown
       // harness yields a clean code-2 error instead of a stack trace from
       // getDriver() inside cmdLaunch.
-      try {
-        getDriver(value);
-      } catch (e) {
-        return err((e as Error).message);
-      }
-      harness = value;
+      const resolution = resolveHarness({ command: value, installed: [] });
+      if (!resolution.ok) return err(resolution.diagnostic, resolution.code);
+      harness = resolution.harness;
       i += 2;
       continue;
     }
@@ -313,7 +357,13 @@ function parseLaunchArgs(
   }
   const [tmuxName, cwd] = positionals;
   if (tmuxName === undefined || cwd === undefined) return err(usage);
-  return { tmuxName, cwd, extraArgs, harness, ...(worktree ? { worktree: true } : {}) };
+  return {
+    tmuxName,
+    cwd,
+    extraArgs,
+    ...(harness !== undefined ? { harness } : {}),
+    ...(worktree ? { worktree: true } : {}),
+  };
 }
 
 /** Parse `adopt <tmux-name> <cwd> <session-id> [-- claude-args...]`. */
@@ -333,6 +383,39 @@ function parseAdoptArgs(
     return err(usage);
   }
   return { tmuxName, cwd, sessionId, extraArgs };
+}
+
+/** Parse `pack [--harness <id>] <pack-file> [cwd]`. */
+function parsePackArgs(
+  argv: string[],
+): { packFile: string; cwd: string; harness?: HarnessId | undefined } | DispatchError {
+  const positionals: string[] = [];
+  let harness: HarnessId | undefined;
+  let i = 0;
+  while (i < argv.length) {
+    const value = argv[i] ?? "";
+    if (value === "--harness") {
+      const requested = argv[i + 1];
+      if (requested === undefined) return err("Error: --harness expects a value for pack");
+      const resolution = resolveHarness({ command: requested, installed: [] });
+      if (!resolution.ok) return err(resolution.diagnostic, resolution.code);
+      harness = resolution.harness;
+      i += 2;
+      continue;
+    }
+    if (value.startsWith("--")) return err(`Error: unknown option '${value}' for pack`);
+    positionals.push(value);
+    i += 1;
+  }
+  const packFile = positionals[0];
+  if (packFile === undefined || positionals.length > 2) {
+    return err("Usage: pack [--harness <claude|codex|pi>] <pack-file> [cwd]");
+  }
+  return {
+    packFile,
+    cwd: positionals[1] ?? process.cwd(),
+    ...(harness !== undefined ? { harness } : {}),
+  };
 }
 
 /** Print a CommandResult and return its code; each stream gets a trailing newline. */
@@ -388,7 +471,12 @@ export async function run(argv: string[], io: Io = realIo): Promise<number> {
     return 0;
   }
 
-  const ctx = buildContext(worker);
+  const builtContext = buildContext(worker);
+  if ("code" in builtContext) {
+    io.err(`${builtContext.message}\n`);
+    return builtContext.code;
+  }
+  const ctx = builtContext;
   // PER_WORKER_SUBS validation above guarantees `worker` is set for those subs.
   const w = worker as string;
 
@@ -408,7 +496,19 @@ export async function run(argv: string[], io: Io = realIo): Promise<number> {
         io.err(`${parsedArgs.message}\n`);
         return parsedArgs.code;
       }
-      return emit(io, await cmdLaunch(ctx, parsedArgs, bootstrapOpts()));
+      const resolution = resolveHarness({
+        command: parsedArgs.harness,
+        environment: process.env.MOE_CREW_DEFAULT_HARNESS,
+        installed: detectInstalledHarnesses(),
+      });
+      if (!resolution.ok) {
+        io.err(`Error: ${resolution.diagnostic}\n`);
+        return resolution.code;
+      }
+      return emit(
+        io,
+        await cmdLaunch(ctx, { ...parsedArgs, harness: resolution.harness }, bootstrapOpts()),
+      );
     }
 
     case "adopt": {
@@ -430,13 +530,12 @@ export async function run(argv: string[], io: Io = realIo): Promise<number> {
     }
 
     case "pack": {
-      const packFile = args[0];
-      if (packFile === undefined) {
-        io.err("Usage: pack <pack-file> [cwd]\n");
-        return 2;
+      const parsedArgs = parsePackArgs(args);
+      if ("code" in parsedArgs) {
+        io.err(`${parsedArgs.message}\n`);
+        return parsedArgs.code;
       }
-      const packCwd = args[1] ?? process.cwd();
-      return emit(io, await cmdPack(ctx, { packFile, cwd: packCwd }, bootstrapOpts()));
+      return emit(io, await cmdPack(ctx, parsedArgs, bootstrapOpts()));
     }
 
     case "pack-stop": {

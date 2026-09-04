@@ -40,9 +40,9 @@ test("killProcessTree SIGKILLs the pgid and reaps descendants", async () => {
   // Parent spawns a background sleep child, writes its pid to a file
   // (more reliable than racing stderr), then sleeps itself.
   // pgid invariant: pid == pgid only because we spawn detached.
-  const { mkdtempSync, readFileSync } = await import("fs");
-  const { tmpdir } = await import("os");
-  const { join } = await import("path");
+  const { mkdtempSync, readFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
   const dir = mkdtempSync(join(tmpdir(), "moe-flight-killtree-"));
   const pidFile = join(dir, "child.pid");
 

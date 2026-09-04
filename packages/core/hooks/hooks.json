@@ -15,6 +15,12 @@
             "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" governance-marker-check",
             "shell": "bash",
             "async": false
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" developing-for-moe-notice",
+            "shell": "bash",
+            "async": false
           }
         ]
       }
@@ -33,6 +39,23 @@
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/moe-completion-evidence\"",
             "shell": "bash",
             "async": false
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" jig-worktree-guard",
+            "shell": "bash"
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" jig-review-format-guard",
+            "shell": "bash"
           }
         ]
       }

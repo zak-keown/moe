@@ -1,5 +1,5 @@
-import { readFileSync } from "fs";
-import { join } from "path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { PrettyRenderer } from "../../../../src/qa/cli/stream/pretty.js";
 import type { StreamEvent } from "../../../../src/qa/cli/stream/renderer.js";

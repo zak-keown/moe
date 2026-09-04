@@ -27,7 +27,7 @@ function makeRun(): { projectRoot: string; runId: string } {
   );
   writeFileSync(
     join(runDir, "run.jsonl"),
-    JSON.stringify({ eventId: "e1", type: "run_start" }) + "\n",
+    `${JSON.stringify({ eventId: "e1", type: "run_start" })}\n`,
   );
   return { projectRoot, runId };
 }
@@ -52,7 +52,7 @@ describe("render command", () => {
     await render({ command: "render", runIdOrPath: runDir, cli: {} as any }, config, {
       log: (m) => logs.push(m),
     });
-    expect(logs[0]).toBe(runDir + "/index.html");
+    expect(logs[0]).toBe(`${runDir}/index.html`);
   });
 
   test("throws when the run-id can't be resolved", async () => {

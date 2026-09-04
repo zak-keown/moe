@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync } from "node:fs";
 import { RunSetWriter } from "../evidence/run-set-writer.js";
 import type { VerdictResult } from "../types.js";
 import type { CardId, RunId, RunSetId } from "../util/brands.js";

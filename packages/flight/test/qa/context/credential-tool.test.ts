@@ -1,6 +1,6 @@
-import { mkdtempSync, rmSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join, resolve } from "path";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 import type { CredentialResolverConfig } from "../../../src/qa/config.js";
 import {
@@ -133,8 +133,8 @@ describe("buildFetchCredentialTool", () => {
     await withPopulatedContextRoot((root) => {
       const tool = buildFetchCredentialTool(root, cfg(OK));
       expect(tool).not.toBeNull();
-      expect(tool!.definition.name).toBe("fetch_credential");
-      const params = tool!.definition.parameters as {
+      expect(tool?.definition.name).toBe("fetch_credential");
+      const params = tool?.definition.parameters as {
         properties: { entity: { type: string }; key: { type: string } };
         required: string[];
       };
@@ -147,7 +147,7 @@ describe("buildFetchCredentialTool", () => {
   test("tool description matches exported constant", async () => {
     await withPopulatedContextRoot((root) => {
       const tool = buildFetchCredentialTool(root, cfg(OK));
-      expect(tool!.definition.description).toBe(FETCH_CREDENTIAL_TOOL_DESCRIPTION);
+      expect(tool?.definition.description).toBe(FETCH_CREDENTIAL_TOOL_DESCRIPTION);
     });
   });
 

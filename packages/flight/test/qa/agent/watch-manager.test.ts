@@ -1,7 +1,7 @@
+import { appendFileSync, mkdtempSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { appendFileSync, mkdtempSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { WatchManager } from "../../../src/qa/agent/watch-manager.js";
 
@@ -196,7 +196,7 @@ describe("WatchManager.waitForWake", () => {
       pollIntervalMs: 50,
     });
     setTimeout(() => {
-      const { mkdirSync } = require("fs");
+      const { mkdirSync } = require("node:fs");
       mkdirSync(join(subdir, "2026/05/27"), { recursive: true });
       writeFileSync(join(subdir, "2026/05/27/rollout-x.jsonl"), "{}\n");
     }, 150);

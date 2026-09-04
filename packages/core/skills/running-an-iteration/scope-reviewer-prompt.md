@@ -1,9 +1,9 @@
 # Scope Reviewer Prompt Template
 
-Use this template inside the PAR wrapper when dispatching scope review subagents before an iteration starts.
+Use this template inside the PAR wrapper when dispatching scope review subagents before an iteration starts. Resolve {resource:skills/_shared/par-reviewer-wrapper.md} relative to this loaded document and insert that wrapper where marked.
 
 ~~~
-[REVIEWER INSTRUCTIONS — insert inside PAR wrapper from ${CLAUDE_PLUGIN_ROOT}/skills/_shared/par-reviewer-wrapper.md]
+[REVIEWER INSTRUCTIONS — insert the resolved PAR wrapper here]
 
 You are reviewing the scope of an upcoming iteration BEFORE any code is written.
 

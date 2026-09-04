@@ -20,6 +20,6 @@
     "writing",
     "plugin-authoring"
   ],
-  "skills": "./skills/",
+  "skills": "./.codex-plugin/skills/",
   "hooks": {}
 }

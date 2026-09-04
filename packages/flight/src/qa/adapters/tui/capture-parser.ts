@@ -139,7 +139,7 @@ export class XtermCaptureParser implements CaptureParser {
     let seq = "";
     for (let i = 0; i < Math.min(lines.length, rows); i++) {
       // CSI y;1H — move cursor to row y (1-indexed), column 1.
-      seq += `\x1b[${i + 1};1H` + lines[i];
+      seq += `\x1b[${i + 1};1H${lines[i]}`;
     }
     await new Promise<void>((resolve) => term.write(seq, resolve));
 

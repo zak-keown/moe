@@ -9,7 +9,16 @@ import { agentPlugins } from './agent-plugins.js'
 import { copilot } from './copilot.js'
 import { TARGET_IDS } from '../vocabulary.js'
 
-export type { SupportLevel, ComponentSupport, AdapterEmission, AdapterPackageContribution, EmissionLimitation, HarnessAdapter } from './types.js'
+export type {
+  SupportLevel,
+  ComponentSupport,
+  AdapterEmission,
+  AdapterPackageContribution,
+  EmissionLimitation,
+  SkillDelivery,
+  SkillLayout,
+  HarnessAdapter,
+} from './types.js'
 
 export const adapters: readonly HarnessAdapter[] = Object.freeze([
   claudeCode,

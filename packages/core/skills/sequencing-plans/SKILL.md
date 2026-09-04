@@ -34,10 +34,18 @@ set."
 
 ## The manifest
 
-One file per project, committed alongside the plans it names:
+One file per plan set, committed alongside the plans it names:
 `docs/moe/plans/<project>-MANIFEST.md`. It is a markdown wrapper around one
 fenced YAML block. Fields:
 
+- `plan_set_id` — optional stable id unique across the manifests in this
+  repository. It must match `[A-Za-z0-9][A-Za-z0-9._-]*` so qualified
+  `<plan-set-id>/<plan-id>` references round-trip without ambiguity. When
+  omitted for a legacy manifest, the CLI derives it from the filename by
+  removing `-MANIFEST.md` and validates the derived id with the same grammar.
+- `depends_on_plan_sets` — optional list of plan-set ids that must be wholly
+  `done` before any plan in this set is runnable. Defaults to `[]`. A blocked
+  prerequisite blocks every dependent set transitively.
 - `id` — short label unique in this manifest. Used by `plan-set done` and by
   every `depends_on` reference. Recommend the plan slug.
 - `plan` — path to the plan markdown, from the repository root.
@@ -50,6 +58,9 @@ fenced YAML block. Fields:
 - `commits` — set by `plan-set done`, not by hand. `<base7>..<head7>` for the
   range of commits the finished plan produced.
 
+A manifest must contain at least one plan. Empty plan sets are rejected rather
+than treated as vacuously complete prerequisites.
+
 Example:
 
 ````markdown
@@ -58,6 +69,8 @@ Example:
 Prose describing the project. `plan-set` reads only the yaml block below.
 
 ```yaml
+plan_set_id: example-project
+depends_on_plan_sets: []
 plans:
   - id: schema
     plan: docs/moe/plans/2026-01-01-schema.md
@@ -80,36 +93,44 @@ plans:
 
 ## The CLI
 
-`plan-set` is one extensionless Node script under
-`${CLAUDE_PLUGIN_ROOT}/hooks/plan-set`. It is a plugin-owned script, not a
-global executable: invoke it as
-`node "${CLAUDE_PLUGIN_ROOT}/hooks/plan-set"`, never as a bare `plan-set`
-command. It ships in the `moe` plugin alongside this skill.
+Resolve {resource:skills/sequencing-plans/scripts/plan-set.mjs} relative to this
+loaded document. It is a plugin-owned Node launcher, not a global executable:
+invoke the resolved resource with `node`, never as a bare `plan-set` command.
+It locates the plugin's scheduler independently of the project working
+directory and ships in the `moe` plugin alongside this skill.
 
 Verbs:
 
-- `plan-set next [--manifest <path>]` — Print every id whose dependencies are
-  all `done` and whose own status is `pending`. One id per line. `blocked`
-  nodes and their transitive dependents never appear.
+- `plan-set next [--manifest <path>]` — Print every id whose plan and plan-set
+  dependencies are all `done` and whose own status is `pending`. With multiple
+  discovered manifests, output is qualified as `<plan-set-id>/<plan-id>`.
+  Scoped output remains the legacy bare id. Blocked nodes, sets, and their
+  transitive dependents never appear.
 - `plan-set done <id> <base>..<head> [--manifest <path>]` — Mark `<id>` as
-  `done` and record its commit range. Fails if `<id>` is unknown, if any
-  dependency of `<id>` is not `done`, or if the range is not two 7+-char hex
-  SHAs joined by `..`.
+  `done` and record its commit range. In aggregate mode with multiple manifests,
+  `<id>` must be qualified as `<plan-set-id>/<plan-id>`. Fails if the id is
+  unknown, if any plan or plan-set dependency is not `done`, or if the range is
+  not two 7+-char hex SHAs joined by `..`.
 - `plan-set check [--manifest <path>]` — Validate: unique ids, all plan files
-  exist, all deps resolve, no cycle (Kahn), no plan path listed twice. Exits
-  non-zero on any failure. A cycle names its nodes on stderr.
+  exist, all plan and plan-set dependencies resolve, neither DAG contains a
+  cycle (Kahn), plan-set ids are unique, and no plan path is listed twice even
+  across manifests. Exits non-zero on any failure. A cycle names its nodes on
+  stderr.
 
-If `--manifest` is omitted, `plan-set` looks for exactly one file matching
-`docs/moe/plans/*-MANIFEST.md` under the current directory. More than one is a
-call the CLI refuses to guess.
+If `--manifest` is omitted, `plan-set` discovers every matching
+`docs/moe/plans/*-MANIFEST.md` in sorted filename order and operates on the
+aggregate. If `--manifest` is present, it loads only that manifest and its
+transitive prerequisite closure. Unrelated malformed siblings therefore do not
+poison a scoped command, while prerequisite completion is still enforced.
 
 ## The SessionStart hook
 
 `plan-set-notice` is a bash SessionStart hook that fires on `startup|clear|compact`.
-It looks in the session's cwd for `docs/moe/plans/*-MANIFEST.md`, and if one
-exists and has any runnable plans, it prints their ids and a `plan-set next`
-command as SessionStart `additionalContext`. Fully deterministic — no model in
-the loop. Every failure path exits 0; a broken notice must never break a session.
+It looks in the session's cwd for `docs/moe/plans/*-MANIFEST.md`, and if one or
+more exist and have runnable plans, it prints the bare or aggregate-qualified
+ids and a `plan-set next` command as SessionStart `additionalContext`. Fully
+deterministic — no model in the loop. Every failure path exits 0; a broken
+notice must never break a session.
 
 The hook exists so the cold-start case ("new session, four plans exist, which
 are done?") is caught even when the transcript has no history and no skill
@@ -118,18 +139,21 @@ loop.
 
 ## The loop
 
-1. **Confirm the manifest.** Run
-   `node "${CLAUDE_PLUGIN_ROOT}/hooks/plan-set" check --manifest docs/moe/plans/<project>-MANIFEST.md`
+1. **Confirm the manifest set.** Resolve
+   {resource:skills/sequencing-plans/scripts/plan-set.mjs} relative to this
+   loaded document, then invoke it as
+   `node "<resolved-plan-set.mjs>" check`
    before anything else. A cycle, a missing plan file, or a duplicate id is a
-   dead end before the first plan runs, and `check` says which one at once.
+   dead end before the first plan runs, and `check` says which one at once. Use
+   `--manifest docs/moe/plans/<project>-MANIFEST.md` only when intentionally
+   scoping to that set and its prerequisites.
 
-2. **Pick the next plan.** Run
-   `node "${CLAUDE_PLUGIN_ROOT}/hooks/plan-set" next --manifest …`. `next`
-   returns a set; v1 takes the first line of it.
+2. **Pick the next plan.** Invoke the resolved launcher as
+   `node "<resolved-plan-set.mjs>" next`. `next`
+   returns a set; the loop takes the first line of it.
 
    ```bash
-   NEXT=$(node "${CLAUDE_PLUGIN_ROOT}/hooks/plan-set" next \
-     --manifest docs/moe/plans/foo-MANIFEST.md | head -n 1)
+   NEXT=$(node "<resolved-plan-set.mjs>" next | head -n 1)
    ```
 
    If the output is empty, either everything is `done` (the project is
@@ -145,10 +169,11 @@ loop.
    base and head SHAs and mark it done:
 
    ```bash
-   node "${CLAUDE_PLUGIN_ROOT}/hooks/plan-set" done "$NEXT" \
-     "$(git merge-base main HEAD | cut -c1-7)..$(git rev-parse --short HEAD)" \
-     --manifest docs/moe/plans/foo-MANIFEST.md
+   node "<resolved-plan-set.mjs>" done "$NEXT" \
+     "$(git merge-base main HEAD | cut -c1-7)..$(git rev-parse --short HEAD)"
    ```
+
+   Add `--manifest` only for a scoped, bare-id workflow.
 
    `done` refuses to run if `$NEXT`'s dependencies are not all `done` — a
    safeguard against marking things done out of order.
@@ -172,15 +197,13 @@ it, on purpose — it is a decision, not a state transition.
 
 ## Design notes
 
-- **`next` returns a set, not a single id.** v1 takes the first of it. The set
-  is the seam a later cross-plan scheduler would read, once the parallel-write
+- **`next` returns a ready set, not a single id.** The loop takes the first of
+  it. The set is the seam a later cross-plan scheduler would read, once the parallel-write
   ban is lifted. Nothing here requires that ban lifted.
-- **The CLI lives under `hooks/`, not this skill's directory.** Every other
-  skill's scripts sit inside its own directory. Splitting them is a
-  consequence of the tier filter (`scripts/mint-plugins.mjs` copies only the
-  in-tier skills, but copies `hooks/` for every plugin), not a preference. If
-  D2 is later reversed for this skill, the script should move into
-  `skills/sequencing-plans/scripts/`.
+- **The CLI lives under `hooks/`, not this skill's directory.** SessionStart
+  invokes the adjacent notice before any skill body is loaded. Keeping both
+  runtime pieces together also gives every generated harness the same stable
+  plugin-relative path.
 - **`plan-set` is Node, not bash.** Kahn's algorithm plus per-line YAML
   parsing over a mutable file is short in JS and painful in bash. Node ships
   with every harness this fork targets.

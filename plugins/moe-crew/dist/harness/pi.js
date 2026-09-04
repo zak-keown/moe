@@ -67,8 +67,8 @@ export const pi = {
     registersIdAtLaunch: true,
     quitKeys: "/quit",
     stopGraceSeconds: 10,
-    bin() {
-        return process.env.MOE_CREW_PI_BIN ?? "pi";
+    bin(environment = process.env) {
+        return environment.MOE_CREW_PI_BIN || "pi";
     },
     // Pi's env genuinely depends on BOTH workerHome (PI_CODING_AGENT_DIR) and
     // tmuxName (MOE_CREW_TMUX_NAME the extension self-registers the meta with).

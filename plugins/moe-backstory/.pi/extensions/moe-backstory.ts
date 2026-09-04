@@ -7,7 +7,7 @@ import type { ExtensionAPI } from '@earendil-works/pi-coding-agent'
 
 const extensionDir = dirname(fileURLToPath(import.meta.url))
 const packageRoot = resolve(extensionDir, '../..')
-const skillsDir = resolve(packageRoot, 'skills')
+const skillsDir = resolve(packageRoot, '.pi/skills')
 
 export default function extension(pi: ExtensionAPI) {
   pi.on('resources_discover', async () => ({

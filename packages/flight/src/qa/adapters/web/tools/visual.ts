@@ -1,6 +1,6 @@
-import { readFileSync, unlinkSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { readFileSync, unlinkSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { type ToolResult, textResult } from "../../../models/provider.js";
 import { composeResult } from "../adapter.js";
 import type { WebToolCtx } from "./types.js";

@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync } from "node:fs";
 import { parseStoryCard } from "../format/story-card.js";
 
 export interface ValidationResult {

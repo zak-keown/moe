@@ -24,7 +24,7 @@ function makeFixtureRun(): { runDir: string; templatePath: string; base: string 
   );
   writeFileSync(
     join(runDir, "run.jsonl"),
-    JSON.stringify({ eventId: "e1", ts: "2026-05-22T00:00:00Z", type: "run_start" }) + "\n",
+    `${JSON.stringify({ eventId: "e1", ts: "2026-05-22T00:00:00Z", type: "run_start" })}\n`,
   );
   const templatePath = join(base, "template.html");
   writeFileSync(
@@ -51,11 +51,11 @@ describe("renderRunFromTemplate", () => {
     const { runDir, templatePath } = makeFixtureRun();
     writeFileSync(
       join(runDir, "run.jsonl"),
-      JSON.stringify({
+      `${JSON.stringify({
         eventId: "e1",
         type: "user_message",
         content: "evil </script><script>alert(1)</script>",
-      }) + "\n",
+      })}\n`,
     );
     const outPath = await renderRunFromTemplate({ runDir, templatePath });
     const html = readFileSync(outPath, "utf-8");

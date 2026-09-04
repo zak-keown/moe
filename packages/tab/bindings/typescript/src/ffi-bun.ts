@@ -12,7 +12,7 @@ export function createBackend(libPath: string): FfiBackend {
     moe_tab_refresh_pricing: { args: [FFIType.cstring, FFIType.ptr], returns: FFIType.i32 },
   });
 
-  const cstr = (s: string | null) => (s === null ? null : Buffer.from(s + "\0"));
+  const cstr = (s: string | null) => (s === null ? null : Buffer.from(`${s}\0`));
 
   // Copy the moe-tab-owned string out, then free it. Always frees when out[0] is non-NULL.
   // out[0] is a bigint; Number() narrows it — exact for all real user-space pointers (< 2^53).

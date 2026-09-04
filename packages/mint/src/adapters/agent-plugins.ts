@@ -1,6 +1,6 @@
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import type { ComponentSupport, HarnessAdapter, EmissionLimitation } from './types.js'
 import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { baseManifestFields, json } from './shared.js'
 
@@ -191,7 +191,7 @@ function installDoc(model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const agentPlugins = Object.freeze({
+export const agentPlugins: HarnessAdapter = Object.freeze({
   name: 'agent-plugins-1.0',
   support: {
     skills: 'full',
@@ -202,8 +202,10 @@ export const agentPlugins = Object.freeze({
     bootstrap: 'none',
     rules: 'none',
     variables: 'none',
-  } as const,
-  skillsOutputDir: undefined,
+  } satisfies ComponentSupport,
+  skillLayout: { outputDir: 'skills', profile: 'agent-plugins-1.0', mode: 'source-or-rendered' as const },
+  skillDelivery: 'native-discovery',
+  nativeDiscoveryFile: 'plugin.json',
   installDoc,
   emit(model: PluginModel) {
     const { config } = model
@@ -237,11 +239,6 @@ export const agentPlugins = Object.freeze({
       if (mcp) files.push({ path: 'mcp.json', content: json(mcp) })
     }
 
-    if (config.components.skills !== 'skills') {
-      warnings.push(
-        `agent-plugins-1.0 requires skills/ at the plugin root; ${config.components.skills} will not be discovered`,
-      )
-    }
     if (model.commands.length) warnings.push('commands are excluded from the Agent Plugins 1.0 spec')
     if (model.agents.length) warnings.push('agents are excluded from the Agent Plugins 1.0 spec')
     if (model.hooks !== undefined) warnings.push('hooks are excluded from the Agent Plugins 1.0 spec')
@@ -252,4 +249,4 @@ export const agentPlugins = Object.freeze({
       emittedCapabilities: deriveEmittedCapabilities('agent-plugins-1.0', model, files),
     }
   },
-}) satisfies HarnessAdapter
+})

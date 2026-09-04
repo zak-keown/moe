@@ -100,6 +100,7 @@ describe('complete artifact assembly', () => {
       cp(join(repoRoot, 'NOTICE'), join(root, 'NOTICE')),
     ])
     const plugin = await fixturePlugin(root)
+    await chmod(join(plugin.sourcePath, 'skills/demo/test-runtime.js'), 0o740)
     const resolved = platform(root, [plugin])
     const destinationRoot = join(root, 'plugins.next-testnonce')
     await mkdir(destinationRoot)
@@ -114,6 +115,12 @@ describe('complete artifact assembly', () => {
     expect(paths).toContain('skills/demo/__tests__/test-transitive.js')
     expect(paths).toContain('skills/test-driven-development/SKILL.md')
     expect(paths).not.toContain('skills/demo/test-unlinked.js')
+    expect((await stat(join(artifact.root, 'skills/demo/test-runtime.js'))).mode & 0o777).toBe(0o740)
+    for (const privateRoot of ['.claude-plugin/skills', '.opencode/skills', '.pi/skills']) {
+      expect(paths).not.toContain(`${privateRoot}/demo/test-unlinked.js`)
+      expect(paths).toContain(`${privateRoot}/demo/test-runtime.js`)
+      expect((await stat(join(artifact.root, privateRoot, 'demo/test-runtime.js'))).mode & 0o777).toBe(0o740)
+    }
     expect(paths).not.toContain('skills/demo/.gitignore')
     expect(paths).not.toContain('moe-mint.yaml')
     expect(paths).toContain('.moe/artifact.json')
@@ -127,13 +134,71 @@ describe('complete artifact assembly', () => {
     expect(manifest).toMatchObject({
       name: '@example/composed-plugin',
       main: 'dist/index.js',
-      pi: { skills: ['./skills'] },
+      pi: { skills: ['./.pi/skills'] },
       publishConfig: { access: 'public', registry: 'https://registry.npmjs.org' },
     })
     expect(await readFile(join(artifact.root, 'dist/data.bin'))).toEqual(Buffer.from([0x00, 0xff, 0xfe, 0x41]))
     expect((await stat(join(artifact.root, 'dist/cli.js'))).mode & 0o777).toBe(0o755)
     expect((await stat(join(artifact.root, 'dist/data.bin'))).mode & 0o777).toBe(0o644)
     expect(manifest.files).toEqual([...paths.filter((path) => path !== 'package.json' && path !== '.moe/artifact.json'), '.moe/artifact.json'].sort())
+  })
+
+  it('retains a developer-shaped support file referenced by a semantic resource expression', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'moe-assemble-resource-'))
+    workspaces.push(root)
+    await Promise.all([
+      cp(join(repoRoot, 'LICENSE'), join(root, 'LICENSE')),
+      cp(join(repoRoot, 'LICENSE-MIT'), join(root, 'LICENSE-MIT')),
+      cp(join(repoRoot, 'NOTICE'), join(root, 'NOTICE')),
+    ])
+    const plugin = await fixturePlugin(root)
+    await writeFile(
+      join(plugin.sourcePath, 'skills/demo/SKILL.md'),
+      `${await readFile(join(plugin.sourcePath, 'skills/demo/SKILL.md'), 'utf8')}\nRun {resource:skills/demo/test-unlinked.js}.\n`,
+    )
+    const destinationRoot = join(root, 'plugins.next-resource')
+    await mkdir(destinationRoot)
+
+    const artifact = await assembleArtifact({ repoRoot: root, platform: platform(root, [plugin]), plugin, destinationRoot })
+    const paths = await inventory(artifact.root)
+    expect(paths).toContain('skills/demo/test-unlinked.js')
+    expect(paths).toContain('.claude-plugin/skills/demo/test-unlinked.js')
+    expect(await readFile(join(artifact.root, '.claude-plugin/skills/demo/SKILL.md'), 'utf8'))
+      .toContain('[skills/demo/test-unlinked.js](test-unlinked.js)')
+  })
+
+  it('loads the companion vocabulary beside a non-root canonical config', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'moe-assemble-vocab-'))
+    workspaces.push(root)
+    await Promise.all([
+      cp(join(repoRoot, 'LICENSE'), join(root, 'LICENSE')),
+      cp(join(repoRoot, 'LICENSE-MIT'), join(root, 'LICENSE-MIT')),
+      cp(join(repoRoot, 'NOTICE'), join(root, 'NOTICE')),
+    ])
+    const plugin = await fixturePlugin(root)
+    await writeFile(
+      join(plugin.sourcePath, 'skills/demo/SKILL.md'),
+      `${await readFile(join(plugin.sourcePath, 'skills/demo/SKILL.md'), 'utf8')}\nUse {ask}.\n`,
+    )
+    await writeFile(
+      join(plugin.sourcePath, 'mint/composed-plugin-vocab.yaml'),
+      [
+        'tokens:',
+        '  ask:',
+        '    claude-code: CLAUDE',
+        '    opencode: OPENCODE',
+        '    pi: PI',
+        'blocks: {}',
+        '',
+      ].join('\n'),
+    )
+    const destinationRoot = join(root, 'plugins.next-vocab')
+    await mkdir(destinationRoot)
+
+    const artifact = await assembleArtifact({ repoRoot: root, platform: platform(root, [plugin]), plugin, destinationRoot })
+    expect(await readFile(join(artifact.root, '.claude-plugin/skills/demo/SKILL.md'), 'utf8')).toContain('Use CLAUDE.')
+    expect(await readFile(join(artifact.root, '.opencode/skills/demo/SKILL.md'), 'utf8')).toContain('Use OPENCODE.')
+    expect(await readFile(join(artifact.root, '.pi/skills/demo/SKILL.md'), 'utf8')).toContain('Use PI.')
   })
 
   it('rejects a post-payload component directory that aliases an adapter directory', async () => {
@@ -146,6 +211,10 @@ describe('complete artifact assembly', () => {
     ])
     const plugin = await fixturePlugin(root)
     plugin.config.components.agents = 'Docs'
+    await writeFile(
+      plugin.configPath,
+      (await readFile(plugin.configPath, 'utf8')).replace('  agents: agents', '  agents: Docs'),
+    )
     await mkdir(join(plugin.sourcePath, 'Docs'))
     await writeFile(join(plugin.sourcePath, 'Docs', 'component.md'), 'component\n')
     const destinationRoot = join(root, 'plugins.next-alias')
@@ -168,6 +237,10 @@ describe('complete artifact assembly', () => {
     ])
     const plugin = await fixturePlugin(root)
     plugin.config.components.agents = 'PACKAGE.JSON'
+    await writeFile(
+      plugin.configPath,
+      (await readFile(plugin.configPath, 'utf8')).replace('  agents: agents', '  agents: PACKAGE.JSON'),
+    )
     await rm(join(plugin.sourcePath, 'package.json'))
     await writeFile(join(plugin.sourcePath, 'PACKAGE.JSON'), '{}\n')
     const destinationRoot = join(root, 'plugins.next-package-alias')
@@ -187,6 +260,10 @@ describe('complete artifact assembly', () => {
     ])
     const plugin = await fixturePlugin(root)
     plugin.config.components.agents = '.MOE'
+    await writeFile(
+      plugin.configPath,
+      (await readFile(plugin.configPath, 'utf8')).replace('  agents: agents', '  agents: .MOE'),
+    )
     await mkdir(join(plugin.sourcePath, '.MOE'))
     await writeFile(join(plugin.sourcePath, '.MOE/component.md'), 'component\n')
     const destinationRoot = join(root, 'plugins.next-metadata-alias')
@@ -249,6 +326,30 @@ describe('complete artifact assembly', () => {
 
     await expect(assembleArtifact({ repoRoot: root, platform: platform(root, [plugin]), plugin, destinationRoot }))
       .rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_COMPONENT_FORBIDDEN' } })
+  })
+
+  it('rejects a source component symlink before following it outside the package', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'moe-assemble-source-link-'))
+    const outside = await mkdtemp(join(tmpdir(), 'moe-assemble-source-link-target-'))
+    workspaces.push(root, outside)
+    const plugin = await fixturePlugin(root)
+    const secret = join(outside, 'secret.txt')
+    await writeFile(secret, 'outside bytes\n')
+    await symlink(secret, join(plugin.sourcePath, 'skills/demo/leak.txt'))
+    const destinationRoot = join(root, 'plugins.next-source-link')
+    await mkdir(destinationRoot)
+
+    await expect(assembleArtifact({ repoRoot: root, platform: platform(root, [plugin]), plugin, destinationRoot }))
+      .rejects.toMatchObject({
+        diagnostic: {
+          code: 'ARTIFACT_COMPONENT_UNSAFE_TYPE',
+          path: 'skills/demo/leak.txt',
+        },
+      })
+
+    expect(await readFile(secret, 'utf8')).toBe('outside bytes\n')
+    await expect(readFile(join(destinationRoot, plugin.id, 'skills/demo/leak.txt')))
+      .rejects.toMatchObject({ code: 'ENOENT' })
   })
 
   it('rejects component and final-tree aliases of the reserved build-evidence root', async () => {

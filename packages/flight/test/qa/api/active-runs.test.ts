@@ -104,7 +104,7 @@ describe("ActiveRunRegistry", () => {
     const r = new ActiveRunRegistry();
     r.register(info("a", 100));
     for (let i = 0; i < 250; i++) r.recordProgress("a", `msg-${i}`);
-    const log = r.getSnapshot("a")!.progressLog;
+    const log = r.getSnapshot("a")?.progressLog;
     expect(log.length).toBe(200);
     expect(log[0]).toBe("msg-50");
     expect(log[199]).toBe("msg-249");

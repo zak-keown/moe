@@ -1,13 +1,17 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
-export function consentPath(home) {
-    return `${home}/.claude/.moe-crew-consent`;
+import { existsSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { ensureOwnedDir } from "./worker-store.js";
+/** Durable, harness-neutral consent state owned by Moe. */
+export function consentPath(home, environment = {}) {
+    const stateHome = environment.XDG_STATE_HOME || join(home, ".local", "state");
+    return join(stateHome, "moe", "crew", "consent");
 }
-export function hasConsent(home) {
-    return existsSync(consentPath(home));
+export function hasConsent(home, environment = {}) {
+    return existsSync(consentPath(home, environment));
 }
-export function grantConsent(home) {
-    const p = consentPath(home);
-    mkdirSync(dirname(p), { recursive: true });
-    writeFileSync(p, "");
+export function grantConsent(home, environment = {}) {
+    const p = consentPath(home, environment);
+    ensureOwnedDir(dirname(dirname(p)));
+    ensureOwnedDir(dirname(p));
+    writeFileSync(p, "", { mode: 0o600 });
 }

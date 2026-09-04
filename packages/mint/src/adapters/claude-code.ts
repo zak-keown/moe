@@ -2,7 +2,7 @@ import { deepMerge } from '../fileset.js'
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
 import { hooksManifestPath, type MintConfig } from '../config.js'
-import type { HarnessAdapter } from './types.js'
+import type { ComponentSupport, HarnessAdapter } from './types.js'
 import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { sessionStartScript, runHookCmd, mergedClaudeHooks } from '../bootstrap/shell-hook.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
@@ -154,7 +154,7 @@ function installDoc(model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const claudeCode = Object.freeze({
+export const claudeCode: HarnessAdapter = Object.freeze({
   name: 'claude-code',
   support: {
     skills: 'full',
@@ -165,8 +165,9 @@ export const claudeCode = Object.freeze({
     bootstrap: 'full',
     rules: 'none',
     variables: 'none',
-  } as const,
-  skillsOutputDir: undefined,
+  } satisfies ComponentSupport,
+  skillLayout: { outputDir: '.claude-plugin/skills', profile: 'claude-code', mode: 'rendered' as const },
+  skillDelivery: 'rendered',
   installDoc,
   emit(model: PluginModel) {
     const { config } = model
@@ -213,4 +214,4 @@ export const claudeCode = Object.freeze({
     }
     return { files, limitations: [], emittedCapabilities: deriveEmittedCapabilities('claude-code', model, files) }
   },
-}) satisfies HarnessAdapter
+})

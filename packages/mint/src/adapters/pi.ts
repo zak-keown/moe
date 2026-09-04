@@ -1,6 +1,6 @@
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import type { ComponentSupport, HarnessAdapter, EmissionLimitation } from './types.js'
 import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { parseRepo } from './shared.js'
 import { piDiscoveryMetadata, piExtensionPath, bootstrapContentPath } from '../bootstrap/node-package.js'
@@ -211,7 +211,7 @@ function installDoc(model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const pi = Object.freeze({
+export const pi: HarnessAdapter = Object.freeze({
   name: 'pi',
   support: {
     skills: 'full',
@@ -222,8 +222,9 @@ export const pi = Object.freeze({
     bootstrap: 'full',
     rules: 'none',
     variables: 'none',
-  } as const,
-  skillsOutputDir: '.pi/skills',
+  } satisfies ComponentSupport,
+  skillLayout: { outputDir: '.pi/skills', profile: 'pi', mode: 'rendered' as const },
+  skillDelivery: 'rendered',
   installDoc,
   emit(model: PluginModel) {
     const limitations: EmissionLimitation[] = []
@@ -250,4 +251,4 @@ export const pi = Object.freeze({
       packageContribution: { owner: 'pi' as const, pi: piDiscoveryMetadata(model) },
     }
   },
-}) satisfies HarnessAdapter
+})

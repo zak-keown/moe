@@ -78,11 +78,17 @@ export const maka: HarnessAdapter = {
     rules: 'none',
     variables: 'none',
   },
+  skillLayout: { outputDir: 'skills', profile: 'maka', mode: 'in-place' },
+  skillDelivery: 'unsupported',
   installDoc,
   emit(_model: PluginModel): AdapterEmission {
     return {
       files: [],
-      limitations: [{ code: 'COMPONENT_OMITTED', component: 'skills', message: 'maka adapter is a placeholder; no files emitted (Apache Maka plugin spec is not yet confirmed)' }],
+      limitations: [{
+        code: 'COMPONENT_OMITTED',
+        component: 'skills',
+        message: 'maka adapter is a placeholder; no files emitted (Apache Maka plugin spec is not yet confirmed)',
+      }],
       emittedCapabilities: [],
     }
   },

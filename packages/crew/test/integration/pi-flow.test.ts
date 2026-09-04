@@ -86,6 +86,7 @@ describe.skipIf(!HAS_TMUX)("pi flow e2e (real tmux + bundled moe-crew)", () => {
   }> {
     return runWithEnv(["node", moeCrewEntry, ...args], {
       MOE_CREW_WORKER_DIR: workerDir,
+      XDG_STATE_HOME: join(home, "state"),
       HOME: home,
     });
   }
@@ -101,9 +102,9 @@ describe.skipIf(!HAS_TMUX)("pi flow e2e (real tmux + bundled moe-crew)", () => {
     cwd = mkdtempSync(join(tmpdir(), "moe-crew-pi-cwd-"));
     tmuxName = uniqueName();
 
-    mkdirSync(join(home, ".claude"), { recursive: true });
+    mkdirSync(join(home, "state", "moe", "crew"), { recursive: true });
     // Pre-grant consent: launch refuses to run without it.
-    writeFileSync(join(home, ".claude", ".moe-crew-consent"), "");
+    writeFileSync(join(home, "state", "moe", "crew", "consent"), "");
   });
 
   afterEach(() => {
@@ -133,8 +134,9 @@ describe.skipIf(!HAS_TMUX)("pi flow e2e (real tmux + bundled moe-crew)", () => {
         MOE_CREW_PI_BIN: fakePi,
         MOE_CREW_PI_EXTENSION_PATH: piExtension,
         MOE_CREW_WORKER_DIR: workerDir,
+        XDG_STATE_HOME: join(home, "state"),
         HOME: home,
-        CLAUDE_PLUGIN_ROOT: repoRoot,
+        MOE_CREW_PLUGIN_ROOT: repoRoot,
       },
     );
     expect(result.code, `launch failed:\n${result.stderr}`).toBe(0);

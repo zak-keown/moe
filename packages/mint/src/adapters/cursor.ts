@@ -1,19 +1,17 @@
 import { deepMerge } from '../fileset.js'
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel } from '../model.js'
-import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import type { ComponentSupport, HarnessAdapter, EmissionLimitation } from './types.js'
 import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { sessionStartScript, runHookCmd } from '../bootstrap/shell-hook.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
 import { baseManifestFields, json, bootstrapEmitsHooks, marketplaceName } from './shared.js'
 import { hooksManifestPath } from '../config.js'
 
-// Where the cursor adapter emits the bootstrap SessionStart hook and its
-// hooks-cursor.json, when config.bootstrap.kind === 'skill'. Shares the
-// hooks/moe-mint directory (and the session-start/run-hook.cmd files)
-// with claude-code so the two adapters can coexist without duplication.
-const BOOTSTRAP_HOOKS_DIR = 'hooks/moe-mint'
-const BOOTSTRAP_HOOKS_JSON_PATH = `${BOOTSTRAP_HOOKS_DIR}/hooks-cursor.json`
+// Cursor owns a private hook tree because its bootstrap loader resolves the
+// private, profile-rendered Cursor skill tree.
+const BOOTSTRAP_HOOKS_DIR = '.cursor-plugin/hooks/moe-mint'
+const BOOTSTRAP_HOOKS_JSON_PATH = `${BOOTSTRAP_HOOKS_DIR}/hooks.json`
 
 // Cursor's MCP config is emitted inside .cursor-plugin/ to avoid colliding
 // with agent-plugins.ts's root-level mcp.json. The manifest's mcpServers
@@ -135,7 +133,7 @@ function installDoc(model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const cursor = Object.freeze({
+export const cursor: HarnessAdapter = Object.freeze({
   name: 'cursor',
   support: {
     skills: 'full',
@@ -146,8 +144,9 @@ export const cursor = Object.freeze({
     bootstrap: 'full',
     rules: 'none',
     variables: 'none',
-  } as const,
-  skillsOutputDir: '.cursor-plugin/skills',
+  } satisfies ComponentSupport,
+  skillLayout: { outputDir: '.cursor-plugin/skills', profile: 'cursor', mode: 'rendered' as const },
+  skillDelivery: 'rendered',
   installDoc,
   emit(model: PluginModel) {
     const { config } = model
@@ -175,7 +174,11 @@ export const cursor = Object.freeze({
         files.push(
           {
             path: `${BOOTSTRAP_HOOKS_DIR}/session-start`,
-            content: sessionStartScript({ pluginName: config.name, bootstrapContentPath: `${skill.dir}/SKILL.md` }),
+            content: sessionStartScript({
+              pluginName: config.name,
+              bootstrapContentPath: `${skill.dir}/SKILL.md`,
+              pluginRootRelative: '../../..',
+            }),
             executable: true,
           },
           { path: `${BOOTSTRAP_HOOKS_DIR}/run-hook.cmd`, content: runHookCmd(), executable: true },
@@ -192,7 +195,11 @@ export const cursor = Object.freeze({
         files.push(
           {
             path: `${BOOTSTRAP_HOOKS_DIR}/session-start`,
-            content: sessionStartScript({ pluginName: config.name, bootstrapContentPath: GENERATED_BOOTSTRAP_PATH }),
+            content: sessionStartScript({
+              pluginName: config.name,
+              bootstrapContentPath: GENERATED_BOOTSTRAP_PATH,
+              pluginRootRelative: '../../..',
+            }),
             executable: true,
           },
           { path: `${BOOTSTRAP_HOOKS_DIR}/run-hook.cmd`, content: runHookCmd(), executable: true },
@@ -208,4 +215,4 @@ export const cursor = Object.freeze({
 
     return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('cursor', model, files) }
   },
-}) satisfies HarnessAdapter
+})

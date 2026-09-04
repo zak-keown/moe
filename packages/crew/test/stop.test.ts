@@ -310,11 +310,13 @@ describe("cmdStop", () => {
     // this fake answers true for every name, modeling the unregistered
     // worker's live tmux session.
     const tmux = fakeTmux(() => true, calls);
-    const ctx = makeCtx(workerDir, tmux);
+    const ctx = { ...makeCtx(workerDir, tmux), driver: getDriver("codex") };
 
     const result = await cmdStop(ctx, unregisteredName, { stopTimeout: 0.1, pollMs: 10 });
 
     expect(result.code).toBe(0);
+    expect(calls.sendText).toEqual([{ name: unregisteredName, text: "/quit" }]);
+    expect(calls.sendEnter).toEqual([unregisteredName]);
     expect(calls.killSession).toEqual([unregisteredName]);
     expect(existsSync(shimPath(workerDir, unregisteredName))).toBe(false);
     expect(existsSync(harnessMarkerPath(workerDir, unregisteredName))).toBe(false);

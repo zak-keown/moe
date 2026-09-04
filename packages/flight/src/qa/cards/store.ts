@@ -1,5 +1,5 @@
-import { existsSync, readdirSync, readFileSync } from "fs";
-import { join } from "path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { parseStoryCard, type StoryCard } from "../format/story-card.js";
 import { flightPath } from "../paths.js";
 import type { ErrorLog } from "../util/error-log.js";

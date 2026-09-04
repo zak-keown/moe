@@ -1,6 +1,6 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import * as YAML from "yaml";
 import {
@@ -324,13 +324,13 @@ describe("buildInstallPasskeyTool", () => {
     // install_passkey_ok action log entry present, with sanitized context.
     const ok = actions.find((a) => a.action === "install_passkey_ok");
     expect(ok).toBeDefined();
-    expect(ok!.params.path).toBe("matt/passkey.yaml");
-    expect(ok!.params.rpId).toBe("example.test");
-    expect(ok!.params.credentialIdLength).toBeGreaterThan(0);
-    expect(ok!.params.privateKeyLength).toBeGreaterThan(0);
+    expect(ok?.params.path).toBe("matt/passkey.yaml");
+    expect(ok?.params.rpId).toBe("example.test");
+    expect(ok?.params.credentialIdLength).toBeGreaterThan(0);
+    expect(ok?.params.privateKeyLength).toBeGreaterThan(0);
     // Sensitive bytes must never appear in the log.
-    expect(JSON.stringify(ok!.params)).not.toContain(SAMPLE_PASSKEY.privateKey);
-    expect(JSON.stringify(ok!.params)).not.toContain(SAMPLE_PASSKEY.credentialId);
+    expect(JSON.stringify(ok?.params)).not.toContain(SAMPLE_PASSKEY.privateKey);
+    expect(JSON.stringify(ok?.params)).not.toContain(SAMPLE_PASSKEY.credentialId);
   });
 
   test("each execute call fully rebuilds: closes prior session, opens fresh one", async () => {
@@ -365,7 +365,7 @@ describe("buildInstallPasskeyTool", () => {
 
     const failure = actions.find((a) => a.action === "install_passkey_failed");
     expect(failure).toBeDefined();
-    expect(failure!.params.step).toBe("validate_args");
+    expect(failure?.params.step).toBe("validate_args");
   });
 
   test("path that escapes contextRoot is rejected at resolve_path", async () => {
@@ -382,7 +382,7 @@ describe("buildInstallPasskeyTool", () => {
     expect(calls.openSession).toBe(0);
     const failure = actions.find((a) => a.action === "install_passkey_failed");
     expect(failure).toBeDefined();
-    expect(failure!.params.step).toBe("resolve_path");
+    expect(failure?.params.step).toBe("resolve_path");
   });
 
   test("absolute path is rejected at resolve_path", async () => {
@@ -396,7 +396,7 @@ describe("buildInstallPasskeyTool", () => {
     expect(calls.openSession).toBe(0);
     const failure = actions.find((a) => a.action === "install_passkey_failed");
     expect(failure).toBeDefined();
-    expect(failure!.params.step).toBe("resolve_path");
+    expect(failure?.params.step).toBe("resolve_path");
   });
 
   test("path pointing at a non-existent file surfaces as read_passkey error", async () => {
@@ -410,7 +410,7 @@ describe("buildInstallPasskeyTool", () => {
     expect(calls.openSession).toBe(0);
     const failure = actions.find((a) => a.action === "install_passkey_failed");
     expect(failure).toBeDefined();
-    expect(failure!.params.step).toBe("read_passkey");
+    expect(failure?.params.step).toBe("read_passkey");
   });
 
   test("driver failures at each step surface as step-labeled errors and install_passkey_failed logs", async () => {
@@ -432,10 +432,10 @@ describe("buildInstallPasskeyTool", () => {
 
       const failure = actions.find((a) => a.action === "install_passkey_failed");
       expect(failure).toBeDefined();
-      expect(failure!.params.step).toBe(expectedStep);
-      expect(failure!.params.error).toBe(`${failOn} failed`);
+      expect(failure?.params.step).toBe(expectedStep);
+      expect(failure?.params.error).toBe(`${failOn} failed`);
       // Sensitive bytes never in the failure log either.
-      expect(JSON.stringify(failure!.params)).not.toContain(SAMPLE_PASSKEY.privateKey);
+      expect(JSON.stringify(failure?.params)).not.toContain(SAMPLE_PASSKEY.privateKey);
     }
   });
 

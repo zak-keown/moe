@@ -3,8 +3,8 @@
 // timeout cascade, and the existing seam's `kill()` doesn't take a
 // signal. Every other caller in the codebase is fine with the seam;
 // this module is the deliberate exception.
-import { type ChildProcessByStdio, spawn } from "child_process";
-import type { Readable } from "stream";
+import { type ChildProcessByStdio, spawn } from "node:child_process";
+import type { Readable } from "node:stream";
 import type { CredentialResolverConfig } from "../config.js";
 import type { EvidenceLogger } from "../evidence/logger.js";
 import { type ToolDefinition, type ToolResult, textResult } from "../models/provider.js";

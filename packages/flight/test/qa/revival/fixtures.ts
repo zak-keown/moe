@@ -1,6 +1,6 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { basename, join } from "path";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { anthropicToolResultMessages } from "../../../src/qa/models/anthropic.js";
 
 export function makeRunDir(events: Array<Record<string, unknown>>): string {
@@ -19,7 +19,7 @@ export function makeRunDir(events: Array<Record<string, unknown>>): string {
       ...e,
     };
   });
-  writeFileSync(join(dir, "run.jsonl"), chained.map((e) => JSON.stringify(e)).join("\n") + "\n");
+  writeFileSync(join(dir, "run.jsonl"), `${chained.map((e) => JSON.stringify(e)).join("\n")}\n`);
   return dir;
 }
 

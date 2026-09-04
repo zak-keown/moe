@@ -141,10 +141,10 @@ describe('artifact tree manifest', () => {
     })
   })
 
-  it('scans raw text and binary bytes with exact hashes, normalized modes, sorting, and self-exclusion', async () => {
+  it('scans raw text and binary bytes with exact hashes, exact modes, sorting, and self-exclusion', async () => {
     const root = await fixture()
     await writeFile(join(root, 'opaque.bin'), Uint8Array.from([0, 255, 1, 128, 10]))
-    await chmod(join(root, 'opaque.bin'), 0o644)
+    await chmod(join(root, 'opaque.bin'), 0o740)
     await mkdir(join(root, '.moe'))
     await writeFile(join(root, '.moe', 'artifact.json'), '{"ignored":true}\n')
     await writeFile(join(root, '.moe', 'artifact.json.bak'), 'included\n')
@@ -175,7 +175,7 @@ describe('artifact tree manifest', () => {
       path: 'opaque.bin',
       size: 5,
       sha256: '6d1dc71fb8c1d9f7786ddddd833d3f60835dd60e3b86b652e4458f780c6532f6',
-      mode: '0644',
+      mode: '0740',
     })
     expect(entries.find((entry) => entry.path === 'text.txt')).toMatchObject({
       size: 8,
@@ -294,11 +294,20 @@ describe('artifact tree manifest', () => {
     }
   })
 
-  it('rejects modes outside 0644 and 0755 instead of normalizing during the scan', async () => {
+  it('preserves a nonstandard exact regular-file mode during the scan', async () => {
     const root = await fixture()
     await chmod(join(root, 'text.txt'), 0o600)
 
-    await expect(scanArtifact(root)).rejects.toMatchObject({ diagnostic: { code: 'ARTIFACT_MODE_INVALID' } })
+    await expect(scanArtifact(root)).resolves.toContainEqual(expect.objectContaining({
+      path: 'text.txt',
+      mode: '0600',
+    }))
+  })
+
+  it('rejects a mode outside the exact four-digit regular permission format', () => {
+    expect(() => computeTreeDigest([
+      { path: 'invalid-mode', mode: '0788', size: 0, sha256: zeroHash },
+    ])).toThrow(/invalid mode/)
   })
 
   it.runIf(process.platform === 'linux')('rejects full-Unicode case-fold collisions found during a scan', async () => {

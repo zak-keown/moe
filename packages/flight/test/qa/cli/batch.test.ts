@@ -1,6 +1,6 @@
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterAll, describe, expect, test } from "vitest";
 import { runBatch } from "../../../src/qa/cli/batch.js";
 import type { AppConfig } from "../../../src/qa/config.js";

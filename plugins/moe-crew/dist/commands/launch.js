@@ -6,7 +6,7 @@ import { eventsPath, workerHomePath } from "../core/paths.js";
 import { shellQuote } from "../core/shell.js";
 import { isoSecondsUtc } from "../core/time.js";
 import { ensureOwnedDir, removeWorker, resolveSession, writeHarnessMarker, writeMeta, writeShim, writeWorktreeMarker, } from "../core/worker-store.js";
-import { createWorktree, worktreePath } from "../core/worktree.js";
+import { createWorktree } from "../core/worktree.js";
 import { getDriver } from "../harness/registry.js";
 import { awaitSessionStart } from "./await-start.js";
 import { awaitComposerReady, dismissCodexTrustGate } from "./codex-launch.js";
@@ -79,7 +79,7 @@ export async function cmdLaunch(ctx, args, opts) {
     if (typeof resolved !== "string")
         return resolved;
     const cwd = resolved;
-    if (!hasConsent(ctx.home))
+    if (!hasConsent(ctx.home, ctx.environment ?? {}))
         return consentError(opts.moeCrewPath);
     if (await ctx.tmux.hasSession(tmuxName)) {
         return {
@@ -167,7 +167,7 @@ async function launchAssign(ctx, { driver, tmuxName, cwd, extraArgs, invocation,
  * (awaitPiReady) — enough to let the TUI come up before the first send; the meta
  * still self-registers when pi fires its first event.
  */
-async function launchDerive(ctx, { driver, tmuxName, cwd, extraArgs, invocation, worktreeDir }, opts) {
+async function launchDerive(ctx, { driver, tmuxName, cwd, extraArgs, invocation }, opts) {
     // Sidecar marker so per-worker commands load the codex or pi driver during
     // the pre-registration window (before the extension self-registers the meta).
     writeHarnessMarker(ctx.workerDir, tmuxName, driver.id);

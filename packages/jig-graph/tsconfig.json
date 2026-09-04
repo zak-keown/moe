@@ -1,0 +1,10 @@
+{
+  "//": "Runtime DAG: imports @bubstack/moe-jig (extension type stub) and @modelcontextprotocol/sdk.",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src/**/*"],
+  "references": [{ "path": "../jig" }]
+}

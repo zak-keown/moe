@@ -1,5 +1,5 @@
-import { mkdirSync, readFileSync, writeFileSync } from "fs";
-import { join } from "path";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   generateFanout,
   generateFromFailure,
@@ -39,7 +39,7 @@ async function fanoutFromScenario(
   mkdirSync(outDir, { recursive: true });
   for (let i = 0; i < cards.length; i++) {
     const filename = `${card.id}-${String.fromCharCode(97 + i)}.md`;
-    writeFileSync(join(outDir, filename), cards[i] + "\n");
+    writeFileSync(join(outDir, filename), `${cards[i]}\n`);
     console.error(`Generated: ${filename}`);
   }
 
@@ -73,7 +73,7 @@ async function fanoutFromResult(
   mkdirSync(outDir, { recursive: true });
   for (let i = 0; i < allCards.length; i++) {
     const filename = `${result.scenario}-${String.fromCharCode(97 + i)}.md`;
-    writeFileSync(join(outDir, filename), allCards[i] + "\n");
+    writeFileSync(join(outDir, filename), `${allCards[i]}\n`);
     console.error(`Generated: ${filename}`);
   }
 

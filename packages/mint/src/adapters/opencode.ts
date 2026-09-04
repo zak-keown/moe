@@ -1,7 +1,7 @@
 import { stringify } from 'yaml'
 import type { GeneratedFile } from '../fileset.js'
 import type { PluginModel, CommandRef, AgentRef } from '../model.js'
-import type { HarnessAdapter, EmissionLimitation } from './types.js'
+import type { ComponentSupport, HarnessAdapter, EmissionLimitation } from './types.js'
 import { deriveEmittedCapabilities } from '../platform/capabilities.js'
 import { opencodeServerExport, opencodePluginPath, bootstrapContentPath } from '../bootstrap/node-package.js'
 import { generatedBootstrap, GENERATED_BOOTSTRAP_PATH } from '../bootstrap/generated.js'
@@ -244,7 +244,7 @@ function installDoc(model: PluginModel): string {
   return lines.join('\n')
 }
 
-export const opencode = Object.freeze({
+export const opencode: HarnessAdapter = Object.freeze({
   name: 'opencode',
   support: {
     skills: 'full',
@@ -255,8 +255,9 @@ export const opencode = Object.freeze({
     bootstrap: 'full',
     rules: 'none',
     variables: 'none',
-  } as const,
-  skillsOutputDir: '.opencode/skills',
+  } satisfies ComponentSupport,
+  skillLayout: { outputDir: '.opencode/skills', profile: 'opencode', mode: 'rendered' as const },
+  skillDelivery: 'rendered',
   installDoc,
   emit(model: PluginModel) {
     const limitations: EmissionLimitation[] = []
@@ -286,4 +287,4 @@ export const opencode = Object.freeze({
       packageContribution: { owner: 'opencode' as const, exports: opencodeServerExport(model.config.name) },
     }
   },
-}) satisfies HarnessAdapter
+})

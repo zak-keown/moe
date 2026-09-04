@@ -11,7 +11,7 @@
       // is build-time-stable.
       try {
         const node = document.getElementById("__MOE_FLIGHT_RUN__");
-        if (node && node.textContent && node.textContent.trim() !== "{}") {
+        if (node?.textContent && node.textContent.trim() !== "{}") {
           window.__MOE_FLIGHT_RUN__ = JSON.parse(node.textContent);
         }
       } catch (e) { console.error("Failed to parse __MOE_FLIGHT_RUN__", e); }

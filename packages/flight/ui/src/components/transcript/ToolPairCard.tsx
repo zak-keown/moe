@@ -53,7 +53,7 @@ export function ToolPairCard({ runId, pair, respondingTo, activeArtifact, onOpen
 
   const text = result?.text ?? "";
   const tooLong = text.length > INLINE_CHARS;
-  const shownText = expanded || !tooLong ? text : text.slice(0, INLINE_CHARS) + "…";
+  const shownText = expanded || !tooLong ? text : `${text.slice(0, INLINE_CHARS)}…`;
 
   return (
     <div className={`tr-tool${isError ? " tr-error" : ""}${isSoftError ? " tr-warn" : ""}`}>

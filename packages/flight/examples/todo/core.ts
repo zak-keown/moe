@@ -9,7 +9,7 @@
 // This is a fixture. No locking, no schema migration, no validation
 // beyond what the type system gives us. Don't use as a starter.
 
-import { existsSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 export type Filter = "all" | "active" | "completed";
 
@@ -48,7 +48,7 @@ export function loadState(path?: string): TodoState {
 
 export function saveState(state: TodoState, path?: string): void {
   const file = resolveStatePath(path);
-  writeFileSync(file, JSON.stringify(state, null, 2) + "\n", "utf8");
+  writeFileSync(file, `${JSON.stringify(state, null, 2)}\n`, "utf8");
 }
 
 // Alphabet: a-k, m, n, p-z, 2-9 (no 0/1/l/o, no ambiguous chars).

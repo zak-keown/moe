@@ -2,7 +2,7 @@
   "name": "@bubstack/moe-crew",
   "version": "0.1.6",
   "type": "module",
-  "description": "Launch, control and monitor worker Claude sessions over tmux.",
+  "description": "Launch, control and monitor Claude Code, Codex, and Pi workers over tmux.",
   "license": "MIT",
   "author": {
     "name": "Zak Keown",

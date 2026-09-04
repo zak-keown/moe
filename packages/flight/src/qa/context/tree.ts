@@ -1,5 +1,5 @@
-import { readdirSync, statSync } from "fs";
-import { join } from "path";
+import { readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 
 // Compact tree renderer for the system prompt's Context section.
 // Format is authoritative prose from Flight v1.5 spec §4.3:

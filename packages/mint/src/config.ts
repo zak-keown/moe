@@ -180,20 +180,19 @@ const activeTargetSchema = z.object({
   expected_capabilities: z.array(z.enum(CAPABILITY_IDS)),
   operating_systems: z.array(z.enum(OPERATING_SYSTEM_IDS)).min(1),
 }).strict()
-
 const activeFormatTargetSchema = z.object({
   intent: z.enum(['certify', 'preview']),
   expected_capabilities: z.array(z.enum(CAPABILITY_IDS)),
 }).strict()
-
 const omittedTargetSchema = z.object({ intent: z.literal('omit') }).strict()
 const targetEntrySchema = z.union([activeTargetSchema, omittedTargetSchema])
 const formatTargetEntrySchema = z.union([activeFormatTargetSchema, omittedTargetSchema])
-const targetShape = Object.fromEntries(TARGET_IDS.map((id) => [
-  id,
-  id === 'agent-plugins-1.0' ? formatTargetEntrySchema : targetEntrySchema,
-])) as unknown as Record<TargetId, z.ZodType>
-const targetsSchema = z.object(targetShape).strict()
+const targetsSchema = z.object(
+  Object.fromEntries(TARGET_IDS.map((id) => [
+    id,
+    id === 'agent-plugins-1.0' ? formatTargetEntrySchema : targetEntrySchema,
+  ])) as unknown as Record<TargetId, z.ZodType>,
+).strict()
 
 const importedWorkSchema = z.object({ name: z.string().min(1), artifact_roots: z.array(z.string().min(1)).optional() }).strict()
 

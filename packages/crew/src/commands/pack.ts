@@ -1,6 +1,16 @@
+import { existsSync } from "node:fs";
 import type { PackDefinition } from "../core/packs.js";
 import { loadPack } from "../core/packs.js";
-import { listWorkers } from "../core/worker-store.js";
+import { harnessMarkerPath } from "../core/paths.js";
+import {
+  listOrphanNames,
+  listWorkers,
+  readHarnessMarker,
+  removeOrphan,
+} from "../core/worker-store.js";
+import type { HarnessId } from "../harness/driver.js";
+import { detectInstalledHarnesses, getDriver } from "../harness/registry.js";
+import { type HarnessResolutionFailure, resolveHarness } from "../harness/resolver.js";
 import type { CommandContext, CommandResult } from "./context.js";
 import type { BootstrapOpts } from "./launch.js";
 import { cmdLaunch } from "./launch.js";
@@ -10,6 +20,38 @@ import { cmdStop } from "./stop.js";
 export interface PackArgs {
   packFile: string;
   cwd: string;
+  /** `--harness`, used as the command-wide pack default. */
+  harness?: HarnessId | undefined;
+  /** Injectable environment default for tests and programmatic callers. */
+  environmentHarness?: unknown;
+  /** Injectable executable-detection result for tests and programmatic callers. */
+  installedHarnesses?: readonly HarnessId[] | undefined;
+}
+
+export type PackHarnessResolution = { ok: true; harnesses: HarnessId[] } | HarnessResolutionFailure;
+
+/** Resolve every pack worker before any session is launched. */
+export function resolvePackHarnesses(
+  pack: PackDefinition,
+  defaults: {
+    command?: unknown;
+    environment?: unknown;
+    installed: readonly HarnessId[];
+  },
+): PackHarnessResolution {
+  const harnesses: HarnessId[] = [];
+  for (const worker of pack.workers) {
+    const resolution = resolveHarness({
+      worker: worker.harness,
+      command: defaults.command,
+      pack: pack.defaultHarness,
+      environment: defaults.environment,
+      installed: defaults.installed,
+    });
+    if (!resolution.ok) return resolution;
+    harnesses.push(resolution.harness);
+  }
+  return { ok: true, harnesses };
 }
 
 /**
@@ -25,8 +67,8 @@ function workerName(packName: string, prefix: string, index: number): string {
  * Launch all workers defined in a pack file, then send each its role prompt.
  *
  * For each worker in the pack definition:
- * 1. `cmdLaunch` with name = `<packName>-<namePrefix>-<index>`, harness from
- *    the worker or the default "claude", cwd from the argument.
+ * 1. Resolve every harness without side effects, then `cmdLaunch` with name =
+ *    `<packName>-<namePrefix>-<index>` and cwd from the argument.
  * 2. `cmdSend` with the worker's rolePrompt.
  *
  * Returns a summary or the first fatal error.
@@ -43,17 +85,32 @@ export async function cmdPack(
     return { stderr: `Error: ${(e as Error).message}`, code: 1 };
   }
 
+  const environmentHarness = Object.hasOwn(args, "environmentHarness")
+    ? args.environmentHarness
+    : process.env.MOE_CREW_DEFAULT_HARNESS;
+  const resolution = resolvePackHarnesses(pack, {
+    command: args.harness,
+    environment: environmentHarness,
+    installed: args.installedHarnesses ?? detectInstalledHarnesses(),
+  });
+  if (!resolution.ok) {
+    return { stderr: `Error: ${resolution.diagnostic}`, code: resolution.code };
+  }
+
   const shims: string[] = [];
   const errors: string[] = [];
 
-  for (let i = 0; i < pack.workers.length; i++) {
-    const w = pack.workers[i]!;
+  for (const [i, w] of pack.workers.entries()) {
     const name = workerName(pack.name, w.namePrefix, i);
-    const harness = w.harness ?? "claude";
+    const harness = resolution.harnesses[i];
+    if (harness === undefined) {
+      return { stderr: `Error: no resolved harness for pack worker '${name}'`, code: 2 };
+    }
     const extraArgs = w.harnessArgs ?? [];
+    const workerCtx = { ...ctx, driver: getDriver(harness) };
 
     const launchResult = await cmdLaunch(
-      ctx,
+      workerCtx,
       { tmuxName: name, cwd: args.cwd, extraArgs, harness },
       opts,
     );
@@ -69,7 +126,7 @@ export async function cmdPack(
     }
 
     // Send the role prompt.
-    const sendResult = await cmdSend(ctx, name, w.rolePrompt.trim());
+    const sendResult = await cmdSend(workerCtx, name, w.rolePrompt.trim());
     if (sendResult.code !== 0) {
       errors.push(`Failed to send role prompt to ${name}: ${sendResult.stderr ?? "unknown error"}`);
     }
@@ -102,7 +159,9 @@ export interface PackStopArgs {
  * Stop all workers belonging to a pack. Identifies the pack by name: if the
  * argument looks like a file path, loads it to read the name; otherwise uses
  * the argument as a direct name. Finds all workers in the store whose
- * tmux_name starts with `<packName>-` and stops each one.
+ * tmux_name starts with `<packName>-` and stops each one. Marker-only derive
+ * workers are included because their first send may fail before metadata is
+ * registered.
  */
 export async function cmdPackStop(ctx: CommandContext, args: PackStopArgs): Promise<CommandResult> {
   let packName: string;
@@ -121,21 +180,60 @@ export async function cmdPackStop(ctx: CommandContext, args: PackStopArgs): Prom
   const prefix = `${packName}-`;
   const workers = listWorkers(ctx.workerDir);
   const matching = workers.filter((m) => m.tmux_name.startsWith(prefix));
+  const orphanNames = listOrphanNames(ctx.workerDir).filter((name) => name.startsWith(prefix));
 
-  if (matching.length === 0) {
+  if (matching.length === 0 && orphanNames.length === 0) {
     return { stderr: `No workers found for pack '${packName}'`, code: 0 };
+  }
+
+  const routed: Array<{ name: string; driver: ReturnType<typeof getDriver> }> = [];
+  for (const meta of matching) {
+    const resolution = resolveHarness({ worker: meta.harness, installed: [] });
+    if (!resolution.ok) {
+      return { stderr: `Error: ${resolution.diagnostic}`, code: resolution.code };
+    }
+    routed.push({ name: meta.tmux_name, driver: getDriver(resolution.harness) });
+  }
+
+  const corruptOrphans: Array<{ name: string; diagnostic: string }> = [];
+  for (const name of orphanNames) {
+    const markerPath = harnessMarkerPath(ctx.workerDir, name);
+    const marker = readHarnessMarker(ctx.workerDir, name);
+    const value =
+      marker ??
+      (existsSync(markerPath)
+        ? "(empty or unreadable harness marker)"
+        : "(missing harness marker)");
+    const resolution = resolveHarness({ worker: value, installed: [] });
+    if (!resolution.ok) {
+      corruptOrphans.push({ name, diagnostic: resolution.diagnostic });
+      continue;
+    }
+    routed.push({ name, driver: getDriver(resolution.harness) });
   }
 
   let stopped = 0;
   const errors: string[] = [];
 
-  for (const meta of matching) {
-    const result = await cmdStop(ctx, meta.tmux_name);
+  for (const { name, driver } of routed) {
+    const result = await cmdStop({ ...ctx, driver }, name);
     if (result.code === 0) {
       stopped++;
     } else {
-      errors.push(`Failed to stop ${meta.tmux_name}: ${result.stderr ?? "unknown error"}`);
+      errors.push(`Failed to stop ${name}: ${result.stderr ?? "unknown error"}`);
     }
+  }
+
+  // A corrupt orphan has no trustworthy driver to ask for a graceful exit.
+  // Still kill and remove it so an invalid marker cannot leave a live bypassed
+  // worker behind, then surface the state corruption as the controlling code 2.
+  for (const orphan of corruptOrphans) {
+    if (await ctx.tmux.hasSession(orphan.name)) {
+      await ctx.tmux.killSession(orphan.name);
+    }
+    removeOrphan(ctx.workerDir, orphan.name);
+    stopped++;
+    errors.push(`Invalid state for ${orphan.name}: ${orphan.diagnostic}`);
   }
 
   const summary = [`Pack '${packName}' stopped: ${stopped} workers`];
@@ -148,6 +246,7 @@ export async function cmdPackStop(ctx: CommandContext, args: PackStopArgs): Prom
 
   return {
     stdout: summary.join("\n"),
-    code: errors.length > 0 ? 1 : 0,
+    ...(corruptOrphans.length > 0 ? { stderr: errors.join("\n") } : {}),
+    code: corruptOrphans.length > 0 ? 2 : errors.length > 0 ? 1 : 0,
   };
 }

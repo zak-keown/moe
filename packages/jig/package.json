@@ -1,0 +1,57 @@
+{
+  "name": "@bubstack/moe-jig",
+  "version": "0.1.4",
+  "type": "module",
+  "description": "Deterministic enforcement tooling. Replaces prose-only skill conventions with CLI commands that produce correct output regardless of which model or harness runs them.",
+  "license": "MIT",
+  "author": {
+    "name": "Zak Keown",
+    "email": "zak.keown@outlook.com"
+  },
+  "homepage": "https://github.com/zak-keown/moe",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zak-keown/moe.git"
+  },
+  "keywords": [
+    "claude-code",
+    "codex",
+    "moe",
+    "enforcement",
+    "worktree",
+    "jig"
+  ],
+  "main": "dist/cli.js",
+  "exports": {
+    ".": "./dist/cli.js",
+    "./parser": "./dist/parser.js",
+    "./extension": "./dist/extension.js"
+  },
+  "bin": {
+    "moe-jig": "./dist/cli.js"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc -b && node ../../scripts/copy-license.mjs MIT dist/LICENSE",
+    "typecheck": "tsc -b --pretty",
+    "test": "vitest run",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "commander": "^14.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.4"
+  }
+}

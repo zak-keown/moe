@@ -19,7 +19,7 @@ export async function render(
   config: AppConfig,
   deps: RenderDeps = {},
 ): Promise<void> {
-  const log = deps.log ?? ((m) => process.stderr.write(m + "\n"));
+  const log = deps.log ?? ((m) => process.stderr.write(`${m}\n`));
   const arg = args.runIdOrPath;
 
   let runDir: string;

@@ -1,6 +1,6 @@
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { parseStoryCard } from "../../../src/qa/format/story-card.js";
 import { executeRunCore } from "../../../src/qa/runs/orchestrator.js";
@@ -319,7 +319,7 @@ describe("executeRunCore — error path", () => {
     expect(calls).toEqual(["attach", "onError", "beforeClose", "detach", "afterClose"]);
 
     // Find the orch-err output dir and read run.jsonl
-    const { readdirSync } = await import("fs");
+    const { readdirSync } = await import("node:fs");
     const outDirs = readdirSync(join(projectRoot, ".moe-flight", "results"));
     expect(outDirs.length).toBe(1);
     const runJsonl = readFileSync(

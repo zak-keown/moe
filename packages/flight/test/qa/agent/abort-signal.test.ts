@@ -137,7 +137,7 @@ describe("runAgent abort signal", () => {
 
     const shutdownEvents = events.filter((e) => e.type === "shutdown_signaled");
     expect(shutdownEvents).toHaveLength(1);
-    expect(shutdownEvents[0]!.body.turn).toBe(0);
+    expect(shutdownEvents[0]?.body.turn).toBe(0);
   });
 
   test("Case 2 — abort fires after turn 2 LLM response, before tool-call iteration", async () => {
@@ -174,7 +174,7 @@ describe("runAgent abort signal", () => {
 
     const shutdownEvents = events.filter((e) => e.type === "shutdown_signaled");
     expect(shutdownEvents).toHaveLength(1);
-    expect(shutdownEvents[0]!.body.turn).toBe(1);
+    expect(shutdownEvents[0]?.body.turn).toBe(1);
   });
 
   test("Case 3 — abort fires mid-tool-call sequence within a turn", async () => {
@@ -214,6 +214,6 @@ describe("runAgent abort signal", () => {
     expect(shutdownEvents).toHaveLength(1);
     // The event fires at the top of the next per-tool-call iteration, so
     // turns has already been incremented to 1 (turn 1's LLM call completed).
-    expect(shutdownEvents[0]!.body.turn).toBe(1);
+    expect(shutdownEvents[0]?.body.turn).toBe(1);
   });
 });

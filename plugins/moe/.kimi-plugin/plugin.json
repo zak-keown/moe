@@ -20,7 +20,7 @@
     "writing",
     "plugin-authoring"
   ],
-  "skills": "./skills/",
+  "skills": "./.kimi-plugin/skills/",
   "sessionStart": {
     "skill": "using-moe"
   }

@@ -21,6 +21,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // packages/statusline/src/hooks/ensure-statusline.ts
 var ensure_statusline_exports = {};
 __export(ensure_statusline_exports, {
+  defaultSettingsPath: () => defaultSettingsPath,
   ensureStatusLine: () => ensureStatusLine
 });
 module.exports = __toCommonJS(ensure_statusline_exports);
@@ -60,8 +61,12 @@ function ensureStatusLine(opts) {
 `);
   return { wrote: true, reason: "written" };
 }
-function defaultSettingsPath() {
-  return (0, import_node_path.join)((0, import_node_os.homedir)(), ".claude", "settings.json");
+function defaultSettingsPath(env = process.env, homeDir = (0, import_node_os.homedir)()) {
+  const configuredDir = env.CLAUDE_CONFIG_DIR;
+  if (configuredDir !== void 0 && configuredDir.length > 0) {
+    return (0, import_node_path.join)(configuredDir, "settings.json");
+  }
+  return (0, import_node_path.join)(homeDir, ".claude", "settings.json");
 }
 function readStdin(timeoutMs = 5e3) {
   return new Promise((resolve) => {
@@ -105,5 +110,6 @@ if (typeof require !== "undefined" && typeof module !== "undefined" && require.m
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  defaultSettingsPath,
   ensureStatusLine
 });
