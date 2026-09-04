@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { makePageSessionFake } from './_helpers.mjs';
 
 const require = createRequire(import.meta.url);
-const { attachFileUpload } = require('../../skills/browsing/lib/file-upload.js');
+const { attachFileUpload } = require('../../browsing-compat/lib/file-upload.js');
 
 describe('file-upload', () => {
   function setup(handlers) {

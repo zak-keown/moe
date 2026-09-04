@@ -84,6 +84,17 @@ describe('skill runtime validation', () => {
     ]))).toMatchObject({ modules: 2, diagnostics: [], ok: true })
   })
 
+  it.each([
+    'skills/demo/scripts/main.d.mts',
+    'skills/demo/scripts/main.d.ts',
+    'skills/demo/scripts/main.d.cts',
+  ])('exempts a %s declaration sibling from the .mjs runtime contract', (path) => {
+    expect(validateSkillRuntime(input([
+      ...valid,
+      file(path, 'export function value(): string;\n'),
+    ]))).toMatchObject({ modules: 2, diagnostics: [], ok: true })
+  })
+
   it('reports executable script mode', () => {
     const report = validateSkillRuntime(input([...valid, file('skills/demo/scripts/executable.mjs', 'console.log("tool")\n', true)]))
 
@@ -260,6 +271,40 @@ describe('skill runtime validation', () => {
     ]))
 
     expect(report.diagnostics).toEqual([])
+  })
+
+  it('accepts the resolved-placeholder convention as canonical, both as a node argument and as a prior assignment', () => {
+    const report = validateSkillRuntime(input([
+      ...valid,
+      file('skills/demo/guide.md', [
+        'Resolve {resource:skills/demo/scripts/main.mjs} relative to this loaded document, then invoke it as:',
+        '```bash',
+        'node "<resolved-main.mjs>" --format json',
+        '```',
+        'Or capture it once:',
+        '```bash',
+        'HELPER="<resolved-main.mjs>"',
+        'node "$HELPER" --format json',
+        '```',
+      ].join('\n')),
+    ]))
+
+    expect(report.diagnostics).toEqual([])
+  })
+
+  it('rejects a resolved-placeholder invocation naming a script that does not exist', () => {
+    const report = validateSkillRuntime(input([
+      ...valid,
+      file('skills/demo/guide.md', [
+        '```bash',
+        'node "<resolved-missing.mjs>"',
+        '```',
+      ].join('\n')),
+    ]))
+
+    expect(report.diagnostics.map(({ path, code }) => ({ path, code }))).toEqual([
+      { path: 'skills/demo/guide.md', code: 'SKILL_RUNTIME_REFERENCE' },
+    ])
   })
 
   it('rejects quoted direct calls and dangling noncanonical mjs invocations', () => {

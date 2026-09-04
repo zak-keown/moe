@@ -23,7 +23,7 @@ import * as http from 'node:http';
 import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
-const { createSession } = require('../skills/browsing/chrome-ws-lib.js');
+const { createSession } = require('../browsing-compat/chrome-ws-lib.js');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.join(__dirname, 'fixtures');

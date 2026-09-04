@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Merge shard reports into CODEBASE-REVIEW.md, assigning the CR-### sequence.
 //
 // IDs are assigned HERE, once, rather than by each shard: a shard-local number

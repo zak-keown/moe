@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { makeBrowserSessionFake } from './_helpers.mjs';
 
 const require = createRequire(import.meta.url);
-const { attachBrowserBridge } = require('../../skills/browsing/lib/browser-bridge.js');
+const { attachBrowserBridge } = require('../../browsing-compat/lib/browser-bridge.js');
 
 function setup() {
   const browser = makeBrowserSessionFake();

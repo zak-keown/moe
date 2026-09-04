@@ -50,8 +50,11 @@ look incompatible often serve the same goal from different starting points.
 ## 4. Verify
 
 Run the project's automated checks in order: typecheck, then tests, then
-format. Fix anything the merge broke — the merge resolution owns correctness,
-not a follow-up.
+format. Fix whatever fails before continuing — per `merge-discipline`, this
+is not limited to what the merge itself broke. A failure that predates the
+conflict, or lives on the other side's changes, is still yours to fix once
+you're the one doing the merge. The resolution owns correctness, not a
+follow-up commit.
 
 ## 5. Finish
 
@@ -72,3 +75,4 @@ the rebase completes.
 | "I'll abort and start over" | The same conflict will reappear. Resolve it now. |
 | "The conflict is too complex, let me rewrite this section" | A merge resolution combines or chooses. New code is a follow-up commit. |
 | "The tests pass, so the resolution is correct" | Tests passing is necessary but not sufficient. The intent check (step 2) catches semantic regressions tests miss. |
+| "That failure was already there before the conflict" | Doesn't matter — see `merge-discipline`. You're merging, so you own the result. |

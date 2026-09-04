@@ -4,7 +4,7 @@ import { describe, it } from 'vitest';
 import { makePageSessionFake } from './_helpers.mjs';
 
 const require = createRequire(import.meta.url);
-const { attachConsoleLogging } = require('../../skills/browsing/lib/console-logging.js');
+const { attachConsoleLogging } = require('../../browsing-compat/lib/console-logging.js');
 
 describe('console-logging', () => {
   function setup(sessionId = 'S-test') {

@@ -7,11 +7,17 @@ code quality.
 **Purpose:** Verify one task's implementation matches its requirements (nothing
 more, nothing less) and is well-built (clean, tested, maintainable)
 
+Resolve [skills/subagent-driven-development/scripts/task-brief.mjs](scripts/task-brief.mjs) and [skills/subagent-driven-development/scripts/review-package.mjs](scripts/review-package.mjs) relative to this loaded document before filling the resource-backed placeholders below.
+
+**Dispatch model selection:** Pass a call-level model override only when
+the installed subagent tool documents that field. Otherwise route the
+selected role through the tool's configured subagent profile, or use the
+configured default. Do not invent an unsupported field.
+
+
 ```
 Subagent (general-purpose):
   description: "Review Task N (spec + quality)"
-  model: [MODEL — REQUIRED: choose per SKILL.md Model Selection; an omitted
-         model silently inherits the session's most expensive one]
   prompt: |
     You are reviewing one task's implementation: first whether it matches its
     requirements, then whether it is well-built. This is a task-scoped gate,
@@ -188,9 +194,8 @@ Subagent (general-purpose):
 ```
 
 **Placeholders:**
-- `[MODEL]` — REQUIRED: reviewer model per SKILL.md Model Selection
-- `[BRIEF_FILE]` — REQUIRED: the task brief file (`node "${CLAUDE_PLUGIN_ROOT}/skills/subagent-driven-development/scripts/task-brief.mjs" PLAN N`
-  prints the path; same file the implementer worked from)
+- `[BRIEF_FILE]` — REQUIRED: the path printed by invoking the resolved
+  `task-brief.mjs` resource with `PLAN N`; same file the implementer worked from
 - `[GLOBAL_CONSTRAINTS]` — the binding requirements copied verbatim from
   the plan's Global Constraints section or the spec: exact values, formats,
   and stated relationships between components (not process rules — those
@@ -199,9 +204,9 @@ Subagent (general-purpose):
   report to
 - `[BASE_SHA]` — commit before this task
 - `[HEAD_SHA]` — current commit
-- `[DIFF_FILE]` — REQUIRED: the path the controller wrote the review
-  package to (`node "${CLAUDE_PLUGIN_ROOT}/skills/subagent-driven-development/scripts/review-package.mjs" PLAN_FILE BASE HEAD` prints the unique
-  path it wrote; the package never enters the controller's context)
+- `[DIFF_FILE]` — REQUIRED: the unique path printed by invoking the resolved
+  `review-package.mjs` resource with `PLAN_FILE BASE HEAD`; the package never
+  enters the controller's context
 
 **Reviewer returns:** Spec Compliance verdict (✅/❌/⚠️), Strengths, Issues
 (Critical/Important/Minor), Task quality verdict

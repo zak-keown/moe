@@ -12,7 +12,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const CLI_PATH = join(__dirname, '../../skills/browsing/chrome-ws');
+const CLI_PATH = join(__dirname, '../../browsing-compat/chrome-ws');
 
 function runCli(args, timeoutMs = 5000) {
   return new Promise((resolve) => {

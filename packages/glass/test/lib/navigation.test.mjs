@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { makePageSessionFake } from './_helpers.mjs';
 
 const require = createRequire(import.meta.url);
-const { attachNavigation } = require('../../skills/browsing/lib/navigation.js');
+const { attachNavigation } = require('../../browsing-compat/lib/navigation.js');
 
 describe('navigation', () => {
   function setup(psHandlers = {}, psOpts = {}) {

@@ -27,6 +27,7 @@ import { writeLicensePayload } from './license-payload.js'
 import type { BundledPackage } from './bundle-inventory.js'
 import { assertLegalClosure, parseNotice, readArtifactLicenseRecords, readBundledLicenseRecords } from './legal.js'
 import { classifyStagedImports, type StagedEvidence } from './staged-imports.js'
+import { assertValidSkillRuntime, validateSkillRuntime, type SkillRuntimeFile, type SkillRuntimeReport } from '../skill-runtime.js'
 
 export interface AssembledArtifact {
   readonly plugin: ResolvedPlugin
@@ -253,6 +254,17 @@ async function writeNewFile(path: string, bytes: Uint8Array | string, mode = 0o6
 
 async function stageComponents(plugin: ResolvedPlugin, artifactRoot: string): Promise<readonly ComponentFile[]> {
   const files = await collectComponentFiles(plugin)
+  const runtimeFiles: SkillRuntimeFile[] = files.map((file) => ({
+    path: file.destination,
+    content: file.bytes,
+    executable: (file.mode & 0o111) !== 0,
+  }))
+  assertValidSkillRuntime({
+    plugin: plugin.id,
+    source: plugin.config.source,
+    skillsRoot: plugin.config.components.skills,
+    files: runtimeFiles,
+  })
   for (const file of files) {
     await mkdir(dirname(join(artifactRoot, file.destination)), { recursive: true })
     await writeNewFile(join(artifactRoot, file.destination), file.bytes, file.mode)
@@ -586,4 +598,19 @@ export async function assembleArtifactSet(input: AssembleArtifactSetInput): Prom
     if (ownsDestination) await rm(destinationRoot, { recursive: true, force: true })
     throw error
   }
+}
+
+export async function inspectSkillRuntime(plugin: ResolvedPlugin): Promise<SkillRuntimeReport> {
+  const files = await collectComponentFiles(plugin)
+  const runtimeFiles: SkillRuntimeFile[] = files.map((file) => ({
+    path: file.destination,
+    content: file.bytes,
+    executable: (file.mode & 0o111) !== 0,
+  }))
+  return validateSkillRuntime({
+    plugin: plugin.id,
+    source: plugin.config.source,
+    skillsRoot: plugin.config.components.skills,
+    files: runtimeFiles,
+  })
 }

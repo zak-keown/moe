@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { makePageSessionFake } from './_helpers.mjs';
 
 const require = createRequire(import.meta.url);
-const { attachEvaluation } = require('../../skills/browsing/lib/evaluation.js');
+const { attachEvaluation } = require('../../browsing-compat/lib/evaluation.js');
 
 describe('evaluation', () => {
   function setup(handlers = {}) {

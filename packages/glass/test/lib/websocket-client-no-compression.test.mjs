@@ -4,7 +4,7 @@ import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { WebSocketClient } = require('../../skills/browsing/lib/websocket-client.js');
+const { WebSocketClient } = require('../../browsing-compat/lib/websocket-client.js');
 
 // Why this test exists: the downstream Gauntlet fork hit a nasty
 // failure mode when it replaced this hand-rolled WebSocket client

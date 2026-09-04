@@ -23,7 +23,7 @@ All scripts referenced below live in this skill's `scripts/` directory, next to 
 
 ## Key Concept: Spec Taxonomy
 
-The spec directory structure drives proof seam classification. See `${CLAUDE_PLUGIN_ROOT}/skills/_shared/behavior-evidence-formats.md` for the full taxonomy. Summary:
+The spec directory structure drives proof seam classification. Resolve {resource:skills/_shared/behavior-evidence-formats.md} relative to this loaded document for the full taxonomy. Summary:
 
 | Spec directory | Default proof seam |
 |---|---|
@@ -40,9 +40,7 @@ Extraction subagents use the appropriate prompt variant based on source file loc
 
 Enumerate the spec files without reading full contents:
 
-```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/chunk_spec.mjs" <spec-path>
-```
+Resolve {resource:skills/extracting-requirements/scripts/chunk_spec.mjs} relative to this loaded document, then invoke it as `node "<resolved-chunk_spec.mjs>" <spec-path>`.
 
 This produces a JSON array of chunks. Each chunk has `source_file`, `heading`, `start_line`, `end_line`, `content`, and `estimated_tokens`. Small files (< 4K tokens) are kept whole. Larger files are split by `##` headings, or `###` if sections are still too large.
 
@@ -72,7 +70,7 @@ Pass the chunk content inline — do NOT make the subagent read the file.
 
 Before aggregation, run a PAR omission review. The sole job of this review is to find requirements AND scenarios that the extraction subagents dropped.
 
-For each chunk (or batch of chunks), dispatch two reviewers in parallel following `${CLAUDE_PLUGIN_ROOT}/skills/_shared/parallel-adversarial-review.md`:
+For each chunk (or batch of chunks), dispatch two reviewers in parallel following {resource:skills/_shared/parallel-adversarial-review.md}, resolved relative to this loaded document:
 
 1. Give each reviewer the **original chunk text** and the **extracted stories + scenarios** for that chunk
 2. Prompt: "Compare the source text against the extracted stories and scenarios. Find every requirement, acceptance criterion, behavioral constraint, or observable behavior in the source that is NOT represented by any extracted story or scenario. Score 5 points for each omission found. Pay special attention to: (a) ACs missing proof obligations, (b) observable behavior with no scenario, (c) journey steps that were summarized or skipped."
@@ -85,9 +83,7 @@ This pass is required, not optional. Extraction subagents optimize for what they
 
 Run the story aggregation script on all extracted story JSONs (including any added by the omission review):
 
-```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_stories.mjs" -o docs/moe/iterations/requirements/ <json-file-1> <json-file-2> ...
-```
+Resolve {resource:skills/extracting-requirements/scripts/aggregate_stories.mjs} relative to this loaded document, then invoke it as `node "<resolved-aggregate_stories.mjs>" -o docs/moe/iterations/requirements/ <json-file-1> <json-file-2> ...`.
 
 The script combines stories, deduplicates matching theme + trimmed title + body identities (never blank titles), groups them into epics, assigns stable STORY/EPIC IDs, and outputs per-epic files with proof obligations preserved.
 
@@ -95,12 +91,7 @@ The script combines stories, deduplicates matching theme + trimmed title + body 
 
 Run the scenario aggregation script:
 
-```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_scenarios.mjs" \
-  -o docs/moe/iterations/behavior-scenarios.md \
-  --stories-dir docs/moe/iterations/requirements/ \
-  <json-file-1> <json-file-2> ...
-```
+Resolve {resource:skills/extracting-requirements/scripts/aggregate_scenarios.mjs} relative to this loaded document, then invoke it as `node "<resolved-aggregate_scenarios.mjs>" -o docs/moe/iterations/behavior-scenarios.md --stories-dir docs/moe/iterations/requirements/ <json-file-1> <json-file-2> ...`.
 
 The script combines, deduplicates by title, assigns stable SCENARIO/JOURNEY IDs, resolves story title references to STORY-IDs, and outputs `behavior-scenarios.md`.
 
@@ -114,11 +105,7 @@ Same as before: review the epic list, merge near-duplicates, re-run aggregation.
 
 After both aggregations complete, run the back-linking script to update per-epic story files with scenario references:
 
-```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/backlink_scenarios.mjs" \
-  docs/moe/iterations/behavior-scenarios.md \
-  docs/moe/iterations/requirements/
-```
+Resolve {resource:skills/extracting-requirements/scripts/backlink_scenarios.mjs} relative to this loaded document, then invoke it as `node "<resolved-backlink_scenarios.mjs>" docs/moe/iterations/behavior-scenarios.md docs/moe/iterations/requirements/`.
 
 The script reads scenario → owning-story mappings from `behavior-scenarios.md` and appends `scenario:SCENARIO-NNNN` or `scenario:JOURNEY-NNNN` to AC lines in the epic files that have observable behavioral impact. AC lines that already have scenario refs are skipped.
 
@@ -165,9 +152,14 @@ Set command to `TBD` — the implementing iterations will fill these in.
 
 ### 10. Validate
 
+Resolve {resource:skills/extracting-requirements/scripts/validate_requirements_index.mjs}
+as `<resolved-validate_requirements_index.mjs>` and
+{resource:skills/extracting-requirements/scripts/validate_scenarios.mjs} as
+`<resolved-validate_scenarios.mjs>`, relative to this loaded document. Then run:
+
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_requirements_index.mjs" docs/moe/iterations/requirements/
-node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_scenarios.mjs" docs/moe/iterations/behavior-scenarios.md docs/moe/iterations/requirements/
+node "<resolved-validate_requirements_index.mjs>" docs/moe/iterations/requirements/
+node "<resolved-validate_scenarios.mjs>" docs/moe/iterations/behavior-scenarios.md docs/moe/iterations/requirements/
 ```
 
 If validation fails, inspect the output, fix formatting issues, and re-validate.
@@ -185,15 +177,15 @@ git commit -m "docs: add requirements with proof obligations, behavior scenarios
 
 | Step | Tool | Input | Output |
 |---|---|---|---|
-| Chunk | `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/chunk_spec.mjs" <spec-path>` | spec path | JSON chunks (stdout) |
+| Chunk | `scripts/chunk_spec.mjs` | spec path | JSON chunks (stdout) |
 | Extract | Subagent + `extraction-subagent-prompt.md` | chunk content | JSON stories + scenarios (per subagent) |
 | Omission review | PAR (source text vs. stories + scenarios) | chunks + stories + scenarios | Missing requirements and scenarios |
-| Aggregate stories | `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_stories.mjs" -o <dir> <json-files...>` | JSON files | Per-epic .md files with proof obligations |
-| Aggregate scenarios | `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/aggregate_scenarios.mjs" -o <file> --stories-dir <dir> <json-files...>` | JSON files + stories dir | `behavior-scenarios.md` |
-| Back-link | `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/backlink_scenarios.mjs" <scenarios-file> <stories-dir>` | scenarios + stories | Updated AC lines with scenario refs |
+| Aggregate stories | `scripts/aggregate_stories.mjs -o <dir>` | JSON files | Per-epic .md files with proof obligations |
+| Aggregate scenarios | `scripts/aggregate_scenarios.mjs -o <file>` | JSON files + stories dir | `behavior-scenarios.md` |
+| Back-link | `scripts/backlink_scenarios.mjs` | scenarios + stories | Updated AC lines with scenario refs |
 | Coverage ledger | Map chunks → story IDs + scenario IDs | chunk list, stories, scenarios | Gap/covered/story-only per chunk |
 | Init corpus | Write corpus index | scenario list | `behavior-corpus.md` |
-| Validate | `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_requirements_index.mjs" <requirements-dir>` + `node "${CLAUDE_PLUGIN_ROOT}/skills/extracting-requirements/scripts/validate_scenarios.mjs" <scenarios-file> <requirements-dir>` | .md files | OK or errors |
+| Validate | `scripts/validate_requirements_index.mjs` + `scripts/validate_scenarios.mjs` | .md files | OK or errors |
 
 ## Deferred to later plans
 

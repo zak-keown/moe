@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { describe, it } from 'vitest';
 
 const require = createRequire(import.meta.url);
-const { attachTabs, createPageSessionResolver } = require('../../skills/browsing/lib/tabs.js');
+const { attachTabs, createPageSessionResolver } = require('../../browsing-compat/lib/tabs.js');
 
 describe('tabs', () => {
   function fakeHostOverride() {

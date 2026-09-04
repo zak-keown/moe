@@ -25,7 +25,7 @@ const require = createRequire(import.meta.url);
 // load, so the stub must be installed before a fresh require of the module.
 // The os module is stubbed the same way to exercise the Linux branch.
 
-const SCREENSHOT_PATH = require.resolve('../../skills/browsing/lib/screenshot.js');
+const SCREENSHOT_PATH = require.resolve('../../browsing-compat/lib/screenshot.js');
 const FAKE_PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
 // Slash-free hostile basename: covers `"` (quote breakout), `;`, `$()` and

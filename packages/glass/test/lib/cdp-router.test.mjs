@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { createCdpRouter } = require('../../skills/browsing/lib/cdp-router.js');
+const { createCdpRouter } = require('../../browsing-compat/lib/cdp-router.js');
 
 function makeBrowserFake() {
   const handlers = new Set();

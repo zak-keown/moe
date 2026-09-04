@@ -75,7 +75,7 @@ describe('parsePayload coercion logic', () => {
 // ---------------------------------------------------------------------------
 
 describe('Fix A: captureActionWithDiff AFTER-capture short-circuit on dialog open', () => {
-  const { attachCapture } = require('../skills/browsing/lib/capture.js');
+  const { attachCapture } = require('../browsing-compat/lib/capture.js');
 
   const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'fix-a-test-'));
 
@@ -171,8 +171,8 @@ describe('Fix A: captureActionWithDiff AFTER-capture short-circuit on dialog ope
 // ---------------------------------------------------------------------------
 
 describe('Fix D: restartInMode probes liveness before returning alreadyMessage', () => {
-  const HELPERS_PATH = require.resolve('../skills/browsing/lib/chrome-launcher-helpers.js');
-  const CHROME_PROCESS_PATH = require.resolve('../skills/browsing/lib/chrome-process.js');
+  const HELPERS_PATH = require.resolve('../browsing-compat/lib/chrome-launcher-helpers.js');
+  const CHROME_PROCESS_PATH = require.resolve('../browsing-compat/lib/chrome-process.js');
 
   function withFakeIsPortAlive(portAliveResult, testFn) {
     const origHelpers = require.cache[HELPERS_PATH];
@@ -286,7 +286,7 @@ describe('Fix D: restartInMode probes liveness before returning alreadyMessage',
 // ---------------------------------------------------------------------------
 
 describe('Fix E: kill_chrome and restart_chrome methods exist on session', () => {
-  const { createSession } = require('../skills/browsing/chrome-ws-lib.js');
+  const { createSession } = require('../browsing-compat/chrome-ws-lib.js');
 
   it('chromeLib exposes killChrome method', () => {
     const session = createSession();
@@ -304,7 +304,7 @@ describe('Fix E: kill_chrome and restart_chrome methods exist on session', () =>
 // ---------------------------------------------------------------------------
 
 describe('Fix G: console message dedup', () => {
-  const { attachConsoleLogging } = require('../skills/browsing/lib/console-logging.js');
+  const { attachConsoleLogging } = require('../browsing-compat/lib/console-logging.js');
 
   function setup(sessionId = 'S-dedup') {
     const ps = makePageSessionFake({}, { sessionId });
@@ -405,7 +405,7 @@ describe('Fix G: console message dedup', () => {
 // ---------------------------------------------------------------------------
 
 describe('Schema collapse: bundle includes kill_chrome and restart_chrome actions', () => {
-  const { createSession } = require('../skills/browsing/chrome-ws-lib.js');
+  const { createSession } = require('../browsing-compat/chrome-ws-lib.js');
   const session = createSession();
 
   it('session has killChrome for kill_chrome action', () => {

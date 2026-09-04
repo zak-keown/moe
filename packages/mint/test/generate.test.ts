@@ -660,7 +660,7 @@ describe('vocabulary integration', () => {
   it('preserves an exact nonstandard skill-file mode in every adapter skill directory', () => {
     const dir = freshFixture()
     writeFileSync(join(dir, 'moe-mint-vocab.yaml'), 'tokens: {}\nblocks: {}')
-    chmodSync(join(dir, 'skills/greeting/scripts/hello.sh'), 0o740)
+    chmodSync(join(dir, 'skills/greeting/scripts/hello.mjs'), 0o740)
     const result = generate(dir)
     const adapterSkillDirs = [
       '.codex-plugin/skills',
@@ -671,13 +671,12 @@ describe('vocabulary integration', () => {
     ]
 
     for (const adapterSkillDir of adapterSkillDirs) {
-      const path = `${adapterSkillDir}/greeting/scripts/hello.sh`
+      const path = `${adapterSkillDir}/greeting/scripts/hello.mjs`
       const supportFile = result.files.find((file) => file.path === path)
       expect(supportFile, path).toMatchObject({
         mode: 0o740,
       })
-      expect(Buffer.from(supportFile!.content), path).toEqual(Buffer.from('#!/usr/bin/env bash\necho hello\n'))
-      expect(readFileSync(join(dir, path), 'utf8'), path).toBe('#!/usr/bin/env bash\necho hello\n')
+      expect(readFileSync(join(dir, path), 'utf8'), path).toBe(readFileSync(join(dir, 'skills/greeting/scripts/hello.mjs'), 'utf8'))
       expect(statSync(join(dir, path)).mode & 0o777, path).toBe(0o740)
     }
   })

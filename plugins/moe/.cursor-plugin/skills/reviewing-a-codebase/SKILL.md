@@ -119,16 +119,16 @@ review lenses together.
 
 | | files | lenses | model |
 |---|---|---|---|
-| `shallow` | entrypoints, plus files changed most often in git history | correctness, security | Sonnet |
-| `medium` | all tracked source after exclusions | plus tests, error handling, API contracts | Sonnet |
-| `deep` | plus tests, config, scripts, infrastructure | plus performance, coupling, dependency risk | **Opus** |
+| `shallow` | entrypoints, plus files changed most often in git history | correctness, security | the configured default |
+| `medium` | all tracked source after exclusions | plus tests, error handling, API contracts | the configured default |
+| `deep` | plus tests, config, scripts, infrastructure | plus performance, coupling, dependency risk | **the configured deep-reasoning model** |
 
 Credential-bearing paths — `.env`, `*.pem`, `id_rsa`, `.npmrc` and the like —
 are in scope at **every** depth regardless of extension. A committed secret is
 the highest-severity thing a review can find and it never lives in a file with a
 code extension, so an extension filter is exactly the wrong instrument for it.
 
-Only `deep` escalates the model, by passing `model: opus` when dispatching
+Only `deep` escalates the model, by passing `model:` the configured deep-reasoning model when dispatching
 `review-shard`. Shallow is cheaper by scope, not by capability.
 
 **This is review breadth. It is not the `patch` / `change` / `feature` workflow
@@ -138,8 +138,10 @@ never appear in the same decision.
 
 ## Running it
 
+Resolve [skills/reviewing-a-codebase/scripts/review-scope.mjs](scripts/review-scope.mjs) relative to this loaded document, then invoke it as:
+
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/reviewing-a-codebase/scripts/review-scope.mjs" \
+node "<resolved-review-scope.mjs>" \
   --depth medium --out .moe/review-shards
 ```
 
@@ -156,10 +158,10 @@ concurrent. Each writes its own shard report; none of them commit. The agent
 definition carries an off-limits list for the host it runs on; the dispatch
 prompt may add to it, never subtract.
 
-As reports land, validate each one before the merge ever sees it:
+As reports land, resolve [skills/reviewing-a-codebase/scripts/review-check.mjs](scripts/review-check.mjs) relative to this loaded document and validate each one before the merge ever sees it:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/reviewing-a-codebase/scripts/review-check.mjs" \
+node "<resolved-review-check.mjs>" \
   --shards .moe/review-shards
 ```
 
@@ -175,10 +177,10 @@ harness without subagents — run the shards yourself, serially, in manifest
 order. The output is identical and only the wall clock changes. See
 `../_shared/parallel-adversarial-review.md` for the fallback this follows.
 
-Finally:
+Finally, resolve [skills/reviewing-a-codebase/scripts/review-merge.mjs](scripts/review-merge.mjs) relative to this loaded document:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/reviewing-a-codebase/scripts/review-merge.mjs" \
+node "<resolved-review-merge.mjs>" \
   --shards .moe/review-shards --out CODEBASE-REVIEW.md
 ```
 
@@ -197,22 +199,24 @@ happen. Findings that survive are marked `verified: confirmed`; those that fall
 are demoted or dropped, with the refutation kept.
 
 Run the ordinary merge first so the serious findings have their stable
-`CR-###` IDs. Then split them out:
+`CR-###` IDs. Resolve [skills/reviewing-a-codebase/scripts/review-verify-scope.mjs](scripts/review-verify-scope.mjs) relative to this loaded document, then split them out:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/reviewing-a-codebase/scripts/review-verify-scope.mjs" \
+node "<resolved-review-verify-scope.mjs>" \
   --shards .moe/review-shards --report CODEBASE-REVIEW.md
 ```
 
 That writes one `.moe/review-shards/verify/CR-###.md` per critical and high
 finding, plus a manifest of the ID set. Dispatch one `verify-finding` agent per
-file, pointing it at its file. Every reply ends in a `VERDICT-JSON:` line;
-record each as it arrives, from the saved reply or the bare object:
+file, pointing it at its file. Every reply ends in a `VERDICT-JSON:` line.
+Resolve [skills/reviewing-a-codebase/scripts/review-verify-record.mjs](scripts/review-verify-record.mjs)
+relative to this loaded document and record each reply as it arrives, from the
+saved reply or the bare object:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/reviewing-a-codebase/scripts/review-verify-record.mjs" \
+node "<resolved-review-verify-record.mjs>" \
   --shards .moe/review-shards --from-file reply.txt
-node "${CLAUDE_PLUGIN_ROOT}/skills/reviewing-a-codebase/scripts/review-verify-record.mjs" \
+node "<resolved-review-verify-record.mjs>" \
   --shards .moe/review-shards \
   '{"id":"CR-001","verdict":"confirmed","evidence":"Reproduced from the public route."}'
 ```
@@ -227,7 +231,7 @@ ID unless `--replace` is passed; it rewrites
 shows nothing missing, finalize:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/skills/reviewing-a-codebase/scripts/review-merge.mjs" \
+node "<resolved-review-merge.mjs>" \
   --shards .moe/review-shards \
   --verification-results .moe/review-shards/verifications.json \
   --out CODEBASE-REVIEW.md

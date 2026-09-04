@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Validate shard reports against the manifest as they land, before the merge.
 //
 // The merge refuses a malformed report, but only once every shard is in, and

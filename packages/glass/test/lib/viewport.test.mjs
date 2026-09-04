@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { makePageSessionFake } from './_helpers.mjs';
 
 const require = createRequire(import.meta.url);
-const { attachViewport } = require('../../skills/browsing/lib/viewport.js');
+const { attachViewport } = require('../../browsing-compat/lib/viewport.js');
 
 describe('viewport (pageSession-shaped)', () => {
   function setup(handlers = {}) {

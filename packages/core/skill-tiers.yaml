@@ -303,6 +303,17 @@ authored:
       than WHAT it does. Complements `verification-before-completion`, which
       fires at completion time, by firing alongside the task itself.
 
+  merge-discipline:
+    from: moe
+    why: >-
+      Fires on any merge, rebase, or cherry-pick — the one place
+      `moe-discipline`'s scope-containment rule is deliberately overridden:
+      a lint or test failure the integration surfaces is in scope because
+      you are the one integrating, regardless of whose changeset introduced
+      it. Cross-linked from, rather than duplicated into,
+      `finishing-a-development-branch` and `resolving-merge-conflicts` so
+      both flows share one statement of the rule.
+
   developing-for-moe:
     from: moe
     why: >-
