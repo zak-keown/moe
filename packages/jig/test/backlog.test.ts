@@ -92,3 +92,50 @@ describe("backlogAdd", () => {
     expect(code).toBe(1); // 1 = not ignored
   });
 });
+
+describe("routeReason + backlogDefer", () => {
+  let repo: string;
+  beforeEach(() => { repo = makeRepo(); });
+  afterEach(() => { rmSync(repo, { recursive: true, force: true }); });
+
+  it("routes reasons to states", async () => {
+    const { routeReason } = await import("../src/backlog.js");
+    expect(routeReason("no-runtime")).toBe("blocked");
+    expect(routeReason("budget")).toBe("carry-over");
+    expect(routeReason("i-was-low-on-context")).toBe("needs-triage");
+  });
+
+  it("a block reason sets blocked", async () => {
+    const { backlogAdd, backlogDefer, parseItem } = await import("../src/backlog.js");
+    const p = backlogAdd("needs a runtime", { cwd: repo });
+    const r = backlogDefer(parseItem(readFileSync(p, "utf-8")).id, { reason: "no-runtime", note: "no python", cwd: repo });
+    expect(r.status).toBe("blocked");
+    expect(readFileSync(r.path, "utf-8")).toContain("status: blocked");
+  });
+
+  it("a carry reason WITH a next step sets carry-over and writes Resume", async () => {
+    const { backlogAdd, backlogDefer } = await import("../src/backlog.js");
+    backlogAdd("half done", { cwd: repo });
+    const r = backlogDefer("BL-0001", { reason: "budget", next: "wire the last binding", branch: "feat@abc", cwd: repo });
+    expect(r.status).toBe("carry-over");
+    const text = readFileSync(r.path, "utf-8");
+    expect(text).toContain("## Resume");
+    expect(text).toContain("- next: wire the last binding");
+  });
+
+  it("a carry reason WITHOUT a next step is triaged, not carried", async () => {
+    const { backlogAdd, backlogDefer } = await import("../src/backlog.js");
+    backlogAdd("no thread", { cwd: repo });
+    const r = backlogDefer("BL-0001", { reason: "budget", cwd: repo });
+    expect(r.status).toBe("needs-triage");
+    expect(r.triaged).toBe(true);
+  });
+
+  it("an unrecognized reason is triaged and preserves the raw reason", async () => {
+    const { backlogAdd, backlogDefer } = await import("../src/backlog.js");
+    backlogAdd("odd", { cwd: repo });
+    const r = backlogDefer("BL-0001", { reason: "just because", cwd: repo });
+    expect(r.status).toBe("needs-triage");
+    expect(readFileSync(r.path, "utf-8")).toContain("reason: just because");
+  });
+});

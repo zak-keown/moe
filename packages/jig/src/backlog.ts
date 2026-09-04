@@ -153,3 +153,42 @@ export function backlogAdd(title: string, opts: AddOpts = {}): string {
   writeFileSync(filepath, serializeItem(item), "utf-8");
   return resolve(filepath);
 }
+
+export const BLOCK_REASONS = ["no-runtime", "upstream-decision", "depends-on", "needs-human", "external-service"] as const;
+export const CARRY_REASONS = ["budget", "scope-split"] as const;
+export const DECLINE_REASONS = ["wont-fix", "out-of-scope", "duplicate", "not-reproducible"] as const;
+
+export function routeReason(reason: string): BacklogStatus {
+  if ((BLOCK_REASONS as readonly string[]).includes(reason)) return "blocked";
+  if ((CARRY_REASONS as readonly string[]).includes(reason)) return "carry-over";
+  return "needs-triage";
+}
+
+function writeResume(body: string, opts: { note?: string; next?: string; branch?: string }): string {
+  const lines = ["## Resume", ""];
+  if (opts.note) lines.push(`- done: ${opts.note}`);
+  lines.push(`- next: ${opts.next ?? "—"}`);
+  if (opts.branch) lines.push(`- branch: ${opts.branch}`);
+  const block = `${lines.join("\n")}\n`;
+  if (/^## Resume$/m.test(body)) return body.replace(/## Resume[\s\S]*$/m, block);
+  return `${body.replace(/\n*$/, "")}\n\n${block}`;
+}
+
+export interface DeferOpts {
+  reason: string; note?: string; next?: string; branch?: string; cwd?: string; by?: string;
+}
+
+export function backlogDefer(id: string, opts: DeferOpts): { path: string; status: BacklogStatus; triaged: boolean } {
+  const { dir, name, item } = loadItem(opts.cwd, id);
+  let target = routeReason(opts.reason);
+  if (target === "carry-over" && !opts.next?.trim()) target = "needs-triage";
+  item.status = target;
+  item.reason = opts.reason;
+  item.updated = today();
+  item.movedBy = opts.by ?? "manual";
+  item.movedSha = safeSha(opts.cwd) ?? item.movedSha;
+  if (target === "carry-over" || target === "blocked") item.body = writeResume(item.body, opts);
+  const path = join(dir, name);
+  writeFileSync(path, serializeItem(item), "utf-8");
+  return { path: resolve(path), status: target, triaged: target === "needs-triage" };
+}
