@@ -1330,7 +1330,7 @@
       "format": "esm"
     },
     "src/search.ts": {
-      "bytes": 17810,
+      "bytes": 17832,
       "imports": [
         {
           "path": "node:fs",
