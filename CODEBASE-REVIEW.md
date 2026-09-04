@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 35
+  fixed: 44
   stale: 1
   skipped: 0
   deferred: 0
-  open: 71
+  open: 62
 ---
 
 # Codebase Review — moe
@@ -1464,6 +1464,10 @@ produces.
 
 Fix: pass `hostname: "127.0.0.1"` to `honoServe(...)`, matching `startMockWsServer` and the package's own stated default.
 
+**Disposition:** fixed
+**Commit:** `7fe5b4b4fb67f584ad932902bb1eef75a421f994`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-040: `chrome-profile-rotation.test.ts` only guards the module `require()`, not the actual `startChrome()` launch, so it fails outright (rather than skipping) whenever Chrome itself is missing
 
 **File:** `packages/flight/test/qa/integration/chrome-profile-rotation.test.ts`
@@ -1474,6 +1478,10 @@ The test wraps only the `require("../../../src/qa/adapters/web/lib/chrome-ws-lib
 
 Fix: check for a Chrome/Chromium binary the same way `hasTmux`/`hasNano` are checked in the TUI suites (`spawnSync(["which", "google-chrome"])`-style) and gate the whole `describe` on it, or wrap the `startChrome` calls the same way the other three web-e2e files intend to (once that helper is also fixed).
 
+**Disposition:** fixed
+**Commit:** `f6842488061aeba597c2f84f6daa7da9c027e26a`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-041: `isChromeUnavailable()` never matches the actual "Chrome not found" error, so `test:chrome` hard-fails instead of skipping when no browser is installed
 
 **File:** `packages/flight/test/qa/integration/helpers.ts`
@@ -1495,6 +1503,10 @@ The actual error the launcher throws when no browser binary exists is `Chrome no
 
 Fix: add a branch matching the real message, e.g. `msg.includes("Chrome not found")`, or better, detect the browser once with a `spawnSync`-based `hasChrome` check (the same pattern the TUI suites already use for `tmux`) instead of string-sniffing error messages after the fact.
 
+**Disposition:** fixed
+**Commit:** `73f8b8c54b39dd0085347d38c1175a84a6c2126e`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-042: Card status vocabulary diverges between CardEditor, CardsList's filter, and StatusBadge's color map
 **File:** `packages/flight/ui/src/components/CardsList.tsx`
 **Anchor:** `<option value="all">All status</option>` filter dropdown vs. `CardEditor`'s `<select id="card-status">`
@@ -2442,6 +2454,10 @@ either defect.
 Fix: delete the duplicated section, and correct both links to
 `../src/qa/adapters/web/cookies.ts` and `../src/qa/adapters/web/passkey.ts`.
 
+**Disposition:** fixed
+**Commit:** `15743de9210ae2df275769eb1ce505f031187635`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-077: `downscaleImageIfNeeded` builds shell commands via unescaped string interpolation
 
 **File:** `packages/flight/src/qa/adapters/web/lib/screenshot.js`
@@ -2597,6 +2613,10 @@ This is silent today because `packages/flight/tsconfig.tests.json` intentionally
 
 Functionally the tests still pass and still exercise real behavior (the screencast-gate assertions correctly depend on `effective.stateDirName`, which is independently set via `loadConfig({ projectRoot }, ...)` and defaults to `.moe-flight`), so this is not a false-positive test. It is leftover cruft — most likely from a prior version of `ExecuteHttpRunOpts` that took `stateDirName` directly — that no longer means anything and should be deleted so a future reader doesn't assume overriding it changes where frames/results are written.
 
+**Disposition:** fixed
+**Commit:** `2394153f339aea2217d7d12a1a87a808e7d196d3`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-086: Temp directory leaked by render-cmd.test.ts (no cleanup)
 **File:** `packages/flight/test/qa/cli/render-cmd.test.ts`
 **Anchor:** `function makeRun()`
@@ -2604,6 +2624,10 @@ Functionally the tests still pass and still exercise real behavior (the screenca
 
 `makeRun()` calls `mkdtempSync(join(tmpdir(), "moe-flight-render-cmd-"))` and is invoked from all three tests in the file, but the file never calls `rmSync` on the returned `projectRoot` (no import of `rmSync`, no `afterEach`/`afterAll`). As with `run-one.test.ts` in this same shard, this leaks a temp directory per test run; confirmed 147 stale `moe-flight-render-cmd-*` directories present in the OS temp dir from previous runs. Fix: capture the returned `projectRoot` in each test and remove it in a `finally`/`afterEach`, consistent with `render.ts`'s other consumers in this package (e.g. `render-args.test.ts`'s siblings, `attach.test.ts`) that do clean up.
 
+**Disposition:** fixed
+**Commit:** `1764bbe7a3133ce85fc654a0ff87a835e7baa39b`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-087: Temp directories leaked by run-one.test.ts (no cleanup)
 **File:** `packages/flight/test/qa/cli/run-one.test.ts`
 **Anchor:** `mkdtempSync(join(tmpdir(), "moe-flight-runone-ctx-"))`
@@ -2613,6 +2637,10 @@ This file calls `mkdtempSync` four times (`moe-flight-runone-ctx-`, `moe-flight-
 
 I verified this is not merely theoretical: `ls -d "$TMPDIR"/moe-flight-runone-*` on this machine currently shows 147 leftover directories accumulated from prior test runs (same command against `moe-flight-render-cmd-*` also shows 147, corroborating the pattern below). Each run of the suite adds three more directories under the OS temp dir that are never reclaimed until the OS clears `/tmp` (or, on CI runners with a long-lived temp volume, not at all). Fix: add an `afterEach`/`afterAll` that `rmSync(dir, { recursive: true, force: true })`s each created root, matching the pattern used elsewhere in this same test suite.
 
+**Disposition:** fixed
+**Commit:** `001191831ecabe23f4e72cfc916db4fe34cd751f`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-088: `cli-batch.test.ts` reproduces the exact `AppConfig` field-name drift `make-config.ts` was written to prevent
 
 **File:** `packages/flight/test/qa/integration/cli-batch.test.ts`
@@ -2624,6 +2652,10 @@ I verified this is not merely theoretical: `ls -d "$TMPDIR"/moe-flight-runone-*`
 
 Fix: use `makeConfig(projectRoot, { ... })` from `test/qa/helpers/make-config.js` here instead of the hand-rolled `as any` literal, the same fix already applied to the four siblings `make-config.ts` names.
 
+**Disposition:** fixed
+**Commit:** `622a69048914e0f3922cd9442ef04c469a84d2d1`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-089: `resolveRunDir` has no traversal-safety test despite paths.ts's "one and only path-safety guard" framing
 **File:** `packages/flight/test/qa/paths.test.ts`
 **Anchor:** `describe("resolveRunDir", ...)`
@@ -2633,6 +2665,10 @@ Fix: use `makeConfig(projectRoot, { ... })` from `test/qa/helpers/make-config.js
 
 Today's only call site (`packages/flight/src/qa/cli/render.ts`, checked to confirm) passes a CLI argv value, and the HTTP route layer (`api/routes/results.ts`) does its own `join()` + `isSafePath()` check rather than going through `resolveRunDir`, so this isn't currently reachable from an untrusted input. But the test file's own docstring block ("Containment checks operate on already-absolute-or-resolvable inputs... These cover the cases the old `src/api/safe-path.ts` helper handled") signals the whole file's job is exhaustively pinning this module's safety contract, and `resolveRunDir` is the one exported, runId-shaped composer left with zero coverage of the traversal case its siblings are drilled on. Add a test asserting `resolveRunDir` either validates its `runId` or is documented as intentionally unvalidated (call-site-trusted only), so a future caller reaching for "the" path-safety helper in `paths.ts` doesn't reasonably assume it's covered.
 
+**Disposition:** fixed
+**Commit:** `affad1ba3df863f10389009f8591aaca075f0e2c`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-090: Error Log list items can collide on React key under a same-millisecond error burst
 **File:** `packages/flight/ui/src/components/AppShell.tsx`
 **Anchor:** `key={`${err.timestamp}-${err.source}`}`

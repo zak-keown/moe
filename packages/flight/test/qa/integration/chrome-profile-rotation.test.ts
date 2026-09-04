@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { isChromeUnavailable } from "./helpers.js";
 
 // The CDP library under src/qa/adapters/web/lib/ is vendored CommonJS.
 // Bun tolerated a bare `require()` in an ESM file; Node and vitest do
@@ -69,6 +70,12 @@ describe("chrome profile rotation (PRI-1280)", () => {
       expect(statusB.profileDir).toBe(dirB);
       expect(existsSync(dirB)).toBe(true);
       expect(readdirSync(dirB).length).toBeGreaterThan(0);
+    } catch (err: any) {
+      if (isChromeUnavailable(err)) {
+        console.log(`Skipping: ${err.message}`);
+        return;
+      }
+      throw err;
     } finally {
       try {
         await chrome.killChrome();
