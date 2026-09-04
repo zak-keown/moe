@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { renderMatrix, renderSupportMatrix } from '../src/matrix.js'
+import { renderMatrix } from '../src/matrix.js'
 
 describe('renderMatrix', () => {
   it('renders one row per adapter without making static support claims', () => {
@@ -15,12 +15,5 @@ describe('renderMatrix', () => {
     }, { 'claude-code': 'rendered' })
     expect(out).toContain('| claude-code | rendered | skill-discovery |')
     expect(out).toContain('| codex | unsupported | omitted |')
-  })
-})
-
-describe('renderSupportMatrix', () => {
-  it('renders one row per adapter with component support levels', () => {
-    const out = renderSupportMatrix()
-    expect(out).toMatch(/\| claude-code \|( full \|){6}( none \|){2}/)
   })
 })

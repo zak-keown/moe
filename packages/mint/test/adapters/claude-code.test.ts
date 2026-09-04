@@ -65,13 +65,6 @@ describe('claude-code adapter', () => {
     ])
   })
 
-  it('declares full support for every component except rules and variables', () => {
-    const { rules, variables, ...rest } = claudeCode.support
-    expect(Object.values(rest).every((level) => level === 'full')).toBe(true)
-    expect(rules).toBe('none')
-    expect(variables).toBe('none')
-  })
-
   it('emits an executable bootstrap session-start hook', () => {
     const file = result.files.find((f) => f.path === 'hooks/moe-mint/session-start')
     expect(file?.executable).toBe(true)

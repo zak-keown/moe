@@ -18,8 +18,8 @@ The shim path is deterministic: if you pick a memorable tmux name at launch, you
 Pick a harness with `--harness` at launch:
 
 ```bash
-$SKILL/moe-crew launch --harness codex my-task /path/to/project
-$SKILL/moe-crew launch --harness pi    my-task /path/to/project
+node $SKILL/moe-crew.mjs launch --harness codex my-task /path/to/project
+node $SKILL/moe-crew.mjs launch --harness pi    my-task /path/to/project
 ```
 
 Without `--harness`, `MOE_CREW_DEFAULT_HARNESS` wins; when it is unset,
@@ -43,7 +43,7 @@ The controller-facing command surface is **identical across all three harnesses*
 
 ## Setup
 
-The CLI lives at `<skill>/scripts/moe-crew`. Top-level subcommands need the skill path:
+The CLI lives at `<skill>/scripts/moe-crew.mjs`. Top-level subcommands need the skill path:
 
 - `moe-crew launch [--harness <claude|codex|pi>] <tmux-name> <cwd> [-- harness-args...]` — bootstrap a worker (default resolution is described under [Harnesses](#harnesses))
 - `moe-crew adopt <tmux-name> <cwd> <session-id> [-- claude-args...]` — re-adopt an existing Claude session as a worker (claude-only; see [Recovering workers](#recovering-workers-after-a-reboot))
@@ -54,8 +54,8 @@ Once a worker is launched, run subsequent commands against `/tmp/moe-crew-worker
 
 ```bash
 SKILL=/abs/path/to/skill/scripts
-$SKILL/moe-crew grant-consent                          # one-time per machine
-$SKILL/moe-crew launch my-task /path/to/project        # stdout: /tmp/moe-crew-workers/bin/my-task
+node $SKILL/moe-crew.mjs grant-consent                          # one-time per machine
+node $SKILL/moe-crew.mjs launch my-task /path/to/project        # stdout: /tmp/moe-crew-workers/bin/my-task
 /tmp/moe-crew-workers/bin/my-task status               # use the shim directly
 ```
 
@@ -68,7 +68,7 @@ In examples below, `$SKILL` is the absolute path to `skills/driving-claude-code-
 ### 1. Launch
 
 ```bash
-$SKILL/moe-crew launch my-task /path/to/project
+node $SKILL/moe-crew.mjs launch my-task /path/to/project
 # stdout: /tmp/moe-crew-workers/bin/my-task
 # stderr: Worker launched. tmux/session_id/cwd/events/reproduce
 ```
@@ -82,8 +82,8 @@ $SKILL/moe-crew launch my-task /path/to/project
 
 Pass harness CLI args after a `--` separator, or pick an explicit harness with `--harness`:
 ```bash
-$SKILL/moe-crew launch my-task /path/to/project -- --model sonnet
-$SKILL/moe-crew launch --harness codex my-task /path/to/project
+node $SKILL/moe-crew.mjs launch my-task /path/to/project -- --model sonnet
+node $SKILL/moe-crew.mjs launch --harness codex my-task /path/to/project
 ```
 
 ### 2. Converse (the typical case)
@@ -167,10 +167,10 @@ Prints attach instructions for a human to take over the tmux session.
 ### Finding workers
 
 ```bash
-$SKILL/moe-crew list                      # live workers (idle/working/terminated)
-$SKILL/moe-crew list --all                # include 'gone' workers (tmux already exited)
-$SKILL/moe-crew list api                  # substring filter on tmux name
-$SKILL/moe-crew prune                     # remove dead workers + orphaned sidecars/shims
+node $SKILL/moe-crew.mjs list                      # live workers (idle/working/terminated)
+node $SKILL/moe-crew.mjs list --all                # include 'gone' workers (tmux already exited)
+node $SKILL/moe-crew.mjs list api                  # substring filter on tmux name
+node $SKILL/moe-crew.mjs prune                     # remove dead workers + orphaned sidecars/shims
 ```
 
 ## Reference
@@ -222,8 +222,8 @@ git -C ~/proj-worktrees/worker-api rev-parse --path-format=absolute --git-common
 git -C ~/proj-worktrees/worker-ui rev-parse --path-format=absolute --git-dir
 git -C ~/proj-worktrees/worker-ui rev-parse --path-format=absolute --git-common-dir
 
-$SKILL/moe-crew launch worker-api ~/proj-worktrees/worker-api
-$SKILL/moe-crew launch worker-ui  ~/proj-worktrees/worker-ui
+node $SKILL/moe-crew.mjs launch worker-api ~/proj-worktrees/worker-api
+node $SKILL/moe-crew.mjs launch worker-ui  ~/proj-worktrees/worker-ui
 
 /tmp/moe-crew-workers/bin/worker-api send "Add pagination to /users"
 /tmp/moe-crew-workers/bin/worker-ui  send "Add a loading spinner to the user list"
@@ -251,11 +251,11 @@ partial parallel launch.
 ### Pipeline: Worker A produces, Worker B consumes
 
 ```bash
-$SKILL/moe-crew launch spec ~/proj
+node $SKILL/moe-crew.mjs launch spec ~/proj
 /tmp/moe-crew-workers/bin/spec converse "Write an OpenAPI spec for /users to /tmp/api.yaml" 300
 /tmp/moe-crew-workers/bin/spec stop
 
-$SKILL/moe-crew launch impl ~/proj
+node $SKILL/moe-crew.mjs launch impl ~/proj
 /tmp/moe-crew-workers/bin/impl converse "Implement the endpoint defined in /tmp/api.yaml" 600
 /tmp/moe-crew-workers/bin/impl stop
 ```
@@ -277,7 +277,7 @@ A bare `wait-for-turn` baselines at the *current* end of the events file and wai
 Worker runtime state (the `meta`/`events`/`shim` files under `/tmp/moe-crew-workers`) lives in `/tmp`, which macOS clears on reboot — and the tmux panes die with it. But the *conversations* survive: Claude Code persists each session transcript at `~/.claude/projects/<encoded-cwd>/<session-id>.jsonl`. `moe-crew adopt` brings one back as a live, driveable worker (this is **claude-only** — Codex and Pi mint their own session ids and offer no resume-by-id, so relaunch those instead):
 
 ```bash
-$SKILL/moe-crew adopt my-task /path/to/project <session-id>
+node $SKILL/moe-crew.mjs adopt my-task /path/to/project <session-id>
 # stdout: /tmp/moe-crew-workers/bin/my-task   (same shim contract as launch)
 ```
 

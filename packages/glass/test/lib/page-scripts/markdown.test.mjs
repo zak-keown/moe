@@ -1,10 +1,7 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
-import { createRequire } from 'node:module';
 import { JSDOM } from 'jsdom';
-
-const require = createRequire(import.meta.url);
-const markdownScript = require('../../../skills/browsing/lib/page-scripts/markdown.js');
+import markdownScript from '../../../skills/browsing/scripts/lib/page-scripts/markdown.mjs';
 
 describe('page-scripts/markdown', () => {
   function evalScript(html) {

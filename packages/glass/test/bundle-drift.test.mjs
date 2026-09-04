@@ -1,14 +1,11 @@
 import { describe, it } from 'vitest';
 import { strict as assert } from 'node:assert';
-import { createRequire } from 'node:module';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createSession } from '../skills/browsing/scripts/chrome-ws-lib.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const require = createRequire(import.meta.url);
-
-const { createSession } = require('../skills/browsing/chrome-ws-lib.js');
 
 describe('bundle drift', () => {
   it('every chromeLib.X call in dist/index.js exists on the lib session object', () => {

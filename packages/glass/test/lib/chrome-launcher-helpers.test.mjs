@@ -1,9 +1,6 @@
 import { strict as assert } from 'node:assert';
-import { createRequire } from 'node:module';
 import { describe, it } from 'vitest';
-
-const require = createRequire(import.meta.url);
-const {
+import {
   PORT_RANGE_START,
   PORT_RANGE_END,
   buildChromeArgs,
@@ -14,7 +11,7 @@ const {
   isPortFree,
   portFreeFromProbes,
   sandboxDisableNeeded,
-} = require('../../skills/browsing/lib/chrome-launcher-helpers.js');
+} from '../../skills/browsing/scripts/lib/chrome-launcher-helpers.mjs';
 
 describe('chrome-launcher-helpers', () => {
   it('PORT_RANGE_START is 9222 (backward compat)', () => {
@@ -152,20 +149,9 @@ describe('chrome-launcher-helpers', () => {
   // literal string prefix of getChromeProfileDir('moe-glass-2'). A `ps` line
   // that carries the SIBLING profile's --user-data-dir must never be adopted
   // for the base profile.
-  //
-  // findOrphanChromeForProfile shells out to the real `ps auxw` with no
-  // maxBuffer override, so on a machine with a large process table (this
-  // dev box included: ps auxw exceeds the 1MB default) execSync throws and
-  // the function silently returns null via its catch-all — masking the
-  // defect for any test that spawns a real decoy and reads the real process
-  // table. Stubbing child_process.execSync (it is destructured fresh inside
-  // the function body on every call, so patching the shared module export
-  // is picked up) gives a deterministic repro of the substring-match bug
-  // itself, independent of the host's process table.
   it('findOrphanChromeForProfile does not adopt a sibling profile whose dir is a superstring of ours', () => {
-    const cp = require('child_process');
     const baseProfile = 'cr056-orphan-base';
-    const siblingDir = getChromeProfileDir('cr056-orphan-base-2'); // superstring of the base profile's dir
+    const siblingDir = getChromeProfileDir('cr056-orphan-base-2');
 
     const fakePsOutput = [
       'USER               PID  %CPU %MEM      VSZ    RSS   TT  STAT STARTED      TIME COMMAND',
@@ -174,14 +160,8 @@ describe('chrome-launcher-helpers', () => {
         `--remote-debugging-port=19999 --user-data-dir=${siblingDir}`,
     ].join('\n');
 
-    const originalExecSync = cp.execSync;
-    cp.execSync = () => fakePsOutput;
-    try {
-      const r = findOrphanChromeForProfile(baseProfile);
-      assert.equal(r, null, `must not adopt the sibling profile's Chrome, got ${JSON.stringify(r)}`);
-    } finally {
-      cp.execSync = originalExecSync;
-    }
+    const r = findOrphanChromeForProfile(baseProfile, { exec: () => fakePsOutput });
+    assert.equal(r, null, `must not adopt the sibling profile's Chrome, got ${JSON.stringify(r)}`);
   });
 
   // portFreeFromProbes: the pure decision over the IPv4 + IPv6 loopback bind

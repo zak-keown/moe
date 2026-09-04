@@ -27,6 +27,7 @@ import { writeLicensePayload } from './license-payload.js'
 import type { BundledPackage } from './bundle-inventory.js'
 import { assertLegalClosure, parseNotice, readArtifactLicenseRecords, readBundledLicenseRecords } from './legal.js'
 import { classifyStagedImports, type StagedEvidence } from './staged-imports.js'
+import { assertValidSkillRuntime, validateSkillRuntime, type SkillRuntimeFile, type SkillRuntimeReport } from '../skill-runtime.js'
 
 export interface AssembledArtifact {
   readonly plugin: ResolvedPlugin
@@ -53,6 +54,7 @@ interface ComponentFile {
   readonly destination: ArtifactPath
   readonly bytes: Buffer
   readonly mode: number
+  readonly executable: boolean
 }
 
 function assemblyError(
@@ -144,7 +146,7 @@ function markdownTargets(contents: string): readonly string[] {
   return targets
 }
 
-async function collectComponentFiles(plugin: ResolvedPlugin): Promise<readonly ComponentFile[]> {
+async function collectComponentFiles(plugin: ResolvedPlugin): Promise<{ candidates: readonly ComponentFile[]; staged: readonly ComponentFile[] }> {
   const roots = [
     plugin.config.components.skills,
     plugin.config.components.commands,
@@ -196,6 +198,7 @@ async function collectComponentFiles(plugin: ResolvedPlugin): Promise<readonly C
       destination,
       bytes: await readFile(sourceAbsolute),
       mode: stats.mode & 0o777,
+      executable: (stats.mode & 0o111) !== 0,
     })
   }
 
@@ -236,9 +239,11 @@ async function collectComponentFiles(plugin: ResolvedPlugin): Promise<readonly C
     }
   }
 
-  return [...candidates.values()]
-    .filter((file) => !isDeveloperHarness(file.destination) || linked.has(file.destination))
+  const allCandidates = [...candidates.values()]
     .sort((left, right) => compareArtifactPaths(left.destination, right.destination))
+  const staged = allCandidates
+    .filter((file) => !isDeveloperHarness(file.destination) || linked.has(file.destination))
+  return { candidates: allCandidates, staged }
 }
 
 async function writeNewFile(path: string, bytes: Uint8Array | string, mode = 0o644): Promise<void> {
@@ -252,12 +257,23 @@ async function writeNewFile(path: string, bytes: Uint8Array | string, mode = 0o6
 }
 
 async function stageComponents(plugin: ResolvedPlugin, artifactRoot: string): Promise<readonly ComponentFile[]> {
-  const files = await collectComponentFiles(plugin)
-  for (const file of files) {
+  const { staged } = await collectComponentFiles(plugin)
+  const runtimeFiles: SkillRuntimeFile[] = staged.map((file) => ({
+    path: file.destination,
+    content: file.bytes,
+    executable: file.executable,
+  }))
+  assertValidSkillRuntime({
+    plugin: plugin.id,
+    source: plugin.config.source,
+    skillsRoot: plugin.config.components.skills,
+    files: runtimeFiles,
+  })
+  for (const file of staged) {
     await mkdir(dirname(join(artifactRoot, file.destination)), { recursive: true })
     await writeNewFile(join(artifactRoot, file.destination), file.bytes, file.mode)
   }
-  return files
+  return staged
 }
 
 type ArtifactEntryKind = 'directory' | 'file'
@@ -586,4 +602,19 @@ export async function assembleArtifactSet(input: AssembleArtifactSetInput): Prom
     if (ownsDestination) await rm(destinationRoot, { recursive: true, force: true })
     throw error
   }
+}
+
+export async function inspectSkillRuntime(plugin: ResolvedPlugin): Promise<SkillRuntimeReport> {
+  const { staged } = await collectComponentFiles(plugin)
+  const runtimeFiles: SkillRuntimeFile[] = staged.map((file) => ({
+    path: file.destination,
+    content: file.bytes,
+    executable: file.executable,
+  }))
+  return validateSkillRuntime({
+    plugin: plugin.id,
+    source: plugin.config.source,
+    skillsRoot: plugin.config.components.skills,
+    files: runtimeFiles,
+  })
 }

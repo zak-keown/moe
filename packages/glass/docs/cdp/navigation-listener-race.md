@@ -52,7 +52,7 @@ notification, `Page.frameStoppedLoading` for later, or an explicit
 
 ## For moe-glass
 
-`lib/navigation.js` does this correctly. The `waitForEvent` call is set up before
+`scripts/lib/navigation.mjs` does this correctly. The `waitForEvent` call is set up before
 `ps.send('Page.navigate', ...)` is awaited. Any new "do-then-wait" helper that a
 future maintainer adds should preserve this ordering. The library's current set of
 event waits (loadEventFired, executionContextCreated, frameNavigated) all follow
@@ -61,4 +61,4 @@ the pattern; adding a new one in the wrong order reintroduces the class silently
 ## Sources
 
 - CDP Page domain: https://chromedevtools.github.io/devtools-protocol/tot/Page/
-- `skills/browsing/lib/navigation.js` — the in-tree implementation
+- `skills/browsing/scripts/lib/navigation.mjs` — the in-tree implementation

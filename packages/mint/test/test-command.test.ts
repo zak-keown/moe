@@ -545,12 +545,11 @@ describe('checks/run-checks.sh', () => {
     expect(result.stdout.trim()).toBe('skills/greeting/scripts/hello.sh')
   })
 
-  // A plugin that ships no executable skill files pays exactly one line — the
-  // documented single skip — and does no per-harness exec-bit work. Built by
-  // stripping the fixture's hello.sh of its mode bit after generation.
+  // Skill scripts ship at mode 0644 under the runtime standard — no
+  // executable skill files. The fixture's greeting skill has hello.mjs (0644),
+  // so deep_exec_bits() hits the empty-discovery path and emits one skip.
   it('emits exactly one "skip exec-bits:" line when the plugin ships no executable skill files', () => {
     const dir = generatedKitchenSink()
-    chmodSync(join(dir, 'skills', 'greeting', 'scripts', 'hello.sh'), 0o644)
     const result = spawnSync('bash', [CHECKS_SCRIPT], {
       encoding: 'utf8',
       env: {
@@ -566,13 +565,14 @@ describe('checks/run-checks.sh', () => {
     expect(result.status).toBe(0)
   }, 30_000)
 
-  // With the kitchen-sink fixture (which now ships an executable hello.sh) and
-  // no harness CLI on PATH: the source baseline passes (the staged copy kept
-  // the bit) and every per-harness check degrades to a CLI-absent skip,
-  // staying exit 0. kimi is skipped as TUI-only; opencode and pi emit no
-  // exec-bits line at all (they don't install by copy).
-  it('reports ok exec-bits-source plus CLI-absent per-harness skips against the fixture that ships an executable skill script', () => {
+  // If someone accidentally ships an executable skill script, the exec-bit
+  // infrastructure still catches it: discover_exec_skill_files() finds the
+  // file, deep_exec_bits() checks the source baseline, and per-harness checks
+  // degrade to CLI-absent skips. Verifies the detection path survives even
+  // though the runtime standard makes it the uncommon case.
+  it('exec-bit checking activates when a skill script is accidentally executable', () => {
     const dir = generatedKitchenSink()
+    chmodSync(join(dir, 'skills', 'greeting', 'scripts', 'hello.mjs'), 0o755)
     const result = spawnSync('bash', [CHECKS_SCRIPT], {
       encoding: 'utf8',
       env: {

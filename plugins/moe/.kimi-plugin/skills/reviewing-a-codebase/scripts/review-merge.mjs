@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Merge shard reports into CODEBASE-REVIEW.md, assigning the CR-### sequence.
 //
 // IDs are assigned HERE, once, rather than by each shard: a shard-local number
@@ -6,8 +5,9 @@
 // moment a finding is added, silently repointing every disposition stamped
 // against it by `fixing-a-code-review`.
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   FRONTMATTER_RE,
   RANK,
@@ -25,6 +25,7 @@ const arg = (name, fallback) => {
   return i !== -1 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
 };
 
+export function main() {
 const repo = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
 const shardsDir = arg("shards", ".moe/review-shards");
 const out = arg("out", "CODEBASE-REVIEW.md");
@@ -314,3 +315,7 @@ process.stdout.write(
   `${out}: ${active.length} finding(s) — ${counts.critical}C/${counts.high}H/${counts.medium}M/${counts.low}L, ` +
     `${opened}/${manifest.denominator} files opened.\n`,
 );
+}
+
+const modulePath = fileURLToPath(import.meta.url);
+if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(modulePath)) main();

@@ -142,18 +142,18 @@ loop.
 1. **Confirm the manifest set.** Resolve
    {resource:skills/sequencing-plans/scripts/plan-set.mjs} relative to this
    loaded document, then invoke it as
-   `node "<resolved-plan-set.mjs>" check`
+   `node "$SKILL/plan-set.mjs" check`
    before anything else. A cycle, a missing plan file, or a duplicate id is a
    dead end before the first plan runs, and `check` says which one at once. Use
    `--manifest docs/moe/plans/<project>-MANIFEST.md` only when intentionally
    scoping to that set and its prerequisites.
 
 2. **Pick the next plan.** Invoke the resolved launcher as
-   `node "<resolved-plan-set.mjs>" next`. `next`
+   `node "$SKILL/plan-set.mjs" next`. `next`
    returns a set; the loop takes the first line of it.
 
    ```bash
-   NEXT=$(node "<resolved-plan-set.mjs>" next | head -n 1)
+   NEXT=$(node "$SKILL/plan-set.mjs" next | head -n 1)
    ```
 
    If the output is empty, either everything is `done` (the project is
@@ -169,7 +169,7 @@ loop.
    base and head SHAs and mark it done:
 
    ```bash
-   node "<resolved-plan-set.mjs>" done "$NEXT" \
+   node "$SKILL/plan-set.mjs" done "$NEXT" \
      "$(git merge-base main HEAD | cut -c1-7)..$(git rev-parse --short HEAD)"
    ```
 
