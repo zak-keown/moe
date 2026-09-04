@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { readFileSync, existsSync, mkdirSync, writeFileSync, statSync } from 'node:fs'
+import { chmodSync, readFileSync, existsSync, mkdirSync, writeFileSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { ConfigError } from './config.js'
 import { contentBytes, type FileContent, type FileSet } from './fileset.js'
@@ -97,6 +97,10 @@ export function saveManifest(
   const abs = join(root, MANIFEST_PATH)
   mkdirSync(dirname(abs), { recursive: true })
   writeFileSync(abs, JSON.stringify(manifest, null, 2) + '\n')
+  // writeFileSync's default creation mode is 0666 masked by the umask, so this
+  // file is 0644 on a umask-022 host and 0666 on a umask-000 one. The artifact
+  // manifest records the mode, so leaving it to the umask breaks reproducibility.
+  chmodSync(abs, 0o644)
 }
 
 export interface DriftReport {

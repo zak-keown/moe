@@ -141,9 +141,10 @@ describe('artifact tree manifest', () => {
     })
   })
 
-  it('scans raw text and binary bytes with exact hashes, exact modes, sorting, and self-exclusion', async () => {
+  it('scans raw text and binary bytes with exact hashes, canonical modes, sorting, and self-exclusion', async () => {
     const root = await fixture()
     await writeFile(join(root, 'opaque.bin'), Uint8Array.from([0, 255, 1, 128, 10]))
+    // 0o740 normalizes to 0755: executable, and the rest is host state.
     await chmod(join(root, 'opaque.bin'), 0o740)
     await mkdir(join(root, '.moe'))
     await writeFile(join(root, '.moe', 'artifact.json'), '{"ignored":true}\n')
@@ -175,7 +176,7 @@ describe('artifact tree manifest', () => {
       path: 'opaque.bin',
       size: 5,
       sha256: '6d1dc71fb8c1d9f7786ddddd833d3f60835dd60e3b86b652e4458f780c6532f6',
-      mode: '0740',
+      mode: '0755',
     })
     expect(entries.find((entry) => entry.path === 'text.txt')).toMatchObject({
       size: 8,
@@ -294,13 +295,29 @@ describe('artifact tree manifest', () => {
     }
   })
 
-  it('preserves a nonstandard exact regular-file mode during the scan', async () => {
+  it('normalizes a nonstandard regular-file mode to the canonical non-executable mode', async () => {
+    // The scan used to record 0600 verbatim. That made a committed manifest
+    // unverifiable: git carries only the executable bit, so the same tree
+    // scans as 0644 at umask 022, 0666 at 000 and 0600 at 077, and validating
+    // a committed artifact against its committed manifest failed on every host
+    // but the one that generated it. Pack extraction normalizes to 0755/0644
+    // anyway, so the executable bit is the only mode that survives packaging.
     const root = await fixture()
     await chmod(join(root, 'text.txt'), 0o600)
 
     await expect(scanArtifact(root)).resolves.toContainEqual(expect.objectContaining({
       path: 'text.txt',
-      mode: '0600',
+      mode: '0644',
+    }))
+  })
+
+  it('still records the executable bit, which is the one mode git preserves', async () => {
+    const root = await fixture()
+    await chmod(join(root, 'text.txt'), 0o700)
+
+    await expect(scanArtifact(root)).resolves.toContainEqual(expect.objectContaining({
+      path: 'text.txt',
+      mode: '0755',
     }))
   })
 
