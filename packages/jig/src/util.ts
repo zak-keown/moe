@@ -36,3 +36,15 @@ export function primaryRoot(cwd: string): string {
   const resolved = resolve(cwd, commonDir, "..");
   return gitIn(resolved, "rev-parse", "--show-toplevel");
 }
+
+export function worktreeRoot(cwd: string = process.cwd()): string {
+  return gitIn(cwd, "rev-parse", "--show-toplevel");
+}
+
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-|-$/g, "");
+}

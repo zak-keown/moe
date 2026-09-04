@@ -1,6 +1,22 @@
 #!/usr/bin/env node
-import { realpathSync } from "node:fs";
+import { readFileSync, realpathSync } from "node:fs";
 import { Command, CommanderError } from "commander";
+import {
+  type BacklogStatus,
+  backlogAdd,
+  backlogClaim,
+  backlogDecline,
+  backlogDefer,
+  backlogDone,
+  backlogList,
+  backlogResume,
+  backlogShow,
+  backlogTriage,
+  CARRY_REASONS,
+  formatLine,
+  parseItem,
+  type Severity,
+} from "./backlog.js";
 import { discoverExtensionCommands, loadExtensions } from "./extension.js";
 import { computeWaves, parsePlan, validatePlan } from "./parser.js";
 import { planInit, specInit } from "./plan.js";
@@ -161,6 +177,114 @@ progress
       console.log(path);
     },
   );
+
+const backlog = program
+  .command("backlog")
+  .description("Durable deferral and work tracking in .moe/backlog/");
+
+backlog
+  .command("add")
+  .argument("<title...>", "one-line title")
+  .option("--source <s>", "provenance of the item (e.g. code-review:CR-012)")
+  .option("--severity <s>", "low | medium | high | critical")
+  .option("--tag <t...>", "tags")
+  .option("--by <id>", "actor id for provenance")
+  .action(
+    (parts: string[], o: { source?: string; severity?: Severity; tag?: string[]; by?: string }) => {
+      const path = backlogAdd(parts.join(" "), {
+        ...(o.source !== undefined ? { source: o.source } : {}),
+        ...(o.severity !== undefined ? { severity: o.severity } : {}),
+        ...(o.tag !== undefined ? { tags: o.tag } : {}),
+        ...(o.by !== undefined ? { by: o.by } : {}),
+      });
+      const id = parseItem(readFileSync(path, "utf-8")).id;
+      console.log(`${id}  ${path}`);
+    },
+  );
+
+backlog
+  .command("claim")
+  .argument("<id>")
+  .option("--by <id>", "actor id")
+  .action((id: string, o: { by?: string }) =>
+    console.log(backlogClaim(id, o.by !== undefined ? { by: o.by } : {})),
+  );
+
+backlog
+  .command("defer")
+  .argument("<id>")
+  .requiredOption("--reason <r>", "deferral reason (routes to blocked / carry-over / needs-triage)")
+  .option("--note <n>", "what got done so far")
+  .option("--next <step>", "the next concrete step (required for carry-over)")
+  .option("--branch <ref>", "working branch@sha")
+  .option("--by <id>", "actor id")
+  .action(
+    (
+      id: string,
+      o: { reason: string; note?: string; next?: string; branch?: string; by?: string },
+    ) => {
+      const r = backlogDefer(id, o);
+      console.log(`${id} → ${r.status}`);
+      if (r.triaged) {
+        const carryNoNext =
+          (CARRY_REASONS as readonly string[]).includes(o.reason) && !o.next?.trim();
+        if (carryNoNext)
+          console.error(
+            `WARNING: carry-over reason "${o.reason}" requires a --next step — filed as needs-triage. Re-run with --next "<step>", or a human resolves it via 'moe jig backlog triage'.`,
+          );
+        else
+          console.error(
+            `WARNING: reason "${o.reason}" is not a recognized deferral reason — filed as needs-triage. A human must adjudicate via 'moe jig backlog triage'.`,
+          );
+      }
+    },
+  );
+
+backlog
+  .command("resume")
+  .argument("<id>")
+  .option("--by <id>", "actor id")
+  .action((id: string, o: { by?: string }) => {
+    const r = backlogResume(id, o.by !== undefined ? { by: o.by } : {});
+    console.log(r.path);
+    if (r.resume) console.log(`\n${r.resume}`);
+  });
+
+backlog
+  .command("done")
+  .argument("<id>")
+  .option("--commit <sha>", "resolving commit")
+  .option("--by <id>", "actor id")
+  .action((id: string, o: { commit?: string; by?: string }) => console.log(backlogDone(id, o)));
+
+backlog
+  .command("decline")
+  .argument("<id>")
+  .requiredOption("--reason <r>", "wont-fix | out-of-scope | duplicate | not-reproducible")
+  .option("--note <n>")
+  .option("--by <id>")
+  .action((id: string, o: { reason: string; note?: string; by?: string }) =>
+    console.log(backlogDecline(id, o)),
+  );
+
+backlog
+  .command("list")
+  .option("--status <s>")
+  .option("--source <s>")
+  .option("--severity <s>")
+  .option("--tag <t>")
+  .action((o: { status?: BacklogStatus; source?: string; severity?: Severity; tag?: string }) => {
+    for (const item of backlogList(o)) console.log(formatLine(item));
+  });
+
+backlog
+  .command("show")
+  .argument("<id>")
+  .action((id: string) => console.log(backlogShow(id)));
+
+backlog.command("triage").action(() => {
+  for (const item of backlogTriage()) console.log(formatLine(item));
+});
 
 // Merge in any commands from an installed extension package (e.g.
 // @bubstack/moe-jig-graph/jig-extension) after every static command group

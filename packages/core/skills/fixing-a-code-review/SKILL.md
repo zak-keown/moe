@@ -112,6 +112,22 @@ with no disposition is indistinguishable from one nobody reached.
 | `skipped` | attempted, not applied — the fix broke tests, or the code drifted past recognition | `—`, and every touched file reverted |
 | `deferred` | not attempted — no test framework, documentation-only, environment blocked | `—`, nothing touched |
 
+Deferred and skipped findings do not end when this report does — the report
+ends with the review cycle, but the finding still needs attention after it.
+Promote it to the durable backlog:
+
+```bash
+moe jig backlog add "<finding title>" --source code-review:<CR-ID> --severity <sev>
+moe jig backlog defer <BL-ID> --reason <reason> --note "<why>" [--next "<step>"]
+```
+
+Record the returned `BL-####` in the disposition `Note`. The reason must be a
+recognized deferral reason — `no-runtime`, `upstream-decision`, `depends-on`,
+`needs-human`, `external-service` for blocks; `budget`, `scope-split` for
+carry-over, which also needs `--next`. An unrecognized reason files the item as
+`needs-triage` for a human — don't invent a reason to avoid that. If `moe-jig`
+is not on PATH, create the item by hand under `.moe/backlog/`.
+
 A `stale` finding still earns a record. It is the only one that produces no
 commit, so dropping it silently leaves a report claiming eleven findings against
 a log showing ten fixes, and the next reader cannot tell which.
@@ -190,3 +206,4 @@ inline findings that remain.
 - Frontmatter counts that disagree with the stamped dispositions
 - Starting the next finding with the tree dirty
 - A compaction that moved `skipped` or `deferred` findings to the resolved section
+- A deferred or skipped finding with no BL-#### in its Note
