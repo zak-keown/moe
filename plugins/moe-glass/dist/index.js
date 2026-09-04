@@ -21543,6 +21543,13 @@ function resolveStrictStructuredPayload(payload) {
     errorDetail: `payload was valid JSON but not an object: ${truncateForError(payload)}`
   };
 }
+function resolveTypeOptions(p) {
+  return {
+    fast: p?.fast === true,
+    delay: typeof p?.delay === "number" ? p.delay : void 0,
+    jitter: typeof p?.jitter === "number" ? p.jitter : void 0
+  };
+}
 
 // packages/glass/src/index.ts
 var __filename = fileURLToPath(import.meta.url);
@@ -21770,10 +21777,11 @@ async function executeBrowserAction(params) {
       if (!text || typeof text !== "string") {
         throw new Error("type requires payload with text (string or {selector?,text})");
       }
+      const typeOptions = resolveTypeOptions(p);
       const typeResult = await chromeLib.captureActionWithDiff(
         tabIndex,
         "type",
-        () => chromeLib.humanType(tabIndex, selector, text)
+        () => typeOptions.fast ? chromeLib.fill(tabIndex, selector, text) : chromeLib.humanType(tabIndex, selector, text, { delay: typeOptions.delay, jitter: typeOptions.jitter })
       );
       if (!typeResult.capture) {
         const target = selector ? `into ${selector}` : "into current focus";
@@ -22511,6 +22519,7 @@ export {
   parsePayload,
   resolveConsoleSince,
   resolveStrictStructuredPayload,
+  resolveTypeOptions,
   tryParseCoords,
   tryParseIntegerValue,
   tryParseJsonObject

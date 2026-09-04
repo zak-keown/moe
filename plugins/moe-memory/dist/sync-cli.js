@@ -141,19 +141,27 @@ export async function runSync(args) {
         released = true;
         releaseFileLock(syncLock);
     };
-    process.on("exit", releaseSyncLockOnce);
-    process.on("SIGINT", () => {
+    const onSigint = () => {
         releaseSyncLockOnce();
         process.exit(130);
-    });
-    process.on("SIGTERM", () => {
+    };
+    const onSigterm = () => {
         releaseSyncLockOnce();
         process.exit(143);
-    });
-    process.on("SIGHUP", () => {
+    };
+    const onSighup = () => {
         releaseSyncLockOnce();
         process.exit(129);
-    });
+    };
+    // CR-097: runSync is an exported function, not a script entry point —
+    // nothing stops it being called more than once inside a single process (a
+    // test suite that calls it repeatedly, or any future in-process caller).
+    // These listeners are removed again in the `finally` below so repeated
+    // calls don't accumulate them.
+    process.on("exit", releaseSyncLockOnce);
+    process.on("SIGINT", onSigint);
+    process.on("SIGTERM", onSigterm);
+    process.on("SIGHUP", onSighup);
     console.log("Syncing conversations...");
     console.log(`Sources: ${sourceDirs.join(", ")}`);
     console.log(`Destination: ${destDir}\n`);
@@ -197,5 +205,9 @@ export async function runSync(args) {
     }
     finally {
         releaseSyncLockOnce();
+        process.off("exit", releaseSyncLockOnce);
+        process.off("SIGINT", onSigint);
+        process.off("SIGTERM", onSigterm);
+        process.off("SIGHUP", onSighup);
     }
 }

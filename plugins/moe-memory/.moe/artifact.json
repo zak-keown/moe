@@ -440,8 +440,8 @@
     },
     {
       "path": "dist/mcp-server.js",
-      "size": 36351,
-      "sha256": "84f6b5edd6681080e3c8bd3040809f769c7a4eb5cad1d0dd392969e5ddce15dd",
+      "size": 38190,
+      "sha256": "339db71101550a4a04d562d3ed4a7170eff058fed3f3b3960ed2786e0054ee2c",
       "mode": "0644"
     },
     {
@@ -488,8 +488,8 @@
     },
     {
       "path": "dist/search.js",
-      "size": 15796,
-      "sha256": "df5143d7f42475a99e17de593d0f903113ecd2b90b08d541c6f2f45413ad2faf",
+      "size": 16002,
+      "sha256": "d57ca13efbec19644d4dc960364d3a9dab395cf053dae9c88bd5ec2ae3fbfbaf",
       "mode": "0644"
     },
     {
@@ -542,14 +542,14 @@
     },
     {
       "path": "dist/summarizer.d.ts",
-      "size": 3790,
-      "sha256": "20762256e62b27dcf1db1e856ef9c74c656112ea47a3b933b962912152f53ea8",
+      "size": 4520,
+      "sha256": "c53d0b9ef9c39cc0cf6da7b181de9550d8360da8cf263a6e2ea5c041e1ac3541",
       "mode": "0644"
     },
     {
       "path": "dist/summarizer.js",
-      "size": 22100,
-      "sha256": "9c9e24b9845c8d49d83dcad87d4f7fc349359f3b95cbc5ad8632dc94ffefa323",
+      "size": 23243,
+      "sha256": "e99b81efdd70ef4dd36852721d9368f911048e672fef1493dfa5bcfc0a6b133e",
       "mode": "0644"
     },
     {
@@ -572,8 +572,8 @@
     },
     {
       "path": "dist/sync-cli.js",
-      "size": 8668,
-      "sha256": "472bd5f623554ba2786e9f96550ff0669328143e045891e617ebaed653485375",
+      "size": 9284,
+      "sha256": "432d4f83e31a951d9ce72dda833d2efca3f84c3c2252e74e55989554eb9fca2c",
       "mode": "0644"
     },
     {
@@ -584,8 +584,8 @@
     },
     {
       "path": "dist/sync.js",
-      "size": 9360,
-      "sha256": "63ad6fd24ee13e13c88bcace40ba86a73e706c4d3dbd95605a64ca60ccf4a4f8",
+      "size": 9508,
+      "sha256": "40189be682fbd2a8d884ca712c244ecd302accc466aa9a91355f12683fd1f381",
       "mode": "0644"
     },
     {
@@ -608,8 +608,8 @@
     },
     {
       "path": "dist/verify.js",
-      "size": 8997,
-      "sha256": "16c5200496e824db2ae644117f385a18c7e84ef7d71a57c3f820750dc98ae390",
+      "size": 9369,
+      "sha256": "d8d62a2f877f06f9267c660fcbbc149363edffe865b1480999576e9360a8df15",
       "mode": "0644"
     },
     {
@@ -739,7 +739,7 @@
       "mode": "0644"
     }
   ],
-  "tree_sha256": "53ffda2ae74c2f6d83e5ed63a4f06269207d5e6f2a983828bb005a8d85c5b31e",
+  "tree_sha256": "01991b09e2514715f140dcbf826227d0612295fb0f8653edcde7596ba2ed8091",
   "targets": {
     "claude-code": {
       "emitted_capabilities": [

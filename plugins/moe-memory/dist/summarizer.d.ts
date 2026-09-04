@@ -14,6 +14,20 @@ export declare class SummarizerSdkError extends Error {
  * the session — the trigger for the non-resume fallback in summarizeConversation.
  */
 export declare function isResumeFailure(error: unknown): boolean;
+/**
+ * Thrown by callClaude when BOTH the primary and fallback model hit the
+ * "thinking.budget_tokens" API error (#96/CR-059). This used to be handled
+ * by returning the raw error text as though it were the model's output —
+ * summarizeConversation would then extractSummary() it, find no <summary>
+ * tags, fall back to text.trim(), and write the error text to
+ * `<archive>-summary.txt` as a permanent "summary" with no error sentinel
+ * and no retry path. Throwing here routes the failure through the same
+ * catch-and-sentinel machinery every caller already has for other errors.
+ */
+export declare class SummarizerThinkingBudgetError extends Error {
+    readonly rawResult: string;
+    constructor(rawResult: string);
+}
 export interface CodexSummarizerCommand {
     command: string;
     args: string[];

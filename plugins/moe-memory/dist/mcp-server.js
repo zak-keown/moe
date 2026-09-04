@@ -33,6 +33,7 @@ import { initDatabase, insertEdge, traceProvenance } from "./db.js";
 import { reportMissingDeps } from "./install-check.js";
 import { JournalSearchService } from "./journal/search.js";
 import { JournalStore } from "./journal/store.js";
+import { getArchiveDir } from "./paths.js";
 import { formatMultiConceptResults, formatResults, searchConversations, searchMultipleConcepts, } from "./search.js";
 import { formatConversationAsMarkdown } from "./show.js";
 import { VERSION } from "./version.js";
@@ -157,6 +158,57 @@ function handleError(error) {
 }
 function textResult(text) {
     return { content: [{ type: "text", text }] };
+}
+/** The closed set of `SourceType` values (types.ts), duplicated at runtime. */
+const SOURCE_TYPES = ["exchange", "journal", "decision", "finding", "moedex_symbol"];
+/**
+ * CR-057: split a model-supplied `type:id` string and validate the `type`
+ * half against the declared `SourceType` enum. `link_memories`/
+ * `trace_provenance` previously only checked that a colon was present, then
+ * did `... as SourceType` — a compile-time-only cast that let a hallucinated
+ * or typo'd type (e.g. "anything:123") through to `insertEdge`, silently
+ * corrupting the graph despite the tool's own `inputSchema` description
+ * advertising a closed set of types.
+ */
+function parseTypeId(value, label) {
+    const colonIdx = value.indexOf(":");
+    if (colonIdx < 1) {
+        throw new Error(`Invalid ${label} format: expected type:id, got "${value}"`);
+    }
+    const type = value.slice(0, colonIdx);
+    const id = value.slice(colonIdx + 1);
+    if (!SOURCE_TYPES.includes(type)) {
+        throw new Error(`Invalid ${label} type "${type}": expected one of ${SOURCE_TYPES.join(", ")}`);
+    }
+    return { type: type, id };
+}
+function isUnderRoot(candidate, root) {
+    return candidate === root || candidate.startsWith(root + path.sep);
+}
+/**
+ * CR-019: confine `read_conversation` to files under the trusted archive
+ * root. `params.path` is model-supplied — the model's context is built
+ * largely from `search_conversations` results, i.e. content harvested out of
+ * past transcripts that can carry attacker-supplied text (prompt injection) —
+ * so without this guard a crafted `path` reads any file on disk that the
+ * server process can see.
+ *
+ * Mirrors `read_journal_entry`'s two-stage guard in journal/search.ts's
+ * `readEntry`: resolve and check containment, then realpath and check
+ * containment again against the realpath'd root, so a symlink inside the
+ * archive cannot be used to escape it.
+ */
+function assertUnderArchiveRoot(candidatePath) {
+    const archiveRoot = path.resolve(getArchiveDir());
+    const resolvedPath = path.resolve(candidatePath);
+    if (!isUnderRoot(resolvedPath, archiveRoot)) {
+        throw new Error(`Path is not under the conversation archive: ${candidatePath}`);
+    }
+    const realPath = fs.realpathSync(resolvedPath);
+    const realArchiveRoot = fs.realpathSync(archiveRoot);
+    if (!isUnderRoot(realPath, realArchiveRoot)) {
+        throw new Error(`Path is not under the conversation archive: ${candidatePath}`);
+    }
 }
 // ---------------------------------------------------------------------------
 // Tool definitions
@@ -526,6 +578,7 @@ export function createMemoryMcpServer(options = {}) {
                 if (!fs.existsSync(params.path)) {
                     throw new Error(`File not found: ${params.path}`);
                 }
+                assertUnderArchiveRoot(params.path);
                 const jsonlContent = fs.readFileSync(params.path, "utf-8");
                 return textResult(formatConversationAsMarkdown(jsonlContent, params.startLine, params.endLine));
             }
@@ -632,16 +685,8 @@ export function createMemoryMcpServer(options = {}) {
             }
             if (name === "link_memories") {
                 const params = LinkMemoriesInputSchema.parse(args);
-                const sourceColon = params.source.indexOf(":");
-                const targetColon = params.target.indexOf(":");
-                if (sourceColon < 1)
-                    throw new Error(`Invalid source format: expected type:id, got "${params.source}"`);
-                if (targetColon < 1)
-                    throw new Error(`Invalid target format: expected type:id, got "${params.target}"`);
-                const sourceType = params.source.slice(0, sourceColon);
-                const sourceId = params.source.slice(sourceColon + 1);
-                const targetType = params.target.slice(0, targetColon);
-                const targetId = params.target.slice(targetColon + 1);
+                const { type: sourceType, id: sourceId } = parseTypeId(params.source, "source");
+                const { type: targetType, id: targetId } = parseTypeId(params.target, "target");
                 const edgeId = crypto.randomUUID();
                 const edge = {
                     id: edgeId,
@@ -665,11 +710,7 @@ export function createMemoryMcpServer(options = {}) {
             }
             if (name === "trace_provenance") {
                 const params = TraceProvenanceInputSchema.parse(args);
-                const colonIdx = params.id.indexOf(":");
-                if (colonIdx < 1)
-                    throw new Error(`Invalid id format: expected type:id, got "${params.id}"`);
-                const recordType = params.id.slice(0, colonIdx);
-                const recordId = params.id.slice(colonIdx + 1);
+                const { type: recordType, id: recordId } = parseTypeId(params.id, "id");
                 const db = initDatabase();
                 try {
                     const chain = traceProvenance(db, recordType, recordId, params.depth, params.direction);

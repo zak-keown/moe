@@ -25,7 +25,18 @@ const raw = readFileSync(file, "utf8").replace(/\r\n/g, "\n");
 const fmEnd = raw.indexOf("\n---\n", 4);
 if (!raw.startsWith("---\n") || fmEnd === -1) die(`${file} has no frontmatter`);
 const front = raw.slice(0, fmEnd + 5);
-let body = raw.slice(fmEnd + 5);
+const fullBody = raw.slice(fmEnd + 5);
+
+// A prior run may have already written a "## Resolved findings" section.
+// Only scan for compactable findings *above* it — findings already moved
+// there must never be rescanned, or a second run collapses their
+// preserved full blocks back down to one-line summaries and, since the
+// heading itself lives after the scan point, duplicates the heading too.
+const resolvedHeadingRe = /^## Resolved findings$/m;
+const headingMatch = resolvedHeadingRe.exec(fullBody);
+const hasResolvedSection = headingMatch !== null;
+let body = hasResolvedSection ? fullBody.slice(0, headingMatch.index) : fullBody;
+const existingResolvedTail = hasResolvedSection ? fullBody.slice(headingMatch.index) : "";
 
 const findingRe = /^###\s+(CR-\d{3}):\s+(.*)$/gm;
 const resolved = [];
@@ -63,18 +74,27 @@ for (let i = resolved.length - 1; i >= 0; i--) {
   body = body.slice(0, r.start) + summary + body.slice(r.end);
 }
 
-const resolvedSection =
-  "\n## Resolved findings\n\n" +
-  resolved.map((r) => r.block).join("\n") +
-  "\n";
+const newBlocks = resolved.map((r) => r.block).join("\n") + "\n";
 
-const checkedIdx = body.indexOf("\n## Checked and found sound");
-if (checkedIdx !== -1) {
-  const afterChecked = body.indexOf("\n## ", checkedIdx + 1);
-  const insertAt = afterChecked === -1 ? body.length : afterChecked;
-  body = body.slice(0, insertAt) + "\n" + resolvedSection + body.slice(insertAt);
+let resolvedTail;
+if (hasResolvedSection) {
+  // Extend the existing section instead of creating a second heading.
+  resolvedTail = existingResolvedTail.replace(/\n*$/, "\n") + newBlocks;
 } else {
-  body = body.trimEnd() + "\n" + resolvedSection;
+  resolvedTail = "\n## Resolved findings\n\n" + newBlocks;
+}
+
+if (hasResolvedSection) {
+  body = body + resolvedTail;
+} else {
+  const checkedIdx = body.indexOf("\n## Checked and found sound");
+  if (checkedIdx !== -1) {
+    const afterChecked = body.indexOf("\n## ", checkedIdx + 1);
+    const insertAt = afterChecked === -1 ? body.length : afterChecked;
+    body = body.slice(0, insertAt) + "\n" + resolvedTail + body.slice(insertAt);
+  } else {
+    body = body.trimEnd() + "\n" + resolvedTail;
+  }
 }
 
 writeFileSync(file, front + body.replace(/\n*$/, "\n"));

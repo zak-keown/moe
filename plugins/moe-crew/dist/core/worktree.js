@@ -32,7 +32,12 @@ export async function createWorktree(runner = realRun, repoRoot, name, ref = "HE
  *
  * Runs `git worktree remove --force <path>`. Swallows errors when the worktree
  * has already been removed (the path does not exist or git does not know about
- * it) so `stop` never fails because of a manually cleaned-up worktree.
+ * it) so `stop` never fails because of a manually cleaned-up worktree. Never
+ * throws (stop must not fail) — instead, resolves `true` on success (including
+ * when the worktree was already gone) and `false` on a real failure (e.g.
+ * permission denied), so a caller that wants to know can check the return
+ * value; a caller that doesn't (most don't — stop intentionally never fails on
+ * worktree cleanup) can keep discarding it exactly as before (CR-074).
  */
 export async function removeWorktree(runner = realRun, repoRoot, wtPath) {
     const result = await runner("git", ["-C", repoRoot, "worktree", "remove", "--force", wtPath]);
@@ -40,14 +45,17 @@ export async function removeWorktree(runner = realRun, repoRoot, wtPath) {
     if (result.code !== 0) {
         const msg = result.stderr.toLowerCase();
         if (msg.includes("not a working tree") || msg.includes("is not a valid")) {
-            return; // already gone — not an error
+            return true; // already gone — not an error
         }
         // Also swallow when the directory simply doesn't exist any more.
         if (msg.includes("no such file") || msg.includes("does not exist")) {
-            return;
+            return true;
         }
-        // Real failure — let the caller know, but don't throw (stop must not fail).
-        // Prune the worktree entry from git's internal list as a fallback.
+        // Real failure — don't throw (stop must not fail), but don't claim
+        // success either. Prune the worktree entry from git's internal list as a
+        // fallback, then report the failure to any caller that checks.
         await runner("git", ["-C", repoRoot, "worktree", "prune"]);
+        return false;
     }
+    return true;
 }
