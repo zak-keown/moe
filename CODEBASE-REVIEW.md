@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 5
+  fixed: 6
   stale: 0
   skipped: 0
   deferred: 0
-  open: 102
+  open: 101
 ---
 
 # Codebase Review — moe
@@ -1852,6 +1852,10 @@ This is reachable in production: `validate.ts`'s Check 3 ("Wave conflicts") call
 
 Fix: either have `computeWaves` treat an unknown `dependsOn` target as satisfied/ignored (matching `validatePlan`'s `if (!known.has(d)) continue;` pattern used in its own cycle-detection setup) and document the precondition, or have callers run `validatePlan` first and refuse to compute waves on an invalid plan.
 
+**Disposition:** fixed
+**Commit:** `443a46e5e3b195beaba98c76ea5167ead592926e`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-057: `link_memories`/`trace_provenance` accept any `type` prefix with no runtime validation
 **File:** `packages/memory/src/mcp-server.ts`
 **Anchor:** `const sourceType = params.source.slice(0, sourceColon) as SourceType;`
