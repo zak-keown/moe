@@ -14,7 +14,7 @@ import {
   runCodexCommand,
   shouldSkipReentrantSync,
   summarizeConversation
-} from "./chunk-HSI3HVDR.js";
+} from "./chunk-WYYWGHLN.js";
 import "./chunk-KVDJIHLR.js";
 import "./chunk-NH4NDHAK.js";
 import "./chunk-ZCVHMAKN.js";

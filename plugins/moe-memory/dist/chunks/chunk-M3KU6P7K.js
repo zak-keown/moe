@@ -158,7 +158,7 @@ Skipping excluded project: ${project}`);
   }
   if (!options.skipSummaries && filesToSummarize.length > 0) {
     const { parseConversation } = await import("./parser-OZTBPBQF.js");
-    const { summarizeConversation } = await import("./summarizer-JX2L5D3P.js");
+    const { summarizeConversation } = await import("./summarizer-S67PKAKI.js");
     const summaryLimit = options.summaryLimit ?? 10;
     const toSummarize = filesToSummarize.slice(0, summaryLimit);
     const remaining = filesToSummarize.length - toSummarize.length;

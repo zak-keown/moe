@@ -3,7 +3,7 @@ import { createRequire as __createRequire } from 'module';
 const require = __createRequire(import.meta.url);
 import {
   syncConversations
-} from "./chunk-SW5YMIYD.js";
+} from "./chunk-M3KU6P7K.js";
 import {
   formatLogLine,
   getSyncLogPath
@@ -29,7 +29,7 @@ import {
 } from "./chunk-OYWI4M6D.js";
 import {
   shouldSkipReentrantSync
-} from "./chunk-HSI3HVDR.js";
+} from "./chunk-WYYWGHLN.js";
 import "./chunk-KVDJIHLR.js";
 import "./chunk-NH4NDHAK.js";
 import "./chunk-ZCVHMAKN.js";

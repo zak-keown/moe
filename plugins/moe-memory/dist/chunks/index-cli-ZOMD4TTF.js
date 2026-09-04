@@ -3,7 +3,7 @@ import { createRequire as __createRequire } from 'module';
 const require = __createRequire(import.meta.url);
 import {
   shouldSkipConversation
-} from "./chunk-SW5YMIYD.js";
+} from "./chunk-M3KU6P7K.js";
 import {
   JournalStore
 } from "./chunk-XQQVRDY6.js";
@@ -31,7 +31,7 @@ import {
 import "./chunk-OYWI4M6D.js";
 import {
   summarizeConversation
-} from "./chunk-HSI3HVDR.js";
+} from "./chunk-WYYWGHLN.js";
 import "./chunk-KVDJIHLR.js";
 import "./chunk-NH4NDHAK.js";
 import "./chunk-ZCVHMAKN.js";
@@ -501,7 +501,7 @@ async function repairIndex(issues, options = {}) {
   const { initDatabase: initDatabase2, insertExchange: insertExchange2, deleteExchange } = await import("./db-SNCDV7GU.js");
   const { parseConversation: parseConversation2 } = await import("./parser-OZTBPBQF.js");
   const { initEmbeddings: initEmbeddings2, generateExchangeEmbedding: generateExchangeEmbedding2 } = await import("./embeddings-MIYVCACC.js");
-  const { summarizeConversation: summarizeConversation2 } = await import("./summarizer-JX2L5D3P.js");
+  const { summarizeConversation: summarizeConversation2 } = await import("./summarizer-S67PKAKI.js");
   const { formatErrorSentinel: formatErrorSentinel2 } = await import("./summary-sentinel-SZIFJFYT.js");
   const db = initDatabase2();
   await initEmbeddings2();

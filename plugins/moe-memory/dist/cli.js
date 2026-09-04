@@ -49,11 +49,11 @@ EXAMPLES:
 async function dispatch(command, args) {
   switch (command) {
     case "sync": {
-      const { runSync } = await import("./chunks/sync-cli-MVRJHA27.js");
+      const { runSync } = await import("./chunks/sync-cli-ZZ72EWVV.js");
       return runSync(args);
     }
     case "index": {
-      const { runIndex } = await import("./chunks/index-cli-UDBVKCEP.js");
+      const { runIndex } = await import("./chunks/index-cli-ZOMD4TTF.js");
       return runIndex(args);
     }
     case "search": {
