@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 3
+  fixed: 4
   stale: 0
   skipped: 0
   deferred: 0
-  open: 104
+  open: 103
 ---
 
 # Codebase Review — moe
@@ -1001,6 +1001,10 @@ Fix: normalize `f.severity` (e.g. `.toLowerCase()`) before grouping/counting,
 and/or fail loudly on an unrecognized severity value instead of silently
 excluding it from the rendered body.
 
+**Disposition:** fixed
+**Commit:** `02b0c6926a9d056ce8df90db85f8e6ea447b9e19`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-025: chunk_spec.py misattributes line numbers for sections with duplicate heading text and shared opening content
 
 **File:** `packages/core/skills/extracting-requirements/scripts/chunk_spec.py`
