@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 6
+  fixed: 7
   stale: 0
   skipped: 0
   deferred: 0
-  open: 101
+  open: 100
 ---
 
 # Codebase Review — moe
@@ -2387,6 +2387,10 @@ I checked reachability: no tool in `tool-defs.ts`/`tools/*.ts` currently exposes
 
 Fix: interpolate `JSON.stringify(index)` (and validate it's an integer) the same way `value` already is.
 
+**Disposition:** fixed
+**Commit:** `4f12168a1ae458be977db43e651893e104ba44e2`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-079: `readPasskeyFile` accepts a non-integer `signCount` despite its own error message requiring one
 
 **File:** `packages/flight/src/qa/adapters/web/passkey.ts`
