@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 7
+  fixed: 8
   stale: 0
   skipped: 0
   deferred: 0
-  open: 100
+  open: 99
 ---
 
 # Codebase Review — moe
@@ -2289,6 +2289,10 @@ deliberately omitted (as designed here) or whether the report is truncated.
 Align the behavior — either always print the heading with "No findings." or
 always skip empty groups — for all four severities.
 
+**Disposition:** fixed
+**Commit:** `6eabdff4802c153dbc8ac72e9d36f9297546acb6`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-073: AGENTS.md's guarded-surface citation for the imported-skill-count test no longer matches the code
 
 **File:** `packages/core/test/metadata.test.ts`
