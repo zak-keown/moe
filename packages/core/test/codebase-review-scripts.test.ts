@@ -764,6 +764,80 @@ describe("stamp-disposition behavior", () => {
     expect(readFileSync(file, "utf8")).toBe(before);
   });
 
+  it("stamps at the finding's true end, not inside its own fenced illustration of a stamp", () => {
+    // A finding's body can legitimately contain a fenced example of what a
+    // **Disposition:**/**Commit:** stamp block looks like — e.g. a finding
+    // *about* this exact stamping script illustrating a bug with a
+    // realistic-looking example. The block-boundary search must not mistake
+    // that fenced "## "/"### " heading for the real next finding, or the
+    // stamp gets spliced into the middle of the fence instead of appended
+    // after the finding's real content, and a fenced "**Disposition:**"
+    // example must not trip the duplicate-stamp refusal either.
+    const repo = sandbox("stamp-fence-repo");
+    const file = join(repo, "CODEBASE-REVIEW.md");
+    writeFileSync(
+      file,
+      [
+        "---",
+        "report: codebase-review",
+        "findings:",
+        "  critical: 0",
+        "  high: 1",
+        "  medium: 0",
+        "  low: 0",
+        "  total: 1",
+        "status: issues_found",
+        "---",
+        "# Review fixture",
+        "",
+        "## High",
+        "",
+        "### CR-001: Finding whose body illustrates a fake stamp",
+        "**File:** `src/first.ts`",
+        "**Anchor:** `firstFinding`",
+        "**Severity:** high",
+        "Reproduced by running the script twice, which produces:",
+        "",
+        "```",
+        "",
+        "**Disposition:** fixed",
+        "**Commit:** `deadbeef`",
+        "**Resolved:** 2026-09-04",
+        "**Note:** —",
+        "## Checked and found sound",
+        "```",
+        "",
+        "That duplicate section is the defect. Real fix content continues here",
+        "and must not be truncated by the fenced example above.",
+        "",
+      ].join("\n"),
+    );
+
+    const result = run(
+      STAMP_DISPOSITION,
+      ["--file", file, "--id", "CR-001", "--disposition", "fixed", "--commit", "cafef00d"],
+      repo,
+    );
+    expect(result.status, result.stderr).toBe(0);
+
+    const after = readFileSync(file, "utf8");
+    // The fenced illustration survives untouched...
+    expect(after).toContain("**Commit:** `deadbeef`");
+    // ...and the real stamp lands after the finding's real trailing prose,
+    // not spliced in right after the fence opens.
+    const realStampIdx = after.indexOf("**Commit:** `cafef00d`");
+    const trailingProseIdx = after.indexOf(
+      "and must not be truncated by the fenced example above.",
+    );
+    expect(realStampIdx).toBeGreaterThan(-1);
+    expect(trailingProseIdx).toBeGreaterThan(-1);
+    expect(realStampIdx).toBeGreaterThan(trailingProseIdx);
+    // The frontmatter tally counts the one real disposition, not the
+    // fenced illustration's fake one too.
+    expect(after).toContain("  fixed: 1");
+    expect(after).toContain("  open: 0");
+  });
+
   it.each([
     ["missing id", ["--disposition", "fixed", "--commit", "abc1234"], "--id must"],
     [
@@ -846,6 +920,92 @@ describe("compact-resolved behavior", () => {
 
     // Unrelated prose survives untouched.
     expect(afterSecond).toContain("The parser preserved unrelated content.");
+  });
+
+  it("compacts a finding that comes after another finding's fenced illustration of a Resolved findings heading", () => {
+    // A finding's own body can legitimately quote "## Resolved findings" and
+    // "### CR-XXX:" inside a fenced code block — e.g. a finding *about* this
+    // very script illustrating the bug it describes with an example of the
+    // broken output. The heading/finding scanners must not mistake that
+    // fenced prose for real document structure, or scanning stops there and
+    // every finding after it is silently left uncompacted.
+    const repo = sandbox("compact-fence-repo");
+    const file = join(repo, "CODEBASE-REVIEW.md");
+    writeFileSync(
+      file,
+      [
+        "---",
+        "report: codebase-review",
+        "findings:",
+        "  critical: 0",
+        "  high: 2",
+        "  medium: 0",
+        "  low: 0",
+        "  total: 2",
+        "status: issues_found",
+        "---",
+        "# Review fixture",
+        "",
+        "## High",
+        "",
+        "### CR-001: Finding whose body illustrates a fake Resolved section",
+        "**File:** `src/first.ts`",
+        "**Anchor:** `firstFinding`",
+        "**Severity:** high",
+        "Reproduced by running the script twice:",
+        "",
+        "```",
+        "## Checked and found sound",
+        "...",
+        "## Resolved findings",
+        "  ### CR-999: Fake finding inside the illustration",
+        "...",
+        "## Resolved findings",
+        "- **CR-999:** Fake finding — fixed (`deadbeef`)",
+        "```",
+        "",
+        "That duplicate heading is the defect.",
+        "",
+        "**Disposition:** fixed",
+        "**Commit:** `aaaaaaa`",
+        "**Resolved:** 2026-09-04",
+        "**Note:** —",
+        "",
+        "### CR-002: Real finding after the illustration",
+        "**File:** `src/second.ts`",
+        "**Anchor:** `secondFinding`",
+        "**Severity:** high",
+        "This finding must still be found and compacted.",
+        "",
+        "**Disposition:** fixed",
+        "**Commit:** `bbbbbbb`",
+        "**Resolved:** 2026-09-04",
+        "**Note:** —",
+        "",
+      ].join("\n"),
+    );
+
+    const result = run(COMPACT_RESOLVED, ["--file", file], repo);
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain("CR-001");
+    expect(result.stdout).toContain("CR-002");
+
+    const after = readFileSync(file, "utf8");
+    // Both findings compacted to one-line summaries inline...
+    expect(after).toContain(
+      "- **CR-001:** Finding whose body illustrates a fake Resolved section — fixed (`aaaaaaa`)",
+    );
+    expect(after).toContain(
+      "- **CR-002:** Real finding after the illustration — fixed (`bbbbbbb`)",
+    );
+    // ...and CR-002's full block actually moved to the real Resolved section,
+    // not left behind as an inline full block because scanning stopped at
+    // CR-001's fenced illustration.
+    const resolvedIdx = after.lastIndexOf("## Resolved findings");
+    expect(resolvedIdx).toBeGreaterThan(-1);
+    const resolvedSection = after.slice(resolvedIdx);
+    expect(resolvedSection).toContain("### CR-002: Real finding after the illustration");
+    expect(resolvedSection).toContain("This finding must still be found and compacted.");
   });
 
   it("reports nothing to compact when nothing is fixed or stale", () => {

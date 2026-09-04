@@ -276,11 +276,11 @@
       "mode": 420
     },
     ".claude-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
+      "sha256": "5551945932f1ceb574728924d7c172a9221494370d6e8e19ab9543e8b408b44c",
       "mode": 493
     },
     ".claude-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": 420
     },
     ".claude-plugin/skills/implementing-tasks/SKILL.md": {
@@ -947,11 +947,11 @@
       "mode": 420
     },
     ".codex-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
+      "sha256": "5551945932f1ceb574728924d7c172a9221494370d6e8e19ab9543e8b408b44c",
       "mode": 493
     },
     ".codex-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": 420
     },
     ".codex-plugin/skills/implementing-tasks/SKILL.md": {
@@ -1632,11 +1632,11 @@
       "mode": 420
     },
     ".cursor-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
+      "sha256": "5551945932f1ceb574728924d7c172a9221494370d6e8e19ab9543e8b408b44c",
       "mode": 493
     },
     ".cursor-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": 420
     },
     ".cursor-plugin/skills/implementing-tasks/SKILL.md": {
@@ -2303,11 +2303,11 @@
       "mode": 420
     },
     ".kimi-plugin/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
+      "sha256": "5551945932f1ceb574728924d7c172a9221494370d6e8e19ab9543e8b408b44c",
       "mode": 493
     },
     ".kimi-plugin/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": 420
     },
     ".kimi-plugin/skills/implementing-tasks/SKILL.md": {
@@ -2983,11 +2983,11 @@
       "mode": 420
     },
     ".opencode/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
+      "sha256": "5551945932f1ceb574728924d7c172a9221494370d6e8e19ab9543e8b408b44c",
       "mode": 493
     },
     ".opencode/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": 420
     },
     ".opencode/skills/implementing-tasks/SKILL.md": {
@@ -3654,11 +3654,11 @@
       "mode": 420
     },
     ".pi/skills/fixing-a-code-review/scripts/compact-resolved.mjs": {
-      "sha256": "2c2dd4b4a952a3e9d2dc90e5e32145980f28564dae153712cbb330c31b9b6b6a",
+      "sha256": "5551945932f1ceb574728924d7c172a9221494370d6e8e19ab9543e8b408b44c",
       "mode": 493
     },
     ".pi/skills/fixing-a-code-review/scripts/stamp-disposition.mjs": {
-      "sha256": "2303eb4f64acabb45eebbc6556ee70e33d222ce304e9480767f964a8445718e0",
+      "sha256": "06b7ec258925c17b7926718016abebf844ec922ac25592ffddeff29ac33fef79",
       "mode": 420
     },
     ".pi/skills/implementing-tasks/SKILL.md": {
