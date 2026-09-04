@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 6
+  fixed: 7
   stale: 0
   skipped: 0
   deferred: 0
-  open: 101
+  open: 100
 ---
 
 # Codebase Review — moe
@@ -2270,6 +2270,10 @@ directory name) would silently become injectable. Consider escaping `title`
 and `nav` (which are more likely to carry plain text than markup) or
 documenting that all four slots must already be HTML-safe on input.
 
+**Disposition:** fixed
+**Commit:** `6c36aa1729aca42ffcac70320d3b2368423cff1f`
+**Resolved:** 2026-09-04
+**Note:** Scoped to the title slot; nav/content/scripts stay raw per their documented HTML-carrying contract, see commit message
 ### CR-072: docs-verify-report.mjs suppresses the "No findings" heading only for Critical, inconsistently with High/Medium/Low
 
 **File:** `packages/core/skills/docs-update/scripts/docs-verify-report.mjs`
