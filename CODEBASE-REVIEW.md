@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 2
+  fixed: 3
   stale: 0
   skipped: 0
   deferred: 0
-  open: 105
+  open: 104
 ---
 
 # Codebase Review — moe
@@ -1851,6 +1851,10 @@ const sourceType = params.source.slice(0, sourceColon) as SourceType;
 
 Since these tools are model-callable and the API contract advertised to the model (`inputSchema` description: `"e.g. 'exchange:abc123', 'journal:def456', 'decision:ghi789'"`) implies a closed set of types, a malformed or hallucinated `type:id` string silently corrupts the graph rather than erroring — `traceProvenance` walks `source_type`/`target_type` equality, so a typo'd type just becomes an unreachable island with no diagnostic. Add a zod `.refine()` (or a regex/enum check on the prefix) before constructing the edge, and consider a `CHECK` constraint in the schema as defense in depth.
 
+**Disposition:** fixed
+**Commit:** `e34065c9286ecf0ab27c677885aefa8e78fbdc73`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-058: `searchConversations` and other DB-opening helpers leak the SQLite handle on error
 **File:** `packages/memory/src/search.ts`
 **Anchor:** `const db = initDatabase();` in `searchConversations`
