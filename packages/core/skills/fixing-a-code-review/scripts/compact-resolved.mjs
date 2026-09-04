@@ -5,6 +5,38 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 
 const COMPACTABLE = ["fixed", "stale"];
 
+// A finding's own body can legitimately quote a "## Resolved findings" or
+// "### CR-###:" line inside a fenced code block — e.g. a finding *about*
+// this very script illustrating the bug it describes with an example of the
+// broken output (this happened for real: CR-004 in this report's own
+// history). Naive line-anchored heading regexes can't tell that apart from
+// real document structure, so a fenced example fools them into truncating
+// the scan (or splitting a finding) right there, silently leaving every
+// finding after it uncompacted.
+//
+// Returns a copy of `text` with identical length and line offsets, but with
+// the leading "#" run blanked out on any heading-shaped line that falls
+// inside a ``` or ~~~ fence. Matching against this masked copy — while still
+// slicing the *original* text for output — makes every regex below blind to
+// fenced headings without disturbing any real content or offset.
+function maskFencedHeadings(text) {
+  const lines = text.split("\n");
+  let inFence = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^\s*(```|~~~)/.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (!inFence) continue;
+    const heading = line.match(/^(\s*)(#{1,6})(\s.*)?$/);
+    if (heading) {
+      lines[i] = heading[1] + " ".repeat(heading[2].length) + (heading[3] ?? "");
+    }
+  }
+  return lines.join("\n");
+}
+
 const arg = (name, fallback) => {
   const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
   if (hit) return hit.slice(name.length + 3);
@@ -32,23 +64,33 @@ const fullBody = raw.slice(fmEnd + 5);
 // there must never be rescanned, or a second run collapses their
 // preserved full blocks back down to one-line summaries and, since the
 // heading itself lives after the scan point, duplicates the heading too.
+// Matched against the fence-masked copy so a finding's own fenced example
+// of this exact heading can't be mistaken for the real one.
 const resolvedHeadingRe = /^## Resolved findings$/m;
-const headingMatch = resolvedHeadingRe.exec(fullBody);
+const maskedFullBody = maskFencedHeadings(fullBody);
+const headingMatch = resolvedHeadingRe.exec(maskedFullBody);
 const hasResolvedSection = headingMatch !== null;
 let body = hasResolvedSection ? fullBody.slice(0, headingMatch.index) : fullBody;
 const existingResolvedTail = hasResolvedSection ? fullBody.slice(headingMatch.index) : "";
+
+// Re-masked on the (possibly truncated) body: fence state only depends on
+// ``` / ~~~ markers, and any fence must already be closed by the split point
+// above (that point is itself outside every fence), so masking the prefix
+// independently reproduces the same result.
+let maskedBody = maskFencedHeadings(body);
 
 const findingRe = /^###\s+(CR-\d{3}):\s+(.*)$/gm;
 const resolved = [];
 const summaries = [];
 let match;
 
-while ((match = findingRe.exec(body)) !== null) {
+while ((match = findingRe.exec(maskedBody)) !== null) {
   const id = match[1];
   const title = match[2];
   const start = match.index;
   const rest = body.slice(start + match[0].length);
-  const nextRel = rest.search(/^#{2,3}\s+/m);
+  const maskedRest = maskedBody.slice(start + match[0].length);
+  const nextRel = maskedRest.search(/^#{2,3}\s+/m);
   const end = nextRel === -1 ? body.length : start + match[0].length + nextRel;
   const block = body.slice(start, end);
 
