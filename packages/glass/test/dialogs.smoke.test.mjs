@@ -112,7 +112,7 @@ describe('dialog handling — real Chrome smoke', { skip: !CHROME_AVAILABLE && '
   // completes before the dialog opens — avoiding a 30-second pooled-connection
   // timeout caused by clicking a button whose onclick fires a dialog).
   // The dialog intercept verifies the full CDP path:
-  //   Page.javascriptDialogOpening → state map → withDialogAwareness refuses →
+  //   Page.javascriptDialogOpening → state map → wrapWithDialogGate refuses →
   //   dialog::accept → Page.handleJavaScriptDialog → page unblocked.
   it('real alert is surfaced and dismissed with dialog::accept', async () => {
     // The 100 ms delay ensures loadEventFired fires before the alert opens.

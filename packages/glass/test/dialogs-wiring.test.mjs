@@ -13,28 +13,29 @@ describe('chrome-ws-lib exposes dialogs API', () => {
     assert.equal(typeof session.dialogs.getOpen, 'function');
     assert.equal(typeof session.dialogs.clear, 'function');
     assert.equal(typeof session.dialogs.attachToPageSession, 'function');
-    assert.equal(typeof session.dialogs.withDialogAwareness, 'function');
     assert.equal(typeof session.dialogs.withDialogAwarenessForSession, 'function');
+  });
+
+  // CR-093: dialogs.js used to also export a wsUrl-keyed withDialogAwareness,
+  // built on its own PAGE_TARGET_ACTIONS allowlist — a second,
+  // independently-maintained dialog gate with zero production call sites
+  // (only reachable via this test file). The actual, live session-boundary
+  // gate is chrome-ws-lib.js's wrapWithDialogGate, built on
+  // PAGE_TARGET_SESSION_METHODS and consuming withDialogAwarenessForSession.
+  // Keeping both risked a future contributor updating the unused allowlist,
+  // believing it was the enforcement point. Removed the dead one.
+  it('does not expose a second, independently-maintained wsUrl-keyed dialog gate', () => {
+    const session = createSession();
+    assert.equal(session.dialogs.withDialogAwareness, undefined);
   });
 });
 
-describe('dialogs wiring — withDialogAwareness integration', () => {
-  // withDialogAwareness is the shared gating mechanism used by mouse, keyboard,
-  // and capture. These tests exercise it via the exported session.dialogs handle,
-  // verifying that the object is correctly constructed and functional.
-
-  it('runs action fn when no dialog is open for that wsUrl', async () => {
-    const session = createSession();
-    let fnCalled = false;
-    const result = await session.dialogs.withDialogAwareness(
-      'click',
-      'ws://fake/no-dialog',
-      { selector: '#btn' },
-      async () => { fnCalled = true; return 'action-result'; },
-    );
-    assert.equal(fnCalled, true, 'action fn ran when no dialog is open');
-    assert.equal(result, 'action-result');
-  });
+describe('dialogs wiring — session-boundary dialog gate integration', () => {
+  // The session-boundary gate is chrome-ws-lib.js's wrapWithDialogGate,
+  // wrapping every PAGE_TARGET_SESSION_METHODS entry and consuming
+  // dialogs.withDialogAwarenessForSession internally (see also capture.js's
+  // four direct call sites). These tests exercise it via the session object
+  // the MCP layer and CLI actually use.
 
   it('returns refused result when a dialog is open and a page-target action is attempted', async () => {
     const session = createSession();
