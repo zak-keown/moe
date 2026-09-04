@@ -78,7 +78,7 @@ imported:
     from: imported
     renamed_from: subagent-driven-development
     why: >-
-      writing-plans marks it "**REQUIRED SUB-SKILL**" as the recommended
+      write-plan marks it "**REQUIRED SUB-SKILL**" as the recommended
       execution path, and it is the path every harness Moe targets can
       actually take.
 
@@ -86,7 +86,7 @@ imported:
     from: imported
     renamed_from: executing-plans
     why: >-
-      writing-plans marks it "**REQUIRED SUB-SKILL**" as the second of exactly
+      write-plan marks it "**REQUIRED SUB-SKILL**" as the second of exactly
       two execution options — the one to take when subagents are unavailable.
 
   use-worktrees:
@@ -108,7 +108,7 @@ imported:
     from: imported
     renamed_from: requesting-code-review
     why: >-
-      subagent-driven-development's review phase dispatches this skill's
+      sdd's review phase dispatches this skill's
       `code-reviewer.md` template. Also fires unasked on "before merging".
 
   receive-review:
@@ -116,7 +116,7 @@ imported:
     renamed_from: receiving-code-review
     why: >-
       Fires when review feedback arrives, which is ordinary work, and it is
-      the counterpart to requesting-code-review. Shipping the request half
+      the counterpart to request-review. Shipping the request half
       without the receive half teaches half the loop.
 
   write-clearly:
@@ -132,7 +132,7 @@ imported:
     renamed_from: dispatching-parallel-agents
     why: >-
       "Use when facing 2+ independent tasks" is a recognition trigger.
-      subagent-driven-development and implementing-tasks restate the parallel
+      sdd and implement-tasks restate the parallel
       gate inline for the everyday paths; this skill remains the canonical
       source for the full gate, the degradation ladder, and the divergent-tree
       rule.
@@ -189,7 +189,7 @@ imported:
     renamed_from: iterative-development
     why: >-
       An alternative whole methodology, invoked by name when a spec is too
-      large for the writing-plans flow.
+      large for the write-plan flow.
 
   extract-requirements:
     from: imported
@@ -203,20 +203,20 @@ imported:
     renamed_from: scoping-the-simplest-core
     why: >-
       Part of the cluster, and it reads a prompt template out of
-      running-an-iteration's directory — the two cannot be split.
+      run-iteration's directory — the two cannot be split.
 
   run-iteration:
     from: imported
     renamed_from: running-an-iteration
     why: >-
-      Part of the cluster. Dispatches implementing-tasks.
+      Part of the cluster. Dispatches implement-tasks.
 
   implement-tasks:
     from: imported
     renamed_from: implementing-tasks
     why: >-
-      Part of the cluster. A fork of subagent-driven-development for
-      in-memory task batches; only running-an-iteration invokes it.
+      Part of the cluster. A fork of sdd for
+      in-memory task batches; only run-iteration invokes it.
 
   audit-progress:
     from: imported
@@ -229,7 +229,7 @@ imported:
     why: >-
       The shared design vocabulary
       (module/interface/depth/seam/adapter/leverage/locality) that
-      test-driven-development's "Seams — Where Tests Go" section reaches for.
+      tdd's "Seams — Where Tests Go" section reaches for.
       Ships with DEEPENING.md and DESIGN-IT-TWICE.md.
 
   improve-architecture:
@@ -287,7 +287,7 @@ authored:
     from: moe
     why: >-
       A deterministic scheduler for the multi-plan case that neither
-      `writing-plans` nor `subagent-driven-development` covers. The description
+      `write-plan` nor `sdd` covers. The description
       fires warm ("use when a project has more than one plan and you need to
       know which is runnable"); the cold case — a fresh session on a
       partly-finished project — is caught by the `plan-set-notice`
@@ -300,7 +300,7 @@ authored:
     why: >-
       A whole-repository review you invoke on purpose — an inherited codebase,
       a pre-release sweep. Its description deliberately claims "a whole
-      repository rather than a diff" because `requesting-code-review` already
+      repository rather than a diff" because `request-review` already
       owns the diff trigger. Ships two node scripts invoked as `node <path>`,
       so neither needs an X_BIT_ALLOWLIST entry.
 
@@ -308,7 +308,7 @@ authored:
     from: moe
     why: >-
       The consumer half of the pair — it reads the report
-      `reviewing-a-codebase` writes. Deliberately invoked once a report
+      `review-codebase` writes. Deliberately invoked once a report
       exists, so it cannot fire unasked. A REQUIRED four-field disposition
       slot plus the script that fills it, so a fix run cannot forget to
       record which commit fixed which finding.
@@ -325,7 +325,7 @@ authored:
     why: >-
       Shapes HOW the agent works during implementation — minimal changes,
       edit-over-create, proportional responses, scope containment — rather
-      than WHAT it does. Complements `verification-before-completion`, which
+      than WHAT it does. Complements `verify-completion`, which
       fires at completion time, by firing alongside the task itself.
 
   merge-discipline:
@@ -336,7 +336,7 @@ authored:
       a lint or test failure the integration surfaces is in scope because
       you are the one integrating, regardless of whose changeset introduced
       it. Cross-linked from, rather than duplicated into,
-      `finishing-a-development-branch` and `resolving-merge-conflicts` so
+      `finish-branch` and `resolve-conflicts` so
       both flows share one statement of the rule.
 
   moe-dev:
