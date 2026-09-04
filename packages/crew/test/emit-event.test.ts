@@ -259,7 +259,6 @@ describe("runHook — no-op cases", () => {
     const result = run(stdin, dir);
     expect(result).toEqual({ stdout: "" });
   });
-
 });
 
 describe("runHook — session_id path safety (CR-008)", () => {

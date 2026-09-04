@@ -210,9 +210,7 @@ function parseTypeId(value: string, label: string): { type: SourceType; id: stri
   const type = value.slice(0, colonIdx);
   const id = value.slice(colonIdx + 1);
   if (!(SOURCE_TYPES as readonly string[]).includes(type)) {
-    throw new Error(
-      `Invalid ${label} type "${type}": expected one of ${SOURCE_TYPES.join(", ")}`,
-    );
+    throw new Error(`Invalid ${label} type "${type}": expected one of ${SOURCE_TYPES.join(", ")}`);
   }
   return { type: type as SourceType, id };
 }

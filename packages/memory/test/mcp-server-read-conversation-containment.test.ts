@@ -41,7 +41,9 @@ describe("CR-019: read_conversation refuses paths outside the archive root", () 
     outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), "moe-memory-outside-"));
     process.env.TEST_ARCHIVE_DIR = archiveDir;
 
-    const server = createMemoryMcpServer({ journalPath: fs.mkdtempSync(path.join(os.tmpdir(), "moe-memory-journal-")) });
+    const server = createMemoryMcpServer({
+      journalPath: fs.mkdtempSync(path.join(os.tmpdir(), "moe-memory-journal-")),
+    });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     client = new Client({ name: "test-client", version: "0.0.0" });
     await Promise.all([client.connect(clientTransport), server.connect(serverTransport)]);

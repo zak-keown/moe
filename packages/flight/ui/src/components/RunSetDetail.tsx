@@ -22,9 +22,11 @@ export function pollRunSetManifest(
   intervalMs: number,
 ): () => void {
   const id = setInterval(() => {
-    fetchManifest().then(onUpdate).catch(() => {
-      // best-effort; keep the last known manifest and try again next tick
-    });
+    fetchManifest()
+      .then(onUpdate)
+      .catch(() => {
+        // best-effort; keep the last known manifest and try again next tick
+      });
   }, intervalMs);
   return () => clearInterval(id);
 }

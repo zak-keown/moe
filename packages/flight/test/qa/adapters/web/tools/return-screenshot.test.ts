@@ -1,7 +1,7 @@
 import { existsSync, unlinkSync, writeFileSync } from "node:fs";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { buildReturnScreenshot } from "../../../../../src/qa/adapters/web/tools/return-screenshot.js";
 import type { ChromeSession } from "../../../../../src/qa/adapters/web/adapter.js";
+import { buildReturnScreenshot } from "../../../../../src/qa/adapters/web/tools/return-screenshot.js";
 import type { EvidenceLogger } from "../../../../../src/qa/evidence/logger.js";
 
 // CR-034: buildReturnScreenshot() names its temp screenshot file

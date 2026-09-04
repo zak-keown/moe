@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { WebAdapter, type ChromeSession } from "../../../../src/qa/adapters/web/adapter.js";
+import { type ChromeSession, WebAdapter } from "../../../../src/qa/adapters/web/adapter.js";
 import type { EvidenceLogger } from "../../../../src/qa/evidence/logger.js";
 
 // CR-080: `eval` was deliberately dropped from webToolDefinitions()

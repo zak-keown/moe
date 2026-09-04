@@ -13,10 +13,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-const SCRIPT = new URL(
-  "../skills/docs-update/scripts/docs-verify-report.mjs",
-  import.meta.url,
-).pathname;
+const SCRIPT = new URL("../skills/docs-update/scripts/docs-verify-report.mjs", import.meta.url)
+  .pathname;
 
 describe("docs-verify-report", () => {
   let tmp: string;
@@ -42,7 +40,13 @@ describe("docs-verify-report", () => {
   it("renders every finding it counts, even when severity casing differs from canonical lowercase", () => {
     const report = runDocsVerify([
       { type: "stale_reference", file: "README.md", anchor: "a", actual: "one", severity: "high" },
-      { type: "factual_error", file: "README.md", anchor: "b", actual: "two", severity: "Critical" },
+      {
+        type: "factual_error",
+        file: "README.md",
+        anchor: "b",
+        actual: "two",
+        severity: "Critical",
+      },
     ]);
 
     const totalMatch = report.match(/findings:.*total:\s*(\d+)/);

@@ -21,8 +21,8 @@
 // top level supports top-level await — and passes the result into
 // loadExtensions via a resolver closure.
 
-import { Option } from "commander";
 import type { Command } from "commander";
+import { Option } from "commander";
 import type { computeWaves, PlanTask, parsePlan, validatePlan } from "./parser.js";
 
 // Re-exported for extension authors: JigContext.parsePlan resolves to

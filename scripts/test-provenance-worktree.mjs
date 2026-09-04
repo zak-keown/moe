@@ -22,7 +22,9 @@ const result = spawnSync(
 );
 
 const output = JSON.parse(result.stdout);
-const worktreeDiagnostics = output.diagnostics.filter((item) => item.message.includes(".moe/worktrees"));
+const worktreeDiagnostics = output.diagnostics.filter((item) =>
+  item.message.includes(".moe/worktrees"),
+);
 
 assert.equal(
   worktreeDiagnostics.length,
@@ -30,4 +32,6 @@ assert.equal(
   `expected no diagnostics about the nested .moe/worktrees checkout, got: ${JSON.stringify(worktreeDiagnostics)}`,
 );
 
-console.log("provenance self-test: nested .moe/worktrees checkout is not misreported as a stale legal copy");
+console.log(
+  "provenance self-test: nested .moe/worktrees checkout is not misreported as a stale legal copy",
+);

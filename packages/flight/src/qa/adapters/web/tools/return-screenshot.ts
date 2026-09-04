@@ -37,10 +37,7 @@ export function buildReturnScreenshot(opts: {
     // in the same millisecond would otherwise target the identical temp
     // file. process.pid + a random UUID makes every call's temp file unique
     // regardless of timing.
-    const tmpFile = join(
-      tmpdir(),
-      `moe-flight-screenshot-${process.pid}-${randomUUID()}.png`,
-    );
+    const tmpFile = join(tmpdir(), `moe-flight-screenshot-${process.pid}-${randomUUID()}.png`);
     try {
       await chrome.screenshot(targetTab, tmpFile, null, false, {
         timeoutMs: RETURN_SCREENSHOT_TIMEOUT_MS,
