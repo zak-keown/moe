@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 1
+  fixed: 2
   stale: 0
   skipped: 0
   deferred: 0
-  open: 106
+  open: 105
 ---
 
 # Codebase Review — moe
@@ -324,6 +324,10 @@ This is not a contrived input for this project: the codebase's own review/issue 
 
 Fix: only strip an inline comment when not inside a quoted value (e.g. only apply the regex when `raw.trim()` doesn't already start with a quote character, or do a proper quote-aware scan), and preserve `#` characters that are already inside a matched quote pair.
 
+**Disposition:** fixed
+**Commit:** `09a0772bac6b5ea87957428d55400d611430f581`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-008: Unsanitized `session_id` from hook stdin lets a crafted payload escape the worker dir and can defeat the hook's own "always exit 0" guarantee
 
 **File:** `packages/crew/src/hooks/emit-event.ts`
