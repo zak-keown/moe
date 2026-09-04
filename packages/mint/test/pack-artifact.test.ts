@@ -49,7 +49,21 @@ async function artifactFixture(): Promise<{ workspace: string; root: string; out
     writeFile(join(root, 'LICENSE'), 'fixture license\n'),
     writeFile(join(root, 'NOTICE'), 'fixture notice\n'),
   ])
-  await chmod(join(root, 'bin', 'npm-pack-fixture'), 0o755)
+  // Canonical modes, not whatever the umask left behind. The manifest records
+  // each entry's mode and extraction chmods every unpacked member to
+  // 0755/0644, so a fixture written under umask 077 lands at 0600 and can
+  // never match its own packed output. The production writers all chmod before
+  // the manifest is taken; this fixture hand-builds its tree and must too.
+  await Promise.all([
+    chmod(join(root, 'package.json'), 0o644),
+    chmod(join(root, 'dist', 'index.js'), 0o644),
+    chmod(join(root, 'dist', 'server.js'), 0o644),
+    chmod(join(root, '.pi', 'extensions', 'npm-pack-fixture.js'), 0o644),
+    chmod(join(root, '.claude-plugin', 'plugin.json'), 0o644),
+    chmod(join(root, 'LICENSE'), 0o644),
+    chmod(join(root, 'NOTICE'), 0o644),
+    chmod(join(root, 'bin', 'npm-pack-fixture'), 0o755),
+  ])
   await writeArtifactManifest(root, expected)
   return { workspace, root, output }
 }

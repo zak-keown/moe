@@ -116,6 +116,19 @@ function isExcludedComponentPath(path: string, configKey: string | undefined): b
     || foldedPath(path) === configKey
 }
 
+/**
+ * The mode an artifact entry gets, derived only from the source's executable
+ * bit.
+ *
+ * Git records exactly one permission bit -- whether a blob is executable -- so
+ * everything else in a checkout's mode is the umask the clone ran under.
+ * Copying it through hashes the umask into the artifact manifest and makes
+ * generation non-reproducible across hosts.
+ */
+export function canonicalArtifactMode(sourceMode: number): number {
+  return (sourceMode & 0o111) === 0 ? 0o644 : 0o755
+}
+
 function isSourceMap(path: ArtifactPath): boolean {
   return foldedPath(basename(path)).endsWith('.map')
 }
@@ -196,7 +209,7 @@ async function collectComponentFiles(plugin: ResolvedPlugin): Promise<readonly C
     candidates.set(destination, {
       destination,
       bytes: await readFile(sourceAbsolute),
-      mode: stats.mode & 0o777,
+      mode: canonicalArtifactMode(stats.mode),
     })
   }
 

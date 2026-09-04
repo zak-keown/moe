@@ -6,11 +6,17 @@
 # Escape hatch: MOE_JIG_RAW_WORKTREE=1 disables this hook.
 set -u
 
+# Drain stdin before any early exit. A PreToolUse hook that exits while its
+# caller is still writing the event leaves the caller with EPIPE, which Node
+# surfaces as a thrown execFileSync carrying exit status 0 -- a confusing way
+# to fail, and a real one once the event exceeds the pipe buffer.
+# jig-review-format-guard already reads the event first.
+EVENT="$(cat 2>/dev/null || true)"
+
 if [ -n "${MOE_JIG_RAW_WORKTREE:-}" ]; then
   exit 0
 fi
 
-EVENT="$(cat 2>/dev/null || true)"
 if [ -z "$EVENT" ]; then
   exit 0
 fi
