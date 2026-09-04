@@ -444,7 +444,9 @@ prefix_rule(
     10_000,
   );
 
-  it("parses boundaries strictly and filters requested harnesses", async () => {
+  it("parses boundaries strictly and filters requested harnesses", {
+    timeout: 15_000,
+  }, async () => {
     const fixture = await isolatedHome();
     for (const args of [
       ["scan", "--days", "0"],

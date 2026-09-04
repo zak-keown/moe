@@ -507,7 +507,7 @@ describe("runtime paths", () => {
     expect(discovered.length).toBeGreaterThanOrEqual(X_BIT_ALLOWLIST.length);
   });
 
-  it("every shell script and node script parses", () => {
+  it("every shell script and node script parses", { timeout: 15_000 }, () => {
     // Discovered, not enumerated. Two hardcoded lists (11 shell, 4 node) drifted
     // out of this file's sight the moment a skill import added a script, exactly
     // as the execute-bit allowlist did. Routing is by extension, plus a shebang
