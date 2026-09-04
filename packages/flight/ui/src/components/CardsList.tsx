@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { CardSummary } from "../lib/api";
+import { CARD_STATUS_LABELS, CARD_STATUSES } from "../lib/cardStatus";
 import { StatusBadge } from "./shared";
 
 interface CardsListProps {
@@ -41,8 +42,11 @@ export function CardsList({ cards, selectedId, onSelect }: CardsListProps) {
           className="input-field !w-auto !py-1 !text-xs"
         >
           <option value="all">All status</option>
-          <option value="draft">Draft</option>
-          <option value="ready">Ready</option>
+          {CARD_STATUSES.map((status) => (
+            <option key={status} value={status}>
+              {CARD_STATUS_LABELS[status]}
+            </option>
+          ))}
         </select>
         <select
           value={tagFilter}
