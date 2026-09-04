@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 1
+  fixed: 2
   stale: 0
   skipped: 0
   deferred: 0
-  open: 106
+  open: 105
 ---
 
 # Codebase Review — moe
@@ -794,6 +794,10 @@ I confirmed there is no other guard: `grep -rn "getArchiveDir\|isUnderRoot\|read
 
 Fix: resolve `params.path`, realpath it, and require it be contained in `getArchiveDir()` (mirroring the journal's two-stage guard) before reading.
 
+**Disposition:** fixed
+**Commit:** `49e6fb0738391e09c22f0311bde6073234d911e5`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-020: `release --execute` commands print success but never invoke the release automation they claim to run
 
 **File:** `packages/mint/src/release/promotion.ts`
