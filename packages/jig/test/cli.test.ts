@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -59,8 +59,12 @@ describe("moe-jig CLI", () => {
         cwd: repo,
         encoding: "utf-8",
       });
-      expect(existsSync(join(repo, ".moe", "backlog", "0001-cli-item.md"))).toBe(true);
-      const idMatch = /\bBL-\d{4}\b/.exec(addOut);
+      expect(
+        readdirSync(join(repo, ".moe", "backlog")).some((f) =>
+          /^BL-[0-9a-f]{10}-cli-item\.md$/.test(f),
+        ),
+      ).toBe(true);
+      const idMatch = /\bBL-[0-9a-f]{10}\b/.exec(addOut);
       expect(idMatch).not.toBeNull();
       const id = (idMatch as RegExpExecArray)[0];
       const out = execFileSync(
@@ -77,11 +81,12 @@ describe("moe-jig CLI", () => {
   it("defer warns with a carry-over-specific message when a carry reason is missing --next", () => {
     const repo = makeRepo();
     try {
-      execFileSync(process.execPath, [CLI, "backlog", "add", "no next item"], {
+      const addOut = execFileSync(process.execPath, [CLI, "backlog", "add", "no next item"], {
         cwd: repo,
         encoding: "utf-8",
       });
-      const { stderr } = runIn(repo, "backlog", "defer", "BL-0001", "--reason", "budget");
+      const id = /\bBL-[0-9a-f]{10}\b/.exec(addOut)?.[0] ?? "";
+      const { stderr } = runIn(repo, "backlog", "defer", id, "--reason", "budget");
       expect(stderr).toContain('carry-over reason "budget"');
       expect(stderr).toContain("requires a --next step");
     } finally {
@@ -92,13 +97,38 @@ describe("moe-jig CLI", () => {
   it("defer warns with the unrecognized-reason message for a reason that is not recognized at all", () => {
     const repo = makeRepo();
     try {
-      execFileSync(process.execPath, [CLI, "backlog", "add", "mystery item"], {
+      const addOut = execFileSync(process.execPath, [CLI, "backlog", "add", "mystery item"], {
         cwd: repo,
         encoding: "utf-8",
       });
-      const { stderr } = runIn(repo, "backlog", "defer", "BL-0001", "--reason", "just because");
+      const id = /\bBL-[0-9a-f]{10}\b/.exec(addOut)?.[0] ?? "";
+      const { stderr } = runIn(repo, "backlog", "defer", id, "--reason", "just because");
       expect(stderr).toContain('reason "just because" is not a recognized deferral reason');
       expect(stderr).not.toContain("carry-over reason");
+    } finally {
+      rmSync(repo, { recursive: true, force: true });
+    }
+  });
+
+  it("accepts a triaged item to open end-to-end", () => {
+    const repo = makeRepo();
+    try {
+      const addOut = execFileSync(process.execPath, [CLI, "backlog", "add", "triage cli"], {
+        cwd: repo,
+        encoding: "utf-8",
+      });
+      const id = /\bBL-[0-9a-f]{10}\b/.exec(addOut)?.[0] ?? "";
+      runIn(repo, "backlog", "defer", id, "--reason", "just because"); // → needs-triage
+      const out = execFileSync(process.execPath, [CLI, "backlog", "accept", id], {
+        cwd: repo,
+        encoding: "utf-8",
+      });
+      expect(out).toContain(".moe/backlog");
+      const show = execFileSync(process.execPath, [CLI, "backlog", "show", id], {
+        cwd: repo,
+        encoding: "utf-8",
+      });
+      expect(show).toContain("status: open");
     } finally {
       rmSync(repo, { recursive: true, force: true });
     }

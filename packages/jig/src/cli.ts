@@ -3,6 +3,7 @@ import { readFileSync, realpathSync } from "node:fs";
 import { Command, CommanderError } from "commander";
 import {
   type BacklogStatus,
+  backlogAccept,
   backlogAdd,
   backlogClaim,
   backlogDecline,
@@ -265,6 +266,14 @@ backlog
   .option("--by <id>")
   .action((id: string, o: { reason: string; note?: string; by?: string }) =>
     console.log(backlogDecline(id, o)),
+  );
+
+backlog
+  .command("accept")
+  .argument("<id>")
+  .option("--by <id>", "actor id")
+  .action((id: string, o: { by?: string }) =>
+    console.log(backlogAccept(id, o.by !== undefined ? { by: o.by } : {})),
   );
 
 backlog

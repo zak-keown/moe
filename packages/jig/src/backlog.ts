@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { git, slugify, today, worktreeRoot } from "./util.js";
@@ -110,14 +111,15 @@ export function serializeItem(item: BacklogItem): string {
   ].join("\n");
 }
 
-export function allocateId(existing: string[]): { num: number; id: string } {
-  let max = 0;
+export function allocateId(existing: string[]): { id: string } {
+  const used = new Set<string>();
   for (const name of existing) {
-    const m = /^(\d{4})-.*\.md$/.exec(name);
-    if (m) max = Math.max(max, Number.parseInt(m[1] ?? "0", 10));
+    const m = /^(BL-[0-9a-f]+)-/.exec(name);
+    if (m?.[1]) used.add(m[1]);
   }
-  const num = max + 1;
-  return { num, id: `BL-${String(num).padStart(4, "0")}` };
+  let id = `BL-${randomBytes(5).toString("hex")}`;
+  while (used.has(id)) id = `BL-${randomBytes(5).toString("hex")}`;
+  return { id };
 }
 
 export function backlogDir(cwd?: string): string {
@@ -168,7 +170,7 @@ export function backlogAdd(title: string, opts: AddOpts = {}): string {
         throw new Error(`an open item with slug "${slug}" already exists: ${item.id}`);
     }
   }
-  const { num, id } = allocateId(existing);
+  const { id } = allocateId(existing);
   const now = today();
   const item: BacklogItem = {
     id,
@@ -185,7 +187,7 @@ export function backlogAdd(title: string, opts: AddOpts = {}): string {
     tags: opts.tags ?? [],
     body: '## Context\n\n<why this exists and what "done" looks like>\n',
   };
-  const filepath = join(dir, `${String(num).padStart(4, "0")}-${slug}.md`);
+  const filepath = join(dir, `${id}-${slug}.md`);
   writeFileSync(filepath, serializeItem(item), "utf-8");
   return resolve(filepath);
 }
@@ -221,6 +223,14 @@ function writeResume(
   if (opts.branch) lines.push(`- branch: ${opts.branch}`);
   const block = `${lines.join("\n")}\n`;
   if (/^## Resume$/m.test(body)) return body.replace(/## Resume[\s\S]*$/m, block);
+  return `${body.replace(/\n*$/, "")}\n\n${block}`;
+}
+
+function writeDisposition(body: string, reason: string, note?: string): string {
+  const lines = ["## Disposition", "", `- declined: ${reason}`];
+  if (note) lines.push(`- note: ${note}`);
+  const block = `${lines.join("\n")}\n`;
+  if (/^## Disposition$/m.test(body)) return body.replace(/## Disposition[\s\S]*$/m, block);
   return `${body.replace(/\n*$/, "")}\n\n${block}`;
 }
 
@@ -286,6 +296,15 @@ export function backlogResume(
   return { path, resume: rm ? (rm[0] ?? "") : "" };
 }
 
+export function backlogAccept(id: string, opts: { cwd?: string; by?: string } = {}): string {
+  const { dir, name, item } = loadItem(opts.cwd, id);
+  if (item.status !== "needs-triage")
+    throw new Error(`cannot accept ${id}: status is ${item.status} (only needs-triage)`);
+  item.status = "open";
+  item.movedBy = opts.by ?? "manual";
+  return persist(dir, name, item, opts.cwd);
+}
+
 export function backlogDone(
   id: string,
   opts: { cwd?: string; commit?: string; by?: string } = {},
@@ -310,7 +329,7 @@ export function backlogDecline(
   item.status = "declined";
   item.reason = opts.reason;
   item.movedBy = opts.by ?? "manual";
-  if (opts.note) item.body = writeResume(item.body, { note: opts.note, next: "—" });
+  item.body = writeDisposition(item.body, opts.reason, opts.note);
   return persist(dir, name, item, opts.cwd);
 }
 
@@ -329,8 +348,10 @@ function loadAll(cwd?: string): BacklogItem[] {
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
     .filter((f) => f.endsWith(".md"))
-    .sort()
-    .map((f) => parseItem(readFileSync(join(dir, f), "utf-8")));
+    .map((f) => parseItem(readFileSync(join(dir, f), "utf-8")))
+    .sort((a, b) =>
+      a.created === b.created ? a.id.localeCompare(b.id) : a.created.localeCompare(b.created),
+    );
 }
 
 export function backlogList(opts: ListOpts = {}): BacklogItem[] {
