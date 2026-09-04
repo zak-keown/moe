@@ -57,4 +57,21 @@ describe("docs-verify-report", () => {
     expect(renderedIds.length).toBe(total);
     expect(report).toContain("## Critical");
   });
+
+  it("prints an empty Critical heading with 'No findings.' just like High/Medium/Low", () => {
+    const report = runDocsVerify([
+      { type: "stale_reference", file: "README.md", anchor: "a", actual: "one", severity: "high" },
+    ]);
+
+    // High/Medium/Low all print their heading followed by "No findings."
+    // when their group is empty. Critical must behave the same way — its
+    // absence otherwise reads as "the report is truncated" rather than
+    // "deliberately empty".
+    for (const heading of ["Critical", "Medium", "Low"]) {
+      const idx = report.indexOf(`## ${heading}`);
+      expect(idx, `expected a "## ${heading}" heading in:\n${report}`).toBeGreaterThanOrEqual(0);
+      const nextLines = report.slice(idx).split("\n").slice(1, 3).join("\n");
+      expect(nextLines).toContain("No findings.");
+    }
+  });
 });
