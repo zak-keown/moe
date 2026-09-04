@@ -36,6 +36,1039 @@ evidence it is clean.
 
 ## Critical
 
+- **CR-001:** Live-run file route lets `../` in an allow-listed prefix reach the credential-fixture directory — fixed (`c3f1f2f447775eb9a8d1ab35688ae7e7470a2375`)
+## High
+
+- **CR-002:** probeChrome never detects an installed browser on Linux because `command -v` has no standalone executable there — fixed (`69b16fb9fdcfdad77bc50b4b1c629c45ea68c4cf`)
+- **CR-003:** aggregate_scenarios.py silently merges distinct untitled scenarios, discarding one's content — fixed (`ed891aad4eb9eecac120ce5d8cbf61b8d633a994`)
+- **CR-004:** compact-resolved.mjs re-compacts already-resolved findings and duplicates the "Resolved findings" heading on a second run — fixed (`301bf7f88087562206f8106bd6e923043aa7537f`)
+- **CR-005:** review-merge.mjs's finding validation does not enforce the "no line-number citation" rule it exists to guarantee — fixed (`cbf6cd5fb00fe3004e7815e71de1912d535e39c0`)
+- **CR-006:** A bad `wait-for-turn` timeout argument produces NaN and either hangs forever or fails instantly instead of erroring — fixed (`78207f9ce71de4471fc90170b22410910b67bf70`)
+- **CR-007:** Pack-file inline scalar parser silently truncates values containing `" #"`, even inside quotes — fixed (`09a0772bac6b5ea87957428d55400d611430f581`)
+- **CR-008:** Unsanitized `session_id` from hook stdin lets a crafted payload escape the worker dir and can defeat the hook's own "always exit 0" guarantee — fixed (`54ad5ce6d5b844dff1e71f7b27f98853e373b70f`)
+- **CR-009:** `cellId()` uses an unsafe separator, letting two distinct cells collide on the same DOM id and SSE event name — fixed (`22642b56d7dd202257719718409fa00cd28b8e0a`)
+- **CR-010:** Hyphen-joined `cellId` can collide across distinct (scenario, agent, credential, os) identities, misrouting SSE cell updates — stale
+- **CR-011:** `trySpawnOn` leaves the spawned Chrome `ChildProcess` with no `'error'` listener, crashing the host process on spawn failure — fixed (`3b98657939f428f80db11723015e7464a5c48df9`)
+- **CR-012:** `navigate()` never checks `Page.navigate`'s `errorText`, so failed navigations are reported as success — fixed (`9b63e7bd84696df5612a9e3d3b1ad6c140cd07f6`)
+- **CR-013:** Bash tool forwards live LLM provider credentials into a shell the agent controls while reading untrusted page content — fixed (`2f94d5fa4f6bc2d60e5d8fc9d3f563f309e71c67`)
+- **CR-014:** `findCard` bypasses the codebase's own "one and only path-safety guard", enabling a file-existence oracle for arbitrary paths — fixed (`95e5d92cba6e86c08ec0cb322fe1a32c09959a17`)
+- **CR-015:** `fetch_credential` failure path leaks resolver stderr into the persisted transcript, bypassing the redaction opt-out — fixed (`52b1c66d59112d509ec69b1d703ea80a6773eb9c`)
+- **CR-016:** `executeRunCore` double-fires lifecycle hooks and misreports a successful run as errored when `beforeClose`/`afterClose` throws — fixed (`8f681217b85998c2eddc1e3de7c2076bfcc768ce`)
+- **CR-017:** Card creation form does not enforce the character set `makeRunId`/`parseRunId` require, silently breaking live transcript for the run — fixed (`a7ffd9ad3f3aeec2770a90c38e979f11f602bd7e`)
+- **CR-018:** `seedPlanSkeleton` builds `depends_on` edges backwards — fixed (`1c653a1bd1185101c314795fd9872733129b6ae6`)
+- **CR-019:** `read_conversation` MCP tool reads any path on disk with no containment check — fixed (`49e6fb0738391e09c22f0311bde6073234d911e5`)
+- **CR-020:** `release --execute` commands print success but never invoke the release automation they claim to run — fixed (`c69b01c49285e887976b7dd31352654bb1913817`)
+- **CR-021:** extractEmbedded's directory creation follows a pre-planted symlink, letting a co-tenant redirect the native-library cache outside the content-hash integrity check — fixed (`265213ad576421041e60cd5b042e8e919a618d41`)
+- **CR-022:** Artifact files are served with browser-executable Content-Types, enabling stored XSS in the report UI — fixed (`1b2b191ee4e00af8e4f9f5d83b219bb2a8d6bafe`)
+- **CR-023:** `pnpm provenance` false-positives (and fails) whenever a `.moe/worktrees/` checkout is present — fixed (`0b7b025f0160347ea973b9c3479d3f1fd45a15f4`)
+## Medium
+
+- **CR-024:** docs-verify-report.mjs silently drops findings whose severity isn't an exact lowercase match, while still counting them in the total — fixed (`02b0c6926a9d056ce8df90db85f8e6ea447b9e19`)
+- **CR-025:** chunk_spec.py misattributes line numbers for sections with duplicate heading text and shared opening content — fixed (`709635b84e04554768a56f8c22bda5a048c0c806`)
+- **CR-026:** Negative-index slice makes the epic-misattribution regression guard vacuous — fixed (`e788e8b5474bd0fd3a0986e4a6e365c80d169b6c`)
+- **CR-027:** `--worktree` teardown paths delete the worktree marker without removing the git worktree, leaking disk and git state — fixed (`3df505d5636ed23e0f43f2e4e4b3c234015337c8`)
+- **CR-028:** `ensureOwnedDir`'s create-path has a TOCTOU window that defeats its own symlink defense — fixed (`a607cdbb5c5856a81cb6ac3089a91a9d2200e11b`)
+- **CR-029:** Same unsanitized-session-id pattern in the pi extension's self-registration path — fixed (`6278af574f7d87354ce3f89a5eb9e34a1e6c4a73`)
+- **CR-030:** `pidAlive` reports pid 0 and negative pids as permanently alive, contradicting its own doc comment — fixed (`864a47110997ceddf502f4eac0e6fadaeae197c6`)
+- **CR-031:** `driftFlag`/`cardView` can label a stale run as "latest" when the true latest run's cost is unpriced — fixed (`b8eab4be558e2e3d89097be6538fecefc1e7228f`)
+- **CR-032:** Page-script comments claim jsdom test coverage that does not exist in this package — fixed (`5f47e63c8c2cc76aa22760ca4290a1c5e16b170c`)
+- **CR-033:** `markdown.js` page-script comment claims jsdom test coverage that does not exist in this package — fixed (`29086e025a94fd11ad5c5fa36c31f8278b86dc60`)
+- **CR-034:** Screenshot temp-file name collision under concurrent runs — fixed (`f900535cac6a21de78ab915cbc1bc2468f2ed42f`)
+- **CR-035:** `POST /api/scenarios` creation has no id charset check despite a comment elsewhere claiming it does — fixed (`342e17525880dc627ba5271ae07d3cf4bbf33cde`)
+- **CR-036:** Pretty CLI renderer never truncates the JSON-fallback tool-call body, contradicting its own doc comment — reproducible on every completed run — fixed (`a03e123b2d8fd3dd2bae15e51714906fc64962a3`)
+- **CR-037:** Fanout card generation silently corrupts embedded code fences in generated story-card content — fixed (`5488d60ae1e9e6d15d038104000ae72087ce5f90`)
+- **CR-038:** `runLoop` silently discards the executor's exception, leaving `"errored"` runs with no diagnostic trail — fixed (`446cbbdcd25e510099ba086130f7b3ab9a73611f`)
+- **CR-039:** `startFetchServer` binds to all interfaces instead of loopback, unlike its sibling `startMockWsServer` in the same file — fixed (`7fe5b4b4fb67f584ad932902bb1eef75a421f994`)
+- **CR-040:** `chrome-profile-rotation.test.ts` only guards the module `require()`, not the actual `startChrome()` launch, so it fails outright (rather than skipping) whenever Chrome itself is missing — fixed (`f6842488061aeba597c2f84f6daa7da9c027e26a`)
+- **CR-041:** `isChromeUnavailable()` never matches the actual "Chrome not found" error, so `test:chrome` hard-fails instead of skipping when no browser is installed — fixed (`73f8b8c54b39dd0085347d38c1175a84a6c2126e`)
+- **CR-042:** Card status vocabulary diverges between CardEditor, CardsList's filter, and StatusBadge's color map — fixed (`61144584e3c403351ea61c3614204d25cebc996e`)
+- **CR-043:** Run-set live view has no error/close handling on its WebSocket — no polling fallback either — fixed (`9945a2296df30c68c2258559f7aacd0b5dbca133`)
+- **CR-044:** Live transcript WebSocket never reconnects and gives no indication after a drop — fixed (`85a58cdc33549edd8a05a9c5d86f85b7653b96d5`)
+- **CR-045:** `loadMore` has no in-flight guard — rapid repeated calls fetch and append the same page twice — fixed (`d7674e764f71dc9d377e9af0ff4bc2091bbbb4bb`)
+- **CR-046:** IPv6 host override silently fails to rewrite the WebSocket URL — fixed (`86597b67fc828709b24ec9a7ad07bfbb3cd9ff7c`)
+- **CR-047:** killChrome's port-based fallback SIGTERMs whatever now holds the port, unverified — fixed (`c4af3b3f97c647a67c8bd310ce1b3704a9b93970`)
+- **CR-048:** Unescaped WebBluetooth/WebUSB device name injected into generated HTML artifact — fixed (`37342c74150eb2cd675accd1d731a90e84cf21ce`)
+- **CR-049:** html-diff safety cap still allows ~250MB single-call allocation, undercutting its own OOM mitigation — fixed (`4eb99bae9b4491ab3a9877d9637733612fd143bd`)
+- **CR-050:** Session-boundary dialog-refusal test doesn't exercise the refusal it names — fixed (`d6850a38bbda0231cb00eb71e6ad8f92e8c6087f`)
+- **CR-051:** Chrome 148+ incompatibility test is not skipped and will always fail — fixed (`050e8dd585a87211e1e0df2fb30b629fb919d991`)
+- **CR-052:** test-harness.js cannot run at all: CommonJS `require()` inside an ES module — fixed (`b1ca215f8a0ddd1d75b25549cf0702f1b6fe0fdd`)
+- **CR-053:** Manual Chrome test scripts require a relative path that only resolves from the package root, not from their own directory — fixed (`8ebf16df4a39d3d23aafdd9289e09fde504af517`)
+- **CR-054:** jig plan seed silently drops topic words that coincide with the --entry value — fixed (`c1badc9ad182af7b5db90a8db0cdee764802acbe`)
+- **CR-055:** `loadExtensions` mangles multi-word CLI flags when forwarding to extension commands — fixed (`d098f67f19ffeaacfbfd3f5cd52e86659037a3e2`)
+- **CR-056:** `computeWaves` silently drops tasks whose `depends_on` references an unknown task number — fixed (`443a46e5e3b195beaba98c76ea5167ead592926e`)
+- **CR-057:** `link_memories`/`trace_provenance` accept any `type` prefix with no runtime validation — fixed (`e34065c9286ecf0ab27c677885aefa8e78fbdc73`)
+- **CR-058:** `searchConversations` and other DB-opening helpers leak the SQLite handle on error — fixed (`583b74f0b35113c3446cd373f639ce73a8889a66`)
+- **CR-059:** Persistent "thinking budget" summarizer failure is silently accepted as the permanent summary — fixed (`a92c8c095c407831403ec4438785330c17c70019`)
+- **CR-060:** Claude E2E harness leaks a real Codex-style temp directory that is never cleaned up — fixed (`4fdf754a09f01062f5ed182d68446463fd2f1013`)
+- **CR-061:** agent-plugins-1.0 install doc falsely claims a custom skills path "will not be discovered" — fixed (`1267dc571835c15c4633b242c467587775c1ea59`)
+- **CR-062:** TOCTOU between the marketplace/catalog symlink check and the write — fixed (`fb27eec3521b9b3e21e652a8bb541207fdf31385`)
+- **CR-063:** `does not use npm pack after candidate verification` test never executes its assertion — fixed (`42f7f7d78de50408536d90845878c7416fc28e2f`)
+- **CR-064:** `MOE_TAB_PRICING_DIR` override silently loses its "wins absolutely" contract for non-UTF-8 values — fixed (`14d822199dc3e045e687e2a78cf04af596be08ab`)
+- **CR-065:** `execute_run` crashes with a raw TypeError when a task's prompt is a non-string YAML scalar — fixed (`f2abee6c6660045ab2531c5ed1312b62d83e4c60`)
+- **CR-066:** A checker emitting a non-numeric `score` aborts the entire `grade` run with an unhandled ValueError — fixed (`f32fd9e526f51c10fa47fc57a18a5e7ca5ec430c`)
+- **CR-067:** `render_model_blocks` crashes `report` with an unhandled ValueError on a non-numeric metric value — fixed (`5dc92ab988ac4932276f8f4c9dee090f4b221903`)
+- **CR-068:** A task or config YAML missing a required key crashes with a raw KeyError instead of a ClickException — fixed (`7aefa4e55a279750dc4fbbd3804f37aa9f73c0c7`)
+- **CR-069:** `check-provenance.mjs` crashes with an uncaught exception instead of a diagnostic when `root` has no `plugins/` directory — fixed (`4e91a1b67957dfabad6bd5f9c0ffb41c0582813a`)
+## Low
+
+- **CR-070:** Exported harness-registry order/duplicate validator is dead code — fixed (`f8439ac3d58d67c9be20cb09323f8fd99346e1df`)
+- **CR-071:** render-html.cjs interpolates slot values into the HTML template without escaping — fixed (`6c36aa1729aca42ffcac70320d3b2368423cff1f`)
+- **CR-072:** docs-verify-report.mjs suppresses the "No findings" heading only for Critical, inconsistently with High/Medium/Low — fixed (`6eabdff4802c153dbc8ac72e9d36f9297546acb6`)
+- **CR-073:** AGENTS.md's guarded-surface citation for the imported-skill-count test no longer matches the code — fixed (`905a5c2b0b0dabb5e292a3fa0f375783265f6ad6`)
+- **CR-074:** `removeWorktree`'s comment promises to "let the caller know" on real failure but the function cannot — fixed (`b32c486a76b695f434d9042fd7cdc581738df6d9`)
+- **CR-075:** Verdict-cache grows without bound for the lifetime of the dashboard process — fixed (`88191150cfdd9da6b55d7230f6c649c5e6163679`)
+- **CR-076:** `docs/credentials.md` duplicates its own "Username and password" section and links to a nonexistent path — fixed (`15743de9210ae2df275769eb1ce505f031187635`)
+- **CR-077:** `downscaleImageIfNeeded` builds shell commands via unescaped string interpolation — fixed (`37d1fe214ea0ed9dae77d75e18b34fb80149c8cb`)
+- **CR-078:** `selectOption`'s `index` parameter is interpolated unescaped into the evaluated JS source — fixed (`4f12168a1ae458be977db43e651893e104ba44e2`)
+- **CR-079:** `readPasskeyFile` accepts a non-integer `signCount` despite its own error message requiring one — fixed (`5c28441bb37bafc6937db730f1035c98a60d801a`)
+- **CR-080:** `eval` tool remains dispatchable after being deliberately removed from the schema — fixed (`ab33f2e0d33fdf032ca7638abe61373f0146c2c8`)
+- **CR-081:** `/:runId/snapshot` serializes the internal `RunSnapshot` struct wholesale, contradicting its own "never serialized" contract — fixed (`66342430c0fcb0b945521402a67547caf4c60bf1`)
+- **CR-082:** `run-sets.ts` manifest reads skip the malformed-JSON handling every sibling route has — fixed (`0fa90bfbe544a49ab2d4dbd17b95ac9701b2132b`)
+- **CR-083:** `ask`'s recorded-model/date lookups can crash with a raw JSON-parse error on a corrupt `run.jsonl` — fixed (`03ad55d8861317743bfbe712b90f3a690f3255ba`)
+- **CR-084:** `RunSetWriter.finalize`'s `processedIds` set is computed but never consulted — fixed (`8e203e51bbac03eff699931b769a9b47aa123c79`)
+- **CR-085:** Stale `stateDirName` field passed to `executeHttpRun` has no effect — fixed (`2394153f339aea2217d7d12a1a87a808e7d196d3`)
+- **CR-086:** Temp directory leaked by render-cmd.test.ts (no cleanup) — fixed (`1764bbe7a3133ce85fc654a0ff87a835e7baa39b`)
+- **CR-087:** Temp directories leaked by run-one.test.ts (no cleanup) — fixed (`001191831ecabe23f4e72cfc916db4fe34cd751f`)
+- **CR-088:** `cli-batch.test.ts` reproduces the exact `AppConfig` field-name drift `make-config.ts` was written to prevent — fixed (`622a69048914e0f3922cd9442ef04c469a84d2d1`)
+- **CR-089:** `resolveRunDir` has no traversal-safety test despite paths.ts's "one and only path-safety guard" framing — fixed (`affad1ba3df863f10389009f8591aaca075f0e2c`)
+- **CR-090:** Error Log list items can collide on React key under a same-millisecond error burst — fixed (`8bf72b3555ce5eadc421ec30a0f32e7c858e8e1d`)
+- **CR-091:** `Passes` input silently truncates exponent-notation values via `Number.parseInt` — fixed (`83d808e3f22b263b88bc3ff789992506e4c80ee9`)
+- **CR-092:** `restoreFocus` builds an invalid CSS selector for `name` attributes containing a quote — fixed (`47647716c87069f699326bcde3606144c4fa248e`)
+- **CR-093:** Two independently-maintained dialog-gate allowlists; one implementation is dead code — fixed (`d724e9ba1a6e11ff2f9af7773cbe19dc0ec56ee9`)
+- **CR-094:** `selectOption`'s `index` parameter is interpolated into generated JS source unescaped — fixed (`c2108d4e7e8e1d281b6475be892f953e67f06f1b`)
+- **CR-095:** `type` action has no way to avoid the ~80-160ms-per-character `humanType` path — fixed (`04c08b8edd5327b751353a28ae907727d8695315`)
+- **CR-096:** Temp directories from capture.test.mjs regression cases are never cleaned up — fixed (`87eace5a5ded472ce89becdb63db6a485d9b5fef`)
+- **CR-097:** `runSync` re-registers process-level signal/exit handlers on every call with no cleanup — fixed (`63ec17827b478b05747b11d9b3c231cd816fea4c`)
+- **CR-098:** Vacuous "malformed JSONL" test does not exercise malformed input — fixed (`67129698660c99b2ab870722e9828659d62abb7e`)
+- **CR-099:** Vacuous "sidechain" test asserts nothing sidechain-specific — fixed (`6c4ad266ee27bc7f9e2bdea6844023dc59d76717`)
+- **CR-100:** Dead code computes SHA-512 of an empty string instead of the tarball's actual digest — fixed (`4e36913b5877e65180b4aaaf8c0d67e58e2b3c02`)
+- **CR-101:** `computeResumeActions` treats an unobserved draft-asset hash as a match, not as "unknown" — fixed (`42d8cd90505e51689b8929680651d434fc405795`)
+- **CR-102:** Unescaped shell interpolation of an environment-controlled path in the dogfood test — fixed (`47f3dc24ca10ef2928b9bad10557067d5d9c043a`)
+- **CR-103:** Publish-workflow permission test accepts a downgrade its own name forbids — fixed (`571b270e00e54d87a622d60a0b23d95efce6714f`)
+- **CR-104:** `CostEstimate.per_model` mislabels `provider` when the same model string is billed under two different providers — fixed (`bc589f0850df2678abd8566837a6019f91c9c8db`)
+- **CR-105:** `PriceStore::save` writes the snapshot in place, not atomically — fixed (`3e0349ef59400e1f8732700f4f0362b865eb88ac`)
+- **CR-106:** `transcript::detect` misclassifies a valid dialect file with more than 20 leading lines as `UnknownDialect` — fixed (`8a4dbb7b016391f031e6c785688c996ad2cdccb5`)
+- **CR-107:** `check_xml_valid`'s file lookup silently escapes the run/grade sandbox for absolute or `..`-containing paths — fixed (`2e753b6bc1adcbfd2af94f8f455f7fd9399f08eb`)
+## Checked and found sound
+
+- `bin/moe.js`'s `resolve()` — sibling → PATH → workspace-fallback precedence,
+  the win32 `.cmd`/`.exe`/`.bat`/bareword candidate order, the tab-specific
+  `.exe` workspace fallback, and the directory-vs-file guards on both sibling
+  and workspace candidates — traced against every case in
+  `bin/test/moe.test.mjs` and confirms correctly with `pnpm exec vitest run
+  --dir bin/test` (85/85 passing locally).
+- `spawnAndForward`'s SIGINT/SIGTERM forwarding and signal→exit-code mapping,
+  and its listener cleanup on both the `error` and `exit` child events (safe
+  even if both somehow fire, since the surrounding Promise only resolves
+  once).
+- `selectHarness()`'s precedence (`--harness` > `MOE_DEFAULT_HARNESS` >
+  sole-installed-executable) and its ambiguous/zero-installed error paths in
+  `bin/lib/plugin-registry.mjs`, cross-checked against every
+  `bin/moe-doctor`/`bin/moe-install` call site and their tests in
+  `bin/test/doctor.test.mjs`.
+- `executableOnPath`/`executableFile` in `bin/lib/probes.mjs` — PATH-splitting
+  by platform delimiter, PATHEXT handling on win32, and the POSIX X_OK check —
+  match the dedicated tests and the equivalent, independently-written
+  resolver in `bin/moe.js`.
+- `cmpVersion`, `extractVersion`, and `extractTmuxVersion` — verified the
+  tuple comparison and the "no N.N.N triple in tmux output" rationale against
+  real `tmux -V` output shapes cited in the comment.
+- `tryExec`'s 2-second timeout with `SIGKILL` actually bounds a
+  never-exiting child (confirmed by the "tryExec bounds a tool that never
+  exits" test, which spawns a genuinely hanging Node process).
+- Cross-checked every `plugin.pkg`/`plugin.config` pair in `PLUGINS` against
+  the filesystem — all six `packages/<pkg>/<config>` mint yaml files exist.
+- `automatedInstallActions`/`runActions` in `bin/moe-install` and the probe
+  invocation in `bin/moe-doctor` — both use `execFileSync`/`spawnSync` with
+  argument arrays (no shell), so neither is vulnerable to shell injection via
+  harness names, repository URLs, or plugin names, all of which are drawn
+  from the fixed in-repo registry rather than user input.
+
+`packages/core/skills/smoothing-the-experience/scripts/lib/harnesses/claude.mjs` — `matchesPathPattern`'s glob translation (single `*` vs `**`, with/without a trailing slash) was exercised directly against `matchClaudePermission` for `Edit(dir/**)`, `Edit(dir/*)`, `Edit(**)`, and `Edit(*.txt)` against several candidate paths; single-star correctly refuses to cross a `/` boundary and double-star correctly does, matching the documented Claude settings glob semantics.
+
+`packages/core/skills/brainstorming/scripts/server.cjs` — the local companion server's authentication path was read end to end: the session token is compared with `crypto.timingSafeEqual` on every request (query param and cookie), the cookie is set `HttpOnly; SameSite=Strict`, response headers set `X-Frame-Options: DENY` and a restrictive CSP, the WebSocket upgrade re-checks both the token and an `Origin` allowlist, `/files/` rejects dotfiles/symlinks/anything outside `CONTENT_DIR` via `realpathSync` comparison, and the port/token persistence files are written through `writeSecretFile`'s unlink-then-`wx` pattern specifically to defeat a pre-planted symlink. No gap found in this path.
+
+`packages/core/skills/reviewing-a-codebase/scripts/review-scope.mjs` — the manifest's `denominator`/`not_selected`/`outside_denominator` fields were checked against their stated definitions (`denominator` is explicitly `selected.length`, computed once; `outside_denominator` is deliberately computed against `selected`, not the pre-shallow-narrowing `files` set, so it correctly captures everything the denominator does not count at every depth, including shallow-narrowed files). The symlink/regular-file guards around `--out` and the generated workspace files (`O_NOFOLLOW`, `lstatSync` checks before writing) were also read and are consistent.
+
+`packages/core/scripts/validate_skill.py` — `parse_frontmatter`'s handling of a folded (`>`) block scalar and of a `description` value containing an internal `:` were both exercised directly (`python3 -c`) and produced the expected joined string and preserved-colon value respectively.
+
+- `packages/core/skills/smoothing-the-experience/scripts/lib/safety/{shell,filesystem,network,mcp}.mjs` — reviewed the conservative-shell tokenizer/allowlist, the lexical+canonical path containment checks for filesystem evidence (including the `.ssh`/`.aws`/`.env`/`secrets` denylist), the public-hostname classifier (rejects IPs, `.local`/`.localhost`, globs, oversized labels), and the fixed MCP tool allowlist. All are deny-by-default and consistent with their exercising unit tests (`packages/core/test/smoothing-safety.test.ts`, run directly: 88/88 passing). Traced `classifyShell`'s callers (`rank.mjs`, `harnesses/claude.mjs`, `harnesses/codex.mjs`) to confirm these functions classify already-executed historical evidence for permission-rule suggestion, not live command dispatch, so the `cp -n` path's dependence on `realpathSync` succeeding post-execution is not a pre-flight race.
+- `packages/core/skills/smoothing-the-experience/scripts/lib/mutation.mjs` — the bound-plan write path (`createBoundPlan`/`readBoundPlan`/`applyBoundPlan`) hashes and pins the full intent at plan-creation time, re-validates the on-disk source hash both before and after the caller's `validatePlan` callback (closing the TOCTOU window around that callback), takes an exclusive `wx`-mode lock file keyed to the destination, writes through a `wx`-created temp file with `fsync` + rename + post-write hash verification, and cleans up the temp file and any created parent directories on every failure path. Confirmed `writeSecretFile`-style symlink resistance is unnecessary here because the same `wx` semantics reject a pre-planted symlink at both the plan path and the temp-file path. Cross-checked against `packages/core/test/smoothing-mutation.test.ts` (run directly: passing) and `packages/core/skills/smoothing-the-experience/scripts/lib/harnesses/{claude,codex}.mjs` to confirm `plan.destination` is always harness-internal (derived from the resolved config directory), never attacker-suppliable through the `plan`/`apply` CLI surface.
+- `packages/core/skills/smoothing-the-experience/scripts/smooth.mjs` — the `apply` verb re-runs a full `scan` (`validateSelectablePlan`) before mutating, so a plan can't be replayed after the underlying evidence/candidate set has moved; `--confirm` is bound to `intentSha256` so a stale or hand-edited plan is rejected. Argument parsing (`parseScanArgs`/`parsePlanArgs`/`parseApplyArgs`) rejects duplicate/unknown flags and validates `--days`, `--harness`, and permission-ID shape before use.
+- `packages/core/skills/subagent-driven-development/scripts/task-set.mjs`, `packages/core/skills/writing-skills/render-graphs.mjs`, `packages/core/skills/working-with-claude-code/scripts/update_docs.cjs` — all spawn/exec without a shell (`execFileSync`/`spawnSync` with argv arrays), and `update_docs.cjs`'s filename handling (derived from fetched remote text) is already hardened against path escape with both a filename regex and a resolved-dirname check.
+- `packages/core/skills/systematic-debugging/condition-based-waiting-example.ts` — illustrative skill documentation only; confirmed via `packages/core/tsconfig.tests.json` (`exclude: ["skills/**"]`) that it is deliberately outside this package's typecheck surface, so its import of a nonexistent `~/threads/thread-manager` module is not a build defect.
+- `packages/core/test/brainstorm-server/*.test.cjs` (auth, branding, browser-launcher, helper, lifecycle, server, session-security, ws-protocol) — read in full and then executed directly (`node test/brainstorm-server/*.test.cjs`): all 122 individual test cases across these eight files pass against the current `server.cjs`/`helper.cjs`/`start-server.sh`. The auth suite's confused-deputy, cross-origin-WebSocket, and cookie/query-key precedence cases, and the session-security suite's symlink/hardlink and TOCTOU-style secret-file-write cases, all exercise real attack shapes rather than asserting tautologies.
+- `packages/core/test/codebase-review-scripts.test.ts` and `packages/core/test/completion-evidence.test.ts` — read in full and executed directly with vitest (67/67 passing). The review-merge/verify-scope/verify-record tests correctly gate report emission on shard-report completeness, base-SHA agreement, and a closed verdict vocabulary with a per-finding base-matched ledger.
+- `packages/core/test/ci-config.test.ts`, `packages/core/test/house-voice.test.ts`, `packages/core/test/house-voice/score.mjs` — executed directly with vitest (14/14 passing); the GitLab→GitHub Actions migration referenced in the file's comments is corroborated by `git log` (`b0ae97f6 ci: migrate from GitLab to GitHub Actions`, `78a772f6`), so the historical framing is accurate rather than stale.
+- `packages/core/test/iterative-development/{test_artifact_validator,test_check_citations,test_chunk_spec,test_extraction_pipeline}.py` and `__init__.py` — executed directly with `unittest` (all passing) alongside `test_aggregate_stories.py`; no other issues found in these four files.
+
+- `packages/core/test/metadata.test.ts` (101 tests, run via `pnpm vitest run`) — every skill-tree metadata invariant (name/description presence, no duplicate names, allowed frontmatter keys, cross-reference resolution, execute-bit allowlist in both directions, hooks.json shape, `plan-set`/`task-set` CLI behavior across many fixtures, licensing) passes at HEAD and the assertions are substantive, not tautological.
+- `packages/core/test/smoothing-*.test.ts` (claude, codex, safety, mutation, ranking-rendering, evidence-discovery, cli-e2e, the-experience-contract — 8 files, ~230 tests total) — all pass. The suite exercises real production ESM helpers for permission classification, atomic file mutation with injected failure points at every step (lock-held, mid-write, mid-rename, post-rename hash mismatch), Codex App Server protocol handling with a fake subprocess, and a genuine end-to-end CLI harness that spawns the real `smooth.mjs` against isolated `HOME`/`CODEX_HOME` fixtures. Security-relevant assertions (secret redaction, SSRF-style hostname rejection, path traversal rejection, execpolicy witness requirements) are exercised with concrete negative cases.
+- `packages/core/test/task-set-governance.test.ts`, `parallel-execution-contract.test.ts`, `retrieving-context-contract.test.ts`, `resolved-resource-quoting.test.ts`, `latte-corpus.test.ts`, `render-html.test.ts` — all pass; each is a well-scoped content/behavior pinning suite with real assertions against generated output.
+- `packages/core/test/iterative-development/test_skill_validator.py` — ran via `python3 -m unittest`; 6/6 pass; fixtures referenced by the tests exist on disk.
+- `packages/core/vitest.config.ts` — the `include: ["test/*.test.ts"]` glob matches the file comment's claim that nested suites (`test/iterative-development/`, `test/brainstorm-server/`, `test/shell/`, `test/latte/`) are deliberately excluded from the vitest run; confirmed no `.test.ts` file exists in a subdirectory that would be silently dropped by the non-recursive glob.
+- `packages/crew/src/commands/adopt.ts`, `codex-launch.ts`, `context.ts`, `converse.ts`, `events-file.ts`, `grant-consent.ts`, `handoff.ts`, `list.ts`, `pack.ts`, `pi-launch.ts` — read in full; harness-conflict detection in `adopt.ts`'s `existingHarnessState`, the fail-fast validation order in `cmdPack`/`cmdPackStop`, and the derive-vs-assign send/resolve ordering in `converse.ts` are all internally consistent with their documented invariants. Traced `ctx.driver.transcriptPath(sid, meta.cwd, ctx.home)` in `converse.ts` against the codex/pi driver implementations to rule out a suspected stale-`HOME` bug: codex and pi ignore the `workerHome` parameter entirely and read `transcript_path` back from the self-registered meta, so passing the controller's real `HOME` there is harmless.
+
+- `packages/crew/src/core/transcript.ts` — `parseClaudeTurn`/`parseCodexTurn`/`parsePiTurn` and the shared `renderTurn`. All three parsers degrade gracefully on malformed/partial JSONL lines and non-object blocks (verified the guard functions `asBlock`/`parseLines`/`parseRolloutLines`/`parsePiEntries` never throw on garbage input), and `collapseCodexResult`'s anchor-on-`Output:`-plus-exit-header logic passes text through unchanged when the expected markers are absent, so it never drops data on a format it doesn't recognize.
+- `packages/crew/src/commands/send.ts` — the bracketed-paste ESC-stripping defense in `pasteText` (deleting every ESC byte rather than the two marker substrings) correctly closes the marker-splice case described in its own comment, since a bracketed-paste payload has no legitimate use for a raw ESC byte.
+- `packages/crew/src/harness/codex.ts` — `tomlBasicString` correctly escapes backslash, double-quote, and all C0/DEL control characters for both the quoted table key and the string value, so a `cwd` or model containing `"`, `\`, or newlines cannot break out of the generated TOML.
+- `packages/crew/src/core/worker-store.ts` — `stageCredentialFile`'s unlink-then-`O_EXCL|O_NOFOLLOW`-open sequence correctly prevents following a pre-planted symlink at the destination, and the destination directory's ownership is checked by `ensureOwnedDir` at the call sites before staging (independent of the TOCTOU gap noted above, which is about the *create* path, not this file-level defense).
+- `packages/crew/src/core/paths.ts` — `assertSafeSegment`'s single-segment `[A-Za-z0-9_-]+` allowlist is applied consistently by every path-builder that keys off an untrusted worker name (`shimPath`, `workerHomePath`, `harnessMarkerPath`, `worktreeMarkerPath`), closing path traversal via `/`, `.`, or `..` in a worker name before it reaches the filesystem or the generated shim script.
+- `packages/crew/src/harness/resolver.ts` — `resolveHarness`'s precedence chain correctly treats a present-but-invalid higher-precedence source as a hard error rather than falling through to a lower-precedence default, matching its documented contract that corrupt worker state must never disappear behind a valid fallback.
+
+- `packages/crew/src/hooks/emit-event.ts` — `runHook`'s JSON-parse guard,
+  managed-worker gate (`existsSync(metaPath(...))`), `EVENT_MAP` lookup,
+  `buildEvent`'s per-event shape construction (cwd/tool/tool_input handling,
+  including the `{}`-coercion of a non-object `tool_input`), the `Stop`
+  hook's `{"decision":"approve"}` stdout contract, and `readStdin`'s
+  5-second-timeout-with-no-hang behavior were all exercised by
+  `test/emit-event.test.ts` and match the implementation; the derive/baked
+  self-registration flow (write meta on first event, never overwrite on a
+  later event) is covered for both the transcript-path-present and
+  transcript-path-absent cases.
+- `packages/crew/src/pi-extension/index.ts` — the six `pi.on` handler
+  registrations, the WorkerEvent mapping for each (`session_start`,
+  filtered `input`→`user_prompt_submit` on `source === "interactive"`,
+  `tool_call`/`tool_result` via `canonicalToolName`, `agent_end`→`stop`,
+  `session_shutdown` filtered to `reason === "quit"`), the
+  `MOE_CREW_WORKER_DIR`-unset no-op path, and the "never overwrite an
+  existing meta" guarantee are all covered by `test/pi-extension.test.ts`
+  and match the code, including the malformed-event-payload resilience
+  tests.
+- Cross-checked `packages/crew/src/core/tool-name.ts`'s `canonicalToolName`
+  against the pi-extension's call sites (`event.toolName` possibly
+  `undefined` on a malformed test payload) — it tolerates non-string input
+  by returning `""`, so it cannot be the source of an uncaught throw there.
+- Read the broader test suite in this shard (`adopt.test.ts`,
+  `await-start.test.ts`, `claude-driver.test.ts`, `cli.test.ts`,
+  `codex-driver.test.ts`, `codex-launch.test.ts`, `consent.test.ts`,
+  `converse.test.ts`, `diagnostics.test.ts`, `event-log*.test.ts`,
+  `events*.test.ts`, `grant-consent.test.ts`, `handoff.test.ts`,
+  `harness-resolution.test.ts`, `integration/*-flow.test.ts`,
+  `launch.test.ts`, `list.test.ts`, `marketplace.test.ts`, `packs.test.ts`,
+  `paths.test.ts`, `pi-driver.test.ts`) end to end. These exercise commands
+  and drivers outside this shard's assigned source files (`adopt.ts`,
+  `launch.ts`, `converse.ts`, the harness drivers, `runs.ts`, etc.) and did
+  not surface an assertion that contradicted the behavior it was testing;
+  no further action taken on that code since it is out of this shard's file
+  list, but nothing in the test bodies themselves looked wrong.
+
+- `packages/flight/dashboard/src/server.ts` `handleStatic` — the `/static/*`
+  route was checked for path traversal. `join(STATIC_DIR, rest)` followed by
+  `target.startsWith(normalizedRoot)` correctly rejects both literal `..`
+  segments and pre-normalized `..` sequences that `new URL(...).pathname`
+  collapses (verified with `node -e` against several encoded-dot and
+  encoded-slash payloads: `%2e%2e` collapses at the `URL` parsing layer and
+  no longer starts with `/static/`, so it 404s before reaching
+  `handleStatic`; literal `%2f` survives `URL` parsing unresolved but is
+  never decoded by `path.join`, so it cannot act as a path separator). The
+  existence probe before `createReadStream` is deliberate and documented
+  (`Bun.file` vs `createReadStream` failure-mode difference) and is correct.
+- `packages/flight/dashboard/src/server.ts` `oneLine` / SSE framing — CR/LF
+  stripping is applied to both the SSE `data:` body and the `event:` name
+  (`publishCell`), which is the correct defense against a WHATWG
+  `EventSource` frame-splitting injection from a scenario/agent/credential/os
+  string that contains a raw CR or LF byte.
+- `packages/crew/test/worker-store.test.ts` — the `ensureOwnedDir`,
+  `stageCredentialFile`, and `removeWorker` suites exercise real adversarial
+  filesystem shapes (symlink swapped in at the credential-staging
+  destination, a `tmux_name` containing `../../` path-traversal, a plain file
+  where a directory is expected) and assert the victim path is untouched in
+  each case. These are load-bearing security tests and the assertions match
+  what a correct implementation must do.
+- `packages/crew/test/send.test.ts` — the two CR-017 regression tests
+  (`strips paste markers embedded in the prompt`, `does not let deleting an
+  embedded PASTE_START weld a live PASTE_END from the surrounding bytes`)
+  correctly pin the specific "reconstructed escape sequence from adjacent
+  survivor bytes" failure mode, not just a simple substring-strip case.
+- `packages/flight/dashboard/src/manifest.ts` and `contracts.ts` — the
+  read-side zod schemas correctly `.catch()`-guard every field that a
+  malformed/legacy/externally-edited `verdict.json`/`grid-manifest.json`
+  could break, and `loadGridManifest` wraps both `readFileSync` and
+  `JSON.parse` in the same try/catch so a missing or malformed manifest
+  degrades to `null` (results-only mode) rather than throwing out of
+  `startDashboard`.
+- `packages/crew/tsup.config.ts` — the CJS/ESM split and the manual
+  `banner: { js: "#!/usr/bin/env node" }` on the CJS bundle is justified by a
+  real, verifiable Windows cmd-shim failure mode (no shebang, no shim
+  interpreter) and is not dead configuration.
+
+- `packages/flight/dashboard/src/templates.ts` — `esc()` is a single-regex
+  escaper over the five HTML metacharacters (deliberately not a
+  `.replaceAll` chain, per its own comment, to satisfy a CodeQL sanitizer
+  model), and every interpolated scenario/agent/run_id/cost/title string
+  routed through `cellHtml`, `gridHtml`, and `cardHtml` is passed through it.
+  Cross-checked against `dashboard-templates.test.ts`'s escaping assertions
+  (ampersand-first ordering, quote escaping, card row `run_id`/`drift_line`
+  escaping) and found consistent.
+- `packages/flight/dashboard/test/dashboard-server.test.ts`'s CR/LF SSE
+  injection test (`"a CR in a run's scenario cannot forge an extra SSE
+  event/data pair"`) exercises exactly the class of injection risk that
+  free-text identity fields reaching an `event:` line would otherwise create,
+  and the assertion (`buf` must never contain `\r`) is a real, meaningful
+  check, not a tautology.
+- `packages/flight/src/qa/adapters/cli/adapter.ts` and
+  `packages/flight/src/qa/adapters/tui/adapter.ts` — process lifecycle
+  (`start`/`close`, descendant reaping with a grace window before SIGKILL,
+  private per-session tmux servers to avoid inheriting a stale shared
+  server's environment) reads correctly against their own doc comments. I
+  reproduced the specific claim in `CLIAdapter`'s `readStream`/`pump` (a
+  `.then()` chain with no `.catch()` reading from a child process stream)
+  against a real `child_process.spawn` + `SIGKILL` sequence
+  (`node repro-stream.mjs` in scratch), and confirmed no unhandled rejection
+  is raised on an ordinary kill — the fire-and-forget promise chain is safe
+  in practice, not a latent crash.
+- `packages/flight/src/lab/tab/index.ts` (`mergeEstimates`,
+  `estimateTrajectory`, `estimateUsageSidecar`) — the moe-tab boundary
+  (`ObolError`→`TabError`, `'obol'`→`'tab'` dialect rename, mandatory
+  `pricing_source`) is handled consistently with its own commentary, and the
+  approximation/unpriced-model bookkeeping (tuple-keyed dedup, first-truthy
+  `pricing_as_of`) matches its stated contract.
+- `packages/flight/src/package-root.ts` — the package-root discovery walk
+  correctly lands one level above `src/package-root.ts` from both `src/` and
+  a built `dist/`, matching its documented invariant.
+- `packages/flight/examples/todo/*` and
+  `packages/flight/examples/tutorial/webapp/server.ts` are explicitly
+  documented, intentionally-insecure fixtures ("Don't use this as a
+  starter" / "DO NOT use this code as a template for a real app") — the
+  absence of auth, CSRF protection, and rate limiting there is by design, not
+  a defect.
+
+- `packages/flight/src/qa/adapters/tui/capture-parser.ts` — the xterm-headless-backed `CaptureParser`: palette/cube/grayscale color math (`paletteColor`, `rgbHex`), wide-glyph width handling, and the absolute-cursor-positioning feed strategy for tmux `capture-pane -e` output were all checked against the documented xterm-256 cube/grayscale formulas and are correct.
+- `packages/flight/src/qa/adapters/web/lib/html-diff.js` — the hand-rolled Myers diff and its `multisetDiff` fallback were exercised directly (`node -e` against `generateHtmlDiff`) for empty inputs, pure add/remove, and pure-reorder cases; all produced the documented output, including the "reorder is reported as del+add, not no-op" behavior the comments call out.
+- `packages/flight/src/qa/adapters/web/lib/element-selector.js` — `parseContains`'s regex was exercised against a selector containing a `:contains(...)`-shaped substring inside an unrelated attribute value (`a[href="test:contains(x)"]:contains('y')`) and correctly anchored on the real trailing clause via backtracking, not the decoy.
+- `packages/flight/src/qa/adapters/web/lib/browser-session.js` / `cdp-router.js` / `page-session.js` / `browser-bridge.js` — the sessionId-routing contract (root command responses vs. page-session responses vs. events) and the `ensureConnected()` memoized-connect logic were traced for the concurrent-caller race the comments call out (PRI-1690) and hold up: the synchronous assignment of `connectPromise` before any `await` prevents two back-to-back `ensureConnected()` calls from double-connecting.
+- `packages/flight/src/qa/adapters/web/adapter.ts` and `cookies.ts` — tool dispatch, schema-validation caching, the tab-focus-stack fallback, and `install_cookies`'s YAML validation/error-ordering (unknown-field checks before required-field checks, cookie values excluded from evidence logging) all match their documented contracts.
+
+- `packages/flight/src/qa/agent/validators.ts` — `parseReportResult`/`salvageReportResult`/`parseReportCriteria`/`checkCriteriaConsistency`/`validateToolArgs` all treat LLM output as fully untrusted, narrow it defensively, and give specific, actionable rejection reasons. The salvage path correctly preserves a valid core verdict while dropping only malformed observations (PRI-2140), and criteria-consistency correctly allows fail/investigate with all-passing criteria while rejecting an overall `pass` next to any non-pass criterion.
+- CR-032 containment — `tools/page-actions.ts`'s `executeFileUpload` resolves every `file_paths` entry through `resolveInside(contextRoot, rel)` before it reaches `DOM.setFileInputFiles`, matching the containment already used by `install_cookies`/`install_passkey`; confirmed the same `resolveInside` gate wraps `passkey.ts`'s `readPasskeyFile` path resolution.
+- CR-038 evidence-log redaction in `bash-tool.ts` — verified `buildScrubbedEnv`/`redactSecrets` are built from and applied to the same key set, so the scrubbed set matches what was actually forwarded to the child; the plain substring-replace approach is deliberately chosen over regex to sidestep credential values containing regex metacharacters. (Its scope gap against a deliberately-adversarial agent is filed above.)
+- CR-039 in `api/routes/config-effective.ts` — confirmed against `cli/config-command.ts`'s `buildConfigOutput` that `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` are already reduced to `"set"/"unset"` at the source, and that the route's own loop over `CREDENTIAL_CAPABLE_SDK_ENV_KEYS` correctly reduces the remaining `string | null` fields (`ANTHROPIC_BASE_URL`, proxy vars, etc.) to the same presence-only shape before the payload is serialized — no raw secret-capable value reaches the JSON response.
+- `packages/flight/src/qa/agent/agent.ts`'s stall watchdog fingerprinting (`stablePayload = result0.kind === "image" ? result0.image.data : (result0.text ?? "")`) — checked against `models/provider.ts`'s `ToolResult` union: every variant (`text`, `image`, `artifact`, `capture`) always carries a populated `text` field, so the `capture`/`artifact` branches are not silently starved of a fingerprint the way a first read suggested.
+- `packages/flight/src/qa/agent/watch-manager.ts`'s `WatchManager.waitForWake` — single-flight guard (`waitInFlight`) prevents concurrent pollers from double-driving the same manager; the idle/timeout/new-file races are computed from monotonically-read `Date.now()` values each poll and bounded correctly against `WAKE_IDLE_MS_MIN`/`WAKE_TIMEOUT_MS_MAX` in `wake-on-idle-log-tool.ts`'s `parseArgs`.
+- `packages/flight/src/qa/adapters/web/lib/tabs.js` and `lifecycle.ts` — tab/page-session cache lifecycle (memoized `getPageSession()` per `targetId`, detach-then-delete ordering in `closeTab`, side-trip pop loop running before `BrowserContext.dispose()` in `closeWebAdapter`) is internally consistent and every cleanup step is wrapped to be best-effort without failing the run.
+
+- `packages/flight/src/qa/api/routes/results.ts` — the non-live (manifest-gated) branch of `/:runId/file/:path{.+}`, the `/:runId` and `/` list routes, and `parseIntParam`'s clamping were all exercised by hand-tracing and are correctly bounded; the only defect found is the live-branch prefix check written up above.
+- `packages/flight/src/qa/api/ws-handlers.ts` and `ws-upgrade.ts` — both explicitly route untrusted ids through `parseRunId`/`parseRunSetId` and `isSafePath` before touching disk, and both correctly treat the origin allowlist and transcript-snapshot parse failures as best-effort/non-fatal.
+- `packages/flight/src/qa/api/shutdown.ts` and `shutdown-stub-writer.ts` — the drain sequencing (cancel tokens → abort → patience window → stub write) and the stub writer's `existsSync` race-safety argument both check out against `ActiveRunRegistry`'s documented ordering invariant.
+- `packages/flight/src/qa/api/run-cancel.ts`, `run-set-broadcaster.ts`, `ws.ts` — straightforward registries; per-client send/close failures are swallowed correctly and don't affect other clients.
+- `packages/flight/src/qa/cli/args.ts` — the flag parser's bareword-vs-value disambiguation (a flag value that itself starts with `--` is never swallowed) was traced through `parseFlags`, `extractPositional`, and the batch positional-scanner and is internally consistent across all seven subcommands.
+- `packages/flight/src/qa/cli/stream/batch-table.ts` and `colors.ts` — the TTY spinner/commit bookkeeping (`pendingBlankAboveSpinner`, `activeKey`) and the rollup-median computation were traced through queued → running → done/errored transitions for both single- and multi-pass cases and are self-consistent.
+
+- `packages/flight/src/qa/paths.ts` (`resolveInside`, `isSafePath`, `canonicalize`) and its use in `packages/flight/src/qa/context/read-tool.ts` and `packages/flight/src/qa/context/credential-tool.ts`: path containment correctly rejects absolute paths, `..` segments (split on both `/` and `\`), and symlink escapes via `realpathSync`-based canonicalization on both `base` and `target`. Traced all three call sites and found no path that skips the guard.
+- `packages/flight/src/qa/revival/rebuild-messages.ts` (`rebuildToolResult`): the module's own comment flags all three attacker-influenceable path fields (`artifact`, `capturePath`, `image`) as CR-047-relevant. I verified each of the three call sites routes through `safeResolveInside` (which wraps `resolveInside` from `paths.ts`) before any `readFileSync`, and each degrades to a warning + placeholder text rather than reading outside `runDir` on rejection. No field bypasses the guard.
+- `packages/flight/src/qa/context/credential-tool.ts` (`runResolver`): argv-based `spawn` (no shell), `entity`/`key` validated against restrictive patterns before use, stdout/stderr byte caps enforced independently of the timeout/kill cascade, and the SIGTERM→grace→SIGKILL sequence correctly settles exactly once (`settled` guard) regardless of which event (data-cap, timeout, exit, spawn error) fires first.
+- `packages/flight/src/qa/render/render-run.ts`: the JSON payload spliced into the static HTML template is escaped for `</script` breakout before being embedded in a `<script type="application/json">` tag, which is the correct (and sufficient) mitigation for this embedding pattern.
+- `packages/flight/src/qa/config.ts`: `validateRunBody`, `mergeRunConfig`, and `loadConfig`'s env/flag precedence resolution (via `config-helpers.ts`) were traced end-to-end; source attribution (`sources.*`) and the default-chrome auto-launch fallback logic are internally consistent, and the loopback-only default host (CR-051) is preserved.
+- `packages/flight/src/qa/models/anthropic.ts` and `packages/flight/src/qa/models/openai.ts`: cache-breakpoint placement, OAuth-vs-API-key auth construction, and provider-neutral `AgentResponse` conversion (including the OpenAI `input_tokens` cached-token subtraction and the deliberate silent-drop of an unparseable truncated `function_call` on `max_output_tokens`) match their documented rationale.
+
+- `packages/flight/src/qa/util/id.ts` — `makeRunId`/`makeRunSetId`'s nonce
+  generation (`Math.random().toString(36).slice(2, 6).padEnd(4, "0")`) was
+  checked empirically: `node -e` over 20M iterations of
+  `Math.random().toString(36)` never produced a string shorter than 8
+  characters (well above the `slice(2, 6)` window), so the `padEnd` fallback
+  path is not reachable in practice and the nonce always satisfies
+  `RUN_ID_RE`'s `[a-z0-9]{4}` tail.
+- `packages/flight/src/qa/util/sanitize-error.ts` — `LlmError`/`sanitizeLlmError`
+  only read an explicit allow-list of fields (`status`, `requestID`/`request_id`,
+  and a carefully-ordered Anthropic/OpenAI `error.type`/`code` extraction) and
+  never retain a reference to the original SDK error, consistent with the
+  stated goal of keeping response `Headers` (org id, `cf-ray`, `set-cookie`)
+  out of anything that reaches `util.inspect`.
+- `packages/flight/src/qa/runs/run-set.ts` — `runRunSet`'s duplicate-`cardId`
+  guard (rejecting `cards[]` with a repeated id before generating any run ids)
+  correctly prevents the double-count/lost-attempt corruption described in
+  its own CR-048 comment; the cancellation path (`cancelToken.cancelled`)
+  correctly marks every unstarted eagerly-generated run as `"cancelled"`
+  rather than leaving it unresolved in `set.json`.
+- `packages/flight/src/qa/runtime/serve.ts` — the WS-upgrade handler's
+  `Host`-header URL-parsing guard (CR-050) was verified by inspection against
+  its own stated failure mode: a malformed `Host` header that Node's HTTP
+  parser accepts but the WHATWG `URL` constructor rejects now hits the
+  `try { url = new URL(...) } catch { socket.destroy(); return; }` path
+  instead of throwing synchronously inside the unguarded `'upgrade'` event
+  handler.
+- `packages/flight/test/qa/adapters/web/cookies.test.ts` — exercises real
+  security-relevant boundaries end to end: path traversal (`../secret.yaml`)
+  and absolute-path rejection at `resolve_path`, and confirms cookie *values*
+  never appear in `install_cookies_ok`/`install_cookies_failed` log entries
+  (only `valueLength`), including on the driver-throw path.
+- `packages/flight/test/qa/adapters/web/chrome-ws-lib-isolation.test.ts`,
+  `chrome-ws-lib-context-isolation.test.ts`, and `host-override.test.ts` —
+  all pin the PRI-1436 per-session isolation invariant (no module-level
+  mutable state shared across concurrent `WebAdapter`/Chrome sessions) with
+  concrete before/after mutation assertions rather than just object-identity
+  checks.
+- `packages/flight/test/qa/adapters/web/generate-html-diff.test.ts` — the
+  "stays fast on two large, fully-different documents" test asserts a
+  concrete wall-time budget (<100ms) against the documented Myers-trace
+  blow-up (CR-033); this is a real regression guard, not a tautological
+  timing assertion.
+- `packages/flight/test/qa/adapters/tui/adapter.test.ts` — descendant-reap
+  and HUP-flush-grace tests correctly guard the `tmux` binary's availability
+  via `describe.skipIf(!tmuxAvailable)`, matching `vitest.config.ts`'s
+  documented rationale for keeping these out of the silently-green default
+  suite.
+
+Reviewed all 30 assigned files: the `packages/flight/test/qa/adapters/web/**`
+suite (browser-bridge, browser-session/-reconnect, cdp-router,
+chrome-launcher-helpers, chrome-process, mouse, navigation, page-session,
+tabs, webauthn-context, websocket-client-no-compression, passkey,
+side-trip-popup, and the `tools/` keyboard and page-actions suites) and the
+`packages/flight/test/qa/agent/**` suite (abort-signal, agent, bash-tool,
+empty-end-turn-safety-net, event-stream, initial-message, loader,
+project-prompt, prompt-baseline, prompts-drift, prompts, reflection-checkpoint,
+reflection, shared-tools-watch).
+
+This is an unusually high-quality shard: nearly every non-trivial test carries
+a comment naming the regression it pins (PRI-#### or CR-###) and explaining
+the failure mode in mechanical terms, and several tests deliberately encode
+the *reason* a naive mock would pass for the wrong reason (e.g. `keyboard.test.ts`'s
+stub `keyboardPress` reproduces the real named-keys-only throw behavior rather
+than a mock that can't fail; `navigation.test.ts`'s fake page session
+reproduces the real 30s `waitForEvent` promise shape rather than shortcutting
+it).
+
+I cross-checked the regression claims against the actual implementation
+rather than taking the comments at face value:
+
+- `chrome-launcher-helpers.test.ts` (CR-030, path traversal in
+  `getChromeProfileDir`): confirmed `chrome-launcher-helpers.js`'s
+  `getChromeProfileDir` sanitizes `profileName` via
+  `/^[a-zA-Z0-9_-]+$/` replacement before `path.join`, matching the three
+  test cases (traversal, embedded slashes, ordinary name).
+- `chrome-process.test.ts` (CR-031, `killChrome` signalling an unconfirmed
+  port holder): confirmed `chrome-process.js`'s `killChrome` gates the
+  port-holder-kill fallback on `state.activePort && state.activePortOwned`,
+  not on `activePort` alone.
+- `tools/page-actions.test.ts` (CR-032, unsandboxed `file_upload` paths):
+  confirmed `executeFileUpload` in `page-actions.ts` routes through
+  `resolveInside(ctx.contextRoot, path)` and rejects when `contextRoot` is
+  null, matching all four test cases (absolute, traversal, no-root,
+  legitimate-relative).
+- `tools/keyboard.test.ts` (CR-035, no-selector `type` walking text through
+  `keyboardPress`): confirmed `executeType` in `keyboard.ts` unconditionally
+  calls `ctx.chrome.fill(ctx.tab, selector, text)` regardless of whether
+  `selector` is present, never touching `keyboardPress`.
+- `bash-tool.test.ts` (CR-038, forwarded SDK credentials leaking into
+  `run.jsonl`): confirmed `bash-tool.ts`'s `redactSecrets` masks every
+  `SDK_PASSTHROUGH_KEYS` value out of `transcriptText` (built from the same
+  `scrubbedEnv` used for the child's actual env) while leaving `text` (what
+  the agent sees) untouched, matching the "still forwarded to the agent, but
+  redacted in the persisted log" test pair.
+- `mouse.test.ts`'s CDP-throws-but-element-exists fallback path: confirmed
+  against `mouse.js` — `resolveCenter` throws when `Runtime.evaluate` reports
+  `found:false`, and `click()`'s catch block re-probes via a plain
+  `el.click()` IIFE, propagating a real "not found" only if that second probe
+  also fails. The test's two-call `Runtime.evaluate` mock (false then true)
+  exercises exactly that path.
+- `websocket-client-no-compression.test.ts`: confirmed `websocket-client.js`
+  constructs `new WebSocket(url, { perMessageDeflate: false })`, matching the
+  assertion that the upgrade handshake never advertises
+  `permessage-deflate`.
+- `reflection.test.ts`'s `renderTrace` windowing/renumbering assertions:
+  confirmed against `reflection.ts` (`calls.slice(-MAX_TRACE_ENTRIES)` then
+  `.map((c, i) => ...i+1...)`), so numbering restarts at 1 within the
+  truncated window as asserted.
+
+The `agent.test.ts` file (1958 lines) is the load-bearing spec for the agent
+loop's turn/abort/timeout/stall-watchdog/re-ask/salvage/truncation-recovery
+machinery. I read it in full rather than sampling; the re-ask and salvage
+tests (PRI-2140/PRI-2160) correctly distinguish "malformed but salvageable"
+(drop only the bad observation, keep the verdict) from "unsalvageable"
+(bounded re-asks then `investigate`) from "criteria present but uncited/
+contradictory" (re-ask, then salvage-with-downgrade if still uncited), and
+each has both a positive and a bounded-exhaustion case. The stall-watchdog
+tests correctly distinguish tool-identity-plus-payload fingerprinting (so a
+web adapter's screenshot, whose `text` field carries a per-call path but
+whose image bytes are frozen, still trips the watchdog) from genuinely
+changing results (never trips it), and confirm the mutating-call-resets-
+counter and text-only-turn-breaks-the-chain edge cases. The
+`abort-signal.test.ts` three cases (before turn 1, between turns, mid-tool-
+call-sequence within a turn) match the stated PRI-1507 invariant that abort
+is observed as a synthetic `errored` result, never a thrown rejection.
+
+No defects were found in this shard.
+
+- `packages/flight/src/qa/agent/validators.ts` against `validators.test.ts`: `parseReportResult`, `salvageReportResult` (including the PRI-2140 truncated-enum salvage path and the double-JSON-encoded `observations` recovery), `parseReportCriteria` (PRI-2160 cross-field evidence requirement), `checkCriteriaConsistency`, and `validateToolArgs`'s narrow JSON-Schema subset (string/number/boolean/array/object, enum, required, null-as-absent-for-optional) all match their test expectations exactly.
+- `packages/flight/src/qa/agent/shared-tools.ts`, `wake-on-idle-log-tool.ts`, `watch-logs-tool.ts`, and `watch-manager.ts` against their respective tests: tool mounting/gating by `contextRoot`, the `idle_ms`/`timeout_ms` clamping to `WAKE_IDLE_MS_MIN`/`WAKE_TIMEOUT_MS_MAX`, glob registration idempotency, `scan()`'s new-file/appended/truncation detection, and the `waitInFlight` concurrent-call guard in `WatchManager.waitForWake` all check out.
+- `packages/flight/src/qa/agent/reflection.ts` and the `<SYSTEM-REMINDER>` literal in `agent.ts` (the deadline-grace reminder) both satisfy the UI's `isSystemReminder` regex coupling asserted in `system-reminder-prefix.test.ts`.
+- `packages/flight/src/qa/api/active-runs.ts` (`ActiveRunRegistry`) against `active-runs.test.ts` and `active-runs-route.test.ts`: register/list/unregister semantics including the `startedAt`-guarded unregister race protection, the 200-entry progress-log ring buffer, and the abort-controller bookkeeping (`abortAll` skipping already-aborted signals and not double-counting) all match.
+- `packages/flight/src/qa/api/routes/active-runs.ts`'s target-truncation logic matches `caps.test.ts`'s PRI-1478 truncation tests (list view truncated, snapshot view full).
+- `packages/flight/src/qa/config.ts`'s env/flag parsing for `defaultBudgetMs`, `maxRequestBodySize`, `maxConcurrentRuns`, `activeRunTargetMaxBytes`, and `validateRunBody`'s rejection of `turns` and out-of-range `passes` all match `caps.test.ts`, `config.test.ts`, `config-effective.test.ts`, and `run-multi-pass.test.ts`.
+- `packages/flight/src/qa/api/server.ts`'s `bodyLimit` 413 envelope and the generic `onError` 500 JSON envelope match `caps.test.ts` and `server.test.ts`.
+- `packages/flight/src/qa/api/routes/config-effective.ts`'s CR-039 mitigation (credential-capable `sdkEnv` keys reported as `"set"`/`"unset"` rather than verbatim) matches `config-effective.test.ts`, including the negative assertion that the raw secret values never appear in the serialized response.
+- `packages/flight/src/qa/api/routes/fanout.ts`'s CR-040/CR-041/CR-042 mitigations — the `[a-zA-Z0-9-]+` card-id charset check plus `isSafePath` belt-and-suspenders in `writeCards`, and `parseRunId`-gated `id` resolution on the `/:id/:mode` route — match every traversal case in `fanout.test.ts`, including the percent-encoded-slash variant that survives Hono's router-level `../` normalization.
+- `packages/flight/src/qa/api/routes/results.ts`'s manifest-gated file route (`isSafePath` double-check, live-run allow-list restricted to `screenshots/`, `frames/`, `captures/`, `artifacts/`, and `run.jsonl`, deliberately excluding `inputs/context/`, plus the `.ansi`→`.json` capture-twin allowance) matches every case in `file-route.test.ts` and `results.test.ts`, including the credential-fixture-exclusion regression test.
+- `packages/flight/src/qa/api/routes/scenarios.ts`'s create/update body validation and `isSafePath`-based id containment match every case in `scenarios.test.ts`.
+- `packages/flight/src/qa/api/routes/run.ts`'s solo and multi-pass POST paths — concurrency cap, unknown-model handling, PRI-1507 per-attempt `AbortController` attachment via `onAllRunsKnown`, and the unregister-before-broadcast terminal-event ordering — match `run.test.ts`, `run-multi-pass.test.ts`, and `routes/run-snapshot.test.ts`.
+- `packages/flight/src/qa/api/run-cancel.ts` (`CancelTokenRegistry`) and `packages/flight/src/qa/api/run-set-broadcaster.ts` (`RunSetBroadcaster`) match `run-cancel.test.ts` and `run-set-broadcaster.test.ts` exactly, including `readyState`-gated dispatch and per-client `send`/`close` error swallowing.
+- `packages/flight/src/qa/api/routes/run-sets.ts`'s `RUN_SET_ID_RE`-gated id validation (rejecting percent-encoded traversal on GET, GET summary, and DELETE) matches `run-sets.test.ts`.
+- `packages/flight/src/qa/api/shutdown.ts` (`ShutdownState`, `drainShutdown`) and `shutdown-stub-writer.ts` match every case in `shutdown.test.ts` and `shutdown-cancel.test.ts`, including the cancelAll-before-abortAll ordering (PRI-1507 Case 5), the patience-window race that preserves a real `result.json` over a stub, and the drain-middleware's 503 vs. unblocked-GET behavior.
+- `packages/flight/src/qa/api/ws-handlers.ts` (`handleWsOpen`, `handleSetWsOpen`) matches `ws-handlers.test.ts`, including the `addClient`-before-snapshot ordering guard, the best-effort/defense-in-depth `isSafePath` check before reading `run.jsonl`, and malformed-JSONL-line skipping.
+- `packages/flight/src/qa/api/ws-upgrade.ts` (`decideUpgrade`) and `packages/flight/src/qa/util/id.ts` (`parseRunId`, `parseRunSetId`) match every case in `ws-upgrade.test.ts`, including the PRI-1483 Origin-allowlist gate (empty allowlist = disabled; non-matching or missing Origin rejected when the allowlist is non-empty).
+- `packages/flight/src/qa/api/ws.ts` (`RunBroadcaster`) matches `ws.test.ts`'s per-runId channel isolation and closed-client filtering.
+- `packages/flight/src/qa/cards/store.ts` (`findCard`, `loadAllCards`) matches every case in `cards/store.test.ts`, including the fast-path/fallback-scan split, the direct-hit-parse-failure-throws vs. fallback-scan-skips-and-logs asymmetry, and the id-mismatch fall-through.
+- `packages/flight/src/qa/paths.ts` (`isSafePath`, `resolveInside`) is symlink/canonicalization-aware and is the consistent containment primitive underlying every traversal-defense test cited above.
+
+This shard is exclusively test files for `@bubstack/moe-flight`'s QA CLI (`packages/flight/test/qa/cli/**`, `packages/flight/test/qa/config*`, `packages/flight/test/qa/context/*`). I read all 30 assigned files and cross-checked several against the source they exercise where the test made a security- or contract-relevant claim:
+
+- `args.test.ts` / `args-hygiene.test.ts` / `project-prompt-flag.test.ts` / `render-args.test.ts` / `validate.test.ts`: flag parsing, unknown-flag rejection, `--passes` bounds, `--model` role-prefix validation, and `--project-prompt`/`--show-prompt-and-exit` gating for `run` vs `batch` are all exercised with both positive and negative cases and read as internally consistent.
+- `config.test.ts`, `config/resolve-setting.test.ts`, `config/source-attribution.test.ts`: cross-checked against `packages/flight/src/qa/config.ts` and `config-helpers.ts`. The `CR-051` claims (default bind host `127.0.0.1`, `MOE_FLIGHT_HOST`/`--host` precedence) and the `MOE_FLIGHT_CREDENTIAL_RESOLVER` existence/executable-bit validation both match the source (`hostR`/`resolveCredentialResolver` in `config.ts`) exactly as asserted.
+- `context/credential-tool.test.ts`: cross-checked against `packages/flight/src/qa/context/credential-tool.ts`. The entity/key validation (rejects `..`, leading `.`, `/`/`\`, length caps, non-`[a-zA-Z0-9_-]` keys), the stdout/stderr 64 KiB/8 KiB overflow caps, the SIGTERM→grace→SIGKILL timeout cascade, and the transcript-redaction default (`includeInTranscripts` gate) all match the implementation. All referenced fixture scripts (`credential-resolver-{ok,fail,slow,empty,overflow,stderr-overflow}.sh`) exist under `packages/flight/test/qa/fixtures/`.
+- `context/read-tool.test.ts`: cross-checked against `packages/flight/src/qa/context/read-tool.ts` and `resolveInside`/`isSafePath` in `packages/flight/src/qa/paths.ts`. Path-traversal (`..`), absolute-path, and binary-file rejections are backed by real containment checks (segment-wise `..` rejection plus `isAbsolute` guard), not just string matching in the test.
+- `cli/batch.test.ts`: the `CR-043` card-id-collision test (`suiteA/login.md` vs `suiteB/login.md`) was checked against `assignCardIds` in `packages/flight/src/qa/cli/batch.ts`, which disambiguates same-stem cards with a `-2`, `-3`, ... suffix — matches the test's expectation of two distinct card ids and a non-doubled `totalRuns`.
+- `cli/stream/*.test.ts` (`attach`, `batch-table`, `colors`, `format-args`, `format-event`, `format-timing`, `format`, `jsonl`, `pretty`, `wrap`): fixture-driven renderer tests (`pretty.test.ts` diffs against golden `.pretty.txt` fixtures) plus unit tests for ANSI wrapping, timing thresholds, and TTY/non-TTY rollup accounting. No inverted or self-contradicting assertions found.
+- `cli/{ask,auto-emit,cancel,config-command,error-output,render-cmd,run,run-one,show-prompt-and-exit}.test.ts`: cover the remaining CLI subcommands' error paths (missing run dir, missing `run.jsonl`, SIGINT handler double-detach safety, JSON-vs-prose `formatCliError` envelope, `MOE_FLIGHT_DEBUG`/`--verbose` gating) — all consistent with their stated intent.
+
+- `packages/flight/test/qa/docker-context.test.ts` (CR-026): verified `packages/flight/docker/Dockerfile.dockerignore` exists next to `Dockerfile` and contains every pattern the test asserts (`**/.env`, `**/.env.*`, `**/node_modules`, `**/dist`, `**/.turbo`, `.git`), read `compose.yaml`'s `context: ../../..` to confirm the stated root-context problem the fix addresses, and confirmed BuildKit's `<Dockerfile>.dockerignore` sibling-file convention is what's actually in use.
+- `packages/flight/test/qa/examples/example-state-dir.test.ts` (CR-029): verified on disk that `examples/tutorial/.moe-flight/stories/` and `examples/todo/.moe-flight/stories/` contain every story file the test lists, and that no `.gauntlet/` directory remains anywhere under `examples/`.
+- `packages/flight/test/qa/examples/todo/web-server.test.ts` (CR-028) and `packages/flight/test/qa/examples/todo/launchers.test.ts`: read `examples/todo/run-web.sh` / `run-tui.sh` directly and confirmed the launcher `cwd`/`--import tsx`/entrypoint behavior the tests assert against matches the scripts on disk.
+- Ran the full `unit`-project subset of this shard (`context/tree`, `evidence/logger`, `evidence/run-set-writer`, `evidence/writer`, `examples/*`, `fanout/generator`, `format/story-card`, `models/anthropic`, `models/openai`, `models/provider`, `e2e/built-cli-smoke`, `integration/cli-batch`, `integration/cli-bc`, `integration/cli-fanout`, `integration/cli-smoke`, `integration/tui-*` under `--project tmux`) via `npx vitest run`: 174+ tests pass cleanly (plus the two API-key-gated integration suites self-skip as designed). `renderContextTree`'s truncation/ordering/indentation behavior, `EvidenceLogger`'s event-envelope chaining and oversize-text spill-to-artifact behavior, `RunSetWriter`'s status-bucketing (`consistent_pass`/`mixed`/`mixed_with_errors`/`errored`), the story-card parser's soft-wrap/heading/issue-reference edge cases (PRI-2160), and the Anthropic/OpenAI response-conversion helpers (stop-reason mapping, cache-token accounting, OAuth system-block ordering, CR-046's truncated-tool-call recovery) were all exercised directly and matched their test's stated intent.
+
+- `packages/flight/test/qa/revival/rebuild-messages.test.ts` (964 lines) — thorough coverage of recovery-turn replay ordering (PRI-2160, PRI-1864), reflection-checkpoint weaving, deadline grace turns, image/text/TUI-capture rehydration, the old-run fallback path, `--turn` cutoff semantics, and CR-047 (artifact-path traversal outside the run dir, verified the secret content and a matching warning are both asserted, not just one).
+- `packages/flight/test/qa/runs/orchestrator.test.ts` and `orchestrator-ordering.test.ts` — full lifecycle-hook ordering (`onLogger.attach → beforeAgent → beforeClose → adapter.close → onLogger.detach → afterClose`), the error-path hook sequence, the PRI-1507 `writeResultFiles`-before-`afterClose` invariant (correctly using `toBeLessThanOrEqual` rather than a strict `<`, so it isn't flaky under coarse timer resolution), the abort-signal success-path-writes-errored-result invariant, and a source-text guard against the orchestrator importing HTTP-only types.
+- `packages/flight/test/qa/runtime/serve-errors.test.ts` — CR-050 (malformed Host header on a WS upgrade must not crash the process, verified via a temporary `uncaughtException` listener) and CR-051 (default loopback-only bind, explicitly reasoned about since the daemon has no route auth) are both meaningful security-relevant regressions, not just smoke tests.
+- `packages/flight/test/qa/streaming/screencast.test.ts` — CR-052 (a rejected `Page.screencastFrameAck` must not become an unhandled rejection) is verified with a real `unhandledRejection` listener and multiple microtask-drain ticks rather than asserting on a synchronous absence.
+- `packages/flight/test/qa/util/sanitize-error.test.ts` — the header/leak tests serialize every own property (including non-enumerable) via `Object.getOwnPropertyNames` plus `util.inspect(..., {depth: null})`, which is a real check that sensitive header values aren't reachable through any surface Node's own printers would traverse, not just the top-level fields.
+- `packages/flight/ui/src/App.tsx` — the three route-derived regexes (`cardIdMatch`, `runIdMatch`, `liveIdMatch`) were checked against edge cases (`/cards/newfoo` vs `/cards/new`, `/runs/livecard_...` vs `/runs/live/...`); all resolve correctly given the negative-lookahead anchoring, and `main.tsx` (read to confirm) uses `createBrowserRouter`/`RouterProvider`, so `CardEditor`'s `useBlocker` call is backed by a data router and won't throw at runtime.
+- `packages/flight/test/qa/paths.test.ts` — `isSafePath` and `resolveInside` symlink-escape and prefix-collision cases were spot-checked against `path.join` semantics with `node -e` and read against the `paths.ts` implementation; both hold.
+
+- `packages/flight/ui/src/lib/transcript.ts`'s `applyEvent` reducer and
+  `TranscriptView.tsx`'s `detectCurrentTurn`: verified that `model.turns`'
+  highest key is always exactly the in-progress turn at any point in a real
+  event stream (llm_request → llm_response → tool_call/tool_result all land
+  on the same turn key before the next turn's llm_request arrives), so the
+  simplified `return turnNumbers[0]` is behaviorally equivalent to the more
+  elaborate heuristic described in the function's doc comment, not a bug.
+- `packages/flight/ui/src/components/RunsList.tsx`'s `runKey` and
+  `groupByCard`: cross-checked against `packages/flight/src/qa/util/id.ts`'s
+  `makeRunId`/`RUN_ID_RE` (cardId charset excludes `_`, so `runId.split("_")`
+  reliably yields exactly `[cardId, timestamp, nonce]`) and against
+  `ActiveRun.id` in `lib/api.ts` (confirmed equal to `VerdictResult.runId`,
+  so the active/completed dedupe by run id is sound).
+  `RUN_SET_ID_RE`/`makeRunSetId` are unaffected by the card-id gap noted
+  above since run-set ids are always server-generated from a fixed `kind`
+  enum, not user input.
+- Ran `pnpm --filter @bubstack/moe-flight-ui typecheck`: passes clean.
+  Confirmed the bare `React.CSSProperties` / `React.MouseEvent` /
+  `React.ReactNode` type references in `TuiCapture.tsx`, `ErrorBanner.tsx`,
+  and `TranscriptView.tsx` — none of which import a default `React` binding
+  — do not trip `noImplicitAny`/UMD-global errors under this package's
+  `@types/react@19` + `jsx: react-jsx` configuration; not a defect.
+- `packages/flight/ui/src/components/shared.tsx`'s `ConfirmDialog`: verified
+  the hook-order is unconditional before the `if (!open) return ...` early
+  return, and that the native `<dialog>` element persists across the
+  open/closed branches (same type/position, so React reconciles rather than
+  remounts), so the `dialogRef`-driven `showModal()`/`close()` effect stays
+  correctly wired across toggles.
+- `packages/flight/ui/src/components/transcript/TuiCapture.tsx`'s
+  `CaptureGrid`: the `cell.ch === "" && cell.width === 1` skip for the
+  trailing half of a wide character is consistent with the leading cell's
+  `gridColumn: "span 2"`, so double-painting is correctly avoided.
+- `packages/flight/ui/src/hooks/useLiveTranscript.ts`'s WS query param
+  (`?run=<runId>`) matches `packages/flight/src/qa/api/ws-upgrade.ts`'s
+  `decideUpgrade` exactly (path `/api/ws`, param name `run`).
+
+- `packages/flight/ui/src/lib/transcript.ts` and
+  `packages/flight/ui/src/lib/transcript-blocks.ts` — the event reducer
+  (idempotency via `maxEventId`, per-turn `tools` pairing by `toolUseId`,
+  soft-error detection regex, prompt-pairing state machine) and the
+  chronological block-builder were read end-to-end against the fixture-driven
+  tests in `packages/flight/ui/test/transcript.test.ts` and
+  `transcript-blocks.test.ts`; the logic matches its own documentation and the
+  test assertions.
+- `packages/flight/ui/src/lib/api.ts` — `fileUrl`'s static-vs-server branching
+  (`window.__MOE_FLIGHT_RUN__` presence) and path-segment encoding were
+  checked against `api-file-url.test.ts` and are consistent.
+- `packages/flight/vitest.config.ts` and `packages/flight/ui/vitest.config.ts` —
+  verified every path listed in `CHROME_SUITES`, `FFI_SUITES`, and
+  `TMUX_SUITES` exists on disk (17 files checked via `ls`), so the
+  include/exclude split does not silently drop or double-run any suite.
+- `packages/glass/skills/browsing/lib/cdp-router.js`,
+  `lib/cdp-utils.js`, `lib/cookies.js`, `lib/console-logging.js` — small,
+  self-contained helpers; session-id routing, correlation-map cleanup on
+  `unregisterSession`, and `Runtime.evaluate` exception surfacing were traced
+  and are correct for their stated contracts.
+- `packages/glass/skills/browsing/lib/dialogs-router.js` — the permission-dialog
+  resolve path (`CR-064`) was specifically checked: the shim secret and id are
+  passed through `JSON.stringify` (not raw string concatenation) into the
+  injected `Runtime.evaluate` expression, which closes the "craft an id to
+  smuggle extra JS" injection this comment calls out; a page cannot resolve
+  its own request without the secret.
+- `packages/glass/skills/browsing/lib/browser-session.js` and
+  `lib/browser-bridge.js` — root-session request correlation, the
+  connect/retry state machine (`connectPromise` nulled only on failure), and
+  the paused-auto-attach → hook → `Runtime.runIfWaitingForDebugger` resume
+  ordering were traced and behave as documented (including the `CR-055` stale-
+  bridge-detection fix in `chrome-ws-lib.js`'s `ensureBridge`).
+
+- `packages/glass/src/payload.ts` — the full `PAYLOAD_SPECS` / `parsePayload` / `resolveStrictStructuredPayload` / `tryParseIntegerValue` / `resolveConsoleSince` machinery was read end-to-end against its own extensive doc comments and cross-checked against every call site in `src/index.ts`. The scalar/structured split, the `numericDefaultKey` handling (including the `since: 0` edge case, which is correctly distinguished from "absent" via `!== undefined` rather than truthiness), and the three-way error/absent/present split are internally consistent and match the documented intent.
+- `packages/glass/skills/browsing/lib/profile-lock.js` — the atomic-claim / stale-lock-reclaim / release logic was traced through its race-handling comments (`tryAtomicClaim`'s `wx` flag, the unlink-then-reclaim re-check, `release`'s pid comparison before unlink) and holds up; the only residual race (a dead PID's number being reused by an unrelated live process before cleanup) is an inherent, well-known limitation of PID-based liveness checks, not a defect in this implementation.
+- `packages/glass/skills/browsing/lib/html-diff.js`'s `myersDiff`/`backtrack` — verified correctness (not just the memory-cap concern above) by running reordered-line and identical-input cases directly; reordered identical lines correctly produce a remove+add pair rather than being treated as unchanged, matching the documented rationale for choosing Myers over a set-based diff.
+- `packages/glass/skills/browsing/lib/screenshot.js` — the CR-065 path-containment logic (`resolveScreenshotPath`/`realpathOrResolve`) correctly rejects `..`-escaping and out-of-root absolute paths, and correctly canonicalizes through symlinks (e.g. macOS `/var` -> `/private/var`) for the containment comparison only, never for the path actually written.
+- `packages/glass/skills/browsing/lib/page-scripts/permission-shim.js` and the secret-minting half in `lib/dialogs.js` — the CR-064 per-session-secret design (secret lives only in the injected script's closure, is minted fresh per page session via `randomUUID()`, and is checked with `!==` before either accepting a page-originated permission-request or resolving one) is sound against the documented threat (a page directly calling the plain-global binding to fabricate or resolve requests).
+- `packages/glass/skills/browsing/lib/websocket-client.js` — the CR-066 handshake-timeout logic (bounding the wait when a stale/wrong-port endpoint answers with an ordinary HTTP response instead of upgrading) is correct; verified the `settled` guard prevents both the timer and the `'upgrade'`/`'response'`/`'error'` handlers from double-resolving.
+- `packages/glass/test/array-guards.test.mjs`, `bundle-drift.test.mjs`, `bundle-loads.test.mjs`, `cli-dispatch.test.mjs` — all read and cross-checked against the source they exercise (`lib/tabs.js`'s `Array.isArray` guards, `dist/index.js` vs. the `createSession()` method surface, the CLI's `stop`/`start`/dispatch paths); the tests' own assertions match what the underlying code actually does, and `cli-dispatch.test.mjs` in particular documents and defends against a real historical test-quality regression (asserting exit status/stdout rather than only the absence of certain stderr strings).
+
+- `packages/glass/test/lib/dialogs-router.test.mjs` — the CR-058 test
+  (`'a crafted _shimId cannot inject extra JS or flip the decision'`) actually
+  executes the emitted `Runtime.evaluate` expression through `node:vm` against
+  a recording stub, rather than pattern-matching the string. Cross-checked
+  against `dialogs-router.js`, which builds the expression via
+  `JSON.stringify(id)`/`JSON.stringify(decision)`/`JSON.stringify(secret)` —
+  the fix is real and the test would catch a regression to string
+  interpolation.
+- `packages/glass/test/lib/dialogs.test.mjs` — the CR-064 forged-permission
+  test (`'ignores a forged permission-request with no (or the wrong) secret'`)
+  is backed by a real per-session secret check in `dialogs.js`
+  (`state._dialogShimSecrets`, compared with `data.secret !== expectedSecret`).
+  Verified by reading the implementation directly.
+- `packages/glass/test/lib/chrome-process.test.mjs` — the CR-057 readiness-probe
+  test asserts `isPortAlive` is called with the spawned PID as its third
+  argument; cross-checked against `chrome-process.js`'s three `isPortAlive(...,
+  proc.pid)` call sites and `chrome-launcher-helpers.js`'s
+  `isPortAlive(host, port, expectedPid = null)` signature — the assertion
+  matches the real contract.
+- `packages/glass/test/lib/chrome-launcher-helpers.test.mjs` — the CR-056
+  sibling-profile substring test is backed by a real `path.resolve(...) !==
+  path.resolve(profileDir)` exact-match guard in
+  `findOrphanChromeForProfile`, not a substring test; verified by reading the
+  source.
+- `packages/glass/test/lib/find-pid-on-port-guard.test.mjs` — the
+  command-injection regression coverage (rejected inputs, argv-only
+  `execFileSync` usage, exact-suffix matching on Windows `netstat` output) was
+  checked line-by-line against `findPidOnPort` in `chrome-launcher-helpers.js`;
+  all of the accepted/rejected input pairs (including the `0x23fa` hex and
+  `9.222e3` scientific-notation edge cases) match the guard's actual
+  `Number()`/`Number.isInteger()` behavior.
+- `packages/glass/test/lib/html-diff.test.mjs` — the CR-059/060 "bails out ...
+  above a line-count safety cap" test exercises a real, documented DoS
+  mitigation (unbounded `O(D*(N+M))` memory in Myers diff) at a size deliberately
+  kept below the measured-unsafe range; the test's intent and scope are sound.
+- The remaining files in this shard (`element-selector.test.mjs`,
+  `evaluate-await-promise.test.mjs`, `host-lifecycle.test.mjs`, `_helpers.mjs` /
+  `_helpers.test.mjs`, `browser-bridge.test.mjs`, `browser-session.test.mjs`,
+  `cdp-router.test.mjs`, `chrome-ws-lib-bridge.test.mjs`,
+  `cli-close-numeric.test.mjs`, `console-logging.test.mjs`, `cookies.test.mjs`,
+  `dialogs-render.test.mjs`, `evaluation.test.mjs`, `extraction.test.mjs`,
+  `file-upload.test.mjs`, `key-definitions.test.mjs`, `keyboard-input.test.mjs`,
+  `mouse.test.mjs`, `navigation.test.mjs`,
+  `page-scripts/dom-summary.test.mjs`) were read in full; their assertions
+  match the fake/stub shapes they construct and the behavior they claim to
+  pin, with no contract mismatches found.
+
+- `packages/glass/test/lib/page-scripts/markdown.test.mjs`,
+  `permission-shim.test.mjs`, `page-session.test.mjs`, `profile-lock.test.mjs`,
+  `select-option.test.mjs`, `session-state.test.mjs`, `tabs.test.mjs`,
+  `viewport.test.mjs`, `websocket-client-handshake.test.mjs`,
+  `websocket-client-no-compression.test.mjs`, `screenshot.test.mjs`,
+  `screenshot-exec-safety.test.mjs` — read in full; assertions match the
+  documented behavior (CR-063/CR-064 permission-shim secret-binding tests,
+  CR-065 screenshot containment-root tests, CR-066 websocket-handshake
+  timeout/rejection tests, CWE-78 command-injection regression tests). Ran
+  the full `packages/glass` unit vitest project (50 files, 533 tests, all
+  passing, including every non-manual file in this shard) to confirm none of
+  these are stale or already broken.
+- `packages/glass/test/mcp-error-flag.test.mjs`, `mcp-postel-fixes.test.mjs`,
+  `mcp-schema.test.mjs`, `payload-normalization.test.mjs`,
+  `schema-collapse.test.mjs`, `session-isolation.test.mjs`, `smoke.test.mjs`,
+  `popup-dialog-integration.test.mjs` — behavioral and source-text guard
+  tests against `dist/index.js`/`dist/payload.js`; correctly gated behind
+  Chrome-availability detection (`smoke.test.mjs`,
+  `popup-dialog-integration.test.mjs`) and wired correctly into
+  `vitest.config.ts`'s `CHROME_SUITES` list. Referenced fixture files
+  (`test/fixtures/popup-opener.html`, `popup-with-confirm.html`) and helper
+  modules (`test/lib/_helpers.mjs`, `test/dialogs.smoke.test.mjs`) exist as
+  expected.
+- `packages/glass/vitest.config.ts` — the two-project split (`unit` vs.
+  `chrome`) correctly excludes `test/manual/**` and the three Chrome-dependent
+  suites from the CI-safe `unit` project.
+- `packages/jig-graph/src/moedex.ts` — `MoedexClient` degrades gracefully
+  (`connect()`/`isAvailable()` never throw on an unreachable daemon),
+  `disconnect()` is idempotent and safe to call when never connected, and the
+  test-only `_setTransport` seam is clearly scoped and documented.
+
+- `packages/jig/src/worktree.ts` — considered whether `worktreeCreate`'s `join(worktreeDir, branch)` lets a caller escape `.moe/worktrees/` via a `branch` argument containing `..` (asymmetric with `worktreeRemove`, which explicitly re-validates the resolved path stays under `.moe/worktrees/`). Reproduced directly: `git`'s own ref-name validation (`check-ref-format`) rejects any branch name containing `..` before `git worktree add` runs, and `path.join` does not let a leading `/` in the second argument override the base directory, so the traversal is closed by git's own validation. No working exploit found.
+- `packages/memory/src/db.ts` — considered whether `ON DELETE CASCADE` on `tool_calls.exchange_id` (added by `migrateToolCallsCascade`) is actually enforced, since `initDatabase()` never explicitly runs `PRAGMA foreign_keys = ON` outside the one-time migration path. Verified with a standalone better-sqlite3 repro that the library defaults `foreign_keys` to `1` (ON) for every new connection, so cascading deletes work correctly on ordinary (already-migrated) connections without an explicit pragma call.
+- `packages/memory/src/codex-hook-trust.ts` — considered whether `detectCodexHookTrustState` crashes (unhandled stream `'error'`) when `spawn("codex", ...)` fails (binary not installed/ENOENT) and the code immediately calls `child.stdin.write(...)`. Reproduced with a nonexistent binary: Node queues the write and reports failure only via the already-registered `child.on("error")` handler; no uncaught exception, and the function correctly resolves to `"unknown"` via its `try/catch`.
+- `packages/jig/src/parser.ts` — `parsePlan`'s fenced-code-block skipping and `validatePlan`'s duplicate-task-number/cycle detection (Kahn's algorithm, run against `known` task numbers only) were checked against the test fixtures in `parser.test.ts` and behave correctly for the covered cases.
+- `packages/jig/src/review.ts` — `reviewStamp`'s ordancestor/clean-tree checks and `commitReviewFix`'s staged-changes detection (relying on `git diff --cached --quiet`'s exit code) were traced against `review.test.ts`'s cases, including the inverted-exit-code staged-changes check, and match the documented behavior.
+- `packages/jig/src/cli.ts` — the `realpathSync`-based `require.main === module` equivalent for ESM, and the `CommanderError` exit-code passthrough in `main()`, were checked against `cli.test.ts` and behave as documented (including under pnpm's symlinked bin shims, per the file's own comment).
+
+- `packages/memory/src/file-lock.ts` — the acquire/release protocol built on `proper-lockfile`, including the diagnostic-PID-file unlink-then-recreate ordering (documented and intentional: "a subsequent acquirer will recreate it"), the `ELOCKED` vs. genuine I/O error distinction, and the stale-lock mtime threshold.
+- `packages/memory/src/journal/search.ts` — `JournalSearchService.readEntry`'s two-stage containment guard (resolve → require `.md` → require containment → realpath → require containment again) correctly defends against a symlink escape, unlike `read_conversation` above.
+- `packages/memory/src/journal/store.ts` — the collapsed-root scope disambiguation (`scopeFor`), the prune-only-what-I-walked logic in `indexJournal` (correctly scoped to `this.roots()` so one project's index run cannot delete another project's rows), and the asymmetric `journalEntryId` key construction in `journal/markdown.ts`.
+- `packages/memory/src/embeddings.ts` and `embedding-migration.ts` — the memoized init promise with retry-on-failure, the `EMBEDDING_VERSION` bump discipline, and the lock-protected, batch-transactional re-embed flow (`runMigrationBatch`/`recordReembedded`) all hold together correctly, including the query/passage BGE prefix asymmetry being applied consistently for both conversation and journal search.
+- `packages/memory/src/parser.ts` — the Claude vs. Codex harness detection and the two exchange-builder state machines, including the tool-call/tool-result association via `toolCallsByCallId` and its clearing on `finalizeExchange`, which I traced to confirm the `currentExchange!` non-null assertion in `appendToolResult` cannot actually fire on a stale/cleared exchange.
+- `packages/memory/src/mcp-server.ts` — the overall request-handling pattern of catching all errors and returning them as tool-result content with `isError: true` rather than as transport-level failures, matching MCP's own recommendation as the file's comment describes.
+- `packages/memory/src/summary-sentinel.ts` — the three-way sentinel state machine (missing / empty permanent / `__ERRORED__` retryable-after-threshold) is internally consistent; the gap identified above is that `summarizer.ts` can produce content that is byte-for-byte indistinguishable from the "empty permanent" state without actually being trivial.
+
+- `packages/memory/src/version.ts` — pinned constant; consistent with its own doc comment and the
+  package's checked-in build model (no npm lifecycle generator under turbo/tsc -b).
+- `packages/memory/test/codex-support.test.ts` against `src/codex-support.ts` —
+  `parseCodexCliVersion`, `compareSemver`, `versionMeetsMinimum`, and `MIN_CODEX_VERSION` all match
+  the test's assertions exactly, including the `0`-fallback behavior for missing version segments.
+- `packages/memory/test/codex-doctor.test.ts` and `codex-e2e-script.test.ts` /
+  `claude-e2e-script.test.ts` against `src/doctor.ts`, `src/codex-hook-trust.ts`, and
+  `hooks/hooks.json` — the hook-trust message text, the `/hooks` guidance branch, and the
+  `SessionStart` command string (`if [ -n "${PLUGIN_ROOT:-}" ]; then exit 0; fi; node
+  "${CLAUDE_PLUGIN_ROOT}/dist/cli.js" sync --background`) all match what the tests assert
+  byte-for-byte.
+- `packages/memory/test/codex-plugin.test.ts` against `.mcp.json` and `src/paths.ts` — the
+  `env_vars` allowlist contains every `MOE_*` token actually referenced in `paths.ts` (verified by
+  grepping all `MOE_[A-Z0-9_]*` occurrences against the allowlist), and the four hand-maintained
+  manifests it asserts are absent are in fact absent from the package root.
+- `packages/memory/test/cosine-similarity.test.ts` against `src/search.ts`'s
+  `l2DistanceToCosineSimilarity` — the implementation (`1 - d*d/2`, clamped to `[-1, 1]`) matches
+  every asserted value, including the sub-1 clamp for `distance = 2.0000001`.
+- `packages/memory/test/embedding-init.test.ts` and `embedding-migration.test.ts` — the
+  model-load timeout/memoization contract and the 2000-char truncation constant
+  (`MAX_INPUT_CHARS` in `src/embeddings.ts`) match; the migration lock/stale-batch/re-embed
+  behaviors line up with `src/embedding-migration.ts`.
+- `packages/memory/test/do-not-index-indexer.test.ts` (CR-070) and
+  `exclude-codex-project.test.ts` (CR-069) — verified against `src/indexer.ts` and `src/sync.ts`
+  that all three indexer entry points (`indexConversations`, `indexSession`, `indexUnprocessed`)
+  call `shouldSkipConversation`, and that project-exclusion filtering is re-checked against each
+  exchange's resolved `project` field (`excludeByResolvedProject`) rather than only the walk's
+  top-level directory name — both fixes are real and match their tests.
+- `packages/memory/test/exclusion-markers.test.ts` — `EXCLUSION_MARKER`, `LEGACY_EXCLUSION_MARKER`,
+  and `EXCLUSION_MARKERS` string literals match `src/sync.ts` exactly.
+- `packages/memory/test/journal-cli-args.test.ts` against `src/journal-cli.ts`'s
+  `parseJournalArgs` — the value-flag consumption logic (including the "flag at end of args, or
+  followed by another flag, consumes nothing" guard) matches every asserted case.
+- `packages/memory/test/journal-project-isolation.test.ts` — `journalEntryId`'s root-in-key-only-
+  for-project-scope behavior in `src/journal/markdown.ts` matches the isolation guarantees the
+  test suite exercises.
+- `packages/memory/test/graph.test.ts`'s "link_memories MCP handler parsing" — the replicated
+  `indexOf(":")`/`slice` logic matches the real handler in `src/mcp-server.ts` verbatim, so the
+  test is not silently exercising dead logic.
+- `packages/memory/test/install-check.test.ts` against `src/install-check.ts` and `package.json`
+  — `REQUIRED_PACKAGES` is exactly the package's declared `dependencies` list, and excludes the
+  transitive/optional packages (`onnxruntime-node`, `sharp`, `fsevents`) the test says must not be
+  probed directly.
+- `packages/memory/test/manual/codex-e2e.d.ts` — a minimal ambient declaration for the one export
+  `codex-e2e-cleanup.test.ts` imports; matches `withTempRoot`'s real signature in
+  `test/manual/codex-e2e.js`.
+- `packages/memory/test/db.test.ts`, `journal-search.test.ts`, `journal-store.test.ts`,
+  `journal-markdown.test.ts`, `logging.test.ts`, `hooks.test.ts`, `cross-harness-recall.test.ts`,
+  `codex-transcripts.test.ts`, `codex-skills.test.ts`, `file-lock.test.ts`,
+  `exclude-nested.test.ts` — read in full; assertions are internally consistent with the behavior
+  they describe and no contract mismatch or unreachable/vacuous assertion was found.
+
+- `packages/memory/test/manual/codex-e2e.js` — manual, opt-in-only E2E harness (`MOE_MEMORY_RUN_CODEX_E2E=1` gate). Verified `withTempRoot` releases the temp directory containing the copied live Codex `auth.json` on both the success and thrown-error paths via `try/finally` (this is the documented CR-077 fix). `shellQuote` uses the standard `'...'` + `'\''` escaping for values interpolated into the `tmux new-session` command string, which is correct for the fixed, non-attacker-controlled inputs used here (constant `MARKER`, generated temp paths). `isMain` guard correctly prevents `main()` from firing when the file is imported by a unit test for `withTempRoot`.
+- `packages/memory/test/model/embedding-migration-encoder.test.ts`, `journal-encoder.test.ts` — real-encoder round-trip tests (batch resumability, embedding version stamping, unit-norm invariant); env vars are set/cleared symmetrically in `beforeEach`/`afterEach` and temp dirs are removed.
+- `packages/memory/test/model/exclude-nested-indexer.test.ts`, `incremental-indexing.test.ts`, `sync-indexing.test.ts` — env fixtures are isolated per test via unique temp dirs and cleaned up in `afterEach`; assertions match the described behavior (nested exclude, append-then-reindex, both DO-NOT-INDEX marker forms).
+- `packages/memory/test/model/integration.test.ts` — full-pipeline indexing/search coverage against real fixtures across vector/text/combined/date-filtered modes; consistent path scoping with per-test `MOE_MEMORY_DB_PATH` and cleanup.
+- `packages/memory/test/model/multi-concept.test.ts` — correctly rewritten to use a temp DB rather than the real production index (its own comment documents the prior vacuous-pass bug); the "returns nothing when only one concept present" test title is slightly imprecise but the body's comment explicitly documents that it asserts intersection semantics rather than emptiness, so this is self-documented and not a hidden gap.
+- `packages/memory/test/model/search-metadata-filters.test.ts` — filter coverage (project/session/branch/commit, AND-combination) plus an explicit SQL-injection-via-string-interpolation regression test (`project: "project-a' OR '1'='1"` expecting no results), which is good defensive coverage.
+- `packages/memory/test/model/verify-repair.test.ts` — repair round-trip for orphaned and outdated entries; confirmed `{ noSummaries: true }` avoids requiring live Claude auth, matching the file's own explanatory comment.
+- `packages/memory/test/parser.test.ts` — aside from the flagged vacuous case, coverage of metadata extraction, large-file parsing performance, and data-integrity invariants across all exchanges is solid.
+- `packages/memory/test/paths.test.ts` — thorough env-var save/restore in `beforeEach`/`afterEach` (including `vi.restoreAllMocks()`), covering the three jest-era bugs the file's comment documents were fixed on port; journal-root resolution/override/de-dup logic all checked against expected paths.
+- `packages/memory/test/query-prefix.test.ts` — trivial but correct prefix/idempotency checks.
+- `packages/memory/test/repair-do-not-index.test.ts` — verifies `repairIndex` refuses to summarize/index a DO-NOT-INDEX-marked conversation reached via `issues.missing` from a source other than `verifyIndex`, with the transformers pipeline and summarizer properly mocked.
+- `packages/memory/test/search-agent-template.test.ts` — static assertions against the shipped prompt template; all `toContain` checks correspond to real strings a reader can spot-check in `prompts/search-agent.md`.
+- `packages/memory/test/search-date-filter-vector.test.ts`, `search-text-only-confidence.test.ts` — well-targeted regression tests for the described KNN-before-WHERE and text-only-scored-as-100%-match bugs (CR-074, CR-073); vectors are constructed deliberately orthogonal/near to force the KNN edge case, and mocks are reset per test.
+- `packages/memory/test/show.test.ts` — aside from the flagged vacuous case, good coverage of markdown/HTML formatting for both Claude and Codex transcript shapes, including an explicit HTML-escaping regression test for injected `<script>` content in user/tool/assistant fields.
+- `packages/memory/test/stats.test.ts`, `sync-session-id.test.ts` — straightforward, assertions match setup.
+- `packages/memory/test/summarizer-options.test.ts`, `summarizer-resume-fallback.test.ts` — resume-fallback retry logic (fresh-session retry only on `error_during_execution`, not on other error subtypes or non-SDK errors), cwd-existence gating, and a fake Codex `app-server` JSON-RPC harness are all consistent with the assertions made; version-floor rejection test checked against the same `0.130.0` floor used in `codex-e2e.js`.
+- `packages/memory/test/sync-cli-reentrancy.test.ts`, `sync-cli-single-instance.test.ts` — spawn the real built CLI; lock-stealing-from-dead-PID and lock-release-on-exit cases are meaningful regression tests, not just happy-path. (Noted, not filed: `runWith`/`spawnWith` set `MOE_MEMORY_SUMMARIZER_GUARD: undefined` in the child env, which Node stringifies to the literal `"undefined"` rather than unsetting the var — confirmed with `node -e` — but since `shouldSkipReentrantSync` checks strict equality against `"1"`, this has no effect on test behavior.)
+- `packages/memory/test/sync-error-sentinel.test.ts`, `sync.test.ts` — error-sentinel retry-window behavior (including a custom `MOE_MEMORY_SUMMARY_ERROR_RETRY_HOURS`) and zero-exchange sentinel non-requeueing are both tested with real time manipulation (`utimesSync`) rather than mocked clocks, which is a more convincing test than a fake-timer equivalent.
+- `packages/memory/test/test-indexer.ts`, `test-utils.ts` — `fakeEmbed`'s deterministic hashed-bag-of-words embedding is correctly unit-normalized (required by the L2-to-cosine conversion elsewhere), and its own comment contrasts it usefully against an upstream mocking anti-pattern (same vector for every input) that would have made semantic-ranking assertions pass vacuously.
+- `packages/memory/test/tool-calls-cascade.test.ts` — covers cascade delete on a fresh schema and, importantly, migration of a legacy pre-cascade schema with an existing FK-violating orphan row, asserting the orphan is dropped and the valid row survives.
+- `packages/memory/test/verify.test.ts` — missing/orphaned/outdated detection, exclusion filtering, error-sentinel-as-missing, and DO-NOT-INDEX-as-not-missing are all covered with fixtures that match the production code paths described in the comments.
+
+- `packages/mint/src/adapters/claude-code.ts`, `codex.ts`, `kimi.ts`, `cursor.ts`, `opencode.ts`, `pi.ts`, `copilot.ts`, `index.ts`, `shared.ts`, `types.ts` — manifest field emission, install-doc generation, capability/limitation bookkeeping, and bootstrap hook wiring all read correctly against `deriveEmittedCapabilities` in `platform/capabilities.ts` and the adapters' own test suites. Cursor's `manifest.commands`/`manifest.agents` pointing at source paths while simultaneously reporting `COMPONENT_OMITTED` for the same components looked contradictory at first read, but it is deliberate, documented, and covered by an explicit assertion in `test/adapters/cursor.test.ts` ("warns about user hooks, commands, agents, and mcp not being translated/emitted").
+- `packages/mint/src/adapters/maka.ts`, `openclaude.ts` — both are explicitly documented, unregistered skeleton adapters (confirmed absent from `adapters/index.ts`'s `adapters` array); their placeholder `emit()`/`installDoc()` behavior matches their own header comments.
+- `packages/mint/src/artifact/artifact-manifest.ts`, `pack.ts`, `payload.ts`, `assemble.ts`, `paths.ts` — extensive TOCTOU-aware file handling (stat-before/open/stat-after identity checks via dev/ino/mtime/ctime, `O_NOFOLLOW`, hard-link rejection, symlink rejection), NFC/case-fold collision detection, and a hand-rolled but spec-correct USTAR tar parser (checksum verification, bounded gzip expansion, path-escape rejection, member-count/size limits, directory/file shape-conflict detection). No gaps found in the traversal or extraction logic.
+- `packages/mint/src/artifact/legal.ts`, `license-payload.ts` — verified `LEGAL_TEMPLATE_SHA256`'s two pinned digests against the actual `LICENSE-BSD-3-CLAUSE` and `LICENSE-ISC` files in the repo root (`shasum -a 256`); both match exactly.
+- `packages/mint/src/artifact/bundle-inventory.ts`, `references.ts`, `check.ts` — path-containment checks (`containedRelative`), esbuild-metafile parsing, and cross-manifest reference validation are consistent; `checkArtifactSet`'s per-plugin try/catch correctly routes packing failures to the shared `problems` list rather than reaching the later `results.push` with a stale `packed` reference.
+- `packages/memory/test/version-consistency.test.ts`, `packages/memory/vitest.config.ts` — both match their documented intent (guarding `VERSION` drift and splitting the model-dependent suite from the CI-safe one) with no logic issues.
+- `packages/mint/fixtures/universal-artifact/**` — plain, self-consistent fixture files with no logic to break.
+
+- `packages/mint/src/generate.ts`'s `RESERVED_PACKAGE_JSON_FULL_CASE_FOLD` /
+  `isReservedRootPackagePath` (the guard that stops an adapter from emitting
+  a root `package.json` under a different case, e.g. `Package.JSON`, which
+  would collide on case-insensitive filesystems): its comment claims the
+  table is the *complete* set of Unicode 16.0.0 case-fold scalars whose
+  folded value is a substring of `"package.json"`. Cross-checked this against
+  the canonical case-fold data in `packages/mint/src/artifact/unicode-casefold.ts`
+  with `grep -nE "^\s*\[0x[0-9A-Fa-f]+, '[acegjknops]'\]"` — the only matches
+  are exactly the ASCII uppercase letters A/C/E/G/J/K/N/O/P/S plus U+017F
+  (long s) and U+212A (Kelvin sign), matching the hardcoded table entry for
+  entry. No multi-character fold value (e.g. ligatures) matches any 2+
+  character substring of `"package.json"` either (checked several candidate
+  substrings against the data file). The guard is correct and consistent
+  with the shipped Unicode data as of this snapshot.
+- `packages/mint/src/fileset.ts`'s `writeFileSet`/`assertNoSymlinkInPath`:
+  correctly closes the containment-check TOCTOU window by opening with
+  `O_NOFOLLOW` for the actual write, in contrast to the projections.ts finding
+  above.
+- `packages/mint/src/config.ts`'s schema and migration-error paths
+  (`rejectLegacySyntax`, `resolveHarnessSettings`, `resolveTargets`,
+  `validateTargetMigration`, `normalizeImportedWorks`): traced each rule
+  against `loadConfig`'s call order and found the migration/validation
+  ordering consistent (legacy syntax rejected before schema parse, harness
+  settings validated against the frozen `ADAPTER_NAMES`/`TARGET_IDS` list,
+  imported-work root overlap detection symmetric in both directions).
+- `packages/mint/src/artifact/staged-imports.ts`'s `classifyStagedImports`:
+  overlap detection (`within`), undeclared-work rejection, and the
+  root-must-be-staged closure check all handle the `bundle` sourceKind
+  carve-out consistently.
+- `packages/mint/src/package-manifest.ts`'s `composePackageManifest` /
+  `mergeAdapterPackageContributions` / `validateManifestReferences`: the
+  field allowlists (`DESCRIPTIVE_FIELDS`/`OMITTED_FIELDS`/`RUNTIME_FIELDS`),
+  the `pi`/`opencode` namespace ownership checks, and the workspace-protocol
+  version substitution (`workspace:*` / `workspace:^` / `workspace:~`) were
+  traced end to end and are internally consistent and strict-by-default
+  (unclassified fields throw rather than pass through silently).
+
+- `packages/mint/src/release/npm-registry.ts` — `inspectVersion`'s fallback to `{ state: 'absent' }` when
+  `result.stdout.includes('E404')` relies on `npm view <pkg>@<version> --json` writing the `E404` error
+  object to **stdout** (not just stderr) on a 404. I verified this directly: `npm view
+  this-package-definitely-does-not-exist-zzz123456@1.0.0 --json` in the scratchpad writes
+  `{"error":{"code":"E404",...}}` to stdout and the human-readable `npm error 404 ...` text to stderr.
+  `buildNpmCommandRunner` discards stderr but captures stdout, so the code's assumption holds against a
+  real npm invocation, and the subsequent `JSON.parse(...).error` check is a correct second line of
+  defense if the string match text ever changes.
+- `packages/mint/src/vocabulary.ts` — the token/block/resource substitution pipeline (fence-tracking via
+  `advanceMarkdownFence`, escape handling, `assertNoSurvivors`/`assertNoResourceSurvivors`, and
+  `planSkillRendering`'s in-place vs. rendered output-dir bucketing with cross-adapter profile/mode
+  collision detection) is internally consistent and exercised thoroughly by
+  `test/core-semantics.test.ts` and the per-adapter test files in this shard (vocabulary token
+  substitution across all eight profiles, escaped-literal round-tripping, resource-link rewriting with
+  percent-encoding of parentheses).
+- `packages/mint/src/validate.ts` and `packages/mint/src/test-command.ts` — schema selection, exit-code
+  mapping for the container-backed check runner (`0`→0, `3`→2, anything else/`ENOENT`→`ConfigError`), and
+  the deliberate exclusion of the Codex manifest from schema validation (documented and covered instead
+  by exact-content tests) are all correct as written.
+- The adapter test suites (`claude-code`, `cursor`, `codex`, `kimi`, `opencode`, `pi`, `agent-plugins`,
+  `copilot`, plus `skills-output-dir.test.ts` and `registry.test.ts`) give exact-content assertions for
+  every emitted manifest, hook script, and install doc, including negative/edge cases (per-harness
+  `hooks: own`, `bootstrap: none`/`generate`, non-default component paths, malformed MCP config, name-gate
+  rejection, Unicode case-folding). Two of the Pi tests (`type-checks the emitted skill-mode extension
+  under strict NodeNext`, and its `bootstrap: none` twin) actually shell out to `tsc` against a typed stub
+  of `@earendil-works/pi-coding-agent` and assert a deliberately-broken variant fails to compile — real
+  proof the generated TypeScript type-checks, not string matching.
+- `test/artifact-manifest.test.ts`, `test/artifact-check.test.ts`, `test/artifact-references.test.ts`,
+  `test/assemble-artifact.test.ts`, and `test/bundle-inventory.test.ts` — the artifact-safety test suites
+  are unusually rigorous: TOCTOU re-open races, symlink/hardlink/FIFO/socket/device rejection, Unicode
+  NFC and full case-fold collision detection, reserved-path aliasing (`.MOE`, `.MOE-BUILD`,
+  `PACKAGE.JSON` case-folded), and canonical-tree-untouched-on-failure guarantees are all exercised
+  against real filesystem operations rather than mocked.
+- `test/config.test.ts`, `test/bump.test.ts`, and `test/cli.test.ts` — config schema closure (unknown-key
+  rejection at every nesting level), the migration-required diagnostics for pre-v2 syntax, and the CLI's
+  end-to-end generate/validate/bump/init flows (including the root `mint`/`mint:check` recovery-journal
+  state machine across all six documented journal states) match their respective implementations. The
+  hardcoded plugin versions asserted in the `publish-matrix` CLI test were cross-checked against the six
+  packages' actual `package.json` versions and are currently accurate.
+
+Read all 30 assigned files (test suites, test helpers/fakes, and fixture source files under
+`packages/mint/test/`). Summary of what was specifically checked:
+
+- `packages/mint/test/dogfood.test.ts` — verified the `findReferenceSnapshot()` walk-up logic
+  actually reaches `Code/.moe-references/superpowers` (the location recorded in the user's
+  own memory notes) by tracing the loop's `join(dir, '..', '.moe-references', 'superpowers')`
+  candidate at each ancestor of the test file's directory; the loop terminates correctly via
+  `dirname(dir) === dir` at the filesystem root and falls back to the historical fixed path.
+  The `EXPECTED_DIFFERENCES` closure logic (`withExpectedDifferencesRemoved`) only deletes
+  keys explicitly registered per file, so an undocumented divergence still fails the
+  comparison — matches the stated acceptance-test intent.
+- `packages/mint/test/field-edit.test.ts` — round-trip, dotted-path, YAML-comment-preservation,
+  and every listed `ConfigError` path (missing field, unsupported extension, non-string value,
+  unreadable file, malformed JSON/YAML, auto-vivification refusal, out-of-bounds array index)
+  are each asserted with a distinct fixture; no assertion is vacuous or duplicated.
+- `packages/mint/test/generate.test.ts` — spot-checked the symlink-related regression tests
+  (`CR-080`) against their stated defect (dangling-symlink-looks-absent via `existsSync`
+  following symlinks) and confirmed the assertions actually exercise both the dangling-symlink
+  and the force-mode victim-file cases distinctly. Collision, pruning, stale-file, corrupt-manifest,
+  and unsafe-manifest-entry tests all set up the exact precondition their assertion depends on.
+- `packages/mint/test/helpers.ts` and `helpers.test.ts` — `withV1Policy` correctly threads
+  `harnesses.exclude` into per-target `intent: omit` while leaving the rest of `config.harnesses`
+  (e.g. adapter-specific `manifest`/`hooks` overrides) untouched, and validates malformed input
+  shapes (`harnesses` not a mapping, `exclude` not a string array) before use.
+- `packages/mint/test/import.test.ts` and `init.test.ts` — CLI-level (`spawnSync` against the
+  built `dist/cli.js`) and unit-level tests agree on exit codes and messages; cleanup-on-failure
+  tests (`cleans up an inline-extracted .mcp.json when loadConfig fails...`) assert both the
+  absence of the partially written config and the absence of side-effect files.
+- `packages/mint/test/legal-reconciliation.test.ts`, `license-payload.test.ts` — the
+  `it.each` mutation table for `reconcileLegalClosure` covers each diagnostic code with a
+  single, targeted mutation of the shared `base()` fixture, so each row's specified defect is
+  what actually triggers its expected code.
+- `packages/mint/test/manifest.test.ts` — `deepMerge`'s null-as-delete-sentinel semantics
+  (including the "arrays are opaque to the sentinel" case) are each independently tested;
+  drift detection tests cover hand-edits, deletions, exec-bit changes, and the `checkExecBit:
+  false` opt-out.
+- `packages/mint/test/pack-artifact.test.ts` — manually verified the hand-rolled `tarMember`/
+  `tarNumber` helpers against the USTAR header layout (name 0–99, mode 100–107, size 124–135,
+  checksum 148–155 computed with the checksum field space-filled, typeflag at 156, magic at
+  257) and confirmed the "member-size limit" test's injected size value is well within the
+  12-byte octal field's range, so it exercises the intended limit rather than a corrupted
+  header from truncation.
+- `packages/mint/test/mint-plugins-wrapper.test.ts` — traced the "plugin six fails" test to
+  confirm it asserts a same-name unrelated staging directory (`plugins.next-unrelated`)
+  survives cleanup, i.e. the transaction's rollback path is scoped to its own nonce rather
+  than sweeping any `plugins.next-*` sibling.
+- `packages/mint/test/package-manifest-loader.test.ts` and its `fixtures/package-consumer/`
+  companions (`consumer.mjs`, `.pi/extensions/package-consumer.ts`) — the consumer script's
+  imports (`@bubstack/package-consumer` root and `/server` subpath) match the `exports` map
+  built into the test's `composePackageManifest` call.
+- Fixture one-liners under `fixtures/bundle-metafiles/` and `fixtures/composed-plugin/` are
+  inert marker modules (each exports a single boolean, or — for `test-unlinked.js` —
+  deliberately throws to prove a "developer harness must not ship" fixture is unreachable);
+  none contain logic that could itself be defective.
+- Grepped the full shard for stray `console.log`/`debugger`/`FIXME`/`XXX` markers; the only
+  hits are an intentional skip-notice log in `dogfood.test.ts` and intentional
+  failure-diagnostic `console.error` calls in `init.test.ts`'s CLI `--dir` test, plus two
+  literal `"TODO describe this plugin"` string assertions (the default description text under
+  test, not an actual pending-work marker).
+
+Read all 30 assigned files in full (`packages/mint/test/*.test.ts` covering package-manifest, payload staging/collision/case-folding, platform capabilities/projections/resolution/schema, provenance, public-registry, publish-matrix provenance/immutability, release assets/candidate/catalog/claude-maintenance/evidence/github-store/npm-registry/promotion/recovery/tag-policy/workflows, smoke, staged-imports, test-command, the generation-transaction crash/recovery suite, universal-artifact, validate, and vocabulary; `packages/mint/vitest.config.ts`; and `packages/statusline/src/hooks/ensure-statusline.ts` with its test).
+
+- `packages/statusline/src/hooks/ensure-statusline.ts` — traced the full control flow: `readSettings` correctly distinguishes "absent" (`{}`), "unreadable/corrupt" (`null`), and "present" states; `ensureStatusLine` never overwrites an already-set `statusLine` key (including an explicit `null`, which the code and its tests both treat as "user disabled it, leave alone"); `defaultSettingsPath` honors `CLAUDE_CONFIG_DIR`; `readStdin`'s 5s timeout prevents the hook hanging when Claude Code's SessionStart payload is piped but unread; and `main()`'s `require.main === module` guard correctly prevents the CLI entry point from firing under vitest's ESM import. Cross-checked against `packages/statusline/hooks/hooks.json`, whose bash wrapper (not this file) performs the `PLUGIN_ROOT` check that gives Codex-style hosts a silent no-op — the test file's "silent no-op under Codex plugin-root semantics" name is accurate once this split is understood.
+- `packages/mint/test/transaction.test.ts` — the durable-swap/recovery fault-injection matrix (crash after every one of 21 forward-durability events, restart-then-recover, and 15/6-cut recovery-durability fault injection for old/new rollback paths) is internally consistent: every terminal assertion confirms exactly one of `current`/`next`/`backup` survives per target and the journal is removed only when recovery is unambiguous. The `.gitignore` sibling-name check at the end (`git check-ignore` against the exact nonce temp-file patterns) passes against the current `.gitignore`.
+- `packages/mint/test/publish-matrix.test.ts` and `platform-projections.test.ts` — the anti-tampering tests (frozen `record.plugin`/`.author`/`.targets`, `TypeError` on attempted mutation of `adapters`/`claudeCode.emit`, provenance rejection when records are replayed against a mutated registry or a second `resolvePlatform()` call) are coherent and each restores the mutated global in a `finally`, so they don't leak state to later tests in the same run.
+- `packages/mint/test/provenance.test.ts` and the Unicode case-folding fixture check in `payload.test.ts` — both pin an independent, byte-verified digest of `CaseFolding-16.0.0.txt` and cross-check `artifactCollisionKey` against every `C`/`F` row parsed directly from that fixture (1557 rows), rather than trusting the production code's own embedded table.
+
+- `packages/tab/bindings/go/tab/tab.go`, `loader.go`, `loader_unsupported.go`, `embed_stub.go`, `tab_test.go`, `pricing_env_test.go`, `pricing_env_unsupported_test.go`, `loader_embed_test.go`, `cmd/total/main.go` — the C-string marshalling (`cstr`/`drain`), `runtime.KeepAlive` placement around FFI calls, the `sync.Once`-guarded loader, and the build-tag split between the purego-backed loader and the `!darwin && !linux` stub all matched their documented intent. The final-file tamper checks added for CR-081/CR-082 (re-hash on read, replace a symlinked target rather than writing through it) were exercised and are correct for the case they target (see the separate finding above for the narrower case they do not cover).
+- `packages/tab/bindings/python/moe_tab/__init__.py` and `_lib.py` — the ctypes `restype`/`argtypes` declarations match the calls made against them; `_decode_and_free` copies the C string into a Python `bytes` via `.value` before freeing, so there is no use-after-free; error decoding mirrors the Go/TS envelope-parsing logic.
+- `packages/tab/bindings/python/setup.py` — the `BinaryDistribution`/`bdist_wheel` override is a standard, correct pattern for shipping a platform-tagged, ABI-agnostic prebuilt-binary wheel.
+- `packages/tab/bindings/python/tests/test_moe_tab.py` and `packages/tab/bindings/typescript/test/ffi/tab.test.ts` — both derive the expected version from `packages/tab/Cargo.toml`'s `[workspace.package] version`; confirmed by reading that file and `moe-tab-ffi`/`moe-tab-core`'s `Cargo.toml` that both crates inherit it via `version.workspace = true`, so the regex match (which anchors on `^version` and only matches the workspace-level line) is correct and won't drift silently on a version bump.
+- `packages/tab/bindings/typescript/src/ffi.ts`, `ffi-bun.ts`, `ffi-node.ts`, `pricing-env.ts`, `lib-path.ts`, `total.ts`, `types.ts`, `bun-ffi.d.ts` — the Bun/koffi split correctly avoids importing `bun:ffi` under Node and vice versa; the `void**` (not `char**`) koffi signature for the out-param avoids the auto-stringify pointer leak the comment describes; the `BigUint64Array`/`Number(p)` pointer narrowing in the Bun backend is safe for real user-space addresses as documented; `pricing_source` was verified present in the Rust core's serialized `CostEstimate` (via `moe-tab-cli/tests/cli.rs`'s `estimate_reports_bundled_pricing_source`), so declaring it non-optional in `types.ts` is correct.
+- `packages/tab/bindings/typescript/test/unit/errors.test.ts`, `lib-path.test.ts`, `vitest.config.ts` — the unit/ffi project split and `fileParallelism: false` correctly account for the shared-process-env hazard the comments describe.
+- `packages/tab/crates/moe-tab-cli/src/main.rs` — `utc_stamp_from_epoch`'s Howard Hinnant civil-from-days implementation was independently re-implemented and run against all four of the file's own test vectors (including the 2000-02-29 leap-day case); all four matched exactly.
+- `packages/tab/crates/moe-tab-cli/tests/cli.rs` — the hermetic pricing-source tests correctly isolate `XDG_DATA_HOME`/`MOE_TAB_PRICING_DIR` so they don't depend on the developer's real home directory.
+- `packages/statusline/tsup.config.ts`, `packages/statusline/vitest.config.ts` — small, declarative configs; both match their documented rationale and neighboring packages' conventions.
+
+- `cost::estimate` (`packages/tab/crates/moe-tab-core/src/cost.rs`): the
+  native-cost-vs-rate-table precedence, the `unpriced_models` vs
+  `UnknownModelForTurn` distinction for empty model strings, and the
+  `AssumedStandardTier`/`UnknownModelForTurn` approximation flags were traced
+  end to end and match their test coverage; ran the crate's own test suite
+  (`cargo test -p moe-tab-core`, 68 passed) to confirm no regressions in this
+  tree.
+- `pricing::as_of` (`as_of.rs`): the `sort_key` parser is a strict, allocation-free
+  byte-level validator (no `chrono`), correctly rejects path-traversal-shaped
+  and malformed stamps (verified the test list explicitly includes
+  `"../../escape"` and `"2026-06-09/evil"`), and `archive_file_name` is only
+  ever called after `validate`/`sort_key` has succeeded (checked every call
+  site), so it cannot be reached with attacker-controlled path separators.
+- `transcript::atif::parse` (`atif.rs`): traced the three-way cost precedence
+  (per-step sum wins when complete; `final_metrics.total_cost_usd` wins and
+  suppresses per-step rate-table math when incomplete; rate-table is the
+  fallback) against all nine of its dedicated tests, including the two
+  double-count guards — no gap found beyond the documented, intentional
+  loss of per-model cost granularity when a totals-only override fires.
+- `transcript::provider::{anthropic,openai}` normalizers: the Anthropic
+  5m/1h cache-write split and the OpenAI cached-token subtraction
+  (`saturating_sub`, so a corrupt `cached_tokens > input_tokens` clamps to
+  zero instead of underflowing) both match the documented provider billing
+  semantics.
+- `moe-tab-ffi/src/lib.rs`: the ownership contract (NULL-init before catch_unwind,
+  freeable-string-or-NULL invariant, `catch_unwind`/`AssertUnwindSafe` around
+  both entry points, NULL-pointer checks preceding every `CStr::from_ptr`) was
+  read against every exit path in both `moe_tab_estimate_path` and
+  `moe_tab_refresh_pricing`; ran `cargo test -p moe-tab-ffi` (13 passed,
+  including `header_matches_source`, which regenerates the cbindgen header
+  and diffs it against the committed `include/moe_tab.h`) to confirm the C
+  ABI surface is in sync with the source in this tree.
+
+- `slugify` (`py/proof/src/moe_proof/cli.py`): the `"", ".", ".."` fallback
+  to a content-derived hash, and its interaction with
+  `resolve_eval_slugs`'s duplicate-slug guard and `build_eval`'s
+  `shutil.rmtree(eval_dir)` guard, is exercised by
+  `test_never_returns_empty_for_all_unsafe_characters`,
+  `test_never_returns_dot_or_dotdot`,
+  `test_distinct_unsafe_names_still_get_distinct_slugs` (`test_units.py`) and
+  `test_build_with_an_all_unsafe_name_does_not_wipe_other_evals`
+  (`test_site.py`, regression-labeled CR-085). Confirmed the fallback cannot
+  collapse two different unsafe names onto the same slug (SHA-256 truncated
+  to 12 hex chars) and cannot reintroduce `"."`/`".."`.
+- `site.py`'s `serve_eval` path-containment check
+  (`target.is_relative_to(runs_root)` after `.resolve()`) correctly rejects
+  both a same-prefix sibling directory (`runs-secret/`) and a `..`-escape out
+  of the eval directory entirely; verified by tracing the exact string
+  transformations `self.path.split("?")[0]` -> `removeprefix("/evals/")` ->
+  `partition("/")` against the URLs used in
+  `test_serve_refuses_prefix_sibling_of_runs` and
+  `test_serve_refuses_paths_outside_runs`, and confirmed with pathlib that an
+  internal `//` in the tail cannot be used to smuggle an absolute-path
+  override past the `tail.startswith("runs/")` gate.
+- `grade_run`'s scoring rule — a check that fails without producing a score
+  poisons the whole Grade's score to `None` even if a later check does
+  produce one (`unscored_failure`), while a later score legitimately
+  overrides an earlier one when every failing check that ran did score
+  itself — matches `test_last_score_wins`,
+  `test_non_required_failure_continues`, and
+  `test_unscored_failure_leaves_grade_unscored` exactly.
+- `render_leaderboard`'s competition-style tied-rank display
+  (`test_leaderboard_orders_by_mean_and_shares_tied_ranks`) correctly ranks
+  by the *displayed* (rounded) mean rather than the raw float mean, so
+  genuinely-tied display strings share a rank and the next rank skips
+  accordingly.
+- `discover_evals` correctly stops descent at the first `eval.yaml` found
+  (so a `runs/` tree is never re-scanned for nested "decoy" evals) and skips
+  dotfile directories; matches
+  `test_discover_evals_recurses_and_stops_at_evals`.
+- `normalize_check_info`'s core-key protection (`score`, `metrics`, `tags`,
+  `notes`, `details` are the only keys ever promoted to the top level;
+  everything else, including a checker that emits `ok`/`checker`/`skipped`
+  itself, is folded into `details`) is correct and matches
+  `test_core_keys_cannot_be_clobbered`.
+
+- `scripts/lib/mint-generation-transaction.mjs` — the durable three-target
+  swap/recovery state machine (`replaceGeneratedOutputs`,
+  `recoverGeneratedOutputs`, `stateFor`, `restoreOld`, `finishNew`). Traced
+  the classification of every reachable interleaving of
+  `unstarted`/`backed-up`/`committed`/`clean` across the three targets,
+  including partial-commit crashes mid-loop (e.g. `[committed, backed-up,
+  unstarted]`) and partial-cleanup crashes after commit (`[committed,
+  clean]`), and the "old" vs "new" generation selection correctly resolves
+  each to one coherent generation across all three targets. The
+  journal-removed-but-fsync-failed edge case is deliberately surfaced as a
+  distinct `*_DURABILITY_UNCERTAIN` error rather than silently retried, and
+  the "trusted boundary" identity re-check (`captureTrustedBoundary`/
+  `guarded`) brackets every mutating step against a concurrent parent-path
+  replacement. Portable-path validation (`portableParts`, `validateShape`,
+  `assertSymlinkFreeAncestry`) rejects absolute paths, `..`/`.` segments, and
+  symlinked ancestry before any mutation.
+- `scripts/write-bundle-inventory.mjs` — `safeMetafilePath`'s allowlist of
+  exact expected metafile locations plus a post-`realpath` containment check
+  (`contained`), the absolute/UNC/drive-letter path rejection
+  (`isMachineAbsolute`/`assertRelativeMetafilePath`) applied to every input,
+  output, and import path parsed out of a metafile, and the symlink guard in
+  `prepareEvidenceRoot` before a recursive `rm`. Traced the normalize →
+  validate → write pipeline end to end; found no path-escape or malformed-
+  input gap.
+- `scripts/check-session-start-hooks.mjs` — the packaged-artifact integration
+  test correctly builds a real npm tarball (`npm pack --ignore-scripts`),
+  extracts it outside the repo, asserts no `node_modules` leaked in and the
+  extraction path isn't itself beneath a `node_modules`, and runs each
+  packed `SessionStart` command with an intentionally minimal env (no `HOME`,
+  no ambient `NODE_*`) to catch a hook that only works by accident inside the
+  monorepo's own dependency tree. The tempdir-outside-repo assertion
+  (`realpathSync` + `relative(...).startsWith("..")`) and the mandatory
+  empty-stdout/stderr contract in `runHook` were verified against the code
+  as written.
+- `scripts/mint-plugins.mjs` — `validateCanonicalPluginRegistry`'s
+  cross-check between the dependency-free `bin/lib/plugin-registry.mjs` and
+  the resolved Mint platform (id/source/config/repository/npm package/active
+  harness set in both directions, plus duplicate-value detection) and the
+  `runMintPlugins` orchestration's cleanup-on-failure logic (only removing
+  prepared `next` outputs when the durable journal was never written or has
+  already been resolved by the transaction module itself) were traced and
+  are internally consistent with the transaction module's own contract.
+- `scripts/mint-prepare.mjs`, `scripts/mint-recover.mjs`,
+  `scripts/test-provenance-red.mjs`, `scripts/check-artifacts.mjs`,
+  `scripts/clean-package-dist.mjs`, `scripts/copy-license.mjs`,
+  `scripts/lib/mint-diagnostics.mjs`, `scripts/lib/mint-host-contract.mjs` —
+  read in full; each is a small, single-purpose wrapper and no defect was
+  found. `test-provenance-red.mjs` and `check-artifacts.mjs` were also run
+  directly against the current tree to confirm their expected exit codes.
+
+
+## Resolved findings
+
 ### CR-001: Live-run file route lets `../` in an allow-listed prefix reach the credential-fixture directory
 
 **File:** `packages/flight/src/qa/api/routes/results.ts`
@@ -102,8 +1135,6 @@ containment.
 **Commit:** `c3f1f2f447775eb9a8d1ab35688ae7e7470a2375`
 **Resolved:** 2026-09-04
 **Note:** —
-## High
-
 ### CR-002: probeChrome never detects an installed browser on Linux because `command -v` has no standalone executable there
 
 **File:** `bin/lib/probes.mjs`
@@ -261,7 +1292,6 @@ identical bug: its unmasked block-boundary search stopped at this finding's
 own fenced illustration and spliced the disposition stamp inside the fence
 instead of appending it here. Repaired by hand in the same commit that fixes
 stamp-disposition.mjs's fence-blindness (packages/core/skills/fixing-a-code-review/scripts/stamp-disposition.mjs).
-
 ### CR-005: review-merge.mjs's finding validation does not enforce the "no line-number citation" rule it exists to guarantee
 
 **File:** `packages/core/skills/reviewing-a-codebase/scripts/review-report.mjs`
@@ -1049,8 +2079,6 @@ worktrees.
 **Commit:** `0b7b025f0160347ea973b9c3479d3f1fd45a15f4`
 **Resolved:** 2026-09-04
 **Note:** —
-## Medium
-
 ### CR-024: docs-verify-report.mjs silently drops findings whose severity isn't an exact lowercase match, while still counting them in the total
 
 **File:** `packages/core/skills/docs-update/scripts/docs-verify-report.mjs`
@@ -2478,8 +3506,6 @@ not found"`) instead of throwing.
 **Commit:** `4e91a1b67957dfabad6bd5f9c0ffb41c0582813a`
 **Resolved:** 2026-09-04
 **Note:** —
-## Low
-
 ### CR-070: Exported harness-registry order/duplicate validator is dead code
 
 **File:** `bin/lib/plugin-registry.mjs`
@@ -3300,919 +4326,3 @@ are absolute or contain `..` segments.
 **Commit:** `2e753b6bc1adcbfd2af94f8f455f7fd9399f08eb`
 **Resolved:** 2026-09-04
 **Note:** —
-## Checked and found sound
-
-- `bin/moe.js`'s `resolve()` — sibling → PATH → workspace-fallback precedence,
-  the win32 `.cmd`/`.exe`/`.bat`/bareword candidate order, the tab-specific
-  `.exe` workspace fallback, and the directory-vs-file guards on both sibling
-  and workspace candidates — traced against every case in
-  `bin/test/moe.test.mjs` and confirms correctly with `pnpm exec vitest run
-  --dir bin/test` (85/85 passing locally).
-- `spawnAndForward`'s SIGINT/SIGTERM forwarding and signal→exit-code mapping,
-  and its listener cleanup on both the `error` and `exit` child events (safe
-  even if both somehow fire, since the surrounding Promise only resolves
-  once).
-- `selectHarness()`'s precedence (`--harness` > `MOE_DEFAULT_HARNESS` >
-  sole-installed-executable) and its ambiguous/zero-installed error paths in
-  `bin/lib/plugin-registry.mjs`, cross-checked against every
-  `bin/moe-doctor`/`bin/moe-install` call site and their tests in
-  `bin/test/doctor.test.mjs`.
-- `executableOnPath`/`executableFile` in `bin/lib/probes.mjs` — PATH-splitting
-  by platform delimiter, PATHEXT handling on win32, and the POSIX X_OK check —
-  match the dedicated tests and the equivalent, independently-written
-  resolver in `bin/moe.js`.
-- `cmpVersion`, `extractVersion`, and `extractTmuxVersion` — verified the
-  tuple comparison and the "no N.N.N triple in tmux output" rationale against
-  real `tmux -V` output shapes cited in the comment.
-- `tryExec`'s 2-second timeout with `SIGKILL` actually bounds a
-  never-exiting child (confirmed by the "tryExec bounds a tool that never
-  exits" test, which spawns a genuinely hanging Node process).
-- Cross-checked every `plugin.pkg`/`plugin.config` pair in `PLUGINS` against
-  the filesystem — all six `packages/<pkg>/<config>` mint yaml files exist.
-- `automatedInstallActions`/`runActions` in `bin/moe-install` and the probe
-  invocation in `bin/moe-doctor` — both use `execFileSync`/`spawnSync` with
-  argument arrays (no shell), so neither is vulnerable to shell injection via
-  harness names, repository URLs, or plugin names, all of which are drawn
-  from the fixed in-repo registry rather than user input.
-
-`packages/core/skills/smoothing-the-experience/scripts/lib/harnesses/claude.mjs` — `matchesPathPattern`'s glob translation (single `*` vs `**`, with/without a trailing slash) was exercised directly against `matchClaudePermission` for `Edit(dir/**)`, `Edit(dir/*)`, `Edit(**)`, and `Edit(*.txt)` against several candidate paths; single-star correctly refuses to cross a `/` boundary and double-star correctly does, matching the documented Claude settings glob semantics.
-
-`packages/core/skills/brainstorming/scripts/server.cjs` — the local companion server's authentication path was read end to end: the session token is compared with `crypto.timingSafeEqual` on every request (query param and cookie), the cookie is set `HttpOnly; SameSite=Strict`, response headers set `X-Frame-Options: DENY` and a restrictive CSP, the WebSocket upgrade re-checks both the token and an `Origin` allowlist, `/files/` rejects dotfiles/symlinks/anything outside `CONTENT_DIR` via `realpathSync` comparison, and the port/token persistence files are written through `writeSecretFile`'s unlink-then-`wx` pattern specifically to defeat a pre-planted symlink. No gap found in this path.
-
-`packages/core/skills/reviewing-a-codebase/scripts/review-scope.mjs` — the manifest's `denominator`/`not_selected`/`outside_denominator` fields were checked against their stated definitions (`denominator` is explicitly `selected.length`, computed once; `outside_denominator` is deliberately computed against `selected`, not the pre-shallow-narrowing `files` set, so it correctly captures everything the denominator does not count at every depth, including shallow-narrowed files). The symlink/regular-file guards around `--out` and the generated workspace files (`O_NOFOLLOW`, `lstatSync` checks before writing) were also read and are consistent.
-
-`packages/core/scripts/validate_skill.py` — `parse_frontmatter`'s handling of a folded (`>`) block scalar and of a `description` value containing an internal `:` were both exercised directly (`python3 -c`) and produced the expected joined string and preserved-colon value respectively.
-
-- `packages/core/skills/smoothing-the-experience/scripts/lib/safety/{shell,filesystem,network,mcp}.mjs` — reviewed the conservative-shell tokenizer/allowlist, the lexical+canonical path containment checks for filesystem evidence (including the `.ssh`/`.aws`/`.env`/`secrets` denylist), the public-hostname classifier (rejects IPs, `.local`/`.localhost`, globs, oversized labels), and the fixed MCP tool allowlist. All are deny-by-default and consistent with their exercising unit tests (`packages/core/test/smoothing-safety.test.ts`, run directly: 88/88 passing). Traced `classifyShell`'s callers (`rank.mjs`, `harnesses/claude.mjs`, `harnesses/codex.mjs`) to confirm these functions classify already-executed historical evidence for permission-rule suggestion, not live command dispatch, so the `cp -n` path's dependence on `realpathSync` succeeding post-execution is not a pre-flight race.
-- `packages/core/skills/smoothing-the-experience/scripts/lib/mutation.mjs` — the bound-plan write path (`createBoundPlan`/`readBoundPlan`/`applyBoundPlan`) hashes and pins the full intent at plan-creation time, re-validates the on-disk source hash both before and after the caller's `validatePlan` callback (closing the TOCTOU window around that callback), takes an exclusive `wx`-mode lock file keyed to the destination, writes through a `wx`-created temp file with `fsync` + rename + post-write hash verification, and cleans up the temp file and any created parent directories on every failure path. Confirmed `writeSecretFile`-style symlink resistance is unnecessary here because the same `wx` semantics reject a pre-planted symlink at both the plan path and the temp-file path. Cross-checked against `packages/core/test/smoothing-mutation.test.ts` (run directly: passing) and `packages/core/skills/smoothing-the-experience/scripts/lib/harnesses/{claude,codex}.mjs` to confirm `plan.destination` is always harness-internal (derived from the resolved config directory), never attacker-suppliable through the `plan`/`apply` CLI surface.
-- `packages/core/skills/smoothing-the-experience/scripts/smooth.mjs` — the `apply` verb re-runs a full `scan` (`validateSelectablePlan`) before mutating, so a plan can't be replayed after the underlying evidence/candidate set has moved; `--confirm` is bound to `intentSha256` so a stale or hand-edited plan is rejected. Argument parsing (`parseScanArgs`/`parsePlanArgs`/`parseApplyArgs`) rejects duplicate/unknown flags and validates `--days`, `--harness`, and permission-ID shape before use.
-- `packages/core/skills/subagent-driven-development/scripts/task-set.mjs`, `packages/core/skills/writing-skills/render-graphs.mjs`, `packages/core/skills/working-with-claude-code/scripts/update_docs.cjs` — all spawn/exec without a shell (`execFileSync`/`spawnSync` with argv arrays), and `update_docs.cjs`'s filename handling (derived from fetched remote text) is already hardened against path escape with both a filename regex and a resolved-dirname check.
-- `packages/core/skills/systematic-debugging/condition-based-waiting-example.ts` — illustrative skill documentation only; confirmed via `packages/core/tsconfig.tests.json` (`exclude: ["skills/**"]`) that it is deliberately outside this package's typecheck surface, so its import of a nonexistent `~/threads/thread-manager` module is not a build defect.
-- `packages/core/test/brainstorm-server/*.test.cjs` (auth, branding, browser-launcher, helper, lifecycle, server, session-security, ws-protocol) — read in full and then executed directly (`node test/brainstorm-server/*.test.cjs`): all 122 individual test cases across these eight files pass against the current `server.cjs`/`helper.cjs`/`start-server.sh`. The auth suite's confused-deputy, cross-origin-WebSocket, and cookie/query-key precedence cases, and the session-security suite's symlink/hardlink and TOCTOU-style secret-file-write cases, all exercise real attack shapes rather than asserting tautologies.
-- `packages/core/test/codebase-review-scripts.test.ts` and `packages/core/test/completion-evidence.test.ts` — read in full and executed directly with vitest (67/67 passing). The review-merge/verify-scope/verify-record tests correctly gate report emission on shard-report completeness, base-SHA agreement, and a closed verdict vocabulary with a per-finding base-matched ledger.
-- `packages/core/test/ci-config.test.ts`, `packages/core/test/house-voice.test.ts`, `packages/core/test/house-voice/score.mjs` — executed directly with vitest (14/14 passing); the GitLab→GitHub Actions migration referenced in the file's comments is corroborated by `git log` (`b0ae97f6 ci: migrate from GitLab to GitHub Actions`, `78a772f6`), so the historical framing is accurate rather than stale.
-- `packages/core/test/iterative-development/{test_artifact_validator,test_check_citations,test_chunk_spec,test_extraction_pipeline}.py` and `__init__.py` — executed directly with `unittest` (all passing) alongside `test_aggregate_stories.py`; no other issues found in these four files.
-
-- `packages/core/test/metadata.test.ts` (101 tests, run via `pnpm vitest run`) — every skill-tree metadata invariant (name/description presence, no duplicate names, allowed frontmatter keys, cross-reference resolution, execute-bit allowlist in both directions, hooks.json shape, `plan-set`/`task-set` CLI behavior across many fixtures, licensing) passes at HEAD and the assertions are substantive, not tautological.
-- `packages/core/test/smoothing-*.test.ts` (claude, codex, safety, mutation, ranking-rendering, evidence-discovery, cli-e2e, the-experience-contract — 8 files, ~230 tests total) — all pass. The suite exercises real production ESM helpers for permission classification, atomic file mutation with injected failure points at every step (lock-held, mid-write, mid-rename, post-rename hash mismatch), Codex App Server protocol handling with a fake subprocess, and a genuine end-to-end CLI harness that spawns the real `smooth.mjs` against isolated `HOME`/`CODEX_HOME` fixtures. Security-relevant assertions (secret redaction, SSRF-style hostname rejection, path traversal rejection, execpolicy witness requirements) are exercised with concrete negative cases.
-- `packages/core/test/task-set-governance.test.ts`, `parallel-execution-contract.test.ts`, `retrieving-context-contract.test.ts`, `resolved-resource-quoting.test.ts`, `latte-corpus.test.ts`, `render-html.test.ts` — all pass; each is a well-scoped content/behavior pinning suite with real assertions against generated output.
-- `packages/core/test/iterative-development/test_skill_validator.py` — ran via `python3 -m unittest`; 6/6 pass; fixtures referenced by the tests exist on disk.
-- `packages/core/vitest.config.ts` — the `include: ["test/*.test.ts"]` glob matches the file comment's claim that nested suites (`test/iterative-development/`, `test/brainstorm-server/`, `test/shell/`, `test/latte/`) are deliberately excluded from the vitest run; confirmed no `.test.ts` file exists in a subdirectory that would be silently dropped by the non-recursive glob.
-- `packages/crew/src/commands/adopt.ts`, `codex-launch.ts`, `context.ts`, `converse.ts`, `events-file.ts`, `grant-consent.ts`, `handoff.ts`, `list.ts`, `pack.ts`, `pi-launch.ts` — read in full; harness-conflict detection in `adopt.ts`'s `existingHarnessState`, the fail-fast validation order in `cmdPack`/`cmdPackStop`, and the derive-vs-assign send/resolve ordering in `converse.ts` are all internally consistent with their documented invariants. Traced `ctx.driver.transcriptPath(sid, meta.cwd, ctx.home)` in `converse.ts` against the codex/pi driver implementations to rule out a suspected stale-`HOME` bug: codex and pi ignore the `workerHome` parameter entirely and read `transcript_path` back from the self-registered meta, so passing the controller's real `HOME` there is harmless.
-
-- `packages/crew/src/core/transcript.ts` — `parseClaudeTurn`/`parseCodexTurn`/`parsePiTurn` and the shared `renderTurn`. All three parsers degrade gracefully on malformed/partial JSONL lines and non-object blocks (verified the guard functions `asBlock`/`parseLines`/`parseRolloutLines`/`parsePiEntries` never throw on garbage input), and `collapseCodexResult`'s anchor-on-`Output:`-plus-exit-header logic passes text through unchanged when the expected markers are absent, so it never drops data on a format it doesn't recognize.
-- `packages/crew/src/commands/send.ts` — the bracketed-paste ESC-stripping defense in `pasteText` (deleting every ESC byte rather than the two marker substrings) correctly closes the marker-splice case described in its own comment, since a bracketed-paste payload has no legitimate use for a raw ESC byte.
-- `packages/crew/src/harness/codex.ts` — `tomlBasicString` correctly escapes backslash, double-quote, and all C0/DEL control characters for both the quoted table key and the string value, so a `cwd` or model containing `"`, `\`, or newlines cannot break out of the generated TOML.
-- `packages/crew/src/core/worker-store.ts` — `stageCredentialFile`'s unlink-then-`O_EXCL|O_NOFOLLOW`-open sequence correctly prevents following a pre-planted symlink at the destination, and the destination directory's ownership is checked by `ensureOwnedDir` at the call sites before staging (independent of the TOCTOU gap noted above, which is about the *create* path, not this file-level defense).
-- `packages/crew/src/core/paths.ts` — `assertSafeSegment`'s single-segment `[A-Za-z0-9_-]+` allowlist is applied consistently by every path-builder that keys off an untrusted worker name (`shimPath`, `workerHomePath`, `harnessMarkerPath`, `worktreeMarkerPath`), closing path traversal via `/`, `.`, or `..` in a worker name before it reaches the filesystem or the generated shim script.
-- `packages/crew/src/harness/resolver.ts` — `resolveHarness`'s precedence chain correctly treats a present-but-invalid higher-precedence source as a hard error rather than falling through to a lower-precedence default, matching its documented contract that corrupt worker state must never disappear behind a valid fallback.
-
-- `packages/crew/src/hooks/emit-event.ts` — `runHook`'s JSON-parse guard,
-  managed-worker gate (`existsSync(metaPath(...))`), `EVENT_MAP` lookup,
-  `buildEvent`'s per-event shape construction (cwd/tool/tool_input handling,
-  including the `{}`-coercion of a non-object `tool_input`), the `Stop`
-  hook's `{"decision":"approve"}` stdout contract, and `readStdin`'s
-  5-second-timeout-with-no-hang behavior were all exercised by
-  `test/emit-event.test.ts` and match the implementation; the derive/baked
-  self-registration flow (write meta on first event, never overwrite on a
-  later event) is covered for both the transcript-path-present and
-  transcript-path-absent cases.
-- `packages/crew/src/pi-extension/index.ts` — the six `pi.on` handler
-  registrations, the WorkerEvent mapping for each (`session_start`,
-  filtered `input`→`user_prompt_submit` on `source === "interactive"`,
-  `tool_call`/`tool_result` via `canonicalToolName`, `agent_end`→`stop`,
-  `session_shutdown` filtered to `reason === "quit"`), the
-  `MOE_CREW_WORKER_DIR`-unset no-op path, and the "never overwrite an
-  existing meta" guarantee are all covered by `test/pi-extension.test.ts`
-  and match the code, including the malformed-event-payload resilience
-  tests.
-- Cross-checked `packages/crew/src/core/tool-name.ts`'s `canonicalToolName`
-  against the pi-extension's call sites (`event.toolName` possibly
-  `undefined` on a malformed test payload) — it tolerates non-string input
-  by returning `""`, so it cannot be the source of an uncaught throw there.
-- Read the broader test suite in this shard (`adopt.test.ts`,
-  `await-start.test.ts`, `claude-driver.test.ts`, `cli.test.ts`,
-  `codex-driver.test.ts`, `codex-launch.test.ts`, `consent.test.ts`,
-  `converse.test.ts`, `diagnostics.test.ts`, `event-log*.test.ts`,
-  `events*.test.ts`, `grant-consent.test.ts`, `handoff.test.ts`,
-  `harness-resolution.test.ts`, `integration/*-flow.test.ts`,
-  `launch.test.ts`, `list.test.ts`, `marketplace.test.ts`, `packs.test.ts`,
-  `paths.test.ts`, `pi-driver.test.ts`) end to end. These exercise commands
-  and drivers outside this shard's assigned source files (`adopt.ts`,
-  `launch.ts`, `converse.ts`, the harness drivers, `runs.ts`, etc.) and did
-  not surface an assertion that contradicted the behavior it was testing;
-  no further action taken on that code since it is out of this shard's file
-  list, but nothing in the test bodies themselves looked wrong.
-
-- `packages/flight/dashboard/src/server.ts` `handleStatic` — the `/static/*`
-  route was checked for path traversal. `join(STATIC_DIR, rest)` followed by
-  `target.startsWith(normalizedRoot)` correctly rejects both literal `..`
-  segments and pre-normalized `..` sequences that `new URL(...).pathname`
-  collapses (verified with `node -e` against several encoded-dot and
-  encoded-slash payloads: `%2e%2e` collapses at the `URL` parsing layer and
-  no longer starts with `/static/`, so it 404s before reaching
-  `handleStatic`; literal `%2f` survives `URL` parsing unresolved but is
-  never decoded by `path.join`, so it cannot act as a path separator). The
-  existence probe before `createReadStream` is deliberate and documented
-  (`Bun.file` vs `createReadStream` failure-mode difference) and is correct.
-- `packages/flight/dashboard/src/server.ts` `oneLine` / SSE framing — CR/LF
-  stripping is applied to both the SSE `data:` body and the `event:` name
-  (`publishCell`), which is the correct defense against a WHATWG
-  `EventSource` frame-splitting injection from a scenario/agent/credential/os
-  string that contains a raw CR or LF byte.
-- `packages/crew/test/worker-store.test.ts` — the `ensureOwnedDir`,
-  `stageCredentialFile`, and `removeWorker` suites exercise real adversarial
-  filesystem shapes (symlink swapped in at the credential-staging
-  destination, a `tmux_name` containing `../../` path-traversal, a plain file
-  where a directory is expected) and assert the victim path is untouched in
-  each case. These are load-bearing security tests and the assertions match
-  what a correct implementation must do.
-- `packages/crew/test/send.test.ts` — the two CR-017 regression tests
-  (`strips paste markers embedded in the prompt`, `does not let deleting an
-  embedded PASTE_START weld a live PASTE_END from the surrounding bytes`)
-  correctly pin the specific "reconstructed escape sequence from adjacent
-  survivor bytes" failure mode, not just a simple substring-strip case.
-- `packages/flight/dashboard/src/manifest.ts` and `contracts.ts` — the
-  read-side zod schemas correctly `.catch()`-guard every field that a
-  malformed/legacy/externally-edited `verdict.json`/`grid-manifest.json`
-  could break, and `loadGridManifest` wraps both `readFileSync` and
-  `JSON.parse` in the same try/catch so a missing or malformed manifest
-  degrades to `null` (results-only mode) rather than throwing out of
-  `startDashboard`.
-- `packages/crew/tsup.config.ts` — the CJS/ESM split and the manual
-  `banner: { js: "#!/usr/bin/env node" }` on the CJS bundle is justified by a
-  real, verifiable Windows cmd-shim failure mode (no shebang, no shim
-  interpreter) and is not dead configuration.
-
-- `packages/flight/dashboard/src/templates.ts` — `esc()` is a single-regex
-  escaper over the five HTML metacharacters (deliberately not a
-  `.replaceAll` chain, per its own comment, to satisfy a CodeQL sanitizer
-  model), and every interpolated scenario/agent/run_id/cost/title string
-  routed through `cellHtml`, `gridHtml`, and `cardHtml` is passed through it.
-  Cross-checked against `dashboard-templates.test.ts`'s escaping assertions
-  (ampersand-first ordering, quote escaping, card row `run_id`/`drift_line`
-  escaping) and found consistent.
-- `packages/flight/dashboard/test/dashboard-server.test.ts`'s CR/LF SSE
-  injection test (`"a CR in a run's scenario cannot forge an extra SSE
-  event/data pair"`) exercises exactly the class of injection risk that
-  free-text identity fields reaching an `event:` line would otherwise create,
-  and the assertion (`buf` must never contain `\r`) is a real, meaningful
-  check, not a tautology.
-- `packages/flight/src/qa/adapters/cli/adapter.ts` and
-  `packages/flight/src/qa/adapters/tui/adapter.ts` — process lifecycle
-  (`start`/`close`, descendant reaping with a grace window before SIGKILL,
-  private per-session tmux servers to avoid inheriting a stale shared
-  server's environment) reads correctly against their own doc comments. I
-  reproduced the specific claim in `CLIAdapter`'s `readStream`/`pump` (a
-  `.then()` chain with no `.catch()` reading from a child process stream)
-  against a real `child_process.spawn` + `SIGKILL` sequence
-  (`node repro-stream.mjs` in scratch), and confirmed no unhandled rejection
-  is raised on an ordinary kill — the fire-and-forget promise chain is safe
-  in practice, not a latent crash.
-- `packages/flight/src/lab/tab/index.ts` (`mergeEstimates`,
-  `estimateTrajectory`, `estimateUsageSidecar`) — the moe-tab boundary
-  (`ObolError`→`TabError`, `'obol'`→`'tab'` dialect rename, mandatory
-  `pricing_source`) is handled consistently with its own commentary, and the
-  approximation/unpriced-model bookkeeping (tuple-keyed dedup, first-truthy
-  `pricing_as_of`) matches its stated contract.
-- `packages/flight/src/package-root.ts` — the package-root discovery walk
-  correctly lands one level above `src/package-root.ts` from both `src/` and
-  a built `dist/`, matching its documented invariant.
-- `packages/flight/examples/todo/*` and
-  `packages/flight/examples/tutorial/webapp/server.ts` are explicitly
-  documented, intentionally-insecure fixtures ("Don't use this as a
-  starter" / "DO NOT use this code as a template for a real app") — the
-  absence of auth, CSRF protection, and rate limiting there is by design, not
-  a defect.
-
-- `packages/flight/src/qa/adapters/tui/capture-parser.ts` — the xterm-headless-backed `CaptureParser`: palette/cube/grayscale color math (`paletteColor`, `rgbHex`), wide-glyph width handling, and the absolute-cursor-positioning feed strategy for tmux `capture-pane -e` output were all checked against the documented xterm-256 cube/grayscale formulas and are correct.
-- `packages/flight/src/qa/adapters/web/lib/html-diff.js` — the hand-rolled Myers diff and its `multisetDiff` fallback were exercised directly (`node -e` against `generateHtmlDiff`) for empty inputs, pure add/remove, and pure-reorder cases; all produced the documented output, including the "reorder is reported as del+add, not no-op" behavior the comments call out.
-- `packages/flight/src/qa/adapters/web/lib/element-selector.js` — `parseContains`'s regex was exercised against a selector containing a `:contains(...)`-shaped substring inside an unrelated attribute value (`a[href="test:contains(x)"]:contains('y')`) and correctly anchored on the real trailing clause via backtracking, not the decoy.
-- `packages/flight/src/qa/adapters/web/lib/browser-session.js` / `cdp-router.js` / `page-session.js` / `browser-bridge.js` — the sessionId-routing contract (root command responses vs. page-session responses vs. events) and the `ensureConnected()` memoized-connect logic were traced for the concurrent-caller race the comments call out (PRI-1690) and hold up: the synchronous assignment of `connectPromise` before any `await` prevents two back-to-back `ensureConnected()` calls from double-connecting.
-- `packages/flight/src/qa/adapters/web/adapter.ts` and `cookies.ts` — tool dispatch, schema-validation caching, the tab-focus-stack fallback, and `install_cookies`'s YAML validation/error-ordering (unknown-field checks before required-field checks, cookie values excluded from evidence logging) all match their documented contracts.
-
-- `packages/flight/src/qa/agent/validators.ts` — `parseReportResult`/`salvageReportResult`/`parseReportCriteria`/`checkCriteriaConsistency`/`validateToolArgs` all treat LLM output as fully untrusted, narrow it defensively, and give specific, actionable rejection reasons. The salvage path correctly preserves a valid core verdict while dropping only malformed observations (PRI-2140), and criteria-consistency correctly allows fail/investigate with all-passing criteria while rejecting an overall `pass` next to any non-pass criterion.
-- CR-032 containment — `tools/page-actions.ts`'s `executeFileUpload` resolves every `file_paths` entry through `resolveInside(contextRoot, rel)` before it reaches `DOM.setFileInputFiles`, matching the containment already used by `install_cookies`/`install_passkey`; confirmed the same `resolveInside` gate wraps `passkey.ts`'s `readPasskeyFile` path resolution.
-- CR-038 evidence-log redaction in `bash-tool.ts` — verified `buildScrubbedEnv`/`redactSecrets` are built from and applied to the same key set, so the scrubbed set matches what was actually forwarded to the child; the plain substring-replace approach is deliberately chosen over regex to sidestep credential values containing regex metacharacters. (Its scope gap against a deliberately-adversarial agent is filed above.)
-- CR-039 in `api/routes/config-effective.ts` — confirmed against `cli/config-command.ts`'s `buildConfigOutput` that `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` are already reduced to `"set"/"unset"` at the source, and that the route's own loop over `CREDENTIAL_CAPABLE_SDK_ENV_KEYS` correctly reduces the remaining `string | null` fields (`ANTHROPIC_BASE_URL`, proxy vars, etc.) to the same presence-only shape before the payload is serialized — no raw secret-capable value reaches the JSON response.
-- `packages/flight/src/qa/agent/agent.ts`'s stall watchdog fingerprinting (`stablePayload = result0.kind === "image" ? result0.image.data : (result0.text ?? "")`) — checked against `models/provider.ts`'s `ToolResult` union: every variant (`text`, `image`, `artifact`, `capture`) always carries a populated `text` field, so the `capture`/`artifact` branches are not silently starved of a fingerprint the way a first read suggested.
-- `packages/flight/src/qa/agent/watch-manager.ts`'s `WatchManager.waitForWake` — single-flight guard (`waitInFlight`) prevents concurrent pollers from double-driving the same manager; the idle/timeout/new-file races are computed from monotonically-read `Date.now()` values each poll and bounded correctly against `WAKE_IDLE_MS_MIN`/`WAKE_TIMEOUT_MS_MAX` in `wake-on-idle-log-tool.ts`'s `parseArgs`.
-- `packages/flight/src/qa/adapters/web/lib/tabs.js` and `lifecycle.ts` — tab/page-session cache lifecycle (memoized `getPageSession()` per `targetId`, detach-then-delete ordering in `closeTab`, side-trip pop loop running before `BrowserContext.dispose()` in `closeWebAdapter`) is internally consistent and every cleanup step is wrapped to be best-effort without failing the run.
-
-- `packages/flight/src/qa/api/routes/results.ts` — the non-live (manifest-gated) branch of `/:runId/file/:path{.+}`, the `/:runId` and `/` list routes, and `parseIntParam`'s clamping were all exercised by hand-tracing and are correctly bounded; the only defect found is the live-branch prefix check written up above.
-- `packages/flight/src/qa/api/ws-handlers.ts` and `ws-upgrade.ts` — both explicitly route untrusted ids through `parseRunId`/`parseRunSetId` and `isSafePath` before touching disk, and both correctly treat the origin allowlist and transcript-snapshot parse failures as best-effort/non-fatal.
-- `packages/flight/src/qa/api/shutdown.ts` and `shutdown-stub-writer.ts` — the drain sequencing (cancel tokens → abort → patience window → stub write) and the stub writer's `existsSync` race-safety argument both check out against `ActiveRunRegistry`'s documented ordering invariant.
-- `packages/flight/src/qa/api/run-cancel.ts`, `run-set-broadcaster.ts`, `ws.ts` — straightforward registries; per-client send/close failures are swallowed correctly and don't affect other clients.
-- `packages/flight/src/qa/cli/args.ts` — the flag parser's bareword-vs-value disambiguation (a flag value that itself starts with `--` is never swallowed) was traced through `parseFlags`, `extractPositional`, and the batch positional-scanner and is internally consistent across all seven subcommands.
-- `packages/flight/src/qa/cli/stream/batch-table.ts` and `colors.ts` — the TTY spinner/commit bookkeeping (`pendingBlankAboveSpinner`, `activeKey`) and the rollup-median computation were traced through queued → running → done/errored transitions for both single- and multi-pass cases and are self-consistent.
-
-- `packages/flight/src/qa/paths.ts` (`resolveInside`, `isSafePath`, `canonicalize`) and its use in `packages/flight/src/qa/context/read-tool.ts` and `packages/flight/src/qa/context/credential-tool.ts`: path containment correctly rejects absolute paths, `..` segments (split on both `/` and `\`), and symlink escapes via `realpathSync`-based canonicalization on both `base` and `target`. Traced all three call sites and found no path that skips the guard.
-- `packages/flight/src/qa/revival/rebuild-messages.ts` (`rebuildToolResult`): the module's own comment flags all three attacker-influenceable path fields (`artifact`, `capturePath`, `image`) as CR-047-relevant. I verified each of the three call sites routes through `safeResolveInside` (which wraps `resolveInside` from `paths.ts`) before any `readFileSync`, and each degrades to a warning + placeholder text rather than reading outside `runDir` on rejection. No field bypasses the guard.
-- `packages/flight/src/qa/context/credential-tool.ts` (`runResolver`): argv-based `spawn` (no shell), `entity`/`key` validated against restrictive patterns before use, stdout/stderr byte caps enforced independently of the timeout/kill cascade, and the SIGTERM→grace→SIGKILL sequence correctly settles exactly once (`settled` guard) regardless of which event (data-cap, timeout, exit, spawn error) fires first.
-- `packages/flight/src/qa/render/render-run.ts`: the JSON payload spliced into the static HTML template is escaped for `</script` breakout before being embedded in a `<script type="application/json">` tag, which is the correct (and sufficient) mitigation for this embedding pattern.
-- `packages/flight/src/qa/config.ts`: `validateRunBody`, `mergeRunConfig`, and `loadConfig`'s env/flag precedence resolution (via `config-helpers.ts`) were traced end-to-end; source attribution (`sources.*`) and the default-chrome auto-launch fallback logic are internally consistent, and the loopback-only default host (CR-051) is preserved.
-- `packages/flight/src/qa/models/anthropic.ts` and `packages/flight/src/qa/models/openai.ts`: cache-breakpoint placement, OAuth-vs-API-key auth construction, and provider-neutral `AgentResponse` conversion (including the OpenAI `input_tokens` cached-token subtraction and the deliberate silent-drop of an unparseable truncated `function_call` on `max_output_tokens`) match their documented rationale.
-
-- `packages/flight/src/qa/util/id.ts` — `makeRunId`/`makeRunSetId`'s nonce
-  generation (`Math.random().toString(36).slice(2, 6).padEnd(4, "0")`) was
-  checked empirically: `node -e` over 20M iterations of
-  `Math.random().toString(36)` never produced a string shorter than 8
-  characters (well above the `slice(2, 6)` window), so the `padEnd` fallback
-  path is not reachable in practice and the nonce always satisfies
-  `RUN_ID_RE`'s `[a-z0-9]{4}` tail.
-- `packages/flight/src/qa/util/sanitize-error.ts` — `LlmError`/`sanitizeLlmError`
-  only read an explicit allow-list of fields (`status`, `requestID`/`request_id`,
-  and a carefully-ordered Anthropic/OpenAI `error.type`/`code` extraction) and
-  never retain a reference to the original SDK error, consistent with the
-  stated goal of keeping response `Headers` (org id, `cf-ray`, `set-cookie`)
-  out of anything that reaches `util.inspect`.
-- `packages/flight/src/qa/runs/run-set.ts` — `runRunSet`'s duplicate-`cardId`
-  guard (rejecting `cards[]` with a repeated id before generating any run ids)
-  correctly prevents the double-count/lost-attempt corruption described in
-  its own CR-048 comment; the cancellation path (`cancelToken.cancelled`)
-  correctly marks every unstarted eagerly-generated run as `"cancelled"`
-  rather than leaving it unresolved in `set.json`.
-- `packages/flight/src/qa/runtime/serve.ts` — the WS-upgrade handler's
-  `Host`-header URL-parsing guard (CR-050) was verified by inspection against
-  its own stated failure mode: a malformed `Host` header that Node's HTTP
-  parser accepts but the WHATWG `URL` constructor rejects now hits the
-  `try { url = new URL(...) } catch { socket.destroy(); return; }` path
-  instead of throwing synchronously inside the unguarded `'upgrade'` event
-  handler.
-- `packages/flight/test/qa/adapters/web/cookies.test.ts` — exercises real
-  security-relevant boundaries end to end: path traversal (`../secret.yaml`)
-  and absolute-path rejection at `resolve_path`, and confirms cookie *values*
-  never appear in `install_cookies_ok`/`install_cookies_failed` log entries
-  (only `valueLength`), including on the driver-throw path.
-- `packages/flight/test/qa/adapters/web/chrome-ws-lib-isolation.test.ts`,
-  `chrome-ws-lib-context-isolation.test.ts`, and `host-override.test.ts` —
-  all pin the PRI-1436 per-session isolation invariant (no module-level
-  mutable state shared across concurrent `WebAdapter`/Chrome sessions) with
-  concrete before/after mutation assertions rather than just object-identity
-  checks.
-- `packages/flight/test/qa/adapters/web/generate-html-diff.test.ts` — the
-  "stays fast on two large, fully-different documents" test asserts a
-  concrete wall-time budget (<100ms) against the documented Myers-trace
-  blow-up (CR-033); this is a real regression guard, not a tautological
-  timing assertion.
-- `packages/flight/test/qa/adapters/tui/adapter.test.ts` — descendant-reap
-  and HUP-flush-grace tests correctly guard the `tmux` binary's availability
-  via `describe.skipIf(!tmuxAvailable)`, matching `vitest.config.ts`'s
-  documented rationale for keeping these out of the silently-green default
-  suite.
-
-Reviewed all 30 assigned files: the `packages/flight/test/qa/adapters/web/**`
-suite (browser-bridge, browser-session/-reconnect, cdp-router,
-chrome-launcher-helpers, chrome-process, mouse, navigation, page-session,
-tabs, webauthn-context, websocket-client-no-compression, passkey,
-side-trip-popup, and the `tools/` keyboard and page-actions suites) and the
-`packages/flight/test/qa/agent/**` suite (abort-signal, agent, bash-tool,
-empty-end-turn-safety-net, event-stream, initial-message, loader,
-project-prompt, prompt-baseline, prompts-drift, prompts, reflection-checkpoint,
-reflection, shared-tools-watch).
-
-This is an unusually high-quality shard: nearly every non-trivial test carries
-a comment naming the regression it pins (PRI-#### or CR-###) and explaining
-the failure mode in mechanical terms, and several tests deliberately encode
-the *reason* a naive mock would pass for the wrong reason (e.g. `keyboard.test.ts`'s
-stub `keyboardPress` reproduces the real named-keys-only throw behavior rather
-than a mock that can't fail; `navigation.test.ts`'s fake page session
-reproduces the real 30s `waitForEvent` promise shape rather than shortcutting
-it).
-
-I cross-checked the regression claims against the actual implementation
-rather than taking the comments at face value:
-
-- `chrome-launcher-helpers.test.ts` (CR-030, path traversal in
-  `getChromeProfileDir`): confirmed `chrome-launcher-helpers.js`'s
-  `getChromeProfileDir` sanitizes `profileName` via
-  `/^[a-zA-Z0-9_-]+$/` replacement before `path.join`, matching the three
-  test cases (traversal, embedded slashes, ordinary name).
-- `chrome-process.test.ts` (CR-031, `killChrome` signalling an unconfirmed
-  port holder): confirmed `chrome-process.js`'s `killChrome` gates the
-  port-holder-kill fallback on `state.activePort && state.activePortOwned`,
-  not on `activePort` alone.
-- `tools/page-actions.test.ts` (CR-032, unsandboxed `file_upload` paths):
-  confirmed `executeFileUpload` in `page-actions.ts` routes through
-  `resolveInside(ctx.contextRoot, path)` and rejects when `contextRoot` is
-  null, matching all four test cases (absolute, traversal, no-root,
-  legitimate-relative).
-- `tools/keyboard.test.ts` (CR-035, no-selector `type` walking text through
-  `keyboardPress`): confirmed `executeType` in `keyboard.ts` unconditionally
-  calls `ctx.chrome.fill(ctx.tab, selector, text)` regardless of whether
-  `selector` is present, never touching `keyboardPress`.
-- `bash-tool.test.ts` (CR-038, forwarded SDK credentials leaking into
-  `run.jsonl`): confirmed `bash-tool.ts`'s `redactSecrets` masks every
-  `SDK_PASSTHROUGH_KEYS` value out of `transcriptText` (built from the same
-  `scrubbedEnv` used for the child's actual env) while leaving `text` (what
-  the agent sees) untouched, matching the "still forwarded to the agent, but
-  redacted in the persisted log" test pair.
-- `mouse.test.ts`'s CDP-throws-but-element-exists fallback path: confirmed
-  against `mouse.js` — `resolveCenter` throws when `Runtime.evaluate` reports
-  `found:false`, and `click()`'s catch block re-probes via a plain
-  `el.click()` IIFE, propagating a real "not found" only if that second probe
-  also fails. The test's two-call `Runtime.evaluate` mock (false then true)
-  exercises exactly that path.
-- `websocket-client-no-compression.test.ts`: confirmed `websocket-client.js`
-  constructs `new WebSocket(url, { perMessageDeflate: false })`, matching the
-  assertion that the upgrade handshake never advertises
-  `permessage-deflate`.
-- `reflection.test.ts`'s `renderTrace` windowing/renumbering assertions:
-  confirmed against `reflection.ts` (`calls.slice(-MAX_TRACE_ENTRIES)` then
-  `.map((c, i) => ...i+1...)`), so numbering restarts at 1 within the
-  truncated window as asserted.
-
-The `agent.test.ts` file (1958 lines) is the load-bearing spec for the agent
-loop's turn/abort/timeout/stall-watchdog/re-ask/salvage/truncation-recovery
-machinery. I read it in full rather than sampling; the re-ask and salvage
-tests (PRI-2140/PRI-2160) correctly distinguish "malformed but salvageable"
-(drop only the bad observation, keep the verdict) from "unsalvageable"
-(bounded re-asks then `investigate`) from "criteria present but uncited/
-contradictory" (re-ask, then salvage-with-downgrade if still uncited), and
-each has both a positive and a bounded-exhaustion case. The stall-watchdog
-tests correctly distinguish tool-identity-plus-payload fingerprinting (so a
-web adapter's screenshot, whose `text` field carries a per-call path but
-whose image bytes are frozen, still trips the watchdog) from genuinely
-changing results (never trips it), and confirm the mutating-call-resets-
-counter and text-only-turn-breaks-the-chain edge cases. The
-`abort-signal.test.ts` three cases (before turn 1, between turns, mid-tool-
-call-sequence within a turn) match the stated PRI-1507 invariant that abort
-is observed as a synthetic `errored` result, never a thrown rejection.
-
-No defects were found in this shard.
-
-- `packages/flight/src/qa/agent/validators.ts` against `validators.test.ts`: `parseReportResult`, `salvageReportResult` (including the PRI-2140 truncated-enum salvage path and the double-JSON-encoded `observations` recovery), `parseReportCriteria` (PRI-2160 cross-field evidence requirement), `checkCriteriaConsistency`, and `validateToolArgs`'s narrow JSON-Schema subset (string/number/boolean/array/object, enum, required, null-as-absent-for-optional) all match their test expectations exactly.
-- `packages/flight/src/qa/agent/shared-tools.ts`, `wake-on-idle-log-tool.ts`, `watch-logs-tool.ts`, and `watch-manager.ts` against their respective tests: tool mounting/gating by `contextRoot`, the `idle_ms`/`timeout_ms` clamping to `WAKE_IDLE_MS_MIN`/`WAKE_TIMEOUT_MS_MAX`, glob registration idempotency, `scan()`'s new-file/appended/truncation detection, and the `waitInFlight` concurrent-call guard in `WatchManager.waitForWake` all check out.
-- `packages/flight/src/qa/agent/reflection.ts` and the `<SYSTEM-REMINDER>` literal in `agent.ts` (the deadline-grace reminder) both satisfy the UI's `isSystemReminder` regex coupling asserted in `system-reminder-prefix.test.ts`.
-- `packages/flight/src/qa/api/active-runs.ts` (`ActiveRunRegistry`) against `active-runs.test.ts` and `active-runs-route.test.ts`: register/list/unregister semantics including the `startedAt`-guarded unregister race protection, the 200-entry progress-log ring buffer, and the abort-controller bookkeeping (`abortAll` skipping already-aborted signals and not double-counting) all match.
-- `packages/flight/src/qa/api/routes/active-runs.ts`'s target-truncation logic matches `caps.test.ts`'s PRI-1478 truncation tests (list view truncated, snapshot view full).
-- `packages/flight/src/qa/config.ts`'s env/flag parsing for `defaultBudgetMs`, `maxRequestBodySize`, `maxConcurrentRuns`, `activeRunTargetMaxBytes`, and `validateRunBody`'s rejection of `turns` and out-of-range `passes` all match `caps.test.ts`, `config.test.ts`, `config-effective.test.ts`, and `run-multi-pass.test.ts`.
-- `packages/flight/src/qa/api/server.ts`'s `bodyLimit` 413 envelope and the generic `onError` 500 JSON envelope match `caps.test.ts` and `server.test.ts`.
-- `packages/flight/src/qa/api/routes/config-effective.ts`'s CR-039 mitigation (credential-capable `sdkEnv` keys reported as `"set"`/`"unset"` rather than verbatim) matches `config-effective.test.ts`, including the negative assertion that the raw secret values never appear in the serialized response.
-- `packages/flight/src/qa/api/routes/fanout.ts`'s CR-040/CR-041/CR-042 mitigations — the `[a-zA-Z0-9-]+` card-id charset check plus `isSafePath` belt-and-suspenders in `writeCards`, and `parseRunId`-gated `id` resolution on the `/:id/:mode` route — match every traversal case in `fanout.test.ts`, including the percent-encoded-slash variant that survives Hono's router-level `../` normalization.
-- `packages/flight/src/qa/api/routes/results.ts`'s manifest-gated file route (`isSafePath` double-check, live-run allow-list restricted to `screenshots/`, `frames/`, `captures/`, `artifacts/`, and `run.jsonl`, deliberately excluding `inputs/context/`, plus the `.ansi`→`.json` capture-twin allowance) matches every case in `file-route.test.ts` and `results.test.ts`, including the credential-fixture-exclusion regression test.
-- `packages/flight/src/qa/api/routes/scenarios.ts`'s create/update body validation and `isSafePath`-based id containment match every case in `scenarios.test.ts`.
-- `packages/flight/src/qa/api/routes/run.ts`'s solo and multi-pass POST paths — concurrency cap, unknown-model handling, PRI-1507 per-attempt `AbortController` attachment via `onAllRunsKnown`, and the unregister-before-broadcast terminal-event ordering — match `run.test.ts`, `run-multi-pass.test.ts`, and `routes/run-snapshot.test.ts`.
-- `packages/flight/src/qa/api/run-cancel.ts` (`CancelTokenRegistry`) and `packages/flight/src/qa/api/run-set-broadcaster.ts` (`RunSetBroadcaster`) match `run-cancel.test.ts` and `run-set-broadcaster.test.ts` exactly, including `readyState`-gated dispatch and per-client `send`/`close` error swallowing.
-- `packages/flight/src/qa/api/routes/run-sets.ts`'s `RUN_SET_ID_RE`-gated id validation (rejecting percent-encoded traversal on GET, GET summary, and DELETE) matches `run-sets.test.ts`.
-- `packages/flight/src/qa/api/shutdown.ts` (`ShutdownState`, `drainShutdown`) and `shutdown-stub-writer.ts` match every case in `shutdown.test.ts` and `shutdown-cancel.test.ts`, including the cancelAll-before-abortAll ordering (PRI-1507 Case 5), the patience-window race that preserves a real `result.json` over a stub, and the drain-middleware's 503 vs. unblocked-GET behavior.
-- `packages/flight/src/qa/api/ws-handlers.ts` (`handleWsOpen`, `handleSetWsOpen`) matches `ws-handlers.test.ts`, including the `addClient`-before-snapshot ordering guard, the best-effort/defense-in-depth `isSafePath` check before reading `run.jsonl`, and malformed-JSONL-line skipping.
-- `packages/flight/src/qa/api/ws-upgrade.ts` (`decideUpgrade`) and `packages/flight/src/qa/util/id.ts` (`parseRunId`, `parseRunSetId`) match every case in `ws-upgrade.test.ts`, including the PRI-1483 Origin-allowlist gate (empty allowlist = disabled; non-matching or missing Origin rejected when the allowlist is non-empty).
-- `packages/flight/src/qa/api/ws.ts` (`RunBroadcaster`) matches `ws.test.ts`'s per-runId channel isolation and closed-client filtering.
-- `packages/flight/src/qa/cards/store.ts` (`findCard`, `loadAllCards`) matches every case in `cards/store.test.ts`, including the fast-path/fallback-scan split, the direct-hit-parse-failure-throws vs. fallback-scan-skips-and-logs asymmetry, and the id-mismatch fall-through.
-- `packages/flight/src/qa/paths.ts` (`isSafePath`, `resolveInside`) is symlink/canonicalization-aware and is the consistent containment primitive underlying every traversal-defense test cited above.
-
-This shard is exclusively test files for `@bubstack/moe-flight`'s QA CLI (`packages/flight/test/qa/cli/**`, `packages/flight/test/qa/config*`, `packages/flight/test/qa/context/*`). I read all 30 assigned files and cross-checked several against the source they exercise where the test made a security- or contract-relevant claim:
-
-- `args.test.ts` / `args-hygiene.test.ts` / `project-prompt-flag.test.ts` / `render-args.test.ts` / `validate.test.ts`: flag parsing, unknown-flag rejection, `--passes` bounds, `--model` role-prefix validation, and `--project-prompt`/`--show-prompt-and-exit` gating for `run` vs `batch` are all exercised with both positive and negative cases and read as internally consistent.
-- `config.test.ts`, `config/resolve-setting.test.ts`, `config/source-attribution.test.ts`: cross-checked against `packages/flight/src/qa/config.ts` and `config-helpers.ts`. The `CR-051` claims (default bind host `127.0.0.1`, `MOE_FLIGHT_HOST`/`--host` precedence) and the `MOE_FLIGHT_CREDENTIAL_RESOLVER` existence/executable-bit validation both match the source (`hostR`/`resolveCredentialResolver` in `config.ts`) exactly as asserted.
-- `context/credential-tool.test.ts`: cross-checked against `packages/flight/src/qa/context/credential-tool.ts`. The entity/key validation (rejects `..`, leading `.`, `/`/`\`, length caps, non-`[a-zA-Z0-9_-]` keys), the stdout/stderr 64 KiB/8 KiB overflow caps, the SIGTERM→grace→SIGKILL timeout cascade, and the transcript-redaction default (`includeInTranscripts` gate) all match the implementation. All referenced fixture scripts (`credential-resolver-{ok,fail,slow,empty,overflow,stderr-overflow}.sh`) exist under `packages/flight/test/qa/fixtures/`.
-- `context/read-tool.test.ts`: cross-checked against `packages/flight/src/qa/context/read-tool.ts` and `resolveInside`/`isSafePath` in `packages/flight/src/qa/paths.ts`. Path-traversal (`..`), absolute-path, and binary-file rejections are backed by real containment checks (segment-wise `..` rejection plus `isAbsolute` guard), not just string matching in the test.
-- `cli/batch.test.ts`: the `CR-043` card-id-collision test (`suiteA/login.md` vs `suiteB/login.md`) was checked against `assignCardIds` in `packages/flight/src/qa/cli/batch.ts`, which disambiguates same-stem cards with a `-2`, `-3`, ... suffix — matches the test's expectation of two distinct card ids and a non-doubled `totalRuns`.
-- `cli/stream/*.test.ts` (`attach`, `batch-table`, `colors`, `format-args`, `format-event`, `format-timing`, `format`, `jsonl`, `pretty`, `wrap`): fixture-driven renderer tests (`pretty.test.ts` diffs against golden `.pretty.txt` fixtures) plus unit tests for ANSI wrapping, timing thresholds, and TTY/non-TTY rollup accounting. No inverted or self-contradicting assertions found.
-- `cli/{ask,auto-emit,cancel,config-command,error-output,render-cmd,run,run-one,show-prompt-and-exit}.test.ts`: cover the remaining CLI subcommands' error paths (missing run dir, missing `run.jsonl`, SIGINT handler double-detach safety, JSON-vs-prose `formatCliError` envelope, `MOE_FLIGHT_DEBUG`/`--verbose` gating) — all consistent with their stated intent.
-
-- `packages/flight/test/qa/docker-context.test.ts` (CR-026): verified `packages/flight/docker/Dockerfile.dockerignore` exists next to `Dockerfile` and contains every pattern the test asserts (`**/.env`, `**/.env.*`, `**/node_modules`, `**/dist`, `**/.turbo`, `.git`), read `compose.yaml`'s `context: ../../..` to confirm the stated root-context problem the fix addresses, and confirmed BuildKit's `<Dockerfile>.dockerignore` sibling-file convention is what's actually in use.
-- `packages/flight/test/qa/examples/example-state-dir.test.ts` (CR-029): verified on disk that `examples/tutorial/.moe-flight/stories/` and `examples/todo/.moe-flight/stories/` contain every story file the test lists, and that no `.gauntlet/` directory remains anywhere under `examples/`.
-- `packages/flight/test/qa/examples/todo/web-server.test.ts` (CR-028) and `packages/flight/test/qa/examples/todo/launchers.test.ts`: read `examples/todo/run-web.sh` / `run-tui.sh` directly and confirmed the launcher `cwd`/`--import tsx`/entrypoint behavior the tests assert against matches the scripts on disk.
-- Ran the full `unit`-project subset of this shard (`context/tree`, `evidence/logger`, `evidence/run-set-writer`, `evidence/writer`, `examples/*`, `fanout/generator`, `format/story-card`, `models/anthropic`, `models/openai`, `models/provider`, `e2e/built-cli-smoke`, `integration/cli-batch`, `integration/cli-bc`, `integration/cli-fanout`, `integration/cli-smoke`, `integration/tui-*` under `--project tmux`) via `npx vitest run`: 174+ tests pass cleanly (plus the two API-key-gated integration suites self-skip as designed). `renderContextTree`'s truncation/ordering/indentation behavior, `EvidenceLogger`'s event-envelope chaining and oversize-text spill-to-artifact behavior, `RunSetWriter`'s status-bucketing (`consistent_pass`/`mixed`/`mixed_with_errors`/`errored`), the story-card parser's soft-wrap/heading/issue-reference edge cases (PRI-2160), and the Anthropic/OpenAI response-conversion helpers (stop-reason mapping, cache-token accounting, OAuth system-block ordering, CR-046's truncated-tool-call recovery) were all exercised directly and matched their test's stated intent.
-
-- `packages/flight/test/qa/revival/rebuild-messages.test.ts` (964 lines) — thorough coverage of recovery-turn replay ordering (PRI-2160, PRI-1864), reflection-checkpoint weaving, deadline grace turns, image/text/TUI-capture rehydration, the old-run fallback path, `--turn` cutoff semantics, and CR-047 (artifact-path traversal outside the run dir, verified the secret content and a matching warning are both asserted, not just one).
-- `packages/flight/test/qa/runs/orchestrator.test.ts` and `orchestrator-ordering.test.ts` — full lifecycle-hook ordering (`onLogger.attach → beforeAgent → beforeClose → adapter.close → onLogger.detach → afterClose`), the error-path hook sequence, the PRI-1507 `writeResultFiles`-before-`afterClose` invariant (correctly using `toBeLessThanOrEqual` rather than a strict `<`, so it isn't flaky under coarse timer resolution), the abort-signal success-path-writes-errored-result invariant, and a source-text guard against the orchestrator importing HTTP-only types.
-- `packages/flight/test/qa/runtime/serve-errors.test.ts` — CR-050 (malformed Host header on a WS upgrade must not crash the process, verified via a temporary `uncaughtException` listener) and CR-051 (default loopback-only bind, explicitly reasoned about since the daemon has no route auth) are both meaningful security-relevant regressions, not just smoke tests.
-- `packages/flight/test/qa/streaming/screencast.test.ts` — CR-052 (a rejected `Page.screencastFrameAck` must not become an unhandled rejection) is verified with a real `unhandledRejection` listener and multiple microtask-drain ticks rather than asserting on a synchronous absence.
-- `packages/flight/test/qa/util/sanitize-error.test.ts` — the header/leak tests serialize every own property (including non-enumerable) via `Object.getOwnPropertyNames` plus `util.inspect(..., {depth: null})`, which is a real check that sensitive header values aren't reachable through any surface Node's own printers would traverse, not just the top-level fields.
-- `packages/flight/ui/src/App.tsx` — the three route-derived regexes (`cardIdMatch`, `runIdMatch`, `liveIdMatch`) were checked against edge cases (`/cards/newfoo` vs `/cards/new`, `/runs/livecard_...` vs `/runs/live/...`); all resolve correctly given the negative-lookahead anchoring, and `main.tsx` (read to confirm) uses `createBrowserRouter`/`RouterProvider`, so `CardEditor`'s `useBlocker` call is backed by a data router and won't throw at runtime.
-- `packages/flight/test/qa/paths.test.ts` — `isSafePath` and `resolveInside` symlink-escape and prefix-collision cases were spot-checked against `path.join` semantics with `node -e` and read against the `paths.ts` implementation; both hold.
-
-- `packages/flight/ui/src/lib/transcript.ts`'s `applyEvent` reducer and
-  `TranscriptView.tsx`'s `detectCurrentTurn`: verified that `model.turns`'
-  highest key is always exactly the in-progress turn at any point in a real
-  event stream (llm_request → llm_response → tool_call/tool_result all land
-  on the same turn key before the next turn's llm_request arrives), so the
-  simplified `return turnNumbers[0]` is behaviorally equivalent to the more
-  elaborate heuristic described in the function's doc comment, not a bug.
-- `packages/flight/ui/src/components/RunsList.tsx`'s `runKey` and
-  `groupByCard`: cross-checked against `packages/flight/src/qa/util/id.ts`'s
-  `makeRunId`/`RUN_ID_RE` (cardId charset excludes `_`, so `runId.split("_")`
-  reliably yields exactly `[cardId, timestamp, nonce]`) and against
-  `ActiveRun.id` in `lib/api.ts` (confirmed equal to `VerdictResult.runId`,
-  so the active/completed dedupe by run id is sound).
-  `RUN_SET_ID_RE`/`makeRunSetId` are unaffected by the card-id gap noted
-  above since run-set ids are always server-generated from a fixed `kind`
-  enum, not user input.
-- Ran `pnpm --filter @bubstack/moe-flight-ui typecheck`: passes clean.
-  Confirmed the bare `React.CSSProperties` / `React.MouseEvent` /
-  `React.ReactNode` type references in `TuiCapture.tsx`, `ErrorBanner.tsx`,
-  and `TranscriptView.tsx` — none of which import a default `React` binding
-  — do not trip `noImplicitAny`/UMD-global errors under this package's
-  `@types/react@19` + `jsx: react-jsx` configuration; not a defect.
-- `packages/flight/ui/src/components/shared.tsx`'s `ConfirmDialog`: verified
-  the hook-order is unconditional before the `if (!open) return ...` early
-  return, and that the native `<dialog>` element persists across the
-  open/closed branches (same type/position, so React reconciles rather than
-  remounts), so the `dialogRef`-driven `showModal()`/`close()` effect stays
-  correctly wired across toggles.
-- `packages/flight/ui/src/components/transcript/TuiCapture.tsx`'s
-  `CaptureGrid`: the `cell.ch === "" && cell.width === 1` skip for the
-  trailing half of a wide character is consistent with the leading cell's
-  `gridColumn: "span 2"`, so double-painting is correctly avoided.
-- `packages/flight/ui/src/hooks/useLiveTranscript.ts`'s WS query param
-  (`?run=<runId>`) matches `packages/flight/src/qa/api/ws-upgrade.ts`'s
-  `decideUpgrade` exactly (path `/api/ws`, param name `run`).
-
-- `packages/flight/ui/src/lib/transcript.ts` and
-  `packages/flight/ui/src/lib/transcript-blocks.ts` — the event reducer
-  (idempotency via `maxEventId`, per-turn `tools` pairing by `toolUseId`,
-  soft-error detection regex, prompt-pairing state machine) and the
-  chronological block-builder were read end-to-end against the fixture-driven
-  tests in `packages/flight/ui/test/transcript.test.ts` and
-  `transcript-blocks.test.ts`; the logic matches its own documentation and the
-  test assertions.
-- `packages/flight/ui/src/lib/api.ts` — `fileUrl`'s static-vs-server branching
-  (`window.__MOE_FLIGHT_RUN__` presence) and path-segment encoding were
-  checked against `api-file-url.test.ts` and are consistent.
-- `packages/flight/vitest.config.ts` and `packages/flight/ui/vitest.config.ts` —
-  verified every path listed in `CHROME_SUITES`, `FFI_SUITES`, and
-  `TMUX_SUITES` exists on disk (17 files checked via `ls`), so the
-  include/exclude split does not silently drop or double-run any suite.
-- `packages/glass/skills/browsing/lib/cdp-router.js`,
-  `lib/cdp-utils.js`, `lib/cookies.js`, `lib/console-logging.js` — small,
-  self-contained helpers; session-id routing, correlation-map cleanup on
-  `unregisterSession`, and `Runtime.evaluate` exception surfacing were traced
-  and are correct for their stated contracts.
-- `packages/glass/skills/browsing/lib/dialogs-router.js` — the permission-dialog
-  resolve path (`CR-064`) was specifically checked: the shim secret and id are
-  passed through `JSON.stringify` (not raw string concatenation) into the
-  injected `Runtime.evaluate` expression, which closes the "craft an id to
-  smuggle extra JS" injection this comment calls out; a page cannot resolve
-  its own request without the secret.
-- `packages/glass/skills/browsing/lib/browser-session.js` and
-  `lib/browser-bridge.js` — root-session request correlation, the
-  connect/retry state machine (`connectPromise` nulled only on failure), and
-  the paused-auto-attach → hook → `Runtime.runIfWaitingForDebugger` resume
-  ordering were traced and behave as documented (including the `CR-055` stale-
-  bridge-detection fix in `chrome-ws-lib.js`'s `ensureBridge`).
-
-- `packages/glass/src/payload.ts` — the full `PAYLOAD_SPECS` / `parsePayload` / `resolveStrictStructuredPayload` / `tryParseIntegerValue` / `resolveConsoleSince` machinery was read end-to-end against its own extensive doc comments and cross-checked against every call site in `src/index.ts`. The scalar/structured split, the `numericDefaultKey` handling (including the `since: 0` edge case, which is correctly distinguished from "absent" via `!== undefined` rather than truthiness), and the three-way error/absent/present split are internally consistent and match the documented intent.
-- `packages/glass/skills/browsing/lib/profile-lock.js` — the atomic-claim / stale-lock-reclaim / release logic was traced through its race-handling comments (`tryAtomicClaim`'s `wx` flag, the unlink-then-reclaim re-check, `release`'s pid comparison before unlink) and holds up; the only residual race (a dead PID's number being reused by an unrelated live process before cleanup) is an inherent, well-known limitation of PID-based liveness checks, not a defect in this implementation.
-- `packages/glass/skills/browsing/lib/html-diff.js`'s `myersDiff`/`backtrack` — verified correctness (not just the memory-cap concern above) by running reordered-line and identical-input cases directly; reordered identical lines correctly produce a remove+add pair rather than being treated as unchanged, matching the documented rationale for choosing Myers over a set-based diff.
-- `packages/glass/skills/browsing/lib/screenshot.js` — the CR-065 path-containment logic (`resolveScreenshotPath`/`realpathOrResolve`) correctly rejects `..`-escaping and out-of-root absolute paths, and correctly canonicalizes through symlinks (e.g. macOS `/var` -> `/private/var`) for the containment comparison only, never for the path actually written.
-- `packages/glass/skills/browsing/lib/page-scripts/permission-shim.js` and the secret-minting half in `lib/dialogs.js` — the CR-064 per-session-secret design (secret lives only in the injected script's closure, is minted fresh per page session via `randomUUID()`, and is checked with `!==` before either accepting a page-originated permission-request or resolving one) is sound against the documented threat (a page directly calling the plain-global binding to fabricate or resolve requests).
-- `packages/glass/skills/browsing/lib/websocket-client.js` — the CR-066 handshake-timeout logic (bounding the wait when a stale/wrong-port endpoint answers with an ordinary HTTP response instead of upgrading) is correct; verified the `settled` guard prevents both the timer and the `'upgrade'`/`'response'`/`'error'` handlers from double-resolving.
-- `packages/glass/test/array-guards.test.mjs`, `bundle-drift.test.mjs`, `bundle-loads.test.mjs`, `cli-dispatch.test.mjs` — all read and cross-checked against the source they exercise (`lib/tabs.js`'s `Array.isArray` guards, `dist/index.js` vs. the `createSession()` method surface, the CLI's `stop`/`start`/dispatch paths); the tests' own assertions match what the underlying code actually does, and `cli-dispatch.test.mjs` in particular documents and defends against a real historical test-quality regression (asserting exit status/stdout rather than only the absence of certain stderr strings).
-
-- `packages/glass/test/lib/dialogs-router.test.mjs` — the CR-058 test
-  (`'a crafted _shimId cannot inject extra JS or flip the decision'`) actually
-  executes the emitted `Runtime.evaluate` expression through `node:vm` against
-  a recording stub, rather than pattern-matching the string. Cross-checked
-  against `dialogs-router.js`, which builds the expression via
-  `JSON.stringify(id)`/`JSON.stringify(decision)`/`JSON.stringify(secret)` —
-  the fix is real and the test would catch a regression to string
-  interpolation.
-- `packages/glass/test/lib/dialogs.test.mjs` — the CR-064 forged-permission
-  test (`'ignores a forged permission-request with no (or the wrong) secret'`)
-  is backed by a real per-session secret check in `dialogs.js`
-  (`state._dialogShimSecrets`, compared with `data.secret !== expectedSecret`).
-  Verified by reading the implementation directly.
-- `packages/glass/test/lib/chrome-process.test.mjs` — the CR-057 readiness-probe
-  test asserts `isPortAlive` is called with the spawned PID as its third
-  argument; cross-checked against `chrome-process.js`'s three `isPortAlive(...,
-  proc.pid)` call sites and `chrome-launcher-helpers.js`'s
-  `isPortAlive(host, port, expectedPid = null)` signature — the assertion
-  matches the real contract.
-- `packages/glass/test/lib/chrome-launcher-helpers.test.mjs` — the CR-056
-  sibling-profile substring test is backed by a real `path.resolve(...) !==
-  path.resolve(profileDir)` exact-match guard in
-  `findOrphanChromeForProfile`, not a substring test; verified by reading the
-  source.
-- `packages/glass/test/lib/find-pid-on-port-guard.test.mjs` — the
-  command-injection regression coverage (rejected inputs, argv-only
-  `execFileSync` usage, exact-suffix matching on Windows `netstat` output) was
-  checked line-by-line against `findPidOnPort` in `chrome-launcher-helpers.js`;
-  all of the accepted/rejected input pairs (including the `0x23fa` hex and
-  `9.222e3` scientific-notation edge cases) match the guard's actual
-  `Number()`/`Number.isInteger()` behavior.
-- `packages/glass/test/lib/html-diff.test.mjs` — the CR-059/060 "bails out ...
-  above a line-count safety cap" test exercises a real, documented DoS
-  mitigation (unbounded `O(D*(N+M))` memory in Myers diff) at a size deliberately
-  kept below the measured-unsafe range; the test's intent and scope are sound.
-- The remaining files in this shard (`element-selector.test.mjs`,
-  `evaluate-await-promise.test.mjs`, `host-lifecycle.test.mjs`, `_helpers.mjs` /
-  `_helpers.test.mjs`, `browser-bridge.test.mjs`, `browser-session.test.mjs`,
-  `cdp-router.test.mjs`, `chrome-ws-lib-bridge.test.mjs`,
-  `cli-close-numeric.test.mjs`, `console-logging.test.mjs`, `cookies.test.mjs`,
-  `dialogs-render.test.mjs`, `evaluation.test.mjs`, `extraction.test.mjs`,
-  `file-upload.test.mjs`, `key-definitions.test.mjs`, `keyboard-input.test.mjs`,
-  `mouse.test.mjs`, `navigation.test.mjs`,
-  `page-scripts/dom-summary.test.mjs`) were read in full; their assertions
-  match the fake/stub shapes they construct and the behavior they claim to
-  pin, with no contract mismatches found.
-
-- `packages/glass/test/lib/page-scripts/markdown.test.mjs`,
-  `permission-shim.test.mjs`, `page-session.test.mjs`, `profile-lock.test.mjs`,
-  `select-option.test.mjs`, `session-state.test.mjs`, `tabs.test.mjs`,
-  `viewport.test.mjs`, `websocket-client-handshake.test.mjs`,
-  `websocket-client-no-compression.test.mjs`, `screenshot.test.mjs`,
-  `screenshot-exec-safety.test.mjs` — read in full; assertions match the
-  documented behavior (CR-063/CR-064 permission-shim secret-binding tests,
-  CR-065 screenshot containment-root tests, CR-066 websocket-handshake
-  timeout/rejection tests, CWE-78 command-injection regression tests). Ran
-  the full `packages/glass` unit vitest project (50 files, 533 tests, all
-  passing, including every non-manual file in this shard) to confirm none of
-  these are stale or already broken.
-- `packages/glass/test/mcp-error-flag.test.mjs`, `mcp-postel-fixes.test.mjs`,
-  `mcp-schema.test.mjs`, `payload-normalization.test.mjs`,
-  `schema-collapse.test.mjs`, `session-isolation.test.mjs`, `smoke.test.mjs`,
-  `popup-dialog-integration.test.mjs` — behavioral and source-text guard
-  tests against `dist/index.js`/`dist/payload.js`; correctly gated behind
-  Chrome-availability detection (`smoke.test.mjs`,
-  `popup-dialog-integration.test.mjs`) and wired correctly into
-  `vitest.config.ts`'s `CHROME_SUITES` list. Referenced fixture files
-  (`test/fixtures/popup-opener.html`, `popup-with-confirm.html`) and helper
-  modules (`test/lib/_helpers.mjs`, `test/dialogs.smoke.test.mjs`) exist as
-  expected.
-- `packages/glass/vitest.config.ts` — the two-project split (`unit` vs.
-  `chrome`) correctly excludes `test/manual/**` and the three Chrome-dependent
-  suites from the CI-safe `unit` project.
-- `packages/jig-graph/src/moedex.ts` — `MoedexClient` degrades gracefully
-  (`connect()`/`isAvailable()` never throw on an unreachable daemon),
-  `disconnect()` is idempotent and safe to call when never connected, and the
-  test-only `_setTransport` seam is clearly scoped and documented.
-
-- `packages/jig/src/worktree.ts` — considered whether `worktreeCreate`'s `join(worktreeDir, branch)` lets a caller escape `.moe/worktrees/` via a `branch` argument containing `..` (asymmetric with `worktreeRemove`, which explicitly re-validates the resolved path stays under `.moe/worktrees/`). Reproduced directly: `git`'s own ref-name validation (`check-ref-format`) rejects any branch name containing `..` before `git worktree add` runs, and `path.join` does not let a leading `/` in the second argument override the base directory, so the traversal is closed by git's own validation. No working exploit found.
-- `packages/memory/src/db.ts` — considered whether `ON DELETE CASCADE` on `tool_calls.exchange_id` (added by `migrateToolCallsCascade`) is actually enforced, since `initDatabase()` never explicitly runs `PRAGMA foreign_keys = ON` outside the one-time migration path. Verified with a standalone better-sqlite3 repro that the library defaults `foreign_keys` to `1` (ON) for every new connection, so cascading deletes work correctly on ordinary (already-migrated) connections without an explicit pragma call.
-- `packages/memory/src/codex-hook-trust.ts` — considered whether `detectCodexHookTrustState` crashes (unhandled stream `'error'`) when `spawn("codex", ...)` fails (binary not installed/ENOENT) and the code immediately calls `child.stdin.write(...)`. Reproduced with a nonexistent binary: Node queues the write and reports failure only via the already-registered `child.on("error")` handler; no uncaught exception, and the function correctly resolves to `"unknown"` via its `try/catch`.
-- `packages/jig/src/parser.ts` — `parsePlan`'s fenced-code-block skipping and `validatePlan`'s duplicate-task-number/cycle detection (Kahn's algorithm, run against `known` task numbers only) were checked against the test fixtures in `parser.test.ts` and behave correctly for the covered cases.
-- `packages/jig/src/review.ts` — `reviewStamp`'s ordancestor/clean-tree checks and `commitReviewFix`'s staged-changes detection (relying on `git diff --cached --quiet`'s exit code) were traced against `review.test.ts`'s cases, including the inverted-exit-code staged-changes check, and match the documented behavior.
-- `packages/jig/src/cli.ts` — the `realpathSync`-based `require.main === module` equivalent for ESM, and the `CommanderError` exit-code passthrough in `main()`, were checked against `cli.test.ts` and behave as documented (including under pnpm's symlinked bin shims, per the file's own comment).
-
-- `packages/memory/src/file-lock.ts` — the acquire/release protocol built on `proper-lockfile`, including the diagnostic-PID-file unlink-then-recreate ordering (documented and intentional: "a subsequent acquirer will recreate it"), the `ELOCKED` vs. genuine I/O error distinction, and the stale-lock mtime threshold.
-- `packages/memory/src/journal/search.ts` — `JournalSearchService.readEntry`'s two-stage containment guard (resolve → require `.md` → require containment → realpath → require containment again) correctly defends against a symlink escape, unlike `read_conversation` above.
-- `packages/memory/src/journal/store.ts` — the collapsed-root scope disambiguation (`scopeFor`), the prune-only-what-I-walked logic in `indexJournal` (correctly scoped to `this.roots()` so one project's index run cannot delete another project's rows), and the asymmetric `journalEntryId` key construction in `journal/markdown.ts`.
-- `packages/memory/src/embeddings.ts` and `embedding-migration.ts` — the memoized init promise with retry-on-failure, the `EMBEDDING_VERSION` bump discipline, and the lock-protected, batch-transactional re-embed flow (`runMigrationBatch`/`recordReembedded`) all hold together correctly, including the query/passage BGE prefix asymmetry being applied consistently for both conversation and journal search.
-- `packages/memory/src/parser.ts` — the Claude vs. Codex harness detection and the two exchange-builder state machines, including the tool-call/tool-result association via `toolCallsByCallId` and its clearing on `finalizeExchange`, which I traced to confirm the `currentExchange!` non-null assertion in `appendToolResult` cannot actually fire on a stale/cleared exchange.
-- `packages/memory/src/mcp-server.ts` — the overall request-handling pattern of catching all errors and returning them as tool-result content with `isError: true` rather than as transport-level failures, matching MCP's own recommendation as the file's comment describes.
-- `packages/memory/src/summary-sentinel.ts` — the three-way sentinel state machine (missing / empty permanent / `__ERRORED__` retryable-after-threshold) is internally consistent; the gap identified above is that `summarizer.ts` can produce content that is byte-for-byte indistinguishable from the "empty permanent" state without actually being trivial.
-
-- `packages/memory/src/version.ts` — pinned constant; consistent with its own doc comment and the
-  package's checked-in build model (no npm lifecycle generator under turbo/tsc -b).
-- `packages/memory/test/codex-support.test.ts` against `src/codex-support.ts` —
-  `parseCodexCliVersion`, `compareSemver`, `versionMeetsMinimum`, and `MIN_CODEX_VERSION` all match
-  the test's assertions exactly, including the `0`-fallback behavior for missing version segments.
-- `packages/memory/test/codex-doctor.test.ts` and `codex-e2e-script.test.ts` /
-  `claude-e2e-script.test.ts` against `src/doctor.ts`, `src/codex-hook-trust.ts`, and
-  `hooks/hooks.json` — the hook-trust message text, the `/hooks` guidance branch, and the
-  `SessionStart` command string (`if [ -n "${PLUGIN_ROOT:-}" ]; then exit 0; fi; node
-  "${CLAUDE_PLUGIN_ROOT}/dist/cli.js" sync --background`) all match what the tests assert
-  byte-for-byte.
-- `packages/memory/test/codex-plugin.test.ts` against `.mcp.json` and `src/paths.ts` — the
-  `env_vars` allowlist contains every `MOE_*` token actually referenced in `paths.ts` (verified by
-  grepping all `MOE_[A-Z0-9_]*` occurrences against the allowlist), and the four hand-maintained
-  manifests it asserts are absent are in fact absent from the package root.
-- `packages/memory/test/cosine-similarity.test.ts` against `src/search.ts`'s
-  `l2DistanceToCosineSimilarity` — the implementation (`1 - d*d/2`, clamped to `[-1, 1]`) matches
-  every asserted value, including the sub-1 clamp for `distance = 2.0000001`.
-- `packages/memory/test/embedding-init.test.ts` and `embedding-migration.test.ts` — the
-  model-load timeout/memoization contract and the 2000-char truncation constant
-  (`MAX_INPUT_CHARS` in `src/embeddings.ts`) match; the migration lock/stale-batch/re-embed
-  behaviors line up with `src/embedding-migration.ts`.
-- `packages/memory/test/do-not-index-indexer.test.ts` (CR-070) and
-  `exclude-codex-project.test.ts` (CR-069) — verified against `src/indexer.ts` and `src/sync.ts`
-  that all three indexer entry points (`indexConversations`, `indexSession`, `indexUnprocessed`)
-  call `shouldSkipConversation`, and that project-exclusion filtering is re-checked against each
-  exchange's resolved `project` field (`excludeByResolvedProject`) rather than only the walk's
-  top-level directory name — both fixes are real and match their tests.
-- `packages/memory/test/exclusion-markers.test.ts` — `EXCLUSION_MARKER`, `LEGACY_EXCLUSION_MARKER`,
-  and `EXCLUSION_MARKERS` string literals match `src/sync.ts` exactly.
-- `packages/memory/test/journal-cli-args.test.ts` against `src/journal-cli.ts`'s
-  `parseJournalArgs` — the value-flag consumption logic (including the "flag at end of args, or
-  followed by another flag, consumes nothing" guard) matches every asserted case.
-- `packages/memory/test/journal-project-isolation.test.ts` — `journalEntryId`'s root-in-key-only-
-  for-project-scope behavior in `src/journal/markdown.ts` matches the isolation guarantees the
-  test suite exercises.
-- `packages/memory/test/graph.test.ts`'s "link_memories MCP handler parsing" — the replicated
-  `indexOf(":")`/`slice` logic matches the real handler in `src/mcp-server.ts` verbatim, so the
-  test is not silently exercising dead logic.
-- `packages/memory/test/install-check.test.ts` against `src/install-check.ts` and `package.json`
-  — `REQUIRED_PACKAGES` is exactly the package's declared `dependencies` list, and excludes the
-  transitive/optional packages (`onnxruntime-node`, `sharp`, `fsevents`) the test says must not be
-  probed directly.
-- `packages/memory/test/manual/codex-e2e.d.ts` — a minimal ambient declaration for the one export
-  `codex-e2e-cleanup.test.ts` imports; matches `withTempRoot`'s real signature in
-  `test/manual/codex-e2e.js`.
-- `packages/memory/test/db.test.ts`, `journal-search.test.ts`, `journal-store.test.ts`,
-  `journal-markdown.test.ts`, `logging.test.ts`, `hooks.test.ts`, `cross-harness-recall.test.ts`,
-  `codex-transcripts.test.ts`, `codex-skills.test.ts`, `file-lock.test.ts`,
-  `exclude-nested.test.ts` — read in full; assertions are internally consistent with the behavior
-  they describe and no contract mismatch or unreachable/vacuous assertion was found.
-
-- `packages/memory/test/manual/codex-e2e.js` — manual, opt-in-only E2E harness (`MOE_MEMORY_RUN_CODEX_E2E=1` gate). Verified `withTempRoot` releases the temp directory containing the copied live Codex `auth.json` on both the success and thrown-error paths via `try/finally` (this is the documented CR-077 fix). `shellQuote` uses the standard `'...'` + `'\''` escaping for values interpolated into the `tmux new-session` command string, which is correct for the fixed, non-attacker-controlled inputs used here (constant `MARKER`, generated temp paths). `isMain` guard correctly prevents `main()` from firing when the file is imported by a unit test for `withTempRoot`.
-- `packages/memory/test/model/embedding-migration-encoder.test.ts`, `journal-encoder.test.ts` — real-encoder round-trip tests (batch resumability, embedding version stamping, unit-norm invariant); env vars are set/cleared symmetrically in `beforeEach`/`afterEach` and temp dirs are removed.
-- `packages/memory/test/model/exclude-nested-indexer.test.ts`, `incremental-indexing.test.ts`, `sync-indexing.test.ts` — env fixtures are isolated per test via unique temp dirs and cleaned up in `afterEach`; assertions match the described behavior (nested exclude, append-then-reindex, both DO-NOT-INDEX marker forms).
-- `packages/memory/test/model/integration.test.ts` — full-pipeline indexing/search coverage against real fixtures across vector/text/combined/date-filtered modes; consistent path scoping with per-test `MOE_MEMORY_DB_PATH` and cleanup.
-- `packages/memory/test/model/multi-concept.test.ts` — correctly rewritten to use a temp DB rather than the real production index (its own comment documents the prior vacuous-pass bug); the "returns nothing when only one concept present" test title is slightly imprecise but the body's comment explicitly documents that it asserts intersection semantics rather than emptiness, so this is self-documented and not a hidden gap.
-- `packages/memory/test/model/search-metadata-filters.test.ts` — filter coverage (project/session/branch/commit, AND-combination) plus an explicit SQL-injection-via-string-interpolation regression test (`project: "project-a' OR '1'='1"` expecting no results), which is good defensive coverage.
-- `packages/memory/test/model/verify-repair.test.ts` — repair round-trip for orphaned and outdated entries; confirmed `{ noSummaries: true }` avoids requiring live Claude auth, matching the file's own explanatory comment.
-- `packages/memory/test/parser.test.ts` — aside from the flagged vacuous case, coverage of metadata extraction, large-file parsing performance, and data-integrity invariants across all exchanges is solid.
-- `packages/memory/test/paths.test.ts` — thorough env-var save/restore in `beforeEach`/`afterEach` (including `vi.restoreAllMocks()`), covering the three jest-era bugs the file's comment documents were fixed on port; journal-root resolution/override/de-dup logic all checked against expected paths.
-- `packages/memory/test/query-prefix.test.ts` — trivial but correct prefix/idempotency checks.
-- `packages/memory/test/repair-do-not-index.test.ts` — verifies `repairIndex` refuses to summarize/index a DO-NOT-INDEX-marked conversation reached via `issues.missing` from a source other than `verifyIndex`, with the transformers pipeline and summarizer properly mocked.
-- `packages/memory/test/search-agent-template.test.ts` — static assertions against the shipped prompt template; all `toContain` checks correspond to real strings a reader can spot-check in `prompts/search-agent.md`.
-- `packages/memory/test/search-date-filter-vector.test.ts`, `search-text-only-confidence.test.ts` — well-targeted regression tests for the described KNN-before-WHERE and text-only-scored-as-100%-match bugs (CR-074, CR-073); vectors are constructed deliberately orthogonal/near to force the KNN edge case, and mocks are reset per test.
-- `packages/memory/test/show.test.ts` — aside from the flagged vacuous case, good coverage of markdown/HTML formatting for both Claude and Codex transcript shapes, including an explicit HTML-escaping regression test for injected `<script>` content in user/tool/assistant fields.
-- `packages/memory/test/stats.test.ts`, `sync-session-id.test.ts` — straightforward, assertions match setup.
-- `packages/memory/test/summarizer-options.test.ts`, `summarizer-resume-fallback.test.ts` — resume-fallback retry logic (fresh-session retry only on `error_during_execution`, not on other error subtypes or non-SDK errors), cwd-existence gating, and a fake Codex `app-server` JSON-RPC harness are all consistent with the assertions made; version-floor rejection test checked against the same `0.130.0` floor used in `codex-e2e.js`.
-- `packages/memory/test/sync-cli-reentrancy.test.ts`, `sync-cli-single-instance.test.ts` — spawn the real built CLI; lock-stealing-from-dead-PID and lock-release-on-exit cases are meaningful regression tests, not just happy-path. (Noted, not filed: `runWith`/`spawnWith` set `MOE_MEMORY_SUMMARIZER_GUARD: undefined` in the child env, which Node stringifies to the literal `"undefined"` rather than unsetting the var — confirmed with `node -e` — but since `shouldSkipReentrantSync` checks strict equality against `"1"`, this has no effect on test behavior.)
-- `packages/memory/test/sync-error-sentinel.test.ts`, `sync.test.ts` — error-sentinel retry-window behavior (including a custom `MOE_MEMORY_SUMMARY_ERROR_RETRY_HOURS`) and zero-exchange sentinel non-requeueing are both tested with real time manipulation (`utimesSync`) rather than mocked clocks, which is a more convincing test than a fake-timer equivalent.
-- `packages/memory/test/test-indexer.ts`, `test-utils.ts` — `fakeEmbed`'s deterministic hashed-bag-of-words embedding is correctly unit-normalized (required by the L2-to-cosine conversion elsewhere), and its own comment contrasts it usefully against an upstream mocking anti-pattern (same vector for every input) that would have made semantic-ranking assertions pass vacuously.
-- `packages/memory/test/tool-calls-cascade.test.ts` — covers cascade delete on a fresh schema and, importantly, migration of a legacy pre-cascade schema with an existing FK-violating orphan row, asserting the orphan is dropped and the valid row survives.
-- `packages/memory/test/verify.test.ts` — missing/orphaned/outdated detection, exclusion filtering, error-sentinel-as-missing, and DO-NOT-INDEX-as-not-missing are all covered with fixtures that match the production code paths described in the comments.
-
-- `packages/mint/src/adapters/claude-code.ts`, `codex.ts`, `kimi.ts`, `cursor.ts`, `opencode.ts`, `pi.ts`, `copilot.ts`, `index.ts`, `shared.ts`, `types.ts` — manifest field emission, install-doc generation, capability/limitation bookkeeping, and bootstrap hook wiring all read correctly against `deriveEmittedCapabilities` in `platform/capabilities.ts` and the adapters' own test suites. Cursor's `manifest.commands`/`manifest.agents` pointing at source paths while simultaneously reporting `COMPONENT_OMITTED` for the same components looked contradictory at first read, but it is deliberate, documented, and covered by an explicit assertion in `test/adapters/cursor.test.ts` ("warns about user hooks, commands, agents, and mcp not being translated/emitted").
-- `packages/mint/src/adapters/maka.ts`, `openclaude.ts` — both are explicitly documented, unregistered skeleton adapters (confirmed absent from `adapters/index.ts`'s `adapters` array); their placeholder `emit()`/`installDoc()` behavior matches their own header comments.
-- `packages/mint/src/artifact/artifact-manifest.ts`, `pack.ts`, `payload.ts`, `assemble.ts`, `paths.ts` — extensive TOCTOU-aware file handling (stat-before/open/stat-after identity checks via dev/ino/mtime/ctime, `O_NOFOLLOW`, hard-link rejection, symlink rejection), NFC/case-fold collision detection, and a hand-rolled but spec-correct USTAR tar parser (checksum verification, bounded gzip expansion, path-escape rejection, member-count/size limits, directory/file shape-conflict detection). No gaps found in the traversal or extraction logic.
-- `packages/mint/src/artifact/legal.ts`, `license-payload.ts` — verified `LEGAL_TEMPLATE_SHA256`'s two pinned digests against the actual `LICENSE-BSD-3-CLAUSE` and `LICENSE-ISC` files in the repo root (`shasum -a 256`); both match exactly.
-- `packages/mint/src/artifact/bundle-inventory.ts`, `references.ts`, `check.ts` — path-containment checks (`containedRelative`), esbuild-metafile parsing, and cross-manifest reference validation are consistent; `checkArtifactSet`'s per-plugin try/catch correctly routes packing failures to the shared `problems` list rather than reaching the later `results.push` with a stale `packed` reference.
-- `packages/memory/test/version-consistency.test.ts`, `packages/memory/vitest.config.ts` — both match their documented intent (guarding `VERSION` drift and splitting the model-dependent suite from the CI-safe one) with no logic issues.
-- `packages/mint/fixtures/universal-artifact/**` — plain, self-consistent fixture files with no logic to break.
-
-- `packages/mint/src/generate.ts`'s `RESERVED_PACKAGE_JSON_FULL_CASE_FOLD` /
-  `isReservedRootPackagePath` (the guard that stops an adapter from emitting
-  a root `package.json` under a different case, e.g. `Package.JSON`, which
-  would collide on case-insensitive filesystems): its comment claims the
-  table is the *complete* set of Unicode 16.0.0 case-fold scalars whose
-  folded value is a substring of `"package.json"`. Cross-checked this against
-  the canonical case-fold data in `packages/mint/src/artifact/unicode-casefold.ts`
-  with `grep -nE "^\s*\[0x[0-9A-Fa-f]+, '[acegjknops]'\]"` — the only matches
-  are exactly the ASCII uppercase letters A/C/E/G/J/K/N/O/P/S plus U+017F
-  (long s) and U+212A (Kelvin sign), matching the hardcoded table entry for
-  entry. No multi-character fold value (e.g. ligatures) matches any 2+
-  character substring of `"package.json"` either (checked several candidate
-  substrings against the data file). The guard is correct and consistent
-  with the shipped Unicode data as of this snapshot.
-- `packages/mint/src/fileset.ts`'s `writeFileSet`/`assertNoSymlinkInPath`:
-  correctly closes the containment-check TOCTOU window by opening with
-  `O_NOFOLLOW` for the actual write, in contrast to the projections.ts finding
-  above.
-- `packages/mint/src/config.ts`'s schema and migration-error paths
-  (`rejectLegacySyntax`, `resolveHarnessSettings`, `resolveTargets`,
-  `validateTargetMigration`, `normalizeImportedWorks`): traced each rule
-  against `loadConfig`'s call order and found the migration/validation
-  ordering consistent (legacy syntax rejected before schema parse, harness
-  settings validated against the frozen `ADAPTER_NAMES`/`TARGET_IDS` list,
-  imported-work root overlap detection symmetric in both directions).
-- `packages/mint/src/artifact/staged-imports.ts`'s `classifyStagedImports`:
-  overlap detection (`within`), undeclared-work rejection, and the
-  root-must-be-staged closure check all handle the `bundle` sourceKind
-  carve-out consistently.
-- `packages/mint/src/package-manifest.ts`'s `composePackageManifest` /
-  `mergeAdapterPackageContributions` / `validateManifestReferences`: the
-  field allowlists (`DESCRIPTIVE_FIELDS`/`OMITTED_FIELDS`/`RUNTIME_FIELDS`),
-  the `pi`/`opencode` namespace ownership checks, and the workspace-protocol
-  version substitution (`workspace:*` / `workspace:^` / `workspace:~`) were
-  traced end to end and are internally consistent and strict-by-default
-  (unclassified fields throw rather than pass through silently).
-
-- `packages/mint/src/release/npm-registry.ts` — `inspectVersion`'s fallback to `{ state: 'absent' }` when
-  `result.stdout.includes('E404')` relies on `npm view <pkg>@<version> --json` writing the `E404` error
-  object to **stdout** (not just stderr) on a 404. I verified this directly: `npm view
-  this-package-definitely-does-not-exist-zzz123456@1.0.0 --json` in the scratchpad writes
-  `{"error":{"code":"E404",...}}` to stdout and the human-readable `npm error 404 ...` text to stderr.
-  `buildNpmCommandRunner` discards stderr but captures stdout, so the code's assumption holds against a
-  real npm invocation, and the subsequent `JSON.parse(...).error` check is a correct second line of
-  defense if the string match text ever changes.
-- `packages/mint/src/vocabulary.ts` — the token/block/resource substitution pipeline (fence-tracking via
-  `advanceMarkdownFence`, escape handling, `assertNoSurvivors`/`assertNoResourceSurvivors`, and
-  `planSkillRendering`'s in-place vs. rendered output-dir bucketing with cross-adapter profile/mode
-  collision detection) is internally consistent and exercised thoroughly by
-  `test/core-semantics.test.ts` and the per-adapter test files in this shard (vocabulary token
-  substitution across all eight profiles, escaped-literal round-tripping, resource-link rewriting with
-  percent-encoding of parentheses).
-- `packages/mint/src/validate.ts` and `packages/mint/src/test-command.ts` — schema selection, exit-code
-  mapping for the container-backed check runner (`0`→0, `3`→2, anything else/`ENOENT`→`ConfigError`), and
-  the deliberate exclusion of the Codex manifest from schema validation (documented and covered instead
-  by exact-content tests) are all correct as written.
-- The adapter test suites (`claude-code`, `cursor`, `codex`, `kimi`, `opencode`, `pi`, `agent-plugins`,
-  `copilot`, plus `skills-output-dir.test.ts` and `registry.test.ts`) give exact-content assertions for
-  every emitted manifest, hook script, and install doc, including negative/edge cases (per-harness
-  `hooks: own`, `bootstrap: none`/`generate`, non-default component paths, malformed MCP config, name-gate
-  rejection, Unicode case-folding). Two of the Pi tests (`type-checks the emitted skill-mode extension
-  under strict NodeNext`, and its `bootstrap: none` twin) actually shell out to `tsc` against a typed stub
-  of `@earendil-works/pi-coding-agent` and assert a deliberately-broken variant fails to compile — real
-  proof the generated TypeScript type-checks, not string matching.
-- `test/artifact-manifest.test.ts`, `test/artifact-check.test.ts`, `test/artifact-references.test.ts`,
-  `test/assemble-artifact.test.ts`, and `test/bundle-inventory.test.ts` — the artifact-safety test suites
-  are unusually rigorous: TOCTOU re-open races, symlink/hardlink/FIFO/socket/device rejection, Unicode
-  NFC and full case-fold collision detection, reserved-path aliasing (`.MOE`, `.MOE-BUILD`,
-  `PACKAGE.JSON` case-folded), and canonical-tree-untouched-on-failure guarantees are all exercised
-  against real filesystem operations rather than mocked.
-- `test/config.test.ts`, `test/bump.test.ts`, and `test/cli.test.ts` — config schema closure (unknown-key
-  rejection at every nesting level), the migration-required diagnostics for pre-v2 syntax, and the CLI's
-  end-to-end generate/validate/bump/init flows (including the root `mint`/`mint:check` recovery-journal
-  state machine across all six documented journal states) match their respective implementations. The
-  hardcoded plugin versions asserted in the `publish-matrix` CLI test were cross-checked against the six
-  packages' actual `package.json` versions and are currently accurate.
-
-Read all 30 assigned files (test suites, test helpers/fakes, and fixture source files under
-`packages/mint/test/`). Summary of what was specifically checked:
-
-- `packages/mint/test/dogfood.test.ts` — verified the `findReferenceSnapshot()` walk-up logic
-  actually reaches `Code/.moe-references/superpowers` (the location recorded in the user's
-  own memory notes) by tracing the loop's `join(dir, '..', '.moe-references', 'superpowers')`
-  candidate at each ancestor of the test file's directory; the loop terminates correctly via
-  `dirname(dir) === dir` at the filesystem root and falls back to the historical fixed path.
-  The `EXPECTED_DIFFERENCES` closure logic (`withExpectedDifferencesRemoved`) only deletes
-  keys explicitly registered per file, so an undocumented divergence still fails the
-  comparison — matches the stated acceptance-test intent.
-- `packages/mint/test/field-edit.test.ts` — round-trip, dotted-path, YAML-comment-preservation,
-  and every listed `ConfigError` path (missing field, unsupported extension, non-string value,
-  unreadable file, malformed JSON/YAML, auto-vivification refusal, out-of-bounds array index)
-  are each asserted with a distinct fixture; no assertion is vacuous or duplicated.
-- `packages/mint/test/generate.test.ts` — spot-checked the symlink-related regression tests
-  (`CR-080`) against their stated defect (dangling-symlink-looks-absent via `existsSync`
-  following symlinks) and confirmed the assertions actually exercise both the dangling-symlink
-  and the force-mode victim-file cases distinctly. Collision, pruning, stale-file, corrupt-manifest,
-  and unsafe-manifest-entry tests all set up the exact precondition their assertion depends on.
-- `packages/mint/test/helpers.ts` and `helpers.test.ts` — `withV1Policy` correctly threads
-  `harnesses.exclude` into per-target `intent: omit` while leaving the rest of `config.harnesses`
-  (e.g. adapter-specific `manifest`/`hooks` overrides) untouched, and validates malformed input
-  shapes (`harnesses` not a mapping, `exclude` not a string array) before use.
-- `packages/mint/test/import.test.ts` and `init.test.ts` — CLI-level (`spawnSync` against the
-  built `dist/cli.js`) and unit-level tests agree on exit codes and messages; cleanup-on-failure
-  tests (`cleans up an inline-extracted .mcp.json when loadConfig fails...`) assert both the
-  absence of the partially written config and the absence of side-effect files.
-- `packages/mint/test/legal-reconciliation.test.ts`, `license-payload.test.ts` — the
-  `it.each` mutation table for `reconcileLegalClosure` covers each diagnostic code with a
-  single, targeted mutation of the shared `base()` fixture, so each row's specified defect is
-  what actually triggers its expected code.
-- `packages/mint/test/manifest.test.ts` — `deepMerge`'s null-as-delete-sentinel semantics
-  (including the "arrays are opaque to the sentinel" case) are each independently tested;
-  drift detection tests cover hand-edits, deletions, exec-bit changes, and the `checkExecBit:
-  false` opt-out.
-- `packages/mint/test/pack-artifact.test.ts` — manually verified the hand-rolled `tarMember`/
-  `tarNumber` helpers against the USTAR header layout (name 0–99, mode 100–107, size 124–135,
-  checksum 148–155 computed with the checksum field space-filled, typeflag at 156, magic at
-  257) and confirmed the "member-size limit" test's injected size value is well within the
-  12-byte octal field's range, so it exercises the intended limit rather than a corrupted
-  header from truncation.
-- `packages/mint/test/mint-plugins-wrapper.test.ts` — traced the "plugin six fails" test to
-  confirm it asserts a same-name unrelated staging directory (`plugins.next-unrelated`)
-  survives cleanup, i.e. the transaction's rollback path is scoped to its own nonce rather
-  than sweeping any `plugins.next-*` sibling.
-- `packages/mint/test/package-manifest-loader.test.ts` and its `fixtures/package-consumer/`
-  companions (`consumer.mjs`, `.pi/extensions/package-consumer.ts`) — the consumer script's
-  imports (`@bubstack/package-consumer` root and `/server` subpath) match the `exports` map
-  built into the test's `composePackageManifest` call.
-- Fixture one-liners under `fixtures/bundle-metafiles/` and `fixtures/composed-plugin/` are
-  inert marker modules (each exports a single boolean, or — for `test-unlinked.js` —
-  deliberately throws to prove a "developer harness must not ship" fixture is unreachable);
-  none contain logic that could itself be defective.
-- Grepped the full shard for stray `console.log`/`debugger`/`FIXME`/`XXX` markers; the only
-  hits are an intentional skip-notice log in `dogfood.test.ts` and intentional
-  failure-diagnostic `console.error` calls in `init.test.ts`'s CLI `--dir` test, plus two
-  literal `"TODO describe this plugin"` string assertions (the default description text under
-  test, not an actual pending-work marker).
-
-Read all 30 assigned files in full (`packages/mint/test/*.test.ts` covering package-manifest, payload staging/collision/case-folding, platform capabilities/projections/resolution/schema, provenance, public-registry, publish-matrix provenance/immutability, release assets/candidate/catalog/claude-maintenance/evidence/github-store/npm-registry/promotion/recovery/tag-policy/workflows, smoke, staged-imports, test-command, the generation-transaction crash/recovery suite, universal-artifact, validate, and vocabulary; `packages/mint/vitest.config.ts`; and `packages/statusline/src/hooks/ensure-statusline.ts` with its test).
-
-- `packages/statusline/src/hooks/ensure-statusline.ts` — traced the full control flow: `readSettings` correctly distinguishes "absent" (`{}`), "unreadable/corrupt" (`null`), and "present" states; `ensureStatusLine` never overwrites an already-set `statusLine` key (including an explicit `null`, which the code and its tests both treat as "user disabled it, leave alone"); `defaultSettingsPath` honors `CLAUDE_CONFIG_DIR`; `readStdin`'s 5s timeout prevents the hook hanging when Claude Code's SessionStart payload is piped but unread; and `main()`'s `require.main === module` guard correctly prevents the CLI entry point from firing under vitest's ESM import. Cross-checked against `packages/statusline/hooks/hooks.json`, whose bash wrapper (not this file) performs the `PLUGIN_ROOT` check that gives Codex-style hosts a silent no-op — the test file's "silent no-op under Codex plugin-root semantics" name is accurate once this split is understood.
-- `packages/mint/test/transaction.test.ts` — the durable-swap/recovery fault-injection matrix (crash after every one of 21 forward-durability events, restart-then-recover, and 15/6-cut recovery-durability fault injection for old/new rollback paths) is internally consistent: every terminal assertion confirms exactly one of `current`/`next`/`backup` survives per target and the journal is removed only when recovery is unambiguous. The `.gitignore` sibling-name check at the end (`git check-ignore` against the exact nonce temp-file patterns) passes against the current `.gitignore`.
-- `packages/mint/test/publish-matrix.test.ts` and `platform-projections.test.ts` — the anti-tampering tests (frozen `record.plugin`/`.author`/`.targets`, `TypeError` on attempted mutation of `adapters`/`claudeCode.emit`, provenance rejection when records are replayed against a mutated registry or a second `resolvePlatform()` call) are coherent and each restores the mutated global in a `finally`, so they don't leak state to later tests in the same run.
-- `packages/mint/test/provenance.test.ts` and the Unicode case-folding fixture check in `payload.test.ts` — both pin an independent, byte-verified digest of `CaseFolding-16.0.0.txt` and cross-check `artifactCollisionKey` against every `C`/`F` row parsed directly from that fixture (1557 rows), rather than trusting the production code's own embedded table.
-
-- `packages/tab/bindings/go/tab/tab.go`, `loader.go`, `loader_unsupported.go`, `embed_stub.go`, `tab_test.go`, `pricing_env_test.go`, `pricing_env_unsupported_test.go`, `loader_embed_test.go`, `cmd/total/main.go` — the C-string marshalling (`cstr`/`drain`), `runtime.KeepAlive` placement around FFI calls, the `sync.Once`-guarded loader, and the build-tag split between the purego-backed loader and the `!darwin && !linux` stub all matched their documented intent. The final-file tamper checks added for CR-081/CR-082 (re-hash on read, replace a symlinked target rather than writing through it) were exercised and are correct for the case they target (see the separate finding above for the narrower case they do not cover).
-- `packages/tab/bindings/python/moe_tab/__init__.py` and `_lib.py` — the ctypes `restype`/`argtypes` declarations match the calls made against them; `_decode_and_free` copies the C string into a Python `bytes` via `.value` before freeing, so there is no use-after-free; error decoding mirrors the Go/TS envelope-parsing logic.
-- `packages/tab/bindings/python/setup.py` — the `BinaryDistribution`/`bdist_wheel` override is a standard, correct pattern for shipping a platform-tagged, ABI-agnostic prebuilt-binary wheel.
-- `packages/tab/bindings/python/tests/test_moe_tab.py` and `packages/tab/bindings/typescript/test/ffi/tab.test.ts` — both derive the expected version from `packages/tab/Cargo.toml`'s `[workspace.package] version`; confirmed by reading that file and `moe-tab-ffi`/`moe-tab-core`'s `Cargo.toml` that both crates inherit it via `version.workspace = true`, so the regex match (which anchors on `^version` and only matches the workspace-level line) is correct and won't drift silently on a version bump.
-- `packages/tab/bindings/typescript/src/ffi.ts`, `ffi-bun.ts`, `ffi-node.ts`, `pricing-env.ts`, `lib-path.ts`, `total.ts`, `types.ts`, `bun-ffi.d.ts` — the Bun/koffi split correctly avoids importing `bun:ffi` under Node and vice versa; the `void**` (not `char**`) koffi signature for the out-param avoids the auto-stringify pointer leak the comment describes; the `BigUint64Array`/`Number(p)` pointer narrowing in the Bun backend is safe for real user-space addresses as documented; `pricing_source` was verified present in the Rust core's serialized `CostEstimate` (via `moe-tab-cli/tests/cli.rs`'s `estimate_reports_bundled_pricing_source`), so declaring it non-optional in `types.ts` is correct.
-- `packages/tab/bindings/typescript/test/unit/errors.test.ts`, `lib-path.test.ts`, `vitest.config.ts` — the unit/ffi project split and `fileParallelism: false` correctly account for the shared-process-env hazard the comments describe.
-- `packages/tab/crates/moe-tab-cli/src/main.rs` — `utc_stamp_from_epoch`'s Howard Hinnant civil-from-days implementation was independently re-implemented and run against all four of the file's own test vectors (including the 2000-02-29 leap-day case); all four matched exactly.
-- `packages/tab/crates/moe-tab-cli/tests/cli.rs` — the hermetic pricing-source tests correctly isolate `XDG_DATA_HOME`/`MOE_TAB_PRICING_DIR` so they don't depend on the developer's real home directory.
-- `packages/statusline/tsup.config.ts`, `packages/statusline/vitest.config.ts` — small, declarative configs; both match their documented rationale and neighboring packages' conventions.
-
-- `cost::estimate` (`packages/tab/crates/moe-tab-core/src/cost.rs`): the
-  native-cost-vs-rate-table precedence, the `unpriced_models` vs
-  `UnknownModelForTurn` distinction for empty model strings, and the
-  `AssumedStandardTier`/`UnknownModelForTurn` approximation flags were traced
-  end to end and match their test coverage; ran the crate's own test suite
-  (`cargo test -p moe-tab-core`, 68 passed) to confirm no regressions in this
-  tree.
-- `pricing::as_of` (`as_of.rs`): the `sort_key` parser is a strict, allocation-free
-  byte-level validator (no `chrono`), correctly rejects path-traversal-shaped
-  and malformed stamps (verified the test list explicitly includes
-  `"../../escape"` and `"2026-06-09/evil"`), and `archive_file_name` is only
-  ever called after `validate`/`sort_key` has succeeded (checked every call
-  site), so it cannot be reached with attacker-controlled path separators.
-- `transcript::atif::parse` (`atif.rs`): traced the three-way cost precedence
-  (per-step sum wins when complete; `final_metrics.total_cost_usd` wins and
-  suppresses per-step rate-table math when incomplete; rate-table is the
-  fallback) against all nine of its dedicated tests, including the two
-  double-count guards — no gap found beyond the documented, intentional
-  loss of per-model cost granularity when a totals-only override fires.
-- `transcript::provider::{anthropic,openai}` normalizers: the Anthropic
-  5m/1h cache-write split and the OpenAI cached-token subtraction
-  (`saturating_sub`, so a corrupt `cached_tokens > input_tokens` clamps to
-  zero instead of underflowing) both match the documented provider billing
-  semantics.
-- `moe-tab-ffi/src/lib.rs`: the ownership contract (NULL-init before catch_unwind,
-  freeable-string-or-NULL invariant, `catch_unwind`/`AssertUnwindSafe` around
-  both entry points, NULL-pointer checks preceding every `CStr::from_ptr`) was
-  read against every exit path in both `moe_tab_estimate_path` and
-  `moe_tab_refresh_pricing`; ran `cargo test -p moe-tab-ffi` (13 passed,
-  including `header_matches_source`, which regenerates the cbindgen header
-  and diffs it against the committed `include/moe_tab.h`) to confirm the C
-  ABI surface is in sync with the source in this tree.
-
-- `slugify` (`py/proof/src/moe_proof/cli.py`): the `"", ".", ".."` fallback
-  to a content-derived hash, and its interaction with
-  `resolve_eval_slugs`'s duplicate-slug guard and `build_eval`'s
-  `shutil.rmtree(eval_dir)` guard, is exercised by
-  `test_never_returns_empty_for_all_unsafe_characters`,
-  `test_never_returns_dot_or_dotdot`,
-  `test_distinct_unsafe_names_still_get_distinct_slugs` (`test_units.py`) and
-  `test_build_with_an_all_unsafe_name_does_not_wipe_other_evals`
-  (`test_site.py`, regression-labeled CR-085). Confirmed the fallback cannot
-  collapse two different unsafe names onto the same slug (SHA-256 truncated
-  to 12 hex chars) and cannot reintroduce `"."`/`".."`.
-- `site.py`'s `serve_eval` path-containment check
-  (`target.is_relative_to(runs_root)` after `.resolve()`) correctly rejects
-  both a same-prefix sibling directory (`runs-secret/`) and a `..`-escape out
-  of the eval directory entirely; verified by tracing the exact string
-  transformations `self.path.split("?")[0]` -> `removeprefix("/evals/")` ->
-  `partition("/")` against the URLs used in
-  `test_serve_refuses_prefix_sibling_of_runs` and
-  `test_serve_refuses_paths_outside_runs`, and confirmed with pathlib that an
-  internal `//` in the tail cannot be used to smuggle an absolute-path
-  override past the `tail.startswith("runs/")` gate.
-- `grade_run`'s scoring rule — a check that fails without producing a score
-  poisons the whole Grade's score to `None` even if a later check does
-  produce one (`unscored_failure`), while a later score legitimately
-  overrides an earlier one when every failing check that ran did score
-  itself — matches `test_last_score_wins`,
-  `test_non_required_failure_continues`, and
-  `test_unscored_failure_leaves_grade_unscored` exactly.
-- `render_leaderboard`'s competition-style tied-rank display
-  (`test_leaderboard_orders_by_mean_and_shares_tied_ranks`) correctly ranks
-  by the *displayed* (rounded) mean rather than the raw float mean, so
-  genuinely-tied display strings share a rank and the next rank skips
-  accordingly.
-- `discover_evals` correctly stops descent at the first `eval.yaml` found
-  (so a `runs/` tree is never re-scanned for nested "decoy" evals) and skips
-  dotfile directories; matches
-  `test_discover_evals_recurses_and_stops_at_evals`.
-- `normalize_check_info`'s core-key protection (`score`, `metrics`, `tags`,
-  `notes`, `details` are the only keys ever promoted to the top level;
-  everything else, including a checker that emits `ok`/`checker`/`skipped`
-  itself, is folded into `details`) is correct and matches
-  `test_core_keys_cannot_be_clobbered`.
-
-- `scripts/lib/mint-generation-transaction.mjs` — the durable three-target
-  swap/recovery state machine (`replaceGeneratedOutputs`,
-  `recoverGeneratedOutputs`, `stateFor`, `restoreOld`, `finishNew`). Traced
-  the classification of every reachable interleaving of
-  `unstarted`/`backed-up`/`committed`/`clean` across the three targets,
-  including partial-commit crashes mid-loop (e.g. `[committed, backed-up,
-  unstarted]`) and partial-cleanup crashes after commit (`[committed,
-  clean]`), and the "old" vs "new" generation selection correctly resolves
-  each to one coherent generation across all three targets. The
-  journal-removed-but-fsync-failed edge case is deliberately surfaced as a
-  distinct `*_DURABILITY_UNCERTAIN` error rather than silently retried, and
-  the "trusted boundary" identity re-check (`captureTrustedBoundary`/
-  `guarded`) brackets every mutating step against a concurrent parent-path
-  replacement. Portable-path validation (`portableParts`, `validateShape`,
-  `assertSymlinkFreeAncestry`) rejects absolute paths, `..`/`.` segments, and
-  symlinked ancestry before any mutation.
-- `scripts/write-bundle-inventory.mjs` — `safeMetafilePath`'s allowlist of
-  exact expected metafile locations plus a post-`realpath` containment check
-  (`contained`), the absolute/UNC/drive-letter path rejection
-  (`isMachineAbsolute`/`assertRelativeMetafilePath`) applied to every input,
-  output, and import path parsed out of a metafile, and the symlink guard in
-  `prepareEvidenceRoot` before a recursive `rm`. Traced the normalize →
-  validate → write pipeline end to end; found no path-escape or malformed-
-  input gap.
-- `scripts/check-session-start-hooks.mjs` — the packaged-artifact integration
-  test correctly builds a real npm tarball (`npm pack --ignore-scripts`),
-  extracts it outside the repo, asserts no `node_modules` leaked in and the
-  extraction path isn't itself beneath a `node_modules`, and runs each
-  packed `SessionStart` command with an intentionally minimal env (no `HOME`,
-  no ambient `NODE_*`) to catch a hook that only works by accident inside the
-  monorepo's own dependency tree. The tempdir-outside-repo assertion
-  (`realpathSync` + `relative(...).startsWith("..")`) and the mandatory
-  empty-stdout/stderr contract in `runHook` were verified against the code
-  as written.
-- `scripts/mint-plugins.mjs` — `validateCanonicalPluginRegistry`'s
-  cross-check between the dependency-free `bin/lib/plugin-registry.mjs` and
-  the resolved Mint platform (id/source/config/repository/npm package/active
-  harness set in both directions, plus duplicate-value detection) and the
-  `runMintPlugins` orchestration's cleanup-on-failure logic (only removing
-  prepared `next` outputs when the durable journal was never written or has
-  already been resolved by the transaction module itself) were traced and
-  are internally consistent with the transaction module's own contract.
-- `scripts/mint-prepare.mjs`, `scripts/mint-recover.mjs`,
-  `scripts/test-provenance-red.mjs`, `scripts/check-artifacts.mjs`,
-  `scripts/clean-package-dist.mjs`, `scripts/copy-license.mjs`,
-  `scripts/lib/mint-diagnostics.mjs`, `scripts/lib/mint-host-contract.mjs` —
-  read in full; each is a small, single-purpose wrapper and no defect was
-  found. `test-provenance-red.mjs` and `check-artifacts.mjs` were also run
-  directly against the current tree to confirm their expected exit codes.
