@@ -11,7 +11,12 @@ pub fn estimate(
     store: &PriceStore,
     source: PricingSource,
 ) -> CostEstimate {
-    let mut per_model: BTreeMap<String, ModelCost> = BTreeMap::new();
+    // Keyed by (model, provider label) rather than model alone: ATIF
+    // transcripts can legitimately report the same model string under two
+    // different providers in one trajectory (CR-104), and merging those into
+    // one entry would silently mislabel — or hide — which provider actually
+    // billed which share of the subtotal.
+    let mut per_model: BTreeMap<(String, String), ModelCost> = BTreeMap::new();
     let mut totals = TokenBuckets::default();
     let mut total_usd = 0.0;
     let mut unpriced: Vec<String> = Vec::new();
@@ -58,7 +63,7 @@ pub fn estimate(
         total_usd += subtotal;
 
         let entry = per_model
-            .entry(u.model.clone())
+            .entry((u.model.clone(), u.provider.label().to_string()))
             .or_insert_with(|| ModelCost {
                 model: u.model.clone(),
                 provider: u.provider.clone(),
@@ -171,6 +176,52 @@ mod tests {
             .approximations
             .iter()
             .any(|a| matches!(a, Approximation::UnpricedModel(m) if m == "claude-opus-9-9")));
+    }
+
+    // CR-104: per_model was keyed only by the verbatim model string, so the
+    // second record sharing a model string with an earlier one silently
+    // merged into that entry's `provider` field — reporting the whole
+    // subtotal under whichever provider happened to insert the key first.
+    // ATIF transcripts can legitimately report the same model string under
+    // different providers in one trajectory, so this is reachable through
+    // normal parsing, not just a crafted transcript.
+    #[test]
+    fn per_model_keeps_providers_distinct_for_shared_model_string() {
+        let mut anthropic_usage = opus_usage();
+        anthropic_usage.model = "shared-model-name".into();
+        anthropic_usage.provider = Provider::Anthropic;
+        anthropic_usage.native_cost_usd = Some(1.0);
+
+        let mut openai_usage = opus_usage();
+        openai_usage.model = "shared-model-name".into();
+        openai_usage.provider = Provider::OpenAI;
+        openai_usage.native_cost_usd = Some(1.0);
+
+        let est = estimate(
+            &[anthropic_usage, openai_usage],
+            &store(),
+            PricingSource::Bundled,
+        );
+
+        assert!((est.total_usd - 2.0).abs() < 1e-9, "got {}", est.total_usd);
+        assert_eq!(
+            est.per_model.len(),
+            2,
+            "same model string billed under two providers must not merge into one entry: {:?}",
+            est.per_model
+        );
+        let anthropic_entry = est
+            .per_model
+            .iter()
+            .find(|m| m.provider == Provider::Anthropic)
+            .expect("an Anthropic-billed entry");
+        let openai_entry = est
+            .per_model
+            .iter()
+            .find(|m| m.provider == Provider::OpenAI)
+            .expect("an OpenAI-billed entry");
+        assert!((anthropic_entry.subtotal_usd - 1.0).abs() < 1e-9);
+        assert!((openai_entry.subtotal_usd - 1.0).abs() < 1e-9);
     }
 
     // Defect 1: a record with no model name (empty string) must NOT pollute
