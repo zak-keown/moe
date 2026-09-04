@@ -209,9 +209,6 @@ export const cursor: HarnessAdapter = Object.freeze({
     }
 
     if (model.hooks !== undefined) limitations.push({ code: 'COMPONENT_PARTIAL', component: 'hooks', message: 'user hooks are not translated for cursor in v1' })
-    if (model.commands.length) limitations.push({ code: 'COMPONENT_OMITTED', component: 'commands', message: 'commands are not emitted for cursor in v1' })
-    if (model.agents.length) limitations.push({ code: 'COMPONENT_OMITTED', component: 'agents', message: 'agents are not emitted for cursor in v1' })
-    if (model.mcp !== undefined) limitations.push({ code: 'COMPONENT_OMITTED', component: 'mcp', message: 'mcp servers are not emitted for cursor in v1' })
 
     return { files, limitations, emittedCapabilities: deriveEmittedCapabilities('cursor', model, files) }
   },
