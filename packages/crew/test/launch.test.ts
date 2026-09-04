@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import {
   existsSync,
   mkdtempSync,
@@ -18,8 +19,28 @@ import { eventsPath, shimPath } from "../src/core/paths.js";
 import { shellQuote } from "../src/core/shell.js";
 import type { Tmux } from "../src/core/tmux.js";
 import { readHarnessMarker, readMeta } from "../src/core/worker-store.js";
+import { worktreePath } from "../src/core/worktree.js";
 import { getDriver } from "../src/harness/registry.js";
 import { runHook } from "../src/hooks/emit-event.js";
+
+/** A real git repo with one commit, so `git worktree add --detach <path> HEAD` works. */
+function makeGitRepo(): string {
+  const repoRoot = mkdtempSync(join(tmpdir(), "moe-crew-launch-repo-"));
+  const git = (args: string[]) => execFileSync("git", ["-C", repoRoot, ...args]);
+  git(["init", "-q"]);
+  git([
+    "-c",
+    "user.email=t@t.test",
+    "-c",
+    "user.name=t",
+    "commit",
+    "--allow-empty",
+    "-q",
+    "-m",
+    "init",
+  ]);
+  return realpathSync(repoRoot);
+}
 
 function tmpDir(prefix: string): string {
   return mkdtempSync(join(tmpdir(), prefix));
@@ -524,6 +545,33 @@ describe("cmdLaunch — codex (derive)", () => {
     // The sidecar harness marker written before the newSession attempt is
     // cleaned up too, so prune doesn't have to discover the orphan later.
     expect(readHarnessMarker(workerDir, "cx3")).toBeNull();
+  });
+
+  it("removes the disposable git worktree, not just its marker, when tmux never starts (CR-027)", async () => {
+    grantConsent(home);
+    const realRepo = makeGitRepo();
+    try {
+      const calls: CodexFakeTmuxCalls = { newSession: [], sendText: [], sendEnter: [] };
+      const ctx = codexCtx(
+        codexFakeTmux(calls, () => "just booting", { newSessionSucceeds: false }),
+      );
+
+      const result = await cmdLaunch(
+        ctx,
+        { tmuxName: "cx4", cwd: realRepo, extraArgs: [], harness: "codex", worktree: true },
+        { ...baseOpts(), ...CODEX_FAST },
+      );
+
+      expect(result.code).toBe(1);
+      const wtPath = worktreePath(realRepo, "cx4");
+      expect(existsSync(wtPath)).toBe(false);
+      const list = execFileSync("git", ["-C", realRepo, "worktree", "list"], {
+        encoding: "utf8",
+      });
+      expect(list).not.toContain(wtPath);
+    } finally {
+      rmSync(realRepo, { recursive: true, force: true });
+    }
   });
 });
 

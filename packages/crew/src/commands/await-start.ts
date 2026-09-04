@@ -1,6 +1,8 @@
+import { dirname } from "node:path";
 import { readRawLines } from "../core/event-log.js";
 import { eventsPath } from "../core/paths.js";
-import { removeWorker } from "../core/worker-store.js";
+import { readWorktreeMarker, removeWorker } from "../core/worker-store.js";
+import { removeWorktree } from "../core/worktree.js";
 import { parseEvent } from "../events.js";
 import type { CommandContext } from "./context.js";
 
@@ -98,8 +100,18 @@ export async function awaitSessionStart(
     lines.push("", "Last visible content in the worker pane:", "----------", tail, "----------");
   }
 
+  // Read the worktree marker BEFORE removeWorker deletes it, mirroring cmdStop
+  // (CR-027): otherwise a --worktree worker that times out here leaks its
+  // .moe-worktrees/<name> checkout and git's internal worktree registration.
+  const wtPath = readWorktreeMarker(ctx.workerDir, tmuxName);
+
   await ctx.tmux.killSession(tmuxName);
   removeWorker(ctx.workerDir, sessionId, tmuxName);
+
+  if (wtPath) {
+    const repoRoot = dirname(dirname(wtPath));
+    await removeWorktree(undefined, repoRoot, wtPath);
+  }
 
   return { started: false, failureMessage: lines.join("\n") };
 }
