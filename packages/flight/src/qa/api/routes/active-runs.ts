@@ -16,7 +16,11 @@ export function activeRunRoutes(registry: ActiveRunRegistry, targetMaxBytes?: nu
   router.get("/:runId/snapshot", (c) => {
     const snap = registry.getSnapshot(c.req.param("runId"));
     if (!snap) return c.json({ error: "not running" }, 404);
-    return c.json(snap);
+    // Build the public shape explicitly rather than forwarding the internal
+    // RunSnapshot struct wholesale — `abortController` is documented as
+    // "never serialized to clients" and must not leak just because it's a
+    // field on the struct this route reads from.
+    return c.json({ info: snap.info, lastFrame: snap.lastFrame, progressLog: snap.progressLog });
   });
 
   return router;
