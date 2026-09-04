@@ -205,6 +205,13 @@ export function computeWaves(tasks: PlanTask[]): number[][] {
   }
   for (const t of tasks) {
     for (const d of t.dependsOn) {
+      // A dependsOn entry that doesn't name a task in this list can't be
+      // satisfied and must not count against the in-degree — otherwise the
+      // task never reaches indeg 0 and silently never gets scheduled into
+      // any wave. Matches validatePlan's `known.has(d)` precondition; a
+      // dangling reference is validatePlan's problem to report, not a
+      // reason for computeWaves to make the task vanish.
+      if (!byNum.has(d)) continue;
       indeg.set(t.num, (indeg.get(t.num) ?? 0) + 1);
       adj.get(d)?.push(t.num);
     }
