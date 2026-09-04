@@ -15,11 +15,11 @@ findings:
 verified: false
 status: issues_found
 dispositions:
-  fixed: 2
+  fixed: 3
   stale: 0
   skipped: 0
   deferred: 0
-  open: 105
+  open: 104
 ---
 
 # Codebase Review — moe
@@ -2807,6 +2807,10 @@ misattribute cost. Fix: key `per_model` by `(namespace, model, provider.label())
 (or at minimum change `provider` to a set/vec when it disagrees) instead of
 model string alone.
 
+**Disposition:** fixed
+**Commit:** `bc589f0850df2678abd8566837a6019f91c9c8db`
+**Resolved:** 2026-09-04
+**Note:** —
 ### CR-105: `PriceStore::save` writes the snapshot in place, not atomically
 
 **File:** `packages/tab/crates/moe-tab-core/src/pricing/store.rs`
